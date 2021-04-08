@@ -1,0 +1,114 @@
+{
+  "id": "@artifactId@-@version@",
+  "name": "INN Reach API module",
+  "requires": [],
+  "provides": [
+    {
+      "id": "inn-reach-configurations",
+      "version": "1.0",
+      "handlers": [
+        {
+          "methods": ["POST"],
+          "pathPattern": "/inn-reach/configurations",
+          "permissionsRequired" : [ "inn-reach.configurations.item.post" ]
+        },
+        {
+          "methods": ["PUT"],
+          "pathPattern": "/inn-reach/configurations/",
+          "permissionsRequired" : [ "inn-reach.configurations.item.put" ]
+        },
+        {
+          "methods": ["GET"],
+          "pathPattern": "/inn-reach/configurations",
+          "permissionsRequired" : [ "inn-reach.configurations.collection.get" ]
+        },
+        {
+          "methods": ["GET"],
+          "pathPattern": "/inn-reach/configurations/{configurationId}",
+          "permissionsRequired" : [ "inn-reach.configurations.item.get" ]
+        },
+        {
+          "methods": ["DELETE"],
+          "pathPattern": "/inn-reach/configurations/{configurationId}",
+          "permissionsRequired" : [ "inn-reach.configurations.item.delete" ]
+        }
+      ]
+    },
+    {
+      "id": "_tenant",
+      "version": "1.2",
+      "interfaceType": "system",
+      "handlers": [
+        {
+          "methods": ["POST"],
+          "pathPattern": "/_/tenant"
+        }, {
+          "methods": ["DELETE"],
+          "pathPattern": "/_/tenant"
+        }
+      ]
+    }
+  ],
+  "permissionSets": [
+    {
+      "permissionName" : "inn-reach.configurations.item.post",
+      "displayName" : "create a inn reach configuration",
+      "description" : "Add a inn reach configuration"
+    },
+    {
+      "permissionName" : "inn-reach.configurations.item.put",
+      "displayName" : "modify a inn reach configuration",
+      "description" : "Modify a inn reach configuration"
+    },
+    {
+      "permissionName" : "inn-reach.configurations.collection.get",
+      "displayName" : "get inn reach configurations collection",
+      "description" : "Get a list of inn reach configurations"
+    },
+    {
+      "permissionName" : "inn-reach.configurations.item.get",
+      "displayName" : "get inn reach configuration",
+      "description" : "Get a inn reach configuration by id"
+    },
+    {
+      "permissionName" : "inn-reach.configurations.item.delete",
+      "displayName" : "delete a inn reach configuration",
+      "description" : "Delete a inn reach configuration by id"
+    },
+    {
+      "permissionName" : "inn-reach.all",
+      "displayName" : "inn reach API module - all permissions",
+      "description" : "All permissions for inn reach",
+      "subPermissions" : [
+        "inn-reach.configurations.item.post",
+        "inn-reach.configurations.item.put",
+        "inn-reach.configurations.collection.get",
+        "inn-reach.configurations.item.get",
+        "inn-reach.configurations.item.delete"
+      ]
+    }
+  ],
+  "launchDescriptor": {
+    "dockerImage": "@artifactId@:@version@",
+    "dockerPull": false,
+    "dockerArgs": {
+      "HostConfig": {
+        "Memory": 357913941,
+        "PortBindings": { "8081/tcp": [ { "HostPort": "%p" } ] }
+      }
+    },
+    "env": [
+      { "name": "JAVA_OPTIONS",
+        "value": "-XX:MaxRAMPercentage=66.0"
+      },
+      { "name": "DB_HOST", "value": "postgres" },
+      { "name": "DB_PORT", "value": "5432" },
+      { "name": "DB_USERNAME", "value": "folio_admin" },
+      { "name": "DB_PASSWORD", "value": "folio_admin" },
+      { "name": "DB_DATABASE", "value": "okapi_modules" },
+      { "name": "DB_QUERYTIMEOUT", "value": "60000" },
+      { "name": "DB_CHARSET", "value": "UTF-8" },
+      { "name": "DB_MAXPOOLSIZE", "value": "5" }
+    ]
+  }
+}
