@@ -2,7 +2,6 @@ package org.folio.innreach.controller;
 
 import lombok.extern.log4j.Log4j2;
 import org.folio.spring.FolioExecutionContext;
-import org.folio.tenant.domain.dto.Parameter;
 import org.folio.tenant.domain.dto.TenantAttributes;
 import org.folio.tenant.rest.resource.TenantApi;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,7 +17,7 @@ import java.util.List;
 @RestController("folioTenantController")
 @RequestMapping(value = "/_/")
 public class TenantController implements TenantApi {
-  private static final String PARAMETER_LOAD_SAMPLE = "loadSample";
+
   private static final String SAMPLES_DIR = "samples";
   private final FolioExecutionContext context;
   private final List<String> samples = Collections.singletonList("dematic.json");
