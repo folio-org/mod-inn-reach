@@ -1,22 +1,33 @@
-FROM folioci/alpine-jre-openjdk11:latest
+#--------------------------------------------------------
+# 1. image with extracted application layers
+#--------------------------------------------------------
+FROM adoptopenjdk/openjdk11:alpine-jre as builder
+# should be a single jar file
+ARG JAR_FILE=target/*.jar
 
-USER root
+COPY ${JAR_FILE} application.jar
+RUN java -Djarmode=layertools -jar application.jar extract
+#RUN java -jar application.jar extract
 
-# Copy your fat jar to the container
-ENV APP_FILE mod-inn-reach-fat.jar
+#--------------------------------------------------------
+# 2. target image
+#--------------------------------------------------------
+FROM adoptopenjdk/openjdk11:alpine-jre
 
-# - should be a single jar file
-ARG JAR_FILE=./target/*.jar
-# - copy
-COPY ${JAR_FILE} ${JAVA_APP_DIR}/${APP_FILE}
+ENV JAVA_APP_DIR=/opt/folio
+RUN mkdir -p ${JAVA_APP_DIR}
 
-ARG RUN_ENV_FILE=run-env.sh
+COPY --from=builder dependencies/ ${JAVA_APP_DIR}/
+COPY --from=builder snapshot-dependencies/ ${JAVA_APP_DIR}/
+COPY --from=builder spring-boot-loader/ ${JAVA_APP_DIR}/
+COPY --from=builder application/ ${JAVA_APP_DIR}/
 
-COPY ${RUN_ENV_FILE} ${JAVA_APP_DIR}/
-RUN chmod 755 ${JAVA_APP_DIR}/${RUN_ENV_FILE}
-
-# Run as this user
-USER folio
+COPY run.sh ${JAVA_APP_DIR}/
+RUN chmod 755 ${JAVA_APP_DIR}/run.sh
 
 # Expose this port locally in the container.
 EXPOSE 8081
+
+WORKDIR $JAVA_APP_DIR
+
+ENTRYPOINT ["sh", "./run.sh"]

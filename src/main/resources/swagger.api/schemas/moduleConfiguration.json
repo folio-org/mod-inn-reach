@@ -1,0 +1,40 @@
+{
+  "description": "Inn reach configuration",
+  "type": "object",
+  "properties": {
+    "id": {
+      "description": "configuration id",
+      "$ref": "uuid.json"
+    },
+    "name": {
+      "description": "configuration name",
+      "type": "string"
+    },
+    "providerName": {
+      "description": "inn reach provider name",
+      "type": "string"
+    },
+    "url": {
+      "description": "inn reach url",
+      "type": "string"
+    },
+    "accessionDelay": {
+      "description": "accession schedule delay",
+      "type": "integer"
+    },
+    "accessionTimeUnit": {
+      "description": "accession schedule time unit",
+      "type": "object",
+      "$ref": "timeUnits.json"
+    },
+    "metadata": {
+      "description": "Entity metadata",
+      "type": "object",
+      "$ref": "metadata.json"
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "name"
+  ]
+}
