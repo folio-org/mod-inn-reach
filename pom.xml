@@ -107,8 +107,8 @@
         <artifactId>spring-boot-maven-plugin</artifactId>
         <configuration>
           <layers>
-<!--            <enabled>true</enabled>-->
-            <enabled>false</enabled>
+            <enabled>true</enabled>
+<!--            <enabled>false</enabled>-->
           </layers>
         </configuration>
       </plugin>
