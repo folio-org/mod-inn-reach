@@ -1,7 +1,6 @@
 package org.folio.innreach.controller;
 
 import lombok.extern.log4j.Log4j2;
-
 import org.folio.tenant.domain.dto.TenantAttributes;
 import org.folio.tenant.rest.resource.TenantApi;
 import org.springframework.http.ResponseEntity;

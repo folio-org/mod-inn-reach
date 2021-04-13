@@ -28,6 +28,10 @@
     <openapi.input.file>${project.basedir}/src/main/resources/swagger.api/inn-reach.yaml</openapi.input.file>
     <mapstruct.version>1.3.1.Final</mapstruct.version>
     <json.version>20200518</json.version>
+    <sonar.exclusions>
+      src/main/java/org/folio/innreach/controller/TenantController.java,
+      src/main/java/org/folio/innreach/ModInnReachApplication.java
+    </sonar.exclusions>
   </properties>
   <dependencies>
     <dependency>
@@ -74,7 +78,7 @@
     <dependency>
       <groupId>org.postgresql</groupId>
       <artifactId>postgresql</artifactId>
-      <!--      <scope>runtime</scope>-->
+      <scope>runtime</scope>
     </dependency>
 
     <!-- Test dependencies -->
