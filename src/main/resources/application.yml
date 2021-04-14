@@ -7,6 +7,7 @@ spring:
     username: ${DB_USERNAME:postgres}
     password: ${DB_PASSWORD:postgres}
     url: jdbc:postgresql://${DB_HOST:192.168.153.128}:${DB_PORT:5432}/${DB_DATABASE:folio}
+    driver-class-name: org.postgresql.Driver
   jpa:
     show-sql: false
     hibernate:
@@ -17,6 +18,15 @@ spring:
     implicit-strategy: org.springframework.boot.orm.jpa.hibernate.SpringImplicitNamingStrategy
     hibernate:
       format_sql: true
-
-server.port: 8081
-folio.tenant.validation.enabled: true
+  liquibase:
+    enabled: false
+    change-log: classpath:db/changelog/changelog-master.xml
+  mustache:
+    check-template-location: false
+server:
+  port: 8081
+folio:
+  tenant:
+    validation:
+      enabled: true
+debug: false
