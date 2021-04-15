@@ -1,19 +1,27 @@
 package org.folio.innreach.fixture;
 
 import org.folio.innreach.domain.entity.CentralServer;
-import org.folio.innreach.domain.entity.CentralServerConfiguration;
 
 public class CentralServerFixture {
 
   public static CentralServer createCentralServerEntity() {
-    var serverConfiguration = new CentralServerConfiguration(
-      "http://centralserveraddress",
-      "centralServerKey",
-      "centralServerSecret",
-      "localServerKey",
-      "localServerSecret"
-    );
+    var centralServer = new CentralServer();
+    centralServer.setName("folio");
+    centralServer.setDescription("folio central server");
+    centralServer.setLocalServerCode("qwe12");
+    centralServer.setCentralServerAddress("https://centralserveraddress");
 
-    return new CentralServer(null, "centralServer", null, "folio", serverConfiguration);
+    return centralServer;
+  }
+
+  public static CentralServer createCentralServerEntityWithCredentials() {
+    return new CentralServer(
+      null,
+      "folio",
+      "folio central server",
+      "qwe12",
+      "https://centralserveraddress",
+      CentralServerCredentialsFixture.createCentralServerCredentialsEntity()
+    );
   }
 }
