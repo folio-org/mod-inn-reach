@@ -1,14 +1,10 @@
 package org.folio.innreach.repository;
 
-import org.folio.innreach.domain.entity.CentralServer;
-import org.folio.innreach.domain.entity.CentralServerCredentials;
-import org.folio.innreach.fixture.CentralServerCredentialsFixture;
 import org.folio.innreach.fixture.CentralServerFixture;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
-import org.springframework.test.annotation.Commit;
 import org.springframework.test.context.ActiveProfiles;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -23,7 +19,7 @@ class CentralServerRepositoryIT {
   private CentralServerRepository centralServerRepository;
 
   @Test
-  public void should_saveCentralServerIntoDatabase_when_suchCentralServerDoesNotExistInDatabase() {
+  void should_saveCentralServerIntoDatabase_when_suchCentralServerDoesNotExistInDatabase() {
     var savedCentralServer = centralServerRepository.save(CentralServerFixture.createCentralServerEntityWithCredentials());
 
     assertNotNull(savedCentralServer);
@@ -31,14 +27,14 @@ class CentralServerRepositoryIT {
   }
 
   @Test
-  public void shouldThrowException_when_suchCentralServerAlreadyExistsInDatabase() {
+  void shouldThrowException_when_suchCentralServerAlreadyExistsInDatabase() {
     centralServerRepository.save(CentralServerFixture.createCentralServerEntityWithCredentials());
 
     assertThrows(Exception.class, () -> centralServerRepository.save(CentralServerFixture.createCentralServerEntity()));
   }
 
   @Test
-  public void should_returnCentralServer_when_centralServerEntityExistsInDatabase() {
+  void should_returnCentralServer_when_centralServerEntityExistsInDatabase() {
     var savedCentralServer = centralServerRepository.save(CentralServerFixture.createCentralServerEntityWithCredentials());
 
     var centralServer = centralServerRepository.getOne(savedCentralServer.getId());
