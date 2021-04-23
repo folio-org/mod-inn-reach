@@ -30,7 +30,9 @@
     <json.version>20200518</json.version>
     <sonar.exclusions>
       src/main/java/org/folio/innreach/controller/TenantController.java,
-      src/main/java/org/folio/innreach/ModInnReachApplication.java
+      src/main/java/org/folio/innreach/ModInnReachApplication.java,
+      src/main/java/org/folio/innreach/domain/entity/**,
+      src/test/**
     </sonar.exclusions>
   </properties>
   <dependencies>
