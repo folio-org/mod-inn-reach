@@ -18,8 +18,8 @@ import javax.persistence.Table;
 import java.util.UUID;
 
 /**
- * The key/secret provided by INN-Reach D2IR for FOLIO.
- * Used by FOLIO as payload to get JWT access token from INN-Reach D2IR.
+ * The key/secret provided by FOLIO for INN-Reach D2IR.
+ * Used by INN-Reach D2IR as payload to get JWT access token from FOLIO.
  */
 
 @NoArgsConstructor
@@ -29,17 +29,20 @@ import java.util.UUID;
 @EqualsAndHashCode(of = {"id"})
 @ToString(exclude = "centralServer")
 @Entity
-@Table(name = "central_server_credentials")
-public class CentralServerCredentials {
+@Table(name = "local_server_credentials")
+public class LocalServerCredentials {
 
   @Id
   private UUID id;
 
-  @Column(name = "central_server_key")
-  private String centralServerKey;
+  @Column(name = "local_server_key")
+  private String localServerKey;
 
-  @Column(name = "central_server_secret")
-  private String centralServerSecret;
+  @Column(name = "local_server_secret")
+  private String localServerSecret;
+
+  @Column(name = "local_server_secret_salt")
+  private String centralServerSecretSalt;
 
   @OneToOne(fetch = FetchType.LAZY)
   @MapsId
