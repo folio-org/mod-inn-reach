@@ -15,7 +15,6 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @DataJpaTest
 @ActiveProfiles("local")
@@ -30,14 +29,14 @@ class CentralServerRepositoryIT {
   private CentralServerRepository centralServerRepository;
 
   @Test
-  void saveCentralServer_when_suchCentralServerDoesNotExist() {
+  void saveCentralServer_when_centralServerIsNew() {
     var centralServer = CentralServerFixture.createCentralServer();
     centralServer.setCentralServerCredentials(CentralServerCredentialsFixture.createCentralServerCredentials());
     centralServer.setLocalServerCredentials(LocalServerCredentialsFixture.createLocalServerCredentials());
 
-    centralServer.addAgency(LocalAgencyFixture.createLocalAgency());
-    centralServer.addAgency(LocalAgencyFixture.createLocalAgency());
-    centralServer.addAgency(LocalAgencyFixture.createLocalAgency());
+    centralServer.addLocalAgency(LocalAgencyFixture.createLocalAgency());
+    centralServer.addLocalAgency(LocalAgencyFixture.createLocalAgency());
+    centralServer.addLocalAgency(LocalAgencyFixture.createLocalAgency());
 
     var savedCentralServer = centralServerRepository.save(centralServer);
 
@@ -49,31 +48,13 @@ class CentralServerRepositoryIT {
 
   @Test
   void getCentralServer_when_centralServerExists() {
-    var centralServerById = centralServerRepository.getOne(UUID.fromString(PRE_POPULATED_CENTRAL_SERVER_ID));
+    var centralServer = centralServerRepository.getOne(UUID.fromString(PRE_POPULATED_CENTRAL_SERVER_ID));
 
-    assertNotNull(centralServerById.getLocalServerCredentials().getLocalServerKey());
-    assertNotNull(centralServerById.getCentralServerCredentials().getCentralServerKey());
-    assertNotNull(centralServerById.getAgencies());
-    assertFalse(centralServerById.getAgencies().isEmpty());
-    assertFalse(centralServerById.getAgencies().get(0).getFolioLibrariesIds().isEmpty());
-  }
-
-  @Test
-  void throwException_when_saveCentralServerWithoutRequiredData() {
-    var centralServer = CentralServerFixture.createCentralServer();
-
-    assertThrows(Exception.class, () -> centralServerRepository.save(centralServer));
-  }
-
-  @Test
-  void throwException_when_suchCentralServerAlreadyExists() {
-    var centralServer = CentralServerFixture.createCentralServer();
-    centralServer.setLocalServerCode("q1w2e");
-    centralServer.setCentralServerCredentials(CentralServerCredentialsFixture.createCentralServerCredentials());
-
-    centralServerRepository.save(centralServer);
-
-    assertThrows(Exception.class, () -> centralServerRepository.save(CentralServerFixture.createCentralServer()));
+    assertNotNull(centralServer.getLocalServerCredentials().getLocalServerKey());
+    assertNotNull(centralServer.getCentralServerCredentials().getCentralServerKey());
+    assertNotNull(centralServer.getLocalAgencies());
+    assertFalse(centralServer.getLocalAgencies().isEmpty());
+    assertFalse(centralServer.getLocalAgencies().get(0).getFolioLibraryIds().isEmpty());
   }
 
 }
