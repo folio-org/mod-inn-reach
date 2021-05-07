@@ -2,9 +2,9 @@ package org.folio.innreach.domain.entity;
 
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
+import org.hibernate.annotations.QueryHints;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
@@ -13,39 +13,49 @@ import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.NamedQueries;
+import javax.persistence.NamedQuery;
 import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
+import javax.persistence.QueryHint;
 import javax.persistence.Table;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-@NoArgsConstructor
+import static org.folio.innreach.domain.entity.CentralServer.FETCH_ALL_QUERY;
+import static org.folio.innreach.domain.entity.CentralServer.FETCH_ALL_QUERY_NAME;
+import static org.folio.innreach.domain.entity.CentralServer.FETCH_ONE_BY_ID_QUERY;
+import static org.folio.innreach.domain.entity.CentralServer.FETCH_ONE_BY_ID_QUERY_NAME;
+
 @Getter
 @Setter
-@EqualsAndHashCode(of = {"name", "localServerCode"})
-@ToString(exclude = {"centralServerCredentials", "localServerCredentials", "agencies"})
+@EqualsAndHashCode(of = "localServerCode")
+@ToString(exclude = {"centralServerCredentials", "localServerCredentials", "localAgencies"})
 @Entity
 @Table(name = "central_server")
+@NamedQueries({
+  @NamedQuery(
+    name = FETCH_ALL_QUERY_NAME,
+    query = FETCH_ALL_QUERY,
+    hints = @QueryHint(name = QueryHints.PASS_DISTINCT_THROUGH, value = "false")
+  ),
+  @NamedQuery(
+    name = FETCH_ONE_BY_ID_QUERY_NAME,
+    query = FETCH_ONE_BY_ID_QUERY,
+    hints = @QueryHint(name = QueryHints.PASS_DISTINCT_THROUGH, value = "false")
+  )
+})
 public class CentralServer {
 
-  public CentralServer(UUID id,
-                       String name,
-                       String description,
-                       String localServerCode,
-                       String centralServerAddress,
-                       String loanTypeId,
-                       CentralServerCredentials centralServerCredentials,
-                       LocalServerCredentials localServerCredentials) {
-    this.id = id;
-    this.name = name;
-    this.description = description;
-    this.localServerCode = localServerCode;
-    this.centralServerAddress = centralServerAddress;
-    this.loanTypeId = loanTypeId;
-    setCentralServerCredentials(centralServerCredentials);
-    setLocalServerCredentials(localServerCredentials);
-  }
+  public static final String FETCH_ALL_QUERY_NAME = "CentralServer.fetchAll";
+  public static final String FETCH_ALL_QUERY = "SELECT DISTINCT cs FROM CentralServer AS cs " +
+    "LEFT JOIN FETCH cs.centralServerCredentials " +
+    "LEFT JOIN FETCH cs.localServerCredentials " +
+    "LEFT JOIN FETCH cs.localAgencies";
+
+  public static final String FETCH_ONE_BY_ID_QUERY_NAME = "CentralServer.fetchOne";
+  public static final String FETCH_ONE_BY_ID_QUERY = FETCH_ALL_QUERY + " WHERE cs.id = :id";
 
   @Id
   @GeneratedValue(strategy = GenerationType.AUTO)
@@ -60,7 +70,7 @@ public class CentralServer {
   private String centralServerAddress;
 
   @Column(name = "loan_type_id")
-  private String loanTypeId;
+  private UUID loanTypeId;
 
   @OneToOne(
     cascade = CascadeType.ALL,
@@ -80,12 +90,12 @@ public class CentralServer {
   private LocalServerCredentials localServerCredentials;
 
   @OneToMany(
-    cascade = CascadeType.PERSIST,
+    cascade = CascadeType.ALL,
     fetch = FetchType.LAZY,
     mappedBy = "centralServer",
     orphanRemoval = true
   )
-  private List<LocalAgency> agencies = new ArrayList<>();
+  private List<LocalAgency> localAgencies = new ArrayList<>();
 
   public void setCentralServerCredentials(CentralServerCredentials centralServerCredentials) {
     if (centralServerCredentials != null) {
@@ -101,18 +111,18 @@ public class CentralServer {
     this.localServerCredentials = localServerCredentials;
   }
 
-  public void addAgency(LocalAgency localAgency) {
+  public void addLocalAgency(LocalAgency localAgency) {
     if (localAgency != null) {
       localAgency.setCentralServer(this);
     }
-    this.agencies.add(localAgency);
+    this.localAgencies.add(localAgency);
   }
 
-  public void removeAgency(LocalAgency localAgency) {
+  public void removeLocalAgency(LocalAgency localAgency) {
     if (localAgency != null) {
       localAgency.setCentralServer(null);
     }
-    this.agencies.remove(localAgency);
+    this.localAgencies.remove(localAgency);
   }
 
 }

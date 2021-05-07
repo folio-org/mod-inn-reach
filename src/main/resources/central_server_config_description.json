@@ -1,0 +1,49 @@
+[GET, POST]
+inn-reach/central-servers
+
+[GET, DELETE, PUT]
+inn-reach/central-servers/{id}
+
+request/response:
+{
+  "id": "ce6r7v-ty8bu9-n0miec-6rt7vy",
+  "name": "qwerty",
+  "description": "qwerty",
+  "localServerCode": "a1a23",
+  "centralServerAddress": "http://centralserver",
+  "loanTypeId": "567fd8-g90ovi-cxudsy-6w7r8t",
+  "localAgencies": [
+    {
+      "id": "xe5rcd-6fvt7g-yb8hun-9jim0k",
+      "code": "a7g8s",
+      "folioLibraryId": [  // libraries ID? or location ID?
+        "k1j2h3-k1j2h3-k1j2h3-k1j2h3",
+        "ajkj4k-djaf75-y97ywc-skvnwu",
+      ]
+    },
+    {
+      "id": "312",
+      "code": "q1s32",
+      "folioLibraryId": [  // libraries ID? or location ID?
+        "1m2n3s-1m2n3s-1m2n3s-1m2n3s",
+        "wfe7u6-trhj89-hngb0f-8d765e",
+      ]
+    }
+  ],
+  "centralServerKey": "ad56fg-7h8j9k-8h6gf7-dteyrj",
+  "centralServerSecret": "0k9m8t-7erb6w-q45d5f-6gtrh7",
+  "localServerKey": "ewf56r-78eyut-9iyk0l-owgt7e",
+  "localServerSecret": "fe6wrg-7y8ur9-i0t9u0-8yetw6"
+}
+
+[POST]
+inn-reach/central-servers/{id}/connection-status
+
+request:
+{
+  "centralServerAddress": "http://centralserver",
+  "centralServerKey": "ad56fg-7h8j9k-8h6gf7-dteyrj",
+  "centralServerSecret": "0k9m8t-7erb6w-q45d5f-6gtrh7"
+}
+
+response: http response status code

@@ -1,5 +1,5 @@
 server:
-  port: 8081
+  port: 8091
 spring:
   datasource:
     url: jdbc:postgresql://localhost:5432/postgres
@@ -12,3 +12,7 @@ spring:
     show-sql: true
     properties:
       hibernate.format_sql: true
+folio:
+  tenant:
+    validation:
+      enabled: false
