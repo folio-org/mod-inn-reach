@@ -4,22 +4,22 @@
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
                     http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.4.xsd">
 
-  <changeSet id="2021-04-14-MODINREACH-9-create-central-server-table" author="andrii.khodyka">
+  <changeSet id="2021-04-14-01__create-central-server-table" author="andrii.khodyka">
     <preConditions onFail="MARK_RAN">
       <not>
         <tableExists tableName="central_server"/>
       </not>
     </preConditions>
-    <sqlFile path="sql/create-central-server-table.sql" relativeToChangelogFile="true"/>
+    <sqlFile path="sql/2021-04-14-01__create-central-server-table.sql" relativeToChangelogFile="true"/>
   </changeSet>
 
-  <changeSet id="2021-04-14-MODINREACH-9-create-central-server-credentials-table" author="andrii.khodyka">
+  <changeSet id="2021-04-14-02__create-central-server-credentials-table" author="andrii.khodyka">
     <preConditions onFail="MARK_RAN">
       <not>
         <tableExists tableName="central_server_credentials"/>
       </not>
     </preConditions>
-    <sqlFile path="sql/create-central-server-credentials-table.sql" relativeToChangelogFile="true"/>
+    <sqlFile path="sql/2021-04-14-02__create-central-server-credentials-table.sql" relativeToChangelogFile="true"/>
   </changeSet>
 
 </databaseChangeLog>
