@@ -2,6 +2,7 @@ package org.folio.innreach.domain.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -15,6 +16,7 @@ import java.util.UUID;
 
 @NoArgsConstructor
 @AllArgsConstructor
+@EqualsAndHashCode(exclude = {"id", "localServerKey", "localServerSecret"})
 @Builder
 @Getter
 @Setter

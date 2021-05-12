@@ -48,8 +48,8 @@ public class CentralServerServiceImpl implements CentralServerService {
   }
 
   private void checkCentralServerConnection(CentralServerDTO centralServerDTO) {
-    log.debug("Get an access token to check the connection to the Central Server with URI: "
-      + centralServerDTO.getCentralServerAddress());
+    log.debug("Get an access token to check the connection to the Central Server with URI: {}",
+      centralServerDTO.getCentralServerAddress());
 
     innReachExternalService.getAccessToken(new AccessTokenRequestDTO(
       centralServerDTO.getCentralServerAddress(),

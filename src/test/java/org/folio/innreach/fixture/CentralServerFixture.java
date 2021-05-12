@@ -8,8 +8,8 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.folio.innreach.fixture.CentralServerCredentialsFixture.createCentralServerCredentials;
-import static org.folio.innreach.fixture.FixtureUtil.randomFiveCharacterCode;
-import static org.folio.innreach.fixture.FixtureUtil.randomUUIDString;
+import static org.folio.innreach.fixture.TestUtil.randomFiveCharacterCode;
+import static org.folio.innreach.fixture.TestUtil.randomUUIDString;
 import static org.folio.innreach.fixture.LocalAgencyFixture.createLocalAgency;
 import static org.folio.innreach.fixture.LocalServerCredentialsFixture.createLocalServerCredentials;
 

@@ -47,6 +47,32 @@
           "pathPattern": "/_/tenant"
         }
       ]
+    },
+    {
+      "id": "central-servers",
+      "version": "0.0.1",
+      "handlers": [
+        {
+          "methods": ["POST"],
+          "pathPattern": "/central-servers"
+        },
+        {
+          "methods": ["GET"],
+          "pathPattern": "/central-servers"
+        },
+        {
+          "methods": ["GET"],
+          "pathPattern": "/central-servers/{centralServerId}"
+        },
+        {
+          "methods": ["PUT"],
+          "pathPattern": "/central-servers/{centralServerId}"
+        },
+        {
+          "methods": ["DELETE"],
+          "pathPattern": "/central-servers/{centralServerId}"
+        }
+      ]
     }
   ],
   "permissionSets": [
