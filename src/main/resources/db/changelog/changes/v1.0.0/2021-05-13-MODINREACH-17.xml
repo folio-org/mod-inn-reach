@@ -4,7 +4,8 @@
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
                     http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.4.xsd">
 
-    <include file="2021-04-14-MODINREACH-9.xml" relativeToChangelogFile="true"/>
-    <include file="2021-04-27-MODINREACH-34.xml" relativeToChangelogFile="true"/>
-    <include file="2021-05-13-MODINREACH-17.xml" relativeToChangelogFile="true"/>
+  <changeSet id="2021-05-13-01__create_location_table" author="andrii.khodyka">
+    <sqlFile path="sql/2021-05-13-01__create-inn-reach-location_table.sql" relativeToChangelogFile="true"/>
+  </changeSet>
+
 </databaseChangeLog>

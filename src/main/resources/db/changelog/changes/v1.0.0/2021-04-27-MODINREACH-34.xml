@@ -5,30 +5,15 @@
                     http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.4.xsd">
 
   <changeSet id="2021-04-27-01__create-local-server-credentials-table" author="andrii.khodyka">
-    <preConditions>
-      <not>
-        <tableExists tableName="local_server_credentials"/>
-      </not>
-    </preConditions>
     <sqlFile path="sql/2021-04-27-01__create-local-server-credentials-table.sql" relativeToChangelogFile="true"/>
   </changeSet>
 
   <changeSet id="2021-04-27-02__create_agency_table" author="andrii.khodyka">
-    <preConditions onFail="MARK_RAN">
-      <not>
-        <tableExists tableName="local_agency"/>
-      </not>
-    </preConditions>
-    <sqlFile path="sql/2021-04-27-02__create_agency_table.sql" relativeToChangelogFile="true"/>
+    <sqlFile path="sql/2021-04-27-02__create-agency-table.sql" relativeToChangelogFile="true"/>
   </changeSet>
 
   <changeSet id="2021-04-28-01__create_folio_library_table" author="andrii.khodyka">
-    <preConditions onFail="MARK_RAN">
-      <not>
-        <tableExists tableName="folio_library"/>
-      </not>
-    </preConditions>
-    <sqlFile path="sql/2021-04-28-01__create_folio_library_table.sql" relativeToChangelogFile="true"/>
+    <sqlFile path="sql/2021-04-28-01__create_folio-library-table.sql" relativeToChangelogFile="true"/>
   </changeSet>
 
 </databaseChangeLog>
