@@ -3,26 +3,51 @@ server:
 spring:
   application:
     name: mod-inn-reach
-  jackson:
-    default-property-inclusion: non_null
   datasource:
+    # to boot up application despite of any DB connection issues
+    continue-on-error: true
     username: ${DB_USERNAME:postgres}
     password: ${DB_PASSWORD:postgres}
-    url: jdbc:postgresql://${DB_HOST:192.168.153.128}:${DB_PORT:5432}/${DB_DATABASE:folio}
-    driver-class-name: org.postgresql.Driver
-    database-platform: org.hibernate.dialect.PostgreSQLDialect
-  properties:
-    physical-strategy: org.springframework.boot.orm.jpa.hibernate.SpringPhysicalNamingStrategy
-    implicit-strategy: org.springframework.boot.orm.jpa.hibernate.SpringImplicitNamingStrategy
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_DATABASE:postgres}
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQL10Dialect
     hibernate:
-      format_sql: true
+      ddl-auto: none
+      naming:
+        physical-strategy: org.springframework.boot.orm.jpa.hibernate.SpringPhysicalNamingStrategy
+        implicit-strategy: org.springframework.boot.orm.jpa.hibernate.SpringImplicitNamingStrategy
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQL10Dialect
+        format_sql: true
+    show-sql: true
   liquibase:
-    enabled: false
+    enabled: true
     change-log: classpath:db/changelog/changelog-master.xml
+  jackson:
+    default-property-inclusion: NON_EMPTY
   mustache:
     check-template-location: false
 folio:
   tenant:
     validation:
+      enabled: true
+management:
+  endpoints:
+    web:
+      exposure:
+        include: info,health,env,httptrace
+      base-path: /admin
+  #  endpoint:
+  #    health:
+  #      show-details: always
+  #      show-components: always
+  ###################################################
+  # Disable all checks except for readiness
+  ###################################################
+  health:
+    defaults:
+      enabled: false
+    readinessstate:
       enabled: true
 debug: false
