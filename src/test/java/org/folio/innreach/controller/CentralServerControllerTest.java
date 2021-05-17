@@ -1,8 +1,16 @@
 package org.folio.innreach.controller;
 
 
-import org.folio.innreach.controller.base.BaseTest;
-import org.folio.innreach.domain.dto.CentralServerDTO;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import static org.folio.innreach.fixture.TestUtil.deserializeFromJsonFile;
+import static org.folio.innreach.fixture.TestUtil.randomUUIDString;
+
+import java.util.List;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.web.client.TestRestTemplate;
@@ -11,16 +19,10 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.context.jdbc.Sql;
 
-import java.util.List;
+import org.folio.innreach.controller.base.BaseControllerTest;
+import org.folio.innreach.domain.dto.CentralServerDTO;
 
-import static org.folio.innreach.fixture.TestUtil.deserializeFromJsonFile;
-import static org.folio.innreach.fixture.TestUtil.randomUUIDString;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
-class CentralServerControllerTest extends BaseTest {
+class CentralServerControllerTest extends BaseControllerTest {
 
   private static final String PRE_POPULATED_CENTRAL_SERVER_ID = "edab6baf-c696-42b1-89bb-1bbb8759b0d2";
 

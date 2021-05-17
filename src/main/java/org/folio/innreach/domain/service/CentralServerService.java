@@ -1,9 +1,9 @@
 package org.folio.innreach.domain.service;
 
-import org.folio.innreach.domain.dto.CentralServerDTO;
-
 import java.util.List;
 import java.util.UUID;
+
+import org.folio.innreach.domain.dto.CentralServerDTO;
 
 public interface CentralServerService {
   CentralServerDTO createCentralServer(CentralServerDTO centralServerDTO);

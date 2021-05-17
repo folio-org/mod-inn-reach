@@ -4,33 +4,33 @@
   "requires": [],
   "provides": [
     {
-      "id": "inn-reach-configurations",
+      "id": "inn-reach",
       "version": "1.0",
       "handlers": [
         {
           "methods": ["POST"],
-          "pathPattern": "/inn-reach/configurations",
-          "permissionsRequired" : [ "inn-reach.configurations.item.post" ]
+          "pathPattern": "/central-servers",
+          "permissionsRequired": ["inn-reach.configurations.item.post"]
+        },
+        {
+          "methods": ["GET"],
+          "pathPattern": "/central-servers",
+          "permissionsRequired": ["inn-reach.configurations.collection.get"]
+        },
+        {
+          "methods": ["GET"],
+          "pathPattern": "/central-servers/{centralServerId}",
+          "permissionsRequired": ["inn-reach.configurations.item.get"]
         },
         {
           "methods": ["PUT"],
-          "pathPattern": "/inn-reach/configurations/",
-          "permissionsRequired" : [ "inn-reach.configurations.item.put" ]
-        },
-        {
-          "methods": ["GET"],
-          "pathPattern": "/inn-reach/configurations",
-          "permissionsRequired" : [ "inn-reach.configurations.collection.get" ]
-        },
-        {
-          "methods": ["GET"],
-          "pathPattern": "/inn-reach/configurations/{configurationId}",
-          "permissionsRequired" : [ "inn-reach.configurations.item.get" ]
+          "pathPattern": "/central-servers/{centralServerId}",
+          "permissionsRequired": ["inn-reach.configurations.item.put"]
         },
         {
           "methods": ["DELETE"],
-          "pathPattern": "/inn-reach/configurations/{configurationId}",
-          "permissionsRequired" : [ "inn-reach.configurations.item.delete" ]
+          "pathPattern": "/central-servers/{centralServerId}",
+          "permissionsRequired": ["inn-reach.configurations.item.delete"]
         }
       ]
     },
@@ -45,32 +45,6 @@
         }, {
           "methods": ["DELETE"],
           "pathPattern": "/_/tenant"
-        }
-      ]
-    },
-    {
-      "id": "central-servers",
-      "version": "0.0.1",
-      "handlers": [
-        {
-          "methods": ["POST"],
-          "pathPattern": "/central-servers"
-        },
-        {
-          "methods": ["GET"],
-          "pathPattern": "/central-servers"
-        },
-        {
-          "methods": ["GET"],
-          "pathPattern": "/central-servers/{centralServerId}"
-        },
-        {
-          "methods": ["PUT"],
-          "pathPattern": "/central-servers/{centralServerId}"
-        },
-        {
-          "methods": ["DELETE"],
-          "pathPattern": "/central-servers/{centralServerId}"
         }
       ]
     }

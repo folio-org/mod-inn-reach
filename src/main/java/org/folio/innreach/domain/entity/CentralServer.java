@@ -1,10 +1,13 @@
 package org.folio.innreach.domain.entity;
 
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.Setter;
-import lombok.ToString;
-import org.hibernate.annotations.QueryHints;
+import static org.folio.innreach.domain.entity.CentralServer.FETCH_ALL_QUERY;
+import static org.folio.innreach.domain.entity.CentralServer.FETCH_ALL_QUERY_NAME;
+import static org.folio.innreach.domain.entity.CentralServer.FETCH_ONE_BY_ID_QUERY;
+import static org.folio.innreach.domain.entity.CentralServer.FETCH_ONE_BY_ID_QUERY_NAME;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
@@ -19,14 +22,12 @@ import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 import javax.persistence.QueryHint;
 import javax.persistence.Table;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
 
-import static org.folio.innreach.domain.entity.CentralServer.FETCH_ALL_QUERY;
-import static org.folio.innreach.domain.entity.CentralServer.FETCH_ALL_QUERY_NAME;
-import static org.folio.innreach.domain.entity.CentralServer.FETCH_ONE_BY_ID_QUERY;
-import static org.folio.innreach.domain.entity.CentralServer.FETCH_ONE_BY_ID_QUERY_NAME;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
+import org.hibernate.annotations.QueryHints;
 
 @Getter
 @Setter

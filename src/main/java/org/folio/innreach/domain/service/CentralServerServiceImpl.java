@@ -1,7 +1,16 @@
 package org.folio.innreach.domain.service;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import org.folio.innreach.domain.dto.CentralServerDTO;
 import org.folio.innreach.domain.entity.CentralServer;
 import org.folio.innreach.domain.entity.CentralServerCredentials;
@@ -12,14 +21,6 @@ import org.folio.innreach.external.dto.AccessTokenRequestDTO;
 import org.folio.innreach.external.service.InnReachExternalService;
 import org.folio.innreach.mapper.CentralServerMapper;
 import org.folio.innreach.repository.CentralServerRepository;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
-import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 @Log4j2
@@ -98,6 +99,8 @@ public class CentralServerServiceImpl implements CentralServerService {
 
     updateLocalAgencies(centralServer, updatedCentralServer);
 
+    centralServerRepository.save(centralServer);
+
     return centralServerMapper.mapToCentralServerDTO(centralServer);
   }
 
@@ -150,8 +153,6 @@ public class CentralServerServiceImpl implements CentralServerService {
       updLocalAgency.setCentralServer(centralServer);
       centralServer.getLocalAgencies().set(centralServer.getLocalAgencies().indexOf(updLocalAgency), updLocalAgency);
     }
-
-    centralServerRepository.save(centralServer);
   }
 
   @Override
