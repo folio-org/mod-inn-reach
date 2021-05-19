@@ -1,6 +1,6 @@
 package org.folio.innreach.domain.entity.base;
 
-import java.util.Date;
+import java.time.OffsetDateTime;
 
 import javax.persistence.Column;
 import javax.persistence.EntityListeners;
@@ -20,21 +20,21 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @ToString
 @MappedSuperclass
 @EntityListeners(AuditingEntityListener.class)
-public class Auditable {
+public class Auditable<T> {
 
   @CreatedBy
   @Column(name = "created_by")
-  private String createdBy;
+  private T createdBy;
 
   @CreatedDate
   @Column(name = "created_date")
-  private Date createdDate;
+  private OffsetDateTime createdDate;
 
   @LastModifiedBy
   @Column(name = "last_modified_by")
-  private String lastModifiedBy;
+  private T lastModifiedBy;
 
   @LastModifiedDate
   @Column(name = "last_modified_date")
-  private Date lastModifiedDate;
+  private OffsetDateTime lastModifiedDate;
 }

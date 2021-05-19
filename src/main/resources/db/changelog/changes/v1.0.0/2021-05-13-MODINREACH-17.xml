@@ -5,7 +5,7 @@
                     http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.4.xsd">
 
   <changeSet id="2021-05-13-01__create_location_table" author="andrii.khodyka">
-    <sqlFile path="sql/2021-05-13-01__create-inn-reach-location_table.sql" relativeToChangelogFile="true"/>
+    <sqlFile path="sql/2021-05-13-01__create-inn-reach-location-table.sql" relativeToChangelogFile="true"/>
   </changeSet>
 
 </databaseChangeLog>

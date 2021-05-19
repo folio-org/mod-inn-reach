@@ -21,7 +21,7 @@ import org.folio.innreach.domain.entity.base.Auditable;
 @ToString(callSuper = true)
 @Entity
 @Table(name = "inn_reach_location")
-public class InnReachLocation extends Auditable {
+public class InnReachLocation extends Auditable<String> {
 
   @Id
   @GeneratedValue(strategy = GenerationType.AUTO)
