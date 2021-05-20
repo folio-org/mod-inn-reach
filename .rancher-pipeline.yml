@@ -15,7 +15,7 @@ stages:
 - name: Deploy
   steps:
   - applyAppConfig:      
-      catalogTemplate: p-htqfq:volaris-helmcharts-mod-inn-reach
+      catalogTemplate: p-bxflg:volaris-helmcharts-mod-inn-reach
       version: 0.1.33
       answers:
         image.repository: docker.dev.folio.org/mod-inn-reach
