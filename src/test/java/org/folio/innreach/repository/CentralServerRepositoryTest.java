@@ -6,7 +6,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.util.UUID;
 
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.jdbc.Sql;
@@ -21,6 +20,7 @@ import org.folio.innreach.fixture.LocalServerCredentialsFixture;
 class CentralServerRepositoryTest extends BaseRepositoryTest {
 
   private static final String PRE_POPULATED_CENTRAL_SERVER_ID = "edab6baf-c696-42b1-89bb-1bbb8759b0d2";
+  private static final String PRE_POPULATED_CENTRAL_SERVER_CODE = "abc12";
 
   @Autowired
   private CentralServerRepository centralServerRepository;
@@ -55,9 +55,9 @@ class CentralServerRepositoryTest extends BaseRepositoryTest {
   }
 
   @Test
-  @Disabled("to be reworked")
   void throwException_when_saveCentralServerWithoutRequiredData() {
     var centralServer = CentralServerFixture.createCentralServer();
+    centralServer.setLocalServerCode(null);
 
     centralServerRepository.save(centralServer);
 
@@ -65,14 +65,11 @@ class CentralServerRepositoryTest extends BaseRepositoryTest {
   }
 
   @Test
-  @Disabled("to be reworked")
   void throwException_when_suchCentralServerAlreadyExists() {
     var centralServer = CentralServerFixture.createCentralServer();
-    centralServer.setLocalServerCode("q1w2e");
-    centralServer.setCentralServerCredentials(CentralServerCredentialsFixture.createCentralServerCredentials());
+    centralServer.setLocalServerCode(PRE_POPULATED_CENTRAL_SERVER_CODE);
 
     centralServerRepository.save(centralServer);
-    centralServerRepository.save(CentralServerFixture.createCentralServer());
 
     assertThrows(Exception.class, () -> centralServerRepository.flush());
   }
