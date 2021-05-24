@@ -8,6 +8,7 @@ import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.test.context.jdbc.Sql;
 
 import org.folio.innreach.fixture.CentralServerCredentialsFixture;
@@ -59,9 +60,7 @@ class CentralServerRepositoryTest extends BaseRepositoryTest {
     var centralServer = CentralServerFixture.createCentralServer();
     centralServer.setLocalServerCode(null);
 
-    centralServerRepository.save(centralServer);
-
-    assertThrows(Exception.class, () -> centralServerRepository.flush());
+    assertThrows(DataIntegrityViolationException.class, () -> centralServerRepository.saveAndFlush(centralServer));
   }
 
   @Test
@@ -69,9 +68,7 @@ class CentralServerRepositoryTest extends BaseRepositoryTest {
     var centralServer = CentralServerFixture.createCentralServer();
     centralServer.setLocalServerCode(PRE_POPULATED_CENTRAL_SERVER_CODE);
 
-    centralServerRepository.save(centralServer);
-
-    assertThrows(Exception.class, () -> centralServerRepository.flush());
+    assertThrows(DataIntegrityViolationException.class, () -> centralServerRepository.saveAndFlush(centralServer));
   }
 
 }
