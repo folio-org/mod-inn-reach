@@ -9,27 +9,27 @@
       "handlers": [
         {
           "methods": ["POST"],
-          "pathPattern": "/central-servers",
+          "pathPattern": "/inn-reach/central-servers",
           "permissionsRequired": ["inn-reach.central-servers.item.post"]
         },
         {
           "methods": ["GET"],
-          "pathPattern": "/central-servers",
+          "pathPattern": "/inn-reach/central-servers",
           "permissionsRequired": ["inn-reach.central-servers.collection.get"]
         },
         {
           "methods": ["GET"],
-          "pathPattern": "/central-servers/{centralServerId}",
+          "pathPattern": "/inn-reach/central-servers/{centralServerId}",
           "permissionsRequired": ["inn-reach.central-servers.item.get"]
         },
         {
           "methods": ["PUT"],
-          "pathPattern": "/central-servers/{centralServerId}",
+          "pathPattern": "/inn-reach/central-servers/{centralServerId}",
           "permissionsRequired": ["inn-reach.central-servers.item.put"]
         },
         {
           "methods": ["DELETE"],
-          "pathPattern": "/central-servers/{centralServerId}",
+          "pathPattern": "/inn-reach/central-servers/{centralServerId}",
           "permissionsRequired": ["inn-reach.central-servers.item.delete"]
         }
       ]
@@ -54,40 +54,48 @@
   ],
   "permissionSets": [
     {
-      "permissionName" : "inn-reach.configurations.item.post",
-      "displayName" : "create a inn reach configuration",
-      "description" : "Add a inn reach configuration"
+      "permissionName" : "inn-reach.central-servers.item.post",
+      "displayName" : "create a inn reach central server entry",
+      "description" : "Add a inn reach central server entry"
     },
     {
-      "permissionName" : "inn-reach.configurations.item.put",
-      "displayName" : "modify a inn reach configuration",
-      "description" : "Modify a inn reach configuration"
+      "permissionName" : "inn-reach.central-servers.collection.get",
+      "displayName" : "get a collection of inn reach central servers entries",
+      "description" : "Get a collection of inn reach central servers entries"
     },
     {
-      "permissionName" : "inn-reach.configurations.collection.get",
-      "displayName" : "get inn reach configurations collection",
-      "description" : "Get a list of inn reach configurations"
+      "permissionName" : "inn-reach.central-servers.item.get",
+      "displayName" : "get an inn reach central server entry",
+      "description" : "Get a inn reach central server entry by id"
     },
     {
-      "permissionName" : "inn-reach.configurations.item.get",
-      "displayName" : "get inn reach configuration",
-      "description" : "Get a inn reach configuration by id"
+      "permissionName" : "inn-reach.central-servers.item.put",
+      "displayName" : "modify an inn reach central server entry",
+      "description" : "Modify an inn reach central server entry"
     },
     {
-      "permissionName" : "inn-reach.configurations.item.delete",
-      "displayName" : "delete a inn reach configuration",
-      "description" : "Delete a inn reach configuration by id"
+      "permissionName" : "inn-reach.central-servers.item.delete",
+      "displayName" : "delete an inn reach central server entry",
+      "description" : "Delete an inn reach central server entry by id"
+    },
+    {
+      "permissionName" : "inn-reach.central-servers.all",
+      "displayName" : "inn reach API module - all permissions of central servers",
+      "description" : "All permissions of inn reach central servers scope",
+      "subPermissions" : [
+        "inn-reach.central-servers.item.post",
+        "inn-reach.central-servers.collection.get",
+        "inn-reach.central-servers.item.get",
+        "inn-reach.central-servers.item.put",
+        "inn-reach.central-servers.item.delete"
+      ]
     },
     {
       "permissionName" : "inn-reach.all",
       "displayName" : "inn reach API module - all permissions",
       "description" : "All permissions for inn reach",
       "subPermissions" : [
-        "inn-reach.configurations.item.post",
-        "inn-reach.configurations.item.put",
-        "inn-reach.configurations.collection.get",
-        "inn-reach.configurations.item.get",
-        "inn-reach.configurations.item.delete"
+        "inn-reach.central-servers.all"
       ]
     }
   ],

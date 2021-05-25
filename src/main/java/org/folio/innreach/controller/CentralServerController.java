@@ -20,7 +20,7 @@ import java.util.UUID;
 
 @RequiredArgsConstructor
 @RestController
-@RequestMapping("/central-servers")
+@RequestMapping("/inn-reach/central-servers")
 public class CentralServerController {
 
   private final CentralServerService centralServerService;
