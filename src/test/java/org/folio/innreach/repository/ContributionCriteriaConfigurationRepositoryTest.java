@@ -155,7 +155,7 @@ class ContributionCriteriaConfigurationRepositoryTest extends BaseRepositoryTest
     CentralServer centralServer = centralServerRepository.fetchOne(UUID.fromString(PRE_POPULATED_CENTRAL_SERVER_ID)).get();
     var criteriaConfiguration = contributionCriteriaConfigurationRepository.findById(centralServer.getId()).get();
     var quantityOfStatCodeBehaviors = criteriaConfiguration.getStatisticalCodeBehaviors().size();
-    for (int i = 0; i < quantityOfStatCodeBehaviors-1 ; i++) {
+    for (int i = 0; i < quantityOfStatCodeBehaviors-1; i++) {
       criteriaConfiguration.removeStatisticalCondeBehavior(
         criteriaConfiguration.getStatisticalCodeBehaviors()
           .stream().findFirst().get().
@@ -165,7 +165,7 @@ class ContributionCriteriaConfigurationRepositoryTest extends BaseRepositoryTest
     var modifiedConfiguration = contributionCriteriaConfigurationRepository.findById(centralServer.getId()).get();
 
     assertEquals(criteriaConfiguration.getCreatedBy(),modifiedConfiguration.getCreatedBy());
-    assertEquals(criteriaConfiguration.getCreatedDate().modifiedConfiguration.getCreatedDate());
+    assertEquals(criteriaConfiguration.getCreatedDate(),modifiedConfiguration.getCreatedDate());
     assertNotNull(modifiedConfiguration.getLastModifiedDate());
 
     assertEquals(1,modifiedConfiguration.getStatisticalCodeBehaviors().size());
