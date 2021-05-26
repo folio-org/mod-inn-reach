@@ -10,27 +10,32 @@
         {
           "methods": ["POST"],
           "pathPattern": "/inn-reach/central-servers",
-          "permissionsRequired": ["inn-reach.central-servers.item.post"]
+          "permissionsRequired": ["inn-reach.central-servers.item.post"],
+          "modulePermissions": []
         },
         {
           "methods": ["GET"],
           "pathPattern": "/inn-reach/central-servers",
-          "permissionsRequired": ["inn-reach.central-servers.collection.get"]
+          "permissionsRequired": ["inn-reach.central-servers.collection.get"],
+          "modulePermissions": []
         },
         {
           "methods": ["GET"],
           "pathPattern": "/inn-reach/central-servers/{centralServerId}",
-          "permissionsRequired": ["inn-reach.central-servers.item.get"]
+          "permissionsRequired": ["inn-reach.central-servers.item.get"],
+          "modulePermissions": []
         },
         {
           "methods": ["PUT"],
           "pathPattern": "/inn-reach/central-servers/{centralServerId}",
-          "permissionsRequired": ["inn-reach.central-servers.item.put"]
+          "permissionsRequired": ["inn-reach.central-servers.item.put"],
+          "modulePermissions": []
         },
         {
           "methods": ["DELETE"],
           "pathPattern": "/inn-reach/central-servers/{centralServerId}",
-          "permissionsRequired": ["inn-reach.central-servers.item.delete"]
+          "permissionsRequired": ["inn-reach.central-servers.item.delete"],
+          "modulePermissions": []
         }
       ]
     },
