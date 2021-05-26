@@ -1,7 +1,7 @@
 CREATE TABLE public.statistical_code_behavior
 (
     id UUID NOT NULL,
-    contribution_behavior CHARACTER VARYING(255),
+    contribution_behavior CHARACTER VARYING(50),
     statistical_code_id UUID,
     criteria_configuration_id UUID,
     CONSTRAINT statistical_code_behavior_pkey PRIMARY KEY (id),
