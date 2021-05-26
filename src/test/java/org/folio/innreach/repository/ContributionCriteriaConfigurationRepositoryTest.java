@@ -95,8 +95,8 @@ class ContributionCriteriaConfigurationRepositoryTest extends BaseRepositoryTest
     var modifiedConfiguration = contributionCriteriaConfigurationRepository.findById(centralServer.getId()).get();
 
     assertEquals(criteriaConfiguration.getCreatedBy(),modifiedConfiguration.getCreatedBy());
-    assertTrue(criteriaConfiguration.getCreatedDate().equals(modifiedConfiguration.getCreatedDate()));
-    assertTrue(modifiedConfiguration.getLastModifiedDate()!=null);
+    assertNotNull(criteriaConfiguration.getCreatedDate().equals(modifiedConfiguration.getCreatedDate()));
+    assertNotNull(modifiedConfiguration.getLastModifiedDate());
 
     assertEquals(quantityOfExcludedLocationsId+ UUUID_IDs.size(),modifiedConfiguration.getExcludedLocations().size());
     List<UUID> excludedLocationIds = modifiedConfiguration.getExcludedLocations().stream().map(excludedLocation -> excludedLocation.getExcludedLocationId()).collect(Collectors.toList());
@@ -119,8 +119,8 @@ class ContributionCriteriaConfigurationRepositoryTest extends BaseRepositoryTest
     var modifiedConfiguration = contributionCriteriaConfigurationRepository.findById(centralServer.getId()).get();
 
     assertEquals(criteriaConfiguration.getCreatedBy(),modifiedConfiguration.getCreatedBy());
-    assertTrue(criteriaConfiguration.getCreatedDate().equals(modifiedConfiguration.getCreatedDate()));
-    assertTrue(modifiedConfiguration.getLastModifiedDate()!=null);
+    assertEquals(criteriaConfiguration.getCreatedDate(),modifiedConfiguration.getCreatedDate());
+    assertNotNull(modifiedConfiguration.getLastModifiedDate());
 
     assertEquals(1,modifiedConfiguration.getExcludedLocations().size());
   }
@@ -142,8 +142,8 @@ class ContributionCriteriaConfigurationRepositoryTest extends BaseRepositoryTest
     var modifiedConfiguration = contributionCriteriaConfigurationRepository.findById(centralServer.getId()).get();
 
     assertEquals(criteriaConfiguration.getCreatedBy(), modifiedConfiguration.getCreatedBy());
-    assertTrue(criteriaConfiguration.getCreatedDate().equals(modifiedConfiguration.getCreatedDate()));
-    assertTrue(modifiedConfiguration.getLastModifiedDate() != null);
+    assertEquals(criteriaConfiguration.getCreatedDate(),modifiedConfiguration.getCreatedDate());
+    assertNotNull(modifiedConfiguration.getLastModifiedDate());
 
     assertEquals(quantityOfCodeBehaviors + UUUID_IDs.size(), modifiedConfiguration.getStatisticalCodeBehaviors().size());
     List<UUID> behaviorUUIDs = modifiedConfiguration.getStatisticalCodeBehaviors().stream().map(statisticalCodeBehavior -> statisticalCodeBehavior.getStatisticalCodeId()).collect(Collectors.toList());
@@ -165,8 +165,8 @@ class ContributionCriteriaConfigurationRepositoryTest extends BaseRepositoryTest
     var modifiedConfiguration = contributionCriteriaConfigurationRepository.findById(centralServer.getId()).get();
 
     assertEquals(criteriaConfiguration.getCreatedBy(),modifiedConfiguration.getCreatedBy());
-    assertTrue(criteriaConfiguration.getCreatedDate().equals(modifiedConfiguration.getCreatedDate()));
-    assertTrue(modifiedConfiguration.getLastModifiedDate()!=null);
+    assertEquals(criteriaConfiguration.getCreatedDate().modifiedConfiguration.getCreatedDate());
+    assertNotNull(modifiedConfiguration.getLastModifiedDate());
 
     assertEquals(1,modifiedConfiguration.getStatisticalCodeBehaviors().size());
   }
