@@ -1,0 +1,19 @@
+{
+  "description": "Validation error",
+  "type": "object",
+  "properties": {
+    "fieldName": {
+      "type": "string",
+      "description": "Field name"
+    },
+    "message": {
+      "type": "string",
+      "description": "Validation error message text"
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "fieldName",
+    "message"
+  ]
+}

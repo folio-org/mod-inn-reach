@@ -1,0 +1,29 @@
+{
+  "description": "InnReach location",
+  "type": "object",
+  "properties": {
+    "id": {
+      "description": "location id",
+      "$ref": "uuid.json"
+    },
+    "code": {
+      "description": "location code",
+      "type": "string",
+      "maxLength": 5
+    },
+    "description": {
+      "description": "location description",
+      "type": "string",
+      "maxLength": 255
+    },
+    "metadata": {
+      "description": "Entity metadata",
+      "type": "object",
+      "$ref": "metadata.json"
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "code"
+  ]
+}

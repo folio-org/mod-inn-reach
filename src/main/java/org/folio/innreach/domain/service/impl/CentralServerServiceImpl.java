@@ -1,4 +1,4 @@
-package org.folio.innreach.domain.service;
+package org.folio.innreach.domain.service.impl;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -17,6 +17,7 @@ import org.folio.innreach.domain.entity.CentralServerCredentials;
 import org.folio.innreach.domain.entity.LocalAgency;
 import org.folio.innreach.domain.entity.LocalServerCredentials;
 import org.folio.innreach.domain.exception.EntityNotFoundException;
+import org.folio.innreach.domain.service.CentralServerService;
 import org.folio.innreach.external.dto.AccessTokenRequestDTO;
 import org.folio.innreach.external.service.InnReachExternalService;
 import org.folio.innreach.mapper.CentralServerMapper;

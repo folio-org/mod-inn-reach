@@ -31,6 +31,31 @@
           "methods": ["DELETE"],
           "pathPattern": "/central-servers/{centralServerId}",
           "permissionsRequired": ["inn-reach.central-servers.item.delete"]
+        },
+        {
+          "methods": ["POST"],
+          "pathPattern": "/locations",
+          "permissionsRequired": ["inn-reach.locations.item.post"]
+        },
+        {
+          "methods": ["GET"],
+          "pathPattern": "/locations",
+          "permissionsRequired": ["inn-reach.locations.collection.get"]
+        },
+        {
+          "methods": ["GET"],
+          "pathPattern": "/locations/{locationId}",
+          "permissionsRequired": ["inn-reach.locations.item.get"]
+        },
+        {
+          "methods": ["PUT"],
+          "pathPattern": "/locations/{locationId}",
+          "permissionsRequired": ["inn-reach.locations.item.put"]
+        },
+        {
+          "methods": ["DELETE"],
+          "pathPattern": "/locations/{locationId}",
+          "permissionsRequired": ["inn-reach.locations.item.delete"]
         }
       ]
     },

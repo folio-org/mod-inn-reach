@@ -1,10 +1,19 @@
-package org.folio.innreach.domain.service;
+package org.folio.innreach.domain.service.impl;
 
-import org.folio.innreach.domain.exception.EntityNotFoundException;
-import org.folio.innreach.external.dto.AccessTokenDTO;
-import org.folio.innreach.external.service.InnReachExternalService;
-import org.folio.innreach.mapper.CentralServerMapper;
-import org.folio.innreach.repository.CentralServerRepository;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import static org.folio.innreach.fixture.CentralServerFixture.createCentralServer;
+import static org.folio.innreach.fixture.CentralServerFixture.createCentralServerDTO;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mapstruct.factory.Mappers;
@@ -14,18 +23,11 @@ import org.mockito.MockitoAnnotations;
 import org.mockito.Spy;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-
-import static org.folio.innreach.fixture.CentralServerFixture.createCentralServer;
-import static org.folio.innreach.fixture.CentralServerFixture.createCentralServerDTO;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import org.folio.innreach.domain.exception.EntityNotFoundException;
+import org.folio.innreach.external.dto.AccessTokenDTO;
+import org.folio.innreach.external.service.InnReachExternalService;
+import org.folio.innreach.mapper.CentralServerMapper;
+import org.folio.innreach.repository.CentralServerRepository;
 
 class CentralServerServiceImplTest {
 

@@ -1,17 +1,18 @@
 package org.folio.innreach.external.service;
 
+import java.net.URI;
+import java.util.Base64;
+
 import feign.FeignException.FeignClientException;
 import feign.RetryableException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.springframework.stereotype.Service;
+
 import org.folio.innreach.external.client.feign.InnReachFeignClient;
 import org.folio.innreach.external.dto.AccessTokenDTO;
 import org.folio.innreach.external.dto.AccessTokenRequestDTO;
 import org.folio.innreach.external.exception.InnReachException;
-import org.springframework.stereotype.Service;
-
-import java.net.URI;
-import java.util.Base64;
 
 @RequiredArgsConstructor
 @Log4j2

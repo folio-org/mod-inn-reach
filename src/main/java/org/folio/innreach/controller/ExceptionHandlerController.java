@@ -1,49 +1,72 @@
 package org.folio.innreach.controller;
 
-import org.folio.innreach.domain.dto.ErrorResponseDTO;
-import org.folio.innreach.domain.dto.ValidationErrorResponseDTO;
-import org.folio.innreach.domain.exception.EntityNotFoundException;
-import org.folio.innreach.external.exception.InnReachException;
+import java.util.List;
+import java.util.stream.Collectors;
+
 import org.springframework.http.HttpStatus;
-import org.springframework.validation.ObjectError;
+import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import java.util.Date;
-import java.util.stream.Collectors;
+import org.folio.innreach.domain.exception.EntityNotFoundException;
+import org.folio.innreach.dto.Error;
+import org.folio.innreach.dto.ValidationErrorDTO;
+import org.folio.innreach.dto.ValidationErrorsDTO;
+import org.folio.innreach.external.exception.InnReachException;
 
 @RestControllerAdvice
 public class ExceptionHandlerController {
 
   @ExceptionHandler(EntityNotFoundException.class)
   @ResponseStatus(HttpStatus.NOT_FOUND)
-  public ErrorResponseDTO handleEntityNotFoundException(EntityNotFoundException e) {
-    return new ErrorResponseDTO(new Date(), HttpStatus.NOT_FOUND.value(), e.getMessage());
+  public Error handleEntityNotFoundException(EntityNotFoundException e) {
+    return createError(HttpStatus.NOT_FOUND.toString(), e.getMessage());
   }
 
   @ExceptionHandler(MethodArgumentNotValidException.class)
   @ResponseStatus(HttpStatus.BAD_REQUEST)
-  public ValidationErrorResponseDTO handleValidationException(MethodArgumentNotValidException e) {
-    var validationErrorMessages = e.getBindingResult().getAllErrors()
-      .stream()
-      .map(ObjectError::getDefaultMessage)
-      .collect(Collectors.toSet());
+  public ValidationErrorsDTO handleValidationException(MethodArgumentNotValidException e) {
+    var validationErrorsDTO = new ValidationErrorsDTO();
+    validationErrorsDTO.setCode(HttpStatus.BAD_REQUEST.value());
+    validationErrorsDTO.setMessage("Validation failed");
+    validationErrorsDTO.setValidationErrors(collectValidationErrors(e));
 
-    return new ValidationErrorResponseDTO(new Date(), HttpStatus.BAD_REQUEST.value(),
-      "Validation failed", validationErrorMessages);
+    return validationErrorsDTO;
+  }
+
+  private List<ValidationErrorDTO> collectValidationErrors(MethodArgumentNotValidException e) {
+    return e.getBindingResult()
+	    .getFieldErrors()
+      .stream()
+      .map(this::mapFieldErrorToValidationError)
+      .collect(Collectors.toList());
+  }
+
+  private ValidationErrorDTO mapFieldErrorToValidationError(FieldError fieldError) {
+    var validationErrorDTO = new ValidationErrorDTO();
+    validationErrorDTO.setFieldName(fieldError.getField());
+    validationErrorDTO.setMessage(fieldError.getDefaultMessage());
+    return validationErrorDTO;
   }
 
   @ExceptionHandler(InnReachException.class)
   @ResponseStatus(HttpStatus.BAD_REQUEST)
-  public ErrorResponseDTO handleInnReachException(InnReachException e) {
-    return new ErrorResponseDTO(new Date(), HttpStatus.BAD_REQUEST.value(), e.getMessage());
+  public Error handleInnReachException(InnReachException e) {
+    return createError(HttpStatus.BAD_REQUEST.toString(), e.getMessage());
   }
 
   @ExceptionHandler(Exception.class)
   @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
-  public ErrorResponseDTO handleException(Exception e) {
-    return new ErrorResponseDTO(new Date(), HttpStatus.BAD_REQUEST.value(), e.getMessage());
+  public Error handleException(Exception e) {
+    return createError(HttpStatus.INTERNAL_SERVER_ERROR.toString(), e.getMessage());
+  }
+
+  private Error createError(String code, String message) {
+    var error = new Error();
+    error.setCode(code);
+    error.setMessage(message);
+    return error;
   }
 }

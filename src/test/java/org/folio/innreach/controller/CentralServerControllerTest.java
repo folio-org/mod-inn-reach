@@ -30,7 +30,7 @@ class CentralServerControllerTest extends BaseControllerTest {
   private TestRestTemplate testRestTemplate;
 
   @Test
-  @Sql(scripts = "classpath:db/clear-central-server-tables.sql")
+  @Sql(scripts = "classpath:db/central-server/clear-central-server-tables.sql")
   void return200HttpCode_and_createdCentralServerEntity_when_createCentralServer() {
     var centralServerRequestDTO = deserializeFromJsonFile(
       "/central-server/create-central-server-request.json", CentralServerDTO.class);
@@ -47,7 +47,7 @@ class CentralServerControllerTest extends BaseControllerTest {
   }
 
   @Test
-  @Sql(scripts = "classpath:db/clear-central-server-tables.sql")
+  @Sql(scripts = "classpath:db/central-server/clear-central-server-tables.sql")
   void return400HttpCode_when_requestDataIsInvalid() {
     var centralServerRequestDTO = deserializeFromJsonFile(
       "/central-server/create-central-server-invalid-request.json", CentralServerDTO.class);
@@ -61,8 +61,8 @@ class CentralServerControllerTest extends BaseControllerTest {
 
   @Test
   @Sql(scripts = {
-    "classpath:db/clear-central-server-tables.sql",
-    "classpath:db/pre-populate-central-server.sql"
+    "classpath:db/central-server/clear-central-server-tables.sql",
+    "classpath:db/central-server/pre-populate-central-server.sql"
   })
   void return200HttpCode_and_allCentralServerEntities_when_getForAllCentralServers() {
     var responseEntity = testRestTemplate.getForEntity(
@@ -79,8 +79,8 @@ class CentralServerControllerTest extends BaseControllerTest {
 
   @Test
   @Sql(scripts = {
-    "classpath:db/clear-central-server-tables.sql",
-    "classpath:db/pre-populate-central-server.sql"
+    "classpath:db/central-server/clear-central-server-tables.sql",
+    "classpath:db/central-server/pre-populate-central-server.sql"
   })
   void return200HttpCode_and_centralServerEntityById_when_getForOneCentralServer() {
     var centralServerDTO = deserializeFromJsonFile(
@@ -99,7 +99,7 @@ class CentralServerControllerTest extends BaseControllerTest {
   }
 
   @Test
-  @Sql(scripts = "classpath:db/clear-central-server-tables.sql")
+  @Sql(scripts = "classpath:db/central-server/clear-central-server-tables.sql")
   void return404HttpCode_when_centralServerByIdNotFound() {
     var responseEntity = testRestTemplate.getForEntity(
       "/central-servers/{centralServerId}", CentralServerDTO.class, randomUUIDString());
@@ -109,8 +109,8 @@ class CentralServerControllerTest extends BaseControllerTest {
 
   @Test
   @Sql(scripts = {
-    "classpath:db/clear-central-server-tables.sql",
-    "classpath:db/pre-populate-central-server.sql"
+    "classpath:db/central-server/clear-central-server-tables.sql",
+    "classpath:db/central-server/pre-populate-central-server.sql"
   })
   void return200HttpCode_when_updateCentralServer() {
     var centralServerRequestDTO = deserializeFromJsonFile(
@@ -129,7 +129,7 @@ class CentralServerControllerTest extends BaseControllerTest {
   }
 
   @Test
-  @Sql(scripts = "classpath:db/clear-central-server-tables.sql")
+  @Sql(scripts = "classpath:db/central-server/clear-central-server-tables.sql")
   void return404HttpCode_when_updatableCentralServerNotFound() {
     var centralServerRequestDTO = deserializeFromJsonFile(
       "/central-server/update-central-server-request.json", CentralServerDTO.class);
@@ -143,8 +143,8 @@ class CentralServerControllerTest extends BaseControllerTest {
 
   @Test
   @Sql(scripts = {
-    "classpath:db/clear-central-server-tables.sql",
-    "classpath:db/pre-populate-central-server.sql"
+    "classpath:db/central-server/clear-central-server-tables.sql",
+    "classpath:db/central-server/pre-populate-central-server.sql"
   })
   void return204HttpCode_when_deleteCentralServer() {
     var responseEntity = testRestTemplate.exchange(
@@ -155,7 +155,7 @@ class CentralServerControllerTest extends BaseControllerTest {
   }
 
   @Test
-  @Sql(scripts = "classpath:db/clear-central-server-tables.sql")
+  @Sql(scripts = "classpath:db/central-server/clear-central-server-tables.sql")
   void return404HttpCode_when_deletableCentralServerNotFound() {
     var responseEntity = testRestTemplate.exchange(
       "/central-servers/{centralServerId}", HttpMethod.DELETE, HttpEntity.EMPTY,
@@ -163,6 +163,5 @@ class CentralServerControllerTest extends BaseControllerTest {
 
     assertEquals(HttpStatus.NOT_FOUND, responseEntity.getStatusCode());
   }
-
 
 }

@@ -10,6 +10,7 @@ import org.jeasy.random.EasyRandomParameters;
 import org.jeasy.random.randomizers.text.StringRandomizer;
 
 import org.folio.innreach.domain.entity.InnReachLocation;
+import org.folio.innreach.dto.InnReachLocationDTO;
 
 @UtilityClass
 public class InnReachLocationFixture {
@@ -22,13 +23,19 @@ public class InnReachLocationFixture {
         .randomize(named("description"), new StringRandomizer(255))
         .randomize(named("createdBy"), () -> "admin")
         .randomize(named("createdDate"), OffsetDateTime::now)
+        .excludeField(named("id"))
         .excludeField(named("lastModifiedBy"))
-        .excludeField(named("lastModifiedDate"));
+        .excludeField(named("lastModifiedDate"))
+        .excludeField(named("metadata"));
 
     locationRandom = new EasyRandom(params);
   }
-  
+
   public static InnReachLocation createInnReachLocation() {
     return locationRandom.nextObject(InnReachLocation.class);
   }
+
+	public static InnReachLocationDTO createInnReachLocationDTO() {
+		return locationRandom.nextObject(InnReachLocationDTO.class);
+	}
 }
