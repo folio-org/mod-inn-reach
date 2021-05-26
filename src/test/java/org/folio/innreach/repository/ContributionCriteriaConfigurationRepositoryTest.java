@@ -95,7 +95,7 @@ class ContributionCriteriaConfigurationRepositoryTest extends BaseRepositoryTest
     var modifiedConfiguration = contributionCriteriaConfigurationRepository.findById(centralServer.getId()).get();
 
     assertEquals(criteriaConfiguration.getCreatedBy(),modifiedConfiguration.getCreatedBy());
-    assertNotNull(criteriaConfiguration.getCreatedDate().equals(modifiedConfiguration.getCreatedDate()));
+    assertEquals(criteriaConfiguration.getCreatedDate(),modifiedConfiguration.getCreatedDate());
     assertNotNull(modifiedConfiguration.getLastModifiedDate());
 
     assertEquals(quantityOfExcludedLocationsId+ UUUID_IDs.size(),modifiedConfiguration.getExcludedLocations().size());
