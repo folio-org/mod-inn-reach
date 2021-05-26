@@ -39,8 +39,8 @@ import java.util.stream.Collectors;
 @AllArgsConstructor
 @Getter
 @Setter
-@EqualsAndHashCode(of = {"code"}, callSuper = false)
-@ToString(callSuper = true)
+@EqualsAndHashCode
+@ToString
 
 @Entity
 @Table(name = "contribution_criteria_configuration")

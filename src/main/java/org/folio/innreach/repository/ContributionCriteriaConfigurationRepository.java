@@ -12,10 +12,4 @@ import java.util.UUID;
 
 @Repository
 public interface ContributionCriteriaConfigurationRepository extends JpaRepository<ContributionCriteriaConfiguration, UUID> {
-//public interface ContributionCriteriaConfigurationRepository extends CrudRepository<ContributionCriteriaConfiguration, UUID> {
-//  @Query(name = ContributionCriteriaConfiguration.FETCH_ALL_QUERY_NAME)
-//  List<ContributionCriteriaConfiguration> fetchAll();
-
-//  @Query(name = ContributionCriteriaConfiguration.FETCH_ONE_BY_ID_QUERY_NAME)
-//  Optional<ContributionCriteriaConfiguration> fetchOne(UUID centralServerId);
 }

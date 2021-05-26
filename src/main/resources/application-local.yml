@@ -14,4 +14,4 @@ spring:
         physical-strategy: org.springframework.boot.orm.jpa.hibernate.SpringPhysicalNamingStrategy
         implicit-strategy: org.springframework.boot.orm.jpa.hibernate.SpringImplicitNamingStrategy
     database-platform: org.hibernate.dialect.PostgreSQLDialect
-debug: on
+debug: off

@@ -1,9 +1,11 @@
 package org.folio.innreach.domain.entity;
 
 import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.ToString;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -20,12 +22,13 @@ import javax.persistence.Transient;
 import java.util.UUID;
 
 @Entity
-@Table(name="statistical_code_behavior")
+@Table(name = "statistical_code_behavior")
 
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter
 @Setter
+@ToString
 public class ContributionCriteriaStatisticalCodeBehavior {
   @Id
   @GeneratedValue(strategy = GenerationType.AUTO)

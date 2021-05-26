@@ -1,13 +1,13 @@
 package org.folio.innreach.domain.entity;
 
 import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.ToString;
 
-import javax.persistence.CollectionTable;
 import javax.persistence.Column;
-import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
@@ -25,16 +25,17 @@ import java.util.UUID;
 @AllArgsConstructor
 @Getter
 @Setter
+@ToString
 
 public class ContributionCriteriaExcludedLocation {
-    @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    private UUID id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.AUTO)
+  private UUID id;
 
-    @Column(name = "excluded_location_id")
-    private UUID excludedLocationId;
+  @Column(name = "excluded_location_id")
+  private UUID excludedLocationId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "criteria_configuration_id")
-    private ContributionCriteriaConfiguration contributionCriteriaConfiguration;
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "criteria_configuration_id")
+  private ContributionCriteriaConfiguration contributionCriteriaConfiguration;
 }
