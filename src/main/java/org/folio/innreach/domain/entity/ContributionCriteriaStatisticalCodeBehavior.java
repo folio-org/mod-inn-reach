@@ -5,7 +5,6 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import lombok.ToString;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -18,7 +17,6 @@ import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
-import javax.persistence.Transient;
 import java.util.UUID;
 
 @Entity
@@ -28,17 +26,17 @@ import java.util.UUID;
 @AllArgsConstructor
 @Getter
 @Setter
-@ToString
+@EqualsAndHashCode(exclude = {"statistical_code_id", "contributionBehavior", "contributionCriteriaConfiguration"})
 public class ContributionCriteriaStatisticalCodeBehavior {
   @Id
   @GeneratedValue(strategy = GenerationType.AUTO)
-  UUID id;
+  private UUID id;
 
   @Column(name = "statistical_code_id")
-  UUID statisticalCodeId;
+  private UUID statisticalCodeId;
 
   @Enumerated(EnumType.STRING)
-  ContributionBehavior contributionBehavior;
+  private ContributionBehavior contributionBehavior;
 
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "criteria_configuration_id")
@@ -49,7 +47,4 @@ public class ContributionCriteriaStatisticalCodeBehavior {
     contributeAsSystemOwned,
     doNotContribute
   }
-
-  @Transient
-  private final String statCodeSuffix = "StatisticalCodeId";
 }

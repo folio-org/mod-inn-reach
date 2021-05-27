@@ -1,15 +1,12 @@
 package org.folio.innreach.repository;
 
-import org.folio.innreach.domain.entity.CentralServer;
 import org.folio.innreach.domain.entity.ContributionCriteriaConfiguration;
 import org.folio.innreach.domain.entity.ContributionCriteriaStatisticalCodeBehavior;
+import org.folio.innreach.fixture.CentralServerFixture;
 import org.folio.innreach.fixture.ContributionCriteriaConfigurationFixture;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestMethodOrder;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.test.context.jdbc.Sql;
 
 import java.util.List;
 import java.util.UUID;
@@ -19,12 +16,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-@Sql(scripts = "classpath:db/pre-populate-central-server.sql")
-@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class ContributionCriteriaConfigurationRepositoryTest extends BaseRepositoryTest {
 
-  private static final String PRE_POPULATED_CENTRAL_SERVER_ID = "edab6baf-c696-42b1-89bb-1bbb8759b0d2";
-  private static final String PRE_POPULATED_CENTRAL_SERVER_CODE = "abc12";
+  private static String CENTRAL_SERVER_ID = "edab6baf-c696-42b1-89bb-1bbb8759b0d2";
   private static final List<UUID> UUUID_IDs = List.of(UUID.randomUUID(),UUID.randomUUID(),UUID.randomUUID());
 
   @Autowired
@@ -38,38 +32,33 @@ class ContributionCriteriaConfigurationRepositoryTest extends BaseRepositoryTest
 
   @BeforeEach
   void beforeEach() {
-    CentralServer centralServer = centralServerRepository.fetchOne(UUID.fromString(PRE_POPULATED_CENTRAL_SERVER_ID)).get();
-    assertNotNull(centralServer);
     ContributionCriteriaConfiguration criteriaConfiguration
       = ContributionCriteriaConfigurationFixture
-      .createTestContributionCriteriaConfiguration(centralServer.getId());
+      .createTestContributionCriteriaConfiguration(UUID.fromString(CENTRAL_SERVER_ID));
     contributionCriteriaConfigurationRepository.saveAndFlush(criteriaConfiguration);
   }
 
   @Test
   void chekIfContributionCriteriaConfigurationCreated() {
-    var centralServer = centralServerRepository.fetchOne(UUID.fromString(PRE_POPULATED_CENTRAL_SERVER_ID)).get();
-    var optionalContributionCriteriaConfiguration = contributionCriteriaConfigurationRepository.findById(UUID.fromString(PRE_POPULATED_CENTRAL_SERVER_ID));
+    var optionalContributionCriteriaConfiguration
+      = contributionCriteriaConfigurationRepository.findById(UUID.fromString(CENTRAL_SERVER_ID));
     assertTrue(optionalContributionCriteriaConfiguration.isPresent());
   }
 
   @Test
   void deleteContributionCriteriaConfiguration() {
-    var centralServer = centralServerRepository.fetchOne(UUID.fromString(PRE_POPULATED_CENTRAL_SERVER_ID)).get();
-    contributionCriteriaConfigurationRepository.deleteById(centralServer.getId());
-    assertTrue(contributionCriteriaConfigurationRepository.findById(centralServer.getId()).isEmpty());
+    contributionCriteriaConfigurationRepository.deleteById(UUID.fromString(CENTRAL_SERVER_ID));
+    assertTrue(contributionCriteriaConfigurationRepository.findById(UUID.fromString(CENTRAL_SERVER_ID)).isEmpty());
   }
-
 
 
   @Test
   void createContributionCriteriaConfigurationForExistingCentralServer() {
-    CentralServer centralServer = centralServerRepository.fetchOne(UUID.fromString(PRE_POPULATED_CENTRAL_SERVER_ID)).get();
     ContributionCriteriaConfiguration criteriaConfiguration
       = ContributionCriteriaConfigurationFixture
-      .createTestContributionCriteriaConfiguration(centralServer.getId());
+      .createTestContributionCriteriaConfiguration(UUID.fromString(CENTRAL_SERVER_ID));
 
-    var savedCriteriaConfiguration = contributionCriteriaConfigurationRepository.findById(centralServer.getId()).get();
+    var savedCriteriaConfiguration = contributionCriteriaConfigurationRepository.findById(UUID.fromString(CENTRAL_SERVER_ID)).get();
 
     assertNotNull(savedCriteriaConfiguration.getCreatedBy());
     assertNotNull(savedCriteriaConfiguration.getCreatedDate());
@@ -86,13 +75,13 @@ class ContributionCriteriaConfigurationRepositoryTest extends BaseRepositoryTest
 
   @Test
   void addContributionCriteriaExcludedLocations() {
-    CentralServer centralServer = centralServerRepository.fetchOne(UUID.fromString(PRE_POPULATED_CENTRAL_SERVER_ID)).get();
-    var criteriaConfiguration = contributionCriteriaConfigurationRepository.findById(centralServer.getId()).get();
+    var criteriaConfiguration = contributionCriteriaConfigurationRepository.findById(UUID.fromString(CENTRAL_SERVER_ID)).get();
     var quantityOfExcludedLocationsId = criteriaConfiguration.getExcludedLocations().size();
     UUUID_IDs.stream().forEach(uuid -> criteriaConfiguration.addExcludedLocationId(uuid));
     contributionCriteriaConfigurationRepository.saveAndFlush(criteriaConfiguration);
-    contributionCriteriaConfigurationRepository.findById(UUID.fromString(PRE_POPULATED_CENTRAL_SERVER_ID)).get();
-    var modifiedConfiguration = contributionCriteriaConfigurationRepository.findById(centralServer.getId()).get();
+    contributionCriteriaConfigurationRepository.findById(UUID.fromString(CENTRAL_SERVER_ID)).get();
+    var modifiedConfiguration
+      = contributionCriteriaConfigurationRepository.findById(UUID.fromString(CENTRAL_SERVER_ID)).get();
 
     assertEquals(criteriaConfiguration.getCreatedBy(),modifiedConfiguration.getCreatedBy());
     assertEquals(criteriaConfiguration.getCreatedDate(),modifiedConfiguration.getCreatedDate());
@@ -105,8 +94,8 @@ class ContributionCriteriaConfigurationRepositoryTest extends BaseRepositoryTest
 
   @Test
   void removeContributionCriteriaExcludedLocations() {
-    CentralServer centralServer = centralServerRepository.fetchOne(UUID.fromString(PRE_POPULATED_CENTRAL_SERVER_ID)).get();
-    var criteriaConfiguration = contributionCriteriaConfigurationRepository.findById(centralServer.getId()).get();
+    var criteriaConfiguration
+      = contributionCriteriaConfigurationRepository.findById(UUID.fromString(CENTRAL_SERVER_ID)).get();
     var quantityOfExcludedLocationsId = criteriaConfiguration.getExcludedLocations().size();
     for (int i = 0; i < quantityOfExcludedLocationsId-1 ; i++) {
       criteriaConfiguration.removeExcludedLocationId(
@@ -115,8 +104,8 @@ class ContributionCriteriaConfigurationRepositoryTest extends BaseRepositoryTest
           getExcludedLocationId());
     }
     contributionCriteriaConfigurationRepository.saveAndFlush(criteriaConfiguration);
-    contributionCriteriaConfigurationRepository.findById(UUID.fromString(PRE_POPULATED_CENTRAL_SERVER_ID)).get();
-    var modifiedConfiguration = contributionCriteriaConfigurationRepository.findById(centralServer.getId()).get();
+    contributionCriteriaConfigurationRepository.findById(UUID.fromString(CENTRAL_SERVER_ID)).get();
+    var modifiedConfiguration = contributionCriteriaConfigurationRepository.findById(UUID.fromString(CENTRAL_SERVER_ID)).get();
 
     assertEquals(criteriaConfiguration.getCreatedBy(),modifiedConfiguration.getCreatedBy());
     assertEquals(criteriaConfiguration.getCreatedDate(),modifiedConfiguration.getCreatedDate());
@@ -127,8 +116,8 @@ class ContributionCriteriaConfigurationRepositoryTest extends BaseRepositoryTest
 
   @Test
   void addContributionCriteriaStatisticalCodeBehavior() {
-    CentralServer centralServer = centralServerRepository.fetchOne(UUID.fromString(PRE_POPULATED_CENTRAL_SERVER_ID)).get();
-    var criteriaConfiguration = contributionCriteriaConfigurationRepository.findById(centralServer.getId()).get();
+    var criteriaConfiguration
+      = contributionCriteriaConfigurationRepository.findById(UUID.fromString(CENTRAL_SERVER_ID)).get();
     var quantityOfCodeBehaviors = criteriaConfiguration.getStatisticalCodeBehaviors().size();
     UUUID_IDs.stream().forEach(uuid -> {
       int i = 0;
@@ -138,8 +127,8 @@ class ContributionCriteriaConfigurationRepositoryTest extends BaseRepositoryTest
       criteriaConfiguration.addStatisticalCodeBehavior(codeBehavior);
     });
     contributionCriteriaConfigurationRepository.saveAndFlush(criteriaConfiguration);
-    contributionCriteriaConfigurationRepository.findById(UUID.fromString(PRE_POPULATED_CENTRAL_SERVER_ID)).get();
-    var modifiedConfiguration = contributionCriteriaConfigurationRepository.findById(centralServer.getId()).get();
+    contributionCriteriaConfigurationRepository.findById(UUID.fromString(CENTRAL_SERVER_ID)).get();
+    var modifiedConfiguration = contributionCriteriaConfigurationRepository.findById(UUID.fromString(CENTRAL_SERVER_ID)).get();
 
     assertEquals(criteriaConfiguration.getCreatedBy(), modifiedConfiguration.getCreatedBy());
     assertEquals(criteriaConfiguration.getCreatedDate(),modifiedConfiguration.getCreatedDate());
@@ -152,8 +141,8 @@ class ContributionCriteriaConfigurationRepositoryTest extends BaseRepositoryTest
 
   @Test
   void removeContributionCriteriaStatisticalCodeBehavior() {
-    CentralServer centralServer = centralServerRepository.fetchOne(UUID.fromString(PRE_POPULATED_CENTRAL_SERVER_ID)).get();
-    var criteriaConfiguration = contributionCriteriaConfigurationRepository.findById(centralServer.getId()).get();
+    var criteriaConfiguration
+      = contributionCriteriaConfigurationRepository.findById(UUID.fromString(CENTRAL_SERVER_ID)).get();
     var quantityOfStatCodeBehaviors = criteriaConfiguration.getStatisticalCodeBehaviors().size();
     for (int i = 0; i < quantityOfStatCodeBehaviors-1; i++) {
       criteriaConfiguration.removeStatisticalCondeBehavior(
@@ -162,7 +151,8 @@ class ContributionCriteriaConfigurationRepositoryTest extends BaseRepositoryTest
           getStatisticalCodeId());
     }
     contributionCriteriaConfigurationRepository.saveAndFlush(criteriaConfiguration);
-    var modifiedConfiguration = contributionCriteriaConfigurationRepository.findById(centralServer.getId()).get();
+    var modifiedConfiguration
+      = contributionCriteriaConfigurationRepository.findById(UUID.fromString(CENTRAL_SERVER_ID)).get();
 
     assertEquals(criteriaConfiguration.getCreatedBy(),modifiedConfiguration.getCreatedBy());
     assertEquals(criteriaConfiguration.getCreatedDate(),modifiedConfiguration.getCreatedDate());
@@ -170,7 +160,4 @@ class ContributionCriteriaConfigurationRepositoryTest extends BaseRepositoryTest
 
     assertEquals(1,modifiedConfiguration.getStatisticalCodeBehaviors().size());
   }
-
-
-
 }

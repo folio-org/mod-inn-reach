@@ -25,7 +25,7 @@ import java.util.UUID;
 @AllArgsConstructor
 @Getter
 @Setter
-@ToString
+@EqualsAndHashCode(exclude = {"contributionCriteriaConfiguration","excluded_location_id"})
 
 public class ContributionCriteriaExcludedLocation {
   @Id
