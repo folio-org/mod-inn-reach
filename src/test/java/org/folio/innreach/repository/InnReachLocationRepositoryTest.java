@@ -23,7 +23,7 @@ import org.springframework.test.context.jdbc.Sql;
 import org.folio.innreach.domain.entity.InnReachLocation;
 import org.folio.innreach.fixture.TestUtil;
 
-@Sql(scripts = "classpath:db/pre-populate-inn-reach-location-code.sql")
+@Sql(scripts = "classpath:db/inn-reach-location/pre-populate-inn-reach-location-code.sql")
 class InnReachLocationRepositoryTest extends BaseRepositoryTest {
 
   private static final String PRE_POPULATED_LOCATION1_ID = "a1c1472f-67ec-4938-b5a8-f119e51ab79b";

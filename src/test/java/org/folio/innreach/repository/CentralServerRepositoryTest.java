@@ -17,7 +17,7 @@ import org.folio.innreach.fixture.LocalAgencyFixture;
 import org.folio.innreach.fixture.LocalServerCredentialsFixture;
 
 
-@Sql(scripts = "classpath:db/pre-populate-central-server.sql")
+@Sql(scripts = "classpath:db/central-server/pre-populate-central-server.sql")
 class CentralServerRepositoryTest extends BaseRepositoryTest {
 
   private static final String PRE_POPULATED_CENTRAL_SERVER_ID = "edab6baf-c696-42b1-89bb-1bbb8759b0d2";

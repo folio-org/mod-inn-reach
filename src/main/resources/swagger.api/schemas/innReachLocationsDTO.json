@@ -1,0 +1,20 @@
+{
+  "description": "InnReach locations collection",
+  "type": "object",
+  "properties": {
+    "totalRecords": {
+      "description": "Total records",
+      "type": "integer"
+    },
+    "locations": {
+      "type": "array",
+      "items": {
+        "$ref": "innReachLocationDTO.json"
+      }
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "locations"
+  ]
+}

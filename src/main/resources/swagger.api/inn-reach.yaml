@@ -3,177 +3,166 @@ info:
   title: INN-Reach API
   version: v1
 servers:
-  - url: /innreach/
+  - url: /inn-reach/
 paths:
-  /configurations:
-    get:
-      responses:
-        '200':
-          description: ""
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/moduleConfigurations"
-        '500':
-          description: Internal server error
-          content:
-            text/plain:
-              schema:
-                type: string
-                example: Internal server error
-      description: Get a list of inn reach configurations
-      operationId: getConfigurations
-      parameters:
-        - $ref: "#/components/parameters/trait_pageable_offset"
-        - $ref: "#/components/parameters/trait_pageable_limit"
-        - $ref: "#/components/parameters/trait_queryable_query"
+  /locations:
     post:
       responses:
         '201':
-          description: ""
+          description: Created
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/moduleConfiguration"
+                $ref: "#/components/schemas/innReachLocationDTO"
         '400':
           description: Bad request
           content:
-            text/plain:
+            application/json:
               schema:
-                type: string
-                example: Bad request
-        '422':
-          $ref: "#/components/responses/trait_validate_422"
+                $ref: "#/components/schemas/validationErrorsDTO"
         '500':
           description: Internal server error
           content:
-            text/plain:
+            application/json:
               schema:
-                type: string
-                example: Internal server error
-      description: Add new inn reach configuration
-      operationId: postConfiguration
+                $ref: "#/components/schemas/error"
+      description: Add new InnReach location
+      operationId: postInnReachLocation
       requestBody:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/moduleConfiguration"
+              $ref: "#/components/schemas/innReachLocationDTO"
         required: true
-    put:
-      responses:
-        '201':
-          description: ""
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/moduleConfiguration"
-        '400':
-          description: Bad request
-          content:
-            text/plain:
-              schema:
-                type: string
-                example: Bad request
-        '404':
-          description: Configuration not found
-          content:
-            text/plain:
-              schema:
-                type: string
-                example: Configuration not found
-        '500':
-          description: Internal server error
-          content:
-            text/plain:
-              schema:
-                type: string
-                example: Internal server error
-      description: Change the inn reach configuration
-      operationId: putConfiguration
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/moduleConfiguration"
-        required: true
-  /configurations/{configId}:
     get:
       responses:
         '200':
-          description: ""
+          description: "OK"
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/moduleConfiguration"
-        '404':
-          description: Configuration not found
-          content:
-            text/plain:
-              schema:
-                type: string
-                example: Configuration not found
+                $ref: "#/components/schemas/innReachLocationsDTO"
         '500':
           description: Internal server error
           content:
-            text/plain:
+            application/json:
               schema:
-                type: string
-                example: Internal server error
-      operationId: getConfigurationById
+                $ref: "#/components/schemas/error"
+      description: Get a list of InnReach locations
+      operationId: getLocations
+      parameters:
+        - $ref: "#/components/parameters/trait_pageable_offset"
+        - $ref: "#/components/parameters/trait_pageable_limit"
+  /locations/{locationId}:
+    get:
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/innReachLocationDTO"
+        '404':
+          description: InnReach location not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/error"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/error"
+      description: Get InnReach location by id
+      operationId: getLocationById
+      parameters:
+        - $ref: '#/components/parameters/id'
+    put:
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/innReachLocationDTO"
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/validationErrorsDTO"
+        '404':
+          description: InnReach location not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/error"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/error"
+      description: Update InnReach location
+      operationId: updateLocation
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/innReachLocationDTO"
+        required: true
+      parameters:
+        - $ref: '#/components/parameters/id'
     delete:
       responses:
         '204':
           description: No content
-          content:
-            text/plain:
-              schema:
-                type: string
-                example: No content
         '404':
-          description: Configuration not found
+          description: InnReach location not found
           content:
-            text/plain:
+            application/json:
               schema:
-                type: string
-                example: Configuration not found
+                $ref: "#/components/schemas/error"
         '500':
           description: Internal server error
           content:
-            text/plain:
+            application/json:
               schema:
-                type: string
-                example: Internal server error
-      operationId: deleteConfigurationById
-    parameters:
-      - name: configId
-        in: path
-        required: true
-        schema:
-          type: string
+                $ref: "#/components/schemas/error"
+      description: Delete InnReach location
+      operationId: deleteLocation
+      parameters:
+        - $ref: '#/components/parameters/id'
 components:
-  responses:
-    trait_validate_422:
-      description: Validation errors
-      content:
-        application/json:
-          example: examples/errors.sample
-          schema:
-            $ref: "#/components/schemas/errors"
   schemas:
-    moduleConfiguration:
-      $ref: schemas/moduleConfiguration.json
-    moduleConfigurations:
-      allOf:
-        - $ref: schemas/baseCollection.json
-        - type: object
-          properties:
-            configurations:
-              type: array
-              items:
-                $ref: "#/components/schemas/moduleConfiguration"
-    errors:
-      $ref: schemas/errors.json
+    UUID:
+      type: string
+      format: uuid
+    innReachLocationDTO:
+      $ref: schemas/innReachLocationDTO.json
+    innReachLocationsDTO:
+      $ref: schemas/innReachLocationsDTO.json
+    validationErrorsDTO:
+      type: object
+      properties:
+        code:
+          type: integer
+        message:
+          type: string
+        validationErrors:
+          type: array
+          items:
+            $ref: schemas/validationErrorDTO.json
+    error:
+      $ref: schemas/error.json
   parameters:
+    id:
+      name: id
+      in: path
+      required: true
+      schema:
+        $ref: "#/components/schemas/UUID"
     trait_queryable_query:
       name: query
       in: query
