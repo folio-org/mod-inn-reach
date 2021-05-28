@@ -32,114 +32,120 @@ class InnReachLocationControllerTest extends BaseControllerTest {
 
 	@Test
 	void return200HttpCode_and_createdInnReachLocation_when_createInnReachLocation() {
-		var innReachLocationDTO = deserializeFromJsonFile("/inn-reach-location/create-inn-reach-location-request.json",
-				InnReachLocationDTO.class);
+    var innReachLocationDTO = deserializeFromJsonFile("/inn-reach-location/create-inn-reach-location-request.json",
+        InnReachLocationDTO.class);
 
-		var responseEntity = testRestTemplate.postForEntity("/locations", innReachLocationDTO,
-				InnReachLocationDTO.class);
+    var responseEntity = testRestTemplate.postForEntity("/inn-reach/locations", innReachLocationDTO,
+        InnReachLocationDTO.class);
 
-		assertEquals(HttpStatus.CREATED, responseEntity.getStatusCode());
-		assertTrue(responseEntity.hasBody());
-	}
+    assertEquals(HttpStatus.CREATED, responseEntity.getStatusCode());
+    assertTrue(responseEntity.hasBody());
+  }
 
 	@Test
 	void return400HttpCode_when_createInnReachLocation_and_requestDataIsInvalid() {
-		var innReachLocationDTO = deserializeFromJsonFile("/inn-reach-location/create-inn-reach-location-request.json",
-				InnReachLocationDTO.class);
-		innReachLocationDTO.setCode("qwerty123");
+    var innReachLocationDTO = deserializeFromJsonFile("/inn-reach-location/create-inn-reach-location-request.json",
+        InnReachLocationDTO.class);
+    innReachLocationDTO.setCode("qwerty123");
 
-		var responseEntity = testRestTemplate.postForEntity("/locations", innReachLocationDTO,
-				InnReachLocationDTO.class);
+    var responseEntity = testRestTemplate.postForEntity("/inn-reach/locations", innReachLocationDTO,
+        InnReachLocationDTO.class);
 
-		assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
-	}
+    assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
+  }
 
-	@Test
-	@Sql(scripts = {"classpath:db/inn-reach-location/clear-inn-reach-location-tables.sql",
-			"classpath:db/inn-reach-location/pre-populate-inn-reach-location-code.sql"})
+  @Test
+  @Sql(scripts = {
+    "classpath:db/inn-reach-location/clear-inn-reach-location-tables.sql",
+    "classpath:db/inn-reach-location/pre-populate-inn-reach-location-code.sql"
+  })
 	void return200HttpStatus_and_innReachLocation_when_innReachLocationExists() {
-		var responseEntity = testRestTemplate.getForEntity("/locations/{locationId}",
-				InnReachLocationDTO.class, PRE_POPULATED_LOCATION1_ID);
+    var responseEntity = testRestTemplate.getForEntity("/inn-reach/locations/{locationId}", InnReachLocationDTO.class,
+        PRE_POPULATED_LOCATION1_ID);
 
-		assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
-		assertTrue(responseEntity.hasBody());
-		assertNotNull(responseEntity.getBody());
+    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+    assertTrue(responseEntity.hasBody());
+    assertNotNull(responseEntity.getBody());
 
-		var innReachLocationDTO = responseEntity.getBody();
+    var innReachLocationDTO = responseEntity.getBody();
 
-		assertEquals(PRE_POPULATED_LOCATION1_ID, innReachLocationDTO.getId());
-	}
+    assertEquals(UUID.fromString(PRE_POPULATED_LOCATION1_ID), innReachLocationDTO.getId());
+  }
 
 	@Test
 	void return404HttpCode_when_innReachLocationDoesNotExist() {
-		var responseEntity = testRestTemplate.getForEntity("/locations/{locationId}",
-				InnReachLocationDTO.class, UUID.randomUUID().toString());
+    var responseEntity = testRestTemplate.getForEntity("/inn-reach/locations/{locationId}", InnReachLocationDTO.class,
+        UUID.randomUUID().toString());
 
-		assertEquals(HttpStatus.NOT_FOUND, responseEntity.getStatusCode());
-	}
+    assertEquals(HttpStatus.NOT_FOUND, responseEntity.getStatusCode());
+  }
 
 	@Test
 	@Sql(scripts = "classpath:db/inn-reach-location/pre-populate-inn-reach-location-code.sql")
 	void return200HttpCode_and_allInReachLocations_when_innReachLocationsExist() {
-		var responseEntity = testRestTemplate.getForEntity("/locations", InnReachLocationsDTO.class);
+    var responseEntity = testRestTemplate.getForEntity("/inn-reach/locations", InnReachLocationsDTO.class);
 
-		assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
-		assertTrue(responseEntity.hasBody());
+    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+    assertTrue(responseEntity.hasBody());
 
-		var innReachLocationsDTO = responseEntity.getBody();
+    var innReachLocationsDTO = responseEntity.getBody();
 
-		assertNotNull(innReachLocationsDTO);
-		assertNotNull(innReachLocationsDTO.getLocations());
-		assertFalse(innReachLocationsDTO.getLocations().isEmpty());
-	}
+    assertNotNull(innReachLocationsDTO);
+    assertNotNull(innReachLocationsDTO.getLocations());
+    assertFalse(innReachLocationsDTO.getLocations().isEmpty());
+  }
 
-	@Test
-	@Sql(scripts = {"classpath:db/inn-reach-location/clear-inn-reach-location-tables.sql",
-			"classpath:db/inn-reach-location/pre-populate-inn-reach-location-code.sql"})
+  @Test
+  @Sql(scripts = {
+    "classpath:db/inn-reach-location/clear-inn-reach-location-tables.sql",
+    "classpath:db/inn-reach-location/pre-populate-inn-reach-location-code.sql"
+  })
 	void return200HttpCode_and_updatedInnReachLocation_when_innReachLocationsExist() {
-		var innReachLocationDTO = deserializeFromJsonFile("/inn-reach-location/update-inn-reach-location-request.json",
-				InnReachLocationDTO.class);
+    var innReachLocationDTO = deserializeFromJsonFile("/inn-reach-location/update-inn-reach-location-request.json",
+        InnReachLocationDTO.class);
 
-		var responseEntity = testRestTemplate.exchange("/locations/{locationId}", HttpMethod.PUT,
-				new HttpEntity<>(innReachLocationDTO), InnReachLocationDTO.class, PRE_POPULATED_LOCATION1_ID);
+    var responseEntity = testRestTemplate.exchange("/inn-reach/locations/{locationId}", HttpMethod.PUT,
+        new HttpEntity<>(innReachLocationDTO), InnReachLocationDTO.class, PRE_POPULATED_LOCATION1_ID);
 
-		assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
-		assertTrue(responseEntity.hasBody());
-		assertNotNull(responseEntity.getBody());
+    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+    assertTrue(responseEntity.hasBody());
+    assertNotNull(responseEntity.getBody());
 
-		var updatedInnReachLocation = responseEntity.getBody();
+    var updatedInnReachLocation = responseEntity.getBody();
 
-		assertEquals(innReachLocationDTO.getCode(), updatedInnReachLocation.getCode());
-		assertEquals(innReachLocationDTO.getDescription(), updatedInnReachLocation.getDescription());
+    assertEquals(innReachLocationDTO.getCode(), updatedInnReachLocation.getCode());
+    assertEquals(innReachLocationDTO.getDescription(), updatedInnReachLocation.getDescription());
 	}
 
 	@Test
 	void return404HttpCode_when_updatableInnReachLocationDoesNotExist() {
-		var innReachLocationDTO = deserializeFromJsonFile("/inn-reach-location/update-inn-reach-location-request.json",
-				InnReachLocationDTO.class);
+    var innReachLocationDTO = deserializeFromJsonFile("/inn-reach-location/update-inn-reach-location-request.json",
+        InnReachLocationDTO.class);
 
-		var responseEntity = testRestTemplate.exchange("/locations/{locationId}", HttpMethod.PUT,
-				new HttpEntity<>(innReachLocationDTO), InnReachLocationDTO.class, UUID.randomUUID().toString());
+    var responseEntity = testRestTemplate.exchange("/inn-reach/locations/{locationId}", HttpMethod.PUT,
+        new HttpEntity<>(innReachLocationDTO), InnReachLocationDTO.class, UUID.randomUUID().toString());
 
-		assertEquals(HttpStatus.NOT_FOUND, responseEntity.getStatusCode());
-	}
+    assertEquals(HttpStatus.NOT_FOUND, responseEntity.getStatusCode());
+  }
 
 	@Test
-	@Sql(scripts = {"classpath:db/inn-reach-location/clear-inn-reach-location-tables.sql",
-			"classpath:db/inn-reach-location/pre-populate-inn-reach-location-code.sql"})
+	@Sql(scripts = {
+	  "classpath:db/inn-reach-location/clear-inn-reach-location-tables.sql",
+    "classpath:db/inn-reach-location/pre-populate-inn-reach-location-code.sql"
+	})
 	void return204HttpCode_when_deleteInnReachLocation() {
-		var responseEntity = testRestTemplate.exchange("/locations/{locationId}", HttpMethod.DELETE,
-				HttpEntity.EMPTY, InnReachLocationDTO.class, PRE_POPULATED_LOCATION1_ID);
+    var responseEntity = testRestTemplate.exchange("/inn-reach/locations/{locationId}", HttpMethod.DELETE,
+        HttpEntity.EMPTY, InnReachLocationDTO.class, PRE_POPULATED_LOCATION1_ID);
 
-		assertEquals(HttpStatus.NO_CONTENT, responseEntity.getStatusCode());
-	}
+    assertEquals(HttpStatus.NO_CONTENT, responseEntity.getStatusCode());
+  }
 
 	@Test
 	void return404HttpCode_when_deletableInnReachLocationDoesNotExist() {
-		var responseEntity = testRestTemplate.exchange("/locations/{locationId}", HttpMethod.DELETE,
-				HttpEntity.EMPTY, InnReachLocationDTO.class, UUID.randomUUID().toString());
+    var responseEntity = testRestTemplate.exchange("/inn-reach/locations/{locationId}", HttpMethod.DELETE,
+        HttpEntity.EMPTY, InnReachLocationDTO.class, UUID.randomUUID().toString());
 
-		assertEquals(HttpStatus.NOT_FOUND, responseEntity.getStatusCode());
-	}
+    assertEquals(HttpStatus.NOT_FOUND, responseEntity.getStatusCode());
+  }
 
 }

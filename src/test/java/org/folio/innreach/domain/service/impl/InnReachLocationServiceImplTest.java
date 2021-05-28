@@ -17,7 +17,6 @@ import java.util.UUID;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mapstruct.factory.Mappers;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
@@ -28,26 +27,28 @@ import org.springframework.data.domain.PageRequest;
 import org.folio.innreach.domain.entity.InnReachLocation;
 import org.folio.innreach.domain.exception.EntityNotFoundException;
 import org.folio.innreach.dto.InnReachLocationDTO;
+import org.folio.innreach.mapper.DateMapper;
 import org.folio.innreach.mapper.InnReachLocationMapper;
+import org.folio.innreach.mapper.InnReachLocationMapperImpl;
 import org.folio.innreach.repository.InnReachLocationRepository;
 
 class InnReachLocationServiceImplTest {
 
-	@Mock
-	private InnReachLocationRepository innReachLocationRepository;
+  @Mock
+  private InnReachLocationRepository innReachLocationRepository;
 
-	@Spy
-	private final InnReachLocationMapper innReachLocationMapper = Mappers.getMapper(InnReachLocationMapper.class);
+  @Spy
+  private final InnReachLocationMapper innReachLocationMapper = new InnReachLocationMapperImpl(new DateMapper());
 
-	@InjectMocks
-	private InnReachLocationServiceImpl innReachLocationService;
+  @InjectMocks
+  private InnReachLocationServiceImpl innReachLocationService;
 
-	@BeforeEach
-	public void beforeEachSetup() {
-		MockitoAnnotations.initMocks(this);
-	}
+  @BeforeEach
+  public void beforeEachSetup() {
+    MockitoAnnotations.initMocks(this);
+  }
 
-	@Test
+  @Test
 	void createInnReachLocation_when_centralServerIsNew() {
 		var innReachLocationDTO = createInnReachLocationDTO();
 

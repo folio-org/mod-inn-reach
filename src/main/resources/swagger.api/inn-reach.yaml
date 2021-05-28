@@ -3,7 +3,7 @@ info:
   title: INN-Reach API
   version: v1
 servers:
-  - url: /innreach/
+  - url: /inn-reach/
 paths:
   /locations:
     post:
@@ -77,7 +77,7 @@ paths:
       description: Get InnReach location by id
       operationId: getLocationById
       parameters:
-        - $ref: '#/components/parameters/locationId'
+        - $ref: '#/components/parameters/id'
     put:
       responses:
         '200':
@@ -113,7 +113,7 @@ paths:
               $ref: "#/components/schemas/innReachLocationDTO"
         required: true
       parameters:
-        - $ref: '#/components/parameters/locationId'
+        - $ref: '#/components/parameters/id'
     delete:
       responses:
         '204':
@@ -133,9 +133,12 @@ paths:
       description: Delete InnReach location
       operationId: deleteLocation
       parameters:
-        - $ref: '#/components/parameters/locationId'
+        - $ref: '#/components/parameters/id'
 components:
   schemas:
+    UUID:
+      type: string
+      format: uuid
     innReachLocationDTO:
       $ref: schemas/innReachLocationDTO.json
     innReachLocationsDTO:
@@ -144,7 +147,7 @@ components:
       type: object
       properties:
         code:
-          type: int
+          type: integer
         message:
           type: string
         validationErrors:
@@ -154,12 +157,12 @@ components:
     error:
       $ref: schemas/error.json
   parameters:
-    locationId:
-      name: locationId
+    id:
+      name: id
       in: path
       required: true
       schema:
-        $ref: schemas/uuid.json
+        $ref: "#/components/schemas/UUID"
     trait_queryable_query:
       name: query
       in: query

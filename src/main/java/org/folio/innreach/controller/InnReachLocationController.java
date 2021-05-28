@@ -5,7 +5,6 @@ import java.util.UUID;
 import javax.validation.Valid;
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
-import javax.validation.constraints.Pattern;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -25,24 +24,23 @@ import org.folio.innreach.rest.resource.LocationsApi;
 
 @RequiredArgsConstructor
 @RestController
-@RequestMapping("/locations")
+@RequestMapping("/inn-reach/locations")
 public class InnReachLocationController implements LocationsApi {
 
 	private final InnReachLocationService innReachLocationService;
 
+
   @Override
-  @DeleteMapping("/{locationId}")
-  public ResponseEntity<Void> deleteLocation(@PathVariable @Pattern(
-      regexp = "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[89abAB][a-fA-F0-9]{3}-[a-fA-F0-9]{12}$") String locationId) {
-    innReachLocationService.deleteInnReachLocation(UUID.fromString(locationId));
+  @DeleteMapping("/{id}")
+  public ResponseEntity<Void> deleteLocation(@PathVariable UUID id) {
+    innReachLocationService.deleteInnReachLocation(id);
     return ResponseEntity.noContent().build();
   }
 
   @Override
-  @GetMapping("/{locationId}")
-  public ResponseEntity<InnReachLocationDTO> getLocationById(@PathVariable @Pattern(
-      regexp = "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[89abAB][a-fA-F0-9]{3}-[a-fA-F0-9]{12}$") String locationId) {
-    var innReachLocation = innReachLocationService.getInnReachLocation(UUID.fromString(locationId));
+  @GetMapping("/{id}")
+  public ResponseEntity<InnReachLocationDTO> getLocationById(@PathVariable UUID id) {
+    var innReachLocation = innReachLocationService.getInnReachLocation(id);
     return ResponseEntity.ok(innReachLocation);
   }
 
@@ -54,7 +52,6 @@ public class InnReachLocationController implements LocationsApi {
     return ResponseEntity.ok(innReachLocations);
   }
 
-
   @Override
 	@PostMapping
   public ResponseEntity<InnReachLocationDTO> postInnReachLocation(@Valid InnReachLocationDTO innReachLocationDTO) {
@@ -63,13 +60,11 @@ public class InnReachLocationController implements LocationsApi {
 	}
 
   @Override
-  @PutMapping("/{locationId}")
-  public ResponseEntity<InnReachLocationDTO> updateLocation(@PathVariable @Pattern(
-      regexp = "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[1-5][a-fA-F0-9]{3}-[89abAB][a-fA-F0-9]{3}-[a-fA-F0-9]{12}$") String locationId,
+  @PutMapping("/{id}")
+  public ResponseEntity<InnReachLocationDTO> updateLocation(@PathVariable UUID id,
       @Valid InnReachLocationDTO innReachLocationDTO) {
-      var updatedInnReachLocation = innReachLocationService.updateInnReachLocation(UUID.fromString(locationId),
-	      innReachLocationDTO);
-		return ResponseEntity.ok(updatedInnReachLocation);
-	}
+    var updatedInnReachLocation = innReachLocationService.updateInnReachLocation(id, innReachLocationDTO);
+    return ResponseEntity.ok(updatedInnReachLocation);
+  }
 
 }

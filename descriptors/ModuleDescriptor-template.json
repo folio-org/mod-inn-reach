@@ -34,27 +34,27 @@
         },
         {
           "methods": ["POST"],
-          "pathPattern": "/locations",
+          "pathPattern": "/inn-reach/locations",
           "permissionsRequired": ["inn-reach.locations.item.post"]
         },
         {
           "methods": ["GET"],
-          "pathPattern": "/locations",
+          "pathPattern": "/inn-reach/locations",
           "permissionsRequired": ["inn-reach.locations.collection.get"]
         },
         {
           "methods": ["GET"],
-          "pathPattern": "/locations/{locationId}",
+          "pathPattern": "/inn-reach/locations/{locationId}",
           "permissionsRequired": ["inn-reach.locations.item.get"]
         },
         {
           "methods": ["PUT"],
-          "pathPattern": "/locations/{locationId}",
+          "pathPattern": "/inn-reach/locations/{locationId}",
           "permissionsRequired": ["inn-reach.locations.item.put"]
         },
         {
           "methods": ["DELETE"],
-          "pathPattern": "/locations/{locationId}",
+          "pathPattern": "/inn-reach/locations/{locationId}",
           "permissionsRequired": ["inn-reach.locations.item.delete"]
         }
       ]
@@ -116,11 +116,49 @@
       ]
     },
     {
+      "permissionName" : "inn-reach.locations.item.post",
+      "displayName" : "create an inn reach location entry",
+      "description" : "Add an inn reach location entry"
+    },
+    {
+      "permissionName" : "inn-reach.locations.collection.get",
+      "displayName" : "get a collection of inn reach location entries",
+      "description" : "Get a collection of inn reach location entries"
+    },
+    {
+      "permissionName" : "inn-reach.locations.item.get",
+      "displayName" : "get an inn reach location entry",
+      "description" : "Get an inn reach location entry by id"
+    },
+    {
+      "permissionName" : "inn-reach.locations.item.put",
+      "displayName" : "modify an inn reach location entry",
+      "description" : "Modify an inn reach location entry"
+    },
+    {
+      "permissionName" : "inn-reach.locations.item.delete",
+      "displayName" : "delete an inn reach location entry",
+      "description" : "Delete an inn reach location entry by id"
+    },
+    {
+      "permissionName" : "inn-reach.locations.all",
+      "displayName" : "inn reach API module - all permissions of inn reach locations",
+      "description" : "All permissions of inn reach locations scope",
+      "subPermissions" : [
+        "inn-reach.locations.item.post",
+        "inn-reach.locations.collection.get",
+        "inn-reach.locations.item.get",
+        "inn-reach.locations.item.put",
+        "inn-reach.locations.item.delete"
+      ]
+    },
+    {
       "permissionName" : "inn-reach.all",
       "displayName" : "inn reach API module - all permissions",
       "description" : "All permissions for inn reach",
       "subPermissions" : [
-        "inn-reach.central-servers.all"
+        "inn-reach.central-servers.all",
+        "inn-reach.locations.all"
       ]
     }
   ],
