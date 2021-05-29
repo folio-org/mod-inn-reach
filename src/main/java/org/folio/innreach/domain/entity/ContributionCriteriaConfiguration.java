@@ -15,8 +15,11 @@ import javax.persistence.FetchType;
 import javax.persistence.Id;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
+import javax.transaction.Transactional;
 import javax.validation.constraints.NotNull;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -52,6 +55,27 @@ public class ContributionCriteriaConfiguration extends Auditable<String> {
   private Set<ContributionCriteriaStatisticalCodeBehavior> statisticalCodeBehaviors = new HashSet<>();
 
   private Integer updateCounter = 0;
+
+  @Transactional
+  public void updateExcludedLocations(List<ContributionCriteriaExcludedLocation> obtainedNewExcludedLocations) {
+    var excludedLocationsHashCodeBeforeUpdate = getExcludedLocations().hashCode();
+    if (obtainedNewExcludedLocations.size() == 0) getExcludedLocations().clear();
+    else {
+      List<ContributionCriteriaExcludedLocation> locationsForDelete = new ArrayList<>(getExcludedLocations());
+      locationsForDelete.removeAll(obtainedNewExcludedLocations);
+
+      List<ContributionCriteriaExcludedLocation> locationsForAdd = new ArrayList<>(obtainedNewExcludedLocations);
+      locationsForAdd.removeAll(getExcludedLocations());
+
+      locationsForAdd.stream().forEach(excludedLocation -> {
+        excludedLocation.setContributionCriteriaConfiguration(this);
+      });
+
+      getExcludedLocations().removeAll(locationsForDelete);
+      getExcludedLocations().addAll(locationsForAdd);
+    }
+    if (excludedLocationsHashCodeBeforeUpdate != getExcludedLocations().hashCode()) touchUpdateTrigger();
+  }
 
   public void addStatisticalCodeBehavior(@NotNull ContributionCriteriaStatisticalCodeBehavior statisticalCodeBehavior) {
     int hashCodeBeforeUpdate = statisticalCodeBehaviors.hashCode();

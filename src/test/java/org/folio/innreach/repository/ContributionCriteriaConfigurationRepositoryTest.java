@@ -1,6 +1,7 @@
 package org.folio.innreach.repository;
 
 import org.folio.innreach.domain.entity.ContributionCriteriaConfiguration;
+import org.folio.innreach.domain.entity.ContributionCriteriaExcludedLocation;
 import org.folio.innreach.domain.entity.ContributionCriteriaStatisticalCodeBehavior;
 import org.folio.innreach.fixture.CentralServerFixture;
 import org.folio.innreach.fixture.ContributionCriteriaConfigurationFixture;
@@ -8,9 +9,13 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -30,6 +35,7 @@ class ContributionCriteriaConfigurationRepositoryTest extends BaseRepositoryTest
   @Autowired
   private ContributionCriteriaConfigurationRepository contributionCriteriaConfigurationRepository;
 
+  
   @BeforeEach
   void beforeEach() {
     ContributionCriteriaConfiguration criteriaConfiguration
@@ -113,6 +119,58 @@ class ContributionCriteriaConfigurationRepositoryTest extends BaseRepositoryTest
 
     assertEquals(1,modifiedConfiguration.getExcludedLocations().size());
   }
+
+  @Test
+  void updateContributionCriteriaExcludedLocations() {
+    List<ContributionCriteriaExcludedLocation> mockObtainedFromUiService = new ArrayList<>();
+    var criteriaConfiguration
+      = contributionCriteriaConfigurationRepository.findById(UUID.fromString(CENTRAL_SERVER_ID)).get();
+    var quantityOfExcludedLocationsId = criteriaConfiguration.getExcludedLocations().size();
+    assertEquals(3,criteriaConfiguration.getExcludedLocations().size());
+    for (int i = 0; i < 5 ; i++) {
+      ContributionCriteriaExcludedLocation excludedLocation = new ContributionCriteriaExcludedLocation();
+      excludedLocation.setExcludedLocationId(UUID.randomUUID());
+      mockObtainedFromUiService.add(excludedLocation);
+    }
+    criteriaConfiguration.updateExcludedLocations(mockObtainedFromUiService);
+    contributionCriteriaConfigurationRepository.saveAndFlush(criteriaConfiguration);
+    criteriaConfiguration
+      = contributionCriteriaConfigurationRepository.findById(UUID.fromString(CENTRAL_SERVER_ID)).get();
+    assertEquals(5,criteriaConfiguration.getExcludedLocations().size());
+    assertEquals(0,differenceBetveenExcludedLocationsCollections(mockObtainedFromUiService,criteriaConfiguration.getExcludedLocations().stream().collect(Collectors.toList())).size());
+
+    mockObtainedFromUiService.remove(0);
+    mockObtainedFromUiService.remove(0);
+    UUUID_IDs.stream().forEach(uuid -> {
+      ContributionCriteriaExcludedLocation excludedLocation
+        = new ContributionCriteriaExcludedLocation();
+      excludedLocation.setExcludedLocationId(uuid);
+      mockObtainedFromUiService.add(excludedLocation);
+    });
+    criteriaConfiguration.updateExcludedLocations(mockObtainedFromUiService);
+    contributionCriteriaConfigurationRepository.saveAndFlush(criteriaConfiguration);
+    criteriaConfiguration
+      = contributionCriteriaConfigurationRepository.findById(UUID.fromString(CENTRAL_SERVER_ID)).get();
+    assertEquals(5-2+UUUID_IDs.size(),criteriaConfiguration.getExcludedLocations().size());
+    assertEquals(0,differenceBetveenExcludedLocationsCollections(mockObtainedFromUiService,criteriaConfiguration.getExcludedLocations().stream().collect(Collectors.toList())).size());
+
+    mockObtainedFromUiService.clear();
+    criteriaConfiguration.updateExcludedLocations(mockObtainedFromUiService);
+    contributionCriteriaConfigurationRepository.saveAndFlush(criteriaConfiguration);
+    criteriaConfiguration
+      = contributionCriteriaConfigurationRepository.findById(UUID.fromString(CENTRAL_SERVER_ID)).get();
+    assertEquals(0,criteriaConfiguration.getExcludedLocations().size());
+    assertEquals(0,differenceBetveenExcludedLocationsCollections(mockObtainedFromUiService,criteriaConfiguration.getExcludedLocations().stream().collect(Collectors.toList())).size());
+  }
+
+  List<UUID> differenceBetveenExcludedLocationsCollections(List<ContributionCriteriaExcludedLocation> input, List<ContributionCriteriaExcludedLocation> saved) {
+    List<UUID> inputIds = input.stream().map(inp -> inp.getExcludedLocationId()).collect(Collectors.toList());
+    List<UUID> savedIds = saved.stream().map(sav -> sav.getExcludedLocationId()).collect(Collectors.toList());
+    List<UUID> diff1 = inputIds.stream().filter(uuid -> !savedIds.contains(uuid)).collect(Collectors.toList());
+    List<UUID> diff2 = savedIds.stream().filter(uuid -> !inputIds.contains(uuid)).collect(Collectors.toList());
+    return Stream.concat(diff1.stream(),diff2.stream()).collect(Collectors.toList());
+  }
+
 
   @Test
   void addContributionCriteriaStatisticalCodeBehavior() {
