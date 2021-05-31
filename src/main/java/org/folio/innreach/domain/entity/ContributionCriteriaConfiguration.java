@@ -19,14 +19,13 @@ import javax.validation.constraints.NotNull;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Log4j2
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter
 @Setter
-@EqualsAndHashCode(exclude = {"createdBy","createdDate","lastModifiedBy","lastModifiedDate","excludedLocations","updateCounter","statisticalCodeBehaviors"})
+@EqualsAndHashCode(exclude = {"createdBy", "createdDate", "lastModifiedBy", "lastModifiedDate", "excludedLocations", "updateCounter", "statisticalCodeBehaviors"})
 
 @Entity
 @Table(name = "contribution_criteria_configuration")
@@ -54,29 +53,16 @@ public class ContributionCriteriaConfiguration extends Auditable<String> {
   private Integer updateCounter = 0;
 
   public void addExcludedLocation(@NotNull ContributionCriteriaExcludedLocation excludedLocationForAdd) {
-    var ifLocationIsNotInSet = this.excludedLocations.stream().
-      filter(excludedLocation -> excludedLocation.getExcludedLocationId().equals(excludedLocationForAdd.getExcludedLocationId())).findAny().isEmpty();
-    if (ifLocationIsNotInSet) {
-      int hashCodeBeforeUpdate = excludedLocations.hashCode();
-      excludedLocations.add(excludedLocationForAdd);
-      if (hashCodeBeforeUpdate != excludedLocations.hashCode()) touchUpdateTrigger();
-    } else {
-      log.error("Excluded location already exist. UUID: " + excludedLocationForAdd);
-      throw new RuntimeException("Excluded location already exist. UUID: " + excludedLocationForAdd);
-    }
+    int hashCodeBeforeUpdate = excludedLocations.hashCode();
+    excludedLocations.add(excludedLocationForAdd);
+    if (hashCodeBeforeUpdate != excludedLocations.hashCode()) touchUpdateTrigger();
   }
 
   public void removeExcludedLocation(@NotNull ContributionCriteriaExcludedLocation excludedLocationForRemove) {
     int hashCodeBeforeUpdate = excludedLocations.hashCode();
     excludedLocations.remove(excludedLocationForRemove);
-//    excludedLocations.removeAll(getExcludedLocations().stream()
-//      .filter(excludedLocation -> excludedLocation.getExcludedLocationId().equals(excludedLocationForRemove.getExcludedLocationId()))
-//      .collect(Collectors.toSet()));
     if (hashCodeBeforeUpdate != excludedLocations.hashCode()) touchUpdateTrigger();
   }
-
-
-
 
   public void addStatisticalCodeBehavior(@NotNull ContributionCriteriaStatisticalCodeBehavior statisticalCodeBehavior) {
     int hashCodeBeforeUpdate = statisticalCodeBehaviors.hashCode();
@@ -85,13 +71,9 @@ public class ContributionCriteriaConfiguration extends Auditable<String> {
     if (hashCodeBeforeUpdate != statisticalCodeBehaviors.hashCode()) touchUpdateTrigger();
   }
 
-
   public void removeStatisticalCondeBehavior(@NotNull ContributionCriteriaStatisticalCodeBehavior statisticalCodeBehaviorForRemove) {
     int hashCodeBeforeUpdate = statisticalCodeBehaviors.hashCode();
     statisticalCodeBehaviors.remove(statisticalCodeBehaviorForRemove);
-//    statisticalCodeBehaviors.removeAll(getStatisticalCodeBehaviors().stream()
-//      .filter(statisticalCodeBehavior -> statisticalCodeBehavior.getStatisticalCodeId().equals(statisticalCodeBehaviorForRemove.getStatisticalCodeId()))
-//      .collect(Collectors.toSet()));
     if (hashCodeBeforeUpdate != statisticalCodeBehaviors.hashCode()) touchUpdateTrigger();
   }
 
