@@ -42,7 +42,10 @@ public class CentralServerServiceImpl implements CentralServerService {
 
     centralServer.getLocalAgencies().forEach(la -> la.setCentralServer(centralServer));
 
-    hashAndSaltLocalServerCredentials(centralServer.getLocalServerCredentials());
+    var localServerCredentials = centralServer.getLocalServerCredentials();
+    if (localServerCredentials != null) {
+      hashAndSaltLocalServerCredentials(localServerCredentials);
+    }
 
     var createdCentralServer = centralServerRepository.save(centralServer);
 
@@ -96,7 +99,10 @@ public class CentralServerServiceImpl implements CentralServerService {
 
     updateCentralServerCredentials(centralServer, updatedCentralServer.getCentralServerCredentials());
 
-    updateLocalServerCredentials(centralServer, updatedCentralServer.getLocalServerCredentials());
+    var updatedLocalServerCredentials = updatedCentralServer.getLocalServerCredentials();
+    if (updatedLocalServerCredentials != null) {
+      updateLocalServerCredentials(centralServer, updatedLocalServerCredentials);
+    }
 
     updateLocalAgencies(centralServer, updatedCentralServer);
 
