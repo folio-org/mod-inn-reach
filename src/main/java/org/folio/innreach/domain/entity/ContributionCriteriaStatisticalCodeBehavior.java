@@ -26,7 +26,7 @@ import java.util.UUID;
 @AllArgsConstructor
 @Getter
 @Setter
-@EqualsAndHashCode(exclude = {"statistical_code_id", "contributionBehavior", "contributionCriteriaConfiguration"})
+@EqualsAndHashCode(exclude = {"id","contributionCriteriaConfiguration"})
 public class ContributionCriteriaStatisticalCodeBehavior {
   @Id
   @GeneratedValue(strategy = GenerationType.AUTO)
@@ -41,10 +41,4 @@ public class ContributionCriteriaStatisticalCodeBehavior {
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "criteria_configuration_id")
   private ContributionCriteriaConfiguration contributionCriteriaConfiguration;
-
-  public static enum ContributionBehavior {
-    contributeButSuppress,
-    contributeAsSystemOwned,
-    doNotContribute
-  }
 }

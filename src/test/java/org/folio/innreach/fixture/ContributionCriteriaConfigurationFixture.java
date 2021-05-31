@@ -1,7 +1,9 @@
 package org.folio.innreach.fixture;
 
 import lombok.experimental.UtilityClass;
+import org.folio.innreach.domain.entity.ContributionBehavior;
 import org.folio.innreach.domain.entity.ContributionCriteriaConfiguration;
+import org.folio.innreach.domain.entity.ContributionCriteriaExcludedLocation;
 import org.folio.innreach.domain.entity.ContributionCriteriaStatisticalCodeBehavior;
 
 import java.util.UUID;
@@ -25,11 +27,13 @@ public class ContributionCriteriaConfigurationFixture {
     ContributionCriteriaConfiguration configuration = new ContributionCriteriaConfiguration();
     configuration.setCentralServeId(centralServerId == null ? CENTRAL_SERVER_UUID : centralServerId);
     for (int i = 0; i < EXCLUDED_LOCATION_IDs.length; i++) {
-      configuration.addExcludedLocationId(UUID.fromString(EXCLUDED_LOCATION_IDs[i]));
+      ContributionCriteriaExcludedLocation excludedLocation = new ContributionCriteriaExcludedLocation();
+      excludedLocation.setExcludedLocationId(UUID.fromString(EXCLUDED_LOCATION_IDs[i]));
+      configuration.addExcludedLocation(excludedLocation);
     }
     for (int i = 0; i < STATISTICAL_CODE_IDs.length; i++) {
       ContributionCriteriaStatisticalCodeBehavior statisticalCodeBehavior = new ContributionCriteriaStatisticalCodeBehavior();
-      statisticalCodeBehavior.setContributionBehavior(ContributionCriteriaStatisticalCodeBehavior.ContributionBehavior.values()[i]);
+      statisticalCodeBehavior.setContributionBehavior(ContributionBehavior.values()[i]);
       statisticalCodeBehavior.setStatisticalCodeId(UUID.fromString(STATISTICAL_CODE_IDs[i]));
       configuration.addStatisticalCodeBehavior(statisticalCodeBehavior);
     }

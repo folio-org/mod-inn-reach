@@ -25,7 +25,7 @@ import java.util.UUID;
 @Getter
 @Setter
 
-@EqualsAndHashCode(exclude = {"contributionCriteriaConfiguration", "id"})
+@EqualsAndHashCode(exclude = {"id","contributionCriteriaConfiguration"})
 public class ContributionCriteriaExcludedLocation {
   @Id
   @GeneratedValue(strategy = GenerationType.AUTO)
