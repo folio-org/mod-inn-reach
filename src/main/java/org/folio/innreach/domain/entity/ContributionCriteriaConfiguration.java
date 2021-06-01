@@ -54,6 +54,7 @@ public class ContributionCriteriaConfiguration extends Auditable<String> {
 
   public void addExcludedLocation(@NotNull ContributionCriteriaExcludedLocation excludedLocationForAdd) {
     int hashCodeBeforeUpdate = excludedLocations.hashCode();
+    excludedLocationForAdd.setContributionCriteriaConfiguration(this);
     excludedLocations.add(excludedLocationForAdd);
     if (hashCodeBeforeUpdate != excludedLocations.hashCode()) touchUpdateTrigger();
   }
@@ -61,6 +62,7 @@ public class ContributionCriteriaConfiguration extends Auditable<String> {
   public void removeExcludedLocation(@NotNull ContributionCriteriaExcludedLocation excludedLocationForRemove) {
     int hashCodeBeforeUpdate = excludedLocations.hashCode();
     excludedLocations.remove(excludedLocationForRemove);
+    excludedLocationForRemove.setContributionCriteriaConfiguration(null);
     if (hashCodeBeforeUpdate != excludedLocations.hashCode()) touchUpdateTrigger();
   }
 
@@ -74,6 +76,7 @@ public class ContributionCriteriaConfiguration extends Auditable<String> {
   public void removeStatisticalCondeBehavior(@NotNull ContributionCriteriaStatisticalCodeBehavior statisticalCodeBehaviorForRemove) {
     int hashCodeBeforeUpdate = statisticalCodeBehaviors.hashCode();
     statisticalCodeBehaviors.remove(statisticalCodeBehaviorForRemove);
+    statisticalCodeBehaviorForRemove.setContributionCriteriaConfiguration(null);
     if (hashCodeBeforeUpdate != statisticalCodeBehaviors.hashCode()) touchUpdateTrigger();
   }
 
@@ -84,5 +87,4 @@ public class ContributionCriteriaConfiguration extends Auditable<String> {
       updateCounter = Integer.MIN_VALUE;
     }
   }
-
 }
