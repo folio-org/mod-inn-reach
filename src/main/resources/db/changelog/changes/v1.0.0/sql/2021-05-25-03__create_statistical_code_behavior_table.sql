@@ -1,4 +1,4 @@
-CREATE TABLE public.statistical_code_behavior
+CREATE TABLE statistical_code_behavior
 (
     id UUID NOT NULL,
     contribution_behavior VARCHAR(30),

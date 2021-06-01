@@ -52,28 +52,28 @@ public class ContributionCriteriaConfiguration extends Auditable<String> {
 
   private Integer updateCounter = 0;
 
-  public void addExcludedLocation(@NotNull ContributionCriteriaExcludedLocation excludedLocationForAdd) {
+  public void addExcludedLocation(ContributionCriteriaExcludedLocation excludedLocationForAdd) {
     int hashCodeBeforeUpdate = excludedLocations.hashCode();
     excludedLocationForAdd.setContributionCriteriaConfiguration(this);
     excludedLocations.add(excludedLocationForAdd);
     if (hashCodeBeforeUpdate != excludedLocations.hashCode()) touchUpdateTrigger();
   }
 
-  public void removeExcludedLocation(@NotNull ContributionCriteriaExcludedLocation excludedLocationForRemove) {
+  public void removeExcludedLocation(ContributionCriteriaExcludedLocation excludedLocationForRemove) {
     int hashCodeBeforeUpdate = excludedLocations.hashCode();
     excludedLocations.remove(excludedLocationForRemove);
     excludedLocationForRemove.setContributionCriteriaConfiguration(null);
     if (hashCodeBeforeUpdate != excludedLocations.hashCode()) touchUpdateTrigger();
   }
 
-  public void addStatisticalCodeBehavior(@NotNull ContributionCriteriaStatisticalCodeBehavior statisticalCodeBehavior) {
+  public void addStatisticalCodeBehavior(ContributionCriteriaStatisticalCodeBehavior statisticalCodeBehavior) {
     int hashCodeBeforeUpdate = statisticalCodeBehaviors.hashCode();
     statisticalCodeBehavior.setContributionCriteriaConfiguration(this);
     statisticalCodeBehaviors.add(statisticalCodeBehavior);
     if (hashCodeBeforeUpdate != statisticalCodeBehaviors.hashCode()) touchUpdateTrigger();
   }
 
-  public void removeStatisticalCondeBehavior(@NotNull ContributionCriteriaStatisticalCodeBehavior statisticalCodeBehaviorForRemove) {
+  public void removeStatisticalCondeBehavior(ContributionCriteriaStatisticalCodeBehavior statisticalCodeBehaviorForRemove) {
     int hashCodeBeforeUpdate = statisticalCodeBehaviors.hashCode();
     statisticalCodeBehaviors.remove(statisticalCodeBehaviorForRemove);
     statisticalCodeBehaviorForRemove.setContributionCriteriaConfiguration(null);

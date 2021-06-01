@@ -1,4 +1,4 @@
-CREATE TABLE public.contribution_criteria_excluded_location
+CREATE TABLE contribution_criteria_excluded_location
 (
     id uuid NOT NULL,
     excluded_location_id uuid,
