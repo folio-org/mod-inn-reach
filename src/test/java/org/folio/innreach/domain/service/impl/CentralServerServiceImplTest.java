@@ -49,6 +49,8 @@ class CentralServerServiceImplTest {
   @BeforeEach
   public void beforeEachSetup() {
     MockitoAnnotations.initMocks(this);
+
+    when(passwordEncoder.encode(any())).thenReturn("qwerty");
   }
 
   @Test
@@ -130,6 +132,21 @@ class CentralServerServiceImplTest {
 
     assertThrows(EntityNotFoundException.class,
       () -> centralServerService.deleteCentralServer(UUID.randomUUID()));
+  }
+
+  @Test
+  void updateCentralServerWithNewLocalServerCredentials_when_CentralServerExists() {
+    var centralServer = createCentralServer();
+    centralServer.setLocalServerCredentials(null);
+
+    when(centralServerRepository.fetchOne(any())).thenReturn(Optional.of(centralServer));
+
+    var centralServerDTO = centralServerService.updateCentralServer(any(), createCentralServerDTO());
+
+    verify(centralServerRepository).fetchOne(any());
+
+    assertNotNull(centralServerDTO.getLocalServerKey());
+    assertNotNull(centralServerDTO.getLocalServerSecret());
   }
 
 }

@@ -37,7 +37,9 @@
       src/main/java/org/folio/innreach/ModInnReachApplication.java,
       src/main/java/org/folio/innreach/domain/entity/**,
       src/main/java/org/folio/innreach/domain/dto/**,
-      src/main/java/org/folio/innreach/repository/**
+      src/main/java/org/folio/innreach/repository/**,
+      src/main/java/org/folio/innreach/external/dto/**,
+      src/main/java/org/folio/innreach/rest/**
     </sonar.exclusions>
   </properties>
 
