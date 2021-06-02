@@ -65,7 +65,7 @@ public class CentralServerServiceImpl implements CentralServerService {
 
   private void hashAndSaltLocalServerCredentials(LocalServerCredentials localServerCredentials) {
     localServerCredentials.setLocalServerSecret(passwordEncoder.encode(localServerCredentials.getLocalServerSecret()));
-    localServerCredentials.setCentralServerSecretSalt(passwordEncoder.encode(UUID.randomUUID().toString()));
+    localServerCredentials.setLocalServerSecretSalt(passwordEncoder.encode(UUID.randomUUID().toString()));
   }
 
   @Override
@@ -128,15 +128,25 @@ public class CentralServerServiceImpl implements CentralServerService {
   private void updateLocalServerCredentials(CentralServer centralServer, LocalServerCredentials updatedLocalServerCredentials) {
     var localServerCredentials = centralServer.getLocalServerCredentials();
 
-    // credentials should be REhashed & REsalted only if they ACTUALLY were updated
-    if (!localServerCredentials.getLocalServerSecret().equals(updatedLocalServerCredentials.getLocalServerSecret())) {
-      log.debug("Local server credentials were updated, perform REhashing and REsalting of the updated credentials");
+    if (localServerCredentials == null) {
+      log.debug("Local server credentials didn't exist. Save new and perform hashing, salting.");
       hashAndSaltLocalServerCredentials(updatedLocalServerCredentials);
-      localServerCredentials.setCentralServerSecretSalt(updatedLocalServerCredentials.getCentralServerSecretSalt());
-    }
+      centralServer.setLocalServerCredentials(updatedLocalServerCredentials);
 
-    localServerCredentials.setLocalServerKey(updatedLocalServerCredentials.getLocalServerKey());
-    localServerCredentials.setLocalServerSecret(updatedLocalServerCredentials.getLocalServerSecret());
+    } else if (existingCredentialsShouldBeUpdated(localServerCredentials, updatedLocalServerCredentials)) {
+      log.debug("Local server credentials existed. Update and perform re-hashing and re-salting.");
+      hashAndSaltLocalServerCredentials(updatedLocalServerCredentials);
+
+      localServerCredentials.setLocalServerSecretSalt(updatedLocalServerCredentials.getLocalServerSecretSalt());
+      localServerCredentials.setLocalServerKey(updatedLocalServerCredentials.getLocalServerKey());
+      localServerCredentials.setLocalServerSecret(updatedLocalServerCredentials.getLocalServerSecret());
+    }
+  }
+
+  private boolean existingCredentialsShouldBeUpdated(LocalServerCredentials localServerCredentials,
+      LocalServerCredentials updatedLocalServerCredentials) {
+    // LocalServerCredentials need to be re-hashed and re-salted only if they have been updated
+    return !localServerCredentials.getLocalServerSecret().equals(updatedLocalServerCredentials.getLocalServerSecret());
   }
 
   private void updateLocalAgencies(CentralServer centralServer, CentralServer updatedCentralServer) {
