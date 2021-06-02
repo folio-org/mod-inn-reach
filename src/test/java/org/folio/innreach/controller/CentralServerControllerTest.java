@@ -48,6 +48,23 @@ class CentralServerControllerTest extends BaseControllerTest {
 
   @Test
   @Sql(scripts = "classpath:db/central-server/clear-central-server-tables.sql")
+  void return200HttpCode_and_createdCentralServerEntity_when_createCentralServerWithoutLocalServerCredentials() {
+    var centralServerRequestDTO = deserializeFromJsonFile(
+      "/central-server/create-central-server-without-local-server-credentials-request.json", CentralServerDTO.class);
+
+    var responseEntity = testRestTemplate.postForEntity(
+      "/inn-reach/central-servers", centralServerRequestDTO, CentralServerDTO.class);
+
+    assertTrue(responseEntity.getStatusCode().is2xxSuccessful());
+    assertTrue(responseEntity.hasBody());
+
+    var createdCentralServer = responseEntity.getBody();
+
+    assertEquals(centralServerRequestDTO, createdCentralServer);
+  }
+
+  @Test
+  @Sql(scripts = "classpath:db/central-server/clear-central-server-tables.sql")
   void return400HttpCode_when_requestDataIsInvalid() {
     var centralServerRequestDTO = deserializeFromJsonFile(
       "/central-server/create-central-server-invalid-request.json", CentralServerDTO.class);
