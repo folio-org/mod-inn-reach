@@ -5,6 +5,163 @@ info:
 servers:
   - url: /inn-reach/
 paths:
+  /central-servers/{centralServerId}/material-type-mappings:
+    get:
+      responses:
+        '200':
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/materialTypeMappingsDTO"
+        '400':
+          description:
+            Bad request, e.g. malformed request body or query parameter.
+            Details of the error (e.g. name of the parameter or line/character number
+            with malformed data) provided in the response.
+          content:
+            application/json:
+              example:
+                $ref: "#/components/examples/error"
+              schema:
+                $ref: "#/components/schemas/error"
+        '404':
+          description: Material type mappings is not found for the given central server
+          content:
+            application/json:
+              example:
+                $ref: "#/components/examples/error"
+              schema:
+                $ref: "#/components/schemas/error"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/error"
+      description: Get a list of material type mappings for the given central server
+      operationId: getMaterialTypeMappingsByServerId
+      parameters:
+        - $ref: "#/components/parameters/centralServerId"
+        - $ref: "#/components/parameters/trait_pageable_offset"
+        - $ref: "#/components/parameters/trait_pageable_limit"
+    post:
+      responses:
+        '201':
+          description: Material type mapping created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/materialTypeMappingDTO"
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              example:
+                $ref: "#/components/examples/error"
+              schema:
+                $ref: "#/components/schemas/error"
+        '500':
+          description: Internal server error
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: Internal server error
+      description: Add new material type mapping associated with the central server
+      operationId: postMaterialTypeMapping
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/materialTypeMappingDTO"
+        required: true
+      parameters:
+        - $ref: "#/components/parameters/centralServerId"
+  /central-servers/{centralServerId}/material-type-mappings/{id}:
+    get:
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/materialTypeMappingDTO"
+        '404':
+          description: Material type mapping not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/error"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/error"
+      description: Get material type mapping by id
+      operationId: getMaterialTypeMappingById
+      parameters:
+        - $ref: "#/components/parameters/centralServerId"
+        - $ref: "#/components/parameters/id"
+    put:
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/materialTypeMappingDTO"
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/validationErrorsDTO"
+        '404':
+          description: Material type mapping not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/error"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/error"
+      description: Update material type mapping
+      operationId: updateMaterialTypeMapping
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/materialTypeMappingDTO"
+        required: true
+      parameters:
+        - $ref: "#/components/parameters/centralServerId"
+        - $ref: "#/components/parameters/id"
+    delete:
+      responses:
+        '204':
+          description: No content
+        '404':
+          description: Material type mapping not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/error"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/error"
+      description: Delete material type mapping
+      operationId: deleteMaterialTypeMapping
+      parameters:
+        - $ref: "#/components/parameters/centralServerId"
+        - $ref: "#/components/parameters/id"
   /locations:
     post:
       responses:
@@ -154,11 +311,21 @@ components:
           type: array
           items:
             $ref: schemas/validationErrorDTO.json
+    materialTypeMappingDTO:
+      $ref: schemas/materialTypeMappingDTO.json
+    materialTypeMappingsDTO:
+      $ref: schemas/materialTypeMappingsDTO.json
     error:
       $ref: schemas/error.json
   parameters:
     id:
       name: id
+      in: path
+      required: true
+      schema:
+        $ref: "#/components/schemas/UUID"
+    centralServerId:
+      name: centralServerId
       in: path
       required: true
       schema:
@@ -187,3 +354,7 @@ components:
         minimum: 0
         maximum: 2147483647
         type: integer
+  examples:
+    error:
+      value:
+        $ref: examples/error.sample
