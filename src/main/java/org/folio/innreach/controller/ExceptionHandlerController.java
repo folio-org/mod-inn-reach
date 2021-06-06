@@ -3,6 +3,7 @@ package org.folio.innreach.controller;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import lombok.extern.log4j.Log4j2;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -16,6 +17,7 @@ import org.folio.innreach.dto.ValidationErrorDTO;
 import org.folio.innreach.dto.ValidationErrorsDTO;
 import org.folio.innreach.external.exception.InnReachException;
 
+@Log4j2
 @RestControllerAdvice
 public class ExceptionHandlerController {
 
@@ -60,6 +62,8 @@ public class ExceptionHandlerController {
   @ExceptionHandler(Exception.class)
   @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
   public Error handleException(Exception e) {
+    log.error("Unexpected exception: " + e.getMessage(), e);
+
     return createError(HttpStatus.INTERNAL_SERVER_ERROR.toString(), e.getMessage());
   }
 
