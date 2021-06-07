@@ -18,17 +18,14 @@ import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 import java.util.UUID;
 
-@Entity
-@Table(name = "contribution_criteria_excluded_location")
-
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter
 @Setter
 
-@EqualsAndHashCode(exclude = {"id","contributionCriteriaConfiguration"})
+@EqualsAndHashCode(of = {"excludedLocationId"})
 public class ContributionCriteriaExcludedLocationDTO {
   private UUID id;
   private UUID excludedLocationId;
-  private ContributionCriteriaConfiguration contributionCriteriaConfiguration;
+//  private ContributionCriteriaConfiguration contributionCriteriaConfiguration;
 }
