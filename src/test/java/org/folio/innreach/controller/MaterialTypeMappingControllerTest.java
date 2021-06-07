@@ -8,6 +8,7 @@ import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TEST_METHOD;
 
 import static org.folio.innreach.fixture.TestUtil.deserializeFromJsonFile;
 import static org.folio.innreach.fixture.TestUtil.randomUUIDString;
@@ -31,6 +32,12 @@ import org.folio.innreach.dto.MaterialTypeMappingsDTO;
 import org.folio.innreach.mapper.MaterialTypeMappingMapper;
 import org.folio.innreach.repository.MaterialTypeMappingRepository;
 
+@Sql(
+  scripts = {
+    "classpath:db/mtype-mapping/clear-material-type-mapping-table.sql",
+    "classpath:db/central-server/clear-central-server-tables.sql"},
+  executionPhase = AFTER_TEST_METHOD
+)
 class MaterialTypeMappingControllerTest extends BaseControllerTest {
 
   private static final String PRE_POPULATED_CENTRAL_SERVER_ID = "edab6baf-c696-42b1-89bb-1bbb8759b0d2";
@@ -45,8 +52,6 @@ class MaterialTypeMappingControllerTest extends BaseControllerTest {
 
   @Test
   @Sql(scripts = {
-      "classpath:db/mtype-mapping/clear-material-type-mapping-table.sql",
-      "classpath:db/central-server/clear-central-server-tables.sql",
       "classpath:db/central-server/pre-populate-central-server.sql",
       "classpath:db/mtype-mapping/pre-populate-material-type-mapping.sql"
   })
@@ -69,8 +74,6 @@ class MaterialTypeMappingControllerTest extends BaseControllerTest {
 
   @Test
   @Sql(scripts = {
-      "classpath:db/mtype-mapping/clear-material-type-mapping-table.sql",
-      "classpath:db/central-server/clear-central-server-tables.sql",
       "classpath:db/central-server/pre-populate-central-server.sql",
   })
   void shouldGetEmptyMappingsWith0TotalIfNotSetForCentralServer() {
