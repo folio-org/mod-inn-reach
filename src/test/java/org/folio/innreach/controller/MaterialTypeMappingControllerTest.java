@@ -14,7 +14,6 @@ import static org.folio.innreach.fixture.TestUtil.randomUUIDString;
 
 import java.util.List;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,16 +43,10 @@ class MaterialTypeMappingControllerTest extends BaseControllerTest {
   private MaterialTypeMappingMapper mapper;
 
 
-  @AfterEach
-  @Sql(scripts = {
-      "classpath:db/mtype-mapping/clear-material-type-mapping-table.sql",
-      "classpath:db/central-server/clear-central-server-tables.sql"
-  })
-  void tearDown() {
-  }
-
   @Test
   @Sql(scripts = {
+      "classpath:db/mtype-mapping/clear-material-type-mapping-table.sql",
+      "classpath:db/central-server/clear-central-server-tables.sql",
       "classpath:db/central-server/pre-populate-central-server.sql",
       "classpath:db/mtype-mapping/pre-populate-material-type-mapping.sql"
   })
@@ -76,6 +69,8 @@ class MaterialTypeMappingControllerTest extends BaseControllerTest {
 
   @Test
   @Sql(scripts = {
+      "classpath:db/mtype-mapping/clear-material-type-mapping-table.sql",
+      "classpath:db/central-server/clear-central-server-tables.sql",
       "classpath:db/central-server/pre-populate-central-server.sql",
   })
   void shouldGetEmptyMappingsWith0TotalIfNotSetForCentralServer() {
