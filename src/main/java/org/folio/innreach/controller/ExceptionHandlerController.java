@@ -3,6 +3,9 @@ package org.folio.innreach.controller;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import javax.validation.ConstraintViolation;
+import javax.validation.ConstraintViolationException;
+
 import lombok.extern.log4j.Log4j2;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.FieldError;
@@ -29,28 +32,27 @@ public class ExceptionHandlerController {
 
   @ExceptionHandler(MethodArgumentNotValidException.class)
   @ResponseStatus(HttpStatus.BAD_REQUEST)
-  public ValidationErrorsDTO handleValidationException(MethodArgumentNotValidException e) {
-    var validationErrorsDTO = new ValidationErrorsDTO();
-    validationErrorsDTO.setCode(HttpStatus.BAD_REQUEST.value());
-    validationErrorsDTO.setMessage("Validation failed");
+  public ValidationErrorsDTO handleMethodArgumentNotValidException(MethodArgumentNotValidException e) {
+    var validationErrorsDTO = createValidationErrors();
     validationErrorsDTO.setValidationErrors(collectValidationErrors(e));
 
     return validationErrorsDTO;
   }
 
-  private List<ValidationErrorDTO> collectValidationErrors(MethodArgumentNotValidException e) {
-    return e.getBindingResult()
-	    .getFieldErrors()
-      .stream()
-      .map(this::mapFieldErrorToValidationError)
-      .collect(Collectors.toList());
-  }
+  @ExceptionHandler(ConstraintViolationException.class)
+  @ResponseStatus(HttpStatus.BAD_REQUEST)
+  public ValidationErrorsDTO handleConstraintValidationException(ConstraintViolationException e) {
+    var errors = createValidationErrors();
 
-  private ValidationErrorDTO mapFieldErrorToValidationError(FieldError fieldError) {
-    var validationErrorDTO = new ValidationErrorDTO();
-    validationErrorDTO.setFieldName(fieldError.getField());
-    validationErrorDTO.setMessage(fieldError.getDefaultMessage());
-    return validationErrorDTO;
+    for (ConstraintViolation<?> violation : e.getConstraintViolations()) {
+      var fieldError = new ValidationErrorDTO();
+      fieldError.setFieldName(violation.getPropertyPath().toString());
+      fieldError.setMessage(violation.getMessage());
+
+      errors.addValidationErrorsItem(fieldError);
+    }
+
+    return errors;
   }
 
   @ExceptionHandler(InnReachException.class)
@@ -65,6 +67,28 @@ public class ExceptionHandlerController {
     log.error("Unexpected exception: " + e.getMessage(), e);
 
     return createError(HttpStatus.INTERNAL_SERVER_ERROR.toString(), e.getMessage());
+  }
+
+  private ValidationErrorsDTO createValidationErrors() {
+    var errors = new ValidationErrorsDTO();
+    errors.setCode(HttpStatus.BAD_REQUEST.value());
+    errors.setMessage("Validation failed");
+    return errors;
+  }
+
+  private List<ValidationErrorDTO> collectValidationErrors(MethodArgumentNotValidException e) {
+    return e.getBindingResult()
+        .getFieldErrors()
+        .stream()
+        .map(this::mapFieldErrorToValidationError)
+        .collect(Collectors.toList());
+  }
+
+  private ValidationErrorDTO mapFieldErrorToValidationError(FieldError fieldError) {
+    var validationErrorDTO = new ValidationErrorDTO();
+    validationErrorDTO.setFieldName(fieldError.getField());
+    validationErrorDTO.setMessage(fieldError.getDefaultMessage());
+    return validationErrorDTO;
   }
 
   private Error createError(String code, String message) {

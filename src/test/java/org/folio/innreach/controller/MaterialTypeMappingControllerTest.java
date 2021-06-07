@@ -1,13 +1,16 @@
 package org.folio.innreach.controller;
 
 
+import static java.util.Collections.singletonList;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.springframework.http.HttpStatus.BAD_REQUEST;
 import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TEST_METHOD;
 import static org.springframework.test.context.jdbc.SqlMergeMode.MergeMode.MERGE;
 
@@ -15,6 +18,9 @@ import static org.folio.innreach.fixture.TestUtil.deserializeFromJsonFile;
 import static org.folio.innreach.fixture.TestUtil.randomUUIDString;
 
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -31,6 +37,8 @@ import org.folio.innreach.domain.dto.CentralServerDTO;
 import org.folio.innreach.domain.entity.MaterialTypeMapping;
 import org.folio.innreach.dto.MaterialTypeMappingDTO;
 import org.folio.innreach.dto.MaterialTypeMappingsDTO;
+import org.folio.innreach.dto.ValidationErrorDTO;
+import org.folio.innreach.dto.ValidationErrorsDTO;
 import org.folio.innreach.mapper.MaterialTypeMappingMapper;
 import org.folio.innreach.repository.MaterialTypeMappingRepository;
 
@@ -44,6 +52,7 @@ import org.folio.innreach.repository.MaterialTypeMappingRepository;
 class MaterialTypeMappingControllerTest extends BaseControllerTest {
 
   private static final String PRE_POPULATED_CENTRAL_SERVER_ID = "edab6baf-c696-42b1-89bb-1bbb8759b0d2";
+  private static final String PRE_POPULATED_MAPPING2_ID = "d9985d0d-b121-4ccd-ac16-5ebd0ccccf7f";
 
   @Autowired
   private TestRestTemplate testRestTemplate;
@@ -58,7 +67,7 @@ class MaterialTypeMappingControllerTest extends BaseControllerTest {
       "classpath:db/central-server/pre-populate-central-server.sql",
       "classpath:db/mtype-mapping/pre-populate-material-type-mapping.sql"
   })
-  void shouldGetAllExistingMappingsForCentralServer() {
+  void shouldGetAllExistingMappings() {
     var responseEntity = testRestTemplate.getForEntity(baseMappingURL(), MaterialTypeMappingsDTO.class);
 
     assertTrue(responseEntity.getStatusCode().is2xxSuccessful());
@@ -79,7 +88,7 @@ class MaterialTypeMappingControllerTest extends BaseControllerTest {
   @Sql(scripts = {
       "classpath:db/central-server/pre-populate-central-server.sql",
   })
-  void shouldGetEmptyMappingsWith0TotalIfNotSetForCentralServer() {
+  void shouldGetEmptyMappingsWith0TotalIfNotSet() {
     var responseEntity = testRestTemplate.getForEntity(baseMappingURL(), MaterialTypeMappingsDTO.class);
 
     assertTrue(responseEntity.getStatusCode().is2xxSuccessful());
@@ -92,6 +101,41 @@ class MaterialTypeMappingControllerTest extends BaseControllerTest {
 
     assertEquals(0, response.getTotalRecords());
     assertThat(mappings, is(empty()));
+  }
+
+  @Test
+  @Sql(scripts = {
+      "classpath:db/central-server/pre-populate-central-server.sql",
+      "classpath:db/mtype-mapping/pre-populate-material-type-mapping.sql"
+  })
+  void shouldApplyLimitAndOffsetWhenGettingAllExistingMappings() {
+    var responseEntity = testRestTemplate.getForEntity(baseMappingURL() + "?offset={offset}&limit={limit}",
+          MaterialTypeMappingsDTO.class, Map.of("offset", 1, "limit", 1));
+
+    assertTrue(responseEntity.getStatusCode().is2xxSuccessful());
+    assertTrue(responseEntity.hasBody());
+
+    var response = responseEntity.getBody();
+    assertNotNull(response);
+
+    var expectedEntity = repository.findById(UUID.fromString(PRE_POPULATED_MAPPING2_ID)).get();
+    var expectedMapping = mapper.mapToDTO(expectedEntity);
+
+    assertEquals(3, response.getTotalRecords());
+    assertEquals(singletonList(expectedMapping), response.getMappings());
+  }
+
+  @Test
+  void return400WhenGetAllExistingMappingsIfLimitAndOffsetInvalid() {
+    var responseEntity = testRestTemplate.getForEntity(baseMappingURL() + "?offset={offset}&limit={limit}",
+        ValidationErrorsDTO.class, Map.of("offset", -1, "limit", -1));
+
+    assertEquals(BAD_REQUEST.value(), responseEntity.getStatusCode().value());
+
+    var errors = responseEntity.getBody();
+    assertNotNull(errors);
+    assertEquals(BAD_REQUEST.value(), errors.getCode());
+    assertThat(collectFieldNames(errors), containsInAnyOrder(containsString("offset"), containsString("limit")));
   }
 
   @Test
@@ -220,7 +264,11 @@ class MaterialTypeMappingControllerTest extends BaseControllerTest {
   }
 
   private static String baseMappingURL() {
-    return "/inn-reach/central-servers/" + PRE_POPULATED_CENTRAL_SERVER_ID + "/material-type-mappings";
+    return baseMappingURL(PRE_POPULATED_CENTRAL_SERVER_ID);
+  }
+
+  private static String baseMappingURL(String serverId) {
+    return "/inn-reach/central-servers/" + serverId + "/material-type-mappings";
   }
 
   private MaterialTypeMappingDTO[] entitiesToDTOs(List<MaterialTypeMapping> dbMappings) {
@@ -234,4 +282,9 @@ class MaterialTypeMappingControllerTest extends BaseControllerTest {
     return result;
   }
 
+  private static List<String> collectFieldNames(ValidationErrorsDTO errors) {
+    return errors.getValidationErrors().stream()
+        .map(ValidationErrorDTO::getFieldName)
+        .collect(Collectors.toList());
+  }
 }

@@ -25,14 +25,6 @@ paths:
                 $ref: "#/components/examples/error"
               schema:
                 $ref: "#/components/schemas/error"
-        '404':
-          description: Material type mappings is not found for the given central server
-          content:
-            application/json:
-              example:
-                $ref: "#/components/examples/error"
-              schema:
-                $ref: "#/components/schemas/error"
         '500':
           description: Internal server error
           content:

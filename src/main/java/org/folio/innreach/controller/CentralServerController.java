@@ -4,12 +4,11 @@ import java.util.List;
 import java.util.UUID;
 
 import javax.validation.Valid;
-import javax.validation.constraints.Max;
-import javax.validation.constraints.Min;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -28,6 +27,7 @@ import org.folio.innreach.rest.resource.CentralServersApi;
 
 @RequiredArgsConstructor
 @RestController
+@Validated
 @RequestMapping("/inn-reach/central-servers")
 public class CentralServerController implements CentralServersApi {
 
@@ -74,7 +74,7 @@ public class CentralServerController implements CentralServersApi {
   @Override
   @GetMapping("/{centralServerId}/material-type-mappings")
   public ResponseEntity<MaterialTypeMappingsDTO> getMaterialTypeMappingsByServerId(@PathVariable UUID centralServerId,
-      @Min(0) @Max(2147483647) @Valid Integer offset, @Min(0) @Max(2147483647) @Valid Integer limit) {
+      Integer offset, Integer limit) {
 
     var mappings = materialTypeMappingService.getAllMappings(centralServerId, offset, limit);
 
@@ -94,7 +94,7 @@ public class CentralServerController implements CentralServersApi {
   @Override
   @PostMapping("/{centralServerId}/material-type-mappings")
   public ResponseEntity<MaterialTypeMappingDTO> postMaterialTypeMapping(@PathVariable UUID centralServerId,
-      @Valid @RequestBody MaterialTypeMappingDTO materialTypeMappingDTO) {
+      MaterialTypeMappingDTO materialTypeMappingDTO) {
 
     var mapping = materialTypeMappingService.createMapping(centralServerId, materialTypeMappingDTO);
 
@@ -104,7 +104,7 @@ public class CentralServerController implements CentralServersApi {
   @Override
   @PutMapping("/{centralServerId}/material-type-mappings/{id}")
   public ResponseEntity<MaterialTypeMappingDTO> updateMaterialTypeMapping(@PathVariable UUID centralServerId,
-      @PathVariable UUID id, @Valid @RequestBody MaterialTypeMappingDTO materialTypeMappingDTO) {
+      @PathVariable UUID id, MaterialTypeMappingDTO materialTypeMappingDTO) {
 
     var mapping = materialTypeMappingService.updateMapping(centralServerId, id, materialTypeMappingDTO);
 
