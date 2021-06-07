@@ -28,7 +28,7 @@ import java.util.UUID;
 @AllArgsConstructor
 @Getter
 @Setter
-@EqualsAndHashCode(exclude = {"id","contributionCriteriaConfiguration"})
+@EqualsAndHashCode(of = {"statisticalCodeId","contributionBehavior"})
 public class ContributionCriteriaStatisticalCodeBehaviorDTO {
   private UUID id;
 

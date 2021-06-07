@@ -32,7 +32,7 @@ import java.util.UUID;
 public class ContributionCriteriaConfiguration extends Auditable<String> {
   @Id
   @Column(name = "central_server_id")
-  private UUID centralServeId;
+  private UUID centralServerId;
 
   @OneToMany(
     fetch = FetchType.LAZY,
