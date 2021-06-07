@@ -15,3 +15,6 @@ folio:
   tenant:
     validation:
       enabled: false
+management:
+  endpoints:
+    enabled-by-default: false

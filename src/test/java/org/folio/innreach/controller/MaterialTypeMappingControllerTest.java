@@ -1,7 +1,10 @@
 package org.folio.innreach.controller;
 
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.hamcrest.Matchers.empty;
+import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -10,9 +13,8 @@ import static org.folio.innreach.fixture.TestUtil.deserializeFromJsonFile;
 import static org.folio.innreach.fixture.TestUtil.randomUUIDString;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,12 +44,12 @@ class MaterialTypeMappingControllerTest extends BaseControllerTest {
   private MaterialTypeMappingMapper mapper;
 
 
-  @BeforeEach
+  @AfterEach
   @Sql(scripts = {
       "classpath:db/mtype-mapping/clear-material-type-mapping-table.sql",
       "classpath:db/central-server/clear-central-server-tables.sql"
   })
-  void setUp() {
+  void tearDown() {
   }
 
   @Test
@@ -69,11 +71,26 @@ class MaterialTypeMappingControllerTest extends BaseControllerTest {
     List<MaterialTypeMapping> dbMappings = repository.findAll();
 
     assertEquals(dbMappings.size(), response.getTotalRecords());
-    assertThat(mappings).containsExactlyInAnyOrderElementsOf(entitiesToDTOs(dbMappings));
+    assertThat(mappings, containsInAnyOrder(entitiesToDTOs(dbMappings)));
   }
 
-  private List<MaterialTypeMappingDTO> entitiesToDTOs(List<MaterialTypeMapping> dbMappings) {
-    return dbMappings.stream().map(mapper::mapToDTO).collect(Collectors.toList());
+  @Test
+  @Sql(scripts = {
+      "classpath:db/central-server/pre-populate-central-server.sql",
+  })
+  void shouldGetEmptyMappingsWith0TotalIfNotSetForCentralServer() {
+    var responseEntity = testRestTemplate.getForEntity(baseMappingURL(), MaterialTypeMappingsDTO.class);
+
+    assertTrue(responseEntity.getStatusCode().is2xxSuccessful());
+    assertTrue(responseEntity.hasBody());
+
+    var response = responseEntity.getBody();
+    assertNotNull(response);
+
+    var mappings = response.getMappings();
+
+    assertEquals(0, response.getTotalRecords());
+    assertThat(mappings, is(empty()));
   }
 
   @Test
@@ -203,6 +220,17 @@ class MaterialTypeMappingControllerTest extends BaseControllerTest {
 
   private static String baseMappingURL() {
     return "/inn-reach/central-servers/" + PRE_POPULATED_CENTRAL_SERVER_ID + "/material-type-mappings";
+  }
+
+  private MaterialTypeMappingDTO[] entitiesToDTOs(List<MaterialTypeMapping> dbMappings) {
+    MaterialTypeMappingDTO[] result = new MaterialTypeMappingDTO[dbMappings.size()];
+
+    int i = 0;
+    for (MaterialTypeMapping dbMapping : dbMappings) {
+      result[i++] = mapper.mapToDTO(dbMapping);
+    }
+
+    return result;
   }
 
 }
