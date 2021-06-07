@@ -23,7 +23,7 @@ import lombok.ToString;
 
 @Getter
 @Setter
-@EqualsAndHashCode(of = {"localServerKey", "localServerSecret", "centralServerSecretSalt"})
+@EqualsAndHashCode(of = {"localServerKey", "localServerSecret", "localServerSecretSalt"})
 @ToString(exclude = "centralServer")
 @Entity
 @Table(name = "local_server_credentials")
@@ -39,7 +39,7 @@ public class LocalServerCredentials {
   private String localServerSecret;
 
   @Column(name = "local_server_secret_salt")
-  private String centralServerSecretSalt;
+  private String localServerSecretSalt;
 
   @OneToOne(fetch = FetchType.LAZY, optional = false)
   @MapsId
