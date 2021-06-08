@@ -56,6 +56,11 @@
           "methods": ["DELETE"],
           "pathPattern": "/inn-reach/locations/{locationId}",
           "permissionsRequired": ["inn-reach.locations.item.delete"]
+        },
+        {
+          "methods": ["POST"],
+          "pathPattern": "/inn-reach/authentication",
+          "permissionsRequired": ["inn-reach.authentication.item.post"]
         }
       ]
     },
@@ -153,12 +158,26 @@
       ]
     },
     {
+      "permissionName" : "inn-reach.authentication.item.post",
+      "displayName" : "authenticate local server credentials",
+      "description" : "Perform authentication of local server credentials"
+    },
+    {
+      "permissionName" : "inn-reach.authentication.all",
+      "displayName" : "inn reach API module - all permissions of inn reach local server credentials authentication",
+      "description" : "All permissions of inn reach local server credentials authentication scope",
+      "subPermissions" : [
+        "inn-reach.authentication.item.post"
+      ]
+    },
+    {
       "permissionName" : "inn-reach.all",
       "displayName" : "inn reach API module - all permissions",
       "description" : "All permissions for inn reach",
       "subPermissions" : [
         "inn-reach.central-servers.all",
-        "inn-reach.locations.all"
+        "inn-reach.locations.all",
+        "inn-reach.authentication.all"
       ]
     }
   ],
