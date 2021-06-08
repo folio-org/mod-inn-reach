@@ -1,5 +1,6 @@
-package org.folio.innreach.domain.service;
+package org.folio.innreach.domain.service.impl;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
@@ -19,7 +20,6 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import org.folio.innreach.domain.exception.LocalServerCredentialsNotFoundException;
-import org.folio.innreach.domain.service.impl.AuthenticationServiceImpl;
 import org.folio.innreach.repository.LocalServerCredentialsRepository;
 
 class AuthenticationServiceImplTest {
@@ -40,13 +40,15 @@ class AuthenticationServiceImplTest {
 
   @Test
   void throwException_when_credentialsByServerCodeAndKeyNotFound() {
-    when(localServerCredentialsRepository.findByLocalServerCodeAndKey(any(), any())).thenThrow(
-        LocalServerCredentialsNotFoundException.class);
+    when(localServerCredentialsRepository.findByLocalServerCodeAndKey(any(), any())).thenReturn(Optional.empty());
 
     var authenticationRequest = createAuthenticationRequest();
 
-    assertThrows(LocalServerCredentialsNotFoundException.class, () -> authenticationService.authenticate(
-        authenticationRequest));
+    var credentialsNotFoundException = assertThrows(LocalServerCredentialsNotFoundException.class,
+        () -> authenticationService.authenticate(authenticationRequest));
+
+    assertEquals("Can't find credentials for Central Server with code: " + authenticationRequest.getLocalServerCode(),
+        credentialsNotFoundException.getMessage());
 
     verify(localServerCredentialsRepository).findByLocalServerCodeAndKey(any(), any());
   }
@@ -60,7 +62,10 @@ class AuthenticationServiceImplTest {
 
     var authenticationRequest = createAuthenticationRequest();
 
-    assertThrows(BadCredentialsException.class, () -> authenticationService.authenticate(authenticationRequest));
+    var badCredentialsException = assertThrows(BadCredentialsException.class, () -> authenticationService.authenticate(
+        authenticationRequest));
+
+    assertEquals("Invalid Credentials", badCredentialsException.getMessage());
 
     verify(localServerCredentialsRepository).findByLocalServerCodeAndKey(any(), any());
     verify(passwordEncoder).matches(any(), any());
