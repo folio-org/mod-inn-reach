@@ -1,8 +1,8 @@
 package org.folio.innreach.fixture;
 
-import org.folio.innreach.domain.entity.LocalServerCredentials;
-
 import static org.folio.innreach.fixture.TestUtil.randomUUIDString;
+
+import org.folio.innreach.domain.entity.LocalServerCredentials;
 
 public class LocalServerCredentialsFixture {
 
@@ -10,7 +10,7 @@ public class LocalServerCredentialsFixture {
     var localServerCredentials = new LocalServerCredentials();
     localServerCredentials.setLocalServerKey(randomUUIDString());
     localServerCredentials.setLocalServerSecret(randomUUIDString());
-    localServerCredentials.setCentralServerSecretSalt(randomUUIDString());
+    localServerCredentials.setLocalServerSecretSalt(randomUUIDString());
 
     return localServerCredentials;
   }
