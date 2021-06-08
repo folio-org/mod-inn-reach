@@ -20,19 +20,14 @@ import org.springframework.web.bind.annotation.RestController;
 
 import org.folio.innreach.domain.dto.CentralServerDTO;
 import org.folio.innreach.domain.service.CentralServerService;
-import org.folio.innreach.domain.service.MaterialTypeMappingService;
-import org.folio.innreach.dto.MaterialTypeMappingDTO;
-import org.folio.innreach.dto.MaterialTypeMappingsDTO;
-import org.folio.innreach.rest.resource.CentralServersApi;
 
 @RequiredArgsConstructor
 @RestController
 @Validated
 @RequestMapping("/inn-reach/central-servers")
-public class CentralServerController implements CentralServersApi {
+public class CentralServerController {
 
   private final CentralServerService centralServerService;
-  private final MaterialTypeMappingService materialTypeMappingService;
 
 
   @PostMapping
@@ -67,54 +62,6 @@ public class CentralServerController implements CentralServersApi {
   @DeleteMapping("/{centralServerId}")
   public ResponseEntity<CentralServerDTO> deleteCentralServer(@PathVariable UUID centralServerId) {
     centralServerService.deleteCentralServer(centralServerId);
-
-    return ResponseEntity.noContent().build();
-  }
-
-  @Override
-  @GetMapping("/{centralServerId}/material-type-mappings")
-  public ResponseEntity<MaterialTypeMappingsDTO> getMaterialTypeMappingsByServerId(@PathVariable UUID centralServerId,
-      Integer offset, Integer limit) {
-
-    var mappings = materialTypeMappingService.getAllMappings(centralServerId, offset, limit);
-
-    return ResponseEntity.ok(mappings);
-  }
-
-  @Override
-  @GetMapping("/{centralServerId}/material-type-mappings/{id}")
-  public ResponseEntity<MaterialTypeMappingDTO> getMaterialTypeMappingById(@PathVariable UUID centralServerId,
-      @PathVariable UUID id) {
-
-    var mapping = materialTypeMappingService.getMapping(centralServerId, id);
-    
-    return ResponseEntity.ok(mapping);
-  }
-
-  @Override
-  @PostMapping("/{centralServerId}/material-type-mappings")
-  public ResponseEntity<MaterialTypeMappingDTO> postMaterialTypeMapping(@PathVariable UUID centralServerId,
-      MaterialTypeMappingDTO materialTypeMappingDTO) {
-
-    var mapping = materialTypeMappingService.createMapping(centralServerId, materialTypeMappingDTO);
-
-    return ResponseEntity.status(HttpStatus.CREATED).body(mapping);
-  }
-
-  @Override
-  @PutMapping("/{centralServerId}/material-type-mappings/{id}")
-  public ResponseEntity<MaterialTypeMappingDTO> updateMaterialTypeMapping(@PathVariable UUID centralServerId,
-      @PathVariable UUID id, MaterialTypeMappingDTO materialTypeMappingDTO) {
-
-    var mapping = materialTypeMappingService.updateMapping(centralServerId, id, materialTypeMappingDTO);
-
-    return ResponseEntity.ok(mapping);
-  }
-
-  @Override
-  @DeleteMapping("/{centralServerId}/material-type-mappings/{id}")
-  public ResponseEntity<Void> deleteMaterialTypeMapping(@PathVariable UUID centralServerId, @PathVariable UUID id) {
-    materialTypeMappingService.deleteMapping(centralServerId, id);
 
     return ResponseEntity.noContent().build();
   }

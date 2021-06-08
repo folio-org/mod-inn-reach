@@ -7,6 +7,10 @@ servers:
 paths:
   /central-servers/{centralServerId}/material-type-mappings:
     get:
+      description: Get a list of material type mappings for the given central server
+      operationId: getMaterialTypeMappingsByServerId
+      tags:
+        - material-type-mappings
       responses:
         '200':
           description: "OK"
@@ -31,13 +35,15 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/error"
-      description: Get a list of material type mappings for the given central server
-      operationId: getMaterialTypeMappingsByServerId
       parameters:
         - $ref: "#/components/parameters/centralServerId"
         - $ref: "#/components/parameters/trait_pageable_offset"
         - $ref: "#/components/parameters/trait_pageable_limit"
     post:
+      description: Add new material type mapping associated with the central server
+      operationId: postMaterialTypeMapping
+      tags:
+        - material-type-mappings
       responses:
         '201':
           description: Material type mapping created
@@ -60,8 +66,6 @@ paths:
               schema:
                 type: string
                 example: Internal server error
-      description: Add new material type mapping associated with the central server
-      operationId: postMaterialTypeMapping
       requestBody:
         content:
           application/json:
@@ -72,6 +76,10 @@ paths:
         - $ref: "#/components/parameters/centralServerId"
   /central-servers/{centralServerId}/material-type-mappings/{id}:
     get:
+      description: Get material type mapping by id
+      operationId: getMaterialTypeMappingById
+      tags:
+        - material-type-mappings
       responses:
         '200':
           description: OK
@@ -91,12 +99,14 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/error"
-      description: Get material type mapping by id
-      operationId: getMaterialTypeMappingById
       parameters:
         - $ref: "#/components/parameters/centralServerId"
         - $ref: "#/components/parameters/id"
     put:
+      description: Update material type mapping
+      operationId: updateMaterialTypeMapping
+      tags:
+        - material-type-mappings
       responses:
         '200':
           description: OK
@@ -122,8 +132,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/error"
-      description: Update material type mapping
-      operationId: updateMaterialTypeMapping
       requestBody:
         content:
           application/json:
@@ -134,6 +142,10 @@ paths:
         - $ref: "#/components/parameters/centralServerId"
         - $ref: "#/components/parameters/id"
     delete:
+      description: Delete material type mapping
+      operationId: deleteMaterialTypeMapping
+      tags:
+        - material-type-mappings
       responses:
         '204':
           description: No content
@@ -149,13 +161,15 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/error"
-      description: Delete material type mapping
-      operationId: deleteMaterialTypeMapping
       parameters:
         - $ref: "#/components/parameters/centralServerId"
         - $ref: "#/components/parameters/id"
   /locations:
     post:
+      description: Add new InnReach location
+      operationId: postInnReachLocation
+      tags:
+        - locations
       responses:
         '201':
           description: Created
@@ -175,8 +189,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/error"
-      description: Add new InnReach location
-      operationId: postInnReachLocation
       requestBody:
         content:
           application/json:
@@ -184,6 +196,10 @@ paths:
               $ref: "#/components/schemas/innReachLocationDTO"
         required: true
     get:
+      description: Get a list of InnReach locations
+      operationId: getLocations
+      tags:
+        - locations
       responses:
         '200':
           description: "OK"
@@ -197,13 +213,15 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/error"
-      description: Get a list of InnReach locations
-      operationId: getLocations
       parameters:
         - $ref: "#/components/parameters/trait_pageable_offset"
         - $ref: "#/components/parameters/trait_pageable_limit"
   /locations/{locationId}:
     get:
+      description: Get InnReach location by id
+      operationId: getLocationById
+      tags:
+        - locations
       responses:
         '200':
           description: OK
@@ -223,11 +241,13 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/error"
-      description: Get InnReach location by id
-      operationId: getLocationById
       parameters:
         - $ref: '#/components/parameters/id'
     put:
+      description: Update InnReach location
+      operationId: updateLocation
+      tags:
+        - locations
       responses:
         '200':
           description: OK
@@ -253,8 +273,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/error"
-      description: Update InnReach location
-      operationId: updateLocation
       requestBody:
         content:
           application/json:
@@ -264,6 +282,10 @@ paths:
       parameters:
         - $ref: '#/components/parameters/id'
     delete:
+      description: Delete InnReach location
+      operationId: deleteLocation
+      tags:
+        - locations
       responses:
         '204':
           description: No content
@@ -279,8 +301,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/error"
-      description: Delete InnReach location
-      operationId: deleteLocation
       parameters:
         - $ref: '#/components/parameters/id'
 components:
