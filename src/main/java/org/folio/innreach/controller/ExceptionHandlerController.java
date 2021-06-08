@@ -7,6 +7,7 @@ import javax.validation.ConstraintViolation;
 import javax.validation.ConstraintViolationException;
 
 import lombok.extern.log4j.Log4j2;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -58,6 +59,12 @@ public class ExceptionHandlerController {
   @ExceptionHandler(InnReachException.class)
   @ResponseStatus(HttpStatus.BAD_REQUEST)
   public Error handleInnReachException(InnReachException e) {
+    return createError(HttpStatus.BAD_REQUEST.toString(), e.getMessage());
+  }
+
+  @ExceptionHandler(DataIntegrityViolationException.class)
+  @ResponseStatus(HttpStatus.BAD_REQUEST)
+  public Error handleDataIntegrityViolationException(DataIntegrityViolationException e) {
     return createError(HttpStatus.BAD_REQUEST.toString(), e.getMessage());
   }
 

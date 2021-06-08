@@ -3,10 +3,12 @@ package org.folio.innreach.controller;
 
 import static java.util.Collections.singletonList;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.samePropertyValuesAs;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -35,6 +37,7 @@ import org.springframework.test.context.jdbc.SqlMergeMode;
 import org.folio.innreach.controller.base.BaseControllerTest;
 import org.folio.innreach.domain.dto.CentralServerDTO;
 import org.folio.innreach.domain.entity.MaterialTypeMapping;
+import org.folio.innreach.dto.Error;
 import org.folio.innreach.dto.MaterialTypeMappingDTO;
 import org.folio.innreach.dto.MaterialTypeMappingsDTO;
 import org.folio.innreach.dto.ValidationErrorDTO;
@@ -53,6 +56,7 @@ class MaterialTypeMappingControllerTest extends BaseControllerTest {
 
   private static final String PRE_POPULATED_CENTRAL_SERVER_ID = "edab6baf-c696-42b1-89bb-1bbb8759b0d2";
   private static final String PRE_POPULATED_MAPPING2_ID = "d9985d0d-b121-4ccd-ac16-5ebd0ccccf7f";
+  private static final String PRE_POPULATED_MATERIAL_TYPE2_ID = "5ee11d91-f7e8-481d-b079-65d708582ccc";
 
   @Autowired
   private TestRestTemplate testRestTemplate;
@@ -118,8 +122,7 @@ class MaterialTypeMappingControllerTest extends BaseControllerTest {
     var response = responseEntity.getBody();
     assertNotNull(response);
 
-    var expectedEntity = repository.findById(UUID.fromString(PRE_POPULATED_MAPPING2_ID)).get();
-    var expectedMapping = mapper.mapToDTO(expectedEntity);
+    var expectedMapping = findMapping(PRE_POPULATED_MAPPING2_ID);
 
     assertEquals(3, response.getTotalRecords());
     assertEquals(singletonList(expectedMapping), response.getMappings());
@@ -130,7 +133,7 @@ class MaterialTypeMappingControllerTest extends BaseControllerTest {
     var responseEntity = testRestTemplate.getForEntity(baseMappingURL() + "?offset={offset}&limit={limit}",
         ValidationErrorsDTO.class, Map.of("offset", -1, "limit", -1));
 
-    assertEquals(BAD_REQUEST.value(), responseEntity.getStatusCode().value());
+    assertEquals(BAD_REQUEST, responseEntity.getStatusCode());
 
     var errors = responseEntity.getBody();
     assertNotNull(errors);
@@ -139,35 +142,103 @@ class MaterialTypeMappingControllerTest extends BaseControllerTest {
   }
 
   @Test
-  @Disabled("review")
-  @Sql(scripts = "classpath:db/central-server/clear-central-server-tables.sql")
-  void return200HttpCode_and_createdCentralServerEntity_when_createCentralServer() {
-    var centralServerRequestDTO = deserializeFromJsonFile(
-      "/central-server/create-central-server-request.json", CentralServerDTO.class);
-
-    var responseEntity = testRestTemplate.postForEntity(
-      "/inn-reach/central-servers", centralServerRequestDTO, CentralServerDTO.class);
+  @Sql(scripts = {
+      "classpath:db/central-server/pre-populate-central-server.sql",
+      "classpath:db/mtype-mapping/pre-populate-material-type-mapping.sql"
+  })
+  void shouldGetSingleMappingById() {
+    var responseEntity = testRestTemplate.getForEntity(baseMappingURL() + "/" + PRE_POPULATED_MAPPING2_ID,
+        MaterialTypeMappingDTO.class);
 
     assertTrue(responseEntity.getStatusCode().is2xxSuccessful());
     assertTrue(responseEntity.hasBody());
 
-    var createdCentralServer = responseEntity.getBody();
+    var mapping = responseEntity.getBody();
+    assertNotNull(mapping);
 
-    assertEquals(centralServerRequestDTO, createdCentralServer);
+    var expected = findMapping(PRE_POPULATED_MAPPING2_ID);
+
+    assertEquals(expected, mapping);
   }
 
   @Test
-  @Disabled("review")
-  @Sql(scripts = "classpath:db/central-server/clear-central-server-tables.sql")
-  void return400HttpCode_when_requestDataIsInvalid() {
-    var centralServerRequestDTO = deserializeFromJsonFile(
-      "/central-server/create-central-server-invalid-request.json", CentralServerDTO.class);
+  @Sql(scripts = {
+      "classpath:db/central-server/pre-populate-central-server.sql"
+  })
+  void return404WhenMappingIsNotFoundById() {
+    var responseEntity = testRestTemplate.getForEntity(baseMappingURL() + "/" + UUID.randomUUID(),
+        MaterialTypeMappingDTO.class);
 
-    var responseEntity = testRestTemplate.postForEntity(
-      "/inn-reach/central-servers", centralServerRequestDTO, CentralServerDTO.class);
+    assertEquals(HttpStatus.NOT_FOUND, responseEntity.getStatusCode());
+  }
 
-    assertTrue(responseEntity.getStatusCode().is4xxClientError());
+  @Test
+  @Sql(scripts = {
+      "classpath:db/central-server/pre-populate-central-server.sql"
+  })
+  void shouldCreateNewMapping() {
+    var newMapping = deserializeFromJsonFile("/material-type-mapping/create-material-type-mapping-request.json",
+        MaterialTypeMappingDTO.class);
+    
+    var responseEntity = testRestTemplate.postForEntity(baseMappingURL(), newMapping, MaterialTypeMappingDTO.class);
+
+    assertTrue(responseEntity.getStatusCode().is2xxSuccessful());
     assertTrue(responseEntity.hasBody());
+
+    var created = responseEntity.getBody();
+
+    assertThat(created, samePropertyValuesAs(newMapping, "id", "metadata"));
+  }
+
+  @Test
+  @Sql(scripts = {
+      "classpath:db/central-server/pre-populate-central-server.sql"
+  })
+  void return400WhenCreatingNewMappingAndCentralItemTypeIsNull() {
+    var newMapping = deserializeFromJsonFile("/material-type-mapping/create-material-type-mapping-request.json",
+        MaterialTypeMappingDTO.class);
+    newMapping.setCentralItemType(null);
+
+    var responseEntity = testRestTemplate.postForEntity(baseMappingURL(), newMapping, ValidationErrorsDTO.class);
+
+    assertEquals(BAD_REQUEST, responseEntity.getStatusCode());
+
+    assertNotNull(responseEntity.getBody());
+    assertThat(responseEntity.getBody().getValidationErrors(),
+        contains(createValidationError("centralItemType", "must not be null")));
+  }
+
+  @Test
+  @Sql(scripts = {
+      "classpath:db/central-server/pre-populate-central-server.sql"
+  })
+  void return400WhenCreatingNewMappingAndMaterialTypeIdIsNull() {
+    var newMapping = deserializeFromJsonFile("/material-type-mapping/create-material-type-mapping-request.json",
+        MaterialTypeMappingDTO.class);
+    newMapping.setMaterialTypeId(null);
+
+    var responseEntity = testRestTemplate.postForEntity(baseMappingURL(), newMapping, ValidationErrorsDTO.class);
+
+    assertEquals(BAD_REQUEST, responseEntity.getStatusCode());
+
+    assertNotNull(responseEntity.getBody());
+    assertThat(responseEntity.getBody().getValidationErrors(),
+        contains(createValidationError("materialTypeId", "must not be null")));
+  }
+
+  @Test
+  @Sql(scripts = {
+      "classpath:db/central-server/pre-populate-central-server.sql",
+      "classpath:db/mtype-mapping/pre-populate-material-type-mapping.sql"
+  })
+  void return400WhenCreatingNewMappingAndMaterialTypeIdAlreadyMapped() {
+    var newMapping = deserializeFromJsonFile("/material-type-mapping/create-material-type-mapping-request.json",
+        MaterialTypeMappingDTO.class);
+    newMapping.setMaterialTypeId(UUID.fromString(PRE_POPULATED_MATERIAL_TYPE2_ID));
+
+    var responseEntity = testRestTemplate.postForEntity(baseMappingURL(), newMapping, Error.class);
+
+    assertEquals(BAD_REQUEST, responseEntity.getStatusCode());
   }
 
   @Test
@@ -287,4 +358,20 @@ class MaterialTypeMappingControllerTest extends BaseControllerTest {
         .map(ValidationErrorDTO::getFieldName)
         .collect(Collectors.toList());
   }
+
+  private MaterialTypeMappingDTO findMapping(String id) {
+    var expectedEntity = repository.findById(UUID.fromString(id)).get();
+
+    return mapper.mapToDTO(expectedEntity);
+  }
+
+  private ValidationErrorDTO createValidationError(String field, String message) {
+    var result = new ValidationErrorDTO();
+
+    result.setFieldName(field);
+    result.setMessage(message);
+
+    return result;
+  }
+
 }
