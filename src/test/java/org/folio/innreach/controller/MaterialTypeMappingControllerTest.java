@@ -17,14 +17,12 @@ import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TES
 import static org.springframework.test.context.jdbc.SqlMergeMode.MergeMode.MERGE;
 
 import static org.folio.innreach.fixture.TestUtil.deserializeFromJsonFile;
-import static org.folio.innreach.fixture.TestUtil.randomUUIDString;
 
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.web.client.TestRestTemplate;
@@ -35,7 +33,6 @@ import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlMergeMode;
 
 import org.folio.innreach.controller.base.BaseControllerTest;
-import org.folio.innreach.domain.dto.CentralServerDTO;
 import org.folio.innreach.domain.entity.MaterialTypeMapping;
 import org.folio.innreach.dto.Error;
 import org.folio.innreach.dto.MaterialTypeMappingDTO;
@@ -242,94 +239,61 @@ class MaterialTypeMappingControllerTest extends BaseControllerTest {
   }
 
   @Test
-  @Disabled("review")
   @Sql(scripts = {
-    "classpath:db/central-server/clear-central-server-tables.sql",
-    "classpath:db/central-server/pre-populate-central-server.sql"
+      "classpath:db/central-server/pre-populate-central-server.sql",
+      "classpath:db/mtype-mapping/pre-populate-material-type-mapping.sql"
   })
-  void return200HttpCode_and_centralServerEntityById_when_getForOneCentralServer() {
-    var centralServerDTO = deserializeFromJsonFile(
-      "/central-server/create-central-server-request.json", CentralServerDTO.class);
+  void shouldUpdateExistingMapping() {
+    var mapping = deserializeFromJsonFile("/material-type-mapping/update-material-type-mapping-request.json",
+        MaterialTypeMappingDTO.class);
 
-    var responseEntity = testRestTemplate.getForEntity(
-      "/inn-reach/central-servers/{centralServerId}", CentralServerDTO.class, PRE_POPULATED_CENTRAL_SERVER_ID);
+    var responseEntity = testRestTemplate.exchange(baseMappingURL() + "/{mappingId}", HttpMethod.PUT,
+        new HttpEntity<>(mapping), MaterialTypeMappingDTO.class, PRE_POPULATED_MAPPING2_ID);
 
     assertTrue(responseEntity.getStatusCode().is2xxSuccessful());
     assertTrue(responseEntity.hasBody());
 
-    var centralServer = responseEntity.getBody();
+    var updated = responseEntity.getBody();
 
-    assertNotNull(centralServer);
-    assertEquals(centralServerDTO, centralServer);
+    assertThat(updated, samePropertyValuesAs(mapping, "metadata"));
   }
 
   @Test
-  @Disabled("review")
-  @Sql(scripts = "classpath:db/central-server/clear-central-server-tables.sql")
-  void return404HttpCode_when_centralServerByIdNotFound() {
-    var responseEntity = testRestTemplate.getForEntity(
-      "/inn-reach/central-servers/{centralServerId}", CentralServerDTO.class, randomUUIDString());
+  @Sql(scripts = {
+      "classpath:db/central-server/pre-populate-central-server.sql"
+  })
+  void return404IfMappingNotFoundWhenUpdating() {
+    var mapping = deserializeFromJsonFile("/material-type-mapping/update-material-type-mapping-request.json",
+        MaterialTypeMappingDTO.class);
+
+    var responseEntity = testRestTemplate.exchange(baseMappingURL() + "/{mappingId}", HttpMethod.PUT,
+        new HttpEntity<>(mapping), MaterialTypeMappingDTO.class, UUID.randomUUID());
 
     assertEquals(HttpStatus.NOT_FOUND, responseEntity.getStatusCode());
   }
 
   @Test
-  @Disabled("review")
   @Sql(scripts = {
-    "classpath:db/central-server/clear-central-server-tables.sql",
-    "classpath:db/central-server/pre-populate-central-server.sql"
+      "classpath:db/central-server/pre-populate-central-server.sql",
+      "classpath:db/mtype-mapping/pre-populate-material-type-mapping.sql"
   })
-  void return200HttpCode_when_updateCentralServer() {
-    var centralServerRequestDTO = deserializeFromJsonFile(
-      "/central-server/update-central-server-request.json", CentralServerDTO.class);
-
-    var responseEntity = testRestTemplate.exchange(
-      "/inn-reach/central-servers/{centralServerId}", HttpMethod.PUT, new HttpEntity<>(centralServerRequestDTO),
-      CentralServerDTO.class, PRE_POPULATED_CENTRAL_SERVER_ID);
-
-    assertTrue(responseEntity.getStatusCode().is2xxSuccessful());
-    assertTrue(responseEntity.hasBody());
-
-    var updatedCentralServer = responseEntity.getBody();
-
-    assertEquals(centralServerRequestDTO, updatedCentralServer);
-  }
-
-  @Test
-  @Disabled("review")
-  @Sql(scripts = "classpath:db/central-server/clear-central-server-tables.sql")
-  void return404HttpCode_when_updatableCentralServerNotFound() {
-    var centralServerRequestDTO = deserializeFromJsonFile(
-      "/central-server/update-central-server-request.json", CentralServerDTO.class);
-
-    var responseEntity = testRestTemplate.exchange(
-      "/inn-reach/central-servers/{centralServerId}", HttpMethod.PUT, new HttpEntity<>(centralServerRequestDTO),
-      CentralServerDTO.class, randomUUIDString());
-
-    assertEquals(HttpStatus.NOT_FOUND, responseEntity.getStatusCode());
-  }
-
-  @Test
-  @Disabled("review")
-  @Sql(scripts = {
-    "classpath:db/central-server/clear-central-server-tables.sql",
-    "classpath:db/central-server/pre-populate-central-server.sql"
-  })
-  void return204HttpCode_when_deleteCentralServer() {
-    var responseEntity = testRestTemplate.exchange(
-      "/inn-reach/central-servers/{centralServerId}", HttpMethod.DELETE, HttpEntity.EMPTY,
-      CentralServerDTO.class, PRE_POPULATED_CENTRAL_SERVER_ID);
+  void shouldDeleteExistingMapping() {
+    var responseEntity = testRestTemplate.exchange(baseMappingURL() + "/{mappingId}", HttpMethod.DELETE,
+        HttpEntity.EMPTY, MaterialTypeMappingDTO.class, PRE_POPULATED_MAPPING2_ID);
 
     assertEquals(HttpStatus.NO_CONTENT, responseEntity.getStatusCode());
+
+    var deleted = repository.findById(UUID.fromString(PRE_POPULATED_MAPPING2_ID));
+    assertTrue(deleted.isEmpty());
   }
 
   @Test
-  @Disabled("review")
-  @Sql(scripts = "classpath:db/central-server/clear-central-server-tables.sql")
-  void return404HttpCode_when_deletableCentralServerNotFound() {
-    var responseEntity = testRestTemplate.exchange(
-      "/inn-reach/central-servers/{centralServerId}", HttpMethod.DELETE, HttpEntity.EMPTY,
-      CentralServerDTO.class, randomUUIDString());
+  @Sql(scripts = {
+      "classpath:db/central-server/pre-populate-central-server.sql"
+  })
+  void return404IfMappingNotFoundWhenDeleting() {
+    var responseEntity = testRestTemplate.exchange(baseMappingURL() + "/{mappingId}", HttpMethod.DELETE,
+        HttpEntity.EMPTY, MaterialTypeMappingDTO.class, UUID.randomUUID());
 
     assertEquals(HttpStatus.NOT_FOUND, responseEntity.getStatusCode());
   }
