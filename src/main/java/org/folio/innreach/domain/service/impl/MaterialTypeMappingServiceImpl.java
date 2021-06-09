@@ -34,17 +34,14 @@ public class MaterialTypeMappingServiceImpl implements MaterialTypeMappingServic
   public MaterialTypeMappingsDTO getAllMappings(UUID centralServerId, Integer offset, Integer limit) {
     var example = mappingExampleWithServerId(centralServerId);
 
-    var totalCount = repository.count(example);
+    Page<MaterialTypeMapping> mappings = repository.findAll(example, PageRequest.of(offset, limit));
 
     var result = new MaterialTypeMappingsDTO();
-    if (totalCount > 0) {
-      Page<MaterialTypeMapping> mappings = repository.findAll(example, PageRequest.of(offset, limit));
-
-      result.setMappings(mappings.stream()
-          .map(mapper::mapToDTO)
-          .collect(toList()));
-    }
-    result.setTotalRecords((int) totalCount);
+    result.setMappings(mappings.stream()
+        .map(mapper::mapToDTO)
+        .collect(toList()));
+    
+    result.setTotalRecords((int) mappings.getTotalElements());
 
     return result;
   }
