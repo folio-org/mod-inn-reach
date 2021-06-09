@@ -25,8 +25,8 @@ import org.folio.innreach.rest.resource.CentralServersApi;
 
 @RequiredArgsConstructor
 @RestController
-@RequestMapping("/inn-reach/central-servers")
 @Validated
+@RequestMapping("/inn-reach/central-servers")
 public class CentralServerController implements CentralServersApi {
 
   private final CentralServerService centralServerService;

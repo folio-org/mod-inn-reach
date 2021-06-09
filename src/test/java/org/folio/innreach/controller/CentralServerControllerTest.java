@@ -5,6 +5,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TEST_METHOD;
+import static org.springframework.test.context.jdbc.SqlMergeMode.MergeMode.MERGE;
 
 import static org.folio.innreach.fixture.TestUtil.deserializeFromJsonFile;
 import static org.folio.innreach.fixture.TestUtil.randomUUIDString;
@@ -16,11 +18,17 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.context.jdbc.Sql;
+import org.springframework.test.context.jdbc.SqlMergeMode;
 
 import org.folio.innreach.controller.base.BaseControllerTest;
 import org.folio.innreach.dto.CentralServerDTO;
 import org.folio.innreach.dto.CentralServersDTO;
 
+@Sql(
+  scripts = "classpath:db/central-server/clear-central-server-tables.sql",
+  executionPhase = AFTER_TEST_METHOD
+)
+@SqlMergeMode(MERGE)
 class CentralServerControllerTest extends BaseControllerTest {
 
   private static final String PRE_POPULATED_CENTRAL_SERVER_ID = "edab6baf-c696-42b1-89bb-1bbb8759b0d2";
@@ -29,7 +37,6 @@ class CentralServerControllerTest extends BaseControllerTest {
   private TestRestTemplate testRestTemplate;
 
   @Test
-  @Sql(scripts = "classpath:db/central-server/clear-central-server-tables.sql")
   void return200HttpCode_and_createdCentralServerEntity_when_createCentralServer() {
     var centralServerRequestDTO = deserializeFromJsonFile(
       "/central-server/create-central-server-request.json", CentralServerDTO.class);
@@ -46,7 +53,6 @@ class CentralServerControllerTest extends BaseControllerTest {
   }
 
   @Test
-  @Sql(scripts = "classpath:db/central-server/clear-central-server-tables.sql")
   void return200HttpCode_and_createdCentralServerEntity_when_createCentralServerWithoutLocalServerCredentials() {
     var centralServerRequestDTO = deserializeFromJsonFile(
       "/central-server/create-central-server-without-local-server-credentials-request.json", CentralServerDTO.class);
@@ -65,7 +71,6 @@ class CentralServerControllerTest extends BaseControllerTest {
   }
 
   @Test
-  @Sql(scripts = "classpath:db/central-server/clear-central-server-tables.sql")
   void return400HttpCode_when_requestDataIsInvalid() {
     var centralServerRequestDTO = deserializeFromJsonFile(
       "/central-server/create-central-server-invalid-request.json", CentralServerDTO.class);
@@ -78,10 +83,7 @@ class CentralServerControllerTest extends BaseControllerTest {
   }
 
   @Test
-  @Sql(scripts = {
-    "classpath:db/central-server/clear-central-server-tables.sql",
-    "classpath:db/central-server/pre-populate-central-server.sql"
-  })
+  @Sql(scripts = "classpath:db/central-server/pre-populate-central-server.sql")
   void return200HttpCode_and_allCentralServerEntities_when_getForAllCentralServers() {
     var responseEntity = testRestTemplate.getForEntity(
         "/inn-reach/central-servers", CentralServersDTO.class);
@@ -98,10 +100,7 @@ class CentralServerControllerTest extends BaseControllerTest {
   }
 
   @Test
-  @Sql(scripts = {
-    "classpath:db/central-server/clear-central-server-tables.sql",
-    "classpath:db/central-server/pre-populate-central-server.sql"
-  })
+  @Sql(scripts = "classpath:db/central-server/pre-populate-central-server.sql")
   void return200HttpCode_and_centralServerEntityById_when_getForOneCentralServer() {
     var responseEntity = testRestTemplate.getForEntity(
       "/inn-reach/central-servers/{centralServerId}", CentralServerDTO.class, PRE_POPULATED_CENTRAL_SERVER_ID);
@@ -115,7 +114,6 @@ class CentralServerControllerTest extends BaseControllerTest {
   }
 
   @Test
-  @Sql(scripts = "classpath:db/central-server/clear-central-server-tables.sql")
   void return404HttpCode_when_centralServerByIdNotFound() {
     var responseEntity = testRestTemplate.getForEntity(
       "/inn-reach/central-servers/{centralServerId}", CentralServerDTO.class, randomUUIDString());
@@ -124,10 +122,7 @@ class CentralServerControllerTest extends BaseControllerTest {
   }
 
   @Test
-  @Sql(scripts = {
-    "classpath:db/central-server/clear-central-server-tables.sql",
-    "classpath:db/central-server/pre-populate-central-server.sql"
-  })
+  @Sql(scripts = "classpath:db/central-server/pre-populate-central-server.sql")
   void return200HttpCode_when_updateCentralServer() {
     var centralServerRequestDTO = deserializeFromJsonFile(
       "/central-server/update-central-server-request.json", CentralServerDTO.class);
@@ -149,7 +144,6 @@ class CentralServerControllerTest extends BaseControllerTest {
   }
 
   @Test
-  @Sql(scripts = "classpath:db/central-server/clear-central-server-tables.sql")
   void return404HttpCode_when_updatableCentralServerNotFound() {
     var centralServerRequestDTO = deserializeFromJsonFile(
       "/central-server/update-central-server-request.json", CentralServerDTO.class);
@@ -162,10 +156,7 @@ class CentralServerControllerTest extends BaseControllerTest {
   }
 
   @Test
-  @Sql(scripts = {
-    "classpath:db/central-server/clear-central-server-tables.sql",
-    "classpath:db/central-server/pre-populate-central-server.sql"
-  })
+  @Sql(scripts = "classpath:db/central-server/pre-populate-central-server.sql")
   void return204HttpCode_when_deleteCentralServer() {
     var responseEntity = testRestTemplate.exchange(
       "/inn-reach/central-servers/{centralServerId}", HttpMethod.DELETE, HttpEntity.EMPTY,
@@ -175,7 +166,6 @@ class CentralServerControllerTest extends BaseControllerTest {
   }
 
   @Test
-  @Sql(scripts = "classpath:db/central-server/clear-central-server-tables.sql")
   void return404HttpCode_when_deletableCentralServerNotFound() {
     var responseEntity = testRestTemplate.exchange(
       "/inn-reach/central-servers/{centralServerId}", HttpMethod.DELETE, HttpEntity.EMPTY,

@@ -4,6 +4,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TEST_METHOD;
+import static org.springframework.test.context.jdbc.SqlMergeMode.MergeMode.MERGE;
 
 import static org.folio.innreach.fixture.TestUtil.deserializeFromJsonFile;
 
@@ -16,18 +18,22 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.context.jdbc.Sql;
+import org.springframework.test.context.jdbc.SqlMergeMode;
 
 import org.folio.innreach.controller.base.BaseControllerTest;
 import org.folio.innreach.dto.InnReachLocationDTO;
 import org.folio.innreach.dto.InnReachLocationsDTO;
 
+@Sql(
+  scripts = "classpath:db/inn-reach-location/clear-inn-reach-location-tables.sql",
+  executionPhase = AFTER_TEST_METHOD
+)
+@SqlMergeMode(MERGE)
 class InnReachLocationControllerTest extends BaseControllerTest {
 
 	private static final String PRE_POPULATED_LOCATION1_ID = "a1c1472f-67ec-4938-b5a8-f119e51ab79b";
-	private static final String PRE_POPULATED_LOCATION2_ID = "26f7c8c5-f090-4742-b7c7-e08ed1cc4e67";
-	private static final String PRE_POPULATED_LOCATION3_ID = "34c6a230-d264-44c5-90b3-6159ed2ebdc1";
 
-	@Autowired
+  @Autowired
 	private TestRestTemplate testRestTemplate;
 
 	@Test
@@ -55,10 +61,7 @@ class InnReachLocationControllerTest extends BaseControllerTest {
   }
 
   @Test
-  @Sql(scripts = {
-    "classpath:db/inn-reach-location/clear-inn-reach-location-tables.sql",
-    "classpath:db/inn-reach-location/pre-populate-inn-reach-location-code.sql"
-  })
+  @Sql(scripts = "classpath:db/inn-reach-location/pre-populate-inn-reach-location-code.sql")
 	void return200HttpStatus_and_innReachLocation_when_innReachLocationExists() {
     var responseEntity = testRestTemplate.getForEntity("/inn-reach/locations/{locationId}", InnReachLocationDTO.class,
         PRE_POPULATED_LOCATION1_ID);
@@ -96,10 +99,7 @@ class InnReachLocationControllerTest extends BaseControllerTest {
   }
 
   @Test
-  @Sql(scripts = {
-    "classpath:db/inn-reach-location/clear-inn-reach-location-tables.sql",
-    "classpath:db/inn-reach-location/pre-populate-inn-reach-location-code.sql"
-  })
+  @Sql(scripts = "classpath:db/inn-reach-location/pre-populate-inn-reach-location-code.sql")
 	void return200HttpCode_and_updatedInnReachLocation_when_innReachLocationsExist() {
     var innReachLocationDTO = deserializeFromJsonFile("/inn-reach-location/update-inn-reach-location-request.json",
         InnReachLocationDTO.class);
@@ -129,10 +129,7 @@ class InnReachLocationControllerTest extends BaseControllerTest {
   }
 
 	@Test
-	@Sql(scripts = {
-	  "classpath:db/inn-reach-location/clear-inn-reach-location-tables.sql",
-    "classpath:db/inn-reach-location/pre-populate-inn-reach-location-code.sql"
-	})
+  @Sql(scripts = "classpath:db/inn-reach-location/pre-populate-inn-reach-location-code.sql")
 	void return204HttpCode_when_deleteInnReachLocation() {
     var responseEntity = testRestTemplate.exchange("/inn-reach/locations/{locationId}", HttpMethod.DELETE,
         HttpEntity.EMPTY, InnReachLocationDTO.class, PRE_POPULATED_LOCATION1_ID);
