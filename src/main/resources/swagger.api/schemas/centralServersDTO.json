@@ -1,0 +1,20 @@
+{
+  "description": "Central servers collection",
+  "type": "object",
+  "properties": {
+    "totalRecords": {
+      "description": "Total records",
+      "type": "integer"
+    },
+    "centralServers": {
+      "type": "array",
+      "items": {
+        "$ref": "centralServerDTO.json"
+      }
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "centralServers"
+  ]
+}

@@ -2,14 +2,12 @@ package org.folio.innreach.controller;
 
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import static org.folio.innreach.fixture.TestUtil.deserializeFromJsonFile;
 import static org.folio.innreach.fixture.TestUtil.randomUUIDString;
-
-import java.util.List;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,7 +18,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.test.context.jdbc.Sql;
 
 import org.folio.innreach.controller.base.BaseControllerTest;
-import org.folio.innreach.domain.dto.CentralServerDTO;
+import org.folio.innreach.dto.CentralServerDTO;
+import org.folio.innreach.dto.CentralServersDTO;
 
 class CentralServerControllerTest extends BaseControllerTest {
 
@@ -43,7 +42,7 @@ class CentralServerControllerTest extends BaseControllerTest {
 
     var createdCentralServer = responseEntity.getBody();
 
-    assertEquals(centralServerRequestDTO, createdCentralServer);
+    assertNotNull(createdCentralServer);
   }
 
   @Test
@@ -60,7 +59,9 @@ class CentralServerControllerTest extends BaseControllerTest {
 
     var createdCentralServer = responseEntity.getBody();
 
-    assertEquals(centralServerRequestDTO, createdCentralServer);
+    assertNotNull(createdCentralServer);
+    assertNull(createdCentralServer.getLocalServerKey());
+    assertNull(createdCentralServer.getLocalServerSecret());
   }
 
   @Test
@@ -83,7 +84,7 @@ class CentralServerControllerTest extends BaseControllerTest {
   })
   void return200HttpCode_and_allCentralServerEntities_when_getForAllCentralServers() {
     var responseEntity = testRestTemplate.getForEntity(
-      "/inn-reach/central-servers", List.class);
+        "/inn-reach/central-servers", CentralServersDTO.class);
 
     assertTrue(responseEntity.getStatusCode().is2xxSuccessful());
     assertTrue(responseEntity.hasBody());
@@ -91,7 +92,9 @@ class CentralServerControllerTest extends BaseControllerTest {
     var centralServers = responseEntity.getBody();
 
     assertNotNull(centralServers);
-    assertFalse(centralServers.isEmpty());
+    assertNotNull(centralServers.getCentralServers());
+    assertEquals(1, centralServers.getCentralServers().size());
+    assertEquals(1, centralServers.getTotalRecords());
   }
 
   @Test
@@ -100,9 +103,6 @@ class CentralServerControllerTest extends BaseControllerTest {
     "classpath:db/central-server/pre-populate-central-server.sql"
   })
   void return200HttpCode_and_centralServerEntityById_when_getForOneCentralServer() {
-    var centralServerDTO = deserializeFromJsonFile(
-      "/central-server/create-central-server-request.json", CentralServerDTO.class);
-
     var responseEntity = testRestTemplate.getForEntity(
       "/inn-reach/central-servers/{centralServerId}", CentralServerDTO.class, PRE_POPULATED_CENTRAL_SERVER_ID);
 
@@ -112,7 +112,6 @@ class CentralServerControllerTest extends BaseControllerTest {
     var centralServer = responseEntity.getBody();
 
     assertNotNull(centralServer);
-    assertEquals(centralServerDTO, centralServer);
   }
 
   @Test
@@ -142,7 +141,11 @@ class CentralServerControllerTest extends BaseControllerTest {
 
     var updatedCentralServer = responseEntity.getBody();
 
-    assertEquals(centralServerRequestDTO, updatedCentralServer);
+    assertNotNull(updatedCentralServer);
+    assertNotNull(updatedCentralServer.getLocalAgencies());
+    assertEquals(centralServerRequestDTO.getName(), updatedCentralServer.getName());
+    assertEquals(centralServerRequestDTO.getDescription(), updatedCentralServer.getDescription());
+    assertEquals(3, centralServerRequestDTO.getLocalAgencies().size());
   }
 
   @Test
