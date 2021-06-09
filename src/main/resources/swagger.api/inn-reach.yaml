@@ -28,6 +28,8 @@ paths:
                 $ref: "#/components/schemas/error"
       description: Add new InnReach location
       operationId: postInnReachLocation
+      tags:
+        - locations
       requestBody:
         content:
           application/json:
@@ -50,6 +52,8 @@ paths:
                 $ref: "#/components/schemas/error"
       description: Get a list of InnReach locations
       operationId: getLocations
+      tags:
+        - locations
       parameters:
         - $ref: "#/components/parameters/trait_pageable_offset"
         - $ref: "#/components/parameters/trait_pageable_limit"
@@ -76,6 +80,8 @@ paths:
                 $ref: "#/components/schemas/error"
       description: Get InnReach location by id
       operationId: getLocationById
+      tags:
+        - locations
       parameters:
         - $ref: '#/components/parameters/id'
     put:
@@ -106,6 +112,8 @@ paths:
                 $ref: "#/components/schemas/error"
       description: Update InnReach location
       operationId: updateLocation
+      tags:
+        - locations
       requestBody:
         content:
           application/json:
@@ -132,6 +140,126 @@ paths:
                 $ref: "#/components/schemas/error"
       description: Delete InnReach location
       operationId: deleteLocation
+      tags:
+        - locations
+      parameters:
+        - $ref: '#/components/parameters/id'
+  /central-servers/contribution-criteria:
+    post:
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/contributionCriteriaDTO"
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/validationErrorsDTO"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/error"
+      description: Create new contribution criteria for Central Server
+      operationId: postContributionCriteria
+      tags:
+        - contributionCriteria
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/contributionCriteriaDTO"
+        required: true
+  /central-servers/{centralServerId}/contribution-criteria:
+    delete:
+      responses:
+        '204':
+          description: No content
+        '404':
+          description: Contribution Criteria not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/error"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/error"
+      description: Delete Contribution Criteria Configuration
+      operationId: deleteCriteria
+      tags:
+        - contributionCriteria
+      parameters:
+        - $ref: '#/components/parameters/id'
+    get:
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/contributionCriteriaDTO"
+        '404':
+          description: Contribution criteria not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/error"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/error"
+      description: Get Contribution Criteria by id
+      operationId: getCriteriaById
+      tags:
+        - contributionCriteria
+      parameters:
+        - $ref: '#/components/parameters/id'
+    put:
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/contributionCriteriaDTO"
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/validationErrorsDTO"
+        '404':
+          description: InnReach location not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/error"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/error"
+      description: Update Contribution Criteria Configuration
+      operationId: updateCriteria
+      tags:
+        - contributionCriteria
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/contributionCriteriaDTO"
+        required: true
       parameters:
         - $ref: '#/components/parameters/id'
 components:
@@ -139,6 +267,8 @@ components:
     UUID:
       type: string
       format: uuid
+    contributionCriteriaDTO:
+      $ref: schemas/contributionCriteriaDTO.json
     innReachLocationDTO:
       $ref: schemas/innReachLocationDTO.json
     innReachLocationsDTO:

@@ -1,6 +1,7 @@
 package org.folio.innreach.domain.service.impl;
 
 import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.folio.innreach.domain.dto.ContributionCriteriaConfigurationDTO;
 import org.folio.innreach.domain.dto.ContributionCriteriaExcludedLocationDTO;
@@ -23,9 +24,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
-@Service
 @Log4j2
-@AllArgsConstructor
+@RequiredArgsConstructor
+@Service
 public class ContributionCriteriaConfigurationServiceImpl implements ContributionCriteriaConfigurationService {
   private final ContributionCriteriaConfigurationRepository contributionCriteriaConfigurationRepository;
   private final ContributionCriteriaConfigurationMapper contributionCriteriaConfigurationMapper;
@@ -33,9 +34,12 @@ public class ContributionCriteriaConfigurationServiceImpl implements Contributio
   private final ContributionCriteriaStatisticalCodeBehaviorMapper statisticalCodeMapper;
   @Override
   public ContributionCriteriaConfigurationDTO create(ContributionCriteriaConfigurationDTO criteriaConfigurationDTO) {
+    var entityForSave = contributionCriteriaConfigurationMapper.toEntity(criteriaConfigurationDTO);
+    entityForSave.getStatisticalCodeBehaviors().stream().forEach(statisticalCodeBehavior -> statisticalCodeBehavior.setContributionCriteriaConfiguration(entityForSave));
+    entityForSave.getExcludedLocations().stream().forEach(excludedLocation -> excludedLocation.setContributionCriteriaConfiguration(entityForSave));
     return contributionCriteriaConfigurationMapper.toDto(
       contributionCriteriaConfigurationRepository
-        .save(contributionCriteriaConfigurationMapper.toEntity(criteriaConfigurationDTO))
+        .save(entityForSave)
     );
   }
 
@@ -43,7 +47,7 @@ public class ContributionCriteriaConfigurationServiceImpl implements Contributio
 
   public ContributionCriteriaConfigurationDTO get(UUID centralServerId) {
     return contributionCriteriaConfigurationMapper.toDto(
-      contributionCriteriaConfigurationRepository.findById(centralServerId).orElseThrow(()-> new EntityNotFoundException("Configuration for central server id: "+centralServerId+" not found")));
+      contributionCriteriaConfigurationRepository.findById(centralServerId).orElseThrow(() -> new EntityNotFoundException("Configuration for central server id: "+centralServerId+" not found")));
   }
 
   @Override

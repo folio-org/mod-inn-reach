@@ -247,6 +247,7 @@
                 <java8>true</java8>
                 <dateLibrary>java</dateLibrary>
                 <interfaceOnly>true</interfaceOnly>
+                <useTags>true</useTags>
               </configOptions>
             </configuration>
           </execution>
