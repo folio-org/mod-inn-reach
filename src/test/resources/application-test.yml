@@ -15,3 +15,9 @@ folio:
   tenant:
     validation:
       enabled: false
+management:
+  endpoints:
+    enabled-by-default: false
+logging:
+  level:
+    org.springframework.web: debug
