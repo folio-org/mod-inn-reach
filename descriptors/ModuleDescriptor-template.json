@@ -81,6 +81,11 @@
           "methods": ["DELETE"],
           "pathPattern": "/inn-reach/central-servers/{centralServerId}/material-type-mappings/{mappingId}",
           "permissionsRequired": ["inn-reach.material-type-mappings.item.delete"]
+        },
+        {
+          "methods": ["POST"],
+          "pathPattern": "/inn-reach/authentication",
+          "permissionsRequired": ["inn-reach.authentication.item.post"]
         }
       ]
     },
@@ -166,6 +171,18 @@
       "description" : "Delete an inn reach location entry by id"
     },
     {
+      "permissionName" : "inn-reach.locations.all",
+      "displayName" : "inn reach API module - all permissions of inn reach locations",
+      "description" : "All permissions of inn reach locations scope",
+      "subPermissions" : [
+        "inn-reach.locations.item.post",
+        "inn-reach.locations.collection.get",
+        "inn-reach.locations.item.get",
+        "inn-reach.locations.item.put",
+        "inn-reach.locations.item.delete"
+      ]
+    },
+    {
       "permissionName" : "inn-reach.material-type-mappings.item.post",
       "displayName" : "create an inn reach material type mapping entry",
       "description" : "Add an inn reach material type mapping entry"
@@ -203,15 +220,16 @@
       ]
     },
     {
-      "permissionName" : "inn-reach.locations.all",
-      "displayName" : "inn reach API module - all permissions of inn reach locations",
-      "description" : "All permissions of inn reach locations scope",
+      "permissionName" : "inn-reach.authentication.item.post",
+      "displayName" : "authenticate local server credentials",
+      "description" : "Perform authentication of local server credentials"
+    },
+    {
+      "permissionName" : "inn-reach.authentication.all",
+      "displayName" : "inn reach API module - all permissions of inn reach local server credentials authentication",
+      "description" : "All permissions of inn reach local server credentials authentication scope",
       "subPermissions" : [
-        "inn-reach.locations.item.post",
-        "inn-reach.locations.collection.get",
-        "inn-reach.locations.item.get",
-        "inn-reach.locations.item.put",
-        "inn-reach.locations.item.delete"
+        "inn-reach.authentication.item.post"
       ]
     },
     {
@@ -221,7 +239,8 @@
       "subPermissions" : [
         "inn-reach.central-servers.all",
         "inn-reach.locations.all",
-        "inn-reach.material-type-mappings.all"
+        "inn-reach.material-type-mappings.all",
+        "inn-reach.authentication.all"
       ]
     }
   ],

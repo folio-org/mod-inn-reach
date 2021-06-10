@@ -303,6 +303,39 @@ paths:
                 $ref: "#/components/schemas/error"
       parameters:
         - $ref: '#/components/parameters/id'
+  /authentication:
+    post:
+      description: Authenticate InnReach local server key/secret pair
+      operationId: authenticateLocalServerKeySecret
+      tags:
+        - authentication
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/validationErrorsDTO"
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/validationErrorsDTO"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/error"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/authenticationRequest"
+        required: true
 components:
   schemas:
     UUID:
@@ -329,6 +362,8 @@ components:
       $ref: schemas/materialTypeMappingsDTO.json
     error:
       $ref: schemas/error.json
+    authenticationRequest:
+      $ref: schemas/authenticationRequest.json
   parameters:
     id:
       name: id

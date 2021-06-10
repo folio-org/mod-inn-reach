@@ -9,6 +9,7 @@ import javax.validation.ConstraintViolationException;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -28,7 +29,7 @@ public class ExceptionHandlerController {
   @ExceptionHandler(EntityNotFoundException.class)
   @ResponseStatus(HttpStatus.NOT_FOUND)
   public Error handleEntityNotFoundException(EntityNotFoundException e) {
-    return createError(HttpStatus.NOT_FOUND.toString(), e.getMessage());
+    return createError(HttpStatus.NOT_FOUND, e.getMessage());
   }
 
   @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -59,13 +60,13 @@ public class ExceptionHandlerController {
   @ExceptionHandler(InnReachException.class)
   @ResponseStatus(HttpStatus.BAD_REQUEST)
   public Error handleInnReachException(InnReachException e) {
-    return createError(HttpStatus.BAD_REQUEST.toString(), e.getMessage());
+    return createError(HttpStatus.BAD_REQUEST, e.getMessage());
   }
 
   @ExceptionHandler(DataIntegrityViolationException.class)
   @ResponseStatus(HttpStatus.BAD_REQUEST)
   public Error handleDataIntegrityViolationException(DataIntegrityViolationException e) {
-    return createError(HttpStatus.BAD_REQUEST.toString(), e.getMessage());
+    return createError(HttpStatus.BAD_REQUEST, e.getMessage());
   }
 
   @ExceptionHandler(Exception.class)
@@ -73,7 +74,7 @@ public class ExceptionHandlerController {
   public Error handleException(Exception e) {
     log.error("Unexpected exception: " + e.getMessage(), e);
 
-    return createError(HttpStatus.INTERNAL_SERVER_ERROR.toString(), e.getMessage());
+    return createError(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
   }
 
   private ValidationErrorsDTO createValidationErrors() {
@@ -85,10 +86,10 @@ public class ExceptionHandlerController {
 
   private List<ValidationErrorDTO> collectValidationErrors(MethodArgumentNotValidException e) {
     return e.getBindingResult()
-        .getFieldErrors()
-        .stream()
-        .map(this::mapFieldErrorToValidationError)
-        .collect(Collectors.toList());
+	    .getFieldErrors()
+      .stream()
+      .map(this::mapFieldErrorToValidationError)
+      .collect(Collectors.toList());
   }
 
   private ValidationErrorDTO mapFieldErrorToValidationError(FieldError fieldError) {
@@ -98,9 +99,15 @@ public class ExceptionHandlerController {
     return validationErrorDTO;
   }
 
-  private Error createError(String code, String message) {
+  @ExceptionHandler(AuthenticationException.class)
+  @ResponseStatus(HttpStatus.UNAUTHORIZED)
+  public Error handleAuthenticationException(AuthenticationException e) {
+    return createError(HttpStatus.UNAUTHORIZED, e.getMessage());
+  }
+
+  private Error createError(HttpStatus code, String message) {
     var error = new Error();
-    error.setCode(code);
+    error.setCode(Integer.toString(code.value()));
     error.setMessage(message);
     return error;
   }
