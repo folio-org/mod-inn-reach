@@ -8,7 +8,7 @@ import org.folio.innreach.domain.dto.ContributionCriteriaStatisticalCodeBehavior
 import org.folio.innreach.domain.entity.ContributionCriteriaConfiguration;
 import org.folio.innreach.domain.entity.ContributionCriteriaExcludedLocation;
 import org.folio.innreach.domain.entity.ContributionCriteriaStatisticalCodeBehavior;
-import org.folio.innreach.domain.exception.EntityAlreadyExistsException;
+
 import org.folio.innreach.domain.exception.EntityNotFoundException;
 import org.folio.innreach.domain.service.ContributionCriteriaConfigurationService;
 import org.folio.innreach.mapper.ContributionCriteriaConfigurationMapper;
@@ -36,7 +36,7 @@ public class ContributionCriteriaConfigurationServiceImpl implements Contributio
   @Override
   public ContributionCriteriaConfigurationDTO create(ContributionCriteriaConfigurationDTO criteriaConfigurationDTO) {
     var centralServerId = criteriaConfigurationDTO.getCentralServerId();
-    contributionCriteriaConfigurationRepository.findById(centralServerId).ifPresent(entity -> {throw new EntityAlreadyExistsException(TEXT_CONTRIBUTION_CRITERIA_CONFIGURATION_WITH_ID + entity.getCentralServerId() +" already exists.");});
+    contributionCriteriaConfigurationRepository.findById(centralServerId).ifPresent(entity -> {throw new RuntimeException(TEXT_CONTRIBUTION_CRITERIA_CONFIGURATION_WITH_ID + entity.getCentralServerId() +" already exists.");});
 
     var entityForSave = contributionCriteriaConfigurationMapper.toEntity(criteriaConfigurationDTO);
     entityForSave.getStatisticalCodeBehaviors().stream().forEach(statisticalCodeBehavior -> statisticalCodeBehavior.setContributionCriteriaConfiguration(entityForSave));

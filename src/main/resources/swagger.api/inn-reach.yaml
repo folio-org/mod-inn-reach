@@ -301,10 +301,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/error"
-      description: Delete InnReach location
-      operationId: deleteLocation
-      tags:
-        - locations
       parameters:
         - $ref: '#/components/parameters/id'
   /central-servers/contribution-criteria:
@@ -422,7 +418,6 @@ paths:
           application/json:
             schema:
               $ref: "#/components/schemas/contributionCriteriaDTO"
-        requir
       parameters:
         - $ref: '#/components/parameters/id'
   /authentication:
@@ -463,12 +458,12 @@ components:
     UUID:
       type: string
       format: uuid
-    contributionCriteriaDTO:
-      $ref: schemas/contributionCriteriaDTO.json
     innReachLocationDTO:
       $ref: schemas/innReachLocationDTO.json
     innReachLocationsDTO:
       $ref: schemas/innReachLocationsDTO.json
+    contributionCriteriaDTO:
+      $ref: schemas/contributionCriteriaDTO.json
     validationErrorsDTO:
       type: object
       properties:
