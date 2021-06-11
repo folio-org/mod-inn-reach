@@ -1,0 +1,13 @@
+{
+  "centralServerId": "efb089d4-4416-4892-ab81-bdfa00e4a2c3",
+  "locationIds": [
+    "aee00181-3d90-492d-8156-4d1a0d59bb62",
+    "aee00181-3d90-492d-8156-4d1a0d59bb63",
+    "aee00181-3d90-492d-8156-4d1a0d59bb64",
+    "aee00181-3d90-492d-8156-4d1a0d59bb65",
+    "dcf6e3b3-0653-4988-b0b5-7dd4bc3c04dd"
+  ],
+  "contributeButSuppressId": "96e6b3cd-9c53-41d3-89f9-a52b7c7e44af",
+  "doNotContributeId": "fad93c55-b7c6-4c5a-987e-749906aae07a",
+  "contributeAsSystemOwnedId": "faf053c7-19d1-4348-90c4-5a76ea75f905"
+}

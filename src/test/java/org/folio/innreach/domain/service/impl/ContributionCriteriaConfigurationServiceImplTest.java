@@ -5,7 +5,7 @@ import org.folio.innreach.domain.dto.ContributionCriteriaExcludedLocationDTO;
 import org.folio.innreach.domain.dto.ContributionCriteriaStatisticalCodeBehaviorDTO;
 import org.folio.innreach.domain.entity.ContributionBehavior;
 import org.folio.innreach.domain.entity.ContributionCriteriaConfiguration;
-import org.folio.innreach.fixture.ContributionCriteriaConfigurationServiceFixture;
+import org.folio.innreach.fixture.ContributionCriteriaConfigurationFixture;
 import org.folio.innreach.mapper.ContributionCriteriaConfigurationMapper;
 import org.folio.innreach.mapper.ContributionCriteriaExcludedLocationMapper;
 import org.folio.innreach.mapper.ContributionCriteriaStatisticalCodeBehaviorMapper;
@@ -50,14 +50,13 @@ class ContributionCriteriaConfigurationServiceImplTest {
   @Spy
   private ContributionCriteriaStatisticalCodeBehaviorMapper statisticalCodeMapper = Mappers.getMapper(ContributionCriteriaStatisticalCodeBehaviorMapper.class);
 
-
   @InjectMocks
   ContributionCriteriaConfigurationServiceImpl criteriaConfigurationService;
 
   @BeforeAll
   static void init() {
     TEST_DEFINED_CRITERIA_CONFIGURATION =
-      ContributionCriteriaConfigurationServiceFixture.createTestContributionCriteriaConfiguration(ContributionCriteriaConfigurationServiceFixture.CENTRAL_SERVER_UUID);
+      ContributionCriteriaConfigurationFixture.createTestContributionCriteriaConfiguration(ContributionCriteriaConfigurationFixture.CENTRAL_SERVER_UUID);
   }
 
   @BeforeEach
@@ -79,14 +78,13 @@ class ContributionCriteriaConfigurationServiceImplTest {
 
   @Test
   void create_ContributionCriteriaConfiguration_Test() {
-    ContributionCriteriaConfigurationDTO contributionCriteriaConfigurationDTO = new ContributionCriteriaConfigurationDTO();
+    var contributionCriteriaConfigurationDTO= criteriaConfigurationMapper.toDto(TEST_DEFINED_CRITERIA_CONFIGURATION);
     when(criteriaConfigurationRepository.save(any(ContributionCriteriaConfiguration.class)))
       .thenReturn(new ContributionCriteriaConfiguration());
     var createdContributionCriteriaConfigurationDTO = criteriaConfigurationService.create(contributionCriteriaConfigurationDTO);
 
     verify(criteriaConfigurationMapper).toEntity(any(ContributionCriteriaConfigurationDTO.class));
     verify(criteriaConfigurationRepository).save(any());
-    verify(criteriaConfigurationMapper).toDto(any(ContributionCriteriaConfiguration.class));
   }
 
   @Test
@@ -104,14 +102,12 @@ class ContributionCriteriaConfigurationServiceImplTest {
 
   @Test
   void delete_ContributionCriteriaConfiguration_Test() {
-    when(criteriaConfigurationRepository.findById(any())).thenReturn(Optional.empty());
+    when(criteriaConfigurationRepository.findById(any())).thenReturn(Optional.of(TEST_DEFINED_CRITERIA_CONFIGURATION));
+
     criteriaConfigurationService.delete(UUID.randomUUID());
-    verify(criteriaConfigurationRepository).deleteById(any());
-  }
 
-  @Test
-  void update_ContributionCriteriaConfiguration_Test() {
-
+    verify(criteriaConfigurationRepository).findById(any());
+    verify(criteriaConfigurationRepository).delete(any());
   }
 
   @Test
@@ -141,7 +137,6 @@ class ContributionCriteriaConfigurationServiceImplTest {
       var excludedLocationDTOforAdd = new ContributionCriteriaExcludedLocationDTO();
       excludedLocationDTOforAdd.setExcludedLocationId(UUID.randomUUID());
       nextIteration.add(excludedLocationDTOforAdd);
-
     }
     criteriaConfigurationService.updateExcludedLocations(new HashSet<>(nextIteration),TEST_DEFINED_CRITERIA_CONFIGURATION);
     assertEquals(QUANTITY_OF_ADDED_LOCATIONS-2+QUANTITY_OF_RANDOM_ADDED_LOCATIONS,TEST_DEFINED_CRITERIA_CONFIGURATION.getExcludedLocations().size());

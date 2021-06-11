@@ -1,7 +1,5 @@
 package org.folio.innreach.domain.service;
 
-import lombok.RequiredArgsConstructor;
-import lombok.extern.log4j.Log4j2;
 import org.folio.innreach.domain.dto.ContributionCriteriaConfigurationDTO;
 import org.springframework.stereotype.Service;
 
