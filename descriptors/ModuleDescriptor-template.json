@@ -56,6 +56,36 @@
           "methods": ["DELETE"],
           "pathPattern": "/inn-reach/locations/{locationId}",
           "permissionsRequired": ["inn-reach.locations.item.delete"]
+        },
+        {
+          "methods": ["GET"],
+          "pathPattern": "/inn-reach/central-servers/{centralServerId}/material-type-mappings",
+          "permissionsRequired": ["inn-reach.material-type-mappings.collection.get"]
+        },
+        {
+          "methods": ["GET"],
+          "pathPattern": "/inn-reach/central-servers/{centralServerId}/material-type-mappings/{mappingId}",
+          "permissionsRequired": ["inn-reach.material-type-mappings.item.get"]
+        },
+        {
+          "methods": ["POST"],
+          "pathPattern": "/inn-reach/central-servers/{centralServerId}/material-type-mappings",
+          "permissionsRequired": ["inn-reach.material-type-mappings.item.post"]
+        },
+        {
+          "methods": ["PUT"],
+          "pathPattern": "/inn-reach/central-servers/{centralServerId}/material-type-mappings/{mappingId}",
+          "permissionsRequired": ["inn-reach.material-type-mappings.item.put"]
+        },
+        {
+          "methods": ["DELETE"],
+          "pathPattern": "/inn-reach/central-servers/{centralServerId}/material-type-mappings/{mappingId}",
+          "permissionsRequired": ["inn-reach.material-type-mappings.item.delete"]
+        },
+        {
+          "methods": ["POST"],
+          "pathPattern": "/inn-reach/authentication",
+          "permissionsRequired": ["inn-reach.authentication.item.post"]
         }
       ]
     },
@@ -153,12 +183,64 @@
       ]
     },
     {
+      "permissionName" : "inn-reach.material-type-mappings.item.post",
+      "displayName" : "create an inn reach material type mapping entry",
+      "description" : "Add an inn reach material type mapping entry"
+    },
+    {
+      "permissionName" : "inn-reach.material-type-mappings.collection.get",
+      "displayName" : "get a collection of inn reach material type mapping entries",
+      "description" : "Get a collection of inn reach material type mapping entries"
+    },
+    {
+      "permissionName" : "inn-reach.material-type-mappings.item.get",
+      "displayName" : "get an inn reach material type mapping entry",
+      "description" : "Get an inn reach material type mapping entry by id"
+    },
+    {
+      "permissionName" : "inn-reach.material-type-mappings.item.put",
+      "displayName" : "modify an inn reach material type mapping entry",
+      "description" : "Modify an inn reach material type mapping entry"
+    },
+    {
+      "permissionName" : "inn-reach.material-type-mappings.item.delete",
+      "displayName" : "delete an inn reach material type mapping entry",
+      "description" : "Delete an inn reach material type mapping entry by id"
+    },
+    {
+      "permissionName" : "inn-reach.material-type-mappings.all",
+      "displayName" : "inn reach API module - all permissions of material type mappings",
+      "description" : "All permissions of inn reach material type mappings scope",
+      "subPermissions" : [
+        "inn-reach.material-type-mappings.item.post",
+        "inn-reach.material-type-mappings.collection.get",
+        "inn-reach.material-type-mappings.item.get",
+        "inn-reach.material-type-mappings.item.put",
+        "inn-reach.material-type-mappings.item.delete"
+      ]
+    },
+    {
+      "permissionName" : "inn-reach.authentication.item.post",
+      "displayName" : "authenticate local server credentials",
+      "description" : "Perform authentication of local server credentials"
+    },
+    {
+      "permissionName" : "inn-reach.authentication.all",
+      "displayName" : "inn reach API module - all permissions of inn reach local server credentials authentication",
+      "description" : "All permissions of inn reach local server credentials authentication scope",
+      "subPermissions" : [
+        "inn-reach.authentication.item.post"
+      ]
+    },
+    {
       "permissionName" : "inn-reach.all",
       "displayName" : "inn reach API module - all permissions",
       "description" : "All permissions for inn reach",
       "subPermissions" : [
         "inn-reach.central-servers.all",
-        "inn-reach.locations.all"
+        "inn-reach.locations.all",
+        "inn-reach.material-type-mappings.all",
+        "inn-reach.authentication.all"
       ]
     }
   ],

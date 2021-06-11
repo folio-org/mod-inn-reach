@@ -65,7 +65,6 @@ public class CentralServerServiceImpl implements CentralServerService {
 
   private void hashAndSaltLocalServerCredentials(LocalServerCredentials localServerCredentials) {
     localServerCredentials.setLocalServerSecret(passwordEncoder.encode(localServerCredentials.getLocalServerSecret()));
-    localServerCredentials.setLocalServerSecretSalt(passwordEncoder.encode(UUID.randomUUID().toString()));
   }
 
   @Override
@@ -137,7 +136,6 @@ public class CentralServerServiceImpl implements CentralServerService {
       log.debug("Local server credentials existed. Update and perform re-hashing and re-salting.");
       hashAndSaltLocalServerCredentials(updatedLocalServerCredentials);
 
-      localServerCredentials.setLocalServerSecretSalt(updatedLocalServerCredentials.getLocalServerSecretSalt());
       localServerCredentials.setLocalServerKey(updatedLocalServerCredentials.getLocalServerKey());
       localServerCredentials.setLocalServerSecret(updatedLocalServerCredentials.getLocalServerSecret());
     }

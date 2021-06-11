@@ -30,7 +30,7 @@ public class MaterialTypeMapping extends Auditable<String> {
   @GeneratedValue(strategy = GenerationType.AUTO)
   private UUID id;
   private UUID materialTypeId;
-  private int centralItemType;
+  private Integer centralItemType;
 
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "central_server_id")
