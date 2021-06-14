@@ -7,6 +7,7 @@
       "type": "integer"
     },
     "centralServers": {
+      "description": "List of INN-Reach Central servers",
       "type": "array",
       "items": {
         "$ref": "centralServerDTO.json"
