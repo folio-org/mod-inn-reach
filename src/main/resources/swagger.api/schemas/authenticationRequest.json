@@ -1,0 +1,26 @@
+{
+  "description": "Authentication request",
+  "type": "object",
+  "properties": {
+    "localServerCode": {
+      "description": "key",
+      "type": "string"
+    },
+    "key": {
+      "description": "key",
+      "type": "string",
+      "format": "UUID"
+    },
+    "secret": {
+      "description": "secret",
+      "type": "string",
+      "format": "UUID"
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "localServerCode",
+    "key",
+    "secret"
+  ]
+}

@@ -6,9 +6,9 @@ INSERT INTO central_server_credentials(central_server_id, central_server_key, ce
 VALUES ('edab6baf-c696-42b1-89bb-1bbb8759b0d2', 'b55f2568-e03a-4cc2-8f30-5fb69aa14f5f',
         '0c3ae7f3-4e70-4d5d-b94d-5a6605166494');
 
-INSERT INTO local_server_credentials(central_server_id, local_server_key, local_server_secret, local_server_secret_salt)
+INSERT INTO local_server_credentials(central_server_id, local_server_key, local_server_secret)
 VALUES ('edab6baf-c696-42b1-89bb-1bbb8759b0d2', 'b55f2568-e03a-4cc2-8f30-5fb69aa14f5f',
-        '0c3ae7f3-4e70-4d5d-b94d-5a6605166494', '7cbb2858-13c2-4d71-b2cd-41acfd573e58');
+        '$2a$10$bJY.mnChIj0DCF0345nB/.FflxflGhPDaa6I5OvHhhJci5TRRf3Be');
 
 INSERT INTO local_agency(id, code, central_server_id)
 VALUES ('556a5930-0639-4caa-a66b-f7c99c39972a', 'q1w2e', 'edab6baf-c696-42b1-89bb-1bbb8759b0d2'),

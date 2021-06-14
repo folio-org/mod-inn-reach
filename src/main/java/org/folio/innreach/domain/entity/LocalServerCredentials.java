@@ -1,5 +1,8 @@
 package org.folio.innreach.domain.entity;
 
+import static org.folio.innreach.domain.entity.LocalServerCredentials.FIND_BY_LOCAL_SERVER_CODE_AND_KEY_QUERY;
+import static org.folio.innreach.domain.entity.LocalServerCredentials.FIND_BY_LOCAL_SERVER_CODE_AND_KEY_QUERY_NAME;
+
 import java.util.UUID;
 
 import javax.persistence.Column;
@@ -8,6 +11,7 @@ import javax.persistence.FetchType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.MapsId;
+import javax.persistence.NamedQuery;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
 
@@ -23,11 +27,19 @@ import lombok.ToString;
 
 @Getter
 @Setter
-@EqualsAndHashCode(of = {"localServerKey", "localServerSecret", "localServerSecretSalt"})
+@EqualsAndHashCode(of = {"localServerKey", "localServerSecret"})
 @ToString(exclude = "centralServer")
 @Entity
 @Table(name = "local_server_credentials")
+@NamedQuery(
+  name = FIND_BY_LOCAL_SERVER_CODE_AND_KEY_QUERY_NAME,
+  query = FIND_BY_LOCAL_SERVER_CODE_AND_KEY_QUERY
+)
 public class LocalServerCredentials {
+
+  public static final String FIND_BY_LOCAL_SERVER_CODE_AND_KEY_QUERY_NAME = "LocalServerCredentials.findByLocalServerCodeAndKey";
+  public static final String FIND_BY_LOCAL_SERVER_CODE_AND_KEY_QUERY = "SELECT lsc FROM LocalServerCredentials AS lsc " +
+    "WHERE lsc.centralServer.localServerCode = :localServerCode AND lsc.localServerKey = :localServerKey";
 
   @Id
   private UUID id;
@@ -37,9 +49,6 @@ public class LocalServerCredentials {
 
   @Column(name = "local_server_secret")
   private String localServerSecret;
-
-  @Column(name = "local_server_secret_salt")
-  private String localServerSecretSalt;
 
   @OneToOne(fetch = FetchType.LAZY, optional = false)
   @MapsId

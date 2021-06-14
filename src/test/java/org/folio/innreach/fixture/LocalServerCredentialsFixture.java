@@ -10,7 +10,6 @@ public class LocalServerCredentialsFixture {
     var localServerCredentials = new LocalServerCredentials();
     localServerCredentials.setLocalServerKey(randomUUIDString());
     localServerCredentials.setLocalServerSecret(randomUUIDString());
-    localServerCredentials.setLocalServerSecretSalt(randomUUIDString());
 
     return localServerCredentials;
   }
