@@ -18,6 +18,7 @@ import org.folio.innreach.repository.ContributionCriteriaConfigurationRepository
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.persistence.EntityExistsException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -36,11 +37,11 @@ public class ContributionCriteriaConfigurationServiceImpl implements Contributio
   @Override
   public ContributionCriteriaConfigurationDTO create(ContributionCriteriaConfigurationDTO criteriaConfigurationDTO) {
     var centralServerId = criteriaConfigurationDTO.getCentralServerId();
-    contributionCriteriaConfigurationRepository.findById(centralServerId).ifPresent(entity -> {throw new RuntimeException(TEXT_CONTRIBUTION_CRITERIA_CONFIGURATION_WITH_ID + entity.getCentralServerId() +" already exists.");});
+    contributionCriteriaConfigurationRepository.findById(centralServerId).ifPresent(entity -> {throw new EntityExistsException(TEXT_CONTRIBUTION_CRITERIA_CONFIGURATION_WITH_ID + entity.getCentralServerId() +" already exists.");});
 
     var entityForSave = contributionCriteriaConfigurationMapper.toEntity(criteriaConfigurationDTO);
-    entityForSave.getStatisticalCodeBehaviors().stream().forEach(statisticalCodeBehavior -> statisticalCodeBehavior.setContributionCriteriaConfiguration(entityForSave));
-    entityForSave.getExcludedLocations().stream().forEach(excludedLocation -> excludedLocation.setContributionCriteriaConfiguration(entityForSave));
+    entityForSave.getStatisticalCodeBehaviors().forEach(statisticalCodeBehavior -> statisticalCodeBehavior.setContributionCriteriaConfiguration(entityForSave));
+    entityForSave.getExcludedLocations().forEach(excludedLocation -> excludedLocation.setContributionCriteriaConfiguration(entityForSave));
     return contributionCriteriaConfigurationMapper.toDto(
       contributionCriteriaConfigurationRepository
         .save(entityForSave)
@@ -67,28 +68,28 @@ public class ContributionCriteriaConfigurationServiceImpl implements Contributio
   public void updateStatisticalCodeBehaviors(Set<ContributionCriteriaStatisticalCodeBehaviorDTO> newStatisticalCodeBehaviorDTOS, ContributionCriteriaConfiguration criteriaConfigurationForUpdate) {
     if (newStatisticalCodeBehaviorDTOS.isEmpty()) {
       Set<ContributionCriteriaStatisticalCodeBehavior> statisticalCodeBehaviorForRemove = new HashSet<>(criteriaConfigurationForUpdate.getStatisticalCodeBehaviors());
-      statisticalCodeBehaviorForRemove.stream().forEach(criteriaConfigurationForUpdate::removeStatisticalCondeBehavior);
+      statisticalCodeBehaviorForRemove.forEach(criteriaConfigurationForUpdate::removeStatisticalCondeBehavior);
     } else {
       Set<ContributionCriteriaStatisticalCodeBehaviorDTO> statisticalCodeBehaviorForRemove = new HashSet<>();
       Set<ContributionCriteriaStatisticalCodeBehaviorDTO> statisticalCodeBehaviorForAdd = new HashSet<>(newStatisticalCodeBehaviorDTOS);
-      criteriaConfigurationForUpdate.getStatisticalCodeBehaviors().stream().forEach(statisticalCodeBehavior ->
+      criteriaConfigurationForUpdate.getStatisticalCodeBehaviors().forEach(statisticalCodeBehavior ->
         statisticalCodeBehaviorForRemove.add(statisticalCodeMapper.toDTO(statisticalCodeBehavior))
       );
       statisticalCodeBehaviorForAdd.removeAll(statisticalCodeBehaviorForRemove);
       statisticalCodeBehaviorForRemove.removeAll(newStatisticalCodeBehaviorDTOS);
 
       Map<String, ContributionCriteriaStatisticalCodeBehavior> itemsForUpdate = new HashMap<>();
-      criteriaConfigurationForUpdate.getStatisticalCodeBehaviors().stream().forEach(statisticalCodeBehavior ->
+      criteriaConfigurationForUpdate.getStatisticalCodeBehaviors().forEach(statisticalCodeBehavior ->
         itemsForUpdate.put(statisticalCodeBehavior.getStatisticalCodeId().toString()
           +statisticalCodeBehavior.getContributionBehavior(), statisticalCodeBehavior)
       );
-      statisticalCodeBehaviorForRemove.stream().forEach(statisticalCodeBehaviorDTO -> {
+      statisticalCodeBehaviorForRemove.forEach(statisticalCodeBehaviorDTO -> {
         ContributionCriteriaStatisticalCodeBehavior statisticalCodeBehavior
           = itemsForUpdate.get(statisticalCodeBehaviorDTO.getStatisticalCodeId().toString()+statisticalCodeBehaviorDTO.getContributionBehavior());
         if (statisticalCodeBehavior!=null)
           criteriaConfigurationForUpdate.removeStatisticalCondeBehavior(statisticalCodeBehavior);
       });
-      statisticalCodeBehaviorForAdd.stream().forEach(statisticalCodeBehaviorDTO ->
+      statisticalCodeBehaviorForAdd.forEach(statisticalCodeBehaviorDTO ->
         criteriaConfigurationForUpdate.addStatisticalCodeBehavior(statisticalCodeMapper.toEntity(statisticalCodeBehaviorDTO))
       );
     }
@@ -97,26 +98,26 @@ public class ContributionCriteriaConfigurationServiceImpl implements Contributio
   public void updateExcludedLocations(Set<ContributionCriteriaExcludedLocationDTO> newExcludedLocationDTOS, ContributionCriteriaConfiguration criteriaConfigurationForUpdate) {
     if (newExcludedLocationDTOS.isEmpty()) {
       Set<ContributionCriteriaExcludedLocation> excludedLocationsForRemove = new HashSet<>(criteriaConfigurationForUpdate.getExcludedLocations());
-      excludedLocationsForRemove.stream().forEach(criteriaConfigurationForUpdate::removeExcludedLocation);
+      excludedLocationsForRemove.forEach(criteriaConfigurationForUpdate::removeExcludedLocation);
     } else {
       Set<ContributionCriteriaExcludedLocationDTO> locationsForRemove = new HashSet<>();
       Set<ContributionCriteriaExcludedLocationDTO> locationsForAdd = new HashSet<>(newExcludedLocationDTOS);
-      criteriaConfigurationForUpdate.getExcludedLocations().stream().forEach(excludedLocation ->
+      criteriaConfigurationForUpdate.getExcludedLocations().forEach(excludedLocation ->
         locationsForRemove.add(excludedLocationMapper.toDTO(excludedLocation))
       );
       locationsForAdd.removeAll(locationsForRemove);
       locationsForRemove.removeAll(newExcludedLocationDTOS);
 
       Map<UUID, ContributionCriteriaExcludedLocation> itemsForUpdate = new HashMap<>();
-      criteriaConfigurationForUpdate.getExcludedLocations().stream().forEach(excludedLocation ->
+      criteriaConfigurationForUpdate.getExcludedLocations().forEach(excludedLocation ->
         itemsForUpdate.put(excludedLocation.getExcludedLocationId(), excludedLocation)
       );
-      locationsForRemove.stream().forEach(excludedLocationDTO -> {
+      locationsForRemove.forEach(excludedLocationDTO -> {
         ContributionCriteriaExcludedLocation excludedLocation = itemsForUpdate.get(excludedLocationDTO.getExcludedLocationId());
         if (excludedLocation!=null)
           criteriaConfigurationForUpdate.removeExcludedLocation(excludedLocation);
       });
-      locationsForAdd.stream().forEach(excludedLocationDTO ->
+      locationsForAdd.forEach(excludedLocationDTO ->
         criteriaConfigurationForUpdate.addExcludedLocation(excludedLocationMapper.toEntity(excludedLocationDTO))
       );
     }

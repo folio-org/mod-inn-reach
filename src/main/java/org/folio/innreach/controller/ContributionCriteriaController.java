@@ -90,7 +90,7 @@ public class ContributionCriteriaController implements ContributionCriteriaApi {
           result.setContributeAsSystemOwnedId(statisticalCodeBehaviorDTO.getStatisticalCodeId());
           break;
         default:
-          throw new RuntimeException("Behavior of Contribution Criteria: "+statisticalCodeBehaviorDTO.getContributionBehavior().toString() +" can not be handled!");
+          throw new IllegalArgumentException("Behavior of Contribution Criteria: "+statisticalCodeBehaviorDTO.getContributionBehavior().toString() +" can not be handled!");
       }
     });
     return  result;
