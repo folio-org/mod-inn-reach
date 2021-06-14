@@ -1,6 +1,7 @@
 package org.folio.innreach.controller;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TEST_METHOD;
 
 import static org.folio.innreach.fixture.TestUtil.deserializeFromJsonFile;
 
@@ -13,17 +14,14 @@ import org.springframework.test.context.jdbc.Sql;
 import org.folio.innreach.controller.base.BaseControllerTest;
 import org.folio.innreach.dto.AuthenticationRequest;
 
-@Sql(scripts = {
-  "classpath:db/central-server/clear-central-server-tables.sql",
-  "classpath:db/central-server/pre-populate-central-server.sql",
-})
+@Sql(scripts = "classpath:db/central-server/pre-populate-central-server.sql")
+@Sql(scripts = "classpath:db/central-server/clear-central-server-tables.sql", executionPhase = AFTER_TEST_METHOD)
 class AuthenticationControllerTest extends BaseControllerTest {
 
   @Autowired
   private TestRestTemplate testRestTemplate;
 
   @Test
-
   void return200HttpCode_when_localServerCredentialsAreSuccessfullyAuthenticated() {
     var authenticationRequest = deserializeFromJsonFile("/authentication/authentication-request.json",
         AuthenticationRequest.class);
