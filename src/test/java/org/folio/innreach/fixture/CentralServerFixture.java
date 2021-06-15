@@ -1,17 +1,17 @@
 package org.folio.innreach.fixture;
 
-import org.folio.innreach.domain.dto.CentralServerDTO;
-import org.folio.innreach.domain.dto.LocalAgencyDTO;
-import org.folio.innreach.domain.entity.CentralServer;
+import static org.folio.innreach.fixture.CentralServerCredentialsFixture.createCentralServerCredentials;
+import static org.folio.innreach.fixture.LocalAgencyFixture.createLocalAgency;
+import static org.folio.innreach.fixture.LocalServerCredentialsFixture.createLocalServerCredentials;
+import static org.folio.innreach.fixture.TestUtil.randomFiveCharacterCode;
+import static org.folio.innreach.fixture.TestUtil.randomUUIDString;
 
 import java.util.List;
 import java.util.UUID;
 
-import static org.folio.innreach.fixture.CentralServerCredentialsFixture.createCentralServerCredentials;
-import static org.folio.innreach.fixture.TestUtil.randomFiveCharacterCode;
-import static org.folio.innreach.fixture.TestUtil.randomUUIDString;
-import static org.folio.innreach.fixture.LocalAgencyFixture.createLocalAgency;
-import static org.folio.innreach.fixture.LocalServerCredentialsFixture.createLocalServerCredentials;
+import org.folio.innreach.domain.entity.CentralServer;
+import org.folio.innreach.dto.CentralServerDTO;
+import org.folio.innreach.dto.LocalAgencyDTO;
 
 public class CentralServerFixture {
 
@@ -31,26 +31,23 @@ public class CentralServerFixture {
   }
 
   public static CentralServerDTO createCentralServerDTO() {
-    return CentralServerDTO.builder()
+    return new CentralServerDTO()
       .name("name")
       .description("description")
       .localServerCode(randomFiveCharacterCode())
       .centralServerAddress("http://centralserveraddress")
       .loanTypeId(UUID.randomUUID())
       .localAgencies(List.of(
-        LocalAgencyDTO.builder()
+        new LocalAgencyDTO()
+          .code(randomFiveCharacterCode())
+          .folioLibraryIds(List.of(UUID.randomUUID(), UUID.randomUUID())),
+        new LocalAgencyDTO()
           .code(randomFiveCharacterCode())
           .folioLibraryIds(List.of(UUID.randomUUID(), UUID.randomUUID()))
-          .build(),
-        LocalAgencyDTO.builder()
-          .code(randomFiveCharacterCode())
-          .folioLibraryIds(List.of(UUID.randomUUID(), UUID.randomUUID()))
-          .build()
       ))
       .centralServerKey(randomUUIDString())
       .centralServerSecret(randomUUIDString())
       .localServerKey(randomUUIDString())
-      .localServerSecret(randomUUIDString())
-      .build();
+      .localServerSecret(randomUUIDString());
   }
 }

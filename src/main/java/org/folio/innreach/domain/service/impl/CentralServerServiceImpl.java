@@ -1,23 +1,24 @@
 package org.folio.innreach.domain.service.impl;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import org.folio.innreach.domain.dto.CentralServerDTO;
 import org.folio.innreach.domain.entity.CentralServer;
 import org.folio.innreach.domain.entity.CentralServerCredentials;
 import org.folio.innreach.domain.entity.LocalAgency;
 import org.folio.innreach.domain.entity.LocalServerCredentials;
 import org.folio.innreach.domain.exception.EntityNotFoundException;
 import org.folio.innreach.domain.service.CentralServerService;
+import org.folio.innreach.dto.CentralServerDTO;
+import org.folio.innreach.dto.CentralServersDTO;
 import org.folio.innreach.external.dto.AccessTokenRequestDTO;
 import org.folio.innreach.external.service.InnReachExternalService;
 import org.folio.innreach.mapper.CentralServerMapper;
@@ -81,11 +82,15 @@ public class CentralServerServiceImpl implements CentralServerService {
 
   @Override
   @Transactional(readOnly = true)
-  public List<CentralServerDTO> getAllCentralServers() {
-    return centralServerRepository.fetchAll()
-      .stream()
+  public CentralServersDTO getAllCentralServers(int offset, int limit) {
+    var centralServersPage = centralServerRepository.fetchAll(PageRequest.of(offset, limit));
+
+    var centralServerDTOS = centralServersPage.stream()
       .map(centralServerMapper::mapToCentralServerDTO)
       .collect(Collectors.toList());
+
+    return new CentralServersDTO().centralServers(centralServerDTOS).totalRecords((int) centralServersPage
+        .getTotalElements());
   }
 
   @Override
