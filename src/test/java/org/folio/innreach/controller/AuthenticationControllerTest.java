@@ -14,8 +14,9 @@ import org.springframework.test.context.jdbc.Sql;
 import org.folio.innreach.controller.base.BaseControllerTest;
 import org.folio.innreach.dto.AuthenticationRequest;
 
-@Sql(scripts = "classpath:db/central-server/pre-populate-central-server.sql")
-@Sql(scripts = "classpath:db/central-server/clear-central-server-tables.sql", executionPhase = AFTER_TEST_METHOD)
+@Sql("classpath:db/central-server/pre-populate-central-server.sql")
+@Sql(value = "classpath:db/central-server/clear-central-server-tables.sql",
+    executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
 class AuthenticationControllerTest extends BaseControllerTest {
 
   @Autowired

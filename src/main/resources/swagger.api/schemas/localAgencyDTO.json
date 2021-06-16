@@ -1,0 +1,29 @@
+{
+  "description": "Local agency",
+  "type": "object",
+  "properties": {
+    "id": {
+      "description": "Local agency id",
+      "type": "string",
+      "format": "UUID"
+    },
+    "code": {
+      "description": "Local agency code",
+      "type": "string",
+      "maxLength": 5
+    },
+    "folioLibraryIds": {
+      "description": "Folio libraries ids",
+      "type": "array",
+      "items": {
+        "type": "string",
+        "format": "UUID"
+      }
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "code",
+    "folioLibraryIds"
+  ]
+}

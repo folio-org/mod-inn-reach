@@ -5,6 +5,145 @@ info:
 servers:
   - url: /inn-reach/
 paths:
+  /central-servers:
+    post:
+      tags:
+        - central-servers
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/centralServerDTO"
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/validationErrorsDTO"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/error"
+      description: Add new central server
+      operationId: postCentralServer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/centralServerDTO"
+        required: true
+    get:
+      tags:
+        - central-servers
+      responses:
+        '200':
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/centralServersDTO"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/error"
+      description: Get a list of central servers
+      operationId: getCentralServers
+      parameters:
+        - $ref: "#/components/parameters/trait_pageable_offset"
+        - $ref: "#/components/parameters/trait_pageable_limit"
+  /central-servers/{centralServerId}:
+    get:
+      tags:
+        - central-servers
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/centralServerDTO"
+        '404':
+          description: Central server not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/error"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/error"
+      description: Get central server by id
+      operationId: getCentralServerById
+      parameters:
+        - $ref: '#/components/parameters/id'
+    put:
+      tags:
+        - central-servers
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/centralServerDTO"
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/validationErrorsDTO"
+        '404':
+          description: Central server not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/error"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/error"
+      description: Update central server
+      operationId: updateCentralServer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/centralServerDTO"
+        required: true
+      parameters:
+        - $ref: '#/components/parameters/id'
+    delete:
+      tags:
+        - central-servers
+      responses:
+        '204':
+          description: No content
+        '404':
+          description: Central server not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/error"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/error"
+      description: Delete central server
+      operationId: deleteCentralServer
+      parameters:
+        - $ref: '#/components/parameters/id'
   /central-servers/{centralServerId}/material-type-mappings:
     get:
       description: Get a list of material type mappings for the given central server
@@ -458,6 +597,10 @@ components:
     UUID:
       type: string
       format: uuid
+    centralServerDTO:
+      $ref: schemas/centralServerDTO.json
+    centralServersDTO:
+      $ref: schemas/centralServersDTO.json
     innReachLocationDTO:
       $ref: schemas/innReachLocationDTO.json
     innReachLocationsDTO:

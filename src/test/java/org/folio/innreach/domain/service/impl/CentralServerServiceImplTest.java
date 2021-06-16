@@ -21,6 +21,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.mockito.Spy;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import org.folio.innreach.domain.exception.EntityNotFoundException;
@@ -68,14 +69,16 @@ class CentralServerServiceImplTest {
 
   @Test
   void returnAllCentralServersDTOS_when_centralServersExist() {
-    when(centralServerRepository.fetchAll()).thenReturn(List.of(createCentralServer()));
+    when(centralServerRepository.fetchAll(any())).thenReturn(new PageImpl<>(List.of(createCentralServer(),
+        createCentralServer(), createCentralServer())));
 
-    var centralServerDTOS = centralServerService.getAllCentralServers();
+    var centralServerDTOS = centralServerService.getAllCentralServers(1, 1);
 
-    verify(centralServerRepository).fetchAll();
+    verify(centralServerRepository).fetchAll(any());
 
     assertNotNull(centralServerDTOS);
-    assertFalse(centralServerDTOS.isEmpty());
+    assertNotNull(centralServerDTOS.getCentralServers());
+    assertFalse(centralServerDTOS.getCentralServers().isEmpty());
   }
 
   @Test
