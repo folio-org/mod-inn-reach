@@ -40,19 +40,19 @@ public class ContributionCriteriaConfigurationServiceImpl implements Contributio
   public ContributionCriteriaConfigurationDTO create(ContributionCriteriaConfigurationDTO criteriaConfigurationDTO) {
     var centralServerId = criteriaConfigurationDTO.getCentralServerId();
     contributionCriteriaConfigurationRepository.findById(centralServerId).ifPresent(
-      entity -> {
+      criteriaConfiguration -> {
         throw new EntityExistsException(TEXT_CONTRIBUTION_CRITERIA_CONFIGURATION_WITH_ID
-          + entity.getCentralServerId() + " already exists.");
+          + criteriaConfiguration.getCentralServerId() + " already exists.");
       });
-    var entityForSave
+    var contributionCriteriaConfiguration
       = contributionCriteriaConfigurationMapper.toEntity(criteriaConfigurationDTO);
-    entityForSave.getStatisticalCodeBehaviors().forEach(
-      statisticalCodeBehavior -> statisticalCodeBehavior.setContributionCriteriaConfiguration(entityForSave));
-    entityForSave.getExcludedLocations().forEach(
-      excludedLocation -> excludedLocation.setContributionCriteriaConfiguration(entityForSave));
+    contributionCriteriaConfiguration.getStatisticalCodeBehaviors().forEach(
+      statisticalCodeBehavior -> statisticalCodeBehavior.setContributionCriteriaConfiguration(contributionCriteriaConfiguration));
+    contributionCriteriaConfiguration.getExcludedLocations().forEach(
+      excludedLocation -> excludedLocation.setContributionCriteriaConfiguration(contributionCriteriaConfiguration));
     return contributionCriteriaConfigurationMapper.toDto(
       contributionCriteriaConfigurationRepository
-        .save(entityForSave)
+        .save(contributionCriteriaConfiguration)
     );
   }
 

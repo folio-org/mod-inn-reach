@@ -24,9 +24,4 @@ public class ContributionCriteriaConfigurationDTO {
   private Set<ContributionCriteriaStatisticalCodeBehaviorDTO> statisticalCodeBehaviors;
 
   private Metadata metadata;
-
-//  private String createdBy;
-//  private OffsetDateTime createdDate;
-//  private String lastModifiedBy;
-//  private OffsetDateTime lastModifiedDate;
 }
