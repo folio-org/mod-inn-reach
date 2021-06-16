@@ -3,11 +3,11 @@ package org.folio.innreach.mapper;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
-import org.folio.innreach.domain.dto.CentralServerDTO;
-import org.folio.innreach.domain.dto.LocalAgencyDTO;
 import org.folio.innreach.domain.entity.CentralServer;
 import org.folio.innreach.domain.entity.LocalAgency;
 import org.folio.innreach.domain.entity.LocalServerCredentials;
+import org.folio.innreach.dto.CentralServerDTO;
+import org.folio.innreach.dto.LocalAgencyDTO;
 
 @Mapper(componentModel = "spring")
 public interface CentralServerMapper {
