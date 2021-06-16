@@ -14,6 +14,7 @@ import org.jeasy.random.randomizers.range.IntegerRangeRandomizer;
 import org.folio.innreach.domain.entity.CentralServer;
 import org.folio.innreach.domain.entity.InnReachLocation;
 import org.folio.innreach.domain.entity.LibraryMapping;
+import org.folio.innreach.domain.entity.LocationMapping;
 import org.folio.innreach.domain.entity.MaterialTypeMapping;
 
 @UtilityClass
@@ -23,7 +24,7 @@ public class MappingFixture {
   private static final UUID PRE_POPULATED_IR_LOCATION_UUID = fromString("a1c1472f-67ec-4938-b5a8-f119e51ab79b");
 
   private static final EasyRandom mtypeRandom;
-  private static final EasyRandom libraryRandom;
+  private static final EasyRandom libraryAndLocationRandom;
 
 
   static {
@@ -50,7 +51,7 @@ public class MappingFixture {
         .excludeField(named("lastModifiedDate"))
         .excludeField(named("metadata"));
 
-    libraryRandom = new EasyRandom(params);
+    libraryAndLocationRandom = new EasyRandom(params);
   }
 
   public static MaterialTypeMapping createMaterialTypeMapping() {
@@ -58,7 +59,11 @@ public class MappingFixture {
   }
 
   public static LibraryMapping createLibraryMapping() {
-    return libraryRandom.nextObject(LibraryMapping.class);
+    return libraryAndLocationRandom.nextObject(LibraryMapping.class);
+  }
+
+  public static LocationMapping createLocationMapping() {
+    return libraryAndLocationRandom.nextObject(LocationMapping.class);
   }
 
   public static CentralServer refCentralServer() {
