@@ -37,10 +37,11 @@ public class ContributionCriteriaController implements ContributionCriteriaApi {
 
   @Override
   @PostMapping("/contribution-criteria")
-  public ResponseEntity<ContributionCriteriaDTO> postContributionCriteria(@Valid @RequestBody ContributionCriteriaDTO contributionCriteriaDTO) {
-    return ResponseEntity.status(HttpStatus.CREATED).body(toContributionCriteriaDTO(criteriaConfigurationService.create(toContributionCriteriaConfigurationDTO(contributionCriteriaDTO))));
+  public ResponseEntity<ContributionCriteriaDTO> postContributionCriteria(
+    @Valid @RequestBody ContributionCriteriaDTO contributionCriteriaDTO) {
+    return ResponseEntity.status(HttpStatus.CREATED).body(toContributionCriteriaDTO(criteriaConfigurationService
+      .create(toContributionCriteriaConfigurationDTO(contributionCriteriaDTO))));
   }
-
 
   @Override
   @DeleteMapping("/{centralServerId}/contribution-criteria")
@@ -62,13 +63,14 @@ public class ContributionCriteriaController implements ContributionCriteriaApi {
   @Override
   @PutMapping("/{centralServerId}/contribution-criteria")
   public ResponseEntity<ContributionCriteriaDTO> updateCriteria(@PathVariable UUID centralServerId,
-                                                            @Valid ContributionCriteriaDTO contributionCriteriaDTO) {
+                                                           @Valid ContributionCriteriaDTO contributionCriteriaDTO) {
     return ResponseEntity.ok(toContributionCriteriaDTO(
       criteriaConfigurationService.update(toContributionCriteriaConfigurationDTO(contributionCriteriaDTO))
     ));
   }
 
-  public ContributionCriteriaDTO toContributionCriteriaDTO (ContributionCriteriaConfigurationDTO contributionCriteriaConfigurationDTO) {
+  public ContributionCriteriaDTO toContributionCriteriaDTO (
+    ContributionCriteriaConfigurationDTO contributionCriteriaConfigurationDTO) {
     var result = new ContributionCriteriaDTO();
     result.setCentralServerId(contributionCriteriaConfigurationDTO.getCentralServerId());
     var metadata = new Metadata();
@@ -90,13 +92,15 @@ public class ContributionCriteriaController implements ContributionCriteriaApi {
           result.setContributeAsSystemOwnedId(statisticalCodeBehaviorDTO.getStatisticalCodeId());
           break;
         default:
-          throw new IllegalArgumentException("Behavior of Contribution Criteria: "+statisticalCodeBehaviorDTO.getContributionBehavior().toString() +" can not be handled!");
+          throw new IllegalArgumentException("Behavior of Contribution Criteria: "
+            + statisticalCodeBehaviorDTO.getContributionBehavior().toString() +" can not be handled!");
       }
     });
     return  result;
   }
 
-  public ContributionCriteriaConfigurationDTO toContributionCriteriaConfigurationDTO(ContributionCriteriaDTO contributionCriteriaDTO) {
+  public ContributionCriteriaConfigurationDTO toContributionCriteriaConfigurationDTO(
+    ContributionCriteriaDTO contributionCriteriaDTO) {
     var result = new ContributionCriteriaConfigurationDTO();
     result.setCentralServerId(contributionCriteriaDTO.getCentralServerId());
     result.setExcludedLocations(new HashSet<>());

@@ -29,19 +29,27 @@ import java.util.UUID;
 @RequiredArgsConstructor
 @Service
 public class ContributionCriteriaConfigurationServiceImpl implements ContributionCriteriaConfigurationService {
-  private static final String TEXT_CONTRIBUTION_CRITERIA_CONFIGURATION_WITH_ID = "Contribution Criteria Configuration with id: ";
+  private static final String TEXT_CONTRIBUTION_CRITERIA_CONFIGURATION_WITH_ID
+    = "Contribution Criteria Configuration with id: ";
   private final ContributionCriteriaConfigurationRepository contributionCriteriaConfigurationRepository;
   private final ContributionCriteriaConfigurationMapper contributionCriteriaConfigurationMapper;
   private final ContributionCriteriaExcludedLocationMapper excludedLocationMapper;
   private final ContributionCriteriaStatisticalCodeBehaviorMapper statisticalCodeMapper;
+
   @Override
   public ContributionCriteriaConfigurationDTO create(ContributionCriteriaConfigurationDTO criteriaConfigurationDTO) {
     var centralServerId = criteriaConfigurationDTO.getCentralServerId();
-    contributionCriteriaConfigurationRepository.findById(centralServerId).ifPresent(entity -> {throw new EntityExistsException(TEXT_CONTRIBUTION_CRITERIA_CONFIGURATION_WITH_ID + entity.getCentralServerId() +" already exists.");});
-
-    var entityForSave = contributionCriteriaConfigurationMapper.toEntity(criteriaConfigurationDTO);
-    entityForSave.getStatisticalCodeBehaviors().forEach(statisticalCodeBehavior -> statisticalCodeBehavior.setContributionCriteriaConfiguration(entityForSave));
-    entityForSave.getExcludedLocations().forEach(excludedLocation -> excludedLocation.setContributionCriteriaConfiguration(entityForSave));
+    contributionCriteriaConfigurationRepository.findById(centralServerId).ifPresent(
+      entity -> {
+        throw new EntityExistsException(TEXT_CONTRIBUTION_CRITERIA_CONFIGURATION_WITH_ID
+          + entity.getCentralServerId() + " already exists.");
+      });
+    var entityForSave
+      = contributionCriteriaConfigurationMapper.toEntity(criteriaConfigurationDTO);
+    entityForSave.getStatisticalCodeBehaviors().forEach(
+      statisticalCodeBehavior -> statisticalCodeBehavior.setContributionCriteriaConfiguration(entityForSave));
+    entityForSave.getExcludedLocations().forEach(
+      excludedLocation -> excludedLocation.setContributionCriteriaConfiguration(entityForSave));
     return contributionCriteriaConfigurationMapper.toDto(
       contributionCriteriaConfigurationRepository
         .save(entityForSave)
@@ -52,26 +60,34 @@ public class ContributionCriteriaConfigurationServiceImpl implements Contributio
   @Transactional(readOnly = true)
   public ContributionCriteriaConfigurationDTO get(UUID centralServerId) {
     return contributionCriteriaConfigurationMapper.toDto(
-      contributionCriteriaConfigurationRepository.findById(centralServerId).orElseThrow(() -> new EntityNotFoundException("Configuration for central server id: "+centralServerId+" not found")));
+      contributionCriteriaConfigurationRepository.findById(centralServerId).orElseThrow(
+        () -> new EntityNotFoundException("Configuration for central server id: " + centralServerId + " not found"))
+    );
   }
 
   @Override
   @Transactional
   public ContributionCriteriaConfigurationDTO update(ContributionCriteriaConfigurationDTO criteriaConfigurationDTO) {
-    var criteriaConfigurationForUpdate = contributionCriteriaConfigurationRepository.findById(criteriaConfigurationDTO.getCentralServerId())
-      .orElseThrow(() -> new EntityNotFoundException("Configuration for Central Server id: " + criteriaConfigurationDTO.getCentralServerId() + "not found."));
-    updateExcludedLocations(criteriaConfigurationDTO.getExcludedLocations(),criteriaConfigurationForUpdate);
-    updateStatisticalCodeBehaviors(criteriaConfigurationDTO.getStatisticalCodeBehaviors(),criteriaConfigurationForUpdate);
+    var criteriaConfigurationForUpdate
+      = contributionCriteriaConfigurationRepository.findById(criteriaConfigurationDTO.getCentralServerId())
+      .orElseThrow(() -> new EntityNotFoundException("Configuration for Central Server id: "
+        + criteriaConfigurationDTO.getCentralServerId() + "not found."));
+
+    updateExcludedLocations(criteriaConfigurationDTO.getExcludedLocations(), criteriaConfigurationForUpdate);
+    updateStatisticalCodeBehaviors(criteriaConfigurationDTO.getStatisticalCodeBehaviors(), criteriaConfigurationForUpdate);
     return contributionCriteriaConfigurationMapper.toDto(contributionCriteriaConfigurationRepository.save(criteriaConfigurationForUpdate));
   }
 
-  public void updateStatisticalCodeBehaviors(Set<ContributionCriteriaStatisticalCodeBehaviorDTO> newStatisticalCodeBehaviorDTOS, ContributionCriteriaConfiguration criteriaConfigurationForUpdate) {
+  public void updateStatisticalCodeBehaviors(Set<ContributionCriteriaStatisticalCodeBehaviorDTO> newStatisticalCodeBehaviorDTOS,
+                                             ContributionCriteriaConfiguration criteriaConfigurationForUpdate) {
     if (newStatisticalCodeBehaviorDTOS.isEmpty()) {
-      Set<ContributionCriteriaStatisticalCodeBehavior> statisticalCodeBehaviorForRemove = new HashSet<>(criteriaConfigurationForUpdate.getStatisticalCodeBehaviors());
+      Set<ContributionCriteriaStatisticalCodeBehavior> statisticalCodeBehaviorForRemove
+        = new HashSet<>(criteriaConfigurationForUpdate.getStatisticalCodeBehaviors());
       statisticalCodeBehaviorForRemove.forEach(criteriaConfigurationForUpdate::removeStatisticalCondeBehavior);
     } else {
       Set<ContributionCriteriaStatisticalCodeBehaviorDTO> statisticalCodeBehaviorForRemove = new HashSet<>();
-      Set<ContributionCriteriaStatisticalCodeBehaviorDTO> statisticalCodeBehaviorForAdd = new HashSet<>(newStatisticalCodeBehaviorDTOS);
+      Set<ContributionCriteriaStatisticalCodeBehaviorDTO> statisticalCodeBehaviorForAdd
+        = new HashSet<>(newStatisticalCodeBehaviorDTOS);
       criteriaConfigurationForUpdate.getStatisticalCodeBehaviors().forEach(statisticalCodeBehavior ->
         statisticalCodeBehaviorForRemove.add(statisticalCodeMapper.toDTO(statisticalCodeBehavior))
       );
@@ -81,21 +97,24 @@ public class ContributionCriteriaConfigurationServiceImpl implements Contributio
       Map<String, ContributionCriteriaStatisticalCodeBehavior> itemsForUpdate = new HashMap<>();
       criteriaConfigurationForUpdate.getStatisticalCodeBehaviors().forEach(statisticalCodeBehavior ->
         itemsForUpdate.put(statisticalCodeBehavior.getStatisticalCodeId().toString()
-          +statisticalCodeBehavior.getContributionBehavior(), statisticalCodeBehavior)
+          + statisticalCodeBehavior.getContributionBehavior(), statisticalCodeBehavior)
       );
       statisticalCodeBehaviorForRemove.forEach(statisticalCodeBehaviorDTO -> {
         ContributionCriteriaStatisticalCodeBehavior statisticalCodeBehavior
-          = itemsForUpdate.get(statisticalCodeBehaviorDTO.getStatisticalCodeId().toString()+statisticalCodeBehaviorDTO.getContributionBehavior());
-        if (statisticalCodeBehavior!=null)
+          = itemsForUpdate.get(statisticalCodeBehaviorDTO.getStatisticalCodeId().toString()
+          + statisticalCodeBehaviorDTO.getContributionBehavior());
+        if (statisticalCodeBehavior != null)
           criteriaConfigurationForUpdate.removeStatisticalCondeBehavior(statisticalCodeBehavior);
       });
       statisticalCodeBehaviorForAdd.forEach(statisticalCodeBehaviorDTO ->
-        criteriaConfigurationForUpdate.addStatisticalCodeBehavior(statisticalCodeMapper.toEntity(statisticalCodeBehaviorDTO))
+        criteriaConfigurationForUpdate.addStatisticalCodeBehavior(
+          statisticalCodeMapper.toEntity(statisticalCodeBehaviorDTO))
       );
     }
   }
 
-  public void updateExcludedLocations(Set<ContributionCriteriaExcludedLocationDTO> newExcludedLocationDTOS, ContributionCriteriaConfiguration criteriaConfigurationForUpdate) {
+  public void updateExcludedLocations(Set<ContributionCriteriaExcludedLocationDTO> newExcludedLocationDTOS,
+                                      ContributionCriteriaConfiguration criteriaConfigurationForUpdate) {
     if (newExcludedLocationDTOS.isEmpty()) {
       Set<ContributionCriteriaExcludedLocation> excludedLocationsForRemove = new HashSet<>(criteriaConfigurationForUpdate.getExcludedLocations());
       excludedLocationsForRemove.forEach(criteriaConfigurationForUpdate::removeExcludedLocation);
@@ -114,7 +133,7 @@ public class ContributionCriteriaConfigurationServiceImpl implements Contributio
       );
       locationsForRemove.forEach(excludedLocationDTO -> {
         ContributionCriteriaExcludedLocation excludedLocation = itemsForUpdate.get(excludedLocationDTO.getExcludedLocationId());
-        if (excludedLocation!=null)
+        if (excludedLocation != null)
           criteriaConfigurationForUpdate.removeExcludedLocation(excludedLocation);
       });
       locationsForAdd.forEach(excludedLocationDTO ->
@@ -126,8 +145,8 @@ public class ContributionCriteriaConfigurationServiceImpl implements Contributio
   @Override
   @Transactional
   public void delete(UUID centralServerId) {
-    var criteriaConfiguration = contributionCriteriaConfigurationRepository.findById(centralServerId).orElseThrow(() -> new EntityNotFoundException(TEXT_CONTRIBUTION_CRITERIA_CONFIGURATION_WITH_ID + centralServerId + " not found!"));
+    var criteriaConfiguration
+      = contributionCriteriaConfigurationRepository.findById(centralServerId).orElseThrow(() -> new EntityNotFoundException(TEXT_CONTRIBUTION_CRITERIA_CONFIGURATION_WITH_ID + centralServerId + " not found!"));
     contributionCriteriaConfigurationRepository.delete(criteriaConfiguration);
   }
-
 }

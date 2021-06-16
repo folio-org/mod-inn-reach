@@ -34,7 +34,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 class ContributionCriteriaConfigurationServiceImplTest {
-  private static Set<String> SKIP_BEFORE_EACH_FOR_TESTS = Set.of("contributionCriteriaConfigurationMapperTest()");
+  private static final Set<String> SKIP_BEFORE_EACH_FOR_TESTS = Set.of("contributionCriteriaConfigurationMapperTest()");
 
   private static ContributionCriteriaConfiguration TEST_DEFINED_CRITERIA_CONFIGURATION;
 
@@ -42,13 +42,16 @@ class ContributionCriteriaConfigurationServiceImplTest {
   ContributionCriteriaConfigurationRepository criteriaConfigurationRepository;
 
   @Spy
-  private ContributionCriteriaConfigurationMapper criteriaConfigurationMapper = Mappers.getMapper(ContributionCriteriaConfigurationMapper.class);
+  private final ContributionCriteriaConfigurationMapper criteriaConfigurationMapper
+    = Mappers.getMapper(ContributionCriteriaConfigurationMapper.class);
 
   @Spy
-  private ContributionCriteriaExcludedLocationMapper excludedLocationMapper = Mappers.getMapper(ContributionCriteriaExcludedLocationMapper.class);
+  private final ContributionCriteriaExcludedLocationMapper excludedLocationMapper
+    = Mappers.getMapper(ContributionCriteriaExcludedLocationMapper.class);
 
   @Spy
-  private ContributionCriteriaStatisticalCodeBehaviorMapper statisticalCodeMapper = Mappers.getMapper(ContributionCriteriaStatisticalCodeBehaviorMapper.class);
+  private final ContributionCriteriaStatisticalCodeBehaviorMapper statisticalCodeMapper
+    = Mappers.getMapper(ContributionCriteriaStatisticalCodeBehaviorMapper.class);
 
   @InjectMocks
   ContributionCriteriaConfigurationServiceImpl criteriaConfigurationService;
@@ -56,7 +59,8 @@ class ContributionCriteriaConfigurationServiceImplTest {
   @BeforeAll
   static void init() {
     TEST_DEFINED_CRITERIA_CONFIGURATION =
-      ContributionCriteriaConfigurationFixture.createTestContributionCriteriaConfiguration(ContributionCriteriaConfigurationFixture.CENTRAL_SERVER_UUID);
+      ContributionCriteriaConfigurationFixture
+        .createTestContributionCriteriaConfiguration(ContributionCriteriaConfigurationFixture.CENTRAL_SERVER_UUID);
   }
 
   @BeforeEach
@@ -67,21 +71,29 @@ class ContributionCriteriaConfigurationServiceImplTest {
 
   @Test
   void contributionCriteriaConfigurationMapperTest() {
-    var criteriaConfigurationDTO = criteriaConfigurationMapper.toDto(TEST_DEFINED_CRITERIA_CONFIGURATION);
-    assertEquals(TEST_DEFINED_CRITERIA_CONFIGURATION.getStatisticalCodeBehaviors().size(),criteriaConfigurationDTO.getStatisticalCodeBehaviors().size());
+    var criteriaConfigurationDTO
+      = criteriaConfigurationMapper.toDto(TEST_DEFINED_CRITERIA_CONFIGURATION);
+    assertEquals(TEST_DEFINED_CRITERIA_CONFIGURATION.getStatisticalCodeBehaviors().size(),
+      criteriaConfigurationDTO.getStatisticalCodeBehaviors().size());
     assertEquals(TEST_DEFINED_CRITERIA_CONFIGURATION.getExcludedLocations().size(),criteriaConfigurationDTO.getExcludedLocations().size());
-    var criteriaConfigurationMapped = criteriaConfigurationMapper.toEntity(criteriaConfigurationDTO);
-    assertEquals(TEST_DEFINED_CRITERIA_CONFIGURATION.getCentralServerId(),criteriaConfigurationMapped.getCentralServerId());
-    assertEquals(TEST_DEFINED_CRITERIA_CONFIGURATION.getExcludedLocations().size(),criteriaConfigurationMapped.getExcludedLocations().size());
-    assertEquals(TEST_DEFINED_CRITERIA_CONFIGURATION.getStatisticalCodeBehaviors().size(),criteriaConfigurationMapped.getStatisticalCodeBehaviors().size());
+    var criteriaConfigurationMapped
+      = criteriaConfigurationMapper.toEntity(criteriaConfigurationDTO);
+    assertEquals(TEST_DEFINED_CRITERIA_CONFIGURATION.getCentralServerId(),
+      criteriaConfigurationMapped.getCentralServerId());
+    assertEquals(TEST_DEFINED_CRITERIA_CONFIGURATION.getExcludedLocations().size(),
+      criteriaConfigurationMapped.getExcludedLocations().size());
+    assertEquals(TEST_DEFINED_CRITERIA_CONFIGURATION.getStatisticalCodeBehaviors().size(),
+      criteriaConfigurationMapped.getStatisticalCodeBehaviors().size());
   }
 
   @Test
   void create_ContributionCriteriaConfiguration_Test() {
-    var contributionCriteriaConfigurationDTO= criteriaConfigurationMapper.toDto(TEST_DEFINED_CRITERIA_CONFIGURATION);
+    var contributionCriteriaConfigurationDTO
+      = criteriaConfigurationMapper.toDto(TEST_DEFINED_CRITERIA_CONFIGURATION);
     when(criteriaConfigurationRepository.save(any(ContributionCriteriaConfiguration.class)))
       .thenReturn(new ContributionCriteriaConfiguration());
-    var createdContributionCriteriaConfigurationDTO = criteriaConfigurationService.create(contributionCriteriaConfigurationDTO);
+    var createdContributionCriteriaConfigurationDTO
+      = criteriaConfigurationService.create(contributionCriteriaConfigurationDTO);
 
     verify(criteriaConfigurationMapper).toEntity(any(ContributionCriteriaConfigurationDTO.class));
     verify(criteriaConfigurationRepository).save(any());
@@ -89,7 +101,8 @@ class ContributionCriteriaConfigurationServiceImplTest {
 
   @Test
   void get_ContributionCriteriaConfiguration_Test() {
-    ContributionCriteriaConfigurationDTO contributionCriteriaConfigurationDTO = new ContributionCriteriaConfigurationDTO();
+    ContributionCriteriaConfigurationDTO contributionCriteriaConfigurationDTO
+      = new ContributionCriteriaConfigurationDTO();
     when(criteriaConfigurationRepository.findById(TEST_DEFINED_CRITERIA_CONFIGURATION.getCentralServerId()))
       .thenReturn(Optional.of(TEST_DEFINED_CRITERIA_CONFIGURATION));
 
@@ -111,10 +124,11 @@ class ContributionCriteriaConfigurationServiceImplTest {
   }
 
   @Test
-  void update_excluededLocations() {
+  void update_excludedLocations() {
     Set<ContributionCriteriaExcludedLocationDTO> TEST_DEFINED_EXCLUDED_LOCATIONS_FOR_UPDATE
       = new HashSet<>();
-    criteriaConfigurationService.updateExcludedLocations(TEST_DEFINED_EXCLUDED_LOCATIONS_FOR_UPDATE,TEST_DEFINED_CRITERIA_CONFIGURATION);
+    criteriaConfigurationService.updateExcludedLocations(TEST_DEFINED_EXCLUDED_LOCATIONS_FOR_UPDATE,
+      TEST_DEFINED_CRITERIA_CONFIGURATION);
     assertEquals(0,TEST_DEFINED_CRITERIA_CONFIGURATION.getExcludedLocations().size());
 
     int QUANTITY_OF_ADDED_LOCATIONS=4;
@@ -123,14 +137,18 @@ class ContributionCriteriaConfigurationServiceImplTest {
       excludedLocationDTO.setExcludedLocationId(UUID.randomUUID());
       TEST_DEFINED_EXCLUDED_LOCATIONS_FOR_UPDATE.add(excludedLocationDTO);
     }
-    criteriaConfigurationService.updateExcludedLocations(TEST_DEFINED_EXCLUDED_LOCATIONS_FOR_UPDATE,TEST_DEFINED_CRITERIA_CONFIGURATION);
+    criteriaConfigurationService.updateExcludedLocations(TEST_DEFINED_EXCLUDED_LOCATIONS_FOR_UPDATE,
+      TEST_DEFINED_CRITERIA_CONFIGURATION);
     assertEquals(QUANTITY_OF_ADDED_LOCATIONS,TEST_DEFINED_CRITERIA_CONFIGURATION.getExcludedLocations().size());
 
-    List<ContributionCriteriaExcludedLocationDTO> nextIteration = new ArrayList<>(TEST_DEFINED_EXCLUDED_LOCATIONS_FOR_UPDATE);
+    List<ContributionCriteriaExcludedLocationDTO> nextIteration
+      = new ArrayList<>(TEST_DEFINED_EXCLUDED_LOCATIONS_FOR_UPDATE);
     nextIteration.remove(0);
     nextIteration.remove(0);
-    criteriaConfigurationService.updateExcludedLocations(new HashSet<>(nextIteration),TEST_DEFINED_CRITERIA_CONFIGURATION);
-    assertEquals(QUANTITY_OF_ADDED_LOCATIONS-2,TEST_DEFINED_CRITERIA_CONFIGURATION.getExcludedLocations().size());
+    criteriaConfigurationService.updateExcludedLocations(new HashSet<>(nextIteration),
+      TEST_DEFINED_CRITERIA_CONFIGURATION);
+    assertEquals(QUANTITY_OF_ADDED_LOCATIONS-2,
+      TEST_DEFINED_CRITERIA_CONFIGURATION.getExcludedLocations().size());
 
     int QUANTITY_OF_RANDOM_ADDED_LOCATIONS = 7;
     for (int i = 0; i < QUANTITY_OF_RANDOM_ADDED_LOCATIONS; i++) {
@@ -138,55 +156,69 @@ class ContributionCriteriaConfigurationServiceImplTest {
       excludedLocationDTOforAdd.setExcludedLocationId(UUID.randomUUID());
       nextIteration.add(excludedLocationDTOforAdd);
     }
-    criteriaConfigurationService.updateExcludedLocations(new HashSet<>(nextIteration),TEST_DEFINED_CRITERIA_CONFIGURATION);
-    assertEquals(QUANTITY_OF_ADDED_LOCATIONS-2+QUANTITY_OF_RANDOM_ADDED_LOCATIONS,TEST_DEFINED_CRITERIA_CONFIGURATION.getExcludedLocations().size());
+    criteriaConfigurationService.updateExcludedLocations(new HashSet<>(nextIteration),
+      TEST_DEFINED_CRITERIA_CONFIGURATION);
+    assertEquals(QUANTITY_OF_ADDED_LOCATIONS-2+QUANTITY_OF_RANDOM_ADDED_LOCATIONS,
+      TEST_DEFINED_CRITERIA_CONFIGURATION.getExcludedLocations().size());
   }
 
   @Test
   void update_statisticalCodeBehaviors_test() {
     var TEST_VAR_STATISTICAL_CODE_BEHAVIORS_FOR_UPDATE = new HashSet<ContributionCriteriaStatisticalCodeBehaviorDTO>();
-    TEST_DEFINED_CRITERIA_CONFIGURATION.getStatisticalCodeBehaviors().stream().forEach(statisticalCodeBehavior -> {
-      ContributionCriteriaStatisticalCodeBehaviorDTO updatedStatisticalCodeBehaviorDTO = new ContributionCriteriaStatisticalCodeBehaviorDTO();
+    TEST_DEFINED_CRITERIA_CONFIGURATION.getStatisticalCodeBehaviors().forEach(statisticalCodeBehavior -> {
+      ContributionCriteriaStatisticalCodeBehaviorDTO updatedStatisticalCodeBehaviorDTO
+        = new ContributionCriteriaStatisticalCodeBehaviorDTO();
       updatedStatisticalCodeBehaviorDTO.setStatisticalCodeId(statisticalCodeBehavior.getStatisticalCodeId());
       if (statisticalCodeBehavior.getContributionBehavior().ordinal()>=ContributionBehavior.values().length-1) {
         updatedStatisticalCodeBehaviorDTO.setContributionBehavior(ContributionBehavior.values()[0]);
       } else {
-        updatedStatisticalCodeBehaviorDTO.setContributionBehavior(ContributionBehavior.values()[statisticalCodeBehavior.getContributionBehavior().ordinal()+1]);
+        updatedStatisticalCodeBehaviorDTO.setContributionBehavior(
+          ContributionBehavior.values()[statisticalCodeBehavior.getContributionBehavior().ordinal()+1]);
       }
       TEST_VAR_STATISTICAL_CODE_BEHAVIORS_FOR_UPDATE.add(updatedStatisticalCodeBehaviorDTO);
     });
-    var updatedStatCodesQuantity = TEST_DEFINED_CRITERIA_CONFIGURATION.getStatisticalCodeBehaviors().size();
 
-    criteriaConfigurationService.updateStatisticalCodeBehaviors(TEST_VAR_STATISTICAL_CODE_BEHAVIORS_FOR_UPDATE, TEST_DEFINED_CRITERIA_CONFIGURATION);
+    criteriaConfigurationService.updateStatisticalCodeBehaviors(TEST_VAR_STATISTICAL_CODE_BEHAVIORS_FOR_UPDATE,
+      TEST_DEFINED_CRITERIA_CONFIGURATION);
 
-    assertEquals(TEST_VAR_STATISTICAL_CODE_BEHAVIORS_FOR_UPDATE.size(),TEST_DEFINED_CRITERIA_CONFIGURATION.getStatisticalCodeBehaviors().size());
+    assertEquals(TEST_VAR_STATISTICAL_CODE_BEHAVIORS_FOR_UPDATE.size(),
+      TEST_DEFINED_CRITERIA_CONFIGURATION.getStatisticalCodeBehaviors().size());
 
-    assertEquals(0, TEST_VAR_STATISTICAL_CODE_BEHAVIORS_FOR_UPDATE.stream().filter(statisticalCodeBehaviorDTO ->
-      TEST_DEFINED_CRITERIA_CONFIGURATION.getStatisticalCodeBehaviors().stream().filter(statisticalCodeBehavior ->
+    assertEquals(0, TEST_VAR_STATISTICAL_CODE_BEHAVIORS_FOR_UPDATE.stream()
+      .filter(statisticalCodeBehaviorDTO -> TEST_DEFINED_CRITERIA_CONFIGURATION.getStatisticalCodeBehaviors()
+        .stream().filter(statisticalCodeBehavior ->
         !(statisticalCodeBehaviorDTO.getStatisticalCodeId().equals(statisticalCodeBehavior.getStatisticalCodeId())
-          && statisticalCodeBehaviorDTO.getContributionBehavior().equals(statisticalCodeBehavior.getContributionBehavior()))
+          && statisticalCodeBehaviorDTO.getContributionBehavior()
+          .equals(statisticalCodeBehavior.getContributionBehavior()))
       ).findAny().isEmpty()
     ).collect(Collectors.toSet()).size());
 
     TEST_VAR_STATISTICAL_CODE_BEHAVIORS_FOR_UPDATE.clear();
-    criteriaConfigurationService.updateStatisticalCodeBehaviors(TEST_VAR_STATISTICAL_CODE_BEHAVIORS_FOR_UPDATE, TEST_DEFINED_CRITERIA_CONFIGURATION);
+    criteriaConfigurationService.updateStatisticalCodeBehaviors(TEST_VAR_STATISTICAL_CODE_BEHAVIORS_FOR_UPDATE,
+      TEST_DEFINED_CRITERIA_CONFIGURATION);
     assertEquals(0, TEST_DEFINED_CRITERIA_CONFIGURATION.getStatisticalCodeBehaviors().size());
 
     int QUANTITY_OF_ADDED_STATISTICAL_CODE_BEHAVIORS = 4;
     for (int i = 0; i < QUANTITY_OF_ADDED_STATISTICAL_CODE_BEHAVIORS; i++) {
-      ContributionCriteriaStatisticalCodeBehaviorDTO statisticalCodeBehaviorDTO = new ContributionCriteriaStatisticalCodeBehaviorDTO();
+      ContributionCriteriaStatisticalCodeBehaviorDTO statisticalCodeBehaviorDTO
+        = new ContributionCriteriaStatisticalCodeBehaviorDTO();
       statisticalCodeBehaviorDTO.setStatisticalCodeId(UUID.randomUUID());
       statisticalCodeBehaviorDTO.setContributionBehavior(ContributionBehavior.contributeButSuppress);
       TEST_VAR_STATISTICAL_CODE_BEHAVIORS_FOR_UPDATE.add(statisticalCodeBehaviorDTO);
     }
-    criteriaConfigurationService.updateStatisticalCodeBehaviors(TEST_VAR_STATISTICAL_CODE_BEHAVIORS_FOR_UPDATE, TEST_DEFINED_CRITERIA_CONFIGURATION);
-    assertEquals(QUANTITY_OF_ADDED_STATISTICAL_CODE_BEHAVIORS, TEST_DEFINED_CRITERIA_CONFIGURATION.getStatisticalCodeBehaviors().size());
+    criteriaConfigurationService.updateStatisticalCodeBehaviors(TEST_VAR_STATISTICAL_CODE_BEHAVIORS_FOR_UPDATE,
+      TEST_DEFINED_CRITERIA_CONFIGURATION);
+    assertEquals(QUANTITY_OF_ADDED_STATISTICAL_CODE_BEHAVIORS,
+      TEST_DEFINED_CRITERIA_CONFIGURATION.getStatisticalCodeBehaviors().size());
 
-    List<ContributionCriteriaStatisticalCodeBehaviorDTO> nextIteration = new ArrayList<>(TEST_VAR_STATISTICAL_CODE_BEHAVIORS_FOR_UPDATE);
+    List<ContributionCriteriaStatisticalCodeBehaviorDTO> nextIteration
+      = new ArrayList<>(TEST_VAR_STATISTICAL_CODE_BEHAVIORS_FOR_UPDATE);
     nextIteration.remove(0);
     nextIteration.remove(0);
-    criteriaConfigurationService.updateStatisticalCodeBehaviors(new HashSet<>(nextIteration), TEST_DEFINED_CRITERIA_CONFIGURATION);
-    assertEquals(QUANTITY_OF_ADDED_STATISTICAL_CODE_BEHAVIORS - 2, TEST_DEFINED_CRITERIA_CONFIGURATION.getStatisticalCodeBehaviors().size());
+    criteriaConfigurationService.updateStatisticalCodeBehaviors(new HashSet<>(nextIteration),
+      TEST_DEFINED_CRITERIA_CONFIGURATION);
+    assertEquals(QUANTITY_OF_ADDED_STATISTICAL_CODE_BEHAVIORS - 2,
+      TEST_DEFINED_CRITERIA_CONFIGURATION.getStatisticalCodeBehaviors().size());
 
     int QUANTITY_OF_RANDOM_ADDED_STATISTICAL_CODE_BEHAVIORS = 7;
     for (int i = 0; i < QUANTITY_OF_RANDOM_ADDED_STATISTICAL_CODE_BEHAVIORS; i++) {
@@ -195,7 +227,10 @@ class ContributionCriteriaConfigurationServiceImplTest {
       statisticalCodeBehaviorDTOforAdd.setStatisticalCodeId(UUID.randomUUID());
       nextIteration.add(statisticalCodeBehaviorDTOforAdd);
     }
-    criteriaConfigurationService.updateStatisticalCodeBehaviors(new HashSet<>(nextIteration), TEST_DEFINED_CRITERIA_CONFIGURATION);
-    assertEquals(QUANTITY_OF_ADDED_STATISTICAL_CODE_BEHAVIORS - 2 + QUANTITY_OF_RANDOM_ADDED_STATISTICAL_CODE_BEHAVIORS, TEST_DEFINED_CRITERIA_CONFIGURATION.getStatisticalCodeBehaviors().size());
+    criteriaConfigurationService.updateStatisticalCodeBehaviors(new HashSet<>(nextIteration),
+      TEST_DEFINED_CRITERIA_CONFIGURATION);
+    assertEquals(QUANTITY_OF_ADDED_STATISTICAL_CODE_BEHAVIORS
+        - 2 + QUANTITY_OF_RANDOM_ADDED_STATISTICAL_CODE_BEHAVIORS,
+      TEST_DEFINED_CRITERIA_CONFIGURATION.getStatisticalCodeBehaviors().size());
   }
 }

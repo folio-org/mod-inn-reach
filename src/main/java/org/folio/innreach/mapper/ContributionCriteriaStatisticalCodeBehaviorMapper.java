@@ -6,6 +6,8 @@ import org.mapstruct.Mapper;
 
 @Mapper(componentModel = "spring")
 public interface ContributionCriteriaStatisticalCodeBehaviorMapper {
-  ContributionCriteriaStatisticalCodeBehavior toEntity(ContributionCriteriaStatisticalCodeBehaviorDTO statisticalCodeBehaviorDTO);
-  ContributionCriteriaStatisticalCodeBehaviorDTO toDTO(ContributionCriteriaStatisticalCodeBehavior statisticalCodeBehavior);
+  ContributionCriteriaStatisticalCodeBehavior toEntity(
+    ContributionCriteriaStatisticalCodeBehaviorDTO statisticalCodeBehaviorDTO);
+  ContributionCriteriaStatisticalCodeBehaviorDTO toDTO(
+    ContributionCriteriaStatisticalCodeBehavior statisticalCodeBehavior);
 }

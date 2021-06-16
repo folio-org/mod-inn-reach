@@ -72,7 +72,8 @@ public class ContributionCriteriaConfiguration extends Auditable<String> {
     if (hashCodeBeforeUpdate != statisticalCodeBehaviors.hashCode()) touchUpdateTrigger();
   }
 
-  public void removeStatisticalCondeBehavior(ContributionCriteriaStatisticalCodeBehavior statisticalCodeBehaviorForRemove) {
+  public void removeStatisticalCondeBehavior(
+    ContributionCriteriaStatisticalCodeBehavior statisticalCodeBehaviorForRemove) {
     int hashCodeBeforeUpdate = statisticalCodeBehaviors.hashCode();
     statisticalCodeBehaviors.remove(statisticalCodeBehaviorForRemove);
     statisticalCodeBehaviorForRemove.setContributionCriteriaConfiguration(null);
