@@ -7,6 +7,7 @@ import org.folio.innreach.domain.entity.ContributionBehavior;
 import org.folio.innreach.domain.entity.ContributionCriteriaConfiguration;
 import org.folio.innreach.fixture.ContributionCriteriaConfigurationFixture;
 import org.folio.innreach.mapper.ContributionCriteriaConfigurationMapper;
+import org.folio.innreach.mapper.ContributionCriteriaConfigurationMapperImpl;
 import org.folio.innreach.mapper.ContributionCriteriaExcludedLocationMapper;
 import org.folio.innreach.mapper.ContributionCriteriaStatisticalCodeBehaviorMapper;
 import org.folio.innreach.repository.ContributionCriteriaConfigurationRepository;
@@ -19,6 +20,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.mockito.Spy;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
@@ -42,7 +44,7 @@ class ContributionCriteriaConfigurationServiceImplTest {
   ContributionCriteriaConfigurationRepository criteriaConfigurationRepository;
 
   @Spy
-  private final ContributionCriteriaConfigurationMapper criteriaConfigurationMapper
+    private ContributionCriteriaConfigurationMapper criteriaConfigurationMapper
     = Mappers.getMapper(ContributionCriteriaConfigurationMapper.class);
 
   @Spy
@@ -63,19 +65,14 @@ class ContributionCriteriaConfigurationServiceImplTest {
         .createTestContributionCriteriaConfiguration(ContributionCriteriaConfigurationFixture.CENTRAL_SERVER_UUID);
   }
 
-  @BeforeEach
-  void setUp(TestInfo testInfo) {
-    if (SKIP_BEFORE_EACH_FOR_TESTS.contains(testInfo.getDisplayName())) return;
-    MockitoAnnotations.initMocks(this);
-  }
-
   @Test
   void contributionCriteriaConfigurationMapperTest() {
     var criteriaConfigurationDTO
       = criteriaConfigurationMapper.toDto(TEST_DEFINED_CRITERIA_CONFIGURATION);
     assertEquals(TEST_DEFINED_CRITERIA_CONFIGURATION.getStatisticalCodeBehaviors().size(),
       criteriaConfigurationDTO.getStatisticalCodeBehaviors().size());
-    assertEquals(TEST_DEFINED_CRITERIA_CONFIGURATION.getExcludedLocations().size(),criteriaConfigurationDTO.getExcludedLocations().size());
+    assertEquals(TEST_DEFINED_CRITERIA_CONFIGURATION.getExcludedLocations().size(),criteriaConfigurationDTO
+      .getExcludedLocations().size());
     var criteriaConfigurationMapped
       = criteriaConfigurationMapper.toEntity(criteriaConfigurationDTO);
     assertEquals(TEST_DEFINED_CRITERIA_CONFIGURATION.getCentralServerId(),
@@ -88,6 +85,7 @@ class ContributionCriteriaConfigurationServiceImplTest {
 
   @Test
   void create_ContributionCriteriaConfiguration_Test() {
+    MockitoAnnotations.initMocks(this);
     var contributionCriteriaConfigurationDTO
       = criteriaConfigurationMapper.toDto(TEST_DEFINED_CRITERIA_CONFIGURATION);
     when(criteriaConfigurationRepository.save(any(ContributionCriteriaConfiguration.class)))
@@ -101,6 +99,7 @@ class ContributionCriteriaConfigurationServiceImplTest {
 
   @Test
   void get_ContributionCriteriaConfiguration_Test() {
+    MockitoAnnotations.initMocks(this);
     ContributionCriteriaConfigurationDTO contributionCriteriaConfigurationDTO
       = new ContributionCriteriaConfigurationDTO();
     when(criteriaConfigurationRepository.findById(TEST_DEFINED_CRITERIA_CONFIGURATION.getCentralServerId()))
@@ -115,6 +114,7 @@ class ContributionCriteriaConfigurationServiceImplTest {
 
   @Test
   void delete_ContributionCriteriaConfiguration_Test() {
+    MockitoAnnotations.initMocks(this);
     when(criteriaConfigurationRepository.findById(any())).thenReturn(Optional.of(TEST_DEFINED_CRITERIA_CONFIGURATION));
 
     criteriaConfigurationService.delete(UUID.randomUUID());
@@ -125,6 +125,7 @@ class ContributionCriteriaConfigurationServiceImplTest {
 
   @Test
   void update_excludedLocations() {
+    MockitoAnnotations.initMocks(this);
     Set<ContributionCriteriaExcludedLocationDTO> TEST_DEFINED_EXCLUDED_LOCATIONS_FOR_UPDATE
       = new HashSet<>();
     criteriaConfigurationService.updateExcludedLocations(TEST_DEFINED_EXCLUDED_LOCATIONS_FOR_UPDATE,
@@ -164,6 +165,7 @@ class ContributionCriteriaConfigurationServiceImplTest {
 
   @Test
   void update_statisticalCodeBehaviors_test() {
+    MockitoAnnotations.initMocks(this);
     var TEST_VAR_STATISTICAL_CODE_BEHAVIORS_FOR_UPDATE = new HashSet<ContributionCriteriaStatisticalCodeBehaviorDTO>();
     TEST_DEFINED_CRITERIA_CONFIGURATION.getStatisticalCodeBehaviors().forEach(statisticalCodeBehavior -> {
       ContributionCriteriaStatisticalCodeBehaviorDTO updatedStatisticalCodeBehaviorDTO

@@ -6,6 +6,7 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.folio.innreach.dto.Metadata;
 
 import java.time.OffsetDateTime;
 import java.util.Set;
@@ -18,12 +19,14 @@ import java.util.UUID;
 @Getter
 @Setter
 public class ContributionCriteriaConfigurationDTO {
-  UUID centralServerId;
-  Set<ContributionCriteriaExcludedLocationDTO> excludedLocations;
-  Set<ContributionCriteriaStatisticalCodeBehaviorDTO> statisticalCodeBehaviors;
+  private UUID centralServerId;
+  private Set<ContributionCriteriaExcludedLocationDTO> excludedLocations;
+  private Set<ContributionCriteriaStatisticalCodeBehaviorDTO> statisticalCodeBehaviors;
 
-  private String createdBy;
-  private OffsetDateTime createdDate;
-  private String lastModifiedBy;
-  private OffsetDateTime lastModifiedDate;
+  private Metadata metadata;
+
+//  private String createdBy;
+//  private OffsetDateTime createdDate;
+//  private String lastModifiedBy;
+//  private OffsetDateTime lastModifiedDate;
 }
