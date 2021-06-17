@@ -10,7 +10,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import static org.folio.innreach.fixture.MaterialTypeMappingFixture.createMaterialTypeMapping;
+import static org.folio.innreach.fixture.MappingFixture.createMaterialTypeMapping;
 
 import java.util.List;
 import java.util.Optional;
@@ -33,7 +33,6 @@ class MaterialTypeMappingRepositoryTest extends BaseRepositoryTest {
   private static final String PRE_POPULATED_MAPPING2_ID = "d9985d0d-b121-4ccd-ac16-5ebd0ccccf7f";
   private static final String PRE_POPULATED_MAPPING3_ID = "57fad69e-8c91-48c0-a61f-a6122f52737a";
   private static final String PRE_POPULATED_USER = "admin";
-  private static final UUID PRE_POPULATED_CENTRAL_SERVER_UUID = fromString("edab6baf-c696-42b1-89bb-1bbb8759b0d2");
 
   @Autowired
   private MaterialTypeMappingRepository repository;
@@ -63,10 +62,9 @@ class MaterialTypeMappingRepositoryTest extends BaseRepositoryTest {
 
   @Test
   void shouldSaveNewMapping() {
-    var newLocation = createMaterialTypeMapping();
-    newLocation.setCentralServer(prepopulatedCentralServer());
+    var newMapping = createMaterialTypeMapping();
 
-    var saved = repository.saveAndFlush(newLocation);
+    var saved = repository.saveAndFlush(newMapping);
 
     MaterialTypeMapping found = repository.getOne(saved.getId());
     assertEquals(saved, found);
@@ -103,7 +101,6 @@ class MaterialTypeMappingRepositoryTest extends BaseRepositoryTest {
   void throwExceptionWhenSavingWithoutMaterialTypeId() {
     var mapping = createMaterialTypeMapping();
     mapping.setMaterialTypeId(null);
-    mapping.setCentralServer(prepopulatedCentralServer());
 
     assertThrows(DataIntegrityViolationException.class, () -> repository.saveAndFlush(mapping));
   }
@@ -130,12 +127,6 @@ class MaterialTypeMappingRepositoryTest extends BaseRepositoryTest {
     
     var ex = assertThrows(DataIntegrityViolationException.class, () -> repository.saveAndFlush(mapping));
     assertThat(ex.getMessage(), containsString("constraint [unq_mtype_mapping_server_mtype]"));
-  }
-
-  private static CentralServer prepopulatedCentralServer() {
-    var centralServer = new CentralServer();
-    centralServer.setId(PRE_POPULATED_CENTRAL_SERVER_UUID);
-    return centralServer;
   }
 
 }
