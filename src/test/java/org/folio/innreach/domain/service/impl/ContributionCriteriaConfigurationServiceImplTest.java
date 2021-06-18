@@ -7,20 +7,17 @@ import org.folio.innreach.domain.entity.ContributionBehavior;
 import org.folio.innreach.domain.entity.ContributionCriteriaConfiguration;
 import org.folio.innreach.fixture.ContributionCriteriaConfigurationFixture;
 import org.folio.innreach.mapper.ContributionCriteriaConfigurationMapper;
-import org.folio.innreach.mapper.ContributionCriteriaConfigurationMapperImpl;
 import org.folio.innreach.mapper.ContributionCriteriaExcludedLocationMapper;
+import org.folio.innreach.mapper.ContributionCriteriaMapper;
 import org.folio.innreach.mapper.ContributionCriteriaStatisticalCodeBehaviorMapper;
 import org.folio.innreach.repository.ContributionCriteriaConfigurationRepository;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInfo;
 import org.mapstruct.factory.Mappers;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.mockito.Spy;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
@@ -36,7 +33,6 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 class ContributionCriteriaConfigurationServiceImplTest {
-  private static final Set<String> SKIP_BEFORE_EACH_FOR_TESTS = Set.of("contributionCriteriaConfigurationMapperTest()");
 
   private static ContributionCriteriaConfiguration TEST_DEFINED_CRITERIA_CONFIGURATION;
 
@@ -44,7 +40,7 @@ class ContributionCriteriaConfigurationServiceImplTest {
   ContributionCriteriaConfigurationRepository criteriaConfigurationRepository;
 
   @Spy
-    private ContributionCriteriaConfigurationMapper criteriaConfigurationMapper
+    private final ContributionCriteriaConfigurationMapper criteriaConfigurationMapper
     = Mappers.getMapper(ContributionCriteriaConfigurationMapper.class);
 
   @Spy
@@ -54,6 +50,11 @@ class ContributionCriteriaConfigurationServiceImplTest {
   @Spy
   private final ContributionCriteriaStatisticalCodeBehaviorMapper statisticalCodeMapper
     = Mappers.getMapper(ContributionCriteriaStatisticalCodeBehaviorMapper.class);
+
+  @Spy
+  private final ContributionCriteriaMapper contributionCriteriaMapper
+    = Mappers.getMapper(ContributionCriteriaMapper.class);
+
 
   @InjectMocks
   ContributionCriteriaConfigurationServiceImpl criteriaConfigurationService;
@@ -88,10 +89,12 @@ class ContributionCriteriaConfigurationServiceImplTest {
     MockitoAnnotations.initMocks(this);
     var contributionCriteriaConfigurationDTO
       = criteriaConfigurationMapper.toDto(TEST_DEFINED_CRITERIA_CONFIGURATION);
+    var criteriaConfiguration
+      = contributionCriteriaMapper.toContributionCriteriaDTO(contributionCriteriaConfigurationDTO);
     when(criteriaConfigurationRepository.save(any(ContributionCriteriaConfiguration.class)))
       .thenReturn(new ContributionCriteriaConfiguration());
     var createdContributionCriteriaConfigurationDTO
-      = criteriaConfigurationService.create(contributionCriteriaConfigurationDTO);
+      = criteriaConfigurationService.create(criteriaConfiguration);
 
     verify(criteriaConfigurationMapper).toEntity(any(ContributionCriteriaConfigurationDTO.class));
     verify(criteriaConfigurationRepository).save(any());

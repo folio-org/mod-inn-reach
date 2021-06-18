@@ -22,6 +22,5 @@ public interface ContributionCriteriaConfigurationMapper {
   default Date offsetDateTimeToDate(OffsetDateTime entityDate) {
     var dateMapper = new DateMapper();
     return dateMapper.offsetDateTimeAsDate(entityDate);
-
   }
 }

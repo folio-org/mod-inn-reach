@@ -11,8 +11,11 @@ import org.folio.innreach.domain.entity.ContributionCriteriaStatisticalCodeBehav
 
 import org.folio.innreach.domain.exception.EntityNotFoundException;
 import org.folio.innreach.domain.service.ContributionCriteriaConfigurationService;
+import org.folio.innreach.dto.ContributionCriteriaDTO;
 import org.folio.innreach.mapper.ContributionCriteriaConfigurationMapper;
 import org.folio.innreach.mapper.ContributionCriteriaExcludedLocationMapper;
+import org.folio.innreach.mapper.ContributionCriteriaMapper;
+import org.folio.innreach.mapper.ContributionCriteriaMapperImpl;
 import org.folio.innreach.mapper.ContributionCriteriaStatisticalCodeBehaviorMapper;
 import org.folio.innreach.repository.ContributionCriteriaConfigurationRepository;
 import org.springframework.stereotype.Service;
@@ -35,9 +38,11 @@ public class ContributionCriteriaConfigurationServiceImpl implements Contributio
   private final ContributionCriteriaConfigurationMapper contributionCriteriaConfigurationMapper;
   private final ContributionCriteriaExcludedLocationMapper excludedLocationMapper;
   private final ContributionCriteriaStatisticalCodeBehaviorMapper statisticalCodeMapper;
+  private final ContributionCriteriaMapper contributionCriteriaMapper;
 
   @Override
-  public ContributionCriteriaConfigurationDTO create(ContributionCriteriaConfigurationDTO criteriaConfigurationDTO) {
+  public ContributionCriteriaDTO create(ContributionCriteriaDTO contributionCriteriaDTO) {
+    var criteriaConfigurationDTO = contributionCriteriaMapper.toContributionCriteriaConfigurationDTO(contributionCriteriaDTO);
     var centralServerId = criteriaConfigurationDTO.getCentralServerId();
     contributionCriteriaConfigurationRepository.findById(centralServerId).ifPresent(
       criteriaConfiguration -> {
@@ -50,24 +55,27 @@ public class ContributionCriteriaConfigurationServiceImpl implements Contributio
       statisticalCodeBehavior -> statisticalCodeBehavior.setContributionCriteriaConfiguration(contributionCriteriaConfiguration));
     contributionCriteriaConfiguration.getExcludedLocations().forEach(
       excludedLocation -> excludedLocation.setContributionCriteriaConfiguration(contributionCriteriaConfiguration));
-    return contributionCriteriaConfigurationMapper.toDto(
+    return contributionCriteriaMapper.toContributionCriteriaDTO(contributionCriteriaConfigurationMapper.toDto(
       contributionCriteriaConfigurationRepository
         .save(contributionCriteriaConfiguration)
-    );
+    ));
   }
 
   @Override
   @Transactional(readOnly = true)
-  public ContributionCriteriaConfigurationDTO get(UUID centralServerId) {
-    return contributionCriteriaConfigurationMapper.toDto(
-      contributionCriteriaConfigurationRepository.findById(centralServerId).orElseThrow(
-        () -> new EntityNotFoundException("Configuration for central server id: " + centralServerId + " not found"))
+  public ContributionCriteriaDTO get(UUID centralServerId) {
+    var entity = contributionCriteriaConfigurationRepository.findById(centralServerId).orElseThrow(
+      () -> new EntityNotFoundException("Configuration for central server id: " + centralServerId + " not found"));
+    return contributionCriteriaMapper.toContributionCriteriaDTO(
+      contributionCriteriaConfigurationMapper.toDto(entity)
     );
   }
 
   @Override
   @Transactional
-  public ContributionCriteriaConfigurationDTO update(ContributionCriteriaConfigurationDTO criteriaConfigurationDTO) {
+  public ContributionCriteriaDTO update(ContributionCriteriaDTO contributionCriteriaDTO) {
+    var criteriaConfigurationDTO
+      = contributionCriteriaMapper.toContributionCriteriaConfigurationDTO(contributionCriteriaDTO);
     var criteriaConfigurationForUpdate
       = contributionCriteriaConfigurationRepository.findById(criteriaConfigurationDTO.getCentralServerId())
       .orElseThrow(() -> new EntityNotFoundException("Configuration for Central Server id: "
@@ -75,7 +83,9 @@ public class ContributionCriteriaConfigurationServiceImpl implements Contributio
 
     updateExcludedLocations(criteriaConfigurationDTO.getExcludedLocations(), criteriaConfigurationForUpdate);
     updateStatisticalCodeBehaviors(criteriaConfigurationDTO.getStatisticalCodeBehaviors(), criteriaConfigurationForUpdate);
-    return contributionCriteriaConfigurationMapper.toDto(contributionCriteriaConfigurationRepository.save(criteriaConfigurationForUpdate));
+    return contributionCriteriaMapper.toContributionCriteriaDTO(contributionCriteriaConfigurationMapper.toDto(
+      contributionCriteriaConfigurationRepository.save(criteriaConfigurationForUpdate))
+    );
   }
 
   public void updateStatisticalCodeBehaviors(Set<ContributionCriteriaStatisticalCodeBehaviorDTO> newStatisticalCodeBehaviorDTOS,

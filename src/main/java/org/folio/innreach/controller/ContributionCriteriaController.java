@@ -6,7 +6,6 @@ import lombok.extern.log4j.Log4j2;
 import org.folio.innreach.domain.service.ContributionCriteriaConfigurationService;
 import org.folio.innreach.dto.ContributionCriteriaDTO;
 
-import org.folio.innreach.mapper.ContributionCriteriaMapperImpl;
 import org.folio.innreach.rest.resource.ContributionCriteriaApi;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -29,15 +28,15 @@ import java.util.UUID;
 public class ContributionCriteriaController implements ContributionCriteriaApi {
 
   private final ContributionCriteriaConfigurationService criteriaConfigurationService;
-  private final ContributionCriteriaMapperImpl contributionCriteriaMapper;
+
 
   @Override
   @PostMapping("/contribution-criteria")
   public ResponseEntity<ContributionCriteriaDTO> postContributionCriteria(
     @Valid @RequestBody ContributionCriteriaDTO contributionCriteriaDTO) {
 
-    return ResponseEntity.status(HttpStatus.CREATED).body(contributionCriteriaMapper.toContributionCriteriaDTO(criteriaConfigurationService
-      .create(contributionCriteriaMapper.toContributionCriteriaConfigurationDTO(contributionCriteriaDTO))));
+    return ResponseEntity.status(HttpStatus.CREATED).body(criteriaConfigurationService
+      .create(contributionCriteriaDTO));
   }
 
   @Override
@@ -51,9 +50,7 @@ public class ContributionCriteriaController implements ContributionCriteriaApi {
   @GetMapping("/{centralServerId}/contribution-criteria")
   public ResponseEntity<ContributionCriteriaDTO> getCriteriaById(@PathVariable UUID centralServerId) {
     return ResponseEntity.ok(
-      contributionCriteriaMapper.toContributionCriteriaDTO(
         criteriaConfigurationService.get(centralServerId)
-      )
     );
   }
 
@@ -61,9 +58,9 @@ public class ContributionCriteriaController implements ContributionCriteriaApi {
   @PutMapping("/{centralServerId}/contribution-criteria")
   public ResponseEntity<ContributionCriteriaDTO> updateCriteria(@PathVariable UUID centralServerId,
                                                           @Valid ContributionCriteriaDTO contributionCriteriaDTO) {
-    return ResponseEntity.ok(contributionCriteriaMapper.toContributionCriteriaDTO(
-      criteriaConfigurationService.update(contributionCriteriaMapper.toContributionCriteriaConfigurationDTO(contributionCriteriaDTO))
-    ));
+    return ResponseEntity.ok(
+      criteriaConfigurationService.update(contributionCriteriaDTO)
+    );
   }
 
 }
