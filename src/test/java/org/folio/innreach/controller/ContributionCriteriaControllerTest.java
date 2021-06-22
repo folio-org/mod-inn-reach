@@ -16,7 +16,7 @@ import static org.folio.innreach.fixture.TestUtil.deserializeFromJsonFile;
 
 class ContributionCriteriaControllerTest extends BaseControllerTest {
 
-  private static final String PRE_POPULATED_CENTRAL_SERVER_ID = "efb089d4-4416-4892-ab81-bdfa00e4a2c3";
+  private static final String PRE_POPULATED_CENTRAL_SERVER_ID = "f8723a94-25d5-4f19-9043-cc3c306d54a1";
 
   @Autowired
   private TestRestTemplate testRestTemplate;
@@ -106,10 +106,10 @@ class ContributionCriteriaControllerTest extends BaseControllerTest {
       HttpMethod.PUT,new HttpEntity<>(contributionCriteriaDTO),ContributionCriteriaDTO.class ,PRE_POPULATED_CENTRAL_SERVER_ID);
 
     assertEquals(HttpStatus.OK,responseEntity.getStatusCode());
-    assertEquals(5, responseEntity.getBody().getLocationIds().size());
-    assertEquals(UUID.fromString("faf053c7-19d1-4348-90c4-5a76ea75f905"), responseEntity.getBody().getContributeAsSystemOwnedId());
-    assertEquals(UUID.fromString("96e6b3cd-9c53-41d3-89f9-a52b7c7e44af"), responseEntity.getBody().getContributeButSuppressId());
-    assertEquals(UUID.fromString("fad93c55-b7c6-4c5a-987e-749906aae07a"), responseEntity.getBody().getDoNotContributeId());
+    assertEquals(4, responseEntity.getBody().getLocationIds().size());
+    assertEquals(UUID.fromString("42076c88-02c5-4cb3-bb47-b24a3dc41146"), responseEntity.getBody().getContributeAsSystemOwnedId());
+    assertEquals(UUID.fromString("7a82f404-07df-4e5e-8e8f-a15f3b6ddffa"), responseEntity.getBody().getContributeButSuppressId());
+    assertEquals(UUID.fromString("a6519d9b-e008-4e5c-b7f2-93dc5803dba1"), responseEntity.getBody().getDoNotContributeId());
 
     removeContributionCriteriaConfiguration();
   }

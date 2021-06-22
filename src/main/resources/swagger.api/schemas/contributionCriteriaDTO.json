@@ -2,6 +2,11 @@
   "description": "Contribution Criteria",
   "type": "object",
   "properties": {
+    "id": {
+      "description": "Central server id",
+      "type": "string",
+      "format": "UUID"
+    },
     "centralServerId": {
       "description": "Central server id",
       "type": "string",
