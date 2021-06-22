@@ -88,8 +88,8 @@ paths:
       tags:
         - central-servers
       responses:
-        '202':
-          description: Central server accepted for updating
+        '204':
+          description: No content
         '400':
           description: Bad request
           content:
@@ -243,8 +243,8 @@ paths:
       tags:
         - material-type-mappings
       responses:
-        '202':
-          description: Material type accepted for updating
+        '204':
+          description: No content
         '400':
           description: Bad request
           content:
@@ -380,8 +380,8 @@ paths:
       tags:
         - locations
       responses:
-        '202':
-          description: Location accepted for updating
+        '204':
+          description: No content
         '400':
           description: Bad request
           content:

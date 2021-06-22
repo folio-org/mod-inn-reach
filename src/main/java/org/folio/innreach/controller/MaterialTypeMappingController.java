@@ -63,7 +63,7 @@ public class MaterialTypeMappingController implements MaterialTypeMappingsApi {
 
     materialTypeMappingService.updateMapping(centralServerId, id, materialTypeMappingDTO);
 
-    return ResponseEntity.accepted().build();
+    return ResponseEntity.noContent().build();
   }
 
   @Override

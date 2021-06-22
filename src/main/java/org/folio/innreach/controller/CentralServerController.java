@@ -64,6 +64,6 @@ public class CentralServerController implements CentralServersApi {
   @PutMapping("/{centralServerId}")
   public ResponseEntity<Void> updateCentralServer(@PathVariable UUID centralServerId, @Valid CentralServerDTO centralServerDTO) {
     centralServerService.updateCentralServer(centralServerId, centralServerDTO);
-    return ResponseEntity.accepted().build();
+    return ResponseEntity.noContent().build();
   }
 }

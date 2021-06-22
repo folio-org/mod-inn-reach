@@ -107,7 +107,7 @@ class InnReachLocationControllerTest extends BaseControllerTest {
     var responseEntity = testRestTemplate.exchange("/inn-reach/locations/{locationId}", HttpMethod.PUT,
         new HttpEntity<>(innReachLocationDTO), InnReachLocationDTO.class, PRE_POPULATED_LOCATION1_ID);
 
-    assertEquals(HttpStatus.ACCEPTED, responseEntity.getStatusCode());
+    assertEquals(HttpStatus.NO_CONTENT, responseEntity.getStatusCode());
 	}
 
 	@Test
