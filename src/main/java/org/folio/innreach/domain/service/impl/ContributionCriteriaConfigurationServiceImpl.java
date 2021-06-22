@@ -2,7 +2,6 @@ package org.folio.innreach.domain.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
-import org.folio.innreach.domain.dto.ContributionCriteriaConfigurationDTO;
 import org.folio.innreach.domain.dto.ContributionCriteriaExcludedLocationDTO;
 import org.folio.innreach.domain.dto.ContributionCriteriaStatisticalCodeBehaviorDTO;
 import org.folio.innreach.domain.entity.ContributionCriteriaConfiguration;
@@ -15,7 +14,6 @@ import org.folio.innreach.dto.ContributionCriteriaDTO;
 import org.folio.innreach.mapper.ContributionCriteriaConfigurationMapper;
 import org.folio.innreach.mapper.ContributionCriteriaExcludedLocationMapper;
 import org.folio.innreach.mapper.ContributionCriteriaMapper;
-import org.folio.innreach.mapper.ContributionCriteriaMapperImpl;
 import org.folio.innreach.mapper.ContributionCriteriaStatisticalCodeBehaviorMapper;
 import org.folio.innreach.repository.ContributionCriteriaConfigurationRepository;
 import org.springframework.stereotype.Service;
