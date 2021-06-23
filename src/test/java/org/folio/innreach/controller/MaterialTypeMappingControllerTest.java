@@ -176,7 +176,7 @@ class MaterialTypeMappingControllerTest extends BaseControllerTest {
   void shouldCreateNewMapping() {
     var newMapping = deserializeFromJsonFile("/material-type-mapping/create-material-type-mapping-request.json",
         MaterialTypeMappingDTO.class);
-    
+
     var responseEntity = testRestTemplate.postForEntity(baseMappingURL(), newMapping, MaterialTypeMappingDTO.class);
 
     assertTrue(responseEntity.getStatusCode().is2xxSuccessful());
@@ -251,11 +251,6 @@ class MaterialTypeMappingControllerTest extends BaseControllerTest {
         new HttpEntity<>(mapping), MaterialTypeMappingDTO.class, PRE_POPULATED_MAPPING2_ID);
 
     assertTrue(responseEntity.getStatusCode().is2xxSuccessful());
-    assertTrue(responseEntity.hasBody());
-
-    var updated = responseEntity.getBody();
-
-    assertThat(updated, samePropertyValuesAs(mapping, "metadata"));
   }
 
   @Test

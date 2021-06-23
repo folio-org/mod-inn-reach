@@ -132,15 +132,6 @@ class CentralServerControllerTest extends BaseControllerTest {
       CentralServerDTO.class, PRE_POPULATED_CENTRAL_SERVER_ID);
 
     assertTrue(responseEntity.getStatusCode().is2xxSuccessful());
-    assertTrue(responseEntity.hasBody());
-
-    var updatedCentralServer = responseEntity.getBody();
-
-    assertNotNull(updatedCentralServer);
-    assertNotNull(updatedCentralServer.getLocalAgencies());
-    assertEquals(centralServerRequestDTO.getName(), updatedCentralServer.getName());
-    assertEquals(centralServerRequestDTO.getDescription(), updatedCentralServer.getDescription());
-    assertEquals(3, centralServerRequestDTO.getLocalAgencies().size());
   }
 
   @Test
