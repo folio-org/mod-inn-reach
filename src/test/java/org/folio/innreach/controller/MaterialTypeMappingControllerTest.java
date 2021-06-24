@@ -306,7 +306,7 @@ class MaterialTypeMappingControllerTest extends BaseControllerTest {
 
     int i = 0;
     for (MaterialTypeMapping dbMapping : dbMappings) {
-      result[i++] = mapper.mapToDTO(dbMapping);
+      result[i++] = mapper.toDTO(dbMapping);
     }
 
     return result;
@@ -321,7 +321,7 @@ class MaterialTypeMappingControllerTest extends BaseControllerTest {
   private MaterialTypeMappingDTO findMapping(String id) {
     var expectedEntity = repository.findById(UUID.fromString(id)).get();
 
-    return mapper.mapToDTO(expectedEntity);
+    return mapper.toDTO(expectedEntity);
   }
 
   private ValidationErrorDTO createValidationError(String field, String message) {

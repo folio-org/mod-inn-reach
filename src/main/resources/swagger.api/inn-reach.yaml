@@ -430,6 +430,73 @@ paths:
                 $ref: "#/components/schemas/error"
       parameters:
         - $ref: '#/components/parameters/id'
+  /central-servers/{centralServerId}/libraries/location-mappings/:
+    get:
+      description: Get a list of library to Inn-Reach location mappings for the given central server
+      operationId: getLibraryMappingsByServerId
+      tags:
+        - library-mappings
+      responses:
+        '200':
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/libraryMappingsDTO"
+        '400':
+          description:
+            Bad request, e.g. malformed request body or query parameter.
+            Details of the error (e.g. name of the parameter or line/character number
+            with malformed data) provided in the response.
+          content:
+            application/json:
+              example:
+                $ref: "#/components/examples/error"
+              schema:
+                $ref: "#/components/schemas/error"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/error"
+      parameters:
+        - $ref: "#/components/parameters/centralServerId"
+        - $ref: "#/components/parameters/trait_pageable_offset"
+        - $ref: "#/components/parameters/trait_pageable_limit"
+    put:
+      description: >- 
+          Update (replace) the entire collection of library to Inn-Reach location mappings
+          associated with the central server
+      operationId: putLibraryMappings
+      tags:
+        - library-mappings
+      responses:
+        '204':
+          description: Collection successfully updated
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              example:
+                $ref: "#/components/examples/error"
+              schema:
+                $ref: "#/components/schemas/error"
+        '500':
+          description: Internal server error
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: Internal server error
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/libraryMappingsDTO"
+        required: true
+      parameters:
+        - $ref: "#/components/parameters/centralServerId"
   /authentication:
     post:
       description: Authenticate InnReach local server key/secret pair
@@ -491,6 +558,8 @@ components:
       $ref: schemas/materialTypeMappingDTO.json
     materialTypeMappingsDTO:
       $ref: schemas/materialTypeMappingsDTO.json
+    libraryMappingsDTO:
+      $ref: schemas/libraryMappingsDTO.json
     error:
       $ref: schemas/error.json
     authenticationRequest:
