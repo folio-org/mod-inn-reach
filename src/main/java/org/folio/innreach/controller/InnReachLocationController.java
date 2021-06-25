@@ -61,10 +61,9 @@ public class InnReachLocationController implements LocationsApi {
 
   @Override
   @PutMapping("/{id}")
-  public ResponseEntity<InnReachLocationDTO> updateLocation(@PathVariable UUID id,
-      @Valid InnReachLocationDTO innReachLocationDTO) {
-    var updatedInnReachLocation = innReachLocationService.updateInnReachLocation(id, innReachLocationDTO);
-    return ResponseEntity.ok(updatedInnReachLocation);
+  public ResponseEntity<Void> updateLocation(@PathVariable UUID id, @Valid InnReachLocationDTO innReachLocationDTO) {
+    innReachLocationService.updateInnReachLocation(id, innReachLocationDTO);
+    return ResponseEntity.noContent().build();
   }
 
 }
