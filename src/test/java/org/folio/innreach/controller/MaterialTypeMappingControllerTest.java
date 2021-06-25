@@ -1,6 +1,5 @@
 package org.folio.innreach.controller;
 
-
 import static java.util.Collections.singletonList;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;

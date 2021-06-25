@@ -1,6 +1,8 @@
 package org.folio.innreach.domain.service.impl;
 
 import static org.folio.innreach.domain.service.impl.ServiceUtils.centralServerRef;
+import static org.folio.innreach.domain.service.impl.ServiceUtils.evaluateEntitiesToDelete;
+import static org.folio.innreach.domain.service.impl.ServiceUtils.initId;
 
 import java.util.UUID;
 
@@ -38,7 +40,17 @@ public class LibraryMappingServiceImpl implements LibraryMappingService {
 
   @Override
   public LibraryMappingsDTO updateAllMappings(UUID centralServerId, LibraryMappingsDTO libraryMappingsDTO) {
-    return null;
+    var stored = repository.findAll(mappingExampleWithServerId(centralServerId));
+
+    var incoming = mapper.toEntities(libraryMappingsDTO.getLibraryMappings());
+    incoming.forEach(initId());
+
+    var toDelete = evaluateEntitiesToDelete(stored, incoming);
+    repository.deleteInBatch(toDelete);
+
+    var saved = repository.saveAll(incoming);
+
+    return mapper.toDTOCollection(saved);
   }
 
   private static Example<LibraryMapping> mappingExampleWithServerId(UUID centralServerId) {

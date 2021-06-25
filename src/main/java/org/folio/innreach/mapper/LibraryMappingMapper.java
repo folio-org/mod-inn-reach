@@ -19,6 +19,8 @@ public interface LibraryMappingMapper {
 
   LibraryMapping toEntity(LibraryMappingDTO dto);
 
+  List<LibraryMapping> toEntities(Iterable<LibraryMappingDTO> dtos);
+
   @Mapping(target = "metadata.createdDate", source = "entity.createdDate")
   @Mapping(target = "metadata.createdByUserId", source = "entity.createdBy")
   @Mapping(target = "metadata.updatedDate", source = "entity.lastModifiedDate")
@@ -32,4 +34,11 @@ public interface LibraryMappingMapper {
 
     return new LibraryMappingsDTO().libraryMappings(dtos).totalRecords((int) pageable.getTotalElements());
   }
+
+  default LibraryMappingsDTO toDTOCollection(Iterable<LibraryMapping> entities) {
+    List<LibraryMappingDTO> dtos = defaultIfNull(toDTOs(entities), emptyList());
+
+    return new LibraryMappingsDTO().libraryMappings(dtos).totalRecords(dtos.size());
+  }
+
 }
