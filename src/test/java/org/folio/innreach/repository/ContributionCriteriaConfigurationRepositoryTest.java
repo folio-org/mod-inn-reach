@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Random;
 import java.util.UUID;
 
+import static org.folio.innreach.fixture.ContributionCriteriaConfigurationFixture.createTestContributionCriteriaConfiguration;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -34,8 +35,7 @@ class ContributionCriteriaConfigurationRepositoryTest extends BaseRepositoryTest
   @BeforeEach
   void beforeEach() {
     ContributionCriteriaConfiguration criteriaConfiguration
-      = ContributionCriteriaConfigurationFixture
-      .createTestContributionCriteriaConfiguration(UUID.fromString(CENTRAL_SERVER_ID));
+      = createTestContributionCriteriaConfiguration(UUID.fromString(CENTRAL_SERVER_ID));
     contributionCriteriaConfigurationRepository.saveAndFlush(criteriaConfiguration);
   }
 
@@ -49,8 +49,7 @@ class ContributionCriteriaConfigurationRepositoryTest extends BaseRepositoryTest
   @Test
   void createContributionCriteriaConfigurationForExistingCentralServer() {
     ContributionCriteriaConfiguration criteriaConfiguration
-      = ContributionCriteriaConfigurationFixture
-      .createTestContributionCriteriaConfiguration(UUID.fromString(CENTRAL_SERVER_ID));
+      = createTestContributionCriteriaConfiguration(UUID.fromString(CENTRAL_SERVER_ID));
 
     var savedCriteriaConfiguration = contributionCriteriaConfigurationRepository.findById(UUID.fromString(CENTRAL_SERVER_ID)).get();
 
