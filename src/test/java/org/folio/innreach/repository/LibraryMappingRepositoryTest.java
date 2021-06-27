@@ -158,11 +158,10 @@ class LibraryMappingRepositoryTest extends BaseRepositoryTest {
 
     var mapping = createLibraryMapping();
     mapping.setLibraryId(existing.getLibraryId());
-    mapping.setInnReachLocation(existing.getInnReachLocation());
     mapping.setCentralServer(existing.getCentralServer());
 
     var ex = assertThrows(DataIntegrityViolationException.class, () -> repository.saveAndFlush(mapping));
-    assertThat(ex.getMessage(), containsString("constraint [unq_library_mapping_server_lib_irloc]"));
+    assertThat(ex.getMessage(), containsString("constraint [unq_library_mapping_server_lib]"));
   }
 
 }

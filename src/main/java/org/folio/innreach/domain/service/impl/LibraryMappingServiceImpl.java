@@ -5,6 +5,7 @@ import static org.folio.innreach.domain.service.impl.ServiceUtils.evaluateEntiti
 import static org.folio.innreach.domain.service.impl.ServiceUtils.initId;
 
 import java.util.UUID;
+import java.util.function.Consumer;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Example;
@@ -13,6 +14,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import org.folio.innreach.domain.entity.CentralServer;
 import org.folio.innreach.domain.entity.LibraryMapping;
 import org.folio.innreach.domain.service.LibraryMappingService;
 import org.folio.innreach.dto.LibraryMappingsDTO;
@@ -43,7 +45,8 @@ public class LibraryMappingServiceImpl implements LibraryMappingService {
     var stored = repository.findAll(mappingExampleWithServerId(centralServerId));
 
     var incoming = mapper.toEntities(libraryMappingsDTO.getLibraryMappings());
-    incoming.forEach(initId());
+    var csRef = centralServerRef(centralServerId);
+    incoming.forEach(setCentralServerRef(csRef).andThen(initId()));
 
     var toDelete = evaluateEntitiesToDelete(stored, incoming);
     repository.deleteInBatch(toDelete);
@@ -51,6 +54,10 @@ public class LibraryMappingServiceImpl implements LibraryMappingService {
     var saved = repository.saveAll(incoming);
 
     return mapper.toDTOCollection(saved);
+  }
+
+  private static Consumer<LibraryMapping> setCentralServerRef(CentralServer centralServer) {
+    return mapping -> mapping.setCentralServer(centralServer);
   }
 
   private static Example<LibraryMapping> mappingExampleWithServerId(UUID centralServerId) {

@@ -17,14 +17,16 @@ import org.folio.innreach.dto.LibraryMappingsDTO;
 @Mapper(componentModel = "spring", injectionStrategy = InjectionStrategy.CONSTRUCTOR, uses = DateMapper.class)
 public interface LibraryMappingMapper {
 
+  @Mapping(target = "innReachLocation.id", source = "dto.innReachLocationId")
   LibraryMapping toEntity(LibraryMappingDTO dto);
 
   List<LibraryMapping> toEntities(Iterable<LibraryMappingDTO> dtos);
 
+  @Mapping(target = "innReachLocationId", source = "entity.innReachLocation.id")
   @Mapping(target = "metadata.createdDate", source = "entity.createdDate")
-  @Mapping(target = "metadata.createdByUserId", source = "entity.createdBy")
+  @Mapping(target = "metadata.createdByUsername", source = "entity.createdBy")
   @Mapping(target = "metadata.updatedDate", source = "entity.lastModifiedDate")
-  @Mapping(target = "metadata.updatedByUserId", source = "entity.lastModifiedBy")
+  @Mapping(target = "metadata.updatedByUsername", source = "entity.lastModifiedBy")
   LibraryMappingDTO toDTO(LibraryMapping entity);
 
   List<LibraryMappingDTO> toDTOs(Iterable<LibraryMapping> entities);

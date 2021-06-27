@@ -25,7 +25,7 @@ class ServiceUtils {
     return server;
   }
 
-  static Consumer<Identifiable<UUID>> initId() {
+  static <E extends Identifiable<UUID>> Consumer<E> initId() {
     return identifiable -> {
       if (identifiable.getId() == null) {
         identifiable.setId(UUID.randomUUID());
@@ -33,7 +33,7 @@ class ServiceUtils {
     };
   }
 
-  static Comparator<Identifiable<UUID>> comparatorById() {
+  static <E extends Identifiable<UUID>> Comparator<E> comparatorById() {
     return Comparator.comparing(Identifiable::getId);
   }
 
