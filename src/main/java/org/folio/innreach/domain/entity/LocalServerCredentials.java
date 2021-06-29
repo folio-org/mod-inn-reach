@@ -20,6 +20,8 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 
+import org.folio.innreach.domain.entity.base.Identifiable;
+
 /**
  * The key/secret provided by FOLIO for INN-Reach D2IR.
  * Used by INN-Reach D2IR as payload to get JWT access token from FOLIO.
@@ -35,7 +37,7 @@ import lombok.ToString;
   name = FIND_BY_LOCAL_SERVER_CODE_AND_KEY_QUERY_NAME,
   query = FIND_BY_LOCAL_SERVER_CODE_AND_KEY_QUERY
 )
-public class LocalServerCredentials {
+public class LocalServerCredentials implements Identifiable<UUID> {
 
   public static final String FIND_BY_LOCAL_SERVER_CODE_AND_KEY_QUERY_NAME = "LocalServerCredentials.findByLocalServerCodeAndKey";
   public static final String FIND_BY_LOCAL_SERVER_CODE_AND_KEY_QUERY = "SELECT lsc FROM LocalServerCredentials AS lsc " +

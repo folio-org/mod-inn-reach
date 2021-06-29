@@ -6,6 +6,7 @@ import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.empty;
+import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.samePropertyValuesAs;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -22,9 +23,11 @@ import static org.folio.innreach.fixture.TestUtil.deserializeFromJsonFile;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
+import java.util.function.Predicate;
 
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.web.client.TestRestTemplate;
@@ -54,9 +57,11 @@ import org.folio.innreach.repository.LibraryMappingRepository;
 class LibraryMappingControllerTest extends BaseControllerTest {
 
   private static final String PRE_POPULATED_CENTRAL_SERVER_ID = "edab6baf-c696-42b1-89bb-1bbb8759b0d2";
-  private static final String PRE_POPULATED_MAPPING2_ID = "07f97157-9cf9-44f2-b7aa-82e1f649cc83";
-  private static final String PRE_POPULATED_LIBRARY2_ID = "5cc5fe97-6bce-4bbb-9a97-c0aff0851748";
-  private static final String PRE_POPULATED_INN_REACH_lOCATION1_ID = "a1c1472f-67ec-4938-b5a8-f119e51ab79b";
+  private static final UUID PRE_POPULATED_MAPPING1_ID = UUID.fromString("2d57c159-8b05-4c3b-97d9-7ddf0ead17a3");
+  private static final UUID PRE_POPULATED_MAPPING2_ID = UUID.fromString("07f97157-9cf9-44f2-b7aa-82e1f649cc83");
+  private static final UUID PRE_POPULATED_LIBRARY2_ID = UUID.fromString("5cc5fe97-6bce-4bbb-9a97-c0aff0851748");
+  private static final UUID PRE_POPULATED_INN_REACH_LOCATION1_ID = UUID.fromString(
+      "a1c1472f-67ec-4938-b5a8-f119e51ab79b");
 
 
   @Autowired
@@ -218,7 +223,7 @@ class LibraryMappingControllerTest extends BaseControllerTest {
   void return400WhenCreatingNewMappingsAndLibraryIdAlreadyMapped() {
     var newMappings = deserializeFromJsonFile("/library-mapping/create-library-mappings-request.json",
         LibraryMappingsDTO.class);
-    newMappings.getLibraryMappings().get(0).setLibraryId(UUID.fromString(PRE_POPULATED_LIBRARY2_ID));
+    newMappings.getLibraryMappings().get(0).setLibraryId(PRE_POPULATED_LIBRARY2_ID);
 
     var existing = mapper.toDTOs(repository.findAll());
     newMappings.getLibraryMappings().addAll(existing);
@@ -232,7 +237,6 @@ class LibraryMappingControllerTest extends BaseControllerTest {
   }
 
   @Test
-  @Disabled("review update mechanism")
   @Sql(scripts = {
       "classpath:db/central-server/pre-populate-central-server.sql",
       "classpath:db/inn-reach-location/pre-populate-inn-reach-location-code.sql",
@@ -240,7 +244,7 @@ class LibraryMappingControllerTest extends BaseControllerTest {
   })
   void shouldUpdateExistingMappings() {
     var existing = mapper.toDTOCollection(repository.findAll());
-    UUID innReachLocationId = UUID.fromString("a1c1472f-67ec-4938-b5a8-f119e51ab79b");
+    UUID innReachLocationId = PRE_POPULATED_INN_REACH_LOCATION1_ID;
     existing.getLibraryMappings().forEach(mp -> mp.setInnReachLocationId(innReachLocationId));
 
     var responseEntity = testRestTemplate.exchange(baseMappingURL(), HttpMethod.PUT, new HttpEntity<>(existing),
@@ -259,6 +263,68 @@ class LibraryMappingControllerTest extends BaseControllerTest {
         .isEmpty());
   }
 
+  @Test
+  @Sql(scripts = {
+      "classpath:db/central-server/pre-populate-central-server.sql",
+      "classpath:db/inn-reach-location/pre-populate-inn-reach-location-code.sql",
+      "classpath:db/lib-mapping/pre-populate-library-mapping.sql"
+  })
+  void shouldCreateUpdateAndDeleteMappingsAtTheSameTime() {
+    var mappings = mapper.toDTOCollection(repository.findAll());
+    List<LibraryMappingDTO> em = mappings.getLibraryMappings();
+
+    em.removeIf(idEqualsTo(PRE_POPULATED_MAPPING1_ID));         // to delete
+    findInList(em, PRE_POPULATED_MAPPING2_ID)   // to update
+        .ifPresent(mapping -> mapping.setInnReachLocationId(PRE_POPULATED_INN_REACH_LOCATION1_ID));
+
+    var newMappings = deserializeFromJsonFile("/library-mapping/create-library-mappings-request.json",
+        LibraryMappingsDTO.class);
+    em.addAll(newMappings.getLibraryMappings());                // to insert
+
+    var responseEntity = testRestTemplate.exchange(baseMappingURL(), HttpMethod.PUT, new HttpEntity<>(mappings),
+        Void.class);
+
+    assertEquals(HttpStatus.NO_CONTENT, responseEntity.getStatusCode());
+    assertFalse(responseEntity.hasBody());
+
+    var stored = mapper.toDTOs(repository.findAll());
+
+    assertEquals(em.size(), stored.size());
+    // verify deleted
+    assertTrue(findInList(stored, PRE_POPULATED_MAPPING1_ID).isEmpty());
+    // verify updated
+    assertEquals(PRE_POPULATED_INN_REACH_LOCATION1_ID,
+        findInList(stored, PRE_POPULATED_MAPPING2_ID)
+            .map(LibraryMappingDTO::getInnReachLocationId).get());
+    // verify inserted
+    assertThat(stored, hasItems(
+        samePropertyValuesAs(newMappings.getLibraryMappings().get(0), "id", "metadata"),
+        samePropertyValuesAs(newMappings.getLibraryMappings().get(1), "id", "metadata")
+    ));
+  }
+
+  @Test
+  @Sql(scripts = {
+      "classpath:db/central-server/pre-populate-central-server.sql",
+      "classpath:db/inn-reach-location/pre-populate-inn-reach-location-code.sql",
+      "classpath:db/lib-mapping/pre-populate-library-mapping.sql"
+  })
+  void shouldDeleteAllMappingsIfEmptyCollectionGiven() {
+    var mappings = new LibraryMappingsDTO();
+    
+    var responseEntity = testRestTemplate.exchange(baseMappingURL(), HttpMethod.PUT, new HttpEntity<>(mappings),
+        Void.class);
+
+    assertEquals(HttpStatus.NO_CONTENT, responseEntity.getStatusCode());
+    assertFalse(responseEntity.hasBody());
+
+    assertEquals(0, repository.count());
+  }
+
+  private static Predicate<LibraryMappingDTO> idEqualsTo(UUID id) {
+    return mapping -> Objects.equals(mapping.getId(), id);
+  }
+
   private static String baseMappingURL() {
     return baseMappingURL(PRE_POPULATED_CENTRAL_SERVER_ID);
   }
@@ -267,10 +333,14 @@ class LibraryMappingControllerTest extends BaseControllerTest {
     return "/inn-reach/central-servers/" + serverId + "/libraries/location-mappings";
   }
 
-  private LibraryMappingDTO findMapping(String id) {
-    var entity = repository.findById(UUID.fromString(id)).get();
+  private LibraryMappingDTO findMapping(UUID id) {
+    var entity = repository.findById(id).get();
 
     return mapper.toDTO(entity);
+  }
+
+  private static Optional<LibraryMappingDTO> findInList(List<LibraryMappingDTO> mappings, UUID id) {
+    return mappings.stream().filter(idEqualsTo(id)).findFirst();
   }
 
 }

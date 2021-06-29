@@ -1,16 +1,18 @@
 package org.folio.innreach.domain.service.impl;
 
-import static java.util.stream.Collectors.toList;
+import static java.util.Objects.nonNull;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
-import java.util.function.Predicate;
 
 import lombok.experimental.UtilityClass;
+import org.springframework.data.jpa.repository.JpaRepository;
 
 import org.folio.innreach.domain.entity.CentralServer;
 import org.folio.innreach.domain.entity.base.Identifiable;
@@ -37,17 +39,37 @@ class ServiceUtils {
     return Comparator.comparing(Identifiable::getId);
   }
 
-  static <E extends Identifiable<UUID>> List<E> evaluateEntitiesToDelete(List<E> stored, List<E> incoming) {
-    var sortedIncoming = new ArrayList<>(incoming);
+  static <E extends Identifiable<UUID>> boolean equalIds(E first, E second) {
+    return nonNull(first) && nonNull(second) &&
+        Objects.equals(first.getId(), second.getId());
+  }
+
+  static <E extends Identifiable<UUID>> List<E> merge(List<E> incomingEntities, List<E> storedEntities,
+      JpaRepository<E, UUID> repository, BiConsumer<E, E> updateDataMethod) {
+
+    List<E> toDelete = new ArrayList<>();
+    List<E> toSave = new ArrayList<>();
+
+    var sortedIncoming = new ArrayList<>(incomingEntities);
     sortedIncoming.sort(comparatorById());
 
-    return stored.stream()
-        .filter(notPresentIn(sortedIncoming))
-        .collect(toList());
+    storedEntities.forEach(stored -> {
+      int idx = Collections.binarySearch(sortedIncoming, stored, comparatorById());
+
+      if (idx >= 0) { // updating
+        updateDataMethod.accept(sortedIncoming.get(idx), stored);
+
+        toSave.add(stored);
+        sortedIncoming.remove(idx);
+      } else { // removing
+        toDelete.add(stored);
+      }
+    });
+    toSave.addAll(sortedIncoming); // what is left in the incoming has to be inserted
+
+    repository.deleteInBatch(toDelete);
+
+    return repository.saveAll(toSave);
   }
 
-  private static <E extends Identifiable<UUID>> Predicate<E> notPresentIn(List<E> entities) {
-    return tested -> Collections.binarySearch(entities, tested, comparatorById()) < 0;
-  }
-  
 }

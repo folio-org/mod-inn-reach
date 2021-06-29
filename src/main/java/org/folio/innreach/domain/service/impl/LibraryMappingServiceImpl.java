@@ -1,8 +1,9 @@
 package org.folio.innreach.domain.service.impl;
 
 import static org.folio.innreach.domain.service.impl.ServiceUtils.centralServerRef;
-import static org.folio.innreach.domain.service.impl.ServiceUtils.evaluateEntitiesToDelete;
+import static org.folio.innreach.domain.service.impl.ServiceUtils.equalIds;
 import static org.folio.innreach.domain.service.impl.ServiceUtils.initId;
+import static org.folio.innreach.domain.service.impl.ServiceUtils.merge;
 
 import java.util.UUID;
 import java.util.function.Consumer;
@@ -48,12 +49,17 @@ public class LibraryMappingServiceImpl implements LibraryMappingService {
     var csRef = centralServerRef(centralServerId);
     incoming.forEach(setCentralServerRef(csRef).andThen(initId()));
 
-    var toDelete = evaluateEntitiesToDelete(stored, incoming);
-    repository.deleteInBatch(toDelete);
-
-    var saved = repository.saveAll(incoming);
+    var saved = merge(incoming, stored, repository, this::copyData);
 
     return mapper.toDTOCollection(saved);
+  }
+
+  private void copyData(LibraryMapping from, LibraryMapping to) {
+    to.setLibraryId(from.getLibraryId());
+    
+    if (!equalIds(to.getInnReachLocation(), from.getInnReachLocation())) {
+      to.setInnReachLocation(from.getInnReachLocation());
+    }
   }
 
   private static Consumer<LibraryMapping> setCentralServerRef(CentralServer centralServer) {
