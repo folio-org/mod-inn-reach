@@ -69,6 +69,12 @@ public class ExceptionHandlerController {
     return createError(HttpStatus.BAD_REQUEST, e.getMessage());
   }
 
+  @ExceptionHandler(IllegalArgumentException.class)
+  @ResponseStatus(HttpStatus.BAD_REQUEST)
+  public Error handleIllegalArgumentException(IllegalArgumentException e) {
+    return createError(HttpStatus.BAD_REQUEST, e.getMessage());
+  }
+
   @ExceptionHandler(Exception.class)
   @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
   public Error handleException(Exception e) {
