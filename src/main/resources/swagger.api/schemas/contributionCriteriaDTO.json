@@ -1,0 +1,45 @@
+{
+  "description": "Contribution Criteria",
+  "type": "object",
+  "properties": {
+    "id": {
+      "description": "Central server id",
+      "type": "string",
+      "format": "UUID"
+    },
+    "centralServerId": {
+      "description": "Central server id",
+      "type": "string",
+      "format": "UUID"
+    },
+    "locationIds": {
+      "description": "Locations excluded from contribution process",
+      "type": "array",
+      "items": {
+        "type": "string",
+        "format": "UUID"
+      }
+    },
+    "contributeButSuppressId": {
+      "description": "Contribute but suppress from search",
+      "type": "string",
+      "format": "UUID"
+    },
+    "doNotContributeId": {
+      "description": "Do not contribute",
+      "type": "string",
+      "format": "UUID"
+    },
+    "contributeAsSystemOwnedId":{
+      "description": "Contribute as system owner",
+      "type": "string",
+      "format": "UUID"
+    },
+    "metadata": {
+      "description": "Entity metadata",
+      "type": "object",
+      "$ref": "metadata.json"
+    }
+  },
+  "additionalProperties": false
+}
