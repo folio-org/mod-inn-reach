@@ -38,6 +38,7 @@ class LocationMappingRepositoryTest extends BaseRepositoryTest {
   private static final String PRE_POPULATED_MAPPING3_ID = "ada69896-3954-45dc-92cb-04182afb2548";
 
   private static final UUID PRE_POPULATED_LOCATION1_UUID = fromString("ae937212-5e3f-4ca4-8f1e-1aa2d83bb295");
+  private static final UUID PRE_POPULATED_LIBRARY1_UUID = fromString("a0dd1106-3de8-4346-b0f4-b1ed0a4eaffd");
   private static final UUID PRE_POPULATED_IR_LOCATION1_UUID = fromString("a1c1472f-67ec-4938-b5a8-f119e51ab79b");
   private static final UUID PRE_POPULATED_IR_LOCATION2_UUID = fromString("26f7c8c5-f090-4742-b7c7-e08ed1cc4e67");
   private static final UUID PRE_POPULATED_CENTRAL_SERVER_UUID = fromString("edab6baf-c696-42b1-89bb-1bbb8759b0d2");
@@ -66,6 +67,7 @@ class LocationMappingRepositoryTest extends BaseRepositoryTest {
     var mapping = repository.getOne(fromString(PRE_POPULATED_MAPPING1_ID));
 
     assertEquals(PRE_POPULATED_LOCATION1_UUID, mapping.getLocationId());
+    assertEquals(PRE_POPULATED_LIBRARY1_UUID, mapping.getLibraryId());
     assertEquals(PRE_POPULATED_IR_LOCATION1_UUID, mapping.getInnReachLocation().getId());
     assertEquals(PRE_POPULATED_CENTRAL_SERVER_UUID, mapping.getCentralServer().getId());
 
@@ -84,6 +86,7 @@ class LocationMappingRepositoryTest extends BaseRepositoryTest {
     LocationMapping found = repository.getOne(saved.getId());
     assertEquals(newMapping.getId(), found.getId());
     assertEquals(saved.getLocationId(), found.getLocationId());
+    assertEquals(saved.getLibraryId(), found.getLibraryId());
     assertEquals(saved.getCentralServer().getId(), found.getCentralServer().getId());
     assertEquals(saved.getInnReachLocation().getId(), found.getInnReachLocation().getId());
   }
@@ -97,12 +100,14 @@ class LocationMappingRepositoryTest extends BaseRepositoryTest {
   }
 
   @Test
-  void shouldUpdateLocationIdAndIRLocationId() {
+  void shouldUpdateLocationIdLibraryIdAndIRLocationId() {
     var mapping = repository.getOne(fromString(PRE_POPULATED_MAPPING1_ID));
 
     UUID newLocationId = randomUUID();
+    UUID newLibraryId = randomUUID();
     UUID newIRLocationId = PRE_POPULATED_IR_LOCATION2_UUID;
     mapping.setLocationId(newLocationId);
+    mapping.setLibraryId(newLibraryId);
     mapping.setInnReachLocation(refInnReachLocation(newIRLocationId));
 
     repository.saveAndFlush(mapping);
@@ -110,6 +115,7 @@ class LocationMappingRepositoryTest extends BaseRepositoryTest {
     var saved = repository.getOne(mapping.getId());
 
     assertEquals(newLocationId, saved.getLocationId());
+    assertEquals(newLibraryId, saved.getLibraryId());
     assertEquals(newIRLocationId, saved.getInnReachLocation().getId());
   }
 
@@ -127,6 +133,14 @@ class LocationMappingRepositoryTest extends BaseRepositoryTest {
   void throwExceptionWhenSavingWithoutLocationId() {
     var mapping = createLocationMapping();
     mapping.setLocationId(null);
+
+    assertThrows(DataIntegrityViolationException.class, () -> repository.saveAndFlush(mapping));
+  }
+
+  @Test
+  void throwExceptionWhenSavingWithoutLibraryId() {
+    var mapping = createLocationMapping();
+    mapping.setLibraryId(null);
 
     assertThrows(DataIntegrityViolationException.class, () -> repository.saveAndFlush(mapping));
   }

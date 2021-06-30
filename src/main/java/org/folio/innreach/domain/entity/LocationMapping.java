@@ -28,6 +28,7 @@ public class LocationMapping extends Auditable<String> implements Identifiable<U
   @Id
   private UUID id;
   private UUID locationId;
+  private UUID libraryId;
 
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "ir_location_id")
