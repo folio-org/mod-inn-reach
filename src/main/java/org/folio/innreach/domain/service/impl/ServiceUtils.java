@@ -12,6 +12,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 import lombok.experimental.UtilityClass;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import org.folio.innreach.domain.entity.CentralServer;
@@ -19,6 +20,9 @@ import org.folio.innreach.domain.entity.base.Identifiable;
 
 @UtilityClass
 class ServiceUtils {
+
+  static final Sort SORT_BY_ID = Sort.by("id");
+  static final Sort DEFAULT_SORT = SORT_BY_ID;
 
   static CentralServer centralServerRef(UUID centralServerId) {
     var server = new CentralServer();

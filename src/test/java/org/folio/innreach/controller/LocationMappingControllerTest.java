@@ -58,10 +58,10 @@ class LocationMappingControllerTest extends BaseControllerTest {
 
   private static final String PRE_POPULATED_CENTRAL_SERVER_ID = "edab6baf-c696-42b1-89bb-1bbb8759b0d2";
   private static final String PRE_POPULATED_LIBRARY_ID = "a0dd1106-3de8-4346-b0f4-b1ed0a4eaffd";
-  private static final UUID PRE_POPULATED_MAPPING1_ID = UUID.fromString("bea259f7-dce0-41de-8c31-3ae6e3034840");
+  private static final UUID PRE_POPULATED_MAPPING1_ID = UUID.fromString("ada69896-3954-45dc-92cb-04182afb2548");
   private static final UUID PRE_POPULATED_MAPPING2_ID = UUID.fromString("b4262548-3e38-424c-b3d9-509af233db5f");
   private static final UUID PRE_POPULATED_INN_REACH_LOCATION1_ID = UUID.fromString(
-      "a1c1472f-67ec-4938-b5a8-f119e51ab79b");
+      "34c6a230-d264-44c5-90b3-6159ed2ebdc1");
   private static final UUID PRE_POPULATED_LOCATION2_ID = UUID.fromString("c8092f39-b969-418e-83ac-d73dd5ab9564");
 
 

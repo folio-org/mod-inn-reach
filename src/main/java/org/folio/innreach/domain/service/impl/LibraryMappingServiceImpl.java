@@ -1,5 +1,6 @@
 package org.folio.innreach.domain.service.impl;
 
+import static org.folio.innreach.domain.service.impl.ServiceUtils.DEFAULT_SORT;
 import static org.folio.innreach.domain.service.impl.ServiceUtils.centralServerRef;
 import static org.folio.innreach.domain.service.impl.ServiceUtils.equalIds;
 import static org.folio.innreach.domain.service.impl.ServiceUtils.initId;
@@ -36,7 +37,7 @@ public class LibraryMappingServiceImpl implements LibraryMappingService {
   public LibraryMappingsDTO getAllMappings(UUID centralServerId, int offset, int limit) {
     var example = mappingExampleWithServerId(centralServerId);
 
-    Page<LibraryMapping> mappings = repository.findAll(example, PageRequest.of(offset, limit));
+    Page<LibraryMapping> mappings = repository.findAll(example, PageRequest.of(offset, limit, DEFAULT_SORT));
 
     return mapper.toDTOCollection(mappings);
   }
