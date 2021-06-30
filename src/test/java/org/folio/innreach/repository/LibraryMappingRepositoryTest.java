@@ -33,13 +33,13 @@ import org.folio.innreach.domain.entity.LibraryMapping;
 })
 class LibraryMappingRepositoryTest extends BaseRepositoryTest {
 
-  private static final String PRE_POPULATED_MAPPING1_ID = "2d57c159-8b05-4c3b-97d9-7ddf0ead17a3";
-  private static final String PRE_POPULATED_MAPPING2_ID = "07f97157-9cf9-44f2-b7aa-82e1f649cc83";
+  private static final String PRE_POPULATED_MAPPING1_ID = "07f97157-9cf9-44f2-b7aa-82e1f649cc83";
+  private static final String PRE_POPULATED_MAPPING2_ID = "2d57c159-8b05-4c3b-97d9-7ddf0ead17a3";
   private static final String PRE_POPULATED_MAPPING3_ID = "b089157b-1c72-43e2-acd6-d6f2b312ba8c";
 
-  private static final UUID PRE_POPULATED_LIBRARY1_UUID = fromString("ffbef66a-12f5-480e-9ea2-499a406bdf27");
-  private static final UUID PRE_POPULATED_IR_LOCATION1_UUID = fromString("a1c1472f-67ec-4938-b5a8-f119e51ab79b");
-  private static final UUID PRE_POPULATED_IR_LOCATION2_UUID = fromString("26f7c8c5-f090-4742-b7c7-e08ed1cc4e67");
+  private static final UUID PRE_POPULATED_LIBRARY1_UUID = fromString("5cc5fe97-6bce-4bbb-9a97-c0aff0851748");
+  private static final UUID PRE_POPULATED_IR_LOCATION1_UUID = fromString("26f7c8c5-f090-4742-b7c7-e08ed1cc4e67");
+  private static final UUID PRE_POPULATED_IR_LOCATION2_UUID = fromString("a1c1472f-67ec-4938-b5a8-f119e51ab79b");
   private static final UUID PRE_POPULATED_CENTRAL_SERVER_UUID = fromString("edab6baf-c696-42b1-89bb-1bbb8759b0d2");
 
   private static final String PRE_POPULATED_USER = "admin";

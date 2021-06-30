@@ -33,13 +33,13 @@ import org.folio.innreach.domain.entity.LocationMapping;
 })
 class LocationMappingRepositoryTest extends BaseRepositoryTest {
 
-  private static final String PRE_POPULATED_MAPPING1_ID = "bea259f7-dce0-41de-8c31-3ae6e3034840";
+  private static final String PRE_POPULATED_MAPPING1_ID = "ada69896-3954-45dc-92cb-04182afb2548";
   private static final String PRE_POPULATED_MAPPING2_ID = "b4262548-3e38-424c-b3d9-509af233db5f";
-  private static final String PRE_POPULATED_MAPPING3_ID = "ada69896-3954-45dc-92cb-04182afb2548";
+  private static final String PRE_POPULATED_MAPPING3_ID = "bea259f7-dce0-41de-8c31-3ae6e3034840";
 
-  private static final UUID PRE_POPULATED_LOCATION1_UUID = fromString("ae937212-5e3f-4ca4-8f1e-1aa2d83bb295");
+  private static final UUID PRE_POPULATED_LOCATION1_UUID = fromString("67918781-553b-4e5d-af5a-9b6996a983c7");
   private static final UUID PRE_POPULATED_LIBRARY_UUID = fromString("a0dd1106-3de8-4346-b0f4-b1ed0a4eaffd");
-  private static final UUID PRE_POPULATED_IR_LOCATION1_UUID = fromString("a1c1472f-67ec-4938-b5a8-f119e51ab79b");
+  private static final UUID PRE_POPULATED_IR_LOCATION1_UUID = fromString("34c6a230-d264-44c5-90b3-6159ed2ebdc1");
   private static final UUID PRE_POPULATED_IR_LOCATION2_UUID = fromString("26f7c8c5-f090-4742-b7c7-e08ed1cc4e67");
   private static final UUID PRE_POPULATED_CENTRAL_SERVER_UUID = fromString("edab6baf-c696-42b1-89bb-1bbb8759b0d2");
 
@@ -175,7 +175,7 @@ class LocationMappingRepositoryTest extends BaseRepositoryTest {
     mapping.setCentralServer(existing.getCentralServer());
 
     var ex = assertThrows(DataIntegrityViolationException.class, () -> repository.saveAndFlush(mapping));
-    assertThat(ex.getMessage(), containsString("constraint [unq_location_mapping_server_loc_irloc]"));
+    assertThat(ex.getMessage(), containsString("constraint [unq_location_mapping_server_loc]"));
   }
 
 }
