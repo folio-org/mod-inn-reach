@@ -9,7 +9,7 @@ CREATE TABLE location_mapping
     last_modified_by   VARCHAR(255),
     last_modified_date TIMESTAMP,
     CONSTRAINT pk_location_mapping PRIMARY KEY (id),
-    CONSTRAINT unq_location_mapping_server_loc UNIQUE (central_server_id, location_id),
+    CONSTRAINT unq_location_mapping_server_loc_irloc UNIQUE (central_server_id, location_id, ir_location_id),
     CONSTRAINT fk_location_mapping_ir_location FOREIGN KEY (ir_location_id)
         REFERENCES inn_reach_location (id),
     CONSTRAINT fk_location_mapping_central_server FOREIGN KEY (central_server_id)
