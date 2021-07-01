@@ -15,7 +15,6 @@ import javax.persistence.FetchType;
 import javax.persistence.Id;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
-import javax.validation.constraints.NotNull;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
@@ -32,7 +31,7 @@ import java.util.UUID;
 public class ContributionCriteriaConfiguration extends Auditable<String> {
   @Id
   @Column(name = "central_server_id")
-  private UUID centralServeId;
+  private UUID centralServerId;
 
   @OneToMany(
     fetch = FetchType.LAZY,
@@ -73,7 +72,8 @@ public class ContributionCriteriaConfiguration extends Auditable<String> {
     if (hashCodeBeforeUpdate != statisticalCodeBehaviors.hashCode()) touchUpdateTrigger();
   }
 
-  public void removeStatisticalCondeBehavior(ContributionCriteriaStatisticalCodeBehavior statisticalCodeBehaviorForRemove) {
+  public void removeStatisticalCondeBehavior(
+    ContributionCriteriaStatisticalCodeBehavior statisticalCodeBehaviorForRemove) {
     int hashCodeBeforeUpdate = statisticalCodeBehaviors.hashCode();
     statisticalCodeBehaviors.remove(statisticalCodeBehaviorForRemove);
     statisticalCodeBehaviorForRemove.setContributionCriteriaConfiguration(null);

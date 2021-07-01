@@ -34,6 +34,26 @@
         },
         {
           "methods": ["POST"],
+          "pathPattern": "/inn-reach/central-servers/contribution-criteria",
+          "permissionsRequired": ["inn-reach.central-servers.contribution-criteria-configuration.item.post"]
+        },
+        {
+          "methods": ["GET"],
+          "pathPattern": "/inn-reach/central-servers/{centralServerId}/contribution-criteria",
+          "permissionsRequired": ["inn-reach.central-servers.contribution-criteria-configuration.item.get"]
+        },
+        {
+          "methods": ["PUT"],
+          "pathPattern": "/inn-reach/central-servers/{centralServerId}/contribution-criteria",
+          "permissionsRequired": ["inn-reach.central-servers.contribution-criteria-configuration.item.put"]
+        },
+        {
+          "methods": ["DELETE"],
+          "pathPattern": "/inn-reach/central-servers/{centralServerId}/contribution-criteria",
+          "permissionsRequired": ["inn-reach.central-servers.contribution-criteria-configuration.item.delete"]
+        },
+        {
+          "methods": ["POST"],
           "pathPattern": "/inn-reach/locations",
           "permissionsRequired": ["inn-reach.locations.item.post"]
         },
@@ -119,6 +139,26 @@
   ],
   "permissionSets": [
     {
+      "permissionName" : "inn-reach.central-servers.contribution-criteria-configuration.item.post",
+      "displayName" : "create a inn reach central server contribution criteria configuration entry",
+      "description" : "Add a inn reach central server contribution criteria configuration entry"
+    },
+    {
+      "permissionName" : "inn-reach.central-servers.contribution-criteria-configuration.item.get",
+      "displayName" : "get an inn reach central server contribution criteria configuration entry",
+      "description" : "Get a inn reach central server contribution criteria configuration entry by id"
+    },
+    {
+      "permissionName" : "inn-reach.central-servers.contribution-criteria-configuration.item.put",
+      "displayName" : "modify an inn reach central server contribution criteria configuration entry",
+      "description" : "Modify an inn reach central server contribution criteria configuration entry"
+    },
+    {
+      "permissionName" : "inn-reach.central-servers.contribution-criteria-configuration.item.delete",
+      "displayName" : "delete an inn reach central server contribution criteria configuration entry",
+      "description" : "Delete an inn reach central server contribution criteria configuration entry by id"
+    },
+    {
       "permissionName" : "inn-reach.central-servers.item.post",
       "displayName" : "create a inn reach central server entry",
       "description" : "Add a inn reach central server entry"
@@ -153,6 +193,17 @@
         "inn-reach.central-servers.item.get",
         "inn-reach.central-servers.item.put",
         "inn-reach.central-servers.item.delete"
+      ]
+    },
+    {
+      "permissionName" : "inn-reach.central-servers.contribution-criteria-configuration.all",
+      "displayName" : "inn reach API module - all permissions of central servers",
+      "description" : "All permissions of inn reach central servers scope",
+      "subPermissions" : [
+        "inn-reach.central-servers.contribution-criteria-configuration.item.post",
+        "inn-reach.central-servers.contribution-criteria-configuration.item.get",
+        "inn-reach.central-servers.contribution-criteria-configuration.item.put",
+        "inn-reach.central-servers.contribution-criteria-configuration.item.delete"
       ]
     },
     {
@@ -267,6 +318,7 @@
       "description" : "All permissions for inn reach",
       "subPermissions" : [
         "inn-reach.central-servers.all",
+        "inn-reach.central-servers.contribution-criteria-configuration.all",
         "inn-reach.locations.all",
         "inn-reach.material-type-mappings.all",
         "inn-reach.library-mappings.all",
