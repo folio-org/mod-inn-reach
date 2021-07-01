@@ -20,7 +20,7 @@ import org.folio.innreach.domain.service.CentralServerService;
 import org.folio.innreach.dto.CentralServerDTO;
 import org.folio.innreach.dto.CentralServersDTO;
 import org.folio.innreach.external.dto.AccessTokenRequestDTO;
-import org.folio.innreach.external.service.InnReachExternalService;
+import org.folio.innreach.external.service.InnReachAuthService;
 import org.folio.innreach.mapper.CentralServerMapper;
 import org.folio.innreach.repository.CentralServerRepository;
 
@@ -31,7 +31,7 @@ public class CentralServerServiceImpl implements CentralServerService {
 
   private final CentralServerRepository centralServerRepository;
   private final CentralServerMapper centralServerMapper;
-  private final InnReachExternalService innReachExternalService;
+  private final InnReachAuthService innReachAuthService;
   private final PasswordEncoder passwordEncoder;
 
   @Override
@@ -57,7 +57,7 @@ public class CentralServerServiceImpl implements CentralServerService {
     log.debug("Get an access token to check the connection to the Central Server with URI: {}",
       centralServerDTO.getCentralServerAddress());
 
-    innReachExternalService.getAccessToken(new AccessTokenRequestDTO(
+    innReachAuthService.getAccessToken(new AccessTokenRequestDTO(
       centralServerDTO.getCentralServerAddress(),
       centralServerDTO.getCentralServerKey(),
       centralServerDTO.getCentralServerSecret())

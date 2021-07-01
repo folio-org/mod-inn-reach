@@ -1,8 +1,8 @@
 package org.folio.innreach.external.service;
 
-import org.folio.innreach.external.dto.AccessTokenDTO;
-import org.folio.innreach.external.dto.AccessTokenRequestDTO;
+import java.util.UUID;
 
 public interface InnReachExternalService {
-  AccessTokenDTO getAccessToken(AccessTokenRequestDTO tokenRequestDTO);
+
+  String callInnReachApi(UUID centralServerId, String innReachRequestUri);
 }
