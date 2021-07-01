@@ -57,4 +57,12 @@ class InnReachExternalServiceImplTest {
     assertThrows(InnReachException.class, () -> innReachExternalService.getAccessToken(
       new AccessTokenRequestDTO("uri", "key", "secret")));
   }
+
+  @Test
+  public void throwException_when_centralServerUriIsNotAbsolute() {
+    when(innReachClient.getAccessToken(any(), any())).thenThrow(IllegalArgumentException.class);
+
+    assertThrows(InnReachException.class, () -> innReachExternalService.getAccessToken(
+      new AccessTokenRequestDTO("uri", "key", "secret")));
+  }
 }

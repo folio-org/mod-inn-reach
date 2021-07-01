@@ -39,7 +39,10 @@ public class InnReachExternalServiceImpl implements InnReachExternalService {
       log.error("Can't get InnReach access token", e);
       throw new InnReachException("Can't get InnReach access token. the Central server with URI: "
         + tokenRequestDTO.getCentralServerUri() + " is not available");
-    }
+    } catch (IllegalArgumentException e) {
+    log.error("Can't get InnReach access token", e);
+    throw new InnReachException("Can't get InnReach access token. The Central server URI must be absolute");
+  }
   }
 
   private String getBasicAuthorizationHeader(AccessTokenRequestDTO tokenRequestDTO) {
