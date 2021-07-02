@@ -19,6 +19,8 @@ import org.folio.innreach.external.exception.InnReachException;
 @Service
 public class InnReachExternalServiceImpl implements InnReachExternalService {
 
+  private static final String ACCESS_TOKEN_RETRIEVAL_ERR_MSG = "Can't get InnReach access token";
+  
   private final InnReachFeignClient innReachClient;
 
   @Override
@@ -32,16 +34,15 @@ public class InnReachExternalServiceImpl implements InnReachExternalService {
       return responseEntity.getBody();
 
     } catch (FeignClientException e) {
-      log.error("Can't get InnReach access token", e);
+      log.error(ACCESS_TOKEN_RETRIEVAL_ERR_MSG, e);
       throw new InnReachException("Can't get InnReach access token. Key/Secret pair is not valid");
-
     } catch (RetryableException e) {
-      log.error("Can't get InnReach access token", e);
+      log.error(ACCESS_TOKEN_RETRIEVAL_ERR_MSG, e);
       throw new InnReachException("Can't get InnReach access token. the Central server with URI: "
         + tokenRequestDTO.getCentralServerUri() + " is not available");
     } catch (IllegalArgumentException e) {
-    log.error("Can't get InnReach access token", e);
-    throw new InnReachException("Can't get InnReach access token. The Central server URI must be absolute");
+      log.error(ACCESS_TOKEN_RETRIEVAL_ERR_MSG, e);
+      throw new InnReachException("Can't get InnReach access token. The Central server URI must be absolute");
   }
   }
 
