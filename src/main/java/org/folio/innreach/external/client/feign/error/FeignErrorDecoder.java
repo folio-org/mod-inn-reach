@@ -19,6 +19,6 @@ public class FeignErrorDecoder implements ErrorDecoder {
     }
 
     log.debug("Inn Reach call failed with status: {}", response.status());
-    return new InnReachException("Inn Reach call failed failed with status: {}");
+    return new InnReachException("Inn Reach call failed with status: " + response.status());
   }
 }
