@@ -17,17 +17,9 @@ paths:
               schema:
                 $ref: "#/components/schemas/centralServerDTO"
         '400':
-          description: Bad request
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/validationErrorsDTO"
+          $ref: "#/components/responses/trait_response_validation_400"
         '500':
-          description: Internal server error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/error"
+          $ref: "#/components/responses/trait_response_500"
       description: Add new central server
       operationId: postCentralServer
       requestBody:
@@ -47,11 +39,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/centralServersDTO"
         '500':
-          description: Internal server error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/error"
+          $ref: "#/components/responses/trait_response_500"
       description: Get a list of central servers
       operationId: getCentralServers
       parameters:
@@ -69,17 +57,9 @@ paths:
               schema:
                 $ref: "#/components/schemas/centralServerDTO"
         '404':
-          description: Central server not found
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/error"
+          $ref: "#/components/responses/trait_response_404"
         '500':
-          description: Internal server error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/error"
+          $ref: "#/components/responses/trait_response_500"
       description: Get central server by id
       operationId: getCentralServerById
       parameters:
@@ -91,23 +71,11 @@ paths:
         '204':
           description: No content
         '400':
-          description: Bad request
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/validationErrorsDTO"
+          $ref: "#/components/responses/trait_response_validation_400"
         '404':
-          description: Central server not found
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/error"
+          $ref: "#/components/responses/trait_response_404"
         '500':
-          description: Internal server error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/error"
+          $ref: "#/components/responses/trait_response_500"
       description: Update central server
       operationId: updateCentralServer
       requestBody:
@@ -125,17 +93,9 @@ paths:
         '204':
           description: No content
         '404':
-          description: Central server not found
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/error"
+          $ref: "#/components/responses/trait_response_404"
         '500':
-          description: Internal server error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/error"
+          $ref: "#/components/responses/trait_response_500"
       description: Delete central server
       operationId: deleteCentralServer
       parameters:
@@ -154,22 +114,9 @@ paths:
               schema:
                 $ref: "#/components/schemas/materialTypeMappingsDTO"
         '400':
-          description:
-            Bad request, e.g. malformed request body or query parameter.
-            Details of the error (e.g. name of the parameter or line/character number
-            with malformed data) provided in the response.
-          content:
-            application/json:
-              example:
-                $ref: "#/components/examples/error"
-              schema:
-                $ref: "#/components/schemas/error"
+          $ref: "#/components/responses/trait_response_malformed_query_400"
         '500':
-          description: Internal server error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/error"
+          $ref: "#/components/responses/trait_response_500"
       parameters:
         - $ref: "#/components/parameters/centralServerId"
         - $ref: "#/components/parameters/trait_pageable_offset"
@@ -187,20 +134,9 @@ paths:
               schema:
                 $ref: "#/components/schemas/materialTypeMappingDTO"
         '400':
-          description: Bad request
-          content:
-            application/json:
-              example:
-                $ref: "#/components/examples/error"
-              schema:
-                $ref: "#/components/schemas/error"
+          $ref: "#/components/responses/trait_response_validation_400"
         '500':
-          description: Internal server error
-          content:
-            text/plain:
-              schema:
-                type: string
-                example: Internal server error
+          $ref: "#/components/responses/trait_response_500"
       requestBody:
         content:
           application/json:
@@ -223,17 +159,9 @@ paths:
               schema:
                 $ref: "#/components/schemas/materialTypeMappingDTO"
         '404':
-          description: Material type mapping not found
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/error"
+          $ref: "#/components/responses/trait_response_404"
         '500':
-          description: Internal server error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/error"
+          $ref: "#/components/responses/trait_response_500"
       parameters:
         - $ref: "#/components/parameters/centralServerId"
         - $ref: "#/components/parameters/id"
@@ -246,23 +174,11 @@ paths:
         '204':
           description: No content
         '400':
-          description: Bad request
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/validationErrorsDTO"
+          $ref: "#/components/responses/trait_response_validation_400"
         '404':
-          description: Material type mapping not found
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/error"
+          $ref: "#/components/responses/trait_response_404"
         '500':
-          description: Internal server error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/error"
+          $ref: "#/components/responses/trait_response_500"
       requestBody:
         content:
           application/json:
@@ -281,17 +197,9 @@ paths:
         '204':
           description: No content
         '404':
-          description: Material type mapping not found
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/error"
+          $ref: "#/components/responses/trait_response_404"
         '500':
-          description: Internal server error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/error"
+          $ref: "#/components/responses/trait_response_500"
       parameters:
         - $ref: "#/components/parameters/centralServerId"
         - $ref: "#/components/parameters/id"
@@ -309,17 +217,9 @@ paths:
               schema:
                 $ref: "#/components/schemas/innReachLocationDTO"
         '400':
-          description: Bad request
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/validationErrorsDTO"
+          $ref: "#/components/responses/trait_response_validation_400"
         '500':
-          description: Internal server error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/error"
+          $ref: "#/components/responses/trait_response_500"
       requestBody:
         content:
           application/json:
@@ -339,11 +239,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/innReachLocationsDTO"
         '500':
-          description: Internal server error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/error"
+          $ref: "#/components/responses/trait_response_500"
       parameters:
         - $ref: "#/components/parameters/trait_pageable_offset"
         - $ref: "#/components/parameters/trait_pageable_limit"
@@ -361,17 +257,9 @@ paths:
               schema:
                 $ref: "#/components/schemas/innReachLocationDTO"
         '404':
-          description: InnReach location not found
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/error"
+          $ref: "#/components/responses/trait_response_404"
         '500':
-          description: Internal server error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/error"
+          $ref: "#/components/responses/trait_response_500"
       parameters:
         - $ref: '#/components/parameters/id'
     put:
@@ -383,23 +271,11 @@ paths:
         '204':
           description: No content
         '400':
-          description: Bad request
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/validationErrorsDTO"
+          $ref: "#/components/responses/trait_response_validation_400"
         '404':
-          description: InnReach location not found
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/error"
+          $ref: "#/components/responses/trait_response_404"
         '500':
-          description: Internal server error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/error"
+          $ref: "#/components/responses/trait_response_500"
       requestBody:
         content:
           application/json:
@@ -417,17 +293,9 @@ paths:
         '204':
           description: No content
         '404':
-          description: InnReach location not found
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/error"
+          $ref: "#/components/responses/trait_response_404"
         '500':
-          description: Internal server error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/error"
+          $ref: "#/components/responses/trait_response_500"
       parameters:
         - $ref: '#/components/parameters/id'
   /central-servers/{centralServerId}/libraries/location-mappings/:
@@ -444,22 +312,9 @@ paths:
               schema:
                 $ref: "#/components/schemas/libraryMappingsDTO"
         '400':
-          description:
-            Bad request, e.g. malformed request body or query parameter.
-            Details of the error (e.g. name of the parameter or line/character number
-            with malformed data) provided in the response.
-          content:
-            application/json:
-              example:
-                $ref: "#/components/examples/error"
-              schema:
-                $ref: "#/components/schemas/error"
+          $ref: "#/components/responses/trait_response_malformed_query_400"
         '500':
-          description: Internal server error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/error"
+          $ref: "#/components/responses/trait_response_500"
       parameters:
         - $ref: "#/components/parameters/centralServerId"
         - $ref: "#/components/parameters/trait_pageable_offset"
@@ -475,20 +330,9 @@ paths:
         '204':
           description: Collection successfully updated
         '400':
-          description: Bad request
-          content:
-            application/json:
-              example:
-                $ref: "#/components/examples/error"
-              schema:
-                $ref: "#/components/schemas/error"
+          $ref: "#/components/responses/trait_response_validation_400"
         '500':
-          description: Internal server error
-          content:
-            text/plain:
-              schema:
-                type: string
-                example: Internal server error
+          $ref: "#/components/responses/trait_response_500"
       requestBody:
         content:
           application/json:
@@ -511,22 +355,9 @@ paths:
               schema:
                 $ref: "#/components/schemas/locationMappingsDTO"
         '400':
-          description:
-            Bad request, e.g. malformed request body or query parameter.
-            Details of the error (e.g. name of the parameter or line/character number
-            with malformed data) provided in the response.
-          content:
-            application/json:
-              example:
-                $ref: "#/components/examples/error"
-              schema:
-                $ref: "#/components/schemas/error"
+          $ref: "#/components/responses/trait_response_malformed_query_400"
         '500':
-          description: Internal server error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/error"
+          $ref: "#/components/responses/trait_response_500"
       parameters:
         - $ref: "#/components/parameters/centralServerId"
         - $ref: "#/components/parameters/libraryId"
@@ -543,20 +374,9 @@ paths:
         '204':
           description: Collection successfully updated
         '400':
-          description: Bad request
-          content:
-            application/json:
-              example:
-                $ref: "#/components/examples/error"
-              schema:
-                $ref: "#/components/schemas/error"
+          $ref: "#/components/responses/trait_response_validation_400"
         '500':
-          description: Internal server error
-          content:
-            text/plain:
-              schema:
-                type: string
-                example: Internal server error
+          $ref: "#/components/responses/trait_response_500"
       requestBody:
         content:
           application/json:
@@ -576,17 +396,9 @@ paths:
               schema:
                 $ref: "#/components/schemas/contributionCriteriaDTO"
         '400':
-          description: Bad request
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/validationErrorsDTO"
+          $ref: "#/components/responses/trait_response_validation_400"
         '500':
-          description: Internal server error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/error"
+          $ref: "#/components/responses/trait_response_500"
       description: Create new contribution criteria for Central Server
       operationId: postContributionCriteria
       tags:
@@ -603,17 +415,9 @@ paths:
         '204':
           description: No content
         '404':
-          description: Contribution Criteria not found
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/error"
+          $ref: "#/components/responses/trait_response_404"
         '500':
-          description: Internal server error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/error"
+          $ref: "#/components/responses/trait_response_500"
       description: Delete Contribution Criteria Configuration
       operationId: deleteCriteria
       tags:
@@ -629,17 +433,9 @@ paths:
               schema:
                 $ref: "#/components/schemas/contributionCriteriaDTO"
         '404':
-          description: Contribution criteria not found
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/error"
+          $ref: "#/components/responses/trait_response_404"
         '500':
-          description: Internal server error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/error"
+          $ref: "#/components/responses/trait_response_500"
       description: Get Contribution Criteria by id
       operationId: getCriteriaById
       tags:
@@ -655,23 +451,11 @@ paths:
               schema:
                 $ref: "#/components/schemas/contributionCriteriaDTO"
         '400':
-          description: Bad request
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/validationErrorsDTO"
+          $ref: "#/components/responses/trait_response_validation_400"
         '404':
-          description: InnReach location not found
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/error"
+          $ref: "#/components/responses/trait_response_404"
         '500':
-          description: Internal server error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/error"
+          $ref: "#/components/responses/trait_response_500"
       description: Update Contribution Criteria Configuration
       operationId: updateCriteria
       tags:
@@ -693,11 +477,7 @@ paths:
         '200':
           description: OK
         '400':
-          description: Bad request
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/validationErrorsDTO"
+          $ref: "#/components/responses/trait_response_validation_400"
         '401':
           description: Unauthorized
           content:
@@ -705,11 +485,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/validationErrorsDTO"
         '500':
-          description: Internal server error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/error"
+          $ref: "#/components/responses/trait_response_500"
       requestBody:
         content:
           application/json:
@@ -797,6 +573,33 @@ components:
         minimum: 0
         maximum: 2147483647
         type: integer
+  responses:
+    trait_response_500:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/error"
+    trait_response_404:
+      description: Item not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/error"
+    trait_response_validation_400:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/validationErrorsDTO"
+    trait_response_malformed_query_400:
+      description: Bad request, e.g. malformed query parameter.
+      content:
+        application/json:
+          example:
+            $ref: "#/components/examples/error"
+          schema:
+            $ref: "#/components/schemas/error"
   examples:
     error:
       value:
