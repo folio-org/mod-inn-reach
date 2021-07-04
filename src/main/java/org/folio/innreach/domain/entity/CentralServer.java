@@ -122,6 +122,15 @@ public class CentralServer implements Identifiable<UUID> {
   )
   private List<LocalAgency> localAgencies = new ArrayList<>();
 
+  @OneToOne(
+    cascade = CascadeType.ALL,
+    fetch = FetchType.LAZY,
+    mappedBy = "centralServer",
+    orphanRemoval = true,
+    optional = false
+  )
+  private ItemContributionOptionsConfiguration itemContributionOptionsConfiguration;
+
   public void setCentralServerCredentials(CentralServerCredentials centralServerCredentials) {
     if (centralServerCredentials != null) {
       centralServerCredentials.setCentralServer(this);
@@ -148,6 +157,13 @@ public class CentralServer implements Identifiable<UUID> {
       localAgency.setCentralServer(null);
     }
     this.localAgencies.remove(localAgency);
+  }
+
+  public void setItemContributionOptionsConfiguration(ItemContributionOptionsConfiguration itmContribOptConf) {
+    if (itmContribOptConf != null) {
+      itmContribOptConf.setCentralServer(this);
+    }
+    this.itemContributionOptionsConfiguration = itmContribOptConf;
   }
 
 }

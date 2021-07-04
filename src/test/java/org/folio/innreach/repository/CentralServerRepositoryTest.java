@@ -1,5 +1,6 @@
 package org.folio.innreach.repository;
 
+import static org.folio.innreach.fixture.ItemContributionOptionsConfigurationFixture.createItmContribOptConf;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -17,7 +18,9 @@ import org.folio.innreach.fixture.LocalAgencyFixture;
 import org.folio.innreach.fixture.LocalServerCredentialsFixture;
 
 
-@Sql(scripts = "classpath:db/central-server/pre-populate-central-server.sql")
+@Sql(scripts = {"classpath:db/central-server/pre-populate-central-server.sql",
+  "classpath:db/inn-reach-location/pre-populate-inn-reach-location-code.sql",
+  "classpath:db/itm-contrib-opt-conf/pre-populate-itm-contrib-opt-conf.sql"})
 class CentralServerRepositoryTest extends BaseRepositoryTest {
 
   private static final String PRE_POPULATED_CENTRAL_SERVER_ID = "edab6baf-c696-42b1-89bb-1bbb8759b0d2";
@@ -31,6 +34,7 @@ class CentralServerRepositoryTest extends BaseRepositoryTest {
     var centralServer = CentralServerFixture.createCentralServer();
     centralServer.setCentralServerCredentials(CentralServerCredentialsFixture.createCentralServerCredentials());
     centralServer.setLocalServerCredentials(LocalServerCredentialsFixture.createLocalServerCredentials());
+    centralServer.setItemContributionOptionsConfiguration(createItmContribOptConf());
 
     centralServer.addLocalAgency(LocalAgencyFixture.createLocalAgency());
     centralServer.addLocalAgency(LocalAgencyFixture.createLocalAgency());
@@ -42,6 +46,7 @@ class CentralServerRepositoryTest extends BaseRepositoryTest {
     assertNotNull(savedCentralServer.getId());
     assertNotNull(savedCentralServer.getCentralServerCredentials());
     assertNotNull(savedCentralServer.getLocalServerCredentials());
+    assertNotNull(savedCentralServer.getItemContributionOptionsConfiguration());
   }
 
   @Test
