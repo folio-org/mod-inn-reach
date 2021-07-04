@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
-  "description": "Material type mapping",
+  "description": "Library mapping",
   "type": "object",
   "properties": {
     "id": {
@@ -8,14 +8,15 @@
       "type": "string",
       "format": "uuid"
     },
-    "materialTypeId": {
-      "description": "Material type id",
+    "libraryId": {
+      "description": "Library id",
       "type": "string",
       "format": "uuid"
     },
-    "centralItemType": {
-      "description": "Central server item type",
-      "type": "integer"
+    "innReachLocationId": {
+      "description": "Inn-Reach location id",
+      "type": "string",
+      "format": "uuid"
     },
     "metadata": {
       "description": "Entity metadata",
@@ -25,7 +26,7 @@
   },
   "additionalProperties": false,
   "required": [
-    "materialTypeId",
-    "centralItemType"
+    "libraryId",
+    "innReachLocationId"
   ]
 }

@@ -16,13 +16,14 @@ import lombok.Setter;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
 import org.folio.innreach.domain.entity.base.Auditable;
+import org.folio.innreach.domain.entity.base.Identifiable;
 
 @Getter
 @Setter
 @NoArgsConstructor
 @Entity
 @Table(name = "library_mapping")
-public class LibraryMapping extends Auditable<String> {
+public class LibraryMapping extends Auditable<String> implements Identifiable<UUID> {
 
   @Id
   private UUID id;

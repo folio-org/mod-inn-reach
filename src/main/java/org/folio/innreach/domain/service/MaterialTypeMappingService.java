@@ -7,7 +7,7 @@ import org.folio.innreach.dto.MaterialTypeMappingsDTO;
 
 public interface MaterialTypeMappingService {
 
-  MaterialTypeMappingsDTO getAllMappings(UUID centralServerId, Integer offset, Integer limit);
+  MaterialTypeMappingsDTO getAllMappings(UUID centralServerId, int offset, int limit);
 
   MaterialTypeMappingDTO getMapping(UUID centralServerId, UUID id);
 

@@ -29,6 +29,8 @@ import lombok.Setter;
 import lombok.ToString;
 import org.hibernate.annotations.QueryHints;
 
+import org.folio.innreach.domain.entity.base.Identifiable;
+
 @Getter
 @Setter
 @EqualsAndHashCode(of = "localServerCode")
@@ -47,7 +49,7 @@ import org.hibernate.annotations.QueryHints;
     hints = @QueryHint(name = QueryHints.PASS_DISTINCT_THROUGH, value = "false")
   )
 })
-public class CentralServer {
+public class CentralServer implements Identifiable<UUID> {
 
   public static final String FETCH_ALL_QUERY_NAME = "CentralServer.fetchAll";
   public static final String FETCH_ALL_QUERY = "SELECT DISTINCT cs FROM CentralServer AS cs " +

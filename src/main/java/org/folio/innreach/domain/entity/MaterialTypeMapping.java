@@ -17,6 +17,7 @@ import lombok.Setter;
 import lombok.ToString;
 
 import org.folio.innreach.domain.entity.base.Auditable;
+import org.folio.innreach.domain.entity.base.Identifiable;
 
 @Getter
 @Setter
@@ -24,7 +25,7 @@ import org.folio.innreach.domain.entity.base.Auditable;
 @ToString(exclude = {"centralServer"}, callSuper = true)
 @Entity
 @Table(name = "material_type_mapping")
-public class MaterialTypeMapping extends Auditable<String> {
+public class MaterialTypeMapping extends Auditable<String> implements Identifiable<UUID> {
 
   @Id
   @GeneratedValue(strategy = GenerationType.AUTO)

@@ -1,0 +1,12 @@
+{
+  "locationMappings": [
+    {
+      "locationId": "9f6b24d2-aafd-4105-94e1-c66d12612db8",
+      "innReachLocationId": "a1c1472f-67ec-4938-b5a8-f119e51ab79b"
+    },
+    {
+      "locationId": "703e6cf2-01f7-46e1-8d1f-60bbc7d31a8a",
+      "innReachLocationId": "a1c1472f-67ec-4938-b5a8-f119e51ab79b"
+    }
+  ]
+}
