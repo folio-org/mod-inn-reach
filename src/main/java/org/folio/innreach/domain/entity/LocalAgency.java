@@ -21,13 +21,15 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 
+import org.folio.innreach.domain.entity.base.Identifiable;
+
 @Getter
 @Setter
 @EqualsAndHashCode(of = {"code"})
 @ToString(exclude = {"folioLibraryIds", "centralServer"})
 @Entity
 @Table(name = "local_agency")
-public class LocalAgency {
+public class LocalAgency implements Identifiable<UUID> {
 
   @Id
   @GeneratedValue(strategy = GenerationType.AUTO)

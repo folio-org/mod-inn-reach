@@ -1,6 +1,5 @@
 package org.folio.innreach.controller;
 
-
 import static java.util.Collections.singletonList;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
@@ -16,12 +15,13 @@ import static org.springframework.http.HttpStatus.BAD_REQUEST;
 import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TEST_METHOD;
 import static org.springframework.test.context.jdbc.SqlMergeMode.MergeMode.MERGE;
 
+import static org.folio.innreach.controller.ControllerTestUtils.collectFieldNames;
+import static org.folio.innreach.controller.ControllerTestUtils.createValidationError;
 import static org.folio.innreach.fixture.TestUtil.deserializeFromJsonFile;
 
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,7 +37,6 @@ import org.folio.innreach.domain.entity.MaterialTypeMapping;
 import org.folio.innreach.dto.Error;
 import org.folio.innreach.dto.MaterialTypeMappingDTO;
 import org.folio.innreach.dto.MaterialTypeMappingsDTO;
-import org.folio.innreach.dto.ValidationErrorDTO;
 import org.folio.innreach.dto.ValidationErrorsDTO;
 import org.folio.innreach.mapper.MaterialTypeMappingMapper;
 import org.folio.innreach.repository.MaterialTypeMappingRepository;
@@ -87,7 +86,7 @@ class MaterialTypeMappingControllerTest extends BaseControllerTest {
 
   @Test
   @Sql(scripts = {
-      "classpath:db/central-server/pre-populate-central-server.sql",
+      "classpath:db/central-server/pre-populate-central-server.sql"
   })
   void shouldGetEmptyMappingsWith0TotalIfNotSet() {
     var responseEntity = testRestTemplate.getForEntity(baseMappingURL(), MaterialTypeMappingsDTO.class);
@@ -306,31 +305,16 @@ class MaterialTypeMappingControllerTest extends BaseControllerTest {
 
     int i = 0;
     for (MaterialTypeMapping dbMapping : dbMappings) {
-      result[i++] = mapper.mapToDTO(dbMapping);
+      result[i++] = mapper.toDTO(dbMapping);
     }
 
     return result;
   }
 
-  private static List<String> collectFieldNames(ValidationErrorsDTO errors) {
-    return errors.getValidationErrors().stream()
-        .map(ValidationErrorDTO::getFieldName)
-        .collect(Collectors.toList());
-  }
-
   private MaterialTypeMappingDTO findMapping(String id) {
     var expectedEntity = repository.findById(UUID.fromString(id)).get();
 
-    return mapper.mapToDTO(expectedEntity);
-  }
-
-  private ValidationErrorDTO createValidationError(String field, String message) {
-    var result = new ValidationErrorDTO();
-
-    result.setFieldName(field);
-    result.setMessage(message);
-
-    return result;
+    return mapper.toDTO(expectedEntity);
   }
 
 }

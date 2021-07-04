@@ -1,6 +1,6 @@
 package org.folio.innreach.domain.service.impl;
 
-import static java.util.stream.Collectors.toList;
+import static org.folio.innreach.domain.service.impl.ServiceUtils.centralServerRef;
 
 import java.util.UUID;
 
@@ -11,7 +11,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import org.folio.innreach.domain.entity.CentralServer;
 import org.folio.innreach.domain.entity.MaterialTypeMapping;
 import org.folio.innreach.domain.exception.EntityNotFoundException;
 import org.folio.innreach.domain.service.MaterialTypeMappingService;
@@ -31,19 +30,12 @@ public class MaterialTypeMappingServiceImpl implements MaterialTypeMappingServic
   
   @Override
   @Transactional(readOnly = true)
-  public MaterialTypeMappingsDTO getAllMappings(UUID centralServerId, Integer offset, Integer limit) {
+  public MaterialTypeMappingsDTO getAllMappings(UUID centralServerId, int offset, int limit) {
     var example = mappingExampleWithServerId(centralServerId);
 
     Page<MaterialTypeMapping> mappings = repository.findAll(example, PageRequest.of(offset, limit));
 
-    var result = new MaterialTypeMappingsDTO();
-    result.setMappings(mappings.stream()
-        .map(mapper::mapToDTO)
-        .collect(toList()));
-    
-    result.setTotalRecords((int) mappings.getTotalElements());
-
-    return result;
+    return mapper.toDTOCollection(mappings);
   }
 
   @Override
@@ -51,17 +43,17 @@ public class MaterialTypeMappingServiceImpl implements MaterialTypeMappingServic
   public MaterialTypeMappingDTO getMapping(UUID centralServerId, UUID id) {
     var mapping = findMapping(centralServerId, id);
 
-    return mapper.mapToDTO(mapping);
+    return mapper.toDTO(mapping);
   }
 
   @Override
   public MaterialTypeMappingDTO createMapping(UUID centralServerId, MaterialTypeMappingDTO dto) {
-    var entity = mapper.mapToEntity(dto);
+    var entity = mapper.toEntity(dto);
     entity.setCentralServer(centralServerRef(centralServerId));
 
     var saved = repository.save(entity);
 
-    return mapper.mapToDTO(saved);
+    return mapper.toDTO(saved);
   }
 
   @Override
@@ -72,7 +64,7 @@ public class MaterialTypeMappingServiceImpl implements MaterialTypeMappingServic
     mapping.setMaterialTypeId(dto.getMaterialTypeId());
     mapping.setCentralItemType(dto.getCentralItemType());
 
-    return mapper.mapToDTO(mapping);
+    return mapper.toDTO(mapping);
   }
 
   @Override
@@ -100,13 +92,6 @@ public class MaterialTypeMappingServiceImpl implements MaterialTypeMappingServic
     toFind.setCentralServer(centralServerRef(centralServerId));
 
     return Example.of(toFind);
-  }
-
-  private static CentralServer centralServerRef(UUID centralServerId) {
-    var server = new CentralServer();
-    server.setId(centralServerId);
-
-    return server;
   }
 
 }
