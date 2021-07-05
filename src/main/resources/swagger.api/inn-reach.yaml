@@ -320,7 +320,7 @@ paths:
         - $ref: "#/components/parameters/trait_pageable_offset"
         - $ref: "#/components/parameters/trait_pageable_limit"
     put:
-      description: >- 
+      description: >-
           Update (replace) the entire collection of library to Inn-Reach location mappings
           associated with the central server
       operationId: putLibraryMappings
@@ -444,12 +444,8 @@ paths:
         - $ref: '#/components/parameters/id'
     put:
       responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/contributionCriteriaDTO"
+        '204':
+          description: No content
         '400':
           $ref: "#/components/responses/trait_response_validation_400"
         '404':

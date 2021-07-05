@@ -105,11 +105,7 @@ class ContributionCriteriaControllerTest extends BaseControllerTest {
       = testRestTemplate.exchange("/inn-reach/central-servers/{centralServerId}/contribution-criteria",
       HttpMethod.PUT,new HttpEntity<>(contributionCriteriaDTO),ContributionCriteriaDTO.class ,PRE_POPULATED_CENTRAL_SERVER_ID);
 
-    assertEquals(HttpStatus.OK,responseEntity.getStatusCode());
-    assertEquals(4, responseEntity.getBody().getLocationIds().size());
-    assertEquals(UUID.fromString("42076c88-02c5-4cb3-bb47-b24a3dc41146"), responseEntity.getBody().getContributeAsSystemOwnedId());
-    assertEquals(UUID.fromString("7a82f404-07df-4e5e-8e8f-a15f3b6ddffa"), responseEntity.getBody().getContributeButSuppressId());
-    assertEquals(UUID.fromString("a6519d9b-e008-4e5c-b7f2-93dc5803dba1"), responseEntity.getBody().getDoNotContributeId());
+    assertEquals(HttpStatus.NO_CONTENT,responseEntity.getStatusCode());
 
     removeContributionCriteriaConfiguration();
   }
