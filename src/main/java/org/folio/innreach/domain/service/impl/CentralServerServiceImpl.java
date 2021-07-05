@@ -6,6 +6,7 @@ import java.util.stream.Collectors;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -83,14 +84,16 @@ public class CentralServerServiceImpl implements CentralServerService {
   @Override
   @Transactional(readOnly = true)
   public CentralServersDTO getAllCentralServers(int offset, int limit) {
-    var centralServersPage = centralServerRepository.fetchAll(PageRequest.of(offset, limit));
+    Page<UUID> ids = centralServerRepository.getIds(PageRequest.of(offset, limit));
 
-    var centralServerDTOS = centralServersPage.stream()
+    var centralServerDTOS = centralServerRepository.fetchAllById(ids.getContent())
+      .stream()
       .map(centralServerMapper::mapToCentralServerDTO)
       .collect(Collectors.toList());
 
-    return new CentralServersDTO().centralServers(centralServerDTOS).totalRecords((int) centralServersPage
-        .getTotalElements());
+    return new CentralServersDTO()
+      .centralServers(centralServerDTOS)
+      .totalRecords((int) ids.getTotalElements());
   }
 
   @Override

@@ -1,9 +1,11 @@
 package org.folio.innreach.domain.entity;
 
-import static org.folio.innreach.domain.entity.CentralServer.FETCH_ALL_QUERY;
-import static org.folio.innreach.domain.entity.CentralServer.FETCH_ALL_QUERY_NAME;
+import static org.folio.innreach.domain.entity.CentralServer.FETCH_ALL_BY_ID_QUERY;
+import static org.folio.innreach.domain.entity.CentralServer.FETCH_ALL_BY_ID_QUERY_NAME;
 import static org.folio.innreach.domain.entity.CentralServer.FETCH_ONE_BY_ID_QUERY;
 import static org.folio.innreach.domain.entity.CentralServer.FETCH_ONE_BY_ID_QUERY_NAME;
+import static org.folio.innreach.domain.entity.CentralServer.GET_IDS_QUERY;
+import static org.folio.innreach.domain.entity.CentralServer.GET_IDS_QUERY_NAME;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -16,7 +18,6 @@ import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
-import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
 import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
@@ -35,25 +36,36 @@ import org.hibernate.annotations.QueryHints;
 @ToString(exclude = {"centralServerCredentials", "localServerCredentials", "localAgencies"})
 @Entity
 @Table(name = "central_server")
-@NamedQueries({
-  @NamedQuery(
-    name = FETCH_ALL_QUERY_NAME,
-    query = FETCH_ALL_QUERY,
-    hints = @QueryHint(name = QueryHints.PASS_DISTINCT_THROUGH, value = "false")
-  ),
-  @NamedQuery(
-    name = FETCH_ONE_BY_ID_QUERY_NAME,
-    query = FETCH_ONE_BY_ID_QUERY,
-    hints = @QueryHint(name = QueryHints.PASS_DISTINCT_THROUGH, value = "false")
-  )
-})
+@NamedQuery(
+  name = FETCH_ALL_BY_ID_QUERY_NAME,
+  query = FETCH_ALL_BY_ID_QUERY,
+  hints = @QueryHint(name = QueryHints.PASS_DISTINCT_THROUGH, value = "false")
+)
+@NamedQuery(
+  name = FETCH_ONE_BY_ID_QUERY_NAME,
+  query = FETCH_ONE_BY_ID_QUERY,
+  hints = @QueryHint(name = QueryHints.PASS_DISTINCT_THROUGH, value = "false")
+)
+@NamedQuery(
+  name = GET_IDS_QUERY_NAME,
+  query = GET_IDS_QUERY,
+  hints = @QueryHint(name = QueryHints.PASS_DISTINCT_THROUGH, value = "false")
+)
 public class CentralServer {
 
-  public static final String FETCH_ALL_QUERY_NAME = "CentralServer.fetchAll";
-  public static final String FETCH_ALL_QUERY = "SELECT DISTINCT cs FROM CentralServer AS cs " +
+  private static final String FETCH_ALL_QUERY = "SELECT DISTINCT cs FROM CentralServer AS cs " +
     "LEFT JOIN FETCH cs.centralServerCredentials " +
     "LEFT JOIN FETCH cs.localServerCredentials " +
     "LEFT JOIN FETCH cs.localAgencies";
+
+  public static final String GET_IDS_QUERY_NAME = "CentralServer.getIds";
+  public static final String GET_IDS_QUERY = "SELECT DISTINCT cs.id FROM CentralServer AS cs " +
+    "LEFT JOIN cs.centralServerCredentials " +
+    "LEFT JOIN cs.localServerCredentials " +
+    "LEFT JOIN cs.localAgencies";
+
+  public static final String FETCH_ALL_BY_ID_QUERY_NAME = "CentralServer.fetchAll";
+  public static final String FETCH_ALL_BY_ID_QUERY = FETCH_ALL_QUERY + " WHERE cs.id IN :id";
 
   public static final String FETCH_ONE_BY_ID_QUERY_NAME = "CentralServer.fetchOne";
   public static final String FETCH_ONE_BY_ID_QUERY = FETCH_ALL_QUERY + " WHERE cs.id = :id";

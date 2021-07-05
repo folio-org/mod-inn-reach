@@ -69,12 +69,14 @@ class CentralServerServiceImplTest {
 
   @Test
   void returnAllCentralServersDTOS_when_centralServersExist() {
-    when(centralServerRepository.fetchAll(any())).thenReturn(new PageImpl<>(List.of(createCentralServer(),
-        createCentralServer(), createCentralServer())));
+    when(centralServerRepository.getIds(any())).thenReturn(new PageImpl<>(List.of(UUID.randomUUID(), UUID.randomUUID(),
+        UUID.randomUUID())));
+    when(centralServerRepository.fetchAllById(any())).thenReturn(List.of(createCentralServer(), createCentralServer(),
+        createCentralServer()));
 
     var centralServerDTOS = centralServerService.getAllCentralServers(1, 1);
 
-    verify(centralServerRepository).fetchAll(any());
+    verify(centralServerRepository).fetchAllById(any());
 
     assertNotNull(centralServerDTOS);
     assertNotNull(centralServerDTOS.getCentralServers());
