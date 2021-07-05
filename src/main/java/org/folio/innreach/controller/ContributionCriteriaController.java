@@ -50,17 +50,16 @@ public class ContributionCriteriaController implements ContributionCriteriaApi {
   @GetMapping("/{centralServerId}/contribution-criteria")
   public ResponseEntity<ContributionCriteriaDTO> getCriteriaById(@PathVariable UUID centralServerId) {
     return ResponseEntity.ok(
-        criteriaConfigurationService.get(centralServerId)
+      criteriaConfigurationService.get(centralServerId)
     );
   }
 
   @Override
   @PutMapping("/{centralServerId}/contribution-criteria")
-  public ResponseEntity<ContributionCriteriaDTO> updateCriteria(@PathVariable UUID centralServerId,
-                                                          @Valid ContributionCriteriaDTO contributionCriteriaDTO) {
-    return ResponseEntity.ok(
-      criteriaConfigurationService.update(contributionCriteriaDTO)
-    );
+  public ResponseEntity<Void> updateCriteria(@PathVariable UUID centralServerId,
+                                                                @Valid ContributionCriteriaDTO contributionCriteriaDTO) {
+    criteriaConfigurationService.update(contributionCriteriaDTO);
+    return ResponseEntity.noContent().build();
   }
 
 }
