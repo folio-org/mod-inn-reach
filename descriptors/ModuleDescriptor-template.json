@@ -103,6 +103,26 @@
           "permissionsRequired": ["inn-reach.material-type-mappings.item.delete"]
         },
         {
+          "methods": ["GET"],
+          "pathPattern": "/inn-reach/central-servers/{centralServerId}/libraries/location-mappings",
+          "permissionsRequired": ["inn-reach.library-mappings.collection.get"]
+        },
+        {
+          "methods": ["PUT"],
+          "pathPattern": "/inn-reach/central-servers/{centralServerId}/libraries/location-mappings",
+          "permissionsRequired": ["inn-reach.library-mappings.collection.put"]
+        },
+        {
+          "methods": ["GET"],
+          "pathPattern": "/inn-reach/central-servers/{centralServerId}/libraries/{libraryId}/locations/location-mappings",
+          "permissionsRequired": ["inn-reach.location-mappings.collection.get"]
+        },
+        {
+          "methods": ["PUT"],
+          "pathPattern": "/inn-reach/central-servers/{centralServerId}/libraries/{libraryId}/locations/location-mappings",
+          "permissionsRequired": ["inn-reach.location-mappings.collection.put"]
+        },
+        {
           "methods": ["POST"],
           "pathPattern": "/inn-reach/authentication",
           "permissionsRequired": ["inn-reach.authentication.item.post"]
@@ -271,6 +291,44 @@
       ]
     },
     {
+      "permissionName" : "inn-reach.library-mappings.collection.get",
+      "displayName" : "get a collection of inn reach library mapping entries",
+      "description" : "Get a collection of inn reach library mapping entries"
+    },
+    {
+      "permissionName" : "inn-reach.library-mappings.collection.put",
+      "displayName" : "update a collection of inn reach library mapping entries",
+      "description" : "Update a collection of inn reach library mapping entries"
+    },
+    {
+      "permissionName" : "inn-reach.library-mappings.all",
+      "displayName" : "inn reach API module - all permissions of library mappings",
+      "description" : "All permissions of inn reach library mappings scope",
+      "subPermissions" : [
+        "inn-reach.library-mappings.collection.get",
+        "inn-reach.library-mappings.collection.put"
+      ]
+    },
+    {
+      "permissionName" : "inn-reach.location-mappings.collection.get",
+      "displayName" : "get a collection of inn reach location mapping entries",
+      "description" : "Get a collection of inn reach location mapping entries"
+    },
+    {
+      "permissionName" : "inn-reach.location-mappings.collection.put",
+      "displayName" : "update a collection of inn reach location mapping entries",
+      "description" : "Update a collection of inn reach location mapping entries"
+    },
+    {
+      "permissionName" : "inn-reach.location-mappings.all",
+      "displayName" : "inn reach API module - all permissions of location mappings",
+      "description" : "All permissions of inn reach location mappings scope",
+      "subPermissions" : [
+        "inn-reach.location-mappings.collection.get",
+        "inn-reach.location-mappings.collection.put"
+      ]
+    },
+    {
       "permissionName" : "inn-reach.authentication.item.post",
       "displayName" : "authenticate local server credentials",
       "description" : "Perform authentication of local server credentials"
@@ -292,6 +350,8 @@
         "inn-reach.central-servers.contribution-criteria-configuration.all",
         "inn-reach.locations.all",
         "inn-reach.material-type-mappings.all",
+        "inn-reach.library-mappings.all",
+        "inn-reach.location-mappings.all",
         "inn-reach.authentication.all"
       ]
     }

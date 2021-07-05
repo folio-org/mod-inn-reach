@@ -1,18 +1,19 @@
 package org.folio.innreach.mapper;
 
-import org.folio.innreach.domain.dto.ContributionCriteriaConfigurationDTO;
-import org.folio.innreach.domain.dto.ContributionCriteriaExcludedLocationDTO;
-import org.folio.innreach.domain.dto.ContributionCriteriaStatisticalCodeBehaviorDTO;
-import org.folio.innreach.domain.entity.ContributionBehavior;
-import org.folio.innreach.dto.ContributionCriteriaDTO;
-import org.mapstruct.Mapper;
-
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
+
+import org.mapstruct.Mapper;
+
+import org.folio.innreach.domain.dto.ContributionCriteriaConfigurationDTO;
+import org.folio.innreach.domain.dto.ContributionCriteriaExcludedLocationDTO;
+import org.folio.innreach.domain.dto.ContributionCriteriaStatisticalCodeBehaviorDTO;
+import org.folio.innreach.domain.entity.ContributionBehavior;
+import org.folio.innreach.dto.ContributionCriteriaDTO;
 
 @Mapper(componentModel = "spring")
 public class ContributionCriteriaMapper {
@@ -44,11 +45,14 @@ public class ContributionCriteriaMapper {
     contributionCriteriaConfigurationDTO.setExcludedLocations(new HashSet<>());
     contributionCriteriaConfigurationDTO.setStatisticalCodeBehaviors(new HashSet<>());
     contributionCriteriaConfigurationDTO.setCentralServerId(contributionCriteriaDTO.getCentralServerId());
-    contributionCriteriaDTO.getLocationIds().forEach(uuid -> {
-      var excludedLocationDTO = new ContributionCriteriaExcludedLocationDTO();
-      excludedLocationDTO.setExcludedLocationId(uuid);
-      contributionCriteriaConfigurationDTO.getExcludedLocations().add(excludedLocationDTO);
-    });
+    List<UUID> locationIds = contributionCriteriaDTO.getLocationIds();
+    if (locationIds != null) {
+      locationIds.forEach(uuid -> {
+        var excludedLocationDTO = new ContributionCriteriaExcludedLocationDTO();
+        excludedLocationDTO.setExcludedLocationId(uuid);
+        contributionCriteriaConfigurationDTO.getExcludedLocations().add(excludedLocationDTO);
+      });
+    }
     var statisticalCodeBehaviorDTO = new ContributionCriteriaStatisticalCodeBehaviorDTO();
     statisticalCodeBehaviorDTO.setStatisticalCodeId(contributionCriteriaDTO.getDoNotContributeId());
     statisticalCodeBehaviorDTO.setContributionBehavior(ContributionBehavior.doNotContribute);
