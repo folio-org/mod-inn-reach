@@ -33,7 +33,7 @@ class ContributionCriteriaControllerTest extends BaseControllerTest {
   }
 
   @Test
-  void return200HttpCode_on_createCriteriaConfiguration() {
+  void return201HttpCode_on_createCriteriaConfiguration() {
     var contributionCriteriaDTO = deserializeFromJsonFile("/contribution-criteria/create-contribution-configuration-request.json", ContributionCriteriaDTO.class);
     var responseEntity = testRestTemplate.postForEntity("/inn-reach/central-servers/contribution-criteria/", contributionCriteriaDTO, ContributionCriteriaDTO.class);
     assertEquals(HttpStatus.CREATED, responseEntity.getStatusCode());
@@ -43,7 +43,7 @@ class ContributionCriteriaControllerTest extends BaseControllerTest {
   }
 
   @Test
-  void return200HttpCode_on_createCriteriaConfigurationWithoutExcludedLocations() {
+  void return201HttpCode_on_createCriteriaConfigurationWithoutExcludedLocations() {
     var contributionCriteriaDTO = deserializeFromJsonFile("/contribution-criteria/create-contribution-configuration-request-without-locations.json", ContributionCriteriaDTO.class);
     var responseEntity = testRestTemplate.postForEntity("/inn-reach/central-servers/contribution-criteria/", contributionCriteriaDTO, ContributionCriteriaDTO.class);
     assertEquals(HttpStatus.CREATED, responseEntity.getStatusCode());
