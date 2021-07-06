@@ -51,3 +51,8 @@ management:
     readinessstate:
       enabled: true
 debug: false
+inn-reach:
+  jwt-access-token:
+    cache:
+      ttl: 500
+      max-size: 100

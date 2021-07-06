@@ -21,6 +21,9 @@ public interface CentralServerRepository extends JpaRepository<CentralServer, UU
   @Query(name = CentralServer.FETCH_ONE_BY_ID_QUERY_NAME)
   Optional<CentralServer> fetchOne(UUID id);
 
+  @Query(name = CentralServer.FETCH_ONE_WITH_CREDENTIALS_QUERY_NAME)
+  Optional<CentralServer> fetchOneWithCredentials(UUID id);
+
   @Query(name = CentralServer.GET_IDS_QUERY_NAME)
   Page<UUID> getIds(Pageable pageable);
 }
