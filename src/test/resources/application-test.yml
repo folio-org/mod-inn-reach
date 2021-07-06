@@ -21,3 +21,8 @@ management:
 logging:
   level:
     org.springframework.web: debug
+inn-reach:
+  jwt-access-token:
+    cache:
+      ttl: 500
+      max-size: 100
