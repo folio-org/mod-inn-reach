@@ -34,6 +34,26 @@
         },
         {
           "methods": ["POST"],
+          "pathPattern": "/inn-reach/central-servers/contribution-criteria",
+          "permissionsRequired": ["inn-reach.central-servers.contribution-criteria-configuration.item.post"]
+        },
+        {
+          "methods": ["GET"],
+          "pathPattern": "/inn-reach/central-servers/{centralServerId}/contribution-criteria",
+          "permissionsRequired": ["inn-reach.central-servers.contribution-criteria-configuration.item.get"]
+        },
+        {
+          "methods": ["PUT"],
+          "pathPattern": "/inn-reach/central-servers/{centralServerId}/contribution-criteria",
+          "permissionsRequired": ["inn-reach.central-servers.contribution-criteria-configuration.item.put"]
+        },
+        {
+          "methods": ["DELETE"],
+          "pathPattern": "/inn-reach/central-servers/{centralServerId}/contribution-criteria",
+          "permissionsRequired": ["inn-reach.central-servers.contribution-criteria-configuration.item.delete"]
+        },
+        {
+          "methods": ["POST"],
           "pathPattern": "/inn-reach/locations",
           "permissionsRequired": ["inn-reach.locations.item.post"]
         },
@@ -84,6 +104,26 @@
         },
         {
           "methods": ["GET"],
+          "pathPattern": "/inn-reach/central-servers/{centralServerId}/libraries/location-mappings",
+          "permissionsRequired": ["inn-reach.library-mappings.collection.get"]
+        },
+        {
+          "methods": ["PUT"],
+          "pathPattern": "/inn-reach/central-servers/{centralServerId}/libraries/location-mappings",
+          "permissionsRequired": ["inn-reach.library-mappings.collection.put"]
+        },
+        {
+          "methods": ["GET"],
+          "pathPattern": "/inn-reach/central-servers/{centralServerId}/libraries/{libraryId}/locations/location-mappings",
+          "permissionsRequired": ["inn-reach.location-mappings.collection.get"]
+        },
+        {
+          "methods": ["PUT"],
+          "pathPattern": "/inn-reach/central-servers/{centralServerId}/libraries/{libraryId}/locations/location-mappings",
+          "permissionsRequired": ["inn-reach.location-mappings.collection.put"]
+        },
+        {
+          "methods": ["GET"],
           "pathPattern": "/inn-reach/central-servers/{centralServerId}/d2r/*",
           "permissionsRequired": ["inn-reach.d2r.settings.any.get"]
         },
@@ -113,6 +153,26 @@
     }
   ],
   "permissionSets": [
+    {
+      "permissionName" : "inn-reach.central-servers.contribution-criteria-configuration.item.post",
+      "displayName" : "create a inn reach central server contribution criteria configuration entry",
+      "description" : "Add a inn reach central server contribution criteria configuration entry"
+    },
+    {
+      "permissionName" : "inn-reach.central-servers.contribution-criteria-configuration.item.get",
+      "displayName" : "get an inn reach central server contribution criteria configuration entry",
+      "description" : "Get a inn reach central server contribution criteria configuration entry by id"
+    },
+    {
+      "permissionName" : "inn-reach.central-servers.contribution-criteria-configuration.item.put",
+      "displayName" : "modify an inn reach central server contribution criteria configuration entry",
+      "description" : "Modify an inn reach central server contribution criteria configuration entry"
+    },
+    {
+      "permissionName" : "inn-reach.central-servers.contribution-criteria-configuration.item.delete",
+      "displayName" : "delete an inn reach central server contribution criteria configuration entry",
+      "description" : "Delete an inn reach central server contribution criteria configuration entry by id"
+    },
     {
       "permissionName" : "inn-reach.central-servers.item.post",
       "displayName" : "create a inn reach central server entry",
@@ -148,6 +208,17 @@
         "inn-reach.central-servers.item.get",
         "inn-reach.central-servers.item.put",
         "inn-reach.central-servers.item.delete"
+      ]
+    },
+    {
+      "permissionName" : "inn-reach.central-servers.contribution-criteria-configuration.all",
+      "displayName" : "inn reach API module - all permissions of central servers",
+      "description" : "All permissions of inn reach central servers scope",
+      "subPermissions" : [
+        "inn-reach.central-servers.contribution-criteria-configuration.item.post",
+        "inn-reach.central-servers.contribution-criteria-configuration.item.get",
+        "inn-reach.central-servers.contribution-criteria-configuration.item.put",
+        "inn-reach.central-servers.contribution-criteria-configuration.item.delete"
       ]
     },
     {
@@ -225,6 +296,44 @@
       ]
     },
     {
+      "permissionName" : "inn-reach.library-mappings.collection.get",
+      "displayName" : "get a collection of inn reach library mapping entries",
+      "description" : "Get a collection of inn reach library mapping entries"
+    },
+    {
+      "permissionName" : "inn-reach.library-mappings.collection.put",
+      "displayName" : "update a collection of inn reach library mapping entries",
+      "description" : "Update a collection of inn reach library mapping entries"
+    },
+    {
+      "permissionName" : "inn-reach.library-mappings.all",
+      "displayName" : "inn reach API module - all permissions of library mappings",
+      "description" : "All permissions of inn reach library mappings scope",
+      "subPermissions" : [
+        "inn-reach.library-mappings.collection.get",
+        "inn-reach.library-mappings.collection.put"
+      ]
+    },
+    {
+      "permissionName" : "inn-reach.location-mappings.collection.get",
+      "displayName" : "get a collection of inn reach location mapping entries",
+      "description" : "Get a collection of inn reach location mapping entries"
+    },
+    {
+      "permissionName" : "inn-reach.location-mappings.collection.put",
+      "displayName" : "update a collection of inn reach location mapping entries",
+      "description" : "Update a collection of inn reach location mapping entries"
+    },
+    {
+      "permissionName" : "inn-reach.location-mappings.all",
+      "displayName" : "inn reach API module - all permissions of location mappings",
+      "description" : "All permissions of inn reach location mappings scope",
+      "subPermissions" : [
+        "inn-reach.location-mappings.collection.get",
+        "inn-reach.location-mappings.collection.put"
+      ]
+    },
+    {
       "permissionName" : "inn-reach.d2r.settings.any.get",
       "displayName" : "get inn reach settings",
       "description" : "Get inn reach settings"
@@ -248,8 +357,11 @@
       "description" : "All permissions for inn reach",
       "subPermissions" : [
         "inn-reach.central-servers.all",
+        "inn-reach.central-servers.contribution-criteria-configuration.all",
         "inn-reach.locations.all",
         "inn-reach.material-type-mappings.all",
+        "inn-reach.library-mappings.all",
+        "inn-reach.location-mappings.all",
         "inn-reach.d2r.settings.any.get",
         "inn-reach.authentication.all"
       ]

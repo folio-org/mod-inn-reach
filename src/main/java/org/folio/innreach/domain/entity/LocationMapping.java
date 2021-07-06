@@ -16,17 +16,19 @@ import lombok.Setter;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
 import org.folio.innreach.domain.entity.base.Auditable;
+import org.folio.innreach.domain.entity.base.Identifiable;
 
 @Getter
 @Setter
 @NoArgsConstructor
 @Entity
 @Table(name = "location_mapping")
-public class LocationMapping extends Auditable<String> {
+public class LocationMapping extends Auditable<String> implements Identifiable<UUID> {
 
   @Id
   private UUID id;
   private UUID locationId;
+  private UUID libraryId;
 
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "ir_location_id")
@@ -48,7 +50,7 @@ public class LocationMapping extends Auditable<String> {
     if (o == null || getClass() != o.getClass())
       return false;
 
-    LibraryMapping that = (LibraryMapping) o;
+    LocationMapping that = (LocationMapping) o;
     return getId() != null && getId().equals(that.getId());
   }
 

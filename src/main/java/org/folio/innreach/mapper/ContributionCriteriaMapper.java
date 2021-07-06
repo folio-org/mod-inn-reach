@@ -44,11 +44,14 @@ public class ContributionCriteriaMapper {
     contributionCriteriaConfigurationDTO.setExcludedLocations(new HashSet<>());
     contributionCriteriaConfigurationDTO.setStatisticalCodeBehaviors(new HashSet<>());
     contributionCriteriaConfigurationDTO.setCentralServerId(contributionCriteriaDTO.getCentralServerId());
-    contributionCriteriaDTO.getLocationIds().forEach(uuid -> {
-      var excludedLocationDTO = new ContributionCriteriaExcludedLocationDTO();
-      excludedLocationDTO.setExcludedLocationId(uuid);
-      contributionCriteriaConfigurationDTO.getExcludedLocations().add(excludedLocationDTO);
-    });
+    List<UUID> locationIds = contributionCriteriaDTO.getLocationIds();
+    if (locationIds != null) {
+      locationIds.forEach(uuid -> {
+        var excludedLocationDTO = new ContributionCriteriaExcludedLocationDTO();
+        excludedLocationDTO.setExcludedLocationId(uuid);
+        contributionCriteriaConfigurationDTO.getExcludedLocations().add(excludedLocationDTO);
+      });
+    }
     var statisticalCodeBehaviorDTO = new ContributionCriteriaStatisticalCodeBehaviorDTO();
     statisticalCodeBehaviorDTO.setStatisticalCodeId(contributionCriteriaDTO.getDoNotContributeId());
     statisticalCodeBehaviorDTO.setContributionBehavior(ContributionBehavior.doNotContribute);

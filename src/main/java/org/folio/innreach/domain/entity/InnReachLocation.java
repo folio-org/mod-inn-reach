@@ -14,6 +14,7 @@ import lombok.Setter;
 import lombok.ToString;
 
 import org.folio.innreach.domain.entity.base.Auditable;
+import org.folio.innreach.domain.entity.base.Identifiable;
 
 @Getter
 @Setter
@@ -21,7 +22,7 @@ import org.folio.innreach.domain.entity.base.Auditable;
 @ToString(callSuper = true)
 @Entity
 @Table(name = "inn_reach_location")
-public class InnReachLocation extends Auditable<String> {
+public class InnReachLocation extends Auditable<String> implements Identifiable<UUID> {
 
   @Id
   @GeneratedValue(strategy = GenerationType.AUTO)
