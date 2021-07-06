@@ -50,8 +50,7 @@ import org.folio.innreach.domain.entity.base.Identifiable;
 )
 @NamedQuery(
   name = GET_IDS_QUERY_NAME,
-  query = GET_IDS_QUERY,
-  hints = @QueryHint(name = QueryHints.PASS_DISTINCT_THROUGH, value = "false")
+  query = GET_IDS_QUERY
 )
 public class CentralServer implements Identifiable<UUID> {
 
@@ -61,10 +60,7 @@ public class CentralServer implements Identifiable<UUID> {
     "LEFT JOIN FETCH cs.localAgencies";
 
   public static final String GET_IDS_QUERY_NAME = "CentralServer.getIds";
-  public static final String GET_IDS_QUERY = "SELECT DISTINCT cs.id FROM CentralServer AS cs " +
-    "LEFT JOIN cs.centralServerCredentials " +
-    "LEFT JOIN cs.localServerCredentials " +
-    "LEFT JOIN cs.localAgencies";
+  public static final String GET_IDS_QUERY = "SELECT DISTINCT cs.id FROM CentralServer AS cs";
 
   public static final String FETCH_ALL_BY_ID_QUERY_NAME = "CentralServer.fetchAll";
   public static final String FETCH_ALL_BY_ID_QUERY = FETCH_ALL_QUERY + " WHERE cs.id IN :id";
