@@ -161,7 +161,7 @@ class LocationMappingControllerTest extends BaseControllerTest {
 
     var responseEntity = testRestTemplate.exchange(baseMappingURL(), HttpMethod.PUT, new HttpEntity<>(newMappings),
         Void.class);
-    
+
     assertEquals(HttpStatus.NO_CONTENT, responseEntity.getStatusCode());
     assertFalse(responseEntity.hasBody());
 
@@ -312,7 +312,7 @@ class LocationMappingControllerTest extends BaseControllerTest {
   })
   void shouldDeleteAllMappingsIfEmptyCollectionGiven() {
     var mappings = new LocationMappingsDTO();
-    
+
     var responseEntity = testRestTemplate.exchange(baseMappingURL(), HttpMethod.PUT, new HttpEntity<>(mappings),
         Void.class);
 

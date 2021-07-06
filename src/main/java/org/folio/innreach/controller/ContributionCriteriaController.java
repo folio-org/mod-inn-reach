@@ -1,12 +1,11 @@
 package org.folio.innreach.controller;
 
+import java.util.UUID;
+
+import javax.validation.Valid;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
-
-import org.folio.innreach.domain.service.ContributionCriteriaConfigurationService;
-import org.folio.innreach.dto.ContributionCriteriaDTO;
-
-import org.folio.innreach.rest.resource.ContributionCriteriaApi;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -18,8 +17,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import javax.validation.Valid;
-import java.util.UUID;
+import org.folio.innreach.domain.service.ContributionCriteriaConfigurationService;
+import org.folio.innreach.dto.ContributionCriteriaDTO;
+import org.folio.innreach.rest.resource.ContributionCriteriaApi;
 
 @Log4j2
 @RequiredArgsConstructor

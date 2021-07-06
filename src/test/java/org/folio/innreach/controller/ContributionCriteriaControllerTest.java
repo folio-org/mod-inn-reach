@@ -1,7 +1,11 @@
 package org.folio.innreach.controller;
 
-import org.folio.innreach.controller.base.BaseControllerTest;
-import org.folio.innreach.dto.ContributionCriteriaDTO;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import static org.folio.innreach.fixture.TestUtil.deserializeFromJsonFile;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.web.client.TestRestTemplate;
@@ -9,10 +13,8 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 
-import java.util.UUID;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.folio.innreach.fixture.TestUtil.deserializeFromJsonFile;
+import org.folio.innreach.controller.base.BaseControllerTest;
+import org.folio.innreach.dto.ContributionCriteriaDTO;
 
 class ContributionCriteriaControllerTest extends BaseControllerTest {
 

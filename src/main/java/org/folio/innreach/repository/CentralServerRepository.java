@@ -1,5 +1,6 @@
 package org.folio.innreach.repository;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -14,12 +15,15 @@ import org.folio.innreach.domain.entity.CentralServer;
 @Repository
 public interface CentralServerRepository extends JpaRepository<CentralServer, UUID> {
 
-  @Query(name = CentralServer.FETCH_ALL_QUERY_NAME)
-  Page<CentralServer> fetchAll(Pageable pageable);
+  @Query(name = CentralServer.FETCH_ALL_BY_ID_QUERY_NAME)
+  List<CentralServer> fetchAllById(List<UUID> id);
 
   @Query(name = CentralServer.FETCH_ONE_BY_ID_QUERY_NAME)
   Optional<CentralServer> fetchOne(UUID id);
 
   @Query(name = CentralServer.FETCH_ONE_WITH_CREDENTIALS_QUERY_NAME)
   Optional<CentralServer> fetchOneWithCredentials(UUID id);
+
+  @Query(name = CentralServer.GET_IDS_QUERY_NAME)
+  Page<UUID> getIds(Pageable pageable);
 }

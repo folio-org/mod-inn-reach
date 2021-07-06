@@ -160,7 +160,7 @@ class LibraryMappingControllerTest extends BaseControllerTest {
 
     var responseEntity = testRestTemplate.exchange(baseMappingURL(), HttpMethod.PUT, new HttpEntity<>(newMappings),
         Void.class);
-    
+
     assertEquals(HttpStatus.NO_CONTENT, responseEntity.getStatusCode());
     assertFalse(responseEntity.hasBody());
 
@@ -311,7 +311,7 @@ class LibraryMappingControllerTest extends BaseControllerTest {
   })
   void shouldDeleteAllMappingsIfEmptyCollectionGiven() {
     var mappings = new LibraryMappingsDTO();
-    
+
     var responseEntity = testRestTemplate.exchange(baseMappingURL(), HttpMethod.PUT, new HttpEntity<>(mappings),
         Void.class);
 

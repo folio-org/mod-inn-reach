@@ -1,18 +1,19 @@
 package org.folio.innreach.mapper;
 
-import org.folio.innreach.domain.dto.ContributionCriteriaConfigurationDTO;
-import org.folio.innreach.domain.dto.ContributionCriteriaExcludedLocationDTO;
-import org.folio.innreach.domain.dto.ContributionCriteriaStatisticalCodeBehaviorDTO;
-import org.folio.innreach.domain.entity.ContributionBehavior;
-import org.folio.innreach.dto.ContributionCriteriaDTO;
-import org.mapstruct.Mapper;
-
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
+
+import org.mapstruct.Mapper;
+
+import org.folio.innreach.domain.dto.ContributionCriteriaConfigurationDTO;
+import org.folio.innreach.domain.dto.ContributionCriteriaExcludedLocationDTO;
+import org.folio.innreach.domain.dto.ContributionCriteriaStatisticalCodeBehaviorDTO;
+import org.folio.innreach.domain.entity.ContributionBehavior;
+import org.folio.innreach.dto.ContributionCriteriaDTO;
 
 @Mapper(componentModel = "spring")
 public class ContributionCriteriaMapper {

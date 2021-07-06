@@ -1,11 +1,13 @@
 package org.folio.innreach.domain.entity;
 
-import static org.folio.innreach.domain.entity.CentralServer.FETCH_ALL_QUERY;
-import static org.folio.innreach.domain.entity.CentralServer.FETCH_ALL_QUERY_NAME;
+import static org.folio.innreach.domain.entity.CentralServer.FETCH_ALL_BY_ID_QUERY;
+import static org.folio.innreach.domain.entity.CentralServer.FETCH_ALL_BY_ID_QUERY_NAME;
 import static org.folio.innreach.domain.entity.CentralServer.FETCH_ONE_BY_ID_QUERY;
 import static org.folio.innreach.domain.entity.CentralServer.FETCH_ONE_BY_ID_QUERY_NAME;
 import static org.folio.innreach.domain.entity.CentralServer.FETCH_ONE_WITH_CREDENTIALS_QUERY;
 import static org.folio.innreach.domain.entity.CentralServer.FETCH_ONE_WITH_CREDENTIALS_QUERY_NAME;
+import static org.folio.innreach.domain.entity.CentralServer.GET_IDS_QUERY;
+import static org.folio.innreach.domain.entity.CentralServer.GET_IDS_QUERY_NAME;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -39,8 +41,8 @@ import org.folio.innreach.domain.entity.base.Identifiable;
 @Entity
 @Table(name = "central_server")
 @NamedQuery(
-  name = FETCH_ALL_QUERY_NAME,
-  query = FETCH_ALL_QUERY,
+  name = FETCH_ALL_BY_ID_QUERY_NAME,
+  query = FETCH_ALL_BY_ID_QUERY,
   hints = @QueryHint(name = QueryHints.PASS_DISTINCT_THROUGH, value = "false")
 )
 @NamedQuery(
@@ -53,15 +55,21 @@ import org.folio.innreach.domain.entity.base.Identifiable;
   query = FETCH_ONE_WITH_CREDENTIALS_QUERY,
   hints = @QueryHint(name = QueryHints.PASS_DISTINCT_THROUGH, value = "false")
 )
+@NamedQuery(
+  name = GET_IDS_QUERY_NAME,
+  query = GET_IDS_QUERY
+)
 public class CentralServer implements Identifiable<UUID> {
 
   private static final String FETCH_BY_ID_POSTFIX = " WHERE cs.id = :id";
 
-  public static final String FETCH_ALL_QUERY_NAME = "CentralServer.fetchAll";
-  public static final String FETCH_ALL_QUERY = "SELECT DISTINCT cs FROM CentralServer AS cs " +
+  private static final String FETCH_ALL_QUERY = "SELECT DISTINCT cs FROM CentralServer AS cs " +
     "LEFT JOIN FETCH cs.centralServerCredentials " +
     "LEFT JOIN FETCH cs.localServerCredentials " +
     "LEFT JOIN FETCH cs.localAgencies";
+
+  public static final String FETCH_ALL_BY_ID_QUERY_NAME = "CentralServer.fetchAll";
+  public static final String FETCH_ALL_BY_ID_QUERY = FETCH_ALL_QUERY + " WHERE cs.id IN :id";
 
   public static final String FETCH_ONE_BY_ID_QUERY_NAME = "CentralServer.fetchOne";
   public static final String FETCH_ONE_BY_ID_QUERY = FETCH_ALL_QUERY + FETCH_BY_ID_POSTFIX;
@@ -70,6 +78,9 @@ public class CentralServer implements Identifiable<UUID> {
   public static final String FETCH_ONE_WITH_CREDENTIALS_QUERY = "SELECT DISTINCT cs FROM CentralServer AS cs " +
     "LEFT JOIN FETCH cs.centralServerCredentials " +
     "LEFT JOIN FETCH cs.localServerCredentials" + FETCH_BY_ID_POSTFIX;
+
+  public static final String GET_IDS_QUERY_NAME = "CentralServer.getIds";
+  public static final String GET_IDS_QUERY = "SELECT DISTINCT cs.id FROM CentralServer AS cs";
 
   @Id
   @GeneratedValue(strategy = GenerationType.AUTO)
