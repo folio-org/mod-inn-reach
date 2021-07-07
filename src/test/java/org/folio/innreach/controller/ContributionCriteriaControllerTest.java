@@ -109,7 +109,7 @@ class ContributionCriteriaControllerTest extends BaseControllerTest {
   }
 
   @Test
-  void return200HttpCode_on_updateContributionCriteriaConfiguration() {
+  void return204HttpCode_on_updateContributionCriteriaConfiguration() {
     createContributionCriteriaConfigurationForTest();
     var contributionCriteriaDTO
       = deserializeFromJsonFile("/contribution-criteria/update-contribution-configuration-request.json",
@@ -119,6 +119,30 @@ class ContributionCriteriaControllerTest extends BaseControllerTest {
       HttpMethod.PUT,new HttpEntity<>(contributionCriteriaDTO),ContributionCriteriaDTO.class ,PRE_POPULATED_CENTRAL_SERVER_ID);
 
     assertEquals(HttpStatus.NO_CONTENT,responseEntity.getStatusCode());
+    removeContributionCriteriaConfiguration();
+  }
+
+  @Test
+  void return204HttpCode_on_updateContributionCriteriaConfigurationWithoutStatisticalCodeBehavior() {
+    createContributionCriteriaConfigurationForTest();
+
+    var contributionCriteriaDTO
+      = deserializeFromJsonFile("/contribution-criteria/update-contribution-configuration-request-locations-only.json",
+      ContributionCriteriaDTO.class);
+    var responseEntity
+      = testRestTemplate.exchange("/inn-reach/central-servers/{centralServerId}/contribution-criteria",
+      HttpMethod.PUT,new HttpEntity<>(contributionCriteriaDTO),ContributionCriteriaDTO.class ,PRE_POPULATED_CENTRAL_SERVER_ID);
+
+    assertEquals(HttpStatus.NO_CONTENT,responseEntity.getStatusCode());
+
+    contributionCriteriaDTO
+      = deserializeFromJsonFile("/contribution-criteria/update-contribution-configuration-request.json",
+      ContributionCriteriaDTO.class);
+    var responseEntity1
+      = testRestTemplate.exchange("/inn-reach/central-servers/{centralServerId}/contribution-criteria",
+      HttpMethod.PUT,new HttpEntity<>(contributionCriteriaDTO),ContributionCriteriaDTO.class ,PRE_POPULATED_CENTRAL_SERVER_ID);
+
+    assertEquals(HttpStatus.NO_CONTENT,responseEntity1.getStatusCode());
 
     removeContributionCriteriaConfiguration();
   }

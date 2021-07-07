@@ -104,15 +104,22 @@ public class ContributionCriteriaConfigurationServiceImpl implements Contributio
 
       Map<String, ContributionCriteriaStatisticalCodeBehavior> itemsForUpdate = new HashMap<>();
       criteriaConfigurationForUpdate.getStatisticalCodeBehaviors().forEach(statisticalCodeBehavior ->
-        itemsForUpdate.put(statisticalCodeBehavior.getStatisticalCodeId().toString()
-          + statisticalCodeBehavior.getContributionBehavior(), statisticalCodeBehavior)
-      );
+      {
+        UUID statisticalCodeId = statisticalCodeBehavior.getStatisticalCodeId();
+        if (statisticalCodeId != null) {
+          itemsForUpdate.put(statisticalCodeId.toString()
+            + statisticalCodeBehavior.getContributionBehavior(), statisticalCodeBehavior);
+        }
+      });
       statisticalCodeBehaviorForRemove.forEach(statisticalCodeBehaviorDTO -> {
-        ContributionCriteriaStatisticalCodeBehavior statisticalCodeBehavior
-          = itemsForUpdate.get(statisticalCodeBehaviorDTO.getStatisticalCodeId().toString()
-          + statisticalCodeBehaviorDTO.getContributionBehavior());
-        if (statisticalCodeBehavior != null)
-          criteriaConfigurationForUpdate.removeStatisticalCondeBehavior(statisticalCodeBehavior);
+        UUID statisticalCodeId = statisticalCodeBehaviorDTO.getStatisticalCodeId();
+        if (statisticalCodeId != null) {
+          ContributionCriteriaStatisticalCodeBehavior statisticalCodeBehavior
+            = itemsForUpdate.get(statisticalCodeId.toString()
+            + statisticalCodeBehaviorDTO.getContributionBehavior());
+          if (statisticalCodeBehavior != null)
+            criteriaConfigurationForUpdate.removeStatisticalCondeBehavior(statisticalCodeBehavior);
+        }
       });
       statisticalCodeBehaviorForAdd.forEach(statisticalCodeBehaviorDTO ->
         criteriaConfigurationForUpdate.addStatisticalCodeBehavior(
