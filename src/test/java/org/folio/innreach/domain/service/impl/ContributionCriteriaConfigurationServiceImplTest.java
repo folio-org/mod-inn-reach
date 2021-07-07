@@ -1,25 +1,5 @@
 package org.folio.innreach.domain.service.impl;
 
-import org.folio.innreach.domain.dto.ContributionCriteriaConfigurationDTO;
-import org.folio.innreach.domain.dto.ContributionCriteriaExcludedLocationDTO;
-import org.folio.innreach.domain.dto.ContributionCriteriaStatisticalCodeBehaviorDTO;
-import org.folio.innreach.domain.entity.ContributionBehavior;
-import org.folio.innreach.domain.entity.ContributionCriteriaConfiguration;
-import org.folio.innreach.fixture.ContributionCriteriaConfigurationFixture;
-import org.folio.innreach.mapper.ContributionCriteriaConfigurationMapper;
-import org.folio.innreach.mapper.ContributionCriteriaExcludedLocationMapper;
-import org.folio.innreach.mapper.ContributionCriteriaMapper;
-import org.folio.innreach.mapper.ContributionCriteriaStatisticalCodeBehaviorMapper;
-import org.folio.innreach.repository.ContributionCriteriaConfigurationRepository;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
-import org.mapstruct.factory.Mappers;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
-import org.mockito.Spy;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -31,6 +11,19 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
+
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.mapstruct.factory.Mappers;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+import org.mockito.Spy;
+
+import org.folio.innreach.domain.entity.ContributionCriteriaConfiguration;
+import org.folio.innreach.fixture.ContributionCriteriaConfigurationFixture;
+import org.folio.innreach.mapper.ContributionCriteriaConfigurationMapper;
+import org.folio.innreach.repository.ContributionCriteriaConfigurationRepository;
 
 class ContributionCriteriaConfigurationServiceImplTest {
 
@@ -94,7 +87,7 @@ class ContributionCriteriaConfigurationServiceImplTest {
     when(criteriaConfigurationRepository.save(any(ContributionCriteriaConfiguration.class)))
       .thenReturn(new ContributionCriteriaConfiguration());
     var createdContributionCriteriaConfigurationDTO
-      = criteriaConfigurationService.create(criteriaConfiguration);
+      = criteriaConfigurationService.createCriteria(criteriaConfiguration);
 
     verify(criteriaConfigurationMapper).toEntity(any(ContributionCriteriaConfigurationDTO.class));
     verify(criteriaConfigurationRepository).save(any());
@@ -109,7 +102,7 @@ class ContributionCriteriaConfigurationServiceImplTest {
       .thenReturn(Optional.of(TEST_DEFINED_CRITERIA_CONFIGURATION));
 
     var mockedCriteriaConfiguration
-      = criteriaConfigurationService.get(TEST_DEFINED_CRITERIA_CONFIGURATION.getCentralServerId());
+      = criteriaConfigurationService.getCriteria(TEST_DEFINED_CRITERIA_CONFIGURATION.getCentralServerId());
 
     verify(criteriaConfigurationRepository).findById(any());
     verify(criteriaConfigurationMapper).toDto(TEST_DEFINED_CRITERIA_CONFIGURATION);
@@ -120,7 +113,7 @@ class ContributionCriteriaConfigurationServiceImplTest {
     MockitoAnnotations.initMocks(this);
     when(criteriaConfigurationRepository.findById(any())).thenReturn(Optional.of(TEST_DEFINED_CRITERIA_CONFIGURATION));
 
-    criteriaConfigurationService.delete(UUID.randomUUID());
+    criteriaConfigurationService.deleteCriteria(UUID.randomUUID());
 
     verify(criteriaConfigurationRepository).findById(any());
     verify(criteriaConfigurationRepository).delete(any());

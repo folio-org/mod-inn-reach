@@ -1,23 +1,19 @@
 package org.folio.innreach.repository;
 
-import org.folio.innreach.domain.entity.ContributionBehavior;
-import org.folio.innreach.domain.entity.ContributionCriteriaConfiguration;
-import org.folio.innreach.domain.entity.ContributionCriteriaExcludedLocation;
-import org.folio.innreach.domain.entity.ContributionCriteriaStatisticalCodeBehavior;
-import org.folio.innreach.fixture.ContributionCriteriaConfigurationFixture;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import static org.folio.innreach.fixture.ContributionCriteriaConfigurationFixture.createTestContributionCriteriaConfiguration;
+
+import java.util.List;
+import java.util.UUID;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
-import java.util.UUID;
-
-import static org.folio.innreach.fixture.ContributionCriteriaConfigurationFixture.createTestContributionCriteriaConfiguration;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.folio.innreach.domain.entity.ContributionCriteriaConfiguration;
 
 class ContributionCriteriaConfigurationRepositoryTest extends BaseRepositoryTest {
 

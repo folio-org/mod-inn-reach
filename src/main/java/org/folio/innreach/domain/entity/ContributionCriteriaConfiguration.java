@@ -1,90 +1,51 @@
 package org.folio.innreach.domain.entity;
 
-import lombok.AllArgsConstructor;
-import lombok.EqualsAndHashCode;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+
+import javax.persistence.CollectionTable;
+import javax.persistence.Column;
+import javax.persistence.ElementCollection;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.JoinColumn;
+import javax.persistence.OneToOne;
+import javax.persistence.Table;
+
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import lombok.extern.log4j.Log4j2;
-import org.folio.innreach.domain.entity.base.Auditable;
 
-import javax.persistence.CascadeType;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.Id;
-import javax.persistence.OneToMany;
-import javax.persistence.Table;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.UUID;
+import org.folio.innreach.domain.entity.base.AbstractEntity;
 
-@Log4j2
-@NoArgsConstructor
-@AllArgsConstructor
 @Getter
 @Setter
-@EqualsAndHashCode(exclude = {"createdBy", "createdDate", "lastModifiedBy", "lastModifiedDate", "excludedLocations", "updateCounter", "statisticalCodeBehaviors"})
-
+@NoArgsConstructor
 @Entity
 @Table(name = "contribution_criteria_configuration")
-public class ContributionCriteriaConfiguration extends Auditable<String> {
-  @Id
-  @Column(name = "central_server_id")
-  private UUID centralServerId;
+public class ContributionCriteriaConfiguration extends AbstractEntity {
 
-  @OneToMany(
-    fetch = FetchType.LAZY,
-    cascade = CascadeType.ALL,
-    mappedBy = "contributionCriteriaConfiguration",
-    orphanRemoval = true
+  private UUID contributeButSuppressCodeId;
+  private UUID contributeAsSystemOwnedCodeId;
+  private UUID doNotContributeCodeId;
+
+  @OneToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "central_server_id", unique = true)
+  private CentralServer centralServer;
+
+  @ElementCollection(fetch = FetchType.LAZY)
+  @CollectionTable(
+      name = "contribution_criteria_excluded_location",
+      joinColumns = @JoinColumn(name = "contribution_criteria_id")
   )
-  private Set<ContributionCriteriaExcludedLocation> excludedLocations = new HashSet<>();
+  @Column(name = "location_id")
+  @org.hibernate.annotations.Fetch(value = org.hibernate.annotations.FetchMode.SUBSELECT)
+  private List<UUID> excludedLocationIds = new ArrayList<>();
 
-  @OneToMany(
-    fetch = FetchType.LAZY,
-    cascade = CascadeType.ALL,
-    mappedBy = "contributionCriteriaConfiguration",
-    orphanRemoval = true
-  )
-  private Set<ContributionCriteriaStatisticalCodeBehavior> statisticalCodeBehaviors = new HashSet<>();
 
-  private Integer updateCounter = 0;
-
-  public void addExcludedLocation(ContributionCriteriaExcludedLocation excludedLocationForAdd) {
-    int hashCodeBeforeUpdate = excludedLocations.hashCode();
-    excludedLocationForAdd.setContributionCriteriaConfiguration(this);
-    excludedLocations.add(excludedLocationForAdd);
-    if (hashCodeBeforeUpdate != excludedLocations.hashCode()) touchUpdateTrigger();
+  public ContributionCriteriaConfiguration(UUID id) {
+    super(id);
   }
 
-  public void removeExcludedLocation(ContributionCriteriaExcludedLocation excludedLocationForRemove) {
-    int hashCodeBeforeUpdate = excludedLocations.hashCode();
-    excludedLocations.remove(excludedLocationForRemove);
-    excludedLocationForRemove.setContributionCriteriaConfiguration(null);
-    if (hashCodeBeforeUpdate != excludedLocations.hashCode()) touchUpdateTrigger();
-  }
-
-  public void addStatisticalCodeBehavior(ContributionCriteriaStatisticalCodeBehavior statisticalCodeBehavior) {
-    int hashCodeBeforeUpdate = statisticalCodeBehaviors.hashCode();
-    statisticalCodeBehavior.setContributionCriteriaConfiguration(this);
-    statisticalCodeBehaviors.add(statisticalCodeBehavior);
-    if (hashCodeBeforeUpdate != statisticalCodeBehaviors.hashCode()) touchUpdateTrigger();
-  }
-
-  public void removeStatisticalCondeBehavior(
-    ContributionCriteriaStatisticalCodeBehavior statisticalCodeBehaviorForRemove) {
-    int hashCodeBeforeUpdate = statisticalCodeBehaviors.hashCode();
-    statisticalCodeBehaviors.remove(statisticalCodeBehaviorForRemove);
-    statisticalCodeBehaviorForRemove.setContributionCriteriaConfiguration(null);
-    if (hashCodeBeforeUpdate != statisticalCodeBehaviors.hashCode()) touchUpdateTrigger();
-  }
-
-  private void touchUpdateTrigger() {
-    if (updateCounter < Integer.MAX_VALUE) {
-      updateCounter++;
-    } else {
-      updateCounter = Integer.MIN_VALUE;
-    }
-  }
 }

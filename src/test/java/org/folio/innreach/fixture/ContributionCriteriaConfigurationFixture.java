@@ -1,21 +1,18 @@
 package org.folio.innreach.fixture;
 
-import lombok.experimental.UtilityClass;
-import org.folio.innreach.domain.entity.ContributionBehavior;
-import org.folio.innreach.domain.entity.ContributionCriteriaConfiguration;
-import org.folio.innreach.domain.entity.ContributionCriteriaExcludedLocation;
-import org.folio.innreach.domain.entity.ContributionCriteriaStatisticalCodeBehavior;
-import org.folio.innreach.dto.ContributionCriteriaDTO;
-import org.folio.innreach.dto.Metadata;
-import org.jeasy.random.EasyRandom;
-import org.jeasy.random.EasyRandomParameters;
-import org.jeasy.random.randomizers.text.StringRandomizer;
+import static org.jeasy.random.FieldPredicates.named;
 
 import java.time.OffsetDateTime;
 import java.util.Date;
 import java.util.UUID;
 
-import static org.jeasy.random.FieldPredicates.named;
+import lombok.experimental.UtilityClass;
+import org.jeasy.random.EasyRandom;
+import org.jeasy.random.EasyRandomParameters;
+
+import org.folio.innreach.domain.entity.ContributionCriteriaConfiguration;
+import org.folio.innreach.dto.ContributionCriteriaDTO;
+import org.folio.innreach.dto.Metadata;
 
 @UtilityClass
 public class ContributionCriteriaConfigurationFixture {

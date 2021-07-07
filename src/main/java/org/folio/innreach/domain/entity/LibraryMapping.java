@@ -1,11 +1,9 @@
 package org.folio.innreach.domain.entity;
 
-import java.util.Objects;
 import java.util.UUID;
 
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
-import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
@@ -13,20 +11,16 @@ import javax.persistence.Table;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.apache.commons.lang3.builder.ToStringBuilder;
 
-import org.folio.innreach.domain.entity.base.Auditable;
-import org.folio.innreach.domain.entity.base.Identifiable;
+import org.folio.innreach.domain.entity.base.AbstractEntity;
 
 @Getter
 @Setter
 @NoArgsConstructor
 @Entity
 @Table(name = "library_mapping")
-public class LibraryMapping extends Auditable<String> implements Identifiable<UUID> {
+public class LibraryMapping extends AbstractEntity {
 
-  @Id
-  private UUID id;
   private UUID libraryId;
 
   @ManyToOne(fetch = FetchType.LAZY)
@@ -39,29 +33,7 @@ public class LibraryMapping extends Auditable<String> implements Identifiable<UU
 
 
   public LibraryMapping(UUID id) {
-    setId(id);
+    super(id);
   }
 
-  @Override
-  public boolean equals(Object o) {
-    if (this == o)
-      return true;
-    if (o == null || getClass() != o.getClass())
-      return false;
-   
-    LibraryMapping that = (LibraryMapping) o;
-    return getId() != null && getId().equals(that.getId());
-  }
-
-  @Override
-  public int hashCode() {
-    return Objects.hash(getId());
-  }
-
-  @Override
-  public String toString() {
-    return new ToStringBuilder(this)
-        .append("id", getId())
-        .toString();
-  }
 }

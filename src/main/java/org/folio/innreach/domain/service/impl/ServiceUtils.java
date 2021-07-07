@@ -31,6 +31,12 @@ class ServiceUtils {
     return server;
   }
 
+  static <E extends Identifiable<UUID>> void initId(E identifiable) {
+    if (identifiable.getId() == null) {
+      identifiable.setId(UUID.randomUUID());
+    }
+  }
+
   static <E extends Identifiable<UUID>> Consumer<E> initId() {
     return identifiable -> {
       if (identifiable.getId() == null) {

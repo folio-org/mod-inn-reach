@@ -36,13 +36,13 @@ public class ContributionCriteriaController implements ContributionCriteriaApi {
     @Valid @RequestBody ContributionCriteriaDTO contributionCriteriaDTO) {
 
     return ResponseEntity.status(HttpStatus.CREATED).body(criteriaConfigurationService
-      .create(contributionCriteriaDTO));
+      .createCriteria(contributionCriteriaDTO));
   }
 
   @Override
   @DeleteMapping("/{centralServerId}/contribution-criteria")
   public ResponseEntity<Void> deleteCriteria(@PathVariable UUID centralServerId) {
-    criteriaConfigurationService.delete(centralServerId);
+    criteriaConfigurationService.deleteCriteria(centralServerId);
     return ResponseEntity.noContent().build();
   }
 
@@ -50,7 +50,7 @@ public class ContributionCriteriaController implements ContributionCriteriaApi {
   @GetMapping("/{centralServerId}/contribution-criteria")
   public ResponseEntity<ContributionCriteriaDTO> getCriteriaById(@PathVariable UUID centralServerId) {
     return ResponseEntity.ok(
-      criteriaConfigurationService.get(centralServerId)
+      criteriaConfigurationService.getCriteria(centralServerId)
     );
   }
 
@@ -58,7 +58,7 @@ public class ContributionCriteriaController implements ContributionCriteriaApi {
   @PutMapping("/{centralServerId}/contribution-criteria")
   public ResponseEntity<Void> updateCriteria(@PathVariable UUID centralServerId,
                                                                 @Valid ContributionCriteriaDTO contributionCriteriaDTO) {
-    criteriaConfigurationService.update(contributionCriteriaDTO);
+    criteriaConfigurationService.updateCriteria(contributionCriteriaDTO);
     return ResponseEntity.noContent().build();
   }
 
