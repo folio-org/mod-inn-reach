@@ -8,6 +8,7 @@ import static org.folio.innreach.domain.service.impl.ServiceUtils.merge;
 
 import java.util.UUID;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Example;
@@ -18,8 +19,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 import org.folio.innreach.domain.entity.CentralServer;
 import org.folio.innreach.domain.entity.LocationMapping;
+import org.folio.innreach.domain.service.CentralServerService;
 import org.folio.innreach.domain.service.LocationMappingService;
 import org.folio.innreach.dto.LocationMappingsDTO;
+import org.folio.innreach.external.dto.InnReachLocationDTO;
+import org.folio.innreach.external.service.InnReachLocationExternalService;
 import org.folio.innreach.mapper.LocationMappingMapper;
 import org.folio.innreach.repository.LocationMappingRepository;
 
@@ -30,7 +34,8 @@ public class LocationMappingServiceImpl implements LocationMappingService {
 
   private final LocationMappingRepository repository;
   private final LocationMappingMapper mapper;
-
+  private final CentralServerService centralServerService;
+  private final InnReachLocationExternalService innReachLocationExternalService;
 
   @Override
   @Transactional(readOnly = true)
@@ -45,7 +50,7 @@ public class LocationMappingServiceImpl implements LocationMappingService {
   @Override
   public LocationMappingsDTO updateAllMappings(UUID centralServerId, UUID libraryId,
       LocationMappingsDTO locationMappingsDTO) {
-    var stored = repository.findAll(mappingExampleWithServerId(centralServerId));
+    var stored = repository.fetchAllByCentralServer(centralServerId);
 
     var incoming = mapper.toEntities(locationMappingsDTO.getLocationMappings());
     var csRef = centralServerRef(centralServerId);
@@ -54,6 +59,16 @@ public class LocationMappingServiceImpl implements LocationMappingService {
         .andThen(initId()));
 
     var saved = merge(incoming, stored, repository, this::copyData);
+
+    var innReachLocationDTOS = saved.stream()
+      .map(LocationMapping::getInnReachLocation)
+      .filter(location -> location.getCode() != null && location.getDescription() != null)
+      .map(location -> new InnReachLocationDTO(location.getCode(), location.getDescription()))
+      .collect(Collectors.toList());
+
+    var connectionDetailsDTO = centralServerService.getCentralServerConnectionDetails(centralServerId);
+
+    innReachLocationExternalService.updateAllLocations(connectionDetailsDTO, innReachLocationDTOS);
 
     return mapper.toDTOCollection(saved);
   }
@@ -74,12 +89,12 @@ public class LocationMappingServiceImpl implements LocationMappingService {
   private static Consumer<LocationMapping> setCentralServerRef(CentralServer centralServer) {
     return mapping -> mapping.setCentralServer(centralServer);
   }
-  
+
   private static Example<LocationMapping> mappingExampleWithServerId(UUID centralServerId) {
     var toFind = new LocationMapping();
     toFind.setCentralServer(centralServerRef(centralServerId));
 
     return Example.of(toFind);
   }
-  
+
 }

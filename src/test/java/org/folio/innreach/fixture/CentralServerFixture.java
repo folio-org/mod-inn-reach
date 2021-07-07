@@ -9,18 +9,21 @@ import static org.folio.innreach.fixture.TestUtil.randomUUIDString;
 import java.util.List;
 import java.util.UUID;
 
+import org.folio.innreach.domain.dto.CentralServerConnectionDetailsDTO;
 import org.folio.innreach.domain.entity.CentralServer;
 import org.folio.innreach.dto.CentralServerDTO;
 import org.folio.innreach.dto.LocalAgencyDTO;
 
 public class CentralServerFixture {
 
+  private static final String CENTRAL_SERVER_ADDRESS = "https://centralserveraddress.com";
+
   public static CentralServer createCentralServer() {
     var centralServer = new CentralServer();
     centralServer.setName(randomUUIDString());
     centralServer.setDescription("folio central server");
     centralServer.setLocalServerCode(randomFiveCharacterCode());
-    centralServer.setCentralServerAddress("https://centralserveraddress");
+    centralServer.setCentralServerAddress(CENTRAL_SERVER_ADDRESS);
     centralServer.setLoanTypeId(UUID.randomUUID());
     centralServer.addLocalAgency(createLocalAgency());
     centralServer.addLocalAgency(createLocalAgency());
@@ -35,7 +38,7 @@ public class CentralServerFixture {
       .name("name")
       .description("description")
       .localServerCode(randomFiveCharacterCode())
-      .centralServerAddress("http://centralserveraddress")
+      .centralServerAddress(CENTRAL_SERVER_ADDRESS)
       .loanTypeId(UUID.randomUUID())
       .localAgencies(List.of(
         new LocalAgencyDTO()
@@ -49,5 +52,15 @@ public class CentralServerFixture {
       .centralServerSecret(randomUUIDString())
       .localServerKey(randomUUIDString())
       .localServerSecret(randomUUIDString());
+  }
+
+  public static CentralServerConnectionDetailsDTO createCentralServerConnectionDetailsDTO() {
+    return CentralServerConnectionDetailsDTO.builder()
+      .id(UUID.randomUUID())
+      .connectionUrl(CENTRAL_SERVER_ADDRESS)
+      .localCode(randomFiveCharacterCode())
+      .key(randomUUIDString())
+      .secret(randomUUIDString())
+      .build();
   }
 }

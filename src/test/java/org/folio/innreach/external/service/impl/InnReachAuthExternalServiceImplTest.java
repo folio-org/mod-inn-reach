@@ -8,7 +8,7 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import static org.folio.innreach.fixture.AccessTokenFixture.createAccessToken;
-import static org.folio.innreach.fixture.AccessTokenFixture.createAccessTokenRequest;
+import static org.folio.innreach.fixture.CentralServerFixture.createCentralServerConnectionDetailsDTO;
 
 import com.google.common.cache.Cache;
 import org.junit.jupiter.api.BeforeEach;
@@ -21,7 +21,7 @@ import org.springframework.http.ResponseEntity;
 import org.folio.innreach.external.client.feign.InnReachAuthClient;
 import org.folio.innreach.external.dto.AccessTokenDTO;
 
-class InnReachAuthServiceImplTest {
+class InnReachAuthExternalServiceImplTest {
 
   @Mock
   private InnReachAuthClient innReachAuthClient;
@@ -30,7 +30,7 @@ class InnReachAuthServiceImplTest {
   private Cache<String, AccessTokenDTO> accessTokenCache;
 
   @InjectMocks
-  private InnReachAuthServiceImpl innReachAuthService;
+  private InnReachAuthExternalServiceImpl innReachAuthService;
 
   @BeforeEach
   public void beforeEachSetup() {
@@ -41,7 +41,7 @@ class InnReachAuthServiceImplTest {
   void returnAccessTokenFromCache_when_tokenIsCached() {
     when(accessTokenCache.getIfPresent(anyString())).thenReturn(createAccessToken());
 
-    var accessToken = innReachAuthService.getAccessToken(createAccessTokenRequest());
+    var accessToken = innReachAuthService.getAccessToken(createCentralServerConnectionDetailsDTO());
 
     assertNotNull(accessToken);
 
@@ -54,7 +54,7 @@ class InnReachAuthServiceImplTest {
     when(accessTokenCache.getIfPresent(anyString())).thenReturn(null);
     when(innReachAuthClient.getAccessToken(any(), any())).thenReturn(ResponseEntity.ok(createAccessToken()));
 
-    var accessToken = innReachAuthService.getAccessToken(createAccessTokenRequest());
+    var accessToken = innReachAuthService.getAccessToken(createCentralServerConnectionDetailsDTO());
 
     assertNotNull(accessToken);
 

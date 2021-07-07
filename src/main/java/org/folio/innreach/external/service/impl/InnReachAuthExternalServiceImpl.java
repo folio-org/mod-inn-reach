@@ -8,41 +8,41 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.stereotype.Service;
 
+import org.folio.innreach.domain.dto.CentralServerConnectionDetailsDTO;
 import org.folio.innreach.external.client.feign.InnReachAuthClient;
 import org.folio.innreach.external.dto.AccessTokenDTO;
-import org.folio.innreach.external.dto.AccessTokenRequestDTO;
-import org.folio.innreach.external.service.InnReachAuthService;
+import org.folio.innreach.external.service.InnReachAuthExternalService;
 
 @RequiredArgsConstructor
 @Log4j2
 @Service
-public class InnReachAuthServiceImpl implements InnReachAuthService {
+public class InnReachAuthExternalServiceImpl implements InnReachAuthExternalService {
 
   private final InnReachAuthClient innReachAuthClient;
   private final Cache<String, AccessTokenDTO> accessTokenCache;
 
   @Override
-  public AccessTokenDTO getAccessToken(AccessTokenRequestDTO tokenRequestDTO) {
-    var cachedAccessToken = accessTokenCache.getIfPresent(tokenRequestDTO.getCentralServerUri());
+  public AccessTokenDTO getAccessToken(CentralServerConnectionDetailsDTO connectionDetailsDTO) {
+    var cachedAccessToken = accessTokenCache.getIfPresent(connectionDetailsDTO.getConnectionUrl());
 
     if (cachedAccessToken != null) {
       return cachedAccessToken;
     }
 
     var responseEntity = innReachAuthClient.getAccessToken(
-      URI.create(tokenRequestDTO.getCentralServerUri()),
-      buildBasicAuthorizationHeader(tokenRequestDTO)
+      URI.create(connectionDetailsDTO.getConnectionUrl()),
+      buildBasicAuthorizationHeader(connectionDetailsDTO)
     );
 
     var accessTokenDTO = responseEntity.getBody();
 
-    accessTokenCache.put(tokenRequestDTO.getCentralServerUri(), accessTokenDTO);
+    accessTokenCache.put(connectionDetailsDTO.getConnectionUrl(), accessTokenDTO);
 
     return accessTokenDTO;
   }
 
-  private String buildBasicAuthorizationHeader(AccessTokenRequestDTO tokenRequestDTO) {
-    var keySecret = String.format("%s:%s", tokenRequestDTO.getKey(), tokenRequestDTO.getSecret());
+  private String buildBasicAuthorizationHeader(CentralServerConnectionDetailsDTO connectionDetailsDTO) {
+    var keySecret = String.format("%s:%s", connectionDetailsDTO.getKey(), connectionDetailsDTO.getSecret());
     return "Basic " + Base64.getEncoder().encodeToString(keySecret.getBytes());
   }
 }

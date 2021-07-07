@@ -21,7 +21,7 @@ import org.folio.innreach.fixture.LocalServerCredentialsFixture;
 class CentralServerRepositoryTest extends BaseRepositoryTest {
 
   private static final String PRE_POPULATED_CENTRAL_SERVER_ID = "edab6baf-c696-42b1-89bb-1bbb8759b0d2";
-  private static final String PRE_POPULATED_CENTRAL_SERVER_CODE = "abc12";
+  private static final String PRE_POPULATED_CENTRAL_SERVER_CODE = "fli01";
 
   @Autowired
   private CentralServerRepository centralServerRepository;
