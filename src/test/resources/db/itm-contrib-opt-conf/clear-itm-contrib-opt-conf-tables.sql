@@ -1,10 +1,10 @@
 DELETE
-FROM item_status;
+FROM not_available_item_status;
 DELETE
-FROM loan_type;
+FROM non_lendable_loan_type;
 DELETE
-FROM location;
+FROM non_lendable_location;
 DELETE
-FROM material_type;
+FROM non_lendable_material_type;
 DELETE
 FROM item_contribution_options_configuration;

@@ -24,8 +24,7 @@ import org.folio.innreach.dto.CentralServerDTO;
 import org.folio.innreach.dto.CentralServersDTO;
 
 @Sql(
-  scripts = {"classpath:db/inn-reach-location/clear-inn-reach-location-tables.sql",
-    "classpath:db/itm-contrib-opt-conf/clear-itm-contrib-opt-conf-tables.sql",
+  scripts = {
     "classpath:db/central-server/clear-central-server-tables.sql"},
   executionPhase = AFTER_TEST_METHOD
 )
@@ -148,9 +147,10 @@ class CentralServerControllerTest extends BaseControllerTest {
   }
 
   @Test
-  @Sql(scripts = {"classpath:db/inn-reach-location/pre-populate-inn-reach-location-code.sql",
+  @Sql(scripts = {
     "classpath:db/central-server/pre-populate-central-server.sql",
-    "classpath:db/itm-contrib-opt-conf/pre-populate-itm-contrib-opt-conf.sql"})
+    "classpath:db/itm-contrib-opt-conf/pre-populate-itm-contrib-opt-conf.sql"
+    })
   void return204HttpCode_when_deleteCentralServer() {
     var responseEntity = testRestTemplate.exchange(
       "/inn-reach/central-servers/{centralServerId}", HttpMethod.DELETE, HttpEntity.EMPTY,

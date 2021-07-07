@@ -4,7 +4,6 @@ import org.folio.innreach.domain.entity.ItemContributionOptionsConfiguration;
 
 import java.util.UUID;
 
-import static org.folio.innreach.fixture.InnReachLocationFixture.createInnReachLocation;
 import static org.folio.innreach.fixture.TestUtil.randomInteger;
 
 public class ItemContributionOptionsConfigurationFixture {
@@ -27,8 +26,8 @@ public class ItemContributionOptionsConfigurationFixture {
     var itmContribOptConf = new ItemContributionOptionsConfiguration();
     itmContribOptConf.getLoanTypes().add(UUID.randomUUID());
     itmContribOptConf.getLoanTypes().add(UUID.randomUUID());
-    itmContribOptConf.getLocations().add(createInnReachLocation());
-    itmContribOptConf.getLocations().add(createInnReachLocation());
+    itmContribOptConf.getLocations().add(UUID.randomUUID());
+    itmContribOptConf.getLocations().add(UUID.randomUUID());
     itmContribOptConf.getMaterialTypes().add(UUID.randomUUID());
     itmContribOptConf.getMaterialTypes().add(UUID.randomUUID());
     itmContribOptConf.getStatuses().add(notAvailableItemStatuses[randomInteger(notAvailableItemStatuses.length)]);

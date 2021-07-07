@@ -5,7 +5,6 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 
-import javax.persistence.CascadeType;
 import javax.persistence.CollectionTable;
 import javax.persistence.Column;
 import javax.persistence.ElementCollection;
@@ -13,8 +12,6 @@ import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
-import javax.persistence.JoinTable;
-import javax.persistence.ManyToMany;
 import javax.persistence.MapsId;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
@@ -39,7 +36,7 @@ public class ItemContributionOptionsConfiguration {
 
   @ElementCollection(fetch = FetchType.LAZY)
   @CollectionTable(
-    name = "item_status",
+    name = "not_available_item_status",
     joinColumns = @JoinColumn(name = "item_contribution_options_configuration_id")
   )
   @Column(name = "item_status")
@@ -48,24 +45,25 @@ public class ItemContributionOptionsConfiguration {
 
   @ElementCollection(fetch = FetchType.LAZY)
   @CollectionTable(
-    name = "loan_type",
+    name = "non_lendable_loan_type",
     joinColumns = @JoinColumn(name = "item_contribution_options_configuration_id")
   )
   @Column(name = "loan_type_id")
   @org.hibernate.annotations.Fetch(value = org.hibernate.annotations.FetchMode.SUBSELECT)
   private List<UUID> loanTypes = new ArrayList<>();
 
-  @ManyToMany(cascade = { CascadeType.ALL })
-  @JoinTable(
-    name = "location",
-    joinColumns = { @JoinColumn(name = "item_contribution_options_configuration_id") },
-    inverseJoinColumns = { @JoinColumn(name = "location_id") }
+  @ElementCollection(fetch = FetchType.LAZY)
+  @CollectionTable(
+    name = "non_lendable_location",
+    joinColumns = @JoinColumn(name = "item_contribution_options_configuration_id")
   )
-  private List<InnReachLocation> locations = new ArrayList<>();
+  @Column(name = "location_id")
+  @org.hibernate.annotations.Fetch(value = org.hibernate.annotations.FetchMode.SUBSELECT)
+  private List<UUID> locations = new ArrayList<>();
 
   @ElementCollection(fetch = FetchType.LAZY)
   @CollectionTable(
-    name = "material_type",
+    name = "non_lendable_material_type",
     joinColumns = @JoinColumn(name = "item_contribution_options_configuration_id")
   )
   @Column(name = "material_type_id")

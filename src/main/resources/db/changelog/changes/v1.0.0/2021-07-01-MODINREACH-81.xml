@@ -8,20 +8,20 @@
     <sqlFile path="sql/2021-07-01-01__create_itm_contrib_opt_conf_table.sql" relativeToChangelogFile="true"/>
   </changeSet>
 
-  <changeSet id="2021-07-01-02__create_item_status_table" author="maryna_steshenko">
-    <sqlFile path="sql/2021-07-01-02__create_item_status_table.sql" relativeToChangelogFile="true"/>
+  <changeSet id="2021-07-01-02__create_not_available_item_status_table" author="maryna_steshenko">
+    <sqlFile path="sql/2021-07-01-02__create_not_available_item_status_table.sql" relativeToChangelogFile="true"/>
   </changeSet>
 
-  <changeSet id="2021-07-01-03__create_loan_type_table" author="maryna_steshenko">
-    <sqlFile path="sql/2021-07-01-03__create_loan_type_table.sql" relativeToChangelogFile="true"/>
+  <changeSet id="2021-07-01-03__create_non_lendable_loan_type_table" author="maryna_steshenko">
+    <sqlFile path="sql/2021-07-01-03__create_non_lendable_loan_type_table.sql" relativeToChangelogFile="true"/>
   </changeSet>
 
-  <changeSet id="2021-07-01-04__create_location_table" author="maryna_steshenko">
-    <sqlFile path="sql/2021-07-01-04__create_location_table.sql" relativeToChangelogFile="true"/>
+  <changeSet id="2021-07-01-04__create_non_lendable_location_table" author="maryna_steshenko">
+    <sqlFile path="sql/2021-07-01-04__create_non_lendable_location_table.sql" relativeToChangelogFile="true"/>
   </changeSet>
 
-  <changeSet id="2021-07-01-05__create_material_type_table" author="maryna_steshenko">
-    <sqlFile path="sql/2021-07-01-05__create_material_type_table.sql" relativeToChangelogFile="true"/>
+  <changeSet id="2021-07-01-05__create_non_lendable_material_type_table" author="maryna_steshenko">
+    <sqlFile path="sql/2021-07-01-05__create_non_lendable_material_type_table.sql" relativeToChangelogFile="true"/>
   </changeSet>
 
 </databaseChangeLog>

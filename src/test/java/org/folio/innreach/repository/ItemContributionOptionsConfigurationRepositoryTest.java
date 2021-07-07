@@ -12,7 +12,6 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @Sql(scripts = {"classpath:db/central-server/pre-populate-central-server.sql",
-  "classpath:db/inn-reach-location/pre-populate-inn-reach-location-code.sql",
   "classpath:db/itm-contrib-opt-conf/pre-populate-itm-contrib-opt-conf.sql"})
 class ItemContributionOptionsConfigurationRepositoryTest extends BaseRepositoryTest {
   private static final String PRE_POPULATED_ITEM_CONTRIBUTION_OPTIONS_CONFIGURATION_ID = "edab6baf-c696-42b1-89bb-1bbb8759b0d2";

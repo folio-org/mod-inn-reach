@@ -42,8 +42,7 @@ import org.folio.innreach.mapper.MaterialTypeMappingMapper;
 import org.folio.innreach.repository.MaterialTypeMappingRepository;
 
 @Sql(
-  scripts = {"classpath:db/itm-contrib-opt-conf/clear-itm-contrib-opt-conf-tables.sql",
-    "classpath:db/inn-reach-location/clear-inn-reach-location-tables.sql",
+  scripts = {
     "classpath:db/mtype-mapping/clear-material-type-mapping-table.sql",
     "classpath:db/central-server/clear-central-server-tables.sql"},
   executionPhase = AFTER_TEST_METHOD
@@ -66,9 +65,7 @@ class MaterialTypeMappingControllerTest extends BaseControllerTest {
   @Test
   @Sql(scripts = {
     "classpath:db/central-server/pre-populate-central-server.sql",
-    "classpath:db/mtype-mapping/pre-populate-material-type-mapping.sql",
-    "classpath:db/inn-reach-location/pre-populate-inn-reach-location-code.sql",
-    "classpath:db/itm-contrib-opt-conf/pre-populate-itm-contrib-opt-conf.sql"
+    "classpath:db/mtype-mapping/pre-populate-material-type-mapping.sql"
   })
   void shouldGetAllExistingMappings() {
     var responseEntity = testRestTemplate.getForEntity(baseMappingURL(), MaterialTypeMappingsDTO.class);
@@ -89,9 +86,7 @@ class MaterialTypeMappingControllerTest extends BaseControllerTest {
 
   @Test
   @Sql(scripts = {
-    "classpath:db/central-server/pre-populate-central-server.sql",
-    "classpath:db/inn-reach-location/pre-populate-inn-reach-location-code.sql",
-    "classpath:db/itm-contrib-opt-conf/pre-populate-itm-contrib-opt-conf.sql"
+    "classpath:db/central-server/pre-populate-central-server.sql"
   })
   void shouldGetEmptyMappingsWith0TotalIfNotSet() {
     var responseEntity = testRestTemplate.getForEntity(baseMappingURL(), MaterialTypeMappingsDTO.class);
@@ -111,9 +106,7 @@ class MaterialTypeMappingControllerTest extends BaseControllerTest {
   @Test
   @Sql(scripts = {
     "classpath:db/central-server/pre-populate-central-server.sql",
-    "classpath:db/mtype-mapping/pre-populate-material-type-mapping.sql",
-    "classpath:db/inn-reach-location/pre-populate-inn-reach-location-code.sql",
-    "classpath:db/itm-contrib-opt-conf/pre-populate-itm-contrib-opt-conf.sql"
+    "classpath:db/mtype-mapping/pre-populate-material-type-mapping.sql"
   })
   void shouldApplyLimitAndOffsetWhenGettingAllExistingMappings() {
     var responseEntity = testRestTemplate.getForEntity(baseMappingURL() + "?offset={offset}&limit={limit}",
@@ -147,9 +140,7 @@ class MaterialTypeMappingControllerTest extends BaseControllerTest {
   @Test
   @Sql(scripts = {
     "classpath:db/central-server/pre-populate-central-server.sql",
-    "classpath:db/mtype-mapping/pre-populate-material-type-mapping.sql",
-    "classpath:db/inn-reach-location/pre-populate-inn-reach-location-code.sql",
-    "classpath:db/itm-contrib-opt-conf/pre-populate-itm-contrib-opt-conf.sql"
+    "classpath:db/mtype-mapping/pre-populate-material-type-mapping.sql"
   })
   void shouldGetSingleMappingById() {
     var responseEntity = testRestTemplate.getForEntity(baseMappingURL() + "/" + PRE_POPULATED_MAPPING2_ID,
@@ -168,9 +159,7 @@ class MaterialTypeMappingControllerTest extends BaseControllerTest {
 
   @Test
   @Sql(scripts = {
-    "classpath:db/central-server/pre-populate-central-server.sql",
-    "classpath:db/inn-reach-location/pre-populate-inn-reach-location-code.sql",
-    "classpath:db/itm-contrib-opt-conf/pre-populate-itm-contrib-opt-conf.sql"
+    "classpath:db/central-server/pre-populate-central-server.sql"
   })
   void return404WhenMappingIsNotFoundById() {
     var responseEntity = testRestTemplate.getForEntity(baseMappingURL() + "/" + UUID.randomUUID(),
@@ -181,9 +170,7 @@ class MaterialTypeMappingControllerTest extends BaseControllerTest {
 
   @Test
   @Sql(scripts = {
-    "classpath:db/central-server/pre-populate-central-server.sql",
-    "classpath:db/inn-reach-location/pre-populate-inn-reach-location-code.sql",
-    "classpath:db/itm-contrib-opt-conf/pre-populate-itm-contrib-opt-conf.sql"
+    "classpath:db/central-server/pre-populate-central-server.sql"
   })
   void shouldCreateNewMapping() {
     var newMapping = deserializeFromJsonFile("/material-type-mapping/create-material-type-mapping-request.json",
@@ -201,9 +188,7 @@ class MaterialTypeMappingControllerTest extends BaseControllerTest {
 
   @Test
   @Sql(scripts = {
-    "classpath:db/central-server/pre-populate-central-server.sql",
-    "classpath:db/inn-reach-location/pre-populate-inn-reach-location-code.sql",
-    "classpath:db/itm-contrib-opt-conf/pre-populate-itm-contrib-opt-conf.sql"
+    "classpath:db/central-server/pre-populate-central-server.sql"
   })
   void return400WhenCreatingNewMappingAndCentralItemTypeIsNull() {
     var newMapping = deserializeFromJsonFile("/material-type-mapping/create-material-type-mapping-request.json",
@@ -221,9 +206,7 @@ class MaterialTypeMappingControllerTest extends BaseControllerTest {
 
   @Test
   @Sql(scripts = {
-    "classpath:db/central-server/pre-populate-central-server.sql",
-    "classpath:db/inn-reach-location/pre-populate-inn-reach-location-code.sql",
-    "classpath:db/itm-contrib-opt-conf/pre-populate-itm-contrib-opt-conf.sql"
+    "classpath:db/central-server/pre-populate-central-server.sql"
   })
   void return400WhenCreatingNewMappingAndMaterialTypeIdIsNull() {
     var newMapping = deserializeFromJsonFile("/material-type-mapping/create-material-type-mapping-request.json",
@@ -242,9 +225,7 @@ class MaterialTypeMappingControllerTest extends BaseControllerTest {
   @Test
   @Sql(scripts = {
     "classpath:db/central-server/pre-populate-central-server.sql",
-    "classpath:db/mtype-mapping/pre-populate-material-type-mapping.sql",
-    "classpath:db/inn-reach-location/pre-populate-inn-reach-location-code.sql",
-    "classpath:db/itm-contrib-opt-conf/pre-populate-itm-contrib-opt-conf.sql"
+    "classpath:db/mtype-mapping/pre-populate-material-type-mapping.sql"
   })
   void return400WhenCreatingNewMappingAndMaterialTypeIdAlreadyMapped() {
     var newMapping = deserializeFromJsonFile("/material-type-mapping/create-material-type-mapping-request.json",
@@ -259,9 +240,7 @@ class MaterialTypeMappingControllerTest extends BaseControllerTest {
   @Test
   @Sql(scripts = {
     "classpath:db/central-server/pre-populate-central-server.sql",
-    "classpath:db/mtype-mapping/pre-populate-material-type-mapping.sql",
-    "classpath:db/inn-reach-location/pre-populate-inn-reach-location-code.sql",
-    "classpath:db/itm-contrib-opt-conf/pre-populate-itm-contrib-opt-conf.sql"
+    "classpath:db/mtype-mapping/pre-populate-material-type-mapping.sql"
   })
   void shouldUpdateExistingMapping() {
     var mapping = deserializeFromJsonFile("/material-type-mapping/update-material-type-mapping-request.json",
@@ -275,9 +254,7 @@ class MaterialTypeMappingControllerTest extends BaseControllerTest {
 
   @Test
   @Sql(scripts = {
-    "classpath:db/central-server/pre-populate-central-server.sql",
-    "classpath:db/inn-reach-location/pre-populate-inn-reach-location-code.sql",
-    "classpath:db/itm-contrib-opt-conf/pre-populate-itm-contrib-opt-conf.sql"
+    "classpath:db/central-server/pre-populate-central-server.sql"
   })
   void return404IfMappingNotFoundWhenUpdating() {
     var mapping = deserializeFromJsonFile("/material-type-mapping/update-material-type-mapping-request.json",
@@ -292,9 +269,7 @@ class MaterialTypeMappingControllerTest extends BaseControllerTest {
   @Test
   @Sql(scripts = {
     "classpath:db/central-server/pre-populate-central-server.sql",
-    "classpath:db/mtype-mapping/pre-populate-material-type-mapping.sql",
-    "classpath:db/inn-reach-location/pre-populate-inn-reach-location-code.sql",
-    "classpath:db/itm-contrib-opt-conf/pre-populate-itm-contrib-opt-conf.sql"
+    "classpath:db/mtype-mapping/pre-populate-material-type-mapping.sql"
   })
   void shouldDeleteExistingMapping() {
     var responseEntity = testRestTemplate.exchange(baseMappingURL() + "/{mappingId}", HttpMethod.DELETE,
@@ -309,8 +284,6 @@ class MaterialTypeMappingControllerTest extends BaseControllerTest {
   @Test
   @Sql(scripts = {
     "classpath:db/central-server/pre-populate-central-server.sql",
-    "classpath:db/inn-reach-location/pre-populate-inn-reach-location-code.sql",
-    "classpath:db/itm-contrib-opt-conf/pre-populate-itm-contrib-opt-conf.sql"
   })
   void return404IfMappingNotFoundWhenDeleting() {
     var responseEntity = testRestTemplate.exchange(baseMappingURL() + "/{mappingId}", HttpMethod.DELETE,

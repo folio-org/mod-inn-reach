@@ -19,7 +19,6 @@ import org.folio.innreach.fixture.LocalServerCredentialsFixture;
 
 
 @Sql(scripts = {"classpath:db/central-server/pre-populate-central-server.sql",
-  "classpath:db/inn-reach-location/pre-populate-inn-reach-location-code.sql",
   "classpath:db/itm-contrib-opt-conf/pre-populate-itm-contrib-opt-conf.sql"})
 class CentralServerRepositoryTest extends BaseRepositoryTest {
 
