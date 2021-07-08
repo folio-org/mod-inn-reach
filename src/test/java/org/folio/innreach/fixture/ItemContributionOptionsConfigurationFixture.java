@@ -7,7 +7,6 @@ import java.util.UUID;
 import static org.folio.innreach.fixture.TestUtil.randomInteger;
 
 public class ItemContributionOptionsConfigurationFixture {
-  public static final UUID CENTRAL_SERVER_UUID = UUID.fromString("edab6baf-c696-42b1-89bb-1bbb8759b0d2");
   private static final String[] notAvailableItemStatuses = {"Aged to lost",
     "Claimed returned",
     "In process",
@@ -24,13 +23,13 @@ public class ItemContributionOptionsConfigurationFixture {
 
   public static ItemContributionOptionsConfiguration createItmContribOptConf() {
     var itmContribOptConf = new ItemContributionOptionsConfiguration();
-    itmContribOptConf.getLoanTypes().add(UUID.randomUUID());
-    itmContribOptConf.getLoanTypes().add(UUID.randomUUID());
-    itmContribOptConf.getLocations().add(UUID.randomUUID());
-    itmContribOptConf.getLocations().add(UUID.randomUUID());
-    itmContribOptConf.getMaterialTypes().add(UUID.randomUUID());
-    itmContribOptConf.getMaterialTypes().add(UUID.randomUUID());
-    itmContribOptConf.getStatuses().add(notAvailableItemStatuses[randomInteger(notAvailableItemStatuses.length)]);
+    itmContribOptConf.getNonLendableLoanTypes().add(UUID.randomUUID());
+    itmContribOptConf.getNonLendableLoanTypes().add(UUID.randomUUID());
+    itmContribOptConf.getNonLendableLocations().add(UUID.randomUUID());
+    itmContribOptConf.getNonLendableLocations().add(UUID.randomUUID());
+    itmContribOptConf.getNonLendableMaterialTypes().add(UUID.randomUUID());
+    itmContribOptConf.getNonLendableMaterialTypes().add(UUID.randomUUID());
+    itmContribOptConf.getNotAvailableItemStatuses().add(notAvailableItemStatuses[randomInteger(notAvailableItemStatuses.length)]);
     return itmContribOptConf;
   }
 }

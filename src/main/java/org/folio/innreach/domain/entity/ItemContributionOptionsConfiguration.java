@@ -4,6 +4,7 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
+import org.folio.innreach.domain.entity.base.Auditable;
 
 import javax.persistence.CollectionTable;
 import javax.persistence.Column;
@@ -12,8 +13,6 @@ import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
-import javax.persistence.MapsId;
-import javax.persistence.OneToOne;
 import javax.persistence.Table;
 import java.util.ArrayList;
 import java.util.List;
@@ -23,16 +22,13 @@ import java.util.UUID;
 @Table(name = "item_contribution_options_configuration")
 @Getter
 @Setter
-@ToString(exclude = {"centralServer", "statuses", "loanTypes", "locations", "materialTypes"})
-@EqualsAndHashCode(of = {"id"})
-public class ItemContributionOptionsConfiguration {
-  @Id
-  private UUID id;
+@ToString(exclude = { "notAvailableItemStatuses", "nonLendableLoanTypes", "nonLendableLocations", "nonLendableMaterialTypes"})
+@EqualsAndHashCode(of = {"centralServerId"})
+public class ItemContributionOptionsConfiguration extends Auditable<String> {
 
-  @OneToOne(fetch = FetchType.LAZY, optional = false)
-  @MapsId
-  @JoinColumn(name = "central_server_id")
-  private CentralServer centralServer;
+  @Id
+  @Column(name = "central_server_id")
+  private UUID centralServerId;
 
   @ElementCollection(fetch = FetchType.LAZY)
   @CollectionTable(
@@ -41,7 +37,7 @@ public class ItemContributionOptionsConfiguration {
   )
   @Column(name = "item_status")
   @org.hibernate.annotations.Fetch(value = org.hibernate.annotations.FetchMode.SUBSELECT)
-  private List<String> statuses = new ArrayList<>();
+  private List<String> notAvailableItemStatuses = new ArrayList<>();
 
   @ElementCollection(fetch = FetchType.LAZY)
   @CollectionTable(
@@ -50,7 +46,7 @@ public class ItemContributionOptionsConfiguration {
   )
   @Column(name = "loan_type_id")
   @org.hibernate.annotations.Fetch(value = org.hibernate.annotations.FetchMode.SUBSELECT)
-  private List<UUID> loanTypes = new ArrayList<>();
+  private List<UUID> nonLendableLoanTypes = new ArrayList<>();
 
   @ElementCollection(fetch = FetchType.LAZY)
   @CollectionTable(
@@ -59,7 +55,7 @@ public class ItemContributionOptionsConfiguration {
   )
   @Column(name = "location_id")
   @org.hibernate.annotations.Fetch(value = org.hibernate.annotations.FetchMode.SUBSELECT)
-  private List<UUID> locations = new ArrayList<>();
+  private List<UUID> nonLendableLocations = new ArrayList<>();
 
   @ElementCollection(fetch = FetchType.LAZY)
   @CollectionTable(
@@ -68,5 +64,5 @@ public class ItemContributionOptionsConfiguration {
   )
   @Column(name = "material_type_id")
   @org.hibernate.annotations.Fetch(value = org.hibernate.annotations.FetchMode.SUBSELECT)
-  private List<UUID> materialTypes = new ArrayList<>();
+  private List<UUID> nonLendableMaterialTypes = new ArrayList<>();
 }
