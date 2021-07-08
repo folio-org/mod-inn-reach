@@ -20,9 +20,9 @@ public interface MaterialTypeMappingMapper {
 	MaterialTypeMapping toEntity(MaterialTypeMappingDTO dto);
 
   @Mapping(target = "metadata.createdDate", source = "entity.createdDate")
-  @Mapping(target = "metadata.createdByUserId", source = "entity.createdBy")
+  @Mapping(target = "metadata.createdByUsername", source = "entity.createdBy")
   @Mapping(target = "metadata.updatedDate", source = "entity.lastModifiedDate")
-  @Mapping(target = "metadata.updatedByUserId", source = "entity.lastModifiedBy")
+  @Mapping(target = "metadata.updatedByUsername", source = "entity.lastModifiedBy")
   MaterialTypeMappingDTO toDTO(MaterialTypeMapping entity);
 
   List<MaterialTypeMappingDTO> toDTOs(Iterable<MaterialTypeMapping> entities);

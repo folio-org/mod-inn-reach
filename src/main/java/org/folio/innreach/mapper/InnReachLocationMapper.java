@@ -13,8 +13,8 @@ public interface InnReachLocationMapper {
 	InnReachLocation mapToInnReachLocation(InnReachLocationDTO innReachLocationDTO);
 
   @Mapping(target = "metadata.createdDate", source = "innReachLocation.createdDate")
-  @Mapping(target = "metadata.createdByUserId", source = "innReachLocation.createdBy")
+  @Mapping(target = "metadata.createdByUsername", source = "innReachLocation.createdBy")
   @Mapping(target = "metadata.updatedDate", source = "innReachLocation.lastModifiedDate")
-  @Mapping(target = "metadata.updatedByUserId", source = "innReachLocation.lastModifiedBy")
+  @Mapping(target = "metadata.updatedByUsername", source = "innReachLocation.lastModifiedBy")
 	InnReachLocationDTO mapToInnReachLocationDTO(InnReachLocation innReachLocation);
 }
