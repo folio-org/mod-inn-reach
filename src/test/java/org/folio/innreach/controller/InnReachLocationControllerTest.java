@@ -32,6 +32,7 @@ import org.folio.innreach.dto.InnReachLocationsDTO;
 class InnReachLocationControllerTest extends BaseControllerTest {
 
 	private static final String PRE_POPULATED_LOCATION1_ID = "a1c1472f-67ec-4938-b5a8-f119e51ab79b";
+	private static final String PRE_POPULATED_USER = "admin";
 
   @Autowired
 	private TestRestTemplate testRestTemplate;
@@ -73,6 +74,12 @@ class InnReachLocationControllerTest extends BaseControllerTest {
     var innReachLocationDTO = responseEntity.getBody();
 
     assertEquals(UUID.fromString(PRE_POPULATED_LOCATION1_ID), innReachLocationDTO.getId());
+
+    var metadata = innReachLocationDTO.getMetadata();
+
+    assertNotNull(metadata);
+    assertEquals(PRE_POPULATED_USER, metadata.getCreatedByUsername());
+    assertEquals(PRE_POPULATED_USER, metadata.getUpdatedByUsername());
   }
 
 	@Test

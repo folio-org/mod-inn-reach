@@ -14,9 +14,9 @@ public interface ContributionCriteriaConfigurationMapper {
   ContributionCriteriaConfiguration toEntity(ContributionCriteriaConfigurationDTO criteriaConfigurationDTO);
 
   @Mapping(target = "metadata.createdDate", source = "criteriaConfiguration.createdDate")
-  @Mapping(target = "metadata.createdByUserId", source = "criteriaConfiguration.createdBy")
+  @Mapping(target = "metadata.createdByUsername", source = "criteriaConfiguration.createdBy")
   @Mapping(target = "metadata.updatedDate", source = "criteriaConfiguration.lastModifiedDate")
-  @Mapping(target = "metadata.updatedByUserId", source = "criteriaConfiguration.lastModifiedBy")
+  @Mapping(target = "metadata.updatedByUsername", source = "criteriaConfiguration.lastModifiedBy")
   ContributionCriteriaConfigurationDTO toDto(ContributionCriteriaConfiguration criteriaConfiguration);
 
   default Date offsetDateTimeToDate(OffsetDateTime entityDate) {
