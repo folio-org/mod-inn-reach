@@ -2,6 +2,8 @@ package org.folio.innreach.domain.service.impl;
 
 import static org.folio.innreach.domain.service.impl.ServiceUtils.centralServerRef;
 import static org.folio.innreach.domain.service.impl.ServiceUtils.initId;
+import static org.folio.innreach.domain.service.impl.ServiceUtils.merge;
+import static org.folio.innreach.domain.service.impl.ServiceUtils.nothing;
 
 import java.util.UUID;
 
@@ -27,6 +29,7 @@ public class ContributionCriteriaConfigurationServiceImpl implements Contributio
   private final ContributionCriteriaConfigurationRepository repository;
   private final ContributionCriteriaConfigurationMapper mapper;
 
+
   @Override
   public ContributionCriteriaDTO createCriteria(UUID centralServerId, ContributionCriteriaDTO dto) {
     var entity = mapper.toEntity(dto);
@@ -50,9 +53,12 @@ public class ContributionCriteriaConfigurationServiceImpl implements Contributio
   public ContributionCriteriaDTO updateCriteria(UUID centralServerId, ContributionCriteriaDTO dto) {
     var criteria = findCriteria(centralServerId);
 
-    // TODO (Dima Tkachenko): create implementation
-    /*mapping.setMaterialTypeId(dto.getMaterialTypeId());
-    mapping.setCentralItemType(dto.getCentralItemType());*/
+    criteria.setContributeAsSystemOwnedCodeId(dto.getContributeAsSystemOwnedId());
+    criteria.setContributeButSuppressCodeId(dto.getContributeButSuppressId());
+    criteria.setDoNotContributeCodeId(dto.getDoNotContributeId());
+
+    merge(dto.getLocationIds(), criteria.getExcludedLocationIds(),
+        criteria::addExcludedLocationId, nothing(), criteria::removeExcludedLocationId);
 
     return mapper.toDTO(criteria);
   }

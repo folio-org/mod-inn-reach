@@ -1,7 +1,10 @@
 package org.folio.innreach.domain.entity;
 
+import static org.apache.commons.collections4.CollectionUtils.isEmpty;
+
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 import javax.persistence.CollectionTable;
@@ -46,6 +49,25 @@ public class ContributionCriteriaConfiguration extends AbstractEntity {
 
   public ContributionCriteriaConfiguration(UUID id) {
     super(id);
+  }
+
+  public void setExcludedLocationIds(List<UUID> excludedLocationIds) {
+    if (isEmpty(excludedLocationIds)) {
+      this.excludedLocationIds = new ArrayList<>();
+    }
+    this.excludedLocationIds = excludedLocationIds;
+  }
+
+  public void addExcludedLocationId(UUID id) {
+    Objects.requireNonNull(id);
+
+    excludedLocationIds.add(id);
+  }
+
+  public void removeExcludedLocationId(UUID id) {
+    Objects.requireNonNull(id);
+
+    excludedLocationIds.remove(id);
   }
 
 }

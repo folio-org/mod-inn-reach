@@ -29,6 +29,7 @@
     <openapi-generator.version>4.3.1</openapi-generator.version>
     <openapi.input.file>${project.basedir}/src/main/resources/swagger.api/inn-reach.yaml</openapi.input.file>
     <mapstruct.version>1.4.2.Final</mapstruct.version>
+    <commons-collections4.version>4.4</commons-collections4.version>
     <testcontainers.version>1.15.1</testcontainers.version>
     <easy-random-core.version>5.0.0</easy-random-core.version>
     <argLine />
@@ -110,6 +111,12 @@
       <artifactId>postgresql</artifactId>
       <scope>runtime</scope>
     </dependency>
+    <dependency>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-collections4</artifactId>
+      <version>${commons-collections4.version}</version>
+    </dependency>
+
 
     <!-- Test dependencies -->
     <dependency>

@@ -1,6 +1,7 @@
 package org.folio.innreach.domain.service.impl;
 
 import static java.util.Objects.nonNull;
+import static org.apache.commons.collections4.ListUtils.emptyIfNull;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -23,6 +24,11 @@ class ServiceUtils {
 
   static final Sort SORT_BY_ID = Sort.by("id");
   static final Sort DEFAULT_SORT = SORT_BY_ID;
+
+
+  static <T, U> BiConsumer<T, U> nothing() {
+    return (t, u) -> {};
+  }
 
   static CentralServer centralServerRef(UUID centralServerId) {
     var server = new CentralServer();
@@ -54,32 +60,51 @@ class ServiceUtils {
         Objects.equals(first.getId(), second.getId());
   }
 
-  static <E extends Identifiable<UUID>> List<E> merge(List<E> incomingEntities, List<E> storedEntities,
+  static <E extends Identifiable<UUID>> List<E> mergeAndSave(List<E> incomingEntities, List<E> storedEntities,
       JpaRepository<E, UUID> repository, BiConsumer<E, E> updateDataMethod) {
 
     List<E> toDelete = new ArrayList<>();
     List<E> toSave = new ArrayList<>();
 
-    var sortedIncoming = new ArrayList<>(incomingEntities);
-    sortedIncoming.sort(comparatorById());
-
-    storedEntities.forEach(stored -> {
-      int idx = Collections.binarySearch(sortedIncoming, stored, comparatorById());
-
-      if (idx >= 0) { // updating
-        updateDataMethod.accept(sortedIncoming.get(idx), stored);
-
-        toSave.add(stored);
-        sortedIncoming.remove(idx);
-      } else { // removing
-        toDelete.add(stored);
-      }
-    });
-    toSave.addAll(sortedIncoming); // what is left in the incoming has to be inserted
+    merge(incomingEntities, storedEntities, comparatorById(),
+        toSave::add,
+        (incoming, stored) -> {
+          updateDataMethod.accept(incoming, stored);
+          toSave.add(stored);
+        },
+        toDelete::add);
 
     repository.deleteInBatch(toDelete);
 
     return repository.saveAll(toSave);
+  }
+
+  static <E extends Comparable<E>> void merge(List<E> incoming, List<E> stored,
+      Consumer<E> addMethod, BiConsumer<E, E> updateMethod, Consumer<E> deleteMethod) {
+    merge(incoming, stored, Comparable::compareTo, addMethod, updateMethod, deleteMethod);
+  }
+
+  static <E> void merge(List<E> incoming, List<E> stored, Comparator<E> comparator,
+      Consumer<E> addMethod, BiConsumer<E, E> updateMethod, Consumer<E> deleteMethod) {
+
+    var storedList = new ArrayList<>(emptyIfNull(stored));
+    
+    var incomingList = new ArrayList<>(emptyIfNull(incoming));
+    incomingList.sort(comparator);
+
+    storedList.forEach(s -> {
+      int idx = Collections.binarySearch(incomingList, s, comparator);
+
+      if (idx >= 0) { // updating
+        updateMethod.accept(incomingList.get(idx), s);
+
+        incomingList.remove(idx);
+      } else { // removing
+        deleteMethod.accept(s);
+      }
+    });
+
+    incomingList.forEach(addMethod); // what is left in the incoming has to be inserted
   }
 
 }
