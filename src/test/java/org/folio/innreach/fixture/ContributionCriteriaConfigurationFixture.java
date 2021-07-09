@@ -11,7 +11,6 @@ import org.jeasy.random.EasyRandom;
 import org.jeasy.random.EasyRandomParameters;
 
 import org.folio.innreach.domain.entity.ContributionCriteriaConfiguration;
-import org.folio.innreach.dto.ContributionCriteriaDTO;
 import org.folio.innreach.dto.Metadata;
 
 @UtilityClass
@@ -47,7 +46,7 @@ public class ContributionCriteriaConfigurationFixture {
     return contributionCriteriaRandom.nextObject(ContributionCriteriaConfiguration.class);
   }
 
-  public static ContributionCriteriaConfiguration createTestContributionCriteriaConfiguration(UUID centralServerId) {
+  /*public static ContributionCriteriaConfiguration createTestContributionCriteriaConfiguration(UUID centralServerId) {
     ContributionCriteriaConfiguration configuration = new ContributionCriteriaConfiguration();
     configuration.setCentralServerId(centralServerId == null ? CENTRAL_SERVER_UUID : centralServerId);
     for (int i = 0; i < EXCLUDED_LOCATION_IDs.length; i++) {
@@ -75,7 +74,7 @@ public class ContributionCriteriaConfigurationFixture {
     res.addLocationIdsItem(UUID.randomUUID());
     res.addLocationIdsItem(UUID.randomUUID());
     return res;
-  }
+  }*/
 
   private Metadata stubMetaData() {
     var metaData = new Metadata();

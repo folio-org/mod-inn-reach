@@ -1,19 +1,11 @@
 package org.folio.innreach.repository;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
-import static org.folio.innreach.fixture.ContributionCriteriaConfigurationFixture.createTestContributionCriteriaConfiguration;
-
 import java.util.List;
 import java.util.UUID;
 
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import org.folio.innreach.domain.entity.ContributionCriteriaConfiguration;
+//import static org.folio.innreach.fixture.ContributionCriteriaConfigurationFixture.createTestContributionCriteriaConfiguration;
 
 class ContributionCriteriaConfigurationRepositoryTest extends BaseRepositoryTest {
 
@@ -28,7 +20,7 @@ class ContributionCriteriaConfigurationRepositoryTest extends BaseRepositoryTest
   private ContributionCriteriaConfigurationRepository contributionCriteriaConfigurationRepository;
 
 
-  @BeforeEach
+  /*@BeforeEach
   void beforeEach() {
     ContributionCriteriaConfiguration criteriaConfiguration
       = createTestContributionCriteriaConfiguration(UUID.fromString(CENTRAL_SERVER_ID));
@@ -153,5 +145,5 @@ class ContributionCriteriaConfigurationRepositoryTest extends BaseRepositoryTest
     var modifiedConfiguration
       = contributionCriteriaConfigurationRepository.findById(UUID.fromString(CENTRAL_SERVER_ID)).get();
     assertEquals(quantityOfBehaviors-2,modifiedConfiguration.getStatisticalCodeBehaviors().size());
-  }
+  }*/
 }
