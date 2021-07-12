@@ -54,8 +54,9 @@ public class ContributionCriteriaConfiguration extends AbstractEntity {
   public void setExcludedLocationIds(List<UUID> excludedLocationIds) {
     if (isEmpty(excludedLocationIds)) {
       this.excludedLocationIds = new ArrayList<>();
+    } else {
+      this.excludedLocationIds = excludedLocationIds;
     }
-    this.excludedLocationIds = excludedLocationIds;
   }
 
   public void addExcludedLocationId(UUID id) {

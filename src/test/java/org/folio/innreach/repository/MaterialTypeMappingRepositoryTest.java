@@ -22,8 +22,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.test.context.jdbc.Sql;
 
-import org.folio.innreach.domain.entity.CentralServer;
 import org.folio.innreach.domain.entity.MaterialTypeMapping;
+import org.folio.innreach.fixture.TestUtil;
 
 @Sql(scripts = "classpath:db/central-server/pre-populate-central-server.sql")
 @Sql(scripts = "classpath:db/mtype-mapping/pre-populate-material-type-mapping.sql")
@@ -109,9 +109,7 @@ class MaterialTypeMappingRepositoryTest extends BaseRepositoryTest {
   void throwExceptionWhenSavingWithInvalidCentralServerReference() {
     var mapping = createMaterialTypeMapping();
 
-    var centralServer = new CentralServer();
-    centralServer.setId(randomUUID());
-    mapping.setCentralServer(centralServer);
+    mapping.setCentralServer(TestUtil.refCentralServer(randomUUID()));
 
     var ex = assertThrows(DataIntegrityViolationException.class, () -> repository.saveAndFlush(mapping));
     assertThat(ex.getMessage(), containsString("constraint [fk_mtype_mapping_central_server]"));
