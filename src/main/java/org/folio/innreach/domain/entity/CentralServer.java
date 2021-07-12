@@ -149,5 +149,4 @@ public class CentralServer implements Identifiable<UUID> {
     }
     this.localAgencies.remove(localAgency);
   }
-
 }

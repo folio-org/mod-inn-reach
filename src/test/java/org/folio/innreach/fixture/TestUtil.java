@@ -5,6 +5,7 @@ import java.util.UUID;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.SneakyThrows;
 
+import java.util.Random;
 import org.folio.innreach.domain.entity.CentralServer;
 
 public class TestUtil {
@@ -16,6 +17,8 @@ public class TestUtil {
   public static String randomFiveCharacterCode() {
     return randomUUIDString().substring(0, 5);
   }
+
+  public static int randomInteger(int range) { return new Random().nextInt(range); }
 
   @SneakyThrows
   public static <T> T deserializeFromJsonFile(String path, Class<T> type) {

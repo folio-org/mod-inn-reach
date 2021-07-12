@@ -1,0 +1,10 @@
+DELETE
+FROM not_available_item_status;
+DELETE
+FROM non_lendable_loan_type;
+DELETE
+FROM non_lendable_location;
+DELETE
+FROM non_lendable_material_type;
+DELETE
+FROM item_contribution_options_configuration;
