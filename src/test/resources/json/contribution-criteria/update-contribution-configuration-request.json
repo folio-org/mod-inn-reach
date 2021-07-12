@@ -1,13 +1,11 @@
 {
   "contributeButSuppressId": "7a82f404-07df-4e5e-8e8f-a15f3b6ddffa",
-  "doNotContributeId": "a6519d9b-e008-4e5c-b7f2-93dc5803dba1",
   "contributeAsSystemOwnedId": "42076c88-02c5-4cb3-bb47-b24a3dc41146",
-  "centralServerId": "f8723a94-25d5-4f19-9043-cc3c306d54a1",
   "locationIds": [
     "81012b3d-c686-42bc-8fd8-89274bdc2e64",
-    "ff357dab-1446-4e34-a78c-cf0478a10c75",
+    "8c1508bd-b640-408a-8005-d50df392e233",
     "dc1d71b5-e4c8-41fe-b41d-2768b2b55bf1",
     "54e67000-a197-4c4e-b482-ceea5861525e"
   ],
-  "id": "eb243075-6aa1-4170-b248-a3863b040cae"
+  "id": "71bd0beb-28cb-40bb-9f40-87463d61a553"
 }
