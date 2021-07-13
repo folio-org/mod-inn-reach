@@ -4,14 +4,12 @@ import org.folio.innreach.domain.entity.ContributionBehavior;
 import org.folio.innreach.domain.entity.ContributionCriteriaConfiguration;
 import org.folio.innreach.domain.entity.ContributionCriteriaExcludedLocation;
 import org.folio.innreach.domain.entity.ContributionCriteriaStatisticalCodeBehavior;
-import org.folio.innreach.fixture.ContributionCriteriaConfigurationFixture;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.context.jdbc.Sql;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
 import java.util.UUID;
 
 import static org.folio.innreach.fixture.ContributionCriteriaConfigurationFixture.createTestContributionCriteriaConfiguration;
@@ -19,6 +17,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+@Sql(scripts = "classpath:db/central-server/pre-populate-central-server.sql")
 class ContributionCriteriaConfigurationRepositoryTest extends BaseRepositoryTest {
 
   private static String CENTRAL_SERVER_ID = "edab6baf-c696-42b1-89bb-1bbb8759b0d2";

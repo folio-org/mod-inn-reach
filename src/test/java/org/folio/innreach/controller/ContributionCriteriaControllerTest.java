@@ -5,6 +5,8 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import static org.folio.innreach.fixture.TestUtil.deserializeFromJsonFile;
+import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TEST_METHOD;
+import static org.springframework.test.context.jdbc.SqlMergeMode.MergeMode.MERGE;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,10 +17,18 @@ import org.springframework.http.HttpStatus;
 
 import org.folio.innreach.controller.base.BaseControllerTest;
 import org.folio.innreach.dto.ContributionCriteriaDTO;
+import org.springframework.test.context.jdbc.Sql;
+import org.springframework.test.context.jdbc.SqlMergeMode;
 
+@Sql(
+  scripts = {
+    "classpath:db/central-server/clear-central-server-tables.sql"},
+  executionPhase = AFTER_TEST_METHOD
+)
+@SqlMergeMode(MERGE)
 class ContributionCriteriaControllerTest extends BaseControllerTest {
 
-  private static final String PRE_POPULATED_CENTRAL_SERVER_ID = "f8723a94-25d5-4f19-9043-cc3c306d54a1";
+  private static final String PRE_POPULATED_CENTRAL_SERVER_ID = "edab6baf-c696-42b1-89bb-1bbb8759b0d2";
 
   @Autowired
   private TestRestTemplate testRestTemplate;
@@ -35,6 +45,9 @@ class ContributionCriteriaControllerTest extends BaseControllerTest {
   }
 
   @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql"
+  })
   void return201HttpCode_on_createCriteriaConfiguration() {
     var contributionCriteriaDTO = deserializeFromJsonFile("/contribution-criteria/create-contribution-configuration-request.json", ContributionCriteriaDTO.class);
     var responseEntity = testRestTemplate.postForEntity("/inn-reach/central-servers/contribution-criteria/", contributionCriteriaDTO, ContributionCriteriaDTO.class);
@@ -45,6 +58,9 @@ class ContributionCriteriaControllerTest extends BaseControllerTest {
   }
 
   @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql"
+  })
   void return201HttpCode_on_createCriteriaConfigurationWithoutExcludedLocations() {
     var contributionCriteriaDTO = deserializeFromJsonFile("/contribution-criteria/create-contribution-configuration-request-without-locations.json", ContributionCriteriaDTO.class);
     var responseEntity = testRestTemplate.postForEntity("/inn-reach/central-servers/contribution-criteria/", contributionCriteriaDTO, ContributionCriteriaDTO.class);
@@ -56,6 +72,9 @@ class ContributionCriteriaControllerTest extends BaseControllerTest {
   }
 
   @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql"
+  })
   void return500HttpCode_on_createCriteriaConfiguration_when_CriteriaConfigurationAlreadyExists() {
     createContributionCriteriaConfigurationForTest();
 
@@ -72,6 +91,9 @@ class ContributionCriteriaControllerTest extends BaseControllerTest {
   }
 
   @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql"
+  })
   void return500HttpCode_on_createCriteriaConfiguration_when_requestDataIsInvalid() {
     createContributionCriteriaConfigurationForTest();
 
@@ -97,6 +119,9 @@ class ContributionCriteriaControllerTest extends BaseControllerTest {
   }
 
   @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql"
+  })
   void return204HttpCode_when_deletableCriteriaConfiguration() {
     createContributionCriteriaConfigurationForTest();
     var responseEntity
@@ -109,6 +134,9 @@ class ContributionCriteriaControllerTest extends BaseControllerTest {
   }
 
   @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql"
+  })
   void return204HttpCode_on_updateContributionCriteriaConfiguration() {
     createContributionCriteriaConfigurationForTest();
     var contributionCriteriaDTO
@@ -123,6 +151,9 @@ class ContributionCriteriaControllerTest extends BaseControllerTest {
   }
 
   @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql"
+  })
   void return204HttpCode_on_updateContributionCriteriaConfigurationWithoutStatisticalCodeBehavior() {
     createContributionCriteriaConfigurationForTest();
 
