@@ -11,8 +11,8 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import static org.folio.innreach.fixture.MappingFixture.createLocationMapping;
-import static org.folio.innreach.fixture.MappingFixture.refCentralServer;
 import static org.folio.innreach.fixture.MappingFixture.refInnReachLocation;
+import static org.folio.innreach.fixture.TestUtil.refCentralServer;
 
 import java.util.List;
 import java.util.Optional;

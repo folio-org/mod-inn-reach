@@ -1,26 +1,29 @@
 package org.folio.innreach.mapper;
 
-import org.folio.innreach.domain.dto.ContributionCriteriaConfigurationDTO;
-import org.folio.innreach.domain.entity.ContributionCriteriaConfiguration;
+import org.mapstruct.InjectionStrategy;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
-import java.time.OffsetDateTime;
-import java.util.Date;
+import org.folio.innreach.domain.entity.ContributionCriteriaConfiguration;
+import org.folio.innreach.dto.ContributionCriteriaDTO;
 
-@Mapper(componentModel = "spring")
+@Mapper(componentModel = "spring", injectionStrategy = InjectionStrategy.CONSTRUCTOR, uses = DateMapper.class)
 public interface ContributionCriteriaConfigurationMapper {
 
-  ContributionCriteriaConfiguration toEntity(ContributionCriteriaConfigurationDTO criteriaConfigurationDTO);
+  @Mapping(target = "contributeButSuppressCodeId", source = "contributeButSuppressId")
+  @Mapping(target = "contributeAsSystemOwnedCodeId", source = "contributeAsSystemOwnedId")
+  @Mapping(target = "doNotContributeCodeId", source = "doNotContributeId")
+  @Mapping(target = "excludedLocationIds", source = "locationIds")
+  ContributionCriteriaConfiguration toEntity(ContributionCriteriaDTO dto);
 
-  @Mapping(target = "metadata.createdDate", source = "criteriaConfiguration.createdDate")
-  @Mapping(target = "metadata.createdByUsername", source = "criteriaConfiguration.createdBy")
-  @Mapping(target = "metadata.updatedDate", source = "criteriaConfiguration.lastModifiedDate")
-  @Mapping(target = "metadata.updatedByUsername", source = "criteriaConfiguration.lastModifiedBy")
-  ContributionCriteriaConfigurationDTO toDto(ContributionCriteriaConfiguration criteriaConfiguration);
+  @Mapping(target = "contributeButSuppressId", source = "contributeButSuppressCodeId")
+  @Mapping(target = "contributeAsSystemOwnedId", source = "contributeAsSystemOwnedCodeId")
+  @Mapping(target = "doNotContributeId", source = "doNotContributeCodeId")
+  @Mapping(target = "locationIds", source = "excludedLocationIds")
+  @Mapping(target = "metadata.createdDate", source = "entity.createdDate")
+  @Mapping(target = "metadata.createdByUsername", source = "entity.createdBy")
+  @Mapping(target = "metadata.updatedDate", source = "entity.lastModifiedDate")
+  @Mapping(target = "metadata.updatedByUsername", source = "entity.lastModifiedBy")
+  ContributionCriteriaDTO toDTO(ContributionCriteriaConfiguration entity);
 
-  default Date offsetDateTimeToDate(OffsetDateTime entityDate) {
-    var dateMapper = new DateMapper();
-    return dateMapper.offsetDateTimeAsDate(entityDate);
-  }
 }

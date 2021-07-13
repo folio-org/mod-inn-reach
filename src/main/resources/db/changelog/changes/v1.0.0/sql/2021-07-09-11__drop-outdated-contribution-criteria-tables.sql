@@ -1,0 +1,5 @@
+DROP TABLE statistical_code_behavior;
+
+DROP TABLE contribution_criteria_excluded_location;
+
+DROP TABLE contribution_criteria_configuration;

@@ -1,14 +1,17 @@
 package org.folio.innreach.domain.service;
 
-import org.folio.innreach.dto.ContributionCriteriaDTO;
-import org.springframework.stereotype.Service;
-
 import java.util.UUID;
 
-@Service
+import org.folio.innreach.dto.ContributionCriteriaDTO;
+
 public interface ContributionCriteriaConfigurationService {
-  ContributionCriteriaDTO create(ContributionCriteriaDTO criteriaConfigurationDTO);
-  ContributionCriteriaDTO get(UUID centralServerId);
-  ContributionCriteriaDTO update(ContributionCriteriaDTO criteriaConfigurationDTO);
-  void delete(UUID centralServerId);
+
+  ContributionCriteriaDTO createCriteria(UUID centralServerId, ContributionCriteriaDTO criteriaDTO);
+
+  ContributionCriteriaDTO getCriteria(UUID centralServerId);
+
+  ContributionCriteriaDTO updateCriteria(UUID centralServerId, ContributionCriteriaDTO criteriaDTO);
+
+  void deleteCriteria(UUID centralServerId);
+
 }

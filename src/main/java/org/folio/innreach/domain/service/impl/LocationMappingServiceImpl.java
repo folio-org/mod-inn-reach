@@ -4,7 +4,7 @@ import static org.folio.innreach.domain.service.impl.ServiceUtils.DEFAULT_SORT;
 import static org.folio.innreach.domain.service.impl.ServiceUtils.centralServerRef;
 import static org.folio.innreach.domain.service.impl.ServiceUtils.equalIds;
 import static org.folio.innreach.domain.service.impl.ServiceUtils.initId;
-import static org.folio.innreach.domain.service.impl.ServiceUtils.merge;
+import static org.folio.innreach.domain.service.impl.ServiceUtils.mergeAndSave;
 
 import java.util.UUID;
 import java.util.function.Consumer;
@@ -53,7 +53,7 @@ public class LocationMappingServiceImpl implements LocationMappingService {
         .andThen(setLibraryId(libraryId))
         .andThen(initId()));
 
-    var saved = merge(incoming, stored, repository, this::copyData);
+    var saved = mergeAndSave(incoming, stored, repository, this::copyData);
 
     return mapper.toDTOCollection(saved);
   }

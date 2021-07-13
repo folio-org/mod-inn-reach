@@ -67,13 +67,7 @@ public class MappingFixture {
   }
 
   public static CentralServer refCentralServer() {
-    return refCentralServer(PRE_POPULATED_CENTRAL_SERVER_UUID);
-  }
-
-  public static CentralServer refCentralServer(UUID id) {
-    var centralServer = new CentralServer();
-    centralServer.setId(id);
-    return centralServer;
+    return TestUtil.refCentralServer(PRE_POPULATED_CENTRAL_SERVER_UUID);
   }
 
   public static InnReachLocation refInnReachLocation() {
