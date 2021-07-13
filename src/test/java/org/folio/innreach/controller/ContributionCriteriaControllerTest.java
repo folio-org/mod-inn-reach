@@ -1,10 +1,23 @@
 package org.folio.innreach.controller;
 
+import static java.util.UUID.fromString;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.empty;
+import static org.hamcrest.Matchers.samePropertyValuesAs;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.springframework.http.HttpStatus.BAD_REQUEST;
+import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TEST_METHOD;
+import static org.springframework.test.context.jdbc.SqlMergeMode.MergeMode.MERGE;
 
 import static org.folio.innreach.fixture.TestUtil.deserializeFromJsonFile;
+
+import java.util.UUID;
+
+import javax.transaction.Transactional;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,114 +25,207 @@ import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
+import org.springframework.test.context.jdbc.Sql;
+import org.springframework.test.context.jdbc.SqlConfig;
+import org.springframework.test.context.jdbc.SqlMergeMode;
 
 import org.folio.innreach.controller.base.BaseControllerTest;
 import org.folio.innreach.dto.ContributionCriteriaDTO;
+import org.folio.innreach.dto.Error;
+import org.folio.innreach.mapper.ContributionCriteriaConfigurationMapper;
+import org.folio.innreach.repository.ContributionCriteriaConfigurationRepository;
 
+@Sql(
+    scripts = {
+        "classpath:db/contribution-criteria/clear-contribution-criteria-tables.sql",
+        "classpath:db/central-server/clear-central-server-tables.sql"},
+    executionPhase = AFTER_TEST_METHOD
+)
+@SqlConfig(transactionMode = SqlConfig.TransactionMode.ISOLATED)
+@SqlMergeMode(MERGE)
+@Transactional
 class ContributionCriteriaControllerTest extends BaseControllerTest {
 
-  private static final String PRE_POPULATED_CENTRAL_SERVER_ID = "f8723a94-25d5-4f19-9043-cc3c306d54a1";
+  private static final String PRE_POPULATED_CENTRAL_SERVER_ID = "edab6baf-c696-42b1-89bb-1bbb8759b0d2";
+  private static final UUID PRE_POPULATED_CRITERIA_ID = fromString("71bd0beb-28cb-40bb-9f40-87463d61a553");
 
   @Autowired
   private TestRestTemplate testRestTemplate;
+  @Autowired
+  private ContributionCriteriaConfigurationRepository repository;
+  @Autowired
+  private ContributionCriteriaConfigurationMapper mapper;
 
-  void createContributionCriteriaConfigurationForTest() {
-    var contributionCriteriaDTO = deserializeFromJsonFile("/contribution-criteria/create-contribution-configuration-request.json", ContributionCriteriaDTO.class);
-    var responseEntity = testRestTemplate.postForEntity("/inn-reach/central-servers/contribution-criteria/", contributionCriteriaDTO, ContributionCriteriaDTO.class);
-    assertEquals(HttpStatus.CREATED, responseEntity.getStatusCode());
-  }
-
-  void removeContributionCriteriaConfiguration() {
-    var responseEntity = testRestTemplate.exchange("/inn-reach/central-servers/{centralServerId}/contribution-criteria",
-      HttpMethod.DELETE, HttpEntity.EMPTY, ContributionCriteriaDTO.class, PRE_POPULATED_CENTRAL_SERVER_ID);
-  }
 
   @Test
-  void return201HttpCode_on_createCriteriaConfiguration() {
-    var contributionCriteriaDTO = deserializeFromJsonFile("/contribution-criteria/create-contribution-configuration-request.json", ContributionCriteriaDTO.class);
-    var responseEntity = testRestTemplate.postForEntity("/inn-reach/central-servers/contribution-criteria/", contributionCriteriaDTO, ContributionCriteriaDTO.class);
-    assertEquals(HttpStatus.CREATED, responseEntity.getStatusCode());
+  @Sql(scripts = {
+      "classpath:db/central-server/pre-populate-central-server.sql",
+      "classpath:db/contribution-criteria/pre-populate-contribution-criteria.sql"
+  })
+  void shouldGetExistingCriteria() {
+    var responseEntity = testRestTemplate.getForEntity(baseMappingURL(), ContributionCriteriaDTO.class);
+
+    assertTrue(responseEntity.getStatusCode().is2xxSuccessful());
     assertTrue(responseEntity.hasBody());
 
-    removeContributionCriteriaConfiguration();
+    var response = responseEntity.getBody();
+    assertNotNull(response);
+
+    var dbCriteria = findCriteria();
+
+    assertEquals(dbCriteria, response);
   }
 
   @Test
-  void return201HttpCode_on_createCriteriaConfigurationWithoutExcludedLocations() {
-    var contributionCriteriaDTO = deserializeFromJsonFile("/contribution-criteria/create-contribution-configuration-request-without-locations.json", ContributionCriteriaDTO.class);
-    var responseEntity = testRestTemplate.postForEntity("/inn-reach/central-servers/contribution-criteria/", contributionCriteriaDTO, ContributionCriteriaDTO.class);
-    assertEquals(HttpStatus.CREATED, responseEntity.getStatusCode());
-    assertTrue(responseEntity.hasBody());
-    assertNull(responseEntity.getBody().getLocationIds());
-
-    removeContributionCriteriaConfiguration();
-  }
-
-  @Test
-  void return500HttpCode_on_createCriteriaConfiguration_when_CriteriaConfigurationAlreadyExists() {
-    createContributionCriteriaConfigurationForTest();
-
-    var contributionCriteriaDTO
-      = deserializeFromJsonFile("/contribution-criteria/create-contribution-configuration-request.json",
-      ContributionCriteriaDTO.class);
-    var responseEntity
-      = testRestTemplate.postForEntity("/inn-reach/central-servers/contribution-criteria/",
-      contributionCriteriaDTO, ContributionCriteriaDTO.class);
-
-    assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, responseEntity.getStatusCode());
-
-    removeContributionCriteriaConfiguration();
-  }
-
-  @Test
-  void return500HttpCode_on_createCriteriaConfiguration_when_requestDataIsInvalid() {
-    createContributionCriteriaConfigurationForTest();
-
-    var contributionCriteriaDTO
-      = deserializeFromJsonFile("/contribution-criteria/create-contribution-configuration-not-valid-request.json",
-      ContributionCriteriaDTO.class);
-    var responseEntity
-      = testRestTemplate.postForEntity("/inn-reach/central-servers/contribution-criteria/",
-      contributionCriteriaDTO, ContributionCriteriaDTO.class);
-
-    assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, responseEntity.getStatusCode());
-
-    removeContributionCriteriaConfiguration();
-  }
-
-  @Test
-  void return404HttpCode_when_deletableCriteriaConfiguration_DoesNotExist() {
-    var responseEntity
-      = testRestTemplate.exchange("/inn-reach/central-servers/{centralServerId}/contribution-criteria",
-      HttpMethod.DELETE, HttpEntity.EMPTY, ContributionCriteriaDTO.class, PRE_POPULATED_CENTRAL_SERVER_ID);
+  void return404WhenCriteriaIsNotFoundByServerId() {
+    var responseEntity = testRestTemplate.getForEntity(baseMappingURL(), ContributionCriteriaDTO.class);
 
     assertEquals(HttpStatus.NOT_FOUND, responseEntity.getStatusCode());
   }
 
   @Test
-  void return204HttpCode_when_deletableCriteriaConfiguration() {
-    createContributionCriteriaConfigurationForTest();
-    var responseEntity
-      = testRestTemplate.exchange("/inn-reach/central-servers/{centralServerId}/contribution-criteria",
-      HttpMethod.DELETE, HttpEntity.EMPTY, ContributionCriteriaDTO.class, PRE_POPULATED_CENTRAL_SERVER_ID);
+  @Sql(scripts = {
+      "classpath:db/central-server/pre-populate-central-server.sql"
+  })
+  void shouldCreateNewCriteria() {
+    var newCriteria = deserializeFromJsonFile("/contribution-criteria/create-contribution-configuration-request.json",
+        ContributionCriteriaDTO.class);
 
-    assertEquals(HttpStatus.NO_CONTENT, responseEntity.getStatusCode());
+    var responseEntity = testRestTemplate.postForEntity(baseMappingURL(), newCriteria, ContributionCriteriaDTO.class);
 
-    removeContributionCriteriaConfiguration();
+    assertTrue(responseEntity.getStatusCode().is2xxSuccessful());
+    assertTrue(responseEntity.hasBody());
+
+    var created = responseEntity.getBody();
+
+    assertThat(created, samePropertyValuesAs(newCriteria, "id", "metadata"));
   }
 
   @Test
-  void return200HttpCode_on_updateContributionCriteriaConfiguration() {
-    createContributionCriteriaConfigurationForTest();
-    var contributionCriteriaDTO
-      = deserializeFromJsonFile("/contribution-criteria/update-contribution-configuration-request.json",
-      ContributionCriteriaDTO.class);
-    var responseEntity
-      = testRestTemplate.exchange("/inn-reach/central-servers/{centralServerId}/contribution-criteria",
-      HttpMethod.PUT,new HttpEntity<>(contributionCriteriaDTO),ContributionCriteriaDTO.class ,PRE_POPULATED_CENTRAL_SERVER_ID);
+  @Sql(scripts = {
+      "classpath:db/central-server/pre-populate-central-server.sql"
+  })
+  void shouldCreateNewCriteriaWithoutExcludedLocations() {
+    var newCriteria = deserializeFromJsonFile(
+        "/contribution-criteria/create-contribution-configuration-request-without-locations.json",
+        ContributionCriteriaDTO.class);
 
-    assertEquals(HttpStatus.NO_CONTENT,responseEntity.getStatusCode());
+    var responseEntity = testRestTemplate.postForEntity(baseMappingURL(), newCriteria, ContributionCriteriaDTO.class);
 
-    removeContributionCriteriaConfiguration();
+    assertTrue(responseEntity.getStatusCode().is2xxSuccessful());
+    assertTrue(responseEntity.hasBody());
+
+    var created = responseEntity.getBody();
+
+    assertThat(created, samePropertyValuesAs(newCriteria, "id", "metadata"));
   }
+
+  @Test
+  @Sql(scripts = {
+      "classpath:db/central-server/pre-populate-central-server.sql",
+      "classpath:db/contribution-criteria/pre-populate-contribution-criteria.sql"
+  })
+  void return400WhenCriteriaAlreadyExists() {
+    var newCriteria = deserializeFromJsonFile("/contribution-criteria/create-contribution-configuration-request.json",
+        ContributionCriteriaDTO.class);
+
+    var responseEntity = testRestTemplate.postForEntity(baseMappingURL(), newCriteria, Error.class);
+
+    assertEquals(BAD_REQUEST, responseEntity.getStatusCode());
+    assertNotNull(responseEntity.getBody());
+    assertThat(responseEntity.getBody().getMessage(), containsString("constraint [unq_contribution_criteria_server]"));
+  }
+
+  @Test
+  @Sql(scripts = {
+      "classpath:db/central-server/pre-populate-central-server.sql",
+      "classpath:db/contribution-criteria/pre-populate-contribution-criteria.sql"
+  })
+  void shouldUpdateExistingCriteria() {
+    var criteria = deserializeFromJsonFile("/contribution-criteria/update-contribution-configuration-request.json",
+        ContributionCriteriaDTO.class);
+
+    var responseEntity = testRestTemplate.exchange(baseMappingURL(), HttpMethod.PUT,
+        new HttpEntity<>(criteria), ContributionCriteriaDTO.class);
+
+    assertTrue(responseEntity.getStatusCode().is2xxSuccessful());
+
+    var dbCriteria = findCriteria();
+    assertThat(dbCriteria, samePropertyValuesAs(criteria, "locationIds", "metadata"));
+    // compare separately due to different order of items
+    assertThat(dbCriteria.getLocationIds(), containsInAnyOrder(criteria.getLocationIds().toArray()));
+  }
+
+  @Test
+  @Sql(scripts = {
+      "classpath:db/central-server/pre-populate-central-server.sql",
+      "classpath:db/contribution-criteria/pre-populate-contribution-criteria.sql"
+  })
+  void shouldRemoveAllLocationIdsWhenUpdatingExistingCriteria() {
+    var criteria = deserializeFromJsonFile("/contribution-criteria/update-contribution-configuration-request.json",
+        ContributionCriteriaDTO.class);
+    criteria.setLocationIds(null);
+
+    var responseEntity = testRestTemplate.exchange(baseMappingURL(), HttpMethod.PUT,
+        new HttpEntity<>(criteria), ContributionCriteriaDTO.class);
+
+    assertTrue(responseEntity.getStatusCode().is2xxSuccessful());
+
+    var dbCriteria = findCriteria();
+
+    assertThat(dbCriteria.getLocationIds(), empty());
+  }
+
+  @Test
+  @Sql(scripts = {
+      "classpath:db/central-server/pre-populate-central-server.sql"
+  })
+  void return404IfCriteriaNotFoundWhenUpdating() {
+    var criteria = deserializeFromJsonFile("/contribution-criteria/update-contribution-configuration-request.json",
+        ContributionCriteriaDTO.class);
+
+    var responseEntity = testRestTemplate.exchange(baseMappingURL(), HttpMethod.PUT,
+        new HttpEntity<>(criteria), ContributionCriteriaDTO.class);
+
+    assertEquals(HttpStatus.NOT_FOUND, responseEntity.getStatusCode());
+  }
+
+  @Test
+  @Sql(scripts = {
+      "classpath:db/central-server/pre-populate-central-server.sql",
+      "classpath:db/contribution-criteria/pre-populate-contribution-criteria.sql"
+  })
+  void shouldDeleteExistingMapping() {
+    var responseEntity = testRestTemplate.exchange(baseMappingURL(), HttpMethod.DELETE,
+        HttpEntity.EMPTY, ContributionCriteriaDTO.class);
+
+    assertEquals(HttpStatus.NO_CONTENT, responseEntity.getStatusCode());
+
+    var deleted = repository.findById(PRE_POPULATED_CRITERIA_ID);
+    assertTrue(deleted.isEmpty());
+  }
+
+  @Test
+  @Sql(scripts = {
+      "classpath:db/central-server/pre-populate-central-server.sql"
+  })
+  void return404IfCriteriaNotFoundWhenDeleting() {
+    var responseEntity = testRestTemplate.exchange(baseMappingURL(), HttpMethod.DELETE,
+        HttpEntity.EMPTY, ContributionCriteriaDTO.class);
+
+    assertEquals(HttpStatus.NOT_FOUND, responseEntity.getStatusCode());
+  }
+
+  private ContributionCriteriaDTO findCriteria() {
+    return mapper.toDTO(repository.findById(PRE_POPULATED_CRITERIA_ID).get());
+  }
+
+  private static String baseMappingURL() {
+    return baseMappingURL(PRE_POPULATED_CENTRAL_SERVER_ID);
+  }
+
+  private static String baseMappingURL(String serverId) {
+    return "/inn-reach/central-servers/" + serverId + "/contribution-criteria";
+  }
+
 }

@@ -12,6 +12,7 @@ import org.folio.innreach.domain.dto.CentralServerConnectionDetailsDTO;
 import org.folio.innreach.external.client.feign.InnReachAuthClient;
 import org.folio.innreach.external.dto.AccessTokenDTO;
 import org.folio.innreach.external.service.InnReachAuthExternalService;
+import org.folio.innreach.external.util.AuthUtils;
 
 @RequiredArgsConstructor
 @Log4j2
@@ -43,6 +44,7 @@ public class InnReachAuthExternalServiceImpl implements InnReachAuthExternalServ
 
   private String buildBasicAuthorizationHeader(CentralServerConnectionDetailsDTO connectionDetailsDTO) {
     var keySecret = String.format("%s:%s", connectionDetailsDTO.getKey(), connectionDetailsDTO.getSecret());
-    return "Basic " + Base64.getEncoder().encodeToString(keySecret.getBytes());
+    var base64EncodedKeySecret = Base64.getEncoder().encodeToString(keySecret.getBytes());
+    return AuthUtils.buildBasicAuthHeader(base64EncodedKeySecret);
   }
 }

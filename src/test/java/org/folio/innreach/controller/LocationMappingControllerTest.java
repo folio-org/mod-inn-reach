@@ -28,9 +28,6 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Predicate;
 
-import org.folio.innreach.domain.service.LocationMappingService;
-import org.folio.innreach.domain.service.impl.LocationMappingServiceImpl;
-import org.folio.innreach.external.service.InnReachLocationExternalService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -47,6 +44,7 @@ import org.folio.innreach.dto.Error;
 import org.folio.innreach.dto.LocationMappingDTO;
 import org.folio.innreach.dto.LocationMappingsDTO;
 import org.folio.innreach.dto.ValidationErrorsDTO;
+import org.folio.innreach.external.service.InnReachLocationExternalService;
 import org.folio.innreach.mapper.LocationMappingMapper;
 import org.folio.innreach.repository.LocationMappingRepository;
 
@@ -198,8 +196,8 @@ class LocationMappingControllerTest extends BaseControllerTest {
     assertEquals(BAD_REQUEST, responseEntity.getStatusCode());
 
     assertNotNull(responseEntity.getBody());
-//    assertThat(responseEntity.getBody().getValidationErrors(),
-//        contains(createValidationError("locationMappings[0].locationId", "must not be null")));
+    assertThat(responseEntity.getBody().getValidationErrors(),
+        contains(createValidationError("locationMappings[0].locationId", "must not be null")));
   }
 
   @Test
@@ -218,8 +216,8 @@ class LocationMappingControllerTest extends BaseControllerTest {
     assertEquals(BAD_REQUEST, responseEntity.getStatusCode());
 
     assertNotNull(responseEntity.getBody());
-//    assertThat(responseEntity.getBody().getValidationErrors(),
-//        contains(createValidationError("locationMappings[0].innReachLocationId", "must not be null")));
+    assertThat(responseEntity.getBody().getValidationErrors(),
+        contains(createValidationError("locationMappings[0].innReachLocationId", "must not be null")));
   }
 
   @Test

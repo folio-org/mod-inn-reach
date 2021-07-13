@@ -1,14 +1,10 @@
 {
-  "description": "Contribution Criteria",
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "description": "Contribution Criteria Configuration",
   "type": "object",
   "properties": {
     "id": {
-      "description": "Central server id",
-      "type": "string",
-      "format": "UUID"
-    },
-    "centralServerId": {
-      "description": "Central server id",
+      "description": "Contribution criteria id",
       "type": "string",
       "format": "UUID"
     },
@@ -21,17 +17,17 @@
       }
     },
     "contributeButSuppressId": {
-      "description": "Contribute but suppress from search",
+      "description": "Contribute but suppress statistical code id",
       "type": "string",
       "format": "UUID"
     },
     "doNotContributeId": {
-      "description": "Do not contribute",
+      "description": "Do not contribute statistical code id",
       "type": "string",
       "format": "UUID"
     },
     "contributeAsSystemOwnedId":{
-      "description": "Contribute as system owner",
+      "description": "Contribute as system owner statistical code id",
       "type": "string",
       "format": "UUID"
     },

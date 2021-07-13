@@ -1,6 +1,5 @@
 package org.folio.innreach.controller;
 
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -25,7 +24,8 @@ import org.folio.innreach.dto.CentralServerDTO;
 import org.folio.innreach.dto.CentralServersDTO;
 
 @Sql(
-  scripts = "classpath:db/central-server/clear-central-server-tables.sql",
+  scripts = {
+    "classpath:db/central-server/clear-central-server-tables.sql"},
   executionPhase = AFTER_TEST_METHOD
 )
 @SqlMergeMode(MERGE)
@@ -86,7 +86,7 @@ class CentralServerControllerTest extends BaseControllerTest {
   @Sql(scripts = "classpath:db/central-server/pre-populate-central-server.sql")
   void return200HttpCode_and_allCentralServerEntities_when_getForAllCentralServers() {
     var responseEntity = testRestTemplate.getForEntity(
-        "/inn-reach/central-servers", CentralServersDTO.class);
+      "/inn-reach/central-servers", CentralServersDTO.class);
 
     assertTrue(responseEntity.getStatusCode().is2xxSuccessful());
     assertTrue(responseEntity.hasBody());
@@ -147,7 +147,9 @@ class CentralServerControllerTest extends BaseControllerTest {
   }
 
   @Test
-  @Sql(scripts = "classpath:db/central-server/pre-populate-central-server.sql")
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql"
+    })
   void return204HttpCode_when_deleteCentralServer() {
     var responseEntity = testRestTemplate.exchange(
       "/inn-reach/central-servers/{centralServerId}", HttpMethod.DELETE, HttpEntity.EMPTY,

@@ -190,8 +190,8 @@ class LibraryMappingControllerTest extends BaseControllerTest {
     assertEquals(BAD_REQUEST, responseEntity.getStatusCode());
 
     assertNotNull(responseEntity.getBody());
-//    assertThat(responseEntity.getBody().getValidationErrors(),
-//        contains(createValidationError("libraryMappings[0].libraryId", "must not be null")));
+    assertThat(responseEntity.getBody().getValidationErrors(),
+        contains(createValidationError("libraryMappings[0].libraryId", "must not be null")));
   }
 
   @Test
@@ -210,8 +210,8 @@ class LibraryMappingControllerTest extends BaseControllerTest {
     assertEquals(BAD_REQUEST, responseEntity.getStatusCode());
 
     assertNotNull(responseEntity.getBody());
-//    assertThat(responseEntity.getBody().getValidationErrors(),
-//        contains(createValidationError("libraryMappings[0].innReachLocationId", "must not be null")));
+    assertThat(responseEntity.getBody().getValidationErrors(),
+        contains(createValidationError("libraryMappings[0].innReachLocationId", "must not be null")));
   }
 
   @Test

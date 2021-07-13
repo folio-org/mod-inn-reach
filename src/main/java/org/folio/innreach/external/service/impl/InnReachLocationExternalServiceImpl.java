@@ -1,5 +1,7 @@
 package org.folio.innreach.external.service.impl;
 
+import static org.folio.innreach.external.util.AuthUtils.buildBearerAuthHeader;
+
 import java.net.URI;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -29,7 +31,7 @@ public class InnReachLocationExternalServiceImpl implements InnReachLocationExte
       List<InnReachLocationDTO> updatedLocations) {
     var accessTokenDTO = innReachAuthExternalService.getAccessToken(connectionDetails);
     var connectionUrl = URI.create(connectionDetails.getConnectionUrl());
-    var authorizationHeader = buildBearerAuthorizationHeader(accessTokenDTO.getAccessToken());
+    var authorizationHeader = buildBearerAuthHeader(accessTokenDTO.getAccessToken());
     var localCode = connectionDetails.getLocalCode();
 
     var currentLocations = innReachLocationClient
@@ -42,10 +44,6 @@ public class InnReachLocationExternalServiceImpl implements InnReachLocationExte
     } else {
       doUpdate(connectionUrl, authorizationHeader, localCode, currentLocations, updatedLocations);
     }
-  }
-
-  private String buildBearerAuthorizationHeader(String authToken) {
-    return String.format("Bearer %s", authToken);
   }
 
   private void doUpdate(URI centralServerConnectionUrl, String authorizationHeader, String localCode,

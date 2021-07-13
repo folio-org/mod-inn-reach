@@ -1,5 +1,7 @@
 package org.folio.innreach.external.service.impl;
 
+import static org.folio.innreach.external.util.AuthUtils.buildBearerAuthHeader;
+
 import java.net.URI;
 import java.util.UUID;
 
@@ -30,7 +32,7 @@ public class InnReachExternalServiceImpl implements InnReachExternalService {
 
     return innReachClient.callInnReachApi(
       buildInnReachRequestUrl(connectionDetailsDTO.getConnectionUrl(), innReachRequestUri),
-      buildBearerAuthorizationHeader(accessTokenDTO.getAccessToken()),
+      buildBearerAuthHeader(accessTokenDTO.getAccessToken()),
       connectionDetailsDTO.getLocalCode(),
       InnReachHeaders.X_TO_CODE_DEFAULT_VALUE
     );
@@ -39,9 +41,5 @@ public class InnReachExternalServiceImpl implements InnReachExternalService {
   private URI buildInnReachRequestUrl(String centralServerUrl, String innReachRequestUri) {
     var innReachRequestUrl = String.format("%s/innreach/v2%s", centralServerUrl, innReachRequestUri);
     return URI.create(innReachRequestUrl);
-  }
-
-  private String buildBearerAuthorizationHeader(String authToken) {
-    return String.format("Bearer %s", authToken);
   }
 }
