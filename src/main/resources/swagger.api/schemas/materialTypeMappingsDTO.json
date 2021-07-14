@@ -3,7 +3,7 @@
   "description": "Material type mapping collection",
   "type": "object",
   "properties": {
-    "mappings": {
+    "materialTypeMappings": {
       "description": "List of material type mappings",
       "type": "array",
       "items": {
@@ -17,7 +17,6 @@
   },
   "additionalProperties": false,
   "required": [
-    "mappings",
-    "totalRecords"
+    "materialTypeMappings"
   ]
 }

@@ -13,6 +13,8 @@ public interface MaterialTypeMappingService {
 
   MaterialTypeMappingDTO createMapping(UUID centralServerId, MaterialTypeMappingDTO materialTypeMappingDTO);
 
+  MaterialTypeMappingsDTO updateAllMappings(UUID centralServerId, MaterialTypeMappingsDTO materialTypeMappingsDTO);
+
   MaterialTypeMappingDTO updateMapping(UUID centralServerId, UUID id, MaterialTypeMappingDTO materialTypeMappingDTO);
 
   void deleteMapping(UUID centralServerId, UUID id);

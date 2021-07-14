@@ -68,6 +68,12 @@ public class MaterialTypeMappingServiceImpl implements MaterialTypeMappingServic
   }
 
   @Override
+  public MaterialTypeMappingsDTO updateAllMappings(UUID centralServerId,
+      MaterialTypeMappingsDTO materialTypeMappingsDTO) {
+    return null;
+  }
+
+  @Override
   public void deleteMapping(UUID centralServerId, UUID id) {
     MaterialTypeMapping mapping = findMapping(centralServerId, id);
     repository.delete(mapping);
