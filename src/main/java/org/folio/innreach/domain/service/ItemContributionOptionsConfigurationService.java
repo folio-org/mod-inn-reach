@@ -1,0 +1,13 @@
+package org.folio.innreach.domain.service;
+
+import org.folio.innreach.dto.ItemContributionOptionsConfigurationDTO;
+
+import java.util.UUID;
+
+public interface ItemContributionOptionsConfigurationService {
+  ItemContributionOptionsConfigurationDTO getItemContributionOptionsConfiguration(UUID centralServerId);
+
+  ItemContributionOptionsConfigurationDTO createItemContributionOptionsConfiguration(ItemContributionOptionsConfigurationDTO itemContributionOptionsConfigurationDTO);
+
+  ItemContributionOptionsConfigurationDTO updateItemContributionOptionsConfiguration(ItemContributionOptionsConfigurationDTO itemContributionOptionsConfigurationDTO);
+}

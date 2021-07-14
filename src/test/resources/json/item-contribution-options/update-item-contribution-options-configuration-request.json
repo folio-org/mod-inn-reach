@@ -1,0 +1,16 @@
+{
+  "centralServerId": "edab6baf-c696-42b1-89bb-1bbb8759b0d2",
+  "notAvailableItemStatuses": [
+    "Missing",
+    "In process"
+  ],
+  "nonLendableLoanTypes": [
+    "65bfc462-5af3-4d8e-899e-ff554f55c16f"
+  ],
+  "nonLendableLocations": [
+    "2934b4db-a347-4405-b86f-0ff743141340"
+  ],
+  "nonLendableMaterialTypes": [
+    "90b7b9e6-c429-4965-a0f4-f7cca1980a12"
+  ]
+}
