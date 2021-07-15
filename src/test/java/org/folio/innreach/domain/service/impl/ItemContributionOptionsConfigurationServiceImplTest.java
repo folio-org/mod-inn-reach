@@ -28,13 +28,13 @@ import static org.mockito.Mockito.when;
 class ItemContributionOptionsConfigurationServiceImplTest {
 
   @Mock
-  private ItemContributionOptionsConfigurationRepository itemContributionOptionsConfigurationRepository;
+  private ItemContributionOptionsConfigurationRepository repository;
 
   @Spy
-  private final ItemContributionOptionsConfigurationMapper itemContributionOptionsConfigurationMapper = Mappers.getMapper(ItemContributionOptionsConfigurationMapper.class);
+  private final ItemContributionOptionsConfigurationMapper mapper = Mappers.getMapper(ItemContributionOptionsConfigurationMapper.class);
 
   @InjectMocks
-  private ItemContributionOptionsConfigurationServiceImpl itemContributionOptionsConfigurationService;
+  private ItemContributionOptionsConfigurationServiceImpl service;
 
   @BeforeEach
   public void beforeEachSetup() {
@@ -42,56 +42,55 @@ class ItemContributionOptionsConfigurationServiceImplTest {
   }
 
   @Test
-  void getItemContributionOptionsConfiguration_when_itemContributionOptionsConfigurationExists() {
-    when(itemContributionOptionsConfigurationRepository.findById(any())).thenReturn(Optional.of(createItmContribOptConf()));
+  void getItmContribOptConf_when_itmContribOptConfExists() {
+    when(repository.findById(any())).thenReturn(Optional.of(createItmContribOptConf()));
 
-    var itemContributionOptionsConfiguration = itemContributionOptionsConfigurationService.getItemContributionOptionsConfiguration(UUID.randomUUID());
+    var itmContribOptConf = service.getItmContribOptConf(UUID.randomUUID());
 
-    verify(itemContributionOptionsConfigurationRepository).findById(any());
+    verify(repository).findById(any());
 
-    assertNotNull(itemContributionOptionsConfiguration);
+    assertNotNull(itmContribOptConf);
   }
 
   @Test
-  void createItemContributionOptionsConfiguration_when_centralServerIsNew() {
-    var itemContributionOptionsConfigurationDTO = createItmContribOptConfDTO();
+  void createItmContribOptConf_when_centralServerIsNew() {
+    var itmContribOptConfDTO = createItmContribOptConfDTO();
 
-    when(itemContributionOptionsConfigurationRepository.save(any(ItemContributionOptionsConfiguration.class))).thenReturn(new ItemContributionOptionsConfiguration());
+    when(repository.save(any(ItemContributionOptionsConfiguration.class))).thenReturn(new ItemContributionOptionsConfiguration());
 
-    var createdItemContributionOptionsConfiguration = itemContributionOptionsConfigurationService.createItemContributionOptionsConfiguration(itemContributionOptionsConfigurationDTO);
+    var createdItmContribOptConf = service.createItmContribOptConf(itmContribOptConfDTO);
 
-    verify(itemContributionOptionsConfigurationMapper).toEntity(any(ItemContributionOptionsConfigurationDTO.class));
-    verify(itemContributionOptionsConfigurationRepository).save(any(ItemContributionOptionsConfiguration.class));
+    verify(mapper).toEntity(any(ItemContributionOptionsConfigurationDTO.class));
+    verify(repository).save(any(ItemContributionOptionsConfiguration.class));
 
-    assertNotNull(createdItemContributionOptionsConfiguration);
+    assertNotNull(createdItmContribOptConf);
   }
 
   @Test
-  void updateItemContributionOptionsConfiguration_when_itemContributionOptionsConfigurationExists() {
-    when(itemContributionOptionsConfigurationRepository.findById(any())).thenReturn(Optional.of(createItmContribOptConf()));
+  void updateItmContribOptConf_when_itmContribOptConfExists() {
+    when(repository.findById(any())).thenReturn(Optional.of(createItmContribOptConf()));
 
-    var updatedItemContributionOptionsConfiguration = createItmContribOptConfDTO();
+    var updatedItmContribOptConf = createItmContribOptConfDTO();
 
-    var updatedItemContributionOptionsConfigurationDTO = itemContributionOptionsConfigurationService.updateItemContributionOptionsConfiguration(
-      updatedItemContributionOptionsConfiguration);
+    var updatedItmContribOptConfDTO = service.updateItmContribOptConf(updatedItmContribOptConf);
 
-    verify(itemContributionOptionsConfigurationRepository).findById(any());
+    verify(repository).findById(any());
 
-    assertNotNull(updatedItemContributionOptionsConfigurationDTO);
-    assertEquals(updatedItemContributionOptionsConfiguration.getNotAvailableItemStatuses(), updatedItemContributionOptionsConfigurationDTO.getNotAvailableItemStatuses());
-    assertEquals(updatedItemContributionOptionsConfiguration.getNonLendableLoanTypes(), updatedItemContributionOptionsConfigurationDTO.getNonLendableLoanTypes());
-    assertEquals(updatedItemContributionOptionsConfiguration.getNonLendableLocations(), updatedItemContributionOptionsConfigurationDTO.getNonLendableLocations());
-    assertEquals(updatedItemContributionOptionsConfiguration.getNonLendableMaterialTypes(), updatedItemContributionOptionsConfigurationDTO.getNonLendableMaterialTypes());
+    assertNotNull(updatedItmContribOptConfDTO);
+    assertEquals(updatedItmContribOptConf.getNotAvailableItemStatuses(), updatedItmContribOptConfDTO.getNotAvailableItemStatuses());
+    assertEquals(updatedItmContribOptConf.getNonLendableLoanTypes(), updatedItmContribOptConfDTO.getNonLendableLoanTypes());
+    assertEquals(updatedItmContribOptConf.getNonLendableLocations(), updatedItmContribOptConfDTO.getNonLendableLocations());
+    assertEquals(updatedItmContribOptConf.getNonLendableMaterialTypes(), updatedItmContribOptConfDTO.getNonLendableMaterialTypes());
   }
 
   @Test
-  void throwException_when_itemContributionOptionsConfigurationDoesNotExist() {
-    when(itemContributionOptionsConfigurationRepository.findById(any())).thenReturn(Optional.empty());
+  void throwException_when_itmContribOptConfDoesNotExist() {
+    when(repository.findById(any())).thenReturn(Optional.empty());
 
     UUID id = UUID.randomUUID();
 
-    assertThrows(EntityNotFoundException.class, () -> itemContributionOptionsConfigurationService.getItemContributionOptionsConfiguration(id));
+    assertThrows(EntityNotFoundException.class, () -> service.getItmContribOptConf(id));
 
-    verify(itemContributionOptionsConfigurationRepository).findById(any());
+    verify(repository).findById(any());
   }
 }

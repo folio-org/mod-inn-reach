@@ -17,57 +17,47 @@ import java.util.UUID;
 @Service
 public class ItemContributionOptionsConfigurationServiceImpl implements ItemContributionOptionsConfigurationService {
 
-  private final ItemContributionOptionsConfigurationRepository itemContributionOptionsConfigurationRepository;
-  private final ItemContributionOptionsConfigurationMapper itemContributionOptionsConfigurationMapper;
+  private final ItemContributionOptionsConfigurationRepository repository;
+  private final ItemContributionOptionsConfigurationMapper mapper;
 
-  private static final String TEXT_ITEM_CONTRIBUTION_OPTIONS_CONFIGURATION_WITH_ID
-    = "Item Contribution Options Configuration with id: ";
+  private static final String TEXT_ITM_CONTRIB_OPT_CONFIG_WITH_ID = "Item Contribution Options Configuration with id: ";
 
   @Override
   @Transactional(readOnly = true)
-  public ItemContributionOptionsConfigurationDTO getItemContributionOptionsConfiguration(UUID centralServerId) {
-    var itemContributionOptionsConfiguration = itemContributionOptionsConfigurationRepository.findById(centralServerId)
-      .orElseThrow(() -> new EntityNotFoundException(TEXT_ITEM_CONTRIBUTION_OPTIONS_CONFIGURATION_WITH_ID + centralServerId + " not found"));
-    return itemContributionOptionsConfigurationMapper.toDto(itemContributionOptionsConfiguration);
+  public ItemContributionOptionsConfigurationDTO getItmContribOptConf(UUID centralServerId) {
+    var itmContribOptConf = repository.findById(centralServerId)
+      .orElseThrow(() -> new EntityNotFoundException(TEXT_ITM_CONTRIB_OPT_CONFIG_WITH_ID + centralServerId + " not found"));
+    return mapper.toDto(itmContribOptConf);
   }
 
   @Override
-  public ItemContributionOptionsConfigurationDTO createItemContributionOptionsConfiguration(ItemContributionOptionsConfigurationDTO itemContributionOptionsConfigurationDTO) {
-    var centralServerId = itemContributionOptionsConfigurationDTO.getCentralServerId();
-    itemContributionOptionsConfigurationRepository.findById(centralServerId).ifPresent(
-      itemContributionOptionsConfiguration -> {
-        throw new EntityExistsException(TEXT_ITEM_CONTRIBUTION_OPTIONS_CONFIGURATION_WITH_ID
-          + itemContributionOptionsConfiguration.getCentralServerId() + " already exists.");
-      });
-    var itemContributionOptionsConfiguration
-      = itemContributionOptionsConfigurationMapper.toEntity(itemContributionOptionsConfigurationDTO);
-    var createdItemContributionOptionsConfiguration =
-      itemContributionOptionsConfigurationRepository.save(itemContributionOptionsConfiguration);
-    return itemContributionOptionsConfigurationMapper.toDto(createdItemContributionOptionsConfiguration);
+  public ItemContributionOptionsConfigurationDTO createItmContribOptConf(ItemContributionOptionsConfigurationDTO itmContribOptConfDTO) {
+    var centralServerId = itmContribOptConfDTO.getCentralServerId();
+    repository.findById(centralServerId).ifPresent(itmContribOptConf -> {
+      throw new EntityExistsException(TEXT_ITM_CONTRIB_OPT_CONFIG_WITH_ID
+        + itmContribOptConf.getCentralServerId() + " already exists.");
+    });
+    var itmContribOptConf = mapper.toEntity(itmContribOptConfDTO);
+    var createdItmContribOptConf = repository.save(itmContribOptConf);
+    return mapper.toDto(createdItmContribOptConf);
   }
 
   @Override
-  public ItemContributionOptionsConfigurationDTO updateItemContributionOptionsConfiguration(ItemContributionOptionsConfigurationDTO itemContributionOptionsConfigurationDTO) {
-    var itemContributionOptionsConfiguration =
-      itemContributionOptionsConfigurationRepository.findById(itemContributionOptionsConfigurationDTO.getCentralServerId())
-        .orElseThrow(() -> new EntityNotFoundException(TEXT_ITEM_CONTRIBUTION_OPTIONS_CONFIGURATION_WITH_ID + itemContributionOptionsConfigurationDTO.getCentralServerId() + " not found"));
-    var updatedItemContributionOptionsConfiguration =
-      itemContributionOptionsConfigurationMapper.toEntity(itemContributionOptionsConfigurationDTO);
-    updateItemContributionOptionsConfiguration(itemContributionOptionsConfiguration, updatedItemContributionOptionsConfiguration);
+  public ItemContributionOptionsConfigurationDTO updateItmContribOptConf(ItemContributionOptionsConfigurationDTO itmContribOptConfDTO) {
+    var itmContribOptConf = repository.findById(itmContribOptConfDTO.getCentralServerId())
+      .orElseThrow(() -> new EntityNotFoundException(TEXT_ITM_CONTRIB_OPT_CONFIG_WITH_ID + itmContribOptConfDTO.getCentralServerId() + " not found"));
+    var updatedItmContribOptConf = mapper.toEntity(itmContribOptConfDTO);
+    updateItmContribOptConf(itmContribOptConf, updatedItmContribOptConf);
 
-    itemContributionOptionsConfigurationRepository.save(itemContributionOptionsConfiguration);
+    repository.save(itmContribOptConf);
 
-    return itemContributionOptionsConfigurationMapper.toDto(itemContributionOptionsConfiguration);
+    return mapper.toDto(itmContribOptConf);
   }
 
-  private void updateItemContributionOptionsConfiguration(ItemContributionOptionsConfiguration itemContributionOptionsConfiguration, ItemContributionOptionsConfiguration updatedItemContributionOptionsConfiguration) {
-    itemContributionOptionsConfiguration.setNotAvailableItemStatuses
-      (updatedItemContributionOptionsConfiguration.getNotAvailableItemStatuses());
-    itemContributionOptionsConfiguration.setNonLendableLoanTypes
-      (updatedItemContributionOptionsConfiguration.getNonLendableLoanTypes());
-    itemContributionOptionsConfiguration.setNonLendableLocations
-      (updatedItemContributionOptionsConfiguration.getNonLendableLocations());
-    itemContributionOptionsConfiguration.setNonLendableMaterialTypes
-      (updatedItemContributionOptionsConfiguration.getNonLendableMaterialTypes());
+  private void updateItmContribOptConf(ItemContributionOptionsConfiguration itmContribOptConf, ItemContributionOptionsConfiguration updatedItmContribOptConf) {
+    itmContribOptConf.setNotAvailableItemStatuses(updatedItmContribOptConf.getNotAvailableItemStatuses());
+    itmContribOptConf.setNonLendableLoanTypes(updatedItmContribOptConf.getNonLendableLoanTypes());
+    itmContribOptConf.setNonLendableLocations(updatedItmContribOptConf.getNonLendableLocations());
+    itmContribOptConf.setNonLendableMaterialTypes(updatedItmContribOptConf.getNonLendableMaterialTypes());
   }
 }

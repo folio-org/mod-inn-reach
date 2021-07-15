@@ -27,7 +27,7 @@ import static org.springframework.test.context.jdbc.SqlMergeMode.MergeMode.MERGE
 )
 @SqlMergeMode(MERGE)
 class ItemContributionOptionsConfigurationControllerTest extends BaseControllerTest {
-  private static final String PRE_POPULATED_ITEM_CONTRIBUTION_OPTIONS_CONFIGURATION_ID = "edab6baf-c696-42b1-89bb-1bbb8759b0d2";
+  private static final String PRE_POPULATED_ITM_CONTRIB_OPT_CONF_ID = "edab6baf-c696-42b1-89bb-1bbb8759b0d2";
 
   @Autowired
   private TestRestTemplate testRestTemplate;
@@ -36,62 +36,59 @@ class ItemContributionOptionsConfigurationControllerTest extends BaseControllerT
   @Sql(scripts = {"classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/itm-contrib-opt-conf/pre-populate-itm-contrib-opt-conf.sql"
   })
-  void return200HttpCode_and_itemContributionOptionsConfigurationById_when_getForOneItemContributionOptionsConfiguration() {
+  void return200HttpCode_and_itmContribOptConfById_when_getForOneItmContribOptConf() {
     var responseEntity = testRestTemplate.getForEntity(
-      "/inn-reach/central-servers/{centralServerId}/contribution-options", ItemContributionOptionsConfigurationDTO.class, PRE_POPULATED_ITEM_CONTRIBUTION_OPTIONS_CONFIGURATION_ID);
+      "/inn-reach/central-servers/{centralServerId}/contribution-options", ItemContributionOptionsConfigurationDTO.class,
+      PRE_POPULATED_ITM_CONTRIB_OPT_CONF_ID);
 
     assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
     assertTrue(responseEntity.hasBody());
 
-    var itemContributionOptionsConfigurationDTO = responseEntity.getBody();
+    var itmContribOptConfDTO = responseEntity.getBody();
 
-    assertNotNull(itemContributionOptionsConfigurationDTO.getCentralServerId());
-    assertEquals(PRE_POPULATED_ITEM_CONTRIBUTION_OPTIONS_CONFIGURATION_ID, itemContributionOptionsConfigurationDTO.getCentralServerId().toString());
-    assertNotNull(itemContributionOptionsConfigurationDTO.getNotAvailableItemStatuses());
-    assertNotNull(itemContributionOptionsConfigurationDTO.getNonLendableLoanTypes());
-    assertNotNull(itemContributionOptionsConfigurationDTO.getNonLendableLocations());
-    assertNotNull(itemContributionOptionsConfigurationDTO.getNonLendableMaterialTypes());
+    assertNotNull(itmContribOptConfDTO.getCentralServerId());
+    assertEquals(PRE_POPULATED_ITM_CONTRIB_OPT_CONF_ID, itmContribOptConfDTO.getCentralServerId().toString());
+    assertNotNull(itmContribOptConfDTO.getNotAvailableItemStatuses());
+    assertNotNull(itmContribOptConfDTO.getNonLendableLoanTypes());
+    assertNotNull(itmContribOptConfDTO.getNonLendableLocations());
+    assertNotNull(itmContribOptConfDTO.getNonLendableMaterialTypes());
   }
 
   @Test
   @Sql(scripts = {
     "classpath:db/central-server/pre-populate-central-server.sql"
   })
-  void return200HttpCode_and_createdItemContributionOptionsConfigurationEntity_when_createItemContributionOptionsConfiguration() {
-    var itemContributionOptionsConfigurationDTO = deserializeFromJsonFile(
-      "/item-contribution-options/create-item-contribution-options-configuration-request.json", ItemContributionOptionsConfigurationDTO.class);
+  void return200HttpCode_and_createdItmContribOptConfEntity_when_createItmContribOptConf() {
+    var itmContribOptConfDTO = deserializeFromJsonFile(
+      "/item-contribution-options/create-itm-contrib-opt-conf-request.json", ItemContributionOptionsConfigurationDTO.class);
 
     var responseEntity = testRestTemplate.postForEntity(
-      "/inn-reach/central-servers/contribution-options", itemContributionOptionsConfigurationDTO, ItemContributionOptionsConfigurationDTO.class);
+      "/inn-reach/central-servers/contribution-options", itmContribOptConfDTO, ItemContributionOptionsConfigurationDTO.class);
 
     assertEquals(HttpStatus.CREATED, responseEntity.getStatusCode());
     assertTrue(responseEntity.hasBody());
 
-    var createdItemContributionOptionsConfiguration = responseEntity.getBody();
+    var createdItmContribOptConf = responseEntity.getBody();
 
-    assertNotNull(createdItemContributionOptionsConfiguration);
-    assertNotNull(createdItemContributionOptionsConfiguration.getCentralServerId());
-    assertEquals(itemContributionOptionsConfigurationDTO.getNotAvailableItemStatuses(),
-      createdItemContributionOptionsConfiguration.getNotAvailableItemStatuses());
-    assertEquals(itemContributionOptionsConfigurationDTO.getNonLendableLoanTypes(),
-      createdItemContributionOptionsConfiguration.getNonLendableLoanTypes());
-    assertEquals(itemContributionOptionsConfigurationDTO.getNonLendableLocations(),
-      createdItemContributionOptionsConfiguration.getNonLendableLocations());
-    assertEquals(itemContributionOptionsConfigurationDTO.getNonLendableMaterialTypes(),
-      createdItemContributionOptionsConfiguration.getNonLendableMaterialTypes());
+    assertNotNull(createdItmContribOptConf);
+    assertNotNull(createdItmContribOptConf.getCentralServerId());
+    assertEquals(itmContribOptConfDTO.getNotAvailableItemStatuses(), createdItmContribOptConf.getNotAvailableItemStatuses());
+    assertEquals(itmContribOptConfDTO.getNonLendableLoanTypes(), createdItmContribOptConf.getNonLendableLoanTypes());
+    assertEquals(itmContribOptConfDTO.getNonLendableLocations(), createdItmContribOptConf.getNonLendableLocations());
+    assertEquals(itmContribOptConfDTO.getNonLendableMaterialTypes(), createdItmContribOptConf.getNonLendableMaterialTypes());
   }
 
   @Test
   @Sql(scripts = {"classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/itm-contrib-opt-conf/pre-populate-itm-contrib-opt-conf.sql"
   })
-  void return204HttpCode_when_updateItemContributionOptionsConfiguration() {
-    var itemContributionOptionsConfigurationDTO = deserializeFromJsonFile(
-      "/item-contribution-options/update-item-contribution-options-configuration-request.json", ItemContributionOptionsConfigurationDTO.class);
+  void return204HttpCode_when_updateItmContribOptConf() {
+    var itmContribOptConfDTO = deserializeFromJsonFile(
+      "/item-contribution-options/update-itm-contrib-opt-conf-request.json", ItemContributionOptionsConfigurationDTO.class);
 
     var responseEntity = testRestTemplate.exchange(
-      "/inn-reach/central-servers/{centralServerId}/contribution-options", HttpMethod.PUT, new HttpEntity<>(itemContributionOptionsConfigurationDTO),
-      ItemContributionOptionsConfigurationDTO.class, PRE_POPULATED_ITEM_CONTRIBUTION_OPTIONS_CONFIGURATION_ID);
+      "/inn-reach/central-servers/{centralServerId}/contribution-options", HttpMethod.PUT, new HttpEntity<>(itmContribOptConfDTO),
+      ItemContributionOptionsConfigurationDTO.class, PRE_POPULATED_ITM_CONTRIB_OPT_CONF_ID);
 
     assertEquals(HttpStatus.NO_CONTENT, responseEntity.getStatusCode());
   }
@@ -100,12 +97,12 @@ class ItemContributionOptionsConfigurationControllerTest extends BaseControllerT
   @Sql(scripts = {
     "classpath:db/central-server/pre-populate-central-server.sql"
   })
-  void return400HttpCode_when_requestDataIsInvalid() {
-    var itemContributionOptionsConfigurationDTO = deserializeFromJsonFile(
-      "/item-contribution-options/create-item-contribution-options-configuration-invalid-request.json", ItemContributionOptionsConfigurationDTO.class);
+  void return400HttpCode_when_createItmContribOptConfRequestDataIsInvalid() {
+    var itmContribOptConfDTO = deserializeFromJsonFile(
+      "/item-contribution-options/create-itm-contrib-opt-conf-invalid-request.json", ItemContributionOptionsConfigurationDTO.class);
 
     var responseEntity = testRestTemplate.postForEntity(
-      "/inn-reach/central-servers/contribution-options", itemContributionOptionsConfigurationDTO, ItemContributionOptionsConfigurationDTO.class);
+      "/inn-reach/central-servers/contribution-options", itmContribOptConfDTO, ItemContributionOptionsConfigurationDTO.class);
 
     assertTrue(responseEntity.getStatusCode().is4xxClientError());
     assertTrue(responseEntity.hasBody());
@@ -115,9 +112,10 @@ class ItemContributionOptionsConfigurationControllerTest extends BaseControllerT
   @Sql(scripts = {
     "classpath:db/central-server/pre-populate-central-server.sql"
   })
-  void return404HttpCode_when_itemContributionOptionsConfigurationByIdNotFound() {
+  void return404HttpCode_when_itmContribOptConfByIdNotFound() {
     var responseEntity = testRestTemplate.getForEntity(
-      "/inn-reach/central-servers/{centralServerId}/contribution-options", ItemContributionOptionsConfigurationDTO.class, PRE_POPULATED_ITEM_CONTRIBUTION_OPTIONS_CONFIGURATION_ID);
+      "/inn-reach/central-servers/{centralServerId}/contribution-options", ItemContributionOptionsConfigurationDTO.class,
+      PRE_POPULATED_ITM_CONTRIB_OPT_CONF_ID);
 
     assertEquals(HttpStatus.NOT_FOUND, responseEntity.getStatusCode());
   }
