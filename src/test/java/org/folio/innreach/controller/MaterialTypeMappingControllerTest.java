@@ -1,14 +1,17 @@
 package org.folio.innreach.controller;
 
 import static java.util.Collections.singletonList;
+import static java.util.UUID.fromString;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.empty;
+import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.samePropertyValuesAs;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
@@ -21,7 +24,10 @@ import static org.folio.innreach.fixture.TestUtil.deserializeFromJsonFile;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
+import java.util.function.Predicate;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -51,6 +57,7 @@ import org.folio.innreach.repository.MaterialTypeMappingRepository;
 class MaterialTypeMappingControllerTest extends BaseControllerTest {
 
   private static final String PRE_POPULATED_CENTRAL_SERVER_ID = "edab6baf-c696-42b1-89bb-1bbb8759b0d2";
+  private static final String PRE_POPULATED_MAPPING1_ID = "71bd0beb-28cb-40bb-9f40-87463d61a553";
   private static final String PRE_POPULATED_MAPPING2_ID = "d9985d0d-b121-4ccd-ac16-5ebd0ccccf7f";
   private static final String PRE_POPULATED_MATERIAL_TYPE2_ID = "5ee11d91-f7e8-481d-b079-65d708582ccc";
 
@@ -76,7 +83,7 @@ class MaterialTypeMappingControllerTest extends BaseControllerTest {
     var response = responseEntity.getBody();
     assertNotNull(response);
 
-    var mappings = response.getMappings();
+    var mappings = response.getMaterialTypeMappings();
 
     List<MaterialTypeMapping> dbMappings = repository.findAll();
 
@@ -97,7 +104,7 @@ class MaterialTypeMappingControllerTest extends BaseControllerTest {
     var response = responseEntity.getBody();
     assertNotNull(response);
 
-    var mappings = response.getMappings();
+    var mappings = response.getMaterialTypeMappings();
 
     assertEquals(0, response.getTotalRecords());
     assertThat(mappings, is(empty()));
@@ -121,7 +128,7 @@ class MaterialTypeMappingControllerTest extends BaseControllerTest {
     var expectedMapping = findMapping(PRE_POPULATED_MAPPING2_ID);
 
     assertEquals(3, response.getTotalRecords());
-    assertEquals(singletonList(expectedMapping), response.getMappings());
+    assertEquals(singletonList(expectedMapping), response.getMaterialTypeMappings());
   }
 
   @Test
@@ -230,7 +237,7 @@ class MaterialTypeMappingControllerTest extends BaseControllerTest {
   void return400WhenCreatingNewMappingAndMaterialTypeIdAlreadyMapped() {
     var newMapping = deserializeFromJsonFile("/material-type-mapping/create-material-type-mapping-request.json",
       MaterialTypeMappingDTO.class);
-    newMapping.setMaterialTypeId(UUID.fromString(PRE_POPULATED_MATERIAL_TYPE2_ID));
+    newMapping.setMaterialTypeId(fromString(PRE_POPULATED_MATERIAL_TYPE2_ID));
 
     var responseEntity = testRestTemplate.postForEntity(baseMappingURL(), newMapping, Error.class);
 
@@ -268,6 +275,72 @@ class MaterialTypeMappingControllerTest extends BaseControllerTest {
 
   @Test
   @Sql(scripts = {
+      "classpath:db/central-server/pre-populate-central-server.sql",
+      "classpath:db/mtype-mapping/pre-populate-material-type-mapping.sql"
+  })
+  void shouldUpdateExistingMappings() {
+    var existing = mapper.toDTOCollection(repository.findAll());
+    Integer itemType = 10;
+    existing.getMaterialTypeMappings().forEach(mp -> mp.setCentralItemType(itemType));
+
+    var responseEntity = testRestTemplate.exchange(baseMappingURL(), HttpMethod.PUT, new HttpEntity<>(existing),
+        Void.class);
+
+    assertEquals(HttpStatus.NO_CONTENT, responseEntity.getStatusCode());
+    assertFalse(responseEntity.hasBody());
+
+    var updated = mapper.toDTOs(repository.findAll());
+    var expected = existing.getMaterialTypeMappings();
+
+    assertEquals(expected.size(), updated.size());
+    assertTrue(updated.stream()
+        .filter(mp -> !mp.getCentralItemType().equals(itemType))
+        .findFirst()
+        .isEmpty());
+  }
+
+  @Test
+  @Sql(scripts = {
+      "classpath:db/central-server/pre-populate-central-server.sql",
+      "classpath:db/mtype-mapping/pre-populate-material-type-mapping.sql"
+  })
+  void shouldCreateUpdateAndDeleteMappingsAtTheSameTime() {
+    var mappings = mapper.toDTOCollection(repository.findAll());
+    List<MaterialTypeMappingDTO> em = mappings.getMaterialTypeMappings();
+
+    em.removeIf(idEqualsTo(fromString(PRE_POPULATED_MAPPING1_ID)));         // to delete
+    Integer itemType = 10;
+    findInList(em, fromString(PRE_POPULATED_MAPPING2_ID))   // to update
+        .ifPresent(mapping -> mapping.setCentralItemType(itemType));
+
+    var newMappings = deserializeFromJsonFile("/material-type-mapping/create-material-type-mappings-request.json",
+        MaterialTypeMappingsDTO.class);
+    em.addAll(newMappings.getMaterialTypeMappings());       // to insert
+
+    var responseEntity = testRestTemplate.exchange(baseMappingURL(), HttpMethod.PUT, new HttpEntity<>(mappings),
+        Void.class);
+
+    assertEquals(HttpStatus.NO_CONTENT, responseEntity.getStatusCode());
+    assertFalse(responseEntity.hasBody());
+
+    var stored = mapper.toDTOs(repository.findAll());
+
+    assertEquals(em.size(), stored.size());
+    // verify deleted
+    assertTrue(findInList(stored, fromString(PRE_POPULATED_MAPPING1_ID)).isEmpty());
+    // verify updated
+    assertEquals(itemType,
+        findInList(stored, fromString(PRE_POPULATED_MAPPING2_ID))
+            .map(MaterialTypeMappingDTO::getCentralItemType).get());
+    // verify inserted
+    assertThat(stored, hasItems(
+        samePropertyValuesAs(newMappings.getMaterialTypeMappings().get(0), "id", "metadata"),
+        samePropertyValuesAs(newMappings.getMaterialTypeMappings().get(1), "id", "metadata")
+    ));
+  }
+
+  @Test
+  @Sql(scripts = {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/mtype-mapping/pre-populate-material-type-mapping.sql"
   })
@@ -277,7 +350,7 @@ class MaterialTypeMappingControllerTest extends BaseControllerTest {
 
     assertEquals(HttpStatus.NO_CONTENT, responseEntity.getStatusCode());
 
-    var deleted = repository.findById(UUID.fromString(PRE_POPULATED_MAPPING2_ID));
+    var deleted = repository.findById(fromString(PRE_POPULATED_MAPPING2_ID));
     assertTrue(deleted.isEmpty());
   }
 
@@ -290,6 +363,10 @@ class MaterialTypeMappingControllerTest extends BaseControllerTest {
       HttpEntity.EMPTY, MaterialTypeMappingDTO.class, UUID.randomUUID());
 
     assertEquals(HttpStatus.NOT_FOUND, responseEntity.getStatusCode());
+  }
+
+  private static Predicate<MaterialTypeMappingDTO> idEqualsTo(UUID id) {
+    return mapping -> Objects.equals(mapping.getId(), id);
   }
 
   private static String baseMappingURL() {
@@ -312,9 +389,13 @@ class MaterialTypeMappingControllerTest extends BaseControllerTest {
   }
 
   private MaterialTypeMappingDTO findMapping(String id) {
-    var expectedEntity = repository.findById(UUID.fromString(id)).get();
+    var expectedEntity = repository.findById(fromString(id)).get();
 
     return mapper.toDTO(expectedEntity);
+  }
+
+  private static Optional<MaterialTypeMappingDTO> findInList(List<MaterialTypeMappingDTO> mappings, UUID id) {
+    return mappings.stream().filter(idEqualsTo(id)).findFirst();
   }
 
 }

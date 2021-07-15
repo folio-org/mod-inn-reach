@@ -145,6 +145,28 @@ paths:
         required: true
       parameters:
         - $ref: "#/components/parameters/centralServerId"
+    put:
+      description: >-
+        Update (replace) the entire collection of material type mappings
+        associated with the central server
+      operationId: updateMaterialTypeMappings
+      tags:
+        - material-type-mappings
+      responses:
+        '204':
+          description: Collection successfully updated
+        '400':
+          $ref: "#/components/responses/trait_response_validation_400"
+        '500':
+          $ref: "#/components/responses/trait_response_500"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/materialTypeMappingsDTO"
+        required: true
+      parameters:
+        - $ref: "#/components/parameters/centralServerId"
   /central-servers/{centralServerId}/material-type-mappings/{id}:
     get:
       description: Get material type mapping by id

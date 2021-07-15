@@ -1,8 +1,11 @@
 package org.folio.innreach.domain.service.impl;
 
 import static org.folio.innreach.domain.service.impl.ServiceUtils.centralServerRef;
+import static org.folio.innreach.domain.service.impl.ServiceUtils.initId;
+import static org.folio.innreach.domain.service.impl.ServiceUtils.mergeAndSave;
 
 import java.util.UUID;
+import java.util.function.Consumer;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Example;
@@ -11,6 +14,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import org.folio.innreach.domain.entity.CentralServer;
 import org.folio.innreach.domain.entity.MaterialTypeMapping;
 import org.folio.innreach.domain.exception.EntityNotFoundException;
 import org.folio.innreach.domain.service.MaterialTypeMappingService;
@@ -68,6 +72,20 @@ public class MaterialTypeMappingServiceImpl implements MaterialTypeMappingServic
   }
 
   @Override
+  public MaterialTypeMappingsDTO updateAllMappings(UUID centralServerId,
+      MaterialTypeMappingsDTO materialTypeMappingsDTO) {
+    var stored = repository.findAll(mappingExampleWithServerId(centralServerId));
+
+    var incoming = mapper.toEntities(materialTypeMappingsDTO.getMaterialTypeMappings());
+    var csRef = centralServerRef(centralServerId);
+    incoming.forEach(setCentralServerRef(csRef).andThen(initId()));
+
+    var saved = mergeAndSave(incoming, stored, repository, this::copyData);
+
+    return mapper.toDTOCollection(saved);
+  }
+
+  @Override
   public void deleteMapping(UUID centralServerId, UUID id) {
     MaterialTypeMapping mapping = findMapping(centralServerId, id);
     repository.delete(mapping);
@@ -77,6 +95,15 @@ public class MaterialTypeMappingServiceImpl implements MaterialTypeMappingServic
     return repository.findOne(mappingExampleWithServerIdAndId(centralServerId, id))
         .orElseThrow(() -> new EntityNotFoundException("Material type mapping not found: id = " + id +
             ", centralServerId = " + centralServerId));
+  }
+
+  private void copyData(MaterialTypeMapping from, MaterialTypeMapping to) {
+    to.setMaterialTypeId(from.getMaterialTypeId());
+    to.setCentralItemType(from.getCentralItemType());
+  }
+
+  private static Consumer<MaterialTypeMapping> setCentralServerRef(CentralServer centralServer) {
+    return mapping -> mapping.setCentralServer(centralServer);
   }
 
   private static Example<MaterialTypeMapping> mappingExampleWithServerId(UUID centralServerId) {
