@@ -19,6 +19,8 @@ public interface MaterialTypeMappingMapper {
 
 	MaterialTypeMapping toEntity(MaterialTypeMappingDTO dto);
 
+  List<MaterialTypeMapping> toEntities(Iterable<MaterialTypeMappingDTO> dtos);
+	
   @Mapping(target = "metadata.createdDate", source = "entity.createdDate")
   @Mapping(target = "metadata.createdByUsername", source = "entity.createdBy")
   @Mapping(target = "metadata.updatedDate", source = "entity.lastModifiedDate")
@@ -30,7 +32,13 @@ public interface MaterialTypeMappingMapper {
   default MaterialTypeMappingsDTO toDTOCollection(Page<MaterialTypeMapping> pageable) {
     List<MaterialTypeMappingDTO> dtos = defaultIfNull(toDTOs(pageable), emptyList());
 
-    return new MaterialTypeMappingsDTO().mappings(dtos).totalRecords((int) pageable.getTotalElements());
+    return new MaterialTypeMappingsDTO().materialTypeMappings(dtos).totalRecords((int) pageable.getTotalElements());
+  }
+
+  default MaterialTypeMappingsDTO toDTOCollection(Iterable<MaterialTypeMapping> entities) {
+    List<MaterialTypeMappingDTO> dtos = defaultIfNull(toDTOs(entities), emptyList());
+
+    return new MaterialTypeMappingsDTO().materialTypeMappings(dtos).totalRecords(dtos.size());
   }
 
 }

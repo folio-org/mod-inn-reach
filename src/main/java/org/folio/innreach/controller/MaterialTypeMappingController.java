@@ -58,6 +58,16 @@ public class MaterialTypeMappingController implements MaterialTypeMappingsApi {
   }
 
   @Override
+  @PutMapping("/{centralServerId}/material-type-mappings")
+  public ResponseEntity<Void> updateMaterialTypeMappings(@PathVariable UUID centralServerId,
+      MaterialTypeMappingsDTO materialTypeMappingsDTO) {
+
+    materialTypeMappingService.updateAllMappings(centralServerId, materialTypeMappingsDTO);
+
+    return ResponseEntity.noContent().build();
+  }
+
+  @Override
   @PutMapping("/{centralServerId}/material-type-mappings/{id}")
   public ResponseEntity<Void> updateMaterialTypeMapping(@PathVariable UUID centralServerId, @PathVariable UUID id,
       MaterialTypeMappingDTO materialTypeMappingDTO) {
