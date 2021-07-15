@@ -34,7 +34,7 @@
         },
         {
           "methods": ["POST"],
-          "pathPattern": "/inn-reach/central-servers/contribution-criteria",
+          "pathPattern": "/inn-reach/central-servers/{centralServerId}/contribution-criteria",
           "permissionsRequired": ["inn-reach.central-servers.contribution-criteria-configuration.item.post"]
         },
         {
