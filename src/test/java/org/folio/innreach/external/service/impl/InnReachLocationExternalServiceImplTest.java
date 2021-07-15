@@ -45,7 +45,7 @@ class InnReachLocationExternalServiceImplTest {
     when(innReachLocationClient.getAllLocations(any(), any(), any(), any()))
       .thenReturn(new InnReachLocationsDTO(Collections.emptyList()));
 
-    innReachLocationExternalService.updateAllLocations(createCentralServerConnectionDetailsDTO(), List.of(
+    innReachLocationExternalService.submitMappedLocationsToInnReach(createCentralServerConnectionDetailsDTO(), List.of(
       new InnReachLocationDTO("qwe12", "qwe12 description")
     ));
 
@@ -64,7 +64,7 @@ class InnReachLocationExternalServiceImplTest {
         new InnReachLocationDTO("qwe12", "qwe12 description")
       )));
 
-    innReachLocationExternalService.updateAllLocations(createCentralServerConnectionDetailsDTO(), List.of(
+    innReachLocationExternalService.submitMappedLocationsToInnReach(createCentralServerConnectionDetailsDTO(), List.of(
       new InnReachLocationDTO("asd12", "asd12 description")
     ));
 
@@ -83,7 +83,7 @@ class InnReachLocationExternalServiceImplTest {
         new InnReachLocationDTO("qwe12", "qwe12 description")
       )));
 
-    innReachLocationExternalService.updateAllLocations(createCentralServerConnectionDetailsDTO(), List.of(
+    innReachLocationExternalService.submitMappedLocationsToInnReach(createCentralServerConnectionDetailsDTO(), List.of(
       new InnReachLocationDTO("qwe12", "qwe12 modified description")
     ));
 

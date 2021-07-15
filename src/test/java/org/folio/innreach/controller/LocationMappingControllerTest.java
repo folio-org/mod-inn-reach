@@ -40,6 +40,7 @@ import org.springframework.test.context.jdbc.SqlMergeMode;
 
 import org.folio.innreach.controller.base.BaseControllerTest;
 import org.folio.innreach.domain.entity.LocationMapping;
+import org.folio.innreach.domain.service.CentralServerService;
 import org.folio.innreach.dto.Error;
 import org.folio.innreach.dto.LocationMappingDTO;
 import org.folio.innreach.dto.LocationMappingsDTO;
@@ -73,6 +74,9 @@ class LocationMappingControllerTest extends BaseControllerTest {
   private LocationMappingRepository repository;
   @Autowired
   private LocationMappingMapper mapper;
+
+  @MockBean
+  private CentralServerService centralServerService;
 
   @MockBean
   private InnReachLocationExternalService innReachLocationExternalService;

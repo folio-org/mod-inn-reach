@@ -6,6 +6,7 @@ import static org.folio.innreach.domain.service.impl.ServiceUtils.equalIds;
 import static org.folio.innreach.domain.service.impl.ServiceUtils.initId;
 import static org.folio.innreach.domain.service.impl.ServiceUtils.mergeAndSave;
 
+import java.util.List;
 import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -18,6 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import org.folio.innreach.domain.entity.CentralServer;
+import org.folio.innreach.domain.entity.InnReachLocation;
 import org.folio.innreach.domain.entity.LocationMapping;
 import org.folio.innreach.domain.service.CentralServerService;
 import org.folio.innreach.domain.service.LocationMappingService;
@@ -25,6 +27,7 @@ import org.folio.innreach.dto.LocationMappingsDTO;
 import org.folio.innreach.external.dto.InnReachLocationDTO;
 import org.folio.innreach.external.service.InnReachLocationExternalService;
 import org.folio.innreach.mapper.LocationMappingMapper;
+import org.folio.innreach.repository.InnReachLocationRepository;
 import org.folio.innreach.repository.LocationMappingRepository;
 
 @RequiredArgsConstructor
@@ -33,6 +36,7 @@ import org.folio.innreach.repository.LocationMappingRepository;
 public class LocationMappingServiceImpl implements LocationMappingService {
 
   private final LocationMappingRepository repository;
+  private final InnReachLocationRepository innReachLocationRepository;
   private final LocationMappingMapper mapper;
   private final CentralServerService centralServerService;
   private final InnReachLocationExternalService innReachLocationExternalService;
@@ -50,7 +54,7 @@ public class LocationMappingServiceImpl implements LocationMappingService {
   @Override
   public LocationMappingsDTO updateAllMappings(UUID centralServerId, UUID libraryId,
       LocationMappingsDTO locationMappingsDTO) {
-    var stored = repository.fetchAllByCentralServer(centralServerId);
+    var stored = repository.findAll(mappingExampleWithServerId(centralServerId));
 
     var incoming = mapper.toEntities(locationMappingsDTO.getLocationMappings());
     var csRef = centralServerRef(centralServerId);
@@ -60,15 +64,10 @@ public class LocationMappingServiceImpl implements LocationMappingService {
 
     var saved = mergeAndSave(incoming, stored, repository, this::copyData);
 
-    var innReachLocationDTOS = saved.stream()
-      .map(LocationMapping::getInnReachLocation)
-      .filter(location -> location.getCode() != null && location.getDescription() != null)
-      .map(location -> new InnReachLocationDTO(location.getCode(), location.getDescription()))
-      .collect(Collectors.toList());
+    var centralServerMappedLocations = getCentralServerMappedLocations(saved);
+    var centralServerConnectionDetails = centralServerService.getCentralServerConnectionDetails(centralServerId);
 
-    var connectionDetailsDTO = centralServerService.getCentralServerConnectionDetails(centralServerId);
-
-    innReachLocationExternalService.updateAllLocations(connectionDetailsDTO, innReachLocationDTOS);
+    innReachLocationExternalService.submitMappedLocationsToInnReach(centralServerConnectionDetails, centralServerMappedLocations);
 
     return mapper.toDTOCollection(saved);
   }
@@ -95,6 +94,23 @@ public class LocationMappingServiceImpl implements LocationMappingService {
     toFind.setCentralServer(centralServerRef(centralServerId));
 
     return Example.of(toFind);
+  }
+
+  private List<InnReachLocationDTO> getCentralServerMappedLocations(List<LocationMapping> actualLibraryMappings) {
+    var locationsIds = getCentralServerMappedLocationsIds(actualLibraryMappings);
+
+    return innReachLocationRepository.findAllById(locationsIds)
+      .stream()
+      .map(innReachLocation -> new InnReachLocationDTO(innReachLocation.getCode(), innReachLocation.getDescription()))
+      .collect(Collectors.toList());
+  }
+
+  private List<UUID> getCentralServerMappedLocationsIds(List<LocationMapping> actualLibraryMappings) {
+    return actualLibraryMappings.stream()
+      .map(LocationMapping::getInnReachLocation)
+      .map(InnReachLocation::getId)
+      .distinct()
+      .collect(Collectors.toList());
   }
 
 }

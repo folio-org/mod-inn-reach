@@ -7,5 +7,6 @@ import org.folio.innreach.external.dto.InnReachLocationDTO;
 
 public interface InnReachLocationExternalService {
 
-  void updateAllLocations(CentralServerConnectionDetailsDTO connectionDetails, List<InnReachLocationDTO> updatedLocations);
+  void submitMappedLocationsToInnReach(CentralServerConnectionDetailsDTO connectionDetails,
+                                       List<InnReachLocationDTO> actualMappedLocations);
 }
