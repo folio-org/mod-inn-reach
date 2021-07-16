@@ -1,11 +1,11 @@
 package org.folio.innreach.fixture;
 
+import java.util.Random;
 import java.util.UUID;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.SneakyThrows;
 
-import java.util.Random;
 import org.folio.innreach.domain.entity.CentralServer;
 
 public class TestUtil {

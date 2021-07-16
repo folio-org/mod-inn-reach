@@ -2,10 +2,10 @@ package org.folio.innreach.domain.entity;
 
 import static org.folio.innreach.domain.entity.CentralServer.FETCH_ALL_BY_ID_QUERY;
 import static org.folio.innreach.domain.entity.CentralServer.FETCH_ALL_BY_ID_QUERY_NAME;
+import static org.folio.innreach.domain.entity.CentralServer.FETCH_CONNECTION_DETAILS_QUERY;
+import static org.folio.innreach.domain.entity.CentralServer.FETCH_CONNECTION_DETAILS_QUERY_NAME;
 import static org.folio.innreach.domain.entity.CentralServer.FETCH_ONE_BY_ID_QUERY;
 import static org.folio.innreach.domain.entity.CentralServer.FETCH_ONE_BY_ID_QUERY_NAME;
-import static org.folio.innreach.domain.entity.CentralServer.FETCH_ONE_WITH_CREDENTIALS_QUERY;
-import static org.folio.innreach.domain.entity.CentralServer.FETCH_ONE_WITH_CREDENTIALS_QUERY_NAME;
 import static org.folio.innreach.domain.entity.CentralServer.GET_IDS_QUERY;
 import static org.folio.innreach.domain.entity.CentralServer.GET_IDS_QUERY_NAME;
 
@@ -51,13 +51,13 @@ import org.folio.innreach.domain.entity.base.Identifiable;
   hints = @QueryHint(name = QueryHints.PASS_DISTINCT_THROUGH, value = "false")
 )
 @NamedQuery(
-  name = FETCH_ONE_WITH_CREDENTIALS_QUERY_NAME,
-  query = FETCH_ONE_WITH_CREDENTIALS_QUERY,
-  hints = @QueryHint(name = QueryHints.PASS_DISTINCT_THROUGH, value = "false")
-)
-@NamedQuery(
   name = GET_IDS_QUERY_NAME,
   query = GET_IDS_QUERY
+)
+@NamedQuery(
+  name = FETCH_CONNECTION_DETAILS_QUERY_NAME,
+  query = FETCH_CONNECTION_DETAILS_QUERY,
+  hints = @QueryHint(name = QueryHints.PASS_DISTINCT_THROUGH, value = "false")
 )
 public class CentralServer implements Identifiable<UUID> {
 
@@ -74,13 +74,18 @@ public class CentralServer implements Identifiable<UUID> {
   public static final String FETCH_ONE_BY_ID_QUERY_NAME = "CentralServer.fetchOne";
   public static final String FETCH_ONE_BY_ID_QUERY = FETCH_ALL_QUERY + FETCH_BY_ID_POSTFIX;
 
-  public static final String FETCH_ONE_WITH_CREDENTIALS_QUERY_NAME = "CentralServer.fetchOneWithCredentials";
-  public static final String FETCH_ONE_WITH_CREDENTIALS_QUERY = "SELECT DISTINCT cs FROM CentralServer AS cs " +
-    "LEFT JOIN FETCH cs.centralServerCredentials " +
-    "LEFT JOIN FETCH cs.localServerCredentials" + FETCH_BY_ID_POSTFIX;
-
   public static final String GET_IDS_QUERY_NAME = "CentralServer.getIds";
   public static final String GET_IDS_QUERY = "SELECT DISTINCT cs.id FROM CentralServer AS cs";
+
+  public static final String FETCH_CONNECTION_DETAILS_QUERY_NAME = "CentralServer.fetchConnectionDetails";
+  public static final String FETCH_CONNECTION_DETAILS_QUERY =
+    "SELECT new org.folio.innreach.domain.dto.CentralServerConnectionDetailsDTO(" +
+      "cs.id, " +
+      "cs.centralServerAddress, " +
+      "cs.localServerCode, " +
+      "cs.centralServerCredentials.centralServerKey, " +
+      "cs.centralServerCredentials.centralServerSecret" +
+    ") FROM CentralServer AS cs " + FETCH_BY_ID_POSTFIX;
 
   @Id
   @GeneratedValue(strategy = GenerationType.AUTO)

@@ -30,6 +30,7 @@ import java.util.function.Predicate;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
@@ -39,10 +40,12 @@ import org.springframework.test.context.jdbc.SqlMergeMode;
 
 import org.folio.innreach.controller.base.BaseControllerTest;
 import org.folio.innreach.domain.entity.LocationMapping;
+import org.folio.innreach.domain.service.CentralServerService;
 import org.folio.innreach.dto.Error;
 import org.folio.innreach.dto.LocationMappingDTO;
 import org.folio.innreach.dto.LocationMappingsDTO;
 import org.folio.innreach.dto.ValidationErrorsDTO;
+import org.folio.innreach.external.service.InnReachLocationExternalService;
 import org.folio.innreach.mapper.LocationMappingMapper;
 import org.folio.innreach.repository.LocationMappingRepository;
 
@@ -71,6 +74,12 @@ class LocationMappingControllerTest extends BaseControllerTest {
   private LocationMappingRepository repository;
   @Autowired
   private LocationMappingMapper mapper;
+
+  @MockBean
+  private CentralServerService centralServerService;
+
+  @MockBean
+  private InnReachLocationExternalService innReachLocationExternalService;
 
 
   @Test

@@ -26,7 +26,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 import org.folio.innreach.domain.exception.EntityNotFoundException;
 import org.folio.innreach.external.dto.AccessTokenDTO;
-import org.folio.innreach.external.service.InnReachAuthService;
+import org.folio.innreach.external.service.InnReachAuthExternalService;
 import org.folio.innreach.mapper.CentralServerMapper;
 import org.folio.innreach.repository.CentralServerRepository;
 
@@ -36,7 +36,7 @@ class CentralServerServiceImplTest {
   private CentralServerRepository centralServerRepository;
 
   @Mock
-  private InnReachAuthService innReachAuthService;
+  private InnReachAuthExternalService innReachAuthExternalService;
 
   @Spy
   private CentralServerMapper centralServerMapper = Mappers.getMapper(CentralServerMapper.class);
@@ -56,14 +56,14 @@ class CentralServerServiceImplTest {
 
   @Test
   void createCentralServer_when_centralServerIsNew_and_connectionIsOK() {
-    when(innReachAuthService.getAccessToken(any())).thenReturn(
+    when(innReachAuthExternalService.getAccessToken(any())).thenReturn(
       new AccessTokenDTO("accessToken", "Bearer", 599));
 
     var centralServerDTO = createCentralServerDTO();
 
     centralServerService.createCentralServer(centralServerDTO);
 
-    verify(innReachAuthService).getAccessToken(any());
+    verify(innReachAuthExternalService).getAccessToken(any());
     verify(centralServerRepository).save(any());
   }
 

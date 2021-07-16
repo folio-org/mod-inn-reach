@@ -1,10 +1,10 @@
 package org.folio.innreach.fixture;
 
-import org.folio.innreach.domain.entity.ItemContributionOptionsConfiguration;
+import static org.folio.innreach.fixture.TestUtil.randomInteger;
 
 import java.util.UUID;
 
-import static org.folio.innreach.fixture.TestUtil.randomInteger;
+import org.folio.innreach.domain.entity.ItemContributionOptionsConfiguration;
 
 public class ItemContributionOptionsConfigurationFixture {
   private static final String[] notAvailableItemStatuses = {"Aged to lost",

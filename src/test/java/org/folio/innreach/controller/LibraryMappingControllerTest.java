@@ -30,6 +30,7 @@ import java.util.function.Predicate;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
@@ -39,10 +40,12 @@ import org.springframework.test.context.jdbc.SqlMergeMode;
 
 import org.folio.innreach.controller.base.BaseControllerTest;
 import org.folio.innreach.domain.entity.LibraryMapping;
+import org.folio.innreach.domain.service.CentralServerService;
 import org.folio.innreach.dto.Error;
 import org.folio.innreach.dto.LibraryMappingDTO;
 import org.folio.innreach.dto.LibraryMappingsDTO;
 import org.folio.innreach.dto.ValidationErrorsDTO;
+import org.folio.innreach.external.service.InnReachLocationExternalService;
 import org.folio.innreach.mapper.LibraryMappingMapper;
 import org.folio.innreach.repository.LibraryMappingRepository;
 
@@ -71,6 +74,11 @@ class LibraryMappingControllerTest extends BaseControllerTest {
   @Autowired
   private LibraryMappingMapper mapper;
 
+  @MockBean
+  private CentralServerService centralServerService;
+
+  @MockBean
+  private InnReachLocationExternalService innReachLocationExternalService;
 
   @Test
   @Sql(scripts = {

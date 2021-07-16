@@ -6,6 +6,7 @@ import java.util.stream.Collectors;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.folio.innreach.domain.dto.CentralServerConnectionDetailsDTO;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -20,8 +21,7 @@ import org.folio.innreach.domain.exception.EntityNotFoundException;
 import org.folio.innreach.domain.service.CentralServerService;
 import org.folio.innreach.dto.CentralServerDTO;
 import org.folio.innreach.dto.CentralServersDTO;
-import org.folio.innreach.external.dto.AccessTokenRequestDTO;
-import org.folio.innreach.external.service.InnReachAuthService;
+import org.folio.innreach.external.service.InnReachAuthExternalService;
 import org.folio.innreach.mapper.CentralServerMapper;
 import org.folio.innreach.repository.CentralServerRepository;
 
@@ -32,7 +32,7 @@ public class CentralServerServiceImpl implements CentralServerService {
 
   private final CentralServerRepository centralServerRepository;
   private final CentralServerMapper centralServerMapper;
-  private final InnReachAuthService innReachAuthService;
+  private final InnReachAuthExternalService innReachAuthExternalService;
   private final PasswordEncoder passwordEncoder;
 
   @Override
@@ -58,11 +58,15 @@ public class CentralServerServiceImpl implements CentralServerService {
     log.debug("Get an access token to check the connection to the Central Server with URI: {}",
       centralServerDTO.getCentralServerAddress());
 
-    innReachAuthService.getAccessToken(new AccessTokenRequestDTO(
-      centralServerDTO.getCentralServerAddress(),
-      centralServerDTO.getCentralServerKey(),
-      centralServerDTO.getCentralServerSecret())
-    );
+    var centralServerConnectionDetailsDTO = CentralServerConnectionDetailsDTO.builder()
+      .id(centralServerDTO.getId())
+      .connectionUrl(centralServerDTO.getCentralServerAddress())
+      .localCode(centralServerDTO.getLocalServerCode())
+      .key(centralServerDTO.getCentralServerKey())
+      .secret(centralServerDTO.getCentralServerSecret())
+      .build();
+
+    innReachAuthExternalService.getAccessToken(centralServerConnectionDetailsDTO);
   }
 
   private void hashAndSaltLocalServerCredentials(LocalServerCredentials localServerCredentials) {
@@ -185,5 +189,11 @@ public class CentralServerServiceImpl implements CentralServerService {
       .orElseThrow(() -> new EntityNotFoundException("Central server with ID: " + centralServerId + " not found"));
 
     centralServerRepository.delete(centralServer);
+  }
+
+  @Override
+  public CentralServerConnectionDetailsDTO getCentralServerConnectionDetails(UUID centralServerId) {
+    return centralServerRepository.fetchConnectionDetails(centralServerId)
+      .orElseThrow(() -> new EntityNotFoundException("Central server with ID: " + centralServerId + " not found"));
   }
 }

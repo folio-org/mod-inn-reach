@@ -1,5 +1,5 @@
 INSERT INTO central_server(id, name, description, local_server_code, central_server_address, loan_type_id)
-VALUES ('edab6baf-c696-42b1-89bb-1bbb8759b0d2', 'name', 'description', 'abc12',
+VALUES ('edab6baf-c696-42b1-89bb-1bbb8759b0d2', 'name', 'description', 'fli01',
         'https://rssandbox-api.iii.com', '6dae9cd4-ae7c-11eb-8529-0242ac130003');
 
 INSERT INTO central_server_credentials(central_server_id, central_server_key, central_server_secret)

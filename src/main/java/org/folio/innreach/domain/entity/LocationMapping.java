@@ -32,7 +32,6 @@ public class LocationMapping extends AbstractEntity {
   @JoinColumn(name = "central_server_id")
   private CentralServer centralServer;
 
-
   public LocationMapping(UUID id) {
     super(id);
   }
