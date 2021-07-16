@@ -34,7 +34,7 @@
         },
         {
           "methods": ["POST"],
-          "pathPattern": "/inn-reach/central-servers/contribution-criteria",
+          "pathPattern": "/inn-reach/central-servers/{centralServerId}/contribution-criteria",
           "permissionsRequired": ["inn-reach.central-servers.contribution-criteria-configuration.item.post"]
         },
         {
@@ -91,6 +91,11 @@
           "methods": ["POST"],
           "pathPattern": "/inn-reach/central-servers/{centralServerId}/material-type-mappings",
           "permissionsRequired": ["inn-reach.material-type-mappings.item.post"]
+        },
+        {
+          "methods": ["PUT"],
+          "pathPattern": "/inn-reach/central-servers/{centralServerId}/material-type-mappings",
+          "permissionsRequired": ["inn-reach.material-type-mappings.collection.put"]
         },
         {
           "methods": ["PUT"],
@@ -274,6 +279,11 @@
       "description" : "Get an inn reach material type mapping entry by id"
     },
     {
+      "permissionName" : "inn-reach.material-type-mappings.collection.put",
+      "displayName" : "update a collection of inn reach material type mapping entries",
+      "description" : "Update a collection of inn reach material type mapping entries"
+    },
+    {
       "permissionName" : "inn-reach.material-type-mappings.item.put",
       "displayName" : "modify an inn reach material type mapping entry",
       "description" : "Modify an inn reach material type mapping entry"
@@ -291,6 +301,7 @@
         "inn-reach.material-type-mappings.item.post",
         "inn-reach.material-type-mappings.collection.get",
         "inn-reach.material-type-mappings.item.get",
+        "inn-reach.material-type-mappings.collection.put",
         "inn-reach.material-type-mappings.item.put",
         "inn-reach.material-type-mappings.item.delete"
       ]
