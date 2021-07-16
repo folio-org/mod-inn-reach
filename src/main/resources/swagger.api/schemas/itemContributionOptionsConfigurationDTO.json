@@ -2,11 +2,6 @@
   "description": "Item Contribution Options",
   "type": "object",
   "properties": {
-    "centralServerId": {
-      "description": "Central server id",
-      "type": "string",
-      "format": "UUID"
-    },
     "notAvailableItemStatuses": {
       "description": "A list of FOLIO item states that should be considered \"Not available\"",
       "type": "array",

@@ -7,7 +7,7 @@ import java.util.UUID;
 public interface ItemContributionOptionsConfigurationService {
   ItemContributionOptionsConfigurationDTO getItmContribOptConf(UUID centralServerId);
 
-  ItemContributionOptionsConfigurationDTO createItmContribOptConf(ItemContributionOptionsConfigurationDTO itmContribOptConfDTO);
+  ItemContributionOptionsConfigurationDTO createItmContribOptConf(UUID centralServerId, ItemContributionOptionsConfigurationDTO itmContribOptConfDTO);
 
-  ItemContributionOptionsConfigurationDTO updateItmContribOptConf(ItemContributionOptionsConfigurationDTO itmContribOptConfDTO);
+  ItemContributionOptionsConfigurationDTO updateItmContribOptConf(UUID centralServerId, ItemContributionOptionsConfigurationDTO itmContribOptConfDTO);
 }

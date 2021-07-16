@@ -3,11 +3,12 @@ package org.folio.innreach.domain.service.impl;
 import org.folio.innreach.domain.entity.ItemContributionOptionsConfiguration;
 import org.folio.innreach.domain.exception.EntityNotFoundException;
 import org.folio.innreach.dto.ItemContributionOptionsConfigurationDTO;
+import org.folio.innreach.mapper.DateMapper;
 import org.folio.innreach.mapper.ItemContributionOptionsConfigurationMapper;
+import org.folio.innreach.mapper.ItemContributionOptionsConfigurationMapperImpl;
 import org.folio.innreach.repository.ItemContributionOptionsConfigurationRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mapstruct.factory.Mappers;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
@@ -31,7 +32,7 @@ class ItemContributionOptionsConfigurationServiceImplTest {
   private ItemContributionOptionsConfigurationRepository repository;
 
   @Spy
-  private final ItemContributionOptionsConfigurationMapper mapper = Mappers.getMapper(ItemContributionOptionsConfigurationMapper.class);
+  private final ItemContributionOptionsConfigurationMapper mapper = new ItemContributionOptionsConfigurationMapperImpl(new DateMapper());
 
   @InjectMocks
   private ItemContributionOptionsConfigurationServiceImpl service;
@@ -58,7 +59,7 @@ class ItemContributionOptionsConfigurationServiceImplTest {
 
     when(repository.save(any(ItemContributionOptionsConfiguration.class))).thenReturn(new ItemContributionOptionsConfiguration());
 
-    var createdItmContribOptConf = service.createItmContribOptConf(itmContribOptConfDTO);
+    var createdItmContribOptConf = service.createItmContribOptConf(UUID.randomUUID(), itmContribOptConfDTO);
 
     verify(mapper).toEntity(any(ItemContributionOptionsConfigurationDTO.class));
     verify(repository).save(any(ItemContributionOptionsConfiguration.class));
@@ -72,7 +73,7 @@ class ItemContributionOptionsConfigurationServiceImplTest {
 
     var updatedItmContribOptConf = createItmContribOptConfDTO();
 
-    var updatedItmContribOptConfDTO = service.updateItmContribOptConf(updatedItmContribOptConf);
+    var updatedItmContribOptConfDTO = service.updateItmContribOptConf(UUID.randomUUID(), updatedItmContribOptConf);
 
     verify(repository).findById(any());
 

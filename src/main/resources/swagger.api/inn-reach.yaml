@@ -551,7 +551,6 @@ paths:
               $ref: "#/components/schemas/itemContributionOptionsConfigurationDTO"
       parameters:
         - $ref: '#/components/parameters/centralServerId'
-  /central-servers/contribution-options:
     post:
       description: Add new item contribution options configuration associated with the central server
       operationId: createItemContributionOptionsConfiguration
@@ -574,6 +573,8 @@ paths:
             schema:
               $ref: "#/components/schemas/itemContributionOptionsConfigurationDTO"
         required: true
+      parameters:
+        - $ref: '#/components/parameters/centralServerId'
 components:
   schemas:
     UUID:

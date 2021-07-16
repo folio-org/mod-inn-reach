@@ -31,21 +31,21 @@ public class ItemContributionOptionsConfigurationServiceImpl implements ItemCont
   }
 
   @Override
-  public ItemContributionOptionsConfigurationDTO createItmContribOptConf(ItemContributionOptionsConfigurationDTO itmContribOptConfDTO) {
-    var centralServerId = itmContribOptConfDTO.getCentralServerId();
+  public ItemContributionOptionsConfigurationDTO createItmContribOptConf(UUID centralServerId, ItemContributionOptionsConfigurationDTO itmContribOptConfDTO) {
     repository.findById(centralServerId).ifPresent(itmContribOptConf -> {
       throw new EntityExistsException(TEXT_ITM_CONTRIB_OPT_CONFIG_WITH_ID
         + itmContribOptConf.getCentralServerId() + " already exists.");
     });
     var itmContribOptConf = mapper.toEntity(itmContribOptConfDTO);
+    itmContribOptConf.setCentralServerId(centralServerId);
     var createdItmContribOptConf = repository.save(itmContribOptConf);
     return mapper.toDto(createdItmContribOptConf);
   }
 
   @Override
-  public ItemContributionOptionsConfigurationDTO updateItmContribOptConf(ItemContributionOptionsConfigurationDTO itmContribOptConfDTO) {
-    var itmContribOptConf = repository.findById(itmContribOptConfDTO.getCentralServerId())
-      .orElseThrow(() -> new EntityNotFoundException(TEXT_ITM_CONTRIB_OPT_CONFIG_WITH_ID + itmContribOptConfDTO.getCentralServerId() + " not found"));
+  public ItemContributionOptionsConfigurationDTO updateItmContribOptConf(UUID centralServerId, ItemContributionOptionsConfigurationDTO itmContribOptConfDTO) {
+    var itmContribOptConf = repository.findById(centralServerId)
+      .orElseThrow(() -> new EntityNotFoundException(TEXT_ITM_CONTRIB_OPT_CONFIG_WITH_ID + centralServerId + " not found"));
     var updatedItmContribOptConf = mapper.toEntity(itmContribOptConfDTO);
     updateItmContribOptConf(itmContribOptConf, updatedItmContribOptConf);
 

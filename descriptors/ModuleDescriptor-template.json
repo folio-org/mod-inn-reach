@@ -139,17 +139,17 @@
         },
         {
           "methods": ["GET"],
-          "pathPattern": "/inn-reach/central-servers/{centralServerId}/contribution-options",
+          "pathPattern": "/inn-reach/central-servers/{centralServerId}/item-contribution-options",
           "permissionsRequired": ["inn-reach.central-servers.item-contribution-options-configuration.item.get"]
         },
         {
           "methods": ["POST"],
-          "pathPattern": "/inn-reach/central-servers/contribution-options",
+          "pathPattern": "/inn-reach/central-servers/{centralServerId}/item-contribution-options",
           "permissionsRequired": ["inn-reach.central-servers.item-contribution-options-configuration.item.post"]
         },
         {
           "methods": ["PUT"],
-          "pathPattern": "/inn-reach/central-servers/{centralServerId}/contribution-options",
+          "pathPattern": "/inn-reach/central-servers/{centralServerId}/item-contribution-options",
           "permissionsRequired": ["inn-reach.central-servers.item-contribution-options-configuration.item.put"]
         }
       ]

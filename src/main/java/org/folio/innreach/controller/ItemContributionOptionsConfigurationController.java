@@ -18,26 +18,28 @@ import java.util.UUID;
 
 @RequiredArgsConstructor
 @RestController
-@RequestMapping("/inn-reach/central-servers/")
+@RequestMapping("/inn-reach/central-servers/{centralServerId}/item-contribution-options")
 public class ItemContributionOptionsConfigurationController implements ItemContributionOptionsConfigurationApi {
   private final ItemContributionOptionsConfigurationService service;
 
   @Override
-  @GetMapping("{centralServerId}/contribution-options")
+  @GetMapping
   public ResponseEntity<ItemContributionOptionsConfigurationDTO> getItemContributionOptionsConfigurationById(@PathVariable UUID centralServerId) {
     var itmContribOptConf = service.getItmContribOptConf(centralServerId);
     return ResponseEntity.ok(itmContribOptConf);
   }
+
   @Override
-  @PostMapping("/contribution-options")
-  public ResponseEntity<ItemContributionOptionsConfigurationDTO> createItemContributionOptionsConfiguration(@Valid ItemContributionOptionsConfigurationDTO itmContribOptConfDTO) {
-    var createdItmContribOptConf = service.createItmContribOptConf(itmContribOptConfDTO);
+  @PostMapping
+  public ResponseEntity<ItemContributionOptionsConfigurationDTO> createItemContributionOptionsConfiguration(@PathVariable UUID centralServerId, @Valid ItemContributionOptionsConfigurationDTO itmContribOptConfDTO) {
+    var createdItmContribOptConf = service.createItmContribOptConf(centralServerId, itmContribOptConfDTO);
     return ResponseEntity.status(HttpStatus.CREATED).body(createdItmContribOptConf);
   }
+
   @Override
-  @PutMapping("{centralServerId}/contribution-options")
-  public ResponseEntity<Void> updateItemContributionOptionsConfiguration(@PathVariable UUID centralServerId, @Valid ItemContributionOptionsConfigurationDTO itmContribOptConfDTO){
-    service.updateItmContribOptConf(itmContribOptConfDTO);
+  @PutMapping
+  public ResponseEntity<Void> updateItemContributionOptionsConfiguration(@PathVariable UUID centralServerId, @Valid ItemContributionOptionsConfigurationDTO itmContribOptConfDTO) {
+    service.updateItmContribOptConf(centralServerId, itmContribOptConfDTO);
     return ResponseEntity.noContent().build();
   }
 }
