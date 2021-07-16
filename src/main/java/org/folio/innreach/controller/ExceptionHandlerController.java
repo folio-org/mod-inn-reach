@@ -7,6 +7,7 @@ import javax.validation.ConstraintViolation;
 import javax.validation.ConstraintViolationException;
 
 import lombok.extern.log4j.Log4j2;
+import org.folio.innreach.domain.exception.UniqueConstraintViolationException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.AuthenticationException;
@@ -86,7 +87,7 @@ public class ExceptionHandlerController {
 
   private List<ValidationErrorDTO> collectValidationErrors(MethodArgumentNotValidException e) {
     return e.getBindingResult()
-	    .getFieldErrors()
+      .getFieldErrors()
       .stream()
       .map(this::mapFieldErrorToValidationError)
       .collect(Collectors.toList());
@@ -110,5 +111,11 @@ public class ExceptionHandlerController {
     error.setCode(Integer.toString(code.value()));
     error.setMessage(message);
     return error;
+  }
+
+  @ExceptionHandler(UniqueConstraintViolationException.class)
+  @ResponseStatus(HttpStatus.CONFLICT)
+  public Error handleUniqueConstraintViolationException(UniqueConstraintViolationException e) {
+    return createError(HttpStatus.CONFLICT, e.getMessage());
   }
 }

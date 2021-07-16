@@ -7,6 +7,8 @@ import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
 
 import lombok.RequiredArgsConstructor;
+import org.folio.innreach.domain.exception.UniqueConstraintViolationException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -48,7 +50,7 @@ public class CentralServerController implements CentralServersApi {
   @Override
   @GetMapping
   public ResponseEntity<CentralServersDTO> getCentralServers(@Min(0) @Max(2147483647) @Valid Integer offset,
-      @Min(0) @Max(2147483647) @Valid Integer limit) {
+                                                             @Min(0) @Max(2147483647) @Valid Integer limit) {
     var allCentralServers = centralServerService.getAllCentralServers(offset, limit);
     return ResponseEntity.ok(allCentralServers);
   }
@@ -56,7 +58,12 @@ public class CentralServerController implements CentralServersApi {
   @Override
   @PostMapping
   public ResponseEntity<CentralServerDTO> postCentralServer(@Valid CentralServerDTO centralServerDTO) {
-    var createdCentralServer = centralServerService.createCentralServer(centralServerDTO);
+    CentralServerDTO createdCentralServer;
+    try {
+      createdCentralServer = centralServerService.createCentralServer(centralServerDTO);
+    } catch (DataIntegrityViolationException e) {
+      throw new UniqueConstraintViolationException(e.getMessage());
+    }
     return ResponseEntity.status(HttpStatus.CREATED).body(createdCentralServer);
   }
 
