@@ -19,20 +19,20 @@ import org.springframework.test.context.jdbc.Sql;
 import org.folio.innreach.domain.entity.ItemContributionOptionsConfiguration;
 
 class ItemContributionOptionsConfigurationRepositoryTest extends BaseRepositoryTest {
-  private static final String PRE_POPULATED_ITEM_CONTRIBUTION_OPTIONS_CONFIGURATION_ID = "edab6baf-c696-42b1-89bb-1bbb8759b0d2";
+  private static final String PRE_POPULATED_ITM_CONTRIB_OPT_CONFIG_ID = "edab6baf-c696-42b1-89bb-1bbb8759b0d2";
   private static final String PRE_POPULATED_CENTRAL_SERVER_ID = "edab6baf-c696-42b1-89bb-1bbb8759b0d2";
 
   @Autowired
-  private ItemContributionOptionsConfigurationRepository itemContributionOptionsConfigurationRepository;
+  private ItemContributionOptionsConfigurationRepository repository;
 
   @Test
   @Sql(scripts = {"classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/itm-contrib-opt-conf/pre-populate-itm-contrib-opt-conf.sql"})
   void getItmContribOptConf_when_itmContribOptConfExists() {
-    var itmContribOptConfById = itemContributionOptionsConfigurationRepository.getOne(UUID.fromString(PRE_POPULATED_ITEM_CONTRIBUTION_OPTIONS_CONFIGURATION_ID));
+    var itmContribOptConfById = repository.getOne(UUID.fromString(PRE_POPULATED_ITM_CONTRIB_OPT_CONFIG_ID));
 
     assertNotNull(itmContribOptConfById);
-    assertEquals(UUID.fromString(PRE_POPULATED_ITEM_CONTRIBUTION_OPTIONS_CONFIGURATION_ID), itmContribOptConfById.getCentralServerId());
+    assertEquals(UUID.fromString(PRE_POPULATED_ITM_CONTRIB_OPT_CONFIG_ID), itmContribOptConfById.getCentralServerId());
   }
 
   @Test
@@ -40,7 +40,7 @@ class ItemContributionOptionsConfigurationRepositoryTest extends BaseRepositoryT
   void saveItmContribOptConf_when_itmContribOptConfDoesNotExists() {
     var itmContribOptConf = createItmContribOptConf();
     itmContribOptConf.setCentralServerId(UUID.fromString(PRE_POPULATED_CENTRAL_SERVER_ID));
-    var savedItmContribOptConf = itemContributionOptionsConfigurationRepository.save(itmContribOptConf);
+    var savedItmContribOptConf = repository.save(itmContribOptConf);
 
     assertNotNull(savedItmContribOptConf);
     assertNotNull(savedItmContribOptConf.getCentralServerId());
@@ -54,7 +54,7 @@ class ItemContributionOptionsConfigurationRepositoryTest extends BaseRepositoryT
   @Sql(scripts = {"classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/itm-contrib-opt-conf/pre-populate-itm-contrib-opt-conf.sql"})
   void updateItmContribOptConf_when_itmContribOptConfDataIsValid() {
-    var savedItmContribOptConf = itemContributionOptionsConfigurationRepository.getOne(UUID.fromString(PRE_POPULATED_ITEM_CONTRIBUTION_OPTIONS_CONFIGURATION_ID));
+    var savedItmContribOptConf = repository.getOne(UUID.fromString(PRE_POPULATED_ITM_CONTRIB_OPT_CONFIG_ID));
 
     List<UUID> updatedNonLendableLoanTypes = savedItmContribOptConf.getNonLendableLoanTypes();
     updatedNonLendableLoanTypes.add(UUID.randomUUID());
@@ -70,7 +70,7 @@ class ItemContributionOptionsConfigurationRepositoryTest extends BaseRepositoryT
     savedItmContribOptConf.setNonLendableMaterialTypes(updatedNonLendableMaterialTypes);
     savedItmContribOptConf.setNotAvailableItemStatuses(updatedNotAvailableItemStatuses);
 
-    var updatedItmContribOptConf = itemContributionOptionsConfigurationRepository.save(savedItmContribOptConf);
+    var updatedItmContribOptConf = repository.save(savedItmContribOptConf);
 
     assertEquals(savedItmContribOptConf.getCentralServerId(), updatedItmContribOptConf.getCentralServerId());
     assertEquals(updatedNonLendableLoanTypes, updatedItmContribOptConf.getNonLendableLoanTypes());
@@ -83,20 +83,20 @@ class ItemContributionOptionsConfigurationRepositoryTest extends BaseRepositoryT
   @Sql(scripts = {"classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/itm-contrib-opt-conf/pre-populate-itm-contrib-opt-conf.sql"})
   void deleteItmContribOptConf_when_itmContribOptConfExists() {
-    UUID id = UUID.fromString(PRE_POPULATED_ITEM_CONTRIBUTION_OPTIONS_CONFIGURATION_ID);
-    itemContributionOptionsConfigurationRepository.deleteById(id);
+    UUID id = UUID.fromString(PRE_POPULATED_ITM_CONTRIB_OPT_CONFIG_ID);
+    repository.deleteById(id);
 
-    Optional<ItemContributionOptionsConfiguration> deleted = itemContributionOptionsConfigurationRepository.findById(id);
-    assertTrue(deleted.isEmpty());
+    Optional<ItemContributionOptionsConfiguration> deletedItmContribOptConf = repository.findById(id);
+    assertTrue(deletedItmContribOptConf.isEmpty());
   }
 
   @Test
   @Sql(scripts = {"classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/itm-contrib-opt-conf/pre-populate-itm-contrib-opt-conf.sql"})
   void throwException_when_updatingItmContribOptConfWithExcludedItemStatus() {
-    var itmContribOptConf = itemContributionOptionsConfigurationRepository.getOne(UUID.fromString(PRE_POPULATED_ITEM_CONTRIBUTION_OPTIONS_CONFIGURATION_ID));
+    var itmContribOptConf = repository.getOne(UUID.fromString(PRE_POPULATED_ITM_CONTRIB_OPT_CONFIG_ID));
     itmContribOptConf.getNotAvailableItemStatuses().add("Available");
 
-    assertThrows(DataIntegrityViolationException.class, () -> itemContributionOptionsConfigurationRepository.saveAndFlush(itmContribOptConf));
+    assertThrows(DataIntegrityViolationException.class, () -> repository.saveAndFlush(itmContribOptConf));
   }
 }

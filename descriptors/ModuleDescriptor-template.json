@@ -136,6 +136,21 @@
           "methods": ["POST"],
           "pathPattern": "/inn-reach/authentication",
           "permissionsRequired": ["inn-reach.authentication.item.post"]
+        },
+        {
+          "methods": ["GET"],
+          "pathPattern": "/inn-reach/central-servers/{centralServerId}/item-contribution-options",
+          "permissionsRequired": ["inn-reach.central-servers.item-contribution-options-configuration.item.get"]
+        },
+        {
+          "methods": ["POST"],
+          "pathPattern": "/inn-reach/central-servers/{centralServerId}/item-contribution-options",
+          "permissionsRequired": ["inn-reach.central-servers.item-contribution-options-configuration.item.post"]
+        },
+        {
+          "methods": ["PUT"],
+          "pathPattern": "/inn-reach/central-servers/{centralServerId}/item-contribution-options",
+          "permissionsRequired": ["inn-reach.central-servers.item-contribution-options-configuration.item.put"]
         }
       ]
     },
@@ -363,6 +378,31 @@
       ]
     },
     {
+      "permissionName" : "inn-reach.central-servers.item-contribution-options-configuration.item.get",
+      "displayName" : "get item contribution options configuration",
+      "description" : "Get Item Contribution Options Configuration"
+    },
+    {
+      "permissionName" : "inn-reach.central-servers.item-contribution-options-configuration.item.post",
+      "displayName" : "create item contribution options configuration",
+      "description" : "Add Item Contribution Options Configuration"
+    },
+    {
+      "permissionName" : "inn-reach.central-servers.item-contribution-options-configuration.item.put",
+      "displayName" : "update item contribution options configuration",
+      "description" : "update Item Contribution Options Configuration"
+    },
+    {
+      "permissionName" : "inn-reach.central-servers.item-contribution-options-configuration.all",
+      "displayName" : "inn reach API module - all permissions of item contribution options configuration",
+      "description" : "All permissions for Item Contribution Options Configuration",
+      "subPermissions" : [
+        "inn-reach.central-servers.item-contribution-options-configuration.item.get",
+        "inn-reach.central-servers.item-contribution-options-configuration.item.post",
+        "inn-reach.central-servers.item-contribution-options-configuration.item.put"
+      ]
+    },
+    {
       "permissionName" : "inn-reach.all",
       "displayName" : "inn reach API module - all permissions",
       "description" : "All permissions for inn reach",
@@ -374,7 +414,8 @@
         "inn-reach.library-mappings.all",
         "inn-reach.location-mappings.all",
         "inn-reach.d2r.settings.any.get",
-        "inn-reach.authentication.all"
+        "inn-reach.authentication.all",
+        "inn-reach.central-servers.item-contribution-options-configuration.all"
       ]
     }
   ],
