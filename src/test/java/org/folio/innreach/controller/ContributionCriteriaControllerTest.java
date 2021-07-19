@@ -9,7 +9,7 @@ import static org.hamcrest.Matchers.samePropertyValuesAs;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.springframework.http.HttpStatus.BAD_REQUEST;
+import static org.springframework.http.HttpStatus.CONFLICT;
 import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TEST_METHOD;
 import static org.springframework.test.context.jdbc.SqlMergeMode.MergeMode.MERGE;
 
@@ -125,13 +125,13 @@ class ContributionCriteriaControllerTest extends BaseControllerTest {
       "classpath:db/central-server/pre-populate-central-server.sql",
       "classpath:db/contribution-criteria/pre-populate-contribution-criteria.sql"
   })
-  void return400WhenCriteriaAlreadyExists() {
+  void return409WhenCriteriaAlreadyExists() {
     var newCriteria = deserializeFromJsonFile("/contribution-criteria/create-contribution-configuration-request.json",
         ContributionCriteriaDTO.class);
 
     var responseEntity = testRestTemplate.postForEntity(baseMappingURL(), newCriteria, Error.class);
 
-    assertEquals(BAD_REQUEST, responseEntity.getStatusCode());
+    assertEquals(CONFLICT, responseEntity.getStatusCode());
     assertNotNull(responseEntity.getBody());
     assertThat(responseEntity.getBody().getMessage(), containsString("constraint [unq_contribution_criteria_server]"));
   }

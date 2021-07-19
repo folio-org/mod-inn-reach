@@ -14,6 +14,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
+import static org.springframework.http.HttpStatus.CONFLICT;
 import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TEST_METHOD;
 import static org.springframework.test.context.jdbc.SqlMergeMode.MergeMode.MERGE;
 
@@ -230,7 +231,7 @@ class LocationMappingControllerTest extends BaseControllerTest {
       "classpath:db/inn-reach-location/pre-populate-inn-reach-location-code.sql",
       "classpath:db/loc-mapping/pre-populate-location-mapping.sql"
   })
-  void return400WhenCreatingNewMappingsAndLocationIdAlreadyMapped() {
+  void return409WhenCreatingNewMappingsAndLocationIdAlreadyMapped() {
     var newMappings = deserializeFromJsonFile("/location-mapping/create-location-mappings-request.json",
         LocationMappingsDTO.class);
     newMappings.getLocationMappings().get(0).setLocationId(PRE_POPULATED_LOCATION2_ID);
@@ -241,7 +242,7 @@ class LocationMappingControllerTest extends BaseControllerTest {
     var responseEntity = testRestTemplate.exchange(baseMappingURL(), HttpMethod.PUT, new HttpEntity<>(newMappings),
         Error.class);
 
-    assertEquals(BAD_REQUEST, responseEntity.getStatusCode());
+    assertEquals(CONFLICT, responseEntity.getStatusCode());
     assertNotNull(responseEntity.getBody());
     assertThat(responseEntity.getBody().getMessage(), containsString("constraint [unq_location_mapping_server_loc]"));
   }

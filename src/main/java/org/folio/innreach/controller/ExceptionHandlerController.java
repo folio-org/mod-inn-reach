@@ -7,7 +7,6 @@ import javax.validation.ConstraintViolation;
 import javax.validation.ConstraintViolationException;
 
 import lombok.extern.log4j.Log4j2;
-import org.folio.innreach.domain.exception.UniqueConstraintViolationException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.AuthenticationException;
@@ -65,9 +64,9 @@ public class ExceptionHandlerController {
   }
 
   @ExceptionHandler(DataIntegrityViolationException.class)
-  @ResponseStatus(HttpStatus.BAD_REQUEST)
+  @ResponseStatus(HttpStatus.CONFLICT)
   public Error handleDataIntegrityViolationException(DataIntegrityViolationException e) {
-    return createError(HttpStatus.BAD_REQUEST, e.getMessage());
+    return createError(HttpStatus.CONFLICT, e.getMessage());
   }
 
   @ExceptionHandler(Exception.class)
@@ -111,11 +110,5 @@ public class ExceptionHandlerController {
     error.setCode(Integer.toString(code.value()));
     error.setMessage(message);
     return error;
-  }
-
-  @ExceptionHandler(UniqueConstraintViolationException.class)
-  @ResponseStatus(HttpStatus.CONFLICT)
-  public Error handleUniqueConstraintViolationException(UniqueConstraintViolationException e) {
-    return createError(HttpStatus.CONFLICT, e.getMessage());
   }
 }
