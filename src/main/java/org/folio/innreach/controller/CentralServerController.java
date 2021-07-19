@@ -48,7 +48,7 @@ public class CentralServerController implements CentralServersApi {
   @Override
   @GetMapping
   public ResponseEntity<CentralServersDTO> getCentralServers(@Min(0) @Max(2147483647) @Valid Integer offset,
-      @Min(0) @Max(2147483647) @Valid Integer limit) {
+                                                             @Min(0) @Max(2147483647) @Valid Integer limit) {
     var allCentralServers = centralServerService.getAllCentralServers(offset, limit);
     return ResponseEntity.ok(allCentralServers);
   }

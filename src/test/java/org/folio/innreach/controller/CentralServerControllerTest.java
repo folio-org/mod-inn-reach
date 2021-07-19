@@ -167,4 +167,16 @@ class CentralServerControllerTest extends BaseControllerTest {
     assertEquals(HttpStatus.NOT_FOUND, responseEntity.getStatusCode());
   }
 
+  @Test
+  @Sql(scripts = "classpath:db/central-server/pre-populate-central-server.sql")
+  void return409HttpCode_when_createCentralServerWithUniqueViolation() {
+    var centralServerRequestDTO = deserializeFromJsonFile(
+      "/central-server/create-central-server-request.json", CentralServerDTO.class);
+
+    var responseEntity = testRestTemplate.postForEntity(
+      "/inn-reach/central-servers", centralServerRequestDTO, CentralServerDTO.class);
+
+    assertEquals(HttpStatus.CONFLICT, responseEntity.getStatusCode());
+  }
+
 }

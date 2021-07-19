@@ -18,6 +18,8 @@ paths:
                 $ref: "#/components/schemas/centralServerDTO"
         '400':
           $ref: "#/components/responses/trait_response_validation_400"
+        '409':
+          $ref: "#/components/responses/trait_response_409"
         '500':
           $ref: "#/components/responses/trait_response_500"
       description: Add new central server
@@ -135,6 +137,8 @@ paths:
                 $ref: "#/components/schemas/materialTypeMappingDTO"
         '400':
           $ref: "#/components/responses/trait_response_validation_400"
+        '409':
+          $ref: "#/components/responses/trait_response_409"
         '500':
           $ref: "#/components/responses/trait_response_500"
       requestBody:
@@ -157,6 +161,8 @@ paths:
           description: Collection successfully updated
         '400':
           $ref: "#/components/responses/trait_response_validation_400"
+        '409':
+          $ref: "#/components/responses/trait_response_409"
         '500':
           $ref: "#/components/responses/trait_response_500"
       requestBody:
@@ -353,6 +359,8 @@ paths:
           description: Collection successfully updated
         '400':
           $ref: "#/components/responses/trait_response_validation_400"
+        '409':
+          $ref: "#/components/responses/trait_response_409"
         '500':
           $ref: "#/components/responses/trait_response_500"
       requestBody:
@@ -397,6 +405,8 @@ paths:
           description: Collection successfully updated
         '400':
           $ref: "#/components/responses/trait_response_validation_400"
+        '409':
+          $ref: "#/components/responses/trait_response_409"
         '500':
           $ref: "#/components/responses/trait_response_500"
       requestBody:
@@ -441,6 +451,8 @@ paths:
                 $ref: "#/components/schemas/contributionCriteriaDTO"
         '400':
           $ref: "#/components/responses/trait_response_validation_400"
+        '409':
+          $ref: "#/components/responses/trait_response_409"
         '500':
           $ref: "#/components/responses/trait_response_500"
       requestBody:
@@ -477,6 +489,8 @@ paths:
           $ref: "#/components/responses/trait_response_validation_400"
         '404':
           $ref: "#/components/responses/trait_response_404"
+        '409':
+          $ref: "#/components/responses/trait_response_409"
         '500':
           $ref: "#/components/responses/trait_response_500"
       requestBody:
@@ -661,6 +675,12 @@ components:
   responses:
     trait_response_500:
       description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/error"
+    trait_response_409:
+      description: Item state conflict
       content:
         application/json:
           schema:

@@ -64,9 +64,9 @@ public class ExceptionHandlerController {
   }
 
   @ExceptionHandler(DataIntegrityViolationException.class)
-  @ResponseStatus(HttpStatus.BAD_REQUEST)
+  @ResponseStatus(HttpStatus.CONFLICT)
   public Error handleDataIntegrityViolationException(DataIntegrityViolationException e) {
-    return createError(HttpStatus.BAD_REQUEST, e.getMessage());
+    return createError(HttpStatus.CONFLICT, e.getMessage());
   }
 
   @ExceptionHandler(Exception.class)
@@ -86,7 +86,7 @@ public class ExceptionHandlerController {
 
   private List<ValidationErrorDTO> collectValidationErrors(MethodArgumentNotValidException e) {
     return e.getBindingResult()
-	    .getFieldErrors()
+      .getFieldErrors()
       .stream()
       .map(this::mapFieldErrorToValidationError)
       .collect(Collectors.toList());

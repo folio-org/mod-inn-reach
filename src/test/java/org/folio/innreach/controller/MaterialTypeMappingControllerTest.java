@@ -15,6 +15,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
+import static org.springframework.http.HttpStatus.CONFLICT;
 import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TEST_METHOD;
 import static org.springframework.test.context.jdbc.SqlMergeMode.MergeMode.MERGE;
 
@@ -234,14 +235,14 @@ class MaterialTypeMappingControllerTest extends BaseControllerTest {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/mtype-mapping/pre-populate-material-type-mapping.sql"
   })
-  void return400WhenCreatingNewMappingAndMaterialTypeIdAlreadyMapped() {
+  void return409WhenCreatingNewMappingAndMaterialTypeIdAlreadyMapped() {
     var newMapping = deserializeFromJsonFile("/material-type-mapping/create-material-type-mapping-request.json",
       MaterialTypeMappingDTO.class);
     newMapping.setMaterialTypeId(fromString(PRE_POPULATED_MATERIAL_TYPE2_ID));
 
     var responseEntity = testRestTemplate.postForEntity(baseMappingURL(), newMapping, Error.class);
 
-    assertEquals(BAD_REQUEST, responseEntity.getStatusCode());
+    assertEquals(CONFLICT, responseEntity.getStatusCode());
   }
 
   @Test

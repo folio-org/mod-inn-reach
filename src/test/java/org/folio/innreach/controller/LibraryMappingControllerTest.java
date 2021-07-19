@@ -14,6 +14,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
+import static org.springframework.http.HttpStatus.CONFLICT;
 import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TEST_METHOD;
 import static org.springframework.test.context.jdbc.SqlMergeMode.MergeMode.MERGE;
 
@@ -228,7 +229,7 @@ class LibraryMappingControllerTest extends BaseControllerTest {
       "classpath:db/inn-reach-location/pre-populate-inn-reach-location-code.sql",
       "classpath:db/lib-mapping/pre-populate-library-mapping.sql"
   })
-  void return400WhenCreatingNewMappingsAndLibraryIdAlreadyMapped() {
+  void return409WhenCreatingNewMappingsAndLibraryIdAlreadyMapped() {
     var newMappings = deserializeFromJsonFile("/library-mapping/create-library-mappings-request.json",
         LibraryMappingsDTO.class);
     newMappings.getLibraryMappings().get(0).setLibraryId(PRE_POPULATED_LIBRARY2_ID);
@@ -239,7 +240,7 @@ class LibraryMappingControllerTest extends BaseControllerTest {
     var responseEntity = testRestTemplate.exchange(baseMappingURL(), HttpMethod.PUT, new HttpEntity<>(newMappings),
         Error.class);
 
-    assertEquals(BAD_REQUEST, responseEntity.getStatusCode());
+    assertEquals(CONFLICT, responseEntity.getStatusCode());
     assertNotNull(responseEntity.getBody());
     assertThat(responseEntity.getBody().getMessage(), containsString("constraint [unq_library_mapping_server_lib]"));
   }
