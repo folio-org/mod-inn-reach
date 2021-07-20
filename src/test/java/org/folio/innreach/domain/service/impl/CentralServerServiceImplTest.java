@@ -16,7 +16,6 @@ import java.util.UUID;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mapstruct.factory.Mappers;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
@@ -28,6 +27,8 @@ import org.folio.innreach.domain.exception.EntityNotFoundException;
 import org.folio.innreach.external.dto.AccessTokenDTO;
 import org.folio.innreach.external.service.InnReachAuthExternalService;
 import org.folio.innreach.mapper.CentralServerMapper;
+import org.folio.innreach.mapper.CentralServerMapperImpl;
+import org.folio.innreach.mapper.DateMapper;
 import org.folio.innreach.repository.CentralServerRepository;
 
 class CentralServerServiceImplTest {
@@ -39,7 +40,7 @@ class CentralServerServiceImplTest {
   private InnReachAuthExternalService innReachAuthExternalService;
 
   @Spy
-  private CentralServerMapper centralServerMapper = Mappers.getMapper(CentralServerMapper.class);
+  private CentralServerMapper centralServerMapper = new CentralServerMapperImpl(new DateMapper());
 
   @Mock
   private PasswordEncoder passwordEncoder;
