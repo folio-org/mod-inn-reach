@@ -14,9 +14,9 @@ import java.util.UUID;
 import static java.util.UUID.fromString;
 import static java.util.UUID.randomUUID;
 import static java.util.stream.Collectors.toList;
-import static org.folio.innreach.fixture.AgencyMappingFixture.createAgencyCodeMapping;
-import static org.folio.innreach.fixture.AgencyMappingFixture.createLocalServerMapping;
-import static org.folio.innreach.fixture.AgencyMappingFixture.createMapping;
+import static org.folio.innreach.fixture.AgencyLocationMappingFixture.createAgencyCodeMapping;
+import static org.folio.innreach.fixture.AgencyLocationMappingFixture.createLocalServerMapping;
+import static org.folio.innreach.fixture.AgencyLocationMappingFixture.createMapping;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.junit.Assert.assertThrows;
@@ -35,6 +35,7 @@ class AgencyLocationMappingRepositoryTest extends BaseRepositoryTest {
 
   private static final UUID PRE_POPULATED_LOCATION_UUID = fromString("99b0d4e2-a5ec-46a1-a5ea-1080e609f969");
   private static final UUID PRE_POPULATED_LIBRARY_UUID = fromString("70cf3473-77f2-4f5c-92c3-6489e65769e4");
+
   private static final String PRE_POPULATED_LOCAL_CODE = "5publ";
   private static final String PRE_POPULATED_AGENCY_CODE = "5east";
 
@@ -128,7 +129,7 @@ class AgencyLocationMappingRepositoryTest extends BaseRepositoryTest {
 
     var foundLscMapping = saved.getLocalServerMappings()
       .stream()
-      .filter(lsm -> PRE_POPULATED_LOCAL_CODE.equals(lsm.getLocalServerCode()))
+      .filter(m -> PRE_POPULATED_LOCAL_CODE.equals(m.getLocalServerCode()))
       .findFirst();
 
     assertTrue(foundLscMapping.isEmpty());
@@ -179,7 +180,7 @@ class AgencyLocationMappingRepositoryTest extends BaseRepositoryTest {
     var mapping = repository.getOne(fromString(PRE_POPULATED_MAPPING_ID));
     var localServerMapping = mapping.getLocalServerMappings()
       .stream()
-      .filter(lsm -> PRE_POPULATED_LOCAL_CODE.equals(lsm.getLocalServerCode()))
+      .filter(m -> PRE_POPULATED_LOCAL_CODE.equals(m.getLocalServerCode()))
       .findFirst()
       .get();
 

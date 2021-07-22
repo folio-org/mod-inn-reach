@@ -18,12 +18,11 @@ import static java.util.UUID.fromString;
 import static org.jeasy.random.FieldPredicates.named;
 
 @UtilityClass
-public class AgencyMappingFixture {
+public class AgencyLocationMappingFixture {
 
   private static final UUID PRE_POPULATED_CENTRAL_SERVER_UUID = fromString("cfae4887-f8fb-4e4c-a5cc-34f74e353cf8");
 
   private static final EasyRandom agencyLocationRandom;
-  private static final EasyRandom agencyLocationLsRandom;
   private static final EasyRandom agencyLocationCodeRandom;
 
   static {
@@ -43,15 +42,7 @@ public class AgencyMappingFixture {
     EasyRandomParameters params = new EasyRandomParameters()
       .excludeField(named("id"))
       .excludeField(named("centralServerMapping"))
-      .excludeField(named("agencyCodeMappings"));
-    params.stringLengthRange(5, 5);
-
-    agencyLocationLsRandom = new EasyRandom(params);
-  }
-
-  static {
-    EasyRandomParameters params = new EasyRandomParameters()
-      .excludeField(named("id"))
+      .excludeField(named("agencyCodeMappings"))
       .excludeField(named("localServerMapping"));
     params.stringLengthRange(5, 5);
 
@@ -77,7 +68,7 @@ public class AgencyMappingFixture {
   }
 
   public static AgencyLocationLscMapping createLocalServerMapping() {
-    return agencyLocationLsRandom.nextObject(AgencyLocationLscMapping.class);
+    return agencyLocationCodeRandom.nextObject(AgencyLocationLscMapping.class);
   }
 
   public static AgencyLocationAcMapping createAgencyCodeMapping() {
@@ -85,11 +76,11 @@ public class AgencyMappingFixture {
   }
 
   public static List<AgencyLocationLscMapping> createLocalServerMappings() {
-    return listOf(10, AgencyMappingFixture::createLocalServerMapping);
+    return listOf(10, AgencyLocationMappingFixture::createLocalServerMapping);
   }
 
   public static List<AgencyLocationAcMapping> createAgencyCodeMappings() {
-    return listOf(10, AgencyMappingFixture::createAgencyCodeMapping);
+    return listOf(10, AgencyLocationMappingFixture::createAgencyCodeMapping);
   }
 
   private static <T> List<T> listOf(int bound, Supplier<T> supplier) {

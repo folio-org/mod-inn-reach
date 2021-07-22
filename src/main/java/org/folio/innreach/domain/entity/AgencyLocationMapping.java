@@ -20,7 +20,7 @@ import java.util.UUID;
 @Getter
 @Setter
 @NoArgsConstructor
-@ToString(exclude = "centralServer")
+@ToString
 @Entity
 @Table(name = "agency_location_mapping")
 public class AgencyLocationMapping extends Auditable<String> implements Identifiable<UUID> {
