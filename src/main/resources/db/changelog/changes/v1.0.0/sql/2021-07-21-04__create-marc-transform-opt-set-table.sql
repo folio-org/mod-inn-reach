@@ -2,7 +2,6 @@ CREATE TABLE marc_transformation_options_settings
 (
     id UUID NOT NULL,
     central_server_id UUID NOT NULL,
-    central_server_record_id UUID NOT NULL,
     config_is_active boolean NOT NULL,
     created_by VARCHAR(255) NOT NULL,
     created_date TIMESTAMP NOT NULL,

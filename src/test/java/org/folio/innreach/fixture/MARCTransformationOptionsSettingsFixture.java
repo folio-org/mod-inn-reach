@@ -10,7 +10,6 @@ public class MARCTransformationOptionsSettingsFixture {
 
   public static MARCTransformationOptionsSettings createMARCTransformOptSet(){
     MARCTransformationOptionsSettings MARCTransformOptSet = new MARCTransformationOptionsSettings();
-    MARCTransformOptSet.setCentralServerRecordId(UUID.randomUUID());
     MARCTransformOptSet.setConfigIsActive(new Random().nextBoolean());
     MARCTransformOptSet.getExcludedMARCFields().add("020");
     MARCTransformOptSet.getExcludedMARCFields().add("035");

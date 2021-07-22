@@ -2,6 +2,7 @@ package org.folio.innreach.domain.entity;
 
 import lombok.Getter;
 import lombok.Setter;
+import org.folio.innreach.domain.entity.base.Auditable;
 import org.hibernate.annotations.Fetch;
 
 import javax.persistence.CollectionTable;
@@ -22,8 +23,8 @@ import java.util.UUID;
 @Entity
 @Getter
 @Setter
-@Table(name = "field_configuration")
-public class FieldConfiguration {
+@Table(name = "marc_field_configuration")
+public class FieldConfiguration extends Auditable<String> {
   @Id
   @GeneratedValue(strategy = GenerationType.AUTO)
   private UUID id;
@@ -40,7 +41,7 @@ public class FieldConfiguration {
 
   @ElementCollection(fetch = FetchType.LAZY)
   @CollectionTable(
-    name = "ignored_prefixes",
+    name = "marc_ignored_prefixes",
     joinColumns = @JoinColumn(name = "field_configuration_id")
   )
   @Column(name = "prefix")

@@ -35,9 +35,6 @@ public class MARCTransformationOptionsSettings extends Auditable<String> {
   @JoinColumn(name = "central_server_id", unique = true)
   private CentralServer centralServer;
 
-  @Column(name = "central_server_record_id")
-  private UUID centralServerRecordId;
-
   @Column(name = "config_is_active")
   private Boolean configIsActive;
 
@@ -51,7 +48,7 @@ public class MARCTransformationOptionsSettings extends Auditable<String> {
 
   @ElementCollection(fetch = FetchType.LAZY)
   @CollectionTable(
-    name = "excluded_marc_fields",
+    name = "marc_excluded_marc_fields",
     joinColumns = @JoinColumn(name = "marc_transformation_options_settings_id")
   )
   @Column(name = "marc_field")

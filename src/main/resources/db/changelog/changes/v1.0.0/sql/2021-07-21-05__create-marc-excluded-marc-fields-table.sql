@@ -1,4 +1,4 @@
-CREATE TABLE excluded_marc_fields
+CREATE TABLE marc_excluded_marc_fields
 (
     marc_transformation_options_settings_id UUID NOT NULL,
     marc_field VARCHAR(255) NOT NULL,

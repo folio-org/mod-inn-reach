@@ -4,20 +4,20 @@
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
                     http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.4.xsd">
 
-  <changeSet id="2021-07-21-01__create_marc-transform-opt-set-table" author="maryna_steshenko">
-    <sqlFile path="sql/2021-07-21-01__create-marc-transform-opt-set-table.sql" relativeToChangelogFile="true"/>
+  <changeSet id="2021-07-21-04__create_marc-transform-opt-set-table" author="maryna_steshenko">
+    <sqlFile path="sql/2021-07-21-04__create-marc-transform-opt-set-table.sql" relativeToChangelogFile="true"/>
   </changeSet>
 
-  <changeSet id="2021-07-21-02__create-excluded-marc-fields-table" author="maryna_steshenko">
-    <sqlFile path="sql/2021-07-21-02__create-excluded-marc-fields-table.sql" relativeToChangelogFile="true"/>
+  <changeSet id="2021-07-21-05__create-marc-excluded-marc-fields-table" author="maryna_steshenko">
+    <sqlFile path="sql/2021-07-21-05__create-marc-excluded-marc-fields-table.sql" relativeToChangelogFile="true"/>
   </changeSet>
 
-  <changeSet id="2021-07-21-03__create-field-configuration-table" author="maryna_steshenko">
-    <sqlFile path="sql/2021-07-21-03__create-field-configuration-table.sql" relativeToChangelogFile="true"/>
+  <changeSet id="2021-07-21-06__create-marc-field-configuration-table" author="maryna_steshenko">
+    <sqlFile path="sql/2021-07-21-06__create-marc-field-configuration-table.sql" relativeToChangelogFile="true"/>
   </changeSet>
 
-  <changeSet id="2021-07-21-04__create-ignored-prefixes-table" author="maryna_steshenko">
-    <sqlFile path="sql/2021-07-21-04__create-ignored-prefixes-table.sql" relativeToChangelogFile="true"/>
+  <changeSet id="2021-07-21-07__create-marc-ignored-prefixes-table" author="maryna_steshenko">
+    <sqlFile path="sql/2021-07-21-07__create-marc-ignored-prefixes-table.sql" relativeToChangelogFile="true"/>
   </changeSet>
 
 </databaseChangeLog>

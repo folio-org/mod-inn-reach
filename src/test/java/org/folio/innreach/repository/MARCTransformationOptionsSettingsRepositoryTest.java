@@ -18,7 +18,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class MARCTransformationOptionsSettingsRepositoryTest extends BaseRepositoryTest {
   private static final String PRE_POPULATED_MARC_TRANSFORM_OPT_SET_ID = "51768f15-41e8-494d-bc4d-a308568e7052";
   private static final String PRE_POPULATED_CENTRAL_SERVER_ID = "edab6baf-c696-42b1-89bb-1bbb8759b0d2";
-  private static final String PRE_POPULATED_CENTRAL_SERVER_RECORD_ID = "ff0a9220-d9bc-4c21-8087-78387e734d89";
 
   @Autowired
   private MARCTransformationOptionsSettingsRepository repository;
@@ -27,56 +26,52 @@ class MARCTransformationOptionsSettingsRepositoryTest extends BaseRepositoryTest
   @Sql(scripts = {"classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/marc-transform-opt-set/pre-populate-marc-transform-opt-set.sql"})
   void getMARCTransformOptSet_when_MARCTransformOptSetExists() {
-    var MARCTransformOptSetById = repository.getOne(UUID.fromString(PRE_POPULATED_MARC_TRANSFORM_OPT_SET_ID));
+    var fromDb = repository.getOne(UUID.fromString(PRE_POPULATED_MARC_TRANSFORM_OPT_SET_ID));
 
-    assertNotNull(MARCTransformOptSetById);
-    assertEquals(UUID.fromString(PRE_POPULATED_CENTRAL_SERVER_ID), MARCTransformOptSetById.getCentralServer().getId());
-    assertEquals(UUID.fromString(PRE_POPULATED_CENTRAL_SERVER_RECORD_ID), MARCTransformOptSetById.getCentralServerRecordId());
-    assertEquals(true, MARCTransformOptSetById.getConfigIsActive());
-    assertEquals(1, MARCTransformOptSetById.getExcludedMARCFields().size());
-    assertEquals(1, MARCTransformOptSetById.getModifiedFieldsForContributedRecords().size());
+    assertNotNull(fromDb);
+    assertEquals(UUID.fromString(PRE_POPULATED_CENTRAL_SERVER_ID), fromDb.getCentralServer().getId());
+    assertTrue(fromDb.getConfigIsActive());
+    assertEquals(1, fromDb.getExcludedMARCFields().size());
+    assertEquals(1, fromDb.getModifiedFieldsForContributedRecords().size());
   }
 
   @Test
   @Sql(scripts = {"classpath:db/central-server/pre-populate-central-server.sql"})
   void saveMARCTransformOptSet_when_MARCTransformOptSetDoesNotExists() {
-    var MARCTransformOptSet = createMARCTransformOptSet();
-    MARCTransformOptSet.setCentralServer(refCentralServer(UUID.fromString(PRE_POPULATED_CENTRAL_SERVER_ID)));
-    var savedMARCTransformOptSet = repository.save(MARCTransformOptSet);
+    var created = createMARCTransformOptSet();
+    created.setCentralServer(refCentralServer(UUID.fromString(PRE_POPULATED_CENTRAL_SERVER_ID)));
+    var saved = repository.save(created);
 
-    assertNotNull(savedMARCTransformOptSet);
-    assertNotNull(savedMARCTransformOptSet.getId());
-    assertEquals(MARCTransformOptSet.getCentralServer(), savedMARCTransformOptSet.getCentralServer());
-    assertEquals(MARCTransformOptSet.getConfigIsActive(), savedMARCTransformOptSet.getConfigIsActive());
-    assertEquals(MARCTransformOptSet.getCentralServerRecordId(), savedMARCTransformOptSet.getCentralServerRecordId());
-    assertEquals(MARCTransformOptSet.getExcludedMARCFields(), savedMARCTransformOptSet.getExcludedMARCFields());
-    assertEquals(MARCTransformOptSet.getModifiedFieldsForContributedRecords(), savedMARCTransformOptSet.getModifiedFieldsForContributedRecords());
+    assertNotNull(saved);
+    assertNotNull(saved.getId());
+    assertEquals(created.getCentralServer(), saved.getCentralServer());
+    assertEquals(created.getConfigIsActive(), saved.getConfigIsActive());
+    assertEquals(created.getExcludedMARCFields(), saved.getExcludedMARCFields());
+    assertEquals(created.getModifiedFieldsForContributedRecords(), saved.getModifiedFieldsForContributedRecords());
   }
 
   @Test
   @Sql(scripts = {"classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/marc-transform-opt-set/pre-populate-marc-transform-opt-set.sql"})
   void updateMARCTransformOptSet_when_MARCTransformOptSetDataIsValid() {
-    var savedMARCTransformOptSet = repository.getOne(UUID.fromString(PRE_POPULATED_MARC_TRANSFORM_OPT_SET_ID));
+    var saved = repository.getOne(UUID.fromString(PRE_POPULATED_MARC_TRANSFORM_OPT_SET_ID));
 
-    var updatedModifiedFields = savedMARCTransformOptSet.getModifiedFieldsForContributedRecords();
+    var updatedModifiedFields = saved.getModifiedFieldsForContributedRecords();
     updatedModifiedFields.add(createFieldConfig());
-    var updatedConfigIsActive = !savedMARCTransformOptSet.getConfigIsActive();
-    var updatedExcludedMARCFields = savedMARCTransformOptSet.getExcludedMARCFields();
+    var updatedConfigIsActive = !saved.getConfigIsActive();
+    var updatedExcludedMARCFields = saved.getExcludedMARCFields();
     updatedExcludedMARCFields.clear();
     var updatedCentralServerRecordId = UUID.randomUUID();
 
-    savedMARCTransformOptSet.setModifiedFieldsForContributedRecords(updatedModifiedFields);
-    savedMARCTransformOptSet.setConfigIsActive(updatedConfigIsActive);
-    savedMARCTransformOptSet.setExcludedMARCFields(updatedExcludedMARCFields);
-    savedMARCTransformOptSet.setCentralServerRecordId(updatedCentralServerRecordId);
+    saved.setModifiedFieldsForContributedRecords(updatedModifiedFields);
+    saved.setConfigIsActive(updatedConfigIsActive);
+    saved.setExcludedMARCFields(updatedExcludedMARCFields);
 
-    var updatedMARCTransformOptSet = repository.save(savedMARCTransformOptSet);
+    var updated = repository.save(saved);
 
-    assertEquals(updatedModifiedFields, updatedMARCTransformOptSet.getModifiedFieldsForContributedRecords());
-    assertEquals(updatedConfigIsActive, updatedMARCTransformOptSet.getConfigIsActive());
-    assertEquals(updatedExcludedMARCFields, updatedMARCTransformOptSet.getExcludedMARCFields());
-    assertEquals(updatedCentralServerRecordId, updatedMARCTransformOptSet.getCentralServerRecordId());
+    assertEquals(updatedModifiedFields, updated.getModifiedFieldsForContributedRecords());
+    assertEquals(updatedConfigIsActive, updated.getConfigIsActive());
+    assertEquals(updatedExcludedMARCFields, updated.getExcludedMARCFields());
   }
 
   @Test

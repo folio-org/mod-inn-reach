@@ -1,8 +1,8 @@
 DELETE
-FROM ignored_prefixes;
+FROM marc_ignored_prefixes;
 DELETE
-FROM field_configuration;
+FROM marc_field_configuration;
 DELETE
-FROM excluded_marc_fields;
+FROM marc_excluded_marc_fields;
 DELETE
 FROM marc_transformation_options_settings;
