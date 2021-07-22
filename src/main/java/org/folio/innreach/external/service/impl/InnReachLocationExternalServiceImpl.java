@@ -81,7 +81,7 @@ public class InnReachLocationExternalServiceImpl implements InnReachLocationExte
       if (updatedLocation == null) {
         deleteLocationFromInnReach(centralServerConnectionUrl, authorizationHeader, localCode, currentLocation);
       } else if (!updatedLocation.getDescription().equals(currentLocation.getDescription())) {
-        submitUpdatedLocationToInnReach(centralServerConnectionUrl, authorizationHeader, localCode, currentLocation);
+        submitUpdatedLocationToInnReach(centralServerConnectionUrl, authorizationHeader, localCode, updatedLocation);
       }
       locationCodeToLocationMap.remove(currentLocation.getCode());
     });
