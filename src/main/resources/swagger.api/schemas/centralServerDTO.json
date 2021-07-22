@@ -51,6 +51,11 @@
     "localServerSecret": {
       "description": "Local server secret",
       "type": "string"
+    },
+    "metadata": {
+      "description": "Entity metadata",
+      "type": "object",
+      "$ref": "metadata.json"
     }
   },
   "additionalProperties": false,
