@@ -2,6 +2,11 @@
   "description": "Item Contribution Options",
   "type": "object",
   "properties": {
+    "id": {
+      "description": "Item Contribution Options Configuration id",
+      "type": "string",
+      "format": "UUID"
+    },
     "notAvailableItemStatuses": {
       "description": "A list of FOLIO item states that should be considered \"Not available\"",
       "type": "array",

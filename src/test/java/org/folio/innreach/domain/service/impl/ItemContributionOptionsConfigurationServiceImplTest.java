@@ -44,11 +44,11 @@ class ItemContributionOptionsConfigurationServiceImplTest {
 
   @Test
   void getItmContribOptConf_when_itmContribOptConfExists() {
-    when(repository.findById(any())).thenReturn(Optional.of(createItmContribOptConf()));
+    when(repository.findOne(any())).thenReturn(Optional.of(createItmContribOptConf()));
 
     var itmContribOptConf = service.getItmContribOptConf(UUID.randomUUID());
 
-    verify(repository).findById(any());
+    verify(repository).findOne(any());
 
     assertNotNull(itmContribOptConf);
   }
@@ -69,13 +69,13 @@ class ItemContributionOptionsConfigurationServiceImplTest {
 
   @Test
   void updateItmContribOptConf_when_itmContribOptConfExists() {
-    when(repository.findById(any())).thenReturn(Optional.of(createItmContribOptConf()));
+    when(repository.findOne(any())).thenReturn(Optional.of(createItmContribOptConf()));
 
     var updatedItmContribOptConf = createItmContribOptConfDTO();
 
     var updatedItmContribOptConfDTO = service.updateItmContribOptConf(UUID.randomUUID(), updatedItmContribOptConf);
 
-    verify(repository).findById(any());
+    verify(repository).findOne(any());
 
     assertNotNull(updatedItmContribOptConfDTO);
     assertEquals(updatedItmContribOptConf.getNotAvailableItemStatuses(), updatedItmContribOptConfDTO.getNotAvailableItemStatuses());
@@ -86,12 +86,12 @@ class ItemContributionOptionsConfigurationServiceImplTest {
 
   @Test
   void throwException_when_itmContribOptConfDoesNotExist() {
-    when(repository.findById(any())).thenReturn(Optional.empty());
+    when(repository.findOne(any())).thenReturn(Optional.empty());
 
     UUID id = UUID.randomUUID();
 
     assertThrows(EntityNotFoundException.class, () -> service.getItmContribOptConf(id));
 
-    verify(repository).findById(any());
+    verify(repository).findOne(any());
   }
 }

@@ -11,6 +11,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlMergeMode;
 
+import java.util.UUID;
+
 import static org.folio.innreach.fixture.TestUtil.deserializeFromJsonFile;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -27,7 +29,8 @@ import static org.springframework.test.context.jdbc.SqlMergeMode.MergeMode.MERGE
 )
 @SqlMergeMode(MERGE)
 class ItemContributionOptionsConfigurationControllerTest extends BaseControllerTest {
-  private static final String PRE_POPULATED_ITM_CONTRIB_OPT_CONF_ID = "edab6baf-c696-42b1-89bb-1bbb8759b0d2";
+  private static final String PRE_POPULATED_ITM_CONTRIB_OPT_CONF_ID = "20e4363c-b6c2-4da2-ac68-7dffbd18e3ce";
+  private static final String PRE_POPULATED_CENTRAL_SERVER_ID = "edab6baf-c696-42b1-89bb-1bbb8759b0d2";
 
   @Autowired
   private TestRestTemplate testRestTemplate;
@@ -39,13 +42,14 @@ class ItemContributionOptionsConfigurationControllerTest extends BaseControllerT
   void return200HttpCode_and_itmContribOptConfById_when_getForOneItmContribOptConf() {
     var responseEntity = testRestTemplate.getForEntity(
       "/inn-reach/central-servers/{centralServerId}/item-contribution-options", ItemContributionOptionsConfigurationDTO.class,
-      PRE_POPULATED_ITM_CONTRIB_OPT_CONF_ID);
+      PRE_POPULATED_CENTRAL_SERVER_ID);
 
     assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
     assertTrue(responseEntity.hasBody());
 
     var itmContribOptConfDTO = responseEntity.getBody();
 
+    assertEquals(UUID.fromString(PRE_POPULATED_ITM_CONTRIB_OPT_CONF_ID), itmContribOptConfDTO.getId());
     assertNotNull(itmContribOptConfDTO.getNotAvailableItemStatuses());
     assertNotNull(itmContribOptConfDTO.getNonLendableLoanTypes());
     assertNotNull(itmContribOptConfDTO.getNonLendableLocations());
@@ -62,7 +66,7 @@ class ItemContributionOptionsConfigurationControllerTest extends BaseControllerT
 
     var responseEntity = testRestTemplate.postForEntity(
       "/inn-reach/central-servers/{centralServerId}/item-contribution-options", itmContribOptConfDTO, ItemContributionOptionsConfigurationDTO.class,
-      PRE_POPULATED_ITM_CONTRIB_OPT_CONF_ID);
+      PRE_POPULATED_CENTRAL_SERVER_ID);
 
     assertEquals(HttpStatus.CREATED, responseEntity.getStatusCode());
     assertTrue(responseEntity.hasBody());
@@ -86,7 +90,7 @@ class ItemContributionOptionsConfigurationControllerTest extends BaseControllerT
 
     var responseEntity = testRestTemplate.exchange(
       "/inn-reach/central-servers/{centralServerId}/item-contribution-options", HttpMethod.PUT, new HttpEntity<>(itmContribOptConfDTO),
-      ItemContributionOptionsConfigurationDTO.class, PRE_POPULATED_ITM_CONTRIB_OPT_CONF_ID);
+      ItemContributionOptionsConfigurationDTO.class, PRE_POPULATED_CENTRAL_SERVER_ID);
 
     assertEquals(HttpStatus.NO_CONTENT, responseEntity.getStatusCode());
   }
@@ -101,7 +105,7 @@ class ItemContributionOptionsConfigurationControllerTest extends BaseControllerT
 
     var responseEntity = testRestTemplate.postForEntity(
       "/inn-reach/central-servers/{centralServerId}/item-contribution-options", itmContribOptConfDTO, ItemContributionOptionsConfigurationDTO.class,
-      PRE_POPULATED_ITM_CONTRIB_OPT_CONF_ID);
+      PRE_POPULATED_CENTRAL_SERVER_ID);
 
     assertTrue(responseEntity.getStatusCode().is4xxClientError());
     assertTrue(responseEntity.hasBody());
@@ -114,7 +118,7 @@ class ItemContributionOptionsConfigurationControllerTest extends BaseControllerT
   void return404HttpCode_when_itmContribOptConfByIdNotFound() {
     var responseEntity = testRestTemplate.getForEntity(
       "/inn-reach/central-servers/{centralServerId}/item-contribution-options", ItemContributionOptionsConfigurationDTO.class,
-      PRE_POPULATED_ITM_CONTRIB_OPT_CONF_ID);
+      PRE_POPULATED_CENTRAL_SERVER_ID);
 
     assertEquals(HttpStatus.NOT_FOUND, responseEntity.getStatusCode());
   }
