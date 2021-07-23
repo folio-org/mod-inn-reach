@@ -8,8 +8,8 @@ import org.jeasy.random.EasyRandom;
 import org.jeasy.random.EasyRandomParameters;
 
 import java.time.OffsetDateTime;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Supplier;
@@ -40,10 +40,17 @@ public class AgencyLocationMappingFixture {
 
   static {
     EasyRandomParameters params = new EasyRandomParameters()
+      .randomize(named("createdBy"), () -> "admin")
+      .randomize(named("createdDate"), OffsetDateTime::now)
       .excludeField(named("id"))
       .excludeField(named("centralServerMapping"))
       .excludeField(named("agencyCodeMappings"))
-      .excludeField(named("localServerMapping"));
+      .excludeField(named("localServerMapping"))
+      .excludeField(named("localServerMappings"))
+      .excludeField(named("lastModifiedBy"))
+      .excludeField(named("lastModifiedDate"))
+      .excludeField(named("metadata"));
+
     params.stringLengthRange(5, 5);
 
     agencyLocationCodeRandom = new EasyRandom(params);
@@ -75,17 +82,25 @@ public class AgencyLocationMappingFixture {
     return agencyLocationCodeRandom.nextObject(AgencyLocationAcMapping.class);
   }
 
-  public static List<AgencyLocationLscMapping> createLocalServerMappings() {
+  public static Set<AgencyLocationLscMapping> createLocalServerMappings() {
     return listOf(10, AgencyLocationMappingFixture::createLocalServerMapping);
   }
 
-  public static List<AgencyLocationAcMapping> createAgencyCodeMappings() {
+  public static Set<AgencyLocationAcMapping> createAgencyCodeMappings() {
     return listOf(10, AgencyLocationMappingFixture::createAgencyCodeMapping);
   }
 
-  private static <T> List<T> listOf(int bound, Supplier<T> supplier) {
+  public static AgencyLocationLscMapping findLocalServerMappingByCode(AgencyLocationMapping mapping, String code) {
+    return mapping.getLocalServerMappings()
+      .stream()
+      .filter(m -> code.equals(m.getLocalServerCode()))
+      .findFirst()
+      .orElse(null);
+  }
+
+  private static <T> Set<T> listOf(int bound, Supplier<T> supplier) {
     var total = ThreadLocalRandom.current().nextInt(bound);
-    List<T> list = new ArrayList<>(total);
+    Set<T> list = new HashSet<>(total);
     for (int i = 0; i < total; i++) {
       list.add(supplier.get());
     }

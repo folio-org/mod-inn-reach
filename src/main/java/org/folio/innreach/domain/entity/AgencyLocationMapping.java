@@ -6,24 +6,44 @@ import lombok.Setter;
 import lombok.ToString;
 import org.folio.innreach.domain.entity.base.Auditable;
 import org.folio.innreach.domain.entity.base.Identifiable;
+import org.hibernate.annotations.QueryHints;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.Id;
+import javax.persistence.NamedQuery;
 import javax.persistence.OneToMany;
+import javax.persistence.OrderBy;
+import javax.persistence.QueryHint;
 import javax.persistence.Table;
-import java.util.List;
+import java.util.Set;
 import java.util.UUID;
+
+import static org.folio.innreach.domain.entity.AgencyLocationMapping.FETCH_ONE_BY_ID_QUERY;
+import static org.folio.innreach.domain.entity.AgencyLocationMapping.FETCH_ONE_BY_ID_QUERY_NAME;
 
 @Getter
 @Setter
 @NoArgsConstructor
-@ToString
+@ToString(exclude = "localServerMappings")
 @Entity
+@NamedQuery(
+  name = FETCH_ONE_BY_ID_QUERY_NAME,
+  query = FETCH_ONE_BY_ID_QUERY,
+  hints = @QueryHint(name = QueryHints.PASS_DISTINCT_THROUGH, value = "false")
+)
 @Table(name = "agency_location_mapping")
 public class AgencyLocationMapping extends Auditable<String> implements Identifiable<UUID> {
+
+  private static final String FETCH_BY_ID_POSTFIX = " WHERE am.id = :id";
+
+  public static final String FETCH_ONE_BY_ID_QUERY_NAME = "AgencyLocationMapping.fetchOne";
+
+  public static final String FETCH_ONE_BY_ID_QUERY = "SELECT DISTINCT am FROM AgencyLocationMapping AS am " +
+    "LEFT JOIN FETCH am.localServerMappings lsm " +
+    "LEFT JOIN FETCH lsm.agencyCodeMappings" + FETCH_BY_ID_POSTFIX;
 
   @Id
   @Column(name = "central_server_id")
@@ -35,10 +55,11 @@ public class AgencyLocationMapping extends Auditable<String> implements Identifi
 
   @OneToMany(
     cascade = CascadeType.ALL,
-    fetch = FetchType.EAGER,
+    fetch = FetchType.LAZY,
     orphanRemoval = true,
     mappedBy = "centralServerMapping"
   )
-  private List<AgencyLocationLscMapping> localServerMappings;
+  @OrderBy("localServerCode")
+  private Set<AgencyLocationLscMapping> localServerMappings;
 
 }

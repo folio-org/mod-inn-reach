@@ -14,11 +14,12 @@ import java.util.UUID;
 import static java.util.UUID.fromString;
 import static java.util.UUID.randomUUID;
 import static java.util.stream.Collectors.toList;
-import static org.folio.innreach.fixture.AgencyLocationMappingFixture.createAgencyCodeMapping;
 import static org.folio.innreach.fixture.AgencyLocationMappingFixture.createLocalServerMapping;
 import static org.folio.innreach.fixture.AgencyLocationMappingFixture.createMapping;
+import static org.folio.innreach.fixture.AgencyLocationMappingFixture.findLocalServerMappingByCode;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -58,11 +59,17 @@ class AgencyLocationMappingRepositoryTest extends BaseRepositoryTest {
   }
 
   @Test
-  void shouldGetExistingMapping() {
-    var mapping = repository.getOne(fromString(PRE_POPULATED_MAPPING_ID));
+  void shouldFetchExistingMapping() {
+    var mapping = repository.fetchOne(fromString(PRE_POPULATED_MAPPING_ID)).get();
 
     assertEquals(PRE_POPULATED_LIBRARY_UUID, mapping.getLibraryId());
     assertEquals(PRE_POPULATED_LOCATION_UUID, mapping.getLocationId());
+
+    var localServerMappings = mapping.getLocalServerMappings();
+    assertNotNull(localServerMappings);
+
+    var foundLocalServerMapping = findLocalServerMappingByCode(mapping, PRE_POPULATED_LOCAL_CODE);
+    assertNotNull(foundLocalServerMapping);
 
     assertEquals(PRE_POPULATED_USER, mapping.getCreatedBy());
     assertNotNull(mapping.getCreatedDate());
@@ -77,6 +84,7 @@ class AgencyLocationMappingRepositoryTest extends BaseRepositoryTest {
     var saved = repository.saveAndFlush(newMapping);
 
     var found = repository.getOne(saved.getId());
+    assertNotNull(found);
     assertEquals(newMapping.getId(), found.getId());
     assertEquals(saved.getLocationId(), found.getLocationId());
     assertEquals(saved.getLibraryId(), found.getLibraryId());
@@ -108,6 +116,24 @@ class AgencyLocationMappingRepositoryTest extends BaseRepositoryTest {
   }
 
   @Test
+  void shouldAddLocalServerMapping() {
+    var mapping = repository.getOne(fromString(PRE_POPULATED_MAPPING_ID));
+
+    var newLsMapping = createLocalServerMapping();
+    newLsMapping.setCentralServerMapping(mapping);
+    mapping.getLocalServerMappings().add(newLsMapping);
+
+    repository.saveAndFlush(mapping);
+
+    var saved = repository.getOne(mapping.getId());
+    var savedLsMappings = saved.getLocalServerMappings();
+
+    assertNotNull(savedLsMappings);
+    assertTrue(savedLsMappings.contains(newLsMapping));
+    assertEquals(2, savedLsMappings.size());
+  }
+
+  @Test
   void shouldDeleteExistingMapping() {
     UUID id = fromString(PRE_POPULATED_MAPPING_ID);
 
@@ -120,19 +146,16 @@ class AgencyLocationMappingRepositoryTest extends BaseRepositoryTest {
   @Test
   void shouldDeleteLocalServerMapping() {
     var mapping = repository.getOne(fromString(PRE_POPULATED_MAPPING_ID));
-    var lscMappings = mapping.getLocalServerMappings();
-    lscMappings.removeIf(m -> PRE_POPULATED_LOCAL_CODE.equals(m.getLocalServerCode()));
+
+    var localServerMapping = findLocalServerMappingByCode(mapping, PRE_POPULATED_LOCAL_CODE);
+    mapping.getLocalServerMappings().remove(localServerMapping);
 
     repository.saveAndFlush(mapping);
 
     var saved = repository.getOne(mapping.getId());
+    var savedLocalServerMappings = saved.getLocalServerMappings();
 
-    var foundLscMapping = saved.getLocalServerMappings()
-      .stream()
-      .filter(m -> PRE_POPULATED_LOCAL_CODE.equals(m.getLocalServerCode()))
-      .findFirst();
-
-    assertTrue(foundLscMapping.isEmpty());
+    assertFalse(savedLocalServerMappings.contains(localServerMapping));
   }
 
   @Test
@@ -159,39 +182,6 @@ class AgencyLocationMappingRepositoryTest extends BaseRepositoryTest {
 
     var ex = assertThrows(DataIntegrityViolationException.class, () -> repository.saveAndFlush(mapping));
     assertThat(ex.getMessage(), containsString("constraint [fk_agency_location_mapping_cs_id]"));
-  }
-
-  @Test
-  void throwExceptionWhenSavingWithExistingLocalCodeId() {
-    var mapping = repository.getOne(fromString(PRE_POPULATED_MAPPING_ID));
-
-    var newLscMapping = createLocalServerMapping();
-    newLscMapping.setLocalServerCode(PRE_POPULATED_LOCAL_CODE);
-    newLscMapping.setCentralServerMapping(mapping);
-
-    mapping.getLocalServerMappings().add(newLscMapping);
-
-    var ex = assertThrows(DataIntegrityViolationException.class, () -> repository.saveAndFlush(mapping));
-    assertThat(ex.getMessage(), containsString("constraint [unq_agency_location_lsc_mapping_csm_lsc]"));
-  }
-
-  @Test
-  void throwExceptionWhenSavingWithExistingAgencyCodeId() {
-    var mapping = repository.getOne(fromString(PRE_POPULATED_MAPPING_ID));
-    var localServerMapping = mapping.getLocalServerMappings()
-      .stream()
-      .filter(m -> PRE_POPULATED_LOCAL_CODE.equals(m.getLocalServerCode()))
-      .findFirst()
-      .get();
-
-    var newAcMapping = createAgencyCodeMapping();
-    newAcMapping.setAgencyCode(PRE_POPULATED_AGENCY_CODE);
-    newAcMapping.setLocalServerMapping(localServerMapping);
-
-    localServerMapping.getAgencyCodeMappings().add(newAcMapping);
-
-    var ex = assertThrows(DataIntegrityViolationException.class, () -> repository.saveAndFlush(mapping));
-    assertThat(ex.getMessage(), containsString("constraint [unq_agency_location_ac_mapping_lsm_ac]"));
   }
 
 }
