@@ -27,8 +27,8 @@ import java.util.UUID;
 @Table(name = "agency_location_ac_mapping")
 public class AgencyLocationAcMapping extends Auditable<String> implements Identifiable<UUID> {
 
-  @GeneratedValue(strategy = GenerationType.AUTO)
   @Id
+  @GeneratedValue(strategy = GenerationType.AUTO)
   private UUID id;
 
   private UUID locationId;

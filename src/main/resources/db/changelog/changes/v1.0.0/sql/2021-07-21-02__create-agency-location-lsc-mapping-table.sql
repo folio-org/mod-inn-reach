@@ -11,6 +11,6 @@ CREATE TABLE agency_location_lsc_mapping
     last_modified_date        TIMESTAMP,
     CONSTRAINT pk_agency_location_lsc_mapping PRIMARY KEY (id),
     CONSTRAINT unq_agency_location_lsc_mapping_csm_lsc UNIQUE (central_server_mapping_id, local_server_code),
-    CONSTRAINT fk_agency_location_lsc_mapping_csm_id FOREIGN KEY (central_server_mapping_id)
-        REFERENCES agency_location_mapping (central_server_id) ON DELETE CASCADE
+    CONSTRAINT fk_agency_location_lsc_mapping_id FOREIGN KEY (central_server_mapping_id)
+        REFERENCES agency_location_mapping (id) ON DELETE CASCADE
 );

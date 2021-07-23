@@ -4,7 +4,6 @@ import org.folio.innreach.domain.entity.AgencyLocationMapping;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.orm.jpa.JpaSystemException;
 import org.springframework.test.context.jdbc.Sql;
 
 import java.util.List;
@@ -32,13 +31,12 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 })
 class AgencyLocationMappingRepositoryTest extends BaseRepositoryTest {
 
-  private static final String PRE_POPULATED_MAPPING_ID = "edab6baf-c696-42b1-89bb-1bbb8759b0d2";
+  private static final String PRE_POPULATED_MAPPING_ID = "b8d3f619-6a7c-41c3-9a99-bb937735dcc7";
 
   private static final UUID PRE_POPULATED_LOCATION_UUID = fromString("99b0d4e2-a5ec-46a1-a5ea-1080e609f969");
   private static final UUID PRE_POPULATED_LIBRARY_UUID = fromString("70cf3473-77f2-4f5c-92c3-6489e65769e4");
 
   private static final String PRE_POPULATED_LOCAL_CODE = "5publ";
-  private static final String PRE_POPULATED_AGENCY_CODE = "5east";
 
   private static final String PRE_POPULATED_USER = "admin";
 
@@ -91,11 +89,11 @@ class AgencyLocationMappingRepositoryTest extends BaseRepositoryTest {
   }
 
   @Test
-  void throwExceptionWhenSavingWithoutId() {
+  void throwExceptionWhenSavingWithoutCentralServerRef() {
     var mapping = createMapping();
-    mapping.setId(null);
+    mapping.setCentralServer(null);
 
-    assertThrows(JpaSystemException.class, () -> repository.saveAndFlush(mapping));
+    assertThrows(DataIntegrityViolationException.class, () -> repository.saveAndFlush(mapping));
   }
 
   @Test
@@ -177,8 +175,7 @@ class AgencyLocationMappingRepositoryTest extends BaseRepositoryTest {
   @Test
   void throwExceptionWhenSavingWithInvalidCentralServerId() {
     var mapping = createMapping();
-
-    mapping.setId(randomUUID());
+    mapping.getCentralServer().setId(randomUUID());
 
     var ex = assertThrows(DataIntegrityViolationException.class, () -> repository.saveAndFlush(mapping));
     assertThat(ex.getMessage(), containsString("constraint [fk_agency_location_mapping_cs_id]"));

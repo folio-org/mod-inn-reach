@@ -9,12 +9,15 @@ import org.folio.innreach.domain.entity.base.Identifiable;
 import org.hibernate.annotations.QueryHints;
 
 import javax.persistence.CascadeType;
-import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
 import javax.persistence.NamedQuery;
 import javax.persistence.OneToMany;
+import javax.persistence.OneToOne;
 import javax.persistence.OrderBy;
 import javax.persistence.QueryHint;
 import javax.persistence.Table;
@@ -46,7 +49,7 @@ public class AgencyLocationMapping extends Auditable<String> implements Identifi
     "LEFT JOIN FETCH lsm.agencyCodeMappings" + FETCH_BY_ID_POSTFIX;
 
   @Id
-  @Column(name = "central_server_id")
+  @GeneratedValue(strategy = GenerationType.AUTO)
   private UUID id;
 
   private UUID locationId;
@@ -61,5 +64,9 @@ public class AgencyLocationMapping extends Auditable<String> implements Identifi
   )
   @OrderBy("localServerCode")
   private Set<AgencyLocationLscMapping> localServerMappings;
+
+  @OneToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "central_server_id", unique = true, nullable = false, updatable = false)
+  private CentralServer centralServer;
 
 }
