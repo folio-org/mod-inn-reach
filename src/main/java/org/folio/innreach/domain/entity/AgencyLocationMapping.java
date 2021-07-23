@@ -30,7 +30,7 @@ import static org.folio.innreach.domain.entity.AgencyLocationMapping.FETCH_ONE_B
 @Getter
 @Setter
 @NoArgsConstructor
-@ToString(exclude = "localServerMappings")
+@ToString(exclude = {"centralServer", "localServerMappings"})
 @Entity
 @NamedQuery(
   name = FETCH_ONE_BY_ID_QUERY_NAME,
