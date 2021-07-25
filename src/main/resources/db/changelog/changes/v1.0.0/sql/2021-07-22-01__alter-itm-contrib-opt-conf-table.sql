@@ -1,4 +1,5 @@
 ALTER TABLE item_contribution_options_configuration ADD COLUMN id UUID;
+UPDATE item_contribution_options_configuration SET id = central_server_id;
 ALTER TABLE item_contribution_options_configuration DROP CONSTRAINT item_contribution_options_configuration_pkey CASCADE;
 ALTER TABLE item_contribution_options_configuration ADD CONSTRAINT pk_item_contribution_options_configuration PRIMARY KEY (id);
 
