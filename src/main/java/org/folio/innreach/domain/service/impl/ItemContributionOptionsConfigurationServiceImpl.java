@@ -7,11 +7,14 @@ import org.folio.innreach.domain.service.ItemContributionOptionsConfigurationSer
 import org.folio.innreach.dto.ItemContributionOptionsConfigurationDTO;
 import org.folio.innreach.mapper.ItemContributionOptionsConfigurationMapper;
 import org.folio.innreach.repository.ItemContributionOptionsConfigurationRepository;
+import org.springframework.data.domain.Example;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityExistsException;
 import java.util.UUID;
+
+import static org.folio.innreach.domain.service.impl.ServiceUtils.centralServerRef;
 
 @RequiredArgsConstructor
 @Service
@@ -25,8 +28,7 @@ public class ItemContributionOptionsConfigurationServiceImpl implements ItemCont
   @Override
   @Transactional(readOnly = true)
   public ItemContributionOptionsConfigurationDTO getItmContribOptConf(UUID centralServerId) {
-    var itmContribOptConf = repository.findById(centralServerId)
-      .orElseThrow(() -> new EntityNotFoundException(TEXT_ITM_CONTRIB_OPT_CONFIG_WITH_ID + centralServerId + " not found"));
+    var itmContribOptConf = findItmContribOptConf(centralServerId);
     return mapper.toDto(itmContribOptConf);
   }
 
@@ -34,18 +36,17 @@ public class ItemContributionOptionsConfigurationServiceImpl implements ItemCont
   public ItemContributionOptionsConfigurationDTO createItmContribOptConf(UUID centralServerId, ItemContributionOptionsConfigurationDTO itmContribOptConfDTO) {
     repository.findById(centralServerId).ifPresent(itmContribOptConf -> {
       throw new EntityExistsException(TEXT_ITM_CONTRIB_OPT_CONFIG_WITH_ID
-        + itmContribOptConf.getCentralServerId() + " already exists.");
+        + itmContribOptConf.getCentralServer().getId() + " already exists.");
     });
     var itmContribOptConf = mapper.toEntity(itmContribOptConfDTO);
-    itmContribOptConf.setCentralServerId(centralServerId);
+    itmContribOptConf.setCentralServer(centralServerRef(centralServerId));
     var createdItmContribOptConf = repository.save(itmContribOptConf);
     return mapper.toDto(createdItmContribOptConf);
   }
 
   @Override
   public ItemContributionOptionsConfigurationDTO updateItmContribOptConf(UUID centralServerId, ItemContributionOptionsConfigurationDTO itmContribOptConfDTO) {
-    var itmContribOptConf = repository.findById(centralServerId)
-      .orElseThrow(() -> new EntityNotFoundException(TEXT_ITM_CONTRIB_OPT_CONFIG_WITH_ID + centralServerId + " not found"));
+    var itmContribOptConf = findItmContribOptConf(centralServerId);
     var updatedItmContribOptConf = mapper.toEntity(itmContribOptConfDTO);
     updateItmContribOptConf(itmContribOptConf, updatedItmContribOptConf);
 
@@ -59,5 +60,18 @@ public class ItemContributionOptionsConfigurationServiceImpl implements ItemCont
     itmContribOptConf.setNonLendableLoanTypes(updatedItmContribOptConf.getNonLendableLoanTypes());
     itmContribOptConf.setNonLendableLocations(updatedItmContribOptConf.getNonLendableLocations());
     itmContribOptConf.setNonLendableMaterialTypes(updatedItmContribOptConf.getNonLendableMaterialTypes());
+  }
+
+  private ItemContributionOptionsConfiguration findItmContribOptConf(UUID centralServerId) {
+    return repository.findOne(exampleWithServerId(centralServerId))
+      .orElseThrow(() -> new EntityNotFoundException("Item Contribution Options Configuration not found: " +
+        "centralServerId = " + centralServerId));
+  }
+
+  private static Example<ItemContributionOptionsConfiguration> exampleWithServerId(UUID centralServerId) {
+    var toFind = new ItemContributionOptionsConfiguration();
+    toFind.setCentralServer(centralServerRef(centralServerId));
+
+    return Example.of(toFind);
   }
 }

@@ -9,28 +9,33 @@ import javax.persistence.Column;
 import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
+import javax.persistence.OneToOne;
 import javax.persistence.Table;
 
-import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 
 import org.folio.innreach.domain.entity.base.Auditable;
+import org.folio.innreach.domain.entity.base.Identifiable;
 
 @Entity
 @Table(name = "item_contribution_options_configuration")
 @Getter
 @Setter
-@ToString(exclude = { "notAvailableItemStatuses", "nonLendableLoanTypes", "nonLendableLocations", "nonLendableMaterialTypes"})
-@EqualsAndHashCode(of = {"centralServerId"})
-public class ItemContributionOptionsConfiguration extends Auditable<String> {
-
+@ToString(exclude = {"centralServer", "notAvailableItemStatuses", "nonLendableLoanTypes", "nonLendableLocations", "nonLendableMaterialTypes"})
+public class ItemContributionOptionsConfiguration extends Auditable<String> implements Identifiable<UUID> {
   @Id
-  @Column(name = "central_server_id")
-  private UUID centralServerId;
+  @GeneratedValue(strategy = GenerationType.AUTO)
+  private UUID id;
+
+  @OneToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "central_server_id", unique = true)
+  private CentralServer centralServer;
 
   @ElementCollection(fetch = FetchType.LAZY)
   @CollectionTable(

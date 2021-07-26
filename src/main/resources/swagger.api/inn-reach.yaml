@@ -525,7 +525,7 @@ paths:
             schema:
               $ref: "#/components/schemas/authenticationRequest"
         required: true
-  /central-servers/{centralServerId}/contribution-options:
+  /central-servers/{centralServerId}/item-contribution-options:
     get:
       responses:
         '200':

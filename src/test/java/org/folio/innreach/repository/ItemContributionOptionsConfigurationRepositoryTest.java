@@ -1,5 +1,6 @@
 package org.folio.innreach.repository;
 
+import static org.folio.innreach.fixture.TestUtil.refCentralServer;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -19,7 +20,7 @@ import org.springframework.test.context.jdbc.Sql;
 import org.folio.innreach.domain.entity.ItemContributionOptionsConfiguration;
 
 class ItemContributionOptionsConfigurationRepositoryTest extends BaseRepositoryTest {
-  private static final String PRE_POPULATED_ITM_CONTRIB_OPT_CONFIG_ID = "edab6baf-c696-42b1-89bb-1bbb8759b0d2";
+  private static final String PRE_POPULATED_ITM_CONTRIB_OPT_CONFIG_ID = "20e4363c-b6c2-4da2-ac68-7dffbd18e3ce";
   private static final String PRE_POPULATED_CENTRAL_SERVER_ID = "edab6baf-c696-42b1-89bb-1bbb8759b0d2";
 
   @Autowired
@@ -32,18 +33,18 @@ class ItemContributionOptionsConfigurationRepositoryTest extends BaseRepositoryT
     var itmContribOptConfById = repository.getOne(UUID.fromString(PRE_POPULATED_ITM_CONTRIB_OPT_CONFIG_ID));
 
     assertNotNull(itmContribOptConfById);
-    assertEquals(UUID.fromString(PRE_POPULATED_ITM_CONTRIB_OPT_CONFIG_ID), itmContribOptConfById.getCentralServerId());
+    assertEquals(UUID.fromString(PRE_POPULATED_ITM_CONTRIB_OPT_CONFIG_ID), itmContribOptConfById.getId());
   }
 
   @Test
   @Sql(scripts = {"classpath:db/central-server/pre-populate-central-server.sql"})
   void saveItmContribOptConf_when_itmContribOptConfDoesNotExists() {
     var itmContribOptConf = createItmContribOptConf();
-    itmContribOptConf.setCentralServerId(UUID.fromString(PRE_POPULATED_CENTRAL_SERVER_ID));
+    itmContribOptConf.setCentralServer(refCentralServer(UUID.fromString(PRE_POPULATED_CENTRAL_SERVER_ID)));
     var savedItmContribOptConf = repository.save(itmContribOptConf);
 
     assertNotNull(savedItmContribOptConf);
-    assertNotNull(savedItmContribOptConf.getCentralServerId());
+    assertNotNull(savedItmContribOptConf.getCentralServer().getId());
     assertEquals(itmContribOptConf.getNonLendableLoanTypes(), savedItmContribOptConf.getNonLendableLoanTypes());
     assertEquals(itmContribOptConf.getNonLendableLocations(), savedItmContribOptConf.getNonLendableLocations());
     assertEquals(itmContribOptConf.getNonLendableMaterialTypes(), savedItmContribOptConf.getNonLendableMaterialTypes());
@@ -72,7 +73,7 @@ class ItemContributionOptionsConfigurationRepositoryTest extends BaseRepositoryT
 
     var updatedItmContribOptConf = repository.save(savedItmContribOptConf);
 
-    assertEquals(savedItmContribOptConf.getCentralServerId(), updatedItmContribOptConf.getCentralServerId());
+    assertEquals(savedItmContribOptConf.getCentralServer().getId(), updatedItmContribOptConf.getCentralServer().getId());
     assertEquals(updatedNonLendableLoanTypes, updatedItmContribOptConf.getNonLendableLoanTypes());
     assertEquals(updatedNonLendableLocations, updatedItmContribOptConf.getNonLendableLocations());
     assertEquals(updatedNonLendableMaterialTypes, updatedItmContribOptConf.getNonLendableMaterialTypes());
