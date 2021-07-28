@@ -37,7 +37,7 @@ import static org.folio.innreach.domain.entity.AgencyLocationMapping.FETCH_ONE_B
 @NamedQuery(
   name = FETCH_ONE_BY_CS_QUERY_NAME,
   query = FETCH_ONE_BY_CS_QUERY,
-  hints = @QueryHint(name = QueryHints.PASS_DISTINCT_THROUGH, value = "true")
+  hints = @QueryHint(name = QueryHints.PASS_DISTINCT_THROUGH, value = "false")
 )
 @Table(name = "agency_location_mapping")
 public class AgencyLocationMapping extends Auditable<String> implements Identifiable<UUID> {
