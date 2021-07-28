@@ -54,4 +54,18 @@ public class MARCTransformationOptionsSettings extends Auditable<String> {
   @Column(name = "marc_field")
   @Fetch(value = org.hibernate.annotations.FetchMode.SUBSELECT)
   private List<String> excludedMARCFields = new ArrayList<>();
+
+  public void removeModifiedFieldForContributedRecords(FieldConfiguration fieldConfiguration) {
+    if (fieldConfiguration != null) {
+      fieldConfiguration.setMARCTransformationOptionsSettings(null);
+    }
+    this.modifiedFieldsForContributedRecords.remove(fieldConfiguration);
+  }
+
+  public void addModifiedFieldForContributedRecords(FieldConfiguration fieldConfiguration) {
+    if (fieldConfiguration != null) {
+      fieldConfiguration.setMARCTransformationOptionsSettings(this);
+    }
+    this.modifiedFieldsForContributedRecords.add(fieldConfiguration);
+  }
 }

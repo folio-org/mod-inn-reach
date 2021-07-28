@@ -161,6 +161,31 @@
           "methods": ["PUT"],
           "pathPattern": "/inn-reach/central-servers/{centralServerId}/agency-mappings",
           "permissionsRequired": ["inn-reach.agency-mappings.item.put"]
+        },
+        {
+          "methods": ["GET"],
+          "pathPattern": "/inn-reach/central-servers/{centralServerId}/marc-transformation-options",
+          "permissionsRequired": ["inn-reach.central-servers.marc-transformation-options-settings.item.get"]
+        },
+        {
+          "methods": ["GET"],
+          "pathPattern": "/inn-reach/central-servers/marc-transformation-options",
+          "permissionsRequired": ["inn-reach.central-servers.marc-transformation-options-settings.collection.get"]
+        },
+        {
+          "methods": ["POST"],
+          "pathPattern": "/inn-reach/central-servers/{centralServerId}/marc-transformation-options",
+          "permissionsRequired": ["inn-reach.central-servers.marc-transformation-options-settings.item.post"]
+        },
+        {
+          "methods": ["PUT"],
+          "pathPattern": "/inn-reach/central-servers/{centralServerId}/marc-transformation-options",
+          "permissionsRequired": ["inn-reach.central-servers.marc-transformation-options-settings.item.put"]
+        },
+        {
+          "methods": ["DELETE"],
+          "pathPattern": "/inn-reach/central-servers/{centralServerId}/marc-transformation-options",
+          "permissionsRequired": ["inn-reach.central-servers.marc-transformation-options-settings.item.delete"]
         }
       ]
     },
@@ -432,6 +457,43 @@
       ]
     },
     {
+      "permissionName" : "inn-reach.central-servers.marc-transformation-options-settings.item.get",
+      "displayName" : "get marc transformations options settings",
+      "description" : "Get MARC Transformation Options Settings"
+    },
+    {
+      "permissionName" : "inn-reach.central-servers.marc-transformation-options-settings.collection.get",
+      "displayName" : "get a collection of marc transformations options settings",
+      "description" : "Get a collection of MARC Transformation Options Settings"
+    },
+    {
+      "permissionName" : "inn-reach.central-servers.marc-transformation-options-settings.item.post",
+      "displayName" : "create marc transformations options settings",
+      "description" : "Add MARC Transformation Options Settings"
+    },
+    {
+      "permissionName" : "inn-reach.central-servers.marc-transformation-options-settings.item.put",
+      "displayName" : "update marc transformations options settings",
+      "description" : "Update MARC Transformation Options Settings"
+    },
+    {
+      "permissionName" : "inn-reach.central-servers.marc-transformation-options-settings.item.delete",
+      "displayName" : "delete marc transformations options settings",
+      "description" : "Delete MARC Transformation Options Settings"
+    },
+    {
+      "permissionName" : "inn-reach.central-servers.marc-transformation-options-settings.all",
+      "displayName" : "inn reach API module - all permissions of marc transformations options settings",
+      "description" : "All permissions for MARC Transformation Options Settings",
+      "subPermissions" : [
+        "inn-reach.central-servers.marc-transformation-options-settings.item.get",
+        "inn-reach.central-servers.marc-transformation-options-settings.collection.get",
+        "inn-reach.central-servers.marc-transformation-options-settings.item.post",
+        "inn-reach.central-servers.marc-transformation-options-settings.item.put",
+        "inn-reach.central-servers.marc-transformation-options-settings.item.delete"
+      ]
+    },
+    {
       "permissionName" : "inn-reach.all",
       "displayName" : "inn reach API module - all permissions",
       "description" : "All permissions for inn reach",
@@ -445,7 +507,8 @@
         "inn-reach.d2r.settings.any.get",
         "inn-reach.authentication.all",
         "inn-reach.central-servers.item-contribution-options-configuration.all",
-        "inn-reach.agency-mappings.all"
+        "inn-reach.agency-mappings.all",
+        "inn-reach.central-servers.marc-transformation-options-settings.all"
       ]
     }
   ],

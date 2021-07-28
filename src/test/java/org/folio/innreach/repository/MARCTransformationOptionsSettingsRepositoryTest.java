@@ -77,11 +77,11 @@ class MARCTransformationOptionsSettingsRepositoryTest extends BaseRepositoryTest
   @Test
   @Sql(scripts = {"classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/marc-transform-opt-set/pre-populate-marc-transform-opt-set.sql"})
-  void deleteItmContribOptConf_when_itmContribOptConfExists() {
+  void deleteMARCTransformOptSet_when_marcTransformOptSetExists() {
     UUID id = UUID.fromString(PRE_POPULATED_MARC_TRANSFORM_OPT_SET_ID);
     repository.deleteById(id);
 
-    Optional<MARCTransformationOptionsSettings> deletedItmContribOptConf = repository.findById(id);
-    assertTrue(deletedItmContribOptConf.isEmpty());
+    Optional<MARCTransformationOptionsSettings> deleted = repository.findById(id);
+    assertTrue(deleted.isEmpty());
   }
 }
