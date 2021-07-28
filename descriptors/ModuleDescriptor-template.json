@@ -155,12 +155,12 @@
         {
           "methods": ["GET"],
           "pathPattern": "/inn-reach/central-servers/{centralServerId}/agency-mappings",
-          "permissionsRequired": ["inn-reach.agency-mappings.collection.get"]
+          "permissionsRequired": ["inn-reach.agency-mappings.item.get"]
         },
         {
           "methods": ["PUT"],
           "pathPattern": "/inn-reach/central-servers/{centralServerId}/agency-mappings",
-          "permissionsRequired": ["inn-reach.agency-mappings.collection.put"]
+          "permissionsRequired": ["inn-reach.agency-mappings.item.put"]
         }
       ]
     },
@@ -413,22 +413,22 @@
       ]
     },
     {
-      "permissionName" : "inn-reach.agency-mappings.collection.get",
-      "displayName" : "get a collection of inn reach agency mapping entries",
-      "description" : "Get a collection of inn reach agency mapping entries"
+      "permissionName" : "inn-reach.agency-mappings.item.get",
+      "displayName" : "get INN-Reach Agency to FOLIO locations mapping",
+      "description" : "Get INN-Reach Agency to FOLIO locations mapping"
     },
     {
-      "permissionName" : "inn-reach.agency-mappings.collection.put",
-      "displayName" : "update a collection of inn reach agency mapping entries",
-      "description" : "Update a collection of inn reach agency mapping entries"
+      "permissionName" : "inn-reach.agency-mappings.item.put",
+      "displayName" : "update INN-Reach Agency to FOLIO locations mapping",
+      "description" : "Update INN-Reach Agency to FOLIO locations mapping"
     },
     {
       "permissionName" : "inn-reach.agency-mappings.all",
       "displayName" : "inn reach API module - all permissions of agency mappings",
       "description" : "All permissions of inn reach agency mappings scope",
       "subPermissions" : [
-        "inn-reach.agency-mappings.collection.get",
-        "inn-reach.agency-mappings.collection.put"
+        "inn-reach.agency-mappings.item.get",
+        "inn-reach.agency-mappings.item.put"
       ]
     },
     {
