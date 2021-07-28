@@ -12,7 +12,6 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
 import java.util.Collection;
-import java.util.List;
 import java.util.UUID;
 
 import static org.apache.commons.collections4.CollectionUtils.emptyIfNull;

@@ -210,6 +210,27 @@ class AgencyMappingControllerTest extends BaseControllerTest {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/agency-loc-mapping/pre-populate-agency-location-mapping.sql"
   })
+  void shouldDeleteLocalServerMappings() {
+    var existing = mapper.toDTO(fetchDbEntity());
+    existing.getLocalServers().clear();
+
+    var responseEntity =
+      testRestTemplate.exchange(baseMappingURL(), HttpMethod.PUT, new HttpEntity<>(existing), Void.class);
+
+    assertEquals(HttpStatus.NO_CONTENT, responseEntity.getStatusCode());
+    assertFalse(responseEntity.hasBody());
+
+    var updated = mapper.toDTO(fetchDbEntity());
+    var updatedLsMappings = updated.getLocalServers();
+
+    assertTrue(updatedLsMappings.isEmpty());
+  }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/agency-loc-mapping/pre-populate-agency-location-mapping.sql"
+  })
   void shouldCreateUpdateAndDeleteMappingsAtTheSameTime() {
     var existing = mapper.toDTO(fetchDbEntity());
     var existingLsMappings = existing.getLocalServers();

@@ -17,7 +17,6 @@ import java.util.Comparator;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
-import java.util.function.Consumer;
 import java.util.function.Function;
 
 import static org.folio.innreach.domain.service.impl.ServiceUtils.merge;
@@ -67,7 +66,7 @@ public class AgencyMappingServiceImpl implements AgencyMappingService {
       existing.setLocationId(incoming.getLocationId());
 
       merge(incoming.getLocalServerMappings(), existing.getLocalServerMappings(), LSC_COMPARATOR,
-        existing::addLocalServerMapping, this::updateLscMapping, nothing());
+        existing::addLocalServerMapping, this::updateLscMapping, existing::removeLocalServerMapping);
 
       return existing;
     };
@@ -87,10 +86,6 @@ public class AgencyMappingServiceImpl implements AgencyMappingService {
   private void updateAcMapping(AgencyLocationAcMapping incoming, AgencyLocationAcMapping existing) {
     existing.setLocationId(incoming.getLocationId());
     existing.setLibraryId(incoming.getLibraryId());
-  }
-
-  private <E> Consumer<E> nothing() {
-    return (e) -> { };
   }
 
 }

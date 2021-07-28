@@ -79,4 +79,10 @@ public class AgencyLocationMapping extends Auditable<String> implements Identifi
     localServerMappings.add(mapping);
   }
 
+  public void removeLocalServerMapping(AgencyLocationLscMapping mapping) {
+    Objects.requireNonNull(mapping);
+
+    localServerMappings.remove(mapping);
+  }
+
 }
