@@ -32,6 +32,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 class AgencyLocationMappingRepositoryTest extends BaseRepositoryTest {
 
   private static final String PRE_POPULATED_MAPPING_ID = "b8d3f619-6a7c-41c3-9a99-bb937735dcc7";
+  private static final String PRE_POPULATED_CS_ID = "edab6baf-c696-42b1-89bb-1bbb8759b0d2";
 
   private static final UUID PRE_POPULATED_LOCATION_UUID = fromString("99b0d4e2-a5ec-46a1-a5ea-1080e609f969");
   private static final UUID PRE_POPULATED_LIBRARY_UUID = fromString("70cf3473-77f2-4f5c-92c3-6489e65769e4");
@@ -58,7 +59,7 @@ class AgencyLocationMappingRepositoryTest extends BaseRepositoryTest {
 
   @Test
   void shouldFetchExistingMapping() {
-    var mapping = repository.fetchOne(fromString(PRE_POPULATED_MAPPING_ID)).get();
+    var mapping = repository.fetchOneByCsId(fromString(PRE_POPULATED_CS_ID)).get();
 
     assertEquals(PRE_POPULATED_LIBRARY_UUID, mapping.getLibraryId());
     assertEquals(PRE_POPULATED_LOCATION_UUID, mapping.getLocationId());

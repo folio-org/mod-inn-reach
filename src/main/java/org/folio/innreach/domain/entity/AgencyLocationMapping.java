@@ -21,11 +21,13 @@ import javax.persistence.OneToOne;
 import javax.persistence.OrderBy;
 import javax.persistence.QueryHint;
 import javax.persistence.Table;
+import java.util.LinkedHashSet;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 
-import static org.folio.innreach.domain.entity.AgencyLocationMapping.FETCH_ONE_BY_ID_QUERY;
-import static org.folio.innreach.domain.entity.AgencyLocationMapping.FETCH_ONE_BY_ID_QUERY_NAME;
+import static org.folio.innreach.domain.entity.AgencyLocationMapping.FETCH_ONE_BY_CS_QUERY;
+import static org.folio.innreach.domain.entity.AgencyLocationMapping.FETCH_ONE_BY_CS_QUERY_NAME;
 
 @Getter
 @Setter
@@ -33,20 +35,20 @@ import static org.folio.innreach.domain.entity.AgencyLocationMapping.FETCH_ONE_B
 @ToString(exclude = {"centralServer", "localServerMappings"})
 @Entity
 @NamedQuery(
-  name = FETCH_ONE_BY_ID_QUERY_NAME,
-  query = FETCH_ONE_BY_ID_QUERY,
-  hints = @QueryHint(name = QueryHints.PASS_DISTINCT_THROUGH, value = "false")
+  name = FETCH_ONE_BY_CS_QUERY_NAME,
+  query = FETCH_ONE_BY_CS_QUERY,
+  hints = @QueryHint(name = QueryHints.PASS_DISTINCT_THROUGH, value = "true")
 )
 @Table(name = "agency_location_mapping")
 public class AgencyLocationMapping extends Auditable<String> implements Identifiable<UUID> {
 
-  private static final String FETCH_BY_ID_POSTFIX = " WHERE am.id = :id";
+  private static final String FETCH_BY_CS_POSTFIX = " WHERE am.centralServer.id = :id";
 
-  public static final String FETCH_ONE_BY_ID_QUERY_NAME = "AgencyLocationMapping.fetchOne";
+  public static final String FETCH_ONE_BY_CS_QUERY_NAME = "AgencyLocationMapping.fetchOneByCs";
 
-  public static final String FETCH_ONE_BY_ID_QUERY = "SELECT DISTINCT am FROM AgencyLocationMapping AS am " +
+  public static final String FETCH_ONE_BY_CS_QUERY = "SELECT DISTINCT am FROM AgencyLocationMapping AS am " +
     "LEFT JOIN FETCH am.localServerMappings lsm " +
-    "LEFT JOIN FETCH lsm.agencyCodeMappings" + FETCH_BY_ID_POSTFIX;
+    "LEFT JOIN FETCH lsm.agencyCodeMappings" + FETCH_BY_CS_POSTFIX;
 
   @Id
   @GeneratedValue(strategy = GenerationType.AUTO)
@@ -63,10 +65,18 @@ public class AgencyLocationMapping extends Auditable<String> implements Identifi
     mappedBy = "centralServerMapping"
   )
   @OrderBy("localServerCode")
-  private Set<AgencyLocationLscMapping> localServerMappings;
+  private Set<AgencyLocationLscMapping> localServerMappings = new LinkedHashSet<>();
 
   @OneToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "central_server_id", unique = true, nullable = false, updatable = false)
   private CentralServer centralServer;
+
+  public void addLocalServerMapping(AgencyLocationLscMapping mapping) {
+    Objects.requireNonNull(mapping);
+
+    mapping.setCentralServerMapping(this);
+
+    localServerMappings.add(mapping);
+  }
 
 }

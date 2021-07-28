@@ -1,9 +1,10 @@
 package org.folio.innreach.domain.service.impl;
 
 import static java.util.Objects.nonNull;
-import static org.apache.commons.collections4.ListUtils.emptyIfNull;
+import static org.apache.commons.collections4.CollectionUtils.emptyIfNull;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -79,16 +80,16 @@ class ServiceUtils {
     return repository.saveAll(toSave);
   }
 
-  static <E extends Comparable<E>> void merge(List<E> incoming, List<E> stored,
+  static <E extends Comparable<E>> void merge(Collection<E> incoming, Collection<E> stored,
       Consumer<E> addMethod, BiConsumer<E, E> updateMethod, Consumer<E> deleteMethod) {
     merge(incoming, stored, Comparable::compareTo, addMethod, updateMethod, deleteMethod);
   }
 
-  static <E> void merge(List<E> incoming, List<E> stored, Comparator<E> comparator,
+  static <E> void merge(Collection<E> incoming, Collection<E> stored, Comparator<E> comparator,
       Consumer<E> addMethod, BiConsumer<E, E> updateMethod, Consumer<E> deleteMethod) {
 
     var storedList = new ArrayList<>(emptyIfNull(stored));
-    
+
     var incomingList = new ArrayList<>(emptyIfNull(incoming));
     incomingList.sort(comparator);
 

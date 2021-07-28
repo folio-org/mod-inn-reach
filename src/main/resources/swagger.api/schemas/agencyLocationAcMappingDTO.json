@@ -1,0 +1,36 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "description": "INN-Reach Agency to FOLIO location mapping",
+  "type": "object",
+  "properties": {
+    "id": {
+      "description": "Mapping id",
+      "type": "string",
+      "format": "uuid"
+    },
+    "agencyCode": {
+      "description": "Agency code",
+      "type": "string",
+      "maxLength": 5
+    },
+    "locationId": {
+      "description": "Location id",
+      "type": "string",
+      "format": "uuid"
+    },
+    "libraryId": {
+      "description": "Library id",
+      "type": "string",
+      "format": "uuid"
+    },
+    "metadata": {
+      "description": "Entity metadata",
+      "type": "object",
+      "$ref": "metadata.json"
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "agencyCode"
+  ]
+}
