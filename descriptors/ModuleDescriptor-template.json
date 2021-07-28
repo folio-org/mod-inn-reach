@@ -151,6 +151,16 @@
           "methods": ["PUT"],
           "pathPattern": "/inn-reach/central-servers/{centralServerId}/item-contribution-options",
           "permissionsRequired": ["inn-reach.central-servers.item-contribution-options-configuration.item.put"]
+        },
+        {
+          "methods": ["GET"],
+          "pathPattern": "/inn-reach/central-servers/{centralServerId}/agency-mappings",
+          "permissionsRequired": ["inn-reach.agency-mappings.collection.get"]
+        },
+        {
+          "methods": ["PUT"],
+          "pathPattern": "/inn-reach/central-servers/{centralServerId}/agency-mappings",
+          "permissionsRequired": ["inn-reach.agency-mappings.collection.put"]
         }
       ]
     },
@@ -403,6 +413,25 @@
       ]
     },
     {
+      "permissionName" : "inn-reach.agency-mappings.collection.get",
+      "displayName" : "get a collection of inn reach agency mapping entries",
+      "description" : "Get a collection of inn reach agency mapping entries"
+    },
+    {
+      "permissionName" : "inn-reach.agency-mappings.collection.put",
+      "displayName" : "update a collection of inn reach agency mapping entries",
+      "description" : "Update a collection of inn reach agency mapping entries"
+    },
+    {
+      "permissionName" : "inn-reach.agency-mappings.all",
+      "displayName" : "inn reach API module - all permissions of agency mappings",
+      "description" : "All permissions of inn reach agency mappings scope",
+      "subPermissions" : [
+        "inn-reach.agency-mappings.collection.get",
+        "inn-reach.agency-mappings.collection.put"
+      ]
+    },
+    {
       "permissionName" : "inn-reach.all",
       "displayName" : "inn reach API module - all permissions",
       "description" : "All permissions for inn reach",
@@ -415,7 +444,8 @@
         "inn-reach.location-mappings.all",
         "inn-reach.d2r.settings.any.get",
         "inn-reach.authentication.all",
-        "inn-reach.central-servers.item-contribution-options-configuration.all"
+        "inn-reach.central-servers.item-contribution-options-configuration.all",
+        "inn-reach.agency-mappings.all"
       ]
     }
   ],
