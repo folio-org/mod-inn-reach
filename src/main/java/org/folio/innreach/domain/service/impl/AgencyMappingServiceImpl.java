@@ -52,6 +52,8 @@ public class AgencyMappingServiceImpl implements AgencyMappingService {
       .map(mergeFunc(incoming))
       .orElse(incoming);
 
+    repository.saveAndFlush(updated);
+
     return mapper.toDTO(updated);
   }
 
