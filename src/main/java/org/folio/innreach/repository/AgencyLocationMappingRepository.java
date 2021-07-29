@@ -11,7 +11,7 @@ import java.util.UUID;
 @Repository
 public interface AgencyLocationMappingRepository extends JpaRepository<AgencyLocationMapping, UUID> {
 
-  @Query(name = AgencyLocationMapping.FETCH_ONE_BY_ID_QUERY_NAME)
-  Optional<AgencyLocationMapping> fetchOne(UUID id);
+  @Query(name = AgencyLocationMapping.FETCH_ONE_BY_CS_QUERY_NAME)
+  Optional<AgencyLocationMapping> fetchOneByCsId(UUID id);
 
 }

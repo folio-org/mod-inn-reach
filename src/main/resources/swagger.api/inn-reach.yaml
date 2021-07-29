@@ -589,6 +589,49 @@ paths:
         required: true
       parameters:
         - $ref: '#/components/parameters/centralServerId'
+  /central-servers/{centralServerId}/agency-mappings:
+    get:
+      description: Get a list of Inn-Reach Agency to FOLIO location mappings for the given central server
+      operationId: getAgencyMappingsByServerId
+      tags:
+        - agency-mappings
+      responses:
+        '200':
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/agencyLocationMappingDTO"
+        '400':
+          $ref: "#/components/responses/trait_response_malformed_query_400"
+        '500':
+          $ref: "#/components/responses/trait_response_500"
+      parameters:
+        - $ref: "#/components/parameters/centralServerId"
+    put:
+      description: >-
+        Update (add) INN-Reach Agency to FOLIO location mappings
+        associated with the central server
+      operationId: putAgencyMappings
+      tags:
+        - agency-mappings
+      responses:
+        '204':
+          description: Mapping successfully updated
+        '400':
+          $ref: "#/components/responses/trait_response_validation_400"
+        '409':
+          $ref: "#/components/responses/trait_response_409"
+        '500':
+          $ref: "#/components/responses/trait_response_500"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/agencyLocationMappingDTO"
+        required: true
+      parameters:
+        - $ref: "#/components/parameters/centralServerId"
 components:
   schemas:
     UUID:
@@ -629,6 +672,8 @@ components:
       $ref: schemas/authenticationRequest.json
     itemContributionOptionsConfigurationDTO:
       $ref: schemas/itemContributionOptionsConfigurationDTO.json
+    agencyLocationMappingDTO:
+      $ref: schemas/agencyLocationMappingDTO.json
   parameters:
     id:
       name: id

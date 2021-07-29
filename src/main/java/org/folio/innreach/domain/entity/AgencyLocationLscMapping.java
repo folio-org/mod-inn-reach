@@ -19,6 +19,8 @@ import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.OrderBy;
 import javax.persistence.Table;
+import java.util.LinkedHashSet;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 
@@ -48,10 +50,24 @@ public class AgencyLocationLscMapping extends Auditable<String> implements Ident
     mappedBy = "localServerMapping"
   )
   @OrderBy("agencyCode")
-  private Set<AgencyLocationAcMapping> agencyCodeMappings;
+  private Set<AgencyLocationAcMapping> agencyCodeMappings = new LinkedHashSet<>();
 
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "central_server_mapping_id", nullable = false, updatable = false)
   private AgencyLocationMapping centralServerMapping;
+
+  public void addAgencyCodeMapping(AgencyLocationAcMapping mapping) {
+    Objects.requireNonNull(mapping);
+
+    mapping.setLocalServerMapping(this);
+
+    agencyCodeMappings.add(mapping);
+  }
+
+  public void removeAgencyCodeMapping(AgencyLocationAcMapping mapping) {
+    Objects.requireNonNull(mapping);
+
+    agencyCodeMappings.remove(mapping);
+  }
 
 }
