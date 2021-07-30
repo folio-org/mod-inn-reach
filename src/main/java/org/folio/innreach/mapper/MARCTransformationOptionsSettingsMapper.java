@@ -13,7 +13,7 @@ public interface MARCTransformationOptionsSettingsMapper {
   @Mapping(target = "metadata.createdByUsername", source = "marcTransformOptSet.createdBy")
   @Mapping(target = "metadata.updatedDate", source = "marcTransformOptSet.lastModifiedDate")
   @Mapping(target = "metadata.updatedByUsername", source = "marcTransformOptSet.lastModifiedBy")
-  MARCTransformationOptionsSettingsDTO toMARCTransformationOptSetDto(MARCTransformationOptionsSettings marcTransformOptSet);
+  MARCTransformationOptionsSettingsDTO toDto(MARCTransformationOptionsSettings marcTransformOptSet);
 
-  MARCTransformationOptionsSettings toMARCTransformationOptSet(MARCTransformationOptionsSettingsDTO marcTransformOptSetDTO);
+  MARCTransformationOptionsSettings toEntity(MARCTransformationOptionsSettingsDTO marcTransformOptSetDTO);
 }

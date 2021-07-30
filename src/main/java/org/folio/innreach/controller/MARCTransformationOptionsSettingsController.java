@@ -32,35 +32,35 @@ public class MARCTransformationOptionsSettingsController implements MARCTransfor
   @GetMapping("/marc-transformation-options")
   public ResponseEntity<MARCTransformationOptionsSettingsListDTO> getAllMARCTransformationOptionsSettings(@Min(0) @Max(2147483647) @Valid Integer offset,
                                                                                                           @Min(0) @Max(2147483647) @Valid Integer limit){
-    var marcTransformOptSetList = service.getAllMARCTransformOptSet(offset, limit);
+    var marcTransformOptSetList = service.getAll(offset, limit);
     return ResponseEntity.ok(marcTransformOptSetList);
   }
 
   @Override
   @GetMapping("/{centralServerId}/marc-transformation-options")
   public ResponseEntity<MARCTransformationOptionsSettingsDTO> getMARCTransformationOptionsSettingsById(@PathVariable UUID centralServerId){
-    var marcTransformOptSet = service.getMARCTransformOptSet(centralServerId);
+    var marcTransformOptSet = service.get(centralServerId);
     return ResponseEntity.ok(marcTransformOptSet);
   }
 
   @Override
   @PostMapping("/{centralServerId}/marc-transformation-options")
   public ResponseEntity<MARCTransformationOptionsSettingsDTO> createMARCTransformationOptionsSettings(@PathVariable UUID centralServerId, @Valid MARCTransformationOptionsSettingsDTO dto){
-    var createdMARCTransformOptSet = service.createMARCTransformOptSet(centralServerId, dto);
+    var createdMARCTransformOptSet = service.create(centralServerId, dto);
     return ResponseEntity.status(HttpStatus.CREATED).body(createdMARCTransformOptSet);
   }
 
   @Override
   @PutMapping("/{centralServerId}/marc-transformation-options")
   public ResponseEntity<Void> updateMARCTransformationOptionsSettings(@PathVariable UUID centralServerId, @Valid MARCTransformationOptionsSettingsDTO dto){
-    service.updateMARCTransformOptSet(centralServerId, dto);
+    service.update(centralServerId, dto);
     return ResponseEntity.noContent().build();
   }
 
   @Override
   @DeleteMapping("/{centralServerId}/marc-transformation-options")
   public ResponseEntity<Void> deleteMARCTransformationOptionsSettings (@PathVariable UUID centralServerId) {
-    service.deleteMARCTransformOptSet(centralServerId);
+    service.delete(centralServerId);
     return ResponseEntity.noContent().build();
   }
 }

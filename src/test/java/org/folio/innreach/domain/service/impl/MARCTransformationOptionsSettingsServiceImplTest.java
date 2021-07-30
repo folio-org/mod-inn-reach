@@ -43,11 +43,11 @@ class MARCTransformationOptionsSettingsServiceImplTest {
 
   @Test
   void getMARCTransformOptSet_when_marcTransformOptSetExists() {
-    when(repository.findOne(any())).thenReturn(Optional.of(createMARCTransformOptSet()));
+    when(repository.findOneByCentralServerId(any())).thenReturn(Optional.of(createMARCTransformOptSet()));
 
-    var marcTransformOptSet = service.getMARCTransformOptSet(UUID.randomUUID());
+    var marcTransformOptSet = service.get(UUID.randomUUID());
 
-    verify(repository).findOne(any());
+    verify(repository).findOneByCentralServerId(any());
 
     assertNotNull(marcTransformOptSet);
   }
@@ -58,9 +58,9 @@ class MARCTransformationOptionsSettingsServiceImplTest {
 
     when(repository.save(any(MARCTransformationOptionsSettings.class))).thenReturn(new MARCTransformationOptionsSettings());
 
-    var created = service.createMARCTransformOptSet(UUID.randomUUID(), marcTransformOptSetDTO);
+    var created = service.create(UUID.randomUUID(), marcTransformOptSetDTO);
 
-    verify(mapper).toMARCTransformationOptSet(any(MARCTransformationOptionsSettingsDTO.class));
+    verify(mapper).toEntity(any(MARCTransformationOptionsSettingsDTO.class));
     verify(repository).save(any(MARCTransformationOptionsSettings.class));
 
     assertNotNull(created);
@@ -68,13 +68,13 @@ class MARCTransformationOptionsSettingsServiceImplTest {
 
   @Test
   void updateMARCTransformOptSet_when_marcTransformOptSetExists() {
-    when(repository.findOne(any())).thenReturn(Optional.of(createMARCTransformOptSet()));
+    when(repository.findOneByCentralServerId(any())).thenReturn(Optional.of(createMARCTransformOptSet()));
 
     var updated = createMARCTransformOptSetDTO();
 
-    var updatedDTO = service.updateMARCTransformOptSet(UUID.randomUUID(), updated);
+    var updatedDTO = service.update(UUID.randomUUID(), updated);
 
-    verify(repository).findOne(any());
+    verify(repository).findOneByCentralServerId(any());
 
     assertNotNull(updatedDTO);
     assertEquals(updated.getModifiedFieldsForContributedRecords().size(), updatedDTO.getModifiedFieldsForContributedRecords().size());
@@ -84,12 +84,12 @@ class MARCTransformationOptionsSettingsServiceImplTest {
 
   @Test
   void throwException_when_marcTransformOptSetDoesNotExist() {
-    when(repository.findOne(any())).thenReturn(Optional.empty());
+    when(repository.findOneByCentralServerId(any())).thenReturn(Optional.empty());
 
     UUID id = UUID.randomUUID();
 
-    assertThrows(EntityNotFoundException.class, () -> service.getMARCTransformOptSet(id));
+    assertThrows(EntityNotFoundException.class, () -> service.get(id));
 
-    verify(repository).findOne(any());
+    verify(repository).findOneByCentralServerId(any());
   }
 }

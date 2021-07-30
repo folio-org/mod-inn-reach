@@ -6,13 +6,13 @@ import org.folio.innreach.dto.MARCTransformationOptionsSettingsListDTO;
 import java.util.UUID;
 
 public interface MARCTransformationOptionsSettingsService {
-  MARCTransformationOptionsSettingsDTO getMARCTransformOptSet(UUID centralServerId);
+  MARCTransformationOptionsSettingsDTO get(UUID centralServerId);
 
-  MARCTransformationOptionsSettingsDTO createMARCTransformOptSet(UUID centralServerId, MARCTransformationOptionsSettingsDTO marcTransformOptSetDTO);
+  MARCTransformationOptionsSettingsDTO create(UUID centralServerId, MARCTransformationOptionsSettingsDTO marcTransformOptSetDTO);
 
-  MARCTransformationOptionsSettingsDTO updateMARCTransformOptSet(UUID centralServerId, MARCTransformationOptionsSettingsDTO marcTransformOptSetDTO);
+  MARCTransformationOptionsSettingsDTO update(UUID centralServerId, MARCTransformationOptionsSettingsDTO marcTransformOptSetDTO);
 
-  void deleteMARCTransformOptSet(UUID centralServerId);
+  void delete(UUID centralServerId);
 
-  MARCTransformationOptionsSettingsListDTO getAllMARCTransformOptSet(int offset, int limit);
+  MARCTransformationOptionsSettingsListDTO getAll(int offset, int limit);
 }
