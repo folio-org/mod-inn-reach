@@ -696,6 +696,38 @@ paths:
         required: true
       parameters:
         - $ref: '#/components/parameters/centralServerId'
+    delete:
+      tags:
+        - M-A-R-C-transformation-options-settings
+      responses:
+        '204':
+          description: No content
+        '404':
+          $ref: "#/components/responses/trait_response_404"
+        '500':
+          $ref: "#/components/responses/trait_response_500"
+      description: Delete Marc Transformation Options Settings
+      operationId: deleteMARCTransformationOptionsSettings
+      parameters:
+        - $ref: '#/components/parameters/centralServerId'
+  /central-servers/marc-transformation-options:
+    get:
+      tags:
+        - M-A-R-C-transformation-options-settings
+      responses:
+        '200':
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MARCTransformationOptionsSettingsListDTO"
+        '500':
+          $ref: "#/components/responses/trait_response_500"
+      description: Get a Marc Transformation Options Settings
+      operationId: getAllMARCTransformationOptionsSettings
+      parameters:
+        - $ref: "#/components/parameters/trait_pageable_offset"
+        - $ref: "#/components/parameters/trait_pageable_limit"
 components:
   schemas:
     UUID:
@@ -740,6 +772,8 @@ components:
       $ref: schemas/agencyLocationMappingDTO.json
     MARCTransformationOptionsSettingsDTO:
       $ref: schemas/MARCTransformationOptionsSettingsDTO.json
+    MARCTransformationOptionsSettingsListDTO:
+      $ref: schemas/MARCTransformationOptionsSettingsListDTO.json
   parameters:
     id:
       name: id

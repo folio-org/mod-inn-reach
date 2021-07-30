@@ -5,15 +5,20 @@ import org.folio.innreach.domain.entity.FieldConfiguration;
 import org.folio.innreach.domain.entity.MARCTransformationOptionsSettings;
 import org.folio.innreach.domain.exception.EntityNotFoundException;
 import org.folio.innreach.domain.service.MARCTransformationOptionsSettingsService;
+import org.folio.innreach.dto.MARCTransformationOptionsSettingsListDTO;
 import org.folio.innreach.dto.MARCTransformationOptionsSettingsDTO;
 import org.folio.innreach.mapper.MARCTransformationOptionsSettingsMapper;
 import org.folio.innreach.repository.MARCTransformationOptionsSettingsRepository;
 import org.springframework.data.domain.Example;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityExistsException;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import static org.folio.innreach.domain.service.impl.ServiceUtils.centralServerRef;
 
@@ -55,6 +60,31 @@ public class MARCTransformationOptionsSettingsServiceImpl implements MARCTransfo
     repository.save(marcTransformOptSet);
 
     return mapper.toMARCTransformationOptSetDto(marcTransformOptSet);
+  }
+
+  @Override
+  @Transactional
+  public void deleteMARCTransformOptSet(UUID centralServerId) {
+    var marcTransformOptSet = findMARCTransformOptSet(centralServerId);
+    repository.delete(marcTransformOptSet);
+  }
+
+  @Override
+  public MARCTransformationOptionsSettingsListDTO getAll(int offset, int limit) {
+    var marcTransformOptSetList = collectMARCTransformOptSet(offset, limit);
+
+    var marcTransformOptSetListDTO = new MARCTransformationOptionsSettingsListDTO();
+    marcTransformOptSetListDTO.setMaRCTransformOptSetList(marcTransformOptSetList);
+    marcTransformOptSetListDTO.setTotalRecords(marcTransformOptSetList.size());
+
+    return marcTransformOptSetListDTO;
+  }
+
+  private List<MARCTransformationOptionsSettingsDTO> collectMARCTransformOptSet(Integer offset, Integer limit){
+    return repository.findAll(PageRequest.of(offset, limit))
+      .stream()
+      .map(mapper::toMARCTransformationOptSetDto)
+      .collect(Collectors.toList());
   }
 
   private void updateMARCTransformOptSet(MARCTransformationOptionsSettings marcTransformOptSet, MARCTransformationOptionsSettings updated) {

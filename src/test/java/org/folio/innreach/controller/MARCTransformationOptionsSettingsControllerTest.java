@@ -2,6 +2,7 @@ package org.folio.innreach.controller;
 
 import org.folio.innreach.controller.base.BaseControllerTest;
 import org.folio.innreach.dto.MARCTransformationOptionsSettingsDTO;
+import org.folio.innreach.dto.MARCTransformationOptionsSettingsListDTO;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.web.client.TestRestTemplate;
@@ -57,6 +58,26 @@ class MARCTransformationOptionsSettingsControllerTest extends BaseControllerTest
 
   @Test
   @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/marc-transform-opt-set/pre-populate-marc-transform-opt-set.sql"
+  })
+  void return200HttpCode_and_allMARCTransformOptSetEntities_when_getForAllMARCTransformOptSet() {
+    var responseEntity = testRestTemplate.getForEntity(
+      "/inn-reach/central-servers/marc-transformation-options", MARCTransformationOptionsSettingsListDTO.class);
+
+    assertTrue(responseEntity.getStatusCode().is2xxSuccessful());
+    assertTrue(responseEntity.hasBody());
+
+    var marcTransformOptSetList = responseEntity.getBody();
+
+    assertNotNull(marcTransformOptSetList);
+    assertNotNull(marcTransformOptSetList.getMaRCTransformOptSetList());
+    assertEquals(1, marcTransformOptSetList.getMaRCTransformOptSetList().size());
+    assertEquals(1, marcTransformOptSetList.getTotalRecords());
+  }
+
+  @Test
+  @Sql(scripts = {
     "classpath:db/central-server/pre-populate-central-server.sql"
   })
   void return200HttpCode_and_createdMARCTransformOptSetEntity_when_createMARCTransformOptSet() {
@@ -104,5 +125,18 @@ class MARCTransformationOptionsSettingsControllerTest extends BaseControllerTest
       PRE_POPULATED_CENTRAL_SERVER_ID);
 
     assertEquals(HttpStatus.NOT_FOUND, responseEntity.getStatusCode());
+  }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/marc-transform-opt-set/pre-populate-marc-transform-opt-set.sql"
+  })
+  void return204HttpCode_when_deleteMARCTransformOptSet() {
+    var responseEntity = testRestTemplate.exchange(
+      "/inn-reach/central-servers/{centralServerId}/marc-transformation-options", HttpMethod.DELETE, HttpEntity.EMPTY,
+      MARCTransformationOptionsSettingsDTO.class, PRE_POPULATED_CENTRAL_SERVER_ID);
+
+    assertEquals(HttpStatus.NO_CONTENT, responseEntity.getStatusCode());
   }
 }
