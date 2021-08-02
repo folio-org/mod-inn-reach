@@ -1,0 +1,20 @@
+{
+  "configIsActive" : "false",
+  "modifiedFieldsForContributedRecords" : [
+    {
+      "resourceIdentifierTypeId" : "69b84781-4194-4f17-a634-3d211d59be1f",
+      "stripPrefix" : "false",
+      "ignorePrefixes" : [
+        "FOO", "fod", "LC", "lc"
+      ]
+    },
+    {
+      "resourceIdentifierTypeId" : "37c027e9-2cc4-42f0-8b6c-975ede955c43",
+      "stripPrefix" : "true",
+      "ignorePrefixes" : [
+        "OCM"
+      ]
+    }
+  ],
+  "excludedMARCFields": []
+}

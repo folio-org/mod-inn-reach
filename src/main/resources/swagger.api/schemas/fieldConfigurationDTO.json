@@ -1,0 +1,33 @@
+{
+  "description": "Field Configuration",
+  "type": "object",
+  "properties": {
+    "id": {
+      "description": "Field configuration id",
+      "type": "string",
+      "format": "UUID"
+    },
+    "resourceIdentifierTypeId": {
+      "description": "Resource identifier type id",
+      "type": "string",
+      "format": "UUID"
+    },
+    "stripPrefix": {
+      "description": "Strip prefix",
+      "type": "boolean"
+    },
+    "ignorePrefixes": {
+      "description": "Array of strings that if present as prefixes will cause the identifier to be ignored",
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "metadata": {
+      "description": "Entity metadata",
+      "type": "object",
+      "$ref": "metadata.json"
+    }
+  },
+  "additionalProperties": false
+}
