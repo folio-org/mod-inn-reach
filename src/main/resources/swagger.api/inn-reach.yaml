@@ -723,7 +723,7 @@ paths:
                 $ref: "#/components/schemas/MARCTransformationOptionsSettingsListDTO"
         '500':
           $ref: "#/components/responses/trait_response_500"
-      description: Get a Marc Transformation Options Settings
+      description: Get a list of Marc Transformation Options Settings
       operationId: getAllMARCTransformationOptionsSettings
       parameters:
         - $ref: "#/components/parameters/trait_pageable_offset"

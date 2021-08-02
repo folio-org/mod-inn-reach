@@ -42,7 +42,7 @@ public class MARCTransformationOptionsSettingsServiceImpl implements MARCTransfo
   public MARCTransformationOptionsSettingsDTO create(UUID centralServerId, MARCTransformationOptionsSettingsDTO marcTransformOptSetDTO) {
     repository.findOneByCentralServerId(centralServerId).ifPresent(m -> {
       throw new EntityExistsException("MARC Transformation Options Settings for centralServerId = " + centralServerId
-        + "already exist.");
+        + "already exists.");
     });
 
     var marcTransformOptSet = mapper.toEntity(marcTransformOptSetDTO);
