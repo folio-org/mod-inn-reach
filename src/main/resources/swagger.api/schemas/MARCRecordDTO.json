@@ -1,0 +1,33 @@
+{
+  "description": "SRS MARC record",
+  "type": "object",
+  "properties": {
+    "id": {
+      "description": "SRS MARC record id",
+      "type": "string",
+      "format": "UUID"
+    },
+    "localAgencies": {
+      "description": "Local agencies",
+      "type": "array",
+      "items": {
+        "$ref": "localAgencyDTO.json"
+      }
+    },
+    "metadata": {
+      "description": "Entity metadata",
+      "type": "object",
+      "$ref": "metadata.json"
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "localServerCode",
+    "centralServerAddress",
+    "loanTypeId",
+    "localAgencies",
+    "centralServerKey",
+    "centralServerSecret"
+  ]
+}

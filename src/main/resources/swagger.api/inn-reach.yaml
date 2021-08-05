@@ -728,6 +728,17 @@ paths:
       parameters:
         - $ref: "#/components/parameters/trait_pageable_offset"
         - $ref: "#/components/parameters/trait_pageable_limit"
+#  /central-servers/{centralServerId}/transformed-marc-records/{inventoryId}:
+#    get:
+#      tags:
+#        - M-A-R-C-transformed-records
+#      responses:
+#        '200':
+#          description: "OK"
+#          content:
+#            application/json:
+#              schema:
+#                $ref: ""
 components:
   schemas:
     UUID:
@@ -774,6 +785,8 @@ components:
       $ref: schemas/MARCTransformationOptionsSettingsDTO.json
     MARCTransformationOptionsSettingsListDTO:
       $ref: schemas/MARCTransformationOptionsSettingsListDTO.json
+#    MARCRecordDTO:
+#      $ref: schemas/MARCRecordDTO.json
   parameters:
     id:
       name: id
