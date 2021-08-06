@@ -8,8 +8,4 @@
     <sqlFile path="sql/2021-08-02-01__create-patron-type-mapping-table.sql" relativeToChangelogFile="true"/>
   </changeSet>
 
-  <changeSet id="2021-08-02-02__create-patron-group-table" author="maryna_steshenko">
-    <sqlFile path="sql/2021-08-02-02__create-patron-group-table.sql" relativeToChangelogFile="true"/>
-  </changeSet>
-
 </databaseChangeLog>

@@ -25,7 +25,12 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class PatronTypeMappingRepositoryTest extends BaseRepositoryTest {
   private static final String PRE_POPULATED_PATRON_TYPE_MAPPING_ID1 = "5c39c67f-1373-4ec9-b356-fb71aba3e659";
-  private static final String PRE_POPULATED_PATRON_TYPE_MAPPING_ID2 = "70649b94-da26-48fa-a2e8-a90dfb381027";
+  private static final String PRE_POPULATED_PATRON_TYPE_MAPPING_ID2 = "1af0b16e-24bc-44cb-9c9a-ca07167e41d4";
+  private static final String PRE_POPULATED_PATRON_TYPE_MAPPING_ID3 = "70649b94-da26-48fa-a2e8-a90dfb381027";
+  private static final String PRE_POPULATED_PATRON_TYPE_MAPPING_ID4 = "97949544-e637-4671-acd6-a96847840c98";
+
+  private static final String PRE_POPULATED_PATRON_GROUP_ID1 = "54e17c4c-e315-4d20-8879-efc694dea1ce";
+
   private static final String PRE_POPULATED_USER = "admin";
 
   @Autowired
@@ -39,13 +44,14 @@ class PatronTypeMappingRepositoryTest extends BaseRepositoryTest {
   void shouldFindAllExistingMappings() {
     var mappings = repository.findAll();
 
-    assertEquals(2, mappings.size());
+    assertEquals(4, mappings.size());
 
     List<String> ids = mappings.stream()
       .map(mapping -> mapping.getId().toString())
       .collect(toList());
 
-    assertEquals(ids, List.of(PRE_POPULATED_PATRON_TYPE_MAPPING_ID1, PRE_POPULATED_PATRON_TYPE_MAPPING_ID2));
+    assertEquals(ids, List.of(PRE_POPULATED_PATRON_TYPE_MAPPING_ID1, PRE_POPULATED_PATRON_TYPE_MAPPING_ID2,
+      PRE_POPULATED_PATRON_TYPE_MAPPING_ID3, PRE_POPULATED_PATRON_TYPE_MAPPING_ID4));
   }
 
   @Test
@@ -58,7 +64,7 @@ class PatronTypeMappingRepositoryTest extends BaseRepositoryTest {
     assertEquals(UUID.fromString(PRE_POPULATED_PATRON_TYPE_MAPPING_ID1), mapping.getId());
     assertEquals("description1", mapping.getDescription());
     assertEquals(1, mapping.getPatronType());
-    assertEquals(1, mapping.getPatronGroupIds().size());
+    assertEquals(UUID.fromString(PRE_POPULATED_PATRON_GROUP_ID1), mapping.getPatronGroupId());
 
     assertEquals(PRE_POPULATED_USER, mapping.getCreatedBy());
     assertNotNull(mapping.getCreatedDate());
@@ -79,7 +85,7 @@ class PatronTypeMappingRepositoryTest extends BaseRepositoryTest {
     assertEquals(newMapping.getId(), found.getId());
     assertEquals(saved.getPatronType(), found.getPatronType());
     assertEquals(saved.getDescription(), found.getDescription());
-    assertEquals(saved.getPatronGroupIds(), found.getPatronGroupIds());
+    assertEquals(saved.getPatronGroupId(), found.getPatronGroupId());
   }
 
   @Test
@@ -91,7 +97,7 @@ class PatronTypeMappingRepositoryTest extends BaseRepositoryTest {
     UUID newPatronGroupId = randomUUID();
     int newPatronType = RandomUtils.nextInt(0, 256);
     String newDescription = "New description";
-    mapping.getPatronGroupIds().add(newPatronGroupId);
+    mapping.setPatronGroupId(newPatronGroupId);
     mapping.setPatronType(newPatronType);
     mapping.setDescription(newDescription);
 
@@ -99,7 +105,7 @@ class PatronTypeMappingRepositoryTest extends BaseRepositoryTest {
 
     var saved = repository.getOne(mapping.getId());
 
-    assertTrue(saved.getPatronGroupIds().contains(newPatronGroupId));
+    assertEquals(newPatronGroupId, saved.getPatronGroupId());
     assertEquals(newPatronType, saved.getPatronType());
     assertEquals(newDescription, saved.getDescription());
   }

@@ -5,11 +5,8 @@ import lombok.Setter;
 import lombok.ToString;
 import org.folio.innreach.domain.entity.base.Auditable;
 import org.folio.innreach.domain.entity.base.Identifiable;
-import org.hibernate.annotations.Fetch;
 
-import javax.persistence.CollectionTable;
 import javax.persistence.Column;
-import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
@@ -18,8 +15,6 @@ import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -32,14 +27,8 @@ public class PatronTypeMapping extends Auditable<String> implements Identifiable
   @GeneratedValue(strategy = GenerationType.AUTO)
   private UUID id;
 
-  @ElementCollection(fetch = FetchType.LAZY)
-  @CollectionTable(
-    name = "patron_group",
-    joinColumns = @JoinColumn(name = "patron_type_mapping_id")
-  )
   @Column(name = "patron_group_id")
-  @Fetch(value = org.hibernate.annotations.FetchMode.SUBSELECT)
-  private List<UUID> patronGroupIds = new ArrayList<>();
+  private UUID patronGroupId;
 
   @Column(name = "patron_type")
   private Integer patronType;

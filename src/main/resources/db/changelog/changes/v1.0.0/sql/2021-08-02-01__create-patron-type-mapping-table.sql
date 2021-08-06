@@ -1,9 +1,10 @@
 CREATE TABLE patron_type_mapping
 (
     id UUID NOT NULL,
+    patron_group_id UUID NOT NULL UNIQUE,
     patron_type SMALLINT NOT NULL CHECK(patron_type BETWEEN 0 AND 255),
     description TEXT,
-    central_server_id UUID NOT NULL UNIQUE,
+    central_server_id UUID NOT NULL,
     created_by VARCHAR(255),
     created_date TIMESTAMP,
     last_modified_by VARCHAR(255),
