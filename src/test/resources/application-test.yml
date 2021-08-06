@@ -11,6 +11,10 @@ spring:
     show-sql: true
     properties:
       hibernate.format_sql: true
+  cache:
+    cache-names: system-user-cache
+    caffeine:
+      spec: maximumSize=500,expireAfterAccess=3600s
 folio:
   tenant:
     validation:

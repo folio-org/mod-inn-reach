@@ -31,6 +31,10 @@ spring:
       accept-single-value-as-array: true
   mustache:
     check-template-location: false
+  cache:
+    cache-names: system-user-cache
+    caffeine:
+      spec: maximumSize=500,expireAfterAccess=3600s
 folio:
   tenant:
     validation:
