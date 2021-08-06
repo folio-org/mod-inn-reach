@@ -25,7 +25,10 @@ spring:
     enabled: true
     change-log: classpath:db/changelog/changelog-master.xml
   jackson:
-    default-property-inclusion: NON_EMPTY
+    default-property-inclusion: non_null
+    deserialization:
+      fail-on-unknown-properties: false
+      accept-single-value-as-array: true
   mustache:
     check-template-location: false
 folio:
@@ -56,3 +59,8 @@ inn-reach:
     cache:
       ttl: 500
       max-size: 100
+system-user:
+  username: mod-innreach
+  password: ${SYSTEM_USER_PASSWORD:Mod-innreach-1-0-0}
+  lastname: System
+  permissionsFilePath: permissions/mod-innreach.csv
