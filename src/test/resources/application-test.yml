@@ -11,6 +11,10 @@ spring:
     show-sql: true
     properties:
       hibernate.format_sql: true
+  cache:
+    cache-names: system-user-cache
+    caffeine:
+      spec: maximumSize=500,expireAfterAccess=3600s
 folio:
   tenant:
     validation:
@@ -28,3 +32,8 @@ inn-reach:
     cache:
       ttl: 500
       max-size: 100
+system-user:
+  username: mod-innreach
+  password: Mod-innreach-1-0-0
+  lastname: System
+  permissionsFilePath: permissions/test-permissions.csv

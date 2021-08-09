@@ -97,6 +97,10 @@ curl -w '\n' -X POST -D -   \
     http://localhost:9130/_/proxy/tenants/<tenant_name>/modules
 ```
 
+The module uses system user to communicate with other modules.
+For production deployments you MUST specify the password for this system user via env variable:
+`SYSTEM_USER_PASSWORD=<password>`.
+
 ## Additional information
 
 ### Issue tracker
