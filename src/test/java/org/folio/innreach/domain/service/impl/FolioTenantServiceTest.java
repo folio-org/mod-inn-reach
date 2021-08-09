@@ -6,7 +6,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 
@@ -34,7 +34,7 @@ class FolioTenantServiceTest {
   void shouldInitializeTenantIfSystemUserInitFailed() {
     doThrow(new RuntimeException("test")).when(systemUserService).prepareSystemUser();
 
-    assertDoesNotThrow(() -> service.initializeTenant());
+    assertThrows(RuntimeException.class, () -> service.initializeTenant());
   }
 
 }

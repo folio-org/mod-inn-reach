@@ -12,11 +12,7 @@ public class FolioTenantService {
   private final SystemUserService systemUserService;
 
   public void initializeTenant() {
-    try {
-      systemUserService.prepareSystemUser();
-    } catch (Exception e) {
-      log.error("Unable to initialize system user", e);
-    }
+    systemUserService.prepareSystemUser();
   }
 
 }
