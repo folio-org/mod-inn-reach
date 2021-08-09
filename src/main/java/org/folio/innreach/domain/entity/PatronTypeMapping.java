@@ -33,9 +33,6 @@ public class PatronTypeMapping extends Auditable<String> implements Identifiable
   @Column(name = "patron_type")
   private Integer patronType;
 
-  @Column(name = "description")
-  private String description;
-
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "central_server_id")
   private CentralServer centralServer;

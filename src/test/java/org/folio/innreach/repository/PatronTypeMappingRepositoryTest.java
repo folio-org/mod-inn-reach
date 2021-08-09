@@ -29,7 +29,7 @@ class PatronTypeMappingRepositoryTest extends BaseRepositoryTest {
   private static final String PRE_POPULATED_PATRON_TYPE_MAPPING_ID3 = "70649b94-da26-48fa-a2e8-a90dfb381027";
   private static final String PRE_POPULATED_PATRON_TYPE_MAPPING_ID4 = "97949544-e637-4671-acd6-a96847840c98";
 
-  private static final String PRE_POPULATED_PATRON_GROUP_ID1 = "54e17c4c-e315-4d20-8879-efc694dea1ce";
+  private static final String PRE_POPULATED_PATRON_GROUP_ID = "54e17c4c-e315-4d20-8879-efc694dea1ce";
 
   private static final String PRE_POPULATED_USER = "admin";
 
@@ -62,9 +62,8 @@ class PatronTypeMappingRepositoryTest extends BaseRepositoryTest {
 
     assertNotNull(mapping);
     assertEquals(UUID.fromString(PRE_POPULATED_PATRON_TYPE_MAPPING_ID1), mapping.getId());
-    assertEquals("description1", mapping.getDescription());
     assertEquals(1, mapping.getPatronType());
-    assertEquals(UUID.fromString(PRE_POPULATED_PATRON_GROUP_ID1), mapping.getPatronGroupId());
+    assertEquals(UUID.fromString(PRE_POPULATED_PATRON_GROUP_ID), mapping.getPatronGroupId());
 
     assertEquals(PRE_POPULATED_USER, mapping.getCreatedBy());
     assertNotNull(mapping.getCreatedDate());
@@ -84,7 +83,6 @@ class PatronTypeMappingRepositoryTest extends BaseRepositoryTest {
     assertNotNull(found);
     assertEquals(newMapping.getId(), found.getId());
     assertEquals(saved.getPatronType(), found.getPatronType());
-    assertEquals(saved.getDescription(), found.getDescription());
     assertEquals(saved.getPatronGroupId(), found.getPatronGroupId());
   }
 
@@ -96,10 +94,8 @@ class PatronTypeMappingRepositoryTest extends BaseRepositoryTest {
 
     UUID newPatronGroupId = randomUUID();
     int newPatronType = RandomUtils.nextInt(0, 256);
-    String newDescription = "New description";
     mapping.setPatronGroupId(newPatronGroupId);
     mapping.setPatronType(newPatronType);
-    mapping.setDescription(newDescription);
 
     repository.saveAndFlush(mapping);
 
@@ -107,7 +103,6 @@ class PatronTypeMappingRepositoryTest extends BaseRepositoryTest {
 
     assertEquals(newPatronGroupId, saved.getPatronGroupId());
     assertEquals(newPatronType, saved.getPatronType());
-    assertEquals(newDescription, saved.getDescription());
   }
 
   @Test
@@ -143,10 +138,23 @@ class PatronTypeMappingRepositoryTest extends BaseRepositoryTest {
   }
 
   @Test
+  @Sql(scripts = {"classpath:db/central-server/pre-populate-central-server.sql"})
   void throwExceptionWhenSavingWithInvalidPatronType() {
     var mapping = createPatronTypeMapping();
-    mapping.setPatronType(260);
+    mapping.setPatronType(256);
 
     assertThrows(DataIntegrityViolationException.class, () -> repository.saveAndFlush(mapping));
+  }
+
+  @Test
+  @Sql(scripts = {"classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/patron-type-mapping/pre-populate-patron-type-mapping.sql"})
+  void throwExceptionWhenSavingMappingWithGroupIdThatAlreadyExists() {
+    var mapping = createPatronTypeMapping();
+
+    mapping.setPatronGroupId(UUID.fromString(PRE_POPULATED_PATRON_GROUP_ID));
+
+    var ex = assertThrows(DataIntegrityViolationException.class, () -> repository.saveAndFlush(mapping));
+    assertThat(ex.getMessage(), containsString("constraint [unq_patron_group_id_central_server]"));
   }
 }
