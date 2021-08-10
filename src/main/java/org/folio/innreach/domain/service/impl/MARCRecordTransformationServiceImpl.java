@@ -1,91 +1,59 @@
 package org.folio.innreach.domain.service.impl;
 
-import lombok.RequiredArgsConstructor;
-import lombok.extern.log4j.Log4j2;
-import org.folio.innreach.client.InventoryClient;
-import org.folio.innreach.client.SourceRecordStorageClient;
-import org.folio.innreach.domain.dto.folio.inventory.IdentifierWithConfigDTO;
-import org.folio.innreach.domain.dto.folio.inventory.InventoryInstanceDTO;
-import org.folio.innreach.domain.dto.folio.inventory.SourceRecordType;
-import org.folio.innreach.domain.dto.folio.inventory.SourceRecordDTO;
-import org.folio.innreach.domain.exception.EntityNotFoundException;
-import org.folio.innreach.domain.exception.MarcRecordTransformationException;
-import org.folio.innreach.domain.service.MARCTransformationOptionsSettingsService;
-import org.folio.innreach.domain.service.MARCTransformationService;
-import org.folio.innreach.dto.FieldConfigurationDTO;
-import org.folio.innreach.dto.MARCTransformationOptionsSettingsDTO;
-import org.springframework.stereotype.Service;
-
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
+import lombok.extern.log4j.Log4j2;
+import org.springframework.stereotype.Service;
+
+import org.folio.innreach.client.InventoryClient;
+import org.folio.innreach.client.SourceRecordStorageClient;
+import org.folio.innreach.domain.dto.folio.inventory.IdentifierWithConfigDTO;
+import org.folio.innreach.domain.dto.folio.inventory.InventoryInstanceDTO;
+import org.folio.innreach.domain.dto.folio.inventory.SourceRecordDTO;
+import org.folio.innreach.domain.dto.folio.inventory.SourceRecordType;
+import org.folio.innreach.domain.exception.MarcRecordTransformationException;
+import org.folio.innreach.domain.service.MARCRecordTransformationService;
+import org.folio.innreach.domain.service.MARCTransformationOptionsSettingsService;
+import org.folio.innreach.dto.FieldConfigurationDTO;
+import org.folio.innreach.dto.MARCTransformationOptionsSettingsDTO;
+
 @RequiredArgsConstructor
 @Log4j2
 @Service
-public class MARCTransformationServiceImpl implements MARCTransformationService {
+public class MARCRecordTransformationServiceImpl implements MARCRecordTransformationService {
 
-  public static final String MARC_FIELD_CODE_001 = "001";
-  public static final String MARC_FIELD_CODE_9XX_PREFIX = "9";
+  private static final String MARC_FIELD_CODE_001 = "001";
+  private static final String MARC_FIELD_CODE_9XX_PREFIX = "9";
+  private static final String NOT_NUMBERS_REGEXP = "\\D+";
 
   private final InventoryClient inventoryClient;
   private final SourceRecordStorageClient sourceRecordStorageClient;
   private final MARCTransformationOptionsSettingsService marcTransformationSettingsService;
 
-  /*
-
-    1. When provided with an Inventory Instance ID and a central server configuration ID, retrieve the instance record
-
-    5. Retrieve transformation configuration settings from record contribution settings for the provided central server configuration ID (MODINREACH-50)
-    6. Find relevant identifiers in the [index-]order specified in the retrieved configuration
-    7. If the identifier value begins with a prefix value from the "ignore prefix" list for the identifier, discard the identifier
-    8. Repeat step 7 until the first valid identifier or there are no more matching identifiers
-    9. Update MARC 001 field to the first valid identifier value, stripping any alpha prefix (if indicated by match field options settings for the identifier type)
-    10. Strip MARC fields or subfields indicated for exclusion in transformation configuration settings ("strip fields or subfields")
-   */
-
+  @SneakyThrows
   @Override
   public SourceRecordDTO transformRecord(UUID centralServerId, UUID inventoryId) {
-    //1. When provided with an Inventory Instance ID and a central server configuration ID, retrieve the instance record
     var inventoryInstance = inventoryClient.getInstanceById(inventoryId);
 
-    /*
-      2. Determine if the record has an associate SRS MARC record
-      3. Skip records without underlying SRS MARC. Return a message that indicates no underlying MARC available
-      4. Retrieve underlying MARC record from SRS
-     */
     var sourceRecord = getSourceRecord(inventoryId);
 
-    //5. Retrieve transformation configuration settings from record contribution settings for the provided central server configuration ID (MODINREACH-50)
     var marcTransformationSettings = getMARCTransformationSettings(centralServerId);
 
-    /*
-      6. Find relevant identifiers in the [index-]order specified in the retrieved configuration
-      7. If the identifier value begins with a prefix value from the "ignore prefix" list for the identifier, discard the identifier
-      8. Repeat step 7 until the first valid identifier or there are no more matching identifiers
-    */
     var validIdentifierWithConfig = findValidIdentifier(marcTransformationSettings, inventoryInstance);
 
     var excludedMARCFields = marcTransformationSettings.getExcludedMARCFields();
+
     var fieldsToDelete = new HashSet<SourceRecordDTO.RecordField>();
 
-    /*
-       9. Update MARC 001 field to the first valid identifier value, stripping any alpha prefix
-       (if indicated by match field options settings for the identifier type)
+    validIdentifierWithConfig.ifPresent(identifierWithConf -> updateSourceRecord001MARCField(sourceRecord, identifierWithConf));
 
-       12. If no valid identifiers are found, leave the existing 001 value
-     */
-    validIdentifierWithConfig.ifPresent(identifier -> sourceRecord.getFields()
-      .forEach(recordField -> {
-        if (recordField.getCode().equals(MARC_FIELD_CODE_001)) {
-          recordField.setValue(getIdentifierValue(identifier.getFieldConfigurationDTO(), identifier.getIdentifierDTO()));
-        }
-      })
-    );
-
-    // 10. Strip MARC fields or subfields indicated for exclusion in transformation configuration settings ("strip fields or subfields")
     sourceRecord.getFields().forEach(recordField -> {
       if (isFieldShouldBeDeleted(recordField, excludedMARCFields)) {
         fieldsToDelete.add(recordField);
@@ -129,10 +97,11 @@ public class MARCTransformationServiceImpl implements MARCTransformationService 
   }
 
   private Optional<IdentifierWithConfigDTO> findValidIdentifier(MARCTransformationOptionsSettingsDTO marcTransformationSettings,
-                                                                           InventoryInstanceDTO inventoryInstance) {
+                                                                InventoryInstanceDTO inventoryInstance) {
     return inventoryInstance.getIdentifiers()
       .stream()
       .map(identifier -> findFirstValidIdentifierWithConfig(marcTransformationSettings, identifier))
+      .filter(Objects::nonNull)
       .findFirst();
   }
 
@@ -154,15 +123,15 @@ public class MARCTransformationServiceImpl implements MARCTransformationService 
       .anyMatch(ignorePrefix -> identifier.getValue().startsWith(ignorePrefix));
   }
 
-  private String getIdentifierValue(FieldConfigurationDTO fieldConfiguration, InventoryInstanceDTO.IdentifierDTO identifier) {
-      if (fieldConfiguration.getStripPrefix()) {
-        return identifier.getValue(); //todo - add strip alpha prefix logic
-      }
-      return identifier.getValue();
+  private String stripIdentifierValueAlphaPrefix(FieldConfigurationDTO fieldConfiguration,
+                                                 InventoryInstanceDTO.IdentifierDTO identifier) {
+    if (fieldConfiguration.getStripPrefix()) {
+      return identifier.getValue().replaceAll(NOT_NUMBERS_REGEXP, "");
     }
+    return identifier.getValue();
+  }
 
   private boolean isFieldShouldBeDeleted(SourceRecordDTO.RecordField recordField, List<String> excludedMARCFields) {
-    // 11. Strip all 9xx MARC fields
     var recordFieldCode = recordField.getCode();
     return excludedMARCFields.contains(recordFieldCode) || recordFieldCode.startsWith(MARC_FIELD_CODE_9XX_PREFIX);
   }
@@ -173,6 +142,15 @@ public class MARCTransformationServiceImpl implements MARCTransformationService 
       .stream()
       .filter(subField -> excludedMARCFields.contains(subField.getCode()))
       .collect(Collectors.toList());
+  }
+
+  private void updateSourceRecord001MARCField(SourceRecordDTO sourceRecord, IdentifierWithConfigDTO identifierWithConfig) {
+    sourceRecord.getFields().forEach(recordField -> {
+      if (recordField.getCode().equals(MARC_FIELD_CODE_001)) {
+        recordField.setValue(stripIdentifierValueAlphaPrefix(identifierWithConfig.getFieldConfigurationDTO(),
+          identifierWithConfig.getIdentifierDTO()));
+      }
+    });
   }
 
 }

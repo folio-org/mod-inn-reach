@@ -1,16 +1,17 @@
 package org.folio.innreach.domain.dto.folio.inventory.deserializer;
 
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
-import org.folio.innreach.domain.dto.folio.inventory.SourceRecordDTO;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.databind.DeserializationContext;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
+
+import org.folio.innreach.domain.dto.folio.inventory.SourceRecordDTO;
 
 public class SourceRecordDTODeserializer extends StdDeserializer<SourceRecordDTO> {
 
@@ -65,7 +66,7 @@ public class SourceRecordDTODeserializer extends StdDeserializer<SourceRecordDTO
       return new SourceRecordDTO.RecordField(key, null, collectSubFields(value));
     }
 
-    return new SourceRecordDTO.RecordField(key, value.asText(), List.of());
+    return new SourceRecordDTO.RecordField(key, value.asText(), new ArrayList<>());
   }
 
   private List<SourceRecordDTO.RecordField> collectSubFields(JsonNode fieldWithSubfieldsNode) {
@@ -74,8 +75,8 @@ public class SourceRecordDTODeserializer extends StdDeserializer<SourceRecordDTO
     fieldWithSubfieldsNode.get(SUB_FIELDS_JSON_NODE_NAME)
       .forEach(subFieldNode -> subFieldNode.fields()
         .forEachRemaining(subfieldKeyValue -> subFields.add(
-          new SourceRecordDTO.RecordField(subfieldKeyValue.getKey(), subfieldKeyValue.getValue().asText(), List.of())))
-      );
+          new SourceRecordDTO.RecordField(subfieldKeyValue.getKey(), subfieldKeyValue.getValue().asText(), new ArrayList<>()))
+        ));
 
     return subFields;
   }

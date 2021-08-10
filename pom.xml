@@ -32,6 +32,7 @@
     <commons-collections4.version>4.4</commons-collections4.version>
     <testcontainers.version>1.15.1</testcontainers.version>
     <easy-random-core.version>5.0.0</easy-random-core.version>
+    <marc4j.version>2.9.2</marc4j.version>
     <argLine />
     <sonar.exclusions>
       src/main/java/org/folio/innreach/controller/TenantController.java,
@@ -151,6 +152,11 @@
       <artifactId>easy-random-core</artifactId>
       <version>${easy-random-core.version}</version>
       <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.marc4j</groupId>
+      <artifactId>marc4j</artifactId>
+      <version>${marc4j.version}</version>
     </dependency>
 
   </dependencies>

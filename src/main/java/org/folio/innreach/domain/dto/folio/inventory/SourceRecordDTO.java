@@ -5,11 +5,15 @@ import java.util.UUID;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
+import org.folio.innreach.domain.dto.folio.inventory.deserializer.SourceRecordDTODeserializer;
+
 @Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @JsonDeserialize(using = SourceRecordDTODeserializer.class)
