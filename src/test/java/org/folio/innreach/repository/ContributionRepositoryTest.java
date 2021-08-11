@@ -37,7 +37,7 @@ class ContributionRepositoryTest extends BaseRepositoryTest {
 
   @Test
   void shouldFetchCurrent() {
-    var found = repository.fetchCurrentByCsId(PRE_POPULATED_CS_ID).get();
+    var found = repository.fetchCurrentByCentralServerId(PRE_POPULATED_CS_ID).get();
 
     assertNotNull(found);
 
@@ -46,7 +46,7 @@ class ContributionRepositoryTest extends BaseRepositoryTest {
 
   @Test
   void shouldFetchHistory() {
-    var foundPage = repository.fetchHistoryByCsId(PRE_POPULATED_CS_ID, PageRequest.of(0, 10));
+    var foundPage = repository.fetchHistoryByCentralServerId(PRE_POPULATED_CS_ID, PageRequest.of(0, 10));
 
     assertNotNull(foundPage);
     assertEquals(2, foundPage.getTotalElements());
@@ -66,7 +66,7 @@ class ContributionRepositoryTest extends BaseRepositoryTest {
 
   @Test
   void shouldFetchHistoryOnSecondPage() {
-    var foundPage = repository.fetchHistoryByCsId(PRE_POPULATED_CS_ID, PageRequest.of(1, 1));
+    var foundPage = repository.fetchHistoryByCentralServerId(PRE_POPULATED_CS_ID, PageRequest.of(1, 1));
 
     assertNotNull(foundPage);
     assertEquals(2, foundPage.getTotalElements());

@@ -39,9 +39,6 @@ public class ContributionFixture {
   public static Contribution createContribution() {
     var contribution = contributionRandom.nextObject(Contribution.class);
 
-    var cs = TestUtil.refCentralServer(PRE_POPULATED_CENTRAL_SERVER_UUID);
-    contribution.setCentralServer(cs);
-
     contribution.getErrors().forEach(e -> e.setContribution(contribution));
 
     return contribution;

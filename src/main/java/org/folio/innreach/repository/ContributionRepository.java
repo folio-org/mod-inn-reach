@@ -16,9 +16,9 @@ import static org.folio.innreach.domain.entity.Contribution.FETCH_HISTORY_COUNT_
 public interface ContributionRepository extends JpaRepository<Contribution, UUID> {
 
   @Query(name = Contribution.FETCH_CURRENT_QUERY_NAME)
-  Optional<Contribution> fetchCurrentByCsId(UUID id);
+  Optional<Contribution> fetchCurrentByCentralServerId(UUID id);
 
   @Query(name = Contribution.FETCH_HISTORY_QUERY_NAME, countName = FETCH_HISTORY_COUNT_QUERY_NAME)
-  Page<Contribution> fetchHistoryByCsId(UUID id, Pageable pageable);
+  Page<Contribution> fetchHistoryByCentralServerId(UUID id, Pageable pageable);
 
 }
