@@ -186,6 +186,36 @@
           "methods": ["DELETE"],
           "pathPattern": "/inn-reach/central-servers/{centralServerId}/marc-transformation-options",
           "permissionsRequired": ["inn-reach.central-servers.marc-transformation-options-settings.item.delete"]
+        },
+        {
+          "methods": ["GET"],
+          "pathPattern": "/inn-reach/central-servers/{centralServerId}/patron-type-mappings",
+          "permissionsRequired": ["inn-reach.patron-type-mappings.collection.get"]
+        },
+        {
+          "methods": ["GET"],
+          "pathPattern": "/inn-reach/central-servers/{centralServerId}/patron-type-mappings/{id}",
+          "permissionsRequired": ["inn-reach.patron-type-mappings.item.get"]
+        },
+        {
+          "methods": ["POST"],
+          "pathPattern": "/inn-reach/central-servers/{centralServerId}/patron-type-mappings",
+          "permissionsRequired": ["inn-reach.patron-type-mappings.item.post"]
+        },
+        {
+          "methods": ["PUT"],
+          "pathPattern": "/inn-reach/central-servers/{centralServerId}/patron-type-mappings",
+          "permissionsRequired": ["inn-reach.patron-type-mappings.collection.put"]
+        },
+        {
+          "methods": ["PUT"],
+          "pathPattern": "/inn-reach/central-servers/{centralServerId}/patron-type-mappings/{id}",
+          "permissionsRequired": ["inn-reach.patron-type-mappings.item.put"]
+        },
+        {
+          "methods": ["DELETE"],
+          "pathPattern": "/inn-reach/central-servers/{centralServerId}/patron-type-mappings/{id}",
+          "permissionsRequired": ["inn-reach.patron-type-mappings.item.delete"]
         }
       ]
     },
@@ -501,6 +531,49 @@
       ]
     },
     {
+      "permissionName" : "inn-reach.patron-type-mappings.item.post",
+      "displayName" : "create an inn reach patron type mapping entry",
+      "description" : "Add an inn reach patron type mapping entry"
+    },
+    {
+      "permissionName" : "inn-reach.patron-type-mappings.collection.get",
+      "displayName" : "get a collection of inn reach patron type mapping entries",
+      "description" : "Get a collection of inn reach patron type mapping entries"
+    },
+    {
+      "permissionName" : "inn-reach.patron-type-mappings.item.get",
+      "displayName" : "get an inn reach patron type mapping entry",
+      "description" : "Get an inn reach patron type mapping entry by id"
+    },
+    {
+      "permissionName" : "inn-reach.patron-type-mappings.collection.put",
+      "displayName" : "update a collection of inn reach patron type mapping entries",
+      "description" : "Update a collection of inn reach patron type mapping entries"
+    },
+    {
+      "permissionName" : "inn-reach.patron-type-mappings.item.put",
+      "displayName" : "modify an inn reach patron type mapping entry",
+      "description" : "Modify an inn reach patron type mapping entry"
+    },
+    {
+      "permissionName" : "inn-reach.patron-type-mappings.item.delete",
+      "displayName" : "delete an inn reach patron type mapping entry",
+      "description" : "Delete an inn reach patron type mapping entry by id"
+    },
+    {
+      "permissionName" : "inn-reach.patron-type-mappings.all",
+      "displayName" : "inn reach API module - all permissions of patron type mappings",
+      "description" : "All permissions of inn reach patron type mappings scope",
+      "subPermissions" : [
+        "inn-reach.patron-type-mappings.item.post",
+        "inn-reach.patron-type-mappings.collection.get",
+        "inn-reach.patron-type-mappings.item.get",
+        "inn-reach.patron-type-mappings.collection.put",
+        "inn-reach.patron-type-mappings.item.put",
+        "inn-reach.patron-type-mappings.item.delete"
+      ]
+    },
+    {
       "permissionName" : "inn-reach.all",
       "displayName" : "inn reach API module - all permissions",
       "description" : "All permissions for inn reach",
@@ -515,7 +588,8 @@
         "inn-reach.authentication.all",
         "inn-reach.central-servers.item-contribution-options-configuration.all",
         "inn-reach.agency-mappings.all",
-        "inn-reach.central-servers.marc-transformation-options-settings.all"
+        "inn-reach.central-servers.marc-transformation-options-settings.all",
+        "inn-reach.patron-type-mappings.all"
       ]
     }
   ],
