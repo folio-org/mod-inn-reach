@@ -2,7 +2,6 @@ package org.folio.innreach.domain.service.impl;
 
 import org.folio.innreach.domain.entity.CentralServer;
 import org.folio.innreach.domain.exception.EntityNotFoundException;
-import org.folio.innreach.dto.PatronTypeMappingDTO;
 import org.folio.innreach.dto.PatronTypeMappingsDTO;
 
 import lombok.RequiredArgsConstructor;
@@ -41,35 +40,6 @@ public class PatronTypeMappingServiceImpl implements PatronTypeMappingService {
   }
 
   @Override
-  public PatronTypeMappingDTO get(UUID centralServerId, UUID id) {
-    var mapping = findMapping(centralServerId, id);
-
-    return mapper.toDTO(mapping);
-  }
-
-  @Override
-  public PatronTypeMappingDTO create(UUID centralServerId, PatronTypeMappingDTO patronTypeMappingDTO) {
-    var entity = mapper.toEntity(patronTypeMappingDTO);
-    entity.setCentralServer(centralServerRef(centralServerId));
-
-    var saved = repository.save(entity);
-
-    return mapper.toDTO(saved);
-  }
-
-  @Override
-  public PatronTypeMappingDTO update(UUID centralServerId, UUID id, PatronTypeMappingDTO patronTypeMappingDTO) {
-    var mapping = findMapping(centralServerId, id);
-
-    mapping.setPatronType(patronTypeMappingDTO.getPatronType());
-    mapping.setPatronGroupId(patronTypeMappingDTO.getPatronGroupId());
-
-    repository.save(mapping);
-
-    return mapper.toDTO(mapping);
-  }
-
-  @Override
   public PatronTypeMappingsDTO updateAll(UUID centralServerId, PatronTypeMappingsDTO patronTypeMappingsDTO) {
     var stored = repository.findAll(mappingExampleWithServerId(centralServerId));
 
@@ -81,13 +51,6 @@ public class PatronTypeMappingServiceImpl implements PatronTypeMappingService {
 
     return mapper.toDTOCollection(saved);
   }
-
-  @Override
-  public void delete(UUID centralServerId, UUID id) {
-    PatronTypeMapping mapping = findMapping(centralServerId, id);
-    repository.delete(mapping);
-  }
-
   private PatronTypeMapping findMapping(UUID centralServerId, UUID id) {
     return repository.findOne(mappingExampleWithServerIdAndId(centralServerId, id))
       .orElseThrow(() -> new EntityNotFoundException("Patron type mapping not found: id = " + id +
