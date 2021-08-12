@@ -1,8 +1,6 @@
 package org.folio.innreach.fixture;
 
 import lombok.experimental.UtilityClass;
-import org.folio.innreach.domain.entity.AgencyLocationLscMapping;
-import org.folio.innreach.domain.entity.AgencyLocationMapping;
 import org.folio.innreach.domain.entity.CentralServer;
 import org.folio.innreach.domain.entity.Contribution;
 import org.jeasy.random.EasyRandom;
@@ -46,14 +44,6 @@ public class ContributionFixture {
 
   public static CentralServer refCentralServer() {
     return TestUtil.refCentralServer(PRE_POPULATED_CENTRAL_SERVER_UUID);
-  }
-
-  public static AgencyLocationLscMapping findLocalServerMappingByCode(AgencyLocationMapping mapping, String code) {
-    return mapping.getLocalServerMappings()
-      .stream()
-      .filter(m -> code.equals(m.getLocalServerCode()))
-      .findFirst()
-      .orElse(null);
   }
 
 }
