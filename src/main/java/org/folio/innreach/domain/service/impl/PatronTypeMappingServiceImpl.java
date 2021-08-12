@@ -1,7 +1,6 @@
 package org.folio.innreach.domain.service.impl;
 
 import org.folio.innreach.domain.entity.CentralServer;
-import org.folio.innreach.domain.exception.EntityNotFoundException;
 import org.folio.innreach.dto.PatronTypeMappingsDTO;
 
 import lombok.RequiredArgsConstructor;
@@ -31,7 +30,7 @@ public class PatronTypeMappingServiceImpl implements PatronTypeMappingService {
   private final PatronTypeMappingMapper mapper;
 
   @Override
-  public PatronTypeMappingsDTO getAll(UUID centralServerId, int offset, int limit) {
+  public PatronTypeMappingsDTO getAllMappings(UUID centralServerId, int offset, int limit) {
     var example = mappingExampleWithServerId(centralServerId);
 
     Page<PatronTypeMapping> mappings = repository.findAll(example, PageRequest.of(offset, limit));
@@ -40,7 +39,7 @@ public class PatronTypeMappingServiceImpl implements PatronTypeMappingService {
   }
 
   @Override
-  public PatronTypeMappingsDTO updateAll(UUID centralServerId, PatronTypeMappingsDTO patronTypeMappingsDTO) {
+  public PatronTypeMappingsDTO updateAllMappings(UUID centralServerId, PatronTypeMappingsDTO patronTypeMappingsDTO) {
     var stored = repository.findAll(mappingExampleWithServerId(centralServerId));
 
     var incoming = mapper.toEntities(patronTypeMappingsDTO.getPatronTypeMappings());
@@ -51,22 +50,9 @@ public class PatronTypeMappingServiceImpl implements PatronTypeMappingService {
 
     return mapper.toDTOCollection(saved);
   }
-  private PatronTypeMapping findMapping(UUID centralServerId, UUID id) {
-    return repository.findOne(mappingExampleWithServerIdAndId(centralServerId, id))
-      .orElseThrow(() -> new EntityNotFoundException("Patron type mapping not found: id = " + id +
-        ", centralServerId = " + centralServerId));
-  }
 
   private static Example<PatronTypeMapping> mappingExampleWithServerId(UUID centralServerId) {
     var toFind = new PatronTypeMapping();
-    toFind.setCentralServer(centralServerRef(centralServerId));
-
-    return Example.of(toFind);
-  }
-
-  private static Example<PatronTypeMapping> mappingExampleWithServerIdAndId(UUID centralServerId, UUID id) {
-    var toFind = new PatronTypeMapping();
-    toFind.setId(id);
     toFind.setCentralServer(centralServerRef(centralServerId));
 
     return Example.of(toFind);

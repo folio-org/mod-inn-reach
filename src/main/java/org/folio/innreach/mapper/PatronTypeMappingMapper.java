@@ -11,6 +11,7 @@ import org.springframework.data.domain.Page;
 import java.util.List;
 
 import static java.util.Collections.emptyList;
+import static org.apache.commons.collections4.ListUtils.emptyIfNull;
 import static org.apache.commons.lang3.ObjectUtils.defaultIfNull;
 
 @Mapper(componentModel = "spring", injectionStrategy = InjectionStrategy.CONSTRUCTOR, uses = DateMapper.class)
@@ -29,7 +30,7 @@ public interface PatronTypeMappingMapper {
   List<PatronTypeMappingDTO> toDTOs(Iterable<PatronTypeMapping> entities);
 
   default PatronTypeMappingsDTO toDTOCollection(Page<PatronTypeMapping> pageable) {
-    List<PatronTypeMappingDTO> dtos = defaultIfNull(toDTOs(pageable), emptyList());
+    List<PatronTypeMappingDTO> dtos = emptyIfNull(toDTOs(pageable));
 
     return new PatronTypeMappingsDTO().patronTypeMappings(dtos).totalRecords((int) pageable.getTotalElements());
   }

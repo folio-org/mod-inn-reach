@@ -25,7 +25,7 @@ public class PatronTypeMappingController implements PatronTypeMappingApi {
   public ResponseEntity<PatronTypeMappingsDTO> getPatronTypeMappingsByServerId(@PathVariable UUID centralServerId,
                                                                                Integer offset, Integer limit) {
 
-    var mappings = service.getAll(centralServerId, offset, limit);
+    var mappings = service.getAllMappings(centralServerId, offset, limit);
 
     return ResponseEntity.ok(mappings);
   }
@@ -35,7 +35,7 @@ public class PatronTypeMappingController implements PatronTypeMappingApi {
   public ResponseEntity<Void> updatePatronTypeMappings(@PathVariable UUID centralServerId,
                                                        PatronTypeMappingsDTO patronTypeMappingsDTO) {
 
-    service.updateAll(centralServerId, patronTypeMappingsDTO);
+    service.updateAllMappings(centralServerId, patronTypeMappingsDTO);
 
     return ResponseEntity.noContent().build();
   }

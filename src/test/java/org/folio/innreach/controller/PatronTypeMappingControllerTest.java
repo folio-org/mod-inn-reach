@@ -34,6 +34,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.springframework.http.HttpStatus.BAD_REQUEST;
 import static org.springframework.http.HttpStatus.CONFLICT;
 import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TEST_METHOD;
 import static org.springframework.test.context.jdbc.SqlMergeMode.MergeMode.MERGE;
@@ -177,7 +178,7 @@ class PatronTypeMappingControllerTest extends BaseControllerTest {
       "/inn-reach/central-servers/{centralServerId}/patron-type-mappings", HttpMethod.PUT, new HttpEntity<>(newMapping),
       Error.class, PRE_POPULATED_CENTRAL_SERVER_ID);
 
-    assertEquals(CONFLICT, responseEntity.getStatusCode());
+    assertEquals(BAD_REQUEST, responseEntity.getStatusCode());
   }
 
   private static Predicate<PatronTypeMappingDTO> idEqualsTo(UUID id) {

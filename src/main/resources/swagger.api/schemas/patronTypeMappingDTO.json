@@ -15,7 +15,9 @@
     },
     "patronType": {
       "description": "Patron type",
-      "type": "integer"
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 255
     },
     "metadata": {
       "description": "Entity metadata",
