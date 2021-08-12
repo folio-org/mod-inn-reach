@@ -22,4 +22,5 @@
     <include file="2021-07-28-MODINREACH-65.xml" relativeToChangelogFile="true"/>
     <include file="2021-08-02-MODINREACH-13.xml" relativeToChangelogFile="true"/>
     <include file="2021-08-04-MODINREACH-116.xml" relativeToChangelogFile="true"/>
+    <include file="2021-08-11-MODINREACH-120.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>
