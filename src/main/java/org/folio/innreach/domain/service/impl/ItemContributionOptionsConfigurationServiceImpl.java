@@ -1,20 +1,20 @@
 package org.folio.innreach.domain.service.impl;
 
+import static org.folio.innreach.domain.service.impl.ServiceUtils.centralServerRef;
+
+import java.util.UUID;
+
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Example;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import org.folio.innreach.domain.entity.ItemContributionOptionsConfiguration;
 import org.folio.innreach.domain.exception.EntityNotFoundException;
 import org.folio.innreach.domain.service.ItemContributionOptionsConfigurationService;
 import org.folio.innreach.dto.ItemContributionOptionsConfigurationDTO;
 import org.folio.innreach.mapper.ItemContributionOptionsConfigurationMapper;
 import org.folio.innreach.repository.ItemContributionOptionsConfigurationRepository;
-import org.springframework.data.domain.Example;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import javax.persistence.EntityExistsException;
-import java.util.UUID;
-
-import static org.folio.innreach.domain.service.impl.ServiceUtils.centralServerRef;
 
 @RequiredArgsConstructor
 @Service
@@ -22,8 +22,6 @@ public class ItemContributionOptionsConfigurationServiceImpl implements ItemCont
 
   private final ItemContributionOptionsConfigurationRepository repository;
   private final ItemContributionOptionsConfigurationMapper mapper;
-
-  private static final String TEXT_ITM_CONTRIB_OPT_CONFIG_WITH_ID = "Item Contribution Options Configuration with id: ";
 
   @Override
   @Transactional(readOnly = true)
@@ -34,10 +32,6 @@ public class ItemContributionOptionsConfigurationServiceImpl implements ItemCont
 
   @Override
   public ItemContributionOptionsConfigurationDTO createItmContribOptConf(UUID centralServerId, ItemContributionOptionsConfigurationDTO itmContribOptConfDTO) {
-    repository.findById(centralServerId).ifPresent(itmContribOptConf -> {
-      throw new EntityExistsException(TEXT_ITM_CONTRIB_OPT_CONFIG_WITH_ID
-        + itmContribOptConf.getCentralServer().getId() + " already exists.");
-    });
     var itmContribOptConf = mapper.toEntity(itmContribOptConfDTO);
     itmContribOptConf.setCentralServer(centralServerRef(centralServerId));
     var createdItmContribOptConf = repository.save(itmContribOptConf);

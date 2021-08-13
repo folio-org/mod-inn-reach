@@ -186,6 +186,16 @@
           "methods": ["DELETE"],
           "pathPattern": "/inn-reach/central-servers/{centralServerId}/marc-transformation-options",
           "permissionsRequired": ["inn-reach.central-servers.marc-transformation-options-settings.item.delete"]
+        },
+        {
+          "methods": ["GET"],
+          "pathPattern": "/inn-reach/central-servers/{centralServerId}/patron-type-mappings",
+          "permissionsRequired": ["inn-reach.patron-type-mappings.collection.get"]
+        },
+        {
+          "methods": ["PUT"],
+          "pathPattern": "/inn-reach/central-servers/{centralServerId}/patron-type-mappings",
+          "permissionsRequired": ["inn-reach.patron-type-mappings.collection.put"]
         }
       ]
     },
@@ -197,6 +207,13 @@
         {
           "methods": ["POST"],
           "pathPattern": "/_/tenant",
+          "modulePermissions": [
+            "users.collection.get",
+            "users.item.post",
+            "login.item.post",
+            "perms.users.item.post",
+            "perms.users.get"
+          ],
           "permissionsRequired": []
         },
         {
@@ -494,6 +511,25 @@
       ]
     },
     {
+      "permissionName" : "inn-reach.patron-type-mappings.collection.get",
+      "displayName" : "get a collection of inn reach patron type mapping entries",
+      "description" : "Get a collection of inn reach patron type mapping entries"
+    },
+    {
+      "permissionName" : "inn-reach.patron-type-mappings.collection.put",
+      "displayName" : "update a collection of inn reach patron type mapping entries",
+      "description" : "Update a collection of inn reach patron type mapping entries"
+    },
+    {
+      "permissionName" : "inn-reach.patron-type-mappings.all",
+      "displayName" : "inn reach API module - all permissions of patron type mappings",
+      "description" : "All permissions of inn reach patron type mappings scope",
+      "subPermissions" : [
+        "inn-reach.patron-type-mappings.collection.get",
+        "inn-reach.patron-type-mappings.collection.put"
+      ]
+    },
+    {
       "permissionName" : "inn-reach.all",
       "displayName" : "inn reach API module - all permissions",
       "description" : "All permissions for inn reach",
@@ -508,7 +544,8 @@
         "inn-reach.authentication.all",
         "inn-reach.central-servers.item-contribution-options-configuration.all",
         "inn-reach.agency-mappings.all",
-        "inn-reach.central-servers.marc-transformation-options-settings.all"
+        "inn-reach.central-servers.marc-transformation-options-settings.all",
+        "inn-reach.patron-type-mappings.all"
       ]
     }
   ],
@@ -563,6 +600,10 @@
       {
         "name": "DB_MAXPOOLSIZE",
         "value": "5"
+      },
+      {
+        "name": "SYSTEM_USER_PASSWORD",
+        "value": "Mod-innreach-1-0-0"
       }
     ]
   }

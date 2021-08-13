@@ -1,7 +1,17 @@
 package org.folio.innreach.controller;
 
-import org.folio.innreach.controller.base.BaseControllerTest;
-import org.folio.innreach.dto.ItemContributionOptionsConfigurationDTO;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsString;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TEST_METHOD;
+import static org.springframework.test.context.jdbc.SqlMergeMode.MergeMode.MERGE;
+
+import static org.folio.innreach.fixture.TestUtil.deserializeFromJsonFile;
+
+import java.util.UUID;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.web.client.TestRestTemplate;
@@ -11,14 +21,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlMergeMode;
 
-import java.util.UUID;
-
-import static org.folio.innreach.fixture.TestUtil.deserializeFromJsonFile;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TEST_METHOD;
-import static org.springframework.test.context.jdbc.SqlMergeMode.MergeMode.MERGE;
+import org.folio.innreach.controller.base.BaseControllerTest;
+import org.folio.innreach.dto.ItemContributionOptionsConfigurationDTO;
 
 @Sql(
   scripts = {
@@ -121,5 +125,23 @@ class ItemContributionOptionsConfigurationControllerTest extends BaseControllerT
       PRE_POPULATED_CENTRAL_SERVER_ID);
 
     assertEquals(HttpStatus.NOT_FOUND, responseEntity.getStatusCode());
+  }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/itm-contrib-opt-conf/pre-populate-itm-contrib-opt-conf.sql"
+  })
+  void return409HttpCode_when_creatingItmContribOptConfWhenItmContribOptConfExists() {
+    var itmContribOptConfDTO = deserializeFromJsonFile(
+      "/item-contribution-options/create-itm-contrib-opt-conf-request.json", ItemContributionOptionsConfigurationDTO.class);
+
+    var responseEntity = testRestTemplate.postForEntity(
+      "/inn-reach/central-servers/{centralServerId}/item-contribution-options", itmContribOptConfDTO, Error.class,
+      PRE_POPULATED_CENTRAL_SERVER_ID);
+
+    assertEquals(HttpStatus.CONFLICT, responseEntity.getStatusCode());
+    assertNotNull(responseEntity.getBody());
+    assertThat(responseEntity.getBody().getMessage(), containsString("constraint [unq_central_server_id]"));
   }
 }

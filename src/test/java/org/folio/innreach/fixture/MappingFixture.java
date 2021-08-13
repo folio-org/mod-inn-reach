@@ -16,6 +16,7 @@ import org.folio.innreach.domain.entity.InnReachLocation;
 import org.folio.innreach.domain.entity.LibraryMapping;
 import org.folio.innreach.domain.entity.LocationMapping;
 import org.folio.innreach.domain.entity.MaterialTypeMapping;
+import org.folio.innreach.domain.entity.PatronTypeMapping;
 
 @UtilityClass
 public class MappingFixture {
@@ -25,6 +26,7 @@ public class MappingFixture {
 
   private static final EasyRandom mtypeRandom;
   private static final EasyRandom libraryAndLocationRandom;
+  private static final EasyRandom patronTypeRandom;
 
 
   static {
@@ -54,6 +56,20 @@ public class MappingFixture {
     libraryAndLocationRandom = new EasyRandom(params);
   }
 
+  static {
+    EasyRandomParameters params = new EasyRandomParameters()
+      .randomize(named("patronType"), new IntegerRangeRandomizer(0, 256))
+      .randomize(named("createdBy"), () -> "admin")
+      .randomize(named("createdDate"), OffsetDateTime::now)
+      .randomize(named("centralServer"), MappingFixture::refCentralServer)
+      .excludeField(named("id"))
+      .excludeField(named("lastModifiedBy"))
+      .excludeField(named("lastModifiedDate"))
+      .excludeField(named("metadata"));
+
+    patronTypeRandom = new EasyRandom(params);
+  }
+
   public static MaterialTypeMapping createMaterialTypeMapping() {
     return mtypeRandom.nextObject(MaterialTypeMapping.class);
   }
@@ -64,6 +80,10 @@ public class MappingFixture {
 
   public static LocationMapping createLocationMapping() {
     return libraryAndLocationRandom.nextObject(LocationMapping.class);
+  }
+
+  public static PatronTypeMapping createPatronTypeMapping() {
+    return patronTypeRandom.nextObject(PatronTypeMapping.class);
   }
 
   public static CentralServer refCentralServer() {

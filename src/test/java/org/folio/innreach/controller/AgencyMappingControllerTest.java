@@ -1,32 +1,5 @@
 package org.folio.innreach.controller;
 
-import org.assertj.core.api.Assertions;
-import org.folio.innreach.controller.base.BaseControllerTest;
-import org.folio.innreach.domain.entity.AgencyLocationMapping;
-import org.folio.innreach.dto.AgencyLocationAcMappingDTO;
-import org.folio.innreach.dto.AgencyLocationLscMappingDTO;
-import org.folio.innreach.dto.AgencyLocationMappingDTO;
-import org.folio.innreach.dto.ValidationErrorsDTO;
-import org.folio.innreach.mapper.AgencyLocationMappingMapper;
-import org.folio.innreach.repository.AgencyLocationMappingRepository;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.web.client.TestRestTemplate;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
-import org.springframework.test.context.jdbc.Sql;
-import org.springframework.test.context.jdbc.SqlMergeMode;
-
-import java.util.Collection;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-import java.util.function.Predicate;
-import java.util.stream.Collectors;
-
-import static org.folio.innreach.controller.ControllerTestUtils.createValidationError;
-import static org.folio.innreach.fixture.TestUtil.deserializeFromJsonFile;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
@@ -39,6 +12,35 @@ import static org.springframework.http.HttpStatus.BAD_REQUEST;
 import static org.springframework.http.HttpStatus.NOT_FOUND;
 import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TEST_METHOD;
 import static org.springframework.test.context.jdbc.SqlMergeMode.MergeMode.MERGE;
+
+import static org.folio.innreach.controller.ControllerTestUtils.createValidationError;
+import static org.folio.innreach.fixture.TestUtil.deserializeFromJsonFile;
+
+import java.util.Collection;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
+
+import org.assertj.core.api.Assertions;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
+import org.springframework.test.context.jdbc.Sql;
+import org.springframework.test.context.jdbc.SqlMergeMode;
+
+import org.folio.innreach.controller.base.BaseControllerTest;
+import org.folio.innreach.domain.entity.AgencyLocationMapping;
+import org.folio.innreach.dto.AgencyLocationAcMappingDTO;
+import org.folio.innreach.dto.AgencyLocationLscMappingDTO;
+import org.folio.innreach.dto.AgencyLocationMappingDTO;
+import org.folio.innreach.dto.ValidationErrorsDTO;
+import org.folio.innreach.mapper.AgencyLocationMappingMapper;
+import org.folio.innreach.repository.AgencyLocationMappingRepository;
 
 @Sql(
   scripts = {
@@ -114,7 +116,7 @@ class AgencyMappingControllerTest extends BaseControllerTest {
 
     var created = mapper.toDTO(createdEntity);
 
-//    assertThat(created, samePropertyValuesAs(newMapping, "id", "metadata", "localServers"));
+    assertThat(created, samePropertyValuesAs(newMapping, "id", "metadata", "localServers"));
 
     Assertions.assertThat(created.getLocalServers())
       .hasSize(newLsMappings.size())

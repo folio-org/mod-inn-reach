@@ -1,0 +1,6 @@
+inventory-storage.inventory-view.instances.collection.get
+inventory-storage.instances.collection.get
+inventory-storage.instances.item.get
+inventory-storage.items.collection.get
+inventory-storage.items.item.get
+users.collection.get
