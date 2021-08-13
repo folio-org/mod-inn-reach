@@ -1,0 +1,33 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "description": "Patron type mapping",
+  "type": "object",
+  "properties": {
+    "id": {
+      "description": "Mapping id",
+      "type": "string",
+      "format": "uuid"
+    },
+    "patronGroupId": {
+      "description": "Patron group id",
+      "type": "string",
+      "format": "uuid"
+    },
+    "patronType": {
+      "description": "Patron type",
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 255
+    },
+    "metadata": {
+      "description": "Entity metadata",
+      "type": "object",
+      "$ref": "metadata.json"
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "patronGroupId",
+    "patronType"
+  ]
+}

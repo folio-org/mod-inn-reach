@@ -1,0 +1,13 @@
+{
+  "patronTypeMappings": [
+    {
+      "patronGroupId": "d6c370e3-e871-4a70-b1cb-de8ad7694e30",
+      "patronType": 1
+    },
+    {
+      "patronGroupId": "86df8e45-1a44-4712-bf1a-7cff629ebe1d",
+      "patronType": 2
+    }
+  ],
+  "totalRecords" : 2
+}
