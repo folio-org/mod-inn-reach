@@ -1,6 +1,7 @@
 package org.folio.innreach.controller;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TEST_METHOD;
@@ -22,7 +23,8 @@ import org.folio.innreach.client.InventoryClient;
 import org.folio.innreach.client.SourceRecordStorageClient;
 import org.folio.innreach.controller.base.BaseControllerTest;
 import org.folio.innreach.domain.dto.folio.inventory.InventoryInstanceDTO;
-import org.folio.innreach.domain.dto.folio.inventory.SourceRecordDTO;
+import org.folio.innreach.domain.dto.folio.sourcerecord.SourceRecordDTO;
+import org.folio.innreach.dto.TransformedMARCRecordDTO;
 
 @Sql(
   scripts = {
@@ -34,7 +36,6 @@ import org.folio.innreach.domain.dto.folio.inventory.SourceRecordDTO;
 @SqlMergeMode(MERGE)
 class MARCRecordTransformationControllerTest extends BaseControllerTest {
 
-  private static final String PRE_POPULATED_MARC_TRANSFORM_OPT_SET_ID = "51768f15-41e8-494d-bc4d-a308568e7052";
   private static final UUID PRE_POPULATED_CENTRAL_SERVER_ID = UUID.fromString("edab6baf-c696-42b1-89bb-1bbb8759b0d2");
 
   @Autowired
@@ -59,9 +60,10 @@ class MARCRecordTransformationControllerTest extends BaseControllerTest {
       .thenReturn(deserializeFromJsonFile("/source-record-storage/source-record-storage-example.json", SourceRecordDTO.class));
 
     var responseEntity = testRestTemplate.getForEntity(
-      "/inn-reach/central-servers/{centralServerId}/marc-record-transformation/{inventoryInstanceId}", Void.class,
-      PRE_POPULATED_CENTRAL_SERVER_ID, UUID.randomUUID());
+      "/inn-reach/central-servers/{centralServerId}/marc-record-transformation/{inventoryInstanceId}",
+      TransformedMARCRecordDTO.class, PRE_POPULATED_CENTRAL_SERVER_ID, UUID.randomUUID());
 
     assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+    assertNotNull(responseEntity.getBody());
   }
 }

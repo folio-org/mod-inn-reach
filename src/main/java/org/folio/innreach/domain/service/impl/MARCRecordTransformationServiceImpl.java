@@ -8,21 +8,24 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 import lombok.RequiredArgsConstructor;
-import lombok.SneakyThrows;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.stereotype.Service;
 
 import org.folio.innreach.client.InventoryClient;
 import org.folio.innreach.client.SourceRecordStorageClient;
+import org.folio.innreach.converter.marc.TransformedMARCRecordConverter;
 import org.folio.innreach.domain.dto.folio.inventory.IdentifierWithConfigDTO;
 import org.folio.innreach.domain.dto.folio.inventory.InventoryInstanceDTO;
-import org.folio.innreach.domain.dto.folio.inventory.SourceRecordDTO;
-import org.folio.innreach.domain.dto.folio.inventory.SourceRecordType;
+import org.folio.innreach.domain.dto.folio.sourcerecord.ParsedRecordDTO;
+import org.folio.innreach.domain.dto.folio.sourcerecord.RecordFieldDTO;
+import org.folio.innreach.domain.dto.folio.sourcerecord.SourceRecordDTO;
+import org.folio.innreach.domain.dto.folio.sourcerecord.SourceRecordType;
 import org.folio.innreach.domain.exception.MarcRecordTransformationException;
 import org.folio.innreach.domain.service.MARCRecordTransformationService;
 import org.folio.innreach.domain.service.MARCTransformationOptionsSettingsService;
 import org.folio.innreach.dto.FieldConfigurationDTO;
 import org.folio.innreach.dto.MARCTransformationOptionsSettingsDTO;
+import org.folio.innreach.dto.TransformedMARCRecordDTO;
 
 @RequiredArgsConstructor
 @Log4j2
@@ -36,10 +39,10 @@ public class MARCRecordTransformationServiceImpl implements MARCRecordTransforma
   private final InventoryClient inventoryClient;
   private final SourceRecordStorageClient sourceRecordStorageClient;
   private final MARCTransformationOptionsSettingsService marcTransformationSettingsService;
+  private final TransformedMARCRecordConverter transformedMarcRecordConverter;
 
-  @SneakyThrows
   @Override
-  public SourceRecordDTO transformRecord(UUID centralServerId, UUID inventoryId) {
+  public TransformedMARCRecordDTO transformRecord(UUID centralServerId, UUID inventoryId) {
     var inventoryInstance = inventoryClient.getInstanceById(inventoryId);
 
     var sourceRecord = getSourceRecord(inventoryId);
@@ -50,22 +53,23 @@ public class MARCRecordTransformationServiceImpl implements MARCRecordTransforma
 
     var excludedMARCFields = marcTransformationSettings.getExcludedMARCFields();
 
-    var fieldsToDelete = new HashSet<SourceRecordDTO.RecordField>();
+    var parsedRecord = sourceRecord.getParsedRecord();
 
-    validIdentifierWithConfig.ifPresent(identifierWithConf -> updateSourceRecord001MARCField(sourceRecord, identifierWithConf));
+    var fieldsToDelete = new HashSet<RecordFieldDTO>();
 
-    sourceRecord.getFields().forEach(recordField -> {
+    validIdentifierWithConfig.ifPresent(identifierWithConf -> updateRecord001MARCField(parsedRecord, identifierWithConf));
+
+    parsedRecord.getFields().forEach(recordField -> {
       if (isFieldShouldBeDeleted(recordField, excludedMARCFields)) {
         fieldsToDelete.add(recordField);
-      } else {
+      } else if (recordField.getSubFields() != null) {
         recordField.getSubFields().removeAll(getSubFieldsToDelete(recordField, excludedMARCFields));
       }
     });
 
-    sourceRecord.getFields().removeAll(fieldsToDelete);
+    parsedRecord.getFields().removeAll(fieldsToDelete);
 
-    //todo - return transformed record
-    return null;
+    return transformedMarcRecordConverter.toTransformedRecord(sourceRecord);
   }
 
   private SourceRecordDTO getSourceRecord(UUID inventoryId) {
@@ -131,21 +135,20 @@ public class MARCRecordTransformationServiceImpl implements MARCRecordTransforma
     return identifier.getValue();
   }
 
-  private boolean isFieldShouldBeDeleted(SourceRecordDTO.RecordField recordField, List<String> excludedMARCFields) {
+  private boolean isFieldShouldBeDeleted(RecordFieldDTO recordField, List<String> excludedMARCFields) {
     var recordFieldCode = recordField.getCode();
     return excludedMARCFields.contains(recordFieldCode) || recordFieldCode.startsWith(MARC_FIELD_CODE_9XX_PREFIX);
   }
 
-  private List<SourceRecordDTO.RecordField> getSubFieldsToDelete(SourceRecordDTO.RecordField recordField,
-                                                                 List<String> excludedMARCFields) {
+  private List<RecordFieldDTO.SubFieldDTO> getSubFieldsToDelete(RecordFieldDTO recordField, List<String> excludedMARCFields) {
     return recordField.getSubFields()
       .stream()
       .filter(subField -> excludedMARCFields.contains(subField.getCode()))
       .collect(Collectors.toList());
   }
 
-  private void updateSourceRecord001MARCField(SourceRecordDTO sourceRecord, IdentifierWithConfigDTO identifierWithConfig) {
-    sourceRecord.getFields().forEach(recordField -> {
+  private void updateRecord001MARCField(ParsedRecordDTO parsedRecord, IdentifierWithConfigDTO identifierWithConfig) {
+    parsedRecord.getFields().forEach(recordField -> {
       if (recordField.getCode().equals(MARC_FIELD_CODE_001)) {
         recordField.setValue(stripIdentifierValueAlphaPrefix(identifierWithConfig.getFieldConfigurationDTO(),
           identifierWithConfig.getIdentifierDTO()));

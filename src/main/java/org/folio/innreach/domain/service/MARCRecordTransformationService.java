@@ -2,9 +2,9 @@ package org.folio.innreach.domain.service;
 
 import java.util.UUID;
 
-import org.folio.innreach.domain.dto.folio.inventory.SourceRecordDTO;
+import org.folio.innreach.dto.TransformedMARCRecordDTO;
 
 public interface MARCRecordTransformationService {
 
-  SourceRecordDTO transformRecord(UUID centralServerId, UUID inventoryId);
+  TransformedMARCRecordDTO transformRecord(UUID centralServerId, UUID inventoryId);
 }

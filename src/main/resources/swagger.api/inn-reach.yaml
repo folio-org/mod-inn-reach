@@ -735,6 +735,10 @@ paths:
       responses:
         '200':
           description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TransformedMARCRecordDTO"
         '400':
           $ref: "#/components/responses/trait_response_validation_400"
         '500':
@@ -790,6 +794,8 @@ components:
       $ref: schemas/MARCTransformationOptionsSettingsDTO.json
     MARCTransformationOptionsSettingsListDTO:
       $ref: schemas/MARCTransformationOptionsSettingsListDTO.json
+    TransformedMARCRecordDTO:
+      $ref: schemas/TransformedMARCRecordDTO.json
   parameters:
     id:
       name: id
