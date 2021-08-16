@@ -143,7 +143,7 @@ public class MARCRecordTransformationServiceImpl implements MARCRecordTransforma
   private List<RecordFieldDTO.SubFieldDTO> getSubFieldsToDelete(RecordFieldDTO recordField, List<String> excludedMARCFields) {
     return recordField.getSubFields()
       .stream()
-      .filter(subField -> excludedMARCFields.contains(subField.getCode()))
+      .filter(subField -> excludedMARCFields.contains(subField.getCode().toString()))
       .collect(Collectors.toList());
   }
 
