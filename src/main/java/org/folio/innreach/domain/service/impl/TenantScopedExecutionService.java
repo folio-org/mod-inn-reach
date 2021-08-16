@@ -1,14 +1,15 @@
 package org.folio.innreach.domain.service.impl;
 
-import lombok.RequiredArgsConstructor;
-import lombok.SneakyThrows;
-import org.folio.spring.FolioExecutionContext;
-import org.springframework.stereotype.Service;
+import static org.folio.spring.scope.FolioExecutionScopeExecutionContextManager.beginFolioExecutionContext;
+import static org.folio.spring.scope.FolioExecutionScopeExecutionContextManager.endFolioExecutionContext;
 
 import java.util.concurrent.Callable;
 
-import static org.folio.spring.scope.FolioExecutionScopeExecutionContextManager.beginFolioExecutionContext;
-import static org.folio.spring.scope.FolioExecutionScopeExecutionContextManager.endFolioExecutionContext;
+import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
+import org.springframework.stereotype.Service;
+
+import org.folio.spring.FolioExecutionContext;
 
 @Service
 @RequiredArgsConstructor

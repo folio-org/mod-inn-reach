@@ -1,18 +1,19 @@
 package org.folio.innreach.controller;
 
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+
 import liquibase.exception.LiquibaseException;
-import org.folio.innreach.domain.service.impl.FolioTenantService;
-import org.folio.spring.service.TenantService;
-import org.folio.tenant.domain.dto.TenantAttributes;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
+import org.folio.innreach.domain.service.impl.FolioTenantService;
+import org.folio.spring.service.TenantService;
+import org.folio.tenant.domain.dto.TenantAttributes;
 
 @ExtendWith(MockitoExtension.class)
 class FolioTenantControllerTest {

@@ -1,21 +1,9 @@
 package org.folio.innreach.external.service.impl;
 
-import lombok.RequiredArgsConstructor;
-import lombok.SneakyThrows;
-import lombok.extern.log4j.Log4j2;
-import org.apache.commons.io.IOUtils;
-import org.folio.innreach.config.props.SystemUserProperties;
-import org.folio.innreach.domain.service.impl.FolioExecutionContextBuilder;
-import org.folio.innreach.external.client.feign.AuthnClient;
-import org.folio.innreach.external.client.feign.PermissionsClient;
-import org.folio.innreach.external.client.feign.UsersClient;
-import org.folio.innreach.external.dto.SystemUser;
-import org.folio.spring.FolioExecutionContext;
-import org.folio.spring.integration.XOkapiHeaders;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
-import org.springframework.core.io.ClassPathResource;
-import org.springframework.stereotype.Service;
-import org.springframework.util.CollectionUtils;
+import static org.springframework.util.CollectionUtils.isEmpty;
+
+import static org.folio.spring.scope.FolioExecutionScopeExecutionContextManager.beginFolioExecutionContext;
+import static org.folio.spring.scope.FolioExecutionScopeExecutionContextManager.endFolioExecutionContext;
 
 import java.nio.charset.StandardCharsets;
 import java.util.HashSet;
@@ -24,9 +12,23 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Supplier;
 
-import static org.folio.spring.scope.FolioExecutionScopeExecutionContextManager.beginFolioExecutionContext;
-import static org.folio.spring.scope.FolioExecutionScopeExecutionContextManager.endFolioExecutionContext;
-import static org.springframework.util.CollectionUtils.isEmpty;
+import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
+import lombok.extern.log4j.Log4j2;
+import org.apache.commons.io.IOUtils;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
+
+import org.folio.innreach.config.props.SystemUserProperties;
+import org.folio.innreach.domain.service.impl.FolioExecutionContextBuilder;
+import org.folio.innreach.external.client.feign.AuthnClient;
+import org.folio.innreach.external.client.feign.PermissionsClient;
+import org.folio.innreach.external.client.feign.UsersClient;
+import org.folio.innreach.external.dto.SystemUser;
+import org.folio.spring.FolioExecutionContext;
+import org.folio.spring.integration.XOkapiHeaders;
 
 @Log4j2
 @RequiredArgsConstructor

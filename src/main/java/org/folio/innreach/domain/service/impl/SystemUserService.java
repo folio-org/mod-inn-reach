@@ -2,12 +2,13 @@ package org.folio.innreach.domain.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.stereotype.Service;
+
 import org.folio.innreach.config.props.SystemUserProperties;
 import org.folio.innreach.external.dto.SystemUser;
 import org.folio.innreach.external.service.impl.SystemUserAuthService;
 import org.folio.spring.FolioExecutionContext;
-import org.springframework.cache.annotation.Cacheable;
-import org.springframework.stereotype.Service;
 
 @Log4j2
 @Service

@@ -1,19 +1,20 @@
 package org.folio.innreach.domain.service.impl;
 
+import static org.folio.innreach.domain.service.impl.ServiceUtils.centralServerRef;
+
+import java.util.UUID;
+
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Example;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import org.folio.innreach.domain.entity.ItemContributionOptionsConfiguration;
 import org.folio.innreach.domain.exception.EntityNotFoundException;
 import org.folio.innreach.domain.service.ItemContributionOptionsConfigurationService;
 import org.folio.innreach.dto.ItemContributionOptionsConfigurationDTO;
 import org.folio.innreach.mapper.ItemContributionOptionsConfigurationMapper;
 import org.folio.innreach.repository.ItemContributionOptionsConfigurationRepository;
-import org.springframework.data.domain.Example;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.util.UUID;
-
-import static org.folio.innreach.domain.service.impl.ServiceUtils.centralServerRef;
 
 @RequiredArgsConstructor
 @Service

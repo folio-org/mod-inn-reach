@@ -769,6 +769,26 @@ paths:
         required: true
       parameters:
         - $ref: '#/components/parameters/centralServerId'
+  /central-servers/{centralServerId}/marc-record-transformation/{inventoryInstanceId}:
+    get:
+      tags:
+        - M-A-R-C-transformation-records
+      responses:
+        '200':
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TransformedMARCRecordDTO"
+        '400':
+          $ref: "#/components/responses/trait_response_validation_400"
+        '500':
+          $ref: "#/components/responses/trait_response_500"
+      description: Transform MARC record by Id according to CentralServer settings
+      operationId: transformMARCRecord
+      parameters:
+        - $ref: '#/components/parameters/centralServerId'
+        - $ref: '#/components/parameters/inventoryInstanceId'
 components:
   schemas:
     UUID:
@@ -817,6 +837,8 @@ components:
       $ref: schemas/MARCTransformationOptionsSettingsListDTO.json
     patronTypeMappingsDTO:
       $ref: schemas/patronTypeMappingsDTO.json
+    TransformedMARCRecordDTO:
+      $ref: schemas/TransformedMARCRecordDTO.json
   parameters:
     id:
       name: id
@@ -832,6 +854,12 @@ components:
         $ref: "#/components/schemas/UUID"
     libraryId:
       name: libraryId
+      in: path
+      required: true
+      schema:
+        $ref: "#/components/schemas/UUID"
+    inventoryInstanceId:
+      name: inventoryInstanceId
       in: path
       required: true
       schema:

@@ -1,27 +1,29 @@
 package org.folio.innreach.repository;
 
-import org.apache.commons.lang3.RandomUtils;
-import org.folio.innreach.domain.entity.PatronTypeMapping;
-import org.folio.innreach.fixture.TestUtil;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.test.context.jdbc.Sql;
-
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-
 import static java.util.UUID.fromString;
 import static java.util.UUID.randomUUID;
 import static java.util.stream.Collectors.toList;
-import static org.folio.innreach.fixture.MappingFixture.createPatronTypeMapping;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.StringContains.containsString;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import static org.folio.innreach.fixture.MappingFixture.createPatronTypeMapping;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
+import org.apache.commons.lang3.RandomUtils;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.test.context.jdbc.Sql;
+
+import org.folio.innreach.domain.entity.PatronTypeMapping;
+import org.folio.innreach.fixture.TestUtil;
 
 class PatronTypeMappingRepositoryTest extends BaseRepositoryTest {
   private static final String PRE_POPULATED_PATRON_TYPE_MAPPING_ID1 = "5c39c67f-1373-4ec9-b356-fb71aba3e659";

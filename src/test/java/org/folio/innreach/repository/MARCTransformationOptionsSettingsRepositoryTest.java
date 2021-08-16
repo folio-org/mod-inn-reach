@@ -1,19 +1,21 @@
 package org.folio.innreach.repository;
 
-import org.folio.innreach.domain.entity.MARCTransformationOptionsSettings;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.test.context.jdbc.Sql;
-
-import java.util.Optional;
-import java.util.UUID;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import static org.folio.innreach.fixture.MARCTransformationOptionsSettingsFixture.createFieldConfig;
 import static org.folio.innreach.fixture.MARCTransformationOptionsSettingsFixture.createMARCTransformOptSet;
 import static org.folio.innreach.fixture.TestUtil.refCentralServer;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.util.Optional;
+import java.util.UUID;
+
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.context.jdbc.Sql;
+
+import org.folio.innreach.domain.entity.MARCTransformationOptionsSettings;
 
 class MARCTransformationOptionsSettingsRepositoryTest extends BaseRepositoryTest {
   private static final String PRE_POPULATED_MARC_TRANSFORM_OPT_SET_ID = "51768f15-41e8-494d-bc4d-a308568e7052";
@@ -32,7 +34,7 @@ class MARCTransformationOptionsSettingsRepositoryTest extends BaseRepositoryTest
     assertEquals(UUID.fromString(PRE_POPULATED_CENTRAL_SERVER_ID), fromDb.getCentralServer().getId());
     assertTrue(fromDb.getConfigIsActive());
     assertEquals(1, fromDb.getExcludedMARCFields().size());
-    assertEquals(1, fromDb.getModifiedFieldsForContributedRecords().size());
+    assertEquals(3, fromDb.getModifiedFieldsForContributedRecords().size());
   }
 
   @Test

@@ -1,31 +1,6 @@
 package org.folio.innreach.controller;
 
-import org.folio.innreach.controller.base.BaseControllerTest;
-import org.folio.innreach.domain.entity.PatronTypeMapping;
-import org.folio.innreach.dto.Error;
-import org.folio.innreach.dto.PatronTypeMappingDTO;
-import org.folio.innreach.dto.PatronTypeMappingsDTO;
-import org.folio.innreach.mapper.PatronTypeMappingMapper;
-import org.folio.innreach.repository.PatronTypeMappingRepository;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.web.client.TestRestTemplate;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
-import org.springframework.test.context.jdbc.Sql;
-import org.springframework.test.context.jdbc.SqlMergeMode;
-
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.UUID;
-import java.util.function.Predicate;
-import java.util.stream.Collectors;
-
 import static java.util.UUID.fromString;
-import static org.folio.innreach.fixture.TestUtil.deserializeFromJsonFile;
-import static org.folio.innreach.fixture.TestUtil.randomInteger;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.hasItems;
@@ -38,6 +13,33 @@ import static org.springframework.http.HttpStatus.BAD_REQUEST;
 import static org.springframework.http.HttpStatus.CONFLICT;
 import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TEST_METHOD;
 import static org.springframework.test.context.jdbc.SqlMergeMode.MergeMode.MERGE;
+
+import static org.folio.innreach.fixture.TestUtil.deserializeFromJsonFile;
+import static org.folio.innreach.fixture.TestUtil.randomInteger;
+
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
+
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
+import org.springframework.test.context.jdbc.Sql;
+import org.springframework.test.context.jdbc.SqlMergeMode;
+
+import org.folio.innreach.controller.base.BaseControllerTest;
+import org.folio.innreach.domain.entity.PatronTypeMapping;
+import org.folio.innreach.dto.Error;
+import org.folio.innreach.dto.PatronTypeMappingDTO;
+import org.folio.innreach.dto.PatronTypeMappingsDTO;
+import org.folio.innreach.mapper.PatronTypeMappingMapper;
+import org.folio.innreach.repository.PatronTypeMappingRepository;
 
 @Sql(
   scripts = {

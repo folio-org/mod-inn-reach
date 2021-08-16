@@ -1,9 +1,8 @@
 package org.folio.innreach.controller;
 
+import java.util.UUID;
+
 import lombok.RequiredArgsConstructor;
-import org.folio.innreach.domain.service.PatronTypeMappingService;
-import org.folio.innreach.dto.PatronTypeMappingsDTO;
-import org.folio.innreach.rest.resource.PatronTypeMappingApi;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -11,7 +10,9 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.UUID;
+import org.folio.innreach.domain.service.PatronTypeMappingService;
+import org.folio.innreach.dto.PatronTypeMappingsDTO;
+import org.folio.innreach.rest.resource.PatronTypeMappingApi;
 
 @RestController
 @RequiredArgsConstructor

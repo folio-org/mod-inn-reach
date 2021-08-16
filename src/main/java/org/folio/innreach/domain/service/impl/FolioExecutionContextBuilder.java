@@ -1,17 +1,18 @@
 package org.folio.innreach.domain.service.impl;
 
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
+
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.With;
+import org.springframework.stereotype.Component;
+
 import org.folio.innreach.external.dto.SystemUser;
 import org.folio.spring.FolioExecutionContext;
 import org.folio.spring.FolioModuleMetadata;
-import org.springframework.stereotype.Component;
-
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
 
 @Component
 @RequiredArgsConstructor

@@ -1,16 +1,17 @@
 package org.folio.innreach.fixture;
 
-import lombok.experimental.UtilityClass;
-import org.folio.innreach.domain.entity.CentralServer;
-import org.folio.innreach.domain.entity.Contribution;
-import org.jeasy.random.EasyRandom;
-import org.jeasy.random.EasyRandomParameters;
+import static java.util.UUID.fromString;
+import static org.jeasy.random.FieldPredicates.named;
 
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
-import static java.util.UUID.fromString;
-import static org.jeasy.random.FieldPredicates.named;
+import lombok.experimental.UtilityClass;
+import org.jeasy.random.EasyRandom;
+import org.jeasy.random.EasyRandomParameters;
+
+import org.folio.innreach.domain.entity.CentralServer;
+import org.folio.innreach.domain.entity.Contribution;
 
 @UtilityClass
 public class ContributionFixture {

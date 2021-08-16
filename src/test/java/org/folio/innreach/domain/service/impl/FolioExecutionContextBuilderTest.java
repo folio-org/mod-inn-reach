@@ -1,11 +1,12 @@
 package org.folio.innreach.domain.service.impl;
 
-import org.folio.innreach.external.dto.SystemUser;
-import org.folio.spring.FolioModuleMetadata;
-import org.junit.jupiter.api.Test;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
+
+import org.junit.jupiter.api.Test;
+
+import org.folio.innreach.external.dto.SystemUser;
+import org.folio.spring.FolioModuleMetadata;
 
 class FolioExecutionContextBuilderTest {
   private final FolioExecutionContextBuilder builder =

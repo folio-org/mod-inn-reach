@@ -1,11 +1,17 @@
 package org.folio.innreach.domain.service.impl;
 
+import static java.util.Collections.singletonList;
+import static java.util.Collections.singletonMap;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.NONE;
+
+import static org.folio.spring.integration.XOkapiHeaders.TENANT;
+
 import org.assertj.core.api.Assertions;
-import org.folio.innreach.config.props.SystemUserProperties;
-import org.folio.innreach.external.dto.SystemUser;
-import org.folio.innreach.external.service.impl.SystemUserAuthService;
-import org.folio.spring.DefaultFolioExecutionContext;
-import org.folio.spring.FolioExecutionContext;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockitoAnnotations;
@@ -21,15 +27,11 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.TestPropertySource;
 
-import static java.util.Collections.singletonList;
-import static java.util.Collections.singletonMap;
-import static org.folio.spring.integration.XOkapiHeaders.TENANT;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.NONE;
+import org.folio.innreach.config.props.SystemUserProperties;
+import org.folio.innreach.external.dto.SystemUser;
+import org.folio.innreach.external.service.impl.SystemUserAuthService;
+import org.folio.spring.DefaultFolioExecutionContext;
+import org.folio.spring.FolioExecutionContext;
 
 @Import(SystemUserServiceTest.TestContextConfiguration.class)
 @SpringBootTest(classes = SystemUserService.class, webEnvironment = NONE)

@@ -1,13 +1,15 @@
 package org.folio.innreach.domain.entity;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import lombok.ToString;
-import org.folio.innreach.domain.entity.base.Auditable;
-import org.folio.innreach.domain.entity.base.Identifiable;
-import org.hibernate.annotations.QueryHints;
+import static org.folio.innreach.domain.entity.Contribution.FETCH_CURRENT_QUERY;
+import static org.folio.innreach.domain.entity.Contribution.FETCH_CURRENT_QUERY_NAME;
+import static org.folio.innreach.domain.entity.Contribution.FETCH_HISTORY_COUNT_QUERY_NAME;
+import static org.folio.innreach.domain.entity.Contribution.FETCH_HISTORY_QUERY;
+import static org.folio.innreach.domain.entity.Contribution.FETCH_HISTORY_QUERY_NAME;
+
+import java.time.OffsetDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
 
 import javax.persistence.Entity;
 import javax.persistence.Enumerated;
@@ -21,16 +23,16 @@ import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 import javax.persistence.QueryHint;
 import javax.persistence.Table;
-import java.time.OffsetDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
 
-import static org.folio.innreach.domain.entity.Contribution.FETCH_CURRENT_QUERY;
-import static org.folio.innreach.domain.entity.Contribution.FETCH_CURRENT_QUERY_NAME;
-import static org.folio.innreach.domain.entity.Contribution.FETCH_HISTORY_COUNT_QUERY_NAME;
-import static org.folio.innreach.domain.entity.Contribution.FETCH_HISTORY_QUERY;
-import static org.folio.innreach.domain.entity.Contribution.FETCH_HISTORY_QUERY_NAME;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
+import org.hibernate.annotations.QueryHints;
+
+import org.folio.innreach.domain.entity.base.Auditable;
+import org.folio.innreach.domain.entity.base.Identifiable;
 
 @Getter
 @Setter

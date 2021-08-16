@@ -1,16 +1,5 @@
 package org.folio.innreach.external.service.impl;
 
-import org.folio.innreach.config.props.SystemUserProperties;
-import org.folio.innreach.domain.service.impl.FolioExecutionContextBuilder;
-import org.folio.innreach.external.client.feign.AuthnClient;
-import org.folio.innreach.external.client.feign.PermissionsClient;
-import org.folio.innreach.external.client.feign.UsersClient;
-import org.folio.innreach.external.dto.ResultList;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -18,6 +7,18 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
+
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import org.folio.innreach.config.props.SystemUserProperties;
+import org.folio.innreach.domain.service.impl.FolioExecutionContextBuilder;
+import org.folio.innreach.external.client.feign.AuthnClient;
+import org.folio.innreach.external.client.feign.PermissionsClient;
+import org.folio.innreach.external.client.feign.UsersClient;
+import org.folio.innreach.external.dto.ResultList;
 
 @ExtendWith(MockitoExtension.class)
 class SystemUserAuthServiceTest {

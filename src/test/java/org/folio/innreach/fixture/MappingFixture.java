@@ -7,7 +7,6 @@ import java.time.OffsetDateTime;
 import java.util.UUID;
 
 import lombok.experimental.UtilityClass;
-import org.folio.innreach.domain.entity.PatronTypeMapping;
 import org.jeasy.random.EasyRandom;
 import org.jeasy.random.EasyRandomParameters;
 import org.jeasy.random.randomizers.range.IntegerRangeRandomizer;
@@ -17,6 +16,7 @@ import org.folio.innreach.domain.entity.InnReachLocation;
 import org.folio.innreach.domain.entity.LibraryMapping;
 import org.folio.innreach.domain.entity.LocationMapping;
 import org.folio.innreach.domain.entity.MaterialTypeMapping;
+import org.folio.innreach.domain.entity.PatronTypeMapping;
 
 @UtilityClass
 public class MappingFixture {

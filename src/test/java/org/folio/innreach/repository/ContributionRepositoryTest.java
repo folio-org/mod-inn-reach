@@ -1,24 +1,26 @@
 package org.folio.innreach.repository;
 
+import static java.util.UUID.randomUUID;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsString;
+import static org.junit.Assert.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+
+import static org.folio.innreach.domain.entity.Contribution.Status.COMPLETE;
+import static org.folio.innreach.fixture.ContributionFixture.createContribution;
+
+import java.util.Arrays;
+import java.util.UUID;
+
 import org.assertj.core.api.Assertions;
-import org.folio.innreach.domain.entity.Contribution;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.test.context.jdbc.Sql;
 
-import java.util.Arrays;
-import java.util.UUID;
-
-import static java.util.UUID.randomUUID;
-import static org.folio.innreach.domain.entity.Contribution.Status.COMPLETE;
-import static org.folio.innreach.fixture.ContributionFixture.createContribution;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.containsString;
-import static org.junit.Assert.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import org.folio.innreach.domain.entity.Contribution;
 
 @Sql(scripts = {
   "classpath:db/central-server/pre-populate-central-server.sql",

@@ -1,25 +1,25 @@
 package org.folio.innreach.domain.service.impl;
 
-import org.folio.innreach.domain.entity.CentralServer;
-import org.folio.innreach.dto.PatronTypeMappingsDTO;
+import static org.folio.innreach.domain.service.impl.ServiceUtils.centralServerRef;
+import static org.folio.innreach.domain.service.impl.ServiceUtils.initId;
+import static org.folio.innreach.domain.service.impl.ServiceUtils.mergeAndSave;
+
+import java.util.UUID;
+import java.util.function.Consumer;
 
 import lombok.RequiredArgsConstructor;
-import org.folio.innreach.domain.entity.PatronTypeMapping;
-import org.folio.innreach.domain.service.PatronTypeMappingService;
-import org.folio.innreach.mapper.PatronTypeMappingMapper;
-import org.folio.innreach.repository.PatronTypeMappingRepository;
 import org.springframework.data.domain.Example;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.UUID;
-import java.util.function.Consumer;
-
-import static org.folio.innreach.domain.service.impl.ServiceUtils.centralServerRef;
-import static org.folio.innreach.domain.service.impl.ServiceUtils.initId;
-import static org.folio.innreach.domain.service.impl.ServiceUtils.mergeAndSave;
+import org.folio.innreach.domain.entity.CentralServer;
+import org.folio.innreach.domain.entity.PatronTypeMapping;
+import org.folio.innreach.domain.service.PatronTypeMappingService;
+import org.folio.innreach.dto.PatronTypeMappingsDTO;
+import org.folio.innreach.mapper.PatronTypeMappingMapper;
+import org.folio.innreach.repository.PatronTypeMappingRepository;
 
 @RequiredArgsConstructor
 @Service

@@ -1,21 +1,22 @@
 package org.folio.innreach.external.client.feign;
 
+import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
+
+import java.util.Collections;
+import java.util.List;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.folio.innreach.external.client.feign.config.FolioFeignClientConfig;
-import org.folio.innreach.external.dto.ResultList;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
-import java.util.Collections;
-import java.util.List;
-
-import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
+import org.folio.innreach.external.client.feign.config.FolioFeignClientConfig;
+import org.folio.innreach.external.dto.ResultList;
 
 @FeignClient(name = "perms/users", configuration = FolioFeignClientConfig.class)
 public interface PermissionsClient {
