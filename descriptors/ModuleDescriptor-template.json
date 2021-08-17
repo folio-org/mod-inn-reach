@@ -199,8 +199,8 @@
         },
         {
           "methods": ["POST"],
-          "pathPattern": "/inn-reach/contribution/start-initial-contribution",
-          "permissionsRequired": ["inn-reach.contribution.item.post"]
+          "pathPattern": "/inn-reach/central-servers/{centralServerId}/contributions",
+          "permissionsRequired": ["inn-reach.contributions.item.post"]
         }
       ]
     },
@@ -535,16 +535,16 @@
       ]
     },
     {
-      "permissionName" : "inn-reach.contribution.item.post",
+      "permissionName" : "inn-reach.contributions.item.post",
       "displayName" : "start initial contribution process",
       "description" : "Start initial contribution process"
     },
     {
-      "permissionName" : "inn-reach.contribution.all",
+      "permissionName" : "inn-reach.contributions.all",
       "displayName" : "inn reach API module - all permissions of contribution",
       "description" : "All permissions of inn reach contribution scope",
       "subPermissions" : [
-        "inn-reach.contribution.item.post"
+        "inn-reach.contributions.item.post"
       ]
     },
     {
@@ -563,7 +563,8 @@
         "inn-reach.central-servers.item-contribution-options-configuration.all",
         "inn-reach.agency-mappings.all",
         "inn-reach.central-servers.marc-transformation-options-settings.all",
-        "inn-reach.patron-type-mappings.all"
+        "inn-reach.patron-type-mappings.all",
+        "inn-reach.contributions.all"
       ]
     }
   ],
