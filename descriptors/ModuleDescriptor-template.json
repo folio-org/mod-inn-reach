@@ -196,6 +196,11 @@
           "methods": ["PUT"],
           "pathPattern": "/inn-reach/central-servers/{centralServerId}/patron-type-mappings",
           "permissionsRequired": ["inn-reach.patron-type-mappings.collection.put"]
+        },
+        {
+          "methods": ["POST"],
+          "pathPattern": "/inn-reach/contribution/start-initial-contribution",
+          "permissionsRequired": ["inn-reach.contribution.item.post"]
         }
       ]
     },
@@ -527,6 +532,19 @@
       "subPermissions" : [
         "inn-reach.patron-type-mappings.collection.get",
         "inn-reach.patron-type-mappings.collection.put"
+      ]
+    },
+    {
+      "permissionName" : "inn-reach.contribution.item.post",
+      "displayName" : "start initial contribution process",
+      "description" : "Start initial contribution process"
+    },
+    {
+      "permissionName" : "inn-reach.contribution.all",
+      "displayName" : "inn reach API module - all permissions of contribution",
+      "description" : "All permissions of inn reach contribution scope",
+      "subPermissions" : [
+        "inn-reach.contribution.item.post"
       ]
     },
     {

@@ -789,6 +789,19 @@ paths:
       parameters:
         - $ref: '#/components/parameters/centralServerId'
         - $ref: '#/components/parameters/inventoryInstanceId'
+  /inn-reach/contribution/start-initial-contribution:
+    post:
+      description: Start initial contribution process
+      operationId: startInitialContribution
+      tags:
+        - contribution
+      responses:
+        '201':
+          description: Initial contribution process started
+        '400':
+          $ref: "#/components/responses/trait_response_validation_400"
+        '500':
+          $ref: "#/components/responses/trait_response_500"
 components:
   schemas:
     UUID:
