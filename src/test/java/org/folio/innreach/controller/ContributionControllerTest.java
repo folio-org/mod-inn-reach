@@ -130,6 +130,27 @@ class ContributionControllerTest extends BaseControllerTest {
     assertEquals(MappingValidationStatusDTO.VALID, response.getItemTypeMappingStatus());
   }
 
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/mtype-mapping/pre-populate-material-type-mapping.sql",
+  })
+  void shouldReturnInvalidStatusOnException() {
+    when(inventoryClient.getMaterialTypes(anyString(), anyInt())).thenThrow(new RuntimeException("test"));
+
+    var responseEntity =
+      testRestTemplate.getForEntity(currentContributionUrl(), ContributionDTO.class);
+
+    assertTrue(responseEntity.getStatusCode().is2xxSuccessful());
+    assertTrue(responseEntity.hasBody());
+
+    var response = responseEntity.getBody();
+    assertNotNull(response);
+
+    assertEquals(ContributionDTO.StatusEnum.NOT_STARTED, response.getStatus());
+    assertEquals(MappingValidationStatusDTO.INVALID, response.getItemTypeMappingStatus());
+  }
+
   private ResultList<MaterialTypeDTO> createMaterialTypes() {
     List<MaterialTypeDTO> results = Arrays.asList(PRE_POPULATED_TYPE_ID, PRE_POPULATED_TYPE2_ID, PRE_POPULATED_TYPE3_ID)
       .stream()
