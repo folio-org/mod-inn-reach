@@ -200,12 +200,12 @@
         {
           "methods": ["GET"],
           "pathPattern": "/inn-reach/central-servers/{centralServerId}/contributions/current",
-          "permissionsRequired": ["inn-reach.contributions.item.get"]
+          "permissionsRequired": ["inn-reach.contributions.any.get"]
         },
         {
           "methods": ["GET"],
           "pathPattern": "/inn-reach/central-servers/{centralServerId}/contributions/history",
-          "permissionsRequired": ["inn-reach.contributions.collection.get"]
+          "permissionsRequired": ["inn-reach.contributions.any.get"]
         }
       ]
     },
@@ -540,16 +540,16 @@
       ]
     },
     {
-      "permissionName" : "inn-reach.contribution.any.get",
+      "permissionName" : "inn-reach.contributions.any.get",
       "displayName" : "Get INN-Reach contribution job execution status tracking and basic statistics",
       "description" : "Get INN-Reach contribution job execution status tracking and basic statistics"
     },
     {
-      "permissionName" : "inn-reach.contribution.all",
+      "permissionName" : "inn-reach.contributions.all",
       "displayName" : "inn reach API module - all permissions of contribution",
       "description" : "All permissions of inn reach contribution scope",
       "subPermissions" : [
-        "inn-reach.contribution.any.get"
+        "inn-reach.contributions.any.get"
       ]
     },
     {
