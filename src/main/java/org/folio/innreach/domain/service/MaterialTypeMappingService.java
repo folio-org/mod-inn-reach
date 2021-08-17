@@ -1,5 +1,6 @@
 package org.folio.innreach.domain.service;
 
+import java.util.List;
 import java.util.UUID;
 
 import org.folio.innreach.dto.MaterialTypeMappingDTO;
@@ -18,4 +19,7 @@ public interface MaterialTypeMappingService {
   MaterialTypeMappingDTO updateMapping(UUID centralServerId, UUID id, MaterialTypeMappingDTO materialTypeMappingDTO);
 
   void deleteMapping(UUID centralServerId, UUID id);
+
+  long countByTypeIds(UUID centralServerId, List<UUID> typeIds);
+
 }

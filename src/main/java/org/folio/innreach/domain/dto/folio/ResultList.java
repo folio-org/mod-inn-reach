@@ -1,4 +1,4 @@
-package org.folio.innreach.external.dto;
+package org.folio.innreach.domain.dto.folio;
 
 import java.util.Arrays;
 import java.util.Collections;

@@ -10,7 +10,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.With;
 import org.springframework.stereotype.Component;
 
-import org.folio.innreach.external.dto.SystemUser;
+import org.folio.innreach.domain.dto.folio.SystemUser;
 import org.folio.spring.FolioExecutionContext;
 import org.folio.spring.FolioModuleMetadata;
 

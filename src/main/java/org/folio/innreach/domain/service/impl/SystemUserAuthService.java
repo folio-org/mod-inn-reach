@@ -1,4 +1,4 @@
-package org.folio.innreach.external.service.impl;
+package org.folio.innreach.domain.service.impl;
 
 import static org.springframework.util.CollectionUtils.isEmpty;
 
@@ -21,12 +21,11 @@ import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
+import org.folio.innreach.client.AuthnClient;
+import org.folio.innreach.client.PermissionsClient;
+import org.folio.innreach.client.UsersClient;
 import org.folio.innreach.config.props.SystemUserProperties;
-import org.folio.innreach.domain.service.impl.FolioExecutionContextBuilder;
-import org.folio.innreach.external.client.feign.AuthnClient;
-import org.folio.innreach.external.client.feign.PermissionsClient;
-import org.folio.innreach.external.client.feign.UsersClient;
-import org.folio.innreach.external.dto.SystemUser;
+import org.folio.innreach.domain.dto.folio.SystemUser;
 import org.folio.spring.FolioExecutionContext;
 import org.folio.spring.integration.XOkapiHeaders;
 

@@ -6,8 +6,7 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import org.folio.innreach.config.props.SystemUserProperties;
-import org.folio.innreach.external.dto.SystemUser;
-import org.folio.innreach.external.service.impl.SystemUserAuthService;
+import org.folio.innreach.domain.dto.folio.SystemUser;
 import org.folio.spring.FolioExecutionContext;
 
 @Log4j2
