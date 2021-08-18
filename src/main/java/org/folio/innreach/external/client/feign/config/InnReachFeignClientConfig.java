@@ -12,8 +12,4 @@ public class InnReachFeignClientConfig {
     return new FeignErrorDecoder();
   }
 
-  @Bean
-  public InnReachTextJsonHttpMessageConverter mappingJackson2HttpMessageConverter() {
-    return new InnReachTextJsonHttpMessageConverter();
-  }
 }

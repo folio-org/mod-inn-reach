@@ -55,6 +55,16 @@ public class InnReachLocationExternalServiceImpl implements InnReachLocationExte
 
   }
 
+  @Override
+  public List<InnReachLocationDTO> getAllLocations(CentralServerConnectionDetailsDTO connectionDetails) {
+    var accessTokenDTO = innReachAuthExternalService.getAccessToken(connectionDetails);
+    var connectionUrl = URI.create(connectionDetails.getConnectionUrl());
+    var authorizationHeader = buildBearerAuthHeader(accessTokenDTO.getAccessToken());
+    var localCode = connectionDetails.getLocalCode();
+
+    return getMappedLocationsFromInnReach(connectionUrl, authorizationHeader, localCode);
+  }
+
   private List<InnReachLocationDTO> getMappedLocationsFromInnReach(URI connectionUrl, String authorizationHeader,
       String localCode) {
     return innReachLocationClient.getAllLocations(connectionUrl, authorizationHeader, localCode,

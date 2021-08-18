@@ -14,6 +14,12 @@
       "$ref": "mappingValidationStatusDTO.json",
       "default": "Invalid"
     },
+    "locationsMappingStatus": {
+      "description": "Location mapping validation status",
+      "type": "object",
+      "$ref": "mappingValidationStatusDTO.json",
+      "default": "Invalid"
+    },
     "status": {
       "description": "Status",
       "type": "string",

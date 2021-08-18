@@ -5,6 +5,7 @@ import static org.hamcrest.Matchers.samePropertyValuesAs;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
@@ -32,6 +33,8 @@ import org.folio.innreach.domain.dto.folio.inventory.MaterialTypeDTO;
 import org.folio.innreach.dto.ContributionDTO;
 import org.folio.innreach.dto.ContributionsDTO;
 import org.folio.innreach.dto.MappingValidationStatusDTO;
+import org.folio.innreach.external.dto.InnReachLocationDTO;
+import org.folio.innreach.external.service.InnReachLocationExternalService;
 import org.folio.innreach.mapper.ContributionMapper;
 import org.folio.innreach.repository.ContributionRepository;
 
@@ -40,6 +43,8 @@ import org.folio.innreach.repository.ContributionRepository;
   scripts = {
     "classpath:db/contribution/clear-contribution-tables.sql",
     "classpath:db/mtype-mapping/clear-material-type-mapping-table.sql",
+    "classpath:db/inn-reach-location/clear-inn-reach-location-tables.sql",
+    "classpath:db/lib-mapping/clear-library-mapping-table.sql",
     "classpath:db/central-server/clear-central-server-tables.sql"},
   executionPhase = AFTER_TEST_METHOD
 )
@@ -59,15 +64,20 @@ class ContributionControllerTest extends BaseControllerTest {
   private ContributionMapper mapper;
   @MockBean
   private InventoryClient inventoryClient;
+  @MockBean
+  private InnReachLocationExternalService irLocationService;
 
   @Test
   @Sql(scripts = {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/mtype-mapping/pre-populate-material-type-mapping.sql",
+    "classpath:db/inn-reach-location/pre-populate-inn-reach-location-code.sql",
+    "classpath:db/lib-mapping/pre-populate-another-library-mapping.sql",
     "classpath:db/contribution/pre-populate-contribution.sql"
   })
   void shouldGetCurrentContribution() {
     when(inventoryClient.getMaterialTypes(anyString(), anyInt())).thenReturn(createMaterialTypes());
+    when(irLocationService.getAllLocations(any())).thenReturn(createIrLocations());
 
     var responseEntity =
       testRestTemplate.getForEntity(currentContributionUrl(), ContributionDTO.class);
@@ -83,8 +93,15 @@ class ContributionControllerTest extends BaseControllerTest {
     assertNotNull(existing);
 
     assertEquals(MappingValidationStatusDTO.VALID, response.getItemTypeMappingStatus());
+    assertEquals(MappingValidationStatusDTO.VALID, response.getLocationsMappingStatus());
 
-    assertThat(existing, samePropertyValuesAs(response, "itemTypeMappingStatus"));
+    assertThat(existing, samePropertyValuesAs(response, "itemTypeMappingStatus", "locationsMappingStatus"));
+  }
+
+  private List<InnReachLocationDTO> createIrLocations() {
+    return Arrays.asList("q1w2e", "p0o9i", "u7y6t").stream()
+      .map(c -> new InnReachLocationDTO(c, null))
+      .collect(Collectors.toList());
   }
 
   @Test
@@ -106,16 +123,19 @@ class ContributionControllerTest extends BaseControllerTest {
 
     var existing = fetchContributionHistory();
 
-    assertThat(existing, samePropertyValuesAs(response, "itemTypeMappingStatus"));
+    assertThat(existing, samePropertyValuesAs(response, "itemTypeMappingStatus", "locationsMappingStatus"));
   }
 
   @Test
   @Sql(scripts = {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/mtype-mapping/pre-populate-material-type-mapping.sql",
+    "classpath:db/inn-reach-location/pre-populate-inn-reach-location-code.sql",
+    "classpath:db/lib-mapping/pre-populate-another-library-mapping.sql",
   })
   void shouldReturnNotStartedContribution() {
     when(inventoryClient.getMaterialTypes(anyString(), anyInt())).thenReturn(createMaterialTypes());
+    when(irLocationService.getAllLocations(any())).thenReturn(createIrLocations());
 
     var responseEntity =
       testRestTemplate.getForEntity(currentContributionUrl(), ContributionDTO.class);
@@ -128,15 +148,19 @@ class ContributionControllerTest extends BaseControllerTest {
 
     assertEquals(ContributionDTO.StatusEnum.NOT_STARTED, response.getStatus());
     assertEquals(MappingValidationStatusDTO.VALID, response.getItemTypeMappingStatus());
+    assertEquals(MappingValidationStatusDTO.VALID, response.getLocationsMappingStatus());
   }
 
   @Test
   @Sql(scripts = {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/mtype-mapping/pre-populate-material-type-mapping.sql",
+    "classpath:db/inn-reach-location/pre-populate-inn-reach-location-code.sql",
+    "classpath:db/lib-mapping/pre-populate-another-library-mapping.sql",
   })
   void shouldReturnInvalidStatusOnException() {
     when(inventoryClient.getMaterialTypes(anyString(), anyInt())).thenThrow(new RuntimeException("test"));
+    when(irLocationService.getAllLocations(any())).thenReturn(createIrLocations());
 
     var responseEntity =
       testRestTemplate.getForEntity(currentContributionUrl(), ContributionDTO.class);
@@ -149,6 +173,7 @@ class ContributionControllerTest extends BaseControllerTest {
 
     assertEquals(ContributionDTO.StatusEnum.NOT_STARTED, response.getStatus());
     assertEquals(MappingValidationStatusDTO.INVALID, response.getItemTypeMappingStatus());
+    assertEquals(MappingValidationStatusDTO.VALID, response.getLocationsMappingStatus());
   }
 
   private ResultList<MaterialTypeDTO> createMaterialTypes() {
