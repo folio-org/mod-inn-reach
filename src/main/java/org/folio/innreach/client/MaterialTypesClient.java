@@ -7,10 +7,10 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.folio.innreach.domain.dto.folio.ResultList;
 import org.folio.innreach.domain.dto.folio.inventoryStorage.MaterialTypeDTO;
 
-@FeignClient("inventory-storage")
-public interface InventoryStorageClient {
+@FeignClient("material-types")
+public interface MaterialTypesClient {
 
-  @GetMapping("/material-types")
+  @GetMapping
   ResultList<MaterialTypeDTO> getMaterialTypes(@RequestParam("query") String query, @RequestParam("limit") int limit);
 
 }
