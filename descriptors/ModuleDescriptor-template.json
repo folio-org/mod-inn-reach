@@ -196,6 +196,16 @@
           "methods": ["PUT"],
           "pathPattern": "/inn-reach/central-servers/{centralServerId}/patron-type-mappings",
           "permissionsRequired": ["inn-reach.patron-type-mappings.collection.put"]
+        },
+        {
+          "methods": ["GET"],
+          "pathPattern": "/inn-reach/central-servers/{centralServerId}/contributions/current",
+          "permissionsRequired": ["inn-reach.contributions.current.item.get"]
+        },
+        {
+          "methods": ["GET"],
+          "pathPattern": "/inn-reach/central-servers/{centralServerId}/contributions/history",
+          "permissionsRequired": ["inn-reach.contributions.history.collection.get"]
         }
       ]
     },
@@ -530,6 +540,25 @@
       ]
     },
     {
+      "permissionName" : "inn-reach.contributions.current.item.get",
+      "displayName" : "Get INN-Reach contribution job execution status tracking and basic statistics",
+      "description" : "Get INN-Reach contribution job execution status tracking and basic statistics"
+    },
+    {
+      "permissionName" : "inn-reach.contributions.history.collection.get",
+      "displayName" : "Get history of INN-Reach contribution job execution status tracking and basic statistics",
+      "description" : "Get history of INN-Reach contribution job execution status tracking and basic statistics"
+    },
+    {
+      "permissionName" : "inn-reach.contributions.all",
+      "displayName" : "inn reach API module - all permissions of contribution",
+      "description" : "All permissions of inn reach contribution scope",
+      "subPermissions" : [
+        "inn-reach.contributions.current.item.get",
+        "inn-reach.contributions.history.collection.get"
+      ]
+    },
+    {
       "permissionName" : "inn-reach.all",
       "displayName" : "inn reach API module - all permissions",
       "description" : "All permissions for inn reach",
@@ -545,7 +574,8 @@
         "inn-reach.central-servers.item-contribution-options-configuration.all",
         "inn-reach.agency-mappings.all",
         "inn-reach.central-servers.marc-transformation-options-settings.all",
-        "inn-reach.patron-type-mappings.all"
+        "inn-reach.patron-type-mappings.all",
+        "inn-reach.contributions.all"
       ]
     }
   ],

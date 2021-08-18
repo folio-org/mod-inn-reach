@@ -11,6 +11,8 @@ public interface InnReachLocationService {
 
   InnReachLocationDTO getInnReachLocation(UUID innReachLocationId);
 
+  InnReachLocationsDTO getInnReachLocations(Iterable<UUID> innReachLocationIds);
+
   InnReachLocationsDTO getAllInnReachLocations(Integer offset, Integer limit);
 
   InnReachLocationDTO updateInnReachLocation(UUID innReachLocationId, InnReachLocationDTO innReachLocationDTO);

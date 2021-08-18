@@ -9,4 +9,7 @@ public interface InnReachLocationExternalService {
 
   void submitMappedLocationsToInnReach(CentralServerConnectionDetailsDTO connectionDetails,
                                        List<InnReachLocationDTO> actualMappedLocations);
+
+  List<InnReachLocationDTO> getAllLocations(CentralServerConnectionDetailsDTO connectionDetails);
+
 }

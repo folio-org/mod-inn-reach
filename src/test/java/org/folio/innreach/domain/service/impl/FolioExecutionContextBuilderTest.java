@@ -5,7 +5,7 @@ import static org.mockito.Mockito.mock;
 
 import org.junit.jupiter.api.Test;
 
-import org.folio.innreach.external.dto.SystemUser;
+import org.folio.innreach.domain.dto.folio.SystemUser;
 import org.folio.spring.FolioModuleMetadata;
 
 class FolioExecutionContextBuilderTest {

@@ -95,7 +95,8 @@ public class Contribution extends Auditable<String> implements Identifiable<UUID
   @AllArgsConstructor
   public enum Status {
     IN_PROGRESS("In Progress"),
-    COMPLETE("Complete");
+    COMPLETE("Complete"),
+    NOT_STARTED("Not started");
 
     @Getter
     private String value;

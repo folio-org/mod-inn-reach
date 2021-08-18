@@ -4,6 +4,7 @@ import static org.folio.innreach.domain.service.impl.ServiceUtils.centralServerR
 import static org.folio.innreach.domain.service.impl.ServiceUtils.initId;
 import static org.folio.innreach.domain.service.impl.ServiceUtils.mergeAndSave;
 
+import java.util.List;
 import java.util.UUID;
 import java.util.function.Consumer;
 
@@ -31,7 +32,7 @@ public class MaterialTypeMappingServiceImpl implements MaterialTypeMappingServic
   private final MaterialTypeMappingRepository repository;
   private final MaterialTypeMappingMapper mapper;
 
-  
+
   @Override
   @Transactional(readOnly = true)
   public MaterialTypeMappingsDTO getAllMappings(UUID centralServerId, int offset, int limit) {
@@ -89,6 +90,11 @@ public class MaterialTypeMappingServiceImpl implements MaterialTypeMappingServic
   public void deleteMapping(UUID centralServerId, UUID id) {
     MaterialTypeMapping mapping = findMapping(centralServerId, id);
     repository.delete(mapping);
+  }
+
+  @Override
+  public long countByTypeIds(UUID centralServerId, List<UUID> typeIds) {
+    return repository.countByCentralServerIdAndMaterialTypeIdIn(centralServerId, typeIds);
   }
 
   private MaterialTypeMapping findMapping(UUID centralServerId, UUID id) {
