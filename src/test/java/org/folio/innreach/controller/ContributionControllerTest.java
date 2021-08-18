@@ -12,10 +12,10 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TEST_METHOD;
 import static org.springframework.test.context.jdbc.SqlMergeMode.MergeMode.MERGE;
 
-import java.util.Arrays;
-import java.util.List;
+import static org.folio.innreach.fixture.ContributionFixture.createIrLocations;
+import static org.folio.innreach.fixture.ContributionFixture.createMaterialTypes;
+
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 import lombok.Getter;
 import org.junit.jupiter.api.Test;
@@ -28,12 +28,9 @@ import org.springframework.test.context.jdbc.SqlMergeMode;
 
 import org.folio.innreach.client.InventoryClient;
 import org.folio.innreach.controller.base.BaseControllerTest;
-import org.folio.innreach.domain.dto.folio.ResultList;
-import org.folio.innreach.domain.dto.folio.inventory.MaterialTypeDTO;
 import org.folio.innreach.dto.ContributionDTO;
 import org.folio.innreach.dto.ContributionsDTO;
 import org.folio.innreach.dto.MappingValidationStatusDTO;
-import org.folio.innreach.external.dto.InnReachLocationDTO;
 import org.folio.innreach.external.service.InnReachLocationExternalService;
 import org.folio.innreach.mapper.ContributionMapper;
 import org.folio.innreach.repository.ContributionRepository;
@@ -96,12 +93,6 @@ class ContributionControllerTest extends BaseControllerTest {
     assertEquals(MappingValidationStatusDTO.VALID, response.getLocationsMappingStatus());
 
     assertThat(existing, samePropertyValuesAs(response, "itemTypeMappingStatus", "locationsMappingStatus"));
-  }
-
-  private List<InnReachLocationDTO> createIrLocations() {
-    return Arrays.asList("q1w2e", "p0o9i", "u7y6t").stream()
-      .map(c -> new InnReachLocationDTO(c, null))
-      .collect(Collectors.toList());
   }
 
   @Test
@@ -174,21 +165,6 @@ class ContributionControllerTest extends BaseControllerTest {
     assertEquals(ContributionDTO.StatusEnum.NOT_STARTED, response.getStatus());
     assertEquals(MappingValidationStatusDTO.INVALID, response.getItemTypeMappingStatus());
     assertEquals(MappingValidationStatusDTO.VALID, response.getLocationsMappingStatus());
-  }
-
-  private ResultList<MaterialTypeDTO> createMaterialTypes() {
-    List<MaterialTypeDTO> results = Arrays.asList(PRE_POPULATED_TYPE_ID, PRE_POPULATED_TYPE2_ID, PRE_POPULATED_TYPE3_ID)
-      .stream()
-      .map(this::createMaterialType)
-      .collect(Collectors.toList());
-
-    return ResultList.of(results.size(), results);
-  }
-
-  private MaterialTypeDTO createMaterialType(String id) {
-    MaterialTypeDTO dto = new MaterialTypeDTO();
-    dto.setId(UUID.fromString(id));
-    return dto;
   }
 
   private ContributionDTO fetchCurrentContribution() {
