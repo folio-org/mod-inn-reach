@@ -96,17 +96,14 @@ public class ContributionServiceImpl implements ContributionService {
         return libraryMappingStatus;
       }
 
-      List<String> irLocationCodes = getAllInnReachLocationCodes(centralServerId);
-
-      return validateInnReachLocations(irLocationCodes, libraryMappings);
+      return validateInnReachLocations(centralServerId, libraryMappings);
     } catch (Exception e) {
       log.warn("Can't validate location mappings", e);
       return INVALID;
     }
   }
 
-  private MappingValidationStatusDTO validateLibraryMappings(UUID centralServerId,
-                                                             List<LibraryMappingDTO> libraryMappings) {
+  private MappingValidationStatusDTO validateLibraryMappings(UUID centralServerId, List<LibraryMappingDTO> libraryMappings) {
     List<UUID> centralServerFolioLibraryIds = getFolioLibraryIds(centralServerId);
 
     var mappedLibraryIds = libraryMappings.stream()
@@ -116,8 +113,9 @@ public class ContributionServiceImpl implements ContributionService {
     return mappedLibraryIds.containsAll(centralServerFolioLibraryIds) ? VALID : INVALID;
   }
 
-  private MappingValidationStatusDTO validateInnReachLocations(List<String> irLocationCodes,
-                                                               List<LibraryMappingDTO> libraryMappings) {
+  private MappingValidationStatusDTO validateInnReachLocations(UUID centralServerId, List<LibraryMappingDTO> libraryMappings) {
+    List<String> irLocationCodes = getAllInnReachLocationCodes(centralServerId);
+
     List<String> mappedIrLocationCodes = getMappedInnReachLocationCodes(libraryMappings);
 
     return irLocationCodes.containsAll(mappedIrLocationCodes) ? VALID : INVALID;

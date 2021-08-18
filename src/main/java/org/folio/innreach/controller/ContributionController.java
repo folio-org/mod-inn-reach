@@ -23,7 +23,7 @@ public class ContributionController implements ContributionsApi {
 
   private final ContributionService service;
 
-  @GetMapping(value = "/current")
+  @GetMapping("/current")
   public ResponseEntity<ContributionDTO> getCurrentContributionByServerId(@PathVariable("centralServerId") UUID centralServerId) {
     var currContribution = service.getCurrent(centralServerId);
     return ResponseEntity.ok(currContribution);
