@@ -1,4 +1,4 @@
-package org.folio.innreach.domain.dto.folio.inventory;
+package org.folio.innreach.domain.dto.folio.inventoryStorage;
 
 import java.util.UUID;
 

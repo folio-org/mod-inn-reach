@@ -13,7 +13,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import org.folio.innreach.client.InventoryStorageClient;
-import org.folio.innreach.domain.dto.folio.inventory.MaterialTypeDTO;
+import org.folio.innreach.domain.dto.folio.inventoryStorage.MaterialTypeDTO;
 import org.folio.innreach.domain.entity.Contribution;
 import org.folio.innreach.domain.service.CentralServerService;
 import org.folio.innreach.domain.service.ContributionService;
