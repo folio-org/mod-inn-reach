@@ -26,7 +26,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlMergeMode;
 
-import org.folio.innreach.client.InventoryClient;
+import org.folio.innreach.client.InventoryStorageClient;
 import org.folio.innreach.controller.base.BaseControllerTest;
 import org.folio.innreach.dto.ContributionDTO;
 import org.folio.innreach.dto.ContributionsDTO;
@@ -60,7 +60,7 @@ class ContributionControllerTest extends BaseControllerTest {
   @Autowired
   private ContributionMapper mapper;
   @MockBean
-  private InventoryClient inventoryClient;
+  private InventoryStorageClient inventoryStorageClient;
   @MockBean
   private InnReachLocationExternalService irLocationService;
 
@@ -73,7 +73,7 @@ class ContributionControllerTest extends BaseControllerTest {
     "classpath:db/contribution/pre-populate-contribution.sql"
   })
   void shouldGetCurrentContribution() {
-    when(inventoryClient.getMaterialTypes(anyString(), anyInt())).thenReturn(createMaterialTypes());
+    when(inventoryStorageClient.getMaterialTypes(anyString(), anyInt())).thenReturn(createMaterialTypes());
     when(irLocationService.getAllLocations(any())).thenReturn(createIrLocations());
 
     var responseEntity =
@@ -101,7 +101,7 @@ class ContributionControllerTest extends BaseControllerTest {
     "classpath:db/contribution/pre-populate-contribution.sql"
   })
   void shouldGetContributionHistory() {
-    when(inventoryClient.getMaterialTypes(anyString(), anyInt())).thenReturn(createMaterialTypes());
+    when(inventoryStorageClient.getMaterialTypes(anyString(), anyInt())).thenReturn(createMaterialTypes());
 
     var responseEntity =
       testRestTemplate.getForEntity(contributionHistoryUrl(), ContributionsDTO.class);
@@ -125,7 +125,7 @@ class ContributionControllerTest extends BaseControllerTest {
     "classpath:db/lib-mapping/pre-populate-another-library-mapping.sql",
   })
   void shouldReturnNotStartedContribution() {
-    when(inventoryClient.getMaterialTypes(anyString(), anyInt())).thenReturn(createMaterialTypes());
+    when(inventoryStorageClient.getMaterialTypes(anyString(), anyInt())).thenReturn(createMaterialTypes());
     when(irLocationService.getAllLocations(any())).thenReturn(createIrLocations());
 
     var responseEntity =
@@ -145,12 +145,11 @@ class ContributionControllerTest extends BaseControllerTest {
   @Test
   @Sql(scripts = {
     "classpath:db/central-server/pre-populate-central-server.sql",
-    "classpath:db/mtype-mapping/pre-populate-material-type-mapping.sql",
     "classpath:db/inn-reach-location/pre-populate-inn-reach-location-code.sql",
     "classpath:db/lib-mapping/pre-populate-another-library-mapping.sql",
   })
-  void shouldReturnInvalidStatusOnException() {
-    when(inventoryClient.getMaterialTypes(anyString(), anyInt())).thenThrow(new RuntimeException("test"));
+  void shouldReturnInvalidStatusOnMissingTypeMappings() {
+    when(inventoryStorageClient.getMaterialTypes(anyString(), anyInt())).thenReturn(createMaterialTypes());
     when(irLocationService.getAllLocations(any())).thenReturn(createIrLocations());
 
     var responseEntity =
@@ -165,6 +164,55 @@ class ContributionControllerTest extends BaseControllerTest {
     assertEquals(ContributionDTO.StatusEnum.NOT_STARTED, response.getStatus());
     assertEquals(MappingValidationStatusDTO.INVALID, response.getItemTypeMappingStatus());
     assertEquals(MappingValidationStatusDTO.VALID, response.getLocationsMappingStatus());
+  }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/mtype-mapping/pre-populate-material-type-mapping.sql",
+    "classpath:db/inn-reach-location/pre-populate-inn-reach-location-code.sql",
+  })
+  void shouldReturnInvalidStatusOnMissingLibraryMappings() {
+    when(inventoryStorageClient.getMaterialTypes(anyString(), anyInt())).thenReturn(createMaterialTypes());
+    when(irLocationService.getAllLocations(any())).thenReturn(createIrLocations());
+
+    var responseEntity =
+      testRestTemplate.getForEntity(currentContributionUrl(), ContributionDTO.class);
+
+    assertTrue(responseEntity.getStatusCode().is2xxSuccessful());
+    assertTrue(responseEntity.hasBody());
+
+    var response = responseEntity.getBody();
+    assertNotNull(response);
+
+    assertEquals(ContributionDTO.StatusEnum.NOT_STARTED, response.getStatus());
+    assertEquals(MappingValidationStatusDTO.VALID, response.getItemTypeMappingStatus());
+    assertEquals(MappingValidationStatusDTO.INVALID, response.getLocationsMappingStatus());
+  }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/mtype-mapping/pre-populate-material-type-mapping.sql",
+    "classpath:db/inn-reach-location/pre-populate-inn-reach-location-code.sql",
+    "classpath:db/lib-mapping/pre-populate-another-library-mapping.sql",
+  })
+  void shouldReturnInvalidStatusOnException() {
+    when(inventoryStorageClient.getMaterialTypes(anyString(), anyInt())).thenThrow(new RuntimeException("test"));
+    when(irLocationService.getAllLocations(any())).thenThrow(new RuntimeException("test"));
+
+    var responseEntity =
+      testRestTemplate.getForEntity(currentContributionUrl(), ContributionDTO.class);
+
+    assertTrue(responseEntity.getStatusCode().is2xxSuccessful());
+    assertTrue(responseEntity.hasBody());
+
+    var response = responseEntity.getBody();
+    assertNotNull(response);
+
+    assertEquals(ContributionDTO.StatusEnum.NOT_STARTED, response.getStatus());
+    assertEquals(MappingValidationStatusDTO.INVALID, response.getItemTypeMappingStatus());
+    assertEquals(MappingValidationStatusDTO.INVALID, response.getLocationsMappingStatus());
   }
 
   private ContributionDTO fetchCurrentContribution() {

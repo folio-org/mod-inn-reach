@@ -12,7 +12,7 @@ import lombok.extern.log4j.Log4j2;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
-import org.folio.innreach.client.InventoryClient;
+import org.folio.innreach.client.InventoryStorageClient;
 import org.folio.innreach.domain.dto.folio.inventory.MaterialTypeDTO;
 import org.folio.innreach.domain.entity.Contribution;
 import org.folio.innreach.domain.service.CentralServerService;
@@ -40,7 +40,7 @@ public class ContributionServiceImpl implements ContributionService {
   private final ContributionRepository repository;
   private final ContributionMapper mapper;
 
-  private final InventoryClient inventoryClient;
+  private final InventoryStorageClient inventoryStorageClient;
   private final MaterialTypeMappingService typeMappingService;
 
   private final LibraryMappingService libraryMappingService;
@@ -81,7 +81,7 @@ public class ContributionServiceImpl implements ContributionService {
   }
 
   private List<UUID> getMaterialTypeIds() {
-    return inventoryClient.getMaterialTypes(MATERIAL_TYPES_CQL, LIMIT).getResult()
+    return inventoryStorageClient.getMaterialTypes(MATERIAL_TYPES_CQL, LIMIT).getResult()
       .stream()
       .map(MaterialTypeDTO::getId)
       .collect(Collectors.toList());
