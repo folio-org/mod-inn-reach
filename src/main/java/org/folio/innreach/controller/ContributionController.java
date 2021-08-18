@@ -23,12 +23,14 @@ public class ContributionController implements ContributionsApi {
 
   private final ContributionService service;
 
+  @Override
   @GetMapping("/current")
   public ResponseEntity<ContributionDTO> getCurrentContributionByServerId(@PathVariable("centralServerId") UUID centralServerId) {
     var currContribution = service.getCurrent(centralServerId);
     return ResponseEntity.ok(currContribution);
   }
 
+  @Override
   @GetMapping("/history")
   public ResponseEntity<ContributionsDTO> getContributionHistoryByServerId(@PathVariable("centralServerId") UUID centralServerId,
                                                                            Integer offset, Integer limit) {

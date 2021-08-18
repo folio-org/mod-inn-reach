@@ -61,7 +61,7 @@ public class ContributionFixture {
       .collect(Collectors.toList());
   }
 
-  public ResultList<MaterialTypeDTO> createMaterialTypes() {
+  public static ResultList<MaterialTypeDTO> createMaterialTypes() {
     List<MaterialTypeDTO> results = Arrays.asList(PRE_POPULATED_TYPE_ID, PRE_POPULATED_TYPE2_ID, PRE_POPULATED_TYPE3_ID)
       .stream()
       .map(ContributionFixture::createMaterialType)
@@ -70,7 +70,7 @@ public class ContributionFixture {
     return ResultList.of(results.size(), results);
   }
 
-  public MaterialTypeDTO createMaterialType(String id) {
+  public static MaterialTypeDTO createMaterialType(String id) {
     MaterialTypeDTO dto = new MaterialTypeDTO();
     dto.setId(UUID.fromString(id));
     return dto;

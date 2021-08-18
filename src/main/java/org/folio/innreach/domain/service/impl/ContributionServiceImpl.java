@@ -51,7 +51,7 @@ public class ContributionServiceImpl implements ContributionService {
   @Override
   public ContributionDTO getCurrent(UUID centralServerId) {
     var entity = repository.fetchCurrentByCentralServerId(centralServerId)
-      .orElse(emptyContribution(centralServerId));
+      .orElseGet(Contribution::new);
 
     var contribution = mapper.toDTO(entity);
 
@@ -124,12 +124,10 @@ public class ContributionServiceImpl implements ContributionService {
   private List<String> getAllInnReachLocationCodes(UUID centralServerId) {
     var centralServerConnectionDetails = centralServerService.getCentralServerConnectionDetails(centralServerId);
 
-    List<String> irLocationCodes = innReachLocationExternalService.getAllLocations(centralServerConnectionDetails)
+    return innReachLocationExternalService.getAllLocations(centralServerConnectionDetails)
       .stream()
       .map(org.folio.innreach.external.dto.InnReachLocationDTO::getCode)
       .collect(Collectors.toList());
-
-    return irLocationCodes;
   }
 
   private List<UUID> getFolioLibraryIds(UUID centralServerId) {
@@ -147,18 +145,10 @@ public class ContributionServiceImpl implements ContributionService {
   private List<String> getMappedInnReachLocationCodes(List<LibraryMappingDTO> libraryMappings) {
     var ids = libraryMappings.stream().map(LibraryMappingDTO::getInnReachLocationId).collect(Collectors.toList());
 
-    var mappedIrLocationCodes = innReachLocationService.getInnReachLocations(ids).getLocations()
+    return innReachLocationService.getInnReachLocations(ids).getLocations()
       .stream()
       .map(InnReachLocationDTO::getCode)
       .collect(Collectors.toList());
-
-    return mappedIrLocationCodes;
-  }
-
-  private Contribution emptyContribution(UUID centralServerId) {
-    var contribution = new Contribution();
-    contribution.setCentralServer(ServiceUtils.centralServerRef(centralServerId));
-    return contribution;
   }
 
 }
