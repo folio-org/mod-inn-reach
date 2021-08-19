@@ -1,4 +1,4 @@
-package org.folio.innreach.external.client.feign.config;
+package org.folio.innreach.config;
 
 import feign.RequestInterceptor;
 import org.springframework.context.annotation.Bean;

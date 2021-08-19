@@ -42,6 +42,21 @@ public class InnReachLocationServiceImpl implements InnReachLocationService {
       .orElseThrow(() -> new EntityNotFoundException("InnReachLocation with id: " + innReachLocationId + " not found!"));
 	}
 
+  @Override
+  @Transactional(readOnly = true)
+  public InnReachLocationsDTO getInnReachLocations(Iterable<UUID> innReachLocationIds) {
+    var locations = innReachLocationRepository.findAllById(innReachLocationIds)
+      .stream()
+      .map(innReachLocationMapper::mapToInnReachLocationDTO)
+      .collect(Collectors.toList());
+
+    var locationsDTO = new InnReachLocationsDTO();
+    locationsDTO.setLocations(locations);
+    locationsDTO.setTotalRecords(locations.size());
+
+    return locationsDTO;
+  }
+
 	@Override
 	@Transactional(readOnly = true)
   public InnReachLocationsDTO getAllInnReachLocations(Integer offset, Integer limit) {

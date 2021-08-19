@@ -1,0 +1,26 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "description": "INN-Reach contribution job execution status tracking and basic statistics",
+  "type": "object",
+  "properties": {
+    "id": {
+      "description": "Contribution id",
+      "type": "string",
+      "format": "uuid"
+    },
+    "message": {
+      "description": "Error message (cause)",
+      "type": "string"
+    },
+    "recordId": {
+      "description": "Id of instance record which has not been processed due to error",
+      "type": "string",
+      "format": "uuid"
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "message",
+    "recordId"
+  ]
+}

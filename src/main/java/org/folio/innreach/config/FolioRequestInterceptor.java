@@ -1,4 +1,4 @@
-package org.folio.innreach.external.client.feign.config;
+package org.folio.innreach.config;
 
 import static org.folio.spring.integration.XOkapiHeaders.TENANT;
 import static org.folio.spring.integration.XOkapiHeaders.TOKEN;

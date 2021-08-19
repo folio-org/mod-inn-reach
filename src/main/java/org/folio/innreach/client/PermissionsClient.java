@@ -1,4 +1,4 @@
-package org.folio.innreach.external.client.feign;
+package org.folio.innreach.client;
 
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
@@ -15,8 +15,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
-import org.folio.innreach.external.client.feign.config.FolioFeignClientConfig;
-import org.folio.innreach.external.dto.ResultList;
+import org.folio.innreach.config.FolioFeignClientConfig;
+import org.folio.innreach.domain.dto.folio.ResultList;
 
 @FeignClient(name = "perms/users", configuration = FolioFeignClientConfig.class)
 public interface PermissionsClient {

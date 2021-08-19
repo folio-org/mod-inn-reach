@@ -28,8 +28,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.test.context.TestPropertySource;
 
 import org.folio.innreach.config.props.SystemUserProperties;
-import org.folio.innreach.external.dto.SystemUser;
-import org.folio.innreach.external.service.impl.SystemUserAuthService;
+import org.folio.innreach.domain.dto.folio.SystemUser;
 import org.folio.spring.DefaultFolioExecutionContext;
 import org.folio.spring.FolioExecutionContext;
 
