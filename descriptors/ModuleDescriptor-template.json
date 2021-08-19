@@ -555,15 +555,6 @@
       "description" : "Get history of INN-Reach contribution job execution status tracking and basic statistics"
     },
     {
-      "permissionName" : "inn-reach.contributions.all",
-      "displayName" : "inn reach API module - all permissions of contribution",
-      "description" : "All permissions of inn reach contribution scope",
-      "subPermissions" : [
-        "inn-reach.contributions.current.item.get",
-        "inn-reach.contributions.history.collection.get"
-      ]
-    },
-    {
       "permissionName" : "inn-reach.contributions.item.post",
       "displayName" : "start initial contribution process",
       "description" : "Start initial contribution process"
@@ -573,6 +564,8 @@
       "displayName" : "inn reach API module - all permissions of contribution",
       "description" : "All permissions of inn reach contribution scope",
       "subPermissions" : [
+        "inn-reach.contributions.current.item.get",
+        "inn-reach.contributions.history.collection.get",
         "inn-reach.contributions.item.post"
       ]
     },

@@ -1,7 +1,7 @@
 package org.folio.innreach.domain.service.impl;
 
 import org.folio.innreach.domain.entity.Contribution;
-import org.folio.innreach.external.client.feign.InventoryStorageClient;
+import org.folio.innreach.client.InventoryStorageClient;
 import org.folio.innreach.repository.ContributionRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

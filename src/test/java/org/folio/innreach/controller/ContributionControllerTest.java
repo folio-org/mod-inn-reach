@@ -37,7 +37,7 @@ import org.folio.innreach.repository.ContributionRepository;
 
 import org.folio.innreach.domain.dto.folio.inventoryStorage.InstanceIterationRequest;
 import org.folio.innreach.domain.entity.Contribution;
-import org.folio.innreach.external.client.feign.InventoryStorageClient;
+import org.folio.innreach.client.InventoryStorageClient;
 import org.junit.jupiter.api.BeforeEach;
 import org.mockito.MockitoAnnotations;
 import org.springframework.http.HttpEntity;
@@ -64,11 +64,6 @@ class ContributionControllerTest extends BaseControllerTest {
 
   @MockBean
   private InventoryStorageClient client;
-
-  @BeforeEach
-  void setupBeforeEach() {
-    MockitoAnnotations.initMocks(this);
-  }
 
   @Autowired
   private TestRestTemplate testRestTemplate;
@@ -268,7 +263,7 @@ class ContributionControllerTest extends BaseControllerTest {
 
     assertEquals(HttpStatus.CREATED, responseEntity.getStatusCode());
 
-    var fromDb = repository.fetchCurrentByCentralServerId(UUID.fromString(PRE_POPULATED_CENTRAL_SERVER_ID));
+    var fromDb = repository.fetchCurrentByCentralServerId(PRE_POPULATED_CENTRAL_SERVER_ID);
     assertNotNull(fromDb);
     assertEquals(Contribution.Status.IN_PROGRESS, fromDb.get().getStatus());
   }

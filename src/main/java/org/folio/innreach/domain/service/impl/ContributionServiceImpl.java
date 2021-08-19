@@ -32,7 +32,7 @@ import org.folio.innreach.repository.ContributionRepository;
 import static org.folio.innreach.domain.service.impl.ServiceUtils.centralServerRef;
 
 import org.folio.innreach.domain.dto.folio.inventoryStorage.InstanceIterationRequest;
-import org.folio.innreach.external.client.feign.InventoryStorageClient;
+import org.folio.innreach.client.InventoryStorageClient;
 
 @Log4j2
 @AllArgsConstructor
