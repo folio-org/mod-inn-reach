@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 
 import lombok.AllArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.folio.innreach.external.exception.InnReachException;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
@@ -32,7 +33,7 @@ import org.folio.innreach.repository.ContributionRepository;
 import static org.folio.innreach.domain.service.impl.ServiceUtils.centralServerRef;
 
 import org.folio.innreach.domain.dto.folio.inventoryStorage.InstanceIterationRequest;
-import org.folio.innreach.client.InventoryStorageClient;
+import org.folio.innreach.client.InstanceStorageClient;
 
 @Log4j2
 @AllArgsConstructor
@@ -53,7 +54,7 @@ public class ContributionServiceImpl implements ContributionService {
   private final InnReachLocationService innReachLocationService;
   private final InnReachLocationExternalService innReachLocationExternalService;
 
-  private final InventoryStorageClient client;
+  private final InstanceStorageClient client;
 
   @Override
   public ContributionDTO getCurrent(UUID centralServerId) {
@@ -161,11 +162,17 @@ public class ContributionServiceImpl implements ContributionService {
   @Override
   public void startInitialContribution(UUID centralServerId) {
     var contribution = createEmptyContribution(centralServerId);
-    repository.save(contribution);
+    var savedContribution = repository.save(contribution);
 
     var request = createInstanceIterationRequest();
     log.info("Calling mod-inventory storage...");
-    client.startInitialContribution(request);
+    try {
+      var response = client.startInitialContribution(request);
+      savedContribution.setStartedJobId(response.getId());
+      repository.save(savedContribution);
+    } catch (Exception e) {
+      throw new InnReachException("mod-inventory-storage endpoint is yet to be implemented.");
+    }
     log.info("Initial contribution process started.");
   }
 

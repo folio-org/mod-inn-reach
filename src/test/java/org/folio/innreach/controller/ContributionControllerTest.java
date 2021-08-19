@@ -1,5 +1,6 @@
 package org.folio.innreach.controller;
 
+import static org.folio.innreach.fixture.JobResponseFixture.createJobResponse;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.samePropertyValuesAs;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -18,6 +19,7 @@ import static org.folio.innreach.fixture.ContributionFixture.createMaterialTypes
 import java.util.UUID;
 
 import lombok.Getter;
+import org.folio.innreach.domain.dto.folio.inventoryStorage.JobResponse;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -37,12 +39,9 @@ import org.folio.innreach.repository.ContributionRepository;
 
 import org.folio.innreach.domain.dto.folio.inventoryStorage.InstanceIterationRequest;
 import org.folio.innreach.domain.entity.Contribution;
-import org.folio.innreach.client.InventoryStorageClient;
-import org.junit.jupiter.api.BeforeEach;
-import org.mockito.MockitoAnnotations;
+import org.folio.innreach.client.InstanceStorageClient;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpStatus;
-import static org.mockito.Mockito.doNothing;
 
 @Getter
 @Sql(
@@ -63,7 +62,7 @@ class ContributionControllerTest extends BaseControllerTest {
   private static final String PRE_POPULATED_TYPE3_ID = "615b8413-82d5-4203-aa6e-e37984cb5ac3";
 
   @MockBean
-  private InventoryStorageClient client;
+  private InstanceStorageClient client;
 
   @Autowired
   private TestRestTemplate testRestTemplate;
@@ -255,7 +254,8 @@ class ContributionControllerTest extends BaseControllerTest {
     "classpath:db/central-server/pre-populate-central-server.sql"
   })
   void return201HttpCode_whenInstanceIterationStarted(){
-    doNothing().when(client).startInitialContribution(any(InstanceIterationRequest.class));
+    var jobResponse = createJobResponse();
+    when(client.startInitialContribution(any(InstanceIterationRequest.class))).thenReturn(jobResponse);
 
     var responseEntity = testRestTemplate.postForEntity(
       "/inn-reach/central-servers/{centralServerId}/contributions", HttpEntity.EMPTY, Void.class,
@@ -266,11 +266,12 @@ class ContributionControllerTest extends BaseControllerTest {
     var fromDb = repository.fetchCurrentByCentralServerId(PRE_POPULATED_CENTRAL_SERVER_ID);
     assertNotNull(fromDb);
     assertEquals(Contribution.Status.IN_PROGRESS, fromDb.get().getStatus());
+    assertEquals(jobResponse.getId(), fromDb.get().getStartedJobId());
   }
 
   @Test
   void return409HttpCode_whenStartingInstanceIterationForNonExistingCentralServer(){
-    doNothing().when(client).startInitialContribution(any(InstanceIterationRequest.class));
+    when(client.startInitialContribution(any(InstanceIterationRequest.class))).thenReturn(new JobResponse());
 
     var responseEntity = testRestTemplate.postForEntity(
       "/inn-reach/central-servers/{centralServerId}/contributions", HttpEntity.EMPTY, Void.class,
