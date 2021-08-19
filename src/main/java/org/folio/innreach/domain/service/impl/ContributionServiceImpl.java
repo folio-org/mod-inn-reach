@@ -3,6 +3,7 @@ package org.folio.innreach.domain.service.impl;
 import static org.folio.innreach.domain.service.impl.ServiceUtils.centralServerRef;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.log4j.Log4j2;
 import org.folio.innreach.domain.dto.folio.inventoryStorage.InstanceIterationRequest;
 import org.folio.innreach.domain.entity.Contribution;
 import org.folio.innreach.domain.service.ContributionService;
@@ -12,6 +13,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.UUID;
 
+@Log4j2
 @RequiredArgsConstructor
 @Service
 public class ContributionServiceImpl implements ContributionService {
@@ -25,7 +27,9 @@ public class ContributionServiceImpl implements ContributionService {
     repository.save(contribution);
 
     var request = createInstanceIterationRequest();
+    log.info("Calling mod-inventory storage...");
     client.startInitialContribution(request);
+    log.info("Initial contribution process started.");
   }
 
   private InstanceIterationRequest createInstanceIterationRequest() {
@@ -38,6 +42,10 @@ public class ContributionServiceImpl implements ContributionService {
     var contribution = new Contribution();
     contribution.setStatus(Contribution.Status.IN_PROGRESS);
     contribution.setRecordsTotal(0L);
+    contribution.setRecordsProcessed(0L);
+    contribution.setRecordsContributed(0L);
+    contribution.setRecordsUpdated(0L);
+    contribution.setRecordsDecontributed(0L);
     contribution.setCentralServer(centralServerRef(centralServerId));
     return contribution;
   }
