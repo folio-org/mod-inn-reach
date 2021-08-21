@@ -1,24 +1,5 @@
 package org.folio.innreach.domain.service.impl;
 
-import org.folio.innreach.domain.entity.MARCTransformationOptionsSettings;
-import org.folio.innreach.domain.exception.EntityNotFoundException;
-import org.folio.innreach.dto.MARCTransformationOptionsSettingsDTO;
-import org.folio.innreach.mapper.DateMapper;
-import org.folio.innreach.mapper.MARCTransformationOptionsSettingsMapper;
-import org.folio.innreach.mapper.MARCTransformationOptionsSettingsMapperImpl;
-import org.folio.innreach.repository.MARCTransformationOptionsSettingsRepository;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
-import org.mockito.Spy;
-
-import java.util.Optional;
-import java.util.UUID;
-
-import static org.folio.innreach.fixture.MARCTransformationOptionsSettingsFixture.createMARCTransformOptSet;
-import static org.folio.innreach.fixture.MARCTransformationOptionsSettingsFixture.createMARCTransformOptSetDTO;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -26,12 +7,33 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import static org.folio.innreach.fixture.MARCTransformationOptionsSettingsFixture.createMARCTransformOptSet;
+import static org.folio.innreach.fixture.MARCTransformationOptionsSettingsFixture.createMARCTransformOptSetDTO;
+
+import java.util.Optional;
+import java.util.UUID;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+import org.mockito.Spy;
+
+import org.folio.innreach.domain.entity.MARCTransformationOptionsSettings;
+import org.folio.innreach.domain.exception.EntityNotFoundException;
+import org.folio.innreach.dto.MARCTransformationOptionsSettingsDTO;
+import org.folio.innreach.mapper.MARCTransformationOptionsSettingsMapper;
+import org.folio.innreach.mapper.MARCTransformationOptionsSettingsMapperImpl;
+import org.folio.innreach.mapper.MappingMethods;
+import org.folio.innreach.repository.MARCTransformationOptionsSettingsRepository;
+
 class MARCTransformationOptionsSettingsServiceImplTest {
   @Mock
   private MARCTransformationOptionsSettingsRepository repository;
 
   @Spy
-  private final MARCTransformationOptionsSettingsMapper mapper = new MARCTransformationOptionsSettingsMapperImpl(new DateMapper());
+  private final MARCTransformationOptionsSettingsMapper mapper = new MARCTransformationOptionsSettingsMapperImpl(new MappingMethods());
 
   @InjectMocks
   private MARCTransformationOptionsSettingsServiceImpl service;

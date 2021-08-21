@@ -1,9 +1,8 @@
 package org.folio.innreach.domain.entity;
 
-import lombok.Getter;
-import lombok.Setter;
-import org.folio.innreach.domain.entity.base.Auditable;
-import org.hibernate.annotations.Fetch;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
 
 import javax.persistence.CollectionTable;
 import javax.persistence.Column;
@@ -16,15 +15,18 @@ import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+
+import lombok.Getter;
+import lombok.Setter;
+import org.hibernate.annotations.Fetch;
+
+import org.folio.innreach.domain.entity.base.Auditable;
 
 @Entity
 @Getter
 @Setter
 @Table(name = "marc_field_configuration")
-public class FieldConfiguration extends Auditable<String> {
+public class FieldConfiguration extends Auditable {
   @Id
   @GeneratedValue(strategy = GenerationType.AUTO)
   private UUID id;

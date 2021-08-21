@@ -3,11 +3,9 @@ package org.folio.innreach.domain.entity;
 import static org.folio.innreach.domain.entity.MARCTransformationOptionsSettings.FETCH_ONE_BY_CENTRAL_SERVER_ID_QUERY;
 import static org.folio.innreach.domain.entity.MARCTransformationOptionsSettings.FETCH_ONE_BY_CENTRAL_SERVER_ID_QUERY_NAME;
 
-import lombok.Getter;
-import lombok.Setter;
-import org.folio.innreach.domain.entity.base.Auditable;
-import org.hibernate.annotations.Fetch;
-import org.hibernate.annotations.QueryHints;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
 
 import javax.persistence.CascadeType;
 import javax.persistence.CollectionTable;
@@ -24,9 +22,13 @@ import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 import javax.persistence.QueryHint;
 import javax.persistence.Table;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+
+import lombok.Getter;
+import lombok.Setter;
+import org.hibernate.annotations.Fetch;
+import org.hibernate.annotations.QueryHints;
+
+import org.folio.innreach.domain.entity.base.Auditable;
 
 @Entity
 @Getter
@@ -37,7 +39,7 @@ import java.util.UUID;
   query = FETCH_ONE_BY_CENTRAL_SERVER_ID_QUERY,
   hints = @QueryHint(name = QueryHints.PASS_DISTINCT_THROUGH, value = "false")
 )
-public class MARCTransformationOptionsSettings extends Auditable<String> {
+public class MARCTransformationOptionsSettings extends Auditable {
   public static final String FETCH_ONE_BY_CENTRAL_SERVER_ID_QUERY_NAME = "MARCTransformationOptionsSettings.fetchOne";
   public static final String FETCH_ONE_BY_CENTRAL_SERVER_ID_QUERY =
     "SELECT DISTINCT m FROM MARCTransformationOptionsSettings AS m where m.centralServer.id = :id";

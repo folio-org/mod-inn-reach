@@ -7,7 +7,7 @@ import org.mapstruct.Mapping;
 import org.folio.innreach.domain.entity.ContributionCriteriaConfiguration;
 import org.folio.innreach.dto.ContributionCriteriaDTO;
 
-@Mapper(componentModel = "spring", injectionStrategy = InjectionStrategy.CONSTRUCTOR, uses = DateMapper.class)
+@Mapper(componentModel = "spring", injectionStrategy = InjectionStrategy.CONSTRUCTOR, uses = MappingMethods.class)
 public interface ContributionCriteriaConfigurationMapper {
 
   @Mapping(target = "contributeButSuppressCodeId", source = "contributeButSuppressId")
@@ -20,10 +20,7 @@ public interface ContributionCriteriaConfigurationMapper {
   @Mapping(target = "contributeAsSystemOwnedId", source = "contributeAsSystemOwnedCodeId")
   @Mapping(target = "doNotContributeId", source = "doNotContributeCodeId")
   @Mapping(target = "locationIds", source = "excludedLocationIds")
-  @Mapping(target = "metadata.createdDate", source = "entity.createdDate")
-  @Mapping(target = "metadata.createdByUsername", source = "entity.createdBy")
-  @Mapping(target = "metadata.updatedDate", source = "entity.lastModifiedDate")
-  @Mapping(target = "metadata.updatedByUsername", source = "entity.lastModifiedBy")
+  @AuditableMapping
   ContributionCriteriaDTO toDTO(ContributionCriteriaConfiguration entity);
 
 }

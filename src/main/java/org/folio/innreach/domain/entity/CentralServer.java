@@ -30,10 +30,9 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
-import org.folio.innreach.domain.entity.base.AbstractEntity;
-import org.folio.innreach.domain.entity.base.Auditable;
 import org.hibernate.annotations.QueryHints;
 
+import org.folio.innreach.domain.entity.base.Auditable;
 import org.folio.innreach.domain.entity.base.Identifiable;
 
 @Getter
@@ -61,7 +60,7 @@ import org.folio.innreach.domain.entity.base.Identifiable;
   query = FETCH_CONNECTION_DETAILS_QUERY,
   hints = @QueryHint(name = QueryHints.PASS_DISTINCT_THROUGH, value = "false")
 )
-public class CentralServer extends Auditable<String> implements Identifiable<UUID> {
+public class CentralServer extends Auditable implements Identifiable<UUID> {
 
   private static final String FETCH_BY_ID_POSTFIX = " WHERE cs.id = :id";
 

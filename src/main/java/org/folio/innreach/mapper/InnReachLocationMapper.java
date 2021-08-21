@@ -2,19 +2,15 @@ package org.folio.innreach.mapper;
 
 import org.mapstruct.InjectionStrategy;
 import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
 
 import org.folio.innreach.domain.entity.InnReachLocation;
 import org.folio.innreach.dto.InnReachLocationDTO;
 
-@Mapper(componentModel = "spring", injectionStrategy = InjectionStrategy.CONSTRUCTOR, uses = DateMapper.class)
+@Mapper(componentModel = "spring", injectionStrategy = InjectionStrategy.CONSTRUCTOR, uses = MappingMethods.class)
 public interface InnReachLocationMapper {
 
 	InnReachLocation mapToInnReachLocation(InnReachLocationDTO innReachLocationDTO);
 
-  @Mapping(target = "metadata.createdDate", source = "innReachLocation.createdDate")
-  @Mapping(target = "metadata.createdByUsername", source = "innReachLocation.createdBy")
-  @Mapping(target = "metadata.updatedDate", source = "innReachLocation.lastModifiedDate")
-  @Mapping(target = "metadata.updatedByUsername", source = "innReachLocation.lastModifiedBy")
+  @AuditableMapping
 	InnReachLocationDTO mapToInnReachLocationDTO(InnReachLocation innReachLocation);
 }

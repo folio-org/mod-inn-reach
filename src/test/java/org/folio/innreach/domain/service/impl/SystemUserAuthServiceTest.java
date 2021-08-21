@@ -8,6 +8,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import java.util.Optional;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -15,14 +17,15 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import org.folio.innreach.client.AuthnClient;
 import org.folio.innreach.client.PermissionsClient;
-import org.folio.innreach.client.UsersClient;
 import org.folio.innreach.config.props.SystemUserProperties;
 import org.folio.innreach.domain.dto.folio.ResultList;
+import org.folio.innreach.domain.dto.folio.User;
+import org.folio.innreach.domain.service.UserService;
 
 @ExtendWith(MockitoExtension.class)
 class SystemUserAuthServiceTest {
   @Mock
-  private UsersClient usersClient;
+  private UserService userService;
   @Mock
   private AuthnClient authnClient;
   @Mock
@@ -32,17 +35,17 @@ class SystemUserAuthServiceTest {
 
   @Test
   void shouldCreateSystemUserWhenNotExist() {
-    when(usersClient.query(any())).thenReturn(userNotExistResponse());
+    when(userService.getUserByName(any())).thenReturn(userNotExistResponse());
 
     prepareSystemUser(systemUser());
 
-    verify(usersClient).saveUser(any());
+    verify(userService).getUserByName(any());
     verify(permissionsClient).assignPermissionsToUser(any());
   }
 
   @Test
   void shouldNotCreateSystemUserWhenExists() {
-    when(usersClient.query(any())).thenReturn(userExistsResponse());
+    when(userService.getUserByName(any())).thenReturn(userExistsResponse());
     when(permissionsClient.getUserPermissions(any())).thenReturn(ResultList.empty());
 
     prepareSystemUser(systemUser());
@@ -53,7 +56,7 @@ class SystemUserAuthServiceTest {
   @Test
   void cannotUpdateUserIfEmptyPermissions() {
     var systemUser = systemUserNoPermissions();
-    when(usersClient.query(any())).thenReturn(userNotExistResponse());
+    when(userService.getUserByName(any())).thenReturn(userNotExistResponse());
 
     assertThrows(IllegalStateException.class, () -> prepareSystemUser(systemUser));
 
@@ -63,14 +66,14 @@ class SystemUserAuthServiceTest {
   @Test
   void cannotCreateUserIfEmptyPermissions() {
     var systemUser = systemUserNoPermissions();
-    when(usersClient.query(any())).thenReturn(userExistsResponse());
+    when(userService.getUserByName(any())).thenReturn(userExistsResponse());
 
     assertThrows(IllegalStateException.class, () -> prepareSystemUser(systemUser));
   }
 
   @Test
   void shouldAddOnlyNewPermissions() {
-    when(usersClient.query(any())).thenReturn(userExistsResponse());
+    when(userService.getUserByName(any())).thenReturn(userExistsResponse());
     when(permissionsClient.getUserPermissions(any()))
       .thenReturn(ResultList.asSinglePage("inventory-storage.instance.item.get"));
 
@@ -99,17 +102,16 @@ class SystemUserAuthServiceTest {
       .build();
   }
 
-  private ResultList<UsersClient.User> userExistsResponse() {
-    return ResultList.asSinglePage(new UsersClient.User());
+  private Optional<User> userExistsResponse() {
+    return Optional.of(new User());
   }
 
-  private ResultList<UsersClient.User> userNotExistResponse() {
-    return ResultList.empty();
+  private Optional<User> userNotExistResponse() {
+    return Optional.empty();
   }
 
   private SystemUserAuthService systemUserService(SystemUserProperties properties) {
-    return new SystemUserAuthService(permissionsClient,
-      usersClient, authnClient, contextBuilder, properties);
+    return new SystemUserAuthService(permissionsClient, authnClient, userService, contextBuilder, properties);
   }
 
   private void prepareSystemUser(SystemUserProperties properties) {

@@ -27,9 +27,9 @@ import org.springframework.data.domain.PageRequest;
 import org.folio.innreach.domain.entity.InnReachLocation;
 import org.folio.innreach.domain.exception.EntityNotFoundException;
 import org.folio.innreach.dto.InnReachLocationDTO;
-import org.folio.innreach.mapper.DateMapper;
 import org.folio.innreach.mapper.InnReachLocationMapper;
 import org.folio.innreach.mapper.InnReachLocationMapperImpl;
+import org.folio.innreach.mapper.MappingMethods;
 import org.folio.innreach.repository.InnReachLocationRepository;
 
 class InnReachLocationServiceImplTest {
@@ -38,7 +38,7 @@ class InnReachLocationServiceImplTest {
   private InnReachLocationRepository innReachLocationRepository;
 
   @Spy
-  private final InnReachLocationMapper innReachLocationMapper = new InnReachLocationMapperImpl(new DateMapper());
+  private final InnReachLocationMapper innReachLocationMapper = new InnReachLocationMapperImpl(new MappingMethods());
 
   @InjectMocks
   private InnReachLocationServiceImpl innReachLocationService;

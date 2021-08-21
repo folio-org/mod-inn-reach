@@ -32,9 +32,7 @@ spring:
   mustache:
     check-template-location: false
   cache:
-    cache-names: system-user-cache
-    caffeine:
-      spec: maximumSize=500,expireAfterAccess=3600s
+    type: caffeine
 folio:
   tenant:
     validation:
@@ -68,3 +66,13 @@ system-user:
   password: ${SYSTEM_USER_PASSWORD:Mod-innreach-1-0-0}
   lastname: System
   permissionsFilePath: permissions/mod-innreach.csv
+###################################################
+# Caffeine cache configuration
+###################################################
+coffee-boots:
+  cache:
+    basic-spec: maximumSize=500,expireAfterAccess=1h
+    spec:
+      system-user-cache: maximumSize=5
+      users-by-id: maximumSize=100,expireAfterAccess=5h
+      users-by-name: maximumSize=10,expireAfterAccess=5h

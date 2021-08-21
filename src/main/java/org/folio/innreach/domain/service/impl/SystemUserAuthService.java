@@ -23,9 +23,10 @@ import org.springframework.util.CollectionUtils;
 
 import org.folio.innreach.client.AuthnClient;
 import org.folio.innreach.client.PermissionsClient;
-import org.folio.innreach.client.UsersClient;
 import org.folio.innreach.config.props.SystemUserProperties;
 import org.folio.innreach.domain.dto.folio.SystemUser;
+import org.folio.innreach.domain.dto.folio.User;
+import org.folio.innreach.domain.service.UserService;
 import org.folio.spring.FolioExecutionContext;
 import org.folio.spring.integration.XOkapiHeaders;
 
@@ -36,14 +37,14 @@ import org.folio.spring.integration.XOkapiHeaders;
 public class SystemUserAuthService {
 
   private final PermissionsClient permissionsClient;
-  private final UsersClient usersClient;
   private final AuthnClient authnClient;
+  private final UserService userService;
   private final FolioExecutionContextBuilder contextBuilder;
   private final SystemUserProperties folioSystemUserConf;
 
   public void setupSystemUser() {
-    var folioUser = getFolioUser(folioSystemUserConf.getUsername());
-    var userId = folioUser.map(UsersClient.User::getId)
+    var folioUser = userService.getUserByName(folioSystemUserConf.getUsername());
+    var userId = folioUser.map(User::getId)
       .orElse(UUID.randomUUID().toString());
 
     if (folioUser.isPresent()) {
@@ -76,14 +77,9 @@ public class SystemUserAuthService {
     });
   }
 
-  private Optional<UsersClient.User> getFolioUser(String username) {
-    var users = usersClient.query("username==" + username);
-    return users.getResult().stream().findFirst();
-  }
-
   private void createFolioUser(String id) {
     final var user = createUserObject(id);
-    usersClient.saveUser(user);
+    userService.saveUser(user);
   }
 
   private void saveCredentials() {
@@ -120,14 +116,14 @@ public class SystemUserAuthService {
       permissionsClient.addPermission(userId, PermissionsClient.Permission.of(permission)));
   }
 
-  private UsersClient.User createUserObject(String id) {
-    final var user = new UsersClient.User();
+  private User createUserObject(String id) {
+    final var user = new User();
 
     user.setId(id);
     user.setActive(true);
     user.setUsername(folioSystemUserConf.getUsername());
 
-    user.setPersonal(new UsersClient.User.Personal());
+    user.setPersonal(new User.Personal());
     user.getPersonal()
       .setLastName(folioSystemUserConf.getLastname());
 

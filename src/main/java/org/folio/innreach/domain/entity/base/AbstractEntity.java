@@ -17,7 +17,7 @@ import org.springframework.data.util.ProxyUtils;
 @Setter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @MappedSuperclass
-public abstract class AbstractEntity extends Auditable<String> implements Identifiable<UUID> {
+public abstract class AbstractEntity extends Auditable implements Identifiable<UUID> {
 
   @Id
   private UUID id;

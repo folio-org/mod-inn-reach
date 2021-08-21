@@ -56,8 +56,8 @@ class MaterialTypeMappingRepositoryTest extends BaseRepositoryTest {
 
     assertEquals(PRE_POPULATED_USER, mapping.getCreatedBy());
     assertNotNull(mapping.getCreatedDate());
-    assertEquals(PRE_POPULATED_USER, mapping.getLastModifiedBy());
-    assertNotNull(mapping.getLastModifiedDate());
+    assertEquals(PRE_POPULATED_USER, mapping.getUpdatedBy());
+    assertNotNull(mapping.getUpdatedDate());
   }
 
   @Test

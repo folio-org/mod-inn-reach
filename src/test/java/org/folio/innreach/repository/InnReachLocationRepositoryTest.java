@@ -55,8 +55,8 @@ class InnReachLocationRepositoryTest extends BaseRepositoryTest {
 
     assertEquals(PRE_POPULATED_USER, location.getCreatedBy());
     assertNotNull(location.getCreatedDate());
-    assertEquals(PRE_POPULATED_USER, location.getLastModifiedBy());
-    assertNotNull(location.getLastModifiedDate());
+    assertEquals(PRE_POPULATED_USER, location.getUpdatedBy());
+    assertNotNull(location.getUpdatedDate());
   }
 
   @Test
