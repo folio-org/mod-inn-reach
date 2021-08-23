@@ -53,14 +53,14 @@ public class LocationMappingServiceImpl implements LocationMappingService {
 
   @Override
   public LocationMappingsDTO updateAllMappings(UUID centralServerId, UUID libraryId,
-      LocationMappingsDTO locationMappingsDTO) {
-    var stored = repository.findAll(mappingExampleWithServerIdAndLibraryId(centralServerId, libraryId));
+                                               LocationMappingsDTO locationMappingsDTO) {
+    var stored = repository.findByCentralServerIdAndLibraryId(centralServerId, libraryId);
 
     var incoming = mapper.toEntities(locationMappingsDTO.getLocationMappings());
     var csRef = centralServerRef(centralServerId);
     incoming.forEach(setCentralServerRef(csRef)
-        .andThen(setLibraryId(libraryId))
-        .andThen(initId()));
+      .andThen(setLibraryId(libraryId))
+      .andThen(initId()));
 
     var saved = mergeAndSave(incoming, stored, repository, this::copyData);
 
