@@ -1,15 +1,20 @@
 package org.folio.innreach.client;
 
-import org.folio.innreach.domain.dto.folio.inventory.InventoryInstanceDTO;
+import java.util.UUID;
+
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 
-import java.util.UUID;
+import org.folio.innreach.domain.dto.folio.inventory.InventoryInstanceDTO;
+import org.folio.innreach.domain.dto.folio.inventory.InventoryItemDTO;
 
 @FeignClient("inventory")
 public interface InventoryClient {
 
-  @GetMapping("/inventory/instances/{id}")
-  InventoryInstanceDTO getInstanceById(@PathVariable("id") UUID instanceId);
+  @GetMapping("/instances/{instanceId}")
+  InventoryInstanceDTO getInstanceById(@PathVariable("instanceId") UUID instanceId);
+
+  @GetMapping("/items/{itemId}") //todo - fix mapping
+  InventoryItemDTO getItemById(@PathVariable("itemId") UUID itemId);
 }

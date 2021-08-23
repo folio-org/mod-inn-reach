@@ -12,17 +12,22 @@ import lombok.extern.log4j.Log4j2;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
+import org.folio.innreach.client.InventoryClient;
 import org.folio.innreach.client.MaterialTypesClient;
+import org.folio.innreach.domain.dto.folio.ContributionItemCirculationStatus;
+import org.folio.innreach.domain.dto.folio.inventory.InventoryItemDTO;
 import org.folio.innreach.domain.dto.folio.inventoryStorage.MaterialTypeDTO;
 import org.folio.innreach.domain.entity.Contribution;
 import org.folio.innreach.domain.service.CentralServerService;
 import org.folio.innreach.domain.service.ContributionService;
 import org.folio.innreach.domain.service.InnReachLocationService;
+import org.folio.innreach.domain.service.ItemContributionOptionsConfigurationService;
 import org.folio.innreach.domain.service.LibraryMappingService;
 import org.folio.innreach.domain.service.MaterialTypeMappingService;
 import org.folio.innreach.dto.ContributionDTO;
 import org.folio.innreach.dto.ContributionsDTO;
 import org.folio.innreach.dto.InnReachLocationDTO;
+import org.folio.innreach.dto.ItemContributionOptionsConfigurationDTO;
 import org.folio.innreach.dto.LibraryMappingDTO;
 import org.folio.innreach.dto.MappingValidationStatusDTO;
 import org.folio.innreach.external.service.InnReachLocationExternalService;
@@ -47,6 +52,10 @@ public class ContributionServiceImpl implements ContributionService {
   private final CentralServerService centralServerService;
   private final InnReachLocationService innReachLocationService;
   private final InnReachLocationExternalService innReachLocationExternalService;
+
+  private final ItemContributionOptionsConfigurationService itemContributionOptionsConfigurationService;
+
+  private final InventoryClient inventoryClient;
 
   @Override
   public ContributionDTO getCurrent(UUID centralServerId) {
@@ -151,4 +160,60 @@ public class ContributionServiceImpl implements ContributionService {
       .collect(Collectors.toList());
   }
 
+  @Override
+  public ContributionItemCirculationStatus getItemCirculationStatus(UUID centralServerId, UUID itemId) {
+    var itemContributionConfig = itemContributionOptionsConfigurationService
+      .getItmContribOptConf(centralServerId);
+
+    var inventoryItem = inventoryClient.getItemById(itemId);
+
+    if (isItemNonLendable(inventoryItem, itemContributionConfig)) {
+      return ContributionItemCirculationStatus.NON_LENDABLE;
+    }
+
+    if (inventoryItem.getStatus().isCheckedOut()) {
+      return ContributionItemCirculationStatus.ON_LOAN;
+    }
+
+    //todo - check for "pending requests"
+    if (isItemAvailableForContribution(inventoryItem, itemContributionConfig)) {
+      return ContributionItemCirculationStatus.AVAILABLE;
+    }
+
+    return ContributionItemCirculationStatus.NOT_AVAILABLE;
+  }
+
+  private boolean isItemNonLendable(InventoryItemDTO inventoryItem,
+                                    ItemContributionOptionsConfigurationDTO itemContributionConfig) {
+    return isItemNonLendableByLoanTypes(inventoryItem, itemContributionConfig) ||
+      isItemNonLendableByLocations(inventoryItem, itemContributionConfig) ||
+      isItemNonLendableByMaterialTypes(inventoryItem, itemContributionConfig);
+  }
+
+  private boolean isItemNonLendableByLoanTypes(InventoryItemDTO inventoryItem,
+                                               ItemContributionOptionsConfigurationDTO itemContributionConfig) {
+    var nonLendableLoanTypes = itemContributionConfig.getNonLendableLoanTypes();
+    return nonLendableLoanTypes.contains(inventoryItem.getPermanentLoanType().getId()) ||
+      nonLendableLoanTypes.contains(inventoryItem.getTemporaryLoanType().getId());
+  }
+
+  private boolean isItemNonLendableByLocations(InventoryItemDTO inventoryItem,
+                                               ItemContributionOptionsConfigurationDTO itemContributionConfig) {
+    var nonLendableLocations = itemContributionConfig.getNonLendableLocations();
+    return nonLendableLocations.contains(inventoryItem.getPermanentLocation().getId());
+  }
+
+  private boolean isItemNonLendableByMaterialTypes(InventoryItemDTO inventoryItem,
+                                                   ItemContributionOptionsConfigurationDTO itemContributionConfig) {
+    var nonLendableMaterialTypes = itemContributionConfig.getNonLendableMaterialTypes();
+    return nonLendableMaterialTypes.contains(inventoryItem.getMaterialType().getId());
+  }
+
+  private boolean isItemAvailableForContribution(InventoryItemDTO inventoryItem,
+                                                 ItemContributionOptionsConfigurationDTO itemContributionConfig) {
+    var itemStatus = inventoryItem.getStatus();
+    var notAvailableItemStatuses = itemContributionConfig.getNotAvailableItemStatuses();
+
+    return itemStatus.isAvailable() || itemStatus.isInTransit() || !notAvailableItemStatuses.contains(itemStatus.getName());
+  }
 }
