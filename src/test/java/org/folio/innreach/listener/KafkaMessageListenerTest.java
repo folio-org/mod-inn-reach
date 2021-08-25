@@ -6,6 +6,8 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
+import static org.folio.innreach.utils.RetryTemplateUtils.createRetryTemplate;
+
 import java.util.List;
 import java.util.UUID;
 
@@ -71,9 +73,7 @@ class KafkaMessageListenerTest {
   }
 
   private static RetryTemplate getRetryTemplate() {
-    return RetryTemplate.builder()
-      .maxAttempts(RETRY_ATTEMPTS)
-      .build();
+    return createRetryTemplate(1, RETRY_ATTEMPTS);
   }
 
 }

@@ -3,6 +3,8 @@ package org.folio.innreach.config;
 import static org.apache.kafka.clients.consumer.ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG;
 import static org.apache.kafka.clients.consumer.ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG;
 
+import static org.folio.innreach.utils.RetryTemplateUtils.createRetryTemplate;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -17,7 +19,6 @@ import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
 import org.springframework.kafka.core.ConsumerFactory;
 import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
 import org.springframework.kafka.support.serializer.JsonDeserializer;
-import org.springframework.retry.support.RetryTemplate;
 
 import org.folio.innreach.config.props.FolioKafkaProperties;
 import org.folio.innreach.domain.dto.folio.inventoryStorage.InstanceIterationEvent;
@@ -45,10 +46,11 @@ public class KafkaConfiguration {
 
   @Bean(name = KAFKA_BATCH_PROCESSOR)
   public BatchProcessor batchProcessor() {
-    var retryTemplate = RetryTemplate.builder()
-      .maxAttempts(folioKafkaProperties.getRetryAttempts())
-      .fixedBackoff(folioKafkaProperties.getRetryIntervalMs())
-      .build();
+
+    var retryTemplate = createRetryTemplate(
+      folioKafkaProperties.getRetryIntervalMs(),
+      folioKafkaProperties.getRetryAttempts()
+    );
 
     return new BatchProcessor(retryTemplate);
   }

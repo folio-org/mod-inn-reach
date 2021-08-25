@@ -36,7 +36,7 @@ public class KafkaMessageListener {
   }
 
   private static void logFailedEvent(InstanceIterationEvent event, Exception e) {
-    log.warn("Failed to index resource event [eventType: {}, tenantId: {}, jobId: {}, instanceId: {}]",
+    log.warn("Failed to process instance contribution event [eventType: {}, tenantId: {}, jobId: {}, instanceId: {}]",
       event.getType(), event.getTenant(), event.getJobId(), event.getInstanceId(), e);
   }
 
