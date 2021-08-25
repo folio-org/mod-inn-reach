@@ -41,8 +41,9 @@ public class KafkaMessageListener {
   }
 
   private static List<InstanceIterationEvent> toIterationEvents(List<ConsumerRecord<String, InstanceIterationEvent>> consumerRecords) {
+    consumerRecords.forEach(r -> r.value().setInstanceId(r.key()));
+
     return consumerRecords.stream()
-      .peek(r -> r.value().setInstanceId(r.key()))
       .map(ConsumerRecord::value)
       .collect(Collectors.toList());
   }
