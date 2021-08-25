@@ -7,6 +7,7 @@ import java.time.OffsetDateTime;
 import java.util.UUID;
 
 import lombok.experimental.UtilityClass;
+import org.folio.innreach.domain.entity.ItemTypeMapping;
 import org.jeasy.random.EasyRandom;
 import org.jeasy.random.EasyRandomParameters;
 import org.jeasy.random.randomizers.range.IntegerRangeRandomizer;
@@ -27,7 +28,7 @@ public class MappingFixture {
   private static final EasyRandom mtypeRandom;
   private static final EasyRandom libraryAndLocationRandom;
   private static final EasyRandom patronTypeRandom;
-
+  private static final EasyRandom itemTypeRandom;
 
   static {
     EasyRandomParameters params = new EasyRandomParameters()
@@ -70,6 +71,20 @@ public class MappingFixture {
     patronTypeRandom = new EasyRandom(params);
   }
 
+  static {
+    EasyRandomParameters params = new EasyRandomParameters()
+      .randomize(named("centralItemType"), new IntegerRangeRandomizer(0, 256))
+      .randomize(named("createdBy"), () -> "admin")
+      .randomize(named("createdDate"), OffsetDateTime::now)
+      .randomize(named("centralServer"), MappingFixture::refCentralServer)
+      .excludeField(named("id"))
+      .excludeField(named("lastModifiedBy"))
+      .excludeField(named("lastModifiedDate"))
+      .excludeField(named("metadata"));
+
+    itemTypeRandom = new EasyRandom(params);
+  }
+
   public static MaterialTypeMapping createMaterialTypeMapping() {
     return mtypeRandom.nextObject(MaterialTypeMapping.class);
   }
@@ -84,6 +99,10 @@ public class MappingFixture {
 
   public static PatronTypeMapping createPatronTypeMapping() {
     return patronTypeRandom.nextObject(PatronTypeMapping.class);
+  }
+
+  public static ItemTypeMapping createItemTypeMapping() {
+    return itemTypeRandom.nextObject(ItemTypeMapping.class);
   }
 
   public static CentralServer refCentralServer() {
