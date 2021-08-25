@@ -81,10 +81,9 @@ system-user:
   permissionsFilePath: permissions/mod-innreach.csv
 kafka:
   retry-interval-ms: 20000
-  retry-delivery-attempts: 10
+  retry-attempts: 10
   listener:
     events:
       concurrency: 2
       topic-pattern: (${ENV:folio}\.)?(.*\.)?inventory.instance-contribution
       groupId: ${ENV:folio}-mod-innreach-events-group
-  enable: false
