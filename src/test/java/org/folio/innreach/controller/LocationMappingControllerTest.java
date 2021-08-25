@@ -51,11 +51,11 @@ import org.folio.innreach.mapper.LocationMappingMapper;
 import org.folio.innreach.repository.LocationMappingRepository;
 
 @Sql(
-    scripts = {
-        "classpath:db/loc-mapping/clear-location-mapping-table.sql",
-        "classpath:db/inn-reach-location/clear-inn-reach-location-tables.sql",
-        "classpath:db/central-server/clear-central-server-tables.sql"},
-    executionPhase = AFTER_TEST_METHOD
+  scripts = {
+    "classpath:db/loc-mapping/clear-location-mapping-table.sql",
+    "classpath:db/inn-reach-location/clear-inn-reach-location-tables.sql",
+    "classpath:db/central-server/clear-central-server-tables.sql"},
+  executionPhase = AFTER_TEST_METHOD
 )
 @SqlMergeMode(MERGE)
 class LocationMappingControllerTest extends BaseControllerTest {
@@ -65,7 +65,7 @@ class LocationMappingControllerTest extends BaseControllerTest {
   private static final UUID PRE_POPULATED_MAPPING1_ID = UUID.fromString("ada69896-3954-45dc-92cb-04182afb2548");
   private static final UUID PRE_POPULATED_MAPPING2_ID = UUID.fromString("b4262548-3e38-424c-b3d9-509af233db5f");
   private static final UUID PRE_POPULATED_INN_REACH_LOCATION1_ID = UUID.fromString(
-      "34c6a230-d264-44c5-90b3-6159ed2ebdc1");
+    "34c6a230-d264-44c5-90b3-6159ed2ebdc1");
   private static final UUID PRE_POPULATED_LOCATION2_ID = UUID.fromString("c8092f39-b969-418e-83ac-d73dd5ab9564");
 
 
@@ -85,11 +85,13 @@ class LocationMappingControllerTest extends BaseControllerTest {
 
   @Test
   @Sql(scripts = {
-      "classpath:db/central-server/pre-populate-central-server.sql",
-      "classpath:db/inn-reach-location/pre-populate-inn-reach-location-code.sql",
-      "classpath:db/loc-mapping/pre-populate-location-mapping.sql"
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-location/pre-populate-inn-reach-location-code.sql",
+    "classpath:db/inn-reach-location/pre-populate-another-inn-reach-location-code.sql",
+    "classpath:db/loc-mapping/pre-populate-location-mapping.sql",
+    "classpath:db/loc-mapping/pre-populate-another-location-mapping.sql"
   })
-  void shouldGetAllExistingMappings() {
+  void shouldGetAllExistingMappingsForOneLibrary() {
     var responseEntity = testRestTemplate.getForEntity(baseMappingURL(), LocationMappingsDTO.class);
 
     assertTrue(responseEntity.getStatusCode().is2xxSuccessful());
@@ -100,7 +102,8 @@ class LocationMappingControllerTest extends BaseControllerTest {
 
     var mappings = response.getLocationMappings();
 
-    List<LocationMapping> dbMappings = repository.findAll();
+    List<LocationMapping> dbMappings = repository.findByCentralServerIdAndLibraryId(
+      UUID.fromString(PRE_POPULATED_CENTRAL_SERVER_ID), UUID.fromString(PRE_POPULATED_LIBRARY_ID));
 
     assertEquals(dbMappings.size(), response.getTotalRecords());
     assertThat(mappings, containsInAnyOrder(mapper.toDTOs(dbMappings).toArray()));
@@ -108,7 +111,7 @@ class LocationMappingControllerTest extends BaseControllerTest {
 
   @Test
   @Sql(scripts = {
-      "classpath:db/central-server/pre-populate-central-server.sql"
+    "classpath:db/central-server/pre-populate-central-server.sql"
   })
   void shouldGetEmptyMappingsWith0TotalIfNotSet() {
     var responseEntity = testRestTemplate.getForEntity(baseMappingURL(), LocationMappingsDTO.class);
@@ -127,13 +130,13 @@ class LocationMappingControllerTest extends BaseControllerTest {
 
   @Test
   @Sql(scripts = {
-      "classpath:db/central-server/pre-populate-central-server.sql",
-      "classpath:db/inn-reach-location/pre-populate-inn-reach-location-code.sql",
-      "classpath:db/loc-mapping/pre-populate-location-mapping.sql"
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-location/pre-populate-inn-reach-location-code.sql",
+    "classpath:db/loc-mapping/pre-populate-location-mapping.sql"
   })
   void shouldApplyLimitAndOffsetWhenGettingAllExistingMappings() {
     var responseEntity = testRestTemplate.getForEntity(baseMappingURL() + "?offset={offset}&limit={limit}",
-        LocationMappingsDTO.class, Map.of("offset", 1, "limit", 1));
+      LocationMappingsDTO.class, Map.of("offset", 1, "limit", 1));
 
     assertTrue(responseEntity.getStatusCode().is2xxSuccessful());
     assertTrue(responseEntity.hasBody());
@@ -150,7 +153,7 @@ class LocationMappingControllerTest extends BaseControllerTest {
   @Test
   void return400WhenGetAllExistingMappingsIfLimitAndOffsetInvalid() {
     var responseEntity = testRestTemplate.getForEntity(baseMappingURL() + "?offset={offset}&limit={limit}",
-        ValidationErrorsDTO.class, Map.of("offset", -1, "limit", -1));
+      ValidationErrorsDTO.class, Map.of("offset", -1, "limit", -1));
 
     assertEquals(BAD_REQUEST, responseEntity.getStatusCode());
 
@@ -162,85 +165,87 @@ class LocationMappingControllerTest extends BaseControllerTest {
 
   @Test
   @Sql(scripts = {
-      "classpath:db/central-server/pre-populate-central-server.sql",
-      "classpath:db/inn-reach-location/pre-populate-inn-reach-location-code.sql"
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-location/pre-populate-inn-reach-location-code.sql"
   })
   void shouldCreateNewMappings() {
     var newMappings = deserializeFromJsonFile("/location-mapping/create-location-mappings-request.json",
-        LocationMappingsDTO.class);
+      LocationMappingsDTO.class);
 
     var responseEntity = testRestTemplate.exchange(baseMappingURL(), HttpMethod.PUT, new HttpEntity<>(newMappings),
-        Void.class);
+      Void.class);
 
     assertEquals(HttpStatus.NO_CONTENT, responseEntity.getStatusCode());
     assertFalse(responseEntity.hasBody());
 
-    var created = mapper.toDTOs(repository.findAll());
+    var created = mapper.toDTOs(repository.findByCentralServerIdAndLibraryId(
+      UUID.fromString(PRE_POPULATED_CENTRAL_SERVER_ID), UUID.fromString(PRE_POPULATED_LIBRARY_ID)));
     var expected = newMappings.getLocationMappings();
 
     assertEquals(expected.size(), created.size());
     assertThat(created, containsInAnyOrder(
-        samePropertyValuesAs(expected.get(0), "id", "metadata"),
-        samePropertyValuesAs(expected.get(1), "id", "metadata")
+      samePropertyValuesAs(expected.get(0), "id", "metadata"),
+      samePropertyValuesAs(expected.get(1), "id", "metadata")
     ));
   }
 
   @Test
   @Sql(scripts = {
-      "classpath:db/central-server/pre-populate-central-server.sql",
-      "classpath:db/inn-reach-location/pre-populate-inn-reach-location-code.sql"
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-location/pre-populate-inn-reach-location-code.sql"
   })
   void return400WhenCreatingNewMappingsAndLocationIdIsNull() {
     var newMappings = deserializeFromJsonFile("/location-mapping/create-location-mappings-request.json",
-        LocationMappingsDTO.class);
+      LocationMappingsDTO.class);
     newMappings.getLocationMappings().get(0).setLocationId(null);
 
     var responseEntity = testRestTemplate.exchange(baseMappingURL(), HttpMethod.PUT, new HttpEntity<>(newMappings),
-        ValidationErrorsDTO.class);
+      ValidationErrorsDTO.class);
 
     assertEquals(BAD_REQUEST, responseEntity.getStatusCode());
 
     assertNotNull(responseEntity.getBody());
     assertThat(responseEntity.getBody().getValidationErrors(),
-        contains(createValidationError("locationMappings[0].locationId", "must not be null")));
+      contains(createValidationError("locationMappings[0].locationId", "must not be null")));
   }
 
   @Test
   @Sql(scripts = {
-      "classpath:db/central-server/pre-populate-central-server.sql",
-      "classpath:db/inn-reach-location/pre-populate-inn-reach-location-code.sql"
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-location/pre-populate-inn-reach-location-code.sql"
   })
   void return400WhenCreatingNewMappingsAndInnReachLocationIdIsNull() {
     var newMappings = deserializeFromJsonFile("/location-mapping/create-location-mappings-request.json",
-        LocationMappingsDTO.class);
+      LocationMappingsDTO.class);
     newMappings.getLocationMappings().get(0).setInnReachLocationId(null);
 
     var responseEntity = testRestTemplate.exchange(baseMappingURL(), HttpMethod.PUT, new HttpEntity<>(newMappings),
-        ValidationErrorsDTO.class);
+      ValidationErrorsDTO.class);
 
     assertEquals(BAD_REQUEST, responseEntity.getStatusCode());
 
     assertNotNull(responseEntity.getBody());
     assertThat(responseEntity.getBody().getValidationErrors(),
-        contains(createValidationError("locationMappings[0].innReachLocationId", "must not be null")));
+      contains(createValidationError("locationMappings[0].innReachLocationId", "must not be null")));
   }
 
   @Test
   @Sql(scripts = {
-      "classpath:db/central-server/pre-populate-central-server.sql",
-      "classpath:db/inn-reach-location/pre-populate-inn-reach-location-code.sql",
-      "classpath:db/loc-mapping/pre-populate-location-mapping.sql"
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-location/pre-populate-inn-reach-location-code.sql",
+    "classpath:db/loc-mapping/pre-populate-location-mapping.sql"
   })
   void return409WhenCreatingNewMappingsAndLocationIdAlreadyMapped() {
     var newMappings = deserializeFromJsonFile("/location-mapping/create-location-mappings-request.json",
-        LocationMappingsDTO.class);
+      LocationMappingsDTO.class);
     newMappings.getLocationMappings().get(0).setLocationId(PRE_POPULATED_LOCATION2_ID);
 
-    var existing = mapper.toDTOs(repository.findAll());
+    var existing = mapper.toDTOs(repository.findByCentralServerIdAndLibraryId(
+      UUID.fromString(PRE_POPULATED_CENTRAL_SERVER_ID), UUID.fromString(PRE_POPULATED_LIBRARY_ID)));
     newMappings.getLocationMappings().addAll(existing);
 
     var responseEntity = testRestTemplate.exchange(baseMappingURL(), HttpMethod.PUT, new HttpEntity<>(newMappings),
-        Error.class);
+      Error.class);
 
     assertEquals(CONFLICT, responseEntity.getStatusCode());
     assertNotNull(responseEntity.getBody());
@@ -249,82 +254,90 @@ class LocationMappingControllerTest extends BaseControllerTest {
 
   @Test
   @Sql(scripts = {
-      "classpath:db/central-server/pre-populate-central-server.sql",
-      "classpath:db/inn-reach-location/pre-populate-inn-reach-location-code.sql",
-      "classpath:db/loc-mapping/pre-populate-location-mapping.sql"
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-location/pre-populate-inn-reach-location-code.sql",
+    "classpath:db/inn-reach-location/pre-populate-another-inn-reach-location-code.sql",
+    "classpath:db/loc-mapping/pre-populate-location-mapping.sql",
+    "classpath:db/loc-mapping/pre-populate-another-location-mapping.sql"
   })
   void shouldUpdateExistingMappings() {
-    var existing = mapper.toDTOCollection(repository.findAll());
+    var existing = mapper.toDTOCollection(repository.findByCentralServerIdAndLibraryId(
+      UUID.fromString(PRE_POPULATED_CENTRAL_SERVER_ID), UUID.fromString(PRE_POPULATED_LIBRARY_ID)));
     UUID innReachLocationId = PRE_POPULATED_INN_REACH_LOCATION1_ID;
     existing.getLocationMappings().forEach(mp -> mp.setInnReachLocationId(innReachLocationId));
 
     var responseEntity = testRestTemplate.exchange(baseMappingURL(), HttpMethod.PUT, new HttpEntity<>(existing),
-        Void.class);
+      Void.class);
 
     assertEquals(HttpStatus.NO_CONTENT, responseEntity.getStatusCode());
     assertFalse(responseEntity.hasBody());
 
-    var updated = mapper.toDTOs(repository.findAll());
+    var updated = mapper.toDTOs(repository.findByCentralServerIdAndLibraryId(
+      UUID.fromString(PRE_POPULATED_CENTRAL_SERVER_ID), UUID.fromString(PRE_POPULATED_LIBRARY_ID)));
     var expected = existing.getLocationMappings();
 
     assertEquals(expected.size(), updated.size());
     assertTrue(updated.stream()
-        .filter(mp -> !mp.getInnReachLocationId().equals(innReachLocationId))
-        .findFirst()
-        .isEmpty());
+      .filter(mp -> !mp.getInnReachLocationId().equals(innReachLocationId))
+      .findFirst()
+      .isEmpty());
   }
 
   @Test
   @Sql(scripts = {
-      "classpath:db/central-server/pre-populate-central-server.sql",
-      "classpath:db/inn-reach-location/pre-populate-inn-reach-location-code.sql",
-      "classpath:db/loc-mapping/pre-populate-location-mapping.sql"
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-location/pre-populate-inn-reach-location-code.sql",
+    "classpath:db/inn-reach-location/pre-populate-another-inn-reach-location-code.sql",
+    "classpath:db/loc-mapping/pre-populate-location-mapping.sql",
+    "classpath:db/loc-mapping/pre-populate-another-location-mapping.sql"
   })
   void shouldCreateUpdateAndDeleteMappingsAtTheSameTime() {
-    var mappings = mapper.toDTOCollection(repository.findAll());
+    var mappings = mapper.toDTOCollection(repository.findByCentralServerIdAndLibraryId(
+      UUID.fromString(PRE_POPULATED_CENTRAL_SERVER_ID), UUID.fromString(PRE_POPULATED_LIBRARY_ID)));
     List<LocationMappingDTO> em = mappings.getLocationMappings();
 
     em.removeIf(idEqualsTo(PRE_POPULATED_MAPPING1_ID));         // to delete
     findInList(em, PRE_POPULATED_MAPPING2_ID)   // to update
-        .ifPresent(mapping -> mapping.setInnReachLocationId(PRE_POPULATED_INN_REACH_LOCATION1_ID));
+      .ifPresent(mapping -> mapping.setInnReachLocationId(PRE_POPULATED_INN_REACH_LOCATION1_ID));
 
     var newMappings = deserializeFromJsonFile("/location-mapping/create-location-mappings-request.json",
-        LocationMappingsDTO.class);
+      LocationMappingsDTO.class);
     em.addAll(newMappings.getLocationMappings());                // to insert
 
     var responseEntity = testRestTemplate.exchange(baseMappingURL(), HttpMethod.PUT, new HttpEntity<>(mappings),
-        Void.class);
+      Void.class);
 
     assertEquals(HttpStatus.NO_CONTENT, responseEntity.getStatusCode());
     assertFalse(responseEntity.hasBody());
 
-    var stored = mapper.toDTOs(repository.findAll());
+    var stored = mapper.toDTOs(repository.findByCentralServerIdAndLibraryId(
+      UUID.fromString(PRE_POPULATED_CENTRAL_SERVER_ID), UUID.fromString(PRE_POPULATED_LIBRARY_ID)));
 
     assertEquals(em.size(), stored.size());
     // verify deleted
     assertTrue(findInList(stored, PRE_POPULATED_MAPPING1_ID).isEmpty());
     // verify updated
     assertEquals(PRE_POPULATED_INN_REACH_LOCATION1_ID,
-        findInList(stored, PRE_POPULATED_MAPPING2_ID)
-            .map(LocationMappingDTO::getInnReachLocationId).get());
+      findInList(stored, PRE_POPULATED_MAPPING2_ID)
+        .map(LocationMappingDTO::getInnReachLocationId).get());
     // verify inserted
     assertThat(stored, hasItems(
-        samePropertyValuesAs(newMappings.getLocationMappings().get(0), "id", "metadata"),
-        samePropertyValuesAs(newMappings.getLocationMappings().get(1), "id", "metadata")
+      samePropertyValuesAs(newMappings.getLocationMappings().get(0), "id", "metadata"),
+      samePropertyValuesAs(newMappings.getLocationMappings().get(1), "id", "metadata")
     ));
   }
 
   @Test
   @Sql(scripts = {
-      "classpath:db/central-server/pre-populate-central-server.sql",
-      "classpath:db/inn-reach-location/pre-populate-inn-reach-location-code.sql",
-      "classpath:db/loc-mapping/pre-populate-location-mapping.sql"
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-location/pre-populate-inn-reach-location-code.sql",
+    "classpath:db/loc-mapping/pre-populate-location-mapping.sql"
   })
   void shouldDeleteAllMappingsIfEmptyCollectionGiven() {
     var mappings = new LocationMappingsDTO();
 
     var responseEntity = testRestTemplate.exchange(baseMappingURL(), HttpMethod.PUT, new HttpEntity<>(mappings),
-        Void.class);
+      Void.class);
 
     assertEquals(HttpStatus.NO_CONTENT, responseEntity.getStatusCode());
     assertFalse(responseEntity.hasBody());
