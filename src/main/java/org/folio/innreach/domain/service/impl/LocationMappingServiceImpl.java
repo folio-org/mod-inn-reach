@@ -44,7 +44,7 @@ public class LocationMappingServiceImpl implements LocationMappingService {
   @Override
   @Transactional(readOnly = true)
   public LocationMappingsDTO getAllMappings(UUID centralServerId, UUID libraryId, int offset, int limit) {
-    var example = mappingExampleWithServerId(centralServerId);
+    var example = mappingExampleWithServerIdAndLibraryId(centralServerId, libraryId);
 
     Page<LocationMapping> mappings = repository.findAll(example, PageRequest.of(offset, limit, DEFAULT_SORT));
 
@@ -53,14 +53,14 @@ public class LocationMappingServiceImpl implements LocationMappingService {
 
   @Override
   public LocationMappingsDTO updateAllMappings(UUID centralServerId, UUID libraryId,
-      LocationMappingsDTO locationMappingsDTO) {
-    var stored = repository.findAll(mappingExampleWithServerId(centralServerId));
+                                               LocationMappingsDTO locationMappingsDTO) {
+    var stored = repository.findByCentralServerIdAndLibraryId(centralServerId, libraryId);
 
     var incoming = mapper.toEntities(locationMappingsDTO.getLocationMappings());
     var csRef = centralServerRef(centralServerId);
     incoming.forEach(setCentralServerRef(csRef)
-        .andThen(setLibraryId(libraryId))
-        .andThen(initId()));
+      .andThen(setLibraryId(libraryId))
+      .andThen(initId()));
 
     var saved = mergeAndSave(incoming, stored, repository, this::copyData);
 
@@ -89,9 +89,10 @@ public class LocationMappingServiceImpl implements LocationMappingService {
     return mapping -> mapping.setCentralServer(centralServer);
   }
 
-  private static Example<LocationMapping> mappingExampleWithServerId(UUID centralServerId) {
+  private static Example<LocationMapping> mappingExampleWithServerIdAndLibraryId(UUID centralServerId, UUID libraryId) {
     var toFind = new LocationMapping();
     toFind.setCentralServer(centralServerRef(centralServerId));
+    toFind.setLibraryId(libraryId);
 
     return Example.of(toFind);
   }
