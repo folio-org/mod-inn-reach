@@ -87,3 +87,4 @@ kafka:
       concurrency: 2
       topic-pattern: (${ENV:folio}\.)?(.*\.)?inventory.instance-contribution
       groupId: ${ENV:folio}-mod-innreach-events-group
+
