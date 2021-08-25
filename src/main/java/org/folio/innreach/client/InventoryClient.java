@@ -15,6 +15,6 @@ public interface InventoryClient {
   @GetMapping("/instances/{instanceId}")
   InventoryInstanceDTO getInstanceById(@PathVariable("instanceId") UUID instanceId);
 
-  @GetMapping("/items/{itemId}") //todo - fix mapping
+  @GetMapping("/items/{itemId}")
   InventoryItemDTO getItemById(@PathVariable("itemId") UUID itemId);
 }

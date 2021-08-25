@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 
 import org.folio.innreach.client.InventoryClient;
 import org.folio.innreach.client.MaterialTypesClient;
+import org.folio.innreach.client.RequestStorageClient;
 import org.folio.innreach.domain.dto.folio.ContributionItemCirculationStatus;
 import org.folio.innreach.domain.dto.folio.inventory.InventoryItemDTO;
 import org.folio.innreach.domain.dto.folio.inventoryStorage.MaterialTypeDTO;
@@ -56,6 +57,7 @@ public class ContributionServiceImpl implements ContributionService {
   private final ItemContributionOptionsConfigurationService itemContributionOptionsConfigurationService;
 
   private final InventoryClient inventoryClient;
+  private final RequestStorageClient requestStorageClient;
 
   @Override
   public ContributionDTO getCurrent(UUID centralServerId) {
@@ -175,7 +177,6 @@ public class ContributionServiceImpl implements ContributionService {
       return ContributionItemCirculationStatus.ON_LOAN;
     }
 
-    //todo - check for "pending requests"
     if (isItemAvailableForContribution(inventoryItem, itemContributionConfig)) {
       return ContributionItemCirculationStatus.AVAILABLE;
     }
@@ -212,8 +213,17 @@ public class ContributionServiceImpl implements ContributionService {
   private boolean isItemAvailableForContribution(InventoryItemDTO inventoryItem,
                                                  ItemContributionOptionsConfigurationDTO itemContributionConfig) {
     var itemStatus = inventoryItem.getStatus();
-    var notAvailableItemStatuses = itemContributionConfig.getNotAvailableItemStatuses();
 
-    return itemStatus.isAvailable() || itemStatus.isInTransit() || !notAvailableItemStatuses.contains(itemStatus.getName());
+    if (itemStatus.isInTransit() && isItemRequested(inventoryItem)) {
+      return false;
+    }
+
+    return itemStatus.isAvailable() || !itemContributionConfig.getNotAvailableItemStatuses().contains(itemStatus.getName());
   }
+
+  private boolean isItemRequested(InventoryItemDTO inventoryItem) {
+    var itemRequests = requestStorageClient.findRequests(inventoryItem.getId());
+    return itemRequests.getTotalRecords() != 0;
+  }
+
 }

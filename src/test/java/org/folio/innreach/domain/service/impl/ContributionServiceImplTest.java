@@ -16,8 +16,10 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import org.folio.innreach.client.InventoryClient;
+import org.folio.innreach.client.RequestStorageClient;
 import org.folio.innreach.domain.dto.folio.ContributionItemCirculationStatus;
 import org.folio.innreach.domain.dto.folio.inventory.InventoryItemStatus;
+import org.folio.innreach.domain.dto.folio.requeststorage.RequestsDTO;
 import org.folio.innreach.domain.service.ItemContributionOptionsConfigurationService;
 
 class ContributionServiceImplTest {
@@ -27,6 +29,9 @@ class ContributionServiceImplTest {
 
   @Mock
   private InventoryClient inventoryClient;
+
+  @Mock
+  private RequestStorageClient requestStorageClient;
 
   @InjectMocks
   private ContributionServiceImpl contributionService;
@@ -51,17 +56,33 @@ class ContributionServiceImplTest {
   }
 
   @Test
-  void returnAvailableContributionStatusWhenItemStatusIsInTransit() {
+  void returnAvailableContributionStatusWhenItemStatusIsInTransitAndItemIsNotRequested() {
     when(itemContributionOptionsConfigurationService.getItmContribOptConf(any())).thenReturn(createItmContribOptConfDTO());
 
     var inventoryItem = createInventoryItemDTO(InventoryItemStatus.IN_TRANSIT,
       UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID());
 
     when(inventoryClient.getItemById(any())).thenReturn(inventoryItem);
+    when(requestStorageClient.findRequests(any())).thenReturn(new RequestsDTO(0));
 
     var itemCirculationStatus = contributionService.getItemCirculationStatus(UUID.randomUUID(), UUID.randomUUID());
 
     assertEquals(ContributionItemCirculationStatus.AVAILABLE, itemCirculationStatus);
+  }
+
+  @Test
+  void returnAvailableContributionStatusWhenItemStatusIsInTransitAndItemIsAlreadyRequested() {
+    when(itemContributionOptionsConfigurationService.getItmContribOptConf(any())).thenReturn(createItmContribOptConfDTO());
+
+    var inventoryItem = createInventoryItemDTO(InventoryItemStatus.IN_TRANSIT,
+      UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID());
+
+    when(inventoryClient.getItemById(any())).thenReturn(inventoryItem);
+    when(requestStorageClient.findRequests(any())).thenReturn(new RequestsDTO(1));
+
+    var itemCirculationStatus = contributionService.getItemCirculationStatus(UUID.randomUUID(), UUID.randomUUID());
+
+    assertEquals(ContributionItemCirculationStatus.NOT_AVAILABLE, itemCirculationStatus);
   }
 
   @Test
