@@ -1,10 +1,8 @@
 INSERT INTO contribution_criteria_configuration (
     id, central_server_id,
-    contribute_but_suppress_code_id, contribute_as_system_owned_code_id, do_not_contribute_code_id,
-    created_by, created_date, last_modified_by, last_modified_date)
+    contribute_but_suppress_code_id, contribute_as_system_owned_code_id, do_not_contribute_code_id)
 VALUES ('71bd0beb-28cb-40bb-9f40-87463d61a553', 'edab6baf-c696-42b1-89bb-1bbb8759b0d2',
-        '8d87682b-0414-4e1a-b810-43df2cda69d1', '7ee055ce-64b3-4e12-9253-f56762412a7e', '5599f23f-d424-4fce-8a51-b7fce690cbda',
-        'admin', CURRENT_TIMESTAMP, 'admin', CURRENT_TIMESTAMP);
+        '8d87682b-0414-4e1a-b810-43df2cda69d1', '7ee055ce-64b3-4e12-9253-f56762412a7e', '5599f23f-d424-4fce-8a51-b7fce690cbda');
 
 INSERT INTO contribution_criteria_excluded_location (
     contribution_criteria_id, location_id)

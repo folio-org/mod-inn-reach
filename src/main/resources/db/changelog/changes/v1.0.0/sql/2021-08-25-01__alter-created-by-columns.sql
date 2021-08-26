@@ -14,6 +14,9 @@ BEGIN
   EXECUTE ''ALTER TABLE '' || p_table ||
           ''  DROP COLUMN created_by'';
 
+  EXECUTE ''ALTER TABLE '' || p_table ||
+          ''  ALTER COLUMN created_date SET DEFAULT CURRENT_TIMESTAMP'';
+
   RETURN;
 END;';
 
