@@ -23,6 +23,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.test.context.jdbc.Sql;
 
 import org.folio.innreach.domain.entity.PatronTypeMapping;
+import org.folio.innreach.domain.entity.base.AuditableUser;
 import org.folio.innreach.fixture.TestUtil;
 
 class PatronTypeMappingRepositoryTest extends BaseRepositoryTest {
@@ -33,7 +34,7 @@ class PatronTypeMappingRepositoryTest extends BaseRepositoryTest {
 
   private static final String PRE_POPULATED_PATRON_GROUP_ID = "54e17c4c-e315-4d20-8879-efc694dea1ce";
 
-  private static final String PRE_POPULATED_USER = "admin";
+  private static final AuditableUser PRE_POPULATED_USER = AuditableUser.SYSTEM;
 
   @Autowired
   private PatronTypeMappingRepository repository;
@@ -69,8 +70,6 @@ class PatronTypeMappingRepositoryTest extends BaseRepositoryTest {
 
     assertEquals(PRE_POPULATED_USER, mapping.getCreatedBy());
     assertNotNull(mapping.getCreatedDate());
-    assertEquals(PRE_POPULATED_USER, mapping.getUpdatedBy());
-    assertNotNull(mapping.getUpdatedDate());
   }
 
   @Test

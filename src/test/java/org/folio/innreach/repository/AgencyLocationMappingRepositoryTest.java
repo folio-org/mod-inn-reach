@@ -25,6 +25,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.test.context.jdbc.Sql;
 
 import org.folio.innreach.domain.entity.AgencyLocationMapping;
+import org.folio.innreach.domain.entity.base.AuditableUser;
 
 @Sql(scripts = {
   "classpath:db/central-server/pre-populate-central-server.sql",
@@ -41,7 +42,7 @@ class AgencyLocationMappingRepositoryTest extends BaseRepositoryTest {
 
   private static final String PRE_POPULATED_LOCAL_CODE = "5publ";
 
-  private static final String PRE_POPULATED_USER = "admin";
+  private static final AuditableUser PRE_POPULATED_USER = AuditableUser.SYSTEM;
 
   @Autowired
   private AgencyLocationMappingRepository repository;
@@ -74,8 +75,6 @@ class AgencyLocationMappingRepositoryTest extends BaseRepositoryTest {
 
     assertEquals(PRE_POPULATED_USER, mapping.getCreatedBy());
     assertNotNull(mapping.getCreatedDate());
-    assertEquals(PRE_POPULATED_USER, mapping.getUpdatedBy());
-    assertNotNull(mapping.getUpdatedDate());
   }
 
   @Test

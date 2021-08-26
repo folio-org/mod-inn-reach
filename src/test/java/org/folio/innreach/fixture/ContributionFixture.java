@@ -17,6 +17,7 @@ import org.folio.innreach.domain.dto.folio.ResultList;
 import org.folio.innreach.domain.dto.folio.inventoryStorage.MaterialTypeDTO;
 import org.folio.innreach.domain.entity.CentralServer;
 import org.folio.innreach.domain.entity.Contribution;
+import org.folio.innreach.domain.entity.base.AuditableUser;
 import org.folio.innreach.external.dto.InnReachLocationDTO;
 
 @UtilityClass
@@ -36,12 +37,12 @@ public class ContributionFixture {
     EasyRandomParameters params = new EasyRandomParameters()
       .overrideDefaultInitialization(true)
       .randomize(named("centralServer"), ContributionFixture::refCentralServer)
-      .randomize(named("createdBy"), () -> "admin")
+      .randomize(named("createdBy"), () -> AuditableUser.SYSTEM)
       .randomize(named("createdDate"), OffsetDateTime::now)
       .excludeField(named("id"))
       .excludeField(named("contribution"))
-      .excludeField(named("lastModifiedBy"))
-      .excludeField(named("lastModifiedDate"))
+      .excludeField(named("updatedBy"))
+      .excludeField(named("updatedDate"))
       .excludeField(named("metadata"));
 
     contributionRandom = new EasyRandom(params);

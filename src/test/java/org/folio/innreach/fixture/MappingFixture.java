@@ -17,6 +17,7 @@ import org.folio.innreach.domain.entity.LibraryMapping;
 import org.folio.innreach.domain.entity.LocationMapping;
 import org.folio.innreach.domain.entity.MaterialTypeMapping;
 import org.folio.innreach.domain.entity.PatronTypeMapping;
+import org.folio.innreach.domain.entity.base.AuditableUser;
 
 @UtilityClass
 public class MappingFixture {
@@ -32,12 +33,12 @@ public class MappingFixture {
   static {
     EasyRandomParameters params = new EasyRandomParameters()
         .randomize(named("centralItemType"),new IntegerRangeRandomizer(0, 256))
-        .randomize(named("createdBy"), () -> "admin")
+        .randomize(named("createdBy"), () -> AuditableUser.SYSTEM)
         .randomize(named("createdDate"), OffsetDateTime::now)
         .randomize(named("centralServer"), MappingFixture::refCentralServer)
         .excludeField(named("id"))
-        .excludeField(named("lastModifiedBy"))
-        .excludeField(named("lastModifiedDate"))
+        .excludeField(named("updatedBy"))
+        .excludeField(named("updatedDate"))
         .excludeField(named("metadata"));
 
     mtypeRandom = new EasyRandom(params);
@@ -45,12 +46,12 @@ public class MappingFixture {
 
   static {
     EasyRandomParameters params = new EasyRandomParameters()
-        .randomize(named("createdBy"), () -> "admin")
+        .randomize(named("createdBy"), () -> AuditableUser.SYSTEM)
         .randomize(named("createdDate"), OffsetDateTime::now)
         .randomize(named("centralServer"), MappingFixture::refCentralServer)
         .randomize(named("innReachLocation"), MappingFixture::refInnReachLocation)
-        .excludeField(named("lastModifiedBy"))
-        .excludeField(named("lastModifiedDate"))
+        .excludeField(named("updatedBy"))
+        .excludeField(named("updatedDate"))
         .excludeField(named("metadata"));
 
     libraryAndLocationRandom = new EasyRandom(params);
@@ -59,12 +60,12 @@ public class MappingFixture {
   static {
     EasyRandomParameters params = new EasyRandomParameters()
       .randomize(named("patronType"), new IntegerRangeRandomizer(0, 256))
-      .randomize(named("createdBy"), () -> "admin")
+      .randomize(named("createdBy"), () -> AuditableUser.SYSTEM)
       .randomize(named("createdDate"), OffsetDateTime::now)
       .randomize(named("centralServer"), MappingFixture::refCentralServer)
       .excludeField(named("id"))
-      .excludeField(named("lastModifiedBy"))
-      .excludeField(named("lastModifiedDate"))
+      .excludeField(named("updatedBy"))
+      .excludeField(named("updatedDate"))
       .excludeField(named("metadata"));
 
     patronTypeRandom = new EasyRandom(params);
