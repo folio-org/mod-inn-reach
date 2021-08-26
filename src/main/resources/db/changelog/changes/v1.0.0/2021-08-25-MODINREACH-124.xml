@@ -8,8 +8,8 @@
         <sqlFile path="sql/2021-08-25-01__alter-created-by-columns.sql" relativeToChangelogFile="true"/>
     </changeSet>
 
-    <!--<changeSet id="2021-06-30-01__alter_library_mapping_table" author="dmtkachenko">
-        <sqlFile path="sql/2021-06-30-02__alter-library-mapping-table.sql" relativeToChangelogFile="true"/>
-    </changeSet>-->
+    <changeSet id="2021-08-25-02__alter_modified_by_columns" author="dmtkachenko">
+        <sqlFile path="sql/2021-08-25-02__alter-modified-by-columns.sql" relativeToChangelogFile="true"/>
+    </changeSet>
 
 </databaseChangeLog>
