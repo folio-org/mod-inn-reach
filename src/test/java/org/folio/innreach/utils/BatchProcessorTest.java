@@ -4,8 +4,6 @@ import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.spy;
 
-import static org.folio.innreach.utils.RetryTemplateUtils.createRetryTemplate;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -22,7 +20,7 @@ class BatchProcessorTest {
 
   private static final int MAX_RETRIES = 3;
 
-  private final RetryTemplate retryTemplate = spy(createRetryTemplate(1, MAX_RETRIES));
+  private final RetryTemplate retryTemplate = spy(RetryTemplate.builder().maxAttempts(MAX_RETRIES).fixedBackoff(1).build());
 
   private final BatchProcessor batchProcessor = new BatchProcessor(retryTemplate);
 
