@@ -15,4 +15,6 @@ public interface ContributionService {
 
   void contributeInstances(List<InstanceIterationEvent> events);
 
+  void startInitialContribution(UUID centralServerId);
+
 }
