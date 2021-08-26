@@ -1,11 +1,11 @@
 package org.folio.innreach.fixture;
 
-import org.folio.innreach.domain.dto.folio.inventoryStorage.JobResponse;
+import static org.folio.innreach.fixture.TestUtil.randomInteger;
 
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
-import static org.folio.innreach.fixture.TestUtil.randomInteger;
+import org.folio.innreach.domain.dto.folio.inventorystorage.JobResponse;
 
 public class JobResponseFixture {
   public static JobResponse createJobResponse(){

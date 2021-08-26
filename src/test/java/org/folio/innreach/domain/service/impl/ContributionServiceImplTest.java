@@ -1,9 +1,12 @@
 package org.folio.innreach.domain.service.impl;
 
-import org.folio.innreach.domain.dto.folio.inventoryStorage.JobResponse;
-import org.folio.innreach.domain.entity.Contribution;
-import org.folio.innreach.client.InstanceStorageClient;
-import org.folio.innreach.repository.ContributionRepository;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import java.util.UUID;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -11,12 +14,10 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.mockito.Spy;
 
-import java.util.UUID;
-
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-import static org.mockito.ArgumentMatchers.any;
+import org.folio.innreach.client.InstanceStorageClient;
+import org.folio.innreach.domain.dto.folio.inventorystorage.JobResponse;
+import org.folio.innreach.domain.entity.Contribution;
+import org.folio.innreach.repository.ContributionRepository;
 
 class ContributionServiceImplTest {
   @Mock

@@ -93,8 +93,8 @@ public class Contribution extends Auditable<String> implements Identifiable<UUID
   @JoinColumn(name = "central_server_id", unique = true, nullable = false, updatable = false)
   private CentralServer centralServer;
 
-  @Column(name = "started_job_id")
-  private UUID startedJobId;
+  @Column(name = "job_id")
+  private UUID jobId;
 
   @AllArgsConstructor
   public enum Status {

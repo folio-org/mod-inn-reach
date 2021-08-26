@@ -1,6 +1,5 @@
 package org.folio.innreach.controller;
 
-import static org.folio.innreach.fixture.JobResponseFixture.createJobResponse;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.samePropertyValuesAs;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -15,33 +14,33 @@ import static org.springframework.test.context.jdbc.SqlMergeMode.MergeMode.MERGE
 
 import static org.folio.innreach.fixture.ContributionFixture.createIrLocations;
 import static org.folio.innreach.fixture.ContributionFixture.createMaterialTypes;
+import static org.folio.innreach.fixture.JobResponseFixture.createJobResponse;
 
 import java.util.UUID;
 
 import lombok.Getter;
-import org.folio.innreach.domain.dto.folio.inventoryStorage.JobResponse;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpStatus;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlMergeMode;
 
+import org.folio.innreach.client.InstanceStorageClient;
 import org.folio.innreach.client.MaterialTypesClient;
 import org.folio.innreach.controller.base.BaseControllerTest;
+import org.folio.innreach.domain.dto.folio.inventorystorage.InstanceIterationRequest;
+import org.folio.innreach.domain.dto.folio.inventorystorage.JobResponse;
+import org.folio.innreach.domain.entity.Contribution;
 import org.folio.innreach.dto.ContributionDTO;
 import org.folio.innreach.dto.ContributionsDTO;
 import org.folio.innreach.dto.MappingValidationStatusDTO;
 import org.folio.innreach.external.service.InnReachLocationExternalService;
 import org.folio.innreach.mapper.ContributionMapper;
 import org.folio.innreach.repository.ContributionRepository;
-
-import org.folio.innreach.domain.dto.folio.inventoryStorage.InstanceIterationRequest;
-import org.folio.innreach.domain.entity.Contribution;
-import org.folio.innreach.client.InstanceStorageClient;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpStatus;
 
 @Getter
 @Sql(
@@ -266,7 +265,7 @@ class ContributionControllerTest extends BaseControllerTest {
     var fromDb = repository.fetchCurrentByCentralServerId(PRE_POPULATED_CENTRAL_SERVER_ID);
     assertNotNull(fromDb);
     assertEquals(Contribution.Status.IN_PROGRESS, fromDb.get().getStatus());
-    assertEquals(jobResponse.getId(), fromDb.get().getStartedJobId());
+    assertEquals(jobResponse.getId(), fromDb.get().getJobId());
   }
 
   @Test

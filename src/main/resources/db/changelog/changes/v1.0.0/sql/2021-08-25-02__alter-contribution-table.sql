@@ -1,1 +1,1 @@
-ALTER TABLE contribution ADD started_job_id UUID;
+ALTER TABLE contribution ADD job_id UUID;
