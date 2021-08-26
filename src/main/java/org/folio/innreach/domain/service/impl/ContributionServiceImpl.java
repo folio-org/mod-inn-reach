@@ -1,8 +1,10 @@
 package org.folio.innreach.domain.service.impl;
 
+import static org.folio.innreach.domain.service.impl.ServiceUtils.centralServerRef;
 import static org.folio.innreach.dto.MappingValidationStatusDTO.INVALID;
 import static org.folio.innreach.dto.MappingValidationStatusDTO.VALID;
 
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -12,8 +14,11 @@ import lombok.extern.log4j.Log4j2;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
+import org.folio.innreach.client.InstanceStorageClient;
 import org.folio.innreach.client.MaterialTypesClient;
-import org.folio.innreach.domain.dto.folio.inventoryStorage.MaterialTypeDTO;
+import org.folio.innreach.domain.dto.folio.inventorystorage.InstanceIterationRequest;
+import org.folio.innreach.domain.dto.folio.inventorystorage.JobResponse;
+import org.folio.innreach.domain.dto.folio.inventorystorage.MaterialTypeDTO;
 import org.folio.innreach.domain.entity.Contribution;
 import org.folio.innreach.domain.service.CentralServerService;
 import org.folio.innreach.domain.service.ContributionService;
@@ -47,6 +52,8 @@ public class ContributionServiceImpl implements ContributionService {
   private final CentralServerService centralServerService;
   private final InnReachLocationService innReachLocationService;
   private final InnReachLocationExternalService innReachLocationExternalService;
+
+  private final InstanceStorageClient client;
 
   @Override
   public ContributionDTO getCurrent(UUID centralServerId) {
@@ -151,4 +158,51 @@ public class ContributionServiceImpl implements ContributionService {
       .collect(Collectors.toList());
   }
 
+  @Override
+  public void startInitialContribution(UUID centralServerId) {
+    var contribution = createEmptyContribution(centralServerId);
+
+    var request = createInstanceIterationRequest();
+    log.info("Calling mod-inventory storage...");
+
+    JobResponse jobResponse = startIterationMocked(request);
+
+    contribution.setJobId(jobResponse.getId());
+    repository.save(contribution);
+
+    log.info("Initial contribution process started.");
+  }
+
+  private JobResponse startIterationMocked(InstanceIterationRequest request) {
+    try {
+      return client.startInitialContribution(request);
+    } catch (Exception e) {
+      log.warn("mod-inventory-storage Iteration endpoint is yet to be implemented. Returning stubbed response..");
+
+      return JobResponse.builder()
+          .id(UUID.randomUUID())
+          .status(JobResponse.JobStatus.IN_PROGRESS)
+          .numberOfRecordsPublished(0)
+          .submittedDate(OffsetDateTime.now())
+          .build();
+    }
+  }
+
+  private InstanceIterationRequest createInstanceIterationRequest() {
+    var request = new InstanceIterationRequest();
+    request.setTopicName("inventory.instance-contribution");
+    return request;
+  }
+
+  private Contribution createEmptyContribution(UUID centralServerId) {
+    var contribution = new Contribution();
+    contribution.setStatus(Contribution.Status.IN_PROGRESS);
+    contribution.setRecordsTotal(0L);
+    contribution.setRecordsProcessed(0L);
+    contribution.setRecordsContributed(0L);
+    contribution.setRecordsUpdated(0L);
+    contribution.setRecordsDecontributed(0L);
+    contribution.setCentralServer(centralServerRef(centralServerId));
+    return contribution;
+  }
 }

@@ -829,6 +829,21 @@ paths:
         - $ref: "#/components/parameters/centralServerId"
         - $ref: "#/components/parameters/trait_pageable_offset"
         - $ref: "#/components/parameters/trait_pageable_limit"
+  /central-servers/{centralServerId}/contributions:
+    post:
+      description: Start initial contribution process
+      operationId: startInitialContribution
+      tags:
+        - contributions
+      responses:
+        '201':
+          description: Initial contribution process started
+        '400':
+          $ref: "#/components/responses/trait_response_validation_400"
+        '500':
+          $ref: "#/components/responses/trait_response_500"
+      parameters:
+        - $ref: '#/components/parameters/centralServerId'
 components:
   schemas:
     UUID:

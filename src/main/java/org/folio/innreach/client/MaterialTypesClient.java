@@ -5,7 +5,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import org.folio.innreach.domain.dto.folio.ResultList;
-import org.folio.innreach.domain.dto.folio.inventoryStorage.MaterialTypeDTO;
+import org.folio.innreach.domain.dto.folio.inventorystorage.MaterialTypeDTO;
 
 @FeignClient("material-types")
 public interface MaterialTypesClient {

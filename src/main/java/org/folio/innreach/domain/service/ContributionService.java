@@ -11,4 +11,5 @@ public interface ContributionService {
 
   ContributionsDTO getHistory(UUID centralServerId, int offset, int limit);
 
+  void startInitialContribution(UUID centralServerId);
 }
