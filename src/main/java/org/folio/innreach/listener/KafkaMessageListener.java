@@ -10,7 +10,7 @@ import lombok.extern.log4j.Log4j2;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.springframework.kafka.annotation.KafkaListener;
 
-import org.folio.innreach.domain.dto.folio.inventoryStorage.InstanceIterationEvent;
+import org.folio.innreach.domain.dto.folio.inventorystorage.InstanceIterationEvent;
 import org.folio.innreach.domain.service.ContributionService;
 import org.folio.innreach.utils.BatchProcessor;
 

@@ -20,7 +20,7 @@ import org.springframework.kafka.support.serializer.JsonDeserializer;
 import org.springframework.retry.support.RetryTemplate;
 
 import org.folio.innreach.config.props.FolioKafkaProperties;
-import org.folio.innreach.domain.dto.folio.inventoryStorage.InstanceIterationEvent;
+import org.folio.innreach.domain.dto.folio.inventorystorage.InstanceIterationEvent;
 import org.folio.innreach.domain.service.ContributionService;
 import org.folio.innreach.listener.KafkaMessageListener;
 import org.folio.innreach.utils.BatchProcessor;

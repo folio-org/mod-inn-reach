@@ -18,7 +18,7 @@ import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.retry.support.RetryTemplate;
 
-import org.folio.innreach.domain.dto.folio.inventoryStorage.InstanceIterationEvent;
+import org.folio.innreach.domain.dto.folio.inventorystorage.InstanceIterationEvent;
 import org.folio.innreach.domain.service.ContributionService;
 import org.folio.innreach.utils.BatchProcessor;
 

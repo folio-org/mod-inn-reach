@@ -12,7 +12,7 @@ import lombok.extern.log4j.Log4j2;
 import org.springframework.stereotype.Service;
 
 import org.folio.innreach.client.MaterialTypesClient;
-import org.folio.innreach.domain.dto.folio.inventoryStorage.MaterialTypeDTO;
+import org.folio.innreach.domain.dto.folio.inventorystorage.MaterialTypeDTO;
 import org.folio.innreach.domain.service.CentralServerService;
 import org.folio.innreach.domain.service.ContributionValidationService;
 import org.folio.innreach.domain.service.InnReachLocationService;
