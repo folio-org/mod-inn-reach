@@ -41,7 +41,7 @@ class ContributionServiceImplTest {
 
     service.startInitialContribution(UUID.randomUUID());
 
-    verify(repository, times(2)).save(any());
+    verify(repository, times(1)).save(any());
     verify(client).startInitialContribution(any());
   }
 }
