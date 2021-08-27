@@ -1,12 +1,12 @@
 package org.folio.innreach.fixture;
 
-import org.folio.innreach.domain.entity.ItemContributionOptionsConfiguration;
-import org.folio.innreach.dto.ItemContributionOptionsConfigurationDTO;
+import static org.folio.innreach.fixture.TestUtil.randomInteger;
 
 import java.util.List;
 import java.util.UUID;
 
-import static org.folio.innreach.fixture.TestUtil.randomInteger;
+import org.folio.innreach.domain.entity.ItemContributionOptionsConfiguration;
+import org.folio.innreach.dto.ItemContributionOptionsConfigurationDTO;
 
 public class ItemContributionOptionsConfigurationFixture {
   private static final String[] notAvailableItemStatuses = {"Aged to lost",
@@ -37,7 +37,7 @@ public class ItemContributionOptionsConfigurationFixture {
 
   public static ItemContributionOptionsConfigurationDTO createItmContribOptConfDTO() {
     return new ItemContributionOptionsConfigurationDTO()
-      .notAvailableItemStatuses(List.of(notAvailableItemStatuses[randomInteger(notAvailableItemStatuses.length)]))
+      .notAvailableItemStatuses(List.of(notAvailableItemStatuses))
       .nonLendableLoanTypes(List.of(UUID.randomUUID(), UUID.randomUUID()))
       .nonLendableLocations(List.of(UUID.randomUUID(), UUID.randomUUID()))
       .nonLendableMaterialTypes(List.of(UUID.randomUUID(), UUID.randomUUID()));

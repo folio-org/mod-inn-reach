@@ -12,9 +12,9 @@ import org.folio.innreach.domain.dto.folio.sourcerecord.SourceRecordDTO;
  * Source Record Storage (SRS) client
  */
 
-@FeignClient("SRS")
+@FeignClient("source-storage")
 public interface SourceRecordStorageClient {
 
-  @GetMapping("/source-storage/records/{id}")
+  @GetMapping("/records/{id}")
   SourceRecordDTO getRecordById(@PathVariable("id") UUID id);
 }

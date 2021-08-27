@@ -8,7 +8,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import org.folio.innreach.domain.dto.folio.sourcerecord.deserializer.SourceRecordDTODeserializer;
+import org.folio.innreach.domain.dto.deserializer.SourceRecordDTODeserializer;
 
 @Data
 @Builder

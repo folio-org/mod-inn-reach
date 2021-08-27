@@ -7,13 +7,13 @@ import java.time.OffsetDateTime;
 import java.util.UUID;
 
 import lombok.experimental.UtilityClass;
-import org.folio.innreach.domain.entity.ItemTypeMapping;
 import org.jeasy.random.EasyRandom;
 import org.jeasy.random.EasyRandomParameters;
 import org.jeasy.random.randomizers.range.IntegerRangeRandomizer;
 
 import org.folio.innreach.domain.entity.CentralServer;
 import org.folio.innreach.domain.entity.InnReachLocation;
+import org.folio.innreach.domain.entity.ItemTypeMapping;
 import org.folio.innreach.domain.entity.LibraryMapping;
 import org.folio.innreach.domain.entity.LocationMapping;
 import org.folio.innreach.domain.entity.MaterialTypeMapping;

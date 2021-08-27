@@ -1,27 +1,29 @@
 package org.folio.innreach.repository;
 
-import org.apache.commons.lang3.RandomUtils;
-import org.folio.innreach.domain.entity.ItemTypeMapping;
-import org.folio.innreach.fixture.TestUtil;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.test.context.jdbc.Sql;
-
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-
 import static java.util.UUID.fromString;
 import static java.util.UUID.randomUUID;
 import static java.util.stream.Collectors.toList;
-import static org.folio.innreach.fixture.MappingFixture.createItemTypeMapping;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.StringContains.containsString;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import static org.folio.innreach.fixture.MappingFixture.createItemTypeMapping;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
+import org.apache.commons.lang3.RandomUtils;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.test.context.jdbc.Sql;
+
+import org.folio.innreach.domain.entity.ItemTypeMapping;
+import org.folio.innreach.fixture.TestUtil;
 
 class ItemTypeMappingRepositoryTest extends BaseRepositoryTest {
   private static final String PRE_POPULATED_ITEM_TYPE_MAPPING_ID1 = "f8c5d329-c3db-40c1-9e96-d6176f76b0da";
