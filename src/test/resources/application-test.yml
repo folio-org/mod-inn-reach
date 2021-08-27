@@ -37,3 +37,6 @@ system-user:
   password: Mod-innreach-1-0-0
   lastname: System
   permissionsFilePath: permissions/test-permissions.csv
+kafka:
+  enable: false
+

@@ -10,9 +10,11 @@ import org.springframework.stereotype.Service;
 public class FolioTenantService {
 
   private final SystemUserService systemUserService;
+  private final KafkaService kafkaService;
 
   public void initializeTenant() {
     systemUserService.prepareSystemUser();
+    kafkaService.restartEventListeners();
   }
 
 }
