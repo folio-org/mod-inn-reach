@@ -17,13 +17,27 @@ Version 2.0. See the file "[LICENSE](LICENSE)" for more information.
 
 The module provides an access to INN-Reach.
 
-## API
+### Environment variables:
 
-Module provides next API:
-
- | METHOD |  URL                          | DESCRIPTION                                                       |
- |--------|-------------------------------|-------------------------------------------------------------------|
- |        |                               |                                                                   |
+| Name                          | Default value             | Description                                                       |
+| :-----------------------------| :------------------------:|:------------------------------------------------------------------|
+| JAVA_OPTIONS                  | -XX:MaxRAMPercentage=85.0 | Java options                                                 |
+| DB_HOST                       | postgres                  | Postgres hostname                                                |
+| DB_PORT                       | 5432                      | Postgres port                                                     |
+| DB_USERNAME                   | folio_admin               | Postgres username                                                 |
+| DB_PASSWORD                   | -                         | Postgres password                                        |
+| DB_DATABASE                   | okapi_modules             | Postgres database name                                            |
+| DB_QUERYTIMEOUT               | 60000                     | Database query timeout |
+| DB_CHARSET                    | UTF-8                     | Database charset |
+| DB_MAXPOOLSIZE                | 5                         | Database max pool size |
+| SYSTEM_USER_PASSWORD          | -                         | Internal user password                                     |
+| KAFKA_HOST                    | kafka                     | Kafka broker hostname                                             |
+| KAFKA_PORT                    | 9092                      | Kafka broker port                                                 |
+| KAFKA_SECURITY_PROTOCOL       | PLAINTEXT                 | Kafka security protocol used to communicate with brokers (SSL or PLAINTEXT) |
+| KAFKA_SSL_KEYSTORE_LOCATION   | -                         | The location of the Kafka key store file. This is optional for client and can be used for two-way authentication for client. |
+| KAFKA_SSL_KEYSTORE_PASSWORD   | -                         | The store password for the Kafka key store file. This is optional for client and only needed if 'ssl.keystore.location' is configured. |
+| KAFKA_SSL_TRUSTSTORE_LOCATION | -                         | The location of the Kafka trust store file. |
+| KAFKA_SSL_TRUSTSTORE_PASSWORD | -                         | The password for the Kafka trust store file. If a password is not set, trust store file configured will still be used, but integrity checking is disabled. |
 
 ## Compiling
 
