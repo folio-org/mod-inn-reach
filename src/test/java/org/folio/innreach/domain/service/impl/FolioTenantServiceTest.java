@@ -15,6 +15,9 @@ class FolioTenantServiceTest {
   @Mock
   private SystemUserService systemUserService;
 
+  @Mock
+  private KafkaService kafkaService;
+
   @InjectMocks
   private FolioTenantService service;
 
@@ -28,6 +31,7 @@ class FolioTenantServiceTest {
     service.initializeTenant();
 
     verify(systemUserService).prepareSystemUser();
+    verify(kafkaService).restartEventListeners();
   }
 
   @Test
