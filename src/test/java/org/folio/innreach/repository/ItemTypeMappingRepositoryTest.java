@@ -29,11 +29,11 @@ class ItemTypeMappingRepositoryTest extends BaseRepositoryTest {
   private static final String PRE_POPULATED_ITEM_TYPE_MAPPING_ID3 = "c6e73e3c-eca6-40d0-a6fc-4588f64ef4a9";
   private static final String PRE_POPULATED_ITEM_TYPE_MAPPING_ID4 = "9de1d6de-6508-4d12-b8d7-0a956c19bfdf";
 
+  private static final Integer PRE_POPULATED_CENTRAL_ITEM_TYPE = 1;
   private static final String PRE_POPULATED_MATERIAL_TYPE_ID = "0d1fb482-4012-4e16-9427-aaffdf4c0722";
 
   private static final String PRE_POPULATED_USER = "admin";
-  private static final String PRE_POPULATED_LOCAL_SERVER_CODE = "fli01";
-  private static final String PRE_POPULATED_INN_REACH_CENTRAL_SERVER_ID = "a849e242-9665-4519-81b2-92e75e4fda7c";
+  private static final String PRE_POPULATED_CENTRAL_SERVER_ID = "edab6baf-c696-42b1-89bb-1bbb8759b0d2";
 
   @Autowired
   private ItemTypeMappingRepository repository;
@@ -64,7 +64,7 @@ class ItemTypeMappingRepositoryTest extends BaseRepositoryTest {
 
     assertNotNull(mapping);
     assertEquals(UUID.fromString(PRE_POPULATED_ITEM_TYPE_MAPPING_ID1), mapping.getId());
-    assertEquals(1, mapping.getCentralItemType());
+    assertEquals(PRE_POPULATED_CENTRAL_ITEM_TYPE, mapping.getCentralItemType());
     assertEquals(UUID.fromString(PRE_POPULATED_MATERIAL_TYPE_ID), mapping.getMaterialTypeId());
 
     assertEquals(PRE_POPULATED_USER, mapping.getCreatedBy());
@@ -77,7 +77,7 @@ class ItemTypeMappingRepositoryTest extends BaseRepositoryTest {
   @Sql(scripts = {"classpath:db/central-server/pre-populate-central-server.sql"})
   void shouldSaveNewMapping() {
     var newMapping = createItemTypeMapping();
-    newMapping.setLocalServerCode(PRE_POPULATED_LOCAL_SERVER_CODE);
+    newMapping.setCentralServer(TestUtil.refCentralServer(UUID.fromString(PRE_POPULATED_CENTRAL_SERVER_ID)));
 
     var saved = repository.saveAndFlush(newMapping);
 
@@ -121,10 +121,20 @@ class ItemTypeMappingRepositoryTest extends BaseRepositoryTest {
   }
 
   @Test
+  @Sql(scripts = {"classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/item-type-mapping/pre-populate-item-type-mapping.sql"})
+  void shouldFindMappingByCentralItemType() {
+    var mapping = repository.findByCentralItemType(PRE_POPULATED_CENTRAL_ITEM_TYPE);
+
+    assertEquals(PRE_POPULATED_CENTRAL_ITEM_TYPE, mapping.getCentralItemType());
+    assertEquals(UUID.fromString(PRE_POPULATED_MATERIAL_TYPE_ID), mapping.getMaterialTypeId());
+  }
+
+  @Test
   @Sql(scripts = {"classpath:db/central-server/pre-populate-central-server.sql"})
   void throwExceptionWhenSavingWithoutCentralItemType() {
     var mapping = createItemTypeMapping();
-    mapping.setLocalServerCode(PRE_POPULATED_LOCAL_SERVER_CODE);
+    mapping.setCentralServer(TestUtil.refCentralServer(UUID.fromString(PRE_POPULATED_CENTRAL_SERVER_ID)));
     mapping.setCentralItemType(null);
 
     assertThrows(DataIntegrityViolationException.class, () -> repository.saveAndFlush(mapping));
@@ -135,17 +145,17 @@ class ItemTypeMappingRepositoryTest extends BaseRepositoryTest {
   void throwExceptionWhenSavingWithInvalidCentralServerReference() {
     var mapping = createItemTypeMapping();
 
-    mapping.setLocalServerCode(TestUtil.randomFiveCharacterCode());
+    mapping.setCentralServer(TestUtil.refCentralServer(UUID.randomUUID()));
 
     var ex = assertThrows(DataIntegrityViolationException.class, () -> repository.saveAndFlush(mapping));
-    assertThat(ex.getMessage(), containsString("constraint [fk_item_type_mapping_local_server_code]"));
+    assertThat(ex.getMessage(), containsString("constraint [fk_item_type_mapping_central_server]"));
   }
 
   @Test
   @Sql(scripts = {"classpath:db/central-server/pre-populate-central-server.sql"})
   void throwExceptionWhenSavingWithInvalidCentralItemType() {
     var mapping = createItemTypeMapping();
-    mapping.setLocalServerCode(PRE_POPULATED_LOCAL_SERVER_CODE);
+    mapping.setCentralServer(TestUtil.refCentralServer(UUID.fromString(PRE_POPULATED_CENTRAL_SERVER_ID)));
 
     mapping.setCentralItemType(256);
 
@@ -157,12 +167,10 @@ class ItemTypeMappingRepositoryTest extends BaseRepositoryTest {
     "classpath:db/item-type-mapping/pre-populate-item-type-mapping.sql"})
   void throwExceptionWhenSavingMappingWithItemTypeThatAlreadyExists() {
     var mapping = createItemTypeMapping();
-    mapping.setLocalServerCode(PRE_POPULATED_LOCAL_SERVER_CODE);
-    mapping.setInnReachCentralServerId(UUID.fromString(PRE_POPULATED_INN_REACH_CENTRAL_SERVER_ID));
-
-    mapping.setCentralItemType(1);
+    mapping.setCentralServer(TestUtil.refCentralServer(UUID.fromString(PRE_POPULATED_CENTRAL_SERVER_ID)));
+    mapping.setCentralItemType(PRE_POPULATED_CENTRAL_ITEM_TYPE);
 
     var ex = assertThrows(DataIntegrityViolationException.class, () -> repository.saveAndFlush(mapping));
-    assertThat(ex.getMessage(), containsString("constraint [unq_item_type_inn_reach_central_server]"));
+    assertThat(ex.getMessage(), containsString("constraint [unq_item_type_central_server]"));
   }
 }

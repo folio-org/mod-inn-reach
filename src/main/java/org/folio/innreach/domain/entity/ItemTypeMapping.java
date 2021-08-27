@@ -8,9 +8,12 @@ import org.folio.innreach.domain.entity.base.Identifiable;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 import java.util.UUID;
 
@@ -30,9 +33,7 @@ public class ItemTypeMapping  extends Auditable<String> implements Identifiable<
   @Column(name = "material_type_id")
   private UUID materialTypeId;
 
-  @Column(name = "local_server_code")
-  private String localServerCode;
-
-  @Column(name = "inn_reach_central_server_id")
-  private UUID innReachCentralServerId;
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "central_server_id")
+  private CentralServer centralServer;
 }
