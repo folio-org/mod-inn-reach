@@ -20,9 +20,9 @@ BEGIN
   RETURN;
 END;';
 
-SELECT modify_created(table_name)
+SELECT modify_created(table_name::varchar)
 FROM information_schema.columns
-WHERE table_schema = CURRENT_SCHEMA()
+WHERE table_schema = '${database.defaultSchemaName}'
   AND column_name = 'created_by';
 
 DROP FUNCTION modify_created;

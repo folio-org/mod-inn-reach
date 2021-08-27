@@ -21,9 +21,9 @@ BEGIN
   RETURN;
 END;';
 
-SELECT modify_last_modified(table_name)
+SELECT modify_last_modified(table_name::varchar)
 FROM information_schema.columns
-WHERE table_schema = CURRENT_SCHEMA()
+WHERE table_schema = '${database.defaultSchemaName}'
   AND column_name = 'last_modified_by';
 
 DROP FUNCTION modify_last_modified;
