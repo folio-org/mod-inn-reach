@@ -206,6 +206,11 @@
           "methods": ["GET"],
           "pathPattern": "/inn-reach/central-servers/{centralServerId}/contributions/history",
           "permissionsRequired": ["inn-reach.contributions.history.collection.get"]
+        },
+        {
+          "methods": ["POST"],
+          "pathPattern": "/inn-reach/central-servers/{centralServerId}/contributions",
+          "permissionsRequired": ["inn-reach.contributions.item.post"]
         }
       ]
     },
@@ -550,12 +555,18 @@
       "description" : "Get history of INN-Reach contribution job execution status tracking and basic statistics"
     },
     {
+      "permissionName" : "inn-reach.contributions.item.post",
+      "displayName" : "start initial contribution process",
+      "description" : "Start initial contribution process"
+    },
+    {
       "permissionName" : "inn-reach.contributions.all",
       "displayName" : "inn reach API module - all permissions of contribution",
       "description" : "All permissions of inn reach contribution scope",
       "subPermissions" : [
         "inn-reach.contributions.current.item.get",
-        "inn-reach.contributions.history.collection.get"
+        "inn-reach.contributions.history.collection.get",
+        "inn-reach.contributions.item.post"
       ]
     },
     {
@@ -634,6 +645,34 @@
       {
         "name": "SYSTEM_USER_PASSWORD",
         "value": "Mod-innreach-1-0-0"
+      },
+      {
+        "name": "KAFKA_HOST",
+        "value": "kafka"
+      },
+      {
+        "name": "KAFKA_PORT",
+        "value": "9092"
+      },
+      {
+        "name": "KAFKA_SECURITY_PROTOCOL",
+        "value": "PLAINTEXT"
+      },
+      {
+        "name": "KAFKA_SSL_KEYSTORE_LOCATION",
+        "value": ""
+      },
+      {
+        "name": "KAFKA_SSL_KEYSTORE_PASSWORD",
+        "value": ""
+      },
+      {
+        "name": "KAFKA_SSL_TRUSTSTORE_LOCATION",
+        "value": ""
+      },
+      {
+        "name": "KAFKA_SSL_TRUSTSTORE_PASSWORD",
+        "value": ""
       }
     ]
   }

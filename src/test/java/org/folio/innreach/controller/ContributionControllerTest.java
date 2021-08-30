@@ -14,6 +14,7 @@ import static org.springframework.test.context.jdbc.SqlMergeMode.MergeMode.MERGE
 
 import static org.folio.innreach.fixture.ContributionFixture.createIrLocations;
 import static org.folio.innreach.fixture.ContributionFixture.createMaterialTypes;
+import static org.folio.innreach.fixture.JobResponseFixture.createJobResponse;
 
 import java.util.UUID;
 
@@ -23,11 +24,17 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpStatus;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlMergeMode;
 
-import org.folio.innreach.client.InventoryStorageClient;
+import org.folio.innreach.client.InstanceStorageClient;
+import org.folio.innreach.client.MaterialTypesClient;
 import org.folio.innreach.controller.base.BaseControllerTest;
+import org.folio.innreach.domain.dto.folio.inventorystorage.InstanceIterationRequest;
+import org.folio.innreach.domain.dto.folio.inventorystorage.JobResponse;
+import org.folio.innreach.domain.entity.Contribution;
 import org.folio.innreach.dto.ContributionDTO;
 import org.folio.innreach.dto.ContributionsDTO;
 import org.folio.innreach.dto.MappingValidationStatusDTO;
@@ -53,6 +60,9 @@ class ContributionControllerTest extends BaseControllerTest {
   private static final String PRE_POPULATED_TYPE2_ID = "5ee11d91-f7e8-481d-b079-65d708582ccc";
   private static final String PRE_POPULATED_TYPE3_ID = "615b8413-82d5-4203-aa6e-e37984cb5ac3";
 
+  @MockBean
+  private InstanceStorageClient client;
+
   @Autowired
   private TestRestTemplate testRestTemplate;
   @Autowired
@@ -60,7 +70,7 @@ class ContributionControllerTest extends BaseControllerTest {
   @Autowired
   private ContributionMapper mapper;
   @MockBean
-  private InventoryStorageClient inventoryStorageClient;
+  private MaterialTypesClient materialTypesClient;
   @MockBean
   private InnReachLocationExternalService irLocationService;
 
@@ -73,7 +83,7 @@ class ContributionControllerTest extends BaseControllerTest {
     "classpath:db/contribution/pre-populate-contribution.sql"
   })
   void shouldGetCurrentContribution() {
-    when(inventoryStorageClient.getMaterialTypes(anyString(), anyInt())).thenReturn(createMaterialTypes());
+    when(materialTypesClient.getMaterialTypes(anyString(), anyInt())).thenReturn(createMaterialTypes());
     when(irLocationService.getAllLocations(any())).thenReturn(createIrLocations());
 
     var responseEntity =
@@ -101,7 +111,7 @@ class ContributionControllerTest extends BaseControllerTest {
     "classpath:db/contribution/pre-populate-contribution.sql"
   })
   void shouldGetContributionHistory() {
-    when(inventoryStorageClient.getMaterialTypes(anyString(), anyInt())).thenReturn(createMaterialTypes());
+    when(materialTypesClient.getMaterialTypes(anyString(), anyInt())).thenReturn(createMaterialTypes());
 
     var responseEntity =
       testRestTemplate.getForEntity(contributionHistoryUrl(), ContributionsDTO.class);
@@ -125,7 +135,7 @@ class ContributionControllerTest extends BaseControllerTest {
     "classpath:db/lib-mapping/pre-populate-another-library-mapping.sql",
   })
   void shouldReturnNotStartedContribution() {
-    when(inventoryStorageClient.getMaterialTypes(anyString(), anyInt())).thenReturn(createMaterialTypes());
+    when(materialTypesClient.getMaterialTypes(anyString(), anyInt())).thenReturn(createMaterialTypes());
     when(irLocationService.getAllLocations(any())).thenReturn(createIrLocations());
 
     var responseEntity =
@@ -149,7 +159,7 @@ class ContributionControllerTest extends BaseControllerTest {
     "classpath:db/lib-mapping/pre-populate-another-library-mapping.sql",
   })
   void shouldReturnInvalidStatusOnMissingTypeMappings() {
-    when(inventoryStorageClient.getMaterialTypes(anyString(), anyInt())).thenReturn(createMaterialTypes());
+    when(materialTypesClient.getMaterialTypes(anyString(), anyInt())).thenReturn(createMaterialTypes());
     when(irLocationService.getAllLocations(any())).thenReturn(createIrLocations());
 
     var responseEntity =
@@ -173,7 +183,7 @@ class ContributionControllerTest extends BaseControllerTest {
     "classpath:db/inn-reach-location/pre-populate-inn-reach-location-code.sql",
   })
   void shouldReturnInvalidStatusOnMissingLibraryMappings() {
-    when(inventoryStorageClient.getMaterialTypes(anyString(), anyInt())).thenReturn(createMaterialTypes());
+    when(materialTypesClient.getMaterialTypes(anyString(), anyInt())).thenReturn(createMaterialTypes());
     when(irLocationService.getAllLocations(any())).thenReturn(createIrLocations());
 
     var responseEntity =
@@ -198,7 +208,7 @@ class ContributionControllerTest extends BaseControllerTest {
     "classpath:db/lib-mapping/pre-populate-another-library-mapping.sql",
   })
   void shouldReturnInvalidStatusOnException() {
-    when(inventoryStorageClient.getMaterialTypes(anyString(), anyInt())).thenThrow(new RuntimeException("test"));
+    when(materialTypesClient.getMaterialTypes(anyString(), anyInt())).thenThrow(new RuntimeException("test"));
     when(irLocationService.getAllLocations(any())).thenThrow(new RuntimeException("test"));
 
     var responseEntity =
@@ -237,4 +247,35 @@ class ContributionControllerTest extends BaseControllerTest {
     return "/inn-reach/central-servers/" + serverId + "/contributions";
   }
 
+
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql"
+  })
+  void return201HttpCode_whenInstanceIterationStarted(){
+    var jobResponse = createJobResponse();
+    when(client.startInitialContribution(any(InstanceIterationRequest.class))).thenReturn(jobResponse);
+
+    var responseEntity = testRestTemplate.postForEntity(
+      "/inn-reach/central-servers/{centralServerId}/contributions", HttpEntity.EMPTY, Void.class,
+      PRE_POPULATED_CENTRAL_SERVER_ID);
+
+    assertEquals(HttpStatus.CREATED, responseEntity.getStatusCode());
+
+    var fromDb = repository.fetchCurrentByCentralServerId(PRE_POPULATED_CENTRAL_SERVER_ID);
+    assertNotNull(fromDb);
+    assertEquals(Contribution.Status.IN_PROGRESS, fromDb.get().getStatus());
+    assertEquals(jobResponse.getId(), fromDb.get().getJobId());
+  }
+
+  @Test
+  void return409HttpCode_whenStartingInstanceIterationForNonExistingCentralServer(){
+    when(client.startInitialContribution(any(InstanceIterationRequest.class))).thenReturn(new JobResponse());
+
+    var responseEntity = testRestTemplate.postForEntity(
+      "/inn-reach/central-servers/{centralServerId}/contributions", HttpEntity.EMPTY, Void.class,
+      PRE_POPULATED_CENTRAL_SERVER_ID);
+
+    assertEquals(HttpStatus.CONFLICT, responseEntity.getStatusCode());
+  }
 }

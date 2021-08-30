@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Enumerated;
 import javax.persistence.FetchType;
@@ -91,6 +92,9 @@ public class Contribution extends Auditable implements Identifiable<UUID> {
   @OneToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "central_server_id", unique = true, nullable = false, updatable = false)
   private CentralServer centralServer;
+
+  @Column(name = "job_id")
+  private UUID jobId;
 
   @AllArgsConstructor
   public enum Status {

@@ -33,6 +33,17 @@ spring:
     check-template-location: false
   cache:
     type: caffeine
+  kafka:
+    bootstrap-servers: ${KAFKA_HOST:localhost}:${KAFKA_PORT:9092}
+    consumer:
+      max-poll-records: 50
+    security:
+      protocol: ${KAFKA_SECURITY_PROTOCOL:PLAINTEXT}
+    ssl:
+      key-store-password: ${KAFKA_SSL_KEYSTORE_PASSWORD:}
+      key-store-location: ${KAFKA_SSL_KEYSTORE_LOCATION:}
+      trust-store-password: ${KAFKA_SSL_TRUSTSTORE_PASSWORD:}
+      trust-store-location: ${KAFKA_SSL_TRUSTSTORE_LOCATION:}
 folio:
   tenant:
     validation:
@@ -66,6 +77,14 @@ system-user:
   password: ${SYSTEM_USER_PASSWORD:Mod-innreach-1-0-0}
   lastname: System
   permissionsFilePath: permissions/mod-innreach.csv
+kafka:
+  retry-interval-ms: 20000
+  retry-attempts: 10
+  listener:
+    events:
+      concurrency: 2
+      topic-pattern: (${ENV:folio}\.)?(.*\.)?inventory.instance-contribution
+      groupId: ${ENV:folio}-mod-innreach-events-group
 ###################################################
 # Caffeine cache configuration
 ###################################################

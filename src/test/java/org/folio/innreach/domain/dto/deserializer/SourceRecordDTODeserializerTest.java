@@ -1,4 +1,4 @@
-package org.folio.innreach.domain.dto.folio.sourcerecord.deserializer;
+package org.folio.innreach.domain.dto.deserializer;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 

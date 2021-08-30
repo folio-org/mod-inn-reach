@@ -4,6 +4,7 @@ import static java.util.UUID.fromString;
 import static java.util.UUID.randomUUID;
 import static java.util.stream.Collectors.toList;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.core.StringContains.containsString;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -30,13 +31,16 @@ import org.folio.innreach.domain.entity.base.AuditableUser;
 @Sql(scripts = {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-location/pre-populate-inn-reach-location-code.sql",
-    "classpath:db/loc-mapping/pre-populate-location-mapping.sql"
+    "classpath:db/inn-reach-location/pre-populate-another-inn-reach-location-code.sql",
+    "classpath:db/loc-mapping/pre-populate-location-mapping.sql",
+    "classpath:db/loc-mapping/pre-populate-another-location-mapping.sql"
 })
 class LocationMappingRepositoryTest extends BaseRepositoryTest {
 
   private static final String PRE_POPULATED_MAPPING1_ID = "ada69896-3954-45dc-92cb-04182afb2548";
   private static final String PRE_POPULATED_MAPPING2_ID = "b4262548-3e38-424c-b3d9-509af233db5f";
   private static final String PRE_POPULATED_MAPPING3_ID = "bea259f7-dce0-41de-8c31-3ae6e3034840";
+  private static final String PRE_POPULATED_MAPPING4_ID = "fc039e30-6c14-44cd-91e0-b9e4d42a4f2d";
 
   private static final UUID PRE_POPULATED_LOCATION1_UUID = fromString("67918781-553b-4e5d-af5a-9b6996a983c7");
   private static final UUID PRE_POPULATED_LIBRARY_UUID = fromString("a0dd1106-3de8-4346-b0f4-b1ed0a4eaffd");
@@ -54,13 +58,26 @@ class LocationMappingRepositoryTest extends BaseRepositoryTest {
   void shouldFindAllExistingMappings() {
     var mappings = repository.findAll();
 
-    assertEquals(3, mappings.size());
+    assertEquals(4, mappings.size());
 
     List<String> ids = mappings.stream()
         .map(mapping -> mapping.getId().toString())
         .collect(toList());
 
-    assertEquals(ids, List.of(PRE_POPULATED_MAPPING1_ID, PRE_POPULATED_MAPPING2_ID, PRE_POPULATED_MAPPING3_ID));
+    assertEquals(ids, List.of(PRE_POPULATED_MAPPING1_ID, PRE_POPULATED_MAPPING2_ID, PRE_POPULATED_MAPPING3_ID, PRE_POPULATED_MAPPING4_ID));
+  }
+
+  @Test
+  void shouldFindAllExistingMappingsForOneLibrary() {
+    var mappings = repository.findByCentralServerIdAndLibraryId(PRE_POPULATED_CENTRAL_SERVER_UUID, PRE_POPULATED_LIBRARY_UUID);
+
+    assertEquals(3, mappings.size());
+
+    List<String> ids = mappings.stream()
+      .map(mapping -> mapping.getId().toString())
+      .collect(toList());
+
+    assertThat(ids, containsInAnyOrder(PRE_POPULATED_MAPPING1_ID, PRE_POPULATED_MAPPING2_ID, PRE_POPULATED_MAPPING3_ID));
   }
 
   @Test
