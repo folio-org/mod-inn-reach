@@ -16,16 +16,19 @@ import org.springframework.http.HttpStatus;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlMergeMode;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import static java.util.UUID.fromString;
 import static org.folio.innreach.fixture.TestUtil.deserializeFromJsonFile;
-import static org.folio.innreach.fixture.TestUtil.randomInteger;
+import static org.folio.innreach.fixture.TestUtil.randomIntegerExcept;
+import static org.folio.innreach.fixture.TestUtil.randomDistinctIntegers;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.hasItems;
@@ -46,7 +49,7 @@ import static org.springframework.test.context.jdbc.SqlMergeMode.MergeMode.MERGE
   executionPhase = AFTER_TEST_METHOD
 )
 @SqlMergeMode(MERGE)
-public class ItemTypeMappingControllerTest extends BaseControllerTest {
+class ItemTypeMappingControllerTest extends BaseControllerTest {
 
   private static final String PRE_POPULATED_CENTRAL_SERVER_ID = "edab6baf-c696-42b1-89bb-1bbb8759b0d2";
   private static final String PRE_POPULATED_ITEM_TYPE_MAPPING_ID1 = "f8c5d329-c3db-40c1-9e96-d6176f76b0da";
@@ -92,7 +95,8 @@ public class ItemTypeMappingControllerTest extends BaseControllerTest {
   })
   void shouldUpdateAllExistingMappings() {
     var existing = mapper.toDTOCollection(repository.findAll());
-    existing.getItemTypeMappings().forEach(m -> m.setCentralItemType(randomInteger(256)));
+    var centralItemTypes = new ArrayList<>(randomDistinctIntegers(256, 2));
+    existing.getItemTypeMappings().forEach(m -> m.setCentralItemType(centralItemTypes.get(existing.getItemTypeMappings().indexOf(m))));
 
     var responseEntity = testRestTemplate.exchange(
       "/inn-reach/central-servers/{centralServerId}/item-type-mappings", HttpMethod.PUT,
@@ -119,7 +123,7 @@ public class ItemTypeMappingControllerTest extends BaseControllerTest {
     List<ItemTypeMappingDTO> em = mappings.getItemTypeMappings();
 
     em.removeIf(idEqualsTo(fromString(PRE_POPULATED_ITEM_TYPE_MAPPING_ID1)));         // to delete
-    Integer centralItemType = randomInteger(256);
+    Integer centralItemType = randomIntegerExcept(256, Set.of(1, 2));
     findInList(em, fromString(PRE_POPULATED_ITEM_TYPE_MAPPING_ID2))   // to update
       .ifPresent(mapping -> mapping.setCentralItemType(centralItemType));
 
