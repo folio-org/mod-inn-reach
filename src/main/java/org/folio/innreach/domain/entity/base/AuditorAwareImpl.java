@@ -39,7 +39,7 @@ public class AuditorAwareImpl implements AuditorAware<AuditableUser> {
 
   private Function<User, AuditableUser> toAuditor() {
     return user -> {
-      if (user.isActive()) {
+      if (!user.isActive()) {
         throw new IllegalStateException("Current user is not active and cannot be used as an auditor: userId = " +
             user.getId());
       }
