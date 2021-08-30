@@ -23,6 +23,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.test.context.jdbc.Sql;
 
 import org.folio.innreach.domain.entity.ItemTypeMapping;
+import org.folio.innreach.domain.entity.base.AuditableUser;
 import org.folio.innreach.fixture.TestUtil;
 
 class ItemTypeMappingRepositoryTest extends BaseRepositoryTest {
@@ -34,7 +35,7 @@ class ItemTypeMappingRepositoryTest extends BaseRepositoryTest {
   private static final Integer PRE_POPULATED_CENTRAL_ITEM_TYPE = 1;
   private static final String PRE_POPULATED_MATERIAL_TYPE_ID = "0d1fb482-4012-4e16-9427-aaffdf4c0722";
 
-  private static final String PRE_POPULATED_USER = "admin";
+  private static final AuditableUser PRE_POPULATED_USER = AuditableUser.SYSTEM;
   private static final String PRE_POPULATED_CENTRAL_SERVER_ID = "edab6baf-c696-42b1-89bb-1bbb8759b0d2";
 
   @Autowired
@@ -71,8 +72,6 @@ class ItemTypeMappingRepositoryTest extends BaseRepositoryTest {
 
     assertEquals(PRE_POPULATED_USER, mapping.getCreatedBy());
     assertNotNull(mapping.getCreatedDate());
-    assertEquals(PRE_POPULATED_USER, mapping.getLastModifiedBy());
-    assertNotNull(mapping.getLastModifiedDate());
   }
 
   @Test
