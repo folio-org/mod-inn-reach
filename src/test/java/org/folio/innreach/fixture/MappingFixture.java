@@ -75,12 +75,12 @@ public class MappingFixture {
   static {
     EasyRandomParameters params = new EasyRandomParameters()
       .randomize(named("centralItemType"), new IntegerRangeRandomizer(0, 256))
-      .randomize(named("createdBy"), () -> "admin")
+      .randomize(named("createdBy"), () -> AuditableUser.SYSTEM)
       .randomize(named("createdDate"), OffsetDateTime::now)
       .randomize(named("centralServer"), MappingFixture::refCentralServer)
       .excludeField(named("id"))
-      .excludeField(named("lastModifiedBy"))
-      .excludeField(named("lastModifiedDate"))
+      .excludeField(named("updatedBy"))
+      .excludeField(named("updatedDate"))
       .excludeField(named("metadata"));
 
     itemTypeRandom = new EasyRandom(params);
