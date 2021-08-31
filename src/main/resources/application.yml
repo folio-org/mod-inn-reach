@@ -32,9 +32,7 @@ spring:
   mustache:
     check-template-location: false
   cache:
-    cache-names: system-user-cache
-    caffeine:
-      spec: maximumSize=500,expireAfterAccess=3600s
+    type: caffeine
   kafka:
     bootstrap-servers: ${KAFKA_HOST:localhost}:${KAFKA_PORT:9092}
     consumer:
@@ -87,4 +85,13 @@ kafka:
       concurrency: 2
       topic-pattern: (${ENV:folio}\.)?(.*\.)?inventory.instance-contribution
       groupId: ${ENV:folio}-mod-innreach-events-group
-
+###################################################
+# Caffeine cache configuration
+###################################################
+coffee-boots:
+  cache:
+    basic-spec: maximumSize=500,expireAfterAccess=1h
+    spec:
+      system-user-cache: maximumSize=5
+      users-by-id: maximumSize=100,expireAfterAccess=3h
+      users-by-name: maximumSize=10,expireAfterAccess=3h

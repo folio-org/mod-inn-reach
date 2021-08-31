@@ -1,12 +1,12 @@
 package org.folio.innreach.domain.entity;
 
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import lombok.ToString;
-import org.folio.innreach.domain.entity.base.Auditable;
-import org.folio.innreach.domain.entity.base.Identifiable;
-import org.hibernate.annotations.QueryHints;
+import static org.folio.innreach.domain.entity.AgencyLocationMapping.FETCH_ONE_BY_CS_QUERY;
+import static org.folio.innreach.domain.entity.AgencyLocationMapping.FETCH_ONE_BY_CS_QUERY_NAME;
+
+import java.util.LinkedHashSet;
+import java.util.Objects;
+import java.util.Set;
+import java.util.UUID;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;
@@ -21,13 +21,15 @@ import javax.persistence.OneToOne;
 import javax.persistence.OrderBy;
 import javax.persistence.QueryHint;
 import javax.persistence.Table;
-import java.util.LinkedHashSet;
-import java.util.Objects;
-import java.util.Set;
-import java.util.UUID;
 
-import static org.folio.innreach.domain.entity.AgencyLocationMapping.FETCH_ONE_BY_CS_QUERY;
-import static org.folio.innreach.domain.entity.AgencyLocationMapping.FETCH_ONE_BY_CS_QUERY_NAME;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
+import org.hibernate.annotations.QueryHints;
+
+import org.folio.innreach.domain.entity.base.Auditable;
+import org.folio.innreach.domain.entity.base.Identifiable;
 
 @Getter
 @Setter
@@ -40,7 +42,7 @@ import static org.folio.innreach.domain.entity.AgencyLocationMapping.FETCH_ONE_B
   hints = @QueryHint(name = QueryHints.PASS_DISTINCT_THROUGH, value = "false")
 )
 @Table(name = "agency_location_mapping")
-public class AgencyLocationMapping extends Auditable<String> implements Identifiable<UUID> {
+public class AgencyLocationMapping extends Auditable implements Identifiable<UUID> {
 
   private static final String FETCH_BY_CS_POSTFIX = " WHERE am.centralServer.id = :id";
 

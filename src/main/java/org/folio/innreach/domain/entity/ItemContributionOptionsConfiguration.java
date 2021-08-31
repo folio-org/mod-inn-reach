@@ -28,7 +28,7 @@ import org.folio.innreach.domain.entity.base.Identifiable;
 @Getter
 @Setter
 @ToString(exclude = {"centralServer", "notAvailableItemStatuses", "nonLendableLoanTypes", "nonLendableLocations", "nonLendableMaterialTypes"})
-public class ItemContributionOptionsConfiguration extends Auditable<String> implements Identifiable<UUID> {
+public class ItemContributionOptionsConfiguration extends Auditable implements Identifiable<UUID> {
   @Id
   @GeneratedValue(strategy = GenerationType.AUTO)
   private UUID id;

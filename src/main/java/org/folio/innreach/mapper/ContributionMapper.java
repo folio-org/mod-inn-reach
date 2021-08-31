@@ -15,19 +15,15 @@ import org.folio.innreach.domain.entity.Contribution;
 import org.folio.innreach.dto.ContributionDTO;
 import org.folio.innreach.dto.ContributionsDTO;
 
-
-@Mapper(componentModel = "spring", injectionStrategy = InjectionStrategy.CONSTRUCTOR, uses = DateMapper.class)
+@Mapper(componentModel = "spring", injectionStrategy = InjectionStrategy.CONSTRUCTOR, uses = MappingMethods.class)
 public interface ContributionMapper {
 
   Contribution toEntity(ContributionDTO dto);
 
   @Mapping(target = "contributionStarted", source = "entity.createdDate")
-  @Mapping(target = "contributionStartedBy", source = "entity.createdBy")
+  @Mapping(target = "contributionStartedBy", source = "entity.createdBy.name")
   @Mapping(target = "contributionComplete", source = "entity.completeDate")
-  @Mapping(target = "metadata.createdDate", source = "entity.createdDate")
-  @Mapping(target = "metadata.createdByUsername", source = "entity.createdBy")
-  @Mapping(target = "metadata.updatedDate", source = "entity.lastModifiedDate")
-  @Mapping(target = "metadata.updatedByUsername", source = "entity.lastModifiedBy")
+  @AuditableMapping
   ContributionDTO toDTO(Contribution entity);
 
   List<Contribution> toEntities(Iterable<ContributionDTO> dtos);

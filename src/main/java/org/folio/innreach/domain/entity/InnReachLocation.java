@@ -22,7 +22,7 @@ import org.folio.innreach.domain.entity.base.Identifiable;
 @ToString(callSuper = true)
 @Entity
 @Table(name = "inn_reach_location")
-public class InnReachLocation extends Auditable<String> implements Identifiable<UUID> {
+public class InnReachLocation extends Auditable implements Identifiable<UUID> {
 
   @Id
   @GeneratedValue(strategy = GenerationType.AUTO)

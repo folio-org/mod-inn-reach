@@ -10,7 +10,7 @@ import org.folio.innreach.domain.entity.LocalServerCredentials;
 import org.folio.innreach.dto.CentralServerDTO;
 import org.folio.innreach.dto.LocalAgencyDTO;
 
-@Mapper(componentModel = "spring", injectionStrategy = InjectionStrategy.CONSTRUCTOR, uses = DateMapper.class)
+@Mapper(componentModel = "spring", injectionStrategy = InjectionStrategy.CONSTRUCTOR, uses = MappingMethods.class)
 public interface CentralServerMapper {
 
   @Mapping(target = "centralServerCredentials.centralServerKey", source = "centralServerKey")
@@ -35,10 +35,7 @@ public interface CentralServerMapper {
   @Mapping(target = "centralServerSecret", source = "centralServerCredentials.centralServerSecret")
   @Mapping(target = "localServerKey", source = "localServerCredentials.localServerKey")
   @Mapping(target = "localServerSecret", source = "localServerCredentials.localServerSecret")
-  @Mapping(target = "metadata.createdDate", source = "centralServer.createdDate")
-  @Mapping(target = "metadata.createdByUsername", source = "centralServer.createdBy")
-  @Mapping(target = "metadata.updatedDate", source = "centralServer.lastModifiedDate")
-  @Mapping(target = "metadata.updatedByUsername", source = "centralServer.lastModifiedBy")
+  @AuditableMapping
   CentralServerDTO mapToCentralServerDTO(CentralServer centralServer);
 
   LocalAgencyDTO mapToLocalAgencyDTO(LocalAgency localAgency);

@@ -7,24 +7,20 @@ import java.util.List;
 
 import org.mapstruct.InjectionStrategy;
 import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
 import org.springframework.data.domain.Page;
 
 import org.folio.innreach.domain.entity.MaterialTypeMapping;
 import org.folio.innreach.dto.MaterialTypeMappingDTO;
 import org.folio.innreach.dto.MaterialTypeMappingsDTO;
 
-@Mapper(componentModel = "spring", injectionStrategy = InjectionStrategy.CONSTRUCTOR, uses = DateMapper.class)
+@Mapper(componentModel = "spring", injectionStrategy = InjectionStrategy.CONSTRUCTOR, uses = MappingMethods.class)
 public interface MaterialTypeMappingMapper {
 
 	MaterialTypeMapping toEntity(MaterialTypeMappingDTO dto);
 
   List<MaterialTypeMapping> toEntities(Iterable<MaterialTypeMappingDTO> dtos);
 	
-  @Mapping(target = "metadata.createdDate", source = "entity.createdDate")
-  @Mapping(target = "metadata.createdByUsername", source = "entity.createdBy")
-  @Mapping(target = "metadata.updatedDate", source = "entity.lastModifiedDate")
-  @Mapping(target = "metadata.updatedByUsername", source = "entity.lastModifiedBy")
+  @AuditableMapping
   MaterialTypeMappingDTO toDTO(MaterialTypeMapping entity);
 
   List<MaterialTypeMappingDTO> toDTOs(Iterable<MaterialTypeMapping> entities);

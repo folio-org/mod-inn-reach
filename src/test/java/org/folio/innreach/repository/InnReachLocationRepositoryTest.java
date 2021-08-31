@@ -21,6 +21,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.test.context.jdbc.Sql;
 
 import org.folio.innreach.domain.entity.InnReachLocation;
+import org.folio.innreach.domain.entity.base.AuditableUser;
 import org.folio.innreach.fixture.TestUtil;
 
 @Sql(scripts = "classpath:db/inn-reach-location/pre-populate-inn-reach-location-code.sql")
@@ -29,7 +30,7 @@ class InnReachLocationRepositoryTest extends BaseRepositoryTest {
   private static final String PRE_POPULATED_LOCATION1_ID = "a1c1472f-67ec-4938-b5a8-f119e51ab79b";
   private static final String PRE_POPULATED_LOCATION2_ID = "26f7c8c5-f090-4742-b7c7-e08ed1cc4e67";
   private static final String PRE_POPULATED_LOCATION3_ID = "34c6a230-d264-44c5-90b3-6159ed2ebdc1";
-  private static final String PRE_POPULATED_USER = "admin";
+  private static final AuditableUser PRE_POPULATED_USER = AuditableUser.SYSTEM;
 
 
   @Autowired
@@ -55,8 +56,6 @@ class InnReachLocationRepositoryTest extends BaseRepositoryTest {
 
     assertEquals(PRE_POPULATED_USER, location.getCreatedBy());
     assertNotNull(location.getCreatedDate());
-    assertEquals(PRE_POPULATED_USER, location.getLastModifiedBy());
-    assertNotNull(location.getLastModifiedDate());
   }
 
   @Test

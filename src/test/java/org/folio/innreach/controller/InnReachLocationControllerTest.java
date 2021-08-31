@@ -21,6 +21,7 @@ import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlMergeMode;
 
 import org.folio.innreach.controller.base.BaseControllerTest;
+import org.folio.innreach.domain.entity.base.AuditableUser;
 import org.folio.innreach.dto.InnReachLocationDTO;
 import org.folio.innreach.dto.InnReachLocationsDTO;
 
@@ -32,7 +33,7 @@ import org.folio.innreach.dto.InnReachLocationsDTO;
 class InnReachLocationControllerTest extends BaseControllerTest {
 
 	private static final String PRE_POPULATED_LOCATION1_ID = "a1c1472f-67ec-4938-b5a8-f119e51ab79b";
-	private static final String PRE_POPULATED_USER = "admin";
+	private static final AuditableUser PRE_POPULATED_USER = AuditableUser.SYSTEM;
 
   @Autowired
 	private TestRestTemplate testRestTemplate;
@@ -78,8 +79,7 @@ class InnReachLocationControllerTest extends BaseControllerTest {
     var metadata = innReachLocationDTO.getMetadata();
 
     assertNotNull(metadata);
-    assertEquals(PRE_POPULATED_USER, metadata.getCreatedByUsername());
-    assertEquals(PRE_POPULATED_USER, metadata.getUpdatedByUsername());
+    assertEquals(PRE_POPULATED_USER.getName(), metadata.getCreatedByUsername());
   }
 
 	@Test

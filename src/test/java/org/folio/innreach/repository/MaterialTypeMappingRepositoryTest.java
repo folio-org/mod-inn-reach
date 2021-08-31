@@ -23,6 +23,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.test.context.jdbc.Sql;
 
 import org.folio.innreach.domain.entity.MaterialTypeMapping;
+import org.folio.innreach.domain.entity.base.AuditableUser;
 import org.folio.innreach.fixture.TestUtil;
 
 @Sql(scripts = "classpath:db/central-server/pre-populate-central-server.sql")
@@ -32,7 +33,7 @@ class MaterialTypeMappingRepositoryTest extends BaseRepositoryTest {
   private static final String PRE_POPULATED_MAPPING1_ID = "71bd0beb-28cb-40bb-9f40-87463d61a553";
   private static final String PRE_POPULATED_MAPPING2_ID = "d9985d0d-b121-4ccd-ac16-5ebd0ccccf7f";
   private static final String PRE_POPULATED_MAPPING3_ID = "57fad69e-8c91-48c0-a61f-a6122f52737a";
-  private static final String PRE_POPULATED_USER = "admin";
+  private static final AuditableUser PRE_POPULATED_USER = AuditableUser.SYSTEM;
 
   @Autowired
   private MaterialTypeMappingRepository repository;
@@ -56,8 +57,6 @@ class MaterialTypeMappingRepositoryTest extends BaseRepositoryTest {
 
     assertEquals(PRE_POPULATED_USER, mapping.getCreatedBy());
     assertNotNull(mapping.getCreatedDate());
-    assertEquals(PRE_POPULATED_USER, mapping.getLastModifiedBy());
-    assertNotNull(mapping.getLastModifiedDate());
   }
 
   @Test

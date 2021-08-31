@@ -27,6 +27,7 @@ import org.springframework.orm.jpa.JpaSystemException;
 import org.springframework.test.context.jdbc.Sql;
 
 import org.folio.innreach.domain.entity.ContributionCriteriaConfiguration;
+import org.folio.innreach.domain.entity.base.AuditableUser;
 
 @Sql(scripts = "classpath:db/central-server/pre-populate-central-server.sql")
 @Sql(scripts = "classpath:db/contribution-criteria/pre-populate-contribution-criteria.sql")
@@ -38,7 +39,7 @@ class ContributionCriteriaConfigurationRepositoryTest extends BaseRepositoryTest
   private static final UUID PRE_POPULATED_SUPPRESS_CODE_ID = fromString("8d87682b-0414-4e1a-b810-43df2cda69d1");
   private static final UUID PRE_POPULATED_SYSTEM_OWNED_CODE_ID = fromString("7ee055ce-64b3-4e12-9253-f56762412a7e");
   private static final UUID PRE_POPULATED_NOT_CONTRIBUTE_CODE_ID = fromString("5599f23f-d424-4fce-8a51-b7fce690cbda");
-  private static final String PRE_POPULATED_USER = "admin";
+  private static final AuditableUser PRE_POPULATED_USER = AuditableUser.SYSTEM;
 
   @Autowired
   private ContributionCriteriaConfigurationRepository repository;
@@ -64,8 +65,6 @@ class ContributionCriteriaConfigurationRepositoryTest extends BaseRepositoryTest
 
     assertEquals(PRE_POPULATED_USER, mapping.getCreatedBy());
     assertNotNull(mapping.getCreatedDate());
-    assertEquals(PRE_POPULATED_USER, mapping.getLastModifiedBy());
-    assertNotNull(mapping.getLastModifiedDate());
   }
 
   @Test

@@ -1,24 +1,5 @@
 package org.folio.innreach.domain.service.impl;
 
-import org.folio.innreach.domain.entity.ItemContributionOptionsConfiguration;
-import org.folio.innreach.domain.exception.EntityNotFoundException;
-import org.folio.innreach.dto.ItemContributionOptionsConfigurationDTO;
-import org.folio.innreach.mapper.DateMapper;
-import org.folio.innreach.mapper.ItemContributionOptionsConfigurationMapper;
-import org.folio.innreach.mapper.ItemContributionOptionsConfigurationMapperImpl;
-import org.folio.innreach.repository.ItemContributionOptionsConfigurationRepository;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
-import org.mockito.Spy;
-
-import java.util.Optional;
-import java.util.UUID;
-
-import static org.folio.innreach.fixture.ItemContributionOptionsConfigurationFixture.createItmContribOptConf;
-import static org.folio.innreach.fixture.ItemContributionOptionsConfigurationFixture.createItmContribOptConfDTO;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -26,13 +7,34 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import static org.folio.innreach.fixture.ItemContributionOptionsConfigurationFixture.createItmContribOptConf;
+import static org.folio.innreach.fixture.ItemContributionOptionsConfigurationFixture.createItmContribOptConfDTO;
+
+import java.util.Optional;
+import java.util.UUID;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+import org.mockito.Spy;
+
+import org.folio.innreach.domain.entity.ItemContributionOptionsConfiguration;
+import org.folio.innreach.domain.exception.EntityNotFoundException;
+import org.folio.innreach.dto.ItemContributionOptionsConfigurationDTO;
+import org.folio.innreach.mapper.ItemContributionOptionsConfigurationMapper;
+import org.folio.innreach.mapper.ItemContributionOptionsConfigurationMapperImpl;
+import org.folio.innreach.mapper.MappingMethods;
+import org.folio.innreach.repository.ItemContributionOptionsConfigurationRepository;
+
 class ItemContributionOptionsConfigurationServiceImplTest {
 
   @Mock
   private ItemContributionOptionsConfigurationRepository repository;
 
   @Spy
-  private final ItemContributionOptionsConfigurationMapper mapper = new ItemContributionOptionsConfigurationMapperImpl(new DateMapper());
+  private final ItemContributionOptionsConfigurationMapper mapper = new ItemContributionOptionsConfigurationMapperImpl(new MappingMethods());
 
   @InjectMocks
   private ItemContributionOptionsConfigurationServiceImpl service;

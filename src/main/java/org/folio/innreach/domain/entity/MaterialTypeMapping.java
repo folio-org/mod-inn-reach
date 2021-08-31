@@ -25,7 +25,7 @@ import org.folio.innreach.domain.entity.base.Identifiable;
 @ToString(exclude = {"centralServer"}, callSuper = true)
 @Entity
 @Table(name = "material_type_mapping")
-public class MaterialTypeMapping extends Auditable<String> implements Identifiable<UUID> {
+public class MaterialTypeMapping extends Auditable implements Identifiable<UUID> {
 
   @Id
   @GeneratedValue(strategy = GenerationType.AUTO)

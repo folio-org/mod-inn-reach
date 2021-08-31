@@ -1,21 +1,8 @@
 package org.folio.innreach.repository;
 
-import org.folio.innreach.domain.entity.AgencyLocationMapping;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.test.context.jdbc.Sql;
-
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
-
 import static java.util.UUID.fromString;
 import static java.util.UUID.randomUUID;
 import static java.util.stream.Collectors.toList;
-import static org.folio.innreach.fixture.AgencyLocationMappingFixture.createLocalServerMapping;
-import static org.folio.innreach.fixture.AgencyLocationMappingFixture.createMapping;
-import static org.folio.innreach.fixture.AgencyLocationMappingFixture.findLocalServerMappingByCode;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.junit.Assert.assertFalse;
@@ -23,6 +10,22 @@ import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+
+import static org.folio.innreach.fixture.AgencyLocationMappingFixture.createLocalServerMapping;
+import static org.folio.innreach.fixture.AgencyLocationMappingFixture.createMapping;
+import static org.folio.innreach.fixture.AgencyLocationMappingFixture.findLocalServerMappingByCode;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.test.context.jdbc.Sql;
+
+import org.folio.innreach.domain.entity.AgencyLocationMapping;
+import org.folio.innreach.domain.entity.base.AuditableUser;
 
 @Sql(scripts = {
   "classpath:db/central-server/pre-populate-central-server.sql",
@@ -39,7 +42,7 @@ class AgencyLocationMappingRepositoryTest extends BaseRepositoryTest {
 
   private static final String PRE_POPULATED_LOCAL_CODE = "5publ";
 
-  private static final String PRE_POPULATED_USER = "admin";
+  private static final AuditableUser PRE_POPULATED_USER = AuditableUser.SYSTEM;
 
   @Autowired
   private AgencyLocationMappingRepository repository;
@@ -72,8 +75,6 @@ class AgencyLocationMappingRepositoryTest extends BaseRepositoryTest {
 
     assertEquals(PRE_POPULATED_USER, mapping.getCreatedBy());
     assertNotNull(mapping.getCreatedDate());
-    assertEquals(PRE_POPULATED_USER, mapping.getLastModifiedBy());
-    assertNotNull(mapping.getLastModifiedDate());
   }
 
   @Test

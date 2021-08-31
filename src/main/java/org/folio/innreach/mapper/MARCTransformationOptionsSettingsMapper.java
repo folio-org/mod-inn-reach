@@ -1,18 +1,15 @@
 package org.folio.innreach.mapper;
 
-import org.folio.innreach.domain.entity.MARCTransformationOptionsSettings;
-import org.folio.innreach.dto.MARCTransformationOptionsSettingsDTO;
 import org.mapstruct.InjectionStrategy;
 import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
 
-@Mapper(componentModel = "spring", injectionStrategy = InjectionStrategy.CONSTRUCTOR, uses = DateMapper.class)
+import org.folio.innreach.domain.entity.MARCTransformationOptionsSettings;
+import org.folio.innreach.dto.MARCTransformationOptionsSettingsDTO;
+
+@Mapper(componentModel = "spring", injectionStrategy = InjectionStrategy.CONSTRUCTOR, uses = MappingMethods.class)
 public interface MARCTransformationOptionsSettingsMapper {
 
-  @Mapping(target = "metadata.createdDate", source = "marcTransformOptSet.createdDate")
-  @Mapping(target = "metadata.createdByUsername", source = "marcTransformOptSet.createdBy")
-  @Mapping(target = "metadata.updatedDate", source = "marcTransformOptSet.lastModifiedDate")
-  @Mapping(target = "metadata.updatedByUsername", source = "marcTransformOptSet.lastModifiedBy")
+  @AuditableMapping
   MARCTransformationOptionsSettingsDTO toDto(MARCTransformationOptionsSettings marcTransformOptSet);
 
   MARCTransformationOptionsSettings toEntity(MARCTransformationOptionsSettingsDTO marcTransformOptSetDTO);

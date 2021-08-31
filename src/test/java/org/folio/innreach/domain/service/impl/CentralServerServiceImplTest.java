@@ -28,7 +28,7 @@ import org.folio.innreach.external.dto.AccessTokenDTO;
 import org.folio.innreach.external.service.InnReachAuthExternalService;
 import org.folio.innreach.mapper.CentralServerMapper;
 import org.folio.innreach.mapper.CentralServerMapperImpl;
-import org.folio.innreach.mapper.DateMapper;
+import org.folio.innreach.mapper.MappingMethods;
 import org.folio.innreach.repository.CentralServerRepository;
 
 class CentralServerServiceImplTest {
@@ -40,7 +40,7 @@ class CentralServerServiceImplTest {
   private InnReachAuthExternalService innReachAuthExternalService;
 
   @Spy
-  private CentralServerMapper centralServerMapper = new CentralServerMapperImpl(new DateMapper());
+  private CentralServerMapper centralServerMapper = new CentralServerMapperImpl(new MappingMethods());
 
   @Mock
   private PasswordEncoder passwordEncoder;

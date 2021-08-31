@@ -33,6 +33,7 @@
     <testcontainers.version>1.15.1</testcontainers.version>
     <easy-random-core.version>5.0.0</easy-random-core.version>
     <marc4j.version>2.9.2</marc4j.version>
+    <coffee-boots.version>2.2.0</coffee-boots.version>
     <spring-kafka.version>2.6.3</spring-kafka.version>
     <spring-feign.version>3.0.2</spring-feign.version>
     <argLine />
@@ -134,7 +135,11 @@
       <artifactId>commons-collections4</artifactId>
       <version>${commons-collections4.version}</version>
     </dependency>
-
+    <dependency>
+      <groupId>io.github.stepio.coffee-boots</groupId>
+      <artifactId>coffee-boots</artifactId>
+      <version>${coffee-boots.version}</version>
+    </dependency>
 
     <!-- Test dependencies -->
     <dependency>

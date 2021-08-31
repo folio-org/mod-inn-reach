@@ -25,6 +25,7 @@ import org.springframework.orm.jpa.JpaSystemException;
 import org.springframework.test.context.jdbc.Sql;
 
 import org.folio.innreach.domain.entity.LibraryMapping;
+import org.folio.innreach.domain.entity.base.AuditableUser;
 
 @Sql(scripts = {
     "classpath:db/central-server/pre-populate-central-server.sql",
@@ -42,7 +43,7 @@ class LibraryMappingRepositoryTest extends BaseRepositoryTest {
   private static final UUID PRE_POPULATED_IR_LOCATION2_UUID = fromString("a1c1472f-67ec-4938-b5a8-f119e51ab79b");
   private static final UUID PRE_POPULATED_CENTRAL_SERVER_UUID = fromString("edab6baf-c696-42b1-89bb-1bbb8759b0d2");
 
-  private static final String PRE_POPULATED_USER = "admin";
+  private static final AuditableUser PRE_POPULATED_USER = AuditableUser.SYSTEM;
 
 
   @Autowired
@@ -72,8 +73,6 @@ class LibraryMappingRepositoryTest extends BaseRepositoryTest {
 
     assertEquals(PRE_POPULATED_USER, mapping.getCreatedBy());
     assertNotNull(mapping.getCreatedDate());
-    assertEquals(PRE_POPULATED_USER, mapping.getLastModifiedBy());
-    assertNotNull(mapping.getLastModifiedDate());
   }
 
   @Test

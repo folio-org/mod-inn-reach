@@ -9,6 +9,7 @@ import org.jeasy.random.EasyRandom;
 import org.jeasy.random.EasyRandomParameters;
 
 import org.folio.innreach.domain.entity.ContributionCriteriaConfiguration;
+import org.folio.innreach.domain.entity.base.AuditableUser;
 
 @UtilityClass
 public class ContributionCriteriaConfigurationFixture {
@@ -17,11 +18,11 @@ public class ContributionCriteriaConfigurationFixture {
 
   static {
     EasyRandomParameters params = new EasyRandomParameters()
-        .randomize(named("createdBy"), () -> "admin")
+        .randomize(named("createdBy"), () -> AuditableUser.SYSTEM)
         .randomize(named("createdDate"), OffsetDateTime::now)
         .excludeField(named("centralServer"))
-        .excludeField(named("lastModifiedBy"))
-        .excludeField(named("lastModifiedDate"));
+        .excludeField(named("updatedBy"))
+        .excludeField(named("updatedDate"));
 
     contributionCriteriaRandom = new EasyRandom(params);
   }

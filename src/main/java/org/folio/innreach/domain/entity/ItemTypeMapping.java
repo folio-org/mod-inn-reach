@@ -24,7 +24,7 @@ import org.folio.innreach.domain.entity.base.Identifiable;
 @NoArgsConstructor
 @Entity
 @Table(name = "item_type_mapping")
-public class ItemTypeMapping  extends Auditable<String> implements Identifiable<UUID> {
+public class ItemTypeMapping  extends Auditable implements Identifiable<UUID> {
   @Id
   @GeneratedValue(strategy = GenerationType.AUTO)
   private UUID id;

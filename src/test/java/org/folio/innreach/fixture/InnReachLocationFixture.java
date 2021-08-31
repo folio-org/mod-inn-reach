@@ -10,6 +10,7 @@ import org.jeasy.random.EasyRandomParameters;
 import org.jeasy.random.randomizers.text.StringRandomizer;
 
 import org.folio.innreach.domain.entity.InnReachLocation;
+import org.folio.innreach.domain.entity.base.AuditableUser;
 import org.folio.innreach.dto.InnReachLocationDTO;
 
 @UtilityClass
@@ -21,11 +22,11 @@ public class InnReachLocationFixture {
     EasyRandomParameters params = new EasyRandomParameters()
         .randomize(named("code"), TestUtil::randomFiveCharacterCode)
         .randomize(named("description"), new StringRandomizer(255))
-        .randomize(named("createdBy"), () -> "admin")
+        .randomize(named("createdBy"), () -> AuditableUser.SYSTEM)
         .randomize(named("createdDate"), OffsetDateTime::now)
         .excludeField(named("id"))
-        .excludeField(named("lastModifiedBy"))
-        .excludeField(named("lastModifiedDate"))
+        .excludeField(named("updatedBy"))
+        .excludeField(named("updatedDate"))
         .excludeField(named("metadata"));
 
     locationRandom = new EasyRandom(params);

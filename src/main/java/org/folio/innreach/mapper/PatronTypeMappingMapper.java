@@ -8,24 +8,20 @@ import java.util.List;
 
 import org.mapstruct.InjectionStrategy;
 import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
 import org.springframework.data.domain.Page;
 
 import org.folio.innreach.domain.entity.PatronTypeMapping;
 import org.folio.innreach.dto.PatronTypeMappingDTO;
 import org.folio.innreach.dto.PatronTypeMappingsDTO;
 
-@Mapper(componentModel = "spring", injectionStrategy = InjectionStrategy.CONSTRUCTOR, uses = DateMapper.class)
+@Mapper(componentModel = "spring", injectionStrategy = InjectionStrategy.CONSTRUCTOR, uses = MappingMethods.class)
 public interface PatronTypeMappingMapper {
 
   PatronTypeMapping toEntity(PatronTypeMappingDTO dto);
 
   List<PatronTypeMapping> toEntities(Iterable<PatronTypeMappingDTO> dtos);
 
-  @Mapping(target = "metadata.createdDate", source = "entity.createdDate")
-  @Mapping(target = "metadata.createdByUsername", source = "entity.createdBy")
-  @Mapping(target = "metadata.updatedDate", source = "entity.lastModifiedDate")
-  @Mapping(target = "metadata.updatedByUsername", source = "entity.lastModifiedBy")
+  @AuditableMapping
   PatronTypeMappingDTO toDTO(PatronTypeMapping entity);
 
   List<PatronTypeMappingDTO> toDTOs(Iterable<PatronTypeMapping> entities);

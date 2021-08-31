@@ -52,7 +52,7 @@ import org.folio.innreach.domain.entity.base.Identifiable;
   hints = @QueryHint(name = QueryHints.PASS_DISTINCT_THROUGH, value = "false")
 )
 @Table(name = "contribution")
-public class Contribution extends Auditable<String> implements Identifiable<UUID> {
+public class Contribution extends Auditable implements Identifiable<UUID> {
 
   private static final String FETCH_CURRENT_POSTFIX = " WHERE c.centralServer.id = :id AND c.status = 0";
   public static final String FETCH_CURRENT_QUERY_NAME = "Contribution.fetchCurrent";
