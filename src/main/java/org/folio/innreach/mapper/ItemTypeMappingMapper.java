@@ -5,7 +5,6 @@ import org.folio.innreach.dto.ItemTypeMappingDTO;
 import org.folio.innreach.dto.ItemTypeMappingsDTO;
 import org.mapstruct.InjectionStrategy;
 import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
 import org.springframework.data.domain.Page;
 
 import java.util.List;
@@ -14,16 +13,13 @@ import static java.util.Collections.emptyList;
 import static org.apache.commons.collections4.ListUtils.emptyIfNull;
 import static org.apache.commons.lang3.ObjectUtils.defaultIfNull;
 
-@Mapper(componentModel = "spring", injectionStrategy = InjectionStrategy.CONSTRUCTOR, uses = DateMapper.class)
+@Mapper(componentModel = "spring", injectionStrategy = InjectionStrategy.CONSTRUCTOR, uses = MappingMethods.class)
 public interface ItemTypeMappingMapper {
   ItemTypeMapping toEntity(ItemTypeMappingDTO dto);
 
   List<ItemTypeMapping> toEntities(Iterable<ItemTypeMappingDTO> dtos);
 
-  @Mapping(target = "metadata.createdDate", source = "entity.createdDate")
-  @Mapping(target = "metadata.createdByUsername", source = "entity.createdBy")
-  @Mapping(target = "metadata.updatedDate", source = "entity.lastModifiedDate")
-  @Mapping(target = "metadata.updatedByUsername", source = "entity.lastModifiedBy")
+  @AuditableMapping
   ItemTypeMappingDTO toDTO(ItemTypeMapping entity);
 
   List<ItemTypeMappingDTO> toDTOs(Iterable<ItemTypeMapping> entities);
