@@ -844,6 +844,47 @@ paths:
           $ref: "#/components/responses/trait_response_500"
       parameters:
         - $ref: '#/components/parameters/centralServerId'
+  /central-servers/{centralServerId}/item-type-mappings:
+    get:
+      tags:
+        - item-type-mappings
+      responses:
+        '200':
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/itemTypeMappingsDTO"
+        '500':
+          $ref: "#/components/responses/trait_response_500"
+      description: Get a list of Item Type Mappings
+      operationId: getItemTypeMappingsByServerId
+      parameters:
+        - $ref: '#/components/parameters/centralServerId'
+        - $ref: "#/components/parameters/trait_pageable_offset"
+        - $ref: "#/components/parameters/trait_pageable_limit"
+    put:
+      description: Update Item Type Mappings
+      operationId: updateItemTypeMappings
+      tags:
+        - item-type-mappings
+      responses:
+        '204':
+          description: No content
+        '400':
+          $ref: "#/components/responses/trait_response_validation_400"
+        '404':
+          $ref: "#/components/responses/trait_response_404"
+        '500':
+          $ref: "#/components/responses/trait_response_500"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/itemTypeMappingsDTO"
+        required: true
+      parameters:
+        - $ref: '#/components/parameters/centralServerId'
 components:
   schemas:
     UUID:
@@ -898,6 +939,8 @@ components:
       $ref: schemas/contributionDTO.json
     contributionsDTO:
       $ref: schemas/contributionsDTO.json
+    itemTypeMappingsDTO:
+      $ref: schemas/itemTypeMappingsDTO.json
   parameters:
     id:
       name: id

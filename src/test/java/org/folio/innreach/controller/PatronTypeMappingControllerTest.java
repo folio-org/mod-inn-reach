@@ -105,8 +105,8 @@ class PatronTypeMappingControllerTest extends BaseControllerTest {
     var expected = existing.getPatronTypeMappings();
 
     assertEquals(expected.size(), updated.size());
-    assertEquals(expected.stream().map(PatronTypeMappingDTO::getPatronType).collect(Collectors.toList()),
-      updated.stream().map(PatronTypeMappingDTO::getPatronType).collect(Collectors.toList()));
+    assertThat(expected.stream().map(PatronTypeMappingDTO::getPatronType).collect(Collectors.toList()),
+      containsInAnyOrder(updated.stream().map(PatronTypeMappingDTO::getPatronType).toArray()));
   }
 
   @Test

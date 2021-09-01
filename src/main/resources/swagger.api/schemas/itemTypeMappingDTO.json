@@ -1,0 +1,33 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "description": "Item type mapping",
+  "type": "object",
+  "properties": {
+    "id": {
+      "description": "Mapping id",
+      "type": "string",
+      "format": "uuid"
+    },
+    "centralItemType": {
+      "description": "Central item type",
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 255
+    },
+    "materialTypeId": {
+      "description": "Material type id",
+      "type": "string",
+      "format": "uuid"
+    },
+    "metadata": {
+      "description": "Entity metadata",
+      "type": "object",
+      "$ref": "metadata.json"
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "centralItemType",
+    "materialTypeId"
+  ]
+}
