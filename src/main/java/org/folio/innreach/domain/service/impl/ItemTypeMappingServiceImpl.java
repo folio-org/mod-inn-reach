@@ -29,6 +29,7 @@ public class ItemTypeMappingServiceImpl implements ItemTypeMappingService {
   private final ItemTypeMappingMapper mapper;
 
   @Override
+  @Transactional(readOnly = true)
   public ItemTypeMappingsDTO getAllMappings(UUID centralServerId, Integer offset, Integer limit) {
     var example = mappingExampleWithServerId(centralServerId);
 

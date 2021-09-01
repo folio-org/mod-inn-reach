@@ -211,6 +211,16 @@
           "methods": ["POST"],
           "pathPattern": "/inn-reach/central-servers/{centralServerId}/contributions",
           "permissionsRequired": ["inn-reach.contributions.item.post"]
+        },
+        {
+          "methods": ["GET"],
+          "pathPattern": "/inn-reach/central-servers/{centralServerId}/item-type-mappings",
+          "permissionsRequired": ["inn-reach.item-type-mappings.collection.get"]
+        },
+        {
+          "methods": ["PUT"],
+          "pathPattern": "/inn-reach/central-servers/{centralServerId}/item-type-mappings",
+          "permissionsRequired": ["inn-reach.item-type-mappings.collection.put"]
         }
       ]
     },
