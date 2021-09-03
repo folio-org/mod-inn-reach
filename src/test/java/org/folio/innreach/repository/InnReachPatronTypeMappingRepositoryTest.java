@@ -31,12 +31,6 @@ class InnReachPatronTypeMappingRepositoryTest extends BaseRepositoryTest {
   private InnReachPatronTypeMappingRepository repository;
 
   @Test
-  @Sql(scripts = {
-    "classpath:db/central-server/clear-central-server-tables.sql",
-    "classpath:db/central-server/pre-populate-central-server.sql",
-    "classpath:db/inn-reach-patron-type-mapping/clear-inn_reach_patron_type_mapping_table.sql",
-    "classpath:db/inn-reach-patron-type-mapping/pre-populate-inn_reach_patron_type_mapping_table.sql"
-  })
   void saveNewInnReachPatronTypeMapping() {
     var innReachPatronTypeMapping = createInnReachPatronTypeMapping();
 
@@ -46,24 +40,12 @@ class InnReachPatronTypeMappingRepositoryTest extends BaseRepositoryTest {
   }
 
   @Test
-  @Sql(scripts = {
-    "classpath:db/central-server/clear-central-server-tables.sql",
-    "classpath:db/central-server/pre-populate-central-server.sql",
-    "classpath:db/inn-reach-patron-type-mapping/clear-inn_reach_patron_type_mapping_table.sql",
-    "classpath:db/inn-reach-patron-type-mapping/pre-populate-inn_reach_patron_type_mapping_table.sql"
-  })
   void getInnReachPatronTypeMappingById() {
     var innReachPatronTypeMapping = repository.getOne(PRE_POPULATED_INN_REACH_PATRON_TYPE_MAPPING_ID);
     assertNotNull(innReachPatronTypeMapping);
   }
 
   @Test
-  @Sql(scripts = {
-    "classpath:db/central-server/clear-central-server-tables.sql",
-    "classpath:db/central-server/pre-populate-central-server.sql",
-    "classpath:db/inn-reach-patron-type-mapping/clear-inn_reach_patron_type_mapping_table.sql",
-    "classpath:db/inn-reach-patron-type-mapping/pre-populate-inn_reach_patron_type_mapping_table.sql"
-  })
   void updateInnReachPatronTypeMapping() {
     var innReachPatronTypeMapping = repository.getOne(PRE_POPULATED_INN_REACH_PATRON_TYPE_MAPPING_ID);
 
@@ -77,12 +59,6 @@ class InnReachPatronTypeMappingRepositoryTest extends BaseRepositoryTest {
   }
 
   @Test
-  @Sql(scripts = {
-    "classpath:db/central-server/clear-central-server-tables.sql",
-    "classpath:db/central-server/pre-populate-central-server.sql",
-    "classpath:db/inn-reach-patron-type-mapping/clear-inn_reach_patron_type_mapping_table.sql",
-    "classpath:db/inn-reach-patron-type-mapping/pre-populate-inn_reach_patron_type_mapping_table.sql"
-  })
   void deleteInnReachPatronTypeMapping() {
     repository.deleteById(PRE_POPULATED_INN_REACH_PATRON_TYPE_MAPPING_ID);
 
