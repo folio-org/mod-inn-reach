@@ -885,6 +885,49 @@ paths:
         required: true
       parameters:
         - $ref: '#/components/parameters/centralServerId'
+  /central-servers/{centralServerId}/user-custom-field-mappings/{customFieldId}:
+    get:
+      tags:
+        - user-custom-field-mappings
+      responses:
+        '200':
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/userCustomFieldMappingsDTO"
+        '500':
+          $ref: "#/components/responses/trait_response_500"
+      description: Get a list of User Custom Field Mappings
+      operationId: getUserCustomFieldMappingsByServerId
+      parameters:
+        - $ref: '#/components/parameters/centralServerId'
+        - $ref: '#/components/parameters/customFieldId'
+        - $ref: "#/components/parameters/trait_pageable_offset"
+        - $ref: "#/components/parameters/trait_pageable_limit"
+    put:
+      description: Update User Custom Field Mappings
+      operationId: updateUserCustomFieldMappings
+      tags:
+        - user-custom-field-mappings
+      responses:
+        '204':
+          description: No content
+        '400':
+          $ref: "#/components/responses/trait_response_validation_400"
+        '404':
+          $ref: "#/components/responses/trait_response_404"
+        '500':
+          $ref: "#/components/responses/trait_response_500"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/userCustomFieldMappingsDTO"
+        required: true
+      parameters:
+        - $ref: '#/components/parameters/centralServerId'
+        - $ref: '#/components/parameters/customFieldId'
 components:
   schemas:
     UUID:
@@ -941,6 +984,8 @@ components:
       $ref: schemas/contributionsDTO.json
     itemTypeMappingsDTO:
       $ref: schemas/itemTypeMappingsDTO.json
+    userCustomFieldMappingsDTO:
+      $ref: schemas/userCustomFieldMappingsDTO.json
   parameters:
     id:
       name: id
@@ -962,6 +1007,12 @@ components:
         $ref: "#/components/schemas/UUID"
     inventoryInstanceId:
       name: inventoryInstanceId
+      in: path
+      required: true
+      schema:
+        $ref: "#/components/schemas/UUID"
+    customFieldId:
+      name: customFieldId
       in: path
       required: true
       schema:

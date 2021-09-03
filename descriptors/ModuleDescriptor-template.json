@@ -221,6 +221,16 @@
           "methods": ["PUT"],
           "pathPattern": "/inn-reach/central-servers/{centralServerId}/item-type-mappings",
           "permissionsRequired": ["inn-reach.item-type-mappings.collection.put"]
+        },
+        {
+          "methods": ["GET"],
+          "pathPattern": "/inn-reach/central-servers/{centralServerId}/user-custom-field-mappings/{customFieldId}",
+          "permissionsRequired": ["inn-reach.user-custom-field-mappings.collection.get"]
+        },
+        {
+          "methods": ["PUT"],
+          "pathPattern": "/inn-reach/central-servers/{centralServerId}/user-custom-field-mappings/{customFieldId}",
+          "permissionsRequired": ["inn-reach.user-custom-field-mappings.collection.put"]
         }
       ]
     },
@@ -599,6 +609,25 @@
       ]
     },
     {
+      "permissionName" : "inn-reach.user-custom-field-mappings.collection.get",
+      "displayName" : "get a collection of user custom field mapping entries",
+      "description" : "Get a collection of user custom field mapping entries"
+    },
+    {
+      "permissionName" : "inn-reach.user-custom-field-mappings.collection.put",
+      "displayName" : "update a collection of user custom field mapping entries",
+      "description" : "Update a collection of user custom field mapping entries"
+    },
+    {
+      "permissionName" : "inn-reach.user-custom-field-mappings.all",
+      "displayName" : "inn reach API module - all permissions of user custom field mappings",
+      "description" : "All permissions of inn reach user custom field mappings scope",
+      "subPermissions" : [
+        "inn-reach.user-custom-field-mappings.collection.get",
+        "inn-reach.user-custom-field-mappings.collection.put"
+      ]
+    },
+    {
       "permissionName" : "inn-reach.all",
       "displayName" : "inn reach API module - all permissions",
       "description" : "All permissions for inn reach",
@@ -616,7 +645,8 @@
         "inn-reach.central-servers.marc-transformation-options-settings.all",
         "inn-reach.patron-type-mappings.all",
         "inn-reach.contributions.all",
-        "inn-reach.item-type-mappings.all"
+        "inn-reach.item-type-mappings.all",
+        "inn-reach.user-custom-field-mappings.all"
       ]
     }
   ],
