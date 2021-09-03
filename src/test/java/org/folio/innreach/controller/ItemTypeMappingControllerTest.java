@@ -15,11 +15,14 @@ import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TES
 import static org.springframework.test.context.jdbc.SqlMergeMode.MergeMode.MERGE;
 
 import static org.folio.innreach.fixture.TestUtil.deserializeFromJsonFile;
-import static org.folio.innreach.fixture.TestUtil.randomInteger;
+import static org.folio.innreach.fixture.TestUtil.randomDistinctIntegers;
+import static org.folio.innreach.fixture.TestUtil.randomIntegerExcept;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -34,41 +37,43 @@ import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlMergeMode;
 
 import org.folio.innreach.controller.base.BaseControllerTest;
-import org.folio.innreach.domain.entity.PatronTypeMapping;
+import org.folio.innreach.domain.entity.ItemTypeMapping;
 import org.folio.innreach.dto.Error;
-import org.folio.innreach.dto.PatronTypeMappingDTO;
-import org.folio.innreach.dto.PatronTypeMappingsDTO;
-import org.folio.innreach.mapper.PatronTypeMappingMapper;
-import org.folio.innreach.repository.PatronTypeMappingRepository;
+import org.folio.innreach.dto.ItemTypeMappingDTO;
+import org.folio.innreach.dto.ItemTypeMappingsDTO;
+import org.folio.innreach.mapper.ItemTypeMappingMapper;
+import org.folio.innreach.repository.ItemTypeMappingRepository;
 
 @Sql(
   scripts = {
-    "classpath:db/patron-type-mapping/clear-patron-type-mapping-tables.sql",
+    "classpath:db/item-type-mapping/clear-item-type-mapping-tables.sql",
     "classpath:db/central-server/clear-central-server-tables.sql"},
   executionPhase = AFTER_TEST_METHOD
 )
 @SqlMergeMode(MERGE)
-class PatronTypeMappingControllerTest extends BaseControllerTest {
+class ItemTypeMappingControllerTest extends BaseControllerTest {
+
   private static final String PRE_POPULATED_CENTRAL_SERVER_ID = "edab6baf-c696-42b1-89bb-1bbb8759b0d2";
-  private static final String PRE_POPULATED_PATRON_TYPE_MAPPING_ID1 = "5c39c67f-1373-4ec9-b356-fb71aba3e659";
-  private static final String PRE_POPULATED_PATRON_TYPE_MAPPING_ID2 = "1af0b16e-24bc-44cb-9c9a-ca07167e41d4";
-  private static final String PRE_POPULATED_PATRON_GROUP_ID1 = "54e17c4c-e315-4d20-8879-efc694dea1ce";
+  private static final String PRE_POPULATED_ITEM_TYPE_MAPPING_ID1 = "f8c5d329-c3db-40c1-9e96-d6176f76b0da";
+  private static final String PRE_POPULATED_ITEM_TYPE_MAPPING_ID2 = "606f5a38-9e1f-45d0-856e-899c5667410d";
+
+  private static final Integer PRE_POPULATED_CENTRAL_ITEM_TYPE1 = 1;
 
   @Autowired
   private TestRestTemplate testRestTemplate;
   @Autowired
-  private PatronTypeMappingRepository repository;
+  private ItemTypeMappingRepository repository;
   @Autowired
-  private PatronTypeMappingMapper mapper;
+  private ItemTypeMappingMapper mapper;
 
   @Test
   @Sql(scripts = {
     "classpath:db/central-server/pre-populate-central-server.sql",
-    "classpath:db/patron-type-mapping/pre-populate-patron-type-mapping.sql"
+    "classpath:db/item-type-mapping/pre-populate-item-type-mapping.sql"
   })
   void shouldGetAllExistingMappings() {
     var responseEntity = testRestTemplate.getForEntity(
-      "/inn-reach/central-servers/{centralServerId}/patron-type-mappings", PatronTypeMappingsDTO.class,
+      "/inn-reach/central-servers/{centralServerId}/item-type-mappings", ItemTypeMappingsDTO.class,
       PRE_POPULATED_CENTRAL_SERVER_ID);
 
     assertTrue(responseEntity.getStatusCode().is2xxSuccessful());
@@ -77,9 +82,9 @@ class PatronTypeMappingControllerTest extends BaseControllerTest {
     var response = responseEntity.getBody();
     assertNotNull(response);
 
-    var mappings = response.getPatronTypeMappings();
+    var mappings = response.getItemTypeMappings();
 
-    List<PatronTypeMapping> dbMappings = repository.findAll();
+    List<ItemTypeMapping> dbMappings = repository.findAll();
 
     assertEquals(dbMappings.size(), response.getTotalRecords());
     assertThat(mappings, containsInAnyOrder(mapper.toDTOs(dbMappings).toArray()));
@@ -88,47 +93,48 @@ class PatronTypeMappingControllerTest extends BaseControllerTest {
   @Test
   @Sql(scripts = {
     "classpath:db/central-server/pre-populate-central-server.sql",
-    "classpath:db/patron-type-mapping/pre-populate-patron-type-mapping.sql"
+    "classpath:db/item-type-mapping/pre-populate-item-type-mapping.sql"
   })
   void shouldUpdateAllExistingMappings() {
     var existing = mapper.toDTOCollection(repository.findAll());
-    existing.getPatronTypeMappings().forEach(m -> m.setPatronType(randomInteger(256)));
+    var centralItemTypes = new ArrayList<>(randomDistinctIntegers(256, 2));
+    existing.getItemTypeMappings().forEach(m -> m.setCentralItemType(centralItemTypes.get(existing.getItemTypeMappings().indexOf(m))));
 
     var responseEntity = testRestTemplate.exchange(
-      "/inn-reach/central-servers/{centralServerId}/patron-type-mappings", HttpMethod.PUT,
+      "/inn-reach/central-servers/{centralServerId}/item-type-mappings", HttpMethod.PUT,
       new HttpEntity<>(existing), Void.class, PRE_POPULATED_CENTRAL_SERVER_ID);
 
     assertEquals(HttpStatus.NO_CONTENT, responseEntity.getStatusCode());
     assertFalse(responseEntity.hasBody());
 
     var updated = mapper.toDTOs(repository.findAll());
-    var expected = existing.getPatronTypeMappings();
+    var expected = existing.getItemTypeMappings();
 
     assertEquals(expected.size(), updated.size());
-    assertThat(expected.stream().map(PatronTypeMappingDTO::getPatronType).collect(Collectors.toList()),
-      containsInAnyOrder(updated.stream().map(PatronTypeMappingDTO::getPatronType).toArray()));
+    assertEquals(expected.stream().map(ItemTypeMappingDTO::getCentralItemType).collect(Collectors.toList()),
+      updated.stream().map(ItemTypeMappingDTO::getCentralItemType).collect(Collectors.toList()));
   }
 
   @Test
   @Sql(scripts = {
     "classpath:db/central-server/pre-populate-central-server.sql",
-    "classpath:db/patron-type-mapping/pre-populate-patron-type-mapping.sql"
+    "classpath:db/item-type-mapping/pre-populate-item-type-mapping.sql"
   })
   void shouldCreateUpdateAndDeleteMappingsAtTheSameTime() {
     var mappings = mapper.toDTOCollection(repository.findAll());
-    List<PatronTypeMappingDTO> em = mappings.getPatronTypeMappings();
+    List<ItemTypeMappingDTO> em = mappings.getItemTypeMappings();
 
-    em.removeIf(idEqualsTo(fromString(PRE_POPULATED_PATRON_TYPE_MAPPING_ID1)));         // to delete
-    Integer patronType = randomInteger(256);
-    findInList(em, fromString(PRE_POPULATED_PATRON_TYPE_MAPPING_ID2))   // to update
-      .ifPresent(mapping -> mapping.setPatronType(patronType));
+    em.removeIf(idEqualsTo(fromString(PRE_POPULATED_ITEM_TYPE_MAPPING_ID1)));         // to delete
+    Integer centralItemType = randomIntegerExcept(256, Set.of(1, 2));
+    findInList(em, fromString(PRE_POPULATED_ITEM_TYPE_MAPPING_ID2))   // to update
+      .ifPresent(mapping -> mapping.setCentralItemType(centralItemType));
 
-    var newMappings = deserializeFromJsonFile("/patron-type-mapping/create-patron-type-mappings-request.json",
-      PatronTypeMappingsDTO.class);
-    em.addAll(newMappings.getPatronTypeMappings());       // to insert
+    var newMappings = deserializeFromJsonFile("/item-type-mapping/create-item-type-mappings-request.json",
+      ItemTypeMappingsDTO.class);
+    em.addAll(newMappings.getItemTypeMappings());       // to insert
 
     var responseEntity = testRestTemplate.exchange(
-      "/inn-reach/central-servers/{centralServerId}/patron-type-mappings", HttpMethod.PUT, new HttpEntity<>(mappings),
+      "/inn-reach/central-servers/{centralServerId}/item-type-mappings", HttpMethod.PUT, new HttpEntity<>(mappings),
       Void.class, PRE_POPULATED_CENTRAL_SERVER_ID);
 
     assertEquals(HttpStatus.NO_CONTENT, responseEntity.getStatusCode());
@@ -138,30 +144,29 @@ class PatronTypeMappingControllerTest extends BaseControllerTest {
 
     assertEquals(em.size(), stored.size());
     // verify deleted
-    assertTrue(findInList(stored, fromString(PRE_POPULATED_PATRON_TYPE_MAPPING_ID1)).isEmpty());
+    assertTrue(findInList(stored, fromString(PRE_POPULATED_ITEM_TYPE_MAPPING_ID1)).isEmpty());
     // verify updated
-    assertEquals(patronType,
-      findInList(stored, fromString(PRE_POPULATED_PATRON_TYPE_MAPPING_ID2))
-        .map(PatronTypeMappingDTO::getPatronType).get());
+    assertEquals(centralItemType,
+      findInList(stored, fromString(PRE_POPULATED_ITEM_TYPE_MAPPING_ID2))
+        .map(ItemTypeMappingDTO::getCentralItemType).get());
     // verify inserted
     assertThat(stored, hasItems(
-      samePropertyValuesAs(newMappings.getPatronTypeMappings().get(0), "id", "metadata"),
-      samePropertyValuesAs(newMappings.getPatronTypeMappings().get(1), "id", "metadata")
+      samePropertyValuesAs(newMappings.getItemTypeMappings().get(0), "id", "metadata"),
+      samePropertyValuesAs(newMappings.getItemTypeMappings().get(1), "id", "metadata")
     ));
   }
 
   @Test
   @Sql(scripts = {
     "classpath:db/central-server/pre-populate-central-server.sql",
-    "classpath:db/patron-type-mapping/pre-populate-patron-type-mapping.sql"
+    "classpath:db/item-type-mapping/pre-populate-item-type-mapping.sql"
   })
-  void return409WhenUpdatingMappingAndPatronTypeIdAlreadyMapped() {
+  void return409WhenUpdatingMappingAndCentralItemTypeIsAlreadyMapped() {
     var existing = mapper.toDTOCollection(repository.findAll());
-    existing.getPatronTypeMappings().forEach(m -> m.setPatronGroupId(
-      UUID.fromString(PRE_POPULATED_PATRON_GROUP_ID1)));
+    existing.getItemTypeMappings().forEach(m -> m.setCentralItemType(PRE_POPULATED_CENTRAL_ITEM_TYPE1));
 
     var responseEntity = testRestTemplate.exchange(
-      "/inn-reach/central-servers/{centralServerId}/patron-type-mappings", HttpMethod.PUT, new HttpEntity<>(existing),
+      "/inn-reach/central-servers/{centralServerId}/item-type-mappings", HttpMethod.PUT, new HttpEntity<>(existing),
       Error.class, PRE_POPULATED_CENTRAL_SERVER_ID);
 
     assertEquals(CONFLICT, responseEntity.getStatusCode());
@@ -170,24 +175,24 @@ class PatronTypeMappingControllerTest extends BaseControllerTest {
   @Test
   @Sql(scripts = {
     "classpath:db/central-server/pre-populate-central-server.sql",
-    "classpath:db/patron-type-mapping/pre-populate-patron-type-mapping.sql"
+    "classpath:db/item-type-mapping/pre-populate-item-type-mapping.sql"
   })
-  void return409WhenUpdatingMappingWithInvalidPatronType() {
-    var newMapping = deserializeFromJsonFile("/patron-type-mapping/update-patron-type-mappings-invalid-request.json",
-      PatronTypeMappingsDTO.class);
+  void return409WhenUpdatingMappingWithInvalidCentralItemType() {
+    var newMapping = deserializeFromJsonFile("/item-type-mapping/update-item-type-mappings-invalid-request.json",
+      ItemTypeMappingsDTO.class);
 
     var responseEntity = testRestTemplate.exchange(
-      "/inn-reach/central-servers/{centralServerId}/patron-type-mappings", HttpMethod.PUT, new HttpEntity<>(newMapping),
+      "/inn-reach/central-servers/{centralServerId}/item-type-mappings", HttpMethod.PUT, new HttpEntity<>(newMapping),
       Error.class, PRE_POPULATED_CENTRAL_SERVER_ID);
 
     assertEquals(BAD_REQUEST, responseEntity.getStatusCode());
   }
 
-  private static Predicate<PatronTypeMappingDTO> idEqualsTo(UUID id) {
+  private static Predicate<ItemTypeMappingDTO> idEqualsTo(UUID id) {
     return mapping -> Objects.equals(mapping.getId(), id);
   }
 
-  private static Optional<PatronTypeMappingDTO> findInList(List<PatronTypeMappingDTO> mappings, UUID id) {
+  private static Optional<ItemTypeMappingDTO> findInList(List<ItemTypeMappingDTO> mappings, UUID id) {
     return mappings.stream().filter(idEqualsTo(id)).findFirst();
   }
 }

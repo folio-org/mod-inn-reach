@@ -1,0 +1,2 @@
+DELETE
+FROM user_custom_field_mapping;

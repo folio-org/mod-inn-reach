@@ -20,6 +20,7 @@ import org.folio.innreach.domain.entity.LibraryMapping;
 import org.folio.innreach.domain.entity.LocationMapping;
 import org.folio.innreach.domain.entity.MaterialTypeMapping;
 import org.folio.innreach.domain.entity.PatronTypeMapping;
+import org.folio.innreach.domain.entity.UserCustomFieldMapping;
 import org.folio.innreach.domain.entity.base.AuditableUser;
 
 @UtilityClass
@@ -32,6 +33,7 @@ public class MappingFixture {
   private static final EasyRandom libraryAndLocationRandom;
   private static final EasyRandom patronTypeRandom;
   private static final EasyRandom itemTypeRandom;
+  private static final EasyRandom userCustomFieldRandom;
   private static final EasyRandom innReachPatronRandom;
 
   static {
@@ -91,6 +93,20 @@ public class MappingFixture {
 
   static {
     EasyRandomParameters params = new EasyRandomParameters()
+      .randomize(named("agencyCode"), TestUtil::randomFiveCharacterCode)
+      .randomize(named("createdBy"), () -> AuditableUser.SYSTEM)
+      .randomize(named("createdDate"), OffsetDateTime::now)
+      .randomize(named("centralServer"), MappingFixture::refCentralServer)
+      .excludeField(named("id"))
+      .excludeField(named("updatedBy"))
+      .excludeField(named("updatedDate"))
+      .excludeField(named("metadata"));
+
+    userCustomFieldRandom = new EasyRandom(params);
+  }
+
+  static {
+    EasyRandomParameters params = new EasyRandomParameters()
       .randomize(named("innReachPatronType"), new IntegerRangeRandomizer(0, 256))
       .randomize(named("folioUserBarcode"), new StringRandomizer(10))
       .randomize(named("createdBy"), () -> AuditableUser.SYSTEM)
@@ -118,6 +134,10 @@ public class MappingFixture {
 
   public static PatronTypeMapping createPatronTypeMapping() {
     return patronTypeRandom.nextObject(PatronTypeMapping.class);
+  }
+
+  public static UserCustomFieldMapping createUserCustomFieldMapping() {
+    return userCustomFieldRandom.nextObject(UserCustomFieldMapping.class);
   }
 
   public static ItemTypeMapping createItemTypeMapping() {

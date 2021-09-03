@@ -1,6 +1,8 @@
 package org.folio.innreach.fixture;
 
+import java.util.HashSet;
 import java.util.Random;
+import java.util.Set;
 import java.util.UUID;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -18,7 +20,29 @@ public class TestUtil {
     return randomUUIDString().substring(0, 5);
   }
 
-  public static int randomInteger(int range) { return new Random().nextInt(range); }
+  public static int randomInteger(int range) {
+    return new Random().nextInt(range);
+  }
+
+  public static Set<Integer> randomDistinctIntegers(int range, int amount) {
+    if (range < amount) return new HashSet<>();
+
+    Random random = new Random();
+    Set<Integer> integers = new HashSet<>();
+    while (integers.size() < amount) {
+      integers.add(random.nextInt(range));
+    }
+    return integers;
+  }
+
+  public static int randomIntegerExcept(int range, Set<Integer> except){
+    Random random = new Random();
+    int integer;
+    do {
+      integer = random.nextInt(range);
+    } while (except.contains(integer));
+    return integer;
+  }
 
   @SneakyThrows
   public static <T> T deserializeFromJsonFile(String path, Class<T> type) {
