@@ -673,6 +673,14 @@
         "value": "5"
       },
       {
+        "name": "OKAPI_URL",
+        "value": "http://localhost:8081"
+      },
+      {
+        "name": "ENV",
+        "value": "folio"
+      },
+      {
         "name": "SYSTEM_USER_PASSWORD",
         "value": "Mod-innreach-1-0-0"
       },

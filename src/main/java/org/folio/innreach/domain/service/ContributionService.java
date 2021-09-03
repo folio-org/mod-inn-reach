@@ -1,11 +1,10 @@
 package org.folio.innreach.domain.service;
 
-import java.util.List;
 import java.util.UUID;
 
 import org.folio.innreach.domain.dto.folio.ContributionItemCirculationStatus;
-import org.folio.innreach.domain.dto.folio.inventorystorage.InstanceIterationEvent;
 import org.folio.innreach.dto.ContributionDTO;
+import org.folio.innreach.dto.ContributionErrorDTO;
 import org.folio.innreach.dto.ContributionsDTO;
 
 public interface ContributionService {
@@ -14,10 +13,14 @@ public interface ContributionService {
 
   ContributionsDTO getHistory(UUID centralServerId, int offset, int limit);
 
-  void contributeInstances(List<InstanceIterationEvent> events);
+  void updateContributionStats(UUID centralServerId, ContributionDTO contribution);
 
   void startInitialContribution(UUID centralServerId);
 
+  void completeContribution(UUID centralServerId);
+
   ContributionItemCirculationStatus getItemCirculationStatus(UUID centralServerId, UUID itemId);
+
+  void logContributionError(UUID contributionId, ContributionErrorDTO error);
 
 }

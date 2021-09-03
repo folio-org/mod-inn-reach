@@ -6,10 +6,11 @@ import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 
+import org.folio.innreach.config.FolioRequestInterceptor;
 import org.folio.innreach.domain.dto.folio.inventory.InventoryInstanceDTO;
 import org.folio.innreach.domain.dto.folio.inventory.InventoryItemDTO;
 
-@FeignClient("inventory")
+@FeignClient(name = "inventory", configuration = FolioRequestInterceptor.class)
 public interface InventoryClient {
 
   @GetMapping("/instances/{instanceId}")

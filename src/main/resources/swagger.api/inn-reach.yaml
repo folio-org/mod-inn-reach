@@ -941,6 +941,10 @@ components:
       $ref: schemas/contributionsDTO.json
     itemTypeMappingsDTO:
       $ref: schemas/itemTypeMappingsDTO.json
+    instance:
+      $ref: schemas/inventorystorage/instance.json
+    item:
+      $ref: schemas/inventorystorage/item.json
   parameters:
     id:
       name: id

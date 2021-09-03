@@ -1,0 +1,53 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "description": "Holding description",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Unique ID of the holding record"
+    },
+    "permanentLocationId": {
+      "type": "string",
+      "description": "The permanent shelving location in which an item resides."
+    },
+    "discoverySuppress": {
+      "type": "boolean",
+      "description": "Indicates that the record should not be displayed in a discovery system"
+    },
+    "hrid": {
+      "type": "string",
+      "description": "the human readable ID, also called eye readable ID. A system-assigned sequential ID which maps to the Instance ID"
+    },
+    "tags": {
+      "description": "arbitrary tags associated with this holding",
+      "$ref": "tags.json"
+    },
+    "callNumberPrefix": {
+      "type": "string",
+      "description": "Prefix of the call number on the holding level."
+    },
+    "callNumber": {
+      "type": "string",
+      "description": "Call Number is an identifier assigned to an item, usually printed on a label attached to the item."
+    },
+    "callNumberSuffix": {
+      "type": "string",
+      "description": "Suffix of the call number on the holding level."
+    },
+    "electronicAccess": {
+      "type": "array",
+      "description": "List of electronic access items",
+      "items": {
+        "$ref": "electronicAccess.json"
+      }
+    },
+    "notes": {
+      "type": "array",
+      "description": "Notes about action, copy, binding etc.",
+      "items": {
+        "$ref": "note.json"
+      }
+    }
+  }
+}

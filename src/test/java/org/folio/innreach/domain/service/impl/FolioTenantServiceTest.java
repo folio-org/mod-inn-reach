@@ -10,13 +10,15 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import org.folio.innreach.batch.contribution.service.ContributionJobRunner;
+
 class FolioTenantServiceTest {
 
   @Mock
   private SystemUserService systemUserService;
 
   @Mock
-  private KafkaService kafkaService;
+  private ContributionJobRunner contributionJobRunner;
 
   @InjectMocks
   private FolioTenantService service;
@@ -31,7 +33,7 @@ class FolioTenantServiceTest {
     service.initializeTenant();
 
     verify(systemUserService).prepareSystemUser();
-    verify(kafkaService).restartEventListeners();
+    verify(contributionJobRunner).restart();
   }
 
   @Test

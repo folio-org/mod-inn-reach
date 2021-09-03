@@ -14,6 +14,7 @@ import org.folio.spring.FolioExecutionContext;
 @Service
 @RequiredArgsConstructor
 public class TenantScopedExecutionService {
+
   private final FolioExecutionContextBuilder contextBuilder;
   private final SystemUserService systemUserService;
 
@@ -31,6 +32,23 @@ public class TenantScopedExecutionService {
     try {
       beginFolioExecutionContext(folioExecutionContext(tenantId));
       return job.call();
+    } finally {
+      endFolioExecutionContext();
+    }
+  }
+
+  /**
+   * Executes given job tenant scoped.
+   *
+   * @param tenantId - The tenant name.
+   * @param job      - Job to be executed in tenant scope.
+   * @throws RuntimeException - Wrapped exception from the job.
+   */
+  @SneakyThrows
+  public void executeTenantScoped(String tenantId, Runnable job) {
+    try {
+      beginFolioExecutionContext(folioExecutionContext(tenantId));
+      job.run();
     } finally {
       endFolioExecutionContext();
     }
