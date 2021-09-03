@@ -116,7 +116,6 @@ batch:
       chunk-size: 1
       retry-attempts: 3
       retry-interval-ms: 20000
-      reader-group-id: ${ENV:folio}-mod-innreach-events-group
       reader-topic: folio.diku.inventory.instance-contribution
       reader-poll-timeout-sec: 600
 okapi.url: ${OKAPI_URL:http://localhost:8081}

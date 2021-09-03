@@ -29,8 +29,6 @@ public class ContributionJobExecutionListener extends JobExecutionListenerSuppor
     var current = contributionService.getCurrent(context.getCentralServerId());
 
     Assert.isTrue(current.getStatus() == IN_PROGRESS, "Initial contribution is not found");
-    Assert.isTrue(current.getItemTypeMappingStatus() == VALID, "Invalid item types mapping status");
-    Assert.isTrue(current.getLocationsMappingStatus() == VALID, "Invalid locations mapping status");
   }
 
   @Override

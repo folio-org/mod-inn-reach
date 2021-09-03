@@ -68,7 +68,6 @@ public class ContributionJobConfig {
   @Bean
   public KafkaItemReader<String, InstanceIterationEvent> kafkaReader() {
     Properties props = new Properties();
-    props.put(GROUP_ID_CONFIG, jobProperties.getReaderGroupId());
     props.putAll(kafkaProperties.buildConsumerProperties());
 
     String topic = jobProperties.getReaderTopic();
