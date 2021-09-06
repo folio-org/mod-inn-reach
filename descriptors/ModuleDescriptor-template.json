@@ -221,6 +221,16 @@
           "methods": ["PUT"],
           "pathPattern": "/inn-reach/central-servers/{centralServerId}/item-type-mappings",
           "permissionsRequired": ["inn-reach.item-type-mappings.collection.put"]
+        },
+        {
+          "methods": ["GET"],
+          "pathPattern": "/inn-reach/central-servers/{centralServerId}/central-patron-type-mappings",
+          "permissionsRequired": ["inn-reach.central-patron-type-mappings.collection.get"]
+        },
+        {
+          "methods": ["PUT"],
+          "pathPattern": "/inn-reach/central-servers/{centralServerId}/central-patron-type-mappings",
+          "permissionsRequired": ["inn-reach.central-patron-type-mappings.collection.put"]
         }
       ]
     },
@@ -599,6 +609,25 @@
       ]
     },
     {
+      "permissionName" : "inn-reach.central-patron-type-mappings.collection.get",
+      "displayName" : "get a collection of inn reach central patron type mapping entries",
+      "description" : "Get a collection of inn reach central patron type mapping entries"
+    },
+    {
+      "permissionName" : "inn-reach.central-patron-type-mappings.collection.put",
+      "displayName" : "update a collection of inn reach central patron mapping entries",
+      "description" : "Update a collection of inn reach central patron mapping entries"
+    },
+    {
+      "permissionName" : "inn-reach.central-patron-type-mappings.all",
+      "displayName" : "inn reach API module - all permissions of central patron mappings",
+      "description" : "All permissions of inn reach central patron mappings scope",
+      "subPermissions" : [
+        "inn-reach.central-patron-type-mappings.collection.get",
+        "inn-reach.central-patron-type-mappings.collection.put"
+      ]
+    },
+    {
       "permissionName" : "inn-reach.all",
       "displayName" : "inn reach API module - all permissions",
       "description" : "All permissions for inn reach",
@@ -616,7 +645,8 @@
         "inn-reach.central-servers.marc-transformation-options-settings.all",
         "inn-reach.patron-type-mappings.all",
         "inn-reach.contributions.all",
-        "inn-reach.item-type-mappings.all"
+        "inn-reach.item-type-mappings.all",
+        "inn-reach.central-patron-type-mappings.all"
       ]
     }
   ],
