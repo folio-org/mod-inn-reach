@@ -45,6 +45,7 @@
       src/main/java/org/folio/innreach/repository/**,
       src/main/java/org/folio/innreach/external/dto/**,
       src/main/java/org/folio/innreach/rest/**
+      src/main/java/org/folio/innreach/config/**
     </sonar.exclusions>
   </properties>
 
