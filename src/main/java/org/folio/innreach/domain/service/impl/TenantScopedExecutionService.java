@@ -37,23 +37,6 @@ public class TenantScopedExecutionService {
     }
   }
 
-  /**
-   * Executes given job tenant scoped.
-   *
-   * @param tenantId - The tenant name.
-   * @param job      - Job to be executed in tenant scope.
-   * @throws RuntimeException - Wrapped exception from the job.
-   */
-  @SneakyThrows
-  public void executeTenantScoped(String tenantId, Runnable job) {
-    try {
-      beginFolioExecutionContext(folioExecutionContext(tenantId));
-      job.run();
-    } finally {
-      endFolioExecutionContext();
-    }
-  }
-
   private FolioExecutionContext folioExecutionContext(String tenant) {
     return contextBuilder.forSystemUser(systemUserService.getSystemUser(tenant));
   }

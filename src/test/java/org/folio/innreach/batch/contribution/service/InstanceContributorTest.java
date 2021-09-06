@@ -1,0 +1,59 @@
+package org.folio.innreach.batch.contribution.service;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
+
+import java.util.ArrayList;
+import java.util.UUID;
+import java.util.concurrent.Callable;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+
+import org.folio.innreach.batch.contribution.ContributionJobContext;
+import org.folio.innreach.domain.service.ContributionCriteriaConfigurationService;
+import org.folio.innreach.domain.service.MARCRecordTransformationService;
+import org.folio.innreach.domain.service.impl.TenantScopedExecutionService;
+import org.folio.innreach.dto.Instance;
+import org.folio.innreach.external.service.InnReachContributionService;
+
+class InstanceContributorTest {
+
+  @Mock
+  private TenantScopedExecutionService tenantScopedExecutionService;
+  @Mock
+  private MARCRecordTransformationService marcRecordTransformationService;
+  @Mock
+  private ContributionCriteriaConfigurationService contributionConfig;
+  @Mock
+  private InnReachContributionService contributionService;
+  @Mock
+  private ContributionJobContext jobContext;
+
+  @InjectMocks
+  private InstanceContributor instanceContributor;
+
+  @BeforeEach
+  public void beforeEachSetup() {
+    MockitoAnnotations.openMocks(this);
+  }
+
+  @Test
+  void shouldWrite() throws Exception {
+    var instances = new ArrayList<Instance>();
+    instanceContributor.write(instances);
+
+    when(jobContext.getTenantId()).thenReturn("test");
+    when(jobContext.getCentralServerId()).thenReturn(UUID.randomUUID());
+
+    when(tenantScopedExecutionService.executeTenantScoped(any(), any()))
+      .thenAnswer(invocationOnMock -> {
+        var job = (Callable<?>) invocationOnMock.getArgument(1);
+        return job.call();
+      });
+  }
+
+}

@@ -1,6 +1,7 @@
 package org.folio.innreach.batch.contribution;
 
 import static java.util.UUID.fromString;
+import static org.springframework.context.annotation.ScopedProxyMode.TARGET_CLASS;
 
 import java.util.UUID;
 
@@ -10,10 +11,14 @@ import lombok.NoArgsConstructor;
 import org.springframework.batch.core.JobExecution;
 import org.springframework.batch.core.JobParameters;
 import org.springframework.batch.core.annotation.BeforeJob;
+import org.springframework.context.annotation.Scope;
+import org.springframework.stereotype.Component;
 
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor
+@Component
+@Scope(value = "job", proxyMode = TARGET_CLASS)
 public class ContributionJobContext {
 
   public static final String TENANT_ID_KEY = "tenantId";

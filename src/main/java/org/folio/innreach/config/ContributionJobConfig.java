@@ -14,7 +14,6 @@ import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.JobRegistry;
 import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
 import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
-import org.springframework.batch.core.configuration.annotation.JobScope;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
 import org.springframework.batch.core.configuration.support.JobRegistryBeanPostProcessor;
 import org.springframework.batch.core.launch.JobLauncher;
@@ -62,12 +61,6 @@ public class ContributionJobConfig {
 
   private final ItemProcessor<InstanceIterationEvent, Instance> instanceLoader;
   private final ItemWriter<Instance> instanceContributor;
-
-  @JobScope
-  @Bean
-  public ContributionJobContext jobContext() {
-    return new ContributionJobContext();
-  }
 
   @Bean
   public KafkaItemReader<String, InstanceIterationEvent> kafkaReader() {

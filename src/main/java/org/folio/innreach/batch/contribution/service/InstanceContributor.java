@@ -39,7 +39,10 @@ public class InstanceContributor implements ItemWriter<Instance> {
     }
     tenantScopedExecutionService.executeTenantScoped(
       jobContext.getTenantId(),
-      () -> items.forEach(item -> contributeInstance(jobContext.getCentralServerId(), item))
+      () -> {
+        items.forEach(item -> contributeInstance(jobContext.getCentralServerId(), item));
+        return null;
+      }
     );
   }
 

@@ -29,6 +29,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlMergeMode;
 
+import org.folio.innreach.batch.contribution.service.ContributionJobRunner;
 import org.folio.innreach.client.InstanceStorageClient;
 import org.folio.innreach.client.MaterialTypesClient;
 import org.folio.innreach.controller.base.BaseControllerTest;
@@ -71,6 +72,8 @@ class ContributionControllerTest extends BaseControllerTest {
   private MaterialTypesClient materialTypesClient;
   @MockBean
   private InnReachLocationExternalService irLocationService;
+  @MockBean
+  private ContributionJobRunner jobRunner;
 
   @Test
   @Sql(scripts = {
