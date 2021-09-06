@@ -1,11 +1,15 @@
 package org.folio.innreach.config;
 
+import static java.util.List.of;
+
 import java.time.Duration;
 import java.util.HashMap;
 import java.util.Properties;
 import java.util.UUID;
+import java.util.function.BiConsumer;
 
 import lombok.RequiredArgsConstructor;
+import org.apache.kafka.common.TopicPartition;
 import org.springframework.batch.core.ItemProcessListener;
 import org.springframework.batch.core.ItemReadListener;
 import org.springframework.batch.core.ItemWriteListener;
@@ -14,6 +18,7 @@ import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.JobRegistry;
 import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
 import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
+import org.springframework.batch.core.configuration.annotation.JobScope;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
 import org.springframework.batch.core.configuration.support.JobRegistryBeanPostProcessor;
 import org.springframework.batch.core.launch.JobLauncher;
@@ -28,6 +33,7 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.task.SimpleAsyncTaskExecutor;
+import org.springframework.kafka.annotation.EnableKafka;
 import org.springframework.retry.backoff.FixedBackOffPolicy;
 
 import org.folio.innreach.batch.KafkaItemReader;
@@ -49,6 +55,7 @@ public class ContributionJobConfig {
   public static final String CONTRIBUTION_JOB_NAME = "contributionJob";
   public static final String CONTRIBUTION_JOB_LAUNCHER_NAME = "contributionJobLauncher";
   public static final String CONTRIBUTION_JOB_RUNNER_NAME = "contributionJobRunner";
+  public static final BiConsumer<String, InstanceIterationEvent> CONSUMER_REC_PROCESSOR = (String key, InstanceIterationEvent value) -> value.setInstanceId(UUID.fromString(key));
 
   private final KafkaProperties kafkaProperties;
   private final ContributionJobProperties jobProperties;
@@ -62,6 +69,12 @@ public class ContributionJobConfig {
   private final ItemProcessor<InstanceIterationEvent, Instance> instanceLoader;
   private final ItemWriter<Instance> instanceContributor;
 
+  @JobScope
+  @Bean
+  public ContributionJobContext jobContext() {
+    return new ContributionJobContext();
+  }
+
   @Bean
   public KafkaItemReader<String, InstanceIterationEvent> kafkaReader() {
     Properties props = new Properties();
@@ -69,12 +82,11 @@ public class ContributionJobConfig {
 
     String topic = jobProperties.getReaderTopic();
 
-    var reader = new KafkaItemReader<String, InstanceIterationEvent>(props, topic, 0);
+    var reader = new KafkaItemReader<String, InstanceIterationEvent>(props, of(new TopicPartition(topic, 0)));
     reader.setName("contributionKafkaReader");
     reader.setPollTimeout(Duration.ofSeconds(jobProperties.getReaderPollTimeoutSec()));
     reader.setPartitionOffsets(new HashMap<>());
-    reader.peek((String key, InstanceIterationEvent value) -> value.setInstanceId(UUID.fromString(key)));
-
+    reader.setRecordProcessor(CONSUMER_REC_PROCESSOR);
     return reader;
   }
 

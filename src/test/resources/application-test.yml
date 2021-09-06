@@ -15,6 +15,27 @@ spring:
     cache-names: system-user-cache
     caffeine:
       spec: maximumSize=500,expireAfterAccess=3600s
+  kafka:
+    bootstrap-servers: ${KAFKA_HOST:localhost}:${KAFKA_PORT:9092}
+    consumer:
+      max-poll-records: 50
+      group-id: ${ENV:folio}-mod-innreach-events-group
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring:
+          json:
+            trusted:
+              packages: '*'
+            use:
+              type:
+                headers: false
+            key:
+              default:
+                type: java.lang.String
+            value:
+              default:
+                type: org.folio.innreach.domain.dto.folio.inventorystorage.InstanceIterationEvent
 folio:
   tenant:
     validation:
@@ -39,4 +60,11 @@ system-user:
   permissionsFilePath: permissions/test-permissions.csv
 batch:
   enabled: false
+  jobs:
+    contribution:
+      chunk-size: 1
+      retry-attempts: 3
+      retry-interval-ms: 20000
+      reader-topic: folio.diku.inventory.instance-contribution
+      reader-poll-timeout-sec: 300
 okapi.url: ${OKAPI_URL:http://localhost:8080}

@@ -117,4 +117,4 @@ batch:
       retry-attempts: 3
       retry-interval-ms: 20000
       reader-topic: folio.diku.inventory.instance-contribution
-      reader-poll-timeout-sec: 600
+      reader-poll-timeout-sec: 300
