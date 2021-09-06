@@ -22,16 +22,16 @@ import org.folio.innreach.domain.entity.base.Identifiable;
 @Entity
 @Getter
 @Setter
-@Table(name = "inn_reach_patron_type_mapping")
+@Table(name = "central_patron_type_mapping")
 @ToString(exclude = {"centralServer"})
-public class InnReachPatronTypeMapping extends Auditable implements Identifiable<UUID> {
+public class CentralPatronTypeMapping extends Auditable implements Identifiable<UUID> {
 
   @Id
   @GeneratedValue(strategy = GenerationType.AUTO)
   private UUID id;
 
-  @Column(name = "inn_reach_patron_type")
-  private int innReachPatronType;
+  @Column(name = "central_patron_type")
+  private int centralPatronType;
 
   @Column(name = "folio_user_barcode")
   private String folioUserBarcode;
