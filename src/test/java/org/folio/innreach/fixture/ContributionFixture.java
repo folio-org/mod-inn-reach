@@ -77,7 +77,10 @@ public class ContributionFixture {
   }
 
   public static Instance createInstance() {
-    return contributionRandom.nextObject(Instance.class);
+    var instance = new Instance();
+    instance.setId(UUID.randomUUID());
+    instance.setHrid("test");
+    return instance;
   }
 
   public static List<InnReachLocationDTO> createIrLocations() {

@@ -41,6 +41,7 @@ class ContributionJobRunnerTest {
   @Test
   void shouldRunJob() throws Exception {
     var contribution = mapper.toDTO(createContribution());
+    contribution.setId(UUID.randomUUID());
 
     when(beanFactory.getBean(CONTRIBUTION_JOB_NAME, JobLauncher.class)).thenReturn(jobLauncher);
     when(beanFactory.getBean(CONTRIBUTION_JOB_NAME, Job.class)).thenReturn(job);

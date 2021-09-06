@@ -39,4 +39,4 @@ system-user:
   permissionsFilePath: permissions/test-permissions.csv
 batch:
   enabled: false
-okapi.url: ${OKAPI_URL:http://localhost:8081}
+okapi.url: ${OKAPI_URL:http://localhost:8080}
