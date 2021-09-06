@@ -1,13 +1,13 @@
 package org.folio.innreach.batch;
 
-import java.util.Collection;
+import static org.springframework.batch.core.BatchStatus.STOPPED;
+import static org.springframework.batch.core.BatchStatus.STOPPING;
+
 import java.util.Date;
-import java.util.Set;
 import java.util.UUID;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
-import org.springframework.batch.core.BatchStatus;
 import org.springframework.batch.core.JobExecution;
 import org.springframework.batch.core.StepExecution;
 import org.springframework.batch.core.explore.JobExplorer;
@@ -22,29 +22,28 @@ public abstract class BatchJobRunner<T> {
   protected final JobExplorer jobExplorer;
   protected final JobRepository jobRepository;
 
+  public abstract void run(UUID centralServerId, T jobConfig);
+
+  public abstract String getJobName();
+
   public void restart() {
     try {
-      Set<JobExecution> jobExecutions = jobExplorer.findRunningJobExecutions(getJobName());
+      var jobExecutions = jobExplorer.findRunningJobExecutions(getJobName());
 
       for (JobExecution jobExecution : jobExecutions) {
+        log.info("Restarting job execution: {}", jobExecution);
 
-        Collection<StepExecution> stepExecutions = jobExecution.getStepExecutions();
-        for (StepExecution stepExecution : stepExecutions) {
-          BatchStatus status = stepExecution.getStatus();
-          if (status.isRunning() || status == BatchStatus.STOPPING) {
-            stepExecution.setStatus(BatchStatus.STOPPED);
-            stepExecution.setEndTime(new Date());
-            jobRepository.update(stepExecution);
+        for (StepExecution stepExecution : jobExecution.getStepExecutions()) {
+          var status = stepExecution.getStatus();
+          if (status.isRunning() || status == STOPPING) {
+            stopStepExecution(stepExecution);
           }
         }
 
-        jobExecution.setStatus(BatchStatus.STOPPED);
-        jobExecution.setEndTime(new Date());
-        jobRepository.update(jobExecution);
+        stopJobExecution(jobExecution);
 
-        Long jobExecutionId = jobExecution.getId();
+        var jobExecutionId = jobExecution.getId();
 
-        log.info("Restarting job execution ", jobExecution);
         jobOperator.restart(jobExecutionId);
       }
     } catch (Exception e) {
@@ -52,8 +51,16 @@ public abstract class BatchJobRunner<T> {
     }
   }
 
-  public abstract void run(UUID centralServerId, T jobConfig);
+  private void stopJobExecution(JobExecution jobExecution) {
+    jobExecution.setStatus(STOPPED);
+    jobExecution.setEndTime(new Date());
+    jobRepository.update(jobExecution);
+  }
 
-  public abstract String getJobName();
+  private void stopStepExecution(StepExecution stepExecution) {
+    stepExecution.setStatus(STOPPED);
+    stepExecution.setEndTime(new Date());
+    jobRepository.update(stepExecution);
+  }
 
 }

@@ -3,6 +3,8 @@ package org.folio.innreach.fixture;
 import static java.util.UUID.fromString;
 import static org.jeasy.random.FieldPredicates.named;
 
+import static org.folio.innreach.dto.MappingValidationStatusDTO.VALID;
+
 import java.time.OffsetDateTime;
 import java.util.Arrays;
 import java.util.List;
@@ -14,10 +16,13 @@ import org.jeasy.random.EasyRandom;
 import org.jeasy.random.EasyRandomParameters;
 
 import org.folio.innreach.domain.dto.folio.ResultList;
+import org.folio.innreach.domain.dto.folio.inventorystorage.JobResponse;
 import org.folio.innreach.domain.dto.folio.inventorystorage.MaterialTypeDTO;
 import org.folio.innreach.domain.entity.CentralServer;
 import org.folio.innreach.domain.entity.Contribution;
 import org.folio.innreach.domain.entity.base.AuditableUser;
+import org.folio.innreach.domain.service.ContributionValidationService;
+import org.folio.innreach.dto.ContributionDTO;
 import org.folio.innreach.external.dto.InnReachLocationDTO;
 
 @UtilityClass
@@ -77,8 +82,26 @@ public class ContributionFixture {
     return dto;
   }
 
+  public static JobResponse createIterationJobResponse() {
+    return JobResponse.builder()
+      .id(UUID.randomUUID())
+      .status(JobResponse.JobStatus.IN_PROGRESS)
+      .numberOfRecordsPublished(0)
+      .submittedDate(OffsetDateTime.now())
+      .build();
+  }
+
   public static CentralServer refCentralServer() {
     return TestUtil.refCentralServer(PRE_POPULATED_CENTRAL_SERVER_UUID);
+  }
+
+  public static class ContributionValidationServiceMock implements ContributionValidationService {
+
+    @Override
+    public void validate(UUID centralServerId, ContributionDTO contribution) {
+      contribution.setItemTypeMappingStatus(VALID);
+      contribution.setLocationsMappingStatus(VALID);
+    }
   }
 
 }

@@ -1,7 +1,5 @@
 package org.folio.innreach.config;
 
-import static org.apache.kafka.clients.consumer.ConsumerConfig.GROUP_ID_CONFIG;
-
 import java.time.Duration;
 import java.util.HashMap;
 import java.util.Properties;
@@ -16,6 +14,7 @@ import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.JobRegistry;
 import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
 import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
+import org.springframework.batch.core.configuration.annotation.JobScope;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
 import org.springframework.batch.core.configuration.support.JobRegistryBeanPostProcessor;
 import org.springframework.batch.core.launch.JobLauncher;
@@ -34,9 +33,9 @@ import org.springframework.retry.backoff.FixedBackOffPolicy;
 
 import org.folio.innreach.batch.KafkaItemReader;
 import org.folio.innreach.batch.contribution.ContributionJobContext;
-import org.folio.innreach.batch.contribution.listener.ContributionJobStatsListener;
 import org.folio.innreach.batch.contribution.listener.ContributionJobExceptionListener;
 import org.folio.innreach.batch.contribution.listener.ContributionJobExecutionListener;
+import org.folio.innreach.batch.contribution.listener.ContributionJobStatsListener;
 import org.folio.innreach.config.props.ContributionJobProperties;
 import org.folio.innreach.domain.dto.folio.inventorystorage.InstanceIterationEvent;
 import org.folio.innreach.dto.Instance;
@@ -64,6 +63,12 @@ public class ContributionJobConfig {
 
   private final ItemProcessor instanceLoader;
   private final ItemWriter<Instance> instanceContributor;
+
+  @JobScope
+  @Bean
+  public ContributionJobContext jobContext() {
+    return new ContributionJobContext();
+  }
 
   @Bean
   public KafkaItemReader<String, InstanceIterationEvent> kafkaReader() {
@@ -105,12 +110,12 @@ public class ContributionJobConfig {
   }
 
   @Bean(name = CONTRIBUTION_JOB_NAME)
-  public Job job() {
+  public Job job(ContributionJobContext jobContext) {
     return jobBuilderFactory.get(CONTRIBUTION_JOB_NAME)
       .incrementer(new RunIdIncrementer())
       .start(instanceContributionStep())
       .listener(jobExecutionListener)
-      .listener(contributionJobContext)
+      .listener(jobContext)
       .build();
   }
 

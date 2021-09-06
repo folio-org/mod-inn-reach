@@ -2,12 +2,12 @@ package org.folio.innreach.domain.service.impl;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import static org.folio.innreach.fixture.InventoryItemFixture.createInventoryItemDTO;
 import static org.folio.innreach.fixture.ItemContributionOptionsConfigurationFixture.createItmContribOptConfDTO;
+import static org.folio.innreach.fixture.JobResponseFixture.createJobResponse;
 
 import java.util.UUID;
 
@@ -18,15 +18,21 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.mockito.Spy;
 
+import org.folio.innreach.batch.contribution.service.ContributionJobRunner;
 import org.folio.innreach.client.InstanceStorageClient;
 import org.folio.innreach.client.InventoryClient;
 import org.folio.innreach.client.RequestStorageClient;
 import org.folio.innreach.domain.dto.folio.ContributionItemCirculationStatus;
 import org.folio.innreach.domain.dto.folio.inventory.InventoryItemStatus;
-import org.folio.innreach.domain.dto.folio.inventorystorage.JobResponse;
 import org.folio.innreach.domain.dto.folio.requeststorage.RequestsDTO;
 import org.folio.innreach.domain.entity.Contribution;
+import org.folio.innreach.domain.service.ContributionValidationService;
 import org.folio.innreach.domain.service.ItemContributionOptionsConfigurationService;
+import org.folio.innreach.dto.ContributionDTO;
+import org.folio.innreach.fixture.ContributionFixture.ContributionValidationServiceMock;
+import org.folio.innreach.mapper.ContributionMapper;
+import org.folio.innreach.mapper.ContributionMapperImpl;
+import org.folio.innreach.mapper.MappingMethods;
 import org.folio.innreach.repository.ContributionRepository;
 
 class ContributionServiceImplTest {
@@ -46,24 +52,36 @@ class ContributionServiceImplTest {
   @Mock
   private RequestStorageClient requestStorageClient;
 
+  @Mock
+  private ContributionJobRunner jobRunner;
+
+  @Spy
+  private ContributionMapper mapper = new ContributionMapperImpl(new MappingMethods());
+
+  @Spy
+  private ContributionValidationService validationService = new ContributionValidationServiceMock();
+
   @InjectMocks
   private ContributionServiceImpl service;
 
   @BeforeEach
   public void beforeEachSetup() {
-    MockitoAnnotations.initMocks(this);
+    MockitoAnnotations.openMocks(this);
   }
 
   @Test
   void startInitialContributionProcess() {
-    when(repository.save(any())).thenReturn(new Contribution());
-    when(client.startInitialContribution(any())).thenReturn(new JobResponse());
+    when(repository.save(any(Contribution.class))).thenReturn(new Contribution());
+    when(client.startInitialContribution(any())).thenReturn(createJobResponse());
 
     service.startInitialContribution(UUID.randomUUID());
 
-    verify(repository, times(1)).save(any());
+    verify(repository).save(any(Contribution.class));
     verify(client).startInitialContribution(any());
+    verify(jobRunner).run(any(UUID.class), any(ContributionDTO.class));
   }
+
+  @Test
   void returnAvailableContributionStatusWhenItemStatusIsAvailable() {
     when(itemContributionOptionsConfigurationService.getItmContribOptConf(any())).thenReturn(createItmContribOptConfDTO());
 

@@ -10,12 +10,10 @@ import lombok.NoArgsConstructor;
 import org.springframework.batch.core.JobExecution;
 import org.springframework.batch.core.JobParameters;
 import org.springframework.batch.core.annotation.BeforeJob;
-import org.springframework.stereotype.Component;
 
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor
-@Component
 public class ContributionJobContext {
 
   public static final String TENANT_ID_KEY = "tenantId";
