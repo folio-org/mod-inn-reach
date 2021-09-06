@@ -114,12 +114,12 @@ public class ContributionJobConfig {
   }
 
   @Bean(name = CONTRIBUTION_JOB_NAME)
-  public Job job(ContributionJobContext jobContext) {
+  public Job job() {
     return jobBuilderFactory.get(CONTRIBUTION_JOB_NAME)
       .incrementer(new RunIdIncrementer())
       .start(instanceContributionStep())
       .listener(jobExecutionListener)
-      .listener(jobContext)
+      .listener(jobContext())
       .build();
   }
 
