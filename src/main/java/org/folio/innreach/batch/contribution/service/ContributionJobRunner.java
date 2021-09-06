@@ -50,13 +50,8 @@ public class ContributionJobRunner extends BatchJobRunner<ContributionDTO> {
 
       jobLauncher.run(contributionJob, jobParameters);
     } catch (Exception e) {
-      throw new RuntimeException("Unable to start contribution job", e);
+      throw new IllegalStateException("Unable to start contribution job", e);
     }
-  }
-
-  @Override
-  public void restart() {
-    super.restart();
   }
 
   @Override

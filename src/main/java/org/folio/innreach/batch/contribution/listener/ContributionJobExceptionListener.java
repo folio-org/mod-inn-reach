@@ -24,6 +24,7 @@ public class ContributionJobExceptionListener extends ItemListenerSupport<Instan
   private final ContributionService contributionService;
   private final ContributionJobContext context;
 
+  @Override
   public void onReadError(Exception e) {
     logError("reading", e, UNKNOWN_ID);
   }
@@ -33,6 +34,7 @@ public class ContributionJobExceptionListener extends ItemListenerSupport<Instan
     logError("processing", e, iterationEvent.getInstanceId());
   }
 
+  @Override
   public void onWriteError(Exception e, List<? extends Instance> instances) {
     var instanceId = instances.size() == 1 ? instances.get(0).getId() : UNKNOWN_ID;
     logError("contribution", e, instanceId);

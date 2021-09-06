@@ -15,6 +15,7 @@ import org.folio.innreach.batch.contribution.ContributionJobContext;
 import org.folio.innreach.domain.service.ContributionCriteriaConfigurationService;
 import org.folio.innreach.domain.service.MARCRecordTransformationService;
 import org.folio.innreach.domain.service.impl.TenantScopedExecutionService;
+import org.folio.innreach.dto.ContributionCriteriaDTO;
 import org.folio.innreach.dto.Instance;
 import org.folio.innreach.external.dto.BibContributionRequest;
 import org.folio.innreach.external.service.InnReachContributionService;
@@ -72,7 +73,11 @@ public class InstanceContributor implements ItemWriter<Instance> {
   }
 
   private Character suppress(UUID centralServerId, Instance instance) {
-    var config = contributionConfig.getCriteria(centralServerId); // TODO: exception
+    var config = getContributionConfig(centralServerId);
+    if (config == null) {
+      return null;
+    }
+
     var statisticalCodeIds = emptyIfNull(instance.getStatisticalCodeIds());
 
     var excludedCodeId = config.getDoNotContributeId();
@@ -91,6 +96,17 @@ public class InstanceContributor implements ItemWriter<Instance> {
     }
 
     return null;
+  }
+
+  private ContributionCriteriaDTO getContributionConfig(UUID centralServerId) {
+    ContributionCriteriaDTO config;
+    try {
+      config = contributionConfig.getCriteria(centralServerId);
+    } catch (Exception e) {
+      log.warn("Unable to load contribution config for central server = {}", centralServerId, e);
+      return null;
+    }
+    return config;
   }
 
 }

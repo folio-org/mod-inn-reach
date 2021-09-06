@@ -53,7 +53,6 @@ public class ContributionJobConfig {
 
   private final KafkaProperties kafkaProperties;
   private final ContributionJobProperties jobProperties;
-  private final ContributionJobContext contributionJobContext;
   private final ContributionJobStatsListener countListener;
   private final ContributionJobExecutionListener jobExecutionListener;
   private final ContributionJobExceptionListener failureListener;
@@ -61,7 +60,7 @@ public class ContributionJobConfig {
   private final StepBuilderFactory stepBuilderFactory;
   private final JobBuilderFactory jobBuilderFactory;
 
-  private final ItemProcessor instanceLoader;
+  private final ItemProcessor<InstanceIterationEvent, Instance> instanceLoader;
   private final ItemWriter<Instance> instanceContributor;
 
   @JobScope
@@ -92,7 +91,7 @@ public class ContributionJobConfig {
     backOffPolicy.setBackOffPeriod(jobProperties.getRetryIntervalMs());
 
     return stepBuilderFactory.get("contributionStep")
-      .chunk(jobProperties.getChunkSize())
+      .<InstanceIterationEvent, Instance>chunk(jobProperties.getChunkSize())
       .processor(instanceLoader)
       .writer(instanceContributor)
       .reader(kafkaReader())

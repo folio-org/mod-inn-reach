@@ -95,14 +95,10 @@ public class KafkaItemReader<K, V> extends AbstractItemStreamItemReader<V> {
    */
   public KafkaItemReader(Properties consumerProperties, String topicName, List<Integer> partitions) {
     Assert.notNull(consumerProperties, "Consumer properties must not be null");
-    Assert.isTrue(consumerProperties.containsKey(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG),
-      ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG + " property must be provided");
-    Assert.isTrue(consumerProperties.containsKey(ConsumerConfig.GROUP_ID_CONFIG),
-      ConsumerConfig.GROUP_ID_CONFIG + " property must be provided");
-    Assert.isTrue(consumerProperties.containsKey(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG),
-      ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG + " property must be provided");
-    Assert.isTrue(consumerProperties.containsKey(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG),
-      ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG + " property must be provided");
+    validateProperty(consumerProperties, ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG);
+    validateProperty(consumerProperties, ConsumerConfig.GROUP_ID_CONFIG);
+    validateProperty(consumerProperties, ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG);
+    validateProperty(consumerProperties, ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG);
     this.consumerProperties = consumerProperties;
     Assert.hasLength(topicName, "Topic name must not be null or empty");
     Assert.isTrue(!partitions.isEmpty(), "At least one partition must be provided");
@@ -154,6 +150,7 @@ public class KafkaItemReader<K, V> extends AbstractItemStreamItemReader<V> {
     }
     if (this.saveState && executionContext.containsKey(TOPIC_PARTITION_OFFSETS)) {
       Map<TopicPartition, Long> offsets = (Map<TopicPartition, Long>) executionContext.get(TOPIC_PARTITION_OFFSETS);
+      Assert.isTrue(offsets != null, "Can't load offset from execution context");
       for (Map.Entry<TopicPartition, Long> entry : offsets.entrySet()) {
         this.partitionOffsets.put(entry.getKey(), entry.getValue() == 0 ? 0 : entry.getValue() + 1);
       }
@@ -169,10 +166,10 @@ public class KafkaItemReader<K, V> extends AbstractItemStreamItemReader<V> {
       this.consumerRecords = this.kafkaConsumer.poll(this.pollTimeout).iterator();
     }
     if (this.consumerRecords.hasNext()) {
-      ConsumerRecord<K, V> record = this.consumerRecords.next();
-      consumer.accept(record.key(), record.value());
-      this.partitionOffsets.put(new TopicPartition(record.topic(), record.partition()), record.offset());
-      return record.value();
+      ConsumerRecord<K, V> rec = this.consumerRecords.next();
+      consumer.accept(rec.key(), rec.value());
+      this.partitionOffsets.put(new TopicPartition(rec.topic(), rec.partition()), rec.offset());
+      return rec.value();
     } else {
       return null;
     }
@@ -192,4 +189,9 @@ public class KafkaItemReader<K, V> extends AbstractItemStreamItemReader<V> {
       this.kafkaConsumer.close();
     }
   }
+
+  private void validateProperty(Properties consumerProperties, String property) {
+    Assert.isTrue(consumerProperties.containsKey(property), property + " property must be provided");
+  }
+
 }
