@@ -4,6 +4,9 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import static org.folio.innreach.fixture.AccessTokenFixture.createAccessToken;
+import static org.folio.innreach.fixture.CentralServerFixture.createCentralServerConnectionDetailsDTO;
+
 import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
@@ -12,10 +15,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import org.folio.innreach.domain.dto.CentralServerConnectionDetailsDTO;
 import org.folio.innreach.domain.service.CentralServerService;
 import org.folio.innreach.external.client.feign.InnReachContributionClient;
-import org.folio.innreach.external.dto.AccessTokenDTO;
 import org.folio.innreach.external.dto.BibContributionRequest;
 import org.folio.innreach.external.service.InnReachAuthExternalService;
 
@@ -36,9 +37,9 @@ class InnReachContributionServiceImplTest {
 
   @Test
   void shouldContributeBib() {
-    CentralServerConnectionDetailsDTO connectionConf = createConnectionDetails();
+    var connectionDetails = createCentralServerConnectionDetailsDTO();
 
-    when(centralServerService.getCentralServerConnectionDetails(any())).thenReturn(connectionConf);
+    when(centralServerService.getCentralServerConnectionDetails(any())).thenReturn(connectionDetails);
     when(innReachAuthExternalService.getAccessToken(any()))
       .thenReturn(createAccessToken());
 
@@ -49,9 +50,9 @@ class InnReachContributionServiceImplTest {
 
   @Test
   void lookUpBib() {
-    var connDetails = createConnectionDetails();
+    var connectionDetails = createCentralServerConnectionDetailsDTO();
 
-    when(centralServerService.getCentralServerConnectionDetails(any())).thenReturn(connDetails);
+    when(centralServerService.getCentralServerConnectionDetails(any())).thenReturn(connectionDetails);
     when(innReachAuthExternalService.getAccessToken(any()))
       .thenReturn(createAccessToken());
 
@@ -60,13 +61,4 @@ class InnReachContributionServiceImplTest {
     verify(contributionClient).lookUpBib(any(), any(), any(), any(), any(), any());
   }
 
-  private AccessTokenDTO createAccessToken() {
-    return new AccessTokenDTO("token", "test", 111);
-  }
-
-  private CentralServerConnectionDetailsDTO createConnectionDetails() {
-    var connDetails = new CentralServerConnectionDetailsDTO();
-    connDetails.setConnectionUrl("http://127.0.0.1");
-    return connDetails;
-  }
 }

@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import static org.folio.innreach.fixture.ContributionFixture.createContributionConfig;
@@ -12,6 +13,7 @@ import static org.folio.innreach.fixture.ContributionFixture.createInstance;
 import static org.folio.innreach.fixture.ContributionFixture.irErrorResponse;
 import static org.folio.innreach.fixture.ContributionFixture.irOkResponse;
 
+import java.util.Collections;
 import java.util.UUID;
 import java.util.concurrent.Callable;
 
@@ -108,6 +110,14 @@ class InstanceContributorTest {
     assertThatThrownBy(() -> instanceContributor.write(singletonList(createInstance())))
       .isInstanceOf(IllegalArgumentException.class)
       .hasMessageContaining("Unexpected verification response:");
+  }
+
+  @Test
+  void shouldDoNothingWhenNoItems() throws Exception {
+    instanceContributor.write(Collections.emptyList());
+
+    verifyNoMoreInteractions(tenantScopedExecutionService);
+    verifyNoMoreInteractions(irContributionService);
   }
 
 }
