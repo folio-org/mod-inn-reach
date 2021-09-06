@@ -48,8 +48,6 @@ import org.springframework.util.Assert;
  */
 public class KafkaItemReader<K, V> extends AbstractItemStreamItemReader<V> {
 
-  private static final String TOPIC_PARTITION_OFFSETS = "topic.partition.offsets";
-
   private static final long DEFAULT_POLL_TIMEOUT = 30L;
 
   private List<TopicPartition> topicPartitions;
@@ -65,11 +63,6 @@ public class KafkaItemReader<K, V> extends AbstractItemStreamItemReader<V> {
   private Duration pollTimeout = Duration.ofSeconds(DEFAULT_POLL_TIMEOUT);
 
   private BiConsumer<K, V> consumer;
-
-  /**
-   * Execution context serializes TopicPartitions incorrectly. Keep false for now
-   */
-  private boolean saveState = false;
 
   /**
    * Create a new {@link KafkaItemReader}.
@@ -148,13 +141,6 @@ public class KafkaItemReader<K, V> extends AbstractItemStreamItemReader<V> {
         this.partitionOffsets.put(topicPartition, 0L);
       }
     }
-    if (this.saveState && executionContext.containsKey(TOPIC_PARTITION_OFFSETS)) {
-      Map<TopicPartition, Long> offsets = (Map<TopicPartition, Long>) executionContext.get(TOPIC_PARTITION_OFFSETS);
-      Assert.isTrue(offsets != null, "Can't load offset from execution context");
-      for (Map.Entry<TopicPartition, Long> entry : offsets.entrySet()) {
-        this.partitionOffsets.put(entry.getKey(), entry.getValue() == 0 ? 0 : entry.getValue() + 1);
-      }
-    }
     this.kafkaConsumer.assign(this.topicPartitions);
     this.partitionOffsets.forEach(this.kafkaConsumer::seek);
   }
@@ -177,9 +163,6 @@ public class KafkaItemReader<K, V> extends AbstractItemStreamItemReader<V> {
 
   @Override
   public void update(ExecutionContext executionContext) {
-    if (this.saveState) {
-      executionContext.put(TOPIC_PARTITION_OFFSETS, new HashMap<>(this.partitionOffsets));
-    }
     this.kafkaConsumer.commitSync();
   }
 

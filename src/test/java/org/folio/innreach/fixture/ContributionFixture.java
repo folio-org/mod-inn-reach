@@ -96,7 +96,6 @@ public class ContributionFixture {
   }
 
   public static class ContributionValidationServiceMock implements ContributionValidationService {
-
     @Override
     public void validate(UUID centralServerId, ContributionDTO contribution) {
       contribution.setItemTypeMappingStatus(VALID);

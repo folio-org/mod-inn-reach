@@ -17,7 +17,7 @@ public interface ContributionService {
 
   void startInitialContribution(UUID centralServerId);
 
-  void completeContribution(UUID centralServerId);
+  ContributionDTO completeContribution(UUID centralServerId);
 
   ContributionItemCirculationStatus getItemCirculationStatus(UUID centralServerId, UUID itemId);
 

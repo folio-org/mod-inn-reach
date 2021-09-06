@@ -111,7 +111,6 @@ coffee-boots:
       users-by-id: maximumSize=100,expireAfterAccess=3h
       users-by-name: maximumSize=10,expireAfterAccess=3h
 batch:
-  enabled: false
   jobs:
     contribution:
       chunk-size: 1

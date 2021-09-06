@@ -68,12 +68,12 @@ public class ContributionServiceImpl implements ContributionService {
   }
 
   @Override
-  public void completeContribution(UUID centralServerId) {
+  public ContributionDTO completeContribution(UUID centralServerId) {
     var entity = findCurrent(centralServerId);
 
     entity.setStatus(Contribution.Status.COMPLETE);
 
-    repository.save(entity);
+    return mapper.toDTO(repository.save(entity));
   }
 
   @Override
