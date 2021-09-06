@@ -26,9 +26,9 @@ public class ContributionJobExecutionListener extends JobExecutionListenerSuppor
     log.info("Starting contribution job execution: {}", jobExecution);
 
     var context = toContributionContext(jobExecution);
-    var current = contributionService.getCurrent(context.getCentralServerId());
+    var contribution = contributionService.getCurrent(context.getCentralServerId());
 
-    Assert.isTrue(current.getStatus() == IN_PROGRESS, "Initial contribution is not found");
+    Assert.isTrue(contribution.getStatus() == IN_PROGRESS, "Initial contribution is not running");
   }
 
   @Override

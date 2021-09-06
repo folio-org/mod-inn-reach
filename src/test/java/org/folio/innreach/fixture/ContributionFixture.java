@@ -3,6 +3,7 @@ package org.folio.innreach.fixture;
 import static java.util.UUID.fromString;
 import static org.jeasy.random.FieldPredicates.named;
 
+import static org.folio.innreach.domain.entity.Contribution.Status.IN_PROGRESS;
 import static org.folio.innreach.dto.MappingValidationStatusDTO.VALID;
 
 import java.time.OffsetDateTime;
@@ -20,10 +21,17 @@ import org.folio.innreach.domain.dto.folio.inventorystorage.JobResponse;
 import org.folio.innreach.domain.dto.folio.inventorystorage.MaterialTypeDTO;
 import org.folio.innreach.domain.entity.CentralServer;
 import org.folio.innreach.domain.entity.Contribution;
+import org.folio.innreach.domain.entity.ContributionCriteriaConfiguration;
 import org.folio.innreach.domain.entity.base.AuditableUser;
 import org.folio.innreach.domain.service.ContributionValidationService;
+import org.folio.innreach.dto.ContributionCriteriaDTO;
 import org.folio.innreach.dto.ContributionDTO;
+import org.folio.innreach.dto.Instance;
 import org.folio.innreach.external.dto.InnReachLocationDTO;
+import org.folio.innreach.external.dto.InnReachResponse;
+import org.folio.innreach.mapper.ContributionMapper;
+import org.folio.innreach.mapper.ContributionMapperImpl;
+import org.folio.innreach.mapper.MappingMethods;
 
 @UtilityClass
 public class ContributionFixture {
@@ -38,9 +46,12 @@ public class ContributionFixture {
 
   private static final EasyRandom contributionRandom;
 
+  public static final ContributionMapper mapper = new ContributionMapperImpl(new MappingMethods());
+
   static {
     EasyRandomParameters params = new EasyRandomParameters()
       .overrideDefaultInitialization(true)
+      .randomize(named("status"), () -> IN_PROGRESS)
       .randomize(named("centralServer"), ContributionFixture::refCentralServer)
       .randomize(named("createdBy"), () -> AuditableUser.SYSTEM)
       .randomize(named("createdDate"), OffsetDateTime::now)
@@ -59,6 +70,14 @@ public class ContributionFixture {
     contribution.getErrors().forEach(e -> e.setContribution(contribution));
 
     return contribution;
+  }
+
+  public static ContributionCriteriaDTO createContributionConfig() {
+    return contributionRandom.nextObject(ContributionCriteriaDTO.class);
+  }
+
+  public static Instance createInstance() {
+    return contributionRandom.nextObject(Instance.class);
   }
 
   public static List<InnReachLocationDTO> createIrLocations() {
@@ -93,6 +112,14 @@ public class ContributionFixture {
 
   public static CentralServer refCentralServer() {
     return TestUtil.refCentralServer(PRE_POPULATED_CENTRAL_SERVER_UUID);
+  }
+
+  public static InnReachResponse irOkResponse() {
+    return new InnReachResponse("ok", null, null);
+  }
+
+  public static InnReachResponse irErrorResponse() {
+    return new InnReachResponse("failed", null, null);
   }
 
   public static class ContributionValidationServiceMock implements ContributionValidationService {

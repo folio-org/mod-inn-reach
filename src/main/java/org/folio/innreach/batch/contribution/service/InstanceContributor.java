@@ -67,12 +67,12 @@ public class InstanceContributor implements ItemWriter<Instance> {
 
   private void contribute(UUID centralServerId, String bibId, BibContributionRequest bib) {
     var response = contributionService.contributeBib(centralServerId, bibId, bib);
-    Assert.isTrue(response.isOk(), "unexpected contribution response: " + response);
+    Assert.isTrue(response.isOk(), "Unexpected contribution response: " + response);
   }
 
   private void verifyContribution(UUID centralServerId, String bibId) {
     var response = contributionService.lookUpBib(centralServerId, bibId);
-    Assert.isTrue(response.isOk(), "unexpected verification response: " + response);
+    Assert.isTrue(response.isOk(), "Unexpected verification response: " + response);
   }
 
   private Character suppress(UUID centralServerId, Instance instance) {

@@ -4,6 +4,7 @@ import static org.apache.commons.lang3.ObjectUtils.defaultIfNull;
 import static org.springframework.transaction.annotation.Propagation.REQUIRES_NEW;
 
 import static org.folio.innreach.domain.dto.folio.inventorystorage.JobResponse.JobStatus.IN_PROGRESS;
+import static org.folio.innreach.domain.entity.Contribution.Status.COMPLETE;
 import static org.folio.innreach.domain.service.impl.ServiceUtils.centralServerRef;
 import static org.folio.innreach.dto.MappingValidationStatusDTO.VALID;
 
@@ -57,10 +58,9 @@ public class ContributionServiceImpl implements ContributionService {
 
   @Override
   public ContributionDTO getCurrent(UUID centralServerId) {
-    var entity = repository.fetchCurrentByCentralServerId(centralServerId)
-      .orElseGet(Contribution::new);
-
-    var contribution = mapper.toDTO(entity);
+    var contribution = repository.fetchCurrentByCentralServerId(centralServerId)
+      .map(mapper::toDTO)
+      .orElseGet(ContributionDTO::new);
 
     validationService.validate(centralServerId, contribution);
 
@@ -71,7 +71,7 @@ public class ContributionServiceImpl implements ContributionService {
   public ContributionDTO completeContribution(UUID centralServerId) {
     var entity = findCurrent(centralServerId);
 
-    entity.setStatus(Contribution.Status.COMPLETE);
+    entity.setStatus(COMPLETE);
 
     return mapper.toDTO(repository.save(entity));
   }

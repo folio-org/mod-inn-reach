@@ -1,5 +1,7 @@
 package org.folio.innreach.batch.contribution.listener;
 
+import static java.util.UUID.fromString;
+
 import static org.folio.innreach.batch.contribution.ContributionJobContext.CENTRAL_SERVER_ID_KEY;
 
 import java.util.UUID;
@@ -23,8 +25,9 @@ public class ContributionJobStatsListener extends ChunkListenerSupport {
 
   @Override
   public void afterChunk(ChunkContext chunkContext) {
-    var centralServerId = UUID.fromString(getJobParameter(chunkContext));
-    var stats = collectStats(chunkContext.getStepContext().getStepExecution());
+    var stepExecution = chunkContext.getStepContext().getStepExecution();
+    var centralServerId = getCentralServerId(stepExecution);
+    var stats = collectStats(stepExecution);
     contributionService.updateContributionStats(centralServerId, stats);
   }
 
@@ -43,9 +46,9 @@ public class ContributionJobStatsListener extends ChunkListenerSupport {
     return contribution;
   }
 
-  private static String getJobParameter(ChunkContext chunkContext) {
-    return (String) chunkContext.getStepContext().getJobParameters()
-      .get(CENTRAL_SERVER_ID_KEY);
+  private static UUID getCentralServerId(StepExecution stepExecution) {
+    var jobParameters = stepExecution.getJobParameters();
+    return fromString(jobParameters.getString(CENTRAL_SERVER_ID_KEY));
   }
 
 }
