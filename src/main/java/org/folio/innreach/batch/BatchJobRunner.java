@@ -33,6 +33,8 @@ public abstract class BatchJobRunner<T> implements BeanFactoryAware {
 
   public abstract String getJobName();
 
+  public abstract String getJobLauncherName();
+
   public void restart() {
     try {
       var jobExplorer = beanFactory.getBean(JobExplorer.class);
@@ -62,7 +64,7 @@ public abstract class BatchJobRunner<T> implements BeanFactoryAware {
   }
 
   protected void launch(JobParameters jobParameters) throws Exception {
-    var jobLauncher = beanFactory.getBean(getJobName(), JobLauncher.class);
+    var jobLauncher = beanFactory.getBean(getJobLauncherName(), JobLauncher.class);
     var job = beanFactory.getBean(getJobName(), Job.class);
 
     jobLauncher.run(job, jobParameters);

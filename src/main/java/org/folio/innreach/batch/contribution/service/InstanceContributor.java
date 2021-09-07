@@ -7,6 +7,7 @@ import java.util.UUID;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.springframework.batch.core.configuration.annotation.JobScope;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
@@ -21,6 +22,7 @@ import org.folio.innreach.external.dto.BibContributionRequest;
 import org.folio.innreach.external.service.InnReachContributionService;
 
 @Log4j2
+@JobScope
 @Service
 @RequiredArgsConstructor
 public class InstanceContributor implements ItemWriter<Instance> {

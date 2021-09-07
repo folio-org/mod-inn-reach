@@ -8,6 +8,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import static org.folio.innreach.config.ContributionJobConfig.CONTRIBUTION_JOB_LAUNCHER_NAME;
 import static org.folio.innreach.config.ContributionJobConfig.CONTRIBUTION_JOB_NAME;
 import static org.folio.innreach.fixture.ContributionFixture.createContribution;
 import static org.folio.innreach.fixture.ContributionFixture.mapper;
@@ -58,7 +59,7 @@ class ContributionJobRunnerTest {
     var contribution = mapper.toDTO(createContribution());
     contribution.setId(UUID.randomUUID());
 
-    when(beanFactory.getBean(CONTRIBUTION_JOB_NAME, JobLauncher.class)).thenReturn(jobLauncher);
+    when(beanFactory.getBean(CONTRIBUTION_JOB_LAUNCHER_NAME, JobLauncher.class)).thenReturn(jobLauncher);
     when(beanFactory.getBean(CONTRIBUTION_JOB_NAME, Job.class)).thenReturn(job);
 
     jobRunner.run(UUID.randomUUID(), contribution);

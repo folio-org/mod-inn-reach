@@ -28,6 +28,10 @@ public class ContributionJobContext {
     jobParameters = jobExecution.getJobParameters();
   }
 
+  public static ContributionJobContext of(JobExecution jobExecution) {
+    return new ContributionJobContext(jobExecution.getJobParameters());
+  }
+
   public String getTenantId() {
     return jobParameters.getString(TENANT_ID_KEY);
   }

@@ -25,7 +25,7 @@ public class ContributionJobExecutionListener extends JobExecutionListenerSuppor
   public void beforeJob(JobExecution jobExecution) {
     log.info("Starting contribution job execution: {}", jobExecution);
 
-    var context = toContributionContext(jobExecution);
+    var context = ContributionJobContext.of(jobExecution);
     var contribution = contributionService.getCurrent(context.getCentralServerId());
 
     Assert.isTrue(contribution.getStatus() == IN_PROGRESS, "Initial contribution is not running");
@@ -35,13 +35,9 @@ public class ContributionJobExecutionListener extends JobExecutionListenerSuppor
   public void afterJob(JobExecution jobExecution) {
     log.info("Finished contribution job execution: {}", jobExecution);
 
-    var context = toContributionContext(jobExecution);
+    var context = ContributionJobContext.of(jobExecution);
 
     contributionService.completeContribution(context.getCentralServerId());
-  }
-
-  private ContributionJobContext toContributionContext(JobExecution jobExecution) {
-    return new ContributionJobContext(jobExecution.getJobParameters());
   }
 
 }

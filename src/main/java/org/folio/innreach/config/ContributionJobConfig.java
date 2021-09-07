@@ -8,7 +8,6 @@ import java.util.Properties;
 import java.util.UUID;
 import java.util.function.BiConsumer;
 
-import lombok.RequiredArgsConstructor;
 import org.apache.kafka.common.TopicPartition;
 import org.springframework.batch.core.ItemProcessListener;
 import org.springframework.batch.core.ItemReadListener;
@@ -32,8 +31,8 @@ import org.springframework.boot.autoconfigure.kafka.KafkaProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.core.task.SimpleAsyncTaskExecutor;
-import org.springframework.kafka.annotation.EnableKafka;
 import org.springframework.retry.backoff.FixedBackOffPolicy;
 
 import org.folio.innreach.batch.KafkaItemReader;
@@ -45,29 +44,17 @@ import org.folio.innreach.config.props.ContributionJobProperties;
 import org.folio.innreach.domain.dto.folio.inventorystorage.InstanceIterationEvent;
 import org.folio.innreach.dto.Instance;
 
-@EnableBatchProcessing
 @Configuration
-@RequiredArgsConstructor
+@EnableBatchProcessing
 @EnableConfigurationProperties(ContributionJobProperties.class)
 @ConditionalOnProperty(value = "batch.enabled", havingValue = "true", matchIfMissing = true)
 public class ContributionJobConfig {
 
   public static final String CONTRIBUTION_JOB_NAME = "contributionJob";
   public static final String CONTRIBUTION_JOB_LAUNCHER_NAME = "contributionJobLauncher";
-  public static final String CONTRIBUTION_JOB_RUNNER_NAME = "contributionJobRunner";
-  public static final BiConsumer<String, InstanceIterationEvent> CONSUMER_REC_PROCESSOR = (String key, InstanceIterationEvent value) -> value.setInstanceId(UUID.fromString(key));
 
-  private final KafkaProperties kafkaProperties;
-  private final ContributionJobProperties jobProperties;
-  private final ContributionJobStatsListener countListener;
-  private final ContributionJobExecutionListener jobExecutionListener;
-  private final ContributionJobExceptionListener failureListener;
-
-  private final StepBuilderFactory stepBuilderFactory;
-  private final JobBuilderFactory jobBuilderFactory;
-
-  private final ItemProcessor<InstanceIterationEvent, Instance> instanceLoader;
-  private final ItemWriter<Instance> instanceContributor;
+  public static final BiConsumer<String, InstanceIterationEvent> CONSUMER_REC_PROCESSOR =
+    (String key, InstanceIterationEvent value) -> value.setInstanceId(UUID.fromString(key));
 
   @JobScope
   @Bean
@@ -76,7 +63,9 @@ public class ContributionJobConfig {
   }
 
   @Bean
-  public KafkaItemReader<String, InstanceIterationEvent> kafkaReader() {
+  public KafkaItemReader<String, InstanceIterationEvent> kafkaReader(KafkaProperties kafkaProperties,
+                                                                     ContributionJobProperties jobProperties) {
+
     Properties props = new Properties();
     props.putAll(kafkaProperties.buildConsumerProperties());
 
@@ -91,7 +80,14 @@ public class ContributionJobConfig {
   }
 
   @Bean
-  public Step instanceContributionStep() {
+  public Step instanceContributionStep(KafkaProperties kafkaProperties,
+                                       ContributionJobProperties jobProperties,
+                                       StepBuilderFactory stepBuilderFactory,
+                                       ItemProcessor<InstanceIterationEvent, Instance> instanceLoader,
+                                       ItemWriter<Instance> instanceContributor,
+                                       ContributionJobExceptionListener failureListener,
+                                       ContributionJobStatsListener countListener) {
+
     var backOffPolicy = new FixedBackOffPolicy();
     backOffPolicy.setBackOffPeriod(jobProperties.getRetryIntervalMs());
 
@@ -99,7 +95,7 @@ public class ContributionJobConfig {
       .<InstanceIterationEvent, Instance>chunk(jobProperties.getChunkSize())
       .processor(instanceLoader)
       .writer(instanceContributor)
-      .reader(kafkaReader())
+      .reader(kafkaReader(kafkaProperties, jobProperties))
       .faultTolerant()
       .backOffPolicy(backOffPolicy)
       .retry(Exception.class)
@@ -113,18 +109,32 @@ public class ContributionJobConfig {
       .build();
   }
 
+  @Lazy
   @Bean(name = CONTRIBUTION_JOB_NAME)
-  public Job job() {
+  public Job job(KafkaProperties kafkaProperties,
+                 ContributionJobProperties jobProperties,
+                 JobBuilderFactory jobBuilderFactory,
+                 StepBuilderFactory stepBuilderFactory,
+                 ContributionJobExecutionListener jobExecutionListener,
+                 ItemProcessor<InstanceIterationEvent, Instance> instanceLoader,
+                 ItemWriter<Instance> instanceContributor,
+                 ContributionJobExceptionListener failureListener,
+                 ContributionJobStatsListener countListener) {
+
     return jobBuilderFactory.get(CONTRIBUTION_JOB_NAME)
       .incrementer(new RunIdIncrementer())
-      .start(instanceContributionStep())
+      .start(
+        instanceContributionStep(
+          kafkaProperties, jobProperties, stepBuilderFactory, instanceLoader,
+          instanceContributor, failureListener, countListener))
       .listener(jobExecutionListener)
       .listener(jobContext())
       .build();
   }
 
+  @Lazy
   @Bean(CONTRIBUTION_JOB_LAUNCHER_NAME)
-  public JobLauncher jobLauncher(JobRepository jobRepository) throws Exception {
+  public JobLauncher jobLauncher(@Lazy JobRepository jobRepository) throws Exception {
     SimpleJobLauncher jobLauncher = new SimpleJobLauncher();
     jobLauncher.setTaskExecutor(new SimpleAsyncTaskExecutor());
     jobLauncher.setJobRepository(jobRepository);
@@ -132,8 +142,9 @@ public class ContributionJobConfig {
     return jobLauncher;
   }
 
+  @Lazy
   @Bean
-  public JobRegistryBeanPostProcessor jobRegistryBeanPostProcessor(JobRegistry jobRegistry) {
+  public JobRegistryBeanPostProcessor jobRegistryBeanPostProcessor(@Lazy JobRegistry jobRegistry) {
     JobRegistryBeanPostProcessor postProcessor = new JobRegistryBeanPostProcessor();
     postProcessor.setJobRegistry(jobRegistry);
     return postProcessor;

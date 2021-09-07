@@ -4,6 +4,7 @@ import java.util.Objects;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.springframework.batch.core.configuration.annotation.JobScope;
 import org.springframework.batch.item.ItemProcessor;
 import org.springframework.stereotype.Service;
 
@@ -14,6 +15,7 @@ import org.folio.innreach.domain.service.impl.TenantScopedExecutionService;
 import org.folio.innreach.dto.Instance;
 
 @Log4j2
+@JobScope
 @Service
 @RequiredArgsConstructor
 public class InstanceLoader implements ItemProcessor<InstanceIterationEvent, Instance> {
