@@ -1,24 +1,25 @@
 package org.folio.innreach.domain.service.impl;
 
+import static org.folio.innreach.domain.service.impl.ServiceUtils.centralServerRef;
+import static org.folio.innreach.domain.service.impl.ServiceUtils.initId;
+import static org.folio.innreach.domain.service.impl.ServiceUtils.mergeAndSave;
+
+import java.util.UUID;
+import java.util.function.Consumer;
+
 import lombok.RequiredArgsConstructor;
-import org.folio.innreach.domain.entity.CentralServer;
-import org.folio.innreach.domain.entity.ItemTypeMapping;
-import org.folio.innreach.domain.service.ItemTypeMappingService;
-import org.folio.innreach.dto.ItemTypeMappingsDTO;
-import org.folio.innreach.mapper.ItemTypeMappingMapper;
-import org.folio.innreach.repository.ItemTypeMappingRepository;
 import org.springframework.data.domain.Example;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.UUID;
-import java.util.function.Consumer;
-
-import static org.folio.innreach.domain.service.impl.ServiceUtils.centralServerRef;
-import static org.folio.innreach.domain.service.impl.ServiceUtils.initId;
-import static org.folio.innreach.domain.service.impl.ServiceUtils.mergeAndSave;
+import org.folio.innreach.domain.entity.CentralServer;
+import org.folio.innreach.domain.entity.ItemTypeMapping;
+import org.folio.innreach.domain.service.ItemTypeMappingService;
+import org.folio.innreach.dto.ItemTypeMappingsDTO;
+import org.folio.innreach.mapper.ItemTypeMappingMapper;
+import org.folio.innreach.repository.ItemTypeMappingRepository;
 
 @RequiredArgsConstructor
 @Service

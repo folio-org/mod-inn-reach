@@ -1,8 +1,8 @@
 package org.folio.innreach.domain.service;
 
-import org.folio.innreach.dto.ItemTypeMappingsDTO;
-
 import java.util.UUID;
+
+import org.folio.innreach.dto.ItemTypeMappingsDTO;
 
 public interface ItemTypeMappingService {
   ItemTypeMappingsDTO getAllMappings(UUID centralServerId, Integer offset, Integer limit);

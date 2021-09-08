@@ -1,17 +1,18 @@
 package org.folio.innreach.mapper;
 
-import org.folio.innreach.domain.entity.ItemTypeMapping;
-import org.folio.innreach.dto.ItemTypeMappingDTO;
-import org.folio.innreach.dto.ItemTypeMappingsDTO;
+import static java.util.Collections.emptyList;
+import static org.apache.commons.collections4.ListUtils.emptyIfNull;
+import static org.apache.commons.lang3.ObjectUtils.defaultIfNull;
+
+import java.util.List;
+
 import org.mapstruct.InjectionStrategy;
 import org.mapstruct.Mapper;
 import org.springframework.data.domain.Page;
 
-import java.util.List;
-
-import static java.util.Collections.emptyList;
-import static org.apache.commons.collections4.ListUtils.emptyIfNull;
-import static org.apache.commons.lang3.ObjectUtils.defaultIfNull;
+import org.folio.innreach.domain.entity.ItemTypeMapping;
+import org.folio.innreach.dto.ItemTypeMappingDTO;
+import org.folio.innreach.dto.ItemTypeMappingsDTO;
 
 @Mapper(componentModel = "spring", injectionStrategy = InjectionStrategy.CONSTRUCTOR, uses = MappingMethods.class)
 public interface ItemTypeMappingMapper {
