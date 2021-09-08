@@ -15,13 +15,13 @@ import java.util.UUID;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/inn-reach/central-servers")
+@RequestMapping("/inn-reach/central-servers/{centralServerId}/user-custom-field-mappings/{customFieldId}")
 public class UserCustomFieldMappingController implements UserCustomFieldMappingsApi {
 
   private final UserCustomFieldMappingService service;
 
   @Override
-  @GetMapping("/{centralServerId}/user-custom-field-mappings/{customFieldId}")
+  @GetMapping
   public ResponseEntity<UserCustomFieldMappingsDTO> getUserCustomFieldMappingsByServerId(@PathVariable UUID centralServerId,
                                                                                          @PathVariable UUID customFieldId,
                                                                                          Integer offset, Integer limit) {
@@ -32,7 +32,7 @@ public class UserCustomFieldMappingController implements UserCustomFieldMappings
   }
 
   @Override
-  @PutMapping("/{centralServerId}/user-custom-field-mappings/{customFieldId}")
+  @PutMapping
   public ResponseEntity<Void> updateUserCustomFieldMappings(@PathVariable UUID centralServerId,
                                                             @PathVariable UUID customFieldId,
                                                             UserCustomFieldMappingsDTO userCustomFieldMappingsDTO) {
