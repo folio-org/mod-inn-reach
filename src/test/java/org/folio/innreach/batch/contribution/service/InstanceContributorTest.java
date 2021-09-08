@@ -10,6 +10,7 @@ import static org.mockito.Mockito.when;
 
 import static org.folio.innreach.fixture.ContributionFixture.createContributionConfig;
 import static org.folio.innreach.fixture.ContributionFixture.createInstance;
+import static org.folio.innreach.fixture.ContributionFixture.createMARCRecord;
 import static org.folio.innreach.fixture.ContributionFixture.irErrorResponse;
 import static org.folio.innreach.fixture.ContributionFixture.irOkResponse;
 
@@ -66,8 +67,7 @@ class InstanceContributorTest {
     when(contributionConfig.getCriteria(any())).thenReturn(createContributionConfig());
     when(irContributionService.contributeBib(any(), any(), any())).thenReturn(irOkResponse());
     when(irContributionService.lookUpBib(any(), any())).thenReturn(irOkResponse());
-
-    when(marcService.transformRecord(any(), any())).thenReturn(new TransformedMARCRecordDTO());
+    when(marcService.transformRecord(any(), any())).thenReturn(createMARCRecord());
 
     instanceContributor.write(singletonList(createInstance()));
 
@@ -85,7 +85,7 @@ class InstanceContributorTest {
 
     when(jobContext.getTenantId()).thenReturn("test");
     when(jobContext.getCentralServerId()).thenReturn(UUID.randomUUID());
-    when(marcService.transformRecord(any(), any())).thenReturn(new TransformedMARCRecordDTO());
+    when(marcService.transformRecord(any(), any())).thenReturn(createMARCRecord());
     when(irContributionService.contributeBib(any(), any(), any())).thenReturn(irErrorResponse());
 
     assertThatThrownBy(() -> instanceContributor.write(singletonList(createInstance())))
@@ -103,7 +103,7 @@ class InstanceContributorTest {
 
     when(jobContext.getTenantId()).thenReturn("test");
     when(jobContext.getCentralServerId()).thenReturn(UUID.randomUUID());
-    when(marcService.transformRecord(any(), any())).thenReturn(new TransformedMARCRecordDTO());
+    when(marcService.transformRecord(any(), any())).thenReturn(createMARCRecord());
     when(irContributionService.contributeBib(any(), any(), any())).thenReturn(irOkResponse());
     when(irContributionService.lookUpBib(any(), any())).thenReturn(irErrorResponse());
 

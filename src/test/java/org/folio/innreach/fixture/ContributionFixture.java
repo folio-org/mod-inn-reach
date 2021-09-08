@@ -5,6 +5,7 @@ import static org.jeasy.random.FieldPredicates.named;
 
 import static org.folio.innreach.domain.entity.Contribution.Status.IN_PROGRESS;
 import static org.folio.innreach.dto.MappingValidationStatusDTO.VALID;
+import static org.folio.innreach.fixture.TestUtil.deserializeFromJsonFile;
 
 import java.time.OffsetDateTime;
 import java.util.Arrays;
@@ -21,12 +22,12 @@ import org.folio.innreach.domain.dto.folio.inventorystorage.JobResponse;
 import org.folio.innreach.domain.dto.folio.inventorystorage.MaterialTypeDTO;
 import org.folio.innreach.domain.entity.CentralServer;
 import org.folio.innreach.domain.entity.Contribution;
-import org.folio.innreach.domain.entity.ContributionCriteriaConfiguration;
 import org.folio.innreach.domain.entity.base.AuditableUser;
 import org.folio.innreach.domain.service.ContributionValidationService;
 import org.folio.innreach.dto.ContributionCriteriaDTO;
 import org.folio.innreach.dto.ContributionDTO;
 import org.folio.innreach.dto.Instance;
+import org.folio.innreach.dto.TransformedMARCRecordDTO;
 import org.folio.innreach.external.dto.InnReachLocationDTO;
 import org.folio.innreach.external.dto.InnReachResponse;
 import org.folio.innreach.mapper.ContributionMapper;
@@ -111,6 +112,10 @@ public class ContributionFixture {
       .numberOfRecordsPublished(0)
       .submittedDate(OffsetDateTime.now())
       .build();
+  }
+
+  public static TransformedMARCRecordDTO createMARCRecord() {
+    return deserializeFromJsonFile("/contribution/marc-record.json", TransformedMARCRecordDTO.class);
   }
 
   public static CentralServer refCentralServer() {
