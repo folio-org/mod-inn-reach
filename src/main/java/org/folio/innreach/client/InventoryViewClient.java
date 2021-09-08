@@ -13,13 +13,13 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import org.folio.innreach.client.cql.CqlQuery;
-import org.folio.innreach.config.FolioRequestInterceptor;
+import org.folio.innreach.config.FolioFeignClientConfig;
 import org.folio.innreach.domain.dto.folio.ResultList;
 import org.folio.innreach.dto.Holding;
 import org.folio.innreach.dto.Instance;
 import org.folio.innreach.dto.Item;
 
-@FeignClient(name = "inventory-view", configuration = FolioRequestInterceptor.class)
+@FeignClient(name = "inventory-view", configuration = FolioFeignClientConfig.class)
 public interface InventoryViewClient {
 
   /**

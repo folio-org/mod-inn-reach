@@ -2,6 +2,7 @@ package org.folio.innreach.batch.contribution.service;
 
 import static org.apache.commons.collections4.ListUtils.emptyIfNull;
 
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.UUID;
 
@@ -11,6 +12,7 @@ import org.springframework.batch.core.configuration.annotation.JobScope;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
+import org.springframework.util.Base64Utils;
 
 import org.folio.innreach.batch.contribution.ContributionJobContext;
 import org.folio.innreach.domain.service.ContributionCriteriaConfigurationService;
@@ -18,6 +20,7 @@ import org.folio.innreach.domain.service.MARCRecordTransformationService;
 import org.folio.innreach.domain.service.impl.TenantScopedExecutionService;
 import org.folio.innreach.dto.ContributionCriteriaDTO;
 import org.folio.innreach.dto.Instance;
+import org.folio.innreach.dto.TransformedMARCRecordDTO;
 import org.folio.innreach.external.dto.BibContributionRequest;
 import org.folio.innreach.external.service.InnReachContributionService;
 
@@ -27,6 +30,8 @@ import org.folio.innreach.external.service.InnReachContributionService;
 @RequiredArgsConstructor
 public class InstanceContributor implements ItemWriter<Instance> {
 
+  private static final String MARC_BIB_FORMAT = "ISO2709";
+
   private final TenantScopedExecutionService tenantScopedExecutionService;
   private final MARCRecordTransformationService marcRecordTransformationService;
   private final ContributionCriteriaConfigurationService contributionConfig;
@@ -35,7 +40,7 @@ public class InstanceContributor implements ItemWriter<Instance> {
   private final ContributionJobContext jobContext;
 
   @Override
-  public void write(List<? extends Instance> items) throws Exception {
+  public void write(List<? extends Instance> items) {
     if (items.isEmpty()) {
       return;
     }
@@ -55,8 +60,8 @@ public class InstanceContributor implements ItemWriter<Instance> {
 
     var bib = BibContributionRequest.builder()
       .bibId(bibId)
-      .marc21BibFormat("ISO2709")
-      .marc21BibData(marc.getContent())
+      .marc21BibFormat(MARC_BIB_FORMAT)
+      .marc21BibData(getEncodedMARCRecord(marc))
       .titleHoldCount(0)
       .itemCount(0)
       .suppress(suppress(centralServerId, instance))
@@ -75,6 +80,11 @@ public class InstanceContributor implements ItemWriter<Instance> {
   private void verifyContribution(UUID centralServerId, String bibId) {
     var response = contributionService.lookUpBib(centralServerId, bibId);
     Assert.isTrue(response.isOk(), "Unexpected verification response: " + response);
+  }
+
+  private String getEncodedMARCRecord(TransformedMARCRecordDTO marc) {
+    byte[] contentBytes = marc.getContent().getBytes(StandardCharsets.UTF_8);
+    return Base64Utils.encodeToString(contentBytes);
   }
 
   private Character suppress(UUID centralServerId, Instance instance) {
