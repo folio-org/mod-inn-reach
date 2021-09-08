@@ -1,0 +1,13 @@
+{
+  "userCustomFieldMappings": [
+    {
+      "customFieldValue": "qwerty",
+      "agencyCode": "qwe12"
+    },
+    {
+      "customFieldValue": "asdfg",
+      "agencyCode": "asd34"
+    }
+  ],
+  "totalRecords" : 2
+}
