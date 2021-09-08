@@ -7,11 +7,12 @@ import java.time.OffsetDateTime;
 import java.util.UUID;
 
 import lombok.experimental.UtilityClass;
-import org.folio.innreach.domain.entity.UserCustomFieldMapping;
 import org.jeasy.random.EasyRandom;
 import org.jeasy.random.EasyRandomParameters;
 import org.jeasy.random.randomizers.range.IntegerRangeRandomizer;
+import org.jeasy.random.randomizers.text.StringRandomizer;
 
+import org.folio.innreach.domain.entity.CentralPatronTypeMapping;
 import org.folio.innreach.domain.entity.CentralServer;
 import org.folio.innreach.domain.entity.InnReachLocation;
 import org.folio.innreach.domain.entity.ItemTypeMapping;
@@ -19,6 +20,7 @@ import org.folio.innreach.domain.entity.LibraryMapping;
 import org.folio.innreach.domain.entity.LocationMapping;
 import org.folio.innreach.domain.entity.MaterialTypeMapping;
 import org.folio.innreach.domain.entity.PatronTypeMapping;
+import org.folio.innreach.domain.entity.UserCustomFieldMapping;
 import org.folio.innreach.domain.entity.base.AuditableUser;
 
 @UtilityClass
@@ -32,6 +34,7 @@ public class MappingFixture {
   private static final EasyRandom patronTypeRandom;
   private static final EasyRandom itemTypeRandom;
   private static final EasyRandom userCustomFieldRandom;
+  private static final EasyRandom centralPatronTypeRandom;
 
   static {
     EasyRandomParameters params = new EasyRandomParameters()
@@ -102,6 +105,21 @@ public class MappingFixture {
     userCustomFieldRandom = new EasyRandom(params);
   }
 
+  static {
+    EasyRandomParameters params = new EasyRandomParameters()
+      .randomize(named("centralPatronType"), new IntegerRangeRandomizer(0, 256))
+      .randomize(named("folioUserBarcode"), new StringRandomizer(10))
+      .randomize(named("createdBy"), () -> AuditableUser.SYSTEM)
+      .randomize(named("createdDate"), OffsetDateTime::now)
+      .randomize(named("centralServer"), MappingFixture::refCentralServer)
+      .excludeField(named("id"))
+      .excludeField(named("updatedBy"))
+      .excludeField(named("updatedDate"))
+      .excludeField(named("metadata"));
+
+    centralPatronTypeRandom = new EasyRandom(params);
+  }
+
   public static MaterialTypeMapping createMaterialTypeMapping() {
     return mtypeRandom.nextObject(MaterialTypeMapping.class);
   }
@@ -124,6 +142,10 @@ public class MappingFixture {
 
   public static ItemTypeMapping createItemTypeMapping() {
     return itemTypeRandom.nextObject(ItemTypeMapping.class);
+  }
+
+  public static CentralPatronTypeMapping createCentralPatronTypeMapping() {
+    return centralPatronTypeRandom.nextObject(CentralPatronTypeMapping.class);
   }
 
   public static CentralServer refCentralServer() {

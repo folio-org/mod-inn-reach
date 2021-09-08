@@ -48,5 +48,5 @@ public class Auditable {
   @LastModifiedDate
   @Column(name = "updated_date")
   private OffsetDateTime updatedDate;
-  
+
 }

@@ -1,0 +1,2 @@
+DELETE
+FROM central_patron_type_mapping;
