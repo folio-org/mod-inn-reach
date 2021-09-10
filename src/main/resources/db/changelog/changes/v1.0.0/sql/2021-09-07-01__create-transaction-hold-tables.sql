@@ -48,7 +48,7 @@ CREATE TABLE transaction_patron_hold
     call_number VARCHAR(255),
     shipped_item_barcode VARCHAR(255),
     CONSTRAINT pk_transaction_patron_hold PRIMARY KEY (id),
-    CONSTRAINT fk_patron_hold_transaction FOREIGN KEY (id)
+    CONSTRAINT fk_transaction_patron_hold FOREIGN KEY (id)
     REFERENCES transaction_hold (id) ON DELETE CASCADE
 );
 
@@ -58,7 +58,7 @@ CREATE TABLE transaction_item_hold
     central_patron_type SMALLINT NOT NULL CHECK(central_patron_type BETWEEN 0 AND 255),
     patron_name VARCHAR(255) NOT NULL,
     CONSTRAINT pk_transaction_item_hold PRIMARY KEY (id),
-    CONSTRAINT fk_item_hold_transaction FOREIGN KEY (id)
+    CONSTRAINT fk_transaction_item_hold FOREIGN KEY (id)
     REFERENCES transaction_hold (id) ON DELETE CASCADE
 );
 
@@ -73,6 +73,6 @@ CREATE TABLE transaction_local_hold
     central_patron_type SMALLINT NOT NULL CHECK(central_patron_type BETWEEN 0 AND 255),
     patron_name VARCHAR(255) NOT NULL,
     CONSTRAINT pk_transaction_local_hold PRIMARY KEY (id),
-    CONSTRAINT fk_local_hold_transaction FOREIGN KEY (id)
+    CONSTRAINT fk_transaction_local_hold FOREIGN KEY (id)
     REFERENCES transaction_hold (id) ON DELETE CASCADE
 );

@@ -25,7 +25,7 @@ import java.util.UUID;
 @Entity
 @Inheritance(strategy = InheritanceType.JOINED)
 @Table(name = "transaction_hold")
-@ToString
+@ToString(exclude = {"pickupLocation"})
 public abstract class TransactionHold extends Auditable implements Identifiable<UUID> {
   @Id
   @GeneratedValue(strategy = GenerationType.AUTO)
