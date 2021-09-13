@@ -12,13 +12,17 @@ import org.mapstruct.ValueMapping;
 import org.springframework.data.domain.Page;
 
 import org.folio.innreach.domain.entity.Contribution;
+import org.folio.innreach.domain.entity.ContributionError;
 import org.folio.innreach.dto.ContributionDTO;
+import org.folio.innreach.dto.ContributionErrorDTO;
 import org.folio.innreach.dto.ContributionsDTO;
 
 @Mapper(componentModel = "spring", injectionStrategy = InjectionStrategy.CONSTRUCTOR, uses = MappingMethods.class)
 public interface ContributionMapper {
 
   Contribution toEntity(ContributionDTO dto);
+
+  ContributionError toEntity(ContributionErrorDTO dto);
 
   @Mapping(target = "contributionStarted", source = "entity.createdDate")
   @Mapping(target = "contributionStartedBy", source = "entity.createdBy.name")

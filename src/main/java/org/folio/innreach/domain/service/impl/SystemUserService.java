@@ -2,6 +2,7 @@ package org.folio.innreach.domain.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
@@ -18,6 +19,9 @@ public class SystemUserService {
   private final FolioExecutionContext context;
   private final SystemUserProperties systemUserConf;
 
+  @Value("${okapi.url}")
+  private String okapiUrl;
+
   public void prepareSystemUser() {
     log.info("Preparing system user...");
 
@@ -32,7 +36,7 @@ public class SystemUserService {
     var systemUser = SystemUser.builder()
       .tenantId(tenantId)
       .username(systemUserConf.getUsername())
-      .okapiUrl(context.getOkapiUrl())
+      .okapiUrl(okapiUrl)
       .build();
 
     var token = authService.loginSystemUser(systemUser);

@@ -37,6 +37,12 @@ system-user:
   password: Mod-innreach-1-0-0
   lastname: System
   permissionsFilePath: permissions/test-permissions.csv
-kafka:
-  enable: false
-
+batch:
+  jobs:
+    contribution:
+      chunk-size: 1
+      retry-attempts: 3
+      retry-interval-ms: 20000
+      reader-topic: folio.diku.inventory.instance-contribution
+      reader-poll-timeout-sec: 300
+okapi.url: ${OKAPI_URL:http://localhost:8080}

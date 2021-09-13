@@ -14,6 +14,7 @@ import org.folio.spring.FolioExecutionContext;
 @Service
 @RequiredArgsConstructor
 public class TenantScopedExecutionService {
+
   private final FolioExecutionContextBuilder contextBuilder;
   private final SystemUserService systemUserService;
 

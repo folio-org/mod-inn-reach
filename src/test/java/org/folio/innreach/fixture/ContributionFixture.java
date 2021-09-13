@@ -3,6 +3,10 @@ package org.folio.innreach.fixture;
 import static java.util.UUID.fromString;
 import static org.jeasy.random.FieldPredicates.named;
 
+import static org.folio.innreach.domain.entity.Contribution.Status.IN_PROGRESS;
+import static org.folio.innreach.dto.MappingValidationStatusDTO.VALID;
+import static org.folio.innreach.fixture.TestUtil.deserializeFromJsonFile;
+
 import java.time.OffsetDateTime;
 import java.util.Arrays;
 import java.util.List;
@@ -14,11 +18,21 @@ import org.jeasy.random.EasyRandom;
 import org.jeasy.random.EasyRandomParameters;
 
 import org.folio.innreach.domain.dto.folio.ResultList;
+import org.folio.innreach.domain.dto.folio.inventorystorage.JobResponse;
 import org.folio.innreach.domain.dto.folio.inventorystorage.MaterialTypeDTO;
 import org.folio.innreach.domain.entity.CentralServer;
 import org.folio.innreach.domain.entity.Contribution;
 import org.folio.innreach.domain.entity.base.AuditableUser;
+import org.folio.innreach.domain.service.ContributionValidationService;
+import org.folio.innreach.dto.ContributionCriteriaDTO;
+import org.folio.innreach.dto.ContributionDTO;
+import org.folio.innreach.dto.Instance;
+import org.folio.innreach.dto.TransformedMARCRecordDTO;
 import org.folio.innreach.external.dto.InnReachLocationDTO;
+import org.folio.innreach.external.dto.InnReachResponse;
+import org.folio.innreach.mapper.ContributionMapper;
+import org.folio.innreach.mapper.ContributionMapperImpl;
+import org.folio.innreach.mapper.MappingMethods;
 
 @UtilityClass
 public class ContributionFixture {
@@ -33,9 +47,12 @@ public class ContributionFixture {
 
   private static final EasyRandom contributionRandom;
 
+  public static final ContributionMapper mapper = new ContributionMapperImpl(new MappingMethods());
+
   static {
     EasyRandomParameters params = new EasyRandomParameters()
       .overrideDefaultInitialization(true)
+      .randomize(named("status"), () -> IN_PROGRESS)
       .randomize(named("centralServer"), ContributionFixture::refCentralServer)
       .randomize(named("createdBy"), () -> AuditableUser.SYSTEM)
       .randomize(named("createdDate"), OffsetDateTime::now)
@@ -54,6 +71,17 @@ public class ContributionFixture {
     contribution.getErrors().forEach(e -> e.setContribution(contribution));
 
     return contribution;
+  }
+
+  public static ContributionCriteriaDTO createContributionConfig() {
+    return contributionRandom.nextObject(ContributionCriteriaDTO.class);
+  }
+
+  public static Instance createInstance() {
+    var instance = new Instance();
+    instance.setId(UUID.randomUUID());
+    instance.setHrid("test");
+    return instance;
   }
 
   public static List<InnReachLocationDTO> createIrLocations() {
@@ -77,8 +105,37 @@ public class ContributionFixture {
     return dto;
   }
 
+  public static JobResponse createIterationJobResponse() {
+    return JobResponse.builder()
+      .id(UUID.randomUUID())
+      .status(JobResponse.JobStatus.IN_PROGRESS)
+      .numberOfRecordsPublished(0)
+      .submittedDate(OffsetDateTime.now())
+      .build();
+  }
+
+  public static TransformedMARCRecordDTO createMARCRecord() {
+    return deserializeFromJsonFile("/contribution/marc-record.json", TransformedMARCRecordDTO.class);
+  }
+
   public static CentralServer refCentralServer() {
     return TestUtil.refCentralServer(PRE_POPULATED_CENTRAL_SERVER_UUID);
+  }
+
+  public static InnReachResponse irOkResponse() {
+    return new InnReachResponse("ok", null, null);
+  }
+
+  public static InnReachResponse irErrorResponse() {
+    return new InnReachResponse("failed", null, null);
+  }
+
+  public static class ContributionValidationServiceMock implements ContributionValidationService {
+    @Override
+    public void validate(UUID centralServerId, ContributionDTO contribution) {
+      contribution.setItemTypeMappingStatus(VALID);
+      contribution.setLocationsMappingStatus(VALID);
+    }
   }
 
 }
