@@ -2,7 +2,6 @@ package org.folio.innreach.domain.entity;
 
 import lombok.Getter;
 import lombok.Setter;
-import lombok.ToString;
 import org.folio.innreach.domain.entity.base.Auditable;
 import org.folio.innreach.domain.entity.base.Identifiable;
 
@@ -13,7 +12,6 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
 import javax.persistence.NamedQuery;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
@@ -26,7 +24,6 @@ import static org.folio.innreach.domain.entity.InnReachTransaction.FETCH_TRANSAC
 @Getter
 @Setter
 @Table(name = "inn_reach_transaction")
-@ToString(exclude = {"centralServer"})
 @NamedQuery(
   name = FETCH_TRANSACTION_HOLD_NAME,
   query = FETCH_TRANSACTION_HOLD
@@ -40,12 +37,17 @@ public class InnReachTransaction extends Auditable implements Identifiable<UUID>
   @GeneratedValue(strategy = GenerationType.AUTO)
   private UUID id;
 
-  @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "central_server_id")
-  private CentralServer centralServer;
+  @Column(name = "tracking_id")
+  private UUID trackingId;
+
+  @Column(name = "central_server_code")
+  private String centralServerCode;
 
   @Column(name = "state")
   private TransactionState state;
+
+  @Column(name = "type")
+  private TransactionType type;
 
   @OneToOne(fetch = FetchType.LAZY, orphanRemoval = true)
   @JoinColumn(name = "transaction_hold_id", unique = true)
@@ -68,5 +70,11 @@ public class InnReachTransaction extends Auditable implements Identifiable<UUID>
     FINAL_CHECKIN,
     RECALL,
     TRANSFER
+  }
+
+  public enum TransactionType {
+    ITEM,
+    PATRON,
+    LOCAL
   }
 }

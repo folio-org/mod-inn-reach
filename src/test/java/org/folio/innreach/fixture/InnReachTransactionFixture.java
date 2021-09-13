@@ -2,6 +2,7 @@ package org.folio.innreach.fixture;
 
 import org.folio.innreach.domain.entity.CentralServer;
 import org.folio.innreach.domain.entity.InnReachTransaction;
+import org.folio.innreach.domain.entity.InnReachTransaction.TransactionType;
 import org.folio.innreach.domain.entity.TransactionHold;
 import org.folio.innreach.domain.entity.TransactionItemHold;
 import org.folio.innreach.domain.entity.TransactionLocalHold;
@@ -41,7 +42,8 @@ public class InnReachTransactionFixture {
 
   static {
     EasyRandomParameters params = new EasyRandomParameters()
-      .randomize(named("hold"), InnReachTransactionFixture::createTransactionHold)
+      .randomize(named("type"), () -> TransactionType.values()[randomInteger(3)])
+      .randomize(named("hold"), () -> null)
       .randomize(named("centralServer"), InnReachTransactionFixture::refCentralServer)
       .randomize(named("createdBy"), () -> AuditableUser.SYSTEM)
       .randomize(named("createdDate"), OffsetDateTime::now)
@@ -59,22 +61,25 @@ public class InnReachTransactionFixture {
   }
 
   public static InnReachTransaction createInnReachTransaction() {
-    return transactionRandom.nextObject(InnReachTransaction.class);
+    var transaction = transactionRandom.nextObject(InnReachTransaction.class);
+    transaction.setHold(createTransactionHold(transaction.getType()));
+    return transaction;
   }
 
-  private static TransactionHold createTransactionHold() {
-    int random = randomInteger(3);
+  private static TransactionHold createTransactionHold(TransactionType type) {
     TransactionHold hold;
-    switch (random) {
-      case 0:
+    switch (type) {
+      case PATRON:
         hold = transactionHoldRandom.nextObject(TransactionPatronHold.class);
         break;
-      case 1:
+      case ITEM:
         hold = transactionHoldRandom.nextObject(TransactionItemHold.class);
         break;
-      default:
+      case LOCAL:
         hold = transactionHoldRandom.nextObject(TransactionLocalHold.class);
         break;
+      default:
+        hold = null;
     }
     return hold;
   }

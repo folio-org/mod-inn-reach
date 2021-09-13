@@ -28,7 +28,7 @@ INSERT INTO transaction_local_hold (id, patron_home_library, patron_phone, title
 central_patron_type, patron_name) VALUES
 ('709c1075-0378-48af-a682-b4e7ac170423', 'patronHomeLibrary1', null, 'title1', 'author1', '0123456789', 0, 'patronName1');
 
-INSERT INTO inn_reach_transaction (id, central_server_id, state, transaction_hold_id) VALUES
-('0aab1720-14b4-4210-9a19-0d0bf1cd64d3', 'edab6baf-c696-42b1-89bb-1bbb8759b0d2', 1, '76834d5a-08e8-45ea-84ca-4d9b10aa340c'),
-('ab2393a1-acc4-4849-82ac-8cc0c37339e1', 'edab6baf-c696-42b1-89bb-1bbb8759b0d2', 0, '891bfff3-ba79-4beb-8c25-f714f14c6a31'),
-('79b0a1fb-55be-4e55-9d84-01303aaec1ce', 'edab6baf-c696-42b1-89bb-1bbb8759b0d2', 2, '709c1075-0378-48af-a682-b4e7ac170423');
+INSERT INTO inn_reach_transaction (id, tracking_id, central_server_code, state, type, transaction_hold_id) VALUES
+('0aab1720-14b4-4210-9a19-0d0bf1cd64d3', '65097d7c-2697-468d-ad20-1568d9cffccc', 'fli01', 1, 1, '76834d5a-08e8-45ea-84ca-4d9b10aa340c'),
+('ab2393a1-acc4-4849-82ac-8cc0c37339e1', '86ace75a-7d17-4320-8363-1d0f0283cb42', 'fli01', 0, 0, '891bfff3-ba79-4beb-8c25-f714f14c6a31'),
+('79b0a1fb-55be-4e55-9d84-01303aaec1ce', '4e00c413-381e-4883-9c1c-2a9de6fb71e3', 'fli01', 2, 2, '709c1075-0378-48af-a682-b4e7ac170423');

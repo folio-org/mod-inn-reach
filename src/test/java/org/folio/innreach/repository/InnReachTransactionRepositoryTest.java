@@ -24,9 +24,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class InnReachTransactionRepositoryTest extends BaseRepositoryTest {
   private static final String PRE_POPULATED_INN_REACH_TRANSACTION_ID1 = "0aab1720-14b4-4210-9a19-0d0bf1cd64d3";
   private static final String PRE_POPULATED_TRANSACTION_PICKUP_LOCATION_ID1 = "809adcde-3e67-4822-9916-fd653a681358";
-  private static final String PRE_POPULATED_TRANSACTION_HOLD_ID1 = "76834d5a-08e8-45ea-84ca-4d9b10aa340c";
 
-  private static final String PRE_POPULATED_CENTRAL_SERVER_ID = "edab6baf-c696-42b1-89bb-1bbb8759b0d2";
+  private static final String PRE_POPULATED_CENTRAL_SERVER_CODE = "fli01";
 
   @Autowired
   private InnReachTransactionRepository repository;
@@ -39,7 +38,7 @@ class InnReachTransactionRepositoryTest extends BaseRepositoryTest {
 
     assertNotNull(fromDb);
     assertEquals(UUID.fromString(PRE_POPULATED_INN_REACH_TRANSACTION_ID1), fromDb.getId());
-    assertEquals(UUID.fromString(PRE_POPULATED_CENTRAL_SERVER_ID), fromDb.getCentralServer().getId());
+    assertEquals(PRE_POPULATED_CENTRAL_SERVER_CODE, fromDb.getCentralServerCode());
     assertEquals(PATRON_HOLD, fromDb.getState());
     assertEquals(UUID.fromString(PRE_POPULATED_TRANSACTION_PICKUP_LOCATION_ID1), fromDb.getHold().getPickupLocation().getId());
 
@@ -55,7 +54,7 @@ class InnReachTransactionRepositoryTest extends BaseRepositoryTest {
 
     assertNotNull(saved);
     assertNotNull(saved.getId());
-    assertEquals(created.getCentralServer(), saved.getCentralServer());
+    assertEquals(created.getCentralServerCode(), saved.getCentralServerCode());
     assertEquals(created.getHold(), saved.getHold());
     assertEquals(created.getState(), saved.getState());
   }
