@@ -12,7 +12,7 @@ buildMvn {
   doDocker = {
     buildDocker {
       publishMaster = 'yes'
-      healthChk = 'yes'
+      healthChk = false
       healthChkCmd = 'curl -sS --fail -o /dev/null http://localhost:8081/admin/health || exit 1'
     }
   }

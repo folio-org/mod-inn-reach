@@ -1,5 +1,7 @@
 package org.folio.innreach.domain.dto.folio.inventorystorage;
 
+import java.util.UUID;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -9,9 +11,9 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor(staticName = "of")
 public class InstanceIterationEvent {
 
-  private String jobId;
+  private UUID jobId;
   private String type;
   private String tenant;
-  private String instanceId;
+  private UUID instanceId;
 
 }

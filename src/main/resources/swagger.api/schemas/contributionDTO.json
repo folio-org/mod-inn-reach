@@ -8,6 +8,11 @@
       "type": "string",
       "format": "uuid"
     },
+    "jobId": {
+      "description": "Instance iteration job id",
+      "type": "string",
+      "format": "uuid"
+    },
     "itemTypeMappingStatus": {
       "description": "Material type mapping validation status",
       "type": "object",

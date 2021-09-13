@@ -2,37 +2,53 @@ package org.folio.innreach.domain.service.impl;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import static org.folio.innreach.dto.ContributionDTO.StatusEnum.COMPLETE;
+import static org.folio.innreach.fixture.ContributionFixture.createContribution;
 import static org.folio.innreach.fixture.InventoryItemFixture.createInventoryItemDTO;
 import static org.folio.innreach.fixture.ItemContributionOptionsConfigurationFixture.createItmContribOptConfDTO;
+import static org.folio.innreach.fixture.JobResponseFixture.createJobResponse;
 
+import java.util.Optional;
 import java.util.UUID;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.mockito.Spy;
 
+import org.folio.innreach.batch.contribution.service.ContributionJobRunner;
 import org.folio.innreach.client.InstanceStorageClient;
 import org.folio.innreach.client.InventoryClient;
 import org.folio.innreach.client.RequestStorageClient;
 import org.folio.innreach.domain.dto.folio.ContributionItemCirculationStatus;
 import org.folio.innreach.domain.dto.folio.inventory.InventoryItemStatus;
-import org.folio.innreach.domain.dto.folio.inventorystorage.JobResponse;
 import org.folio.innreach.domain.dto.folio.requeststorage.RequestsDTO;
 import org.folio.innreach.domain.entity.Contribution;
+import org.folio.innreach.domain.entity.ContributionError;
+import org.folio.innreach.domain.service.ContributionValidationService;
 import org.folio.innreach.domain.service.ItemContributionOptionsConfigurationService;
+import org.folio.innreach.dto.ContributionDTO;
+import org.folio.innreach.dto.ContributionErrorDTO;
+import org.folio.innreach.fixture.ContributionFixture.ContributionValidationServiceMock;
+import org.folio.innreach.mapper.ContributionMapper;
+import org.folio.innreach.mapper.ContributionMapperImpl;
+import org.folio.innreach.mapper.MappingMethods;
+import org.folio.innreach.repository.ContributionErrorRepository;
 import org.folio.innreach.repository.ContributionRepository;
 
 class ContributionServiceImplTest {
 
   @Mock
   private ContributionRepository repository;
+
+  @Mock
+  private ContributionErrorRepository errorRepository;
 
   @Spy
   private InstanceStorageClient client;
@@ -46,24 +62,36 @@ class ContributionServiceImplTest {
   @Mock
   private RequestStorageClient requestStorageClient;
 
+  @Mock
+  private ContributionJobRunner jobRunner;
+
+  @Spy
+  private ContributionMapper mapper = new ContributionMapperImpl(new MappingMethods());
+
+  @Spy
+  private ContributionValidationService validationService = new ContributionValidationServiceMock();
+
   @InjectMocks
   private ContributionServiceImpl service;
 
   @BeforeEach
   public void beforeEachSetup() {
-    MockitoAnnotations.initMocks(this);
+    MockitoAnnotations.openMocks(this);
   }
 
   @Test
   void startInitialContributionProcess() {
-    when(repository.save(any())).thenReturn(new Contribution());
-    when(client.startInitialContribution(any())).thenReturn(new JobResponse());
+    when(repository.save(any(Contribution.class))).thenReturn(new Contribution());
+    when(client.startInitialContribution(any())).thenReturn(createJobResponse());
 
     service.startInitialContribution(UUID.randomUUID());
 
-    verify(repository, times(1)).save(any());
+    verify(repository).save(any(Contribution.class));
     verify(client).startInitialContribution(any());
+    verify(jobRunner).run(any(UUID.class), any(ContributionDTO.class));
   }
+
+  @Test
   void returnAvailableContributionStatusWhenItemStatusIsAvailable() {
     when(itemContributionOptionsConfigurationService.getItmContribOptConf(any())).thenReturn(createItmContribOptConfDTO());
 
@@ -212,6 +240,53 @@ class ContributionServiceImplTest {
     var itemCirculationStatus = service.getItemCirculationStatus(UUID.randomUUID(), UUID.randomUUID());
 
     assertEquals(ContributionItemCirculationStatus.NON_LENDABLE, itemCirculationStatus);
+  }
+
+  @Test
+  void shouldCompleteContribution() {
+    var contribution = createContribution();
+    var centralServerId = contribution.getCentralServer().getId();
+
+    when(repository.fetchCurrentByCentralServerId(any())).thenReturn(Optional.of(contribution));
+    when(repository.save(any())).thenReturn(contribution);
+
+    var updated = service.completeContribution(centralServerId);
+
+    assertEquals(contribution.getId(), updated.getId());
+    assertEquals(COMPLETE, updated.getStatus());
+  }
+
+  @Test
+  void shouldUpdateContributionStats() {
+    var contribution = createContribution();
+    var centralServerId = contribution.getCentralServer().getId();
+    contribution.setRecordsTotal(4343L);
+    contribution.setRecordsProcessed(11L);
+    contribution.setRecordsContributed(10L);
+
+    when(repository.fetchCurrentByCentralServerId(any())).thenReturn(Optional.of(contribution));
+    when(repository.save(any())).thenReturn(contribution);
+
+    service.updateContributionStats(centralServerId, mapper.toDTO(contribution));
+
+    ArgumentCaptor<Contribution> argument = ArgumentCaptor.forClass(Contribution.class);
+    verify(repository).save(argument.capture());
+
+    Contribution saved = argument.getValue();
+    assertEquals(contribution.getRecordsTotal(), saved.getRecordsTotal());
+    assertEquals(contribution.getRecordsProcessed(), saved.getRecordsProcessed());
+    assertEquals(contribution.getRecordsContributed(), saved.getRecordsContributed());
+  }
+
+  @Test
+  void shouldLogContributionError() {
+    var error = new ContributionErrorDTO();
+    error.setMessage("test msg");
+    error.setRecordId(UUID.randomUUID());
+
+    service.logContributionError(UUID.randomUUID(), error);
+
+    verify(errorRepository).save(any(ContributionError.class));
   }
 
 }

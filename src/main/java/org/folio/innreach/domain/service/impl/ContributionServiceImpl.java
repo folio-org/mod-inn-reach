@@ -1,22 +1,29 @@
 package org.folio.innreach.domain.service.impl;
 
+import static org.apache.commons.lang3.ObjectUtils.defaultIfNull;
+import static org.springframework.transaction.annotation.Propagation.REQUIRES_NEW;
+
+import static org.folio.innreach.domain.dto.folio.inventorystorage.JobResponse.JobStatus.IN_PROGRESS;
+import static org.folio.innreach.domain.entity.Contribution.Status.COMPLETE;
 import static org.folio.innreach.domain.service.impl.ServiceUtils.centralServerRef;
+import static org.folio.innreach.dto.MappingValidationStatusDTO.VALID;
 
 import java.time.OffsetDateTime;
-import java.util.List;
 import java.util.UUID;
 
 import lombok.AllArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.Assert;
 
+import org.folio.innreach.batch.contribution.service.ContributionJobRunner;
 import org.folio.innreach.client.InstanceStorageClient;
 import org.folio.innreach.client.InventoryClient;
 import org.folio.innreach.client.RequestStorageClient;
 import org.folio.innreach.domain.dto.folio.ContributionItemCirculationStatus;
 import org.folio.innreach.domain.dto.folio.inventory.InventoryItemDTO;
-import org.folio.innreach.domain.dto.folio.inventorystorage.InstanceIterationEvent;
 import org.folio.innreach.domain.dto.folio.inventorystorage.InstanceIterationRequest;
 import org.folio.innreach.domain.dto.folio.inventorystorage.JobResponse;
 import org.folio.innreach.domain.entity.Contribution;
@@ -24,9 +31,11 @@ import org.folio.innreach.domain.service.ContributionService;
 import org.folio.innreach.domain.service.ContributionValidationService;
 import org.folio.innreach.domain.service.ItemContributionOptionsConfigurationService;
 import org.folio.innreach.dto.ContributionDTO;
+import org.folio.innreach.dto.ContributionErrorDTO;
 import org.folio.innreach.dto.ContributionsDTO;
 import org.folio.innreach.dto.ItemContributionOptionsConfigurationDTO;
 import org.folio.innreach.mapper.ContributionMapper;
+import org.folio.innreach.repository.ContributionErrorRepository;
 import org.folio.innreach.repository.ContributionRepository;
 
 @Log4j2
@@ -35,8 +44,10 @@ import org.folio.innreach.repository.ContributionRepository;
 public class ContributionServiceImpl implements ContributionService {
 
   private final ContributionRepository repository;
+  private final ContributionErrorRepository errorRepository;
   private final ContributionMapper mapper;
   private final ContributionValidationService validationService;
+  private final ContributionJobRunner jobRunner;
 
   private final InstanceStorageClient client;
 
@@ -47,14 +58,23 @@ public class ContributionServiceImpl implements ContributionService {
 
   @Override
   public ContributionDTO getCurrent(UUID centralServerId) {
-    var entity = repository.fetchCurrentByCentralServerId(centralServerId)
-      .orElseGet(Contribution::new);
-
-    var contribution = mapper.toDTO(entity);
+    var contribution = repository.fetchCurrentByCentralServerId(centralServerId)
+      .map(mapper::toDTO)
+      .orElseGet(ContributionDTO::new);
 
     validationService.validate(centralServerId, contribution);
 
     return contribution;
+  }
+
+  @Transactional(propagation = REQUIRES_NEW)
+  @Override
+  public ContributionDTO completeContribution(UUID centralServerId) {
+    var entity = findCurrent(centralServerId);
+
+    entity.setStatus(COMPLETE);
+
+    return mapper.toDTO(repository.save(entity));
   }
 
   @Override
@@ -63,24 +83,81 @@ public class ContributionServiceImpl implements ContributionService {
     return mapper.toDTOCollection(page);
   }
 
+  @Transactional(propagation = REQUIRES_NEW)
   @Override
-  public void contributeInstances(List<InstanceIterationEvent> events) {
-    // TODO: implement when D2IR contribution API client is ready
+  public void updateContributionStats(UUID centralServerId, ContributionDTO contribution) {
+    var entity = findCurrent(centralServerId);
+
+    Long total = defaultIfNull(contribution.getRecordsTotal(), entity.getRecordsTotal());
+    Long processed = defaultIfNull(contribution.getRecordsProcessed(), entity.getRecordsProcessed());
+    Long contributed = defaultIfNull(contribution.getRecordsContributed(), entity.getRecordsContributed());
+    Long updated = defaultIfNull(contribution.getRecordsUpdated(), entity.getRecordsUpdated());
+    Long decontributed = defaultIfNull(contribution.getRecordsDecontributed(), entity.getRecordsDecontributed());
+
+    entity.setRecordsTotal(total);
+    entity.setRecordsProcessed(processed);
+    entity.setRecordsContributed(contributed);
+    entity.setRecordsUpdated(updated);
+    entity.setRecordsDecontributed(decontributed);
+
+    repository.save(entity);
   }
 
   @Override
   public void startInitialContribution(UUID centralServerId) {
+    log.info("Starting initial contribution for central server = {}", centralServerId);
+
+    var existingContribution = repository.fetchCurrentByCentralServerId(centralServerId);
+    Assert.isTrue(existingContribution.isEmpty(), "Initial contribution is already in progress");
+
     var contribution = createEmptyContribution(centralServerId);
 
-    var request = createInstanceIterationRequest();
-    log.info("Calling mod-inventory storage...");
+    log.info("Validating contribution settings");
+    validateContribution(centralServerId, contribution);
 
-    JobResponse jobResponse = startIterationMocked(request);
+    log.info("Triggering inventory instance iteration");
+    var iterationJobResponse = triggerInstanceIteration();
+    contribution.setJobId(iterationJobResponse.getId());
 
-    contribution.setJobId(jobResponse.getId());
     repository.save(contribution);
 
-    log.info("Initial contribution process started.");
+    jobRunner.run(centralServerId, mapper.toDTO(contribution));
+
+    log.info("Initial contribution process started");
+  }
+
+  @Transactional(propagation = REQUIRES_NEW)
+  @Override
+  public void logContributionError(UUID contributionId, ContributionErrorDTO errorDTO) {
+    var contribution = new Contribution();
+    contribution.setId(contributionId);
+
+    var error = mapper.toEntity(errorDTO);
+    error.setContribution(contribution);
+
+    errorRepository.save(error);
+  }
+
+  private Contribution findCurrent(UUID centralServerId) {
+    return repository.fetchCurrentByCentralServerId(centralServerId)
+      .orElseThrow(() -> new IllegalArgumentException("Initial contribution is not found for central server = " + centralServerId));
+  }
+
+  private JobResponse triggerInstanceIteration() {
+    var request = createInstanceIterationRequest();
+
+    var iterationJob = startIterationMocked(request);
+    Assert.isTrue(iterationJob.getStatus() == IN_PROGRESS, "Unexpected iteration job status received: " + iterationJob.getStatus());
+
+    return iterationJob;
+  }
+
+  private void validateContribution(UUID centralServerId, Contribution contribution) {
+    var dto = mapper.toDTO(contribution);
+    validationService.validate(centralServerId, dto);
+
+    Assert.isTrue(dto.getItemTypeMappingStatus() == VALID, "Invalid item types mapping status");
+    Assert.isTrue(dto.getLocationsMappingStatus() == VALID, "Invalid locations mapping status");
   }
 
   private JobResponse startIterationMocked(InstanceIterationRequest request) {
@@ -90,11 +167,11 @@ public class ContributionServiceImpl implements ContributionService {
       log.warn("mod-inventory-storage Iteration endpoint is yet to be implemented. Returning stubbed response..");
 
       return JobResponse.builder()
-          .id(UUID.randomUUID())
-          .status(JobResponse.JobStatus.IN_PROGRESS)
-          .numberOfRecordsPublished(0)
-          .submittedDate(OffsetDateTime.now())
-          .build();
+        .id(UUID.randomUUID())
+        .status(JobResponse.JobStatus.IN_PROGRESS)
+        .numberOfRecordsPublished(0)
+        .submittedDate(OffsetDateTime.now())
+        .build();
     }
   }
 
