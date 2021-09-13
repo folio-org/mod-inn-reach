@@ -1,0 +1,31 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "description": "User custom field mapping",
+  "type": "object",
+  "properties": {
+    "id": {
+      "description": "Mapping id",
+      "type": "string",
+      "format": "uuid"
+    },
+    "customFieldValue": {
+      "description": "Custom field value",
+      "type": "string"
+    },
+    "agencyCode": {
+      "description": "Agency code",
+      "type": "string",
+      "maxLength": 5
+    },
+    "metadata": {
+      "description": "Entity metadata",
+      "type": "object",
+      "$ref": "metadata.json"
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "customFieldValue",
+    "agencyCode"
+  ]
+}

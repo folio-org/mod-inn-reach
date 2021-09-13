@@ -1,0 +1,22 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "description": "User custom field mapping collection",
+  "type": "object",
+  "properties": {
+    "userCustomFieldMappings": {
+      "description": "List of user custom field mappings",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "$ref": "userCustomFieldMappingDTO.json"
+      }
+    },
+    "totalRecords": {
+      "type": "integer"
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "userCustomFieldMappings"
+  ]
+}
