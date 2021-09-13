@@ -67,6 +67,7 @@ public class ContributionServiceImpl implements ContributionService {
     return contribution;
   }
 
+  @Transactional(propagation = REQUIRES_NEW)
   @Override
   public ContributionDTO completeContribution(UUID centralServerId) {
     var entity = findCurrent(centralServerId);

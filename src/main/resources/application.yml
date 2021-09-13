@@ -48,9 +48,6 @@ spring:
             use:
               type:
                 headers: false
-            key:
-              default:
-                type: java.lang.String
             value:
               default:
                 type: org.folio.innreach.domain.dto.folio.inventorystorage.InstanceIterationEvent

@@ -1,7 +1,6 @@
 package org.folio.innreach.batch.contribution.listener;
 
 import static org.folio.innreach.dto.ContributionDTO.StatusEnum.IN_PROGRESS;
-import static org.folio.innreach.dto.MappingValidationStatusDTO.VALID;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -12,7 +11,6 @@ import org.springframework.util.Assert;
 
 import org.folio.innreach.batch.contribution.ContributionJobContext;
 import org.folio.innreach.domain.service.ContributionService;
-import org.folio.innreach.dto.ContributionDTO;
 
 @Log4j2
 @Component
@@ -26,9 +24,10 @@ public class ContributionJobExecutionListener extends JobExecutionListenerSuppor
     log.info("Starting contribution job execution: {}", jobExecution);
 
     var context = ContributionJobContext.of(jobExecution);
-    var contribution = contributionService.getCurrent(context.getCentralServerId());
+    var centralServerId = context.getCentralServerId();
+    var contribution = contributionService.getCurrent(centralServerId);
 
-    Assert.isTrue(contribution.getStatus() == IN_PROGRESS, "Initial contribution is not running");
+    Assert.isTrue(contribution.getStatus() == IN_PROGRESS, "Initial contribution is not running for central server = " + centralServerId);
   }
 
   @Override

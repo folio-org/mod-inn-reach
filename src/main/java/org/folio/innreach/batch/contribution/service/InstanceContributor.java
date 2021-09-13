@@ -34,7 +34,7 @@ public class InstanceContributor implements ItemWriter<Instance> {
 
   private final TenantScopedExecutionService tenantScopedExecutionService;
   private final MARCRecordTransformationService marcRecordTransformationService;
-  private final ContributionCriteriaConfigurationService contributionConfig;
+  private final ContributionCriteriaConfigurationService contributionConfigService;
   private final InnReachContributionService contributionService;
 
   private final ContributionJobContext jobContext;
@@ -95,8 +95,8 @@ public class InstanceContributor implements ItemWriter<Instance> {
 
     var statisticalCodeIds = emptyIfNull(instance.getStatisticalCodeIds());
 
-    var excludedCodeId = config.getDoNotContributeId();
-    if (statisticalCodeIds.contains(excludedCodeId)) {
+    var excludedId = config.getDoNotContributeId();
+    if (statisticalCodeIds.contains(excludedId)) {
       return 'n';
     }
 
@@ -116,7 +116,7 @@ public class InstanceContributor implements ItemWriter<Instance> {
   private ContributionCriteriaDTO getContributionConfig(UUID centralServerId) {
     ContributionCriteriaDTO config;
     try {
-      config = contributionConfig.getCriteria(centralServerId);
+      config = contributionConfigService.getCriteria(centralServerId);
     } catch (Exception e) {
       log.warn("Unable to load contribution config for central server = {}", centralServerId, e);
       return null;
