@@ -1,24 +1,25 @@
 package org.folio.innreach.domain.service.impl;
 
+import static org.folio.innreach.domain.service.impl.ServiceUtils.centralServerRef;
+import static org.folio.innreach.domain.service.impl.ServiceUtils.initId;
+import static org.folio.innreach.domain.service.impl.ServiceUtils.mergeAndSave;
+
+import java.util.UUID;
+import java.util.function.Consumer;
+
 import lombok.RequiredArgsConstructor;
-import org.folio.innreach.domain.entity.CentralServer;
-import org.folio.innreach.domain.entity.UserCustomFieldMapping;
-import org.folio.innreach.domain.service.UserCustomFieldMappingService;
-import org.folio.innreach.dto.UserCustomFieldMappingsDTO;
-import org.folio.innreach.mapper.UserCustomFieldMappingMapper;
-import org.folio.innreach.repository.UserCustomFieldMappingRepository;
 import org.springframework.data.domain.Example;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.UUID;
-import java.util.function.Consumer;
-
-import static org.folio.innreach.domain.service.impl.ServiceUtils.centralServerRef;
-import static org.folio.innreach.domain.service.impl.ServiceUtils.initId;
-import static org.folio.innreach.domain.service.impl.ServiceUtils.mergeAndSave;
+import org.folio.innreach.domain.entity.CentralServer;
+import org.folio.innreach.domain.entity.UserCustomFieldMapping;
+import org.folio.innreach.domain.service.UserCustomFieldMappingService;
+import org.folio.innreach.dto.UserCustomFieldMappingsDTO;
+import org.folio.innreach.mapper.UserCustomFieldMappingMapper;
+import org.folio.innreach.repository.UserCustomFieldMappingRepository;
 
 @RequiredArgsConstructor
 @Service

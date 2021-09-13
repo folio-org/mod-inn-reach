@@ -28,7 +28,6 @@ import org.folio.innreach.batch.contribution.ContributionJobContext;
 import org.folio.innreach.domain.service.ContributionCriteriaConfigurationService;
 import org.folio.innreach.domain.service.MARCRecordTransformationService;
 import org.folio.innreach.domain.service.impl.TenantScopedExecutionService;
-import org.folio.innreach.dto.TransformedMARCRecordDTO;
 import org.folio.innreach.external.service.InnReachContributionService;
 
 class InstanceContributorTest {

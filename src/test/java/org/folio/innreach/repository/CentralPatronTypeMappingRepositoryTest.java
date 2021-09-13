@@ -49,13 +49,13 @@ class CentralPatronTypeMappingRepositoryTest extends BaseRepositoryTest {
   void updateCentralPatronTypeMapping() {
     var centralPatronTypeMapping = repository.getOne(PRE_POPULATED_CENTRAL_PATRON_TYPE_MAPPING_ID);
 
-    centralPatronTypeMapping.setFolioUserBarcode("000054321");
+    centralPatronTypeMapping.setBarcode("000054321");
 
     repository.saveAndFlush(centralPatronTypeMapping);
 
     var updatedCentralPatronTypeMapping = repository.getOne(PRE_POPULATED_CENTRAL_PATRON_TYPE_MAPPING_ID);
 
-    assertEquals("000054321", updatedCentralPatronTypeMapping.getFolioUserBarcode());
+    assertEquals("000054321", updatedCentralPatronTypeMapping.getBarcode());
   }
 
   @Test

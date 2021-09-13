@@ -31,10 +31,10 @@ public class CentralPatronTypeMapping extends Auditable implements Identifiable<
   private UUID id;
 
   @Column(name = "central_patron_type")
-  private int centralPatronType;
+  private Integer centralPatronType;
 
   @Column(name = "folio_user_barcode")
-  private String folioUserBarcode;
+  private String barcode;
 
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "central_server_id")
