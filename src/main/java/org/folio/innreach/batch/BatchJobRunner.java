@@ -24,16 +24,16 @@ public abstract class BatchJobRunner<T> implements BeanFactoryAware {
 
   private BeanFactory beanFactory;
 
-  @Override
-  public void setBeanFactory(BeanFactory beanFactory) throws BeansException {
-    this.beanFactory = beanFactory;
-  }
-
   public abstract void run(UUID centralServerId, T jobConfig);
 
   public abstract String getJobName();
 
   public abstract String getJobLauncherName();
+
+  @Override
+  public void setBeanFactory(BeanFactory beanFactory) throws BeansException {
+    this.beanFactory = beanFactory;
+  }
 
   public void restart() {
     try {

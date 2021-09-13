@@ -14,12 +14,14 @@ import org.springframework.batch.core.ItemReadListener;
 import org.springframework.batch.core.ItemWriteListener;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
+import org.springframework.batch.core.configuration.JobFactory;
 import org.springframework.batch.core.configuration.JobRegistry;
 import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
 import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
 import org.springframework.batch.core.configuration.annotation.JobScope;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
 import org.springframework.batch.core.configuration.support.JobRegistryBeanPostProcessor;
+import org.springframework.batch.core.configuration.support.ReferenceJobFactory;
 import org.springframework.batch.core.launch.JobLauncher;
 import org.springframework.batch.core.launch.support.RunIdIncrementer;
 import org.springframework.batch.core.launch.support.SimpleJobLauncher;
@@ -109,7 +111,6 @@ public class ContributionJobConfig {
       .build();
   }
 
-  @Lazy
   @Bean(name = CONTRIBUTION_JOB_NAME)
   public Job job(KafkaProperties kafkaProperties,
                  ContributionJobProperties jobProperties,
@@ -132,7 +133,6 @@ public class ContributionJobConfig {
       .build();
   }
 
-  @Lazy
   @Bean(CONTRIBUTION_JOB_LAUNCHER_NAME)
   public JobLauncher jobLauncher(@Lazy JobRepository jobRepository) throws Exception {
     SimpleJobLauncher jobLauncher = new SimpleJobLauncher();
@@ -142,7 +142,11 @@ public class ContributionJobConfig {
     return jobLauncher;
   }
 
-  @Lazy
+  @Bean
+  public JobFactory jobFactory(@Lazy Job job) {
+    return new ReferenceJobFactory(job);
+  }
+
   @Bean
   public JobRegistryBeanPostProcessor jobRegistryBeanPostProcessor(@Lazy JobRegistry jobRegistry) {
     JobRegistryBeanPostProcessor postProcessor = new JobRegistryBeanPostProcessor();
