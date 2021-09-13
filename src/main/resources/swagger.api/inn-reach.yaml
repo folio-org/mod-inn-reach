@@ -928,9 +928,9 @@ paths:
       parameters:
         - $ref: '#/components/parameters/centralServerId'
         - $ref: '#/components/parameters/customFieldId'
-  /central
+  /central-servers/{centralServerId}/central-patron-type-mappings:
     get:
-      operationId: getCentralPatronTypeMappings-servers/{centralServerId}/central-patron-type-mappings:
+      operationId: getCentralPatronTypeMappings
       description: Get a list of Central Patron Type Mappings
       tags:
         - central-patron-type-mappings
