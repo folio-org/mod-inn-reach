@@ -34,7 +34,7 @@ public abstract class TransactionHold extends Auditable implements Identifiable<
   @Column(name = "transaction_time")
   private OffsetDateTime transactionTime;
 
-  @OneToOne(fetch = FetchType.LAZY)
+  @OneToOne(fetch = FetchType.LAZY, orphanRemoval = true)
   @JoinColumn(name = "pickup_location_id", unique = true)
   private TransactionPickupLocation pickupLocation;
 

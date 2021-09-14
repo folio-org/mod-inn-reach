@@ -1,7 +1,6 @@
 package org.folio.innreach.repository;
 
 import org.folio.innreach.domain.entity.InnReachTransaction;
-import org.folio.innreach.domain.entity.TransactionHold;
 import org.folio.innreach.domain.entity.TransactionPatronHold;
 import org.hibernate.Hibernate;
 import org.junit.jupiter.api.Test;
@@ -94,9 +93,7 @@ class InnReachTransactionRepositoryTest extends BaseRepositoryTest {
     repository.deleteById(id);
 
     Optional<InnReachTransaction> deletedTransaction = repository.findById(id);
-    Optional<TransactionHold> deletedHold = repository.findTransactionHoldById(id);
     assertTrue(deletedTransaction.isEmpty());
-    assertTrue(deletedHold.isEmpty());
   }
 
   @Test

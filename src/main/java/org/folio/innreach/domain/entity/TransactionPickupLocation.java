@@ -17,7 +17,7 @@ import java.util.UUID;
 @Entity
 @Getter
 @Setter
-@Table(name = "transaction_item_hold")
+@Table(name = "transaction_pickup_location")
 @ToString
 public class TransactionPickupLocation extends Auditable implements Identifiable<UUID> {
   @Id

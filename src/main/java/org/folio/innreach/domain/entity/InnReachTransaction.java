@@ -17,21 +17,11 @@ import javax.persistence.OneToOne;
 import javax.persistence.Table;
 import java.util.UUID;
 
-import static org.folio.innreach.domain.entity.InnReachTransaction.FETCH_TRANSACTION_HOLD;
-import static org.folio.innreach.domain.entity.InnReachTransaction.FETCH_TRANSACTION_HOLD_NAME;
-
 @Entity
 @Getter
 @Setter
 @Table(name = "inn_reach_transaction")
-@NamedQuery(
-  name = FETCH_TRANSACTION_HOLD_NAME,
-  query = FETCH_TRANSACTION_HOLD
-)
 public class InnReachTransaction extends Auditable implements Identifiable<UUID> {
-
-  public static final String FETCH_TRANSACTION_HOLD = "select h from TransactionHold h where h.id = :id";
-  public static final String FETCH_TRANSACTION_HOLD_NAME = "InnReachTransaction.fetchTransactionHold";
 
   @Id
   @GeneratedValue(strategy = GenerationType.AUTO)
