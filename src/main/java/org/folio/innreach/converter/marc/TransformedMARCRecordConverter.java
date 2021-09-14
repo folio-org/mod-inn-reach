@@ -1,11 +1,17 @@
 package org.folio.innreach.converter.marc;
 
+import static org.apache.commons.lang3.StringUtils.EMPTY;
 import static org.apache.commons.lang3.StringUtils.SPACE;
 
 import static org.folio.innreach.converter.marc.Constants.BLANK_REPLACEMENT;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.util.regex.Pattern;
 
+import lombok.extern.log4j.Log4j2;
+import org.codehaus.plexus.util.Base64;
+import org.marc4j.MarcStreamWriter;
 import org.marc4j.marc.Leader;
 import org.marc4j.marc.MarcFactory;
 import org.marc4j.marc.Record;
@@ -17,6 +23,7 @@ import org.folio.innreach.domain.dto.folio.sourcerecord.RecordFieldDTO;
 import org.folio.innreach.domain.dto.folio.sourcerecord.SourceRecordDTO;
 import org.folio.innreach.dto.TransformedMARCRecordDTO;
 
+@Log4j2
 @Component
 public class TransformedMARCRecordConverter {
 
@@ -30,9 +37,13 @@ public class TransformedMARCRecordConverter {
   private static final MarcFactory MARC_FACTORY = MarcFactory.newInstance();
 
   public TransformedMARCRecordDTO toTransformedRecord(SourceRecordDTO sourceRecord) {
+    var record = toMARCRecord(sourceRecord);
+    var base64RawContent = toBase64RawContent(record);
+
     return new TransformedMARCRecordDTO()
       .id(sourceRecord.getId())
-      .content(toMARCRecord(sourceRecord).toString());
+      .content(record.toString())
+      .base64rawContent(base64RawContent);
   }
 
   private Record toMARCRecord(SourceRecordDTO sourceRecord) {
@@ -85,6 +96,24 @@ public class TransformedMARCRecordConverter {
 
   private String restoreBlanks(String sourceString) {
     return sourceString.replace(BLANK_REPLACEMENT, SPACE);
+  }
+
+  private String toBase64RawContent(Record record) {
+    MarcStreamWriter marcStreamWriter = null;
+
+    try (var baos = new ByteArrayOutputStream()) {
+      marcStreamWriter = new MarcStreamWriter(baos);
+      marcStreamWriter.write(record);
+      return new String(Base64.encodeBase64(baos.toByteArray()));
+    } catch (IOException e) {
+      log.error("Can't transform MARC record content to Base64 encoded raw content", e);
+    } finally {
+      if (marcStreamWriter != null) {
+        marcStreamWriter.close();
+      }
+    }
+
+    return EMPTY;
   }
 
 }

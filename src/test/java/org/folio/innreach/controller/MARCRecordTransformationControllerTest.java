@@ -64,6 +64,11 @@ class MARCRecordTransformationControllerTest extends BaseControllerTest {
       TransformedMARCRecordDTO.class, PRE_POPULATED_CENTRAL_SERVER_ID, UUID.randomUUID());
 
     assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
-    assertNotNull(responseEntity.getBody());
+
+    var body = responseEntity.getBody();
+
+    assertNotNull(body);
+    assertNotNull(body.getContent());
+    assertNotNull(body.getBase64rawContent());
   }
 }
