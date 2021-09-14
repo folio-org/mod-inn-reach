@@ -17,11 +17,22 @@ import javax.persistence.OneToOne;
 import javax.persistence.Table;
 import java.util.UUID;
 
+import static org.folio.innreach.domain.entity.InnReachTransaction.FETCH_ONE_BY_TRACKING_ID_QUERY;
+import static org.folio.innreach.domain.entity.InnReachTransaction.FETCH_ONE_BY_TRACKING_ID_QUERY_NAME;
+
 @Entity
 @Getter
 @Setter
 @Table(name = "inn_reach_transaction")
+@NamedQuery(
+  name = FETCH_ONE_BY_TRACKING_ID_QUERY_NAME,
+  query = FETCH_ONE_BY_TRACKING_ID_QUERY
+)
 public class InnReachTransaction extends Auditable implements Identifiable<UUID> {
+
+  public static final String FETCH_ONE_BY_TRACKING_ID_QUERY_NAME = "InnReachTransaction.fetchOne";
+  public static final String FETCH_ONE_BY_TRACKING_ID_QUERY =
+    "SELECT t FROM InnReachTransaction t JOIN FETCH t.hold b WHERE t.trackingId = :trackingId";
 
   @Id
   @GeneratedValue(strategy = GenerationType.AUTO)

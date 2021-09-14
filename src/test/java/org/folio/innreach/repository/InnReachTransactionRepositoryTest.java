@@ -2,7 +2,6 @@ package org.folio.innreach.repository;
 
 import org.folio.innreach.domain.entity.InnReachTransaction;
 import org.folio.innreach.domain.entity.TransactionPatronHold;
-import org.hibernate.Hibernate;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -22,6 +21,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class InnReachTransactionRepositoryTest extends BaseRepositoryTest {
   private static final String PRE_POPULATED_INN_REACH_TRANSACTION_ID1 = "0aab1720-14b4-4210-9a19-0d0bf1cd64d3";
+  private static final String PRE_POPULATED_TRANSACTION_TRACKING_ID1 = "65097d7c-2697-468d-ad20-1568d9cffccc";
   private static final String PRE_POPULATED_TRANSACTION_PICKUP_LOCATION_ID1 = "809adcde-3e67-4822-9916-fd653a681358";
 
   private static final String PRE_POPULATED_CENTRAL_SERVER_CODE = "fli01";
@@ -33,7 +33,7 @@ class InnReachTransactionRepositoryTest extends BaseRepositoryTest {
   @Sql(scripts = {"classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"})
   void getInnReachTransaction_when_innReachTractionExists() {
-    var fromDb = repository.getOne(UUID.fromString(PRE_POPULATED_INN_REACH_TRANSACTION_ID1));
+    var fromDb = repository.fetchOneByTrackingId(UUID.fromString(PRE_POPULATED_TRANSACTION_TRACKING_ID1)).get();
 
     assertNotNull(fromDb);
     assertEquals(UUID.fromString(PRE_POPULATED_INN_REACH_TRANSACTION_ID1), fromDb.getId());
@@ -41,7 +41,7 @@ class InnReachTransactionRepositoryTest extends BaseRepositoryTest {
     assertEquals(PATRON_HOLD, fromDb.getState());
     assertEquals(UUID.fromString(PRE_POPULATED_TRANSACTION_PICKUP_LOCATION_ID1), fromDb.getHold().getPickupLocation().getId());
 
-    var hold = (TransactionPatronHold) Hibernate.unproxy(fromDb.getHold());
+    var hold = (TransactionPatronHold) fromDb.getHold();
     assertEquals("title1", hold.getTitle());
   }
 
@@ -62,9 +62,9 @@ class InnReachTransactionRepositoryTest extends BaseRepositoryTest {
   @Sql(scripts = {"classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"})
   void updateInnReachTransaction_when_innReachTransactionDataIsValid() {
-    var saved = repository.getOne(UUID.fromString(PRE_POPULATED_INN_REACH_TRANSACTION_ID1));
+    var saved = repository.fetchOneByTrackingId(UUID.fromString(PRE_POPULATED_TRANSACTION_TRACKING_ID1)).get();
 
-    var updatedHold = (TransactionPatronHold) Hibernate.unproxy(saved.getHold());
+    var updatedHold = (TransactionPatronHold) saved.getHold();
     var updatedState = InnReachTransaction.TransactionState.values()[randomInteger(16)];
     var updatedTitle = "updatedTitle";
     updatedHold.setCentralItemType(randomInteger(256));
@@ -76,7 +76,7 @@ class InnReachTransactionRepositoryTest extends BaseRepositoryTest {
     saved.setState(updatedState);
 
     var updated = repository.save(saved);
-    var savedUpdatedHold = (TransactionPatronHold) Hibernate.unproxy(updated.getHold());
+    var savedUpdatedHold = (TransactionPatronHold) updated.getHold();
 
     assertEquals(updatedHold.getCentralItemType(), savedUpdatedHold.getCentralItemType());
     assertEquals(updatedHold.getItemAgencyCode(), savedUpdatedHold.getItemAgencyCode());
@@ -100,7 +100,7 @@ class InnReachTransactionRepositoryTest extends BaseRepositoryTest {
   @Sql(scripts = {"classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"})
   void throwException_when_updatingInnReachTransactionWithInvalidAgencyCode() {
-    var saved = repository.getOne(UUID.fromString(PRE_POPULATED_INN_REACH_TRANSACTION_ID1));
+    var saved = repository.fetchOneByTrackingId(UUID.fromString(PRE_POPULATED_TRANSACTION_TRACKING_ID1)).get();
 
     saved.getHold().setItemAgencyCode("qwerty123");
 
@@ -111,7 +111,7 @@ class InnReachTransactionRepositoryTest extends BaseRepositoryTest {
   @Sql(scripts = {"classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"})
   void throwException_when_updatingInnReachTransactionWithInvalidItemType() {
-    var saved = repository.getOne(UUID.fromString(PRE_POPULATED_INN_REACH_TRANSACTION_ID1));
+    var saved = repository.fetchOneByTrackingId(UUID.fromString(PRE_POPULATED_TRANSACTION_TRACKING_ID1)).get();
 
     saved.getHold().setCentralItemType(256);
 
@@ -122,7 +122,7 @@ class InnReachTransactionRepositoryTest extends BaseRepositoryTest {
   @Sql(scripts = {"classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"})
   void throwException_when_updatingInnReachTransactionWithoutRequiredFields() {
-    var saved = repository.getOne(UUID.fromString(PRE_POPULATED_INN_REACH_TRANSACTION_ID1));
+    var saved = repository.fetchOneByTrackingId(UUID.fromString(PRE_POPULATED_TRANSACTION_TRACKING_ID1)).get();
 
     saved.getHold().setPatronId(null);
 
