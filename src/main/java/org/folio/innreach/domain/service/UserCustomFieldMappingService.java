@@ -1,11 +1,13 @@
 package org.folio.innreach.domain.service;
 
+import org.folio.innreach.dto.UserCustomFieldMappingDTO;
+
 import java.util.UUID;
 
-import org.folio.innreach.dto.UserCustomFieldMappingsDTO;
-
 public interface UserCustomFieldMappingService {
-  UserCustomFieldMappingsDTO getAllMappings(UUID centralServerId, UUID customFieldId, Integer offset, Integer limit);
+  UserCustomFieldMappingDTO getMapping(UUID centralServerId);
 
-  UserCustomFieldMappingsDTO updateAllMappings(UUID centralServerId, UUID customFieldId, UserCustomFieldMappingsDTO userCustomFieldMappingsDTO);
+  UserCustomFieldMappingDTO createMapping(UUID centralServerId, UserCustomFieldMappingDTO userCustomFieldMappingDTO);
+
+  UserCustomFieldMappingDTO updateMapping(UUID centralServerId, UserCustomFieldMappingDTO userCustomFieldMappingDTO);
 }

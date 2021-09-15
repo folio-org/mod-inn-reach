@@ -1,13 +1,8 @@
 {
-  "userCustomFieldMappings": [
+  "customFieldId": "b376851e-a76b-450b-9945-d035128f628f",
+  "configuredOptions":
     {
-      "customFieldValue": "qwerty",
-      "agencyCode": "qwe12"
-    },
-    {
-      "customFieldValue": "asdfg",
-      "agencyCode": "asd34"
+      "qwerty": "qwe12",
+      "asdfg": "asd34"
     }
-  ],
-  "totalRecords" : 2
 }

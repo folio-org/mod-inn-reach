@@ -885,7 +885,7 @@ paths:
         required: true
       parameters:
         - $ref: '#/components/parameters/centralServerId'
-  /central-servers/{centralServerId}/user-custom-field-mappings/{customFieldId}:
+  /central-servers/{centralServerId}/user-custom-field-mappings:
     get:
       tags:
         - user-custom-field-mappings
@@ -895,19 +895,16 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/userCustomFieldMappingsDTO"
+                $ref: "#/components/schemas/userCustomFieldMappingDTO"
         '500':
           $ref: "#/components/responses/trait_response_500"
-      description: Get a list of User Custom Field Mappings
-      operationId: getUserCustomFieldMappingsByServerId
+      description: Get a User Custom Field Mapping
+      operationId: getUserCustomFieldMapping
       parameters:
         - $ref: '#/components/parameters/centralServerId'
-        - $ref: '#/components/parameters/customFieldId'
-        - $ref: "#/components/parameters/trait_pageable_offset"
-        - $ref: "#/components/parameters/trait_pageable_limit"
     put:
-      description: Update User Custom Field Mappings
-      operationId: updateUserCustomFieldMappings
+      description: Update User Custom Field Mapping
+      operationId: updateUserCustomFieldMapping
       tags:
         - user-custom-field-mappings
       responses:
@@ -923,11 +920,34 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/userCustomFieldMappingsDTO"
+              $ref: "#/components/schemas/userCustomFieldMappingDTO"
         required: true
       parameters:
         - $ref: '#/components/parameters/centralServerId'
-        - $ref: '#/components/parameters/customFieldId'
+    post:
+      description: Add new User Custom Field Mapping associated with the central server
+      operationId: createUserCustomFieldMapping
+      tags:
+        - user-custom-field-mappings
+      responses:
+        '201':
+          description: User Custom Field Mapping created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/userCustomFieldMappingDTO"
+        '400':
+          $ref: "#/components/responses/trait_response_validation_400"
+        '500':
+          $ref: "#/components/responses/trait_response_500"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/userCustomFieldMappingDTO"
+        required: true
+      parameters:
+        - $ref: '#/components/parameters/centralServerId'
   /central-servers/{centralServerId}/central-patron-type-mappings:
     get:
       operationId: getCentralPatronTypeMappings
@@ -1025,8 +1045,8 @@ components:
       $ref: schemas/contributionsDTO.json
     itemTypeMappingsDTO:
       $ref: schemas/itemTypeMappingsDTO.json
-    userCustomFieldMappingsDTO:
-      $ref: schemas/userCustomFieldMappingsDTO.json
+    userCustomFieldMappingDTO:
+      $ref: schemas/userCustomFieldMappingDTO.json
     instance:
       $ref: schemas/inventorystorage/instance.json
     item:
