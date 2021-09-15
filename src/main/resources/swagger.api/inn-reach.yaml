@@ -1031,6 +1031,8 @@ components:
       $ref: schemas/inventorystorage/instance.json
     item:
       $ref: schemas/inventorystorage/item.json
+    holding:
+      $ref: schemas/inventorystorage/holding.json
     centralPatronTypeMappingsDTO:
       $ref: schemas/centralPatronTypeMappingsDTO.json
   parameters:

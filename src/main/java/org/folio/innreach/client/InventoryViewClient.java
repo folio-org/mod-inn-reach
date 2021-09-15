@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 
 import org.folio.innreach.config.FolioFeignClientConfig;
 import org.folio.innreach.domain.dto.folio.ResultList;
+import org.folio.innreach.dto.Holding;
 import org.folio.innreach.dto.Instance;
 import org.folio.innreach.dto.Item;
 
@@ -29,10 +30,11 @@ public interface InventoryViewClient {
   @NoArgsConstructor
   class InstanceView {
     private Instance instance;
+    private List<Holding> holdingsRecords = emptyList();
     private List<Item> items = emptyList();
 
     public Instance toInstance() {
-      return instance.items(items);
+      return instance.holdings(holdingsRecords).items(items);
     }
   }
 }

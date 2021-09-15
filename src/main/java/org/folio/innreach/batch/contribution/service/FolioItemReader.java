@@ -9,6 +9,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -21,6 +23,8 @@ import org.springframework.batch.item.support.AbstractItemStreamItemReader;
 import org.springframework.stereotype.Component;
 
 import org.folio.innreach.domain.service.InventoryService;
+import org.folio.innreach.dto.Holding;
+import org.folio.innreach.dto.Instance;
 import org.folio.innreach.dto.Item;
 
 @StepScope
@@ -77,14 +81,36 @@ public class FolioItemReader extends AbstractItemStreamItemReader<Item> {
         continue;
       }
 
-      var items = inventoryService.getItemsByInstanceId(instanceId);
+      var instance = inventoryService.getInstance(instanceId);
+      if (instance == null) {
+        continue;
+      }
+
+      var items = instance.getItems();
       if (CollectionUtils.isNotEmpty(items)) {
+        setInstanceRefs(instance, items);
+
         instanceItemTotals.putIfAbsent(instanceId, items.size());
 
         // inventory-view client doesn't support pagination of items
         itemsIterator = new BoundedIterator<>(items.iterator(), offset, FETCH_LIMIT);
 
         return;
+      }
+    }
+  }
+
+  private void setInstanceRefs(Instance instance, List<Item> items) {
+    var holdingsByIds = instance.getHoldings()
+      .stream()
+      .collect(Collectors.toMap(Holding::getId, Function.identity()));
+
+    for (var item : items) {
+      item.setInstanceHrid(instance.getHrid());
+
+      if (holdingsByIds.containsKey(item.getHoldingsRecordId())) {
+        var holding = holdingsByIds.get(item.getHoldingsRecordId());
+        item.setHoldingStatisticalCodeIds(holding.getStatisticalCodeIds());
       }
     }
   }

@@ -25,6 +25,11 @@
       "type": "boolean",
       "description": "Records the fact that the record should not be displayed in a discovery system"
     },
+    "holdingsRecordId": {
+      "type": "string",
+      "format": "UUID",
+      "description": "ID of the holdings record the item is a member of."
+    },
     "statisticalCodeIds": {
       "type": "array",
       "description": "List of statistical code IDs",
@@ -60,6 +65,16 @@
     "instanceHrid": {
       "type": "string",
       "description": "The human readable instanceID, also called eye readable ID. A system-assigned sequential alternate ID",
+      "hidden": true
+    },
+    "holdingStatisticalCodeIds": {
+      "type": "array",
+      "description": "List of statistical code of the holdings record the item is a member of",
+      "items": {
+        "type": "string",
+        "format": "UUID"
+      },
+      "uniqueItems": true,
       "hidden": true
     }
   }

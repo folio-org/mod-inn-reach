@@ -39,6 +39,13 @@
       "items": {
         "$ref": "item.json"
       }
+    },
+    "holdings": {
+      "type": "array",
+      "description": "List of holding items",
+      "items": {
+        "$ref": "holding.json"
+      }
     }
   }
 }

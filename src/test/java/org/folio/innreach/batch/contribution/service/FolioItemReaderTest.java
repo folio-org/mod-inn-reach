@@ -1,5 +1,7 @@
 package org.folio.innreach.batch.contribution.service;
 
+import static java.util.Collections.emptyList;
+import static java.util.Collections.singletonList;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -12,6 +14,7 @@ import static org.folio.innreach.batch.contribution.service.FolioItemReader.INST
 import static org.folio.innreach.batch.contribution.service.FolioItemReader.INSTANCE_ITEM_TOTAL_CONTEXT;
 import static org.folio.innreach.batch.contribution.service.InstanceContributor.INSTANCE_CONTRIBUTED_ID_CONTEXT;
 import static org.folio.innreach.fixture.ContributionFixture.createExecutionContext;
+import static org.folio.innreach.fixture.ContributionFixture.createInstance;
 
 import java.util.Collections;
 import java.util.List;
@@ -28,6 +31,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.batch.item.ExecutionContext;
 
 import org.folio.innreach.domain.service.InventoryService;
+import org.folio.innreach.dto.Instance;
 import org.folio.innreach.dto.Item;
 
 @ExtendWith(MockitoExtension.class)
@@ -71,7 +75,7 @@ class FolioItemReaderTest {
   void shouldReturnNullOnRead() {
     reader.open(createExecutionContext());
 
-    when(inventoryService.getItemsByInstanceId(any())).thenReturn(Collections.emptyList());
+    when(inventoryService.getInstance(any())).thenReturn(new Instance());
 
     var event = reader.read();
 
@@ -82,7 +86,7 @@ class FolioItemReaderTest {
   void shouldReturnItem() {
     reader.open(createExecutionContext());
 
-    when(inventoryService.getItemsByInstanceId(any())).thenReturn(Collections.singletonList(new Item()));
+    when(inventoryService.getInstance(any())).thenReturn(createInstance());
 
     var event = reader.read();
 

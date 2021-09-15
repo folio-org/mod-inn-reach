@@ -100,7 +100,10 @@ public class ItemContributor implements ItemWriter<Item> {
   }
 
   private Character getSuppressionStatus(Item item) {
-    return validationService.getSuppressionStatus(jobContext.getCentralServerId(), item.getStatisticalCodeIds());
+    Character itemSuppress = validationService.getSuppressionStatus(jobContext.getCentralServerId(), item.getStatisticalCodeIds());
+
+    return itemSuppress != null ? itemSuppress :
+      validationService.getSuppressionStatus(jobContext.getCentralServerId(), item.getHoldingStatisticalCodeIds());
   }
 
   private ContributionItemCirculationStatus getCirculationStatus(Item item) {

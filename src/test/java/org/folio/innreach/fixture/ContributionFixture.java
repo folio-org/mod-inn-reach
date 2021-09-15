@@ -1,5 +1,6 @@
 package org.folio.innreach.fixture;
 
+import static java.util.Collections.singletonList;
 import static java.util.UUID.fromString;
 import static org.jeasy.random.FieldPredicates.named;
 
@@ -27,7 +28,7 @@ import org.folio.innreach.domain.dto.folio.inventorystorage.MaterialTypeDTO;
 import org.folio.innreach.domain.entity.CentralServer;
 import org.folio.innreach.domain.entity.Contribution;
 import org.folio.innreach.domain.entity.base.AuditableUser;
-import org.folio.innreach.dto.ContributionCriteriaDTO;
+import org.folio.innreach.dto.Holding;
 import org.folio.innreach.dto.Instance;
 import org.folio.innreach.dto.Item;
 import org.folio.innreach.dto.TransformedMARCRecordDTO;
@@ -49,6 +50,7 @@ public class ContributionFixture {
   private static final String IR_LOCATION3_CODE = "u7y6t";
 
   private static final EasyRandom contributionRandom;
+  private static final EasyRandom instanceRandom;
 
   public static final ContributionMapper mapper = new ContributionMapperImpl(new MappingMethods());
 
@@ -68,6 +70,15 @@ public class ContributionFixture {
     contributionRandom = new EasyRandom(params);
   }
 
+  static {
+    EasyRandomParameters params = new EasyRandomParameters()
+      .overrideDefaultInitialization(true)
+      .objectPoolSize(50)
+      .randomize(named("centralServer"), ContributionFixture::refCentralServer);
+
+    instanceRandom = new EasyRandom(params);
+  }
+
   public static Contribution createContribution() {
     var contribution = contributionRandom.nextObject(Contribution.class);
 
@@ -76,19 +87,21 @@ public class ContributionFixture {
     return contribution;
   }
 
-  public static ContributionCriteriaDTO createContributionConfig() {
-    return contributionRandom.nextObject(ContributionCriteriaDTO.class);
-  }
-
   public static Instance createInstance() {
     var instance = new Instance();
     instance.setId(UUID.randomUUID());
     instance.setHrid("test");
+    instance.setItems(singletonList(createItem()));
+    instance.setHoldings(singletonList(createHolding()));
     return instance;
   }
 
   public static Item createItem() {
-    return contributionRandom.nextObject(Item.class);
+    return instanceRandom.nextObject(Item.class);
+  }
+
+  private static Holding createHolding() {
+    return instanceRandom.nextObject(Holding.class);
   }
 
   public static List<InnReachLocationDTO> createIrLocations() {
@@ -126,7 +139,7 @@ public class ContributionFixture {
     var executionContext = new ExecutionContext();
     executionContext.put(INSTANCE_ITEM_OFFSET_CONTEXT, Collections.singletonMap(UUID.randomUUID(), 1));
     executionContext.put(INSTANCE_ITEM_TOTAL_CONTEXT, Collections.singletonMap(UUID.randomUUID(), 342));
-    executionContext.put(INSTANCE_CONTRIBUTED_ID_CONTEXT, Collections.singletonList(UUID.randomUUID()));
+    executionContext.put(INSTANCE_CONTRIBUTED_ID_CONTEXT, singletonList(UUID.randomUUID()));
     return executionContext;
   }
 
