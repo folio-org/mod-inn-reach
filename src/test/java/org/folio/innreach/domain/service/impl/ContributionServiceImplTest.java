@@ -33,6 +33,7 @@ import org.folio.innreach.mapper.ContributionMapperImpl;
 import org.folio.innreach.mapper.MappingMethods;
 import org.folio.innreach.repository.ContributionErrorRepository;
 import org.folio.innreach.repository.ContributionRepository;
+import org.folio.spring.FolioExecutionContext;
 
 class ContributionServiceImplTest {
 
@@ -47,6 +48,9 @@ class ContributionServiceImplTest {
 
   @Mock
   private ContributionJobRunner jobRunner;
+
+  @Mock
+  private FolioExecutionContext context;
 
   @Spy
   private ContributionMapper mapper = new ContributionMapperImpl(new MappingMethods());
@@ -73,7 +77,7 @@ class ContributionServiceImplTest {
 
     verify(repository).save(any(Contribution.class));
     verify(client).startInitialContribution(any());
-    verify(jobRunner).run(any(UUID.class), any(String.class), any(ContributionDTO.class));
+    verify(jobRunner).run(any(UUID.class), any(), any(ContributionDTO.class));
   }
 
   @Test
