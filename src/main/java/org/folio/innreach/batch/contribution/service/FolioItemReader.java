@@ -82,7 +82,7 @@ public class FolioItemReader extends AbstractItemStreamItemReader<Item> {
         instanceItemTotals.putIfAbsent(instanceId, items.size());
 
         // inventory-view client doesn't support pagination of items
-        itemsIterator = new BoundedIterator(items.iterator(), offset, FETCH_LIMIT);
+        itemsIterator = new BoundedIterator<>(items.iterator(), offset, FETCH_LIMIT);
 
         return;
       }

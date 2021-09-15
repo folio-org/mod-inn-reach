@@ -7,13 +7,10 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import static org.folio.innreach.fixture.ContributionFixture.createItem;
-import static org.folio.innreach.fixture.ContributionFixture.createMARCRecord;
 import static org.folio.innreach.fixture.ContributionFixture.irOkResponse;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.UUID;
-import java.util.concurrent.Callable;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -61,7 +58,7 @@ class ItemContributorTest {
   private ItemContributor service;
 
   @Test
-  public void shouldContributeItems() {
+  void shouldContributeItems() {
     when(jobContext.getCentralServerId()).thenReturn(CENTRAL_SERVER_ID);
     when(irContributionService.contributeBibItems(any(), any(), any())).thenReturn(irOkResponse());
     when(irLocationService.getAllInnReachLocations(any(), any())).thenReturn(new InnReachLocationsDTO());
