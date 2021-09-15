@@ -3,12 +3,15 @@ package org.folio.innreach.fixture;
 import static java.util.UUID.fromString;
 import static org.jeasy.random.FieldPredicates.named;
 
+import static org.folio.innreach.batch.contribution.service.FolioItemReader.INSTANCE_ITEM_OFFSET_CONTEXT;
+import static org.folio.innreach.batch.contribution.service.FolioItemReader.INSTANCE_ITEM_TOTAL_CONTEXT;
+import static org.folio.innreach.batch.contribution.service.InstanceContributor.INSTANCE_CONTRIBUTED_ID_CONTEXT;
 import static org.folio.innreach.domain.entity.Contribution.Status.IN_PROGRESS;
-import static org.folio.innreach.dto.MappingValidationStatusDTO.VALID;
 import static org.folio.innreach.fixture.TestUtil.deserializeFromJsonFile;
 
 import java.time.OffsetDateTime;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -16,6 +19,7 @@ import java.util.stream.Collectors;
 import lombok.experimental.UtilityClass;
 import org.jeasy.random.EasyRandom;
 import org.jeasy.random.EasyRandomParameters;
+import org.springframework.batch.item.ExecutionContext;
 
 import org.folio.innreach.domain.dto.folio.ResultList;
 import org.folio.innreach.domain.dto.folio.inventorystorage.JobResponse;
@@ -23,10 +27,9 @@ import org.folio.innreach.domain.dto.folio.inventorystorage.MaterialTypeDTO;
 import org.folio.innreach.domain.entity.CentralServer;
 import org.folio.innreach.domain.entity.Contribution;
 import org.folio.innreach.domain.entity.base.AuditableUser;
-import org.folio.innreach.domain.service.ContributionValidationService;
 import org.folio.innreach.dto.ContributionCriteriaDTO;
-import org.folio.innreach.dto.ContributionDTO;
 import org.folio.innreach.dto.Instance;
+import org.folio.innreach.dto.Item;
 import org.folio.innreach.dto.TransformedMARCRecordDTO;
 import org.folio.innreach.external.dto.InnReachLocationDTO;
 import org.folio.innreach.external.dto.InnReachResponse;
@@ -84,6 +87,10 @@ public class ContributionFixture {
     return instance;
   }
 
+  public static Item createItem() {
+    return contributionRandom.nextObject(Item.class);
+  }
+
   public static List<InnReachLocationDTO> createIrLocations() {
     return Arrays.asList(IR_LOCATION_CODE, IR_LOCATION2_CODE, IR_LOCATION3_CODE).stream()
       .map(c -> new InnReachLocationDTO(c, null))
@@ -114,6 +121,15 @@ public class ContributionFixture {
       .build();
   }
 
+
+  public static ExecutionContext createExecutionContext() {
+    var executionContext = new ExecutionContext();
+    executionContext.put(INSTANCE_ITEM_OFFSET_CONTEXT, Collections.singletonMap(UUID.randomUUID(), 1));
+    executionContext.put(INSTANCE_ITEM_TOTAL_CONTEXT, Collections.singletonMap(UUID.randomUUID(), 342));
+    executionContext.put(INSTANCE_CONTRIBUTED_ID_CONTEXT, Collections.singletonList(UUID.randomUUID()));
+    return executionContext;
+  }
+
   public static TransformedMARCRecordDTO createMARCRecord() {
     return deserializeFromJsonFile("/contribution/marc-record.json", TransformedMARCRecordDTO.class);
   }
@@ -128,14 +144,6 @@ public class ContributionFixture {
 
   public static InnReachResponse irErrorResponse() {
     return new InnReachResponse("failed", null, null);
-  }
-
-  public static class ContributionValidationServiceMock implements ContributionValidationService {
-    @Override
-    public void validate(UUID centralServerId, ContributionDTO contribution) {
-      contribution.setItemTypeMappingStatus(VALID);
-      contribution.setLocationsMappingStatus(VALID);
-    }
   }
 
 }

@@ -3,6 +3,7 @@ package org.folio.innreach.batch.contribution.service;
 import static org.folio.innreach.batch.contribution.ContributionJobContext.CENTRAL_SERVER_ID_KEY;
 import static org.folio.innreach.batch.contribution.ContributionJobContext.CONTRIBUTION_ID_KEY;
 import static org.folio.innreach.batch.contribution.ContributionJobContext.ITERATION_JOB_ID_KEY;
+import static org.folio.innreach.batch.contribution.ContributionJobContext.TENANT_ID_KEY;
 import static org.folio.innreach.config.ContributionJobConfig.CONTRIBUTION_JOB_LAUNCHER_NAME;
 import static org.folio.innreach.config.ContributionJobConfig.CONTRIBUTION_JOB_NAME;
 
@@ -21,9 +22,9 @@ import org.folio.innreach.dto.ContributionDTO;
 public class ContributionJobRunner extends BatchJobRunner<ContributionDTO> {
 
   @Override
-  public void run(UUID centralServerId, ContributionDTO contribution) {
+  public void run(UUID centralServerId, String tenantId, ContributionDTO contribution) {
     try {
-      var jobParameters = getJobParameters(centralServerId, contribution);
+      var jobParameters = getJobParameters(centralServerId, tenantId, contribution);
 
       launch(jobParameters);
     } catch (Exception e) {
@@ -41,8 +42,9 @@ public class ContributionJobRunner extends BatchJobRunner<ContributionDTO> {
     return CONTRIBUTION_JOB_LAUNCHER_NAME;
   }
 
-  private JobParameters getJobParameters(UUID centralServerId, ContributionDTO contribution) {
+  private JobParameters getJobParameters(UUID centralServerId, String tenantId, ContributionDTO contribution) {
     return new JobParametersBuilder()
+      .addString(TENANT_ID_KEY, tenantId)
       .addString(CENTRAL_SERVER_ID_KEY, centralServerId.toString())
       .addString(CONTRIBUTION_ID_KEY, contribution.getId().toString())
       .addString(ITERATION_JOB_ID_KEY, contribution.getJobId().toString())

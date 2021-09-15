@@ -7,6 +7,7 @@ import static org.folio.innreach.external.InnReachHeaders.X_FROM_CODE;
 import static org.folio.innreach.external.InnReachHeaders.X_TO_CODE;
 
 import java.net.URI;
+import java.util.List;
 
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -15,7 +16,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 
-import org.folio.innreach.external.dto.BibContributionRequest;
+import org.folio.innreach.external.dto.Bib;
+import org.folio.innreach.external.dto.BibItem;
 import org.folio.innreach.external.dto.InnReachResponse;
 
 @FeignClient(value = "innReachContribution")
@@ -26,13 +28,23 @@ public interface InnReachContributionClient {
                                  @RequestHeader(AUTHORIZATION) String authorizationHeader,
                                  @RequestHeader(X_FROM_CODE) String xFromCode,
                                  @RequestHeader(X_TO_CODE) String xToCode,
-                                 @PathVariable String bibId, @RequestBody BibContributionRequest payload);
+                                 @PathVariable String bibId,
+                                 @RequestBody Bib bib);
+
+  @GetMapping(value = "/innreach/v2/contribution/items/{bibId}", produces = APPLICATION_JSON_VALUE)
+  InnReachResponse contributeBibItems(URI baseUri,
+                                      @RequestHeader(AUTHORIZATION) String authorizationHeader,
+                                      @RequestHeader(X_FROM_CODE) String xFromCode,
+                                      @RequestHeader(X_TO_CODE) String xToCode,
+                                      @PathVariable String bibId,
+                                      @RequestBody List<BibItem> bibItems);
 
   @GetMapping(value = "/innreach/v2/local/{localCode}/bib/{bibId}", produces = APPLICATION_JSON_VALUE)
   InnReachResponse lookUpBib(URI baseUri,
                              @RequestHeader(AUTHORIZATION) String authorizationHeader,
                              @RequestHeader(X_FROM_CODE) String xFromCode,
                              @RequestHeader(X_TO_CODE) String xToCode,
-                             @PathVariable("localCode") String localCode, @PathVariable("bibId") String bibId);
+                             @PathVariable("localCode") String localCode,
+                             @PathVariable("bibId") String bibId);
 
 }

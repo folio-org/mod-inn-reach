@@ -62,7 +62,7 @@ class ContributionJobRunnerTest {
     when(beanFactory.getBean(CONTRIBUTION_JOB_LAUNCHER_NAME, JobLauncher.class)).thenReturn(jobLauncher);
     when(beanFactory.getBean(CONTRIBUTION_JOB_NAME, Job.class)).thenReturn(job);
 
-    jobRunner.run(UUID.randomUUID(), contribution);
+    jobRunner.run(UUID.randomUUID(), "test", contribution);
 
     verify(jobLauncher).run(eq(job), any());
   }

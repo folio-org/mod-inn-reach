@@ -1,5 +1,8 @@
 package org.folio.innreach.fixture;
 
+import static java.lang.System.clearProperty;
+import static java.lang.System.setProperty;
+
 import java.util.HashSet;
 import java.util.Random;
 import java.util.Set;
@@ -54,5 +57,13 @@ public class TestUtil {
     var centralServer = new CentralServer();
     centralServer.setId(id);
     return centralServer;
+  }
+
+  public static void setEnvProperty(String value) {
+    setProperty("env", value);
+  }
+
+  public static void removeEnvProperty() {
+    clearProperty("env");
   }
 }

@@ -18,7 +18,7 @@ import lombok.NoArgsConstructor;
 public class ResultList<T> {
 
   /**
-   * Page number.
+   * Total records.
    */
   @JsonAlias("total_records")
   private int totalRecords = 0;

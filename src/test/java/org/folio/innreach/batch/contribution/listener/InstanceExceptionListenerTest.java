@@ -20,7 +20,7 @@ import org.folio.innreach.dto.ContributionErrorDTO;
 import org.folio.innreach.dto.Instance;
 
 @ExtendWith(MockitoExtension.class)
-class ContributionJobExceptionListenerTest {
+class InstanceExceptionListenerTest {
 
   private static final UUID CONTRIBUTION_ID = UUID.randomUUID();
 
@@ -31,7 +31,7 @@ class ContributionJobExceptionListenerTest {
   private ContributionJobContext context;
 
   @InjectMocks
-  private ContributionJobExceptionListener listener;
+  private InstanceExceptionListener listener;
 
   @Test
   void shouldLogOnReadError() {

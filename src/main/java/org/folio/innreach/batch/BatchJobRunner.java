@@ -24,7 +24,7 @@ public abstract class BatchJobRunner<T> implements BeanFactoryAware {
 
   private BeanFactory beanFactory;
 
-  public abstract void run(UUID centralServerId, T jobConfig);
+  public abstract void run(UUID centralServerId, String tenantId, T jobConfig);
 
   public abstract String getJobName();
 

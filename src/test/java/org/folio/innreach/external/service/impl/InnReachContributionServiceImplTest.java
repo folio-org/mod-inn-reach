@@ -17,7 +17,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import org.folio.innreach.domain.service.CentralServerService;
 import org.folio.innreach.external.client.feign.InnReachContributionClient;
-import org.folio.innreach.external.dto.BibContributionRequest;
+import org.folio.innreach.external.dto.Bib;
 import org.folio.innreach.external.service.InnReachAuthExternalService;
 
 @ExtendWith(MockitoExtension.class)
@@ -43,7 +43,7 @@ class InnReachContributionServiceImplTest {
     when(innReachAuthExternalService.getAccessToken(any()))
       .thenReturn(createAccessToken());
 
-    service.contributeBib(UUID.randomUUID(), "test", new BibContributionRequest());
+    service.contributeBib(UUID.randomUUID(), "test", new Bib());
 
     verify(contributionClient).contributeBib(any(), any(), any(), any(), any(), any());
   }
