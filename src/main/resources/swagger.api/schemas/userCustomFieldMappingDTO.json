@@ -15,6 +15,7 @@
     },
     "configuredOptions": {
       "type": "object",
+      "description": "Map of the options for the custom field and local agency codes",
       "additionalProperties": {
         "type": "string",
         "properties": {
