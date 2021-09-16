@@ -1,7 +1,7 @@
 CREATE TABLE inn_reach_transaction
 (
     id UUID NOT NULL,
-    tracking_id UUID NOT NULL,
+    tracking_id VARCHAR(32) NOT NULL,
     state SMALLINT NOT NULL,
     type SMALLINT NOT NULL,
     central_server_code VARCHAR(5) NOT NULL,

@@ -39,7 +39,7 @@ public class InnReachTransaction extends Auditable implements Identifiable<UUID>
   private UUID id;
 
   @Column(name = "tracking_id")
-  private UUID trackingId;
+  private String trackingId;
 
   @Column(name = "central_server_code")
   private String centralServerCode;

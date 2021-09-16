@@ -39,7 +39,7 @@ public abstract class TransactionHold extends Auditable implements Identifiable<
   private TransactionPickupLocation pickupLocation;
 
   @Column(name = "patron_id")
-  private UUID patronId;
+  private String patronId;
 
   @Column(name = "patron_agency_code")
   private String patronAgencyCode;
@@ -48,7 +48,7 @@ public abstract class TransactionHold extends Auditable implements Identifiable<
   private String itemAgencyCode;
 
   @Column(name = "item_id")
-  private UUID itemId;
+  private String itemId;
 
   @Column(name = "central_item_type")
   private Integer centralItemType;

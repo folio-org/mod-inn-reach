@@ -9,5 +9,5 @@ import java.util.UUID;
 
 public interface InnReachTransactionRepository extends JpaRepository<InnReachTransaction, UUID> {
   @Query(name = InnReachTransaction.FETCH_ONE_BY_TRACKING_ID_QUERY_NAME)
-  Optional<InnReachTransaction> fetchOneByTrackingId(UUID trackingId);
+  Optional<InnReachTransaction> fetchOneByTrackingId(String trackingId);
 }
