@@ -1,6 +1,8 @@
 package org.folio.innreach.repository;
 
 import org.folio.innreach.domain.entity.InnReachTransaction;
+import org.folio.innreach.domain.entity.TransactionItemHold;
+import org.folio.innreach.domain.entity.TransactionLocalHold;
 import org.folio.innreach.domain.entity.TransactionPatronHold;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,8 +32,7 @@ class InnReachTransactionRepositoryTest extends BaseRepositoryTest {
   private InnReachTransactionRepository repository;
 
   @Test
-  @Sql(scripts = {"classpath:db/central-server/pre-populate-central-server.sql",
-    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"})
+  @Sql(scripts = {"classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"})
   void getInnReachTransaction_when_innReachTractionExists() {
     var fromDb = repository.fetchOneByTrackingId(PRE_POPULATED_TRANSACTION_TRACKING_ID1).get();
 
@@ -46,7 +47,6 @@ class InnReachTransactionRepositoryTest extends BaseRepositoryTest {
   }
 
   @Test
-  @Sql(scripts = {"classpath:db/central-server/pre-populate-central-server.sql"})
   void saveInnReachTransaction_when_innReachTransactionDoesNotExists() {
     var created = createInnReachTransaction();
     var saved = repository.save(created);
@@ -56,11 +56,24 @@ class InnReachTransactionRepositoryTest extends BaseRepositoryTest {
     assertEquals(created.getCentralServerCode(), saved.getCentralServerCode());
     assertEquals(created.getHold(), saved.getHold());
     assertEquals(created.getState(), saved.getState());
+    switch (created.getType()) {
+      case ITEM:
+        assertEquals(((TransactionItemHold) created.getHold()).getCentralPatronType(),
+          ((TransactionItemHold) saved.getHold()).getCentralPatronType());
+        break;
+      case PATRON:
+        assertEquals(((TransactionPatronHold) created.getHold()).getShippedItemBarcode(),
+          ((TransactionPatronHold) saved.getHold()).getShippedItemBarcode());
+        break;
+      case LOCAL:
+        assertEquals(((TransactionLocalHold) created.getHold()).getPatronPhone(),
+          ((TransactionLocalHold) saved.getHold()).getPatronPhone());
+        break;
+    }
   }
 
   @Test
-  @Sql(scripts = {"classpath:db/central-server/pre-populate-central-server.sql",
-    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"})
+  @Sql(scripts = {"classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"})
   void updateInnReachTransaction_when_innReachTransactionDataIsValid() {
     var saved = repository.fetchOneByTrackingId(PRE_POPULATED_TRANSACTION_TRACKING_ID1).get();
 
@@ -87,8 +100,7 @@ class InnReachTransactionRepositoryTest extends BaseRepositoryTest {
   }
 
   @Test
-  @Sql(scripts = {"classpath:db/central-server/pre-populate-central-server.sql",
-    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"})
+  @Sql(scripts = {"classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"})
   void deleteInnReachTransaction_when_innReachTransactionExists() {
     UUID id = UUID.fromString(PRE_POPULATED_INN_REACH_TRANSACTION_ID1);
     repository.deleteById(id);
@@ -98,8 +110,7 @@ class InnReachTransactionRepositoryTest extends BaseRepositoryTest {
   }
 
   @Test
-  @Sql(scripts = {"classpath:db/central-server/pre-populate-central-server.sql",
-    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"})
+  @Sql(scripts = {"classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"})
   void throwException_when_updatingInnReachTransactionWithInvalidAgencyCode() {
     var saved = repository.fetchOneByTrackingId(PRE_POPULATED_TRANSACTION_TRACKING_ID1).get();
 
@@ -109,8 +120,7 @@ class InnReachTransactionRepositoryTest extends BaseRepositoryTest {
   }
 
   @Test
-  @Sql(scripts = {"classpath:db/central-server/pre-populate-central-server.sql",
-    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"})
+  @Sql(scripts = {"classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"})
   void throwException_when_updatingInnReachTransactionWithInvalidItemType() {
     var saved = repository.fetchOneByTrackingId(PRE_POPULATED_TRANSACTION_TRACKING_ID1).get();
 
@@ -120,8 +130,7 @@ class InnReachTransactionRepositoryTest extends BaseRepositoryTest {
   }
 
   @Test
-  @Sql(scripts = {"classpath:db/central-server/pre-populate-central-server.sql",
-    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"})
+  @Sql(scripts = {"classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"})
   void throwException_when_updatingInnReachTransactionWithoutRequiredFields() {
     var saved = repository.fetchOneByTrackingId(PRE_POPULATED_TRANSACTION_TRACKING_ID1).get();
 

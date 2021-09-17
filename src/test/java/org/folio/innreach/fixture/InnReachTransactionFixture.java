@@ -20,7 +20,6 @@ import static org.jeasy.random.FieldPredicates.named;
 
 public class InnReachTransactionFixture {
 
-  private static final UUID PRE_POPULATED_CENTRAL_SERVER_UUID = fromString("cfae4887-f8fb-4e4c-a5cc-34f74e353cf8");
   private static final EasyRandom transactionRandom;
   private static final EasyRandom transactionHoldRandom;
 
@@ -28,7 +27,6 @@ public class InnReachTransactionFixture {
     EasyRandomParameters params = new EasyRandomParameters()
       .randomize(named("patronAgencyCode"), TestUtil::randomFiveCharacterCode)
       .randomize(named("itemAgencyCode"), TestUtil::randomFiveCharacterCode)
-      .randomize(named("centralServer"), InnReachTransactionFixture::refCentralServer)
       .randomize(named("createdBy"), () -> AuditableUser.SYSTEM)
       .randomize(named("createdDate"), OffsetDateTime::now)
       .excludeField(named("id"))
@@ -44,7 +42,6 @@ public class InnReachTransactionFixture {
     EasyRandomParameters params = new EasyRandomParameters()
       .randomize(named("type"), () -> TransactionType.values()[randomInteger(3)])
       .randomize(named("hold"), () -> null)
-      .randomize(named("centralServer"), InnReachTransactionFixture::refCentralServer)
       .randomize(named("createdBy"), () -> AuditableUser.SYSTEM)
       .randomize(named("createdDate"), OffsetDateTime::now)
       .excludeField(named("id"))
@@ -54,10 +51,6 @@ public class InnReachTransactionFixture {
       .excludeField(named("metadata"));
 
     transactionRandom = new EasyRandom(params);
-  }
-
-  public static CentralServer refCentralServer() {
-    return TestUtil.refCentralServer(PRE_POPULATED_CENTRAL_SERVER_UUID);
   }
 
   public static InnReachTransaction createInnReachTransaction() {
