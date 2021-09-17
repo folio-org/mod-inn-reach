@@ -3,6 +3,8 @@ package org.folio.innreach.batch;
 import static org.springframework.batch.core.BatchStatus.STOPPED;
 import static org.springframework.batch.core.BatchStatus.STOPPING;
 
+import static org.folio.innreach.batch.contribution.ContributionJobContext.TENANT_ID_KEY;
+
 import java.util.Date;
 import java.util.UUID;
 
@@ -35,7 +37,7 @@ public abstract class BatchJobRunner<T> implements BeanFactoryAware {
     this.beanFactory = beanFactory;
   }
 
-  public void restart() {
+  public void restart(String tenantId) {
     try {
       var jobExplorer = beanFactory.getBean(JobExplorer.class);
       var jobOperator = beanFactory.getBean(JobOperator.class);
@@ -43,8 +45,12 @@ public abstract class BatchJobRunner<T> implements BeanFactoryAware {
 
       var jobExecutions = jobExplorer.findRunningJobExecutions(getJobName());
       for (var jobExecution : jobExecutions) {
-        log.info("Restarting job execution: {}", jobExecution);
+        var jobTenantId = getJobTenantId(jobExecution);
+        if (!tenantId.equals(jobTenantId)) {
+          continue;
+        }
 
+        log.info("Restarting job execution: {}", jobExecution);
         for (var stepExecution : jobExecution.getStepExecutions()) {
           var status = stepExecution.getStatus();
           if (status.isRunning() || status == STOPPING) {
@@ -80,6 +86,10 @@ public abstract class BatchJobRunner<T> implements BeanFactoryAware {
     stepExecution.setStatus(STOPPED);
     stepExecution.setEndTime(new Date());
     jobRepository.update(stepExecution);
+  }
+
+  private String getJobTenantId(JobExecution jobExecution) {
+    return jobExecution.getJobParameters().getString(TENANT_ID_KEY);
   }
 
 }
