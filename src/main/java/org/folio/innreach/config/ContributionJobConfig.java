@@ -29,6 +29,7 @@ import org.springframework.batch.core.launch.support.SimpleJobLauncher;
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.item.ItemProcessor;
 import org.springframework.batch.item.ItemWriter;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.autoconfigure.kafka.KafkaProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -36,16 +37,23 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.core.task.SimpleAsyncTaskExecutor;
+import org.springframework.retry.backoff.BackOffPolicy;
 import org.springframework.retry.backoff.FixedBackOffPolicy;
 
 import org.folio.innreach.batch.KafkaItemReader;
 import org.folio.innreach.batch.contribution.ContributionJobContext;
-import org.folio.innreach.batch.contribution.listener.ContributionJobExceptionListener;
 import org.folio.innreach.batch.contribution.listener.ContributionJobExecutionListener;
 import org.folio.innreach.batch.contribution.listener.ContributionJobStatsListener;
+import org.folio.innreach.batch.contribution.listener.InstanceExceptionListener;
+import org.folio.innreach.batch.contribution.listener.ItemExceptionListener;
+import org.folio.innreach.batch.contribution.service.FolioItemReader;
+import org.folio.innreach.batch.contribution.service.ItemContributor;
 import org.folio.innreach.config.props.ContributionJobProperties;
+import org.folio.innreach.config.props.FolioEnvironment;
 import org.folio.innreach.domain.dto.folio.inventorystorage.InstanceIterationEvent;
+import org.folio.innreach.domain.service.ContributionService;
 import org.folio.innreach.dto.Instance;
+import org.folio.innreach.dto.Item;
 
 @Configuration
 @EnableBatchProcessing
@@ -55,6 +63,8 @@ public class ContributionJobConfig {
 
   public static final String CONTRIBUTION_JOB_NAME = "contributionJob";
   public static final String CONTRIBUTION_JOB_LAUNCHER_NAME = "contributionJobLauncher";
+  public static final String INSTANCE_CONTRIBUTION_STEP = "instanceContributionStep";
+  public static final String ITEM_CONTRIBUTION_STEP = "itemContributionStep";
 
   public static final BiConsumer<String, InstanceIterationEvent> CONSUMER_REC_PROCESSOR =
     (String key, InstanceIterationEvent value) -> value.setInstanceId(UUID.fromString(key));
@@ -68,38 +78,67 @@ public class ContributionJobConfig {
   @StepScope
   @Bean
   public KafkaItemReader<String, InstanceIterationEvent> kafkaReader(KafkaProperties kafkaProperties,
-                                                                     ContributionJobProperties jobProperties) {
+                                                                     ContributionJobProperties jobProperties,
+                                                                     ContributionJobContext jobContext,
+                                                                     FolioEnvironment folioEnv) {
 
     Properties props = new Properties();
     props.putAll(kafkaProperties.buildConsumerProperties());
 
-    String topic = jobProperties.getReaderTopic();
+    var topic = String.format("%s.%s.%s",
+      folioEnv.getEnvironment(), jobContext.getTenantId(), jobProperties.getReaderTopic());
 
     var reader = new KafkaItemReader<String, InstanceIterationEvent>(props, of(new TopicPartition(topic, 0)));
     reader.setName("contributionKafkaReader");
     reader.setPollTimeout(Duration.ofSeconds(jobProperties.getReaderPollTimeoutSec()));
     reader.setPartitionOffsets(new HashMap<>());
     reader.setRecordProcessor(CONSUMER_REC_PROCESSOR);
+
     return reader;
   }
 
-  @Bean
-  public Step instanceContributionStep(KafkaProperties kafkaProperties,
+  @Bean(name = INSTANCE_CONTRIBUTION_STEP)
+  public Step instanceContributionStep(KafkaItemReader<String, InstanceIterationEvent> kafkaReader,
                                        ContributionJobProperties jobProperties,
                                        StepBuilderFactory stepBuilderFactory,
                                        ItemProcessor<InstanceIterationEvent, Instance> instanceLoader,
                                        ItemWriter<Instance> instanceContributor,
-                                       ContributionJobExceptionListener failureListener,
-                                       ContributionJobStatsListener countListener) {
+                                       ContributionJobStatsListener countListener,
+                                       BackOffPolicy backOffPolicy,
+                                       InstanceExceptionListener failureListener) {
 
-    var backOffPolicy = new FixedBackOffPolicy();
-    backOffPolicy.setBackOffPeriod(jobProperties.getRetryIntervalMs());
-
-    return stepBuilderFactory.get("contributionStep")
-      .<InstanceIterationEvent, Instance>chunk(jobProperties.getChunkSize())
+    return stepBuilderFactory.get(INSTANCE_CONTRIBUTION_STEP)
+      .<InstanceIterationEvent, Instance>chunk(1)
       .processor(instanceLoader)
       .writer(instanceContributor)
-      .reader(kafkaReader(kafkaProperties, jobProperties))
+      .reader(kafkaReader)
+      .faultTolerant()
+      .backOffPolicy(backOffPolicy)
+      .retry(Exception.class)
+      .retryLimit(jobProperties.getRetryAttempts())
+      .skip(Exception.class)
+      .skipLimit(Integer.MAX_VALUE)
+      .listener((ItemReadListener) failureListener)
+      .listener((ItemProcessListener) failureListener)
+      .listener((ItemWriteListener) failureListener)
+      .listener(countListener)
+      .build();
+  }
+
+  @Bean(name = ITEM_CONTRIBUTION_STEP)
+  public Step itemContributionStep(FolioItemReader itemReader,
+                                   ContributionJobProperties jobProperties,
+                                   StepBuilderFactory stepBuilderFactory,
+                                   ItemContributor itemContributor,
+                                   ContributionJobStatsListener countListener,
+                                   ContributionService contributionService,
+                                   BackOffPolicy backOffPolicy,
+                                   ItemExceptionListener failureListener) {
+
+    return stepBuilderFactory.get(ITEM_CONTRIBUTION_STEP)
+      .<Item, Item>chunk(jobProperties.getChunkSize())
+      .reader(itemReader)
+      .writer(itemContributor)
       .faultTolerant()
       .backOffPolicy(backOffPolicy)
       .retry(Exception.class)
@@ -114,30 +153,31 @@ public class ContributionJobConfig {
   }
 
   @Bean(name = CONTRIBUTION_JOB_NAME)
-  public Job job(KafkaProperties kafkaProperties,
-                 ContributionJobProperties jobProperties,
-                 JobBuilderFactory jobBuilderFactory,
-                 StepBuilderFactory stepBuilderFactory,
+  public Job job(@Qualifier(INSTANCE_CONTRIBUTION_STEP) Step instanceContributionStep,
+                 @Qualifier(ITEM_CONTRIBUTION_STEP) Step itemContributionStep,
                  ContributionJobExecutionListener jobExecutionListener,
-                 ItemProcessor<InstanceIterationEvent, Instance> instanceLoader,
-                 ItemWriter<Instance> instanceContributor,
-                 ContributionJobExceptionListener failureListener,
-                 ContributionJobStatsListener countListener) {
+                 ContributionJobContext jobContext,
+                 JobBuilderFactory jobBuilderFactory) {
 
     return jobBuilderFactory.get(CONTRIBUTION_JOB_NAME)
       .incrementer(new RunIdIncrementer())
-      .start(
-        instanceContributionStep(
-          kafkaProperties, jobProperties, stepBuilderFactory, instanceLoader,
-          instanceContributor, failureListener, countListener))
+      .start(instanceContributionStep)
+      .next(itemContributionStep)
       .listener(jobExecutionListener)
-      .listener(jobContext())
+      .listener(jobContext)
       .build();
+  }
+
+  @Bean
+  public FixedBackOffPolicy backOffPolicy(ContributionJobProperties jobProperties) {
+    var backOffPolicy = new FixedBackOffPolicy();
+    backOffPolicy.setBackOffPeriod(jobProperties.getRetryIntervalMs());
+    return backOffPolicy;
   }
 
   @Bean(CONTRIBUTION_JOB_LAUNCHER_NAME)
   public JobLauncher jobLauncher(@Lazy JobRepository jobRepository) throws Exception {
-    SimpleJobLauncher jobLauncher = new SimpleJobLauncher();
+    var jobLauncher = new SimpleJobLauncher();
     jobLauncher.setTaskExecutor(new SimpleAsyncTaskExecutor());
     jobLauncher.setJobRepository(jobRepository);
     jobLauncher.afterPropertiesSet();
@@ -151,7 +191,7 @@ public class ContributionJobConfig {
 
   @Bean
   public JobRegistryBeanPostProcessor jobRegistryBeanPostProcessor(@Lazy JobRegistry jobRegistry) {
-    JobRegistryBeanPostProcessor postProcessor = new JobRegistryBeanPostProcessor();
+    var postProcessor = new JobRegistryBeanPostProcessor();
     postProcessor.setJobRegistry(jobRegistry);
     return postProcessor;
   }

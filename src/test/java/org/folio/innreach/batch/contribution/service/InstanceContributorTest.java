@@ -8,7 +8,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
-import static org.folio.innreach.fixture.ContributionFixture.createContributionConfig;
 import static org.folio.innreach.fixture.ContributionFixture.createInstance;
 import static org.folio.innreach.fixture.ContributionFixture.createMARCRecord;
 import static org.folio.innreach.fixture.ContributionFixture.irErrorResponse;
@@ -18,43 +17,39 @@ import java.util.Collections;
 import java.util.UUID;
 import java.util.concurrent.Callable;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import org.folio.innreach.batch.contribution.ContributionJobContext;
-import org.folio.innreach.domain.service.ContributionCriteriaConfigurationService;
+import org.folio.innreach.domain.service.ContributionValidationService;
 import org.folio.innreach.domain.service.MARCRecordTransformationService;
 import org.folio.innreach.domain.service.impl.TenantScopedExecutionService;
 import org.folio.innreach.external.service.InnReachContributionService;
 
+@ExtendWith(MockitoExtension.class)
 class InstanceContributorTest {
+
+  private static final UUID CENTRAL_SERVER_ID = UUID.randomUUID();
 
   @Mock
   private TenantScopedExecutionService tenantScopedExecutionService;
   @Mock
   private MARCRecordTransformationService marcService;
   @Mock
-  private ContributionCriteriaConfigurationService contributionConfig;
-  @Mock
   private InnReachContributionService irContributionService;
   @Mock
   private ContributionJobContext jobContext;
+  @Mock
+  private ContributionValidationService validationService;
 
   @InjectMocks
   private InstanceContributor instanceContributor;
 
-  @BeforeEach
-  public void beforeEachSetup() {
-    MockitoAnnotations.openMocks(this);
-  }
-
   @Test
   void shouldContributeAndLookUp() throws Exception {
-    var centralServerId = UUID.randomUUID();
-
     when(tenantScopedExecutionService.executeTenantScoped(any(), any()))
       .thenAnswer(invocationOnMock -> {
         var job = (Callable<?>) invocationOnMock.getArgument(1);
@@ -62,16 +57,15 @@ class InstanceContributorTest {
       });
 
     when(jobContext.getTenantId()).thenReturn("test");
-    when(jobContext.getCentralServerId()).thenReturn(centralServerId);
-    when(contributionConfig.getCriteria(any())).thenReturn(createContributionConfig());
+    when(jobContext.getCentralServerId()).thenReturn(CENTRAL_SERVER_ID);
     when(irContributionService.contributeBib(any(), any(), any())).thenReturn(irOkResponse());
     when(irContributionService.lookUpBib(any(), any())).thenReturn(irOkResponse());
     when(marcService.transformRecord(any(), any())).thenReturn(createMARCRecord());
 
     instanceContributor.write(singletonList(createInstance()));
 
-    verify(irContributionService).contributeBib(eq(centralServerId), any(), any());
-    verify(irContributionService).lookUpBib(eq(centralServerId), any());
+    verify(irContributionService).contributeBib(eq(CENTRAL_SERVER_ID), any(), any());
+    verify(irContributionService).lookUpBib(eq(CENTRAL_SERVER_ID), any());
   }
 
   @Test
@@ -83,7 +77,7 @@ class InstanceContributorTest {
       });
 
     when(jobContext.getTenantId()).thenReturn("test");
-    when(jobContext.getCentralServerId()).thenReturn(UUID.randomUUID());
+    when(jobContext.getCentralServerId()).thenReturn(CENTRAL_SERVER_ID);
     when(marcService.transformRecord(any(), any())).thenReturn(createMARCRecord());
     when(irContributionService.contributeBib(any(), any(), any())).thenReturn(irErrorResponse());
 
@@ -101,7 +95,7 @@ class InstanceContributorTest {
       });
 
     when(jobContext.getTenantId()).thenReturn("test");
-    when(jobContext.getCentralServerId()).thenReturn(UUID.randomUUID());
+    when(jobContext.getCentralServerId()).thenReturn(CENTRAL_SERVER_ID);
     when(marcService.transformRecord(any(), any())).thenReturn(createMARCRecord());
     when(irContributionService.contributeBib(any(), any(), any())).thenReturn(irOkResponse());
     when(irContributionService.lookUpBib(any(), any())).thenReturn(irErrorResponse());

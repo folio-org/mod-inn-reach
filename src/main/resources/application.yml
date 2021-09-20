@@ -110,9 +110,10 @@ coffee-boots:
 batch:
   jobs:
     contribution:
-      chunk-size: 1
+      chunk-size: 100
       retry-attempts: 3
       retry-interval-ms: 20000
-      reader-topic: folio.diku.inventory.instance-contribution
+      reader-topic: inventory.instance-contribution
       reader-poll-timeout-sec: 300
 okapi.url: ${OKAPI_URL:http://localhost}
+environment: ${ENV:folio}

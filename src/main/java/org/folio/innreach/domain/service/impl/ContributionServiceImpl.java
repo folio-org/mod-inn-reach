@@ -37,6 +37,7 @@ import org.folio.innreach.dto.ItemContributionOptionsConfigurationDTO;
 import org.folio.innreach.mapper.ContributionMapper;
 import org.folio.innreach.repository.ContributionErrorRepository;
 import org.folio.innreach.repository.ContributionRepository;
+import org.folio.spring.FolioExecutionContext;
 
 @Log4j2
 @AllArgsConstructor
@@ -48,13 +49,9 @@ public class ContributionServiceImpl implements ContributionService {
   private final ContributionMapper mapper;
   private final ContributionValidationService validationService;
   private final ContributionJobRunner jobRunner;
+  private final FolioExecutionContext folioContext;
 
   private final InstanceStorageClient client;
-
-  private final ItemContributionOptionsConfigurationService itemContributionOptionsConfigurationService;
-
-  private final InventoryClient inventoryClient;
-  private final RequestStorageClient requestStorageClient;
 
   @Override
   public ContributionDTO getCurrent(UUID centralServerId) {
@@ -62,7 +59,8 @@ public class ContributionServiceImpl implements ContributionService {
       .map(mapper::toDTO)
       .orElseGet(ContributionDTO::new);
 
-    validationService.validate(centralServerId, contribution);
+    contribution.setLocationsMappingStatus(validationService.getLocationMappingStatus(centralServerId));
+    contribution.setItemTypeMappingStatus(validationService.getItemTypeMappingStatus(centralServerId));
 
     return contribution;
   }
@@ -113,7 +111,7 @@ public class ContributionServiceImpl implements ContributionService {
     var contribution = createEmptyContribution(centralServerId);
 
     log.info("Validating contribution settings");
-    validateContribution(centralServerId, contribution);
+    validateContribution(centralServerId);
 
     log.info("Triggering inventory instance iteration");
     var iterationJobResponse = triggerInstanceIteration();
@@ -121,7 +119,7 @@ public class ContributionServiceImpl implements ContributionService {
 
     repository.save(contribution);
 
-    jobRunner.run(centralServerId, mapper.toDTO(contribution));
+    jobRunner.run(centralServerId, folioContext.getTenantId(), mapper.toDTO(contribution));
 
     log.info("Initial contribution process started");
   }
@@ -152,12 +150,12 @@ public class ContributionServiceImpl implements ContributionService {
     return iterationJob;
   }
 
-  private void validateContribution(UUID centralServerId, Contribution contribution) {
-    var dto = mapper.toDTO(contribution);
-    validationService.validate(centralServerId, dto);
+  private void validateContribution(UUID centralServerId) {
+    var itemTypeMappingStatus = validationService.getItemTypeMappingStatus(centralServerId);
+    Assert.isTrue(itemTypeMappingStatus == VALID, "Invalid item types mapping status");
 
-    Assert.isTrue(dto.getItemTypeMappingStatus() == VALID, "Invalid item types mapping status");
-    Assert.isTrue(dto.getLocationsMappingStatus() == VALID, "Invalid locations mapping status");
+    var locationMappingStatus = validationService.getLocationMappingStatus(centralServerId);
+    Assert.isTrue(locationMappingStatus == VALID, "Invalid locations mapping status");
   }
 
   private JobResponse startIterationMocked(InstanceIterationRequest request) {
@@ -191,70 +189,6 @@ public class ContributionServiceImpl implements ContributionService {
     contribution.setRecordsDecontributed(0L);
     contribution.setCentralServer(centralServerRef(centralServerId));
     return contribution;
-  }
-
-  @Override
-  public ContributionItemCirculationStatus getItemCirculationStatus(UUID centralServerId, UUID itemId) {
-    var itemContributionConfig = itemContributionOptionsConfigurationService
-      .getItmContribOptConf(centralServerId);
-
-    var inventoryItem = inventoryClient.getItemById(itemId);
-
-    if (isItemNonLendable(inventoryItem, itemContributionConfig)) {
-      return ContributionItemCirculationStatus.NON_LENDABLE;
-    }
-
-    if (inventoryItem.getStatus().isCheckedOut()) {
-      return ContributionItemCirculationStatus.ON_LOAN;
-    }
-
-    if (isItemAvailableForContribution(inventoryItem, itemContributionConfig)) {
-      return ContributionItemCirculationStatus.AVAILABLE;
-    }
-
-    return ContributionItemCirculationStatus.NOT_AVAILABLE;
-  }
-
-  private boolean isItemNonLendable(InventoryItemDTO inventoryItem,
-                                    ItemContributionOptionsConfigurationDTO itemContributionConfig) {
-    return isItemNonLendableByLoanTypes(inventoryItem, itemContributionConfig) ||
-      isItemNonLendableByLocations(inventoryItem, itemContributionConfig) ||
-      isItemNonLendableByMaterialTypes(inventoryItem, itemContributionConfig);
-  }
-
-  private boolean isItemNonLendableByLoanTypes(InventoryItemDTO inventoryItem,
-                                               ItemContributionOptionsConfigurationDTO itemContributionConfig) {
-    var nonLendableLoanTypes = itemContributionConfig.getNonLendableLoanTypes();
-    return nonLendableLoanTypes.contains(inventoryItem.getPermanentLoanType().getId()) ||
-      nonLendableLoanTypes.contains(inventoryItem.getTemporaryLoanType().getId());
-  }
-
-  private boolean isItemNonLendableByLocations(InventoryItemDTO inventoryItem,
-                                               ItemContributionOptionsConfigurationDTO itemContributionConfig) {
-    var nonLendableLocations = itemContributionConfig.getNonLendableLocations();
-    return nonLendableLocations.contains(inventoryItem.getPermanentLocation().getId());
-  }
-
-  private boolean isItemNonLendableByMaterialTypes(InventoryItemDTO inventoryItem,
-                                                   ItemContributionOptionsConfigurationDTO itemContributionConfig) {
-    var nonLendableMaterialTypes = itemContributionConfig.getNonLendableMaterialTypes();
-    return nonLendableMaterialTypes.contains(inventoryItem.getMaterialType().getId());
-  }
-
-  private boolean isItemAvailableForContribution(InventoryItemDTO inventoryItem,
-                                                 ItemContributionOptionsConfigurationDTO itemContributionConfig) {
-    var itemStatus = inventoryItem.getStatus();
-
-    if (itemStatus.isInTransit() && isItemRequested(inventoryItem)) {
-      return false;
-    }
-
-    return itemStatus.isAvailable() || !itemContributionConfig.getNotAvailableItemStatuses().contains(itemStatus.getName());
-  }
-
-  private boolean isItemRequested(InventoryItemDTO inventoryItem) {
-    var itemRequests = requestStorageClient.findRequests(inventoryItem.getId());
-    return itemRequests.getTotalRecords() != 0;
   }
 
 }

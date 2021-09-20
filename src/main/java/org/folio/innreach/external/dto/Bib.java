@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class BibContributionRequest {
+public class Bib {
 
   /**
    * FOLIO Instance HRID
