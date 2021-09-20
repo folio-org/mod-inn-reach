@@ -34,6 +34,7 @@ public class InstanceLoader implements ItemProcessor<InstanceIterationEvent, Ins
         return null;
       }
 
+      // if the returned instance is null it is assumed that processing of the instance should not continue
       return inventoryService.getInstance(instanceIterationEvent.getInstanceId());
     });
   }
