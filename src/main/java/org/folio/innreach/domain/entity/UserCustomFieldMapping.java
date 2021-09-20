@@ -40,7 +40,7 @@ public class UserCustomFieldMapping extends Auditable implements Identifiable<UU
   private UUID customFieldId;
 
   @ElementCollection(fetch = FetchType.LAZY)
-  @JoinTable(name = "configured_options", joinColumns = @JoinColumn(name = "user_custom_field_mapping_id"))
+  @JoinTable(name = "user_custom_field_configured_options", joinColumns = @JoinColumn(name = "user_custom_field_mapping_id"))
   @MapKeyColumn(name = "custom_field_value")
   @Column(name = "agency_code")
   @Fetch(value = FetchMode.JOIN)

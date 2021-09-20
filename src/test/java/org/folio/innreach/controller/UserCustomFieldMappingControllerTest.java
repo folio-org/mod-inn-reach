@@ -15,10 +15,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlMergeMode;
 
-import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.function.Predicate;
 
 import static java.util.UUID.randomUUID;
 import static org.folio.innreach.fixture.TestUtil.deserializeFromJsonFile;
@@ -157,5 +155,17 @@ class UserCustomFieldMappingControllerTest extends BaseControllerTest {
       Error.class, PRE_POPULATED_CENTRAL_SERVER_ID);
 
     assertEquals(CONFLICT, responseEntity.getStatusCode());
+  }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql"
+  })
+  void return404HttpCodeWhenUserCustomFieldMappingNotFound() {
+    var responseEntity = testRestTemplate.getForEntity(
+      "/inn-reach/central-servers/{centralServerId}/user-custom-field-mappings",
+      UserCustomFieldMappingDTO.class, PRE_POPULATED_CENTRAL_SERVER_ID);
+
+    assertEquals(HttpStatus.NOT_FOUND, responseEntity.getStatusCode());
   }
 }
