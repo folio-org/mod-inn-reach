@@ -8,14 +8,28 @@
       "type": "string",
       "format": "uuid"
     },
-    "customFieldValue": {
-      "description": "Custom field value",
-      "type": "string"
-    },
-    "agencyCode": {
-      "description": "Agency code",
+    "customFieldId": {
+      "description": "Custom field id",
       "type": "string",
-      "maxLength": 5
+      "format": "uuid"
+    },
+    "configuredOptions": {
+      "type": "object",
+      "description": "Map of the options for the custom field and local agency codes",
+      "additionalProperties": {
+        "type": "string",
+        "properties": {
+          "agencyCode": {
+            "description": "Agency code",
+            "type": "string",
+            "maxLength": 5
+          },
+          "customFieldValue": {
+            "description": "Custom field value",
+            "type": "string"
+          }
+        }
+      }
     },
     "metadata": {
       "description": "Entity metadata",
@@ -25,7 +39,7 @@
   },
   "additionalProperties": false,
   "required": [
-    "customFieldValue",
-    "agencyCode"
+    "customFieldId",
+    "configuredOptions"
   ]
 }

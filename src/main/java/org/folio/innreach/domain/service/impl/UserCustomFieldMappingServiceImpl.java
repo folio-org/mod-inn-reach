@@ -1,25 +1,18 @@
 package org.folio.innreach.domain.service.impl;
 
-import static org.folio.innreach.domain.service.impl.ServiceUtils.centralServerRef;
-import static org.folio.innreach.domain.service.impl.ServiceUtils.initId;
-import static org.folio.innreach.domain.service.impl.ServiceUtils.mergeAndSave;
-
-import java.util.UUID;
-import java.util.function.Consumer;
-
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Example;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
+import org.folio.innreach.domain.entity.UserCustomFieldMapping;
+import org.folio.innreach.domain.exception.EntityNotFoundException;
+import org.folio.innreach.domain.service.UserCustomFieldMappingService;
+import org.folio.innreach.dto.UserCustomFieldMappingDTO;
+import org.folio.innreach.mapper.UserCustomFieldMappingMapper;
+import org.folio.innreach.repository.UserCustomFieldMappingRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import org.folio.innreach.domain.entity.CentralServer;
-import org.folio.innreach.domain.entity.UserCustomFieldMapping;
-import org.folio.innreach.domain.service.UserCustomFieldMappingService;
-import org.folio.innreach.dto.UserCustomFieldMappingsDTO;
-import org.folio.innreach.mapper.UserCustomFieldMappingMapper;
-import org.folio.innreach.repository.UserCustomFieldMappingRepository;
+import java.util.UUID;
+
+import static org.folio.innreach.domain.service.impl.ServiceUtils.centralServerRef;
 
 @RequiredArgsConstructor
 @Service
@@ -29,49 +22,39 @@ public class UserCustomFieldMappingServiceImpl implements UserCustomFieldMapping
   private final UserCustomFieldMappingRepository repository;
   private final UserCustomFieldMappingMapper mapper;
 
+  private static final String TEXT_USER_CUSTOM_FIELD_MAPPING_NOT_FOUND = "User Custom Field Mapping not found: centralServerId = ";
+
   @Override
   @Transactional(readOnly = true)
-  public UserCustomFieldMappingsDTO getAllMappings(UUID centralServerId, UUID customFieldId, Integer offset, Integer limit) {
-    var example = mappingExampleWithServerIdAndCustomFieldId(centralServerId, customFieldId);
-
-    Page<UserCustomFieldMapping> mappings = repository.findAll(example, PageRequest.of(offset, limit));
-
-    return mapper.toDTOCollection(mappings);
+  public UserCustomFieldMappingDTO getMapping(UUID centralServerId) {
+    var mapping = repository.findOneByCentralServerId(centralServerId);
+    return mapping.map(mapper::toDTO).orElseThrow(()
+      -> new EntityNotFoundException(TEXT_USER_CUSTOM_FIELD_MAPPING_NOT_FOUND + centralServerId));
   }
 
   @Override
-  public UserCustomFieldMappingsDTO updateAllMappings(UUID centralServerId, UUID customFieldId, UserCustomFieldMappingsDTO userCustomFieldMappingsDTO) {
-    var stored = repository.findAll(mappingExampleWithServerIdAndCustomFieldId(
-      centralServerId, customFieldId));
-
-    var incoming = mapper.toEntities(userCustomFieldMappingsDTO.getUserCustomFieldMappings());
-    var csRef = centralServerRef(centralServerId);
-    incoming.forEach(setCentralServerRef(csRef).andThen(setCustomFieldId(customFieldId)).andThen(initId()));
-
-    var saved = mergeAndSave(incoming, stored, repository, this::copyData);
-
-    return mapper.toDTOCollection(saved);
+  public UserCustomFieldMappingDTO createMapping(UUID centralServerId, UserCustomFieldMappingDTO userCustomFieldMappingDTO) {
+    var mapping = mapper.toEntity(userCustomFieldMappingDTO);
+    mapping.setCentralServer(centralServerRef(centralServerId));
+    var created = repository.save(mapping);
+    return mapper.toDTO(created);
   }
 
-  private static Example<UserCustomFieldMapping> mappingExampleWithServerIdAndCustomFieldId(UUID centralServerId,
-                                                                                            UUID customFieldId) {
-    var toFind = new UserCustomFieldMapping();
-    toFind.setCentralServer(centralServerRef(centralServerId));
-    toFind.setCustomFieldId(customFieldId);
+  @Override
+  public UserCustomFieldMappingDTO updateMapping(UUID centralServerId, UserCustomFieldMappingDTO userCustomFieldMappingDTO) {
+    var mapping = repository.findOneByCentralServerId(centralServerId).orElseThrow(
+      () -> new EntityNotFoundException(TEXT_USER_CUSTOM_FIELD_MAPPING_NOT_FOUND + centralServerId));
 
-    return Example.of(toFind);
+    var updated = mapper.toEntity(userCustomFieldMappingDTO);
+    copyData(updated, mapping);
+
+    repository.save(mapping);
+
+    return mapper.toDTO(mapping);
   }
 
   private void copyData(UserCustomFieldMapping from, UserCustomFieldMapping to) {
-    to.setCustomFieldValue(from.getCustomFieldValue());
-    to.setAgencyCode(from.getAgencyCode());
-  }
-
-  private static Consumer<UserCustomFieldMapping> setCentralServerRef(CentralServer centralServer) {
-    return mapping -> mapping.setCentralServer(centralServer);
-  }
-
-  private static Consumer<UserCustomFieldMapping> setCustomFieldId(UUID customFieldId) {
-    return mapping -> mapping.setCustomFieldId(customFieldId);
+    to.setCustomFieldId(from.getCustomFieldId());
+    to.setConfiguredOptions(from.getConfiguredOptions());
   }
 }

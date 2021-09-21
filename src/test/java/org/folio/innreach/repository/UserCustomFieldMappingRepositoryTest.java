@@ -30,14 +30,12 @@ import org.folio.innreach.fixture.TestUtil;
 class UserCustomFieldMappingRepositoryTest extends BaseRepositoryTest {
 
   private static final String PRE_POPULATED_USER_CUSTOM_FIELD_MAPPING_ID1 = "555392b2-9b33-4199-b5eb-73e842c9d5b0";
-  private static final String PRE_POPULATED_USER_CUSTOM_FIELD_MAPPING_ID2 = "b23ee9d7-7857-492b-bc89-dd9f37315555";
-  private static final String PRE_POPULATED_USER_CUSTOM_FIELD_MAPPING_ID3 = "d9068b3e-7add-462c-a3af-4f793a0aef5c";
-  private static final String PRE_POPULATED_USER_CUSTOM_FIELD_MAPPING_ID4 = "25a06994-c488-44a3-b481-ce3fe18b9238";
-  private static final String PRE_POPULATED_USER_CUSTOM_FIELD_MAPPING_ID5 = "4cfd7596-fab9-43ab-b6e9-46de33ba3409";
+  private static final String PRE_POPULATED_USER_CUSTOM_FIELD_MAPPING_ID2 = "25a06994-c488-44a3-b481-ce3fe18b9238";
 
   private static final String PRE_POPULATED_CUSTOM_FIELD_ID = "43a175e3-d876-4235-8a51-56de9fce3247";
 
   private static final AuditableUser PRE_POPULATED_USER = AuditableUser.SYSTEM;
+  private static final String PRE_POPULATED_CENTRAL_SERVER_ID = "edab6baf-c696-42b1-89bb-1bbb8759b0d2";
 
   @Autowired
   private UserCustomFieldMappingRepository repository;
@@ -50,28 +48,26 @@ class UserCustomFieldMappingRepositoryTest extends BaseRepositoryTest {
   void shouldFindAllExistingMappings() {
     var mappings = repository.findAll();
 
-    assertEquals(5, mappings.size());
+    assertEquals(2, mappings.size());
 
     List<String> ids = mappings.stream()
       .map(mapping -> mapping.getId().toString())
       .collect(toList());
 
-    assertEquals(ids, List.of(PRE_POPULATED_USER_CUSTOM_FIELD_MAPPING_ID1, PRE_POPULATED_USER_CUSTOM_FIELD_MAPPING_ID2,
-      PRE_POPULATED_USER_CUSTOM_FIELD_MAPPING_ID3, PRE_POPULATED_USER_CUSTOM_FIELD_MAPPING_ID4,
-      PRE_POPULATED_USER_CUSTOM_FIELD_MAPPING_ID5));
+    assertEquals(ids, List.of(PRE_POPULATED_USER_CUSTOM_FIELD_MAPPING_ID1, PRE_POPULATED_USER_CUSTOM_FIELD_MAPPING_ID2));
   }
 
   @Test
   @Sql(scripts = {"classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/user-custom-field-mapping/pre-populate-user-custom-field-mapping.sql"})
   void shouldGetMappingWithMetadata() {
-    var mapping = repository.getOne(UUID.fromString(PRE_POPULATED_USER_CUSTOM_FIELD_MAPPING_ID1));
+    var mapping = repository.findOneByCentralServerId(UUID.fromString(PRE_POPULATED_CENTRAL_SERVER_ID)).get();
 
     assertNotNull(mapping);
     assertEquals(UUID.fromString(PRE_POPULATED_USER_CUSTOM_FIELD_MAPPING_ID1), mapping.getId());
     assertEquals(UUID.fromString(PRE_POPULATED_CUSTOM_FIELD_ID), mapping.getCustomFieldId());
-    assertEquals("qwerty", mapping.getCustomFieldValue());
-    assertEquals("5east", mapping.getAgencyCode());
+    assertTrue(mapping.getConfiguredOptions().containsKey("qwerty"));
+    assertEquals("5east", mapping.getConfiguredOptions().get("qwerty"));
 
     assertEquals(PRE_POPULATED_USER, mapping.getCreatedBy());
     assertNotNull(mapping.getCreatedDate());
@@ -85,35 +81,30 @@ class UserCustomFieldMappingRepositoryTest extends BaseRepositoryTest {
 
     var saved = repository.saveAndFlush(newMapping);
 
-    var found = repository.getOne(saved.getId());
-
-    assertNotNull(found);
-    assertEquals(newMapping.getId(), found.getId());
-    assertEquals(saved.getCustomFieldId(), found.getCustomFieldId());
-    assertEquals(saved.getCustomFieldValue(), found.getCustomFieldValue());
-    assertEquals(saved.getAgencyCode(), found.getAgencyCode());
+    assertNotNull(saved);
+    assertEquals(newMapping.getId(), saved.getId());
+    assertEquals(saved.getCustomFieldId(), saved.getCustomFieldId());
+    assertEquals(saved.getConfiguredOptions(), saved.getConfiguredOptions());
   }
 
   @Test
   @Sql(scripts = {"classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/user-custom-field-mapping/pre-populate-user-custom-field-mapping.sql"})
   void shouldUpdateExistingMapping() {
-    var mapping = repository.getOne(fromString(PRE_POPULATED_USER_CUSTOM_FIELD_MAPPING_ID1));
+    var mapping = repository.findOneByCentralServerId(UUID.fromString(PRE_POPULATED_CENTRAL_SERVER_ID)).get();
 
     var newCustomFieldId = randomUUID();
-    var newCustomFieldValue = "qwert1";
+    var newCustomFieldValue = "newCustomFieldValue";
     var newAgencyCode = randomFiveCharacterCode();
     mapping.setCustomFieldId(newCustomFieldId);
-    mapping.setCustomFieldValue(newCustomFieldValue);
-    mapping.setAgencyCode(newAgencyCode);
+    mapping.getConfiguredOptions().put(newCustomFieldValue, newAgencyCode);
 
     repository.saveAndFlush(mapping);
 
-    var saved = repository.getOne(mapping.getId());
+    var saved = repository.findOneByCentralServerId(UUID.fromString(PRE_POPULATED_CENTRAL_SERVER_ID)).get();
 
     assertEquals(newCustomFieldId, saved.getCustomFieldId());
-    assertEquals(newCustomFieldValue, saved.getCustomFieldValue());
-    assertEquals(newAgencyCode, saved.getAgencyCode());
+    assertEquals(newAgencyCode, saved.getConfiguredOptions().get(newCustomFieldValue));
   }
 
   @Test
@@ -132,7 +123,7 @@ class UserCustomFieldMappingRepositoryTest extends BaseRepositoryTest {
   @Sql(scripts = {"classpath:db/central-server/pre-populate-central-server.sql"})
   void throwExceptionWhenSavingWithoutCustomFieldValue() {
     var mapping = createUserCustomFieldMapping();
-    mapping.setCustomFieldValue(null);
+    mapping.getConfiguredOptions().put(null, "abc12");
 
     assertThrows(DataIntegrityViolationException.class, () -> repository.saveAndFlush(mapping));
   }
@@ -152,21 +143,8 @@ class UserCustomFieldMappingRepositoryTest extends BaseRepositoryTest {
   @Sql(scripts = {"classpath:db/central-server/pre-populate-central-server.sql"})
   void throwExceptionWhenSavingWithInvalidAgencyCode() {
     var mapping = createUserCustomFieldMapping();
-    mapping.setAgencyCode("123456");
+    mapping.getConfiguredOptions().put("value1", "12345678");
 
     assertThrows(DataIntegrityViolationException.class, () -> repository.saveAndFlush(mapping));
-  }
-
-  @Test
-  @Sql(scripts = {"classpath:db/central-server/pre-populate-central-server.sql",
-    "classpath:db/user-custom-field-mapping/pre-populate-user-custom-field-mapping.sql"})
-  void throwExceptionWhenSavingMappingWithCustomFieldValueThatAlreadyExists() {
-    var mapping = createUserCustomFieldMapping();
-
-    mapping.setCustomFieldId(UUID.fromString(PRE_POPULATED_CUSTOM_FIELD_ID));
-    mapping.setCustomFieldValue("qwerty");
-
-    var ex = assertThrows(DataIntegrityViolationException.class, () -> repository.saveAndFlush(mapping));
-    assertThat(ex.getMessage(), containsString("constraint [unq_custom_field_central_server]"));
   }
 }
