@@ -27,17 +27,6 @@ public class TestUtil {
     return new Random().nextInt(range);
   }
 
-  public static Set<Integer> randomDistinctIntegers(int range, int amount) {
-    if (range < amount) return new HashSet<>();
-
-    Random random = new Random();
-    Set<Integer> integers = new HashSet<>();
-    while (integers.size() < amount) {
-      integers.add(random.nextInt(range));
-    }
-    return integers;
-  }
-
   public static int randomIntegerExcept(int range, Set<Integer> except){
     Random random = new Random();
     int integer;
