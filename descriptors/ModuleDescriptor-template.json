@@ -246,6 +246,11 @@
           "methods": ["PUT"],
           "pathPattern": "/inn-reach/central-servers/{centralServerId}/central-patron-type-mappings",
           "permissionsRequired": ["inn-reach.central-patron-type-mappings.collection.put"]
+        },
+        {
+          "methods": ["POST"],
+          "pathPattern": "/innreach/v2/circ/itemHold/{trackingId}/{centralCode}",
+          "permissionsRequired": ["inn-reach.inn-reach-transaction.item.post"]
         }
       ]
     },
@@ -665,6 +670,19 @@
       "subPermissions" : [
         "inn-reach.central-patron-type-mappings.collection.get",
         "inn-reach.central-patron-type-mappings.collection.put"
+      ]
+    },
+    {
+      "permissionName" : "inn-reach.inn-reach-transaction.item.post",
+      "displayName" : "create INN-Reach Transaction with item hold at the owning site",
+      "description" : "Create INN-Reach Transaction with Item Hold at the owning site"
+    },
+    {
+      "permissionName" : "inn-reach.inn-reach-transaction.all",
+      "displayName" : "inn reach API module - all permissions of inn-reach transactions",
+      "description" : "All permissions of inn-reach transactions scope",
+      "subPermissions" : [
+        "inn-reach.inn-reach-transactions.item.post"
       ]
     },
     {

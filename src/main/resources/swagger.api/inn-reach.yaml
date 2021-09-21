@@ -989,6 +989,29 @@ paths:
         required: true
       parameters:
         - $ref: '#/components/parameters/centralServerId'
+  /v2/circ/itemhold/{trackingId}/{centralCode}:
+    servers:
+      - url: /innreach/
+    post:
+      operationId: createInnReachTransactionItemHold
+      description: Originates an item hold at the owning site
+      tags:
+        - inn-reach-transaction
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/transactionItemHoldDTO"
+      responses:
+        '200':
+          description: Transaction record is created
+        '400':
+          $ref: "#/components/responses/trait_response_validation_400"
+        '500':
+          $ref: "#/components/responses/trait_response_500"
+      parameters:
+        - $ref: '#/components/parameters/trackingId'
+        - $ref: '#/components/parameters/centralCode'
 components:
   schemas:
     UUID:
@@ -1055,6 +1078,8 @@ components:
       $ref: schemas/inventorystorage/holding.json
     centralPatronTypeMappingsDTO:
       $ref: schemas/centralPatronTypeMappingsDTO.json
+    transactionItemHoldDTO:
+      $ref: schemas/transactionItemHoldDTO.json
   parameters:
     id:
       name: id
@@ -1086,6 +1111,18 @@ components:
       required: true
       schema:
         $ref: "#/components/schemas/UUID"
+    trackingId:
+      name: trackingId
+      in: path
+      required: true
+      schema:
+        type: string
+    centralCode:
+      name: centralCode
+      in: path
+      required: true
+      schema:
+        type: string
     trait_queryable_query:
       name: query
       in: query

@@ -1,0 +1,90 @@
+{
+  "description": "INN-Reach Transaction Item Hold record",
+  "type": "object",
+  "properties": {
+    "id": {
+      "description": "Transaction Hold id",
+      "type": "string",
+      "format": "UUID"
+    },
+    "transactionTime": {
+      "description": "Transaction time",
+      "type": "integer"
+    },
+    "pickupLocation": {
+      "description": "Pickup location",
+      "type": "object",
+      "properties": {
+        "pickupLocCode": {
+          "description": "Pickup Loc Code",
+          "type": "string"
+        },
+        "displayName": {
+          "description": "Display Name",
+          "type": "string"
+        },
+        "printName": {
+          "description": "Print Name",
+          "type": "string"
+        },
+        "deliveryStop": {
+          "description": "Delivery Stop",
+          "type": "string"
+        },
+        "metadata": {
+          "description": "Entity metadata",
+          "type": "object",
+          "$ref": "metadata.json"
+        }
+      }
+    },
+    "patronId": {
+      "description": "Patron id",
+      "type": "string"
+    },
+    "patronAgencyCode": {
+      "description": "Patron agency code",
+      "type": "string"
+    },
+    "itemAgencyCode": {
+      "description": "Item agency code",
+      "type": "string"
+    },
+    "itemId": {
+      "description": "Item id",
+      "type": "string"
+    },
+    "needBefore": {
+      "description": "Need before time",
+      "type": "integer"
+    },
+    "centralItemType": {
+      "description": "Central item type",
+      "type": "integer"
+    },
+    "centralPatronType": {
+      "description": "Central patron type",
+      "type": "integer"
+    },
+    "patronName": {
+      "description": "Patron name",
+      "type": "string"
+    },
+    "metadata": {
+      "description": "Entity metadata",
+      "type": "object",
+      "$ref": "metadata.json"
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "transactionTime",
+    "pickupLocation",
+    "patronId",
+    "patronAgencyCode",
+    "itemAgencyCode",
+    "itemId",
+    "centralPatronType",
+    "patronName"
+  ]
+}
