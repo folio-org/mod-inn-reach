@@ -23,6 +23,7 @@ public class BibInfoController implements BibInfoD2irApi {
 
   private final BibInfoService bibInfoService;
 
+  @Override
   @GetMapping(value = "/getbibrecord/{bibId}/{centralCode}", produces = MediaType.APPLICATION_JSON_VALUE)
   public ResponseEntity<BibInfoResponseDTO> getBibRecord(@PathVariable("bibId") String bibId,
                                                          @PathVariable("centralCode") String centralCode) {
