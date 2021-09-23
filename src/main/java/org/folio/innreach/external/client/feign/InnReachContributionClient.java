@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 
-import org.folio.innreach.external.dto.Bib;
+import org.folio.innreach.dto.BibInfo;
 import org.folio.innreach.external.dto.BibItem;
 import org.folio.innreach.external.dto.InnReachResponse;
 
@@ -29,7 +29,7 @@ public interface InnReachContributionClient {
                                  @RequestHeader(X_FROM_CODE) String xFromCode,
                                  @RequestHeader(X_TO_CODE) String xToCode,
                                  @PathVariable String bibId,
-                                 @RequestBody Bib bib);
+                                 @RequestBody BibInfo bib);
 
   @GetMapping(value = "/innreach/v2/contribution/items/{bibId}", produces = APPLICATION_JSON_VALUE)
   InnReachResponse contributeBibItems(URI baseUri,

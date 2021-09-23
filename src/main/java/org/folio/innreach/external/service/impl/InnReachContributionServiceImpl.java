@@ -11,9 +11,9 @@ import lombok.extern.log4j.Log4j2;
 import org.springframework.stereotype.Service;
 
 import org.folio.innreach.domain.service.CentralServerService;
+import org.folio.innreach.dto.BibInfo;
 import org.folio.innreach.external.InnReachHeaders;
 import org.folio.innreach.external.client.feign.InnReachContributionClient;
-import org.folio.innreach.external.dto.Bib;
 import org.folio.innreach.external.dto.BibItem;
 import org.folio.innreach.external.dto.InnReachResponse;
 import org.folio.innreach.external.service.InnReachAuthExternalService;
@@ -29,7 +29,7 @@ public class InnReachContributionServiceImpl implements InnReachContributionServ
   private final CentralServerService centralServerService;
 
   @Override
-  public InnReachResponse contributeBib(UUID centralServerId, String bibId, Bib bib) {
+  public InnReachResponse contributeBib(UUID centralServerId, String bibId, BibInfo bib) {
     var connectionDetails = centralServerService.getCentralServerConnectionDetails(centralServerId);
 
     var accessTokenDTO = innReachAuthExternalService.getAccessToken(connectionDetails);

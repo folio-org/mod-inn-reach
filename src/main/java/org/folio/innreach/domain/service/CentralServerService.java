@@ -11,6 +11,8 @@ public interface CentralServerService {
 
   CentralServerDTO getCentralServer(UUID centralServerId);
 
+  CentralServerDTO getCentralServerByCode(String code);
+
   CentralServersDTO getAllCentralServers(int offset, int limit);
 
   CentralServerDTO updateCentralServer(UUID centralServerId, CentralServerDTO centralServerDTO);

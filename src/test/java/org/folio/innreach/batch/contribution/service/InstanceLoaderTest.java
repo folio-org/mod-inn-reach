@@ -50,7 +50,7 @@ class InstanceLoaderTest {
 
     instanceLoader.process(event);
 
-    verify(inventoryService).getInstance(any());
+    verify(inventoryService).getInstance(any(UUID.class));
   }
 
   @Test

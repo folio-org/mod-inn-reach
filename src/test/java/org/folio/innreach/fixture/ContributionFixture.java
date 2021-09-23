@@ -151,12 +151,4 @@ public class ContributionFixture {
     return TestUtil.refCentralServer(PRE_POPULATED_CENTRAL_SERVER_UUID);
   }
 
-  public static InnReachResponse irOkResponse() {
-    return new InnReachResponse("ok", null, null);
-  }
-
-  public static InnReachResponse irErrorResponse() {
-    return new InnReachResponse("failed", null, null);
-  }
-
 }
