@@ -1,6 +1,7 @@
 package org.folio.innreach.fixture;
 
 import static java.util.Collections.singletonList;
+import static java.util.List.of;
 import static java.util.UUID.fromString;
 import static org.jeasy.random.FieldPredicates.named;
 
@@ -22,6 +23,7 @@ import org.jeasy.random.EasyRandom;
 import org.jeasy.random.EasyRandomParameters;
 import org.springframework.batch.item.ExecutionContext;
 
+import org.folio.innreach.client.InventoryViewClient;
 import org.folio.innreach.domain.dto.folio.ResultList;
 import org.folio.innreach.domain.dto.folio.inventorystorage.JobResponse;
 import org.folio.innreach.domain.dto.folio.inventorystorage.MaterialTypeDTO;
@@ -33,7 +35,6 @@ import org.folio.innreach.dto.Instance;
 import org.folio.innreach.dto.Item;
 import org.folio.innreach.dto.TransformedMARCRecordDTO;
 import org.folio.innreach.external.dto.InnReachLocationDTO;
-import org.folio.innreach.external.dto.InnReachResponse;
 import org.folio.innreach.mapper.ContributionMapper;
 import org.folio.innreach.mapper.ContributionMapperImpl;
 import org.folio.innreach.mapper.MappingMethods;
@@ -85,6 +86,14 @@ public class ContributionFixture {
     contribution.getErrors().forEach(e -> e.setContribution(contribution));
 
     return contribution;
+  }
+
+  public static InventoryViewClient.InstanceView createInstanceView() {
+    var instanceView = new InventoryViewClient.InstanceView();
+    instanceView.setInstance(createInstance());
+    instanceView.setItems(of(createItem()));
+    instanceView.setHoldingsRecords(of(createHolding()));
+    return instanceView;
   }
 
   public static Instance createInstance() {
