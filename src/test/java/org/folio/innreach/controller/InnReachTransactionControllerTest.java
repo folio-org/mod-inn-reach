@@ -10,16 +10,26 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.http.HttpStatus;
+import org.springframework.test.context.jdbc.Sql;
+import org.springframework.test.context.jdbc.SqlMergeMode;
 
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionType.ITEM;
 import static org.folio.innreach.fixture.TestUtil.deserializeFromJsonFile;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TEST_METHOD;
+import static org.springframework.test.context.jdbc.SqlMergeMode.MergeMode.MERGE;
 
+@Sql(
+  scripts = {
+    "classpath:db/central-server/clear-central-server-tables.sql"},
+  executionPhase = AFTER_TEST_METHOD
+)
+@SqlMergeMode(MERGE)
 class InnReachTransactionControllerTest extends BaseControllerTest {
 
   private static final String TRACKING_ID = "trackingid1";
-  private static final String CENTRAL_SERVER_CODE = "code1";
+  private static final String CENTRAL_SERVER_CODE = "d2ir";
 
   @Autowired
   private TestRestTemplate testRestTemplate;
@@ -29,6 +39,9 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   private InnReachTransactionMapper mapper;
 
   @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql"
+  })
   void return200HttpCode_and_createdInnReachTransactionEntity_when_createInnReachTransactionWithItemHold() {
     var itemHoldDTO = deserializeFromJsonFile(
       "/inn-reach-transaction/create-item-hold-request.json", TransactionItemHoldDTO.class);
@@ -55,6 +68,9 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   }
 
   @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql"
+  })
   void return409HttpCode_when_createInnReachTransactionWithItemHoldWithInvalidPatronId() {
     var itemHoldDTO = deserializeFromJsonFile(
       "/inn-reach-transaction/create-item-hold-invalid-patron-id-request.json", TransactionItemHoldDTO.class);
@@ -68,6 +84,9 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   }
 
   @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql"
+  })
   void return409HttpCode_when_createInnReachTransactionWithItemHoldWithInvalidCentralItemType() {
     var itemHoldDTO = deserializeFromJsonFile(
       "/inn-reach-transaction/create-item-hold-invalid-central-item-type-request.json", TransactionItemHoldDTO.class);

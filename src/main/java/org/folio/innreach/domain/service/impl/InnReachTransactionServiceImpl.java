@@ -3,6 +3,7 @@ package org.folio.innreach.domain.service.impl;
 import lombok.RequiredArgsConstructor;
 import org.folio.innreach.domain.entity.InnReachTransaction;
 import org.folio.innreach.domain.entity.InnReachTransaction.TransactionType;
+import org.folio.innreach.domain.service.CentralServerService;
 import org.folio.innreach.domain.service.InnReachTransactionService;
 import org.folio.innreach.dto.D2irResponseDTO;
 import org.folio.innreach.dto.TransactionItemHoldDTO;
@@ -16,12 +17,14 @@ public class InnReachTransactionServiceImpl implements InnReachTransactionServic
 
   private final InnReachTransactionRepository repository;
   private final InnReachTransactionMapper mapper;
+  private final CentralServerService centralServerService;
 
   @Override
   public D2irResponseDTO createInnReachTransactionItemHold(String trackingId, String centralCode, TransactionItemHoldDTO dto) {
     var response = new D2irResponseDTO();
     response.setStatus("ok");
     try {
+      centralServerService.getCentralServerByCentralCode(centralCode);
       InnReachTransaction transaction = new InnReachTransaction();
       transaction.setTrackingId(trackingId);
       transaction.setCentralServerCode(centralCode);
