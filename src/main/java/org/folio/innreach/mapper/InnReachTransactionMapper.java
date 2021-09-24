@@ -1,7 +1,5 @@
 package org.folio.innreach.mapper;
 
-import org.folio.innreach.domain.dto.InnReachTransactionItemHoldDTO;
-import org.folio.innreach.domain.entity.InnReachTransaction;
 import org.folio.innreach.domain.entity.TransactionItemHold;
 import org.folio.innreach.domain.entity.TransactionPickupLocation;
 import org.folio.innreach.dto.TransactionItemHoldDTO;
@@ -14,9 +12,6 @@ public interface InnReachTransactionMapper {
 
   TransactionItemHold toItemHold(TransactionItemHoldDTO dto);
 
-  @AuditableMapping
-  InnReachTransactionItemHoldDTO toInnReachTransactionItemHoldDTO(InnReachTransaction entity);
-
   default TransactionPickupLocation map(String value) {
     var strings = value.split(":");
     var pickupLocation = new TransactionPickupLocation();
@@ -27,14 +22,5 @@ public interface InnReachTransactionMapper {
       pickupLocation.setDeliveryStop(strings[3]);
     }
     return pickupLocation;
-  }
-
-  default String map(TransactionPickupLocation value) {
-    var stringBuilder = new StringBuilder();
-    stringBuilder.append(value.getPickupLocCode()).append(value.getDisplayName()).append(value.getPrintName());
-    if (value.getDeliveryStop() != null) {
-      stringBuilder.append(value.getDeliveryStop());
-    }
-    return stringBuilder.toString();
   }
 }

@@ -2,6 +2,7 @@ package org.folio.innreach.controller;
 
 import org.folio.innreach.controller.base.BaseControllerTest;
 import org.folio.innreach.domain.entity.TransactionItemHold;
+import org.folio.innreach.dto.D2irResponseDTO;
 import org.folio.innreach.dto.TransactionItemHoldDTO;
 import org.folio.innreach.mapper.InnReachTransactionMapper;
 import org.folio.innreach.repository.InnReachTransactionRepository;
@@ -13,7 +14,6 @@ import org.springframework.http.HttpStatus;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionType.ITEM;
 import static org.folio.innreach.fixture.TestUtil.deserializeFromJsonFile;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class InnReachTransactionControllerTest extends BaseControllerTest {
@@ -34,11 +34,12 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
       "/inn-reach-transaction/create-item-hold-request.json", TransactionItemHoldDTO.class);
 
     var responseEntity = testRestTemplate.postForEntity(
-      "/innreach/v2/circ/itemHold/{trackingId}/{centralCode}", itemHoldDTO, Void.class, TRACKING_ID,
+      "/innreach/v2/circ/itemHold/{trackingId}/{centralCode}", itemHoldDTO, D2irResponseDTO.class, TRACKING_ID,
       CENTRAL_SERVER_CODE);
 
     assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
-    assertFalse(responseEntity.hasBody());
+    assertTrue(responseEntity.hasBody());
+    assertEquals("ok", responseEntity.getBody().getStatus());
 
     var createdTransaction = repository.fetchOneByTrackingId(TRACKING_ID);
 
@@ -59,10 +60,11 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
       "/inn-reach-transaction/create-item-hold-invalid-patron-id-request.json", TransactionItemHoldDTO.class);
 
     var responseEntity = testRestTemplate.postForEntity(
-      "/innreach/v2/circ/itemHold/{trackingId}/{centralCode}", itemHoldDTO, Error.class, TRACKING_ID,
+      "/innreach/v2/circ/itemHold/{trackingId}/{centralCode}", itemHoldDTO, D2irResponseDTO.class, TRACKING_ID,
       CENTRAL_SERVER_CODE);
 
-    assertEquals(HttpStatus.CONFLICT, responseEntity.getStatusCode());
+    assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
+    assertEquals("failed", responseEntity.getBody().getStatus());
   }
 
   @Test
@@ -71,9 +73,10 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
       "/inn-reach-transaction/create-item-hold-invalid-central-item-type-request.json", TransactionItemHoldDTO.class);
 
     var responseEntity = testRestTemplate.postForEntity(
-      "/innreach/v2/circ/itemHold/{trackingId}/{centralCode}", itemHoldDTO, Error.class, TRACKING_ID,
+      "/innreach/v2/circ/itemHold/{trackingId}/{centralCode}", itemHoldDTO, D2irResponseDTO.class, TRACKING_ID,
       CENTRAL_SERVER_CODE);
 
-    assertEquals(HttpStatus.CONFLICT, responseEntity.getStatusCode());
+    assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
+    assertEquals("failed", responseEntity.getBody().getStatus());
   }
 }

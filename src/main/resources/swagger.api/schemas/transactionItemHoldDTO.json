@@ -17,19 +17,25 @@
     },
     "patronId": {
       "description": "Patron id",
-      "type": "string"
+      "type": "string",
+      "pattern" : "[a-z,0-9]{1,32}"
     },
     "patronAgencyCode": {
       "description": "Patron agency code",
-      "type": "string"
+      "type": "string",
+      "minLength": 5,
+      "maxLength": 5
     },
     "itemAgencyCode": {
       "description": "Item agency code",
-      "type": "string"
+      "type": "string",
+      "minLength": 5,
+      "maxLength": 5
     },
     "itemId": {
       "description": "Item id",
-      "type": "string"
+      "type": "string",
+      "pattern" : "[a-z,0-9]{1,32}"
     },
     "needBefore": {
       "description": "Need before time",
@@ -41,7 +47,9 @@
     },
     "centralPatronType": {
       "description": "Central patron type",
-      "type": "integer"
+      "type": "integer",
+      "minimum" : 0,
+      "maximum" : 255
     },
     "patronName": {
       "description": "Patron name",

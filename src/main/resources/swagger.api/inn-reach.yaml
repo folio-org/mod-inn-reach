@@ -1005,6 +1005,10 @@ paths:
       responses:
         '200':
           description: Transaction record is created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/d2irResponseDTO"
         '400':
           $ref: "#/components/responses/trait_response_validation_400"
         '500':
@@ -1080,6 +1084,8 @@ components:
       $ref: schemas/centralPatronTypeMappingsDTO.json
     transactionItemHoldDTO:
       $ref: schemas/transactionItemHoldDTO.json
+    d2irResponseDTO:
+      $ref: schemas/d2irResponseDTO.json
   parameters:
     id:
       name: id
