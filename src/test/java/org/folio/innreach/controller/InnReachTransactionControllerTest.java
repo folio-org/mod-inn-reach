@@ -47,7 +47,8 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     assertEquals(ITEM, createdTransaction.get().getType());
     assertEquals(itemHoldDTO.getItemId(), createdTransaction.get().getHold().getItemId());
     assertEquals(itemHoldDTO.getItemAgencyCode(), createdTransaction.get().getHold().getItemAgencyCode());
-    assertEquals(itemHoldDTO.getPickupLocation().getDisplayName(), createdTransaction.get().getHold().getPickupLocation().getDisplayName());
+    assertEquals(mapper.map(itemHoldDTO.getPickupLocation()).getDisplayName(),
+      createdTransaction.get().getHold().getPickupLocation().getDisplayName());
     assertEquals(itemHoldDTO.getTransactionTime(), createdTransaction.get().getHold().getTransactionTime());
     assertEquals(itemHoldDTO.getPatronName(), ((TransactionItemHold) createdTransaction.get().getHold()).getPatronName());
   }

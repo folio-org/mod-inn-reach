@@ -13,30 +13,7 @@
     },
     "pickupLocation": {
       "description": "Pickup location",
-      "type": "object",
-      "properties": {
-        "pickupLocCode": {
-          "description": "Pickup Loc Code",
-          "type": "string"
-        },
-        "displayName": {
-          "description": "Display Name",
-          "type": "string"
-        },
-        "printName": {
-          "description": "Print Name",
-          "type": "string"
-        },
-        "deliveryStop": {
-          "description": "Delivery Stop",
-          "type": "string"
-        },
-        "metadata": {
-          "description": "Entity metadata",
-          "type": "object",
-          "$ref": "metadata.json"
-        }
-      }
+      "type": "string"
     },
     "patronId": {
       "description": "Patron id",
