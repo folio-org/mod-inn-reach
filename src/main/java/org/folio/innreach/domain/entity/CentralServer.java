@@ -96,6 +96,7 @@ public class CentralServer extends Auditable implements Identifiable<UUID> {
       "cs.id, " +
       "cs.centralServerAddress, " +
       "cs.localServerCode, " +
+      "cs.centralServerCode, " +
       "cs.centralServerCredentials.centralServerKey, " +
       "cs.centralServerCredentials.centralServerSecret" +
     ") FROM CentralServer AS cs " + FETCH_BY_ID_POSTFIX;
@@ -108,6 +109,9 @@ public class CentralServer extends Auditable implements Identifiable<UUID> {
 
   @Column(name = "local_server_code")
   private String localServerCode;
+
+  @Column(name = "central_server_code")
+  private String centralServerCode;
 
   @Column(name = "central_server_address")
   private String centralServerAddress;

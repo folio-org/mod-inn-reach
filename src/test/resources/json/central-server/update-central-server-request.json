@@ -2,6 +2,7 @@
   "name": "name UPD",
   "description": "description UPD",
   "localServerCode": "fli01",
+  "centralServerCode": "d2ir",
   "centralServerAddress": "https://rssandbox-api.iii.com",
   "loanTypeId": "6dae9cd4-ae7c-11eb-8529-0242ac130003",
   "localAgencies": [
