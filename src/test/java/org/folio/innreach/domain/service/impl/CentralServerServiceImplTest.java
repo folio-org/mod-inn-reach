@@ -107,22 +107,22 @@ class CentralServerServiceImplTest {
   @Test
   void returnOneByCode_when_centralServerExists() {
     var centralServer = createCentralServer();
-    when(centralServerRepository.fetchOneByServerCode(any())).thenReturn(Optional.of(centralServer));
+    when(centralServerRepository.fetchOneByCentralCode(any())).thenReturn(Optional.of(centralServer));
 
-    var centralServerDTO = centralServerService.getCentralServerByCode(centralServer.getLocalServerCode());
+    var centralServerDTO = centralServerService.getCentralServerByCentralCode(centralServer.getCentralServerCode());
 
-    verify(centralServerRepository).fetchOneByServerCode(any());
+    verify(centralServerRepository).fetchOneByCentralCode(any());
 
     assertNotNull(centralServerDTO);
   }
 
   @Test
   void throwException_when_centralServerByCodeDoesNotExist() {
-    when(centralServerRepository.fetchOneByServerCode(any())).thenReturn(Optional.empty());
+    when(centralServerRepository.fetchOneByCentralCode(any())).thenReturn(Optional.empty());
 
-    assertThrows(EntityNotFoundException.class, () -> centralServerService.getCentralServerByCode("test1"));
+    assertThrows(EntityNotFoundException.class, () -> centralServerService.getCentralServerByCentralCode("test1"));
 
-    verify(centralServerRepository).fetchOneByServerCode(any());
+    verify(centralServerRepository).fetchOneByCentralCode(any());
   }
 
   @Test

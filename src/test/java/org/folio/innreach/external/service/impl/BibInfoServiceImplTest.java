@@ -46,7 +46,7 @@ class BibInfoServiceImplTest {
     var centralServer = new CentralServerDTO();
     centralServer.setId(UUID.randomUUID());
 
-    when(centralServerService.getCentralServerByCode(any(String.class))).thenReturn(centralServer);
+    when(centralServerService.getCentralServerByCentralCode(any(String.class))).thenReturn(centralServer);
     when(instanceService.getInstanceByHrid(any(String.class))).thenReturn(new Instance());
     when(instanceTransformationService.getBibInfo(any(UUID.class), any(Instance.class))).thenReturn(new BibInfo());
 
@@ -61,7 +61,7 @@ class BibInfoServiceImplTest {
     var centralServer = new CentralServerDTO();
     centralServer.setId(UUID.randomUUID());
 
-    when(centralServerService.getCentralServerByCode(any(String.class))).thenThrow(new RuntimeException());
+    when(centralServerService.getCentralServerByCentralCode(any(String.class))).thenThrow(new RuntimeException());
 
     var response = service.getBibInfo("bib001313", "code1");
 

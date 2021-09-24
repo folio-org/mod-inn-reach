@@ -35,7 +35,7 @@ public class BibInfoServiceImpl implements BibInfoService {
 
   private BibInfoResponse fetchBibInfo(String bibId, String centralCode) {
     try {
-      var centralServer = centralServerService.getCentralServerByCode(centralCode);
+      var centralServer = centralServerService.getCentralServerByCentralCode(centralCode);
       var instance = instanceService.getInstanceByHrid(bibId);
       var bib = instanceTransformationService.getBibInfo(centralServer.getId(), instance);
 

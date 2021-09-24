@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 
 import org.folio.innreach.domain.dto.CentralServerConnectionDetailsDTO;
 import org.folio.innreach.domain.service.CentralServerService;
+import org.folio.innreach.dto.BibInfo;
 import org.folio.innreach.external.client.feign.InnReachContributionClient;
 import org.folio.innreach.external.dto.BibItem;
 import org.folio.innreach.external.dto.InnReachResponse;
@@ -28,7 +29,7 @@ public class InnReachContributionServiceImpl implements InnReachContributionServ
   private final CentralServerService centralServerService;
 
   @Override
-  public InnReachResponse contributeBib(UUID centralServerId, String bibId, Bib bib) {
+  public InnReachResponse contributeBib(UUID centralServerId, String bibId, BibInfo bib) {
     var connectionDetails = getConnectionDetails(centralServerId);
 
     var accessTokenDTO = innReachAuthExternalService.getAccessToken(connectionDetails);
