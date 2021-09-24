@@ -4,4 +4,4 @@ ALTER TABLE central_server
 UPDATE central_server SET central_server_code = 'dri2';
 
 ALTER TABLE central_server
-  ALTER COLUMN central_server_code VARCHAR(5) NOT NULL;
+  ALTER COLUMN central_server_code SET NOT NULL;
