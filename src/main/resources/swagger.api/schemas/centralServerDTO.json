@@ -20,6 +20,11 @@
       "type": "string",
       "maxLength": 5
     },
+    "centralServerCode": {
+      "description": "Central server code",
+      "type": "string",
+      "maxLength": 5
+    },
     "centralServerAddress": {
       "description": "Central server http address",
       "type": "string"
@@ -62,6 +67,7 @@
   "required": [
     "name",
     "localServerCode",
+    "centralServerCode",
     "centralServerAddress",
     "loanTypeId",
     "localAgencies",
