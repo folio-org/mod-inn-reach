@@ -16,6 +16,7 @@ public class CentralServerConnectionDetailsDTO {
   private UUID id;
   private String connectionUrl;
   private String localCode;
+  private String centralCode;
   private String key;
   private String secret;
 }

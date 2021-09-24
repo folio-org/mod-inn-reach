@@ -34,7 +34,7 @@ public class InnReachExternalServiceImpl implements InnReachExternalService {
       buildInnReachRequestUrl(connectionDetailsDTO.getConnectionUrl(), innReachRequestUri),
       buildBearerAuthHeader(accessTokenDTO.getAccessToken()),
       connectionDetailsDTO.getLocalCode(),
-      InnReachHeaders.X_TO_CODE_DEFAULT_VALUE
+      connectionDetailsDTO.getCentralCode()
     );
   }
 
