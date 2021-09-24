@@ -25,11 +25,7 @@ public class InnReachTransactionServiceImpl implements InnReachTransactionServic
     response.setStatus("ok");
     try {
       centralServerService.getCentralServerByCentralCode(centralCode);
-      InnReachTransaction transaction = new InnReachTransaction();
-      transaction.setTrackingId(trackingId);
-      transaction.setCentralServerCode(centralCode);
-      transaction.setType(TransactionType.ITEM);
-      transaction.setState(InnReachTransaction.TransactionState.ITEM_HOLD);
+      var transaction = createTransactionWithItemHold(trackingId, centralCode);
       var itemHold = mapper.toItemHold(dto);
       transaction.setHold(itemHold);
       repository.save(transaction);
@@ -38,5 +34,14 @@ public class InnReachTransactionServiceImpl implements InnReachTransactionServic
       response.setReason(e.getMessage());
     }
     return response;
+  }
+
+  private InnReachTransaction createTransactionWithItemHold(String trackingId, String centralCode) {
+    InnReachTransaction transaction = new InnReachTransaction();
+    transaction.setTrackingId(trackingId);
+    transaction.setCentralServerCode(centralCode);
+    transaction.setType(TransactionType.ITEM);
+    transaction.setState(InnReachTransaction.TransactionState.ITEM_HOLD);
+    return transaction;
   }
 }

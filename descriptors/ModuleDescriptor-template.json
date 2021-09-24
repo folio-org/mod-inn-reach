@@ -250,7 +250,7 @@
         {
           "methods": ["POST"],
           "pathPattern": "/innreach/v2/circ/itemHold/{trackingId}/{centralCode}",
-          "permissionsRequired": ["inn-reach.inn-reach-transaction.item.post"]
+          "permissionsRequired": ["inn-reach.d2ir.inn-reach-transaction.item.post"]
         }
       ]
     },
@@ -682,7 +682,7 @@
       "displayName" : "inn reach API module - all permissions of inn-reach transactions",
       "description" : "All permissions of inn-reach transactions scope",
       "subPermissions" : [
-        "inn-reach.d2ir.inn-reach-transactions.item.post"
+        "inn-reach.d2ir.inn-reach-transaction.item.post"
       ]
     },
     {
@@ -706,7 +706,7 @@
         "inn-reach.item-type-mappings.all",
         "inn-reach.user-custom-field-mappings.all",
         "inn-reach.central-patron-type-mappings.all",
-        "inn-reach.d2ir.central-patron-type-mappings.all"
+        "inn-reach.d2ir.inn-reach-transaction.all"
       ]
     }
   ],

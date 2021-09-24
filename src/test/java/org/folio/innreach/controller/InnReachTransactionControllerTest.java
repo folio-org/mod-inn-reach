@@ -15,6 +15,8 @@ import org.springframework.test.context.jdbc.SqlMergeMode;
 
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionType.ITEM;
 import static org.folio.innreach.fixture.TestUtil.deserializeFromJsonFile;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsString;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TEST_METHOD;
@@ -29,6 +31,7 @@ import static org.springframework.test.context.jdbc.SqlMergeMode.MergeMode.MERGE
 class InnReachTransactionControllerTest extends BaseControllerTest {
 
   private static final String TRACKING_ID = "trackingid1";
+  private static final String PRE_POPULATED_TRACKING_ID = "tracking1";
   private static final String CENTRAL_SERVER_CODE = "d2ir";
 
   @Autowired
@@ -81,6 +84,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
 
     assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
     assertEquals("failed", responseEntity.getBody().getStatus());
+    assertThat(responseEntity.getBody().getReason(), containsString("must match \"[a-z,0-9]{1,32}\""));
   }
 
   @Test
@@ -97,5 +101,24 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
 
     assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
     assertEquals("failed", responseEntity.getBody().getStatus());
+    assertThat(responseEntity.getBody().getReason(), containsString("must be less than or equal to 255"));
+  }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql",
+  })
+  void return409HttpCode_when_createInnReachTransaction_and_trackingIdAlreadyExists() {
+    var itemHoldDTO = deserializeFromJsonFile(
+      "/inn-reach-transaction/create-item-hold-request.json", TransactionItemHoldDTO.class);
+
+    var responseEntity = testRestTemplate.postForEntity(
+      "/innreach/v2/circ/itemHold/{trackingId}/{centralCode}", itemHoldDTO, D2irResponseDTO.class, PRE_POPULATED_TRACKING_ID,
+      CENTRAL_SERVER_CODE);
+
+    assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
+    assertEquals("failed", responseEntity.getBody().getStatus());
+    assertThat(responseEntity.getBody().getReason(), containsString("constraint [unq_tracking_id]"));
   }
 }
