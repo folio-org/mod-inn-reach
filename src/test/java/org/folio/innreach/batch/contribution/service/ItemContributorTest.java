@@ -6,8 +6,8 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import static org.folio.innreach.external.dto.InnReachResponse.okResponse;
 import static org.folio.innreach.fixture.ContributionFixture.createItem;
-import static org.folio.innreach.fixture.ContributionFixture.irOkResponse;
 
 import java.util.Collections;
 import java.util.UUID;
@@ -60,7 +60,7 @@ class ItemContributorTest {
   @Test
   void shouldContributeItems() {
     when(jobContext.getCentralServerId()).thenReturn(CENTRAL_SERVER_ID);
-    when(irContributionService.contributeBibItems(any(), any(), any())).thenReturn(irOkResponse());
+    when(irContributionService.contributeBibItems(any(), any(), any())).thenReturn(okResponse());
     when(irLocationService.getAllInnReachLocations(any(), any())).thenReturn(new InnReachLocationsDTO());
     when(typeMappingService.getAllMappings(any(), anyInt(), anyInt())).thenReturn(new MaterialTypeMappingsDTO());
     when(libraryMappingService.getAllMappings(any(), anyInt(), anyInt())).thenReturn(new LibraryMappingsDTO());

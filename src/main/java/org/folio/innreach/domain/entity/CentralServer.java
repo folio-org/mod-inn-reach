@@ -4,6 +4,8 @@ import static org.folio.innreach.domain.entity.CentralServer.FETCH_ALL_BY_ID_QUE
 import static org.folio.innreach.domain.entity.CentralServer.FETCH_ALL_BY_ID_QUERY_NAME;
 import static org.folio.innreach.domain.entity.CentralServer.FETCH_CONNECTION_DETAILS_QUERY;
 import static org.folio.innreach.domain.entity.CentralServer.FETCH_CONNECTION_DETAILS_QUERY_NAME;
+import static org.folio.innreach.domain.entity.CentralServer.FETCH_ONE_BY_CENTRAL_CODE_QUERY;
+import static org.folio.innreach.domain.entity.CentralServer.FETCH_ONE_BY_CENTRAL_CODE_QUERY_NAME;
 import static org.folio.innreach.domain.entity.CentralServer.FETCH_ONE_BY_ID_QUERY;
 import static org.folio.innreach.domain.entity.CentralServer.FETCH_ONE_BY_ID_QUERY_NAME;
 import static org.folio.innreach.domain.entity.CentralServer.GET_IDS_QUERY;
@@ -52,6 +54,11 @@ import org.folio.innreach.domain.entity.base.Identifiable;
   hints = @QueryHint(name = QueryHints.PASS_DISTINCT_THROUGH, value = "false")
 )
 @NamedQuery(
+  name = FETCH_ONE_BY_CENTRAL_CODE_QUERY_NAME,
+  query = FETCH_ONE_BY_CENTRAL_CODE_QUERY,
+  hints = @QueryHint(name = QueryHints.PASS_DISTINCT_THROUGH, value = "false")
+)
+@NamedQuery(
   name = GET_IDS_QUERY_NAME,
   query = GET_IDS_QUERY
 )
@@ -64,6 +71,8 @@ public class CentralServer extends Auditable implements Identifiable<UUID> {
 
   private static final String FETCH_BY_ID_POSTFIX = " WHERE cs.id = :id";
 
+  private static final String FETCH_BY_CENTRAL_CODE_POSTFIX = " WHERE cs.centralServerCode = :code";
+
   private static final String FETCH_ALL_QUERY = "SELECT DISTINCT cs FROM CentralServer AS cs " +
     "LEFT JOIN FETCH cs.centralServerCredentials " +
     "LEFT JOIN FETCH cs.localServerCredentials " +
@@ -74,6 +83,9 @@ public class CentralServer extends Auditable implements Identifiable<UUID> {
 
   public static final String FETCH_ONE_BY_ID_QUERY_NAME = "CentralServer.fetchOne";
   public static final String FETCH_ONE_BY_ID_QUERY = FETCH_ALL_QUERY + FETCH_BY_ID_POSTFIX;
+
+  public static final String FETCH_ONE_BY_CENTRAL_CODE_QUERY_NAME = "CentralServer.fetchOneByCode";
+  public static final String FETCH_ONE_BY_CENTRAL_CODE_QUERY = FETCH_ALL_QUERY + FETCH_BY_CENTRAL_CODE_POSTFIX;
 
   public static final String GET_IDS_QUERY_NAME = "CentralServer.getIds";
   public static final String GET_IDS_QUERY = "SELECT DISTINCT cs.id FROM CentralServer AS cs";

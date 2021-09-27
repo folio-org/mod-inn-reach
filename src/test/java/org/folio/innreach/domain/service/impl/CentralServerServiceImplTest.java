@@ -71,9 +71,9 @@ class CentralServerServiceImplTest {
   @Test
   void returnAllCentralServersDTOS_when_centralServersExist() {
     when(centralServerRepository.getIds(any())).thenReturn(new PageImpl<>(List.of(UUID.randomUUID(), UUID.randomUUID(),
-        UUID.randomUUID())));
+      UUID.randomUUID())));
     when(centralServerRepository.fetchAllById(any())).thenReturn(List.of(createCentralServer(), createCentralServer(),
-        createCentralServer()));
+      createCentralServer()));
 
     var centralServerDTOS = centralServerService.getAllCentralServers(1, 1);
 
@@ -102,6 +102,27 @@ class CentralServerServiceImplTest {
     assertThrows(EntityNotFoundException.class, () -> centralServerService.getCentralServer(UUID.randomUUID()));
 
     verify(centralServerRepository).fetchOne(any());
+  }
+
+  @Test
+  void returnOneByCode_when_centralServerExists() {
+    var centralServer = createCentralServer();
+    when(centralServerRepository.fetchOneByCentralCode(any())).thenReturn(Optional.of(centralServer));
+
+    var centralServerDTO = centralServerService.getCentralServerByCentralCode(centralServer.getCentralServerCode());
+
+    verify(centralServerRepository).fetchOneByCentralCode(any());
+
+    assertNotNull(centralServerDTO);
+  }
+
+  @Test
+  void throwException_when_centralServerByCodeDoesNotExist() {
+    when(centralServerRepository.fetchOneByCentralCode(any())).thenReturn(Optional.empty());
+
+    assertThrows(EntityNotFoundException.class, () -> centralServerService.getCentralServerByCentralCode("test1"));
+
+    verify(centralServerRepository).fetchOneByCentralCode(any());
   }
 
   @Test

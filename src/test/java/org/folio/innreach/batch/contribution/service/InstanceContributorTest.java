@@ -8,10 +8,9 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
+import static org.folio.innreach.external.dto.InnReachResponse.errorResponse;
+import static org.folio.innreach.external.dto.InnReachResponse.okResponse;
 import static org.folio.innreach.fixture.ContributionFixture.createInstance;
-import static org.folio.innreach.fixture.ContributionFixture.createMARCRecord;
-import static org.folio.innreach.fixture.ContributionFixture.irErrorResponse;
-import static org.folio.innreach.fixture.ContributionFixture.irOkResponse;
 
 import java.util.Collections;
 import java.util.UUID;
@@ -24,9 +23,9 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import org.folio.innreach.batch.contribution.ContributionJobContext;
-import org.folio.innreach.domain.service.ContributionValidationService;
-import org.folio.innreach.domain.service.MARCRecordTransformationService;
+import org.folio.innreach.domain.service.InstanceTransformationService;
 import org.folio.innreach.domain.service.impl.TenantScopedExecutionService;
+import org.folio.innreach.dto.BibInfo;
 import org.folio.innreach.external.service.InnReachContributionService;
 
 @ExtendWith(MockitoExtension.class)
@@ -37,13 +36,11 @@ class InstanceContributorTest {
   @Mock
   private TenantScopedExecutionService tenantScopedExecutionService;
   @Mock
-  private MARCRecordTransformationService marcService;
-  @Mock
   private InnReachContributionService irContributionService;
   @Mock
   private ContributionJobContext jobContext;
   @Mock
-  private ContributionValidationService validationService;
+  private InstanceTransformationService instanceTransformationService;
 
   @InjectMocks
   private InstanceContributor instanceContributor;
@@ -58,9 +55,9 @@ class InstanceContributorTest {
 
     when(jobContext.getTenantId()).thenReturn("test");
     when(jobContext.getCentralServerId()).thenReturn(CENTRAL_SERVER_ID);
-    when(irContributionService.contributeBib(any(), any(), any())).thenReturn(irOkResponse());
-    when(irContributionService.lookUpBib(any(), any())).thenReturn(irOkResponse());
-    when(marcService.transformRecord(any(), any())).thenReturn(createMARCRecord());
+    when(instanceTransformationService.getBibInfo(any(), any())).thenReturn(new BibInfo());
+    when(irContributionService.contributeBib(any(), any(), any())).thenReturn(okResponse());
+    when(irContributionService.lookUpBib(any(), any())).thenReturn(okResponse());
 
     instanceContributor.write(singletonList(createInstance()));
 
@@ -78,8 +75,8 @@ class InstanceContributorTest {
 
     when(jobContext.getTenantId()).thenReturn("test");
     when(jobContext.getCentralServerId()).thenReturn(CENTRAL_SERVER_ID);
-    when(marcService.transformRecord(any(), any())).thenReturn(createMARCRecord());
-    when(irContributionService.contributeBib(any(), any(), any())).thenReturn(irErrorResponse());
+    when(instanceTransformationService.getBibInfo(any(), any())).thenReturn(new BibInfo());
+    when(irContributionService.contributeBib(any(), any(), any())).thenReturn(errorResponse());
 
     assertThatThrownBy(() -> instanceContributor.write(singletonList(createInstance())))
       .isInstanceOf(IllegalArgumentException.class)
@@ -96,9 +93,9 @@ class InstanceContributorTest {
 
     when(jobContext.getTenantId()).thenReturn("test");
     when(jobContext.getCentralServerId()).thenReturn(CENTRAL_SERVER_ID);
-    when(marcService.transformRecord(any(), any())).thenReturn(createMARCRecord());
-    when(irContributionService.contributeBib(any(), any(), any())).thenReturn(irOkResponse());
-    when(irContributionService.lookUpBib(any(), any())).thenReturn(irErrorResponse());
+    when(instanceTransformationService.getBibInfo(any(), any())).thenReturn(new BibInfo());
+    when(irContributionService.contributeBib(any(), any(), any())).thenReturn(okResponse());
+    when(irContributionService.lookUpBib(any(), any())).thenReturn(errorResponse());
 
     assertThatThrownBy(() -> instanceContributor.write(singletonList(createInstance())))
       .isInstanceOf(IllegalArgumentException.class)
