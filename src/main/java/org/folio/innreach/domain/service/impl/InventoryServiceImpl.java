@@ -36,7 +36,7 @@ public class InventoryServiceImpl implements InventoryService {
     try {
       return fetchInstance(() -> inventoryViewClient.getInstanceByHrid(instanceHrid));
     } catch (Exception e) {
-      throw new EntityNotFoundException("Inventory instance with hrid " + instanceHrid + " not found");
+      throw new RuntimeException("Unable to load inventory instance with hrid " + instanceHrid);
     }
   }
 

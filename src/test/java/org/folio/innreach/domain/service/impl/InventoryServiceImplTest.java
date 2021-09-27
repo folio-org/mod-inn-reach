@@ -1,5 +1,6 @@
 package org.folio.innreach.domain.service.impl;
 
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
@@ -47,5 +48,14 @@ class InventoryServiceImplTest {
     assertNotNull(instance);
 
     verify(inventoryViewClient).getInstanceByHrid(any(String.class));
+  }
+
+  @Test
+  void shouldTrowRuntimeException() {
+    when(inventoryViewClient.getInstanceByHrid(any())).thenThrow(new RuntimeException());
+
+    assertThatThrownBy(() -> service.getInstanceByHrid("in00343441"))
+      .isInstanceOf(RuntimeException.class)
+      .hasMessageContaining("Unable to load inventory instance");
   }
 }
