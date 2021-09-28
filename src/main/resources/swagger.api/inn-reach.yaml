@@ -989,6 +989,26 @@ paths:
         required: true
       parameters:
         - $ref: '#/components/parameters/centralServerId'
+  /getbibrecord/{bibId}/{centralCode}:
+    servers:
+      - url: /innreach/v2/
+    get:
+      operationId: getBibRecord
+      description: Handles D2IR request from central server for an already-contributed Bib record.
+      tags:
+        - bib-info-d2ir
+      responses:
+        '200':
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/bibInfoResponseDTO"
+        '500':
+          $ref: "#/components/responses/trait_response_500"
+      parameters:
+        - $ref: '#/components/parameters/bibId'
+        - $ref: '#/components/parameters/centralCode'
   /v2/circ/itemhold/{trackingId}/{centralCode}:
     servers:
       - url: /innreach/
@@ -1082,6 +1102,8 @@ components:
       $ref: schemas/inventorystorage/holding.json
     centralPatronTypeMappingsDTO:
       $ref: schemas/centralPatronTypeMappingsDTO.json
+    bibInfoResponseDTO:
+      $ref: schemas/d2ir/bibInfoResponseDTO.json
     transactionItemHoldDTO:
       $ref: schemas/transactionItemHoldDTO.json
     d2irResponseDTO:
@@ -1117,6 +1139,20 @@ components:
       required: true
       schema:
         $ref: "#/components/schemas/UUID"
+    bibId:
+      name: bibId
+      description: 32-character, alphanumeric id corresponding to a FOLIO instance record HRID
+      in: path
+      required: true
+      schema:
+        type: string
+    centralCode:
+      name: centralCode
+      description: Unique code that identifies the central server (match against value stored in Central Server settings, used to determine contribution status)
+      in: path
+      required: true
+      schema:
+        type: string
     trackingId:
       name: trackingId
       in: path

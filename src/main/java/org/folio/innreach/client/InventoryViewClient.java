@@ -25,6 +25,9 @@ public interface InventoryViewClient {
   @GetMapping(path = "/instances?query=(id==\"{id}\")&limit=1", consumes = APPLICATION_OCTET_STREAM_VALUE)
   ResultList<InstanceView> getInstanceById(@PathVariable("id") UUID instanceId);
 
+  @GetMapping(path = "/instances?query=(hrid==\"{hrid}\")&limit=1", consumes = APPLICATION_OCTET_STREAM_VALUE)
+  ResultList<InstanceView> getInstanceByHrid(@PathVariable("hrid") String instanceHrid);
+
   @Data
   @AllArgsConstructor
   @NoArgsConstructor

@@ -83,7 +83,7 @@ public class CentralServerServiceImpl implements CentralServerService {
   @Override
   @Transactional(readOnly = true)
   public CentralServerDTO getCentralServerByCentralCode(String code) {
-    var centralServer = centralServerRepository.fetchOneByServerCode(code)
+    var centralServer = centralServerRepository.fetchOneByCentralCode(code)
       .orElseThrow(() -> new EntityNotFoundException("Central server with code: " + code + " not found"));
 
     return centralServerMapper.mapToCentralServerDTO(centralServer);
