@@ -1111,7 +1111,7 @@ components:
     transactionItemHoldDTO:
       $ref: schemas/transactionItemHoldDTO.json
     innReachResponseDTO:
-      $ref: schemas/innReachResponseDTO.json
+      $ref: schemas/d2ir/innReachResponseDTO.json
   parameters:
     id:
       name: id
