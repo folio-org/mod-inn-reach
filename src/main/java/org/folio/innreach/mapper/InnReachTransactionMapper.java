@@ -10,7 +10,7 @@ import org.mapstruct.Mapper;
 @Mapper(componentModel = "spring", injectionStrategy = InjectionStrategy.CONSTRUCTOR, uses = MappingMethods.class, builder = @Builder(disableBuilder = true))
 public interface InnReachTransactionMapper {
 
-  String PICKUP_LOCATION_SEPARATOR = ":";
+  String PICKUP_LOCATION_DELIMITER = ":";
 
   TransactionItemHold toItemHold(TransactionItemHoldDTO dto);
 
@@ -18,7 +18,7 @@ public interface InnReachTransactionMapper {
     if (value == null){
       throw new IllegalArgumentException("Pickup location must not be null.");
     }
-    var strings = value.split(PICKUP_LOCATION_SEPARATOR);
+    var strings = value.split(PICKUP_LOCATION_DELIMITER);
     if (strings.length > 4 || strings.length < 3){
       throw new IllegalArgumentException("Pickup location must consist of 3 or 4 strings delimited by a colon.");
     }

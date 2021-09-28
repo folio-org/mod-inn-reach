@@ -1028,9 +1028,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/d2irResponseDTO"
+                $ref: "#/components/schemas/innReachResponseDTO"
         '400':
-          $ref: "#/components/responses/trait_response_validation_400"
+          description: An error occurred during creation of transaction record
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/innReachResponseDTO"
         '500':
           $ref: "#/components/responses/trait_response_500"
       parameters:
@@ -1106,7 +1110,7 @@ components:
       $ref: schemas/d2ir/bibInfoResponseDTO.json
     transactionItemHoldDTO:
       $ref: schemas/transactionItemHoldDTO.json
-    d2irResponseDTO:
+    innReachResponseDTO:
       $ref: schemas/innReachResponseDTO.json
   parameters:
     id:
@@ -1155,12 +1159,6 @@ components:
         type: string
     trackingId:
       name: trackingId
-      in: path
-      required: true
-      schema:
-        type: string
-    centralCode:
-      name: centralCode
       in: path
       required: true
       schema:

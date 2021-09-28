@@ -5,7 +5,7 @@ import org.folio.innreach.domain.entity.InnReachTransaction;
 import org.folio.innreach.domain.entity.InnReachTransaction.TransactionType;
 import org.folio.innreach.domain.service.CentralServerService;
 import org.folio.innreach.domain.service.InnReachTransactionService;
-import org.folio.innreach.dto.D2irResponseDTO;
+import org.folio.innreach.dto.InnReachResponseDTO;
 import org.folio.innreach.dto.TransactionItemHoldDTO;
 import org.folio.innreach.mapper.InnReachTransactionMapper;
 import org.folio.innreach.repository.InnReachTransactionRepository;
@@ -20,8 +20,8 @@ public class InnReachTransactionServiceImpl implements InnReachTransactionServic
   private final CentralServerService centralServerService;
 
   @Override
-  public D2irResponseDTO createInnReachTransactionItemHold(String trackingId, String centralCode, TransactionItemHoldDTO dto) {
-    var response = new D2irResponseDTO();
+  public InnReachResponseDTO createInnReachTransactionItemHold(String trackingId, String centralCode, TransactionItemHoldDTO dto) {
+    var response = new InnReachResponseDTO();
     response.setStatus("ok");
     try {
       centralServerService.getCentralServerByCentralCode(centralCode);
