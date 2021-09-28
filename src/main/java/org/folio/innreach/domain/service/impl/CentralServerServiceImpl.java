@@ -135,6 +135,7 @@ public class CentralServerServiceImpl implements CentralServerService {
     centralServer.setName(updatedCentralServer.getName());
     centralServer.setDescription(updatedCentralServer.getDescription());
     centralServer.setLocalServerCode(updatedCentralServer.getLocalServerCode());
+    centralServer.setCentralServerCode(updatedCentralServer.getCentralServerCode());
     centralServer.setCentralServerAddress(updatedCentralServer.getCentralServerAddress());
     centralServer.setLoanTypeId(updatedCentralServer.getLoanTypeId());
   }
