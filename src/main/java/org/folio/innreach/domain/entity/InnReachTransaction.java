@@ -5,6 +5,7 @@ import lombok.Setter;
 import org.folio.innreach.domain.entity.base.Auditable;
 import org.folio.innreach.domain.entity.base.Identifiable;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
@@ -32,7 +33,9 @@ public class InnReachTransaction extends Auditable implements Identifiable<UUID>
 
   public static final String FETCH_ONE_BY_TRACKING_ID_QUERY_NAME = "InnReachTransaction.fetchOne";
   public static final String FETCH_ONE_BY_TRACKING_ID_QUERY =
-    "SELECT t FROM InnReachTransaction t JOIN FETCH t.hold b WHERE t.trackingId = :trackingId";
+    "SELECT t FROM InnReachTransaction t JOIN FETCH t.hold hold " +
+      "JOIN FETCH hold.pickupLocation location " +
+      "WHERE t.trackingId = :trackingId AND location.id = hold.pickupLocation.id";
 
   @Id
   @GeneratedValue(strategy = GenerationType.AUTO)
@@ -50,7 +53,7 @@ public class InnReachTransaction extends Auditable implements Identifiable<UUID>
   @Column(name = "type")
   private TransactionType type;
 
-  @OneToOne(fetch = FetchType.LAZY, orphanRemoval = true)
+  @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
   @JoinColumn(name = "transaction_hold_id", unique = true)
   private TransactionHold hold;
 

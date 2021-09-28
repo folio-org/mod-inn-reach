@@ -3,6 +3,7 @@ package org.folio.innreach.repository;
 import static java.util.UUID.fromString;
 import static java.util.UUID.randomUUID;
 import static java.util.stream.Collectors.toList;
+import static org.folio.innreach.fixture.TestUtil.randomIntegerExcept;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.StringContains.containsString;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -14,9 +15,9 @@ import static org.folio.innreach.fixture.MappingFixture.createItemTypeMapping;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
-import org.apache.commons.lang3.RandomUtils;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -97,7 +98,7 @@ class ItemTypeMappingRepositoryTest extends BaseRepositoryTest {
     var mapping = repository.getOne(fromString(PRE_POPULATED_ITEM_TYPE_MAPPING_ID1));
 
     UUID newMaterialTypeId = randomUUID();
-    int newItemType = RandomUtils.nextInt(0, 256);
+    int newItemType = randomIntegerExcept(256, Set.of(mapping.getCentralItemType()));
     mapping.setCentralItemType(newItemType);
     mapping.setMaterialTypeId(newMaterialTypeId);
 

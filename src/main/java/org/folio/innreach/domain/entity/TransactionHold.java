@@ -6,6 +6,7 @@ import lombok.ToString;
 import org.folio.innreach.domain.entity.base.Auditable;
 import org.folio.innreach.domain.entity.base.Identifiable;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
@@ -17,7 +18,6 @@ import javax.persistence.InheritanceType;
 import javax.persistence.JoinColumn;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
-import java.time.OffsetDateTime;
 import java.util.UUID;
 
 @Getter
@@ -27,44 +27,45 @@ import java.util.UUID;
 @Table(name = "transaction_hold")
 @ToString(exclude = {"pickupLocation"})
 public abstract class TransactionHold extends Auditable implements Identifiable<UUID> {
+
   @Id
   @GeneratedValue(strategy = GenerationType.AUTO)
   private UUID id;
 
   @Column(name = "transaction_time")
-  private OffsetDateTime transactionTime;
+  protected Integer transactionTime;
 
-  @OneToOne(fetch = FetchType.LAZY, orphanRemoval = true)
+  @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
   @JoinColumn(name = "pickup_location_id", unique = true)
-  private TransactionPickupLocation pickupLocation;
+  protected TransactionPickupLocation pickupLocation;
 
   @Column(name = "patron_id")
-  private String patronId;
+  protected String patronId;
 
   @Column(name = "patron_agency_code")
-  private String patronAgencyCode;
+  protected String patronAgencyCode;
 
   @Column(name = "item_agency_code")
-  private String itemAgencyCode;
+  protected String itemAgencyCode;
 
   @Column(name = "item_id")
-  private String itemId;
+  protected String itemId;
 
   @Column(name = "central_item_type")
-  private Integer centralItemType;
+  protected Integer centralItemType;
 
   @Column(name = "need_before")
-  private OffsetDateTime needBefore;
+  protected Integer needBefore;
 
   @Column(name = "folio_patron_id")
-  private UUID folioPatronId;
+  protected UUID folioPatronId;
 
   @Column(name = "folio_item_id")
-  private UUID folioItemId;
+  protected UUID folioItemId;
 
   @Column(name = "folio_request_id")
-  private UUID folioRequestId;
+  protected UUID folioRequestId;
 
   @Column(name = "folio_loan_id")
-  private UUID folioLoanId;
+  protected UUID folioLoanId;
 }

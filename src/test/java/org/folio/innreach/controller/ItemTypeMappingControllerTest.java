@@ -15,10 +15,8 @@ import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TES
 import static org.springframework.test.context.jdbc.SqlMergeMode.MergeMode.MERGE;
 
 import static org.folio.innreach.fixture.TestUtil.deserializeFromJsonFile;
-import static org.folio.innreach.fixture.TestUtil.randomDistinctIntegers;
 import static org.folio.innreach.fixture.TestUtil.randomIntegerExcept;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -97,8 +95,11 @@ class ItemTypeMappingControllerTest extends BaseControllerTest {
   })
   void shouldUpdateAllExistingMappings() {
     var existing = mapper.toDTOCollection(repository.findAll());
-    var centralItemTypes = new ArrayList<>(randomDistinctIntegers(256, 2));
-    existing.getItemTypeMappings().forEach(m -> m.setCentralItemType(centralItemTypes.get(existing.getItemTypeMappings().indexOf(m))));
+    var centralItemTypes = existing.getItemTypeMappings().stream().map(
+      ItemTypeMappingDTO::getCentralItemType).collect(Collectors.toSet());
+    centralItemTypes.forEach(t -> t = randomIntegerExcept(256, centralItemTypes));
+    var updatedCentralItemTypes = List.copyOf(centralItemTypes);
+    existing.getItemTypeMappings().forEach(m -> m.setCentralItemType(updatedCentralItemTypes.get(existing.getItemTypeMappings().indexOf(m))));
 
     var responseEntity = testRestTemplate.exchange(
       "/inn-reach/central-servers/{centralServerId}/item-type-mappings", HttpMethod.PUT,
