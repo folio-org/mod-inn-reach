@@ -16,7 +16,7 @@ import org.folio.innreach.external.service.BibInfoService;
 import org.folio.innreach.rest.resource.BibInfoD2irApi;
 
 @Log4j2
-@RequestMapping("/innreach/v2")
+@RequestMapping("/inn-reach/d2ir/")
 @RestController
 @RequiredArgsConstructor
 public class BibInfoController implements BibInfoD2irApi {
