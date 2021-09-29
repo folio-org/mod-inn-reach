@@ -989,9 +989,7 @@ paths:
         required: true
       parameters:
         - $ref: '#/components/parameters/centralServerId'
-  /getbibrecord/{bibId}/{centralCode}:
-    servers:
-      - url: /innreach/v2/
+  /d2ir/getbibrecord/{bibId}/{centralCode}:
     get:
       operationId: getBibRecord
       description: Handles D2IR request from central server for an already-contributed Bib record.
