@@ -18,7 +18,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import org.folio.innreach.batch.contribution.ContributionJobContext;
 import org.folio.innreach.domain.dto.folio.inventorystorage.InstanceIterationEvent;
-import org.folio.innreach.domain.service.InventoryService;
+import org.folio.innreach.domain.service.InventoryViewService;
 import org.folio.innreach.domain.service.impl.TenantScopedExecutionService;
 
 @ExtendWith(MockitoExtension.class)
@@ -29,7 +29,7 @@ class InstanceLoaderTest {
   @Mock
   private TenantScopedExecutionService tenantScopedExecutionService;
   @Mock
-  private InventoryService inventoryService;
+  private InventoryViewService inventoryService;
   @Mock
   private ContributionJobContext context;
 

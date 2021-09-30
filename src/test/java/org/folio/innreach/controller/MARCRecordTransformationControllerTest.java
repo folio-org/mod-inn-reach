@@ -22,8 +22,8 @@ import org.springframework.test.context.jdbc.SqlMergeMode;
 import org.folio.innreach.client.InventoryClient;
 import org.folio.innreach.client.SourceRecordStorageClient;
 import org.folio.innreach.controller.base.BaseControllerTest;
-import org.folio.innreach.domain.dto.folio.inventory.InventoryInstanceDTO;
 import org.folio.innreach.domain.dto.folio.sourcerecord.SourceRecordDTO;
+import org.folio.innreach.dto.Instance;
 import org.folio.innreach.dto.TransformedMARCRecordDTO;
 
 @Sql(
@@ -54,7 +54,7 @@ class MARCRecordTransformationControllerTest extends BaseControllerTest {
   })
   void returnTransformedMARCRecord() {
     when(inventoryClient.getInstanceById(any()))
-      .thenReturn(deserializeFromJsonFile("/inventory-storage/american-bar-association.json", InventoryInstanceDTO.class));
+      .thenReturn(deserializeFromJsonFile("/inventory-storage/american-bar-association.json", Instance.class));
 
     when(sourceRecordStorageClient.getRecordById(any()))
       .thenReturn(deserializeFromJsonFile("/source-record-storage/source-record-storage-example.json", SourceRecordDTO.class));
@@ -71,4 +71,30 @@ class MARCRecordTransformationControllerTest extends BaseControllerTest {
     assertNotNull(body.getContent());
     assertNotNull(body.getBase64rawContent());
   }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/marc-transform-opt-set/pre-populate-marc-transform-opt-set.sql"
+  })
+  void shouldReturn() {
+    when(inventoryClient.getInstanceById(any()))
+      .thenReturn(deserializeFromJsonFile("/inventory-storage/american-bar-association.json", Instance.class));
+
+    when(sourceRecordStorageClient.getRecordById(any()))
+      .thenReturn(deserializeFromJsonFile("/source-record-storage/source-record-storage-example.json", SourceRecordDTO.class));
+
+    var responseEntity = testRestTemplate.getForEntity(
+      "/inn-reach/central-servers/{centralServerId}/marc-record-transformation/{inventoryInstanceId}",
+      TransformedMARCRecordDTO.class, PRE_POPULATED_CENTRAL_SERVER_ID, UUID.randomUUID());
+
+    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+
+    var body = responseEntity.getBody();
+
+    assertNotNull(body);
+    assertNotNull(body.getContent());
+    assertNotNull(body.getBase64rawContent());
+  }
+
 }

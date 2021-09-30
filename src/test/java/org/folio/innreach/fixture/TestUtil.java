@@ -8,6 +8,7 @@ import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.SneakyThrows;
 
@@ -39,6 +40,7 @@ public class TestUtil {
   @SneakyThrows
   public static <T> T deserializeFromJsonFile(String path, Class<T> type) {
     var objectMapper = new ObjectMapper();
+    objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     return objectMapper.readValue(TestUtil.class.getResource("/json" + path), type);
   }
 

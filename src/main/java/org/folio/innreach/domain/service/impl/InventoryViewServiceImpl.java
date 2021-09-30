@@ -10,14 +10,13 @@ import org.springframework.stereotype.Service;
 import org.folio.innreach.client.InventoryViewClient;
 import org.folio.innreach.client.InventoryViewClient.InstanceView;
 import org.folio.innreach.domain.dto.folio.ResultList;
-import org.folio.innreach.domain.exception.EntityNotFoundException;
-import org.folio.innreach.domain.service.InventoryService;
+import org.folio.innreach.domain.service.InventoryViewService;
 import org.folio.innreach.dto.Instance;
 
 @Log4j2
 @RequiredArgsConstructor
 @Service
-public class InventoryServiceImpl implements InventoryService {
+public class InventoryViewServiceImpl implements InventoryViewService {
 
   private final InventoryViewClient inventoryViewClient;
 
@@ -26,7 +25,7 @@ public class InventoryServiceImpl implements InventoryService {
     try {
       return fetchInstance(() -> inventoryViewClient.getInstanceById(instanceId));
     } catch (Exception e) {
-      log.warn("Inventory instance with id {} not found", instanceId, e);
+      log.warn("Unable to load inventory-view instance with id {} ", instanceId, e);
     }
     return null;
   }
@@ -36,7 +35,7 @@ public class InventoryServiceImpl implements InventoryService {
     try {
       return fetchInstance(() -> inventoryViewClient.getInstanceByHrid(instanceHrid));
     } catch (Exception e) {
-      throw new RuntimeException("Unable to load inventory instance with hrid " + instanceHrid);
+      throw new RuntimeException("Unable to load inventory-view instance with hrid " + instanceHrid);
     }
   }
 

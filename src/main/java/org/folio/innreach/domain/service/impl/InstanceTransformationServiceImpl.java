@@ -27,7 +27,7 @@ public class InstanceTransformationServiceImpl implements InstanceTransformation
     var bibId = instance.getHrid();
 
     var suppressionStatus = validationService.getSuppressionStatus(centralServerId, instance.getStatisticalCodeIds());
-    var marc = marcService.transformRecord(centralServerId, instance.getId());
+    var marc = marcService.transformRecord(centralServerId, instance);
 
     var bibInfo = new BibInfo();
     bibInfo.setBibId(bibId);

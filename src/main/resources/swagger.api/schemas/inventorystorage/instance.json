@@ -25,6 +25,30 @@
       },
       "uniqueItems": true
     },
+    "identifiers": {
+      "type": "array",
+      "description": "An extensible set of name-value pairs of identifiers associated with the resource",
+      "minItems": 0,
+      "items": {
+        "type": "object",
+        "properties": {
+          "value": {
+            "type": "string",
+            "description": "Resource identifier value"
+          },
+          "identifierTypeId": {
+            "description": "UUID of resource identifier type (e.g. ISBN, ISSN, LCCN, CODEN, Locally defined identifiers)",
+            "type": "string",
+            "format": "UUID"
+          }
+        },
+        "additionalProperties": false,
+        "required": [
+          "value",
+          "identifierTypeId"
+        ]
+      }
+    },
     "staffSuppress": {
       "type": "boolean",
       "description": "Records the fact that the record should not be displayed for others than catalogers"

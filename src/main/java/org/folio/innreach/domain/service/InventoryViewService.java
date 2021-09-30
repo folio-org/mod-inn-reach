@@ -4,7 +4,7 @@ import java.util.UUID;
 
 import org.folio.innreach.dto.Instance;
 
-public interface InventoryService {
+public interface InventoryViewService {
 
   Instance getInstance(UUID instanceId);
 
