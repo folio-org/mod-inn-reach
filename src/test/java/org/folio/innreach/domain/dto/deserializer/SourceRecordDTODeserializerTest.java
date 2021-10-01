@@ -8,8 +8,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.json.JsonTest;
 
-import org.folio.innreach.domain.dto.folio.inventory.InventoryInstanceDTO;
 import org.folio.innreach.domain.dto.folio.sourcerecord.SourceRecordDTO;
+import org.folio.innreach.dto.Instance;
 
 @JsonTest
 class SourceRecordDTODeserializerTest {
@@ -28,9 +28,9 @@ class SourceRecordDTODeserializerTest {
 
   @Test
   @SneakyThrows
-  public void shouldDeserializeInventoryInstanceDTO() {
+  public void shouldDeserializeInstance() {
     var resource = this.getClass().getResource("/json/inventory-storage/american-bar-association.json");
-    var inventoryInstanceDTO = objectMapper.readValue(resource, InventoryInstanceDTO.class);
+    var inventoryInstanceDTO = objectMapper.readValue(resource, Instance.class);
 
     assertNotNull(inventoryInstanceDTO);
   }

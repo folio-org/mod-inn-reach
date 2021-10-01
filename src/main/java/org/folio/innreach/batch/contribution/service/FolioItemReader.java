@@ -22,7 +22,7 @@ import org.springframework.batch.item.ExecutionContext;
 import org.springframework.batch.item.support.AbstractItemStreamItemReader;
 import org.springframework.stereotype.Component;
 
-import org.folio.innreach.domain.service.InventoryService;
+import org.folio.innreach.domain.service.InventoryViewService;
 import org.folio.innreach.dto.Holding;
 import org.folio.innreach.dto.Instance;
 import org.folio.innreach.dto.Item;
@@ -38,7 +38,7 @@ public class FolioItemReader extends AbstractItemStreamItemReader<Item> {
   public static final String INSTANCE_ITEM_OFFSET_CONTEXT = "contribution.instance.item.offset";
   public static final String INSTANCE_ITEM_TOTAL_CONTEXT = "contribution.instance.item.total";
 
-  private final InventoryService inventoryService;
+  private final InventoryViewService inventoryService;
 
   private Map<UUID, Integer> instanceItemOffsets = Collections.emptyMap();
   private Map<UUID, Integer> instanceItemTotals = Collections.emptyMap();

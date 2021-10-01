@@ -1,4 +1,4 @@
-package org.folio.innreach.external.service.impl;
+package org.folio.innreach.domain.service.impl;
 
 import static java.util.List.of;
 
@@ -10,11 +10,11 @@ import org.springframework.stereotype.Service;
 
 import org.folio.innreach.domain.service.CentralServerService;
 import org.folio.innreach.domain.service.InstanceTransformationService;
-import org.folio.innreach.domain.service.InventoryService;
+import org.folio.innreach.domain.service.InventoryViewService;
 import org.folio.innreach.dto.BibInfoResponseDTO;
 import org.folio.innreach.external.dto.BibInfoResponse;
 import org.folio.innreach.external.mapper.InnReachResponseMapper;
-import org.folio.innreach.external.service.BibInfoService;
+import org.folio.innreach.domain.service.BibInfoService;
 
 @Log4j2
 @RequiredArgsConstructor
@@ -24,7 +24,7 @@ public class BibInfoServiceImpl implements BibInfoService {
   private static final String ERROR_MESSAGE = "Unknown centralCode and bibId combination";
 
   private final CentralServerService centralServerService;
-  private final InventoryService instanceService;
+  private final InventoryViewService instanceService;
   private final InstanceTransformationService instanceTransformationService;
   private final InnReachResponseMapper mapper;
 

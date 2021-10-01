@@ -27,14 +27,14 @@ import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.batch.item.ExecutionContext;
 
-import org.folio.innreach.domain.service.InventoryService;
+import org.folio.innreach.domain.service.InventoryViewService;
 import org.folio.innreach.dto.Instance;
 
 @ExtendWith(MockitoExtension.class)
 class FolioItemReaderTest {
 
   @Mock
-  private InventoryService inventoryService;
+  private InventoryViewService inventoryService;
 
   @InjectMocks
   private FolioItemReader reader;

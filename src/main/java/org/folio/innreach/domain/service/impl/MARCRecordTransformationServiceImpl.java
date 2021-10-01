@@ -15,15 +15,15 @@ import org.folio.innreach.client.InventoryClient;
 import org.folio.innreach.client.SourceRecordStorageClient;
 import org.folio.innreach.converter.marc.TransformedMARCRecordConverter;
 import org.folio.innreach.domain.dto.folio.inventory.IdentifierWithConfigDTO;
-import org.folio.innreach.domain.dto.folio.inventory.InventoryInstanceDTO;
 import org.folio.innreach.domain.dto.folio.sourcerecord.ParsedRecordDTO;
 import org.folio.innreach.domain.dto.folio.sourcerecord.RecordFieldDTO;
 import org.folio.innreach.domain.dto.folio.sourcerecord.SourceRecordDTO;
-import org.folio.innreach.domain.dto.folio.sourcerecord.SourceRecordType;
 import org.folio.innreach.domain.exception.MarcRecordTransformationException;
 import org.folio.innreach.domain.service.MARCRecordTransformationService;
 import org.folio.innreach.domain.service.MARCTransformationOptionsSettingsService;
 import org.folio.innreach.dto.FieldConfigurationDTO;
+import org.folio.innreach.dto.Instance;
+import org.folio.innreach.dto.InstanceIdentifiers;
 import org.folio.innreach.dto.MARCTransformationOptionsSettingsDTO;
 import org.folio.innreach.dto.TransformedMARCRecordDTO;
 
@@ -32,6 +32,7 @@ import org.folio.innreach.dto.TransformedMARCRecordDTO;
 @Service
 public class MARCRecordTransformationServiceImpl implements MARCRecordTransformationService {
 
+  private static final String MARC_RECORD_SOURCE = "MARC";
   private static final String MARC_FIELD_CODE_001 = "001";
   private static final String MARC_FIELD_CODE_9XX_PREFIX = "9";
   private static final String NOT_NUMBERS_REGEXP = "\\D+";
@@ -45,7 +46,18 @@ public class MARCRecordTransformationServiceImpl implements MARCRecordTransforma
   public TransformedMARCRecordDTO transformRecord(UUID centralServerId, UUID inventoryId) {
     var inventoryInstance = inventoryClient.getInstanceById(inventoryId);
 
-    var sourceRecord = getSourceRecord(inventoryId);
+    return transformRecord(centralServerId, inventoryInstance);
+  }
+
+  @Override
+  public TransformedMARCRecordDTO transformRecord(UUID centralServerId, Instance inventoryInstance) {
+    if (!isMARCRecord(inventoryInstance)) {
+      throw new MarcRecordTransformationException(
+        String.format("Source [%s] of inventory instance with id [%s] is not MARC", inventoryInstance.getSource(), inventoryInstance.getId())
+      );
+    }
+
+    var sourceRecord = getSourceRecord(inventoryInstance.getId());
 
     var marcTransformationSettings = getMARCTransformationSettings(centralServerId);
 
@@ -72,20 +84,12 @@ public class MARCRecordTransformationServiceImpl implements MARCRecordTransforma
     return transformedMarcRecordConverter.toTransformedRecord(sourceRecord);
   }
 
-  private SourceRecordDTO getSourceRecord(UUID inventoryId) {
-    var sourceRecord = sourceRecordStorageClient.getRecordById(inventoryId);
-
-    if (!isMARCRecord(sourceRecord)) {
-      throw new MarcRecordTransformationException(
-        String.format("SourceRecord with Id [%s] is not MARC", sourceRecord.getId())
-      );
-    }
-
-    return sourceRecord;
+  public static boolean isMARCRecord(Instance inventoryInstance) {
+    return MARC_RECORD_SOURCE.equalsIgnoreCase(inventoryInstance.getSource());
   }
 
-  private boolean isMARCRecord(SourceRecordDTO sourceRecord) {
-    return sourceRecord.getRecordType().equals(SourceRecordType.MARC.name());
+  private SourceRecordDTO getSourceRecord(UUID inventoryId) {
+    return sourceRecordStorageClient.getRecordById(inventoryId);
   }
 
   private MARCTransformationOptionsSettingsDTO getMARCTransformationSettings(UUID centralServerId) {
@@ -101,7 +105,7 @@ public class MARCRecordTransformationServiceImpl implements MARCRecordTransforma
   }
 
   private Optional<IdentifierWithConfigDTO> findValidIdentifier(MARCTransformationOptionsSettingsDTO marcTransformationSettings,
-                                                                InventoryInstanceDTO inventoryInstance) {
+                                                                Instance inventoryInstance) {
     return inventoryInstance.getIdentifiers()
       .stream()
       .map(identifier -> findFirstValidIdentifierWithConfig(marcTransformationSettings, identifier))
@@ -110,10 +114,10 @@ public class MARCRecordTransformationServiceImpl implements MARCRecordTransforma
   }
 
   private IdentifierWithConfigDTO findFirstValidIdentifierWithConfig(MARCTransformationOptionsSettingsDTO marcTransformationSettings,
-                                                                     InventoryInstanceDTO.IdentifierDTO identifier) {
+                                                                     InstanceIdentifiers identifier) {
     return marcTransformationSettings.getModifiedFieldsForContributedRecords()
       .stream()
-      .filter(fieldConfig -> fieldConfig.getResourceIdentifierTypeId().equals(identifier.getId()))
+      .filter(fieldConfig -> fieldConfig.getResourceIdentifierTypeId().equals(identifier.getIdentifierTypeId()))
       .filter(fieldConfig -> !identifierValueStartsWithIgnorePrefix(fieldConfig, identifier))
       .map(fieldConfig -> new IdentifierWithConfigDTO(identifier, fieldConfig))
       .findFirst()
@@ -121,14 +125,14 @@ public class MARCRecordTransformationServiceImpl implements MARCRecordTransforma
   }
 
   private boolean identifierValueStartsWithIgnorePrefix(FieldConfigurationDTO fieldConfiguration,
-                                                        InventoryInstanceDTO.IdentifierDTO identifier) {
+                                                        InstanceIdentifiers identifier) {
     return fieldConfiguration.getIgnorePrefixes()
       .stream()
       .anyMatch(ignorePrefix -> identifier.getValue().startsWith(ignorePrefix));
   }
 
   private String stripIdentifierValueAlphaPrefix(FieldConfigurationDTO fieldConfiguration,
-                                                 InventoryInstanceDTO.IdentifierDTO identifier) {
+                                                 InstanceIdentifiers identifier) {
     if (fieldConfiguration.getStripPrefix()) {
       return identifier.getValue().replaceAll(NOT_NUMBERS_REGEXP, "");
     }

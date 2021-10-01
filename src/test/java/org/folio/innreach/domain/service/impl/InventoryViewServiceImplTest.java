@@ -20,13 +20,13 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.folio.innreach.client.InventoryViewClient;
 
 @ExtendWith(MockitoExtension.class)
-class InventoryServiceImplTest {
+class InventoryViewServiceImplTest {
 
   @Mock
   private InventoryViewClient inventoryViewClient;
 
   @InjectMocks
-  private InventoryServiceImpl service;
+  private InventoryViewServiceImpl service;
 
   @Test
   void shouldGetInstanceById() {
@@ -56,6 +56,6 @@ class InventoryServiceImplTest {
 
     assertThatThrownBy(() -> service.getInstanceByHrid("in00343441"))
       .isInstanceOf(RuntimeException.class)
-      .hasMessageContaining("Unable to load inventory instance");
+      .hasMessageContaining("Unable to load inventory-view instance");
   }
 }

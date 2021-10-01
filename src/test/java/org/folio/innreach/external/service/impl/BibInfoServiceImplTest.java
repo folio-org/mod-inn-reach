@@ -19,7 +19,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import org.folio.innreach.domain.service.CentralServerService;
 import org.folio.innreach.domain.service.InstanceTransformationService;
-import org.folio.innreach.domain.service.InventoryService;
+import org.folio.innreach.domain.service.InventoryViewService;
+import org.folio.innreach.domain.service.impl.BibInfoServiceImpl;
 import org.folio.innreach.dto.BibInfo;
 import org.folio.innreach.dto.CentralServerDTO;
 import org.folio.innreach.dto.Instance;
@@ -32,7 +33,7 @@ class BibInfoServiceImplTest {
   @Mock
   private CentralServerService centralServerService;
   @Mock
-  private InventoryService instanceService;
+  private InventoryViewService instanceService;
   @Mock
   private InstanceTransformationService instanceTransformationService;
   @Spy
