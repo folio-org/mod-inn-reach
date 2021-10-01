@@ -32,7 +32,13 @@ public class InnReachTransactionController implements InnReachTransactionApi {
                                                                                @PathVariable String centralCode,
                                                                                @Valid TransactionItemHoldDTO dto) {
     var response = service.createInnReachTransactionItemHold(trackingId, centralCode, dto);
-    var status = response.getStatus().equals("ok") ? HttpStatus.OK : HttpStatus.BAD_REQUEST;
+    HttpStatus status;
+    if (response.getStatus().equals("ok")) {
+      status = HttpStatus.OK;
+      service.createItemRequest(trackingId);
+    } else {
+      status = HttpStatus.BAD_REQUEST;
+    }
     return new ResponseEntity<>(response, status);
   }
 

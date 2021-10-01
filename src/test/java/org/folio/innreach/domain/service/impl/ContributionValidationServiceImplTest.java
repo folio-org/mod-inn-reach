@@ -12,8 +12,10 @@ import static org.folio.innreach.fixture.InventoryItemFixture.createInventoryIte
 import static org.folio.innreach.fixture.ItemContributionOptionsConfigurationFixture.createItmContribOptConfDTO;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.UUID;
 
+import org.folio.innreach.domain.dto.folio.requeststorage.RequestDTO;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -88,7 +90,7 @@ class ContributionValidationServiceImplTest {
       UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID());
 
     when(inventoryClient.getItemById(any())).thenReturn(inventoryItem);
-    when(requestStorageClient.findRequests(any())).thenReturn(new RequestsDTO(0));
+    when(requestStorageClient.findRequests(any())).thenReturn(new RequestsDTO(null, 0));
 
     var itemCirculationStatus = service.getItemCirculationStatus(UUID.randomUUID(), UUID.randomUUID());
 
@@ -103,7 +105,7 @@ class ContributionValidationServiceImplTest {
       UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID());
 
     when(inventoryClient.getItemById(any())).thenReturn(inventoryItem);
-    when(requestStorageClient.findRequests(any())).thenReturn(new RequestsDTO(1));
+    when(requestStorageClient.findRequests(any())).thenReturn(new RequestsDTO(List.of(new RequestDTO()), 1));
 
     var itemCirculationStatus = service.getItemCirculationStatus(UUID.randomUUID(), UUID.randomUUID());
 

@@ -49,7 +49,7 @@ public abstract class TransactionHold extends Auditable implements Identifiable<
   protected String itemAgencyCode;
 
   @Column(name = "item_id")
-  protected String itemId;
+  protected UUID itemId;
 
   @Column(name = "central_item_type")
   protected Integer centralItemType;

@@ -22,6 +22,7 @@ public enum InventoryItemStatus {
   AWAITING_DELIVERY("Awaiting delivery"),
   MISSING("Missing"),
   ON_ORDER("On order"),
+  ORDER_CLOSED("Order closed"),
   IN_PROCESS("In process"),
   CLAIMED_RETURNED("Claimed returned"),
   LOST_AND_PAID("Lost and paid"),

@@ -15,11 +15,11 @@ public interface InnReachTransactionMapper {
   TransactionItemHold toItemHold(TransactionItemHoldDTO dto);
 
   default TransactionPickupLocation map(String value) {
-    if (value == null){
+    if (value == null) {
       throw new IllegalArgumentException("Pickup location must not be null.");
     }
     var strings = value.split(PICKUP_LOCATION_DELIMITER);
-    if (strings.length > 4 || strings.length < 3){
+    if (strings.length > 4 || strings.length < 3) {
       throw new IllegalArgumentException("Pickup location must consist of 3 or 4 strings delimited by a colon.");
     }
     var pickupLocation = new TransactionPickupLocation();
@@ -30,5 +30,13 @@ public interface InnReachTransactionMapper {
       pickupLocation.setDeliveryStop(strings[3]);
     }
     return pickupLocation;
+  }
+
+  default String map(TransactionPickupLocation value) {
+    return value.getDeliveryStop() == null ?
+      value.getPickupLocCode() + PICKUP_LOCATION_DELIMITER + value.getDisplayName() + PICKUP_LOCATION_DELIMITER
+        + value.getPrintName() :
+      value.getPickupLocCode() + PICKUP_LOCATION_DELIMITER + value.getDisplayName() + PICKUP_LOCATION_DELIMITER
+        + value.getPrintName() + PICKUP_LOCATION_DELIMITER + value.getDeliveryStop();
   }
 }
