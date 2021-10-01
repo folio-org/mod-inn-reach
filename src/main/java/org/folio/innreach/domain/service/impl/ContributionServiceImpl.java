@@ -8,7 +8,6 @@ import static org.folio.innreach.domain.entity.Contribution.Status.COMPLETE;
 import static org.folio.innreach.domain.service.impl.ServiceUtils.centralServerRef;
 import static org.folio.innreach.dto.MappingValidationStatusDTO.VALID;
 
-import java.time.OffsetDateTime;
 import java.util.UUID;
 
 import lombok.AllArgsConstructor;
@@ -138,7 +137,7 @@ public class ContributionServiceImpl implements ContributionService {
   private JobResponse triggerInstanceIteration() {
     var request = createInstanceIterationRequest();
 
-    var iterationJob = startIterationMocked(request);
+    var iterationJob = client.startInitialContribution(request);
     Assert.isTrue(iterationJob.getStatus() == IN_PROGRESS, "Unexpected iteration job status received: " + iterationJob.getStatus());
 
     return iterationJob;
@@ -150,21 +149,6 @@ public class ContributionServiceImpl implements ContributionService {
 
     var locationMappingStatus = validationService.getLocationMappingStatus(centralServerId);
     Assert.isTrue(locationMappingStatus == VALID, "Invalid locations mapping status");
-  }
-
-  private JobResponse startIterationMocked(InstanceIterationRequest request) {
-    try {
-      return client.startInitialContribution(request);
-    } catch (Exception e) {
-      log.warn("mod-inventory-storage Iteration endpoint is yet to be implemented. Returning stubbed response..");
-
-      return JobResponse.builder()
-        .id(UUID.randomUUID())
-        .status(JobResponse.JobStatus.IN_PROGRESS)
-        .numberOfRecordsPublished(0)
-        .submittedDate(OffsetDateTime.now())
-        .build();
-    }
   }
 
   private InstanceIterationRequest createInstanceIterationRequest() {
