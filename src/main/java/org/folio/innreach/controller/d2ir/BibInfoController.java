@@ -1,4 +1,4 @@
-package org.folio.innreach.external.controller;
+package org.folio.innreach.controller.d2ir;
 
 
 import lombok.RequiredArgsConstructor;
@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import org.folio.innreach.dto.BibInfoResponseDTO;
-import org.folio.innreach.external.service.BibInfoService;
+import org.folio.innreach.domain.service.BibInfoService;
 import org.folio.innreach.rest.resource.BibInfoD2irApi;
 
 @Log4j2

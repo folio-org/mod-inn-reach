@@ -1,4 +1,4 @@
-package org.folio.innreach.external.service;
+package org.folio.innreach.domain.service;
 
 import org.folio.innreach.dto.BibInfoResponseDTO;
 
