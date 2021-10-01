@@ -35,7 +35,7 @@ class InstanceTransformationServiceImplTest {
 
   @Test
   void shouldGetBibInfo() {
-    when(marcService.transformRecord(any(), any(UUID.class))).thenReturn(createMARCRecord());
+    when(marcService.transformRecord(any(UUID.class), any(Instance.class))).thenReturn(createMARCRecord());
 
     Instance instance = createInstance();
     var bibInfo = service.getBibInfo(CENTRAL_SERVER_ID, instance);
