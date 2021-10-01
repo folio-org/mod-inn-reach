@@ -18,7 +18,7 @@ import lombok.Setter;
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class JobResponse {
   private UUID id;
-  @JsonProperty("published")
+  @JsonProperty("messagesPublished")
   private Integer numberOfRecordsPublished;
   private JobStatus status;
   private OffsetDateTime submittedDate;
@@ -26,10 +26,10 @@ public class JobResponse {
   @AllArgsConstructor
   public enum JobStatus {
     IN_PROGRESS("In progress"),
-    ID_PUBLISHING_FAILED("Id publishing failed"),
-    IDS_PUBLISHED("Ids published"),
-    PENDING_CANCEL("Pending cancel"),
-    ID_PUBLISHING_CANCELLED("Id publishing cancelled");
+    FAILED("Failed"),
+    COMPLETED("Completed"),
+    CANCELLATION_PENDING("Cancellation pending"),
+    CANCELLED("Cancelled");
 
     @Getter
     private String value;
