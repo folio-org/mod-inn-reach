@@ -4,13 +4,14 @@ import java.util.UUID;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.apache.commons.lang3.CharUtils;
 import org.springframework.stereotype.Service;
 
 import org.folio.innreach.domain.service.ContributionValidationService;
+import org.folio.innreach.domain.service.InstanceTransformationService;
 import org.folio.innreach.domain.service.MARCRecordTransformationService;
 import org.folio.innreach.dto.BibInfo;
 import org.folio.innreach.dto.Instance;
-import org.folio.innreach.domain.service.InstanceTransformationService;
 
 @RequiredArgsConstructor
 @Log4j2
@@ -31,7 +32,8 @@ public class InstanceTransformationServiceImpl implements InstanceTransformation
 
     var bibInfo = new BibInfo();
     bibInfo.setBibId(bibId);
-    bibInfo.setSuppress(suppressionStatus.toString());
+
+    bibInfo.setSuppress(CharUtils.toString(suppressionStatus));
     bibInfo.setMarc21BibFormat(MARC_BIB_FORMAT);
     bibInfo.setMarc21BibData(marc.getBase64rawContent());
     bibInfo.setTitleHoldCount(0);

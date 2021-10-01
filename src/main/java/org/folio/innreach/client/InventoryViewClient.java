@@ -1,7 +1,6 @@
 package org.folio.innreach.client;
 
 import static java.util.Collections.emptyList;
-import static org.springframework.http.MediaType.APPLICATION_OCTET_STREAM_VALUE;
 
 import java.util.List;
 import java.util.UUID;
@@ -22,10 +21,10 @@ import org.folio.innreach.dto.Item;
 @FeignClient(name = "inventory-view", configuration = FolioFeignClientConfig.class)
 public interface InventoryViewClient {
 
-  @GetMapping(path = "/instances?query=(id==\"{id}\")&limit=1", consumes = APPLICATION_OCTET_STREAM_VALUE)
+  @GetMapping(path = "/instances?query=(id={id})&limit=1", consumes = "binary/octet-stream")
   ResultList<InstanceView> getInstanceById(@PathVariable("id") UUID instanceId);
 
-  @GetMapping(path = "/instances?query=(hrid==\"{hrid}\")&limit=1", consumes = APPLICATION_OCTET_STREAM_VALUE)
+  @GetMapping(path = "/instances?query=(instance.hrid={hrid})&limit=1", consumes = "binary/octet-stream")
   ResultList<InstanceView> getInstanceByHrid(@PathVariable("hrid") String instanceHrid);
 
   @Data

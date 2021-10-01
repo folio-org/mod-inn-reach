@@ -35,7 +35,7 @@ public class InventoryViewServiceImpl implements InventoryViewService {
     try {
       return fetchInstance(() -> inventoryViewClient.getInstanceByHrid(instanceHrid));
     } catch (Exception e) {
-      throw new RuntimeException("Unable to load inventory-view instance with hrid " + instanceHrid);
+      throw new RuntimeException("Unable to load inventory-view instance with hrid " + instanceHrid, e);
     }
   }
 
@@ -45,7 +45,7 @@ public class InventoryViewServiceImpl implements InventoryViewService {
       .stream()
       .findFirst()
       .map(InstanceView::toInstance)
-      .orElse(null);
+      .orElseThrow(() -> new IllegalStateException("Instance not found"));
   }
 
 }
