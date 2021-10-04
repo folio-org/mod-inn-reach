@@ -8,4 +8,7 @@ public interface PatronTypeMappingService {
   PatronTypeMappingsDTO getAllMappings(UUID centralServerId, int offset, int limit);
 
   PatronTypeMappingsDTO updateAllMappings(UUID centralServerId, PatronTypeMappingsDTO patronTypeMappingsDTO);
+
+  Integer getCentralPatronType(UUID centralServerId, UUID patronGroupId);
+
 }

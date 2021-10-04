@@ -9,6 +9,8 @@ import org.folio.innreach.dto.InnReachResponseDTO;
 import org.folio.innreach.dto.TransactionItemHoldDTO;
 import org.folio.innreach.mapper.InnReachTransactionMapper;
 import org.folio.innreach.repository.InnReachTransactionRepository;
+import org.folio.innreach.repository.TransactionHoldRepository;
+
 import org.springframework.stereotype.Service;
 
 @RequiredArgsConstructor
@@ -16,6 +18,7 @@ import org.springframework.stereotype.Service;
 public class InnReachTransactionServiceImpl implements InnReachTransactionService {
 
   private final InnReachTransactionRepository repository;
+  private final TransactionHoldRepository holdRepository;
   private final InnReachTransactionMapper mapper;
   private final CentralServerService centralServerService;
 
@@ -34,6 +37,11 @@ public class InnReachTransactionServiceImpl implements InnReachTransactionServic
       response.setReason(e.getMessage());
     }
     return response;
+  }
+
+  @Override
+  public Integer countLoansByPatronId(String patronId) {
+    return holdRepository.countByPatronId(patronId);
   }
 
   private InnReachTransaction createTransactionWithItemHold(String trackingId, String centralCode) {

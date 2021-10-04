@@ -9,4 +9,7 @@ public interface CentralPatronTypeMappingService {
   CentralPatronTypeMappingsDTO getCentralPatronTypeMappings(UUID centralServerId, Integer offset, Integer limit);
 
   CentralPatronTypeMappingsDTO updateCentralPatronTypeMappings(UUID centralServerId, CentralPatronTypeMappingsDTO centralPatronTypeMappingsDTO);
+
+  Integer getCentralPatronType(UUID centralServerId, String barcode);
+
 }

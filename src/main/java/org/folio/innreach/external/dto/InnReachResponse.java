@@ -1,5 +1,7 @@
 package org.folio.innreach.external.dto;
 
+import static com.google.common.collect.ImmutableList.of;
+
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -70,11 +72,11 @@ public class InnReachResponse {
     private String name;
     private String rejectedValue;
 
-    public static Error ofMessages(String central, List<String> messages) {
+    public static Error ofMessage(String central, String message) {
       return builder()
         .reason(INVALID_REQUEST_REASON)
         .central(central)
-        .messages(messages)
+        .messages(of(message))
         .build();
     }
 

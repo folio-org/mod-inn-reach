@@ -14,6 +14,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import org.folio.innreach.domain.entity.CentralPatronTypeMapping;
 import org.folio.innreach.domain.entity.CentralServer;
 import org.folio.innreach.domain.entity.PatronTypeMapping;
 import org.folio.innreach.domain.service.PatronTypeMappingService;
@@ -49,6 +50,13 @@ public class PatronTypeMappingServiceImpl implements PatronTypeMappingService {
     var saved = mergeAndSave(incoming, stored, repository, this::copyData);
 
     return mapper.toDTOCollection(saved);
+  }
+
+  @Override
+  public Integer getCentralPatronType(UUID centralServerId, UUID patronGroupId) {
+    return repository.findOneByCentralServerIdAndPatronGroupId(centralServerId, patronGroupId)
+      .map(CentralPatronTypeMapping::getCentralPatronType)
+      .orElse(null);
   }
 
   private static Example<PatronTypeMapping> mappingExampleWithServerId(UUID centralServerId) {

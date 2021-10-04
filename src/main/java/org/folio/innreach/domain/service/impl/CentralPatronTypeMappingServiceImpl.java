@@ -38,6 +38,14 @@ public class CentralPatronTypeMappingServiceImpl implements CentralPatronTypeMap
     return mapper.toDTOCollection(centralPatronTypeMappings);
   }
 
+  @Transactional(readOnly = true)
+  @Override
+  public Integer getCentralPatronType(UUID centralServerId, String barcode) {
+    return repository.findOneByCentralServerIdAndBarcode(centralServerId, barcode)
+      .map(CentralPatronTypeMapping::getCentralPatronType)
+      .orElse(null);
+  }
+
   @Override
   public CentralPatronTypeMappingsDTO updateCentralPatronTypeMappings(UUID centralServerId, CentralPatronTypeMappingsDTO centralPatronTypeMappingsDTO) {
     var stored = repository.findAll(mappingExampleWithServerId(centralServerId));
