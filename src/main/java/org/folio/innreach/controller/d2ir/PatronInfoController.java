@@ -20,20 +20,19 @@ import org.folio.innreach.rest.resource.VerifyPatronD2irApi;
 @RequestMapping("/inn-reach/d2ir/")
 @RestController
 @RequiredArgsConstructor
-public class PatronVerifyController implements VerifyPatronD2irApi {
+public class PatronInfoController implements VerifyPatronD2irApi {
 
   private final PatronInfoService service;
 
   @Override
   @GetMapping(value = "/circ/verifypatron", produces = MediaType.APPLICATION_JSON_VALUE)
-  public ResponseEntity<PatronInfoResponseDTO> verifyPatron(@RequestHeader(value = "X-to-code") String localCodeHeader,
+  public ResponseEntity<PatronInfoResponseDTO> verifyPatron(@RequestHeader(value = "x-to-code") String localCodeHeader,
                                                             @RequestHeader(value = "x-from-code") String centralCodeHeader,
                                                             @RequestParam(value = "visiblePatronId") String visiblePatronId,
                                                             @RequestParam(value = "patronAgencyCode") String patronAgencyCode,
                                                             @RequestParam(value = "patronName") String patronName) {
-//    var info = service.getBibInfo(bibId, centralCode);
-    var info = service.verifyPatron(centralCodeHeader, visiblePatronId, patronAgencyCode, patronName);
 
+    var info = service.verifyPatron(centralCodeHeader, visiblePatronId, patronAgencyCode, patronName);
     return new ResponseEntity<>(info, HttpStatus.OK);
   }
 
