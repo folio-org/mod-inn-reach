@@ -1,5 +1,6 @@
 package org.folio.innreach.domain.service.impl;
 
+import static java.util.Collections.singletonList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
@@ -23,6 +24,7 @@ import org.folio.innreach.client.PatronClient;
 import org.folio.innreach.domain.dto.folio.ResultList;
 import org.folio.innreach.domain.dto.folio.User;
 import org.folio.innreach.domain.dto.folio.patron.PatronDTO;
+import org.folio.innreach.domain.dto.folio.patron.PatronDTO.Loan;
 import org.folio.innreach.domain.service.CentralPatronTypeMappingService;
 import org.folio.innreach.domain.service.CentralServerService;
 import org.folio.innreach.domain.service.InnReachTransactionService;
@@ -76,8 +78,8 @@ class PatronInfoServiceImplTest {
     when(centralServerService.getCentralServerByCentralCode(any())).thenReturn(CentralServerFixture.createCentralServerDTO());
     when(userService.getUserByPublicId(any())).thenReturn(Optional.of(user));
     when(patronBlocksClient.getPatronBlocks(any())).thenReturn(ResultList.empty());
-    when(patronClient.getAccountDetails(any())).thenReturn(PatronDTO.of(TOTAL_LOANS));
-    when(transactionService.countLoansByPatronId(any())).thenReturn(INN_REACH_LOANS);
+    when(patronClient.getAccountDetails(any())).thenReturn(PatronDTO.of(TOTAL_LOANS, singletonList(Loan.of(UUID.randomUUID()))));
+    when(transactionService.countInnReachLoans(any(), any())).thenReturn(INN_REACH_LOANS);
     when(centralPatronTypeMappingService.getCentralPatronType(any(), any())).thenReturn(CENTRAL_PATRON_TYPE);
 
     var response = service.verifyPatron(CENTRAL_CODE, VISIBLE_PATRON_ID, AGENCY_CODE, PATRON_NAME);

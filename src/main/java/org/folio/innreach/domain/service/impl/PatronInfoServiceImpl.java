@@ -6,7 +6,9 @@ import static org.apache.commons.lang3.StringUtils.equalsAny;
 import static org.folio.innreach.external.dto.InnReachResponse.Error.ofMessage;
 
 import java.time.OffsetDateTime;
+import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -18,6 +20,7 @@ import org.folio.innreach.client.PatronBlocksClient;
 import org.folio.innreach.client.PatronClient;
 import org.folio.innreach.domain.dto.folio.User;
 import org.folio.innreach.domain.dto.folio.patron.PatronBlock;
+import org.folio.innreach.domain.dto.folio.patron.PatronDTO;
 import org.folio.innreach.domain.service.CentralPatronTypeMappingService;
 import org.folio.innreach.domain.service.CentralServerService;
 import org.folio.innreach.domain.service.InnReachTransactionService;
@@ -71,8 +74,9 @@ public class PatronInfoServiceImpl implements PatronInfoService {
   private PatronInfo getPatronInfo(UUID centralServerId, User user, String patronAgencyCode, String patronName) {
     var patronId = getPatronId(user);
     var centralPatronType = getCentralPatronType(centralServerId, user);
-    var innReachLoans = countInnReachLoans(patronId);
-    var totalLoans = countLoans(user);
+    var patron = getPatron(user);
+    var totalLoans = patron.getTotalLoans();
+    var innReachLoans = countInnReachLoans(patronId, patron.getLoans());
     var expirationDate = ofNullable(user.getExpirationDate()).map(OffsetDateTime::toEpochSecond).orElse(null);
 
     var patronInfo = new PatronInfo();
@@ -96,7 +100,9 @@ public class PatronInfoServiceImpl implements PatronInfoService {
         .findFirst()
         .orElse(null);
 
-      Assert.isTrue(block == null, "Patron block found: " + block.getMessage());
+      if (block != null) {
+        throw new IllegalArgumentException("Patron block found: " + block.getMessage());
+      }
     }
   }
 
@@ -104,13 +110,13 @@ public class PatronInfoServiceImpl implements PatronInfoService {
     return user.getId().replaceAll("-", "");
   }
 
-  private Integer countLoans(User user) {
-    return patronClient.getAccountDetails(user.getId())
-      .getTotalLoans();
+  private PatronDTO getPatron(User user) {
+    return patronClient.getAccountDetails(user.getId());
   }
 
-  private Integer countInnReachLoans(String visiblePatronId) {
-    return transactionService.countLoansByPatronId(visiblePatronId);
+  private Integer countInnReachLoans(String patronId, List<PatronDTO.Loan> loans) {
+    var loanIds = loans.stream().map(PatronDTO.Loan::getId).collect(Collectors.toList());
+    return transactionService.countInnReachLoans(patronId, loanIds);
   }
 
   private Integer getCentralPatronType(UUID centralServerId, User user) {
@@ -133,7 +139,7 @@ public class PatronInfoServiceImpl implements PatronInfoService {
     }
 
     // "First Middle Last" format
-    return equalsAny(patronNameTokens[0], personal.getFirstName(), personal.getPreferredFirstName())  &&
+    return equalsAny(patronNameTokens[0], personal.getFirstName(), personal.getPreferredFirstName()) &&
       patronNameTokens[1].equals(personal.getMiddleName()) &&
       patronNameTokens[2].equals(personal.getLastName());
   }

@@ -1,5 +1,8 @@
 package org.folio.innreach.domain.service.impl;
 
+import java.util.List;
+import java.util.UUID;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.folio.innreach.domain.entity.InnReachTransaction;
@@ -49,8 +52,8 @@ public class InnReachTransactionServiceImpl implements InnReachTransactionServic
   }
 
   @Override
-  public Integer countLoansByPatronId(String patronId) {
-    return holdRepository.countByPatronId(patronId);
+  public Integer countInnReachLoans(String patronId, List<UUID> loanIds) {
+    return holdRepository.countByPatronIdAndFolioLoanIdIn(patronId, loanIds);
   }
 
 }
