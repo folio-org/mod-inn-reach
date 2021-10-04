@@ -1,5 +1,6 @@
 package org.folio.innreach.controller;
 
+import static org.folio.innreach.fixture.TestUtil.deserializeFromJsonFile;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.samePropertyValuesAs;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -17,8 +18,10 @@ import static org.folio.innreach.fixture.ContributionFixture.createIterationJobR
 import static org.folio.innreach.fixture.ContributionFixture.createMaterialTypes;
 import static org.folio.innreach.fixture.JobResponseFixture.createJobResponse;
 
+import java.time.OffsetDateTime;
 import java.util.UUID;
 
+import org.folio.innreach.domain.dto.folio.inventorystorage.JobResponse;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -289,5 +292,15 @@ class ContributionControllerTest extends BaseControllerTest {
       PRE_POPULATED_CENTRAL_SERVER_ID);
 
     assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
+  }
+
+  @Test
+  void shouldDeserializeJsonJobResponse(){
+    var jobResponse = deserializeFromJsonFile("/contribution/job-response.json", JobResponse.class);
+
+    assertEquals("813de9bd-d1ad-4687-9fd7-3239385e5fe5", jobResponse.getId().toString());
+    assertEquals(100, jobResponse.getNumberOfRecordsPublished());
+    assertEquals(JobResponse.JobStatus.COMPLETED, jobResponse.getStatus());
+    assertEquals(OffsetDateTime.parse("2021-06-22T09:33:35.279+00:00"), jobResponse.getSubmittedDate());
   }
 }
