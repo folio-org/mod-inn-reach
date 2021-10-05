@@ -36,7 +36,7 @@ public class InstanceLoader implements ItemProcessor<InstanceIterationEvent, Ins
         return null;
       }
 
-      // if the returned instance is null it is assumed that processing of the instance should not continue
+      // if the returned instance is null it is assumed that processing of the event should not continue
       var instance = inventoryService.getInstance(instanceIterationEvent.getInstanceId());
 
       if (instance == null) {
