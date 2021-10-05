@@ -49,11 +49,9 @@ class InstanceTransformationServiceImplTest {
   }
 
   @Test
-  void shouldGetBibInfo_excludeMultipleStatsCodes() {
+  void shouldGetBibInfo_noItems() {
     Instance instance = createInstance();
-    var item = createItem();
-    item.setStatisticalCodeIds(of(UUID.randomUUID(), UUID.randomUUID()));
-    instance.setItems(of(item));
+    instance.setItems(null);
 
     when(marcService.transformRecord(any(UUID.class), any(Instance.class))).thenReturn(createMARCRecord());
 
@@ -61,7 +59,21 @@ class InstanceTransformationServiceImplTest {
 
     assertNotNull(bibInfo);
     assertEquals(instance.getHrid(), bibInfo.getBibId());
-    assertEquals((Integer) instance.getItems().size(), bibInfo.getItemCount());
+    assertEquals(0, (int) bibInfo.getItemCount());
+  }
+
+  @Test
+  void shouldGetBibInfo_excludeItem() {
+    Instance instance = createInstance();
+
+    when(marcService.transformRecord(any(UUID.class), any(Instance.class))).thenReturn(createMARCRecord());
+    when(validationService.getSuppressionStatus(any(UUID.class), any())).thenReturn('n');
+
+    var bibInfo = service.getBibInfo(CENTRAL_SERVER_ID, instance);
+
+    assertNotNull(bibInfo);
+    assertEquals(instance.getHrid(), bibInfo.getBibId());
+    assertEquals(0, (int) bibInfo.getItemCount());
   }
 
 }
