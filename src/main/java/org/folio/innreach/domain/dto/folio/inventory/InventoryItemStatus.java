@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 public enum InventoryItemStatus {
 
   AVAILABLE("Available"),
+  RECENTLY_RETURNED("Recently Returned"),
   IN_TRANSIT("In transit"),
   CHECKED_OUT("Checked out"),
   PAGED("Paged"),
@@ -30,7 +31,9 @@ public enum InventoryItemStatus {
   IN_PROCESS_NON_REQUESTABLE("In process (non-requestable)"),
   UNAVAILABLE("Unavailable"),
   UNKNOWN("Unknown"),
-  RESTRICTED("Restricted");
+  RESTRICTED("Restricted"),
+  RETRIEVING_FROM_ASR("Retrieving from ASR"),
+  MISSING_FROM_ASR("Missing from ASR");
 
   private final String name;
 

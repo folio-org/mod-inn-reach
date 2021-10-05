@@ -90,7 +90,7 @@ class ContributionValidationServiceImplTest {
       UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID());
 
     when(inventoryClient.getItemById(any())).thenReturn(inventoryItem);
-    when(requestStorageClient.findRequests(any())).thenReturn(new RequestsDTO(null, 0));
+    when(requestStorageClient.findRequests(any())).thenReturn(new RequestsDTO(Collections.emptyList(), 0));
 
     var itemCirculationStatus = service.getItemCirculationStatus(UUID.randomUUID(), UUID.randomUUID());
 
