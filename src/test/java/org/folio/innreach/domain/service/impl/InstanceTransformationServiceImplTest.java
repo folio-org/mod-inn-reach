@@ -1,16 +1,13 @@
 package org.folio.innreach.domain.service.impl;
 
-import static java.util.List.of;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 import static org.folio.innreach.fixture.ContributionFixture.createInstance;
-import static org.folio.innreach.fixture.ContributionFixture.createItem;
 import static org.folio.innreach.fixture.ContributionFixture.createMARCRecord;
 
-import java.util.List;
 import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
@@ -39,9 +36,10 @@ class InstanceTransformationServiceImplTest {
   @Test
   void shouldGetBibInfo() {
     Instance instance = createInstance();
-    var bibInfo = service.getBibInfo(CENTRAL_SERVER_ID, instance);
 
     when(marcService.transformRecord(any(UUID.class), any(Instance.class))).thenReturn(createMARCRecord());
+
+    var bibInfo = service.getBibInfo(CENTRAL_SERVER_ID, instance);
 
     assertNotNull(bibInfo);
     assertEquals(instance.getHrid(), bibInfo.getBibId());
