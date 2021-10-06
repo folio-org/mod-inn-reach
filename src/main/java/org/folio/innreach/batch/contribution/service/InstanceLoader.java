@@ -2,8 +2,6 @@ package org.folio.innreach.batch.contribution.service;
 
 import static org.folio.innreach.domain.service.impl.MARCRecordTransformationServiceImpl.isMARCRecord;
 
-import java.util.Objects;
-
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.batch.core.configuration.annotation.JobScope;
@@ -48,10 +46,6 @@ public class InstanceLoader implements ItemProcessor<InstanceIterationEvent, Ins
 
       return instance;
     });
-  }
-
-  private boolean isUnknownEvent(InstanceIterationEvent event) {
-    return !Objects.equals(event.getJobId(), context.getIterationJobId());
   }
 
 }

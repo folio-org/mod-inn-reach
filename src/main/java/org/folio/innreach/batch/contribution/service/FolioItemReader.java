@@ -55,8 +55,10 @@ public class FolioItemReader extends AbstractItemStreamItemReader<Item> {
   @BeforeStep
   public void loadInstanceStepContext(StepExecution stepExecution) {
     JobExecution jobExecution = stepExecution.getJobExecution();
-    ExecutionContext jobContext = jobExecution.getExecutionContext();
-    this.contributedInstanceIds = (List<String>) jobContext.get(INSTANCE_CONTRIBUTED_ID_CONTEXT);
+    ExecutionContext jobExecutionContext = jobExecution.getExecutionContext();
+    if (jobExecutionContext.containsKey(INSTANCE_CONTRIBUTED_ID_CONTEXT)) {
+      contributedInstanceIds = (List<String>) jobExecutionContext.get(INSTANCE_CONTRIBUTED_ID_CONTEXT);
+    }
   }
 
   @Override
@@ -78,7 +80,7 @@ public class FolioItemReader extends AbstractItemStreamItemReader<Item> {
   @Override
   public Item read() {
     if (!itemsIterator.hasNext()) {
-      tenantScopedExecutionService.runTenantScoped(jobContext.getTenantId(), () -> fetchItems());
+      tenantScopedExecutionService.runTenantScoped(jobContext.getTenantId(), this::fetchItems);
     }
     return itemsIterator.hasNext() ? itemsIterator.next() : null;
   }

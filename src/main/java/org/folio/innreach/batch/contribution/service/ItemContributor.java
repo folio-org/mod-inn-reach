@@ -1,6 +1,6 @@
 package org.folio.innreach.batch.contribution.service;
 
-import static com.google.common.collect.ImmutableList.of;
+import static java.util.List.of;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -70,12 +70,11 @@ public class ItemContributor extends AbstractItemStreamItemWriter<Item> {
   public void write(List<? extends Item> items) {
     ContributionMappings mappings = getContributionMappings();
 
-    executionService.runTenantScoped(jobContext.getTenantId(), () -> {
+    executionService.runTenantScoped(jobContext.getTenantId(), () ->
       items.stream()
         .collect(Collectors.groupingBy(Item::getInstanceHrid))
         .forEach((instanceHrid, instanceItems)
-          -> contributeItems(instanceHrid, instanceItems, mappings));
-    });
+          -> contributeItems(instanceHrid, instanceItems, mappings)));
   }
 
   @Override
@@ -127,8 +126,7 @@ public class ItemContributor extends AbstractItemStreamItemWriter<Item> {
         .copyNumber(copyNumber)
         .callNumber(callNumber)
         .suppress(suppressionStatus)
-//        .centralItemType(mappings.getCentralType(item.getMaterialTypeId()))
-        .centralItemType(11)
+        .centralItemType(mappings.getCentralType(item.getMaterialTypeId()))
         .locationKey(mappings.getLocationKey(folLocId, folLibId))
         .agencyCode(mappings.getAgencyCode(folLibId))
         .build();
