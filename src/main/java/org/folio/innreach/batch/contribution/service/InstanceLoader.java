@@ -8,7 +8,6 @@ import org.springframework.batch.core.configuration.annotation.JobScope;
 import org.springframework.batch.item.ItemProcessor;
 import org.springframework.stereotype.Service;
 
-import org.folio.innreach.batch.contribution.ContributionJobContext;
 import org.folio.innreach.domain.dto.folio.inventorystorage.InstanceIterationEvent;
 import org.folio.innreach.domain.service.InventoryViewService;
 import org.folio.innreach.domain.service.impl.TenantScopedExecutionService;
@@ -22,7 +21,6 @@ public class InstanceLoader implements ItemProcessor<InstanceIterationEvent, Ins
 
   private final TenantScopedExecutionService tenantScopedExecutionService;
   private final InventoryViewService inventoryService;
-  private final ContributionJobContext context;
 
   @Override
   public Instance process(InstanceIterationEvent instanceIterationEvent) throws Exception {

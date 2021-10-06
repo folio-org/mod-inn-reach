@@ -1,5 +1,6 @@
 package org.folio.innreach.domain.service.impl;
 
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -18,6 +19,7 @@ import org.folio.innreach.domain.dto.folio.inventory.IdentifierWithConfigDTO;
 import org.folio.innreach.domain.dto.folio.sourcerecord.ParsedRecordDTO;
 import org.folio.innreach.domain.dto.folio.sourcerecord.RecordFieldDTO;
 import org.folio.innreach.domain.dto.folio.sourcerecord.SourceRecordDTO;
+import org.folio.innreach.domain.exception.EntityNotFoundException;
 import org.folio.innreach.domain.exception.MarcRecordTransformationException;
 import org.folio.innreach.domain.service.MARCRecordTransformationService;
 import org.folio.innreach.domain.service.MARCTransformationOptionsSettingsService;
@@ -93,15 +95,21 @@ public class MARCRecordTransformationServiceImpl implements MARCRecordTransforma
   }
 
   private MARCTransformationOptionsSettingsDTO getMARCTransformationSettings(UUID centralServerId) {
-    var marcTransformationSettings = marcTransformationSettingsService.get(centralServerId);
+    MARCTransformationOptionsSettingsDTO transformationConfig;
+    try {
+      transformationConfig = marcTransformationSettingsService.get(centralServerId);
+    } catch (EntityNotFoundException e) {
+      log.warn("MARC transformation settings for CentralServer Id [{}] is not found. Using default", centralServerId);
+      transformationConfig = createEmptyMARCTransformationConfig();
+    }
 
-    if (!marcTransformationSettings.getConfigIsActive()) {
+    if (!transformationConfig.getConfigIsActive()) {
       throw new IllegalStateException(
         String.format("MARC transformation settings for CentralServer Id [%s] is not active", centralServerId)
       );
     }
 
-    return marcTransformationSettings;
+    return transformationConfig;
   }
 
   private Optional<IdentifierWithConfigDTO> findValidIdentifier(MARCTransformationOptionsSettingsDTO marcTransformationSettings,
@@ -158,6 +166,14 @@ public class MARCRecordTransformationServiceImpl implements MARCRecordTransforma
           identifierWithConfig.getIdentifierDTO()));
       }
     });
+  }
+
+  private static MARCTransformationOptionsSettingsDTO createEmptyMARCTransformationConfig() {
+    var config = new MARCTransformationOptionsSettingsDTO();
+    config.setConfigIsActive(true);
+    config.setExcludedMARCFields(Collections.emptyList());
+    config.setModifiedFieldsForContributedRecords(Collections.emptyList());
+    return config;
   }
 
 }

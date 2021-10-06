@@ -5,7 +5,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import static org.folio.innreach.fixture.ContributionFixture.createInstance;
@@ -20,7 +19,6 @@ import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import org.folio.innreach.batch.contribution.ContributionJobContext;
 import org.folio.innreach.domain.dto.folio.inventorystorage.InstanceIterationEvent;
 import org.folio.innreach.domain.service.InventoryViewService;
 import org.folio.innreach.domain.service.impl.TenantScopedExecutionService;
@@ -34,8 +32,6 @@ class InstanceLoaderTest {
   private TenantScopedExecutionService tenantScopedExecutionService = createTenantExecutionService();
   @Mock
   private InventoryViewService inventoryService;
-  @Mock
-  private ContributionJobContext context;
 
   @InjectMocks
   private InstanceLoader instanceLoader;
@@ -52,16 +48,6 @@ class InstanceLoaderTest {
 
     assertNotNull(result);
     assertEquals(instance, result);
-  }
-
-  void shouldSkipUnknownEvent() throws Exception {
-    var event =
-      InstanceIterationEvent.of(randomUUID(), "test", "test", randomUUID());
-
-    var result = instanceLoader.process(event);
-
-    assertNull(result);
-    verifyNoMoreInteractions(inventoryService);
   }
 
   @Test
