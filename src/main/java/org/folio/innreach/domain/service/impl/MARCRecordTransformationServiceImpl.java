@@ -1,5 +1,7 @@
 package org.folio.innreach.domain.service.impl;
 
+import static java.lang.Boolean.TRUE;
+
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -103,7 +105,7 @@ public class MARCRecordTransformationServiceImpl implements MARCRecordTransforma
       transformationConfig = createEmptyMARCTransformationConfig();
     }
 
-    if (!transformationConfig.getConfigIsActive()) {
+    if (!TRUE.equals(transformationConfig.getConfigIsActive())) {
       throw new IllegalStateException(
         String.format("MARC transformation settings for CentralServer Id [%s] is not active", centralServerId)
       );
