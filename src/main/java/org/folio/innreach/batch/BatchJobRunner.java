@@ -4,6 +4,7 @@ import static org.springframework.batch.core.BatchStatus.STOPPED;
 import static org.springframework.batch.core.BatchStatus.STOPPING;
 
 import static org.folio.innreach.batch.contribution.ContributionJobContext.TENANT_ID_KEY;
+import static org.folio.innreach.config.ContributionJobConfig.CONTRIBUTION_JOB_REPOSITORY_NAME;
 
 import java.util.Date;
 import java.util.UUID;
@@ -15,7 +16,7 @@ import org.springframework.batch.core.JobParameters;
 import org.springframework.batch.core.StepExecution;
 import org.springframework.batch.core.explore.JobExplorer;
 import org.springframework.batch.core.launch.JobLauncher;
-import org.springframework.batch.core.launch.JobOperator;
+import org.springframework.batch.core.launch.support.SimpleJobOperator;
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanFactory;
@@ -40,8 +41,8 @@ public abstract class BatchJobRunner<T> implements BeanFactoryAware {
   public void restart(String tenantId) {
     try {
       var jobExplorer = beanFactory.getBean(JobExplorer.class);
-      var jobOperator = beanFactory.getBean(JobOperator.class);
-      var jobRepository = beanFactory.getBean(JobRepository.class);
+      var jobOperator = beanFactory.getBean(SimpleJobOperator.class);
+      var jobRepository = beanFactory.getBean(CONTRIBUTION_JOB_REPOSITORY_NAME, JobRepository.class);
 
       var jobExecutions = jobExplorer.findRunningJobExecutions(getJobName());
       for (var jobExecution : jobExecutions) {
@@ -62,6 +63,7 @@ public abstract class BatchJobRunner<T> implements BeanFactoryAware {
 
         var jobExecutionId = jobExecution.getId();
 
+        jobOperator.setJobLauncher(getJobLauncher());
         jobOperator.restart(jobExecutionId);
       }
     } catch (Exception e) {
@@ -70,10 +72,14 @@ public abstract class BatchJobRunner<T> implements BeanFactoryAware {
   }
 
   protected void launch(JobParameters jobParameters) throws Exception {
-    var jobLauncher = beanFactory.getBean(getJobLauncherName(), JobLauncher.class);
+    var jobLauncher = getJobLauncher();
     var job = beanFactory.getBean(getJobName(), Job.class);
 
     jobLauncher.run(job, jobParameters);
+  }
+
+  private JobLauncher getJobLauncher() {
+    return beanFactory.getBean(getJobLauncherName(), JobLauncher.class);
   }
 
   private void stopJobExecution(JobRepository jobRepository, JobExecution jobExecution) {

@@ -31,11 +31,6 @@ public class InstanceLoader implements ItemProcessor<InstanceIterationEvent, Ins
     return tenantScopedExecutionService.executeTenantScoped(instanceIterationEvent.getTenant(), () -> {
       log.info("Processing instance iteration event = {}", instanceIterationEvent);
 
-      if (isUnknownEvent(instanceIterationEvent)) {
-        log.info("Skipping unknown event...");
-        return null;
-      }
-
       // if the returned instance is null it is assumed that processing of the event should not continue
       var instance = inventoryService.getInstance(instanceIterationEvent.getInstanceId());
 
@@ -48,6 +43,8 @@ public class InstanceLoader implements ItemProcessor<InstanceIterationEvent, Ins
         log.info("Source {} is not supported", instance.getSource());
         return null;
       }
+
+      log.info("Loaded instance with hrid {}", instance.getHrid());
 
       return instance;
     });

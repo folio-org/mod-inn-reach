@@ -9,14 +9,15 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import static org.folio.innreach.fixture.ContributionFixture.createInstance;
+import static org.folio.innreach.fixture.FolioContextFixture.createTenantExecutionService;
 
 import java.util.UUID;
-import java.util.concurrent.Callable;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import org.folio.innreach.batch.contribution.ContributionJobContext;
@@ -29,8 +30,8 @@ class InstanceLoaderTest {
 
   private static final UUID JOB_ID = randomUUID();
 
-  @Mock
-  private TenantScopedExecutionService tenantScopedExecutionService;
+  @Spy
+  private TenantScopedExecutionService tenantScopedExecutionService = createTenantExecutionService();
   @Mock
   private InventoryViewService inventoryService;
   @Mock
@@ -45,12 +46,6 @@ class InstanceLoaderTest {
       InstanceIterationEvent.of(JOB_ID, "test", "test", randomUUID());
     var instance = createInstance();
 
-    when(tenantScopedExecutionService.executeTenantScoped(any(), any()))
-      .thenAnswer(invocationOnMock -> {
-        var job = (Callable<?>) invocationOnMock.getArgument(1);
-        return job.call();
-      });
-    when(context.getIterationJobId()).thenReturn(JOB_ID);
     when(inventoryService.getInstance(any(UUID.class))).thenReturn(instance);
 
     var result = instanceLoader.process(event);
@@ -59,17 +54,9 @@ class InstanceLoaderTest {
     assertEquals(instance, result);
   }
 
-  @Test
   void shouldSkipUnknownEvent() throws Exception {
     var event =
       InstanceIterationEvent.of(randomUUID(), "test", "test", randomUUID());
-
-    when(tenantScopedExecutionService.executeTenantScoped(any(), any()))
-      .thenAnswer(invocationOnMock -> {
-        var job = (Callable<?>) invocationOnMock.getArgument(1);
-        return job.call();
-      });
-    when(context.getIterationJobId()).thenReturn(JOB_ID);
 
     var result = instanceLoader.process(event);
 
@@ -82,12 +69,6 @@ class InstanceLoaderTest {
     var event =
       InstanceIterationEvent.of(JOB_ID, "test", "test", randomUUID());
 
-    when(tenantScopedExecutionService.executeTenantScoped(any(), any()))
-      .thenAnswer(invocationOnMock -> {
-        var job = (Callable<?>) invocationOnMock.getArgument(1);
-        return job.call();
-      });
-    when(context.getIterationJobId()).thenReturn(JOB_ID);
     when(inventoryService.getInstance(any(UUID.class))).thenReturn(null);
 
     var result = instanceLoader.process(event);
@@ -102,12 +83,6 @@ class InstanceLoaderTest {
     var instance = createInstance();
     instance.setSource("FOLIO");
 
-    when(tenantScopedExecutionService.executeTenantScoped(any(), any()))
-      .thenAnswer(invocationOnMock -> {
-        var job = (Callable<?>) invocationOnMock.getArgument(1);
-        return job.call();
-      });
-    when(context.getIterationJobId()).thenReturn(JOB_ID);
     when(inventoryService.getInstance(any(UUID.class))).thenReturn(instance);
 
     var result = instanceLoader.process(event);

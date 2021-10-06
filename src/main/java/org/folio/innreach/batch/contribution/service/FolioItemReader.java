@@ -2,7 +2,6 @@ package org.folio.innreach.batch.contribution.service;
 
 import static org.folio.innreach.batch.contribution.service.InstanceContributor.INSTANCE_CONTRIBUTED_ID_CONTEXT;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -17,12 +16,17 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.iterators.BoundedIterator;
+import org.springframework.batch.core.JobExecution;
+import org.springframework.batch.core.StepExecution;
+import org.springframework.batch.core.annotation.BeforeStep;
 import org.springframework.batch.core.configuration.annotation.StepScope;
 import org.springframework.batch.item.ExecutionContext;
 import org.springframework.batch.item.support.AbstractItemStreamItemReader;
 import org.springframework.stereotype.Component;
 
+import org.folio.innreach.batch.contribution.ContributionJobContext;
 import org.folio.innreach.domain.service.InventoryViewService;
+import org.folio.innreach.domain.service.impl.TenantScopedExecutionService;
 import org.folio.innreach.dto.Holding;
 import org.folio.innreach.dto.Instance;
 import org.folio.innreach.dto.Item;
@@ -38,31 +42,30 @@ public class FolioItemReader extends AbstractItemStreamItemReader<Item> {
   public static final String INSTANCE_ITEM_OFFSET_CONTEXT = "contribution.instance.item.offset";
   public static final String INSTANCE_ITEM_TOTAL_CONTEXT = "contribution.instance.item.total";
 
+  private final TenantScopedExecutionService tenantScopedExecutionService;
   private final InventoryViewService inventoryService;
+  private final ContributionJobContext jobContext;
 
-  private Map<UUID, Integer> instanceItemOffsets = Collections.emptyMap();
-  private Map<UUID, Integer> instanceItemTotals = Collections.emptyMap();
-  private List<UUID> contributedInstanceIds = Collections.emptyList();
+  private Map<String, Integer> instanceItemOffsets = new HashMap<>();
+  private Map<String, Integer> instanceItemTotals = new HashMap<>();
+
+  private List<String> contributedInstanceIds = Collections.emptyList();
   private Iterator<Item> itemsIterator = Collections.emptyIterator();
 
-  @Override
-  public Item read() {
-    if (!itemsIterator.hasNext()) {
-      fetchItems();
-    }
-    return itemsIterator.hasNext() ? itemsIterator.next() : null;
+  @BeforeStep
+  public void loadInstanceStepContext(StepExecution stepExecution) {
+    JobExecution jobExecution = stepExecution.getJobExecution();
+    ExecutionContext jobContext = jobExecution.getExecutionContext();
+    this.contributedInstanceIds = (List<String>) jobContext.get(INSTANCE_CONTRIBUTED_ID_CONTEXT);
   }
 
   @Override
   public void open(ExecutionContext executionContext) {
-    if (executionContext.containsKey(INSTANCE_CONTRIBUTED_ID_CONTEXT)) {
-      contributedInstanceIds = new ArrayList<>((List<UUID>) executionContext.get(INSTANCE_CONTRIBUTED_ID_CONTEXT));
-    }
     if (executionContext.containsKey(INSTANCE_ITEM_OFFSET_CONTEXT)) {
-      instanceItemOffsets = new HashMap<>((Map<UUID, Integer>) executionContext.get(INSTANCE_ITEM_OFFSET_CONTEXT));
+      instanceItemOffsets = new HashMap<>((Map<String, Integer>) executionContext.get(INSTANCE_ITEM_OFFSET_CONTEXT));
     }
     if (executionContext.containsKey(INSTANCE_ITEM_TOTAL_CONTEXT)) {
-      instanceItemTotals = new HashMap<>((Map<UUID, Integer>) executionContext.get(INSTANCE_ITEM_TOTAL_CONTEXT));
+      instanceItemTotals = new HashMap<>((Map<String, Integer>) executionContext.get(INSTANCE_ITEM_TOTAL_CONTEXT));
     }
   }
 
@@ -70,6 +73,14 @@ public class FolioItemReader extends AbstractItemStreamItemReader<Item> {
   public void update(ExecutionContext executionContext) {
     executionContext.put(INSTANCE_ITEM_OFFSET_CONTEXT, new HashMap<>(instanceItemOffsets));
     executionContext.put(INSTANCE_ITEM_TOTAL_CONTEXT, new HashMap<>(instanceItemTotals));
+  }
+
+  @Override
+  public Item read() {
+    if (!itemsIterator.hasNext()) {
+      tenantScopedExecutionService.runTenantScoped(jobContext.getTenantId(), () -> fetchItems());
+    }
+    return itemsIterator.hasNext() ? itemsIterator.next() : null;
   }
 
   private void fetchItems() {
@@ -81,7 +92,7 @@ public class FolioItemReader extends AbstractItemStreamItemReader<Item> {
         continue;
       }
 
-      var instance = inventoryService.getInstance(instanceId);
+      var instance = inventoryService.getInstance(UUID.fromString(instanceId));
       if (instance == null) {
         continue;
       }

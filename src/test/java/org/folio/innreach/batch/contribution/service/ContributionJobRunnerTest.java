@@ -30,7 +30,7 @@ import org.springframework.batch.core.JobParameters;
 import org.springframework.batch.core.StepExecution;
 import org.springframework.batch.core.explore.JobExplorer;
 import org.springframework.batch.core.launch.JobLauncher;
-import org.springframework.batch.core.launch.JobOperator;
+import org.springframework.batch.core.launch.support.SimpleJobOperator;
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.beans.factory.BeanFactory;
 
@@ -51,7 +51,7 @@ class ContributionJobRunnerTest {
   @Mock
   private JobExplorer jobExplorer;
   @Mock
-  private JobOperator jobOperator;
+  private SimpleJobOperator jobOperator;
   @Mock
   private JobRepository jobRepository;
 
@@ -79,8 +79,8 @@ class ContributionJobRunnerTest {
     contribution.setId(UUID.randomUUID());
 
     when(beanFactory.getBean(JobExplorer.class)).thenReturn(jobExplorer);
-    when(beanFactory.getBean(JobOperator.class)).thenReturn(jobOperator);
-    when(beanFactory.getBean(JobRepository.class)).thenReturn(jobRepository);
+    when(beanFactory.getBean(SimpleJobOperator.class)).thenReturn(jobOperator);
+    when(beanFactory.getBean(any(), eq(JobRepository.class))).thenReturn(jobRepository);
 
     var jobParameters = new JobParameters(of(TENANT_ID_KEY, new JobParameter(TENANT_ID)));
     var jobExecution = new JobExecution(42L, jobParameters);

@@ -1,9 +1,13 @@
 package org.folio.innreach.batch.contribution.service;
 
+import static com.google.common.collect.ImmutableList.of;
+
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -14,10 +18,13 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.springframework.batch.core.configuration.annotation.StepScope;
-import org.springframework.batch.item.ItemWriter;
+import org.springframework.batch.item.ExecutionContext;
+import org.springframework.batch.item.support.AbstractItemStreamItemWriter;
 import org.springframework.stereotype.Service;
+import org.springframework.util.Assert;
 
 import org.folio.innreach.batch.contribution.ContributionJobContext;
+import org.folio.innreach.batch.contribution.listener.ItemExceptionListener;
 import org.folio.innreach.domain.dto.folio.ContributionItemCirculationStatus;
 import org.folio.innreach.domain.service.CentralServerService;
 import org.folio.innreach.domain.service.ContributionValidationService;
@@ -25,78 +32,110 @@ import org.folio.innreach.domain.service.InnReachLocationService;
 import org.folio.innreach.domain.service.LibraryMappingService;
 import org.folio.innreach.domain.service.LocationMappingService;
 import org.folio.innreach.domain.service.MaterialTypeMappingService;
+import org.folio.innreach.domain.service.impl.TenantScopedExecutionService;
 import org.folio.innreach.dto.InnReachLocationDTO;
 import org.folio.innreach.dto.Item;
 import org.folio.innreach.dto.ItemEffectiveCallNumberComponents;
 import org.folio.innreach.dto.MaterialTypeMappingDTO;
 import org.folio.innreach.external.dto.BibItem;
+import org.folio.innreach.external.dto.BibItemsInfo;
 import org.folio.innreach.external.service.InnReachContributionService;
 
 @Log4j2
 @StepScope
 @Service
 @RequiredArgsConstructor
-public class ItemContributor implements ItemWriter<Item> {
+public class ItemContributor extends AbstractItemStreamItemWriter<Item> {
+
+  public static final String ITEM_CONTRIBUTED_COUNT_CONTEXT = "contribution.item.contributed-count";
 
   private static final int FETCH_LIMIT = 2000;
   private static final String NON_DIGIT_REGEX = "\\D+";
 
   private final InnReachContributionService irContributionService;
   private final ContributionValidationService validationService;
+  private final ItemExceptionListener exceptionListener;
   private final MaterialTypeMappingService typeMappingService;
   private final LibraryMappingService libraryMappingService;
   private final InnReachLocationService irLocationService;
   private final CentralServerService centralServerService;
   private final LocationMappingService locationMappingService;
+  private final TenantScopedExecutionService executionService;
 
   private final ContributionJobContext jobContext;
+
+  private List<String> contributedInstanceIds = new ArrayList<>();
 
   @Override
   public void write(List<? extends Item> items) {
     ContributionMappings mappings = getContributionMappings();
 
-    items.stream()
-      .collect(Collectors.groupingBy(Item::getInstanceHrid))
-      .forEach((instanceHrid, instanceItems)
-        -> contributeItems(instanceHrid, instanceItems, mappings));
+    executionService.runTenantScoped(jobContext.getTenantId(), () -> {
+      items.stream()
+        .collect(Collectors.groupingBy(Item::getInstanceHrid))
+        .forEach((instanceHrid, instanceItems)
+          -> contributeItems(instanceHrid, instanceItems, mappings));
+    });
+  }
+
+  @Override
+  public void update(ExecutionContext executionContext) {
+    executionContext.put(ITEM_CONTRIBUTED_COUNT_CONTEXT, new ArrayList<>(contributedInstanceIds));
   }
 
   private void contributeItems(String bibId, List<? extends Item> items, ContributionMappings mappings) {
+    log.info("Processing items of bib {}", bibId);
+
     var bibItems = items.stream()
       .map(item -> convertItem(item, mappings))
+      .filter(Objects::nonNull)
       .collect(Collectors.toList());
 
-    irContributionService.contributeBibItems(jobContext.getCentralServerId(), bibId, bibItems);
+    var bibItemsInfo = BibItemsInfo.of(bibItems);
+
+    log.info("Loaded {} items", bibItemsInfo.getItemInfo().size());
+
+    var response = irContributionService.contributeBibItems(jobContext.getCentralServerId(), bibId, bibItemsInfo);
+    Assert.isTrue(response.isOk(), "Unexpected items contribution response: " + response);
+
+    log.info("Finished contributing items of bib {}", bibId);
   }
 
   private BibItem convertItem(Item item, ContributionMappings mappings) {
-    var suppressionStatus = getSuppressionStatus(item);
-    var circulationStatus = getCirculationStatus(item);
+    log.info("Loading item {} info", item.getId());
+    try {
+      var suppressionStatus = getSuppressionStatus(item);
+      var circulationStatus = getCirculationStatus(item);
 
-    var copyNumber = Optional.ofNullable(item.getCopyNumber())
-      .map(n -> n.replaceAll(NON_DIGIT_REGEX, ""))
-      .filter(NumberUtils::isCreatable)
-      .map(NumberUtils::createInteger)
-      .filter(n -> n != 0)
-      .orElse(null);
+      var copyNumber = Optional.ofNullable(item.getCopyNumber())
+        .map(n -> n.replaceAll(NON_DIGIT_REGEX, ""))
+        .filter(NumberUtils::isCreatable)
+        .map(NumberUtils::createInteger)
+        .filter(n -> n != 0)
+        .orElse(null);
 
-    var callNumber = Optional.ofNullable(item.getEffectiveCallNumberComponents())
-      .map(ItemEffectiveCallNumberComponents::getCallNumber)
-      .orElse(null);
+      var callNumber = Optional.ofNullable(item.getEffectiveCallNumberComponents())
+        .map(ItemEffectiveCallNumberComponents::getCallNumber)
+        .orElse(null);
 
-    var folLocId = item.getPermanentLocationId();
-    var folLibId = mappings.getLibraryId(folLocId);
+      var folLocId = item.getPermanentLocationId();
+      var folLibId = mappings.getLibraryId(folLocId);
 
-    return BibItem.builder()
-      .itemId(item.getHrid())
-      .itemCircStatus(circulationStatus)
-      .copyNumber(copyNumber)
-      .callNumber(callNumber)
-      .suppress(suppressionStatus)
-      .centralItemType(mappings.getCentralType(item.getMaterialTypeId()))
-      .locationKey(mappings.getLocationKey(folLocId, folLibId))
-      .agencyCode(mappings.getAgencyCode(folLibId))
-      .build();
+      return BibItem.builder()
+        .itemId(item.getHrid())
+        .itemCircStatus(circulationStatus.getStatus())
+        .copyNumber(copyNumber)
+        .callNumber(callNumber)
+        .suppress(suppressionStatus)
+//        .centralItemType(mappings.getCentralType(item.getMaterialTypeId()))
+        .centralItemType(11)
+        .locationKey(mappings.getLocationKey(folLocId, folLibId))
+        .agencyCode(mappings.getAgencyCode(folLibId))
+        .build();
+    } catch (Exception e) {
+      exceptionListener.onWriteError(new RuntimeException("Unable to load item info", e), of(item));
+      return null;
+    }
   }
 
   private Character getSuppressionStatus(Item item) {
@@ -107,7 +146,7 @@ public class ItemContributor implements ItemWriter<Item> {
   }
 
   private ContributionItemCirculationStatus getCirculationStatus(Item item) {
-    return validationService.getItemCirculationStatus(jobContext.getCentralServerId(), item.getId());
+    return validationService.getItemCirculationStatus(jobContext.getCentralServerId(), item);
   }
 
   private ContributionMappings getContributionMappings() {

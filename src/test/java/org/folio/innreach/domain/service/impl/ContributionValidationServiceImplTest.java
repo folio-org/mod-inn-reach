@@ -8,7 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
-import static org.folio.innreach.fixture.InventoryItemFixture.createInventoryItemDTO;
+import static org.folio.innreach.fixture.ContributionFixture.createItem;
 import static org.folio.innreach.fixture.ItemContributionOptionsConfigurationFixture.createItmContribOptConfDTO;
 
 import java.util.Collections;
@@ -24,7 +24,6 @@ import org.folio.innreach.client.InventoryClient;
 import org.folio.innreach.client.MaterialTypesClient;
 import org.folio.innreach.client.RequestStorageClient;
 import org.folio.innreach.domain.dto.folio.ContributionItemCirculationStatus;
-import org.folio.innreach.domain.dto.folio.inventory.InventoryItemStatus;
 import org.folio.innreach.domain.dto.folio.requeststorage.RequestsDTO;
 import org.folio.innreach.domain.service.CentralServerService;
 import org.folio.innreach.domain.service.ContributionCriteriaConfigurationService;
@@ -33,6 +32,7 @@ import org.folio.innreach.domain.service.ItemContributionOptionsConfigurationSer
 import org.folio.innreach.domain.service.LibraryMappingService;
 import org.folio.innreach.domain.service.MaterialTypeMappingService;
 import org.folio.innreach.dto.ContributionCriteriaDTO;
+import org.folio.innreach.dto.ItemStatus;
 import org.folio.innreach.external.service.InnReachLocationExternalService;
 
 class ContributionValidationServiceImplTest {
@@ -70,12 +70,10 @@ class ContributionValidationServiceImplTest {
   void returnAvailableContributionStatusWhenItemStatusIsAvailable() {
     when(itemContributionOptionsConfigurationService.getItmContribOptConf(any())).thenReturn(createItmContribOptConfDTO());
 
-    var inventoryItem = createInventoryItemDTO(InventoryItemStatus.AVAILABLE,
-      UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID());
+    var item = createItem();
+    item.setStatus(new ItemStatus().name(ItemStatus.NameEnum.AVAILABLE));
 
-    when(inventoryClient.getItemById(any())).thenReturn(inventoryItem);
-
-    var itemCirculationStatus = service.getItemCirculationStatus(UUID.randomUUID(), UUID.randomUUID());
+    var itemCirculationStatus = service.getItemCirculationStatus(UUID.randomUUID(), item);
 
     assertEquals(ContributionItemCirculationStatus.AVAILABLE, itemCirculationStatus);
   }
@@ -84,13 +82,12 @@ class ContributionValidationServiceImplTest {
   void returnAvailableContributionStatusWhenItemStatusIsInTransitAndItemIsNotRequested() {
     when(itemContributionOptionsConfigurationService.getItmContribOptConf(any())).thenReturn(createItmContribOptConfDTO());
 
-    var inventoryItem = createInventoryItemDTO(InventoryItemStatus.IN_TRANSIT,
-      UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID());
+    var item = createItem();
+    item.setStatus(new ItemStatus().name(ItemStatus.NameEnum.IN_TRANSIT));
 
-    when(inventoryClient.getItemById(any())).thenReturn(inventoryItem);
     when(requestStorageClient.findRequests(any())).thenReturn(new RequestsDTO(0));
 
-    var itemCirculationStatus = service.getItemCirculationStatus(UUID.randomUUID(), UUID.randomUUID());
+    var itemCirculationStatus = service.getItemCirculationStatus(UUID.randomUUID(), item);
 
     assertEquals(ContributionItemCirculationStatus.AVAILABLE, itemCirculationStatus);
   }
@@ -99,13 +96,12 @@ class ContributionValidationServiceImplTest {
   void returnAvailableContributionStatusWhenItemStatusIsInTransitAndItemIsAlreadyRequested() {
     when(itemContributionOptionsConfigurationService.getItmContribOptConf(any())).thenReturn(createItmContribOptConfDTO());
 
-    var inventoryItem = createInventoryItemDTO(InventoryItemStatus.IN_TRANSIT,
-      UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID());
+    var item = createItem();
+    item.setStatus(new ItemStatus().name(ItemStatus.NameEnum.IN_TRANSIT));
 
-    when(inventoryClient.getItemById(any())).thenReturn(inventoryItem);
     when(requestStorageClient.findRequests(any())).thenReturn(new RequestsDTO(1));
 
-    var itemCirculationStatus = service.getItemCirculationStatus(UUID.randomUUID(), UUID.randomUUID());
+    var itemCirculationStatus = service.getItemCirculationStatus(UUID.randomUUID(), item);
 
     assertEquals(ContributionItemCirculationStatus.NOT_AVAILABLE, itemCirculationStatus);
   }
@@ -114,12 +110,10 @@ class ContributionValidationServiceImplTest {
   void returnAvailableContributionStatusWhenItemStatusIsNotListedInTheNotAvailableStatuses() {
     when(itemContributionOptionsConfigurationService.getItmContribOptConf(any())).thenReturn(createItmContribOptConfDTO());
 
-    var inventoryItem = createInventoryItemDTO(InventoryItemStatus.AWAITING_PICKUP,
-      UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID());
+    var item = createItem();
+    item.setStatus(new ItemStatus().name(ItemStatus.NameEnum.AWAITING_PICKUP));
 
-    when(inventoryClient.getItemById(any())).thenReturn(inventoryItem);
-
-    var itemCirculationStatus = service.getItemCirculationStatus(UUID.randomUUID(), UUID.randomUUID());
+    var itemCirculationStatus = service.getItemCirculationStatus(UUID.randomUUID(), item);
 
     assertEquals(ContributionItemCirculationStatus.AVAILABLE, itemCirculationStatus);
   }
@@ -128,12 +122,10 @@ class ContributionValidationServiceImplTest {
   void returnNotAvailableContributionStatusWhenItemStatusIsUnavailable() {
     when(itemContributionOptionsConfigurationService.getItmContribOptConf(any())).thenReturn(createItmContribOptConfDTO());
 
-    var inventoryItem = createInventoryItemDTO(InventoryItemStatus.UNAVAILABLE,
-      UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID());
+    var item = createItem();
+    item.setStatus(new ItemStatus().name(ItemStatus.NameEnum.UNAVAILABLE));
 
-    when(inventoryClient.getItemById(any())).thenReturn(inventoryItem);
-
-    var itemCirculationStatus = service.getItemCirculationStatus(UUID.randomUUID(), UUID.randomUUID());
+    var itemCirculationStatus = service.getItemCirculationStatus(UUID.randomUUID(), item);
 
     assertEquals(ContributionItemCirculationStatus.NOT_AVAILABLE, itemCirculationStatus);
   }
@@ -142,12 +134,10 @@ class ContributionValidationServiceImplTest {
   void returnNotAvailableContributionStatusWhenItemStatusIsListedInTheNotAvailableStatuses() {
     when(itemContributionOptionsConfigurationService.getItmContribOptConf(any())).thenReturn(createItmContribOptConfDTO());
 
-    var inventoryItem = createInventoryItemDTO(InventoryItemStatus.AGED_TO_LOST,
-      UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID());
+    var item = createItem();
+    item.setStatus(new ItemStatus().name(ItemStatus.NameEnum.AGED_TO_LOST));
 
-    when(inventoryClient.getItemById(any())).thenReturn(inventoryItem);
-
-    var itemCirculationStatus = service.getItemCirculationStatus(UUID.randomUUID(), UUID.randomUUID());
+    var itemCirculationStatus = service.getItemCirculationStatus(UUID.randomUUID(), item);
 
     assertEquals(ContributionItemCirculationStatus.NOT_AVAILABLE, itemCirculationStatus);
   }
@@ -156,12 +146,10 @@ class ContributionValidationServiceImplTest {
   void returnOnLoanContributionStatusWhenItemStatusIsCheckedOut() {
     when(itemContributionOptionsConfigurationService.getItmContribOptConf(any())).thenReturn(createItmContribOptConfDTO());
 
-    var inventoryItem = createInventoryItemDTO(InventoryItemStatus.CHECKED_OUT,
-      UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID());
+    var item = createItem();
+    item.setStatus(new ItemStatus().name(ItemStatus.NameEnum.CHECKED_OUT));
 
-    when(inventoryClient.getItemById(any())).thenReturn(inventoryItem);
-
-    var itemCirculationStatus = service.getItemCirculationStatus(UUID.randomUUID(), UUID.randomUUID());
+    var itemCirculationStatus = service.getItemCirculationStatus(UUID.randomUUID(), item);
 
     assertEquals(ContributionItemCirculationStatus.ON_LOAN, itemCirculationStatus);
   }
@@ -171,14 +159,13 @@ class ContributionValidationServiceImplTest {
     var itmContribOptConfDTO = createItmContribOptConfDTO();
     var nonLendableLoanTypes = itmContribOptConfDTO.getNonLendableLoanTypes();
 
+    var item = createItem();
+    item.setPermanentLoanTypeId(nonLendableLoanTypes.get(0));
+    item.setTemporaryLoanTypeId(nonLendableLoanTypes.get(1));
+
     when(itemContributionOptionsConfigurationService.getItmContribOptConf(any())).thenReturn(itmContribOptConfDTO);
 
-    var inventoryItem = createInventoryItemDTO(InventoryItemStatus.AVAILABLE,
-      UUID.randomUUID(), nonLendableLoanTypes.get(0), nonLendableLoanTypes.get(1), UUID.randomUUID());
-
-    when(inventoryClient.getItemById(any())).thenReturn(inventoryItem);
-
-    var itemCirculationStatus = service.getItemCirculationStatus(UUID.randomUUID(), UUID.randomUUID());
+    var itemCirculationStatus = service.getItemCirculationStatus(UUID.randomUUID(), item);
 
     assertEquals(ContributionItemCirculationStatus.NON_LENDABLE, itemCirculationStatus);
   }
@@ -188,14 +175,13 @@ class ContributionValidationServiceImplTest {
     var itmContribOptConfDTO = createItmContribOptConfDTO();
     var nonLendableLocations = itmContribOptConfDTO.getNonLendableLocations();
 
+    var item = createItem();
+    item.setStatus(new ItemStatus().name(ItemStatus.NameEnum.AVAILABLE));
+    item.setPermanentLocationId(nonLendableLocations.get(0));
+
     when(itemContributionOptionsConfigurationService.getItmContribOptConf(any())).thenReturn(itmContribOptConfDTO);
 
-    var inventoryItem = createInventoryItemDTO(InventoryItemStatus.AVAILABLE,
-      UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(), nonLendableLocations.get(0));
-
-    when(inventoryClient.getItemById(any())).thenReturn(inventoryItem);
-
-    var itemCirculationStatus = service.getItemCirculationStatus(UUID.randomUUID(), UUID.randomUUID());
+    var itemCirculationStatus = service.getItemCirculationStatus(UUID.randomUUID(), item);
 
     assertEquals(ContributionItemCirculationStatus.NON_LENDABLE, itemCirculationStatus);
   }
@@ -207,12 +193,11 @@ class ContributionValidationServiceImplTest {
 
     when(itemContributionOptionsConfigurationService.getItmContribOptConf(any())).thenReturn(itmContribOptConfDTO);
 
-    var inventoryItem = createInventoryItemDTO(InventoryItemStatus.AVAILABLE,
-      nonLendableMaterialTypes.get(0), UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID());
+    var item = createItem();
+    item.setStatus(new ItemStatus().name(ItemStatus.NameEnum.AVAILABLE));
+    item.setMaterialTypeId(nonLendableMaterialTypes.get(0));
 
-    when(inventoryClient.getItemById(any())).thenReturn(inventoryItem);
-
-    var itemCirculationStatus = service.getItemCirculationStatus(UUID.randomUUID(), UUID.randomUUID());
+    var itemCirculationStatus = service.getItemCirculationStatus(UUID.randomUUID(), item);
 
     assertEquals(ContributionItemCirculationStatus.NON_LENDABLE, itemCirculationStatus);
   }
