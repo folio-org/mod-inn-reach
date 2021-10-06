@@ -10,13 +10,17 @@ import static org.mockito.Mockito.when;
 
 import static org.folio.innreach.batch.contribution.service.FolioItemReader.INSTANCE_ITEM_OFFSET_CONTEXT;
 import static org.folio.innreach.batch.contribution.service.FolioItemReader.INSTANCE_ITEM_TOTAL_CONTEXT;
+import static org.folio.innreach.batch.contribution.service.InstanceContributor.INSTANCE_CONTRIBUTED_ID_CONTEXT;
 import static org.folio.innreach.fixture.ContributionFixture.createBatchStepExecution;
 import static org.folio.innreach.fixture.ContributionFixture.createExecutionContext;
 import static org.folio.innreach.fixture.ContributionFixture.createInstance;
 import static org.folio.innreach.fixture.FolioContextFixture.createTenantExecutionService;
 
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -46,6 +50,20 @@ class FolioItemReaderTest {
   private FolioItemReader reader;
 
   @Test
+  void shouldLoadInstanceStepContext() {
+    var context = createBatchStepExecution();
+    var contextInstanceIds = (List<String>) context
+      .getJobExecution()
+      .getExecutionContext()
+      .get(INSTANCE_CONTRIBUTED_ID_CONTEXT);
+
+    reader.loadInstanceStepContext(context);
+
+    Assertions.assertThat(reader.getContributedInstanceIds())
+      .containsExactlyInAnyOrderElementsOf(contextInstanceIds);
+  }
+
+  @Test
   void shouldOpenEmptyContext() {
     reader.open(new ExecutionContext());
 
@@ -54,24 +72,20 @@ class FolioItemReaderTest {
     assertTrue(reader.getContributedInstanceIds().isEmpty());
   }
 
-/*  @Test
+  @Test
   void shouldOpenExistingContext() {
     var context = createExecutionContext();
     reader.open(context);
 
-    var contextInstanceIds = (List<UUID>) context.get(INSTANCE_CONTRIBUTED_ID_CONTEXT);
-    var contextItemOffsets = (Map<UUID, Integer>) context.get(INSTANCE_ITEM_OFFSET_CONTEXT);
-    var contextItemTotals = (Map<UUID, Integer>) context.get(INSTANCE_ITEM_TOTAL_CONTEXT);
-
-    Assertions.assertThat(reader.getContributedInstanceIds())
-      .containsExactlyInAnyOrderElementsOf(contextInstanceIds);
+    var contextItemOffsets = (Map<String, Integer>) context.get(INSTANCE_ITEM_OFFSET_CONTEXT);
+    var contextItemTotals = (Map<String, Integer>) context.get(INSTANCE_ITEM_TOTAL_CONTEXT);
 
     Assertions.assertThat(reader.getInstanceItemOffsets())
       .containsExactlyInAnyOrderEntriesOf(contextItemOffsets);
 
     Assertions.assertThat(reader.getInstanceItemTotals())
       .containsExactlyInAnyOrderEntriesOf(contextItemTotals);
-  }*/
+  }
 
   @Test
   void shouldReturnNullOnRead() {
