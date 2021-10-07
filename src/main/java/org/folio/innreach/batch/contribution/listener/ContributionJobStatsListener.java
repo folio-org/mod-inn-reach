@@ -40,9 +40,7 @@ public class ContributionJobStatsListener extends ChunkListenerSupport {
     var contribution = new ContributionDTO();
     contribution.setRecordsContributed((long) stepContext.getWriteCount());
     contribution.setRecordsProcessed(contribution.getRecordsContributed() + stepContext.getSkipCount());
-    contribution.setRecordsTotal(null);
-    contribution.setRecordsDecontributed(null);
-    contribution.setRecordsUpdated(null);
+    contribution.setRecordsTotal((long) (stepContext.getReadCount() + stepContext.getReadSkipCount()));
     return contribution;
   }
 

@@ -21,6 +21,8 @@ import java.util.stream.Collectors;
 import lombok.experimental.UtilityClass;
 import org.jeasy.random.EasyRandom;
 import org.jeasy.random.EasyRandomParameters;
+import org.springframework.batch.core.JobExecution;
+import org.springframework.batch.core.StepExecution;
 import org.springframework.batch.item.ExecutionContext;
 
 import org.folio.innreach.client.InventoryViewClient;
@@ -144,12 +146,17 @@ public class ContributionFixture {
       .build();
   }
 
+  public static StepExecution createBatchStepExecution() {
+    var jobExecution = new JobExecution(42L);
+    jobExecution.setExecutionContext(createExecutionContext());
+    return jobExecution.createStepExecution("test");
+  }
 
   public static ExecutionContext createExecutionContext() {
     var executionContext = new ExecutionContext();
-    executionContext.put(INSTANCE_ITEM_OFFSET_CONTEXT, Collections.singletonMap(UUID.randomUUID(), 1));
-    executionContext.put(INSTANCE_ITEM_TOTAL_CONTEXT, Collections.singletonMap(UUID.randomUUID(), 342));
-    executionContext.put(INSTANCE_CONTRIBUTED_ID_CONTEXT, singletonList(UUID.randomUUID()));
+    executionContext.put(INSTANCE_ITEM_OFFSET_CONTEXT, Collections.singletonMap(UUID.randomUUID().toString(), 1));
+    executionContext.put(INSTANCE_ITEM_TOTAL_CONTEXT, Collections.singletonMap(UUID.randomUUID().toString(), 342));
+    executionContext.put(INSTANCE_CONTRIBUTED_ID_CONTEXT, singletonList(UUID.randomUUID().toString()));
     return executionContext;
   }
 

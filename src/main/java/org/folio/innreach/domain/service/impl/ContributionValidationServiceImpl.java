@@ -1,5 +1,10 @@
 package org.folio.innreach.domain.service.impl;
 
+import static org.apache.commons.collections4.ListUtils.emptyIfNull;
+
+import static org.folio.innreach.dto.ItemStatus.NameEnum.AVAILABLE;
+import static org.folio.innreach.dto.ItemStatus.NameEnum.CHECKED_OUT;
+import static org.folio.innreach.dto.ItemStatus.NameEnum.IN_TRANSIT;
 import static org.folio.innreach.dto.MappingValidationStatusDTO.INVALID;
 import static org.folio.innreach.dto.MappingValidationStatusDTO.VALID;
 
@@ -14,11 +19,9 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 
-import org.folio.innreach.client.InventoryClient;
 import org.folio.innreach.client.MaterialTypesClient;
 import org.folio.innreach.client.RequestStorageClient;
 import org.folio.innreach.domain.dto.folio.ContributionItemCirculationStatus;
-import org.folio.innreach.domain.dto.folio.inventory.InventoryItemDTO;
 import org.folio.innreach.domain.dto.folio.inventorystorage.MaterialTypeDTO;
 import org.folio.innreach.domain.service.CentralServerService;
 import org.folio.innreach.domain.service.ContributionCriteriaConfigurationService;
@@ -29,6 +32,7 @@ import org.folio.innreach.domain.service.LibraryMappingService;
 import org.folio.innreach.domain.service.MaterialTypeMappingService;
 import org.folio.innreach.dto.ContributionCriteriaDTO;
 import org.folio.innreach.dto.InnReachLocationDTO;
+import org.folio.innreach.dto.Item;
 import org.folio.innreach.dto.ItemContributionOptionsConfigurationDTO;
 import org.folio.innreach.dto.LibraryMappingDTO;
 import org.folio.innreach.dto.MappingValidationStatusDTO;
@@ -53,25 +57,22 @@ public class ContributionValidationServiceImpl implements ContributionValidation
 
   private final ItemContributionOptionsConfigurationService itemContributionOptionsConfigurationService;
 
-  private final InventoryClient inventoryClient;
   private final RequestStorageClient requestStorageClient;
 
   @Override
-  public ContributionItemCirculationStatus getItemCirculationStatus(UUID centralServerId, UUID itemId) {
+  public ContributionItemCirculationStatus getItemCirculationStatus(UUID centralServerId, Item item) {
     var itemContributionConfig = itemContributionOptionsConfigurationService
       .getItmContribOptConf(centralServerId);
 
-    var inventoryItem = inventoryClient.getItemById(itemId);
-
-    if (isItemNonLendable(inventoryItem, itemContributionConfig)) {
+    if (isItemNonLendable(item, itemContributionConfig)) {
       return ContributionItemCirculationStatus.NON_LENDABLE;
     }
 
-    if (inventoryItem.getStatus().isCheckedOut()) {
+    if (item.getStatus().getName() == CHECKED_OUT) {
       return ContributionItemCirculationStatus.ON_LOAN;
     }
 
-    if (isItemAvailableForContribution(inventoryItem, itemContributionConfig)) {
+    if (isItemAvailableForContribution(item, itemContributionConfig)) {
       return ContributionItemCirculationStatus.AVAILABLE;
     }
 
@@ -138,44 +139,44 @@ public class ContributionValidationServiceImpl implements ContributionValidation
     }
   }
 
-  private boolean isItemNonLendable(InventoryItemDTO inventoryItem,
+  private boolean isItemNonLendable(Item inventoryItem,
                                     ItemContributionOptionsConfigurationDTO itemContributionConfig) {
     return isItemNonLendableByLoanTypes(inventoryItem, itemContributionConfig) ||
       isItemNonLendableByLocations(inventoryItem, itemContributionConfig) ||
       isItemNonLendableByMaterialTypes(inventoryItem, itemContributionConfig);
   }
 
-  private boolean isItemNonLendableByLoanTypes(InventoryItemDTO inventoryItem,
+  private boolean isItemNonLendableByLoanTypes(Item inventoryItem,
                                                ItemContributionOptionsConfigurationDTO itemContributionConfig) {
-    var nonLendableLoanTypes = itemContributionConfig.getNonLendableLoanTypes();
-    return nonLendableLoanTypes.contains(inventoryItem.getPermanentLoanType().getId()) ||
-      nonLendableLoanTypes.contains(inventoryItem.getTemporaryLoanType().getId());
+    var nonLendableLoanTypes = emptyIfNull(itemContributionConfig.getNonLendableLoanTypes());
+    return nonLendableLoanTypes.contains(inventoryItem.getPermanentLoanTypeId()) ||
+      nonLendableLoanTypes.contains(inventoryItem.getTemporaryLoanTypeId());
   }
 
-  private boolean isItemNonLendableByLocations(InventoryItemDTO inventoryItem,
+  private boolean isItemNonLendableByLocations(Item inventoryItem,
                                                ItemContributionOptionsConfigurationDTO itemContributionConfig) {
-    var nonLendableLocations = itemContributionConfig.getNonLendableLocations();
-    return nonLendableLocations.contains(inventoryItem.getPermanentLocation().getId());
+    var nonLendableLocations = emptyIfNull(itemContributionConfig.getNonLendableLocations());
+    return nonLendableLocations.contains(inventoryItem.getPermanentLocationId());
   }
 
-  private boolean isItemNonLendableByMaterialTypes(InventoryItemDTO inventoryItem,
+  private boolean isItemNonLendableByMaterialTypes(Item inventoryItem,
                                                    ItemContributionOptionsConfigurationDTO itemContributionConfig) {
-    var nonLendableMaterialTypes = itemContributionConfig.getNonLendableMaterialTypes();
-    return nonLendableMaterialTypes.contains(inventoryItem.getMaterialType().getId());
+    var nonLendableMaterialTypes = emptyIfNull(itemContributionConfig.getNonLendableMaterialTypes());
+    return nonLendableMaterialTypes.contains(inventoryItem.getMaterialTypeId());
   }
 
-  private boolean isItemAvailableForContribution(InventoryItemDTO inventoryItem,
+  private boolean isItemAvailableForContribution(Item inventoryItem,
                                                  ItemContributionOptionsConfigurationDTO itemContributionConfig) {
     var itemStatus = inventoryItem.getStatus();
 
-    if (itemStatus.isInTransit() && isItemRequested(inventoryItem)) {
+    if (itemStatus.getName() == IN_TRANSIT && isItemRequested(inventoryItem)) {
       return false;
     }
 
-    return itemStatus.isAvailable() || !itemContributionConfig.getNotAvailableItemStatuses().contains(itemStatus.getName());
+    return itemStatus.getName() == AVAILABLE || !itemContributionConfig.getNotAvailableItemStatuses().contains(itemStatus.getName().getValue());
   }
 
-  private boolean isItemRequested(InventoryItemDTO inventoryItem) {
+  private boolean isItemRequested(Item inventoryItem) {
     var itemRequests = requestStorageClient.findRequests(inventoryItem.getId());
     return itemRequests.getTotalRecords() != 0;
   }
