@@ -15,6 +15,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
+import org.folio.innreach.domain.dto.folio.ResultList;
 import org.folio.innreach.domain.dto.folio.requeststorage.RequestDTO;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -27,7 +28,6 @@ import org.folio.innreach.client.MaterialTypesClient;
 import org.folio.innreach.client.RequestStorageClient;
 import org.folio.innreach.domain.dto.folio.ContributionItemCirculationStatus;
 import org.folio.innreach.domain.dto.folio.inventory.InventoryItemStatus;
-import org.folio.innreach.domain.dto.folio.requeststorage.RequestsDTO;
 import org.folio.innreach.domain.service.CentralServerService;
 import org.folio.innreach.domain.service.ContributionCriteriaConfigurationService;
 import org.folio.innreach.domain.service.InnReachLocationService;
@@ -90,7 +90,7 @@ class ContributionValidationServiceImplTest {
       UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID());
 
     when(inventoryClient.getItemById(any())).thenReturn(inventoryItem);
-    when(requestStorageClient.findRequests(any())).thenReturn(new RequestsDTO(Collections.emptyList(), 0));
+    when(requestStorageClient.findRequests(any())).thenReturn(ResultList.of(0, Collections.emptyList()));
 
     var itemCirculationStatus = service.getItemCirculationStatus(UUID.randomUUID(), UUID.randomUUID());
 
@@ -105,7 +105,7 @@ class ContributionValidationServiceImplTest {
       UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID());
 
     when(inventoryClient.getItemById(any())).thenReturn(inventoryItem);
-    when(requestStorageClient.findRequests(any())).thenReturn(new RequestsDTO(List.of(new RequestDTO()), 1));
+    when(requestStorageClient.findRequests(any())).thenReturn(ResultList.of(1, List.of(new RequestDTO())));
 
     var itemCirculationStatus = service.getItemCirculationStatus(UUID.randomUUID(), UUID.randomUUID());
 

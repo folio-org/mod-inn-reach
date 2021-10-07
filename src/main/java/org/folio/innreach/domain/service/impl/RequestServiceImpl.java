@@ -34,6 +34,7 @@ import java.util.UUID;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.folio.innreach.domain.dto.folio.ResultList;
 import org.springframework.stereotype.Service;
 
 import org.folio.innreach.client.InventoryClient;
@@ -46,7 +47,6 @@ import org.folio.innreach.domain.dto.folio.inventory.InventoryItemDTO;
 import org.folio.innreach.domain.dto.folio.inventory.InventoryItemStatus;
 import org.folio.innreach.domain.dto.folio.requeststorage.RequestDTO;
 import org.folio.innreach.domain.dto.folio.requeststorage.RequestDTO.RequestStatus;
-import org.folio.innreach.domain.dto.folio.requeststorage.RequestsDTO;
 import org.folio.innreach.domain.entity.InnReachTransaction;
 import org.folio.innreach.domain.entity.TransactionHold;
 import org.folio.innreach.domain.entity.TransactionItemHold;
@@ -91,11 +91,11 @@ public class RequestServiceImpl implements RequestService {
     var transaction = transactionRepository.fetchOneByTrackingId(trackingId).orElseThrow(() ->
       new EntityNotFoundException("Transaction not found for trackingId = " + trackingId)
     );
-    var itemId = transaction.getHold().getItemId();
+    var itemHrId = transaction.getHold().getItemId();
     var centralServerId = getCentralServerId(transaction.getCentralServerCode());
 
-    var item = inventoryClient.getItemById(itemId);
-    var requests = requestsClient.findRequests(itemId);
+    var item = inventoryClient.getItemByHrId(itemHrId);
+    var requests = requestsClient.findRequests(item.getId());
 
     if (itemIsRequestable(item, requests)) {
       try {
@@ -111,7 +111,7 @@ public class RequestServiceImpl implements RequestService {
         //creating and sending new request
         var newRequest = RequestDTO.builder()
           .requestType(requestType)
-          .itemId(itemId)
+          .itemId(item.getId())
           .requesterId(UUID.fromString(userId))
           .pickupServicePointId(defaultServicePointId)
           .requestExpirationDate(requestExpirationDate)
@@ -124,12 +124,13 @@ public class RequestServiceImpl implements RequestService {
         //updating transaction data
         transaction.getHold().setFolioRequestId(createdRequest.getId());
         transaction.getHold().setFolioPatronId(UUID.fromString(userId));
-        transaction.getHold().setFolioItemId(itemId);
+        transaction.getHold().setFolioItemId(item.getId());
         transactionRepository.save(transaction);
 
         log.info("Item request successfully created.");
       } catch (Exception e) {
-        log.warn("An error occurred during request creation. Sending \"Owning site cancels\" request.");
+        log.warn(e.getMessage());
+        log.warn("Sending \"Owning site cancels\" request.");
         var errorReason = "Request not permitted";
         issueOwningSiteCancelsRequest(errorReason, transaction, centralServerId);
       }
@@ -140,14 +141,14 @@ public class RequestServiceImpl implements RequestService {
     }
   }
 
-  private boolean itemIsRequestable(InventoryItemDTO item, RequestsDTO requests) {
+  private boolean itemIsRequestable(InventoryItemDTO item, ResultList<RequestDTO> requests) {
     return item.getStatus() == AVAILABLE ||
       !notAvailableItemStatuses.contains(item.getStatus()) ||
       noOpenRequests(requests) && noOpenRequestsAvailableStatuses.contains(item.getStatus());
   }
 
-  private boolean noOpenRequests(RequestsDTO requests) {
-    return requests.getRequests().stream().noneMatch(r -> openRequestStatuses.contains(r.getStatus()));
+  private boolean noOpenRequests(ResultList<RequestDTO> requests) {
+    return requests.getResult().stream().noneMatch(r -> openRequestStatuses.contains(r.getStatus()));
   }
 
   private String createPatronComment(TransactionHold hold) {
@@ -199,7 +200,7 @@ public class RequestServiceImpl implements RequestService {
     var request = OwningSiteCancelsRequestDTO.builder()
       .reason(reason)
       .reasonCode(7)
-      .localBibId(transaction.getHold().getItemId().toString())
+      .localBibId(transaction.getHold().getItemId())
       .patronName(((TransactionItemHold) transaction.getHold()).getPatronName())
       .build();
     innReachService.postInnReachApi(

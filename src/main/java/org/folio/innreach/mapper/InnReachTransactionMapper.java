@@ -7,6 +7,9 @@ import org.mapstruct.Builder;
 import org.mapstruct.InjectionStrategy;
 import org.mapstruct.Mapper;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+
 @Mapper(componentModel = "spring", injectionStrategy = InjectionStrategy.CONSTRUCTOR, uses = MappingMethods.class, builder = @Builder(disableBuilder = true))
 public interface InnReachTransactionMapper {
 
@@ -33,10 +36,13 @@ public interface InnReachTransactionMapper {
   }
 
   default String map(TransactionPickupLocation value) {
-    return value.getDeliveryStop() == null ?
-      value.getPickupLocCode() + PICKUP_LOCATION_DELIMITER + value.getDisplayName() + PICKUP_LOCATION_DELIMITER
-        + value.getPrintName() :
-      value.getPickupLocCode() + PICKUP_LOCATION_DELIMITER + value.getDisplayName() + PICKUP_LOCATION_DELIMITER
-        + value.getPrintName() + PICKUP_LOCATION_DELIMITER + value.getDeliveryStop();
+    var locationTokens =
+      new ArrayList<>(Arrays.asList(value.getPickupLocCode(), value.getDisplayName(), value.getPrintName()));
+
+    if (value.getDeliveryStop() != null) {
+      locationTokens.add(value.getDeliveryStop());
+    }
+
+    return String.join(PICKUP_LOCATION_DELIMITER, locationTokens);
   }
 }
