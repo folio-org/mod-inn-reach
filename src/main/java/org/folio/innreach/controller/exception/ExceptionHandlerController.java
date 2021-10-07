@@ -1,4 +1,4 @@
-package org.folio.innreach.controller;
+package org.folio.innreach.controller.exception;
 
 import java.util.List;
 import java.util.stream.Collectors;

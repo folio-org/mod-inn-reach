@@ -1,9 +1,11 @@
 package org.folio.innreach.domain.entity;
 
-import lombok.Getter;
-import lombok.Setter;
-import org.folio.innreach.domain.entity.base.Auditable;
-import org.folio.innreach.domain.entity.base.Identifiable;
+import static org.folio.innreach.domain.entity.InnReachTransaction.FETCH_ONE_BY_TRACKING_ID_AND_CENTRAL_CODE_QUERY;
+import static org.folio.innreach.domain.entity.InnReachTransaction.FETCH_ONE_BY_TRACKING_ID_AND_CENTRAL_CODE_QUERY_NAME;
+import static org.folio.innreach.domain.entity.InnReachTransaction.FETCH_ONE_BY_TRACKING_ID_QUERY;
+import static org.folio.innreach.domain.entity.InnReachTransaction.FETCH_ONE_BY_TRACKING_ID_QUERY_NAME;
+
+import java.util.UUID;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
@@ -16,10 +18,12 @@ import javax.persistence.JoinColumn;
 import javax.persistence.NamedQuery;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
-import java.util.UUID;
 
-import static org.folio.innreach.domain.entity.InnReachTransaction.FETCH_ONE_BY_TRACKING_ID_QUERY;
-import static org.folio.innreach.domain.entity.InnReachTransaction.FETCH_ONE_BY_TRACKING_ID_QUERY_NAME;
+import lombok.Getter;
+import lombok.Setter;
+
+import org.folio.innreach.domain.entity.base.Auditable;
+import org.folio.innreach.domain.entity.base.Identifiable;
 
 @Entity
 @Getter
@@ -29,6 +33,10 @@ import static org.folio.innreach.domain.entity.InnReachTransaction.FETCH_ONE_BY_
   name = FETCH_ONE_BY_TRACKING_ID_QUERY_NAME,
   query = FETCH_ONE_BY_TRACKING_ID_QUERY
 )
+@NamedQuery(
+  name = FETCH_ONE_BY_TRACKING_ID_AND_CENTRAL_CODE_QUERY_NAME,
+  query = FETCH_ONE_BY_TRACKING_ID_AND_CENTRAL_CODE_QUERY
+)
 public class InnReachTransaction extends Auditable implements Identifiable<UUID> {
 
   public static final String FETCH_ONE_BY_TRACKING_ID_QUERY_NAME = "InnReachTransaction.fetchOne";
@@ -36,6 +44,13 @@ public class InnReachTransaction extends Auditable implements Identifiable<UUID>
     "SELECT t FROM InnReachTransaction t JOIN FETCH t.hold hold " +
       "JOIN FETCH hold.pickupLocation location " +
       "WHERE t.trackingId = :trackingId AND location.id = hold.pickupLocation.id";
+
+  public static final String FETCH_ONE_BY_TRACKING_ID_AND_CENTRAL_CODE_QUERY_NAME = "InnReachTransaction.fetchByTrackingIdAndCentralCode";
+  public static final String FETCH_ONE_BY_TRACKING_ID_AND_CENTRAL_CODE_QUERY = "SELECT irt FROM InnReachTransaction AS irt " +
+    "JOIN FETCH irt.hold AS h " +
+    "JOIN FETCH h.pickupLocation " +
+    "WHERE irt.trackingId = :trackingId AND irt.centralServerCode = :centralServerCode";
+
 
   @Id
   @GeneratedValue(strategy = GenerationType.AUTO)

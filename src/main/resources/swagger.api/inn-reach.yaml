@@ -1038,6 +1038,39 @@ paths:
       parameters:
         - $ref: '#/components/parameters/trackingId'
         - $ref: '#/components/parameters/centralCode'
+  /d2ir/circ/{circulationOperationName}/{trackingId}/{centralCode}:
+    servers:
+      - url: /innreach/
+    post:
+      operationId: processCirculationRequest
+      description: Process circulation request
+      tags:
+        - inn-reach-circulation
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/circulationRequestDTO"
+      responses:
+        '200':
+          description: Transaction record is created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/innReachResponseDTO"
+        '400':
+          description: An error occurred during creation of transaction record
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/innReachResponseDTO"
+        '500':
+          $ref: "#/components/responses/trait_response_500"
+      parameters:
+        - $ref: '#/components/parameters/trackingId'
+        - $ref: '#/components/parameters/centralCode'
+        - $ref: '#/components/parameters/circulationOperationName'
+
 components:
   schemas:
     UUID:
@@ -1110,6 +1143,8 @@ components:
       $ref: schemas/transactionItemHoldDTO.json
     innReachResponseDTO:
       $ref: schemas/d2ir/innReachResponseDTO.json
+    circulationRequestDTO:
+      $ref: schemas/d2ir/circulationRequestDTO.json
   parameters:
     id:
       name: id
@@ -1157,6 +1192,12 @@ components:
         type: string
     trackingId:
       name: trackingId
+      in: path
+      required: true
+      schema:
+        type: string
+    circulationOperationName:
+      name: circulationOperationName
       in: path
       required: true
       schema:

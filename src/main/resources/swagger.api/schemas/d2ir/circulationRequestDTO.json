@@ -1,0 +1,94 @@
+{
+  "description": "INN-Reach Circulation Request Data",
+  "type": "object",
+  "properties": {
+    "transactionTime": {
+      "description": "Transaction time",
+      "type": "integer"
+    },
+    "pickupLocation": {
+      "description": "Pickup location",
+      "type": "string"
+    },
+    "patronId": {
+      "description": "Patron id",
+      "type": "string",
+      "pattern" : "[a-z,0-9]{1,32}"
+    },
+    "patronAgencyCode": {
+      "description": "Patron agency code",
+      "type": "string",
+      "minLength": 5,
+      "maxLength": 5
+    },
+    "itemAgencyCode": {
+      "description": "Item agency code",
+      "type": "string",
+      "minLength": 5,
+      "maxLength": 5
+    },
+    "itemId": {
+      "description": "Item id",
+      "type": "string",
+      "pattern" : "[a-z,0-9]{1,32}"
+    },
+    "needBefore": {
+      "description": "Need before time",
+      "type": "integer"
+    },
+    "centralItemType": {
+      "description": "Central item type",
+      "type": "integer",
+      "minimum" : 0,
+      "maximum" : 255
+    },
+    "centralPatronType": {
+      "description": "Central patron type",
+      "type": "integer",
+      "minimum" : 0,
+      "maximum" : 255
+    },
+    "patronName": {
+      "description": "Patron name",
+      "type": "string"
+    },
+    "title": {
+      "description": "Title",
+      "type": "string",
+      "maxLength": 256
+    },
+    "author": {
+      "description": "Author",
+      "type": "string",
+      "maxLength": 256
+    },
+    "callNumber": {
+      "description": "Call number",
+      "type": "string",
+      "maxLength": 256
+    },
+    "newItemId": {
+      "description": "Item HRID or UUID, depending on record contribution implementation",
+      "type": "string",
+      "maxLength": 32
+    },
+    "itemBarcode": {
+      "description": "Item barcode",
+      "type": "string"
+    },
+    "reason": {
+      "description": "Reason",
+      "type": "string"
+    },
+    "reasonCode": {
+      "description": "Reason code (always 7)",
+      "type": "integer"
+    },
+    "dueDateTime": {
+      "description": "UNIX epoch timestamp",
+      "type": "integer"
+    }
+  },
+  "additionalProperties": false,
+  "required": []
+}
