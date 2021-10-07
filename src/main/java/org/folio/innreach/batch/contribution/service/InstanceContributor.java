@@ -33,20 +33,23 @@ public class InstanceContributor extends AbstractItemStreamItemWriter<Instance> 
 
   private final ContributionJobContext jobContext;
 
-  private List<UUID> contributedInstanceIds = new ArrayList<>();
+  private List<String> contributedInstanceIds = new ArrayList<>();
 
   @Override
   public void write(List<? extends Instance> instances) {
     if (instances.isEmpty()) {
       return;
     }
-    tenantScopedExecutionService.executeTenantScoped(
-      jobContext.getTenantId(),
-      () -> {
-        instances.forEach(item -> contributeInstance(jobContext.getCentralServerId(), item));
-        return null;
-      }
+    tenantScopedExecutionService.runTenantScoped(jobContext.getTenantId(), () ->
+      instances.forEach(instance -> contributeInstance(jobContext.getCentralServerId(), instance))
     );
+  }
+
+  @Override
+  public void open(ExecutionContext executionContext) {
+    if (executionContext.containsKey(INSTANCE_CONTRIBUTED_ID_CONTEXT)) {
+      contributedInstanceIds = new ArrayList<>((List<String>) executionContext.get(INSTANCE_CONTRIBUTED_ID_CONTEXT));
+    }
   }
 
   @Override
@@ -56,13 +59,18 @@ public class InstanceContributor extends AbstractItemStreamItemWriter<Instance> 
 
   private void contributeInstance(UUID centralServerId, Instance instance) {
     var bibId = instance.getHrid();
+
+    log.info("Contributing bib {}", bibId);
+
     var bib = instanceTransformationService.getBibInfo(centralServerId, instance);
 
     contribute(centralServerId, bibId, bib);
 
     verifyContribution(centralServerId, bibId);
 
-    contributedInstanceIds.add(instance.getId());
+    contributedInstanceIds.add(instance.getId().toString());
+
+    log.info("Finished contribution of bib {}", bibId);
   }
 
   private void contribute(UUID centralServerId, String bibId, BibInfo bib) {

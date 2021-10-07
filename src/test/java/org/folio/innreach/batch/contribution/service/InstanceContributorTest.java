@@ -11,15 +11,16 @@ import static org.mockito.Mockito.when;
 import static org.folio.innreach.external.dto.InnReachResponse.errorResponse;
 import static org.folio.innreach.external.dto.InnReachResponse.okResponse;
 import static org.folio.innreach.fixture.ContributionFixture.createInstance;
+import static org.folio.innreach.fixture.FolioContextFixture.createTenantExecutionService;
 
 import java.util.Collections;
 import java.util.UUID;
-import java.util.concurrent.Callable;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import org.folio.innreach.batch.contribution.ContributionJobContext;
@@ -34,25 +35,19 @@ class InstanceContributorTest {
   private static final UUID CENTRAL_SERVER_ID = UUID.randomUUID();
 
   @Mock
-  private TenantScopedExecutionService tenantScopedExecutionService;
-  @Mock
   private InnReachContributionService irContributionService;
   @Mock
   private ContributionJobContext jobContext;
   @Mock
   private InstanceTransformationService instanceTransformationService;
+  @Spy
+  private TenantScopedExecutionService tenantScopedExecutionService = createTenantExecutionService();
 
   @InjectMocks
   private InstanceContributor instanceContributor;
 
   @Test
   void shouldContributeAndLookUp() throws Exception {
-    when(tenantScopedExecutionService.executeTenantScoped(any(), any()))
-      .thenAnswer(invocationOnMock -> {
-        var job = (Callable<?>) invocationOnMock.getArgument(1);
-        return job.call();
-      });
-
     when(jobContext.getTenantId()).thenReturn("test");
     when(jobContext.getCentralServerId()).thenReturn(CENTRAL_SERVER_ID);
     when(instanceTransformationService.getBibInfo(any(), any())).thenReturn(new BibInfo());
@@ -67,12 +62,6 @@ class InstanceContributorTest {
 
   @Test
   void shouldFailContribution() {
-    when(tenantScopedExecutionService.executeTenantScoped(any(), any()))
-      .thenAnswer(invocationOnMock -> {
-        var job = (Callable<?>) invocationOnMock.getArgument(1);
-        return job.call();
-      });
-
     when(jobContext.getTenantId()).thenReturn("test");
     when(jobContext.getCentralServerId()).thenReturn(CENTRAL_SERVER_ID);
     when(instanceTransformationService.getBibInfo(any(), any())).thenReturn(new BibInfo());
@@ -85,11 +74,6 @@ class InstanceContributorTest {
 
   @Test
   void shouldFailVerification() {
-    when(tenantScopedExecutionService.executeTenantScoped(any(), any()))
-      .thenAnswer(invocationOnMock -> {
-        var job = (Callable<?>) invocationOnMock.getArgument(1);
-        return job.call();
-      });
 
     when(jobContext.getTenantId()).thenReturn("test");
     when(jobContext.getCentralServerId()).thenReturn(CENTRAL_SERVER_ID);

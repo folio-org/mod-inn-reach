@@ -2,6 +2,8 @@ package org.folio.innreach.config;
 
 import static java.util.List.of;
 
+import static org.folio.innreach.batch.contribution.service.InstanceContributor.INSTANCE_CONTRIBUTED_ID_CONTEXT;
+
 import java.time.Duration;
 import java.util.HashMap;
 import java.util.Properties;
@@ -26,6 +28,7 @@ import org.springframework.batch.core.configuration.support.ReferenceJobFactory;
 import org.springframework.batch.core.launch.JobLauncher;
 import org.springframework.batch.core.launch.support.RunIdIncrementer;
 import org.springframework.batch.core.launch.support.SimpleJobLauncher;
+import org.springframework.batch.core.listener.ExecutionContextPromotionListener;
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.item.ItemProcessor;
 import org.springframework.batch.item.ItemWriter;
@@ -39,6 +42,8 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.core.task.SimpleAsyncTaskExecutor;
 import org.springframework.retry.backoff.BackOffPolicy;
 import org.springframework.retry.backoff.FixedBackOffPolicy;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.interceptor.TransactionProxyFactoryBean;
 
 import org.folio.innreach.batch.KafkaItemReader;
 import org.folio.innreach.batch.contribution.ContributionJobContext;
@@ -63,6 +68,7 @@ public class ContributionJobConfig {
 
   public static final String CONTRIBUTION_JOB_NAME = "contributionJob";
   public static final String CONTRIBUTION_JOB_LAUNCHER_NAME = "contributionJobLauncher";
+  public static final String CONTRIBUTION_JOB_REPOSITORY_NAME = "contributionJobRepo";
   public static final String INSTANCE_CONTRIBUTION_STEP = "instanceContributionStep";
   public static final String ITEM_CONTRIBUTION_STEP = "itemContributionStep";
 
@@ -118,6 +124,7 @@ public class ContributionJobConfig {
       .retryLimit(jobProperties.getRetryAttempts())
       .skip(Exception.class)
       .skipLimit(Integer.MAX_VALUE)
+      .listener(contextPromotionListener())
       .listener((ItemReadListener) failureListener)
       .listener((ItemProcessListener) failureListener)
       .listener((ItemWriteListener) failureListener)
@@ -187,6 +194,24 @@ public class ContributionJobConfig {
   @Bean
   public JobFactory jobFactory(@Lazy Job job) {
     return new ReferenceJobFactory(job);
+  }
+
+  @Bean
+  public ExecutionContextPromotionListener contextPromotionListener() {
+    ExecutionContextPromotionListener listener = new ExecutionContextPromotionListener();
+    listener.setKeys(new String[] {INSTANCE_CONTRIBUTED_ID_CONTEXT});
+    return listener;
+  }
+
+  @Bean(CONTRIBUTION_JOB_REPOSITORY_NAME)
+  public TransactionProxyFactoryBean baseProxy(JobRepository jobRepository, PlatformTransactionManager transactionManager) {
+    TransactionProxyFactoryBean transactionProxyFactoryBean = new TransactionProxyFactoryBean();
+    Properties transactionAttributes = new Properties();
+    transactionAttributes.setProperty("*", "PROPAGATION_REQUIRED");
+    transactionProxyFactoryBean.setTransactionAttributes(transactionAttributes);
+    transactionProxyFactoryBean.setTarget(jobRepository);
+    transactionProxyFactoryBean.setTransactionManager(transactionManager);
+    return transactionProxyFactoryBean;
   }
 
   @Bean

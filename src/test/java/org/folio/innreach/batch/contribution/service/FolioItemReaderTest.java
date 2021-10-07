@@ -11,8 +11,10 @@ import static org.mockito.Mockito.when;
 import static org.folio.innreach.batch.contribution.service.FolioItemReader.INSTANCE_ITEM_OFFSET_CONTEXT;
 import static org.folio.innreach.batch.contribution.service.FolioItemReader.INSTANCE_ITEM_TOTAL_CONTEXT;
 import static org.folio.innreach.batch.contribution.service.InstanceContributor.INSTANCE_CONTRIBUTED_ID_CONTEXT;
+import static org.folio.innreach.fixture.ContributionFixture.createBatchStepExecution;
 import static org.folio.innreach.fixture.ContributionFixture.createExecutionContext;
 import static org.folio.innreach.fixture.ContributionFixture.createInstance;
+import static org.folio.innreach.fixture.FolioContextFixture.createTenantExecutionService;
 
 import java.util.List;
 import java.util.Map;
@@ -24,20 +26,42 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.batch.item.ExecutionContext;
 
+import org.folio.innreach.batch.contribution.ContributionJobContext;
 import org.folio.innreach.domain.service.InventoryViewService;
-import org.folio.innreach.dto.Instance;
+import org.folio.innreach.domain.service.impl.TenantScopedExecutionService;
 
 @ExtendWith(MockitoExtension.class)
 class FolioItemReaderTest {
+
+  @Spy
+  private TenantScopedExecutionService tenantScopedExecutionService = createTenantExecutionService();
+
+  @Mock
+  private ContributionJobContext jobContext;
 
   @Mock
   private InventoryViewService inventoryService;
 
   @InjectMocks
   private FolioItemReader reader;
+
+  @Test
+  void shouldLoadInstanceStepContext() {
+    var context = createBatchStepExecution();
+    var contextInstanceIds = (List<String>) context
+      .getJobExecution()
+      .getExecutionContext()
+      .get(INSTANCE_CONTRIBUTED_ID_CONTEXT);
+
+    reader.loadInstanceStepContext(context);
+
+    Assertions.assertThat(reader.getContributedInstanceIds())
+      .containsExactlyInAnyOrderElementsOf(contextInstanceIds);
+  }
 
   @Test
   void shouldOpenEmptyContext() {
@@ -53,12 +77,8 @@ class FolioItemReaderTest {
     var context = createExecutionContext();
     reader.open(context);
 
-    var contextInstanceIds = (List<UUID>) context.get(INSTANCE_CONTRIBUTED_ID_CONTEXT);
-    var contextItemOffsets = (Map<UUID, Integer>) context.get(INSTANCE_ITEM_OFFSET_CONTEXT);
-    var contextItemTotals = (Map<UUID, Integer>) context.get(INSTANCE_ITEM_TOTAL_CONTEXT);
-
-    Assertions.assertThat(reader.getContributedInstanceIds())
-      .containsExactlyInAnyOrderElementsOf(contextInstanceIds);
+    var contextItemOffsets = (Map<String, Integer>) context.get(INSTANCE_ITEM_OFFSET_CONTEXT);
+    var contextItemTotals = (Map<String, Integer>) context.get(INSTANCE_ITEM_TOTAL_CONTEXT);
 
     Assertions.assertThat(reader.getInstanceItemOffsets())
       .containsExactlyInAnyOrderEntriesOf(contextItemOffsets);
@@ -69,9 +89,8 @@ class FolioItemReaderTest {
 
   @Test
   void shouldReturnNullOnRead() {
+    reader.loadInstanceStepContext(createBatchStepExecution());
     reader.open(createExecutionContext());
-
-    when(inventoryService.getInstance(any(UUID.class))).thenReturn(new Instance());
 
     var event = reader.read();
 
@@ -80,6 +99,7 @@ class FolioItemReaderTest {
 
   @Test
   void shouldReturnItem() {
+    reader.loadInstanceStepContext(createBatchStepExecution());
     reader.open(createExecutionContext());
 
     when(inventoryService.getInstance(any(UUID.class))).thenReturn(createInstance());
