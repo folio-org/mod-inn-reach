@@ -38,8 +38,6 @@ class ContributionJobStatsListenerTest {
     when(getJobParameters().getString(CENTRAL_SERVER_ID_KEY))
       .thenReturn(CENTRAL_SERVER_ID);
 
-    listener.afterChunk(context);
-
     verify(contributionService).updateContributionStats(any(), any());
   }
 
@@ -47,8 +45,6 @@ class ContributionJobStatsListenerTest {
   void afterChunkError() {
     when(getJobParameters().getString(CENTRAL_SERVER_ID_KEY))
       .thenReturn(CENTRAL_SERVER_ID);
-
-    listener.afterChunkError(context);
 
     verify(contributionService).updateContributionStats(any(), any());
   }

@@ -18,6 +18,8 @@ public interface ContributionService {
 
   ContributionDTO completeContribution(UUID centralServerId);
 
+  void cancelAll();
+
   void logContributionError(UUID contributionId, ContributionErrorDTO error);
 
 }

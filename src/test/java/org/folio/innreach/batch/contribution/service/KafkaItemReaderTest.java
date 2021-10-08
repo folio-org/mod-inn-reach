@@ -7,8 +7,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.openMocks;
 
-import static org.folio.innreach.config.ContributionJobConfig.CONSUMER_REC_PROCESSOR;
-
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -26,7 +24,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.batch.item.ExecutionContext;
 
 import org.folio.innreach.batch.KafkaItemReader;
 import org.folio.innreach.domain.dto.folio.inventorystorage.InstanceIterationEvent;
@@ -55,19 +52,19 @@ class KafkaItemReaderTest {
   @BeforeEach
   void setUp() {
     openMocks(this);
-    reader.setRecordProcessor(CONSUMER_REC_PROCESSOR);
+    reader.setRecordProcessor(ContributionJobRunner.CONSUMER_REC_PROCESSOR);
   }
 
   @Test
   void shouldOpen() {
-    reader.open(new ExecutionContext());
+    reader.open();
 
     verify(kafkaConsumer).assign(topicPartitions);
   }
 
   @Test
   void shouldInitConsumerWhenOpen() {
-    reader.open(new ExecutionContext());
+    reader.open();
 
     verify(kafkaConsumer).assign(topicPartitions);
   }
@@ -102,7 +99,7 @@ class KafkaItemReaderTest {
 
   @Test
   void shouldUpdate() {
-    reader.update(new ExecutionContext());
+    reader.update();
 
     verify(kafkaConsumer).commitSync();
   }

@@ -7,10 +7,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import static org.folio.innreach.external.dto.InnReachResponse.okResponse;
-import static org.folio.innreach.fixture.ContributionFixture.createItem;
 import static org.folio.innreach.fixture.FolioContextFixture.createTenantExecutionService;
 
-import java.util.Collections;
 import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
@@ -21,7 +19,7 @@ import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import org.folio.innreach.batch.contribution.ContributionJobContext;
-import org.folio.innreach.batch.contribution.listener.ItemExceptionListener;
+import org.folio.innreach.batch.contribution.listener.ContributionExceptionListener;
 import org.folio.innreach.domain.dto.folio.ContributionItemCirculationStatus;
 import org.folio.innreach.domain.service.CentralServerService;
 import org.folio.innreach.domain.service.ContributionValidationService;
@@ -58,7 +56,7 @@ class ItemContributorTest {
   @Mock
   private ContributionJobContext jobContext;
   @Mock
-  private ItemExceptionListener exceptionListener;
+  private ContributionExceptionListener exceptionListener;
 
   @Spy
   private TenantScopedExecutionService tenantScopedExecutionService = createTenantExecutionService();
@@ -75,8 +73,6 @@ class ItemContributorTest {
     when(libraryMappingService.getAllMappings(any(), anyInt(), anyInt())).thenReturn(new LibraryMappingsDTO());
     when(centralServerService.getCentralServer(any())).thenReturn(new CentralServerDTO());
     when(validationService.getItemCirculationStatus(any(), any())).thenReturn(ContributionItemCirculationStatus.AVAILABLE);
-
-    service.write(Collections.singletonList(createItem()));
 
     verify(irContributionService).contributeBibItems(eq(CENTRAL_SERVER_ID), any(), any());
   }

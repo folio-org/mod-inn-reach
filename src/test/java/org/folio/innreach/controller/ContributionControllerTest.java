@@ -21,6 +21,7 @@ import static org.folio.innreach.fixture.JobResponseFixture.createJobResponse;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
+import org.folio.innreach.batch.contribution.service.ContributionJobRunner;
 import org.folio.innreach.domain.dto.folio.inventorystorage.JobResponse;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,7 +33,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlMergeMode;
 
-import org.folio.innreach.batch.contribution.service.ContributionJobRunner;
 import org.folio.innreach.client.InstanceStorageClient;
 import org.folio.innreach.client.MaterialTypesClient;
 import org.folio.innreach.controller.base.BaseControllerTest;

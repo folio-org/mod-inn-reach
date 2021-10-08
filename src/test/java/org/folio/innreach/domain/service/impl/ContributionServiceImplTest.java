@@ -26,7 +26,6 @@ import org.folio.innreach.client.InstanceStorageClient;
 import org.folio.innreach.domain.entity.Contribution;
 import org.folio.innreach.domain.entity.ContributionError;
 import org.folio.innreach.domain.service.ContributionValidationService;
-import org.folio.innreach.dto.ContributionDTO;
 import org.folio.innreach.dto.ContributionErrorDTO;
 import org.folio.innreach.mapper.ContributionMapper;
 import org.folio.innreach.mapper.ContributionMapperImpl;
@@ -77,7 +76,7 @@ class ContributionServiceImplTest {
 
     verify(repository).save(any(Contribution.class));
     verify(client).startInitialContribution(any());
-    verify(jobRunner).run(any(UUID.class), any(), any(ContributionDTO.class));
+    verify(jobRunner).run(any());
   }
 
   @Test

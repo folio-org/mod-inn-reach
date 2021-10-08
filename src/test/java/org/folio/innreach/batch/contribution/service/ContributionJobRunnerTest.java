@@ -10,8 +10,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import static org.folio.innreach.batch.contribution.ContributionJobContext.TENANT_ID_KEY;
-import static org.folio.innreach.config.ContributionJobConfig.CONTRIBUTION_JOB_LAUNCHER_NAME;
-import static org.folio.innreach.config.ContributionJobConfig.CONTRIBUTION_JOB_NAME;
 import static org.folio.innreach.fixture.ContributionFixture.createContribution;
 import static org.folio.innreach.fixture.ContributionFixture.mapper;
 
@@ -33,6 +31,8 @@ import org.springframework.batch.core.launch.JobLauncher;
 import org.springframework.batch.core.launch.support.SimpleJobOperator;
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.beans.factory.BeanFactory;
+
+import org.folio.innreach.batch.contribution.ContributionJobContext;
 
 class ContributionJobRunnerTest {
 
@@ -65,16 +65,13 @@ class ContributionJobRunnerTest {
     var contribution = mapper.toDTO(createContribution());
     contribution.setId(UUID.randomUUID());
 
-    when(beanFactory.getBean(CONTRIBUTION_JOB_LAUNCHER_NAME, JobLauncher.class)).thenReturn(jobLauncher);
-    when(beanFactory.getBean(CONTRIBUTION_JOB_NAME, Job.class)).thenReturn(job);
-
-    jobRunner.run(UUID.randomUUID(), "test", contribution);
+    jobRunner.run(new ContributionJobContext());
 
     verify(jobLauncher).run(eq(job), any());
   }
 
   @Test
-  void shouldRestartJob() throws Exception {
+  void shouldCancelJob() throws Exception {
     var contribution = mapper.toDTO(createContribution());
     contribution.setId(UUID.randomUUID());
 
@@ -91,7 +88,7 @@ class ContributionJobRunnerTest {
     when(jobExplorer.findRunningJobExecutions(any(String.class)))
       .thenReturn(singleton(jobExecution));
 
-    jobRunner.restart(TENANT_ID);
+    jobRunner.cancelJobs();
 
     verify(jobOperator).restart(anyLong());
     verify(jobRepository).update(any(JobExecution.class));

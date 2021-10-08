@@ -12,14 +12,11 @@ import lombok.Setter;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.TopicPartition;
-import org.springframework.batch.item.ExecutionContext;
-import org.springframework.batch.item.support.AbstractItemStreamItemReader;
 
 /**
  * <p>
- * An {@link org.springframework.batch.item.ItemReader} implementation for Apache Kafka.
+ * Apache Kafka item reader.
  * Uses a {@link KafkaConsumer} to read data from a given topic.
- * Multiple partitions within the same topic can be assigned to this reader.
  * </p>
  *
  * <p>
@@ -28,7 +25,7 @@ import org.springframework.batch.item.support.AbstractItemStreamItemReader;
  */
 @Setter
 @RequiredArgsConstructor
-public class KafkaItemReader<K, V> extends AbstractItemStreamItemReader<V> {
+public class KafkaItemReader<K, V> implements AutoCloseable {
 
   private static final long DEFAULT_POLL_TIMEOUT = 30L;
 
@@ -41,8 +38,7 @@ public class KafkaItemReader<K, V> extends AbstractItemStreamItemReader<V> {
   private BiConsumer<K, V> recordProcessor;
   private Duration pollTimeout = Duration.ofSeconds(DEFAULT_POLL_TIMEOUT);
 
-  @Override
-  public void open(ExecutionContext executionContext) {
+  public void open() {
     if (kafkaConsumer == null) {
       kafkaConsumer = new KafkaConsumer<>(consumerProperties);
     }
@@ -51,7 +47,6 @@ public class KafkaItemReader<K, V> extends AbstractItemStreamItemReader<V> {
     partitionOffsets.forEach(kafkaConsumer::seek);
   }
 
-  @Override
   public V read() {
     if (consumerRecords == null || !consumerRecords.hasNext()) {
       consumerRecords = kafkaConsumer.poll(pollTimeout).iterator();
@@ -67,8 +62,7 @@ public class KafkaItemReader<K, V> extends AbstractItemStreamItemReader<V> {
     }
   }
 
-  @Override
-  public void update(ExecutionContext executionContext) {
+  public void update() {
     kafkaConsumer.commitSync();
   }
 
