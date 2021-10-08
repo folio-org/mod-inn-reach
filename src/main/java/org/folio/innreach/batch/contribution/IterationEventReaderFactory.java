@@ -28,7 +28,7 @@ public class IterationEventReaderFactory {
   public static final Consumer<ConsumerRecord<String, InstanceIterationEvent>> CONSUMER_REC_PROCESSOR =
     rec -> {
       var event = rec.value();
-      var jobId = UUID.nameUUIDFromBytes(rec.headers().lastHeader(ITERATION_JOB_ID_HEADER).value());
+      var jobId = getJobId(rec);
       event.setInstanceId(UUID.fromString(rec.key()));
       event.setJobId(jobId);
     };
@@ -36,7 +36,6 @@ public class IterationEventReaderFactory {
   private final KafkaProperties kafkaProperties;
   private final FolioEnvironment folioEnv;
   private final ContributionJobProperties jobProperties;
-
 
   public KafkaItemReader<String, InstanceIterationEvent> createReader(String tenantId) {
     Properties props = new Properties();
@@ -50,6 +49,10 @@ public class IterationEventReaderFactory {
     reader.setPartitionOffsets(new HashMap<>());
     reader.setRecordProcessor(CONSUMER_REC_PROCESSOR);
     return reader;
+  }
+
+  private static UUID getJobId(ConsumerRecord<String, InstanceIterationEvent> rec) {
+    return UUID.fromString(new String(rec.headers().lastHeader(ITERATION_JOB_ID_HEADER).value()));
   }
 
 }
