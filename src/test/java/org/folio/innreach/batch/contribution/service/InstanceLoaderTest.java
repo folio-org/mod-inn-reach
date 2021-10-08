@@ -5,6 +5,9 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import static org.folio.innreach.fixture.ContributionFixture.createContributionJobContext;
@@ -31,7 +34,6 @@ import org.folio.innreach.domain.service.impl.TenantScopedExecutionService;
 @ExtendWith(MockitoExtension.class)
 class InstanceLoaderTest {
 
-  private static final UUID JOB_ID = randomUUID();
   private static final ContributionJobContext JOB_CONTEXT = createContributionJobContext();
 
   @Mock
@@ -74,6 +76,7 @@ class InstanceLoaderTest {
     var result = instanceLoader.load(event);
 
     assertNull(result);
+    verify(inventoryService).getInstance(eq(event.getInstanceId()));
   }
 
   @Test
@@ -83,9 +86,22 @@ class InstanceLoaderTest {
     var instance = createInstance();
     instance.setSource("FOLIO");
 
+    when(inventoryService.getInstance(any(UUID.class))).thenReturn(instance);
+
     var result = instanceLoader.load(event);
 
     assertNull(result);
+  }
+
+  @Test
+  void shouldSkipUnknownEvent() throws Exception {
+    var event =
+      InstanceIterationEvent.of(randomUUID(), "test", "test", randomUUID());
+
+    var result = instanceLoader.load(event);
+
+    assertNull(result);
+    verifyNoInteractions(inventoryService);
   }
 
 }

@@ -1,7 +1,6 @@
 package org.folio.innreach.batch.contribution.service;
 
 import static java.lang.Math.min;
-import static java.util.List.of;
 
 import static org.folio.innreach.batch.contribution.ContributionJobContextManager.beginContributionJobContext;
 import static org.folio.innreach.batch.contribution.ContributionJobContextManager.endContributionJobContext;
@@ -83,7 +82,7 @@ public class ContributionJobRunner {
           return;
         }
 
-        Instance instance = loadInstance(event, stats);
+        Instance instance = loadInstance(event);
         if (instance == null) {
           continue;
         }
@@ -156,7 +155,7 @@ public class ContributionJobRunner {
     }
   }
 
-  private Instance loadInstance(InstanceIterationEvent event, Statistics stats) {
+  private Instance loadInstance(InstanceIterationEvent event) {
     Instance instance = null;
     try {
       instance = retryTemplate.execute(r -> instanceLoader.load(event));
@@ -178,7 +177,7 @@ public class ContributionJobRunner {
       return event;
     } catch (Exception e) {
       instanceExceptionListener.logReaderError(e);
-      throw new RuntimeException("Can't read instance iteration event: " + e.getMessage(), e);
+      throw new IllegalStateException("Can't read instance iteration event: " + e.getMessage(), e);
     }
   }
 

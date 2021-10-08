@@ -7,7 +7,6 @@ import java.util.UUID;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
-import org.springframework.batch.item.ItemProcessor;
 import org.springframework.stereotype.Service;
 
 import org.folio.innreach.batch.contribution.ContributionJobContextManager;
@@ -22,7 +21,7 @@ public class InstanceLoader {
 
   private final InventoryViewService inventoryService;
 
-  public Instance load(InstanceIterationEvent event) throws Exception {
+  public Instance load(InstanceIterationEvent event) {
     log.info("Processing instance iteration event = {}", event);
 
     if (isUnknownEvent(event)) {

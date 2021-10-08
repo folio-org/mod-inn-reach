@@ -19,8 +19,6 @@ import org.folio.innreach.external.service.InnReachContributionService;
 @RequiredArgsConstructor
 public class InstanceContributor {
 
-  public static final String INSTANCE_CONTRIBUTED_ID_CONTEXT = "contribution.instance.contributed-id";
-
   private final InnReachContributionService contributionService;
   private final InstanceTransformationService instanceTransformationService;
 
