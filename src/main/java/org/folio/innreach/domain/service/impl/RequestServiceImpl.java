@@ -164,7 +164,7 @@ public class RequestServiceImpl implements RequestService {
 
   private UUID getDefaultServicePointId(String userId) {
     return inventoryStorageClient.findServicePointsUsers(UUID.fromString(userId))
-      .getServicePointsUsers().stream().findFirst().orElseThrow(
+      .getResult().stream().findFirst().orElseThrow(
         () -> new EntityNotFoundException("Service points not found for user id = " + userId)
       ).getDefaultServicePointId();
   }

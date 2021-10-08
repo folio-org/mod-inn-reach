@@ -47,7 +47,6 @@ import org.folio.innreach.domain.dto.OwningSiteCancelsRequestDTO;
 import org.folio.innreach.domain.dto.folio.ResultList;
 import org.folio.innreach.domain.dto.folio.inventory.InventoryItemStatus;
 import org.folio.innreach.domain.dto.folio.inventorystorage.ServicePointUserDTO;
-import org.folio.innreach.domain.dto.folio.inventorystorage.ServicePointsUsersDTO;
 import org.folio.innreach.domain.dto.folio.requeststorage.RequestDTO;
 import org.folio.innreach.domain.entity.TransactionItemHold;
 import org.folio.innreach.domain.service.InnReachTransactionService;
@@ -150,7 +149,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     var servicePointUserDTO = new ServicePointUserDTO();
     servicePointUserDTO.setUserId(fromString(user.getId()));
     servicePointUserDTO.setDefaultServicePointId(randomUUID());
-    when(inventoryStorageClient.findServicePointsUsers(UUID.fromString(user.getId()))).thenReturn(new ServicePointsUsersDTO(List.of(servicePointUserDTO)));
+    when(inventoryStorageClient.findServicePointsUsers(UUID.fromString(user.getId()))).thenReturn(ResultList.of(1, List.of(servicePointUserDTO)));
     when(requestsClient.sendRequest(any(RequestDTO.class))).then((Answer<RequestDTO>) invocationOnMock -> {
       var sentRequest = (RequestDTO) invocationOnMock.getArgument(0);
       sentRequest.setId(randomUUID());
@@ -196,7 +195,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     var servicePointUserDTO = new ServicePointUserDTO();
     servicePointUserDTO.setUserId(fromString(user.getId()));
     servicePointUserDTO.setDefaultServicePointId(randomUUID());
-    when(inventoryStorageClient.findServicePointsUsers(UUID.fromString(user.getId()))).thenReturn(new ServicePointsUsersDTO(List.of(servicePointUserDTO)));
+    when(inventoryStorageClient.findServicePointsUsers(UUID.fromString(user.getId()))).thenReturn(ResultList.of(1, List.of(servicePointUserDTO)));
     when(requestsClient.sendRequest(any(RequestDTO.class))).then((Answer<RequestDTO>) invocationOnMock -> {
       var sentRequest = (RequestDTO) invocationOnMock.getArgument(0);
       sentRequest.setId(randomUUID());
@@ -370,7 +369,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     var servicePointUserDTO = new ServicePointUserDTO();
     servicePointUserDTO.setUserId(fromString(user.getId()));
     servicePointUserDTO.setDefaultServicePointId(randomUUID());
-    when(inventoryStorageClient.findServicePointsUsers(fromString(user.getId()))).thenReturn(new ServicePointsUsersDTO(List.of(servicePointUserDTO)));
+    when(inventoryStorageClient.findServicePointsUsers(fromString(user.getId()))).thenReturn(ResultList.of(1, List.of(servicePointUserDTO)));
     when(innReachClient.postInnReachApi(any(), anyString(), anyString(), anyString(), any())).thenReturn("response");
 
     var itemHoldDTO = deserializeFromJsonFile(

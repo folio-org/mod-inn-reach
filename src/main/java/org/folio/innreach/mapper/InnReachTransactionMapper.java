@@ -1,14 +1,12 @@
 package org.folio.innreach.mapper;
 
+import com.google.common.collect.Lists;
 import org.folio.innreach.domain.entity.TransactionItemHold;
 import org.folio.innreach.domain.entity.TransactionPickupLocation;
 import org.folio.innreach.dto.TransactionItemHoldDTO;
 import org.mapstruct.Builder;
 import org.mapstruct.InjectionStrategy;
 import org.mapstruct.Mapper;
-
-import java.util.ArrayList;
-import java.util.Arrays;
 
 @Mapper(componentModel = "spring", injectionStrategy = InjectionStrategy.CONSTRUCTOR, uses = MappingMethods.class, builder = @Builder(disableBuilder = true))
 public interface InnReachTransactionMapper {
@@ -36,8 +34,7 @@ public interface InnReachTransactionMapper {
   }
 
   default String map(TransactionPickupLocation value) {
-    var locationTokens =
-      new ArrayList<>(Arrays.asList(value.getPickupLocCode(), value.getDisplayName(), value.getPrintName()));
+    var locationTokens = Lists.newArrayList(value.getPickupLocCode(), value.getDisplayName(), value.getPrintName());
 
     if (value.getDeliveryStop() != null) {
       locationTokens.add(value.getDeliveryStop());

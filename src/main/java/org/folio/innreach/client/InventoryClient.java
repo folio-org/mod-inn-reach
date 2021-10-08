@@ -19,6 +19,6 @@ public interface InventoryClient {
   @GetMapping("/items/{itemId}")
   InventoryItemDTO getItemById(@PathVariable("itemId") UUID itemId);
 
-  @GetMapping("/items/query==(hrid=\"{hrId}\")")
+  @GetMapping("/items/query=(hrid==\"{hrId}\")")
   InventoryItemDTO getItemByHrId(@PathVariable("hrId") String hrId);
 }

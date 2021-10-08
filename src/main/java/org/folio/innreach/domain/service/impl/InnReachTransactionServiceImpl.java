@@ -20,7 +20,7 @@ public class InnReachTransactionServiceImpl implements InnReachTransactionServic
   private final CentralServerService centralServerService;
 
   private InnReachTransaction createTransactionWithItemHold(String trackingId, String centralCode) {
-    InnReachTransaction transaction = new InnReachTransaction();
+    var transaction = new InnReachTransaction();
     transaction.setTrackingId(trackingId);
     transaction.setCentralServerCode(centralCode);
     transaction.setType(TransactionType.ITEM);
