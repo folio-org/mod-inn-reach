@@ -31,7 +31,8 @@
       "enum": [
         "In Progress",
         "Complete",
-        "Not started"
+        "Not started",
+        "Cancelled"
       ],
       "default": "Not started"
     },
