@@ -19,9 +19,6 @@ import java.util.function.BiConsumer;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.TopicPartition;
-import org.apache.kafka.common.header.Headers;
-import org.apache.kafka.common.header.internals.RecordHeader;
-import org.apache.kafka.common.header.internals.RecordHeaders;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -78,25 +75,22 @@ class KafkaItemReaderTest {
   @Test
   void shouldRead() {
     var instanceId = UUID.randomUUID();
+    var jobId = UUID.randomUUID();
 
     var rec = new ConsumerRecord<>(
       "topic", 0, 0, instanceId.toString(), new InstanceIterationEvent());
-    rec.headers().add(ITERATION_JOB_ID_HEADER, "test".getBytes());
+    rec.headers().add(ITERATION_JOB_ID_HEADER, jobId.toString().getBytes());
 
     when(kafkaConsumer.poll(any()).iterator()).thenReturn(List.of(rec).iterator());
 
     var event = reader.read();
 
     assertEquals(instanceId, event.getInstanceId());
+    assertEquals(jobId, event.getJobId());
   }
 
   @Test
   void shouldReturnNullOnRead() {
-    var instanceId = UUID.randomUUID();
-    var consumerRecord = new ConsumerRecord<>(
-      "topic", 0, 0,
-      instanceId.toString(), new InstanceIterationEvent());
-
     when(consumerRecords.hasNext()).thenReturn(false);
 
     var event = reader.read();
