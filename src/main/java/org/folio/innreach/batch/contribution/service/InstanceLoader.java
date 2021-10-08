@@ -18,12 +18,11 @@ import org.folio.innreach.dto.Instance;
 @Log4j2
 @Service
 @RequiredArgsConstructor
-public class InstanceLoader implements ItemProcessor<InstanceIterationEvent, Instance> {
+public class InstanceLoader {
 
   private final InventoryViewService inventoryService;
 
-  @Override
-  public Instance process(InstanceIterationEvent event) throws Exception {
+  public Instance load(InstanceIterationEvent event) throws Exception {
     log.info("Processing instance iteration event = {}", event);
 
     if (isUnknownEvent(event)) {

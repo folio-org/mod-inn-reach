@@ -1,98 +1,121 @@
 package org.folio.innreach.batch.contribution.service;
 
-import static java.util.Collections.singleton;
-import static java.util.Collections.singletonList;
-import static java.util.Map.of;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
-import static org.folio.innreach.batch.contribution.ContributionJobContext.TENANT_ID_KEY;
-import static org.folio.innreach.fixture.ContributionFixture.createContribution;
-import static org.folio.innreach.fixture.ContributionFixture.mapper;
+import static org.folio.innreach.fixture.ContributionFixture.createContributionJobContext;
+import static org.folio.innreach.fixture.ContributionFixture.createInstance;
+import static org.folio.innreach.fixture.TestUtil.createNoRetryTemplate;
 
-import java.util.UUID;
-
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
-import org.springframework.batch.core.BatchStatus;
-import org.springframework.batch.core.Job;
-import org.springframework.batch.core.JobExecution;
-import org.springframework.batch.core.JobParameter;
-import org.springframework.batch.core.JobParameters;
-import org.springframework.batch.core.StepExecution;
-import org.springframework.batch.core.explore.JobExplorer;
-import org.springframework.batch.core.launch.JobLauncher;
-import org.springframework.batch.core.launch.support.SimpleJobOperator;
-import org.springframework.batch.core.repository.JobRepository;
-import org.springframework.beans.factory.BeanFactory;
+import org.mockito.Spy;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.autoconfigure.kafka.KafkaProperties;
+import org.springframework.retry.support.RetryTemplate;
 
-import org.folio.innreach.batch.contribution.ContributionJobContext;
+import org.folio.innreach.batch.KafkaItemReader;
+import org.folio.innreach.batch.contribution.IterationEventReaderFactory;
+import org.folio.innreach.batch.contribution.listener.ContributionExceptionListener;
+import org.folio.innreach.batch.contribution.listener.ContributionJobStatsListener;
+import org.folio.innreach.config.props.ContributionJobProperties;
+import org.folio.innreach.config.props.FolioEnvironment;
+import org.folio.innreach.domain.dto.folio.inventorystorage.InstanceIterationEvent;
+import org.folio.innreach.domain.service.ContributionService;
+import org.folio.innreach.dto.Instance;
 
+@ExtendWith(MockitoExtension.class)
 class ContributionJobRunnerTest {
 
-  private static final String TENANT_ID = "test";
-
+  @Qualifier("instanceExceptionListener")
   @Mock
-  private BeanFactory beanFactory;
+  private ContributionExceptionListener instanceExceptionListener;
+  @Qualifier("itemExceptionListener")
+  @Mock
+  private ContributionExceptionListener itemExceptionListener;
+  @Mock
+  private ContributionJobStatsListener statsListener;
+  @Mock
+  private InstanceLoader instanceLoader;
+  @Mock
+  private InstanceContributor instanceContributor;
+  @Mock
+  private ItemContributor itemContributor;
+  @Mock
+  private ContributionJobProperties jobProperties;
+  @Mock
+  private KafkaProperties kafkaProperties;
+  @Mock
+  private FolioEnvironment folioEnv;
+  @Mock
+  private ContributionService contributionService;
+  @Mock
+  private IterationEventReaderFactory factory;
+  @Mock
+  private KafkaItemReader<String, InstanceIterationEvent> reader;
+  @Spy
+  private RetryTemplate retryTemplate = createNoRetryTemplate();
 
   @InjectMocks
   private ContributionJobRunner jobRunner;
 
-  @Mock
-  private Job job;
-  @Mock
-  private JobLauncher jobLauncher;
-  @Mock
-  private JobExplorer jobExplorer;
-  @Mock
-  private SimpleJobOperator jobOperator;
-  @Mock
-  private JobRepository jobRepository;
-
-  @BeforeEach
-  public void beforeEachSetup() {
-    MockitoAnnotations.openMocks(this);
-  }
-
   @Test
   void shouldRunJob() throws Exception {
-    var contribution = mapper.toDTO(createContribution());
-    contribution.setId(UUID.randomUUID());
+    when(factory.createReader(any())).thenReturn(reader);
+    when(reader.read())
+      .thenReturn(new InstanceIterationEvent())
+      .thenReturn(null);
+    when(instanceLoader.load(any())).thenReturn(createInstance());
+    when(jobProperties.getChunkSize()).thenReturn(100);
 
-    jobRunner.run(new ContributionJobContext());
+    jobRunner.run(createContributionJobContext());
 
-    verify(jobLauncher).run(eq(job), any());
+    verify(reader, times(2)).read();
+    verify(instanceContributor).contributeInstance(any());
+    verify(itemContributor).contributeItems(any(), any());
   }
 
   @Test
-  void shouldCancelJob() throws Exception {
-    var contribution = mapper.toDTO(createContribution());
-    contribution.setId(UUID.randomUUID());
+  void shouldRunJobWithNoInstanceItems() throws Exception {
+    Instance instance = createInstance();
+    instance.setItems(null);
 
-    when(beanFactory.getBean(JobExplorer.class)).thenReturn(jobExplorer);
-    when(beanFactory.getBean(SimpleJobOperator.class)).thenReturn(jobOperator);
-    when(beanFactory.getBean(any(), eq(JobRepository.class))).thenReturn(jobRepository);
+    when(factory.createReader(any())).thenReturn(reader);
+    when(reader.read())
+      .thenReturn(new InstanceIterationEvent())
+      .thenReturn(null);
+    when(instanceLoader.load(any())).thenReturn(instance);
 
-    var jobParameters = new JobParameters(of(TENANT_ID_KEY, new JobParameter(TENANT_ID)));
-    var jobExecution = new JobExecution(42L, jobParameters);
-    var stepExecution = new StepExecution("test", jobExecution);
-    stepExecution.setStatus(BatchStatus.STARTED);
-    jobExecution.addStepExecutions(singletonList(stepExecution));
+    jobRunner.run(createContributionJobContext());
 
-    when(jobExplorer.findRunningJobExecutions(any(String.class)))
-      .thenReturn(singleton(jobExecution));
+    verify(reader, times(2)).read();
+    verify(instanceContributor).contributeInstance(any());
+    verifyNoInteractions(itemContributor);
+  }
 
+  @Test
+  void shouldRunJobWithNoInstances() {
+    when(factory.createReader(any())).thenReturn(reader);
+    when(reader.read()).thenReturn(null);
+
+    jobRunner.run(createContributionJobContext());
+
+    verify(reader).read();
+    verifyNoInteractions(instanceContributor);
+    verifyNoInteractions(itemContributor);
+  }
+
+  @Test
+  void shouldCancelJob() {
     jobRunner.cancelJobs();
 
-    verify(jobOperator).restart(anyLong());
-    verify(jobRepository).update(any(JobExecution.class));
-    verify(jobRepository).update(any(StepExecution.class));
+    verify(contributionService).cancelAll();
   }
 
 }

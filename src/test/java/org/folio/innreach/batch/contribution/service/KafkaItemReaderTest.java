@@ -7,6 +7,9 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.openMocks;
 
+import static org.folio.innreach.batch.contribution.IterationEventReaderFactory.CONSUMER_REC_PROCESSOR;
+import static org.folio.innreach.batch.contribution.IterationEventReaderFactory.ITERATION_JOB_ID_HEADER;
+
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -16,6 +19,9 @@ import java.util.function.BiConsumer;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.TopicPartition;
+import org.apache.kafka.common.header.Headers;
+import org.apache.kafka.common.header.internals.RecordHeader;
+import org.apache.kafka.common.header.internals.RecordHeaders;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -52,7 +58,7 @@ class KafkaItemReaderTest {
   @BeforeEach
   void setUp() {
     openMocks(this);
-    reader.setRecordProcessor(ContributionJobRunner.CONSUMER_REC_PROCESSOR);
+    reader.setRecordProcessor(CONSUMER_REC_PROCESSOR);
   }
 
   @Test
@@ -72,11 +78,12 @@ class KafkaItemReaderTest {
   @Test
   void shouldRead() {
     var instanceId = UUID.randomUUID();
-    var consumerRecord = new ConsumerRecord<>(
-      "topic", 0, 0,
-      instanceId.toString(), new InstanceIterationEvent());
 
-    when(kafkaConsumer.poll(any()).iterator()).thenReturn(List.of(consumerRecord).iterator());
+    var rec = new ConsumerRecord<>(
+      "topic", 0, 0, instanceId.toString(), new InstanceIterationEvent());
+    rec.headers().add(ITERATION_JOB_ID_HEADER, "test".getBytes());
+
+    when(kafkaConsumer.poll(any()).iterator()).thenReturn(List.of(rec).iterator());
 
     var event = reader.read();
 

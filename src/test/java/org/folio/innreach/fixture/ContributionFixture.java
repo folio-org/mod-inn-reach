@@ -5,7 +5,6 @@ import static java.util.List.of;
 import static java.util.UUID.fromString;
 import static org.jeasy.random.FieldPredicates.named;
 
-import static org.folio.innreach.batch.contribution.service.InstanceContributor.INSTANCE_CONTRIBUTED_ID_CONTEXT;
 import static org.folio.innreach.domain.entity.Contribution.Status.IN_PROGRESS;
 import static org.folio.innreach.fixture.TestUtil.deserializeFromJsonFile;
 
@@ -18,10 +17,8 @@ import java.util.stream.Collectors;
 import lombok.experimental.UtilityClass;
 import org.jeasy.random.EasyRandom;
 import org.jeasy.random.EasyRandomParameters;
-import org.springframework.batch.core.JobExecution;
-import org.springframework.batch.core.StepExecution;
-import org.springframework.batch.item.ExecutionContext;
 
+import org.folio.innreach.batch.contribution.ContributionJobContext;
 import org.folio.innreach.client.InventoryViewClient;
 import org.folio.innreach.domain.dto.folio.ResultList;
 import org.folio.innreach.domain.dto.folio.inventorystorage.JobResponse;
@@ -87,6 +84,10 @@ public class ContributionFixture {
     return contribution;
   }
 
+  public static ContributionJobContext createContributionJobContext() {
+    return contributionRandom.nextObject(ContributionJobContext.class);
+  }
+
   public static InventoryViewClient.InstanceView createInstanceView() {
     var instanceView = new InventoryViewClient.InstanceView();
     instanceView.setInstance(createInstance());
@@ -141,18 +142,6 @@ public class ContributionFixture {
       .numberOfRecordsPublished(0)
       .submittedDate(OffsetDateTime.now())
       .build();
-  }
-
-  public static StepExecution createBatchStepExecution() {
-    var jobExecution = new JobExecution(42L);
-    jobExecution.setExecutionContext(createExecutionContext());
-    return jobExecution.createStepExecution("test");
-  }
-
-  public static ExecutionContext createExecutionContext() {
-    var executionContext = new ExecutionContext();
-    executionContext.put(INSTANCE_CONTRIBUTED_ID_CONTEXT, singletonList(UUID.randomUUID().toString()));
-    return executionContext;
   }
 
   public static TransformedMARCRecordDTO createMARCRecord() {

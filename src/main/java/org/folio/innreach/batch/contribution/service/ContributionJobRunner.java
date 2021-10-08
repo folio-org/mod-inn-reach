@@ -1,32 +1,28 @@
 package org.folio.innreach.batch.contribution.service;
 
+import static java.lang.Math.min;
 import static java.util.List.of;
 
 import static org.folio.innreach.batch.contribution.ContributionJobContextManager.beginContributionJobContext;
 import static org.folio.innreach.batch.contribution.ContributionJobContextManager.endContributionJobContext;
 
-import java.time.Duration;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Properties;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
-import java.util.function.Consumer;
 import java.util.stream.StreamSupport;
 
 import com.google.common.collect.Iterables;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
-import org.apache.kafka.clients.consumer.ConsumerRecord;
-import org.apache.kafka.common.TopicPartition;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.boot.autoconfigure.kafka.KafkaProperties;
 import org.springframework.retry.support.RetryTemplate;
 import org.springframework.stereotype.Service;
 
 import org.folio.innreach.batch.KafkaItemReader;
 import org.folio.innreach.batch.contribution.ContributionJobContext;
 import org.folio.innreach.batch.contribution.ContributionJobContext.Statistics;
+import org.folio.innreach.batch.contribution.IterationEventReaderFactory;
 import org.folio.innreach.batch.contribution.listener.ContributionExceptionListener;
 import org.folio.innreach.batch.contribution.listener.ContributionJobStatsListener;
 import org.folio.innreach.config.props.ContributionJobProperties;
@@ -41,16 +37,6 @@ import org.folio.innreach.dto.Item;
 @RequiredArgsConstructor
 public class ContributionJobRunner {
 
-  public static final String ITERATION_JOB_ID_HEADER = "iteration-job-id";
-
-  public static final Consumer<ConsumerRecord<String, InstanceIterationEvent>> CONSUMER_REC_PROCESSOR =
-    rec -> {
-      var event = rec.value();
-      var jobId = UUID.nameUUIDFromBytes(rec.headers().lastHeader(ITERATION_JOB_ID_HEADER).value());
-      event.setInstanceId(UUID.fromString(rec.key()));
-      event.setJobId(jobId);
-    };
-
   @Qualifier("instanceExceptionListener")
   private final ContributionExceptionListener instanceExceptionListener;
   @Qualifier("itemExceptionListener")
@@ -60,10 +46,10 @@ public class ContributionJobRunner {
   private final InstanceContributor instanceContributor;
   private final ItemContributor itemContributor;
   private final ContributionJobProperties jobProperties;
-  private final KafkaProperties kafkaProperties;
   private final FolioEnvironment folioEnv;
   private final ContributionService contributionService;
   private final RetryTemplate retryTemplate;
+  private final IterationEventReaderFactory itemReaderFactory;
 
   public void runAsync(UUID centralServerId, String tenantId, UUID contributionId, UUID iterationJobId) {
     var context = ContributionJobContext.builder()
@@ -85,7 +71,7 @@ public class ContributionJobRunner {
 
     var stats = new Statistics();
     try (var kafkaReader =
-           kafkaReader(kafkaProperties, jobProperties, folioEnv, context.getTenantId())) {
+           itemReaderFactory.createReader(context.getTenantId())) {
 
       beginContributionJobContext(context);
 
@@ -124,7 +110,14 @@ public class ContributionJobRunner {
     var bibId = instance.getHrid();
     var items = instance.getItems();
 
-    StreamSupport.stream(Iterables.partition(items, jobProperties.getChunkSize()).spliterator(), false)
+    if (CollectionUtils.isEmpty(items)) {
+      log.info("No items found for bib {}", instance.getHrid());
+      return;
+    }
+
+    int chunkSize = min(jobProperties.getChunkSize(), 1);
+
+    StreamSupport.stream(Iterables.partition(items, chunkSize).spliterator(), false)
       .forEach(itemsChunk -> contributeItems(bibId, itemsChunk, stats));
   }
 
@@ -166,7 +159,7 @@ public class ContributionJobRunner {
   private Instance loadInstance(InstanceIterationEvent event, Statistics stats) {
     Instance instance = null;
     try {
-      instance = retryTemplate.execute(r -> instanceLoader.process(event));
+      instance = retryTemplate.execute(r -> instanceLoader.load(event));
     } catch (Exception e) {
       instanceExceptionListener.logProcessError(e, event.getInstanceId());
     }
@@ -187,23 +180,6 @@ public class ContributionJobRunner {
       instanceExceptionListener.logReaderError(e);
       throw new RuntimeException("Can't read instance iteration event: " + e.getMessage(), e);
     }
-  }
-
-  private static KafkaItemReader<String, InstanceIterationEvent> kafkaReader(KafkaProperties kafkaProperties,
-                                                                             ContributionJobProperties jobProperties,
-                                                                             FolioEnvironment folioEnv, String tenantId) {
-    Properties props = new Properties();
-    props.putAll(kafkaProperties.buildConsumerProperties());
-
-    var topic = String.format("%s.%s.%s",
-      folioEnv.getEnvironment(), tenantId, jobProperties.getReaderTopic());
-
-    var reader = new KafkaItemReader<String, InstanceIterationEvent>(props, of(new TopicPartition(topic, 0)));
-    reader.setPollTimeout(Duration.ofSeconds(jobProperties.getReaderPollTimeoutSec()));
-    reader.setPartitionOffsets(new HashMap<>());
-    reader.setRecordProcessor(CONSUMER_REC_PROCESSOR);
-
-    return reader;
   }
 
 }
