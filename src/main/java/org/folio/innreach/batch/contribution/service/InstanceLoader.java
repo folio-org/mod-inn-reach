@@ -27,7 +27,7 @@ public class InstanceLoader implements ItemProcessor<InstanceIterationEvent, Ins
     log.info("Processing instance iteration event = {}", event);
 
     if (isUnknownEvent(event)) {
-      log.info("Skipping unknown event of job {}, current job is {}", event.getJobId(), getIterationJobId());
+      log.info("Skipping unknown event, current job is {}", getIterationJobId());
       return null;
     }
 
