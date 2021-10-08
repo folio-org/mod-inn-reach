@@ -112,7 +112,7 @@ public class ItemContributor {
 
       return bibItem;
     } catch (Exception e) {
-      exceptionListener.logWriteError(new RuntimeException("Unable to load item info", e), item.getId());
+      exceptionListener.logWriteError(new RuntimeException("Unable to load item info: " + e.getMessage(), e), item.getId());
       return null;
     }
   }

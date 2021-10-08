@@ -5,7 +5,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
@@ -35,7 +35,7 @@ public class KafkaItemReader<K, V> implements AutoCloseable {
   private Map<TopicPartition, Long> partitionOffsets;
   private KafkaConsumer<K, V> kafkaConsumer;
   private Iterator<ConsumerRecord<K, V>> consumerRecords;
-  private BiConsumer<K, V> recordProcessor;
+  private Consumer<ConsumerRecord<K, V>> recordProcessor;
   private Duration pollTimeout = Duration.ofSeconds(DEFAULT_POLL_TIMEOUT);
 
   public void open() {
@@ -54,7 +54,7 @@ public class KafkaItemReader<K, V> implements AutoCloseable {
 
     if (consumerRecords.hasNext()) {
       ConsumerRecord<K, V> rec = consumerRecords.next();
-      recordProcessor.accept(rec.key(), rec.value());
+      recordProcessor.accept(rec);
       partitionOffsets.put(new TopicPartition(rec.topic(), rec.partition()), rec.offset());
       return rec.value();
     } else {

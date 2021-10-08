@@ -11,12 +11,13 @@ import java.util.List;
 import java.util.Properties;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
-import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 import java.util.stream.StreamSupport;
 
 import com.google.common.collect.Iterables;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.common.TopicPartition;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.kafka.KafkaProperties;
@@ -40,8 +41,15 @@ import org.folio.innreach.dto.Item;
 @RequiredArgsConstructor
 public class ContributionJobRunner {
 
-  public static final BiConsumer<String, InstanceIterationEvent> CONSUMER_REC_PROCESSOR =
-    (String key, InstanceIterationEvent value) -> value.setInstanceId(UUID.fromString(key));
+  public static final String ITERATION_JOB_ID_HEADER = "iteration-job-id";
+
+  public static final Consumer<ConsumerRecord<String, InstanceIterationEvent>> CONSUMER_REC_PROCESSOR =
+    rec -> {
+      var event = rec.value();
+      var jobId = UUID.nameUUIDFromBytes(rec.headers().lastHeader(ITERATION_JOB_ID_HEADER).value());
+      event.setInstanceId(UUID.fromString(rec.key()));
+      event.setJobId(jobId);
+    };
 
   @Qualifier("instanceExceptionListener")
   private final ContributionExceptionListener instanceExceptionListener;
@@ -177,13 +185,13 @@ public class ContributionJobRunner {
       return event;
     } catch (Exception e) {
       instanceExceptionListener.logReaderError(e);
-      throw new RuntimeException("Can't read instance iteration event", e);
+      throw new RuntimeException("Can't read instance iteration event: " + e.getMessage(), e);
     }
   }
 
   private static KafkaItemReader<String, InstanceIterationEvent> kafkaReader(KafkaProperties kafkaProperties,
-                                                                      ContributionJobProperties jobProperties,
-                                                                      FolioEnvironment folioEnv, String tenantId) {
+                                                                             ContributionJobProperties jobProperties,
+                                                                             FolioEnvironment folioEnv, String tenantId) {
     Properties props = new Properties();
     props.putAll(kafkaProperties.buildConsumerProperties());
 
