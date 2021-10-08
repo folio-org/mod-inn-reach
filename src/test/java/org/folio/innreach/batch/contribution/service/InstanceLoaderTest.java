@@ -5,14 +5,12 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import static org.folio.innreach.fixture.ContributionFixture.createContributionJobContext;
 import static org.folio.innreach.fixture.ContributionFixture.createInstance;
-import static org.folio.innreach.fixture.FolioContextFixture.createTenantExecutionService;
 
 import java.util.UUID;
 
@@ -22,14 +20,12 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import org.folio.innreach.batch.contribution.ContributionJobContext;
 import org.folio.innreach.batch.contribution.ContributionJobContextManager;
 import org.folio.innreach.domain.dto.folio.inventorystorage.InstanceIterationEvent;
 import org.folio.innreach.domain.service.InventoryViewService;
-import org.folio.innreach.domain.service.impl.TenantScopedExecutionService;
 
 @ExtendWith(MockitoExtension.class)
 class InstanceLoaderTest {
@@ -53,7 +49,7 @@ class InstanceLoaderTest {
   }
 
   @Test
-  void shouldProcess() throws Exception {
+  void shouldProcess() {
     var event =
       InstanceIterationEvent.of(JOB_CONTEXT.getIterationJobId(), "test", "test", randomUUID());
     var instance = createInstance();
@@ -67,7 +63,7 @@ class InstanceLoaderTest {
   }
 
   @Test
-  void shouldSkipNotFoundInstance() throws Exception {
+  void shouldSkipNotFoundInstance() {
     var event =
       InstanceIterationEvent.of(JOB_CONTEXT.getIterationJobId(), "test", "test", randomUUID());
 
@@ -76,11 +72,11 @@ class InstanceLoaderTest {
     var result = instanceLoader.load(event);
 
     assertNull(result);
-    verify(inventoryService).getInstance(eq(event.getInstanceId()));
+    verify(inventoryService).getInstance(event.getInstanceId());
   }
 
   @Test
-  void shouldSkipUnsupportedSource() throws Exception {
+  void shouldSkipUnsupportedSource() {
     var event =
       InstanceIterationEvent.of(JOB_CONTEXT.getIterationJobId(), "test", "test", randomUUID());
     var instance = createInstance();
@@ -94,7 +90,7 @@ class InstanceLoaderTest {
   }
 
   @Test
-  void shouldSkipUnknownEvent() throws Exception {
+  void shouldSkipUnknownEvent() {
     var event =
       InstanceIterationEvent.of(randomUUID(), "test", "test", randomUUID());
 

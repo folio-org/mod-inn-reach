@@ -128,7 +128,9 @@ public class ContributionJobRunner {
       stats.writeSkipCount += items.size() - writeCount;
     } catch (Exception e) {
       stats.writeSkipCount += items.size();
-      itemExceptionListener.logWriteError(e, null);
+      // not possible to guess what item failed when the chunk of multiple items is being contributed
+      var recordId = items.size() == 1 ? items.get(0).getId() : null;
+      itemExceptionListener.logWriteError(e, recordId);
     } finally {
       statsListener.updateStats(stats);
     }

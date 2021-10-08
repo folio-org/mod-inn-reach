@@ -1,5 +1,6 @@
 package org.folio.innreach.batch.contribution.service;
 
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -9,6 +10,8 @@ import static org.mockito.Mockito.when;
 import static org.folio.innreach.fixture.ContributionFixture.createContributionJobContext;
 import static org.folio.innreach.fixture.ContributionFixture.createInstance;
 import static org.folio.innreach.fixture.TestUtil.createNoRetryTemplate;
+
+import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -21,6 +24,7 @@ import org.springframework.boot.autoconfigure.kafka.KafkaProperties;
 import org.springframework.retry.support.RetryTemplate;
 
 import org.folio.innreach.batch.KafkaItemReader;
+import org.folio.innreach.batch.contribution.ContributionJobContext;
 import org.folio.innreach.batch.contribution.IterationEventReaderFactory;
 import org.folio.innreach.batch.contribution.listener.ContributionExceptionListener;
 import org.folio.innreach.batch.contribution.listener.ContributionJobStatsListener;
@@ -32,6 +36,8 @@ import org.folio.innreach.dto.Instance;
 
 @ExtendWith(MockitoExtension.class)
 class ContributionJobRunnerTest {
+
+  private static final ContributionJobContext JOB_CONTEXT = createContributionJobContext();
 
   @Qualifier("instanceExceptionListener")
   @Mock
@@ -82,7 +88,7 @@ class ContributionJobRunnerTest {
   }
 
   @Test
-  void shouldRunJobWithNoInstanceItems() throws Exception {
+  void shouldRunJob_noInstanceItems() throws Exception {
     Instance instance = createInstance();
     instance.setItems(null);
 
@@ -100,13 +106,46 @@ class ContributionJobRunnerTest {
   }
 
   @Test
-  void shouldRunJobWithNoInstances() {
+  void shouldRunJob_noInstances() {
+    var event = InstanceIterationEvent.of(UUID.randomUUID(), "test", "test", UUID.randomUUID());
+
+    when(factory.createReader(any())).thenReturn(reader);
+    when(reader.read())
+      .thenReturn(event)
+      .thenReturn(null);
+    when(instanceLoader.load(any())).thenReturn(null);
+
+    jobRunner.run(JOB_CONTEXT);
+
+    verify(reader, times(2)).read();
+    verify(instanceLoader).load(event);
+    verifyNoInteractions(itemContributor);
+  }
+
+  @Test
+  void shouldRunJob_noEvents() {
     when(factory.createReader(any())).thenReturn(reader);
     when(reader.read()).thenReturn(null);
 
-    jobRunner.run(createContributionJobContext());
+    jobRunner.run(JOB_CONTEXT);
 
     verify(reader).read();
+    verifyNoInteractions(instanceContributor);
+    verifyNoInteractions(itemContributor);
+  }
+
+  @Test
+  void throwsExceptionOnRead() {
+    when(factory.createReader(any())).thenReturn(reader);
+    String exceptionMsg = "test message";
+    when(reader.read()).thenThrow(new RuntimeException(exceptionMsg));
+
+    assertThatThrownBy(() -> jobRunner.run(JOB_CONTEXT))
+      .isInstanceOf(RuntimeException.class)
+      .hasMessageContaining(exceptionMsg);
+
+    verify(reader).read();
+    verify(contributionService).completeContribution(JOB_CONTEXT.getCentralServerId());
     verifyNoInteractions(instanceContributor);
     verifyNoInteractions(itemContributor);
   }

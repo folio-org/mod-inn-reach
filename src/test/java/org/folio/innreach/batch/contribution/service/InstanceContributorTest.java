@@ -65,21 +65,25 @@ class InstanceContributorTest {
 
   @Test
   void shouldFailContribution() {
+    var instance = createInstance();
+
     when(instanceTransformationService.getBibInfo(any(), any())).thenReturn(new BibInfo());
     when(irContributionService.contributeBib(any(), any(), any())).thenReturn(errorResponse());
 
-    assertThatThrownBy(() -> instanceContributor.contributeInstance(createInstance()))
+    assertThatThrownBy(() -> instanceContributor.contributeInstance(instance))
       .isInstanceOf(IllegalArgumentException.class)
       .hasMessageContaining("Unexpected contribution response:");
   }
 
   @Test
   void shouldFailVerification() {
+    var instance = createInstance();
+
     when(instanceTransformationService.getBibInfo(any(), any())).thenReturn(new BibInfo());
     when(irContributionService.contributeBib(any(), any(), any())).thenReturn(okResponse());
     when(irContributionService.lookUpBib(any(), any())).thenReturn(errorResponse());
 
-    assertThatThrownBy(() -> instanceContributor.contributeInstance(createInstance()))
+    assertThatThrownBy(() -> instanceContributor.contributeInstance(instance))
       .isInstanceOf(IllegalArgumentException.class)
       .hasMessageContaining("Unexpected verification response:");
   }
