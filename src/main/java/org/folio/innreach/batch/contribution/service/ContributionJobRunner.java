@@ -1,6 +1,6 @@
 package org.folio.innreach.batch.contribution.service;
 
-import static java.lang.Math.min;
+import static java.lang.Math.max;
 
 import static org.folio.innreach.batch.contribution.ContributionJobContextManager.beginContributionJobContext;
 import static org.folio.innreach.batch.contribution.ContributionJobContextManager.endContributionJobContext;
@@ -114,7 +114,7 @@ public class ContributionJobRunner {
       return;
     }
 
-    int chunkSize = min(jobProperties.getChunkSize(), 1);
+    int chunkSize = max(jobProperties.getChunkSize(), 1);
 
     StreamSupport.stream(Iterables.partition(items, chunkSize).spliterator(), false)
       .forEach(itemsChunk -> contributeItems(bibId, itemsChunk, stats));
