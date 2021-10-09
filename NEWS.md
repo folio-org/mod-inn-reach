@@ -1,3 +1,14 @@
+## v1.0.1 2021-10-08
+
+Release primarily addresses Initial Contribution issues found during testing. 
+
+### Stories
+
+* [MODINREACH-145](https://issues.folio.org/browse/MODINREACH-145) - Fix record contribution integration errors
+* [MODINREACH-140](https://issues.folio.org/browse/MODINREACH-140) - Update Iteration Job status object to reflect changes in mod-inventory-storage
+* [MODINREACH-83](https://issues.folio.org/browse/MODINREACH-83) - D2IR Local Endpoint (Circulation): Create INN-Reach Item Hold - Create Transaction
+* [MODINREACH-113](https://issues.folio.org/browse/MODINREACH-113) - D2IR Local Endpoint (Record Contribution): Get Bib Record
+
 ## v1.0.0 2021-09-24
 
 The primary focus of this initial release was to support configuration settings for Inn-Reach integration and 
