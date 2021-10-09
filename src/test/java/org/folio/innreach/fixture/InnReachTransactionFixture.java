@@ -1,6 +1,5 @@
 package org.folio.innreach.fixture;
 
-import org.folio.innreach.domain.entity.CentralServer;
 import org.folio.innreach.domain.entity.InnReachTransaction;
 import org.folio.innreach.domain.entity.InnReachTransaction.TransactionType;
 import org.folio.innreach.domain.entity.TransactionHold;
@@ -12,9 +11,6 @@ import org.jeasy.random.EasyRandom;
 import org.jeasy.random.EasyRandomParameters;
 
 import java.time.OffsetDateTime;
-import java.util.UUID;
-
-import static java.util.UUID.fromString;
 import static org.folio.innreach.fixture.TestUtil.randomInteger;
 import static org.jeasy.random.FieldPredicates.named;
 
