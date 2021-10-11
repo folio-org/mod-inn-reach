@@ -5,6 +5,7 @@ import java.util.UUID;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+
 import org.folio.innreach.domain.entity.InnReachTransaction;
 import org.folio.innreach.domain.entity.InnReachTransaction.TransactionType;
 import org.folio.innreach.domain.service.CentralServerService;
@@ -14,7 +15,6 @@ import org.folio.innreach.dto.TransactionItemHoldDTO;
 import org.folio.innreach.mapper.InnReachTransactionMapper;
 import org.folio.innreach.repository.InnReachTransactionRepository;
 import org.folio.innreach.repository.TransactionHoldRepository;
-import org.springframework.stereotype.Service;
 
 @RequiredArgsConstructor
 @Service

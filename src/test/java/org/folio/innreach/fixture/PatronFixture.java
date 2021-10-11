@@ -44,6 +44,6 @@ public class PatronFixture {
   }
 
   public static String getPatronId(User user) {
-    return user.getId().replaceAll("-", "");
+    return user.getId().replace("-", "");
   }
 }

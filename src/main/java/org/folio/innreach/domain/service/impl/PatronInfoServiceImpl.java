@@ -107,7 +107,7 @@ public class PatronInfoServiceImpl implements PatronInfoService {
   }
 
   private String getPatronId(User user) {
-    return user.getId().replaceAll("-", "");
+    return user.getId().replace("-", "");
   }
 
   private PatronDTO getPatron(User user) {
