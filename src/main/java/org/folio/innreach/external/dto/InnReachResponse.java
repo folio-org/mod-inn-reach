@@ -3,6 +3,7 @@ package org.folio.innreach.external.dto;
 import static com.google.common.collect.ImmutableList.of;
 
 import java.util.List;
+import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.AllArgsConstructor;
@@ -67,6 +68,10 @@ public class InnReachResponse {
   public static class Error {
     private String reason;
     private String central;
+    /**
+     * Batch processing returns errors instead of messages
+     */
+    private List<Map<String, String>> errors;
     private List<String> messages;
     private String type;
     private String name;

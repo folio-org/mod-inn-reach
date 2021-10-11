@@ -7,7 +7,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.openMocks;
 
-import static org.folio.innreach.config.ContributionJobConfig.CONSUMER_REC_PROCESSOR;
+import static org.folio.innreach.batch.contribution.IterationEventReaderFactory.CONSUMER_REC_PROCESSOR;
+import static org.folio.innreach.batch.contribution.IterationEventReaderFactory.ITERATION_JOB_ID_HEADER;
 
 import java.util.Iterator;
 import java.util.List;
@@ -26,7 +27,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.batch.item.ExecutionContext;
 
 import org.folio.innreach.batch.KafkaItemReader;
 import org.folio.innreach.domain.dto.folio.inventorystorage.InstanceIterationEvent;
@@ -60,14 +60,14 @@ class KafkaItemReaderTest {
 
   @Test
   void shouldOpen() {
-    reader.open(new ExecutionContext());
+    reader.open();
 
     verify(kafkaConsumer).assign(topicPartitions);
   }
 
   @Test
   void shouldInitConsumerWhenOpen() {
-    reader.open(new ExecutionContext());
+    reader.open();
 
     verify(kafkaConsumer).assign(topicPartitions);
   }
@@ -75,24 +75,22 @@ class KafkaItemReaderTest {
   @Test
   void shouldRead() {
     var instanceId = UUID.randomUUID();
-    var consumerRecord = new ConsumerRecord<>(
-      "topic", 0, 0,
-      instanceId.toString(), new InstanceIterationEvent());
+    var jobId = UUID.randomUUID();
 
-    when(kafkaConsumer.poll(any()).iterator()).thenReturn(List.of(consumerRecord).iterator());
+    var rec = new ConsumerRecord<>(
+      "topic", 0, 0, instanceId.toString(), new InstanceIterationEvent());
+    rec.headers().add(ITERATION_JOB_ID_HEADER, jobId.toString().getBytes());
+
+    when(kafkaConsumer.poll(any()).iterator()).thenReturn(List.of(rec).iterator());
 
     var event = reader.read();
 
     assertEquals(instanceId, event.getInstanceId());
+    assertEquals(jobId, event.getJobId());
   }
 
   @Test
   void shouldReturnNullOnRead() {
-    var instanceId = UUID.randomUUID();
-    var consumerRecord = new ConsumerRecord<>(
-      "topic", 0, 0,
-      instanceId.toString(), new InstanceIterationEvent());
-
     when(consumerRecords.hasNext()).thenReturn(false);
 
     var event = reader.read();
@@ -102,7 +100,7 @@ class KafkaItemReaderTest {
 
   @Test
   void shouldUpdate() {
-    reader.update(new ExecutionContext());
+    reader.update();
 
     verify(kafkaConsumer).commitSync();
   }

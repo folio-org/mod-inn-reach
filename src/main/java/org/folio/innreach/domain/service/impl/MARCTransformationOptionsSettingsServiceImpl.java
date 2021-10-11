@@ -31,6 +31,7 @@ public class MARCTransformationOptionsSettingsServiceImpl implements MARCTransfo
   private static final String TEXT_MARC_TRANSFORM_OPT_SET_NOT_FOUND = "MARC Transformation Options Settings not found: centralServerId =";
   private static final Comparator<FieldConfiguration> comparator = Comparator.comparing(FieldConfiguration::getResourceIdentifierTypeId);
 
+  @Transactional(readOnly = true)
   @Override
   public MARCTransformationOptionsSettingsDTO get(UUID centralServerId) {
     var marcTransformOptSet = repository.findOneByCentralServerId(centralServerId);

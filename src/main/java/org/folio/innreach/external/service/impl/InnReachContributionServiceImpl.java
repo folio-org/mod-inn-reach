@@ -3,7 +3,6 @@ package org.folio.innreach.external.service.impl;
 import static org.folio.innreach.external.util.AuthUtils.buildBearerAuthHeader;
 
 import java.net.URI;
-import java.util.List;
 import java.util.UUID;
 
 import lombok.RequiredArgsConstructor;
@@ -14,7 +13,7 @@ import org.folio.innreach.domain.dto.CentralServerConnectionDetailsDTO;
 import org.folio.innreach.domain.service.CentralServerService;
 import org.folio.innreach.dto.BibInfo;
 import org.folio.innreach.external.client.feign.InnReachContributionClient;
-import org.folio.innreach.external.dto.BibItem;
+import org.folio.innreach.external.dto.BibItemsInfo;
 import org.folio.innreach.external.dto.InnReachResponse;
 import org.folio.innreach.external.service.InnReachAuthExternalService;
 import org.folio.innreach.external.service.InnReachContributionService;
@@ -43,7 +42,7 @@ public class InnReachContributionServiceImpl implements InnReachContributionServ
   }
 
   @Override
-  public InnReachResponse contributeBibItems(UUID centralServerId, String bibId, List<BibItem> bibItems) {
+  public InnReachResponse contributeBibItems(UUID centralServerId, String bibId, BibItemsInfo bibItems) {
     var connectionDetails = getConnectionDetails(centralServerId);
 
     var accessTokenDTO = innReachAuthExternalService.getAccessToken(connectionDetails);

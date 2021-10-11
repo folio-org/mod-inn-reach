@@ -11,4 +11,5 @@ public interface CentralPatronTypeMappingRepository extends JpaRepository<Centra
 
   Optional<CentralPatronTypeMapping> findOneByCentralServerIdAndBarcode(UUID centralServerId, String barcode);
 
+  Optional<CentralPatronTypeMapping> findOneByCentralServerIdAndCentralPatronType(UUID centralServerId, Integer centralPatronType);
 }

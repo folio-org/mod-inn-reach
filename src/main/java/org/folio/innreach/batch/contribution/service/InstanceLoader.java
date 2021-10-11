@@ -3,58 +3,57 @@ package org.folio.innreach.batch.contribution.service;
 import static org.folio.innreach.domain.service.impl.MARCRecordTransformationServiceImpl.isMARCRecord;
 
 import java.util.Objects;
+import java.util.UUID;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
-import org.springframework.batch.core.configuration.annotation.JobScope;
-import org.springframework.batch.item.ItemProcessor;
 import org.springframework.stereotype.Service;
 
-import org.folio.innreach.batch.contribution.ContributionJobContext;
+import org.folio.innreach.batch.contribution.ContributionJobContextManager;
 import org.folio.innreach.domain.dto.folio.inventorystorage.InstanceIterationEvent;
 import org.folio.innreach.domain.service.InventoryViewService;
-import org.folio.innreach.domain.service.impl.TenantScopedExecutionService;
 import org.folio.innreach.dto.Instance;
 
 @Log4j2
-@JobScope
 @Service
 @RequiredArgsConstructor
-public class InstanceLoader implements ItemProcessor<InstanceIterationEvent, Instance> {
+public class InstanceLoader {
 
-  private final TenantScopedExecutionService tenantScopedExecutionService;
   private final InventoryViewService inventoryService;
-  private final ContributionJobContext context;
 
-  @Override
-  public Instance process(InstanceIterationEvent instanceIterationEvent) throws Exception {
-    return tenantScopedExecutionService.executeTenantScoped(instanceIterationEvent.getTenant(), () -> {
-      log.info("Processing instance iteration event = {}", instanceIterationEvent);
+  public Instance load(InstanceIterationEvent event) {
+    log.info("Processing instance iteration event = {}", event);
 
-      if (isUnknownEvent(instanceIterationEvent)) {
-        log.info("Skipping unknown event...");
-        return null;
-      }
+    if (isUnknownEvent(event)) {
+      log.info("Skipping unknown event, current job is {}", getIterationJobId());
+      return null;
+    }
 
-      // if the returned instance is null it is assumed that processing of the instance should not continue
-      var instance = inventoryService.getInstance(instanceIterationEvent.getInstanceId());
+    // if the returned instance is null it is assumed that processing of the event should not continue
+    var instance = inventoryService.getInstance(event.getInstanceId());
 
-      if (instance == null) {
-        log.info("No instance found by id {}", instanceIterationEvent.getInstanceId());
-        return null;
-      }
+    if (instance == null) {
+      log.info("No instance found by id {}", event.getInstanceId());
+      return null;
+    }
 
-      if (!isMARCRecord(instance)) {
-        log.info("Source {} is not supported", instance.getSource());
-        return null;
-      }
+    if (!isMARCRecord(instance)) {
+      log.info("Source {} is not supported", instance.getSource());
+      return null;
+    }
 
-      return instance;
-    });
+    log.info("Loaded instance with hrid {}", instance.getHrid());
+
+    return instance;
   }
 
   private boolean isUnknownEvent(InstanceIterationEvent event) {
-    return !Objects.equals(event.getJobId(), context.getIterationJobId());
+    var iterationJobId = getIterationJobId();
+    return !Objects.equals(event.getJobId(), iterationJobId);
+  }
+
+  private UUID getIterationJobId() {
+    return ContributionJobContextManager.getContributionJobContext().getIterationJobId();
   }
 
 }

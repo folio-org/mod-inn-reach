@@ -1,5 +1,7 @@
 package org.folio.innreach.domain.service.impl;
 
+import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 import lombok.RequiredArgsConstructor;
@@ -12,6 +14,7 @@ import org.folio.innreach.domain.service.InstanceTransformationService;
 import org.folio.innreach.domain.service.MARCRecordTransformationService;
 import org.folio.innreach.dto.BibInfo;
 import org.folio.innreach.dto.Instance;
+import org.folio.innreach.dto.Item;
 
 @RequiredArgsConstructor
 @Log4j2
@@ -36,9 +39,27 @@ public class InstanceTransformationServiceImpl implements InstanceTransformation
     bibInfo.setSuppress(CharUtils.toString(suppressionStatus));
     bibInfo.setMarc21BibFormat(MARC_BIB_FORMAT);
     bibInfo.setMarc21BibData(marc.getBase64rawContent());
-    bibInfo.setTitleHoldCount(0);
-    bibInfo.setItemCount(0);
+    bibInfo.setItemCount(countContributionItems(centralServerId, instance.getItems()));
     return bibInfo;
+  }
+
+  private int countContributionItems(UUID centralServerId, List<Item> items) {
+    if (items == null) {
+      return 0;
+    }
+    return (int) items.stream()
+      .filter(Objects::nonNull)
+      .filter(i -> !excludedFromContribution(centralServerId, i))
+      .count();
+  }
+
+  private boolean excludedFromContribution(UUID centralServerId, Item item) {
+    try {
+      var suppressionStatus = validationService.getSuppressionStatus(centralServerId, item.getStatisticalCodeIds());
+      return Character.valueOf('n').equals(suppressionStatus);
+    } catch (Exception e) {
+      return true;
+    }
   }
 
 }

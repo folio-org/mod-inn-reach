@@ -20,13 +20,13 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.mockito.Spy;
+import org.springframework.beans.factory.BeanFactory;
 
 import org.folio.innreach.batch.contribution.service.ContributionJobRunner;
 import org.folio.innreach.client.InstanceStorageClient;
 import org.folio.innreach.domain.entity.Contribution;
 import org.folio.innreach.domain.entity.ContributionError;
 import org.folio.innreach.domain.service.ContributionValidationService;
-import org.folio.innreach.dto.ContributionDTO;
 import org.folio.innreach.dto.ContributionErrorDTO;
 import org.folio.innreach.mapper.ContributionMapper;
 import org.folio.innreach.mapper.ContributionMapperImpl;
@@ -44,7 +44,7 @@ class ContributionServiceImplTest {
   private ContributionErrorRepository errorRepository;
 
   @Spy
-  private InstanceStorageClient client;
+  private InstanceStorageClient storageClient;
 
   @Mock
   private ContributionJobRunner jobRunner;
@@ -58,6 +58,9 @@ class ContributionServiceImplTest {
   @Mock
   private ContributionValidationService validationService;
 
+  @Mock
+  private BeanFactory beanFactory;
+
   @InjectMocks
   private ContributionServiceImpl service;
 
@@ -69,15 +72,16 @@ class ContributionServiceImplTest {
   @Test
   void startInitialContributionProcess() {
     when(repository.save(any(Contribution.class))).thenReturn(createContribution());
-    when(client.startInitialContribution(any())).thenReturn(createJobResponse());
+    when(storageClient.startInitialContribution(any())).thenReturn(createJobResponse());
     when(validationService.getItemTypeMappingStatus(any())).thenReturn(VALID);
     when(validationService.getLocationMappingStatus(any())).thenReturn(VALID);
+    when(beanFactory.getBean(ContributionJobRunner.class)).thenReturn(jobRunner);
 
     service.startInitialContribution(UUID.randomUUID());
 
+    verify(storageClient).startInitialContribution(any());
     verify(repository).save(any(Contribution.class));
-    verify(client).startInitialContribution(any());
-    verify(jobRunner).run(any(UUID.class), any(), any(ContributionDTO.class));
+    verify(jobRunner).runAsync(any(), any(), any(), any());
   }
 
   @Test

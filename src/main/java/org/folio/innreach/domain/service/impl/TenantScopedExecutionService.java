@@ -37,6 +37,14 @@ public class TenantScopedExecutionService {
     }
   }
 
+  @SneakyThrows
+  public void runTenantScoped(String tenantId, Runnable job) {
+    executeTenantScoped(tenantId, () -> {
+      job.run();
+      return null;
+    });
+  }
+
   private FolioExecutionContext folioExecutionContext(String tenant) {
     return contextBuilder.forSystemUser(systemUserService.getSystemUser(tenant));
   }

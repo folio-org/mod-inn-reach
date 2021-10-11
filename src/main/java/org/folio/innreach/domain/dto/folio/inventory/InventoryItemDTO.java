@@ -15,6 +15,7 @@ import lombok.NoArgsConstructor;
 public class InventoryItemDTO {
 
   private UUID id;
+  private String hrId;
 
   @JsonUnwrapped
   private InventoryItemStatus status;

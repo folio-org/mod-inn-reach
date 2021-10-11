@@ -37,7 +37,7 @@ public class BibItem {
   /**
    * Circulation status
    */
-  private ContributionItemCirculationStatus itemCircStatus;
+  private String itemCircStatus;
 
   /**
    * (required if non-zero)

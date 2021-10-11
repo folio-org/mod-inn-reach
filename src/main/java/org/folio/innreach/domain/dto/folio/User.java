@@ -22,6 +22,7 @@ public class User {
   private OffsetDateTime expirationDate;
   private boolean active;
   private Personal personal;
+  private String barcode;
 
   @Data
   @NoArgsConstructor

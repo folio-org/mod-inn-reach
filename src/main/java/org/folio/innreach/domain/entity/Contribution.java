@@ -100,7 +100,8 @@ public class Contribution extends Auditable implements Identifiable<UUID> {
   public enum Status {
     IN_PROGRESS("In Progress"),
     COMPLETE("Complete"),
-    NOT_STARTED("Not started");
+    NOT_STARTED("Not started"),
+    CANCELLED("Cancelled");
 
     @Getter
     private String value;
