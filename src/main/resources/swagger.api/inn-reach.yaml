@@ -989,6 +989,24 @@ paths:
         required: true
       parameters:
         - $ref: '#/components/parameters/centralServerId'
+  /central-servers/agencies:
+    get:
+      operationId: getCentralServerAgencies
+      description: Get a combined list of agencies available from all configured central servers
+      tags:
+        - central-server-agencies
+      responses:
+        '200':
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/centralServerAgenciesDTO"
+        '500':
+          $ref: "#/components/responses/trait_response_500"
+      parameters:
+        - $ref: "#/components/parameters/trait_pageable_offset"
+        - $ref: "#/components/parameters/trait_pageable_limit"
   /d2ir/getbibrecord/{bibId}/{centralCode}:
     get:
       operationId: getBibRecord
@@ -1104,6 +1122,8 @@ components:
       $ref: schemas/inventorystorage/holding.json
     centralPatronTypeMappingsDTO:
       $ref: schemas/centralPatronTypeMappingsDTO.json
+    centralServerAgenciesDTO:
+      $ref: schemas/centralServerAgenciesDTO.json
     bibInfoResponseDTO:
       $ref: schemas/d2ir/bibInfoResponseDTO.json
     transactionItemHoldDTO:
