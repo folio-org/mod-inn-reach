@@ -16,7 +16,6 @@ public class User {
   private String id;
   private String externalSystemId;
   private String username;
-  private String barcode;
   @JsonProperty("patronGroup")
   private UUID patronGroupId;
   private OffsetDateTime expirationDate;

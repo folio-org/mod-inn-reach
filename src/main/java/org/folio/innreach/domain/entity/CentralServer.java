@@ -90,6 +90,9 @@ public class CentralServer extends Auditable implements Identifiable<UUID> {
   public static final String GET_IDS_QUERY_NAME = "CentralServer.getIds";
   public static final String GET_IDS_QUERY = "SELECT DISTINCT cs.id FROM CentralServer AS cs";
 
+  public static final String GET_ID_BY_CENTRAL_CODE_QUERY_NAME = "CentralServer.getIdByCentralCode";
+  public static final String GET_ID_BY_CENTRAL_CODE_QUERY = "SELECT cs.id FROM CentralServer cs WHERE cs.centralServerCode = :centralCode";
+
   public static final String FETCH_CONNECTION_DETAILS_QUERY_NAME = "CentralServer.fetchConnectionDetails";
   public static final String FETCH_CONNECTION_DETAILS_QUERY =
     "SELECT new org.folio.innreach.domain.dto.CentralServerConnectionDetailsDTO(" +

@@ -13,6 +13,8 @@ public interface CentralServerService {
 
   CentralServerDTO getCentralServerByCentralCode(String code);
 
+  UUID getCentralServerIdByCentralCode(String code);
+
   CentralServersDTO getAllCentralServers(int offset, int limit);
 
   CentralServerDTO updateCentralServer(UUID centralServerId, CentralServerDTO centralServerDTO);

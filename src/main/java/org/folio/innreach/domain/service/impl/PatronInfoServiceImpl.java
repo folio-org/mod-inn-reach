@@ -1,5 +1,6 @@
 package org.folio.innreach.domain.service.impl;
 
+import static java.lang.Boolean.TRUE;
 import static java.util.Optional.ofNullable;
 import static org.apache.commons.lang3.StringUtils.equalsAny;
 
@@ -36,7 +37,7 @@ import org.folio.innreach.external.mapper.InnReachResponseMapper;
 @RequiredArgsConstructor
 public class PatronInfoServiceImpl implements PatronInfoService {
 
-  private static final String ERROR_REASON = "Unable to verify patron";
+  public static final String ERROR_REASON = "Unable to verify patron";
 
   private final UserServiceImpl userService;
   private final CentralPatronTypeMappingService centralPatronTypeMappingService;
@@ -52,11 +53,11 @@ public class PatronInfoServiceImpl implements PatronInfoService {
                                             String patronAgencyCode, String patronName) {
     PatronInfoResponse response;
     try {
-      var centralServerId = centralServerService.getCentralServerByCentralCode(centralServerCode).getId();
+      var centralServerId = centralServerService.getCentralServerIdByCentralCode(centralServerCode);
 
       var user = userService.getUserByPublicId(visiblePatronId).orElse(null);
 
-      Assert.isTrue(user != null, "Patron is not found");
+      Assert.isTrue(user != null, "Patron is not found by visiblePatronId: " + visiblePatronId);
       Assert.isTrue(user.isActive(), "Patron is not active");
       Assert.isTrue(matchName(user, patronName), "Patron is not found by name: " + patronName);
       verifyPatronBlocks(user);
@@ -72,8 +73,8 @@ public class PatronInfoServiceImpl implements PatronInfoService {
   }
 
   private PatronInfo getPatronInfo(UUID centralServerId, User user, String patronAgencyCode, String patronName) {
-    var patronId = getPatronId(user);
     var centralPatronType = getCentralPatronType(centralServerId, user);
+    var patronId = getPatronId(user);
     var patron = getPatron(user);
     var totalLoans = patron.getTotalLoans();
     var innReachLoans = countInnReachLoans(patronId, patron.getLoans());
@@ -95,8 +96,7 @@ public class PatronInfoServiceImpl implements PatronInfoService {
 
     if (CollectionUtils.isNotEmpty(blocks)) {
       var block = blocks.stream()
-        .filter(PatronBlock::getBlockBorrowing)
-        .filter(PatronBlock::getBlockRequests)
+        .filter(b -> TRUE.equals(b.getBlockBorrowing()) || TRUE.equals(b.getBlockRequests()))
         .findFirst()
         .orElse(null);
 
@@ -120,10 +120,10 @@ public class PatronInfoServiceImpl implements PatronInfoService {
   }
 
   private Integer getCentralPatronType(UUID centralServerId, User user) {
-    var userPatronType = centralPatronTypeMappingService.getCentralPatronType(centralServerId, user.getBarcode());
-
-    return userPatronType != null ? userPatronType :
-      patronTypeMappingService.getCentralPatronType(centralServerId, user.getPatronGroupId());
+    return centralPatronTypeMappingService.getCentralPatronType(centralServerId, user.getBarcode())
+      .or(() -> patronTypeMappingService.getCentralPatronType(centralServerId, user.getPatronGroupId()))
+      .orElseThrow(() -> new IllegalStateException(
+          "centralPatronType is not resolved for patron with public id: " + user.getExternalSystemId()));
   }
 
   private boolean matchName(User user, String patronName) {

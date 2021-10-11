@@ -1,5 +1,6 @@
 package org.folio.innreach.domain.service;
 
+import java.util.Optional;
 import java.util.UUID;
 
 import org.folio.innreach.dto.CentralPatronTypeMappingsDTO;
@@ -10,6 +11,6 @@ public interface CentralPatronTypeMappingService {
 
   CentralPatronTypeMappingsDTO updateCentralPatronTypeMappings(UUID centralServerId, CentralPatronTypeMappingsDTO centralPatronTypeMappingsDTO);
 
-  Integer getCentralPatronType(UUID centralServerId, String barcode);
+  Optional<Integer> getCentralPatronType(UUID centralServerId, String barcode);
 
 }
