@@ -10,6 +10,8 @@ import static org.folio.innreach.domain.entity.CentralServer.FETCH_ONE_BY_ID_QUE
 import static org.folio.innreach.domain.entity.CentralServer.FETCH_ONE_BY_ID_QUERY_NAME;
 import static org.folio.innreach.domain.entity.CentralServer.GET_IDS_QUERY;
 import static org.folio.innreach.domain.entity.CentralServer.GET_IDS_QUERY_NAME;
+import static org.folio.innreach.domain.entity.CentralServer.GET_ID_BY_CENTRAL_CODE_QUERY;
+import static org.folio.innreach.domain.entity.CentralServer.GET_ID_BY_CENTRAL_CODE_QUERY_NAME;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -61,6 +63,10 @@ import org.folio.innreach.domain.entity.base.Identifiable;
 @NamedQuery(
   name = GET_IDS_QUERY_NAME,
   query = GET_IDS_QUERY
+)
+@NamedQuery(
+  name = GET_ID_BY_CENTRAL_CODE_QUERY_NAME,
+  query = GET_ID_BY_CENTRAL_CODE_QUERY
 )
 @NamedQuery(
   name = FETCH_CONNECTION_DETAILS_QUERY_NAME,
