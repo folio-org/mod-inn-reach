@@ -249,7 +249,7 @@ class PatronInfoServiceImplTest {
     assertFalse(response.getRequestAllowed());
     assertEquals(ERROR_STATUS, response.getStatus());
     assertEquals(ERROR_REASON, response.getReason());
-    assertEquals("centralPatronType is not resolved for patron with public id: " + user.getExternalSystemId(), getErrorMsg(response));
+    assertEquals("centralPatronType is not resolved for patron with public id: " + user.getBarcode(), getErrorMsg(response));
   }
 
   @Test

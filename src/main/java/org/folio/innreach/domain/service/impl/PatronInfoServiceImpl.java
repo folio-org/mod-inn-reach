@@ -123,7 +123,7 @@ public class PatronInfoServiceImpl implements PatronInfoService {
     return centralPatronTypeMappingService.getCentralPatronType(centralServerId, user.getBarcode())
       .or(() -> patronTypeMappingService.getCentralPatronType(centralServerId, user.getPatronGroupId()))
       .orElseThrow(() -> new IllegalStateException(
-          "centralPatronType is not resolved for patron with public id: " + user.getExternalSystemId()));
+          "centralPatronType is not resolved for patron with public id: " + user.getBarcode()));
   }
 
   private boolean matchName(User user, String patronName) {
