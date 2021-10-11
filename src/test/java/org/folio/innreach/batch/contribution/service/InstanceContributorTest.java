@@ -1,21 +1,20 @@
 package org.folio.innreach.batch.contribution.service;
 
-import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import static org.folio.innreach.external.dto.InnReachResponse.errorResponse;
 import static org.folio.innreach.external.dto.InnReachResponse.okResponse;
+import static org.folio.innreach.fixture.ContributionFixture.createContributionJobContext;
 import static org.folio.innreach.fixture.ContributionFixture.createInstance;
 
-import java.util.Collections;
 import java.util.UUID;
-import java.util.concurrent.Callable;
 
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -23,43 +22,42 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import org.folio.innreach.batch.contribution.ContributionJobContext;
+import org.folio.innreach.batch.contribution.ContributionJobContextManager;
 import org.folio.innreach.domain.service.InstanceTransformationService;
-import org.folio.innreach.domain.service.impl.TenantScopedExecutionService;
 import org.folio.innreach.dto.BibInfo;
 import org.folio.innreach.external.service.InnReachContributionService;
 
 @ExtendWith(MockitoExtension.class)
 class InstanceContributorTest {
 
-  private static final UUID CENTRAL_SERVER_ID = UUID.randomUUID();
+  private static final ContributionJobContext JOB_CONTEXT = createContributionJobContext();
+  private static final UUID CENTRAL_SERVER_ID = JOB_CONTEXT.getCentralServerId();
 
   @Mock
-  private TenantScopedExecutionService tenantScopedExecutionService;
-  @Mock
   private InnReachContributionService irContributionService;
-  @Mock
-  private ContributionJobContext jobContext;
   @Mock
   private InstanceTransformationService instanceTransformationService;
 
   @InjectMocks
   private InstanceContributor instanceContributor;
 
-  @Test
-  void shouldContributeAndLookUp() throws Exception {
-    when(tenantScopedExecutionService.executeTenantScoped(any(), any()))
-      .thenAnswer(invocationOnMock -> {
-        var job = (Callable<?>) invocationOnMock.getArgument(1);
-        return job.call();
-      });
+  @BeforeEach
+  public void init() {
+    ContributionJobContextManager.beginContributionJobContext(JOB_CONTEXT);
+  }
 
-    when(jobContext.getTenantId()).thenReturn("test");
-    when(jobContext.getCentralServerId()).thenReturn(CENTRAL_SERVER_ID);
+  @AfterEach
+  public void clear() {
+    ContributionJobContextManager.endContributionJobContext();
+  }
+
+  @Test
+  void shouldContributeAndLookUp() {
     when(instanceTransformationService.getBibInfo(any(), any())).thenReturn(new BibInfo());
     when(irContributionService.contributeBib(any(), any(), any())).thenReturn(okResponse());
     when(irContributionService.lookUpBib(any(), any())).thenReturn(okResponse());
 
-    instanceContributor.write(singletonList(createInstance()));
+    instanceContributor.contributeInstance(createInstance());
 
     verify(irContributionService).contributeBib(eq(CENTRAL_SERVER_ID), any(), any());
     verify(irContributionService).lookUpBib(eq(CENTRAL_SERVER_ID), any());
@@ -67,47 +65,27 @@ class InstanceContributorTest {
 
   @Test
   void shouldFailContribution() {
-    when(tenantScopedExecutionService.executeTenantScoped(any(), any()))
-      .thenAnswer(invocationOnMock -> {
-        var job = (Callable<?>) invocationOnMock.getArgument(1);
-        return job.call();
-      });
+    var instance = createInstance();
 
-    when(jobContext.getTenantId()).thenReturn("test");
-    when(jobContext.getCentralServerId()).thenReturn(CENTRAL_SERVER_ID);
     when(instanceTransformationService.getBibInfo(any(), any())).thenReturn(new BibInfo());
     when(irContributionService.contributeBib(any(), any(), any())).thenReturn(errorResponse());
 
-    assertThatThrownBy(() -> instanceContributor.write(singletonList(createInstance())))
+    assertThatThrownBy(() -> instanceContributor.contributeInstance(instance))
       .isInstanceOf(IllegalArgumentException.class)
       .hasMessageContaining("Unexpected contribution response:");
   }
 
   @Test
   void shouldFailVerification() {
-    when(tenantScopedExecutionService.executeTenantScoped(any(), any()))
-      .thenAnswer(invocationOnMock -> {
-        var job = (Callable<?>) invocationOnMock.getArgument(1);
-        return job.call();
-      });
+    var instance = createInstance();
 
-    when(jobContext.getTenantId()).thenReturn("test");
-    when(jobContext.getCentralServerId()).thenReturn(CENTRAL_SERVER_ID);
     when(instanceTransformationService.getBibInfo(any(), any())).thenReturn(new BibInfo());
     when(irContributionService.contributeBib(any(), any(), any())).thenReturn(okResponse());
     when(irContributionService.lookUpBib(any(), any())).thenReturn(errorResponse());
 
-    assertThatThrownBy(() -> instanceContributor.write(singletonList(createInstance())))
+    assertThatThrownBy(() -> instanceContributor.contributeInstance(instance))
       .isInstanceOf(IllegalArgumentException.class)
       .hasMessageContaining("Unexpected verification response:");
-  }
-
-  @Test
-  void shouldDoNothingWhenNoItems() throws Exception {
-    instanceContributor.write(Collections.emptyList());
-
-    verifyNoMoreInteractions(tenantScopedExecutionService);
-    verifyNoMoreInteractions(irContributionService);
   }
 
 }

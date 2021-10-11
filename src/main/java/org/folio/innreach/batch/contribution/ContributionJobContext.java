@@ -1,19 +1,18 @@
 package org.folio.innreach.batch.contribution;
 
-import static java.util.UUID.fromString;
-
 import java.util.UUID;
 
 import lombok.AllArgsConstructor;
-import lombok.Getter;
+import lombok.Builder;
+import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.springframework.batch.core.JobExecution;
-import org.springframework.batch.core.JobParameters;
-import org.springframework.batch.core.annotation.BeforeJob;
+import lombok.ToString;
 
-@Getter
+@Builder
+@Data
 @AllArgsConstructor
 @NoArgsConstructor
+@ToString
 public class ContributionJobContext {
 
   public static final String TENANT_ID_KEY = "tenantId";
@@ -21,31 +20,16 @@ public class ContributionJobContext {
   public static final String CONTRIBUTION_ID_KEY = "contributionId";
   public static final String ITERATION_JOB_ID_KEY = "iterationJobId";
 
-  private JobParameters jobParameters;
+  private String tenantId;
+  private UUID centralServerId;
+  private UUID contributionId;
+  private UUID iterationJobId;
 
-  @BeforeJob
-  public void beforeJob(JobExecution jobExecution) {
-    jobParameters = jobExecution.getJobParameters();
-  }
-
-  public static ContributionJobContext of(JobExecution jobExecution) {
-    return new ContributionJobContext(jobExecution.getJobParameters());
-  }
-
-  public String getTenantId() {
-    return jobParameters.getString(TENANT_ID_KEY);
-  }
-
-  public UUID getCentralServerId() {
-    return fromString(jobParameters.getString(CENTRAL_SERVER_ID_KEY));
-  }
-
-  public UUID getContributionId() {
-    return fromString(jobParameters.getString(CONTRIBUTION_ID_KEY));
-  }
-
-  public UUID getIterationJobId() {
-    return fromString(jobParameters.getString(ITERATION_JOB_ID_KEY));
+  @Data
+  public static class Statistics {
+    public int readCount = 0;
+    public int writeCount = 0;
+    public int writeSkipCount = 0;
   }
 
 }

@@ -1,17 +1,21 @@
 package org.folio.innreach.domain.service.impl;
 
 import static org.apache.commons.lang3.ObjectUtils.defaultIfNull;
-import static org.springframework.transaction.annotation.Propagation.REQUIRES_NEW;
 
 import static org.folio.innreach.domain.dto.folio.inventorystorage.JobResponse.JobStatus.IN_PROGRESS;
+import static org.folio.innreach.domain.entity.Contribution.Status.CANCELLED;
 import static org.folio.innreach.domain.entity.Contribution.Status.COMPLETE;
 import static org.folio.innreach.domain.service.impl.ServiceUtils.centralServerRef;
 import static org.folio.innreach.dto.MappingValidationStatusDTO.VALID;
 
+import java.util.List;
 import java.util.UUID;
 
 import lombok.AllArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.springframework.beans.BeansException;
+import org.springframework.beans.factory.BeanFactory;
+import org.springframework.beans.factory.BeanFactoryAware;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -35,16 +39,21 @@ import org.folio.spring.FolioExecutionContext;
 @Log4j2
 @AllArgsConstructor
 @Service
-public class ContributionServiceImpl implements ContributionService {
+public class ContributionServiceImpl implements ContributionService, BeanFactoryAware {
 
   private final ContributionRepository repository;
   private final ContributionErrorRepository errorRepository;
   private final ContributionMapper mapper;
   private final ContributionValidationService validationService;
-  private final ContributionJobRunner jobRunner;
   private final FolioExecutionContext folioContext;
-
   private final InstanceStorageClient client;
+
+  private BeanFactory beanFactory;
+
+  @Override
+  public void setBeanFactory(BeanFactory beanFactory) throws BeansException {
+    this.beanFactory = beanFactory;
+  }
 
   @Override
   public ContributionDTO getCurrent(UUID centralServerId) {
@@ -58,7 +67,7 @@ public class ContributionServiceImpl implements ContributionService {
     return contribution;
   }
 
-  @Transactional(propagation = REQUIRES_NEW)
+  @Transactional
   @Override
   public ContributionDTO completeContribution(UUID centralServerId) {
     var entity = findCurrent(centralServerId);
@@ -68,13 +77,19 @@ public class ContributionServiceImpl implements ContributionService {
     return mapper.toDTO(repository.save(entity));
   }
 
+  @Transactional
+  @Override
+  public void cancelAll() {
+    findAllInProgress().forEach(c -> c.setStatus(CANCELLED));
+  }
+
   @Override
   public ContributionsDTO getHistory(UUID centralServerId, int offset, int limit) {
     var page = repository.fetchHistoryByCentralServerId(centralServerId, PageRequest.of(offset, limit));
     return mapper.toDTOCollection(page);
   }
 
-  @Transactional(propagation = REQUIRES_NEW)
+  @Transactional
   @Override
   public void updateContributionStats(UUID centralServerId, ContributionDTO contribution) {
     var entity = findCurrent(centralServerId);
@@ -99,7 +114,10 @@ public class ContributionServiceImpl implements ContributionService {
     log.info("Starting initial contribution for central server = {}", centralServerId);
 
     var existingContribution = repository.fetchCurrentByCentralServerId(centralServerId);
-    Assert.isTrue(existingContribution.isEmpty(), "Initial contribution is already in progress");
+    if (existingContribution.isPresent()) {
+      log.warn("Initial contribution is already in progress");
+      throw new IllegalArgumentException("Initial contribution is already in progress");
+    }
 
     var contribution = createEmptyContribution(centralServerId);
 
@@ -112,12 +130,12 @@ public class ContributionServiceImpl implements ContributionService {
 
     repository.save(contribution);
 
-    jobRunner.run(centralServerId, folioContext.getTenantId(), mapper.toDTO(contribution));
+    runContributionJob(centralServerId, contribution);
 
     log.info("Initial contribution process started");
   }
 
-  @Transactional(propagation = REQUIRES_NEW)
+  @Transactional
   @Override
   public void logContributionError(UUID contributionId, ContributionErrorDTO errorDTO) {
     var contribution = new Contribution();
@@ -129,9 +147,19 @@ public class ContributionServiceImpl implements ContributionService {
     errorRepository.save(error);
   }
 
+  private void runContributionJob(UUID centralServerId, Contribution contribution) {
+    var jobRunner = beanFactory.getBean(ContributionJobRunner.class);
+
+    jobRunner.runAsync(centralServerId, folioContext.getTenantId(), contribution.getId(), contribution.getJobId());
+  }
+
   private Contribution findCurrent(UUID centralServerId) {
     return repository.fetchCurrentByCentralServerId(centralServerId)
       .orElseThrow(() -> new IllegalArgumentException("Initial contribution is not found for central server = " + centralServerId));
+  }
+
+  private List<Contribution> findAllInProgress() {
+    return repository.findAllByStatus(Contribution.Status.IN_PROGRESS);
   }
 
   private JobResponse triggerInstanceIteration() {

@@ -1,5 +1,6 @@
 package org.folio.innreach.mapper;
 
+import com.google.common.collect.Lists;
 import org.folio.innreach.domain.entity.TransactionItemHold;
 import org.folio.innreach.domain.entity.TransactionPickupLocation;
 import org.folio.innreach.dto.TransactionItemHoldDTO;
@@ -15,11 +16,11 @@ public interface InnReachTransactionMapper {
   TransactionItemHold toItemHold(TransactionItemHoldDTO dto);
 
   default TransactionPickupLocation map(String value) {
-    if (value == null){
+    if (value == null) {
       throw new IllegalArgumentException("Pickup location must not be null.");
     }
     var strings = value.split(PICKUP_LOCATION_DELIMITER);
-    if (strings.length > 4 || strings.length < 3){
+    if (strings.length > 4 || strings.length < 3) {
       throw new IllegalArgumentException("Pickup location must consist of 3 or 4 strings delimited by a colon.");
     }
     var pickupLocation = new TransactionPickupLocation();
@@ -30,5 +31,15 @@ public interface InnReachTransactionMapper {
       pickupLocation.setDeliveryStop(strings[3]);
     }
     return pickupLocation;
+  }
+
+  default String map(TransactionPickupLocation value) {
+    var locationTokens = Lists.newArrayList(value.getPickupLocCode(), value.getDisplayName(), value.getPrintName());
+
+    if (value.getDeliveryStop() != null) {
+      locationTokens.add(value.getDeliveryStop());
+    }
+
+    return String.join(PICKUP_LOCATION_DELIMITER, locationTokens);
   }
 }

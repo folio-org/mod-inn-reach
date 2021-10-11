@@ -10,7 +10,6 @@ import lombok.extern.log4j.Log4j2;
 import org.springframework.stereotype.Service;
 
 import org.folio.innreach.domain.service.CentralServerService;
-import org.folio.innreach.external.InnReachHeaders;
 import org.folio.innreach.external.client.feign.InnReachClient;
 import org.folio.innreach.external.service.InnReachAuthExternalService;
 import org.folio.innreach.external.service.InnReachExternalService;
@@ -35,6 +34,21 @@ public class InnReachExternalServiceImpl implements InnReachExternalService {
       buildBearerAuthHeader(accessTokenDTO.getAccessToken()),
       connectionDetailsDTO.getLocalCode(),
       connectionDetailsDTO.getCentralCode()
+    );
+  }
+
+  @Override
+  public String postInnReachApi(UUID centralServerId, URI innReachRequestUri, Object dto) {
+    var connectionDetailsDTO = centralServerService.getCentralServerConnectionDetails(centralServerId);
+
+    var accessTokenDTO = innReachAuthExternalService.getAccessToken(connectionDetailsDTO);
+
+    return innReachClient.postInnReachApi(
+      innReachRequestUri,
+      buildBearerAuthHeader(accessTokenDTO.getAccessToken()),
+      connectionDetailsDTO.getLocalCode(),
+      connectionDetailsDTO.getCentralCode(),
+      dto
     );
   }
 

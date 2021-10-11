@@ -1,6 +1,7 @@
 package org.folio.innreach.domain.service.impl;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
 import org.folio.innreach.domain.entity.InnReachTransaction;
 import org.folio.innreach.domain.entity.InnReachTransaction.TransactionType;
 import org.folio.innreach.domain.service.CentralServerService;
@@ -9,7 +10,6 @@ import org.folio.innreach.dto.InnReachResponseDTO;
 import org.folio.innreach.dto.TransactionItemHoldDTO;
 import org.folio.innreach.mapper.InnReachTransactionMapper;
 import org.folio.innreach.repository.InnReachTransactionRepository;
-import org.springframework.stereotype.Service;
 
 @RequiredArgsConstructor
 @Service
@@ -18,6 +18,15 @@ public class InnReachTransactionServiceImpl implements InnReachTransactionServic
   private final InnReachTransactionRepository repository;
   private final InnReachTransactionMapper mapper;
   private final CentralServerService centralServerService;
+
+  private InnReachTransaction createTransactionWithItemHold(String trackingId, String centralCode) {
+    var transaction = new InnReachTransaction();
+    transaction.setTrackingId(trackingId);
+    transaction.setCentralServerCode(centralCode);
+    transaction.setType(TransactionType.ITEM);
+    transaction.setState(InnReachTransaction.TransactionState.ITEM_HOLD);
+    return transaction;
+  }
 
   @Override
   public InnReachResponseDTO createInnReachTransactionItemHold(String trackingId, String centralCode, TransactionItemHoldDTO dto) {
@@ -34,14 +43,5 @@ public class InnReachTransactionServiceImpl implements InnReachTransactionServic
       response.setReason(e.getMessage());
     }
     return response;
-  }
-
-  private InnReachTransaction createTransactionWithItemHold(String trackingId, String centralCode) {
-    InnReachTransaction transaction = new InnReachTransaction();
-    transaction.setTrackingId(trackingId);
-    transaction.setCentralServerCode(centralCode);
-    transaction.setType(TransactionType.ITEM);
-    transaction.setState(InnReachTransaction.TransactionState.ITEM_HOLD);
-    return transaction;
   }
 }

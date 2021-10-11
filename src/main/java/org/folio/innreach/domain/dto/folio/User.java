@@ -11,6 +11,7 @@ public class User {
   private String username;
   private boolean active;
   private Personal personal;
+  private String barcode;
 
   @Data
   @JsonIgnoreProperties(ignoreUnknown = true)

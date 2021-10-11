@@ -5,15 +5,11 @@ import static java.util.List.of;
 import static java.util.UUID.fromString;
 import static org.jeasy.random.FieldPredicates.named;
 
-import static org.folio.innreach.batch.contribution.service.FolioItemReader.INSTANCE_ITEM_OFFSET_CONTEXT;
-import static org.folio.innreach.batch.contribution.service.FolioItemReader.INSTANCE_ITEM_TOTAL_CONTEXT;
-import static org.folio.innreach.batch.contribution.service.InstanceContributor.INSTANCE_CONTRIBUTED_ID_CONTEXT;
 import static org.folio.innreach.domain.entity.Contribution.Status.IN_PROGRESS;
 import static org.folio.innreach.fixture.TestUtil.deserializeFromJsonFile;
 
 import java.time.OffsetDateTime;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -21,8 +17,8 @@ import java.util.stream.Collectors;
 import lombok.experimental.UtilityClass;
 import org.jeasy.random.EasyRandom;
 import org.jeasy.random.EasyRandomParameters;
-import org.springframework.batch.item.ExecutionContext;
 
+import org.folio.innreach.batch.contribution.ContributionJobContext;
 import org.folio.innreach.client.InventoryViewClient;
 import org.folio.innreach.domain.dto.folio.ResultList;
 import org.folio.innreach.domain.dto.folio.inventorystorage.JobResponse;
@@ -88,6 +84,10 @@ public class ContributionFixture {
     return contribution;
   }
 
+  public static ContributionJobContext createContributionJobContext() {
+    return contributionRandom.nextObject(ContributionJobContext.class);
+  }
+
   public static InventoryViewClient.InstanceView createInstanceView() {
     var instanceView = new InventoryViewClient.InstanceView();
     instanceView.setInstance(createInstance());
@@ -142,15 +142,6 @@ public class ContributionFixture {
       .numberOfRecordsPublished(0)
       .submittedDate(OffsetDateTime.now())
       .build();
-  }
-
-
-  public static ExecutionContext createExecutionContext() {
-    var executionContext = new ExecutionContext();
-    executionContext.put(INSTANCE_ITEM_OFFSET_CONTEXT, Collections.singletonMap(UUID.randomUUID(), 1));
-    executionContext.put(INSTANCE_ITEM_TOTAL_CONTEXT, Collections.singletonMap(UUID.randomUUID(), 342));
-    executionContext.put(INSTANCE_CONTRIBUTED_ID_CONTEXT, singletonList(UUID.randomUUID()));
-    return executionContext;
   }
 
   public static TransformedMARCRecordDTO createMARCRecord() {

@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -13,11 +14,12 @@ import lombok.Builder;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.math.NumberUtils;
-import org.springframework.batch.core.configuration.annotation.StepScope;
-import org.springframework.batch.item.ItemWriter;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
+import org.springframework.util.Assert;
 
-import org.folio.innreach.batch.contribution.ContributionJobContext;
+import org.folio.innreach.batch.contribution.ContributionJobContextManager;
+import org.folio.innreach.batch.contribution.listener.ContributionExceptionListener;
 import org.folio.innreach.domain.dto.folio.ContributionItemCirculationStatus;
 import org.folio.innreach.domain.service.CentralServerService;
 import org.folio.innreach.domain.service.ContributionValidationService;
@@ -30,17 +32,19 @@ import org.folio.innreach.dto.Item;
 import org.folio.innreach.dto.ItemEffectiveCallNumberComponents;
 import org.folio.innreach.dto.MaterialTypeMappingDTO;
 import org.folio.innreach.external.dto.BibItem;
+import org.folio.innreach.external.dto.BibItemsInfo;
 import org.folio.innreach.external.service.InnReachContributionService;
 
 @Log4j2
-@StepScope
 @Service
 @RequiredArgsConstructor
-public class ItemContributor implements ItemWriter<Item> {
+public class ItemContributor {
 
   private static final int FETCH_LIMIT = 2000;
   private static final String NON_DIGIT_REGEX = "\\D+";
 
+  @Qualifier("itemExceptionListener")
+  private final ContributionExceptionListener exceptionListener;
   private final InnReachContributionService irContributionService;
   private final ContributionValidationService validationService;
   private final MaterialTypeMappingService typeMappingService;
@@ -49,65 +53,80 @@ public class ItemContributor implements ItemWriter<Item> {
   private final CentralServerService centralServerService;
   private final LocationMappingService locationMappingService;
 
-  private final ContributionJobContext jobContext;
+  public int contributeItems(String bibId, List<Item> items) {
+    log.info("Processing items of bib {}", bibId);
 
-  @Override
-  public void write(List<? extends Item> items) {
-    ContributionMappings mappings = getContributionMappings();
+    var mappings = getContributionMappings();
 
-    items.stream()
-      .collect(Collectors.groupingBy(Item::getInstanceHrid))
-      .forEach((instanceHrid, instanceItems)
-        -> contributeItems(instanceHrid, instanceItems, mappings));
-  }
-
-  private void contributeItems(String bibId, List<? extends Item> items, ContributionMappings mappings) {
     var bibItems = items.stream()
       .map(item -> convertItem(item, mappings))
+      .filter(Objects::nonNull)
       .collect(Collectors.toList());
 
-    irContributionService.contributeBibItems(jobContext.getCentralServerId(), bibId, bibItems);
+    var bibItemsInfo = BibItemsInfo.of(bibItems);
+
+    int writeCount = bibItemsInfo.getItemInfo().size();
+
+    log.info("Loaded {} items", writeCount);
+
+    var response = irContributionService.contributeBibItems(getCentralServerId(), bibId, bibItemsInfo);
+    Assert.isTrue(response.isOk(), "Unexpected items contribution response: " + response);
+
+    log.info("Finished contributing items of bib {}", bibId);
+
+    return writeCount;
   }
 
   private BibItem convertItem(Item item, ContributionMappings mappings) {
-    var suppressionStatus = getSuppressionStatus(item);
-    var circulationStatus = getCirculationStatus(item);
+    log.info("Loading item {} info", item.getHrid());
+    try {
+      var suppressionStatus = getSuppressionStatus(item);
+      var circulationStatus = getCirculationStatus(item);
 
-    var copyNumber = Optional.ofNullable(item.getCopyNumber())
-      .map(n -> n.replaceAll(NON_DIGIT_REGEX, ""))
-      .filter(NumberUtils::isCreatable)
-      .map(NumberUtils::createInteger)
-      .filter(n -> n != 0)
-      .orElse(null);
+      var copyNumber = Optional.ofNullable(item.getCopyNumber())
+        .map(n -> n.replaceAll(NON_DIGIT_REGEX, ""))
+        .filter(NumberUtils::isCreatable)
+        .map(NumberUtils::createInteger)
+        .filter(n -> n != 0)
+        .orElse(null);
 
-    var callNumber = Optional.ofNullable(item.getEffectiveCallNumberComponents())
-      .map(ItemEffectiveCallNumberComponents::getCallNumber)
-      .orElse(null);
+      var callNumber = Optional.ofNullable(item.getEffectiveCallNumberComponents())
+        .map(ItemEffectiveCallNumberComponents::getCallNumber)
+        .orElse(null);
 
-    var folLocId = item.getPermanentLocationId();
-    var folLibId = mappings.getLibraryId(folLocId);
+      var folLocId = item.getPermanentLocationId();
+      var folLibId = mappings.getLibraryId(folLocId);
 
-    return BibItem.builder()
-      .itemId(item.getHrid())
-      .itemCircStatus(circulationStatus)
-      .copyNumber(copyNumber)
-      .callNumber(callNumber)
-      .suppress(suppressionStatus)
-      .centralItemType(mappings.getCentralType(item.getMaterialTypeId()))
-      .locationKey(mappings.getLocationKey(folLocId, folLibId))
-      .agencyCode(mappings.getAgencyCode(folLibId))
-      .build();
+      var bibItem = BibItem.builder()
+        .itemId(item.getHrid())
+        .itemCircStatus(circulationStatus.getStatus())
+        .copyNumber(copyNumber)
+        .callNumber(callNumber)
+        .suppress(suppressionStatus)
+        .centralItemType(mappings.getCentralType(item.getMaterialTypeId()))
+        .locationKey(mappings.getLocationKey(folLocId, folLibId))
+        .agencyCode(mappings.getAgencyCode(folLibId))
+        .build();
+
+      log.info("Loaded bibItem {}", bibItem);
+
+      return bibItem;
+    } catch (Exception e) {
+      exceptionListener.logWriteError(new RuntimeException("Unable to load item info: " + e.getMessage(), e), item.getId());
+      return null;
+    }
   }
 
   private Character getSuppressionStatus(Item item) {
-    Character itemSuppress = validationService.getSuppressionStatus(jobContext.getCentralServerId(), item.getStatisticalCodeIds());
+    var centralServerId = getCentralServerId();
+    Character itemSuppress = validationService.getSuppressionStatus(centralServerId, item.getStatisticalCodeIds());
 
     return itemSuppress != null ? itemSuppress :
-      validationService.getSuppressionStatus(jobContext.getCentralServerId(), item.getHoldingStatisticalCodeIds());
+      validationService.getSuppressionStatus(centralServerId, item.getHoldingStatisticalCodeIds());
   }
 
   private ContributionItemCirculationStatus getCirculationStatus(Item item) {
-    return validationService.getItemCirculationStatus(jobContext.getCentralServerId(), item.getId());
+    return validationService.getItemCirculationStatus(getCentralServerId(), item);
   }
 
   private ContributionMappings getContributionMappings() {
@@ -132,7 +151,7 @@ public class ItemContributor implements ItemWriter<Item> {
   }
 
   private Map<UUID, Integer> getTypeMappings() {
-    return typeMappingService.getAllMappings(jobContext.getCentralServerId(), 0, FETCH_LIMIT)
+    return typeMappingService.getAllMappings(getCentralServerId(), 0, FETCH_LIMIT)
       .getMaterialTypeMappings()
       .stream()
       .collect(Collectors.toMap(MaterialTypeMappingDTO::getMaterialTypeId, MaterialTypeMappingDTO::getCentralItemType));
@@ -140,7 +159,7 @@ public class ItemContributor implements ItemWriter<Item> {
 
   private Map<UUID, String> getLibraryMappings(Map<UUID, String> irLocations) {
     var libraryMappings =
-      libraryMappingService.getAllMappings(jobContext.getCentralServerId(), 0, FETCH_LIMIT).getLibraryMappings();
+      libraryMappingService.getAllMappings(getCentralServerId(), 0, FETCH_LIMIT).getLibraryMappings();
 
     Map<UUID, String> mappings = new HashMap<>();
     for (var mapping : libraryMappings) {
@@ -156,7 +175,7 @@ public class ItemContributor implements ItemWriter<Item> {
 
     for (var libId : libraryIds) {
       var locationMappings = locationMappingService
-        .getAllMappings(jobContext.getCentralServerId(), libId, 0, FETCH_LIMIT)
+        .getAllMappings(getCentralServerId(), libId, 0, FETCH_LIMIT)
         .getLocationMappings();
 
       locationMappings.forEach(loc -> mappings.put(loc.getLocationId(), libId));
@@ -170,7 +189,7 @@ public class ItemContributor implements ItemWriter<Item> {
 
     for (var libId : libraryIds) {
       var locationMappings =
-        locationMappingService.getAllMappings(jobContext.getCentralServerId(), libId, 0, FETCH_LIMIT).getLocationMappings();
+        locationMappingService.getAllMappings(getCentralServerId(), libId, 0, FETCH_LIMIT).getLocationMappings();
 
       locationMappings.forEach(loc -> mappings.put(loc.getLocationId(), irLocations.get(loc.getInnReachLocationId())));
     }
@@ -179,7 +198,7 @@ public class ItemContributor implements ItemWriter<Item> {
   }
 
   private Map<UUID, String> getAgencyMappings() {
-    var centralServer = centralServerService.getCentralServer(jobContext.getCentralServerId());
+    var centralServer = centralServerService.getCentralServer(getCentralServerId());
 
     var localAgencies = centralServer.getLocalAgencies();
     Map<UUID, String> mappings = new HashMap<>();
@@ -189,6 +208,10 @@ public class ItemContributor implements ItemWriter<Item> {
     }
 
     return mappings;
+  }
+
+  private UUID getCentralServerId() {
+    return ContributionJobContextManager.getContributionJobContext().getCentralServerId();
   }
 
   @Builder

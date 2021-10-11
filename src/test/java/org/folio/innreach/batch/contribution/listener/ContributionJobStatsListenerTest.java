@@ -2,27 +2,30 @@ package org.folio.innreach.batch.contribution.listener;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
-import static org.folio.innreach.batch.contribution.ContributionJobContext.CENTRAL_SERVER_ID_KEY;
+import static org.folio.innreach.fixture.ContributionFixture.createContributionJobContext;
 
 import java.util.UUID;
 
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Answers;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.batch.core.JobParameters;
 import org.springframework.batch.core.scope.context.ChunkContext;
 
+import org.folio.innreach.batch.contribution.ContributionJobContext;
+import org.folio.innreach.batch.contribution.ContributionJobContext.Statistics;
+import org.folio.innreach.batch.contribution.ContributionJobContextManager;
 import org.folio.innreach.domain.service.ContributionService;
 
 @ExtendWith(MockitoExtension.class)
 class ContributionJobStatsListenerTest {
 
-  private static final String CENTRAL_SERVER_ID = UUID.randomUUID().toString();
+  private static final ContributionJobContext JOB_CONTEXT = createContributionJobContext();
 
   @Mock
   private ContributionService contributionService;
@@ -30,31 +33,21 @@ class ContributionJobStatsListenerTest {
   @InjectMocks
   private ContributionJobStatsListener listener;
 
-  @Mock(answer = Answers.RETURNS_DEEP_STUBS)
-  private ChunkContext context;
+  @BeforeEach
+  public void init() {
+    ContributionJobContextManager.beginContributionJobContext(JOB_CONTEXT);
+  }
 
-  @Test
-  void afterChunk() {
-    when(getJobParameters().getString(CENTRAL_SERVER_ID_KEY))
-      .thenReturn(CENTRAL_SERVER_ID);
-
-    listener.afterChunk(context);
-
-    verify(contributionService).updateContributionStats(any(), any());
+  @AfterEach
+  public void clear() {
+    ContributionJobContextManager.endContributionJobContext();
   }
 
   @Test
-  void afterChunkError() {
-    when(getJobParameters().getString(CENTRAL_SERVER_ID_KEY))
-      .thenReturn(CENTRAL_SERVER_ID);
-
-    listener.afterChunkError(context);
+  void updateStats() {
+    listener.updateStats(new Statistics());
 
     verify(contributionService).updateContributionStats(any(), any());
-  }
-
-  private JobParameters getJobParameters() {
-    return context.getStepContext().getStepExecution().getJobParameters();
   }
 
 }

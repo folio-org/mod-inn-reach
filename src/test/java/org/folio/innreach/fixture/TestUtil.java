@@ -11,6 +11,7 @@ import java.util.UUID;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.SneakyThrows;
+import org.springframework.retry.support.RetryTemplate;
 
 import org.folio.innreach.domain.entity.CentralServer;
 
@@ -56,5 +57,12 @@ public class TestUtil {
 
   public static void removeEnvProperty() {
     clearProperty("env");
+  }
+
+  public static RetryTemplate createNoRetryTemplate() {
+    return RetryTemplate.builder()
+      .noBackoff()
+      .notRetryOn(Exception.class)
+      .build();
   }
 }
