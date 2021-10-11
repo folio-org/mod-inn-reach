@@ -256,6 +256,11 @@
           "methods": ["GET"],
           "pathPattern": "/inn-reach/d2ir/getbibrecord/{bibId}/{centralCode}",
           "permissionsRequired": ["inn-reach.d2ir.bib-info.item.get"]
+        },
+        {
+          "methods": ["GET"],
+          "pathPattern": "/inn-reach/d2ir/circ/verifypatron",
+          "permissionsRequired": ["inn-reach.d2ir.patron-info.item.get"]
         }
       ]
     },
@@ -704,6 +709,19 @@
       ]
     },
     {
+      "permissionName" : "inn-reach.d2ir.patron-info.item.get",
+      "displayName" : "get d2ir patron info",
+      "description" : "get d2ir patron info"
+    },
+    {
+      "permissionName" : "inn-reach.d2ir.patron-info.all",
+      "displayName" : "inn reach API module - all permissions of patron info",
+      "description" : "All permissions of d2ir patron info scope",
+      "subPermissions" : [
+        "inn-reach.d2ir.patron-info.item.get"
+      ]
+    },
+    {
       "permissionName" : "inn-reach.all",
       "displayName" : "inn reach API module - all permissions",
       "description" : "All permissions for inn reach",
@@ -725,7 +743,8 @@
         "inn-reach.user-custom-field-mappings.all",
         "inn-reach.central-patron-type-mappings.all",
         "inn-reach.d2ir.inn-reach-transaction.all",
-        "inn-reach.d2ir.bib-info.all"
+        "inn-reach.d2ir.bib-info.all",
+        "inn-reach.d2ir.patron-info.all"
       ]
     }
   ],

@@ -1,6 +1,6 @@
 package org.folio.innreach.external.dto;
 
-import static com.google.common.collect.ImmutableList.of;
+import static java.util.Collections.singletonList;
 
 import java.util.List;
 import java.util.Map;
@@ -81,7 +81,7 @@ public class InnReachResponse {
       return builder()
         .reason(INVALID_REQUEST_REASON)
         .central(central)
-        .messages(of(message))
+        .messages(singletonList(message))
         .build();
     }
 

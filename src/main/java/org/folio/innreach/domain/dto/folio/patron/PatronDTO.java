@@ -1,5 +1,7 @@
 package org.folio.innreach.domain.dto.folio.patron;
 
+import static java.util.Collections.emptyList;
+
 import java.util.List;
 import java.util.UUID;
 
@@ -13,8 +15,8 @@ import lombok.ToString;
 @NoArgsConstructor
 @AllArgsConstructor(staticName = "of")
 public class PatronDTO {
-  private Integer totalLoans;
-  private List<Loan> loans;
+  private Integer totalLoans = 0;
+  private List<Loan> loans = emptyList();
 
   @Data
   @ToString
