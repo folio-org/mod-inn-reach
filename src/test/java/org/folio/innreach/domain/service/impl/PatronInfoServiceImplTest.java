@@ -15,6 +15,7 @@ import static org.folio.innreach.fixture.PatronFixture.PATRON_FIRST_NAME;
 import static org.folio.innreach.fixture.PatronFixture.createPatronBlock;
 import static org.folio.innreach.fixture.PatronFixture.createUser;
 import static org.folio.innreach.fixture.PatronFixture.getErrorMsg;
+import static org.folio.innreach.fixture.PatronFixture.getPatronId;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -29,6 +30,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.folio.innreach.client.PatronBlocksClient;
 import org.folio.innreach.client.PatronClient;
 import org.folio.innreach.domain.dto.folio.ResultList;
+import org.folio.innreach.domain.dto.folio.User;
 import org.folio.innreach.domain.dto.folio.patron.PatronDTO;
 import org.folio.innreach.domain.dto.folio.patron.PatronDTO.Loan;
 import org.folio.innreach.domain.service.CentralPatronTypeMappingService;
@@ -73,7 +75,7 @@ class PatronInfoServiceImplTest {
   @Test
   void shouldReturnPatronInfo() {
     var user = createUser();
-    var strUserId = user.getId().replaceAll("-", "");
+    var patronId = getPatronId(user);
 
     when(centralServerService.getCentralServerIdByCentralCode(any())).thenReturn(UUID.randomUUID());
     when(userService.getUserByPublicId(any())).thenReturn(Optional.of(user));
@@ -88,8 +90,71 @@ class PatronInfoServiceImplTest {
     var patronInfo = response.getPatronInfo();
 
     assertNotNull(patronInfo);
-    assertEquals(strUserId, patronInfo.getPatronId());
+    assertEquals(patronId, patronInfo.getPatronId());
     assertEquals(PATRON_NAME, patronInfo.getPatronName());
+    assertEquals(CENTRAL_PATRON_TYPE, patronInfo.getCentralPatronType());
+    assertEquals(INN_REACH_LOANS, patronInfo.getNonLocalLoans());
+    assertEquals(TOTAL_LOANS - INN_REACH_LOANS, (int) patronInfo.getLocalLoans());
+    assertEquals(AGENCY_CODE, patronInfo.getPatronAgencyCode());
+    assertNotNull(patronInfo.getPatronExpireDate());
+  }
+
+  @Test
+  void shouldReturnPatronInfo_MatchFirstMiddleLastName() {
+    var patronName = "John John Doe";
+    var user = createUser();
+    user.getPersonal().setFirstName("John");
+    user.getPersonal().setMiddleName("John");
+    user.getPersonal().setLastName("Doe");
+
+    var strUserId = getPatronId(user);
+
+    when(centralServerService.getCentralServerIdByCentralCode(any())).thenReturn(UUID.randomUUID());
+    when(userService.getUserByPublicId(any())).thenReturn(Optional.of(user));
+    when(patronBlocksClient.getPatronBlocks(any())).thenReturn(ResultList.empty());
+    when(patronClient.getAccountDetails(any())).thenReturn(PatronDTO.of(TOTAL_LOANS, singletonList(Loan.of(UUID.randomUUID()))));
+    when(transactionService.countInnReachLoans(any(), any())).thenReturn(INN_REACH_LOANS);
+    when(centralPatronTypeMappingService.getCentralPatronType(any(), any())).thenReturn(Optional.of(CENTRAL_PATRON_TYPE));
+
+    var response = service.verifyPatron(CENTRAL_CODE, VISIBLE_PATRON_ID, AGENCY_CODE, patronName);
+
+    assertNotNull(response);
+    var patronInfo = response.getPatronInfo();
+
+    assertNotNull(patronInfo);
+    assertEquals(strUserId, patronInfo.getPatronId());
+    assertEquals(patronName, patronInfo.getPatronName());
+    assertEquals(CENTRAL_PATRON_TYPE, patronInfo.getCentralPatronType());
+    assertEquals(INN_REACH_LOANS, patronInfo.getNonLocalLoans());
+    assertEquals(TOTAL_LOANS - INN_REACH_LOANS, (int) patronInfo.getLocalLoans());
+    assertEquals(AGENCY_CODE, patronInfo.getPatronAgencyCode());
+    assertNotNull(patronInfo.getPatronExpireDate());
+  }
+
+  @Test
+  void shouldReturnPatronInfo_MatchMiddleLastName() {
+    var patronName = "John Doe";
+    var user = createUser();
+    user.getPersonal().setMiddleName("John");
+    user.getPersonal().setLastName("Doe");
+
+    var strUserId = getPatronId(user);
+
+    when(centralServerService.getCentralServerIdByCentralCode(any())).thenReturn(UUID.randomUUID());
+    when(userService.getUserByPublicId(any())).thenReturn(Optional.of(user));
+    when(patronBlocksClient.getPatronBlocks(any())).thenReturn(ResultList.empty());
+    when(patronClient.getAccountDetails(any())).thenReturn(PatronDTO.of(TOTAL_LOANS, singletonList(Loan.of(UUID.randomUUID()))));
+    when(transactionService.countInnReachLoans(any(), any())).thenReturn(INN_REACH_LOANS);
+    when(centralPatronTypeMappingService.getCentralPatronType(any(), any())).thenReturn(Optional.of(CENTRAL_PATRON_TYPE));
+
+    var response = service.verifyPatron(CENTRAL_CODE, VISIBLE_PATRON_ID, AGENCY_CODE, patronName);
+
+    assertNotNull(response);
+    var patronInfo = response.getPatronInfo();
+
+    assertNotNull(patronInfo);
+    assertEquals(strUserId, patronInfo.getPatronId());
+    assertEquals(patronName, patronInfo.getPatronName());
     assertEquals(CENTRAL_PATRON_TYPE, patronInfo.getCentralPatronType());
     assertEquals(INN_REACH_LOANS, patronInfo.getNonLocalLoans());
     assertEquals(TOTAL_LOANS - INN_REACH_LOANS, (int) patronInfo.getLocalLoans());
@@ -130,8 +195,10 @@ class PatronInfoServiceImplTest {
   }
 
   @Test
-  void shouldReturnErrorWhenPatronBlocksFound() {
+  void shouldReturnError_PatronBlocksFound() {
     var patronBlock = createPatronBlock();
+    patronBlock.setBlockBorrowing(true);
+    patronBlock.setBlockRequests(false);
 
     when(centralServerService.getCentralServerIdByCentralCode(any())).thenReturn(UUID.randomUUID());
     when(userService.getUserByPublicId(any())).thenReturn(Optional.of(createUser()));
@@ -145,6 +212,61 @@ class PatronInfoServiceImplTest {
     assertEquals(ERROR_STATUS, response.getStatus());
     assertEquals(ERROR_REASON, response.getReason());
     assertEquals("Patron block found: " + patronBlock.getMessage(), getErrorMsg(response));
+  }
+
+  @Test
+  void shouldReturnError_PatronBlockRequests() {
+    var patronBlock = createPatronBlock();
+    patronBlock.setBlockBorrowing(false);
+    patronBlock.setBlockRequests(true);
+
+    when(centralServerService.getCentralServerIdByCentralCode(any())).thenReturn(UUID.randomUUID());
+    when(userService.getUserByPublicId(any())).thenReturn(Optional.of(createUser()));
+    when(patronBlocksClient.getPatronBlocks(any())).thenReturn(asSinglePage(patronBlock));
+
+    var response = service.verifyPatron(CENTRAL_CODE, VISIBLE_PATRON_ID, AGENCY_CODE, PATRON_NAME);
+
+    assertNotNull(response);
+    assertNull(response.getPatronInfo());
+    assertFalse(response.getRequestAllowed());
+    assertEquals(ERROR_STATUS, response.getStatus());
+    assertEquals(ERROR_REASON, response.getReason());
+    assertEquals("Patron block found: " + patronBlock.getMessage(), getErrorMsg(response));
+  }
+
+  @Test
+  void shouldReturnError_CentralTypeNotFound() {
+    User user = createUser();
+
+    when(centralServerService.getCentralServerIdByCentralCode(any())).thenReturn(UUID.randomUUID());
+    when(userService.getUserByPublicId(any())).thenReturn(Optional.of(user));
+    when(patronBlocksClient.getPatronBlocks(any())).thenReturn(ResultList.empty());
+
+    var response = service.verifyPatron(CENTRAL_CODE, VISIBLE_PATRON_ID, AGENCY_CODE, PATRON_NAME);
+
+    assertNotNull(response);
+    assertNull(response.getPatronInfo());
+    assertFalse(response.getRequestAllowed());
+    assertEquals(ERROR_STATUS, response.getStatus());
+    assertEquals(ERROR_REASON, response.getReason());
+    assertEquals("centralPatronType is not resolved for patron with public id: " + user.getExternalSystemId(), getErrorMsg(response));
+  }
+
+  @Test
+  void shouldReturnError_InvalidPatronName() {
+    var patronName = "testName";
+
+    when(centralServerService.getCentralServerIdByCentralCode(any())).thenReturn(UUID.randomUUID());
+    when(userService.getUserByPublicId(any())).thenReturn(Optional.of(createUser()));
+
+    var response = service.verifyPatron(CENTRAL_CODE, VISIBLE_PATRON_ID, AGENCY_CODE, patronName);
+
+    assertNotNull(response);
+    assertNull(response.getPatronInfo());
+    assertFalse(response.getRequestAllowed());
+    assertEquals(ERROR_STATUS, response.getStatus());
+    assertEquals(ERROR_REASON, response.getReason());
+    assertEquals("Patron is not found by name: " + patronName, getErrorMsg(response));
   }
 
 }

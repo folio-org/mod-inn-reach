@@ -7,10 +7,13 @@ import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.UUID;
 
+import lombok.experimental.UtilityClass;
+
 import org.folio.innreach.domain.dto.folio.User;
 import org.folio.innreach.domain.dto.folio.patron.PatronBlock;
 import org.folio.innreach.dto.PatronInfoResponseDTO;
 
+@UtilityClass
 public class PatronFixture {
 
   public static final UUID USER_ID = UUID.randomUUID();
@@ -38,5 +41,9 @@ public class PatronFixture {
       return isNotEmpty(error.getMessages()) ? error.getMessages().get(0) : null;
     }
     return null;
+  }
+
+  public static String getPatronId(User user) {
+    return user.getId().replaceAll("-", "");
   }
 }
