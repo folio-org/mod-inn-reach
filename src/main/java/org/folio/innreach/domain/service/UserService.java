@@ -11,6 +11,8 @@ public interface UserService {
 
   Optional<User> getUserByName(String name);
 
+  Optional<User> getUserByPublicId(String userPublicId);
+
   User saveUser(User user);
 
 }

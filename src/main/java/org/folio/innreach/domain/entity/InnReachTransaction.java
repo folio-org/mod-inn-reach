@@ -1,9 +1,9 @@
 package org.folio.innreach.domain.entity;
 
-import lombok.Getter;
-import lombok.Setter;
-import org.folio.innreach.domain.entity.base.Auditable;
-import org.folio.innreach.domain.entity.base.Identifiable;
+import static org.folio.innreach.domain.entity.InnReachTransaction.FETCH_ONE_BY_TRACKING_ID_QUERY;
+import static org.folio.innreach.domain.entity.InnReachTransaction.FETCH_ONE_BY_TRACKING_ID_QUERY_NAME;
+
+import java.util.UUID;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
@@ -16,10 +16,12 @@ import javax.persistence.JoinColumn;
 import javax.persistence.NamedQuery;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
-import java.util.UUID;
 
-import static org.folio.innreach.domain.entity.InnReachTransaction.FETCH_ONE_BY_TRACKING_ID_QUERY;
-import static org.folio.innreach.domain.entity.InnReachTransaction.FETCH_ONE_BY_TRACKING_ID_QUERY_NAME;
+import lombok.Getter;
+import lombok.Setter;
+
+import org.folio.innreach.domain.entity.base.Auditable;
+import org.folio.innreach.domain.entity.base.Identifiable;
 
 @Entity
 @Getter

@@ -4,6 +4,7 @@ import static org.folio.innreach.domain.service.impl.ServiceUtils.centralServerR
 import static org.folio.innreach.domain.service.impl.ServiceUtils.initId;
 import static org.folio.innreach.domain.service.impl.ServiceUtils.mergeAndSave;
 
+import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Consumer;
 
@@ -14,6 +15,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import org.folio.innreach.domain.entity.CentralPatronTypeMapping;
 import org.folio.innreach.domain.entity.CentralServer;
 import org.folio.innreach.domain.entity.PatronTypeMapping;
 import org.folio.innreach.domain.service.PatronTypeMappingService;
@@ -49,6 +51,12 @@ public class PatronTypeMappingServiceImpl implements PatronTypeMappingService {
     var saved = mergeAndSave(incoming, stored, repository, this::copyData);
 
     return mapper.toDTOCollection(saved);
+  }
+
+  @Override
+  public Optional<Integer> getCentralPatronType(UUID centralServerId, UUID patronGroupId) {
+    return repository.findOneByCentralServerIdAndPatronGroupId(centralServerId, patronGroupId)
+      .map(CentralPatronTypeMapping::getCentralPatronType);
   }
 
   private static Example<PatronTypeMapping> mappingExampleWithServerId(UUID centralServerId) {

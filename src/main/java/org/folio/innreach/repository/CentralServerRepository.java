@@ -30,4 +30,8 @@ public interface CentralServerRepository extends JpaRepository<CentralServer, UU
 
   @Query(name = CentralServer.GET_IDS_QUERY_NAME)
   Page<UUID> getIds(Pageable pageable);
+
+  @Query(name = CentralServer.GET_ID_BY_CENTRAL_CODE_QUERY_NAME)
+  Optional<UUID> getIdByCentralCode(String centralCode);
+
 }
