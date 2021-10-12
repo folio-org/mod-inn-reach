@@ -1007,9 +1007,7 @@ paths:
       parameters:
         - $ref: '#/components/parameters/bibId'
         - $ref: '#/components/parameters/centralCode'
-  /v2/circ/itemhold/{trackingId}/{centralCode}:
-    servers:
-      - url: /innreach/
+  /d2ir/circ/itemhold/{trackingId}/{centralCode}:
     post:
       operationId: createInnReachTransactionItemHold
       description: Originates an item hold at the owning site
