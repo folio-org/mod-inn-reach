@@ -2,7 +2,9 @@ package org.folio.innreach.domain.service.impl;
 
 import static java.lang.Boolean.TRUE;
 import static java.util.Optional.ofNullable;
+import static org.apache.commons.lang3.StringUtils.defaultIfEmpty;
 import static org.apache.commons.lang3.StringUtils.equalsAny;
+import static org.apache.commons.lang3.StringUtils.isNotEmpty;
 
 import static org.folio.innreach.external.dto.InnReachResponse.Error.ofMessage;
 
@@ -20,9 +22,7 @@ import org.springframework.util.Assert;
 import org.folio.innreach.client.PatronBlocksClient;
 import org.folio.innreach.client.PatronClient;
 import org.folio.innreach.domain.dto.folio.User;
-import org.folio.innreach.domain.dto.folio.patron.PatronBlock;
 import org.folio.innreach.domain.dto.folio.patron.PatronDTO;
-import org.folio.innreach.domain.service.CentralPatronTypeMappingService;
 import org.folio.innreach.domain.service.CentralServerService;
 import org.folio.innreach.domain.service.InnReachTransactionService;
 import org.folio.innreach.domain.service.PatronInfoService;
@@ -40,7 +40,6 @@ public class PatronInfoServiceImpl implements PatronInfoService {
   public static final String ERROR_REASON = "Unable to verify patron";
 
   private final UserServiceImpl userService;
-  private final CentralPatronTypeMappingService centralPatronTypeMappingService;
   private final PatronTypeMappingService patronTypeMappingService;
   private final CentralServerService centralServerService;
   private final InnReachTransactionService transactionService;
@@ -87,7 +86,7 @@ public class PatronInfoServiceImpl implements PatronInfoService {
     patronInfo.setNonLocalLoans(innReachLoans);
     patronInfo.setLocalLoans(totalLoans - innReachLoans);
     patronInfo.setPatronExpireDate(expirationDate);
-    patronInfo.setPatronName(patronName);
+    patronInfo.setPatronName(getPatronName(user));
     return patronInfo;
   }
 
@@ -120,13 +119,12 @@ public class PatronInfoServiceImpl implements PatronInfoService {
   }
 
   private Integer getCentralPatronType(UUID centralServerId, User user) {
-    return centralPatronTypeMappingService.getCentralPatronType(centralServerId, user.getBarcode())
-      .or(() -> patronTypeMappingService.getCentralPatronType(centralServerId, user.getPatronGroupId()))
+    return patronTypeMappingService.getCentralPatronType(centralServerId, user.getPatronGroupId())
       .orElseThrow(() -> new IllegalStateException(
-          "centralPatronType is not resolved for patron with public id: " + user.getBarcode()));
+        "centralPatronType is not resolved for patron with public id: " + user.getBarcode()));
   }
 
-  private boolean matchName(User user, String patronName) {
+  private static boolean matchName(User user, String patronName) {
     var personal = user.getPersonal();
     String[] patronNameTokens = patronName.split("\\s");
 
@@ -142,6 +140,20 @@ public class PatronInfoServiceImpl implements PatronInfoService {
     return equalsAny(patronNameTokens[0], personal.getFirstName(), personal.getPreferredFirstName()) &&
       patronNameTokens[1].equals(personal.getMiddleName()) &&
       patronNameTokens[2].equals(personal.getLastName());
+  }
+
+  private static String getPatronName(User user) {
+    var personal = user.getPersonal();
+
+    var nameBuilder = new StringBuilder(personal.getLastName())
+      .append(", ")
+      .append(defaultIfEmpty(personal.getPreferredFirstName(), personal.getFirstName()));
+
+    if (isNotEmpty(personal.getMiddleName())) {
+      nameBuilder.append(" ").append(personal.getMiddleName());
+    }
+
+    return nameBuilder.toString();
   }
 
 }

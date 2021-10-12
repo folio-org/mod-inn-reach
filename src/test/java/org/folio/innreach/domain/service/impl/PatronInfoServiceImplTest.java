@@ -33,7 +33,6 @@ import org.folio.innreach.domain.dto.folio.ResultList;
 import org.folio.innreach.domain.dto.folio.User;
 import org.folio.innreach.domain.dto.folio.patron.PatronDTO;
 import org.folio.innreach.domain.dto.folio.patron.PatronDTO.Loan;
-import org.folio.innreach.domain.service.CentralPatronTypeMappingService;
 import org.folio.innreach.domain.service.CentralServerService;
 import org.folio.innreach.domain.service.InnReachTransactionService;
 import org.folio.innreach.domain.service.PatronTypeMappingService;
@@ -44,6 +43,7 @@ import org.folio.innreach.external.mapper.InnReachResponseMapperImpl;
 class PatronInfoServiceImplTest {
 
   public static final String PATRON_NAME = "John Doe";
+  public static final String FOLIO_PATRON_NAME = "Doe, John";
   public static final Integer CENTRAL_PATRON_TYPE = 42;
   public static final Integer TOTAL_LOANS = 7;
   public static final Integer INN_REACH_LOANS = 3;
@@ -53,8 +53,6 @@ class PatronInfoServiceImplTest {
 
   @Mock
   private UserServiceImpl userService;
-  @Mock
-  private CentralPatronTypeMappingService centralPatronTypeMappingService;
   @Mock
   private PatronTypeMappingService patronTypeMappingService;
   @Mock
@@ -82,7 +80,7 @@ class PatronInfoServiceImplTest {
     when(patronBlocksClient.getPatronBlocks(any())).thenReturn(ResultList.empty());
     when(patronClient.getAccountDetails(any())).thenReturn(PatronDTO.of(TOTAL_LOANS, singletonList(Loan.of(UUID.randomUUID()))));
     when(transactionService.countInnReachLoans(any(), any())).thenReturn(INN_REACH_LOANS);
-    when(centralPatronTypeMappingService.getCentralPatronType(any(), any())).thenReturn(Optional.of(CENTRAL_PATRON_TYPE));
+    when(patronTypeMappingService.getCentralPatronType(any(), any())).thenReturn(Optional.of(CENTRAL_PATRON_TYPE));
 
     var response = service.verifyPatron(CENTRAL_CODE, VISIBLE_PATRON_ID, AGENCY_CODE, PATRON_NAME);
 
@@ -91,7 +89,7 @@ class PatronInfoServiceImplTest {
 
     assertNotNull(patronInfo);
     assertEquals(patronId, patronInfo.getPatronId());
-    assertEquals(PATRON_NAME, patronInfo.getPatronName());
+    assertEquals(FOLIO_PATRON_NAME, patronInfo.getPatronName());
     assertEquals(CENTRAL_PATRON_TYPE, patronInfo.getCentralPatronType());
     assertEquals(INN_REACH_LOANS, patronInfo.getNonLocalLoans());
     assertEquals(TOTAL_LOANS - INN_REACH_LOANS, (int) patronInfo.getLocalLoans());
@@ -101,11 +99,13 @@ class PatronInfoServiceImplTest {
 
   @Test
   void shouldReturnPatronInfo_MatchFirstMiddleLastName() {
-    var patronName = "John John Doe";
     var user = createUser();
-    user.getPersonal().setFirstName("John");
-    user.getPersonal().setMiddleName("John");
-    user.getPersonal().setLastName("Doe");
+    var p = user.getPersonal();
+    p.setFirstName("Abc");
+    p.setMiddleName("John");
+    p.setLastName("Doe");
+    var patronName = "Abc John Doe";
+    var folioPatronName = "Doe, Abc John";
 
     var strUserId = getPatronId(user);
 
@@ -114,7 +114,7 @@ class PatronInfoServiceImplTest {
     when(patronBlocksClient.getPatronBlocks(any())).thenReturn(ResultList.empty());
     when(patronClient.getAccountDetails(any())).thenReturn(PatronDTO.of(TOTAL_LOANS, singletonList(Loan.of(UUID.randomUUID()))));
     when(transactionService.countInnReachLoans(any(), any())).thenReturn(INN_REACH_LOANS);
-    when(centralPatronTypeMappingService.getCentralPatronType(any(), any())).thenReturn(Optional.of(CENTRAL_PATRON_TYPE));
+    when(patronTypeMappingService.getCentralPatronType(any(), any())).thenReturn(Optional.of(CENTRAL_PATRON_TYPE));
 
     var response = service.verifyPatron(CENTRAL_CODE, VISIBLE_PATRON_ID, AGENCY_CODE, patronName);
 
@@ -123,7 +123,7 @@ class PatronInfoServiceImplTest {
 
     assertNotNull(patronInfo);
     assertEquals(strUserId, patronInfo.getPatronId());
-    assertEquals(patronName, patronInfo.getPatronName());
+    assertEquals(folioPatronName, patronInfo.getPatronName());
     assertEquals(CENTRAL_PATRON_TYPE, patronInfo.getCentralPatronType());
     assertEquals(INN_REACH_LOANS, patronInfo.getNonLocalLoans());
     assertEquals(TOTAL_LOANS - INN_REACH_LOANS, (int) patronInfo.getLocalLoans());
@@ -133,10 +133,12 @@ class PatronInfoServiceImplTest {
 
   @Test
   void shouldReturnPatronInfo_MatchMiddleLastName() {
-    var patronName = "John Doe";
     var user = createUser();
+    user.getPersonal().setPreferredFirstName("Abc");
     user.getPersonal().setMiddleName("John");
     user.getPersonal().setLastName("Doe");
+    var patronName = "John Doe";
+    var folioPatronName = "Doe, Abc John";
 
     var strUserId = getPatronId(user);
 
@@ -145,7 +147,7 @@ class PatronInfoServiceImplTest {
     when(patronBlocksClient.getPatronBlocks(any())).thenReturn(ResultList.empty());
     when(patronClient.getAccountDetails(any())).thenReturn(PatronDTO.of(TOTAL_LOANS, singletonList(Loan.of(UUID.randomUUID()))));
     when(transactionService.countInnReachLoans(any(), any())).thenReturn(INN_REACH_LOANS);
-    when(centralPatronTypeMappingService.getCentralPatronType(any(), any())).thenReturn(Optional.of(CENTRAL_PATRON_TYPE));
+    when(patronTypeMappingService.getCentralPatronType(any(), any())).thenReturn(Optional.of(CENTRAL_PATRON_TYPE));
 
     var response = service.verifyPatron(CENTRAL_CODE, VISIBLE_PATRON_ID, AGENCY_CODE, patronName);
 
@@ -154,7 +156,7 @@ class PatronInfoServiceImplTest {
 
     assertNotNull(patronInfo);
     assertEquals(strUserId, patronInfo.getPatronId());
-    assertEquals(patronName, patronInfo.getPatronName());
+    assertEquals(folioPatronName, patronInfo.getPatronName());
     assertEquals(CENTRAL_PATRON_TYPE, patronInfo.getCentralPatronType());
     assertEquals(INN_REACH_LOANS, patronInfo.getNonLocalLoans());
     assertEquals(TOTAL_LOANS - INN_REACH_LOANS, (int) patronInfo.getLocalLoans());

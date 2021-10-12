@@ -56,7 +56,7 @@ public class PatronTypeMappingServiceImpl implements PatronTypeMappingService {
   @Override
   public Optional<Integer> getCentralPatronType(UUID centralServerId, UUID patronGroupId) {
     return repository.findOneByCentralServerIdAndPatronGroupId(centralServerId, patronGroupId)
-      .map(CentralPatronTypeMapping::getCentralPatronType);
+      .map(PatronTypeMapping::getPatronType);
   }
 
   private static Example<PatronTypeMapping> mappingExampleWithServerId(UUID centralServerId) {
