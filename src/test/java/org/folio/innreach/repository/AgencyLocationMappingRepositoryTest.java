@@ -2,7 +2,6 @@ package org.folio.innreach.repository;
 
 import static java.util.UUID.fromString;
 import static java.util.UUID.randomUUID;
-import static java.util.stream.Collectors.toList;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.junit.Assert.assertFalse;
@@ -14,6 +13,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.folio.innreach.fixture.AgencyLocationMappingFixture.createLocalServerMapping;
 import static org.folio.innreach.fixture.AgencyLocationMappingFixture.createMapping;
 import static org.folio.innreach.fixture.AgencyLocationMappingFixture.findLocalServerMappingByCode;
+import static org.folio.innreach.util.ListUtils.mapItems;
 
 import java.util.List;
 import java.util.Optional;
@@ -53,9 +53,7 @@ class AgencyLocationMappingRepositoryTest extends BaseRepositoryTest {
 
     assertEquals(1, mappings.size());
 
-    List<String> ids = mappings.stream()
-      .map(mapping -> mapping.getId().toString())
-      .collect(toList());
+    List<String> ids = mapItems(mappings, mapping -> mapping.getId().toString());
 
     assertEquals(ids, List.of(PRE_POPULATED_MAPPING_ID));
   }

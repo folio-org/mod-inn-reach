@@ -1004,9 +1004,6 @@ paths:
                 $ref: "#/components/schemas/centralServerAgenciesDTO"
         '500':
           $ref: "#/components/responses/trait_response_500"
-      parameters:
-        - $ref: "#/components/parameters/trait_pageable_offset"
-        - $ref: "#/components/parameters/trait_pageable_limit"
   /d2ir/getbibrecord/{bibId}/{centralCode}:
     get:
       operationId: getBibRecord
@@ -1124,6 +1121,8 @@ components:
       $ref: schemas/centralPatronTypeMappingsDTO.json
     centralServerAgenciesDTO:
       $ref: schemas/centralServerAgenciesDTO.json
+    localServerAgenciesDTO:
+      $ref: schemas/d2ir/localServerAgenciesDTO.json
     bibInfoResponseDTO:
       $ref: schemas/d2ir/bibInfoResponseDTO.json
     transactionItemHoldDTO:
