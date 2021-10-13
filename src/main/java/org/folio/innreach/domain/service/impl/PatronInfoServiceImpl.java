@@ -27,6 +27,8 @@ import org.folio.innreach.domain.service.CentralServerService;
 import org.folio.innreach.domain.service.InnReachTransactionService;
 import org.folio.innreach.domain.service.PatronInfoService;
 import org.folio.innreach.domain.service.PatronTypeMappingService;
+import org.folio.innreach.domain.service.UserCustomFieldMappingService;
+import org.folio.innreach.dto.LocalAgencyDTO;
 import org.folio.innreach.dto.PatronInfo;
 import org.folio.innreach.dto.PatronInfoResponseDTO;
 import org.folio.innreach.external.dto.PatronInfoResponse;
@@ -43,6 +45,7 @@ public class PatronInfoServiceImpl implements PatronInfoService {
   private final PatronTypeMappingService patronTypeMappingService;
   private final CentralServerService centralServerService;
   private final InnReachTransactionService transactionService;
+  private final UserCustomFieldMappingService patronAgencyService;
   private final PatronClient patronClient;
   private final PatronBlocksClient patronBlocksClient;
   private final InnReachResponseMapper mapper;
@@ -52,16 +55,13 @@ public class PatronInfoServiceImpl implements PatronInfoService {
                                             String patronAgencyCode, String patronName) {
     PatronInfoResponse response;
     try {
-      var centralServerId = centralServerService.getCentralServerIdByCentralCode(centralServerCode);
+      var centralServer = centralServerService.getCentralServerByCentralCode(centralServerCode);
+      var centralServerId = centralServer.getId();
+      var localAgencies = centralServer.getLocalAgencies();
 
-      var user = userService.getUserByPublicId(visiblePatronId).orElse(null);
+      var user = findPatronUser(visiblePatronId, patronName);
 
-      Assert.isTrue(user != null, "Patron is not found by visiblePatronId: " + visiblePatronId);
-      Assert.isTrue(user.isActive(), "Patron is not active");
-      Assert.isTrue(matchName(user, patronName), "Patron is not found by name: " + patronName);
-      verifyPatronBlocks(user);
-
-      var patronInfo = getPatronInfo(centralServerId, user, patronAgencyCode, patronName);
+      var patronInfo = getPatronInfo(centralServerId, localAgencies, user, patronAgencyCode);
 
       response = PatronInfoResponse.of(patronInfo);
     } catch (Exception e) {
@@ -71,13 +71,15 @@ public class PatronInfoServiceImpl implements PatronInfoService {
     return mapper.toDto(response);
   }
 
-  private PatronInfo getPatronInfo(UUID centralServerId, User user, String patronAgencyCode, String patronName) {
+  private PatronInfo getPatronInfo(UUID centralServerId, List<LocalAgencyDTO> agencies, User user, String userCustomField) {
     var centralPatronType = getCentralPatronType(centralServerId, user);
     var patronId = getPatronId(user);
     var patron = getPatron(user);
+    var patronName = getPatronName(user);
     var totalLoans = patron.getTotalLoans();
     var innReachLoans = countInnReachLoans(patronId, patron.getLoans());
     var expirationDate = ofNullable(user.getExpirationDate()).map(OffsetDateTime::toEpochSecond).orElse(null);
+    var patronAgencyCode = getPatronAgencyCode(centralServerId, agencies, userCustomField);
 
     var patronInfo = new PatronInfo();
     patronInfo.setPatronId(patronId);
@@ -86,8 +88,19 @@ public class PatronInfoServiceImpl implements PatronInfoService {
     patronInfo.setNonLocalLoans(innReachLoans);
     patronInfo.setLocalLoans(totalLoans - innReachLoans);
     patronInfo.setPatronExpireDate(expirationDate);
-    patronInfo.setPatronName(getPatronName(user));
+    patronInfo.setPatronName(patronName);
     return patronInfo;
+  }
+
+  private User findPatronUser(String visiblePatronId, String patronName) {
+    var user = userService.getUserByPublicId(visiblePatronId).orElse(null);
+
+    Assert.isTrue(user != null, "Patron is not found by visiblePatronId: " + visiblePatronId);
+    Assert.isTrue(user.isActive(), "Patron is not active");
+    Assert.isTrue(matchName(user, patronName), "Patron is not found by name: " + patronName);
+    verifyPatronBlocks(user);
+
+    return user;
   }
 
   private void verifyPatronBlocks(User user) {
@@ -122,6 +135,16 @@ public class PatronInfoServiceImpl implements PatronInfoService {
     return patronTypeMappingService.getCentralPatronType(centralServerId, user.getPatronGroupId())
       .orElseThrow(() -> new IllegalStateException(
         "centralPatronType is not resolved for patron with public id: " + user.getBarcode()));
+  }
+
+  private String getPatronAgencyCode(UUID centralServerId, List<LocalAgencyDTO> agencies, String customFieldValue) {
+    if (agencies.size() == 1) {
+      // if only one agency code is hosted on the server, it should default to that
+      return agencies.get(0).getCode();
+    }
+
+    var userCustomField = patronAgencyService.getMapping(centralServerId);
+    return userCustomField.getConfiguredOptions().get(customFieldValue);
   }
 
   private static boolean matchName(User user, String patronName) {
