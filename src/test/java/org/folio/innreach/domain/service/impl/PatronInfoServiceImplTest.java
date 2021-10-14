@@ -284,6 +284,8 @@ class PatronInfoServiceImplTest {
   private static UserCustomFieldMappingDTO createCustomFieldMapping() {
     var mapping = new UserCustomFieldMappingDTO();
     mapping.setConfiguredOptions(Map.of(AGENCY_CODE, CENTRAL_AGENCY_CODE));
+    mapping.setId(UUID.randomUUID());
+    mapping.setCustomFieldId(UUID.randomUUID());
     return mapping;
   }
 

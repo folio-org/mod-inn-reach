@@ -45,7 +45,7 @@ public class PatronInfoServiceImpl implements PatronInfoService {
   private final PatronTypeMappingService patronTypeMappingService;
   private final CentralServerService centralServerService;
   private final InnReachTransactionService transactionService;
-  private final UserCustomFieldMappingService patronAgencyService;
+  private final UserCustomFieldMappingService customFieldMappingService;
   private final PatronClient patronClient;
   private final PatronBlocksClient patronBlocksClient;
   private final InnReachResponseMapper mapper;
@@ -61,7 +61,7 @@ public class PatronInfoServiceImpl implements PatronInfoService {
 
       var user = findPatronUser(visiblePatronId, patronName);
 
-      var patronInfo = getPatronInfo(centralServerId, localAgencies, user, patronAgencyCode);
+      var patronInfo = getPatronInfo(centralServerId, localAgencies, user);
 
       response = PatronInfoResponse.of(patronInfo);
     } catch (Exception e) {
@@ -71,7 +71,7 @@ public class PatronInfoServiceImpl implements PatronInfoService {
     return mapper.toDto(response);
   }
 
-  private PatronInfo getPatronInfo(UUID centralServerId, List<LocalAgencyDTO> agencies, User user, String userCustomField) {
+  private PatronInfo getPatronInfo(UUID centralServerId, List<LocalAgencyDTO> agencies, User user) {
     var centralPatronType = getCentralPatronType(centralServerId, user);
     var patronId = getPatronId(user);
     var patron = getPatron(user);
@@ -79,7 +79,7 @@ public class PatronInfoServiceImpl implements PatronInfoService {
     var totalLoans = patron.getTotalLoans();
     var innReachLoans = countInnReachLoans(patronId, patron.getLoans());
     var expirationDate = ofNullable(user.getExpirationDate()).map(OffsetDateTime::toEpochSecond).orElse(null);
-    var patronAgencyCode = getPatronAgencyCode(centralServerId, agencies, userCustomField);
+    var patronAgencyCode = getPatronAgencyCode(centralServerId, agencies, user);
 
     var patronInfo = new PatronInfo();
     patronInfo.setPatronId(patronId);
@@ -137,14 +137,17 @@ public class PatronInfoServiceImpl implements PatronInfoService {
         "centralPatronType is not resolved for patron with public id: " + user.getBarcode()));
   }
 
-  private String getPatronAgencyCode(UUID centralServerId, List<LocalAgencyDTO> agencies, String customFieldValue) {
+  private String getPatronAgencyCode(UUID centralServerId, List<LocalAgencyDTO> agencies, User user) {
     if (agencies.size() == 1) {
       // if only one agency code is hosted on the server, it should default to that
       return agencies.get(0).getCode();
     }
 
-    var userCustomField = patronAgencyService.getMapping(centralServerId);
-    return userCustomField.getConfiguredOptions().get(customFieldValue);
+    var patronAgencyMapping = customFieldMappingService.getMapping(centralServerId);
+
+    var libraryOptionId = user.getCustomFields().get(patronAgencyMapping.getCustomFieldId());
+
+    return patronAgencyMapping.getConfiguredOptions().get(libraryOptionId);
   }
 
   private static boolean matchName(User user, String patronName) {

@@ -5,6 +5,7 @@ import static org.apache.commons.collections4.CollectionUtils.isNotEmpty;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
+import java.util.Map;
 import java.util.UUID;
 
 import lombok.experimental.UtilityClass;
@@ -32,6 +33,7 @@ public class PatronFixture {
     user.setActive(true);
     user.setExpirationDate(OffsetDateTime.ofInstant(Instant.ofEpochMilli(expiryDateTs), ZoneOffset.UTC));
     user.setPersonal(User.Personal.of(PATRON_FIRST_NAME, null, PATRON_LAST_NAME, null));
+    user.setCustomFields(Map.of("homeLibrary", "opt_0"));
     return user;
   }
 
