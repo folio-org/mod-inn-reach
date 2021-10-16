@@ -36,6 +36,7 @@
     <spring-kafka.version>2.6.3</spring-kafka.version>
     <spring-feign.version>3.0.2</spring-feign.version>
     <wiremock.version>2.31.0</wiremock.version>
+    <awaitility.version>3.0.0</awaitility.version>
     <argLine />
     <sonar.exclusions>
       src/main/java/org/folio/innreach/controller/TenantController.java,
@@ -202,6 +203,12 @@
       <groupId>com.github.tomakehurst</groupId>
       <artifactId>wiremock-jre8</artifactId>
       <version>${wiremock.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.awaitility</groupId>
+      <artifactId>awaitility</artifactId>
+      <version>${awaitility.version}</version>
       <scope>test</scope>
     </dependency>
 

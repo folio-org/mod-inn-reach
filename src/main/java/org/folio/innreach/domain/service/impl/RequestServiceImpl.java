@@ -34,7 +34,7 @@ import java.util.UUID;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
-import org.folio.innreach.domain.dto.folio.ResultList;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import org.folio.innreach.client.InventoryClient;
@@ -42,6 +42,7 @@ import org.folio.innreach.client.InventoryStorageClient;
 import org.folio.innreach.client.RequestStorageClient;
 import org.folio.innreach.client.UsersClient;
 import org.folio.innreach.domain.dto.OwningSiteCancelsRequestDTO;
+import org.folio.innreach.domain.dto.folio.ResultList;
 import org.folio.innreach.domain.dto.folio.User;
 import org.folio.innreach.domain.dto.folio.inventory.InventoryItemDTO;
 import org.folio.innreach.domain.dto.folio.inventory.InventoryItemStatus;
@@ -85,6 +86,7 @@ public class RequestServiceImpl implements RequestService {
 
   private final InnReachExternalService innReachService;
 
+  @Async
   @Override
   public void createItemRequest(String trackingId) {
     log.info("Creating an item request...");

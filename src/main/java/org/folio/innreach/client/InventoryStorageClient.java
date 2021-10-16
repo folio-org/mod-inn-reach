@@ -11,6 +11,6 @@ import java.util.UUID;
 
 @FeignClient(name = "inventory-storage", configuration = FolioFeignClientConfig.class)
 public interface InventoryStorageClient {
-  @GetMapping("/service-points-users?query=(userId==\"{userId}\")")
+  @GetMapping("/service-points-users?query=(userId=={userId})")
   ResultList<ServicePointUserDTO> findServicePointsUsers(@PathVariable("userId") UUID userId);
 }

@@ -27,7 +27,7 @@ public class InnReachTransactionController implements InnReachTransactionApi {
   private final InnReachTransactionService transactionService;
 
   @Override
-  @PostMapping("/inn-reach/d2ir/circ/itemHold/{trackingId}/{centralCode}")
+  @PostMapping("/inn-reach/d2ir/circ/itemhold/{trackingId}/{centralCode}")
   public ResponseEntity<InnReachResponseDTO> createInnReachTransactionItemHold(@PathVariable String trackingId,
                                                                                @PathVariable String centralCode,
                                                                                @Valid TransactionItemHoldDTO dto) {
