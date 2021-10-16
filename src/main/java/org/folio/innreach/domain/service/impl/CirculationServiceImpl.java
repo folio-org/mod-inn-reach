@@ -22,7 +22,7 @@ public class CirculationServiceImpl implements CirculationService {
   @Override
   public InnReachResponseDTO processCirculationRequest(String trackingId, String centralCode, String circulationOperationName, CirculationRequestDTO circulationRequestDTO) {
     var circulationProcessor = innReachCirculationProcessors.stream()
-      .filter(circulationOperation -> circulationOperation.canProcess(circulationOperationName))
+      .filter(processor -> processor.canProcess(circulationOperationName))
       .findFirst()
       .orElseThrow(() -> new CirculationProcessException("Can't find processor for circulation operation: " + circulationOperationName));
 

@@ -4,6 +4,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TEST_METHOD;
+import static org.springframework.test.context.jdbc.SqlMergeMode.MergeMode.MERGE;
 
 import static org.folio.innreach.domain.CirculationOperation.PATRON_HOLD;
 import static org.folio.innreach.fixture.CirculationFixture.createCirculationRequestDTO;
@@ -13,12 +15,18 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.context.jdbc.Sql;
+import org.springframework.test.context.jdbc.SqlMergeMode;
 
 import org.folio.innreach.controller.base.BaseControllerTest;
 import org.folio.innreach.domain.InnReachResponseStatus;
 import org.folio.innreach.dto.InnReachResponseDTO;
 import org.folio.innreach.repository.InnReachTransactionRepository;
 
+@Sql(
+  scripts = {"classpath:db/central-server/clear-central-server-tables.sql"},
+  executionPhase = AFTER_TEST_METHOD
+)
+@SqlMergeMode(MERGE)
 class InnReachCirculationControllerTest extends BaseControllerTest {
 
   private static final String PRE_POPULATED_TRACKING_ID = "tracking1";
