@@ -42,7 +42,7 @@ class CentralServerAgencyControllerTest extends BaseControllerTest {
   void returnAllAgencyCodesPerCentralServer() {
     var centralServer = CentralServerFixture.createCentralServer();
 
-    centralServer.setCentralServerAddress(wm.getRuntimeInfo().getHttpBaseUrl());
+    centralServer.setCentralServerAddress(wm.baseUrl());
     centralServer.setCentralServerCredentials(CentralServerCredentialsFixture.createCentralServerCredentials());
     centralServer.setLocalServerCredentials(LocalServerCredentialsFixture.createLocalServerCredentials());
 
