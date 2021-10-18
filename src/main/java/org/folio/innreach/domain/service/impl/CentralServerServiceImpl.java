@@ -1,5 +1,6 @@
 package org.folio.innreach.domain.service.impl;
 
+import static org.folio.innreach.domain.service.impl.ServiceUtils.initId;
 import static org.folio.innreach.util.ListUtils.mapItems;
 
 import java.util.ArrayList;
@@ -42,6 +43,7 @@ public class CentralServerServiceImpl implements CentralServerService {
     checkCentralServerConnection(centralServerDTO);
 
     var centralServer = centralServerMapper.mapToCentralServer(centralServerDTO);
+    initId(centralServer);
 
     centralServer.getLocalAgencies().forEach(la -> la.setCentralServer(centralServer));
 

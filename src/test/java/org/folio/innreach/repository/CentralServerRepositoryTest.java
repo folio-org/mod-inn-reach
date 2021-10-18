@@ -2,6 +2,7 @@ package org.folio.innreach.repository;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.StringContains.containsString;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -42,7 +43,7 @@ class CentralServerRepositoryTest extends BaseRepositoryTest {
     var savedCentralServer = centralServerRepository.save(centralServer);
 
     assertNotNull(savedCentralServer);
-    assertNotNull(savedCentralServer.getId());
+    assertEquals(centralServer.getId(), savedCentralServer.getId());
     assertNotNull(savedCentralServer.getCentralServerCredentials());
     assertNotNull(savedCentralServer.getLocalServerCredentials());
   }

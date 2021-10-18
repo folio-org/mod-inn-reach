@@ -19,27 +19,23 @@ import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
 import javax.persistence.NamedQuery;
 import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 import javax.persistence.QueryHint;
 import javax.persistence.Table;
 
-import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import org.hibernate.annotations.QueryHints;
 
-import org.folio.innreach.domain.entity.base.Auditable;
-import org.folio.innreach.domain.entity.base.Identifiable;
+import org.folio.innreach.domain.entity.base.AbstractEntity;
 
 @Getter
 @Setter
-@EqualsAndHashCode(of = "localServerCode")
+@NoArgsConstructor
 @ToString(exclude = {"centralServerCredentials", "localServerCredentials", "localAgencies"})
 @Entity
 @Table(name = "central_server")
@@ -67,7 +63,7 @@ import org.folio.innreach.domain.entity.base.Identifiable;
   query = FETCH_CONNECTION_DETAILS_QUERY,
   hints = @QueryHint(name = QueryHints.PASS_DISTINCT_THROUGH, value = "false")
 )
-public class CentralServer extends Auditable implements Identifiable<UUID> {
+public class CentralServer extends AbstractEntity {
 
   private static final String FETCH_BY_ID_POSTFIX = " WHERE cs.id = :id";
 
@@ -101,9 +97,6 @@ public class CentralServer extends Auditable implements Identifiable<UUID> {
       "cs.centralServerCredentials.centralServerSecret" +
     ") FROM CentralServer AS cs " + FETCH_BY_ID_POSTFIX;
 
-  @Id
-  @GeneratedValue(strategy = GenerationType.AUTO)
-  private UUID id;
   private String name;
   private String description;
 
@@ -143,6 +136,11 @@ public class CentralServer extends Auditable implements Identifiable<UUID> {
     orphanRemoval = true
   )
   private List<LocalAgency> localAgencies = new ArrayList<>();
+
+
+  public CentralServer(UUID id) {
+    super(id);
+  }
 
   public void setCentralServerCredentials(CentralServerCredentials centralServerCredentials) {
     if (centralServerCredentials != null) {
