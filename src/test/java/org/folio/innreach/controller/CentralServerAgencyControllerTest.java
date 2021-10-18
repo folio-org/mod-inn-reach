@@ -17,7 +17,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlMergeMode;
 
-import org.folio.innreach.controller.base.BaseControllerTest;
+import org.folio.innreach.controller.base.BaseApiControllerTest;
 import org.folio.innreach.dto.CentralServerAgenciesDTO;
 import org.folio.innreach.fixture.CentralServerCredentialsFixture;
 import org.folio.innreach.fixture.CentralServerFixture;
@@ -30,7 +30,7 @@ import org.folio.innreach.repository.CentralServerRepository;
     executionPhase = AFTER_TEST_METHOD
 )
 @SqlMergeMode(MERGE)
-class CentralServerAgencyControllerTest extends BaseControllerTest {
+class CentralServerAgencyControllerTest extends BaseApiControllerTest {
 
   @Autowired
   private TestRestTemplate testRestTemplate;
