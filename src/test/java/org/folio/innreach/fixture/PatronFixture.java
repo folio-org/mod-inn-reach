@@ -13,10 +13,14 @@ import lombok.experimental.UtilityClass;
 import org.folio.innreach.domain.dto.folio.User;
 import org.folio.innreach.domain.dto.folio.patron.PatronBlock;
 import org.folio.innreach.dto.PatronInfoResponseDTO;
+import org.folio.innreach.dto.UserCustomFieldMappingDTO;
 
 @UtilityClass
 public class PatronFixture {
 
+  public static final UUID CUSTOM_FIELD_ID = UUID.randomUUID();
+  public static final String CUSTOM_FIELD_OPTION = "opt_0";
+  public static final String CENTRAL_AGENCY_CODE = "code1";
   public static final UUID USER_ID = UUID.randomUUID();
   public static final String PATRON_FIRST_NAME = "John";
   public static final String PATRON_LAST_NAME = "Doe";
@@ -33,8 +37,16 @@ public class PatronFixture {
     user.setActive(true);
     user.setExpirationDate(OffsetDateTime.ofInstant(Instant.ofEpochMilli(expiryDateTs), ZoneOffset.UTC));
     user.setPersonal(User.Personal.of(PATRON_FIRST_NAME, null, PATRON_LAST_NAME, null));
-    user.setCustomFields(Map.of("homeLibrary", "opt_0"));
+    user.setCustomFields(Map.of(CUSTOM_FIELD_ID.toString(), CUSTOM_FIELD_OPTION));
     return user;
+  }
+
+  public static UserCustomFieldMappingDTO createCustomFieldMapping() {
+    var mapping = new UserCustomFieldMappingDTO();
+    mapping.setConfiguredOptions(Map.of(CUSTOM_FIELD_OPTION, CENTRAL_AGENCY_CODE));
+    mapping.setId(UUID.randomUUID());
+    mapping.setCustomFieldId(CUSTOM_FIELD_ID);
+    return mapping;
   }
 
   public static String getErrorMsg(PatronInfoResponseDTO response) {

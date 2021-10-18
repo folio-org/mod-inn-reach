@@ -145,7 +145,7 @@ public class PatronInfoServiceImpl implements PatronInfoService {
 
     var patronAgencyMapping = customFieldMappingService.getMapping(centralServerId);
 
-    var libraryOptionId = user.getCustomFields().get(patronAgencyMapping.getCustomFieldId());
+    var libraryOptionId = user.getCustomFields().get(patronAgencyMapping.getCustomFieldId().toString());
 
     return patronAgencyMapping.getConfiguredOptions().get(libraryOptionId);
   }

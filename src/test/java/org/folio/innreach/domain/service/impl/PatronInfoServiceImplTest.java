@@ -12,13 +12,14 @@ import static org.folio.innreach.domain.dto.folio.ResultList.asSinglePage;
 import static org.folio.innreach.domain.service.impl.PatronInfoServiceImpl.ERROR_REASON;
 import static org.folio.innreach.external.dto.InnReachResponse.ERROR_STATUS;
 import static org.folio.innreach.fixture.CentralServerFixture.createCentralServerDTO;
+import static org.folio.innreach.fixture.PatronFixture.CENTRAL_AGENCY_CODE;
 import static org.folio.innreach.fixture.PatronFixture.PATRON_FIRST_NAME;
+import static org.folio.innreach.fixture.PatronFixture.createCustomFieldMapping;
 import static org.folio.innreach.fixture.PatronFixture.createPatronBlock;
 import static org.folio.innreach.fixture.PatronFixture.createUser;
 import static org.folio.innreach.fixture.PatronFixture.getErrorMsg;
 import static org.folio.innreach.fixture.PatronFixture.getPatronId;
 
-import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -39,7 +40,6 @@ import org.folio.innreach.domain.service.CentralServerService;
 import org.folio.innreach.domain.service.InnReachTransactionService;
 import org.folio.innreach.domain.service.PatronTypeMappingService;
 import org.folio.innreach.domain.service.UserCustomFieldMappingService;
-import org.folio.innreach.dto.UserCustomFieldMappingDTO;
 import org.folio.innreach.external.mapper.InnReachResponseMapper;
 import org.folio.innreach.external.mapper.InnReachResponseMapperImpl;
 
@@ -54,7 +54,6 @@ class PatronInfoServiceImplTest {
   public static final String CENTRAL_CODE = "d2ir";
   public static final String VISIBLE_PATRON_ID = "111111";
   public static final String AGENCY_CODE = "test1";
-  public static final String CENTRAL_AGENCY_CODE = "code1";
 
   @Mock
   private UserServiceImpl userService;
@@ -281,12 +280,5 @@ class PatronInfoServiceImplTest {
     assertEquals("Patron is not found by name: " + patronName, getErrorMsg(response));
   }
 
-  private static UserCustomFieldMappingDTO createCustomFieldMapping() {
-    var mapping = new UserCustomFieldMappingDTO();
-    mapping.setConfiguredOptions(Map.of(AGENCY_CODE, CENTRAL_AGENCY_CODE));
-    mapping.setId(UUID.randomUUID());
-    mapping.setCustomFieldId(UUID.randomUUID());
-    return mapping;
-  }
 
 }
