@@ -2,7 +2,6 @@ package org.folio.innreach.controller;
 
 import org.folio.innreach.controller.base.BaseControllerTest;
 import org.folio.innreach.domain.entity.UserCustomFieldMapping;
-import org.folio.innreach.dto.Error;
 import org.folio.innreach.dto.UserCustomFieldMappingDTO;
 import org.folio.innreach.mapper.UserCustomFieldMappingMapper;
 import org.folio.innreach.repository.UserCustomFieldMappingRepository;
@@ -41,7 +40,7 @@ import static org.springframework.test.context.jdbc.SqlMergeMode.MergeMode.MERGE
 class UserCustomFieldMappingControllerTest extends BaseControllerTest {
 
   private static final String PRE_POPULATED_CENTRAL_SERVER_ID = "edab6baf-c696-42b1-89bb-1bbb8759b0d2";
-  private static final String PRE_POPULATED_CUSTOM_FIELD_ID = "43a175e3-d876-4235-8a51-56de9fce3247";
+  private static final String PRE_POPULATED_CUSTOM_FIELD_ID = "homeLibrary";
 
   @Autowired
   private TestRestTemplate testRestTemplate;
@@ -107,7 +106,7 @@ class UserCustomFieldMappingControllerTest extends BaseControllerTest {
   void shouldUpdateExistingMappingsForOneCentralServer() {
     var existing = mapper.toDTO(repository.findOneByCentralServerId(UUID.fromString(PRE_POPULATED_CENTRAL_SERVER_ID)).get());
     existing.getConfiguredOptions().values().forEach(m -> randomFiveCharacterCode());
-    existing.setCustomFieldId(randomUUID());
+    existing.setCustomFieldId("testLib");
 
     var responseEntity = testRestTemplate.exchange(
       "/inn-reach/central-servers/{centralServerId}/user-custom-field-mappings",
@@ -131,7 +130,7 @@ class UserCustomFieldMappingControllerTest extends BaseControllerTest {
   void return409WhenCreatingMappingAndCustomFieldIdAlreadyMapped() {
     var newMapping = deserializeFromJsonFile("/user-custom-field-mapping/create-user-custom-field-mappings-request.json",
       UserCustomFieldMappingDTO.class);
-    newMapping.setCustomFieldId(UUID.fromString(PRE_POPULATED_CUSTOM_FIELD_ID));
+    newMapping.setCustomFieldId(PRE_POPULATED_CUSTOM_FIELD_ID);
 
     var responseEntity = testRestTemplate.postForEntity(
       "/inn-reach/central-servers/{centralServerId}/user-custom-field-mappings", newMapping,

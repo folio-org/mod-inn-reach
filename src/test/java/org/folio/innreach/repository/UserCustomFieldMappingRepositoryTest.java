@@ -32,7 +32,8 @@ class UserCustomFieldMappingRepositoryTest extends BaseRepositoryTest {
   private static final String PRE_POPULATED_USER_CUSTOM_FIELD_MAPPING_ID1 = "555392b2-9b33-4199-b5eb-73e842c9d5b0";
   private static final String PRE_POPULATED_USER_CUSTOM_FIELD_MAPPING_ID2 = "25a06994-c488-44a3-b481-ce3fe18b9238";
 
-  private static final String PRE_POPULATED_CUSTOM_FIELD_ID = "43a175e3-d876-4235-8a51-56de9fce3247";
+  private static final String PRE_POPULATED_CUSTOM_FIELD_ID = "homeLibrary";
+  private static final String PRE_POPULATED_CUSTOM_FIELD_OPTION = "opt_0";
 
   private static final AuditableUser PRE_POPULATED_USER = AuditableUser.SYSTEM;
   private static final String PRE_POPULATED_CENTRAL_SERVER_ID = "edab6baf-c696-42b1-89bb-1bbb8759b0d2";
@@ -65,9 +66,9 @@ class UserCustomFieldMappingRepositoryTest extends BaseRepositoryTest {
 
     assertNotNull(mapping);
     assertEquals(UUID.fromString(PRE_POPULATED_USER_CUSTOM_FIELD_MAPPING_ID1), mapping.getId());
-    assertEquals(UUID.fromString(PRE_POPULATED_CUSTOM_FIELD_ID), mapping.getCustomFieldId());
-    assertTrue(mapping.getConfiguredOptions().containsKey("qwerty"));
-    assertEquals("5east", mapping.getConfiguredOptions().get("qwerty"));
+    assertEquals(PRE_POPULATED_CUSTOM_FIELD_ID, mapping.getCustomFieldId());
+    assertTrue(mapping.getConfiguredOptions().containsKey(PRE_POPULATED_CUSTOM_FIELD_OPTION));
+    assertEquals("5east", mapping.getConfiguredOptions().get(PRE_POPULATED_CUSTOM_FIELD_OPTION));
 
     assertEquals(PRE_POPULATED_USER, mapping.getCreatedBy());
     assertNotNull(mapping.getCreatedDate());
@@ -93,7 +94,7 @@ class UserCustomFieldMappingRepositoryTest extends BaseRepositoryTest {
   void shouldUpdateExistingMapping() {
     var mapping = repository.findOneByCentralServerId(UUID.fromString(PRE_POPULATED_CENTRAL_SERVER_ID)).get();
 
-    var newCustomFieldId = randomUUID();
+    var newCustomFieldId = "newLibrary";
     var newCustomFieldValue = "newCustomFieldValue";
     var newAgencyCode = randomFiveCharacterCode();
     mapping.setCustomFieldId(newCustomFieldId);

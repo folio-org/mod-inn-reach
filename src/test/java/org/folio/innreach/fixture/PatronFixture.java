@@ -18,7 +18,7 @@ import org.folio.innreach.dto.UserCustomFieldMappingDTO;
 @UtilityClass
 public class PatronFixture {
 
-  public static final UUID CUSTOM_FIELD_ID = UUID.randomUUID();
+  public static final String CUSTOM_FIELD_ID = "homeLibrary";
   public static final String CUSTOM_FIELD_OPTION = "opt_0";
   public static final String CENTRAL_AGENCY_CODE = "code1";
   public static final UUID USER_ID = UUID.randomUUID();
@@ -37,7 +37,7 @@ public class PatronFixture {
     user.setActive(true);
     user.setExpirationDate(OffsetDateTime.ofInstant(Instant.ofEpochMilli(expiryDateTs), ZoneOffset.UTC));
     user.setPersonal(User.Personal.of(PATRON_FIRST_NAME, null, PATRON_LAST_NAME, null));
-    user.setCustomFields(Map.of(CUSTOM_FIELD_ID.toString(), CUSTOM_FIELD_OPTION));
+    user.setCustomFields(Map.of(CUSTOM_FIELD_ID, CUSTOM_FIELD_OPTION));
     return user;
   }
 
