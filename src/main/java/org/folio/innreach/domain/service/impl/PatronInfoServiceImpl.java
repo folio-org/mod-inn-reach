@@ -145,7 +145,9 @@ public class PatronInfoServiceImpl implements PatronInfoService {
 
     var patronAgencyMapping = customFieldMappingService.getMapping(centralServerId);
 
-    var libraryOptionId = user.getCustomFields().get(patronAgencyMapping.getCustomFieldId());
+    var fieldRefId = patronAgencyMapping.getCustomFieldId();
+    var libraryOptionId = user.getCustomFields().get(fieldRefId);
+    Assert.isTrue(libraryOptionId != null, "User home library setting is not found by refId: " + fieldRefId);
 
     return patronAgencyMapping.getConfiguredOptions().get(libraryOptionId);
   }
