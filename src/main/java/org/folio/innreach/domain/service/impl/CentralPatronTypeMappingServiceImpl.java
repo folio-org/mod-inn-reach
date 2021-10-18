@@ -4,7 +4,6 @@ import static org.folio.innreach.domain.service.impl.ServiceUtils.centralServerR
 import static org.folio.innreach.domain.service.impl.ServiceUtils.initId;
 import static org.folio.innreach.domain.service.impl.ServiceUtils.mergeAndSave;
 
-import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Consumer;
 
@@ -37,13 +36,6 @@ public class CentralPatronTypeMappingServiceImpl implements CentralPatronTypeMap
     var centralPatronTypeMappings = repository.findAll(centralPatronTypeMappingExample, PageRequest.of(offset, limit));
 
     return mapper.toDTOCollection(centralPatronTypeMappings);
-  }
-
-  @Transactional(readOnly = true)
-  @Override
-  public Optional<Integer> getCentralPatronType(UUID centralServerId, String barcode) {
-    return repository.findOneByCentralServerIdAndBarcode(centralServerId, barcode)
-      .map(CentralPatronTypeMapping::getCentralPatronType);
   }
 
   @Override

@@ -1,6 +1,7 @@
 package org.folio.innreach.domain.dto.folio;
 
 import java.time.OffsetDateTime;
+import java.util.Map;
 import java.util.UUID;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -22,6 +23,7 @@ public class User {
   private boolean active;
   private Personal personal;
   private String barcode;
+  private Map<String, String> customFields;
 
   @Data
   @NoArgsConstructor
