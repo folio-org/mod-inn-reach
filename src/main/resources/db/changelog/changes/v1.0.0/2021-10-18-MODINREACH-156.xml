@@ -4,8 +4,8 @@
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
                     http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.4.xsd">
 
-  <changeSet id="2021-10-19-01__alter-user-custom-field-mapping-tables.sql" author="oliinyko">
-    <sqlFile path="sql/2021-10-19-01__alter-user-custom-field-mapping-tables.sql" relativeToChangelogFile="true"/>
+  <changeSet id="2021-10-18-01__alter-user-custom-field-mapping-tables.sql" author="oliinyko">
+    <sqlFile path="sql/2021-10-18-01__alter-user-custom-field-mapping-tables.sql" relativeToChangelogFile="true"/>
   </changeSet>
 
 </databaseChangeLog>
