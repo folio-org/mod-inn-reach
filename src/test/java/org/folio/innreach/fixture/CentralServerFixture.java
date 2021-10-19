@@ -21,7 +21,7 @@ public class CentralServerFixture {
   private static final String CENTRAL_SERVER_ADDRESS = "https://centralserveraddress.com";
 
   public static CentralServer createCentralServer() {
-    var centralServer = new CentralServer(UUID.randomUUID());
+    var centralServer = new CentralServer();
     centralServer.setName(randomUUIDString());
     centralServer.setDescription("folio central server");
     centralServer.setCentralServerCode(randomFiveCharacterCode());
