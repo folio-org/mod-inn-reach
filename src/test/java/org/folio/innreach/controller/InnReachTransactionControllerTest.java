@@ -107,7 +107,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
       "/inn-reach-transaction/create-item-hold-request.json", TransactionItemHoldDTO.class);
 
     var responseEntity = testRestTemplate.postForEntity(
-      "/innreach/v2/circ/itemHold/{trackingId}/{centralCode}", itemHoldDTO, InnReachResponseDTO.class, TRACKING_ID,
+      "/inn-reach/d2ir/circ/itemHold/{trackingId}/{centralCode}", itemHoldDTO, InnReachResponseDTO.class, TRACKING_ID,
       PRE_POPULATED_CENTRAL_SERVER_CODE);
 
     verify(requestService).createItemRequest(TRACKING_ID);
@@ -162,7 +162,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     itemHoldDTO.setItemId(inventoryItemDTO.getHrId());
 
     var responseEntity = testRestTemplate.postForEntity(
-      "/innreach/v2/circ/itemHold/{trackingId}/{centralCode}", itemHoldDTO, InnReachResponseDTO.class, TRACKING_ID,
+      "/inn-reach/d2ir/circ/itemHold/{trackingId}/{centralCode}", itemHoldDTO, InnReachResponseDTO.class, TRACKING_ID,
       PRE_POPULATED_CENTRAL_SERVER_CODE);
 
     assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
@@ -208,7 +208,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     itemHoldDTO.setItemId(inventoryItemDTO.getHrId());
 
     var responseEntity = testRestTemplate.postForEntity(
-      "/innreach/v2/circ/itemHold/{trackingId}/{centralCode}", itemHoldDTO, InnReachResponseDTO.class, TRACKING_ID,
+      "/inn-reach/d2ir/circ/itemHold/{trackingId}/{centralCode}", itemHoldDTO, InnReachResponseDTO.class, TRACKING_ID,
       PRE_POPULATED_CENTRAL_SERVER_CODE);
 
     assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
@@ -232,7 +232,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
       "/inn-reach-transaction/create-item-hold-invalid-patron-id-request.json", TransactionItemHoldDTO.class);
 
     var responseEntity = testRestTemplate.postForEntity(
-      "/innreach/v2/circ/itemHold/{trackingId}/{centralCode}", itemHoldDTO, InnReachResponseDTO.class, TRACKING_ID,
+      "/inn-reach/d2ir/circ/itemHold/{trackingId}/{centralCode}", itemHoldDTO, InnReachResponseDTO.class, TRACKING_ID,
       PRE_POPULATED_CENTRAL_SERVER_CODE);
 
     assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
@@ -251,7 +251,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
       "/inn-reach-transaction/create-item-hold-invalid-central-item-type-request.json", TransactionItemHoldDTO.class);
 
     var responseEntity = testRestTemplate.postForEntity(
-      "/innreach/v2/circ/itemHold/{trackingId}/{centralCode}", itemHoldDTO, InnReachResponseDTO.class, TRACKING_ID,
+      "/inn-reach/d2ir/circ/itemHold/{trackingId}/{centralCode}", itemHoldDTO, InnReachResponseDTO.class, TRACKING_ID,
       PRE_POPULATED_CENTRAL_SERVER_CODE);
 
     assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
@@ -271,7 +271,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
       "/inn-reach-transaction/create-item-hold-request.json", TransactionItemHoldDTO.class);
 
     var responseEntity = testRestTemplate.postForEntity(
-      "/innreach/v2/circ/itemHold/{trackingId}/{centralCode}", itemHoldDTO, InnReachResponseDTO.class, PRE_POPULATED_TRACKING_ID,
+      "/inn-reach/d2ir/circ/itemHold/{trackingId}/{centralCode}", itemHoldDTO, InnReachResponseDTO.class, PRE_POPULATED_TRACKING_ID,
       PRE_POPULATED_CENTRAL_SERVER_CODE);
 
     assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
@@ -287,7 +287,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
       "/inn-reach-transaction/create-item-hold-request.json", TransactionItemHoldDTO.class);
 
     var responseEntity = testRestTemplate.postForEntity(
-      "/innreach/v2/circ/itemHold/{trackingId}/{centralCode}", itemHoldDTO, InnReachResponseDTO.class, PRE_POPULATED_TRACKING_ID,
+      "/inn-reach/d2ir/circ/itemHold/{trackingId}/{centralCode}", itemHoldDTO, InnReachResponseDTO.class, PRE_POPULATED_TRACKING_ID,
       PRE_POPULATED_CENTRAL_SERVER_CODE);
 
     assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
@@ -306,7 +306,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
       "/inn-reach-transaction/create-item-hold-invalid-pickup-location-request.json", TransactionItemHoldDTO.class);
 
     var responseEntity = testRestTemplate.postForEntity(
-      "/innreach/v2/circ/itemHold/{trackingId}/{centralCode}", itemHoldDTO, InnReachResponseDTO.class, PRE_POPULATED_TRACKING_ID,
+      "/inn-reach/d2ir/circ/itemHold/{trackingId}/{centralCode}", itemHoldDTO, InnReachResponseDTO.class, PRE_POPULATED_TRACKING_ID,
       PRE_POPULATED_CENTRAL_SERVER_CODE);
 
     assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
@@ -339,7 +339,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     itemHoldDTO.setCentralPatronType(PRE_POPULATED_CENTRAL_PATRON_TYPE);
 
     var responseEntity = testRestTemplate.postForEntity(
-      "/innreach/v2/circ/itemHold/{trackingId}/{centralCode}", itemHoldDTO, InnReachResponseDTO.class, PRE_POPULATED_TRACKING_ID,
+      "/inn-reach/d2ir/circ/itemHold/{trackingId}/{centralCode}", itemHoldDTO, InnReachResponseDTO.class, PRE_POPULATED_TRACKING_ID,
       PRE_POPULATED_CENTRAL_SERVER_CODE);
 
     assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
@@ -377,7 +377,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     itemHoldDTO.setItemId(inventoryItemDTO.getHrId());
 
     var responseEntity = testRestTemplate.postForEntity(
-      "/innreach/v2/circ/itemHold/{trackingId}/{centralCode}", itemHoldDTO, InnReachResponseDTO.class, PRE_POPULATED_TRACKING_ID,
+      "/inn-reach/d2ir/circ/itemHold/{trackingId}/{centralCode}", itemHoldDTO, InnReachResponseDTO.class, PRE_POPULATED_TRACKING_ID,
       PRE_POPULATED_CENTRAL_SERVER_CODE);
 
     assertEquals(HttpStatus.OK, responseEntity.getStatusCode());

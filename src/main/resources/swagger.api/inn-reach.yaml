@@ -1022,9 +1022,7 @@ paths:
       parameters:
         - $ref: '#/components/parameters/bibId'
         - $ref: '#/components/parameters/centralCode'
-  /v2/circ/itemhold/{trackingId}/{centralCode}:
-    servers:
-      - url: /innreach/
+  /d2ir/circ/itemhold/{trackingId}/{centralCode}:
     post:
       operationId: createInnReachTransactionItemHold
       description: Originates an item hold at the owning site
@@ -1053,6 +1051,27 @@ paths:
       parameters:
         - $ref: '#/components/parameters/trackingId'
         - $ref: '#/components/parameters/centralCode'
+  /d2ir/circ/verifypatron:
+    get:
+      operationId: verifyPatron
+      description: Handles D2IR request from central server for patron verification.
+      tags:
+        - verify-patron-d2ir
+      responses:
+        '200':
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/patronInfoResponseDTO"
+        '500':
+          $ref: "#/components/responses/trait_response_500"
+      parameters:
+        - $ref: '#/components/parameters/localCodeHeader'
+        - $ref: '#/components/parameters/centralCodeHeader'
+        - $ref: '#/components/parameters/visiblePatronId'
+        - $ref: '#/components/parameters/patronAgencyCode'
+        - $ref: '#/components/parameters/patronName'
 components:
   schemas:
     UUID:
@@ -1129,6 +1148,8 @@ components:
       $ref: schemas/transactionItemHoldDTO.json
     innReachResponseDTO:
       $ref: schemas/d2ir/innReachResponseDTO.json
+    patronInfoResponseDTO:
+      $ref: schemas/d2ir/patronInfoResponseDTO.json
   parameters:
     id:
       name: id
@@ -1180,6 +1201,42 @@ components:
       required: true
       schema:
         type: string
+    visiblePatronId:
+      name: visiblePatronId
+      description: User attribute configured by the system to act as their publicId (externalSystemId or barcode)
+      in: query
+      required: true
+      schema:
+        type: string
+        maxLength: 32
+    patronAgencyCode:
+      name: patronAgencyCode
+      in: query
+      required: true
+      schema:
+        type: string
+        maxLength: 5
+    patronName:
+      name: patronName
+      in: query
+      required: true
+      schema:
+        type: string
+        maxLength: 128
+    localCodeHeader:
+      name: X-To-Code
+      in: header
+      required: true
+      schema:
+        type: string
+        maxLength: 5
+    centralCodeHeader:
+      name: X-From-Code
+      in: header
+      required: true
+      schema:
+        type: string
+        maxLength: 5
     trait_queryable_query:
       name: query
       in: query

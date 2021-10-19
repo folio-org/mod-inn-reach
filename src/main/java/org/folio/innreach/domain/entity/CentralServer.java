@@ -10,6 +10,8 @@ import static org.folio.innreach.domain.entity.CentralServer.FETCH_ONE_BY_ID_QUE
 import static org.folio.innreach.domain.entity.CentralServer.FETCH_ONE_BY_ID_QUERY_NAME;
 import static org.folio.innreach.domain.entity.CentralServer.GET_IDS_QUERY;
 import static org.folio.innreach.domain.entity.CentralServer.GET_IDS_QUERY_NAME;
+import static org.folio.innreach.domain.entity.CentralServer.GET_ID_BY_CENTRAL_CODE_QUERY;
+import static org.folio.innreach.domain.entity.CentralServer.GET_ID_BY_CENTRAL_CODE_QUERY_NAME;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -63,6 +65,10 @@ import org.folio.innreach.domain.entity.base.Identifiable;
   query = GET_IDS_QUERY
 )
 @NamedQuery(
+  name = GET_ID_BY_CENTRAL_CODE_QUERY_NAME,
+  query = GET_ID_BY_CENTRAL_CODE_QUERY
+)
+@NamedQuery(
   name = FETCH_CONNECTION_DETAILS_QUERY_NAME,
   query = FETCH_CONNECTION_DETAILS_QUERY,
   hints = @QueryHint(name = QueryHints.PASS_DISTINCT_THROUGH, value = "false")
@@ -89,6 +95,9 @@ public class CentralServer extends Auditable implements Identifiable<UUID> {
 
   public static final String GET_IDS_QUERY_NAME = "CentralServer.getIds";
   public static final String GET_IDS_QUERY = "SELECT DISTINCT cs.id FROM CentralServer AS cs";
+
+  public static final String GET_ID_BY_CENTRAL_CODE_QUERY_NAME = "CentralServer.getIdByCentralCode";
+  public static final String GET_ID_BY_CENTRAL_CODE_QUERY = "SELECT cs.id FROM CentralServer cs WHERE cs.centralServerCode = :centralCode";
 
   public static final String FETCH_CONNECTION_DETAILS_QUERY_NAME = "CentralServer.fetchConnectionDetails";
   public static final String FETCH_CONNECTION_DETAILS_QUERY =

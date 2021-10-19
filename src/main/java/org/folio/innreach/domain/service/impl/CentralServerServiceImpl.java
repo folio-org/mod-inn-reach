@@ -90,6 +90,12 @@ public class CentralServerServiceImpl implements CentralServerService {
     return centralServerMapper.mapToCentralServerDTO(centralServer);
   }
 
+  @Override
+  public UUID getCentralServerIdByCentralCode(String code) {
+    return centralServerRepository.getIdByCentralCode(code)
+      .orElseThrow(() -> new EntityNotFoundException("Central server with code: " + code + " not found"));
+  }
+
   private CentralServer fetchOne(UUID centralServerId) {
     return centralServerRepository.fetchOne(centralServerId)
       .orElseThrow(() -> new EntityNotFoundException("Central server with ID: " + centralServerId + " not found"));

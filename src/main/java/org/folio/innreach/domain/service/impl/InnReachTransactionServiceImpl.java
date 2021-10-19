@@ -1,7 +1,11 @@
 package org.folio.innreach.domain.service.impl;
 
+import java.util.List;
+import java.util.UUID;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+
 import org.folio.innreach.domain.entity.InnReachTransaction;
 import org.folio.innreach.domain.entity.InnReachTransaction.TransactionType;
 import org.folio.innreach.domain.service.CentralServerService;
@@ -10,12 +14,14 @@ import org.folio.innreach.dto.InnReachResponseDTO;
 import org.folio.innreach.dto.TransactionItemHoldDTO;
 import org.folio.innreach.mapper.InnReachTransactionMapper;
 import org.folio.innreach.repository.InnReachTransactionRepository;
+import org.folio.innreach.repository.TransactionHoldRepository;
 
 @RequiredArgsConstructor
 @Service
 public class InnReachTransactionServiceImpl implements InnReachTransactionService {
 
   private final InnReachTransactionRepository repository;
+  private final TransactionHoldRepository holdRepository;
   private final InnReachTransactionMapper mapper;
   private final CentralServerService centralServerService;
 
@@ -44,4 +50,10 @@ public class InnReachTransactionServiceImpl implements InnReachTransactionServic
     }
     return response;
   }
+
+  @Override
+  public Integer countInnReachLoans(String patronId, List<UUID> loanIds) {
+    return holdRepository.countByPatronIdAndFolioLoanIdIn(patronId, loanIds);
+  }
+
 }
