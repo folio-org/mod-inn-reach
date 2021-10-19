@@ -45,7 +45,7 @@ public class InnReachTransactionController implements InnReachTransactionApi {
   @ExceptionHandler(MethodArgumentNotValidException.class)
   @ResponseStatus(HttpStatus.BAD_REQUEST)
   public InnReachResponseDTO handleMethodArgumentNotValidException(MethodArgumentNotValidException e) {
-    log.warn(e.getMessage());
+    log.warn("Argument validation failed.", e);
     var response = new InnReachResponseDTO();
     response.setStatus("failed");
     response.setReason(e.getMessage());

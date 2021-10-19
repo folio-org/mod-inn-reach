@@ -131,8 +131,7 @@ public class RequestServiceImpl implements RequestService {
 
         log.info("Item request successfully created.");
       } catch (Exception e) {
-        log.warn(e.getMessage());
-        log.warn("Sending \"Owning site cancels\" request.");
+        log.warn("An error occurred during request processing. Sending \"Owning site cancels\" request.", e);
         var errorReason = "Request not permitted";
         issueOwningSiteCancelsRequest(errorReason, transaction, centralServerId);
       }

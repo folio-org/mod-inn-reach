@@ -6,8 +6,7 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.folio.innreach.client.InventoryClient;
-import org.folio.innreach.domain.exception.EntityNotFoundException;
-import org.folio.innreach.repository.MaterialTypeMappingRepository;
+import org.folio.innreach.domain.service.MaterialTypeMappingService;
 import org.springframework.stereotype.Service;
 
 import org.folio.innreach.domain.entity.InnReachTransaction;
@@ -29,9 +28,9 @@ public class InnReachTransactionServiceImpl implements InnReachTransactionServic
   private final TransactionHoldRepository holdRepository;
   private final InnReachTransactionMapper mapper;
   private final CentralServerService centralServerService;
+  private final MaterialTypeMappingService materialService;
 
   private final InventoryClient inventoryClient;
-  private final MaterialTypeMappingRepository materialRepository;
 
   private InnReachTransaction createTransactionWithItemHold(String trackingId, String centralCode) {
     var transaction = new InnReachTransaction();
@@ -48,19 +47,17 @@ public class InnReachTransactionServiceImpl implements InnReachTransactionServic
     response.setStatus("ok");
     try {
       var centralServer = centralServerService.getCentralServerByCentralCode(centralCode);
+      var centralServerId = centralServer.getId();
       var transaction = createTransactionWithItemHold(trackingId, centralCode);
       var itemHold = mapper.toItemHold(dto);
       var item = inventoryClient.getItemByHrId(itemHold.getItemId());
-      var materialType = materialRepository.findOneByCentralServerIdAndMaterialTypeId(
-        centralServer.getId(), item.getMaterialType().getId()).orElseThrow(
-        () -> new EntityNotFoundException("Material type mapping for central server id = " + centralServer.getId()
-          + " and material type id = " + item.getMaterialType().getId() + " not found")
-      );
+      var materialTypeId = item.getMaterialType().getId();
+      var materialType = materialService.findByCentralServerAndMaterialType(centralServerId, materialTypeId);
       itemHold.setCentralItemType(materialType.getCentralItemType());
       transaction.setHold(itemHold);
       repository.save(transaction);
     } catch (Exception e) {
-      log.warn(e.getMessage());
+      log.warn("An error occurred during creation of INN-Reach Transaction.", e);
       response.setStatus("failed");
       response.setReason(e.getMessage());
     }

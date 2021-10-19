@@ -97,6 +97,16 @@ public class MaterialTypeMappingServiceImpl implements MaterialTypeMappingServic
     return repository.countByCentralServerIdAndMaterialTypeIdIn(centralServerId, typeIds);
   }
 
+  @Override
+  public MaterialTypeMappingDTO findByCentralServerAndMaterialType(UUID centralServerId, UUID materialTypeId){
+    var materialType = repository.findOneByCentralServerIdAndMaterialTypeId(
+      centralServerId, materialTypeId).orElseThrow(
+      () -> new EntityNotFoundException("Material type mapping for central server id = " + centralServerId
+        + " and material type id = " + materialTypeId + " not found")
+    );
+    return mapper.toDTO(materialType);
+  }
+
   private MaterialTypeMapping findMapping(UUID centralServerId, UUID id) {
     return repository.findOne(mappingExampleWithServerIdAndId(centralServerId, id))
         .orElseThrow(() -> new EntityNotFoundException("Material type mapping not found: id = " + id +
