@@ -54,13 +54,15 @@ public class AgencyServiceImpl implements AgencyService {
   }
 
   private AgenciesPerCentralServerDTO retrieveAllAgenciesFromCentralServer(CentralServerDTO centralServer) {
+    log.info("Retrieving local server agencies from central server: code = {}", centralServer.getCentralServerCode());
+
     LocalServerAgenciesDTO lsaResponse;
     try {
       String response = innReachService.callInnReachApi(centralServer.getId(), INN_REACH_LOCAL_SERVERS_URI);
 
       lsaResponse = fromJson(response, LocalServerAgenciesDTO.class);
     } catch (InnReachException | BadCredentialsException | IllegalStateException e) {
-      log.warn("Failed to retrieve local server agency codes from central server: code = {}",
+      log.warn("Failed to get local server agencies from central server: code = {}",
           centralServer.getCentralServerCode(), e);
 
       return null;
@@ -70,9 +72,11 @@ public class AgencyServiceImpl implements AgencyService {
     if (isOk(lsaResponse)) {
       agencies = flatMapItems(lsaResponse.getLocalServerList(), localServer -> toStream(localServer.getAgencyList()));
     } else {
-      log.warn("Failed to retrieve local server agency codes from central server: code = {}. Inn-reach response: {}",
+      log.warn("Failed to get local server agencies from central server: code = {}. Inn-reach response: {}",
           centralServer.getCentralServerCode(), lsaResponse);
     }
+
+    log.info("Number of agencies received: {}", agencies.size());
 
     return isNotEmpty(agencies) ? createAgencies(centralServer, agencies) : null;
   }
