@@ -52,6 +52,7 @@ import org.folio.innreach.domain.entity.TransactionItemHold;
 import org.folio.innreach.domain.service.InnReachTransactionService;
 import org.folio.innreach.domain.service.RequestService;
 import org.folio.innreach.dto.InnReachResponseDTO;
+import org.folio.innreach.dto.InnReachTransactionDTO;
 import org.folio.innreach.dto.TransactionItemHoldDTO;
 import org.folio.innreach.external.client.feign.InnReachClient;
 import org.folio.innreach.mapper.InnReachTransactionMapper;
@@ -72,6 +73,10 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   private static final String PRE_POPULATED_USER_BARCODE = "0000098765";
   private static final String PRE_POPULATED_USER_BARCODE_QUERY = "(barcode==\"" + PRE_POPULATED_USER_BARCODE + "\")";
   private static final Integer PRE_POPULATED_CENTRAL_PATRON_TYPE = 200;
+
+  public static final String TRANSACTION_WITH_ITEM_HOLD_ID = "ab2393a1-acc4-4849-82ac-8cc0c37339e1";
+  public static final String TRANSACTION_WITH_LOCAL_HOLD_ID = "79b0a1fb-55be-4e55-9d84-01303aaec1ce";
+  public static final String TRANSACTION_WITH_PATRON_HOLD_ID = "0aab1720-14b4-4210-9a19-0d0bf1cd64d3";
 
   @Autowired
   private TestRestTemplate testRestTemplate;
@@ -391,4 +396,65 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     verify(innReachClient).postInnReachApi(any(), anyString(), anyString(), anyString(), request.capture());
     assertEquals("Item not available", request.getValue().getReason());
   }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql",
+  })
+  void returnInnReachTransactionWithPatronHold_when_transactionExists() {
+    var responseEntity = testRestTemplate.getForEntity("/inn-reach/d2ir/circ/transactions/{transactionId}",
+      InnReachTransactionDTO.class, TRANSACTION_WITH_PATRON_HOLD_ID);
+
+    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+
+    var responseBody = responseEntity.getBody();
+
+    assertNotNull(responseBody);
+    assertNotNull(responseBody.getTransactionHold().getTitle());
+    assertNotNull(responseBody.getTransactionHold().getAuthor());
+    assertNotNull(responseBody.getTransactionHold().getCallNumber());
+    assertNotNull(responseBody.getTransactionHold().getShippedItemBarcode());
+  }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql",
+  })
+  void returnInnReachTransactionWithItemHold_when_transactionExists() {
+    var responseEntity = testRestTemplate.getForEntity("/inn-reach/d2ir/circ/transactions/{transactionId}",
+      InnReachTransactionDTO.class, TRANSACTION_WITH_ITEM_HOLD_ID);
+
+    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+
+    var responseBody = responseEntity.getBody();
+
+    assertNotNull(responseBody);
+    assertNotNull(responseBody.getTransactionHold().getCentralPatronType());
+    assertNotNull(responseBody.getTransactionHold().getPatronName());
+  }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql",
+  })
+  void returnInnReachTransactionWithLocalHold_when_transactionExists() {
+    var responseEntity = testRestTemplate.getForEntity("/inn-reach/d2ir/circ/transactions/{transactionId}",
+      InnReachTransactionDTO.class, TRANSACTION_WITH_LOCAL_HOLD_ID);
+
+    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+
+    var responseBody = responseEntity.getBody();
+
+    assertNotNull(responseBody);
+    assertNotNull(responseBody.getTransactionHold().getPatronHomeLibrary());
+    assertNotNull(responseBody.getTransactionHold().getTitle());
+    assertNotNull(responseBody.getTransactionHold().getAuthor());
+    assertNotNull(responseBody.getTransactionHold().getCallNumber());
+    assertNotNull(responseBody.getTransactionHold().getCentralPatronType());
+    assertNotNull(responseBody.getTransactionHold().getPatronName());
+  }
+
 }
