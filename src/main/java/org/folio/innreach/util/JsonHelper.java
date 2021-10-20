@@ -2,20 +2,22 @@ package org.folio.innreach.util;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.experimental.UtilityClass;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.springframework.stereotype.Component;
 
 @Log4j2
-@UtilityClass
-public class JsonUtils {
+@RequiredArgsConstructor
+@Component
+public class JsonHelper {
 
-  private static final ObjectMapper mapper = new ObjectMapper();
+  private final ObjectMapper mapper;
 
   public static final String OBJECT_SERIALIZATION_FAILED = "Failed to serialize object to a json string";
   public static final String OBJECT_DESERIALIZATION_FAILED = "Failed to deserialize json string to an object";
 
 
-  public static String toJson(Object o) {
+  public String toJson(Object o) {
     String jsonString;
     try {
       jsonString = mapper.writeValueAsString(o);
@@ -26,7 +28,7 @@ public class JsonUtils {
     return jsonString;
   }
 
-  public static <T> T fromJson(String jsonString, Class<T> valueType) {
+  public <T> T fromJson(String jsonString, Class<T> valueType) {
     T obj;
     try {
       obj = mapper.readValue(jsonString, valueType);

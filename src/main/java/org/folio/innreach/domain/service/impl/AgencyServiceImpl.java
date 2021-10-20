@@ -4,7 +4,6 @@ import static java.util.Collections.emptyList;
 import static org.apache.commons.collections4.CollectionUtils.isNotEmpty;
 
 import static org.folio.innreach.external.dto.InnReachResponse.OK_STATUS;
-import static org.folio.innreach.util.JsonUtils.fromJson;
 import static org.folio.innreach.util.ListUtils.flatMapItems;
 import static org.folio.innreach.util.ListUtils.mapItemsWithFilter;
 import static org.folio.innreach.util.ListUtils.toStream;
@@ -29,6 +28,7 @@ import org.folio.innreach.dto.InnReachResponseDTO;
 import org.folio.innreach.dto.LocalServerAgenciesDTO;
 import org.folio.innreach.external.exception.InnReachException;
 import org.folio.innreach.external.service.InnReachExternalService;
+import org.folio.innreach.util.JsonHelper;
 
 @Log4j2
 @RequiredArgsConstructor
@@ -39,6 +39,7 @@ public class AgencyServiceImpl implements AgencyService {
 
   private final CentralServerService centralServerService;
   private final InnReachExternalService innReachService;
+  private final JsonHelper jsonHelper;
 
 
   @Override
@@ -60,7 +61,7 @@ public class AgencyServiceImpl implements AgencyService {
     try {
       String response = innReachService.callInnReachApi(centralServer.getId(), INN_REACH_LOCAL_SERVERS_URI);
 
-      lsaResponse = fromJson(response, LocalServerAgenciesDTO.class);
+      lsaResponse = jsonHelper.fromJson(response, LocalServerAgenciesDTO.class);
     } catch (InnReachException | BadCredentialsException | IllegalStateException e) {
       log.warn("Failed to get local server agencies from central server: code = {}",
           centralServer.getCentralServerCode(), e);
