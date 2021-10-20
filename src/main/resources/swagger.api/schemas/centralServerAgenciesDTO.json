@@ -1,0 +1,22 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "description": "Agency collection from all configured central servers",
+  "type": "object",
+  "properties": {
+    "centralServerAgencies": {
+      "description": "List of agencies per central server",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "$ref": "agenciesPerCentralServerDTO.json"
+      }
+    },
+    "totalRecords": {
+      "type": "integer"
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "centralServerAgencies"
+  ]
+}

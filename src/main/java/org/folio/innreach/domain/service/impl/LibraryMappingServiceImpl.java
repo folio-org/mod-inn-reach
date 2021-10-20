@@ -5,6 +5,7 @@ import static org.folio.innreach.domain.service.impl.ServiceUtils.centralServerR
 import static org.folio.innreach.domain.service.impl.ServiceUtils.equalIds;
 import static org.folio.innreach.domain.service.impl.ServiceUtils.initId;
 import static org.folio.innreach.domain.service.impl.ServiceUtils.mergeAndSave;
+import static org.folio.innreach.util.ListUtils.mapItems;
 
 import java.util.List;
 import java.util.UUID;
@@ -91,10 +92,8 @@ public class LibraryMappingServiceImpl implements LibraryMappingService {
   private List<InnReachLocationDTO> getCentralServerMappedLocations(List<LibraryMapping> actualLibraryMappings) {
     var locationsIds = getCentralServerMappedLocationsIds(actualLibraryMappings);
 
-    return innReachLocationRepository.findAllById(locationsIds)
-      .stream()
-      .map(innReachLocation -> new InnReachLocationDTO(innReachLocation.getCode(), innReachLocation.getDescription()))
-      .collect(Collectors.toList());
+    return mapItems(innReachLocationRepository.findAllById(locationsIds),
+        innReachLocation -> new InnReachLocationDTO(innReachLocation.getCode(), innReachLocation.getDescription()));
   }
 
   private List<UUID> getCentralServerMappedLocationsIds(List<LibraryMapping> actualLibraryMappings) {

@@ -16,13 +16,13 @@ import static org.springframework.test.context.jdbc.SqlMergeMode.MergeMode.MERGE
 
 import static org.folio.innreach.fixture.TestUtil.deserializeFromJsonFile;
 import static org.folio.innreach.fixture.TestUtil.randomInteger;
+import static org.folio.innreach.util.ListUtils.mapItems;
 
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -105,7 +105,7 @@ class PatronTypeMappingControllerTest extends BaseControllerTest {
     var expected = existing.getPatronTypeMappings();
 
     assertEquals(expected.size(), updated.size());
-    assertThat(expected.stream().map(PatronTypeMappingDTO::getPatronType).collect(Collectors.toList()),
+    assertThat(mapItems(expected, PatronTypeMappingDTO::getPatronType),
       containsInAnyOrder(updated.stream().map(PatronTypeMappingDTO::getPatronType).toArray()));
   }
 
