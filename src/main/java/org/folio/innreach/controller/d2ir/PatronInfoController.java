@@ -29,7 +29,7 @@ public class PatronInfoController implements VerifyPatronD2irApi {
   @PostMapping(value = "/circ/verifypatron", produces = MediaType.APPLICATION_JSON_VALUE)
   public ResponseEntity<PatronInfoResponseDTO> verifyPatron(@RequestHeader(value = "x-to-code") String localCodeHeader,
                                                             @RequestHeader(value = "x-from-code") String centralCodeHeader,
-                                                            @RequestBody(required = false) PatronInfoRequestDTO patronInfoRequest) {
+                                                            @RequestBody PatronInfoRequestDTO patronInfoRequest) {
 
     var visiblePatronId = patronInfoRequest.getVisiblePatronId();
     var patronAgencyCode = patronInfoRequest.getPatronAgencyCode();
