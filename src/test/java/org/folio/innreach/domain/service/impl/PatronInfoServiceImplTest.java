@@ -1,5 +1,6 @@
 package org.folio.innreach.domain.service.impl;
 
+import static java.util.Collections.emptyMap;
 import static java.util.Collections.singletonList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -13,6 +14,7 @@ import static org.folio.innreach.domain.service.impl.PatronInfoServiceImpl.ERROR
 import static org.folio.innreach.external.dto.InnReachResponse.ERROR_STATUS;
 import static org.folio.innreach.fixture.CentralServerFixture.createCentralServerDTO;
 import static org.folio.innreach.fixture.PatronFixture.CENTRAL_AGENCY_CODE;
+import static org.folio.innreach.fixture.PatronFixture.CUSTOM_FIELD_REF_ID;
 import static org.folio.innreach.fixture.PatronFixture.PATRON_FIRST_NAME;
 import static org.folio.innreach.fixture.PatronFixture.createCustomFieldMapping;
 import static org.folio.innreach.fixture.PatronFixture.createPatronBlock;
@@ -280,5 +282,27 @@ class PatronInfoServiceImplTest {
     assertEquals("Patron is not found by name: " + patronName, getErrorMsg(response));
   }
 
+  @Test
+  void shouldReturnError_UserLibraryNotFound() {
+    var user = createUser();
+    user.setCustomFields(emptyMap());
+
+    when(centralServerService.getCentralServerByCentralCode(any())).thenReturn(createCentralServerDTO());
+    when(userService.getUserByPublicId(any())).thenReturn(Optional.of(user));
+    when(patronBlocksClient.getPatronBlocks(any())).thenReturn(ResultList.empty());
+    when(patronClient.getAccountDetails(any())).thenReturn(PatronDTO.of(TOTAL_LOANS, singletonList(Loan.of(UUID.randomUUID()))));
+    when(transactionService.countInnReachLoans(any(), any())).thenReturn(INN_REACH_LOANS);
+    when(patronTypeMappingService.getCentralPatronType(any(), any())).thenReturn(Optional.of(CENTRAL_PATRON_TYPE));
+    when(userCustomFieldService.getMapping(any())).thenReturn(createCustomFieldMapping());
+
+    var response = service.verifyPatron(CENTRAL_CODE, VISIBLE_PATRON_ID, AGENCY_CODE, PATRON_NAME);
+
+    assertNotNull(response);
+    assertNull(response.getPatronInfo());
+    assertFalse(response.getRequestAllowed());
+    assertEquals(ERROR_STATUS, response.getStatus());
+    assertEquals(ERROR_REASON, response.getReason());
+    assertEquals("User home library setting is not found by refId: " + CUSTOM_FIELD_REF_ID, getErrorMsg(response));
+  }
 
 }
