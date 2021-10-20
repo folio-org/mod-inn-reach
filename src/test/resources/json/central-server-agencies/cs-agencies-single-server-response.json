@@ -1,0 +1,97 @@
+{
+  "centralServerAgencies":
+  [
+    {
+      "centralServerId": "%s",
+      "centralServerCode": "%s",
+      "agencies":
+      [
+        {
+          "agencyCode": "5dlpl",
+          "description": "Sierra Alpha"
+        },
+        {
+          "agencyCode": "5east",
+          "description": "Sierra Public East Library"
+        },
+        {
+          "agencyCode": "5main",
+          "description": "Sierra Cluster -- Main"
+        },
+        {
+          "agencyCode": "5nrth",
+          "description": "Sierra Cluster -- North Library"
+        },
+        {
+          "agencyCode": "5publ",
+          "description": "Sierra Cluster"
+        },
+        {
+          "agencyCode": "5suth",
+          "description": "Sierra Public South Library"
+        },
+        {
+          "agencyCode": "5west",
+          "description": "Sierra Public West Library"
+        },
+        {
+          "agencyCode": "almg1",
+          "description": "Alma ExLibris Group Agency 1"
+        },
+        {
+          "agencyCode": "almg2",
+          "description": "Alma ExLibris Group Agency 2"
+        },
+        {
+          "agencyCode": "alng1",
+          "description": "Alma2 ExLibris Group Agency 1"
+        },
+        {
+          "agencyCode": "alng2",
+          "description": "Alma2 ExLibris Group Agency 2"
+        },
+        {
+          "agencyCode": "blnx1",
+          "description": "Blnx1 BibLionix"
+        },
+        {
+          "agencyCode": "bnag1",
+          "description": "Bnag1 BibLionix"
+        },
+        {
+          "agencyCode": "bnag2",
+          "description": "Bnag2 BibLionix"
+        },
+        {
+          "agencyCode": "blnx2",
+          "description": "Blnx2 BibLionix"
+        },
+        {
+          "agencyCode": "bxag1",
+          "description": "Bxag1 BibLionix"
+        },
+        {
+          "agencyCode": "bxag2",
+          "description": "Bxag2 BibLionix"
+        },
+        {
+          "agencyCode": "fl1g1",
+          "description": "FOLIO 1 Agency 1"
+        },
+        {
+          "agencyCode": "fl1g2",
+          "description": "FOLIO 1 Agency 2"
+        },
+        {
+          "agencyCode": "fl2g1",
+          "description": "FOLIO 2 Agency 1"
+        },
+        {
+          "agencyCode": "fl2g2",
+          "description": "FOLIO 2 Agency 2"
+        }
+      ]
+    }
+  ],
+  "totalRecords": 1
+}

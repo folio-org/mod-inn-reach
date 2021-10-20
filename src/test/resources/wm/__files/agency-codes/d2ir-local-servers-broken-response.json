@@ -1,0 +1,20 @@
+{
+  "status": "ok",
+  "reason": "success",
+  "errors":
+  [],
+  "localServerList":
+  [
+    {
+      "agencyList":
+      [
+        {
+          "agencyCode": "5dlpl",
+          "description": "Sierra Alpha"
+        }
+      ],
+      "description": "Sierra Alpha",
+      "localCode": 5dlpl
+    }
+  ]
+}

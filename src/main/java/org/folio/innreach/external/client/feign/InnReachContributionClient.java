@@ -16,10 +16,11 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 
 import org.folio.innreach.dto.BibInfo;
+import org.folio.innreach.external.client.feign.config.InnReachFeignContributionClientConfig;
 import org.folio.innreach.external.dto.BibItemsInfo;
 import org.folio.innreach.external.dto.InnReachResponse;
 
-@FeignClient(value = "innReachContribution")
+@FeignClient(value = "innReachContribution", configuration = InnReachFeignContributionClientConfig.class)
 public interface InnReachContributionClient {
 
   @PostMapping(value = "/innreach/v2/contribution/bib/{bibId}", consumes = APPLICATION_JSON_VALUE, produces = APPLICATION_JSON_VALUE)

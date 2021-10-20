@@ -2,7 +2,6 @@ package org.folio.innreach.repository;
 
 import static java.util.UUID.fromString;
 import static java.util.UUID.randomUUID;
-import static java.util.stream.Collectors.toList;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.StringContains.containsString;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -11,6 +10,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import static org.folio.innreach.fixture.MappingFixture.createMaterialTypeMapping;
+import static org.folio.innreach.util.ListUtils.mapItems;
 
 import java.util.List;
 import java.util.Optional;
@@ -44,9 +44,7 @@ class MaterialTypeMappingRepositoryTest extends BaseRepositoryTest {
 
     assertEquals(3, mappings.size());
 
-    List<String> ids = mappings.stream()
-        .map(mapping -> mapping.getId().toString())
-        .collect(toList());
+    List<String> ids = mapItems(mappings, mapping -> mapping.getId().toString());
 
     assertEquals(ids, List.of(PRE_POPULATED_MAPPING1_ID, PRE_POPULATED_MAPPING2_ID, PRE_POPULATED_MAPPING3_ID));
   }

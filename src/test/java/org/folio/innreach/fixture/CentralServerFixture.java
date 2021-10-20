@@ -6,11 +6,13 @@ import static org.folio.innreach.fixture.LocalServerCredentialsFixture.createLoc
 import static org.folio.innreach.fixture.TestUtil.randomFiveCharacterCode;
 import static org.folio.innreach.fixture.TestUtil.randomUUIDString;
 
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
 
 import org.folio.innreach.domain.dto.CentralServerConnectionDetailsDTO;
 import org.folio.innreach.domain.entity.CentralServer;
+import org.folio.innreach.domain.entity.base.AuditableUser;
 import org.folio.innreach.dto.CentralServerDTO;
 import org.folio.innreach.dto.LocalAgencyDTO;
 
@@ -22,6 +24,7 @@ public class CentralServerFixture {
     var centralServer = new CentralServer();
     centralServer.setName(randomUUIDString());
     centralServer.setDescription("folio central server");
+    centralServer.setCentralServerCode(randomFiveCharacterCode());
     centralServer.setLocalServerCode(randomFiveCharacterCode());
     centralServer.setCentralServerAddress(CENTRAL_SERVER_ADDRESS);
     centralServer.setLoanTypeId(UUID.randomUUID());
@@ -29,6 +32,8 @@ public class CentralServerFixture {
     centralServer.addLocalAgency(createLocalAgency());
     centralServer.setCentralServerCredentials(createCentralServerCredentials());
     centralServer.setLocalServerCredentials(createLocalServerCredentials());
+    centralServer.setCreatedDate(OffsetDateTime.now());
+    centralServer.setCreatedBy(AuditableUser.SYSTEM);
 
     return centralServer;
   }
