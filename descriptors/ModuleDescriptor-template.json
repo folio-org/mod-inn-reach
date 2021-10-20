@@ -307,7 +307,7 @@
           "permissionsRequired": ["inn-reach.d2ir.bib-info.item.get"]
         },
         {
-          "methods": ["GET"],
+          "methods": ["POST"],
           "pathPattern": "/inn-reach/d2ir/circ/verifypatron",
           "permissionsRequired": ["inn-reach.d2ir.patron-info.item.get"]
         },
