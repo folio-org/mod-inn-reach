@@ -1017,7 +1017,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/transactionItemHoldDTO"
+              $ref: "#/components/schemas/transactionHoldDTO"
       responses:
         '200':
           description: Transaction record is created
@@ -1054,7 +1054,7 @@ paths:
         '500':
           $ref: "#/components/responses/trait_response_500"
       parameters:
-        - $ref: '#/components/parameters/transactionId'
+        - $ref: '#/components/parameters/id'
   /d2ir/circ/verifypatron:
     get:
       operationId: verifyPatron
@@ -1144,8 +1144,6 @@ components:
       $ref: schemas/centralPatronTypeMappingsDTO.json
     bibInfoResponseDTO:
       $ref: schemas/d2ir/bibInfoResponseDTO.json
-    transactionItemHoldDTO:
-      $ref: schemas/transactionItemHoldDTO.json
     innReachResponseDTO:
       $ref: schemas/d2ir/innReachResponseDTO.json
     patronInfoResponseDTO:
@@ -1201,12 +1199,6 @@ components:
         type: string
     trackingId:
       name: trackingId
-      in: path
-      required: true
-      schema:
-        type: string
-    transactionId:
-      name: transactionId
       in: path
       required: true
       schema:

@@ -20,7 +20,7 @@ import org.folio.innreach.domain.service.InnReachTransactionService;
 import org.folio.innreach.domain.service.RequestService;
 import org.folio.innreach.dto.InnReachResponseDTO;
 import org.folio.innreach.dto.InnReachTransactionDTO;
-import org.folio.innreach.dto.TransactionItemHoldDTO;
+import org.folio.innreach.dto.TransactionHoldDTO;
 import org.folio.innreach.rest.resource.InnReachTransactionApi;
 
 @Log4j2
@@ -35,7 +35,7 @@ public class InnReachTransactionController implements InnReachTransactionApi {
   @PostMapping("/inn-reach/d2ir/circ/itemHold/{trackingId}/{centralCode}")
   public ResponseEntity<InnReachResponseDTO> createInnReachTransactionItemHold(@PathVariable String trackingId,
                                                                                @PathVariable String centralCode,
-                                                                               @Valid TransactionItemHoldDTO dto) {
+                                                                               @Valid TransactionHoldDTO dto) {
     var response = transactionService.createInnReachTransactionItemHold(trackingId, centralCode, dto);
     HttpStatus status;
     if (response.getStatus().equals("ok")) {
@@ -49,9 +49,9 @@ public class InnReachTransactionController implements InnReachTransactionApi {
 
   @Override
   @GetMapping("/inn-reach/d2ir/circ/transactions/{transactionId}")
-  public ResponseEntity<InnReachTransactionDTO> getInnReachTransaction(@PathVariable String transactionId) {
-    transactionService.getInnReachTransaction(UUID.fromString(transactionId));
-    return InnReachTransactionApi.super.getInnReachTransaction(transactionId);
+  public ResponseEntity<InnReachTransactionDTO> getInnReachTransaction(@PathVariable UUID transactionId) {
+    var innReachTransaction = transactionService.getInnReachTransaction(transactionId);
+    return ResponseEntity.ok(innReachTransaction);
   }
 
   @ExceptionHandler(MethodArgumentNotValidException.class)

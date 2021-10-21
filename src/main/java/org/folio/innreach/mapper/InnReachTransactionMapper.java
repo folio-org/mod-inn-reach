@@ -1,45 +1,77 @@
 package org.folio.innreach.mapper;
 
-import com.google.common.collect.Lists;
+import java.util.Map;
+import java.util.function.Function;
+
+import javax.annotation.PostConstruct;
+
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Component;
+
+import org.folio.innreach.domain.entity.InnReachTransaction;
+import org.folio.innreach.domain.entity.TransactionHold;
 import org.folio.innreach.domain.entity.TransactionItemHold;
-import org.folio.innreach.domain.entity.TransactionPickupLocation;
-import org.folio.innreach.dto.TransactionItemHoldDTO;
-import org.mapstruct.Builder;
-import org.mapstruct.InjectionStrategy;
-import org.mapstruct.Mapper;
+import org.folio.innreach.domain.entity.TransactionLocalHold;
+import org.folio.innreach.domain.entity.TransactionPatronHold;
+import org.folio.innreach.dto.InnReachTransactionDTO;
+import org.folio.innreach.dto.Metadata;
+import org.folio.innreach.dto.TransactionHoldDTO;
 
-@Mapper(componentModel = "spring", injectionStrategy = InjectionStrategy.CONSTRUCTOR, uses = MappingMethods.class, builder = @Builder(disableBuilder = true))
-public interface InnReachTransactionMapper {
+@Component
+@RequiredArgsConstructor
+public class InnReachTransactionMapper {
 
-  String PICKUP_LOCATION_DELIMITER = ":";
+  private final InnReachTransactionHoldMapper innReachTransactionHoldMapper;
+  private final MappingMethods mappingMethods;
 
-  TransactionItemHold toItemHold(TransactionItemHoldDTO dto);
+  private Map<Class<? extends TransactionHold>, Function<TransactionHold, TransactionHoldDTO>> holdMappers;
 
-  default TransactionPickupLocation map(String value) {
-    if (value == null) {
-      throw new IllegalArgumentException("Pickup location must not be null.");
-    }
-    var strings = value.split(PICKUP_LOCATION_DELIMITER);
-    if (strings.length > 4 || strings.length < 3) {
-      throw new IllegalArgumentException("Pickup location must consist of 3 or 4 strings delimited by a colon.");
-    }
-    var pickupLocation = new TransactionPickupLocation();
-    pickupLocation.setPickupLocCode(strings[0]);
-    pickupLocation.setDisplayName(strings[1]);
-    pickupLocation.setPrintName(strings[2]);
-    if (strings.length > 3) {
-      pickupLocation.setDeliveryStop(strings[3]);
-    }
-    return pickupLocation;
+  @PostConstruct
+  public void initTransactionHoldMappers() {
+    this.holdMappers = Map.of(
+      TransactionItemHold.class, hold -> innReachTransactionHoldMapper.toItemHoldDTO((TransactionItemHold) hold),
+      TransactionLocalHold.class, hold -> innReachTransactionHoldMapper.toLocalHoldDTO((TransactionLocalHold) hold),
+      TransactionPatronHold.class, hold -> innReachTransactionHoldMapper.toPatronHoldDTO((TransactionPatronHold) hold)
+    );
   }
 
-  default String map(TransactionPickupLocation value) {
-    var locationTokens = Lists.newArrayList(value.getPickupLocCode(), value.getDisplayName(), value.getPrintName());
+  public InnReachTransactionDTO toDto(InnReachTransaction innReachTransaction) {
+    var innReachTransactionDTO = new InnReachTransactionDTO()
+      .id(innReachTransaction.getId())
+      .trackingId(innReachTransaction.getTrackingId())
+      .centralServerCode(innReachTransaction.getCentralServerCode());
 
-    if (value.getDeliveryStop() != null) {
-      locationTokens.add(value.getDeliveryStop());
+    if (innReachTransaction.getState() != null) {
+      innReachTransactionDTO.state(innReachTransaction.getState().toString());
     }
 
-    return String.join(PICKUP_LOCATION_DELIMITER, locationTokens);
+    if (innReachTransaction.getType() != null) {
+      innReachTransactionDTO.type(innReachTransaction.getType().toString());
+    }
+
+    if (innReachTransaction.getHold() != null) {
+      innReachTransactionDTO.transactionHold(holdMappers.get(innReachTransaction.getHold().getClass()).apply(innReachTransaction.getHold()));
+    }
+      
+    innReachTransactionDTO.setMetadata(collectMetadata(innReachTransaction));
+    return innReachTransactionDTO;
+  }
+
+  private Metadata collectMetadata(InnReachTransaction innReachTransaction) {
+    var metadata = new Metadata()
+      .createdDate(mappingMethods.offsetDateTimeAsDate(innReachTransaction.getCreatedDate()))
+      .updatedDate(mappingMethods.offsetDateTimeAsDate(innReachTransaction.getUpdatedDate()));
+
+    if (innReachTransaction.getCreatedBy() != null) {
+      metadata.createdByUserId(mappingMethods.uuidAsString(innReachTransaction.getCreatedBy().getId()))
+        .createdByUsername(innReachTransaction.getCreatedBy().getName());
+    }
+
+    if (innReachTransaction.getUpdatedBy() != null) {
+      metadata.updatedByUserId(mappingMethods.uuidAsString(innReachTransaction.getUpdatedBy().getId()))
+        .updatedByUsername(innReachTransaction.getUpdatedBy().getName());
+    }
+
+    return metadata;
   }
 }

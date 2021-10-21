@@ -53,9 +53,9 @@ import org.folio.innreach.domain.service.InnReachTransactionService;
 import org.folio.innreach.domain.service.RequestService;
 import org.folio.innreach.dto.InnReachResponseDTO;
 import org.folio.innreach.dto.InnReachTransactionDTO;
-import org.folio.innreach.dto.TransactionItemHoldDTO;
+import org.folio.innreach.dto.TransactionHoldDTO;
 import org.folio.innreach.external.client.feign.InnReachClient;
-import org.folio.innreach.mapper.InnReachTransactionMapper;
+import org.folio.innreach.mapper.InnReachTransactionPickupLocationMapper;
 import org.folio.innreach.repository.InnReachTransactionRepository;
 
 @Sql(
@@ -83,7 +83,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   @Autowired
   private InnReachTransactionRepository repository;
   @Autowired
-  private InnReachTransactionMapper mapper;
+  private InnReachTransactionPickupLocationMapper transactionPickupLocationMapper;
 
   @MockBean
   private InventoryClient inventoryClient;
@@ -109,7 +109,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     doNothing().when(requestService).createItemRequest(anyString());
 
     var itemHoldDTO = deserializeFromJsonFile(
-      "/inn-reach-transaction/create-item-hold-request.json", TransactionItemHoldDTO.class);
+      "/inn-reach-transaction/create-item-hold-request.json", TransactionHoldDTO.class);
 
     var responseEntity = testRestTemplate.postForEntity(
       "/inn-reach/d2ir/circ/itemHold/{trackingId}/{centralCode}", itemHoldDTO, InnReachResponseDTO.class, TRACKING_ID,
@@ -127,7 +127,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     assertEquals(ITEM, createdTransaction.get().getType());
     assertEquals(itemHoldDTO.getItemId(), createdTransaction.get().getHold().getItemId());
     assertEquals(itemHoldDTO.getItemAgencyCode(), createdTransaction.get().getHold().getItemAgencyCode());
-    assertEquals(mapper.map(itemHoldDTO.getPickupLocation()).getDisplayName(),
+    assertEquals(transactionPickupLocationMapper.fromString(itemHoldDTO.getPickupLocation()).getDisplayName(),
       createdTransaction.get().getHold().getPickupLocation().getDisplayName());
     assertEquals(itemHoldDTO.getTransactionTime(), createdTransaction.get().getHold().getTransactionTime());
     assertEquals(itemHoldDTO.getPatronName(), ((TransactionItemHold) createdTransaction.get().getHold()).getPatronName());
@@ -162,7 +162,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     });
 
     var itemHoldDTO = deserializeFromJsonFile(
-      "/inn-reach-transaction/create-item-hold-request.json", TransactionItemHoldDTO.class);
+      "/inn-reach-transaction/create-item-hold-request.json", TransactionHoldDTO.class);
     itemHoldDTO.setCentralPatronType(PRE_POPULATED_CENTRAL_PATRON_TYPE);
     itemHoldDTO.setItemId(inventoryItemDTO.getHrId());
 
@@ -208,7 +208,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     });
 
     var itemHoldDTO = deserializeFromJsonFile(
-      "/inn-reach-transaction/create-item-hold-request.json", TransactionItemHoldDTO.class);
+      "/inn-reach-transaction/create-item-hold-request.json", TransactionHoldDTO.class);
     itemHoldDTO.setCentralPatronType(PRE_POPULATED_CENTRAL_PATRON_TYPE);
     itemHoldDTO.setItemId(inventoryItemDTO.getHrId());
 
@@ -234,7 +234,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     doNothing().when(requestService).createItemRequest(anyString());
 
     var itemHoldDTO = deserializeFromJsonFile(
-      "/inn-reach-transaction/create-item-hold-invalid-patron-id-request.json", TransactionItemHoldDTO.class);
+      "/inn-reach-transaction/create-item-hold-invalid-patron-id-request.json", TransactionHoldDTO.class);
 
     var responseEntity = testRestTemplate.postForEntity(
       "/inn-reach/d2ir/circ/itemHold/{trackingId}/{centralCode}", itemHoldDTO, InnReachResponseDTO.class, TRACKING_ID,
@@ -253,7 +253,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     doNothing().when(requestService).createItemRequest(anyString());
 
     var itemHoldDTO = deserializeFromJsonFile(
-      "/inn-reach-transaction/create-item-hold-invalid-central-item-type-request.json", TransactionItemHoldDTO.class);
+      "/inn-reach-transaction/create-item-hold-invalid-central-item-type-request.json", TransactionHoldDTO.class);
 
     var responseEntity = testRestTemplate.postForEntity(
       "/inn-reach/d2ir/circ/itemHold/{trackingId}/{centralCode}", itemHoldDTO, InnReachResponseDTO.class, TRACKING_ID,
@@ -273,7 +273,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     doNothing().when(requestService).createItemRequest(anyString());
 
     var itemHoldDTO = deserializeFromJsonFile(
-      "/inn-reach-transaction/create-item-hold-request.json", TransactionItemHoldDTO.class);
+      "/inn-reach-transaction/create-item-hold-request.json", TransactionHoldDTO.class);
 
     var responseEntity = testRestTemplate.postForEntity(
       "/inn-reach/d2ir/circ/itemHold/{trackingId}/{centralCode}", itemHoldDTO, InnReachResponseDTO.class, PRE_POPULATED_TRACKING_ID,
@@ -289,7 +289,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     doNothing().when(requestService).createItemRequest(anyString());
 
     var itemHoldDTO = deserializeFromJsonFile(
-      "/inn-reach-transaction/create-item-hold-request.json", TransactionItemHoldDTO.class);
+      "/inn-reach-transaction/create-item-hold-request.json", TransactionHoldDTO.class);
 
     var responseEntity = testRestTemplate.postForEntity(
       "/inn-reach/d2ir/circ/itemHold/{trackingId}/{centralCode}", itemHoldDTO, InnReachResponseDTO.class, PRE_POPULATED_TRACKING_ID,
@@ -308,7 +308,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     doNothing().when(requestService).createItemRequest(anyString());
 
     var itemHoldDTO = deserializeFromJsonFile(
-      "/inn-reach-transaction/create-item-hold-invalid-pickup-location-request.json", TransactionItemHoldDTO.class);
+      "/inn-reach-transaction/create-item-hold-invalid-pickup-location-request.json", TransactionHoldDTO.class);
 
     var responseEntity = testRestTemplate.postForEntity(
       "/inn-reach/d2ir/circ/itemHold/{trackingId}/{centralCode}", itemHoldDTO, InnReachResponseDTO.class, PRE_POPULATED_TRACKING_ID,
@@ -339,7 +339,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     when(innReachClient.postInnReachApi(any(), anyString(), anyString(), anyString(), any())).thenReturn("response");
 
     var itemHoldDTO = deserializeFromJsonFile(
-      "/inn-reach-transaction/create-item-hold-request.json", TransactionItemHoldDTO.class);
+      "/inn-reach-transaction/create-item-hold-request.json", TransactionHoldDTO.class);
     itemHoldDTO.setItemId(inventoryItemDTO.getHrId());
     itemHoldDTO.setCentralPatronType(PRE_POPULATED_CENTRAL_PATRON_TYPE);
 
@@ -378,7 +378,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     when(innReachClient.postInnReachApi(any(), anyString(), anyString(), anyString(), any())).thenReturn("response");
 
     var itemHoldDTO = deserializeFromJsonFile(
-      "/inn-reach-transaction/create-item-hold-request.json", TransactionItemHoldDTO.class);
+      "/inn-reach-transaction/create-item-hold-request.json", TransactionHoldDTO.class);
     itemHoldDTO.setItemId(inventoryItemDTO.getHrId());
 
     var responseEntity = testRestTemplate.postForEntity(
