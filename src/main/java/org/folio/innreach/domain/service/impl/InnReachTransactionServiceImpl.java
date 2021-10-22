@@ -5,8 +5,8 @@ import java.util.UUID;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
-import org.folio.innreach.client.InventoryClient;
 import org.folio.innreach.domain.service.MaterialTypeMappingService;
+import org.folio.innreach.external.service.InventoryService;
 import org.springframework.stereotype.Service;
 
 import org.folio.innreach.domain.entity.InnReachTransaction;
@@ -29,8 +29,7 @@ public class InnReachTransactionServiceImpl implements InnReachTransactionServic
   private final InnReachTransactionMapper mapper;
   private final CentralServerService centralServerService;
   private final MaterialTypeMappingService materialService;
-
-  private final InventoryClient inventoryClient;
+  private final InventoryService inventoryService;
 
   private InnReachTransaction createTransactionWithItemHold(String trackingId, String centralCode) {
     var transaction = new InnReachTransaction();
@@ -50,7 +49,7 @@ public class InnReachTransactionServiceImpl implements InnReachTransactionServic
       var centralServerId = centralServer.getId();
       var transaction = createTransactionWithItemHold(trackingId, centralCode);
       var itemHold = mapper.toItemHold(dto);
-      var item = inventoryClient.getItemByHrId(itemHold.getItemId());
+      var item = inventoryService.getItemByHrId(itemHold.getItemId());
       var materialTypeId = item.getMaterialType().getId();
       var materialType = materialService.findByCentralServerAndMaterialType(centralServerId, materialTypeId);
       itemHold.setCentralItemType(materialType.getCentralItemType());

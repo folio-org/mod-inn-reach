@@ -47,7 +47,7 @@ import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlMergeMode;
 
 import org.folio.innreach.client.InventoryClient;
-import org.folio.innreach.client.InventoryStorageClient;
+import org.folio.innreach.client.ServicePointsUsersClient;
 import org.folio.innreach.client.UsersClient;
 import org.folio.innreach.controller.base.BaseControllerTest;
 import org.folio.innreach.domain.dto.OwningSiteCancelsRequestDTO;
@@ -93,7 +93,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   @MockBean
   private RequestStorageClient requestsClient;
   @MockBean
-  private InventoryStorageClient inventoryStorageClient;
+  private ServicePointsUsersClient servicePointsUsersClient;
   @MockBean
   private UsersClient usersClient;
   @MockBean
@@ -106,7 +106,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     var inventoryItemDTO = createInventoryItemDTO();
     inventoryItemDTO.setStatus(AVAILABLE);
     inventoryItemDTO.setMaterialType(new InventoryItemDTO.MaterialType(UUID.fromString(PRE_POPULATED_MATERIAL_TYPE_ID), "materialType"));
-    when(inventoryClient.getItemByHrId(inventoryItemDTO.getHrId())).thenReturn(inventoryItemDTO);
+    when(inventoryClient.getItemsByHrId(inventoryItemDTO.getHrId())).thenReturn(ResultList.of(1, List.of(inventoryItemDTO)));
     return inventoryItemDTO;
   }
 
@@ -121,7 +121,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     var servicePointUserDTO = new ServicePointUserDTO();
     servicePointUserDTO.setUserId(fromString(user.getId()));
     servicePointUserDTO.setDefaultServicePointId(randomUUID());
-    when(inventoryStorageClient.findServicePointsUsers(UUID.fromString(user.getId()))).thenReturn(ResultList.of(1, List.of(servicePointUserDTO)));
+    when(servicePointsUsersClient.findServicePointsUsers(UUID.fromString(user.getId()))).thenReturn(ResultList.of(1, List.of(servicePointUserDTO)));
   }
 
   void mockFindRequestsReturnsEmptyList(InventoryItemDTO inventoryItemDTO) {
@@ -169,10 +169,10 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     await().until(() -> repository.fetchOneByTrackingId(TRACKING_ID).get().getHold().getFolioItemId() != null);
 
     verify(requestService).createItemRequest(TRACKING_ID);
-    verify(inventoryClient, times(2)).getItemByHrId(itemHoldDTO.getItemId());
+    verify(inventoryClient, times(2)).getItemsByHrId(itemHoldDTO.getItemId());
     verify(requestsClient).findRequests(inventoryItemDTO.getId());
     verify(usersClient).query(PRE_POPULATED_USER_BARCODE_QUERY);
-    verify(inventoryStorageClient).findServicePointsUsers(fromString(user.getId()));
+    verify(servicePointsUsersClient).findServicePointsUsers(fromString(user.getId()));
     verify(requestsClient).sendRequest(any());
 
     var transaction = repository.fetchOneByTrackingId(TRACKING_ID);
@@ -344,7 +344,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     var inventoryItemDTO = mockInventoryClient();
     mockFindRequestsReturnsEmptyList(inventoryItemDTO);
     var user = mockUserClient();
-    when(inventoryStorageClient.findServicePointsUsers(fromString(user.getId()))).thenThrow(IllegalStateException.class);
+    when(servicePointsUsersClient.findServicePointsUsers(fromString(user.getId()))).thenThrow(IllegalStateException.class);
     when(innReachClient.postInnReachApi(any(), anyString(), anyString(), anyString(), any())).thenReturn("response");
 
     var itemHoldDTO = deserializeFromJsonFile(
@@ -360,10 +360,10 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
 
     await().untilAsserted(() -> verify(innReachClient).postInnReachApi(any(), anyString(), anyString(), anyString(), any()));
 
-    verify(inventoryClient, times(2)).getItemByHrId(inventoryItemDTO.getHrId());
+    verify(inventoryClient, times(2)).getItemsByHrId(inventoryItemDTO.getHrId());
     verify(requestsClient).findRequests(inventoryItemDTO.getId());
     verify(usersClient).query(PRE_POPULATED_USER_BARCODE_QUERY);
-    verify(inventoryStorageClient).findServicePointsUsers(fromString(user.getId()));
+    verify(servicePointsUsersClient).findServicePointsUsers(fromString(user.getId()));
     verify(requestsClient, never()).sendRequest(any());
 
     var cancelRequest = ArgumentCaptor.forClass(OwningSiteCancelsRequestDTO.class);
@@ -396,10 +396,10 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
 
     await().untilAsserted(() -> verify(innReachClient).postInnReachApi(any(), anyString(), anyString(), anyString(), any()));
 
-    verify(inventoryClient, times(2)).getItemByHrId(inventoryItemDTO.getHrId());
+    verify(inventoryClient, times(2)).getItemsByHrId(inventoryItemDTO.getHrId());
     verify(requestsClient).findRequests(inventoryItemDTO.getId());
     verify(usersClient, never()).query(PRE_POPULATED_USER_BARCODE_QUERY);
-    verify(inventoryStorageClient, never()).findServicePointsUsers(fromString(user.getId()));
+    verify(servicePointsUsersClient, never()).findServicePointsUsers(fromString(user.getId()));
     verify(requestsClient, never()).sendRequest(any());
 
     var request = ArgumentCaptor.forClass(OwningSiteCancelsRequestDTO.class);
