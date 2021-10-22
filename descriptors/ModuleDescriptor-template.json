@@ -313,7 +313,13 @@
         {
           "methods": ["POST"],
           "pathPattern": "/inn-reach/d2ir/circ/verifypatron",
-          "permissionsRequired": ["inn-reach.d2ir.patron-info.item.get"]
+          "permissionsRequired": ["inn-reach.d2ir.patron-info.item.get"],
+          "modulePermissions": [
+            "users.collection.get",
+            "patron.account.item.get",
+            "automated-patron-blocks.collection.get",
+            "manualblocks.collection.get"
+          ]
         },
         {
           "methods": ["GET"],
