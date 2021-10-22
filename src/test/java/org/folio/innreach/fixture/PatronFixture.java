@@ -10,8 +10,9 @@ import java.util.UUID;
 
 import lombok.experimental.UtilityClass;
 
+import org.folio.innreach.client.AutomatedPatronBlocksClient.AutomatedPatronBlock;
+import org.folio.innreach.client.ManualPatronBlocksClient.ManualPatronBlock;
 import org.folio.innreach.domain.dto.folio.User;
-import org.folio.innreach.domain.dto.folio.patron.PatronBlock;
 import org.folio.innreach.dto.PatronInfoResponseDTO;
 import org.folio.innreach.dto.UserCustomFieldMappingDTO;
 
@@ -25,10 +26,15 @@ public class PatronFixture {
   public static final String PATRON_FIRST_NAME = "John";
   public static final String PATRON_LAST_NAME = "Doe";
   private static final long expiryDateTs = System.currentTimeMillis();
+  public static final String PATRON_BLOCK_DESC = "test block desc";
   public static final String PATRON_BLOCK = "test block";
 
-  public static PatronBlock createPatronBlock() {
-    return PatronBlock.builder().blockRequests(true).message(PATRON_BLOCK).build();
+  public static AutomatedPatronBlock createAutomatedPatronBlock() {
+    return AutomatedPatronBlock.builder().blockRequests(true).message(PATRON_BLOCK).build();
+  }
+
+  public static ManualPatronBlock createManualPatronBlock() {
+    return ManualPatronBlock.builder().requests(true).desc(PATRON_BLOCK_DESC).patronMessage(PATRON_BLOCK).build();
   }
 
   public static User createUser() {

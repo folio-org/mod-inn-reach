@@ -2,6 +2,7 @@ package org.folio.innreach.domain.service.impl;
 
 import static java.lang.Boolean.TRUE;
 import static java.util.Optional.ofNullable;
+import static org.apache.commons.collections4.CollectionUtils.isNotEmpty;
 import static org.apache.commons.lang3.StringUtils.defaultIfEmpty;
 import static org.apache.commons.lang3.StringUtils.equalsAny;
 import static org.apache.commons.lang3.StringUtils.isNotEmpty;
@@ -15,11 +16,11 @@ import java.util.stream.Collectors;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
-import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 
-import org.folio.innreach.client.PatronBlocksClient;
+import org.folio.innreach.client.AutomatedPatronBlocksClient;
+import org.folio.innreach.client.ManualPatronBlocksClient;
 import org.folio.innreach.client.PatronClient;
 import org.folio.innreach.domain.dto.folio.User;
 import org.folio.innreach.domain.dto.folio.patron.PatronDTO;
@@ -47,7 +48,8 @@ public class PatronInfoServiceImpl implements PatronInfoService {
   private final InnReachTransactionService transactionService;
   private final UserCustomFieldMappingService customFieldMappingService;
   private final PatronClient patronClient;
-  private final PatronBlocksClient patronBlocksClient;
+  private final AutomatedPatronBlocksClient automatedPatronBlocksClient;
+  private final ManualPatronBlocksClient manualPatronBlocksClient;
   private final InnReachResponseMapper mapper;
 
   @Override
@@ -60,6 +62,8 @@ public class PatronInfoServiceImpl implements PatronInfoService {
       var localAgencies = centralServer.getLocalAgencies();
 
       var user = findPatronUser(visiblePatronId, patronName);
+
+      verifyPatronBlocks(user);
 
       var patronInfo = getPatronInfo(centralServerId, localAgencies, user);
 
@@ -98,23 +102,43 @@ public class PatronInfoServiceImpl implements PatronInfoService {
     Assert.isTrue(user != null, "Patron is not found by visiblePatronId: " + visiblePatronId);
     Assert.isTrue(user.isActive(), "Patron is not active");
     Assert.isTrue(matchName(user, patronName), "Patron is not found by name: " + patronName);
-    verifyPatronBlocks(user);
 
     return user;
   }
 
   private void verifyPatronBlocks(User user) {
-    var blocks = patronBlocksClient.getPatronBlocks(user.getId()).getResult();
+    var blocks = automatedPatronBlocksClient.getPatronBlocks(user.getId()).getResult();
+    if (isNotEmpty(blocks)) {
+      verifyAutomatedBlocks(blocks);
+    }
 
-    if (CollectionUtils.isNotEmpty(blocks)) {
-      var block = blocks.stream()
-        .filter(b -> TRUE.equals(b.getBlockBorrowing()) || TRUE.equals(b.getBlockRequests()))
-        .findFirst()
-        .orElse(null);
+    var manualBlocks = manualPatronBlocksClient.getPatronBlocks(user.getId()).getResult();
+    if (isNotEmpty(manualBlocks)) {
+      verifyManualBlocks(manualBlocks);
+    }
+  }
 
-      if (block != null) {
-        throw new IllegalArgumentException("Patron block found: " + block.getMessage());
-      }
+  private void verifyAutomatedBlocks(List<AutomatedPatronBlocksClient.AutomatedPatronBlock> blocks) {
+    var block = blocks.stream()
+      .filter(b -> TRUE.equals(b.getBlockBorrowing()) || TRUE.equals(b.getBlockRequests()))
+      .findFirst()
+      .orElse(null);
+
+    if (block != null) {
+      throw new IllegalArgumentException(
+        String.format("Patron block found: %s", block.getMessage()));
+    }
+  }
+
+  private void verifyManualBlocks(List<ManualPatronBlocksClient.ManualPatronBlock> blocks) {
+    var block = blocks.stream()
+      .filter(b -> TRUE.equals(b.getBorrowing()) || TRUE.equals(b.getRequests()))
+      .findFirst()
+      .orElse(null);
+
+    if (block != null) {
+      throw new IllegalArgumentException(
+        String.format("Patron block found (%s): %s", block.getDesc(), block.getPatronMessage()));
     }
   }
 
