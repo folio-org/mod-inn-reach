@@ -2,6 +2,7 @@ package org.folio.innreach.domain.service.impl;
 
 import static java.lang.Boolean.TRUE;
 import static java.util.Optional.ofNullable;
+import static org.apache.commons.collections4.ListUtils.emptyIfNull;
 import static org.apache.commons.lang3.StringUtils.defaultIfEmpty;
 import static org.apache.commons.lang3.StringUtils.equalsAny;
 import static org.apache.commons.lang3.StringUtils.isNotEmpty;
@@ -19,7 +20,8 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 
-import org.folio.innreach.client.PatronBlocksClient;
+import org.folio.innreach.client.AutomatedPatronBlocksClient;
+import org.folio.innreach.client.ManualPatronBlocksClient;
 import org.folio.innreach.client.PatronClient;
 import org.folio.innreach.domain.dto.folio.User;
 import org.folio.innreach.domain.dto.folio.patron.PatronDTO;
@@ -47,7 +49,8 @@ public class PatronInfoServiceImpl implements PatronInfoService {
   private final InnReachTransactionService transactionService;
   private final UserCustomFieldMappingService customFieldMappingService;
   private final PatronClient patronClient;
-  private final PatronBlocksClient patronBlocksClient;
+  private final AutomatedPatronBlocksClient automatedPatronBlocksClient;
+  private final ManualPatronBlocksClient manualPatronBlocksClient;
   private final InnReachResponseMapper mapper;
 
   @Override
@@ -57,13 +60,13 @@ public class PatronInfoServiceImpl implements PatronInfoService {
     try {
       var centralServer = centralServerService.getCentralServerByCentralCode(centralServerCode);
       var centralServerId = centralServer.getId();
-      var localAgencies = centralServer.getLocalAgencies();
-
+      var localAgencies = emptyIfNull(centralServer.getLocalAgencies());
       var user = findPatronUser(visiblePatronId, patronName);
 
       var patronInfo = getPatronInfo(centralServerId, localAgencies, user);
 
-      response = PatronInfoResponse.of(patronInfo);
+      var requestAllowed = requestAllowed(user);
+      response = PatronInfoResponse.of(patronInfo, requestAllowed);
     } catch (Exception e) {
       log.warn(ERROR_REASON, e);
       response = PatronInfoResponse.error(ERROR_REASON, ofMessage(centralServerCode, e.getMessage()));
@@ -98,24 +101,36 @@ public class PatronInfoServiceImpl implements PatronInfoService {
     Assert.isTrue(user != null, "Patron is not found by visiblePatronId: " + visiblePatronId);
     Assert.isTrue(user.isActive(), "Patron is not active");
     Assert.isTrue(matchName(user, patronName), "Patron is not found by name: " + patronName);
-    verifyPatronBlocks(user);
 
     return user;
   }
 
-  private void verifyPatronBlocks(User user) {
-    var blocks = patronBlocksClient.getPatronBlocks(user.getId()).getResult();
-
-    if (CollectionUtils.isNotEmpty(blocks)) {
-      var block = blocks.stream()
-        .filter(b -> TRUE.equals(b.getBlockBorrowing()) || TRUE.equals(b.getBlockRequests()))
-        .findFirst()
-        .orElse(null);
-
-      if (block != null) {
-        throw new IllegalArgumentException("Patron block found: " + block.getMessage());
-      }
+  private boolean requestAllowed(User user) {
+    var blocks = automatedPatronBlocksClient.getPatronBlocks(user.getId()).getResult();
+    if (hasAutomatedBlocks(blocks)) {
+      return false;
     }
+
+    var manualBlocks = manualPatronBlocksClient.getPatronBlocks(user.getId()).getResult();
+    if (hasManualBlocks(manualBlocks)) {
+      return false;
+    }
+
+    return true;
+  }
+
+  private boolean hasAutomatedBlocks(List<AutomatedPatronBlocksClient.AutomatedPatronBlock> blocks) {
+    return CollectionUtils.emptyIfNull(blocks).stream()
+      .filter(b -> TRUE.equals(b.getBlockBorrowing()) || TRUE.equals(b.getBlockRequests()))
+      .findFirst()
+      .isPresent();
+  }
+
+  private boolean hasManualBlocks(List<ManualPatronBlocksClient.ManualPatronBlock> blocks) {
+    return CollectionUtils.emptyIfNull(blocks).stream()
+      .filter(b -> TRUE.equals(b.getBorrowing()) || TRUE.equals(b.getRequests()))
+      .findFirst()
+      .isPresent();
   }
 
   private String getPatronId(User user) {
@@ -138,18 +153,27 @@ public class PatronInfoServiceImpl implements PatronInfoService {
   }
 
   private String getPatronAgencyCode(UUID centralServerId, List<LocalAgencyDTO> agencies, User user) {
-    if (agencies.size() == 1) {
-      // if only one agency code is hosted on the server, it should default to that
-      return agencies.get(0).getCode();
+    String agencyCode = null;
+    try {
+      var patronAgencyMapping = customFieldMappingService.getMapping(centralServerId);
+
+      var fieldRefId = patronAgencyMapping.getCustomFieldId();
+      var libraryOptionId = user.getCustomFields().get(fieldRefId);
+      Assert.isTrue(libraryOptionId != null, "User home library setting is not found by refId: " + fieldRefId);
+
+      agencyCode = patronAgencyMapping.getConfiguredOptions().get(libraryOptionId);
+    } catch (Exception e) {
+      log.warn("Patron agency mapping for central server {} is not found", centralServerId, e);
     }
 
-    var patronAgencyMapping = customFieldMappingService.getMapping(centralServerId);
+    // if no mapping found and only one agency code is hosted on the server, it should default to that
+    if (agencyCode == null && agencies.size() == 1) {
+      agencyCode = agencies.get(0).getCode();
+    }
 
-    var fieldRefId = patronAgencyMapping.getCustomFieldId();
-    var libraryOptionId = user.getCustomFields().get(fieldRefId);
-    Assert.isTrue(libraryOptionId != null, "User home library setting is not found by refId: " + fieldRefId);
+    Assert.isTrue(agencyCode != null, "Patron agency code is not resolved");
 
-    return patronAgencyMapping.getConfiguredOptions().get(libraryOptionId);
+    return agencyCode;
   }
 
   private static boolean matchName(User user, String patronName) {

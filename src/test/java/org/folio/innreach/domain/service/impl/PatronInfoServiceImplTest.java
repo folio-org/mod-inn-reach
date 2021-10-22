@@ -2,26 +2,30 @@ package org.folio.innreach.domain.service.impl;
 
 import static java.util.Collections.emptyMap;
 import static java.util.Collections.singletonList;
+import static java.util.List.of;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 import static org.folio.innreach.domain.dto.folio.ResultList.asSinglePage;
 import static org.folio.innreach.domain.service.impl.PatronInfoServiceImpl.ERROR_REASON;
 import static org.folio.innreach.external.dto.InnReachResponse.ERROR_STATUS;
+import static org.folio.innreach.external.dto.InnReachResponse.OK_STATUS;
 import static org.folio.innreach.fixture.CentralServerFixture.createCentralServerDTO;
 import static org.folio.innreach.fixture.PatronFixture.CENTRAL_AGENCY_CODE;
-import static org.folio.innreach.fixture.PatronFixture.CUSTOM_FIELD_REF_ID;
 import static org.folio.innreach.fixture.PatronFixture.PATRON_FIRST_NAME;
+import static org.folio.innreach.fixture.PatronFixture.createAutomatedPatronBlock;
 import static org.folio.innreach.fixture.PatronFixture.createCustomFieldMapping;
-import static org.folio.innreach.fixture.PatronFixture.createPatronBlock;
+import static org.folio.innreach.fixture.PatronFixture.createManualPatronBlock;
 import static org.folio.innreach.fixture.PatronFixture.createUser;
 import static org.folio.innreach.fixture.PatronFixture.getErrorMsg;
 import static org.folio.innreach.fixture.PatronFixture.getPatronId;
 
+import java.util.Collections;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -32,7 +36,8 @@ import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import org.folio.innreach.client.PatronBlocksClient;
+import org.folio.innreach.client.AutomatedPatronBlocksClient;
+import org.folio.innreach.client.ManualPatronBlocksClient;
 import org.folio.innreach.client.PatronClient;
 import org.folio.innreach.domain.dto.folio.ResultList;
 import org.folio.innreach.domain.dto.folio.User;
@@ -68,7 +73,9 @@ class PatronInfoServiceImplTest {
   @Mock
   private PatronClient patronClient;
   @Mock
-  private PatronBlocksClient patronBlocksClient;
+  private AutomatedPatronBlocksClient automatedPatronBlocksClient;
+  @Mock
+  private ManualPatronBlocksClient manualPatronBlocksClient;
   @Mock
   private UserCustomFieldMappingService userCustomFieldService;
 
@@ -85,7 +92,8 @@ class PatronInfoServiceImplTest {
 
     when(centralServerService.getCentralServerByCentralCode(any())).thenReturn(createCentralServerDTO());
     when(userService.getUserByPublicId(any())).thenReturn(Optional.of(user));
-    when(patronBlocksClient.getPatronBlocks(any())).thenReturn(ResultList.empty());
+    when(automatedPatronBlocksClient.getPatronBlocks(any())).thenReturn(ResultList.empty());
+    when(manualPatronBlocksClient.getPatronBlocks(any())).thenReturn(ResultList.empty());
     when(patronClient.getAccountDetails(any())).thenReturn(PatronDTO.of(TOTAL_LOANS, singletonList(Loan.of(UUID.randomUUID()))));
     when(transactionService.countInnReachLoans(any(), any())).thenReturn(INN_REACH_LOANS);
     when(patronTypeMappingService.getCentralPatronType(any(), any())).thenReturn(Optional.of(CENTRAL_PATRON_TYPE));
@@ -107,6 +115,37 @@ class PatronInfoServiceImplTest {
   }
 
   @Test
+  void shouldReturnPatronInfo_UsingDefaultLocalAgency() {
+    var user = createUser();
+    var patronId = getPatronId(user);
+    var centralServerDTO = createCentralServerDTO();
+    var localAgency = centralServerDTO.getLocalAgencies().get(0);
+    centralServerDTO.setLocalAgencies(of(localAgency));
+
+    when(centralServerService.getCentralServerByCentralCode(any())).thenReturn(centralServerDTO);
+    when(userService.getUserByPublicId(any())).thenReturn(Optional.of(user));
+    when(automatedPatronBlocksClient.getPatronBlocks(any())).thenReturn(ResultList.empty());
+    when(manualPatronBlocksClient.getPatronBlocks(any())).thenReturn(ResultList.empty());
+    when(patronClient.getAccountDetails(any())).thenReturn(PatronDTO.of(TOTAL_LOANS, singletonList(Loan.of(UUID.randomUUID()))));
+    when(transactionService.countInnReachLoans(any(), any())).thenReturn(INN_REACH_LOANS);
+    when(patronTypeMappingService.getCentralPatronType(any(), any())).thenReturn(Optional.of(CENTRAL_PATRON_TYPE));
+
+    var response = service.verifyPatron(CENTRAL_CODE, VISIBLE_PATRON_ID, AGENCY_CODE, PATRON_NAME);
+
+    assertNotNull(response);
+    var patronInfo = response.getPatronInfo();
+
+    assertNotNull(patronInfo);
+    assertEquals(patronId, patronInfo.getPatronId());
+    assertEquals(FOLIO_PATRON_NAME, patronInfo.getPatronName());
+    assertEquals(CENTRAL_PATRON_TYPE, patronInfo.getCentralPatronType());
+    assertEquals(INN_REACH_LOANS, patronInfo.getNonLocalLoans());
+    assertEquals(TOTAL_LOANS - INN_REACH_LOANS, (int) patronInfo.getLocalLoans());
+    assertEquals(localAgency.getCode(), patronInfo.getPatronAgencyCode());
+    assertNotNull(patronInfo.getPatronExpireDate());
+  }
+
+  @Test
   void shouldReturnPatronInfo_MatchFirstMiddleLastName() {
     var user = createUser();
     var p = user.getPersonal();
@@ -120,7 +159,8 @@ class PatronInfoServiceImplTest {
 
     when(centralServerService.getCentralServerByCentralCode(any())).thenReturn(createCentralServerDTO());
     when(userService.getUserByPublicId(any())).thenReturn(Optional.of(user));
-    when(patronBlocksClient.getPatronBlocks(any())).thenReturn(ResultList.empty());
+    when(automatedPatronBlocksClient.getPatronBlocks(any())).thenReturn(ResultList.empty());
+    when(manualPatronBlocksClient.getPatronBlocks(any())).thenReturn(ResultList.empty());
     when(patronClient.getAccountDetails(any())).thenReturn(PatronDTO.of(TOTAL_LOANS, singletonList(Loan.of(UUID.randomUUID()))));
     when(transactionService.countInnReachLoans(any(), any())).thenReturn(INN_REACH_LOANS);
     when(patronTypeMappingService.getCentralPatronType(any(), any())).thenReturn(Optional.of(CENTRAL_PATRON_TYPE));
@@ -154,7 +194,8 @@ class PatronInfoServiceImplTest {
 
     when(centralServerService.getCentralServerByCentralCode(any())).thenReturn(createCentralServerDTO());
     when(userService.getUserByPublicId(any())).thenReturn(Optional.of(user));
-    when(patronBlocksClient.getPatronBlocks(any())).thenReturn(ResultList.empty());
+    when(automatedPatronBlocksClient.getPatronBlocks(any())).thenReturn(ResultList.empty());
+    when(manualPatronBlocksClient.getPatronBlocks(any())).thenReturn(ResultList.empty());
     when(patronClient.getAccountDetails(any())).thenReturn(PatronDTO.of(TOTAL_LOANS, singletonList(Loan.of(UUID.randomUUID()))));
     when(transactionService.countInnReachLoans(any(), any())).thenReturn(INN_REACH_LOANS);
     when(patronTypeMappingService.getCentralPatronType(any(), any())).thenReturn(Optional.of(CENTRAL_PATRON_TYPE));
@@ -208,43 +249,114 @@ class PatronInfoServiceImplTest {
   }
 
   @Test
-  void shouldReturnError_PatronBlocksFound() {
-    var patronBlock = createPatronBlock();
+  void shouldRestrictRequests_AutomatedPatronBlocksFound() {
+    var patronBlock = createAutomatedPatronBlock();
     patronBlock.setBlockBorrowing(true);
     patronBlock.setBlockRequests(false);
 
     when(centralServerService.getCentralServerByCentralCode(any())).thenReturn(createCentralServerDTO());
     when(userService.getUserByPublicId(any())).thenReturn(Optional.of(createUser()));
-    when(patronBlocksClient.getPatronBlocks(any())).thenReturn(asSinglePage(patronBlock));
+    when(automatedPatronBlocksClient.getPatronBlocks(any())).thenReturn(ResultList.asSinglePage(patronBlock));
+    when(patronClient.getAccountDetails(any())).thenReturn(PatronDTO.of(TOTAL_LOANS, singletonList(Loan.of(UUID.randomUUID()))));
+    when(transactionService.countInnReachLoans(any(), any())).thenReturn(INN_REACH_LOANS);
+    when(patronTypeMappingService.getCentralPatronType(any(), any())).thenReturn(Optional.of(CENTRAL_PATRON_TYPE));
+    when(userCustomFieldService.getMapping(any())).thenReturn(createCustomFieldMapping());
 
     var response = service.verifyPatron(CENTRAL_CODE, VISIBLE_PATRON_ID, AGENCY_CODE, PATRON_NAME);
 
     assertNotNull(response);
-    assertNull(response.getPatronInfo());
+    assertNotNull(response.getPatronInfo());
     assertFalse(response.getRequestAllowed());
-    assertEquals(ERROR_STATUS, response.getStatus());
-    assertEquals(ERROR_REASON, response.getReason());
-    assertEquals("Patron block found: " + patronBlock.getMessage(), getErrorMsg(response));
   }
 
   @Test
-  void shouldReturnError_PatronBlockRequests() {
-    var patronBlock = createPatronBlock();
+  void shouldRestrictRequests_ManualPatronBlocksFound() {
+    var patronBlock = createManualPatronBlock();
+    patronBlock.setBorrowing(true);
+    patronBlock.setRequests(false);
+
+    when(centralServerService.getCentralServerByCentralCode(any())).thenReturn(createCentralServerDTO());
+    when(userService.getUserByPublicId(any())).thenReturn(Optional.of(createUser()));
+    when(automatedPatronBlocksClient.getPatronBlocks(any())).thenReturn(ResultList.empty());
+    when(manualPatronBlocksClient.getPatronBlocks(any())).thenReturn(ResultList.asSinglePage(patronBlock));
+    when(patronClient.getAccountDetails(any())).thenReturn(PatronDTO.of(TOTAL_LOANS, singletonList(Loan.of(UUID.randomUUID()))));
+    when(transactionService.countInnReachLoans(any(), any())).thenReturn(INN_REACH_LOANS);
+    when(patronTypeMappingService.getCentralPatronType(any(), any())).thenReturn(Optional.of(CENTRAL_PATRON_TYPE));
+    when(userCustomFieldService.getMapping(any())).thenReturn(createCustomFieldMapping());
+
+
+    var response = service.verifyPatron(CENTRAL_CODE, VISIBLE_PATRON_ID, AGENCY_CODE, PATRON_NAME);
+
+    assertNotNull(response);
+    assertNotNull(response.getPatronInfo());
+    assertFalse(response.getRequestAllowed());
+  }
+
+  @Test
+  void shouldIgnoreManualPatronBlock() {
+    var patronBlock = createManualPatronBlock();
+    patronBlock.setBorrowing(false);
+    patronBlock.setRequests(false);
+
+    when(centralServerService.getCentralServerByCentralCode(any())).thenReturn(createCentralServerDTO());
+    when(userService.getUserByPublicId(any())).thenReturn(Optional.of(createUser()));
+    when(automatedPatronBlocksClient.getPatronBlocks(any())).thenReturn(ResultList.empty());
+    when(manualPatronBlocksClient.getPatronBlocks(any())).thenReturn(asSinglePage(patronBlock));
+    when(patronClient.getAccountDetails(any())).thenReturn(PatronDTO.of(TOTAL_LOANS, singletonList(Loan.of(UUID.randomUUID()))));
+    when(transactionService.countInnReachLoans(any(), any())).thenReturn(INN_REACH_LOANS);
+    when(patronTypeMappingService.getCentralPatronType(any(), any())).thenReturn(Optional.of(CENTRAL_PATRON_TYPE));
+    when(userCustomFieldService.getMapping(any())).thenReturn(createCustomFieldMapping());
+
+    var response = service.verifyPatron(CENTRAL_CODE, VISIBLE_PATRON_ID, AGENCY_CODE, PATRON_NAME);
+
+    assertNotNull(response);
+    assertNotNull(response.getPatronInfo());
+    assertTrue(response.getRequestAllowed());
+    assertEquals(OK_STATUS, response.getStatus());
+  }
+
+  @Test
+  void shouldIgnoreAutomatedPatronBlock() {
+    var patronBlock = createAutomatedPatronBlock();
+    patronBlock.setBlockBorrowing(false);
+    patronBlock.setBlockRequests(false);
+
+    when(centralServerService.getCentralServerByCentralCode(any())).thenReturn(createCentralServerDTO());
+    when(userService.getUserByPublicId(any())).thenReturn(Optional.of(createUser()));
+    when(automatedPatronBlocksClient.getPatronBlocks(any())).thenReturn(asSinglePage(patronBlock));
+    when(manualPatronBlocksClient.getPatronBlocks(any())).thenReturn(ResultList.empty());
+    when(patronClient.getAccountDetails(any())).thenReturn(PatronDTO.of(TOTAL_LOANS, singletonList(Loan.of(UUID.randomUUID()))));
+    when(transactionService.countInnReachLoans(any(), any())).thenReturn(INN_REACH_LOANS);
+    when(patronTypeMappingService.getCentralPatronType(any(), any())).thenReturn(Optional.of(CENTRAL_PATRON_TYPE));
+    when(userCustomFieldService.getMapping(any())).thenReturn(createCustomFieldMapping());
+
+    var response = service.verifyPatron(CENTRAL_CODE, VISIBLE_PATRON_ID, AGENCY_CODE, PATRON_NAME);
+
+    assertNotNull(response);
+    assertNotNull(response.getPatronInfo());
+    assertTrue(response.getRequestAllowed());
+    assertEquals(OK_STATUS, response.getStatus());
+  }
+
+  @Test
+  void shouldRestrictRequests_PatronBlockRequests() {
+    var patronBlock = createAutomatedPatronBlock();
     patronBlock.setBlockBorrowing(false);
     patronBlock.setBlockRequests(true);
 
     when(centralServerService.getCentralServerByCentralCode(any())).thenReturn(createCentralServerDTO());
     when(userService.getUserByPublicId(any())).thenReturn(Optional.of(createUser()));
-    when(patronBlocksClient.getPatronBlocks(any())).thenReturn(asSinglePage(patronBlock));
+    when(automatedPatronBlocksClient.getPatronBlocks(any())).thenReturn(ResultList.asSinglePage(patronBlock));
+    when(patronClient.getAccountDetails(any())).thenReturn(PatronDTO.of(TOTAL_LOANS, singletonList(Loan.of(UUID.randomUUID()))));
+    when(transactionService.countInnReachLoans(any(), any())).thenReturn(INN_REACH_LOANS);
+    when(patronTypeMappingService.getCentralPatronType(any(), any())).thenReturn(Optional.of(CENTRAL_PATRON_TYPE));
+    when(userCustomFieldService.getMapping(any())).thenReturn(createCustomFieldMapping());
 
     var response = service.verifyPatron(CENTRAL_CODE, VISIBLE_PATRON_ID, AGENCY_CODE, PATRON_NAME);
 
     assertNotNull(response);
-    assertNull(response.getPatronInfo());
+    assertNotNull(response.getPatronInfo());
     assertFalse(response.getRequestAllowed());
-    assertEquals(ERROR_STATUS, response.getStatus());
-    assertEquals(ERROR_REASON, response.getReason());
-    assertEquals("Patron block found: " + patronBlock.getMessage(), getErrorMsg(response));
   }
 
   @Test
@@ -253,7 +365,6 @@ class PatronInfoServiceImplTest {
 
     when(centralServerService.getCentralServerByCentralCode(any())).thenReturn(createCentralServerDTO());
     when(userService.getUserByPublicId(any())).thenReturn(Optional.of(user));
-    when(patronBlocksClient.getPatronBlocks(any())).thenReturn(ResultList.empty());
 
     var response = service.verifyPatron(CENTRAL_CODE, VISIBLE_PATRON_ID, AGENCY_CODE, PATRON_NAME);
 
@@ -286,10 +397,11 @@ class PatronInfoServiceImplTest {
   void shouldReturnError_UserLibraryNotFound() {
     var user = createUser();
     user.setCustomFields(emptyMap());
+    var centralServer = createCentralServerDTO();
+    centralServer.setLocalAgencies(Collections.emptyList());
 
-    when(centralServerService.getCentralServerByCentralCode(any())).thenReturn(createCentralServerDTO());
+    when(centralServerService.getCentralServerByCentralCode(any())).thenReturn(centralServer);
     when(userService.getUserByPublicId(any())).thenReturn(Optional.of(user));
-    when(patronBlocksClient.getPatronBlocks(any())).thenReturn(ResultList.empty());
     when(patronClient.getAccountDetails(any())).thenReturn(PatronDTO.of(TOTAL_LOANS, singletonList(Loan.of(UUID.randomUUID()))));
     when(transactionService.countInnReachLoans(any(), any())).thenReturn(INN_REACH_LOANS);
     when(patronTypeMappingService.getCentralPatronType(any(), any())).thenReturn(Optional.of(CENTRAL_PATRON_TYPE));
@@ -302,7 +414,7 @@ class PatronInfoServiceImplTest {
     assertFalse(response.getRequestAllowed());
     assertEquals(ERROR_STATUS, response.getStatus());
     assertEquals(ERROR_REASON, response.getReason());
-    assertEquals("User home library setting is not found by refId: " + CUSTOM_FIELD_REF_ID, getErrorMsg(response));
+    assertEquals("Patron agency code is not resolved", getErrorMsg(response));
   }
 
 }
