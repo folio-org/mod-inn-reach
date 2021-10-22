@@ -1,7 +1,5 @@
 package org.folio.innreach.client;
 
-import java.util.UUID;
-
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -24,7 +22,7 @@ public interface ManualPatronBlocksClient {
   @NoArgsConstructor
   @AllArgsConstructor
   class ManualPatronBlock {
-    private UUID userId;
+    private String userId;
     private String desc;
     private String patronMessage;
     private Boolean borrowing;
