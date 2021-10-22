@@ -20,12 +20,12 @@ public class PatronInfoResponse extends InnReachResponse {
   private PatronInfo patronInfo;
   private Boolean requestAllowed;
 
-  public static PatronInfoResponse of(PatronInfo patronInfo) {
+  public static PatronInfoResponse of(PatronInfo patronInfo, Boolean requestAllowed) {
     return PatronInfoResponse.builder()
       .status(OK_STATUS)
       .reason(OK_REASON)
       .patronInfo(patronInfo)
-      .requestAllowed(true)
+      .requestAllowed(requestAllowed)
       .build();
   }
 
