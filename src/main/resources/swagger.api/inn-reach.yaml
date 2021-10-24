@@ -994,7 +994,7 @@ paths:
       operationId: getCentralServerAgencies
       description: Get a combined list of agencies available from all configured central servers
       tags:
-        - central-server-agencies
+        - central-server-configuration
       responses:
         '200':
           description: "OK"
@@ -1002,6 +1002,21 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/centralServerAgenciesDTO"
+        '500':
+          $ref: "#/components/responses/trait_response_500"
+  /central-servers/item-types:
+    get:
+      operationId: getCentralServerItemTypes
+      description: Get a combined list of item types available from all configured central servers
+      tags:
+        - central-server-configuration
+      responses:
+        '200':
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/centralServerItemTypesDTO"
         '500':
           $ref: "#/components/responses/trait_response_500"
   /d2ir/getbibrecord/{bibId}/{centralCode}:
@@ -1142,6 +1157,8 @@ components:
       $ref: schemas/centralPatronTypeMappingsDTO.json
     centralServerAgenciesDTO:
       $ref: schemas/centralServerAgenciesDTO.json
+    centralServerItemTypesDTO:
+      $ref: schemas/centralServerItemTypesDTO.json
     localServerAgenciesDTO:
       $ref: schemas/d2ir/localServerAgenciesDTO.json
     bibInfoResponseDTO:

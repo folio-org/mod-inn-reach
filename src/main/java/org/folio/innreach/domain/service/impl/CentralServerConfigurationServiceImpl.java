@@ -18,12 +18,13 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import org.folio.innreach.domain.service.AgencyService;
+import org.folio.innreach.domain.service.CentralServerConfigurationService;
 import org.folio.innreach.domain.service.CentralServerService;
 import org.folio.innreach.dto.AgenciesPerCentralServerDTO;
 import org.folio.innreach.dto.Agency;
 import org.folio.innreach.dto.CentralServerAgenciesDTO;
 import org.folio.innreach.dto.CentralServerDTO;
+import org.folio.innreach.dto.CentralServerItemTypesDTO;
 import org.folio.innreach.dto.InnReachResponseDTO;
 import org.folio.innreach.dto.LocalServerAgenciesDTO;
 import org.folio.innreach.external.exception.InnReachException;
@@ -33,7 +34,7 @@ import org.folio.innreach.util.JsonHelper;
 @Log4j2
 @RequiredArgsConstructor
 @Service
-public class AgencyServiceImpl implements AgencyService {
+public class CentralServerConfigurationServiceImpl implements CentralServerConfigurationService {
 
   private static final String INN_REACH_LOCAL_SERVERS_URI = "/contribution/localservers";
 
@@ -52,6 +53,11 @@ public class AgencyServiceImpl implements AgencyService {
     return new CentralServerAgenciesDTO()
         .centralServerAgencies(agencies)
         .totalRecords(agencies.size());
+  }
+
+  @Override
+  public CentralServerItemTypesDTO getAllItemTypes() {
+    return null;
   }
 
   private AgenciesPerCentralServerDTO retrieveAllAgenciesFromCentralServer(CentralServerDTO centralServer) {
