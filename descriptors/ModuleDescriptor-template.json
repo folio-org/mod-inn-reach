@@ -1,7 +1,60 @@
 {
   "id": "@artifactId@-@version@",
   "name": "INN Reach API module",
-  "requires": [],
+  "requires": [
+    {
+      "id": "login",
+      "version": "7.1"
+    },
+    {
+      "id": "instance-iteration",
+      "version": "0.1"
+    },
+    {
+      "id": "permissions",
+      "version": "5.3"
+    },
+    {
+      "id": "users",
+      "version": "15.3"
+    },
+    {
+      "id": "inventory",
+      "version": "11.1"
+    },
+    {
+      "id": "service-points-users",
+      "version": "1.0"
+    },
+    {
+      "id": "inventory-view",
+      "version": "1.0"
+    },
+    {
+      "id": "material-types",
+      "version": "2.2"
+    },
+    {
+      "id": "automated-patron-blocks",
+      "version": "0.1"
+    },
+    {
+      "id": "patron",
+      "version": "4.3"
+    },
+    {
+      "id": "request-storage",
+      "version": "3.4"
+    },
+    {
+      "id": "source-storage-records",
+      "version": "3.1"
+    },
+    {
+      "id": "feesfines",
+      "version": "17.1"
+    }
+  ],
   "provides": [
     {
       "id": "inn-reach",
@@ -249,13 +302,34 @@
         },
         {
           "methods": ["POST"],
-          "pathPattern": "/innreach/v2/circ/itemHold/{trackingId}/{centralCode}",
+          "pathPattern": "/inn-reach/d2ir/circ/itemhold/{trackingId}/{centralCode}",
           "permissionsRequired": ["inn-reach.d2ir.inn-reach-transaction.item.post"]
+        },
+        {
+          "methods": ["GET"],
+          "pathPattern": "/inn-reach/transactions/{transactionId}",
+          "permissionsRequired": ["inn-reach.inn-reach-transaction.item.get"]
         },
         {
           "methods": ["GET"],
           "pathPattern": "/inn-reach/d2ir/getbibrecord/{bibId}/{centralCode}",
           "permissionsRequired": ["inn-reach.d2ir.bib-info.item.get"]
+        },
+        {
+          "methods": ["POST"],
+          "pathPattern": "/inn-reach/d2ir/circ/verifypatron",
+          "permissionsRequired": ["inn-reach.d2ir.patron-info.item.get"],
+          "modulePermissions": [
+            "users.collection.get",
+            "patron.account.item.get",
+            "automated-patron-blocks.collection.get",
+            "manualblocks.collection.get"
+          ]
+        },
+        {
+          "methods": ["GET"],
+          "pathPattern": "/inn-reach/central-servers/agencies",
+          "permissionsRequired": ["inn-reach.central-server-agencies.collection.get"]
         }
       ]
     },
@@ -683,11 +757,17 @@
       "description" : "Create INN-Reach Transaction with Item Hold at the owning site"
     },
     {
+      "permissionName" : "inn-reach.inn-reach-transaction.item.get",
+      "displayName" : "get INN-Reach Transaction with transaction hold by id",
+      "description" : "Get INN-Reach Transaction with transaction hold by id"
+    },
+    {
       "permissionName" : "inn-reach.d2ir.inn-reach-transaction.all",
       "displayName" : "inn reach API module - all permissions of inn-reach transactions",
       "description" : "All permissions of inn-reach transactions scope",
       "subPermissions" : [
-        "inn-reach.d2ir.inn-reach-transaction.item.post"
+        "inn-reach.d2ir.inn-reach-transaction.item.post",
+        "inn-reach.inn-reach-transaction.item.get"
       ]
     },
     {
@@ -702,6 +782,24 @@
       "subPermissions" : [
         "inn-reach.d2ir.bib-info.item.get"
       ]
+    },
+    {
+      "permissionName" : "inn-reach.d2ir.patron-info.item.get",
+      "displayName" : "get d2ir patron info",
+      "description" : "get d2ir patron info"
+    },
+    {
+      "permissionName" : "inn-reach.d2ir.patron-info.all",
+      "displayName" : "inn reach API module - all permissions of patron info",
+      "description" : "All permissions of d2ir patron info scope",
+      "subPermissions" : [
+        "inn-reach.d2ir.patron-info.item.get"
+      ]
+    },
+    {
+      "permissionName" : "inn-reach.central-server-agencies.collection.get",
+      "displayName" : "get a collection of all known agencies from available central servers",
+      "description" : "Get a collection of all known agencies from available central servers"
     },
     {
       "permissionName" : "inn-reach.all",
@@ -725,7 +823,9 @@
         "inn-reach.user-custom-field-mappings.all",
         "inn-reach.central-patron-type-mappings.all",
         "inn-reach.d2ir.inn-reach-transaction.all",
-        "inn-reach.d2ir.bib-info.all"
+        "inn-reach.d2ir.bib-info.all",
+        "inn-reach.d2ir.patron-info.all",
+        "inn-reach.central-server-agencies.collection.get"
       ]
     }
   ],

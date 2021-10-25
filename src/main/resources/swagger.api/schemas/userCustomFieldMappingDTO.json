@@ -9,13 +9,12 @@
       "format": "uuid"
     },
     "customFieldId": {
-      "description": "Custom field id",
-      "type": "string",
-      "format": "uuid"
+      "description": "Custom field refId",
+      "type": "string"
     },
     "configuredOptions": {
       "type": "object",
-      "description": "Map of the options for the custom field and local agency codes",
+      "description": "Map of the option ids for the custom field and local agency codes",
       "additionalProperties": {
         "type": "string",
         "properties": {
@@ -25,7 +24,7 @@
             "maxLength": 5
           },
           "customFieldValue": {
-            "description": "Custom field value",
+            "description": "Custom field option id",
             "type": "string"
           }
         }

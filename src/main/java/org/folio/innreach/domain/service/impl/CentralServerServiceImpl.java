@@ -1,18 +1,19 @@
 package org.folio.innreach.domain.service.impl;
 
+import static org.folio.innreach.util.ListUtils.mapItems;
+
 import java.util.ArrayList;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
-import org.folio.innreach.domain.dto.CentralServerConnectionDetailsDTO;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import org.folio.innreach.domain.dto.CentralServerConnectionDetailsDTO;
 import org.folio.innreach.domain.entity.CentralServer;
 import org.folio.innreach.domain.entity.CentralServerCredentials;
 import org.folio.innreach.domain.entity.LocalAgency;
@@ -89,6 +90,12 @@ public class CentralServerServiceImpl implements CentralServerService {
     return centralServerMapper.mapToCentralServerDTO(centralServer);
   }
 
+  @Override
+  public UUID getCentralServerIdByCentralCode(String code) {
+    return centralServerRepository.getIdByCentralCode(code)
+      .orElseThrow(() -> new EntityNotFoundException("Central server with code: " + code + " not found"));
+  }
+
   private CentralServer fetchOne(UUID centralServerId) {
     return centralServerRepository.fetchOne(centralServerId)
       .orElseThrow(() -> new EntityNotFoundException("Central server with ID: " + centralServerId + " not found"));
@@ -99,10 +106,8 @@ public class CentralServerServiceImpl implements CentralServerService {
   public CentralServersDTO getAllCentralServers(int offset, int limit) {
     Page<UUID> ids = centralServerRepository.getIds(PageRequest.of(offset, limit));
 
-    var centralServerDTOS = centralServerRepository.fetchAllById(ids.getContent())
-      .stream()
-      .map(centralServerMapper::mapToCentralServerDTO)
-      .collect(Collectors.toList());
+    var centralServerDTOS = mapItems(centralServerRepository.fetchAllById(ids.getContent()),
+        centralServerMapper::mapToCentralServerDTO);
 
     return new CentralServersDTO()
       .centralServers(centralServerDTOS)

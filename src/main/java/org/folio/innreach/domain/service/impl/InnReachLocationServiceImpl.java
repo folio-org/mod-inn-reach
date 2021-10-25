@@ -1,5 +1,7 @@
 package org.folio.innreach.domain.service.impl;
 
+import static org.folio.innreach.util.ListUtils.mapItems;
+
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -45,10 +47,8 @@ public class InnReachLocationServiceImpl implements InnReachLocationService {
   @Override
   @Transactional(readOnly = true)
   public InnReachLocationsDTO getInnReachLocations(Iterable<UUID> innReachLocationIds) {
-    var locations = innReachLocationRepository.findAllById(innReachLocationIds)
-      .stream()
-      .map(innReachLocationMapper::mapToInnReachLocationDTO)
-      .collect(Collectors.toList());
+    var locations = mapItems(innReachLocationRepository.findAllById(innReachLocationIds),
+        innReachLocationMapper::mapToInnReachLocationDTO);
 
     var locationsDTO = new InnReachLocationsDTO();
     locationsDTO.setLocations(locations);

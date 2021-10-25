@@ -1,12 +1,13 @@
 package org.folio.innreach.fixture;
 
+import static java.util.UUID.randomUUID;
+import static org.jeasy.random.FieldPredicates.named;
+
 import lombok.experimental.UtilityClass;
-import org.folio.innreach.domain.dto.folio.User;
 import org.jeasy.random.EasyRandom;
 import org.jeasy.random.EasyRandomParameters;
 
-import static java.util.UUID.randomUUID;
-import static org.jeasy.random.FieldPredicates.named;
+import org.folio.innreach.domain.dto.folio.User;
 
 @UtilityClass
 public class UserFixture {
@@ -14,7 +15,8 @@ public class UserFixture {
 
   static {
     EasyRandomParameters params = new EasyRandomParameters()
-      .randomize(named("id"), () -> randomUUID().toString());
+      .randomize(named("id"), () -> randomUUID().toString())
+      .randomize(named("active"), () -> true);
     userRandom = new EasyRandom(params);
   }
 

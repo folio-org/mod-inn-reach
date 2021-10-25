@@ -989,6 +989,21 @@ paths:
         required: true
       parameters:
         - $ref: '#/components/parameters/centralServerId'
+  /central-servers/agencies:
+    get:
+      operationId: getCentralServerAgencies
+      description: Get a combined list of agencies available from all configured central servers
+      tags:
+        - central-server-agencies
+      responses:
+        '200':
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/centralServerAgenciesDTO"
+        '500':
+          $ref: "#/components/responses/trait_response_500"
   /d2ir/getbibrecord/{bibId}/{centralCode}:
     get:
       operationId: getBibRecord
@@ -1007,9 +1022,7 @@ paths:
       parameters:
         - $ref: '#/components/parameters/bibId'
         - $ref: '#/components/parameters/centralCode'
-  /v2/circ/itemhold/{trackingId}/{centralCode}:
-    servers:
-      - url: /innreach/
+  /d2ir/circ/itemhold/{trackingId}/{centralCode}:
     post:
       operationId: createInnReachTransactionItemHold
       description: Originates an item hold at the owning site
@@ -1019,7 +1032,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/transactionItemHoldDTO"
+              $ref: "#/components/schemas/transactionHoldDTO"
       responses:
         '200':
           description: Transaction record is created
@@ -1038,9 +1051,49 @@ paths:
       parameters:
         - $ref: '#/components/parameters/trackingId'
         - $ref: '#/components/parameters/centralCode'
+  /transactions/{transactionId}:
+    get:
+      operationId: getInnReachTransaction
+      description: get inn-reach transaction by id
+      tags:
+        - inn-reach-transaction
+      responses:
+        '200':
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/innReachTransactionDTO"
+        '404':
+          $ref: "#/components/responses/trait_response_404"
+        '500':
+          $ref: "#/components/responses/trait_response_500"
+      parameters:
+        - $ref: '#/components/parameters/id'
+  /d2ir/circ/verifypatron:
+    post:
+      operationId: verifyPatron
+      description: Handles D2IR request from central server for patron verification.
+      tags:
+        - verify-patron-d2ir
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/patronInfoRequestDTO"
+      responses:
+        '200':
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/patronInfoResponseDTO"
+        '500':
+          $ref: "#/components/responses/trait_response_500"
+      parameters:
+        - $ref: '#/components/parameters/localCodeHeader'
+        - $ref: '#/components/parameters/centralCodeHeader'
   /d2ir/circ/{circulationOperationName}/{trackingId}/{centralCode}:
-    servers:
-      - url: /innreach/
     post:
       operationId: processCirculationRequest
       description: Process circulation request
@@ -1050,7 +1103,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/circulationRequestDTO"
+              $ref: "#/components/schemas/transactionHoldDTO"
       responses:
         '200':
           description: Transaction record is created
@@ -1137,12 +1190,22 @@ components:
       $ref: schemas/inventorystorage/holding.json
     centralPatronTypeMappingsDTO:
       $ref: schemas/centralPatronTypeMappingsDTO.json
+    centralServerAgenciesDTO:
+      $ref: schemas/centralServerAgenciesDTO.json
+    localServerAgenciesDTO:
+      $ref: schemas/d2ir/localServerAgenciesDTO.json
     bibInfoResponseDTO:
       $ref: schemas/d2ir/bibInfoResponseDTO.json
-    transactionItemHoldDTO:
-      $ref: schemas/transactionItemHoldDTO.json
     innReachResponseDTO:
       $ref: schemas/d2ir/innReachResponseDTO.json
+    patronInfoResponseDTO:
+      $ref: schemas/d2ir/patronInfoResponseDTO.json
+    patronInfoRequestDTO:
+      $ref: schemas/d2ir/patronInfoRequestDTO.json
+    innReachTransactionDTO:
+      $ref: schemas/innReachTransactionDTO.json
+    transactionHoldDTO:
+      $ref: schemas/transactionHoldDTO.json
     circulationRequestDTO:
       $ref: schemas/d2ir/circulationRequestDTO.json
   parameters:
@@ -1202,6 +1265,20 @@ components:
       required: true
       schema:
         type: string
+    localCodeHeader:
+      name: X-To-Code
+      in: header
+      required: true
+      schema:
+        type: string
+        maxLength: 5
+    centralCodeHeader:
+      name: X-From-Code
+      in: header
+      required: true
+      schema:
+        type: string
+        maxLength: 5
     trait_queryable_query:
       name: query
       in: query

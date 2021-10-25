@@ -1,0 +1,14 @@
+{
+  "priority": 100,
+  "request": {
+    "method": "POST",
+    "url": "/auth/v1/oauth2/token?grant_type=client_credentials&scope=innreach_tp"
+  },
+  "response": {
+    "status": 200,
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "bodyFileName": "oauth/d2ir-oauth-token-response.json"
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "description": "Agency details",
+  "type": "object",
+  "properties": {
+    "agencyCode": {
+      "description": "Agency code",
+      "type": "string",
+      "maxLength": 5
+    },
+    "description": {
+      "description": "Agency description",
+      "type": "string",
+      "maxLength": 128
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "agencyCode",
+    "description"
+  ]
+}
