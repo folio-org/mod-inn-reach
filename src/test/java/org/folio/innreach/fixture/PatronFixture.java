@@ -10,25 +10,31 @@ import java.util.UUID;
 
 import lombok.experimental.UtilityClass;
 
+import org.folio.innreach.client.AutomatedPatronBlocksClient.AutomatedPatronBlock;
+import org.folio.innreach.client.ManualPatronBlocksClient.ManualPatronBlock;
 import org.folio.innreach.domain.dto.folio.User;
-import org.folio.innreach.domain.dto.folio.patron.PatronBlock;
 import org.folio.innreach.dto.PatronInfoResponseDTO;
 import org.folio.innreach.dto.UserCustomFieldMappingDTO;
 
 @UtilityClass
 public class PatronFixture {
 
-  public static final UUID CUSTOM_FIELD_ID = UUID.randomUUID();
+  public static final String CUSTOM_FIELD_REF_ID = "homeLibrary";
   public static final String CUSTOM_FIELD_OPTION = "opt_0";
   public static final String CENTRAL_AGENCY_CODE = "code1";
   public static final UUID USER_ID = UUID.randomUUID();
   public static final String PATRON_FIRST_NAME = "John";
   public static final String PATRON_LAST_NAME = "Doe";
   private static final long expiryDateTs = System.currentTimeMillis();
+  public static final String PATRON_BLOCK_DESC = "test block desc";
   public static final String PATRON_BLOCK = "test block";
 
-  public static PatronBlock createPatronBlock() {
-    return PatronBlock.builder().blockRequests(true).message(PATRON_BLOCK).build();
+  public static AutomatedPatronBlock createAutomatedPatronBlock() {
+    return AutomatedPatronBlock.builder().blockRequests(true).message(PATRON_BLOCK).build();
+  }
+
+  public static ManualPatronBlock createManualPatronBlock() {
+    return ManualPatronBlock.builder().requests(true).desc(PATRON_BLOCK_DESC).patronMessage(PATRON_BLOCK).build();
   }
 
   public static User createUser() {
@@ -37,7 +43,7 @@ public class PatronFixture {
     user.setActive(true);
     user.setExpirationDate(OffsetDateTime.ofInstant(Instant.ofEpochMilli(expiryDateTs), ZoneOffset.UTC));
     user.setPersonal(User.Personal.of(PATRON_FIRST_NAME, null, PATRON_LAST_NAME, null));
-    user.setCustomFields(Map.of(CUSTOM_FIELD_ID.toString(), CUSTOM_FIELD_OPTION));
+    user.setCustomFields(Map.of(CUSTOM_FIELD_REF_ID, CUSTOM_FIELD_OPTION));
     return user;
   }
 
@@ -45,7 +51,7 @@ public class PatronFixture {
     var mapping = new UserCustomFieldMappingDTO();
     mapping.setConfiguredOptions(Map.of(CUSTOM_FIELD_OPTION, CENTRAL_AGENCY_CODE));
     mapping.setId(UUID.randomUUID());
-    mapping.setCustomFieldId(CUSTOM_FIELD_ID);
+    mapping.setCustomFieldId(CUSTOM_FIELD_REF_ID);
     return mapping;
   }
 

@@ -1,0 +1,21 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "allOf": [
+    {
+      "$ref": "innReachResponseDTO.json"
+    }
+  ],
+  "description": "D2IR local server agency codes response",
+  "type": "object",
+  "properties": {
+    "localServerList": {
+      "description": "D2IR local servers",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "$ref": "localServer.json"
+      }
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,6 +1,5 @@
 package org.folio.innreach.repository;
 
-import static java.util.stream.Collectors.toList;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.StringContains.containsString;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -9,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import static org.folio.innreach.fixture.InnReachLocationFixture.createInnReachLocation;
+import static org.folio.innreach.util.ListUtils.mapItems;
 
 import java.util.List;
 import java.util.Optional;
@@ -43,9 +43,7 @@ class InnReachLocationRepositoryTest extends BaseRepositoryTest {
 
     assertEquals(3, locations.size());
 
-    List<String> ids = locations.stream()
-        .map(innReachLocation -> innReachLocation.getId().toString())
-        .collect(toList());
+    List<String> ids = mapItems(locations, innReachLocation -> innReachLocation.getId().toString());
 
     assertEquals(ids, List.of(PRE_POPULATED_LOCATION1_ID, PRE_POPULATED_LOCATION2_ID, PRE_POPULATED_LOCATION3_ID));
   }

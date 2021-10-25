@@ -989,6 +989,21 @@ paths:
         required: true
       parameters:
         - $ref: '#/components/parameters/centralServerId'
+  /central-servers/agencies:
+    get:
+      operationId: getCentralServerAgencies
+      description: Get a combined list of agencies available from all configured central servers
+      tags:
+        - central-server-agencies
+      responses:
+        '200':
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/centralServerAgenciesDTO"
+        '500':
+          $ref: "#/components/responses/trait_response_500"
   /d2ir/getbibrecord/{bibId}/{centralCode}:
     get:
       operationId: getBibRecord
@@ -1056,11 +1071,16 @@ paths:
       parameters:
         - $ref: '#/components/parameters/id'
   /d2ir/circ/verifypatron:
-    get:
+    post:
       operationId: verifyPatron
       description: Handles D2IR request from central server for patron verification.
       tags:
         - verify-patron-d2ir
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/patronInfoRequestDTO"
       responses:
         '200':
           description: "OK"
@@ -1073,9 +1093,6 @@ paths:
       parameters:
         - $ref: '#/components/parameters/localCodeHeader'
         - $ref: '#/components/parameters/centralCodeHeader'
-        - $ref: '#/components/parameters/visiblePatronId'
-        - $ref: '#/components/parameters/patronAgencyCode'
-        - $ref: '#/components/parameters/patronName'
 components:
   schemas:
     UUID:
@@ -1142,12 +1159,18 @@ components:
       $ref: schemas/inventorystorage/holding.json
     centralPatronTypeMappingsDTO:
       $ref: schemas/centralPatronTypeMappingsDTO.json
+    centralServerAgenciesDTO:
+      $ref: schemas/centralServerAgenciesDTO.json
+    localServerAgenciesDTO:
+      $ref: schemas/d2ir/localServerAgenciesDTO.json
     bibInfoResponseDTO:
       $ref: schemas/d2ir/bibInfoResponseDTO.json
     innReachResponseDTO:
       $ref: schemas/d2ir/innReachResponseDTO.json
     patronInfoResponseDTO:
       $ref: schemas/d2ir/patronInfoResponseDTO.json
+    patronInfoRequestDTO:
+      $ref: schemas/d2ir/patronInfoRequestDTO.json
     innReachTransactionDTO:
       $ref: schemas/innReachTransactionDTO.json
     transactionHoldDTO:
@@ -1203,28 +1226,6 @@ components:
       required: true
       schema:
         type: string
-    visiblePatronId:
-      name: visiblePatronId
-      description: User attribute configured by the system to act as their publicId (externalSystemId or barcode)
-      in: query
-      required: true
-      schema:
-        type: string
-        maxLength: 32
-    patronAgencyCode:
-      name: patronAgencyCode
-      in: query
-      required: true
-      schema:
-        type: string
-        maxLength: 5
-    patronName:
-      name: patronName
-      in: query
-      required: true
-      schema:
-        type: string
-        maxLength: 128
     localCodeHeader:
       name: X-To-Code
       in: header

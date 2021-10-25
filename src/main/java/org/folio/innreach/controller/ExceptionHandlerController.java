@@ -1,7 +1,8 @@
 package org.folio.innreach.controller;
 
+import static org.folio.innreach.util.ListUtils.mapItems;
+
 import java.util.List;
-import java.util.stream.Collectors;
 
 import javax.validation.ConstraintViolation;
 import javax.validation.ConstraintViolationException;
@@ -91,11 +92,7 @@ public class ExceptionHandlerController {
   }
 
   private List<ValidationErrorDTO> collectValidationErrors(MethodArgumentNotValidException e) {
-    return e.getBindingResult()
-      .getFieldErrors()
-      .stream()
-      .map(this::mapFieldErrorToValidationError)
-      .collect(Collectors.toList());
+    return mapItems(e.getBindingResult().getFieldErrors(), this::mapFieldErrorToValidationError);
   }
 
   private ValidationErrorDTO mapFieldErrorToValidationError(FieldError fieldError) {
