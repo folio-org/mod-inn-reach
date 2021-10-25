@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.UUID;
 
 import org.folio.innreach.dto.InnReachResponseDTO;
+import org.folio.innreach.dto.InnReachTransactionsDTO;
 import org.folio.innreach.dto.TransactionItemHoldDTO;
 
 public interface InnReachTransactionService {
@@ -11,4 +12,5 @@ public interface InnReachTransactionService {
 
   Integer countInnReachLoans(String patronId, List<UUID> loanIds);
 
+  InnReachTransactionsDTO getTransactionsSorted(Integer offset, Integer limit);
 }

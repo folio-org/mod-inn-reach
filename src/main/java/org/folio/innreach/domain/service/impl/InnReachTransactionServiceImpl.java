@@ -6,8 +6,10 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.folio.innreach.domain.service.MaterialTypeMappingService;
+import org.folio.innreach.dto.InnReachTransactionsDTO;
 import org.folio.innreach.external.service.InventoryService;
 import org.folio.innreach.mapper.InnReachErrorMapper;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import org.folio.innreach.domain.entity.InnReachTransaction;
@@ -19,6 +21,7 @@ import org.folio.innreach.dto.TransactionItemHoldDTO;
 import org.folio.innreach.mapper.InnReachTransactionMapper;
 import org.folio.innreach.repository.InnReachTransactionRepository;
 import org.folio.innreach.repository.TransactionHoldRepository;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityExistsException;
 
@@ -76,5 +79,12 @@ public class InnReachTransactionServiceImpl implements InnReachTransactionServic
   @Override
   public Integer countInnReachLoans(String patronId, List<UUID> loanIds) {
     return holdRepository.countByPatronIdAndFolioLoanIdIn(patronId, loanIds);
+  }
+
+  @Override
+  @Transactional(readOnly = true)
+  public InnReachTransactionsDTO getTransactionsSorted(Integer offset, Integer limit) {
+    var transactions = repository.getAllSorted(PageRequest.of(offset, limit));
+    return mapper.toDTOCollection(transactions);
   }
 }

@@ -30,11 +30,16 @@ import static org.folio.innreach.fixture.UserFixture.createUser;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.folio.innreach.client.RequestStorageClient;
 import org.folio.innreach.domain.dto.folio.User;
 import org.folio.innreach.domain.dto.folio.inventory.InventoryItemDTO;
+import org.folio.innreach.domain.entity.base.AuditableUser;
+import org.folio.innreach.dto.InnReachTransactionDTO;
+import org.folio.innreach.dto.InnReachTransactionsDTO;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.stubbing.Answer;
@@ -81,6 +86,12 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   private static final Integer PRE_POPULATED_CENTRAL_PATRON_TYPE = 200;
   private static final String PRE_POPULATED_MATERIAL_TYPE_ID = "1a54b431-2e4f-452d-9cae-9cee66c9a892";
 
+  private static final UUID PRE_POPULATED_TRANSACTION_ID1 = UUID.fromString("0aab1720-14b4-4210-9a19-0d0bf1cd64d3");
+  private static final UUID PRE_POPULATED_TRANSACTION_ID2 = UUID.fromString("ab2393a1-acc4-4849-82ac-8cc0c37339e1");
+  private static final UUID PRE_POPULATED_TRANSACTION_ID3 = UUID.fromString("79b0a1fb-55be-4e55-9d84-01303aaec1ce");
+
+  private static final AuditableUser PRE_POPULATED_USER = AuditableUser.SYSTEM;
+
   @Autowired
   private TestRestTemplate testRestTemplate;
   @Autowired
@@ -126,6 +137,57 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
 
   void mockFindRequestsReturnsEmptyList(InventoryItemDTO inventoryItemDTO) {
     when(requestsClient.findRequests(inventoryItemDTO.getId())).thenReturn(ResultList.of(0, Collections.emptyList()));
+  }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
+  })
+  void return200HttpCode_and_allExistingTransactions_when_getAllTransactionsWithNoFilters(){
+    var responseEntity = testRestTemplate.getForEntity(
+      "/inn-reach/transactions", InnReachTransactionsDTO.class
+    );
+
+    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+    assertNotNull(responseEntity.getBody());
+    assertEquals(3, responseEntity.getBody().getTotalRecords());
+
+    var transactionIds = responseEntity.getBody().getTransactions().stream()
+      .map(InnReachTransactionDTO::getId).collect(Collectors.toList());
+    assertTrue(transactionIds.containsAll(
+      List.of(PRE_POPULATED_TRANSACTION_ID1, PRE_POPULATED_TRANSACTION_ID2, PRE_POPULATED_TRANSACTION_ID3)));
+
+    var transactionMetadatas = responseEntity.getBody().getTransactions().stream()
+      .map(InnReachTransactionDTO::getMetadata).collect(Collectors.toList());
+    assertTrue(transactionMetadatas.stream().allMatch(Objects::nonNull));
+    assertTrue(transactionMetadatas.stream().allMatch(m -> m.getCreatedDate() != null));
+    assertTrue(transactionMetadatas.stream().allMatch(m -> m.getCreatedByUsername().equals(PRE_POPULATED_USER.getName())));
+  }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
+  })
+  void return200HttpCode_and_pageOfTransactions_when_getAllTransactionsWithOffsetAndLimit(){
+    var responseEntity = testRestTemplate.getForEntity(
+      "/inn-reach/transactions?offset=1&limit=1", InnReachTransactionsDTO.class
+    );
+
+    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+    assertNotNull(responseEntity.getBody());
+    assertEquals(3, responseEntity.getBody().getTotalRecords());
+
+    var transactionIds = responseEntity.getBody().getTransactions().stream()
+      .map(InnReachTransactionDTO::getId).collect(Collectors.toList());
+    assertTrue(transactionIds.containsAll(List.of(PRE_POPULATED_TRANSACTION_ID2)));
+
+    var transactionMetadatas = responseEntity.getBody().getTransactions().stream()
+      .map(InnReachTransactionDTO::getMetadata).collect(Collectors.toList());
+    assertTrue(transactionMetadatas.stream().allMatch(Objects::nonNull));
+    assertTrue(transactionMetadatas.stream().allMatch(m -> m.getCreatedDate() != null));
+    assertTrue(transactionMetadatas.stream().allMatch(m -> m.getCreatedByUsername().equals(PRE_POPULATED_USER.getName())));
   }
 
   @Test

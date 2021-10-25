@@ -1,0 +1,71 @@
+{
+  "description": "INN-Reach Transaction record",
+  "type": "object",
+  "properties": {
+    "id": {
+      "description": "Transaction id",
+      "type": "string",
+      "format": "UUID"
+    },
+    "trackingId": {
+      "description": "ID for transaction tracking",
+      "type": "string"
+    },
+    "centralServerCode": {
+      "description": "Unique code that identifies the central server",
+      "type": "string"
+    },
+    "state": {
+      "description": "Transaction state",
+      "type": "string",
+      "enum" : [
+        "ITEM_HOLD",
+        "PATRON_HOLD",
+        "LOCAL_HOLD",
+        "BORROWER_RENEW",
+        "BORROWING_SITE_CANCEL",
+        "ITEM_IN_TRANSIT",
+        "RECEIVE_UNANNOUNCED",
+        "RETURN_UNCIRCULATED",
+        "CLAIMS_RETURNED",
+        "ITEM_RECEIVED",
+        "ITEM_SHIPPED",
+        "LOCAL_CHECKOUT",
+        "CANCEL_REQUEST",
+        "FINAL_CHECKIN",
+        "RECALL",
+        "TRANSFER"
+      ]
+    },
+    "type": {
+      "description": "Transaction type",
+      "type": "string",
+      "enum" : [
+        "ITEM",
+        "PATRON",
+        "LOCAL"
+      ]
+    },
+    "hold" : {
+      "description": "Transaction hold",
+      "type": "object",
+      "$ref": "innReachTransactionHold.json"
+    },
+    "metadata": {
+      "description": "Entity metadata",
+      "type": "object",
+      "$ref": "metadata.json"
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "transactionTime",
+    "pickupLocation",
+    "patronId",
+    "patronAgencyCode",
+    "itemAgencyCode",
+    "itemId",
+    "centralPatronType",
+    "patronName"
+  ]
+}

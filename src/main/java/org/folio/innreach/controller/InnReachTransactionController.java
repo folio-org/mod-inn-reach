@@ -5,6 +5,7 @@ import lombok.extern.log4j.Log4j2;
 import org.folio.innreach.domain.service.InnReachTransactionService;
 import org.folio.innreach.domain.service.RequestService;
 import org.folio.innreach.dto.InnReachResponseDTO;
+import org.folio.innreach.dto.InnReachTransactionsDTO;
 import org.folio.innreach.dto.TransactionItemHoldDTO;
 import org.folio.innreach.mapper.InnReachErrorMapper;
 import org.folio.innreach.rest.resource.InnReachTransactionApi;
@@ -12,12 +13,15 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.validation.Valid;
+import javax.validation.constraints.Max;
+import javax.validation.constraints.Min;
 import java.util.stream.Collectors;
 
 @Log4j2
@@ -43,6 +47,14 @@ public class InnReachTransactionController implements InnReachTransactionApi {
       status = HttpStatus.BAD_REQUEST;
     }
     return new ResponseEntity<>(response, status);
+  }
+
+  @Override
+  @GetMapping("/inn-reach/transactions")
+  public ResponseEntity<InnReachTransactionsDTO> getAllSorted(@Min(0) @Max(2147483647) @Valid Integer offset,
+                                                              @Min(0) @Max(2147483647) @Valid Integer limit){
+    var transactions = transactionService.getTransactionsSorted(offset, limit);
+    return ResponseEntity.ok(transactions);
   }
 
   @ExceptionHandler(MethodArgumentNotValidException.class)

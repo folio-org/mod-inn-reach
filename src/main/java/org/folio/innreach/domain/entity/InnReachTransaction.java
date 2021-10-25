@@ -2,6 +2,10 @@ package org.folio.innreach.domain.entity;
 
 import static org.folio.innreach.domain.entity.InnReachTransaction.FETCH_ONE_BY_TRACKING_ID_QUERY;
 import static org.folio.innreach.domain.entity.InnReachTransaction.FETCH_ONE_BY_TRACKING_ID_QUERY_NAME;
+import static org.folio.innreach.domain.entity.InnReachTransaction.GET_ALL_SORTED_QUERY;
+import static org.folio.innreach.domain.entity.InnReachTransaction.GET_ALL_SORTED_QUERY_NAME;
+import static org.folio.innreach.domain.entity.InnReachTransaction.GET_ALL_SORTED_COUNT_QUERY_NAME;
+import static org.folio.innreach.domain.entity.InnReachTransaction.GET_ALL_SORTED_COUNT_QUERY;
 
 import java.util.UUID;
 
@@ -31,6 +35,14 @@ import org.folio.innreach.domain.entity.base.Identifiable;
   name = FETCH_ONE_BY_TRACKING_ID_QUERY_NAME,
   query = FETCH_ONE_BY_TRACKING_ID_QUERY
 )
+@NamedQuery(
+  name = GET_ALL_SORTED_QUERY_NAME,
+  query = GET_ALL_SORTED_QUERY
+)
+@NamedQuery(
+  name = GET_ALL_SORTED_COUNT_QUERY_NAME,
+  query = GET_ALL_SORTED_COUNT_QUERY
+)
 public class InnReachTransaction extends Auditable implements Identifiable<UUID> {
 
   public static final String FETCH_ONE_BY_TRACKING_ID_QUERY_NAME = "InnReachTransaction.fetchOne";
@@ -38,6 +50,13 @@ public class InnReachTransaction extends Auditable implements Identifiable<UUID>
     "SELECT t FROM InnReachTransaction t JOIN FETCH t.hold hold " +
       "JOIN FETCH hold.pickupLocation location " +
       "WHERE t.trackingId = :trackingId AND location.id = hold.pickupLocation.id";
+
+  public static final String GET_ALL_SORTED_QUERY_NAME = "InnReachTransaction.getAllSorted";
+  public static final String GET_ALL_SORTED_QUERY = "SELECT t FROM InnReachTransaction t JOIN FETCH t.hold hold " +
+    "JOIN FETCH hold.pickupLocation location";
+
+  public static final String GET_ALL_SORTED_COUNT_QUERY_NAME = "InnReachTransaction.getAllCount";
+  public static final String GET_ALL_SORTED_COUNT_QUERY = "SELECT count(transaction) FROM InnReachTransaction transaction ";
 
   @Id
   @GeneratedValue(strategy = GenerationType.AUTO)

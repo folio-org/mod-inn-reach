@@ -1074,6 +1074,26 @@ paths:
       parameters:
         - $ref: '#/components/parameters/localCodeHeader'
         - $ref: '#/components/parameters/centralCodeHeader'
+  /transactions:
+    get:
+      description: Get a sorted list of transactions for the given central server
+      operationId: getAllSorted
+      tags:
+        - inn-reach-transaction
+      responses:
+        '200':
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/innReachTransactionsDTO"
+        '400':
+          $ref: "#/components/responses/trait_response_malformed_query_400"
+        '500':
+          $ref: "#/components/responses/trait_response_500"
+      parameters:
+        - $ref: "#/components/parameters/trait_pageable_offset"
+        - $ref: "#/components/parameters/trait_pageable_limit"
 components:
   schemas:
     UUID:
@@ -1154,6 +1174,8 @@ components:
       $ref: schemas/d2ir/patronInfoResponseDTO.json
     patronInfoRequestDTO:
       $ref: schemas/d2ir/patronInfoRequestDTO.json
+    innReachTransactionsDTO:
+      $ref: schemas/innReachTransactionsDTO.json
   parameters:
     id:
       name: id
