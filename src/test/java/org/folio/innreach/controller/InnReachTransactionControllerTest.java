@@ -403,7 +403,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql",
   })
   void returnInnReachTransactionWithPatronHold_when_transactionExists() {
-    var responseEntity = testRestTemplate.getForEntity("/inn-reach/d2ir/circ/transactions/{transactionId}",
+    var responseEntity = testRestTemplate.getForEntity("/inn-reach/transactions/{transactionId}",
       InnReachTransactionDTO.class, TRANSACTION_WITH_PATRON_HOLD_ID);
 
     assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
@@ -423,7 +423,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql",
   })
   void returnInnReachTransactionWithItemHold_when_transactionExists() {
-    var responseEntity = testRestTemplate.getForEntity("/inn-reach/d2ir/circ/transactions/{transactionId}",
+    var responseEntity = testRestTemplate.getForEntity("/inn-reach/transactions/{transactionId}",
       InnReachTransactionDTO.class, TRANSACTION_WITH_ITEM_HOLD_ID);
 
     assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
@@ -441,7 +441,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql",
   })
   void returnInnReachTransactionWithLocalHold_when_transactionExists() {
-    var responseEntity = testRestTemplate.getForEntity("/inn-reach/d2ir/circ/transactions/{transactionId}",
+    var responseEntity = testRestTemplate.getForEntity("/inn-reach/transactions/{transactionId}",
       InnReachTransactionDTO.class, TRANSACTION_WITH_LOCAL_HOLD_ID);
 
     assertEquals(HttpStatus.OK, responseEntity.getStatusCode());

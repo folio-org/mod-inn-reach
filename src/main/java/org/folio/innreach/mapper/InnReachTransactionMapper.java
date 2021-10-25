@@ -52,7 +52,7 @@ public class InnReachTransactionMapper {
     if (innReachTransaction.getHold() != null) {
       innReachTransactionDTO.transactionHold(holdMappers.get(innReachTransaction.getHold().getClass()).apply(innReachTransaction.getHold()));
     }
-      
+
     innReachTransactionDTO.setMetadata(collectMetadata(innReachTransaction));
     return innReachTransactionDTO;
   }
