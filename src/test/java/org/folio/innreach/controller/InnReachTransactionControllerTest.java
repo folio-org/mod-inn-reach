@@ -247,7 +247,8 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
 
     assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
     assertEquals("failed", responseEntity.getBody().getStatus());
-    assertThat(responseEntity.getBody().getReason(), containsString("must match \"[a-z,0-9]{1,32}\""));
+    assertEquals("Argument validation failed.", responseEntity.getBody().getReason());
+    assertThat(responseEntity.getBody().getErrors().get(0).getReason(), containsString("must match \"[a-z,0-9]{1,32}\""));
   }
 
   @Test
@@ -269,7 +270,9 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
 
     assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
     assertEquals("failed", responseEntity.getBody().getStatus());
-    assertThat(responseEntity.getBody().getReason(), containsString("constraint [unq_tracking_id]"));
+
+    assertEquals("An error occurred during creation of INN-Reach Transaction.", responseEntity.getBody().getReason());
+    assertEquals("INN-Reach Transaction with tracking ID = tracking1 already exists.", responseEntity.getBody().getErrors().get(0).getReason());
   }
 
   @Test
@@ -286,7 +289,8 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
 
     assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
     assertEquals("failed", responseEntity.getBody().getStatus());
-    assertEquals("Central server with code: d2ir not found", responseEntity.getBody().getReason());
+    assertEquals("An error occurred during creation of INN-Reach Transaction.", responseEntity.getBody().getReason());
+    assertEquals("Central server with code: d2ir not found", responseEntity.getBody().getErrors().get(0).getReason());
   }
 
   @Test
@@ -307,7 +311,8 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
 
     assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
     assertEquals("failed", responseEntity.getBody().getStatus());
-    assertEquals("Pickup location must consist of 3 or 4 strings delimited by a colon.", responseEntity.getBody().getReason());
+    assertEquals("An error occurred during creation of INN-Reach Transaction.", responseEntity.getBody().getReason());
+    assertEquals("Pickup location must consist of 3 or 4 strings delimited by a colon.", responseEntity.getBody().getErrors().get(0).getReason());
   }
 
   @Test
@@ -327,8 +332,10 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
 
     assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
     assertEquals("failed", responseEntity.getBody().getStatus());
-    assertThat(responseEntity.getBody().getReason(), containsString("Material type mapping for central server id = "
-      + PRE_POPULATED_CENTRAL_SERVER_ID + " and material type id = " + PRE_POPULATED_MATERIAL_TYPE_ID + " not found"));
+    assertEquals("An error occurred during creation of INN-Reach Transaction.", responseEntity.getBody().getReason());
+    assertEquals("Material type mapping for central server id = "
+      + PRE_POPULATED_CENTRAL_SERVER_ID + " and material type id = " + PRE_POPULATED_MATERIAL_TYPE_ID + " not found",
+      responseEntity.getBody().getErrors().get(0).getReason());
   }
 
   @Test
