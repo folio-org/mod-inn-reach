@@ -41,12 +41,6 @@
       "description": "Need before time",
       "type": "integer"
     },
-    "centralItemType": {
-      "description": "Central item type",
-      "type": "integer",
-      "minimum" : 0,
-      "maximum" : 255
-    },
     "centralPatronType": {
       "description": "Central patron type",
       "type": "integer",

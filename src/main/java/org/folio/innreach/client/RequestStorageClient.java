@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 @FeignClient(name = "request-storage", configuration = FolioFeignClientConfig.class)
 public interface RequestStorageClient {
 
-  @GetMapping("/requests?query=(itemId==\"{itemId}\")")
+  @GetMapping("/requests?query=(itemId=={itemId})")
   ResultList<RequestDTO> findRequests(@PathVariable("itemId") UUID itemId);
 
   @PostMapping("/requests")

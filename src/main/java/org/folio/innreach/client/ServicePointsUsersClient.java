@@ -9,8 +9,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 
 import java.util.UUID;
 
-@FeignClient(name = "inventory-storage", configuration = FolioFeignClientConfig.class)
-public interface InventoryStorageClient {
-  @GetMapping("/service-points-users?query=(userId==\"{userId}\")")
+@FeignClient(name = "service-points-users", configuration = FolioFeignClientConfig.class)
+public interface ServicePointsUsersClient {
+  @GetMapping("?query=userId=={userId}")
   ResultList<ServicePointUserDTO> findServicePointsUsers(@PathVariable("userId") UUID userId);
 }

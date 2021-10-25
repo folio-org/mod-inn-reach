@@ -93,16 +93,17 @@ class ItemTypeMappingRepositoryTest extends BaseRepositoryTest {
   @Sql(scripts = {"classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/item-type-mapping/pre-populate-item-type-mapping.sql"})
   void shouldUpdateExistingMapping() {
-    var mapping = repository.getOne(fromString(PRE_POPULATED_ITEM_TYPE_MAPPING_ID1));
+    var mapping1 = repository.getOne(fromString(PRE_POPULATED_ITEM_TYPE_MAPPING_ID1));
+    var mapping2 = repository.getOne(fromString(PRE_POPULATED_ITEM_TYPE_MAPPING_ID2));
 
     UUID newMaterialTypeId = randomUUID();
-    int newItemType = randomIntegerExcept(256, Set.of(mapping.getCentralItemType()));
-    mapping.setCentralItemType(newItemType);
-    mapping.setMaterialTypeId(newMaterialTypeId);
+    int newItemType = randomIntegerExcept(256, Set.of(mapping1.getCentralItemType(), mapping2.getCentralItemType()));
+    mapping1.setCentralItemType(newItemType);
+    mapping1.setMaterialTypeId(newMaterialTypeId);
 
-    repository.saveAndFlush(mapping);
+    repository.saveAndFlush(mapping1);
 
-    var saved = repository.getOne(mapping.getId());
+    var saved = repository.getOne(mapping1.getId());
 
     assertEquals(newItemType, saved.getCentralItemType());
     assertEquals(newMaterialTypeId, saved.getMaterialTypeId());

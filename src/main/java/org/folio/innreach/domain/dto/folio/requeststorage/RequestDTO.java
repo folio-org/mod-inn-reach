@@ -18,13 +18,13 @@ public class RequestDTO {
   private UUID id;
   private UUID itemId;
   private RequestStatus status;
-  private RequestType requestType;
+  private String requestType;
   private OffsetDateTime requestExpirationDate;
   private UUID requesterId;
   private UUID pickupServicePointId;
   private String patronComments;
   private OffsetDateTime requestDate;
-  private FulfilmentPreference fulfilmentPreference;
+  private String fulfilmentPreference;
 
   @Getter
   @RequiredArgsConstructor
