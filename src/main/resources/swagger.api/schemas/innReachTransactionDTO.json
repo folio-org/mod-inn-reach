@@ -1,0 +1,41 @@
+{
+  "description": "INN-Reach Transaction record",
+  "type": "object",
+  "properties": {
+    "id": {
+      "description": "Transaction Hold id",
+      "type": "string",
+      "format": "UUID"
+    },
+    "trackingId": {
+      "description": "Transaction tracking id",
+      "type": "string"
+    },
+    "centralServerCode": {
+      "description": "Central server code",
+      "type": "string"
+    },
+    "state": {
+      "description": "Transaction state",
+      "type": "string"
+    },
+    "type": {
+      "description": "Transaction type",
+      "type": "string"
+    },
+    "transactionHold": {
+      "description": "Transaction hold record",
+      "type": "object",
+      "$ref": "transactionHoldDTO.json"
+    },
+    "metadata": {
+      "description": "Entity metadata",
+      "type": "object",
+      "$ref": "metadata.json"
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "transactionHold"
+  ]
+}

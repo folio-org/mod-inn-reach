@@ -1,10 +1,11 @@
 package org.folio.innreach.mapper;
 
-import org.folio.innreach.dto.InnReachError;
 import org.mapstruct.InjectionStrategy;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.springframework.validation.FieldError;
+
+import org.folio.innreach.dto.InnReachError;
 
 @Mapper(componentModel = "spring", injectionStrategy = InjectionStrategy.CONSTRUCTOR, uses = MappingMethods.class)
 public interface InnReachErrorMapper {

@@ -1032,7 +1032,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/transactionItemHoldDTO"
+              $ref: "#/components/schemas/transactionHoldDTO"
       responses:
         '200':
           description: Transaction record is created
@@ -1051,6 +1051,25 @@ paths:
       parameters:
         - $ref: '#/components/parameters/trackingId'
         - $ref: '#/components/parameters/centralCode'
+  /transactions/{transactionId}:
+    get:
+      operationId: getInnReachTransaction
+      description: get inn-reach transaction by id
+      tags:
+        - inn-reach-transaction
+      responses:
+        '200':
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/innReachTransactionDTO"
+        '404':
+          $ref: "#/components/responses/trait_response_404"
+        '500':
+          $ref: "#/components/responses/trait_response_500"
+      parameters:
+        - $ref: '#/components/parameters/id'
   /d2ir/circ/verifypatron:
     post:
       operationId: verifyPatron
@@ -1146,14 +1165,16 @@ components:
       $ref: schemas/d2ir/localServerAgenciesDTO.json
     bibInfoResponseDTO:
       $ref: schemas/d2ir/bibInfoResponseDTO.json
-    transactionItemHoldDTO:
-      $ref: schemas/transactionItemHoldDTO.json
     innReachResponseDTO:
       $ref: schemas/d2ir/innReachResponseDTO.json
     patronInfoResponseDTO:
       $ref: schemas/d2ir/patronInfoResponseDTO.json
     patronInfoRequestDTO:
       $ref: schemas/d2ir/patronInfoRequestDTO.json
+    innReachTransactionDTO:
+      $ref: schemas/innReachTransactionDTO.json
+    transactionHoldDTO:
+      $ref: schemas/transactionHoldDTO.json
   parameters:
     id:
       name: id

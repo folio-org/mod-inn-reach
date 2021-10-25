@@ -1,14 +1,14 @@
 package org.folio.innreach.domain.dto.folio.requeststorage;
 
+import java.time.OffsetDateTime;
+import java.util.UUID;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
-
-import java.time.OffsetDateTime;
-import java.util.UUID;
 
 @Data
 @NoArgsConstructor
