@@ -34,11 +34,12 @@ import java.util.UUID;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import org.folio.innreach.client.InventoryClient;
-import org.folio.innreach.client.InventoryStorageClient;
 import org.folio.innreach.client.RequestStorageClient;
+import org.folio.innreach.client.ServicePointsUsersClient;
 import org.folio.innreach.client.UsersClient;
 import org.folio.innreach.domain.dto.OwningSiteCancelsRequestDTO;
 import org.folio.innreach.domain.dto.folio.ResultList;
@@ -53,6 +54,8 @@ import org.folio.innreach.domain.entity.TransactionItemHold;
 import org.folio.innreach.domain.exception.EntityNotFoundException;
 import org.folio.innreach.domain.service.RequestService;
 import org.folio.innreach.external.service.InnReachExternalService;
+import org.folio.innreach.external.service.InventoryService;
+import org.folio.innreach.mapper.InnReachTransactionMapper;
 import org.folio.innreach.mapper.InnReachTransactionPickupLocationMapper;
 import org.folio.innreach.repository.CentralPatronTypeMappingRepository;
 import org.folio.innreach.repository.CentralServerRepository;
@@ -75,14 +78,19 @@ public class RequestServiceImpl implements RequestService {
   private final InnReachTransactionRepository transactionRepository;
   private final CentralPatronTypeMappingRepository centralPatronTypeMappingRepository;
   private final CentralServerRepository centralServerRepository;
+
+  private final InnReachTransactionMapper transactionMapper;
+
   private final InnReachTransactionPickupLocationMapper transactionPickupLocationMapper;
   private final InventoryClient inventoryClient;
   private final RequestStorageClient requestsClient;
-  private final InventoryStorageClient inventoryStorageClient;
+  private final ServicePointsUsersClient servicePointsUsersClient;
   private final UsersClient usersClient;
 
   private final InnReachExternalService innReachService;
+  private final InventoryService inventoryService;
 
+  @Async
   @Override
   public void createItemRequest(String trackingId) {
     log.info("Creating an item request...");
@@ -92,7 +100,7 @@ public class RequestServiceImpl implements RequestService {
     var itemHrId = transaction.getHold().getItemId();
     var centralServerId = getCentralServerId(transaction.getCentralServerCode());
 
-    var item = inventoryClient.getItemByHrId(itemHrId);
+    var item = inventoryService.getItemByHrId(itemHrId);
     var requests = requestsClient.findRequests(item.getId());
 
     if (itemIsRequestable(item, requests)) {
@@ -104,7 +112,7 @@ public class RequestServiceImpl implements RequestService {
         var userId = getUserByBarcode(patronBarcode).getId();
         var defaultServicePointId = getDefaultServicePointId(userId);
         var requestExpirationDate = getRequestExpirationDate(transaction.getHold());
-        var requestType = item.getStatus() == AVAILABLE ? PAGE : HOLD;
+        var requestType = item.getStatus() == AVAILABLE ? PAGE.getName() : HOLD.getName();
 
         //creating and sending new request
         var newRequest = RequestDTO.builder()
@@ -115,7 +123,7 @@ public class RequestServiceImpl implements RequestService {
           .requestExpirationDate(requestExpirationDate)
           .patronComments(comment)
           .requestDate(transaction.getCreatedDate())
-          .fulfilmentPreference(HOLD_SHELF)
+          .fulfilmentPreference(HOLD_SHELF.getName())
           .build();
         var createdRequest = requestsClient.sendRequest(newRequest);
 
@@ -127,8 +135,7 @@ public class RequestServiceImpl implements RequestService {
 
         log.info("Item request successfully created.");
       } catch (Exception e) {
-        log.warn(e.getMessage());
-        log.warn("Sending \"Owning site cancels\" request.");
+        log.warn("An error occurred during request processing. Sending \"Owning site cancels\" request.", e);
         var errorReason = "Request not permitted";
         issueOwningSiteCancelsRequest(errorReason, transaction, centralServerId);
       }
@@ -161,7 +168,7 @@ public class RequestServiceImpl implements RequestService {
   }
 
   private UUID getDefaultServicePointId(String userId) {
-    return inventoryStorageClient.findServicePointsUsers(UUID.fromString(userId))
+    return servicePointsUsersClient.findServicePointsUsers(UUID.fromString(userId))
       .getResult().stream().findFirst().orElseThrow(
         () -> new EntityNotFoundException("Service points not found for user id = " + userId)
       ).getDefaultServicePointId();

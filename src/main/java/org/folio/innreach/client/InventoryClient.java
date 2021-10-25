@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 
 import org.folio.innreach.config.FolioFeignClientConfig;
+import org.folio.innreach.domain.dto.folio.ResultList;
 import org.folio.innreach.domain.dto.folio.inventory.InventoryItemDTO;
 import org.folio.innreach.dto.Instance;
 
@@ -19,6 +20,6 @@ public interface InventoryClient {
   @GetMapping("/items/{itemId}")
   InventoryItemDTO getItemById(@PathVariable("itemId") UUID itemId);
 
-  @GetMapping("/items/query=(hrid==\"{hrId}\")")
-  InventoryItemDTO getItemByHrId(@PathVariable("hrId") String hrId);
+  @GetMapping("/items?query=hrid=={hrId}")
+  ResultList<InventoryItemDTO> getItemsByHrId(@PathVariable("hrId") String hrId);
 }

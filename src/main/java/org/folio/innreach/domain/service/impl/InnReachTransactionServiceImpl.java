@@ -3,7 +3,10 @@ package org.folio.innreach.domain.service.impl;
 import java.util.List;
 import java.util.UUID;
 
+import javax.persistence.EntityExistsException;
+
 import lombok.RequiredArgsConstructor;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.stereotype.Service;
 
 import org.folio.innreach.domain.entity.InnReachTransaction;
@@ -11,14 +14,18 @@ import org.folio.innreach.domain.entity.InnReachTransaction.TransactionType;
 import org.folio.innreach.domain.exception.EntityNotFoundException;
 import org.folio.innreach.domain.service.CentralServerService;
 import org.folio.innreach.domain.service.InnReachTransactionService;
+import org.folio.innreach.domain.service.MaterialTypeMappingService;
 import org.folio.innreach.dto.InnReachResponseDTO;
 import org.folio.innreach.dto.InnReachTransactionDTO;
 import org.folio.innreach.dto.TransactionHoldDTO;
+import org.folio.innreach.external.service.InventoryService;
+import org.folio.innreach.mapper.InnReachErrorMapper;
 import org.folio.innreach.mapper.InnReachTransactionHoldMapper;
 import org.folio.innreach.mapper.InnReachTransactionMapper;
 import org.folio.innreach.repository.InnReachTransactionRepository;
 import org.folio.innreach.repository.TransactionHoldRepository;
 
+@Log4j2
 @RequiredArgsConstructor
 @Service
 public class InnReachTransactionServiceImpl implements InnReachTransactionService {
@@ -28,6 +35,9 @@ public class InnReachTransactionServiceImpl implements InnReachTransactionServic
   private final InnReachTransactionMapper transactionMapper;
   private final InnReachTransactionHoldMapper transactionHoldMapper;
   private final CentralServerService centralServerService;
+  private final MaterialTypeMappingService materialService;
+  private final InventoryService inventoryService;
+  private final InnReachErrorMapper errorMapper;
 
   private InnReachTransaction createTransactionWithItemHold(String trackingId, String centralCode) {
     var transaction = new InnReachTransaction();
@@ -43,14 +53,26 @@ public class InnReachTransactionServiceImpl implements InnReachTransactionServic
     var response = new InnReachResponseDTO();
     response.setStatus("ok");
     try {
-      centralServerService.getCentralServerByCentralCode(centralCode);
+      repository.fetchOneByTrackingId(trackingId).ifPresent(m -> {
+        throw new EntityExistsException("INN-Reach Transaction with tracking ID = " + trackingId
+          + " already exists.");
+      });
+      var centralServer = centralServerService.getCentralServerByCentralCode(centralCode);
+      var centralServerId = centralServer.getId();
       var transaction = createTransactionWithItemHold(trackingId, centralCode);
       var itemHold = transactionHoldMapper.toItemHold(dto);
+      var item = inventoryService.getItemByHrId(itemHold.getItemId());
+      var materialTypeId = item.getMaterialType().getId();
+      var materialType = materialService.findByCentralServerAndMaterialType(centralServerId, materialTypeId);
+      itemHold.setCentralItemType(materialType.getCentralItemType());
       transaction.setHold(itemHold);
       repository.save(transaction);
     } catch (Exception e) {
+      log.warn("An error occurred during creation of INN-Reach Transaction.", e);
       response.setStatus("failed");
-      response.setReason(e.getMessage());
+      response.setReason("An error occurred during creation of INN-Reach Transaction.");
+      var innReachError = errorMapper.toInnReachError(e);
+      response.setErrors(List.of(innReachError));
     }
     return response;
   }

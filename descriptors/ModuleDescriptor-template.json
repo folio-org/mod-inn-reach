@@ -302,7 +302,7 @@
         },
         {
           "methods": ["POST"],
-          "pathPattern": "/inn-reach/d2ir/circ/itemHold/{trackingId}/{centralCode}",
+          "pathPattern": "/inn-reach/d2ir/circ/itemhold/{trackingId}/{centralCode}",
           "permissionsRequired": ["inn-reach.d2ir.inn-reach-transaction.item.post"]
         },
         {
