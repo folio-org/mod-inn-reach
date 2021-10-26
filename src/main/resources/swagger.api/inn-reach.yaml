@@ -1157,10 +1157,12 @@ components:
       $ref: schemas/centralPatronTypeMappingsDTO.json
     centralServerAgenciesDTO:
       $ref: schemas/centralServerAgenciesDTO.json
-    centralServerItemTypesDTO:
-      $ref: schemas/centralServerItemTypesDTO.json
     localServerAgenciesDTO:
       $ref: schemas/d2ir/localServerAgenciesDTO.json
+    centralServerItemTypesDTO:
+      $ref: schemas/centralServerItemTypesDTO.json
+    centralItemTypesDTO:
+      $ref: schemas/d2ir/centralItemTypesDTO.json
     bibInfoResponseDTO:
       $ref: schemas/d2ir/bibInfoResponseDTO.json
     transactionItemHoldDTO:

@@ -8,7 +8,7 @@
       "type": "array",
       "items": {
         "type": "object",
-        "$ref": "agenciesPerCentralServerDTO.json"
+        "$ref": "itemTypesPerCentralServerDTO.json"
       }
     },
     "totalRecords": {
