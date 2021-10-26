@@ -19,12 +19,9 @@ import org.folio.innreach.domain.entity.InnReachTransaction.TransactionType;
 import org.folio.innreach.domain.exception.EntityNotFoundException;
 import org.folio.innreach.domain.service.CentralServerService;
 import org.folio.innreach.domain.service.InnReachTransactionService;
-import org.folio.innreach.domain.service.MaterialTypeMappingService;
 import org.folio.innreach.dto.InnReachResponseDTO;
 import org.folio.innreach.dto.InnReachTransactionDTO;
 import org.folio.innreach.dto.TransactionHoldDTO;
-import org.folio.innreach.external.service.InventoryService;
-import org.folio.innreach.mapper.InnReachErrorMapper;
 import org.folio.innreach.mapper.InnReachTransactionHoldMapper;
 import org.folio.innreach.mapper.InnReachTransactionMapper;
 import org.folio.innreach.repository.InnReachTransactionRepository;
@@ -92,14 +89,13 @@ public class InnReachTransactionServiceImpl implements InnReachTransactionServic
   public InnReachTransactionDTO getInnReachTransaction(UUID transactionId) {
     var innReachTransaction = repository.fetchOneById(transactionId)
       .orElseThrow(() -> new EntityNotFoundException(String.format("InnReach transaction with id [%s] not found!", transactionId)));
-
-    return transactionMapper.toDto(innReachTransaction);
+    return transactionMapper.toDTO(innReachTransaction);
   }
 
   @Override
   @Transactional(readOnly = true)
   public InnReachTransactionsDTO getTransactionsSorted(Integer offset, Integer limit) {
     var transactions = repository.getAllSorted(PageRequest.of(offset, limit));
-    return mapper.toDTOCollection(transactions);
+    return transactionMapper.toDTOCollection(transactions);
   }
 }

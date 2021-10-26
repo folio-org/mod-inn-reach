@@ -52,20 +52,16 @@ import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlMergeMode;
 
 import org.folio.innreach.client.InventoryClient;
-import org.folio.innreach.client.RequestStorageClient;
 import org.folio.innreach.client.ServicePointsUsersClient;
 import org.folio.innreach.client.UsersClient;
 import org.folio.innreach.controller.base.BaseControllerTest;
 import org.folio.innreach.domain.dto.OwningSiteCancelsRequestDTO;
 import org.folio.innreach.domain.dto.folio.ResultList;
-import org.folio.innreach.domain.dto.folio.User;
-import org.folio.innreach.domain.dto.folio.inventory.InventoryItemDTO;
 import org.folio.innreach.domain.dto.folio.inventorystorage.ServicePointUserDTO;
 import org.folio.innreach.domain.dto.folio.requeststorage.RequestDTO;
 import org.folio.innreach.domain.entity.TransactionItemHold;
 import org.folio.innreach.domain.service.RequestService;
 import org.folio.innreach.dto.InnReachResponseDTO;
-import org.folio.innreach.dto.InnReachTransactionDTO;
 import org.folio.innreach.dto.TransactionHoldDTO;
 import org.folio.innreach.external.client.feign.InnReachClient;
 import org.folio.innreach.mapper.InnReachTransactionPickupLocationMapper;
@@ -498,10 +494,10 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     var responseBody = responseEntity.getBody();
 
     assertNotNull(responseBody);
-    assertNotNull(responseBody.getTransactionHold().getTitle());
-    assertNotNull(responseBody.getTransactionHold().getAuthor());
-    assertNotNull(responseBody.getTransactionHold().getCallNumber());
-    assertNotNull(responseBody.getTransactionHold().getShippedItemBarcode());
+    assertNotNull(responseBody.getHold().getTitle());
+    assertNotNull(responseBody.getHold().getAuthor());
+    assertNotNull(responseBody.getHold().getCallNumber());
+    assertNotNull(responseBody.getHold().getShippedItemBarcode());
   }
 
   @Test
@@ -518,8 +514,8 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     var responseBody = responseEntity.getBody();
 
     assertNotNull(responseBody);
-    assertNotNull(responseBody.getTransactionHold().getCentralPatronType());
-    assertNotNull(responseBody.getTransactionHold().getPatronName());
+    assertNotNull(responseBody.getHold().getCentralPatronType());
+    assertNotNull(responseBody.getHold().getPatronName());
   }
 
   @Test
@@ -536,12 +532,12 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     var responseBody = responseEntity.getBody();
 
     assertNotNull(responseBody);
-    assertNotNull(responseBody.getTransactionHold().getPatronHomeLibrary());
-    assertNotNull(responseBody.getTransactionHold().getTitle());
-    assertNotNull(responseBody.getTransactionHold().getAuthor());
-    assertNotNull(responseBody.getTransactionHold().getCallNumber());
-    assertNotNull(responseBody.getTransactionHold().getCentralPatronType());
-    assertNotNull(responseBody.getTransactionHold().getPatronName());
+    assertNotNull(responseBody.getHold().getPatronHomeLibrary());
+    assertNotNull(responseBody.getHold().getTitle());
+    assertNotNull(responseBody.getHold().getAuthor());
+    assertNotNull(responseBody.getHold().getCallNumber());
+    assertNotNull(responseBody.getHold().getCentralPatronType());
+    assertNotNull(responseBody.getHold().getPatronName());
   }
 
 }

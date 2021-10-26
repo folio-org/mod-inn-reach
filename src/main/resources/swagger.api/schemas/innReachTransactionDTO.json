@@ -49,7 +49,7 @@
     "hold" : {
       "description": "Transaction hold",
       "type": "object",
-      "$ref": "innReachTransactionHold.json"
+      "$ref": "transactionHoldDTO.json"
     },
     "metadata": {
       "description": "Entity metadata",
