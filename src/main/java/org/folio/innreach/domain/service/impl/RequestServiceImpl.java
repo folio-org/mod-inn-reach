@@ -34,12 +34,12 @@ import java.util.UUID;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
-import org.folio.innreach.external.service.InventoryService;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
-import org.folio.innreach.client.ServicePointsUsersClient;
+import org.folio.innreach.client.InventoryClient;
 import org.folio.innreach.client.RequestStorageClient;
+import org.folio.innreach.client.ServicePointsUsersClient;
 import org.folio.innreach.client.UsersClient;
 import org.folio.innreach.domain.dto.OwningSiteCancelsRequestDTO;
 import org.folio.innreach.domain.dto.folio.ResultList;
@@ -54,7 +54,9 @@ import org.folio.innreach.domain.entity.TransactionItemHold;
 import org.folio.innreach.domain.exception.EntityNotFoundException;
 import org.folio.innreach.domain.service.RequestService;
 import org.folio.innreach.external.service.InnReachExternalService;
+import org.folio.innreach.external.service.InventoryService;
 import org.folio.innreach.mapper.InnReachTransactionMapper;
+import org.folio.innreach.mapper.InnReachTransactionPickupLocationMapper;
 import org.folio.innreach.repository.CentralPatronTypeMappingRepository;
 import org.folio.innreach.repository.CentralServerRepository;
 import org.folio.innreach.repository.InnReachTransactionRepository;
@@ -79,6 +81,8 @@ public class RequestServiceImpl implements RequestService {
 
   private final InnReachTransactionMapper transactionMapper;
 
+  private final InnReachTransactionPickupLocationMapper transactionPickupLocationMapper;
+  private final InventoryClient inventoryClient;
   private final RequestStorageClient requestsClient;
   private final ServicePointsUsersClient servicePointsUsersClient;
   private final UsersClient usersClient;
@@ -154,7 +158,7 @@ public class RequestServiceImpl implements RequestService {
 
   private String createPatronComment(TransactionHold hold) {
     return "INN-Reach request: Patron Agency - " + hold.getPatronAgencyCode() +
-      ", Pickup Location - " + transactionMapper.map(hold.getPickupLocation());
+      ", Pickup Location - " + transactionPickupLocationMapper.toString(hold.getPickupLocation());
   }
 
   private UUID getCentralServerId(String centralServerCode) {

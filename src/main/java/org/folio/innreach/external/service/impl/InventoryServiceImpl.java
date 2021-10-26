@@ -1,11 +1,12 @@
 package org.folio.innreach.external.service.impl;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+
 import org.folio.innreach.client.InventoryClient;
 import org.folio.innreach.domain.dto.folio.inventory.InventoryItemDTO;
 import org.folio.innreach.domain.exception.EntityNotFoundException;
 import org.folio.innreach.external.service.InventoryService;
-import org.springframework.stereotype.Service;
 
 @RequiredArgsConstructor
 @Service

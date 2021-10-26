@@ -307,6 +307,11 @@
         },
         {
           "methods": ["GET"],
+          "pathPattern": "/inn-reach/transactions/{transactionId}",
+          "permissionsRequired": ["inn-reach.inn-reach-transaction.item.get"]
+        },
+        {
+          "methods": ["GET"],
           "pathPattern": "/inn-reach/d2ir/getbibrecord/{bibId}/{centralCode}",
           "permissionsRequired": ["inn-reach.d2ir.bib-info.item.get"]
         },
@@ -757,11 +762,17 @@
       "description" : "Create INN-Reach Transaction with Item Hold at the owning site"
     },
     {
+      "permissionName" : "inn-reach.inn-reach-transaction.item.get",
+      "displayName" : "get INN-Reach Transaction with transaction hold by id",
+      "description" : "Get INN-Reach Transaction with transaction hold by id"
+    },
+    {
       "permissionName" : "inn-reach.d2ir.inn-reach-transaction.all",
       "displayName" : "inn reach API module - all permissions of inn-reach transactions",
       "description" : "All permissions of inn-reach transactions scope",
       "subPermissions" : [
-        "inn-reach.d2ir.inn-reach-transaction.item.post"
+        "inn-reach.d2ir.inn-reach-transaction.item.post",
+        "inn-reach.inn-reach-transaction.item.get"
       ]
     },
     {

@@ -1,5 +1,7 @@
 package org.folio.innreach.domain.entity;
 
+import static org.folio.innreach.domain.entity.InnReachTransaction.FETCH_ONE_BY_ID_QUERY;
+import static org.folio.innreach.domain.entity.InnReachTransaction.FETCH_ONE_BY_ID_QUERY_NAME;
 import static org.folio.innreach.domain.entity.InnReachTransaction.FETCH_ONE_BY_TRACKING_ID_QUERY;
 import static org.folio.innreach.domain.entity.InnReachTransaction.FETCH_ONE_BY_TRACKING_ID_QUERY_NAME;
 import static org.folio.innreach.domain.entity.InnReachTransaction.GET_ALL_SORTED_QUERY;
@@ -36,6 +38,10 @@ import org.folio.innreach.domain.entity.base.Identifiable;
   query = FETCH_ONE_BY_TRACKING_ID_QUERY
 )
 @NamedQuery(
+  name = FETCH_ONE_BY_ID_QUERY_NAME,
+  query = FETCH_ONE_BY_ID_QUERY
+)
+@NamedQuery(
   name = GET_ALL_SORTED_QUERY_NAME,
   query = GET_ALL_SORTED_QUERY
 )
@@ -45,11 +51,14 @@ import org.folio.innreach.domain.entity.base.Identifiable;
 )
 public class InnReachTransaction extends Auditable implements Identifiable<UUID> {
 
+  public static final String FETCH_ONE_QUERY = "SELECT t FROM InnReachTransaction t JOIN FETCH t.hold hold " +
+    "JOIN FETCH hold.pickupLocation location";
+
   public static final String FETCH_ONE_BY_TRACKING_ID_QUERY_NAME = "InnReachTransaction.fetchOne";
-  public static final String FETCH_ONE_BY_TRACKING_ID_QUERY =
-    "SELECT t FROM InnReachTransaction t JOIN FETCH t.hold hold " +
-      "JOIN FETCH hold.pickupLocation location " +
-      "WHERE t.trackingId = :trackingId AND location.id = hold.pickupLocation.id";
+  public static final String FETCH_ONE_BY_TRACKING_ID_QUERY = FETCH_ONE_QUERY + " WHERE t.trackingId = :trackingId AND location.id = hold.pickupLocation.id";
+
+  public static final String FETCH_ONE_BY_ID_QUERY_NAME = "InnReachTransaction.fetchOneById";
+  public static final String FETCH_ONE_BY_ID_QUERY = FETCH_ONE_QUERY + " WHERE t.id = :id";
 
   public static final String GET_ALL_SORTED_QUERY_NAME = "InnReachTransaction.getAllSorted";
   public static final String GET_ALL_SORTED_QUERY = "SELECT t FROM InnReachTransaction t JOIN FETCH t.hold hold " +
