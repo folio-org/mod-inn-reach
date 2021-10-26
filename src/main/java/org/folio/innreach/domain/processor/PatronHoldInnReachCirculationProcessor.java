@@ -34,15 +34,15 @@ public class PatronHoldInnReachCirculationProcessor implements InnReachCirculati
   @Override
   @Transactional
   public InnReachResponseDTO process(String trackingId, String centralCode, TransactionHoldDTO transactionHold) {
-    var innReachTransaction = transactionRepository.findByTrackingIdAndAndCentralServerCode(trackingId, centralCode);
+    var innReachTransaction = transactionRepository.findByTrackingIdAndCentralServerCode(trackingId, centralCode);
 
     if (innReachTransaction.isPresent()) {
       log.info("Transaction patron hold with trackingId [{}] and centralCode [{}] exists, start to update...", trackingId, centralCode);
       updateTransactionPatronHold((TransactionPatronHold) innReachTransaction.get().getHold(), transactionHold);
     } else {
       log.info("Transaction patron hold with trackingId [{}] and centralCode [{}] doesn't exist, create a new one...", trackingId, centralCode);
-      InnReachTransaction newTransactionPatronHold = createTransactionWithPatronHold(trackingId, centralCode, transactionHold);
-      transactionRepository.save(newTransactionPatronHold);
+      InnReachTransaction newTransactionWithPatronHold = createTransactionWithPatronHold(trackingId, centralCode, transactionHold);
+      transactionRepository.save(newTransactionWithPatronHold);
     }
 
     return new InnReachResponseDTO().status(InnReachResponseStatus.OK.getResponseStatus());

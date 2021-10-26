@@ -8,7 +8,7 @@ import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TES
 import static org.springframework.test.context.jdbc.SqlMergeMode.MergeMode.MERGE;
 
 import static org.folio.innreach.domain.CirculationOperation.PATRON_HOLD;
-import static org.folio.innreach.fixture.CirculationFixture.createCirculationRequestDTO;
+import static org.folio.innreach.fixture.CirculationFixture.createTransactionHoldDTO;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,7 +23,10 @@ import org.folio.innreach.dto.InnReachResponseDTO;
 import org.folio.innreach.repository.InnReachTransactionRepository;
 
 @Sql(
-  scripts = {"classpath:db/central-server/clear-central-server-tables.sql"},
+  scripts = {
+    "classpath:db/central-server/clear-central-server-tables.sql",
+    "classpath:db/inn-reach-transaction/clear-inn-reach-transaction-tables.sql"
+  },
   executionPhase = AFTER_TEST_METHOD
 )
 @SqlMergeMode(MERGE)
@@ -40,11 +43,11 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
 
   @Test
   void processCreatePatronHoldCirculationRequest_and_createNewPatronHold() {
-    var circulationRequestDTO = createCirculationRequestDTO();
+    var transactionHoldDTO = createTransactionHoldDTO();
 
     var responseEntity = testRestTemplate.postForEntity(
       "/inn-reach/d2ir/circ/{circulationOperationName}/{trackingId}/{centralCode}",
-      circulationRequestDTO, InnReachResponseDTO.class, PATRON_HOLD.getOperationName(), "tracking99", PRE_POPULATED_CENTRAL_CODE);
+      transactionHoldDTO, InnReachResponseDTO.class, PATRON_HOLD.getOperationName(), "tracking99", PRE_POPULATED_CENTRAL_CODE);
 
     assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
 
@@ -54,9 +57,10 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     assertNull(responseBody.getErrors());
     assertEquals(InnReachResponseStatus.OK.getResponseStatus(), responseBody.getStatus());
 
-    var innReachTransaction = repository.findByTrackingIdAndAndCentralServerCode("tracking99", PRE_POPULATED_CENTRAL_CODE);
+    var innReachTransaction = repository.findByTrackingIdAndCentralServerCode("tracking99", PRE_POPULATED_CENTRAL_CODE);
 
     assertTrue(innReachTransaction.isPresent());
+    assertNotNull(innReachTransaction.get().getHold());
   }
 
   @Test
@@ -65,11 +69,11 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
   })
   void processCreatePatronHoldCirculationRequest_and_updateExitingPatronHold() {
-    var circulationRequestDTO = createCirculationRequestDTO();
+    var transactionHoldDTO = createTransactionHoldDTO();
 
     var responseEntity = testRestTemplate.postForEntity(
       "/inn-reach/d2ir/circ/{circulationOperationName}/{trackingId}/{centralCode}",
-      circulationRequestDTO, InnReachResponseDTO.class, PATRON_HOLD.getOperationName(), PRE_POPULATED_TRACKING_ID, PRE_POPULATED_CENTRAL_CODE);
+      transactionHoldDTO, InnReachResponseDTO.class, PATRON_HOLD.getOperationName(), PRE_POPULATED_TRACKING_ID, PRE_POPULATED_CENTRAL_CODE);
 
     assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
 
@@ -78,5 +82,30 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     assertNotNull(responseBody);
     assertNull(responseBody.getErrors());
     assertEquals(InnReachResponseStatus.OK.getResponseStatus(), responseBody.getStatus());
+
+    var updatedTransaction = repository.findByTrackingIdAndCentralServerCode(PRE_POPULATED_TRACKING_ID, PRE_POPULATED_CENTRAL_CODE);
+
+    assertTrue(updatedTransaction.isPresent());
+
+    var innReachTransaction = updatedTransaction.get();
+
+    assertEquals(transactionHoldDTO.getTransactionTime(), innReachTransaction.getHold().getTransactionTime());
+    assertEquals(transactionHoldDTO.getPatronId(), innReachTransaction.getHold().getPatronId());
+    assertEquals(transactionHoldDTO.getPatronAgencyCode(), innReachTransaction.getHold().getPatronAgencyCode());
+  }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
+  })
+  void returnErrorMessage_whenCirculationOperationIsNotSupported() {
+    var circulationRequestDTO = createTransactionHoldDTO();
+
+    var responseEntity = testRestTemplate.postForEntity(
+      "/inn-reach/d2ir/circ/{circulationOperationName}/{trackingId}/{centralCode}",
+      circulationRequestDTO, InnReachResponseDTO.class, "notExistingOperation", PRE_POPULATED_TRACKING_ID, PRE_POPULATED_CENTRAL_CODE);
+
+    assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
   }
 }

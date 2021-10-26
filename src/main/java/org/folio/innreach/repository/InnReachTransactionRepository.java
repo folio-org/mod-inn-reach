@@ -16,5 +16,5 @@ public interface InnReachTransactionRepository extends JpaRepository<InnReachTra
   Optional<InnReachTransaction> fetchOneById(UUID id);
 
   @Query(name = InnReachTransaction.FETCH_ONE_BY_TRACKING_ID_AND_CENTRAL_CODE_QUERY_NAME)
-  Optional<InnReachTransaction> findByTrackingIdAndAndCentralServerCode(String trackingId, String centralServerCode);
+  Optional<InnReachTransaction> findByTrackingIdAndCentralServerCode(String trackingId, String centralServerCode);
 }

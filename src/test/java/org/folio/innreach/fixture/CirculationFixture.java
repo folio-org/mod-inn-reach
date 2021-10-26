@@ -9,12 +9,12 @@ import org.jeasy.random.EasyRandom;
 import org.jeasy.random.EasyRandomParameters;
 import org.jeasy.random.randomizers.text.StringRandomizer;
 
-import org.folio.innreach.dto.CirculationRequestDTO;
+import org.folio.innreach.dto.TransactionHoldDTO;
 
 @UtilityClass
 public class CirculationFixture {
 
-  private static final EasyRandom circulationRequestRandom;
+  private static final EasyRandom transactionHoldRandom;
 
   static {
     EasyRandomParameters params = new EasyRandomParameters()
@@ -35,12 +35,14 @@ public class CirculationFixture {
       .randomize(named("itemBarcode"), new StringRandomizer(32))
       .randomize(named("reason"), new StringRandomizer(32))
       .randomize(named("reasonCode"), () -> 7) // always 7
-      .randomize(named("dueDateTime"), () -> randomInteger(255));
+      .randomize(named("dueDateTime"), () -> randomInteger(255))
+      .excludeField(named("id"))
+      .excludeField(named("metadata"));
 
-    circulationRequestRandom = new EasyRandom(params);
+    transactionHoldRandom = new EasyRandom(params);
   }
 
-  public static CirculationRequestDTO createCirculationRequestDTO() {
-    return circulationRequestRandom.nextObject(CirculationRequestDTO.class);
+  public static TransactionHoldDTO createTransactionHoldDTO() {
+    return transactionHoldRandom.nextObject(TransactionHoldDTO.class);
   }
 }
