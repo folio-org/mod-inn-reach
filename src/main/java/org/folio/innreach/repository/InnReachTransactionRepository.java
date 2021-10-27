@@ -17,6 +17,9 @@ public interface InnReachTransactionRepository extends JpaRepository<InnReachTra
   @Query(name = InnReachTransaction.FETCH_ONE_BY_ID_QUERY_NAME)
   Optional<InnReachTransaction> fetchOneById(UUID id);
 
+  @Query(name = InnReachTransaction.FETCH_ONE_BY_TRACKING_ID_AND_CENTRAL_CODE_QUERY_NAME)
+  Optional<InnReachTransaction> findByTrackingIdAndCentralServerCode(String trackingId, String centralServerCode);
+
   @Query(name = InnReachTransaction.GET_ALL_SORTED_QUERY_NAME, countName = InnReachTransaction.GET_ALL_SORTED_COUNT_QUERY_NAME)
   Page<InnReachTransaction> getAllSorted(Pageable pageable);
 }

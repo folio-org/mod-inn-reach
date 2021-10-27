@@ -1,4 +1,4 @@
-package org.folio.innreach.controller;
+package org.folio.innreach.controller.exception;
 
 import static org.folio.innreach.util.ListUtils.mapItems;
 
@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import org.folio.innreach.domain.exception.CirculationProcessException;
 import org.folio.innreach.domain.exception.EntityNotFoundException;
 import org.folio.innreach.dto.Error;
 import org.folio.innreach.dto.ValidationErrorDTO;
@@ -106,6 +107,13 @@ public class ExceptionHandlerController {
   @ResponseStatus(HttpStatus.UNAUTHORIZED)
   public Error handleAuthenticationException(AuthenticationException e) {
     return createError(HttpStatus.UNAUTHORIZED, e.getMessage());
+  }
+
+  @ExceptionHandler(CirculationProcessException.class)
+  @ResponseStatus(HttpStatus.BAD_REQUEST)
+  public Error handleCirculationProcessException(CirculationProcessException e) {
+    log.error("Can't process circulation request", e);
+    return createError(HttpStatus.BAD_REQUEST, "Can't process circulation request");
   }
 
   private Error createError(HttpStatus code, String message) {

@@ -35,12 +35,14 @@ public class InnReachTransactionServiceImpl implements InnReachTransactionServic
 
   private final InnReachTransactionRepository repository;
   private final TransactionHoldRepository holdRepository;
+
   private final InnReachTransactionMapper transactionMapper;
   private final InnReachTransactionHoldMapper transactionHoldMapper;
+  private final InnReachErrorMapper errorMapper;
+
   private final CentralServerService centralServerService;
   private final MaterialTypeMappingService materialService;
   private final InventoryService inventoryService;
-  private final InnReachErrorMapper errorMapper;
 
   private InnReachTransaction createTransactionWithItemHold(String trackingId, String centralCode) {
     var transaction = new InnReachTransaction();

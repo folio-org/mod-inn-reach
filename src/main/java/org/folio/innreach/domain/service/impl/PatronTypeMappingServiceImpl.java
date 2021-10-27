@@ -15,7 +15,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import org.folio.innreach.domain.entity.CentralPatronTypeMapping;
 import org.folio.innreach.domain.entity.CentralServer;
 import org.folio.innreach.domain.entity.PatronTypeMapping;
 import org.folio.innreach.domain.service.PatronTypeMappingService;
