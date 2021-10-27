@@ -327,6 +327,19 @@
           ]
         },
         {
+          "methods": ["POST"],
+          "pathPattern": "/inn-reach/d2ir/circ/patronhold/{trackingId}/{centralCode}",
+          "permissionsRequired": ["inn-reach.d2ir.patron-hold.post"],
+          "modulePermissions": [
+            "inventory-storage.instance-types.collection.get",
+            "inventory-storage.contributor-name-types.collection.get",
+            "inventory-storage.instances.item.post",
+            "inventory-storage.items.item.post",
+            "inventory-storage.holdings.item.post",
+            "inventory-storage.hrid-settings.item.get"
+          ]
+        },
+        {
           "methods": ["GET"],
           "pathPattern": "/inn-reach/central-servers/agencies",
           "permissionsRequired": ["inn-reach.central-server-agencies.collection.get"]
@@ -346,7 +359,11 @@
             "users.item.post",
             "login.item.post",
             "perms.users.item.post",
-            "perms.users.get"
+            "perms.users.get",
+            "inventory-storage.instance-types.collection.get",
+            "inventory-storage.instance-types.item.post",
+            "inventory-storage.contributor-name-types.collection.get",
+            "inventory-storage.contributor-name-types.item.post"
           ],
           "permissionsRequired": []
         },

@@ -12,8 +12,9 @@ import org.springframework.stereotype.Service;
 import org.folio.innreach.client.HoldingsStorageClient;
 import org.folio.innreach.client.HridSettingsClient;
 import org.folio.innreach.client.InstanceContributorTypeClient;
+import org.folio.innreach.client.InstanceStorageClient;
 import org.folio.innreach.client.InstanceTypeClient;
-import org.folio.innreach.client.InventoryClient;
+import org.folio.innreach.client.ItemsStorageClient;
 import org.folio.innreach.client.ServicePointsClient;
 import org.folio.innreach.domain.entity.InnReachTransaction;
 import org.folio.innreach.domain.entity.TransactionPatronHold;
@@ -37,6 +38,7 @@ public class PatronHoldServiceImpl implements PatronHoldService {
 
   public static final String INN_REACH_AUTHOR = "INN-Reach author";
   public static final String INN_REACH_TEMPORARY_RECORD = "INN-Reach temporary record";
+  public static final String RECORD_SOURCE = "INN-Reach";
 
   private final HridSettingsClient hridSettingsClient;
   private final InstanceTypeClient instanceTypeClient;
@@ -45,7 +47,8 @@ public class PatronHoldServiceImpl implements PatronHoldService {
   private final CentralServerService centralServerService;
   private final MaterialTypeMappingService materialTypeMappingService;
   private final RequestService requestService;
-  private final InventoryClient inventoryClient;
+  private final InstanceStorageClient instanceStorageClient;
+  private final ItemsStorageClient itemsStorageClient;
   private final HoldingsStorageClient holdingsStorageClient;
   private final ServicePointsClient servicePointsClient;
 
@@ -91,10 +94,11 @@ public class PatronHoldServiceImpl implements PatronHoldService {
       .instanceTypeId(getInstanceTypeId())
       .title(hold.getTitle())
       .addContributorsItem(getInstanceContributor())
+      .source(RECORD_SOURCE)
       .staffSuppress(true)
       .discoverySuppress(true);
 
-    return inventoryClient.createInstance(instance);
+    return instanceStorageClient.createInstance(instance);
   }
 
   private String getInstanceHrid(InnReachTransaction transaction, HridSettingsClient.HridSettings hridSettings) {
@@ -102,7 +106,7 @@ public class PatronHoldServiceImpl implements PatronHoldService {
   }
 
   private Instance fetchInstance(String instanceHrid) {
-    return inventoryClient.queryInstanceByHrid(instanceHrid).getResult().stream()
+    return instanceStorageClient.queryInstanceByHrid(instanceHrid).getResult().stream()
       .findFirst()
       .orElseThrow(() -> new IllegalArgumentException("No instance found by hrid " + instanceHrid));
   }
@@ -119,7 +123,7 @@ public class PatronHoldServiceImpl implements PatronHoldService {
 
     var item = prepareItem(centralServer, transaction, hold, hridSettings);
     item.setHoldingsRecordId(holding.getId());
-    inventoryClient.createItem(item);
+    itemsStorageClient.createItem(item);
   }
 
   private Holding prepareHolding(UUID centralServerId, InnReachTransaction transaction, TransactionPatronHold hold, HridSettingsClient.HridSettings settings) {

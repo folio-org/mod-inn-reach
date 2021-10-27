@@ -17,22 +17,10 @@ import org.folio.innreach.dto.Item;
 @FeignClient(name = "inventory", configuration = FolioFeignClientConfig.class)
 public interface InventoryClient {
 
-  @GetMapping("/instances/{instanceId}")
-  Instance getInstanceById(@PathVariable("instanceId") UUID instanceId);
-
-  @GetMapping("/instances?query=(hrid=={hrid})")
-  ResultList<Instance> queryInstanceByHrid(@PathVariable("hrid") String hrid);
-
   @GetMapping("/items/{itemId}")
   InventoryItemDTO getItemById(@PathVariable("itemId") UUID itemId);
 
   @GetMapping("/items?query=hrid=={hrId}")
   ResultList<InventoryItemDTO> getItemsByHrId(@PathVariable("hrId") String hrId);
-
-  @PostMapping("/instances")
-  Instance createInstance(@RequestBody Instance instance);
-
-  @PostMapping("/items")
-  Item createItem(@RequestBody Item item);
 
 }
