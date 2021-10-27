@@ -24,6 +24,9 @@ class FolioTenantServiceTest {
   @Mock
   private ContributionJobRunner contributionJobRunner;
 
+  @Mock
+  private ReferenceDataLoader referenceDataLoader;
+
   @InjectMocks
   private FolioTenantService service;
 
@@ -38,6 +41,7 @@ class FolioTenantServiceTest {
 
     verify(systemUserService).prepareSystemUser();
     verify(contributionJobRunner).cancelJobs();
+    verify(referenceDataLoader).loadRefData();
   }
 
   @Test
