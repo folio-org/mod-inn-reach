@@ -23,6 +23,7 @@ import javax.persistence.Table;
 
 import lombok.Getter;
 import lombok.Setter;
+import lombok.ToString;
 
 import org.folio.innreach.domain.entity.base.Auditable;
 import org.folio.innreach.domain.entity.base.Identifiable;
@@ -30,6 +31,7 @@ import org.folio.innreach.domain.entity.base.Identifiable;
 @Entity
 @Getter
 @Setter
+@ToString(exclude = "hold")
 @Table(name = "inn_reach_transaction")
 @NamedQuery(
   name = FETCH_ONE_BY_TRACKING_ID_QUERY_NAME,
