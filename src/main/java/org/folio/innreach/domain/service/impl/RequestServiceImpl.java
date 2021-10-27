@@ -114,7 +114,6 @@ public class RequestServiceImpl implements RequestService {
     }
   }
 
-  @Async
   @Override
   public void createItemRequest(InnReachTransaction transaction, UUID centralServerId, UUID servicePointId, UUID requesterId) {
     log.info("Creating item request for transaction {}", transaction);
@@ -155,7 +154,6 @@ public class RequestServiceImpl implements RequestService {
     log.info("Item request successfully created.");
   }
 
-  @Async
   @Override
   public void moveItemRequest(InnReachTransaction transaction) {
     log.info("Moving item request for transaction {}", transaction);

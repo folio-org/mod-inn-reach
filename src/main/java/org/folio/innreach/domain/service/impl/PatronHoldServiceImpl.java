@@ -155,24 +155,22 @@ public class PatronHoldServiceImpl implements PatronHoldService {
     return servicePointsClient.queryServicePointByCode(locationCode).getResult()
       .stream().findFirst().map(ServicePointsClient.ServicePoint::getId)
       .orElseThrow(() ->
-        new IllegalStateException("ServicePoint is not found for pickup location code: " + locationCode));
+        new IllegalStateException("Service point is not found for pickup location code: " + locationCode));
   }
 
   private UUID getInstanceTypeId() {
-    return instanceTypeClient.getInstanceTypeByName(innReachTmpRecord).getId();
+    return instanceTypeClient.getInstanceTypeByName(innReachTmpRecord)
+      .map(InstanceTypeClient.InstanceType::getId)
+      .orElseThrow(() -> new IllegalStateException("Instance type is not found by name: " + innReachTmpRecord));
   }
 
   private InstanceContributors getInstanceContributor() {
-    var author = nameTypeClient.getContributorType(innReachAuthor);
+    var author = nameTypeClient.getContributorType(innReachAuthor)
+      .orElseThrow(() -> new IllegalStateException("Contributor name type is not found by name: " + innReachAuthor));
+
     return new InstanceContributors()
       .name(author.getName())
       .contributorNameTypeId(author.getId());
-  }
-
-  public static void main(String[] args) {
-    var id = UUIDHelper.toStringWithoutHyphens(UUID.randomUUID());
-    System.out.println(id);
-    System.out.println(UUIDHelper.fromStringWithoutHyphens(id));
   }
 
 }

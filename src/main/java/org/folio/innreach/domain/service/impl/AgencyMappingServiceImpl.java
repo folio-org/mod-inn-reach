@@ -2,7 +2,19 @@ package org.folio.innreach.domain.service.impl;
 
 import static org.apache.commons.collections4.CollectionUtils.isNotEmpty;
 
+import static org.folio.innreach.domain.service.impl.ServiceUtils.merge;
+
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
+import java.util.function.Function;
+
 import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import org.folio.innreach.domain.entity.AgencyLocationAcMapping;
 import org.folio.innreach.domain.entity.AgencyLocationLscMapping;
 import org.folio.innreach.domain.entity.AgencyLocationMapping;
@@ -15,18 +27,6 @@ import org.folio.innreach.dto.AgencyLocationMappingDTO;
 import org.folio.innreach.dto.LocalServer;
 import org.folio.innreach.mapper.AgencyLocationMappingMapper;
 import org.folio.innreach.repository.AgencyLocationMappingRepository;
-
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
-import java.util.function.Function;
-
-import static org.folio.innreach.domain.service.impl.ServiceUtils.merge;
 
 @RequiredArgsConstructor
 @Service
@@ -72,7 +72,7 @@ public class AgencyMappingServiceImpl implements AgencyMappingService {
 
   private LocalServer getLocalServerByAgencyCode(UUID centralServerId, String agencyCode) {
     var localServers = agencyService.getLocalServerAgencies(centralServerId);
-    return localServers.getLocalServerList().stream()
+    return localServers.stream()
       .filter(ls -> isNotEmpty(ls.getAgencyList()))
       .filter(l -> l.getAgencyList().contains(agencyCode))
       .findFirst()

@@ -45,13 +45,10 @@ public class ReferenceDataLoader {
       var instanceType = jsonHelper.fromJson(res.getInputStream(), InstanceTypeClient.InstanceType.class);
 
       var existing = instanceTypeClient.getInstanceTypeByName(instanceType.getName());
-      if (existing != null) {
-        log.info("Instance type already exists");
-        return;
+      if (existing.isEmpty()) {
+        log.info("Creating instance type {}", instanceType);
+        instanceTypeClient.createInstanceType(instanceType);
       }
-
-      log.info("Creating instance type {}", instanceType);
-      instanceTypeClient.createInstanceType(instanceType);
     }
   }
 
@@ -62,17 +59,14 @@ public class ReferenceDataLoader {
       var contributorType = jsonHelper.fromJson(res.getInputStream(), InstanceContributorTypeClient.NameType.class);
 
       var existing = instanceContributorTypeClient.getContributorType(contributorType.getName());
-      if (existing != null) {
-        log.info("Contributor name type already exists");
-        return;
+      if (existing.isEmpty()) {
+        log.info("Creating contributor name type {}", contributorType);
+        instanceContributorTypeClient.createNameType(contributorType);
       }
-
-      log.info("Creating contributor name type {}", contributorType);
-      instanceContributorTypeClient.createNameType(contributorType);
     }
   }
 
-  private Resource[] getResources(String resourceDir) throws IOException {
+  private static Resource[] getResources(String resourceDir) throws IOException {
     return resourcePatternResolver.getResources(String.format("/%s/%s/%s", BASE_DIR, resourceDir, "*.json"));
   }
 }

@@ -8,8 +8,10 @@ import static org.folio.innreach.util.ListUtils.flatMapItems;
 import static org.folio.innreach.util.ListUtils.mapItemsWithFilter;
 import static org.folio.innreach.util.ListUtils.toStream;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 
 import lombok.RequiredArgsConstructor;
@@ -26,6 +28,7 @@ import org.folio.innreach.dto.Agency;
 import org.folio.innreach.dto.CentralServerAgenciesDTO;
 import org.folio.innreach.dto.CentralServerDTO;
 import org.folio.innreach.dto.InnReachResponseDTO;
+import org.folio.innreach.dto.LocalServer;
 import org.folio.innreach.dto.LocalServerAgenciesDTO;
 import org.folio.innreach.external.exception.InnReachException;
 import org.folio.innreach.external.service.InnReachExternalService;
@@ -56,9 +59,11 @@ public class AgencyServiceImpl implements AgencyService {
   }
 
   @Override
-  public LocalServerAgenciesDTO getLocalServerAgencies(UUID centralServerId) {
+  public List<LocalServer> getLocalServerAgencies(UUID centralServerId) {
     var server = centralServerService.getCentralServer(centralServerId);
-    return retrieveLocalServerAgencies(server);
+    return Optional.ofNullable(retrieveLocalServerAgencies(server))
+      .map(LocalServerAgenciesDTO::getLocalServerList)
+      .orElse(Collections.emptyList());
   }
 
   private AgenciesPerCentralServerDTO retrieveAllAgenciesFromCentralServer(CentralServerDTO centralServer) {

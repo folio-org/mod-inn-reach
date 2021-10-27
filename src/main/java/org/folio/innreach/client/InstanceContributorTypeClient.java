@@ -2,6 +2,7 @@ package org.folio.innreach.client;
 
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
+import java.util.Optional;
 import java.util.UUID;
 
 import lombok.Builder;
@@ -17,7 +18,7 @@ import org.folio.innreach.config.FolioFeignClientConfig;
 public interface InstanceContributorTypeClient {
 
   @GetMapping(value = "?query=(name=={name})", produces = APPLICATION_JSON_VALUE)
-  NameType getContributorType(@PathVariable("name") String name);
+  Optional<NameType> getContributorType(@PathVariable("name") String name);
 
   @PostMapping(consumes = APPLICATION_JSON_VALUE)
   void createNameType(NameType nameType);

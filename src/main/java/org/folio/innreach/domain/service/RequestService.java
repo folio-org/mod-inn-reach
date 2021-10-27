@@ -10,10 +10,8 @@ public interface RequestService {
   @Async
   void createItemRequest(String transactionTrackingId);
 
-  @Async
   void createItemRequest(InnReachTransaction transaction, UUID centralServerId, UUID servicePointId, UUID requesterId);
 
-  @Async
   void moveItemRequest(InnReachTransaction transaction);
 
 }
