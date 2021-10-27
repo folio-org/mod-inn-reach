@@ -5,6 +5,7 @@ import static org.folio.innreach.dto.ItemStatus.NameEnum.AVAILABLE;
 import java.util.UUID;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import org.folio.innreach.client.HoldingsStorageClient;
@@ -46,6 +47,7 @@ public class PatronHoldServiceImpl implements PatronHoldService {
   private final HoldingsStorageClient holdingsStorageClient;
   private final ServicePointsClient servicePointsClient;
 
+  @Async
   @Override
   public void createVirtualItems(InnReachTransaction transaction) {
     var hold = (TransactionPatronHold) transaction.getHold();
@@ -63,6 +65,7 @@ public class PatronHoldServiceImpl implements PatronHoldService {
     requestService.createItemRequest(transaction, centralServer.getId(), servicePointId, patronId);
   }
 
+  @Async
   @Override
   public void updateVirtualItems(InnReachTransaction transaction) {
     var hold = (TransactionPatronHold) transaction.getHold();
