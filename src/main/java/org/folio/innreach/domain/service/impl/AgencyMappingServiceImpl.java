@@ -1,7 +1,5 @@
 package org.folio.innreach.domain.service.impl;
 
-import static org.apache.commons.collections4.CollectionUtils.isNotEmpty;
-
 import static org.folio.innreach.domain.service.impl.ServiceUtils.merge;
 
 import java.util.Collection;
@@ -72,11 +70,17 @@ public class AgencyMappingServiceImpl implements AgencyMappingService {
 
   private LocalServer getLocalServerByAgencyCode(UUID centralServerId, String agencyCode) {
     var localServers = agencyService.getLocalServerAgencies(centralServerId);
-    return localServers.stream()
-      .filter(ls -> isNotEmpty(ls.getAgencyList()))
-      .filter(l -> l.getAgencyList().contains(agencyCode))
-      .findFirst()
-      .orElseThrow(() -> new IllegalArgumentException("Central agency for code " + agencyCode + " is not found"));
+
+    for (var localServer : localServers) {
+      var agencies = localServer.getAgencyList();
+      var agency = agencies.stream().filter(a -> agencyCode.equals(a.getAgencyCode())).findFirst();
+
+      if (agency.isPresent()) {
+        return localServer;
+      }
+    }
+
+    throw new IllegalArgumentException("Central agency for code " + agencyCode + " is not found");
   }
 
   private Optional<UUID> getLocationIdByLocalServer(AgencyLocationMappingDTO mapping, String agencyCode, UUID centralServerId) {

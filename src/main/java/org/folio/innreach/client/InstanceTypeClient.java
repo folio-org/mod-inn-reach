@@ -13,12 +13,13 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 
 import org.folio.innreach.config.FolioFeignClientConfig;
+import org.folio.innreach.domain.dto.folio.ResultList;
 
 @FeignClient(value = "instance-types", configuration = FolioFeignClientConfig.class)
 public interface InstanceTypeClient {
 
   @GetMapping(value = "?query=(name=={name})", produces = APPLICATION_JSON_VALUE)
-  Optional<InstanceType> getInstanceTypeByName(@PathVariable("name") String name);
+  ResultList<InstanceType> queryInstanceTypeByName(@PathVariable("name") String name);
 
   @PostMapping(consumes = APPLICATION_JSON_VALUE)
   void createInstanceType(InstanceType type);

@@ -2,7 +2,6 @@ package org.folio.innreach.client;
 
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
-import java.util.Optional;
 import java.util.UUID;
 
 import lombok.Builder;
@@ -13,12 +12,13 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 
 import org.folio.innreach.config.FolioFeignClientConfig;
+import org.folio.innreach.domain.dto.folio.ResultList;
 
 @FeignClient(value = "contributor-name-types", configuration = FolioFeignClientConfig.class)
 public interface InstanceContributorTypeClient {
 
   @GetMapping(value = "?query=(name=={name})", produces = APPLICATION_JSON_VALUE)
-  Optional<NameType> getContributorType(@PathVariable("name") String name);
+  ResultList<NameType> queryContributorType(@PathVariable("name") String name);
 
   @PostMapping(consumes = APPLICATION_JSON_VALUE)
   void createNameType(NameType nameType);

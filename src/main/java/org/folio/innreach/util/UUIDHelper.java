@@ -2,6 +2,10 @@ package org.folio.innreach.util;
 
 import java.util.UUID;
 
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
+
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class UUIDHelper {
 
   public static String toStringWithoutHyphens(UUID uuid) {

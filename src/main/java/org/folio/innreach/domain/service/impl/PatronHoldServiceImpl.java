@@ -3,6 +3,7 @@ package org.folio.innreach.domain.service.impl;
 import static org.folio.innreach.dto.ItemStatus.NameEnum.AVAILABLE;
 
 import java.util.UUID;
+import java.util.function.Function;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Async;
@@ -27,14 +28,15 @@ import org.folio.innreach.dto.Instance;
 import org.folio.innreach.dto.InstanceContributors;
 import org.folio.innreach.dto.Item;
 import org.folio.innreach.dto.ItemStatus;
+import org.folio.innreach.util.ListUtils;
 import org.folio.innreach.util.UUIDHelper;
 
 @Service
 @RequiredArgsConstructor
 public class PatronHoldServiceImpl implements PatronHoldService {
 
-  public static final String innReachAuthor = "INN-Reach author";
-  public static final String innReachTmpRecord = "INN-Reach temporary record";
+  public static final String INN_REACH_AUTHOR = "INN-Reach author";
+  public static final String INN_REACH_TEMPORARY_RECORD = "INN-Reach temporary record";
 
   private final HridSettingsClient hridSettingsClient;
   private final InstanceTypeClient instanceTypeClient;
@@ -100,10 +102,9 @@ public class PatronHoldServiceImpl implements PatronHoldService {
   }
 
   private Instance fetchInstance(String instanceHrid) {
-    var instance = inventoryClient.queryInstanceByHrid(instanceHrid).getResult().stream()
+    return inventoryClient.queryInstanceByHrid(instanceHrid).getResult().stream()
       .findFirst()
       .orElseThrow(() -> new IllegalArgumentException("No instance found by hrid " + instanceHrid));
-    return instance;
   }
 
   private void createHoldingItem(InnReachTransaction transaction,
@@ -155,21 +156,22 @@ public class PatronHoldServiceImpl implements PatronHoldService {
   }
 
   private UUID getServicePointIdByCode(String locationCode) {
-    return servicePointsClient.queryServicePointByCode(locationCode).getResult()
-      .stream().findFirst().map(ServicePointsClient.ServicePoint::getId)
-      .orElseThrow(() ->
-        new IllegalStateException("Service point is not found for pickup location code: " + locationCode));
+    var servicePoints = servicePointsClient.queryServicePointByCode(locationCode);
+
+    return ListUtils.mapFirstItem(servicePoints, ServicePointsClient.ServicePoint::getId)
+      .orElseThrow(() -> new IllegalStateException("Service point is not found for pickup location code: " + locationCode));
   }
 
   private UUID getInstanceTypeId() {
-    return instanceTypeClient.getInstanceTypeByName(innReachTmpRecord)
-      .map(InstanceTypeClient.InstanceType::getId)
-      .orElseThrow(() -> new IllegalStateException("Instance type is not found by name: " + innReachTmpRecord));
+    var instanceTypes = instanceTypeClient.queryInstanceTypeByName(INN_REACH_TEMPORARY_RECORD);
+
+    return ListUtils.mapFirstItem(instanceTypes, InstanceTypeClient.InstanceType::getId)
+      .orElseThrow(() -> new IllegalStateException("Instance type is not found by name: " + INN_REACH_TEMPORARY_RECORD));
   }
 
   private InstanceContributors getInstanceContributor() {
-    var author = nameTypeClient.getContributorType(innReachAuthor)
-      .orElseThrow(() -> new IllegalStateException("Contributor name type is not found by name: " + innReachAuthor));
+    var author = ListUtils.mapFirstItem(nameTypeClient.queryContributorType(INN_REACH_AUTHOR), Function.identity())
+      .orElseThrow(() -> new IllegalStateException("Contributor name type is not found by name: " + INN_REACH_AUTHOR));
 
     return new InstanceContributors()
       .name(author.getName())

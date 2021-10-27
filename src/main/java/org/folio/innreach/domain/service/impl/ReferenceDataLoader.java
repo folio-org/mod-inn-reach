@@ -1,5 +1,7 @@
 package org.folio.innreach.domain.service.impl;
 
+import static org.apache.commons.collections4.CollectionUtils.isEmpty;
+
 import java.io.IOException;
 
 import lombok.RequiredArgsConstructor;
@@ -40,12 +42,11 @@ public class ReferenceDataLoader {
   }
 
   private void loadInstanceTypes() throws IOException {
-    log.info("Loading instance types");
     for (var res : getResources(INSTANCE_TYPES_DIR)) {
       var instanceType = jsonHelper.fromJson(res.getInputStream(), InstanceTypeClient.InstanceType.class);
 
-      var existing = instanceTypeClient.getInstanceTypeByName(instanceType.getName());
-      if (existing.isEmpty()) {
+      var existing = instanceTypeClient.queryInstanceTypeByName(instanceType.getName());
+      if (isEmpty(existing.getResult())) {
         log.info("Creating instance type {}", instanceType);
         instanceTypeClient.createInstanceType(instanceType);
       }
@@ -53,13 +54,11 @@ public class ReferenceDataLoader {
   }
 
   private void loadContributorNameTypes() throws IOException {
-    log.info("Loading contributor name types");
-
     for (var res : getResources(CONTRIBUTION_NAME_TYPES_DIR)) {
       var contributorType = jsonHelper.fromJson(res.getInputStream(), InstanceContributorTypeClient.NameType.class);
 
-      var existing = instanceContributorTypeClient.getContributorType(contributorType.getName());
-      if (existing.isEmpty()) {
+      var existing = instanceContributorTypeClient.queryContributorType(contributorType.getName());
+      if (isEmpty(existing.getResult())) {
         log.info("Creating contributor name type {}", contributorType);
         instanceContributorTypeClient.createNameType(contributorType);
       }
