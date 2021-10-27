@@ -57,10 +57,10 @@ public class ReferenceDataLoader {
     for (var res : getResources(CONTRIBUTION_NAME_TYPES_DIR)) {
       var contributorType = jsonHelper.fromJson(res.getInputStream(), InstanceContributorTypeClient.NameType.class);
 
-      var existing = instanceContributorTypeClient.queryContributorType(contributorType.getName());
+      var existing = instanceContributorTypeClient.queryContributorTypeByName(contributorType.getName());
       if (isEmpty(existing.getResult())) {
         log.info("Creating contributor name type {}", contributorType);
-        instanceContributorTypeClient.createNameType(contributorType);
+        instanceContributorTypeClient.createContributorType(contributorType);
       }
     }
   }

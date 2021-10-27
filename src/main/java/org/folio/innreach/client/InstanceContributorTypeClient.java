@@ -18,10 +18,10 @@ import org.folio.innreach.domain.dto.folio.ResultList;
 public interface InstanceContributorTypeClient {
 
   @GetMapping(value = "?query=(name=={name})", produces = APPLICATION_JSON_VALUE)
-  ResultList<NameType> queryContributorType(@PathVariable("name") String name);
+  ResultList<NameType> queryContributorTypeByName(@PathVariable("name") String name);
 
   @PostMapping(consumes = APPLICATION_JSON_VALUE)
-  void createNameType(NameType nameType);
+  void createContributorType(NameType nameType);
 
   @Builder
   @Data

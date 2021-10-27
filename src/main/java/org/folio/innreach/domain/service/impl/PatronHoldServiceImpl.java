@@ -170,7 +170,7 @@ public class PatronHoldServiceImpl implements PatronHoldService {
   }
 
   private InstanceContributors getInstanceContributor() {
-    var author = ListUtils.mapFirstItem(nameTypeClient.queryContributorType(INN_REACH_AUTHOR), Function.identity())
+    var author = ListUtils.mapFirstItem(nameTypeClient.queryContributorTypeByName(INN_REACH_AUTHOR), Function.identity())
       .orElseThrow(() -> new IllegalStateException("Contributor name type is not found by name: " + INN_REACH_AUTHOR));
 
     return new InstanceContributors()

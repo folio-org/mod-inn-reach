@@ -29,9 +29,6 @@ public interface InventoryClient {
   @GetMapping("/items?query=hrid=={hrId}")
   ResultList<InventoryItemDTO> getItemsByHrId(@PathVariable("hrId") String hrId);
 
-  @GetMapping("/items/query=(hrid==\"{hrId}\")")
-  InventoryItemDTO getItemByHrId(@PathVariable("hrId") String hrId);
-
   @PostMapping("/instances")
   Instance createInstance(@RequestBody Instance instance);
 
