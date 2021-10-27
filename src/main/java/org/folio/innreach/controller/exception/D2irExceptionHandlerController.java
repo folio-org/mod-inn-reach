@@ -13,9 +13,9 @@ import org.folio.innreach.dto.InnReachResponseDTO;
 @RestControllerAdvice(basePackages = "org.folio.innreach.controller.d2ir")
 public class D2irExceptionHandlerController {
 
-  @ExceptionHandler(MethodArgumentNotValidException.class)
+  @ExceptionHandler(Exception.class)
   @ResponseStatus(HttpStatus.BAD_REQUEST)
-  public InnReachResponseDTO handleMethodArgumentNotValidException(MethodArgumentNotValidException e) {
+  public InnReachResponseDTO handleException(Exception e) {
     log.warn(e.getMessage());
     var response = new InnReachResponseDTO();
     response.setStatus("failed");
