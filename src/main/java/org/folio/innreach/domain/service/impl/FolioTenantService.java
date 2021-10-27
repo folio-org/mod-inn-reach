@@ -13,10 +13,12 @@ public class FolioTenantService {
 
   private final SystemUserService systemUserService;
   private final ContributionJobRunner contributionJobRunner;
+  private final ReferenceDataLoader referenceDataLoader;
 
   public void initializeTenant() {
     systemUserService.prepareSystemUser();
     contributionJobRunner.cancelJobs();
+    referenceDataLoader.loadRefData();
   }
 
 }

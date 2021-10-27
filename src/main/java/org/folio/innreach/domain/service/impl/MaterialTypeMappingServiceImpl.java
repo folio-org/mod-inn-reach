@@ -107,6 +107,14 @@ public class MaterialTypeMappingServiceImpl implements MaterialTypeMappingServic
     return mapper.toDTO(materialType);
   }
 
+  @Override
+  public MaterialTypeMappingDTO getMappingByCentralType(UUID centralServerId, Integer centralType) {
+    return repository.findOneByCentralServerIdAndCentralItemType(centralServerId, centralType)
+      .map(mapper::toDTO)
+      .orElseThrow(() -> new EntityNotFoundException("Material type mapping not found: centralType = " + centralType +
+        ", centralServerId = " + centralServerId));
+  }
+
   private MaterialTypeMapping findMapping(UUID centralServerId, UUID id) {
     return repository.findOne(mappingExampleWithServerIdAndId(centralServerId, id))
         .orElseThrow(() -> new EntityNotFoundException("Material type mapping not found: id = " + id +
