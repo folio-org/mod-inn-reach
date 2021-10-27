@@ -34,12 +34,8 @@ public class ListUtils {
     return toStream(source).flatMap(mapper).collect(toList());
   }
 
-  public static <T, R> Optional<R> mapFirstItem(Collection<T> source, Function<? super T, ? extends R> mapper) {
-    return toStream(source).findFirst().map(mapper);
-  }
-
-  public static <T, R> Optional<R> mapFirstItem(ResultList<T> source, Function<? super T, ? extends R> mapper) {
-    return mapFirstItem(source.getResult(), mapper);
+  public static <T> Optional<T> getFirstItem(ResultList<T> source) {
+    return toStream(source.getResult()).findFirst();
   }
 
 }

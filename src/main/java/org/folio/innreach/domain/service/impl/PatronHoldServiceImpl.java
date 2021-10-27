@@ -3,23 +3,17 @@ package org.folio.innreach.domain.service.impl;
 import static org.folio.innreach.dto.ItemStatus.NameEnum.AVAILABLE;
 
 import java.util.UUID;
-import java.util.function.Function;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
-import org.folio.innreach.client.HoldingsStorageClient;
 import org.folio.innreach.client.HridSettingsClient;
-import org.folio.innreach.client.InstanceContributorTypeClient;
-import org.folio.innreach.client.InstanceStorageClient;
-import org.folio.innreach.client.InstanceTypeClient;
-import org.folio.innreach.client.ItemsStorageClient;
-import org.folio.innreach.client.ServicePointsClient;
 import org.folio.innreach.domain.entity.InnReachTransaction;
 import org.folio.innreach.domain.entity.TransactionPatronHold;
 import org.folio.innreach.domain.service.AgencyMappingService;
 import org.folio.innreach.domain.service.CentralServerService;
+import org.folio.innreach.domain.service.InventoryStorageService;
 import org.folio.innreach.domain.service.MaterialTypeMappingService;
 import org.folio.innreach.domain.service.PatronHoldService;
 import org.folio.innreach.domain.service.RequestService;
@@ -29,7 +23,6 @@ import org.folio.innreach.dto.Instance;
 import org.folio.innreach.dto.InstanceContributors;
 import org.folio.innreach.dto.Item;
 import org.folio.innreach.dto.ItemStatus;
-import org.folio.innreach.util.ListUtils;
 import org.folio.innreach.util.UUIDHelper;
 
 @Service
@@ -40,23 +33,17 @@ public class PatronHoldServiceImpl implements PatronHoldService {
   public static final String INN_REACH_TEMPORARY_RECORD = "INN-Reach temporary record";
   public static final String RECORD_SOURCE = "INN-Reach";
 
-  private final HridSettingsClient hridSettingsClient;
-  private final InstanceTypeClient instanceTypeClient;
-  private final InstanceContributorTypeClient nameTypeClient;
   private final AgencyMappingService agencyMappingService;
   private final CentralServerService centralServerService;
   private final MaterialTypeMappingService materialTypeMappingService;
   private final RequestService requestService;
-  private final InstanceStorageClient instanceStorageClient;
-  private final ItemsStorageClient itemsStorageClient;
-  private final HoldingsStorageClient holdingsStorageClient;
-  private final ServicePointsClient servicePointsClient;
+  private final InventoryStorageService inventoryStorageService;
 
   @Async
   @Override
   public void createVirtualItems(InnReachTransaction transaction) {
     var hold = (TransactionPatronHold) transaction.getHold();
-    var hridSettings = hridSettingsClient.getHridSettings();
+    var hridSettings = inventoryStorageService.getHridSettings();
     var centralServer = centralServerService.getCentralServerByCentralCode(transaction.getCentralServerCode());
 
     var instance = createInstance(transaction, hold, hridSettings);
@@ -74,7 +61,7 @@ public class PatronHoldServiceImpl implements PatronHoldService {
   @Override
   public void updateVirtualItems(InnReachTransaction transaction) {
     var hold = (TransactionPatronHold) transaction.getHold();
-    var hridSettings = hridSettingsClient.getHridSettings();
+    var hridSettings = inventoryStorageService.getHridSettings();
     var centralServer = centralServerService.getCentralServerByCentralCode(transaction.getCentralServerCode());
 
     var instanceHrid = getInstanceHrid(transaction, hridSettings);
@@ -98,7 +85,7 @@ public class PatronHoldServiceImpl implements PatronHoldService {
       .staffSuppress(true)
       .discoverySuppress(true);
 
-    return instanceStorageClient.createInstance(instance);
+    return inventoryStorageService.createInstance(instance);
   }
 
   private String getInstanceHrid(InnReachTransaction transaction, HridSettingsClient.HridSettings hridSettings) {
@@ -106,9 +93,7 @@ public class PatronHoldServiceImpl implements PatronHoldService {
   }
 
   private Instance fetchInstance(String instanceHrid) {
-    return instanceStorageClient.queryInstanceByHrid(instanceHrid).getResult().stream()
-      .findFirst()
-      .orElseThrow(() -> new IllegalArgumentException("No instance found by hrid " + instanceHrid));
+    return inventoryStorageService.queryInstanceByHrid(instanceHrid);
   }
 
   private void createHoldingItem(InnReachTransaction transaction,
@@ -119,11 +104,11 @@ public class PatronHoldServiceImpl implements PatronHoldService {
 
     var holding = prepareHolding(centralServer.getId(), transaction, hold, hridSettings);
     holding.setInstanceId(instance.getId());
-    holding = holdingsStorageClient.createHolding(holding);
+    holding = inventoryStorageService.createHolding(holding);
 
     var item = prepareItem(centralServer, transaction, hold, hridSettings);
     item.setHoldingsRecordId(holding.getId());
-    itemsStorageClient.createItem(item);
+    inventoryStorageService.createItem(item);
   }
 
   private Holding prepareHolding(UUID centralServerId, InnReachTransaction transaction, TransactionPatronHold hold, HridSettingsClient.HridSettings settings) {
@@ -160,22 +145,17 @@ public class PatronHoldServiceImpl implements PatronHoldService {
   }
 
   private UUID getServicePointIdByCode(String locationCode) {
-    var servicePoints = servicePointsClient.queryServicePointByCode(locationCode);
-
-    return ListUtils.mapFirstItem(servicePoints, ServicePointsClient.ServicePoint::getId)
-      .orElseThrow(() -> new IllegalStateException("Service point is not found for pickup location code: " + locationCode));
+    return inventoryStorageService.queryServicePointByCode(locationCode).getId();
   }
 
   private UUID getInstanceTypeId() {
-    var instanceTypes = instanceTypeClient.queryInstanceTypeByName(INN_REACH_TEMPORARY_RECORD);
+    var instanceTypes = inventoryStorageService.queryInstanceTypeByName(INN_REACH_TEMPORARY_RECORD);
 
-    return ListUtils.mapFirstItem(instanceTypes, InstanceTypeClient.InstanceType::getId)
-      .orElseThrow(() -> new IllegalStateException("Instance type is not found by name: " + INN_REACH_TEMPORARY_RECORD));
+    return instanceTypes.getId();
   }
 
   private InstanceContributors getInstanceContributor() {
-    var author = ListUtils.mapFirstItem(nameTypeClient.queryContributorTypeByName(INN_REACH_AUTHOR), Function.identity())
-      .orElseThrow(() -> new IllegalStateException("Contributor name type is not found by name: " + INN_REACH_AUTHOR));
+    var author = inventoryStorageService.queryContributorTypeByName(INN_REACH_AUTHOR);
 
     return new InstanceContributors()
       .name(author.getName())
