@@ -38,6 +38,7 @@ import org.folio.innreach.util.JsonHelper;
 
 @Log4j2
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 @Service
 public class CentralServerConfigurationServiceImpl implements CentralServerConfigurationService {
 
@@ -50,7 +51,6 @@ public class CentralServerConfigurationServiceImpl implements CentralServerConfi
 
 
   @Override
-  @Transactional(readOnly = true)
   public CentralServerAgenciesDTO getAllAgencies() {
     var agencies = loadRecordsPerServer(INN_REACH_LOCAL_SERVERS_URI, LocalServerAgenciesDTO.class, this::toAgenciesOrNull);
 
