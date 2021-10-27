@@ -1,5 +1,5 @@
 {
-  "description": "INN-Reach Transaction Item Hold record",
+  "description": "INN-Reach Transaction hold record",
   "type": "object",
   "properties": {
     "id": {
@@ -41,6 +41,12 @@
       "description": "Need before time",
       "type": "integer"
     },
+    "centralItemType": {
+      "description": "Central item type",
+      "type": "integer",
+      "minimum" : 0,
+      "maximum" : 255
+    },
     "centralPatronType": {
       "description": "Central patron type",
       "type": "integer",
@@ -49,6 +55,30 @@
     },
     "patronName": {
       "description": "Patron name",
+      "type": "string"
+    },
+    "patronHomeLibrary": {
+      "description": "Patron home library",
+      "type": "string"
+    },
+    "patronPhone": {
+      "description": "Patron phone",
+      "type": "string"
+    },
+    "title": {
+      "description": "Patron hold title",
+      "type": "string"
+    },
+    "author": {
+      "description": "Patron hold author",
+      "type": "string"
+    },
+    "callNumber": {
+      "description": "Patron hold call number",
+      "type": "string"
+    },
+    "shippedItemBarcode": {
+      "description": "Shipped item barcode",
       "type": "string"
     },
     "metadata": {
@@ -64,8 +94,6 @@
     "patronId",
     "patronAgencyCode",
     "itemAgencyCode",
-    "itemId",
-    "centralPatronType",
-    "patronName"
+    "itemId"
   ]
 }

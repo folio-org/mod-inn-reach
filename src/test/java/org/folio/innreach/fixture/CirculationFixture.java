@@ -1,0 +1,48 @@
+package org.folio.innreach.fixture;
+
+import static org.jeasy.random.FieldPredicates.named;
+
+import static org.folio.innreach.fixture.TestUtil.randomInteger;
+
+import lombok.experimental.UtilityClass;
+import org.jeasy.random.EasyRandom;
+import org.jeasy.random.EasyRandomParameters;
+import org.jeasy.random.randomizers.text.StringRandomizer;
+
+import org.folio.innreach.dto.TransactionHoldDTO;
+
+@UtilityClass
+public class CirculationFixture {
+
+  private static final EasyRandom transactionHoldRandom;
+
+  static {
+    EasyRandomParameters params = new EasyRandomParameters()
+      .randomize(named("transactionTime"), () -> randomInteger(255))
+      .randomize(named("pickupLocation"), () -> "a:b:c:d")
+      .randomize(named("patronId"), () -> String.valueOf(randomInteger(32)))
+      .randomize(named("patronAgencyCode"), TestUtil::randomFiveCharacterCode)
+      .randomize(named("itemAgencyCode"), TestUtil::randomFiveCharacterCode)
+      .randomize(named("itemId"), () -> String.valueOf(randomInteger(32)))
+      .randomize(named("needBefore"), () -> randomInteger(255))
+      .randomize(named("centralItemType"), () -> randomInteger(255))
+      .randomize(named("centralPatronType"), () -> randomInteger(255))
+      .randomize(named("patronName"), new StringRandomizer(32))
+      .randomize(named("title"), new StringRandomizer(255))
+      .randomize(named("author"), new StringRandomizer(255))
+      .randomize(named("callNumber"), () -> String.valueOf(randomInteger(32)))
+      .randomize(named("newItemId"), new StringRandomizer(32))
+      .randomize(named("itemBarcode"), new StringRandomizer(32))
+      .randomize(named("reason"), new StringRandomizer(32))
+      .randomize(named("reasonCode"), () -> 7) // always 7
+      .randomize(named("dueDateTime"), () -> randomInteger(255))
+      .excludeField(named("id"))
+      .excludeField(named("metadata"));
+
+    transactionHoldRandom = new EasyRandom(params);
+  }
+
+  public static TransactionHoldDTO createTransactionHoldDTO() {
+    return transactionHoldRandom.nextObject(TransactionHoldDTO.class);
+  }
+}

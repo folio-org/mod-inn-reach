@@ -1,25 +1,5 @@
 package org.folio.innreach.controller;
 
-import org.folio.innreach.controller.base.BaseControllerTest;
-import org.folio.innreach.domain.entity.UserCustomFieldMapping;
-import org.folio.innreach.dto.UserCustomFieldMappingDTO;
-import org.folio.innreach.mapper.UserCustomFieldMappingMapper;
-import org.folio.innreach.repository.UserCustomFieldMappingRepository;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.web.client.TestRestTemplate;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
-import org.springframework.test.context.jdbc.Sql;
-import org.springframework.test.context.jdbc.SqlMergeMode;
-
-import java.util.Optional;
-import java.util.UUID;
-
-import static java.util.UUID.randomUUID;
-import static org.folio.innreach.fixture.TestUtil.deserializeFromJsonFile;
-import static org.folio.innreach.fixture.TestUtil.randomFiveCharacterCode;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -29,6 +9,27 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.http.HttpStatus.CONFLICT;
 import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TEST_METHOD;
 import static org.springframework.test.context.jdbc.SqlMergeMode.MergeMode.MERGE;
+
+import static org.folio.innreach.fixture.TestUtil.deserializeFromJsonFile;
+import static org.folio.innreach.fixture.TestUtil.randomFiveCharacterCode;
+
+import java.util.Optional;
+import java.util.UUID;
+
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
+import org.springframework.test.context.jdbc.Sql;
+import org.springframework.test.context.jdbc.SqlMergeMode;
+
+import org.folio.innreach.controller.base.BaseControllerTest;
+import org.folio.innreach.domain.entity.UserCustomFieldMapping;
+import org.folio.innreach.dto.UserCustomFieldMappingDTO;
+import org.folio.innreach.mapper.UserCustomFieldMappingMapper;
+import org.folio.innreach.repository.UserCustomFieldMappingRepository;
 
 @Sql(
   scripts = {

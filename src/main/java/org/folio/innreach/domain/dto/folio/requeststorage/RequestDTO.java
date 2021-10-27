@@ -1,14 +1,14 @@
 package org.folio.innreach.domain.dto.folio.requeststorage;
 
+import java.time.OffsetDateTime;
+import java.util.UUID;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
-
-import java.time.OffsetDateTime;
-import java.util.UUID;
 
 @Data
 @NoArgsConstructor
@@ -18,13 +18,13 @@ public class RequestDTO {
   private UUID id;
   private UUID itemId;
   private RequestStatus status;
-  private RequestType requestType;
+  private String requestType;
   private OffsetDateTime requestExpirationDate;
   private UUID requesterId;
   private UUID pickupServicePointId;
   private String patronComments;
   private OffsetDateTime requestDate;
-  private FulfilmentPreference fulfilmentPreference;
+  private String fulfilmentPreference;
 
   @Getter
   @RequiredArgsConstructor
