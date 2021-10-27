@@ -14,12 +14,12 @@ import org.springframework.test.context.jdbc.Sql;
 
 @Sql(scripts = {
   "classpath:db/central-server/pre-populate-central-server.sql",
-  "classpath:db/central-patron-type-mapping/pre-populate-central-patron_type-mapping-table.sql.sql"
+    "classpath:db/central-patron-type-mapping/pre-populate-central-patron_type-mapping-table.sql"
 })
 @Sql(
   scripts = {
     "classpath:db/central-server/clear-central-server-tables.sql",
-    "classpath:db/central-patron-type-mapping/clear-central-patron-type-mapping-table.sql.sql"
+    "classpath:db/central-patron-type-mapping/clear-central-patron-type-mapping-table.sql"
   },
   executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD
 )
