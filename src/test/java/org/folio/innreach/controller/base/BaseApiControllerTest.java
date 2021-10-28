@@ -95,7 +95,7 @@ public class BaseApiControllerTest {
     stubGet(url, Collections.emptyMap(), responsePath);
   }
 
-  protected static void stubGet(String urlTemplate, String responsePath, String... pathVariables) {
+  protected static void stubGet(String urlTemplate, String responsePath, Object... pathVariables) {
     stubGet(String.format(urlTemplate, pathVariables), Collections.emptyMap(), responsePath);
   }
 
@@ -111,7 +111,7 @@ public class BaseApiControllerTest {
         .withBodyFile(responsePath)));
   }
 
-  protected static void stubPost(String urlTemplate, String responsePath, String... pathVariables) {
+  protected static void stubPost(String urlTemplate, String responsePath, Object... pathVariables) {
     stubPost(String.format(urlTemplate, pathVariables), responsePath);
   }
 

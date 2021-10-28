@@ -53,7 +53,6 @@ import org.folio.innreach.domain.entity.TransactionHold;
 import org.folio.innreach.domain.entity.TransactionItemHold;
 import org.folio.innreach.domain.exception.EntityNotFoundException;
 import org.folio.innreach.domain.exception.ItemNotRequestableException;
-import org.folio.innreach.domain.service.FolioCirculationService;
 import org.folio.innreach.domain.service.RequestService;
 import org.folio.innreach.external.service.InnReachExternalService;
 import org.folio.innreach.external.service.InventoryService;
@@ -82,7 +81,7 @@ public class RequestServiceImpl implements RequestService {
 
   private final InnReachTransactionPickupLocationMapper transactionPickupLocationMapper;
   private final RequestStorageClient requestsClient;
-  private final FolioCirculationService circulationClient;
+  private final CirculationClient circulationClient;
   private final ServicePointsUsersClient servicePointsUsersClient;
   private final UsersClient usersClient;
 
@@ -180,6 +179,7 @@ public class RequestServiceImpl implements RequestService {
     hold.setFolioItemId(item.getId());
     hold.setFolioRequestId(movedRequest.getId());
     transactionRepository.save(transaction);
+    log.info("Item request successfully moved");
   }
 
   private boolean isItemRequestable(InventoryItemDTO item, ResultList<RequestDTO> requests) {

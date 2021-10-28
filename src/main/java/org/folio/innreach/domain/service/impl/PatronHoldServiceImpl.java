@@ -5,6 +5,7 @@ import static org.folio.innreach.dto.ItemStatus.NameEnum.AVAILABLE;
 import java.util.UUID;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
@@ -25,6 +26,7 @@ import org.folio.innreach.dto.Item;
 import org.folio.innreach.dto.ItemStatus;
 import org.folio.innreach.util.UUIDHelper;
 
+@Log4j2
 @Service
 @RequiredArgsConstructor
 public class PatronHoldServiceImpl implements PatronHoldService {
@@ -42,6 +44,8 @@ public class PatronHoldServiceImpl implements PatronHoldService {
   @Async
   @Override
   public void createVirtualItems(InnReachTransaction transaction) {
+    log.info("Creating inventory virtual items for transaction {}", transaction);
+
     var hold = (TransactionPatronHold) transaction.getHold();
     var hridSettings = inventoryStorageService.getHridSettings();
     var centralServer = centralServerService.getCentralServerByCentralCode(transaction.getCentralServerCode());
@@ -60,6 +64,8 @@ public class PatronHoldServiceImpl implements PatronHoldService {
   @Async
   @Override
   public void updateVirtualItems(InnReachTransaction transaction) {
+    log.info("Updating inventory virtual items for transaction {}", transaction);
+
     var hold = (TransactionPatronHold) transaction.getHold();
     var hridSettings = inventoryStorageService.getHridSettings();
     var centralServer = centralServerService.getCentralServerByCentralCode(transaction.getCentralServerCode());
