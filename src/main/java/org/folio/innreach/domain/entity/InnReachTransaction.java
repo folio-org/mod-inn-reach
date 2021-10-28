@@ -6,10 +6,10 @@ import static org.folio.innreach.domain.entity.InnReachTransaction.FETCH_ONE_BY_
 import static org.folio.innreach.domain.entity.InnReachTransaction.FETCH_ONE_BY_TRACKING_ID_AND_CENTRAL_CODE_QUERY_NAME;
 import static org.folio.innreach.domain.entity.InnReachTransaction.FETCH_ONE_BY_TRACKING_ID_QUERY;
 import static org.folio.innreach.domain.entity.InnReachTransaction.FETCH_ONE_BY_TRACKING_ID_QUERY_NAME;
-import static org.folio.innreach.domain.entity.InnReachTransaction.GET_ALL_SORTED_QUERY;
-import static org.folio.innreach.domain.entity.InnReachTransaction.GET_ALL_SORTED_QUERY_NAME;
-import static org.folio.innreach.domain.entity.InnReachTransaction.GET_ALL_SORTED_COUNT_QUERY_NAME;
-import static org.folio.innreach.domain.entity.InnReachTransaction.GET_ALL_SORTED_COUNT_QUERY;
+import static org.folio.innreach.domain.entity.InnReachTransaction.GET_ALL_COUNT_QUERY;
+import static org.folio.innreach.domain.entity.InnReachTransaction.GET_ALL_COUNT_QUERY_NAME;
+import static org.folio.innreach.domain.entity.InnReachTransaction.GET_ALL_QUERY;
+import static org.folio.innreach.domain.entity.InnReachTransaction.GET_ALL_QUERY_NAME;
 
 import java.util.UUID;
 
@@ -48,23 +48,24 @@ import org.folio.innreach.domain.entity.base.Identifiable;
   query = FETCH_ONE_BY_TRACKING_ID_AND_CENTRAL_CODE_QUERY
 )
 @NamedQuery(
-  name = GET_ALL_SORTED_QUERY_NAME,
-  query = GET_ALL_SORTED_QUERY
+  name = GET_ALL_QUERY_NAME,
+  query = GET_ALL_QUERY
 )
 @NamedQuery(
-  name = GET_ALL_SORTED_COUNT_QUERY_NAME,
-  query = GET_ALL_SORTED_COUNT_QUERY
+  name = GET_ALL_COUNT_QUERY_NAME,
+  query = GET_ALL_COUNT_QUERY
 )
 public class InnReachTransaction extends Auditable implements Identifiable<UUID> {
 
-  public static final String FETCH_ONE_QUERY = "SELECT t FROM InnReachTransaction t JOIN FETCH t.hold hold " +
+  public static final String GET_ALL_QUERY_NAME = "InnReachTransaction.getAll";
+  public static final String GET_ALL_QUERY = "SELECT t FROM InnReachTransaction t JOIN FETCH t.hold hold " +
     "JOIN FETCH hold.pickupLocation location";
 
   public static final String FETCH_ONE_BY_TRACKING_ID_QUERY_NAME = "InnReachTransaction.fetchOne";
-  public static final String FETCH_ONE_BY_TRACKING_ID_QUERY = FETCH_ONE_QUERY + " WHERE t.trackingId = :trackingId AND location.id = hold.pickupLocation.id";
+  public static final String FETCH_ONE_BY_TRACKING_ID_QUERY = GET_ALL_QUERY + " WHERE t.trackingId = :trackingId AND location.id = hold.pickupLocation.id";
 
   public static final String FETCH_ONE_BY_ID_QUERY_NAME = "InnReachTransaction.fetchOneById";
-  public static final String FETCH_ONE_BY_ID_QUERY = FETCH_ONE_QUERY + " WHERE t.id = :id";
+  public static final String FETCH_ONE_BY_ID_QUERY = GET_ALL_QUERY + " WHERE t.id = :id";
 
   public static final String FETCH_ONE_BY_TRACKING_ID_AND_CENTRAL_CODE_QUERY_NAME = "InnReachTransaction.fetchByTrackingIdAndCentralCode";
   public static final String FETCH_ONE_BY_TRACKING_ID_AND_CENTRAL_CODE_QUERY = "SELECT irt FROM InnReachTransaction AS irt " +
@@ -72,12 +73,8 @@ public class InnReachTransaction extends Auditable implements Identifiable<UUID>
     "JOIN FETCH h.pickupLocation " +
     "WHERE irt.trackingId = :trackingId AND irt.centralServerCode = :centralServerCode";
 
-  public static final String GET_ALL_SORTED_QUERY_NAME = "InnReachTransaction.getAllSorted";
-  public static final String GET_ALL_SORTED_QUERY = "SELECT t FROM InnReachTransaction t JOIN FETCH t.hold hold " +
-    "JOIN FETCH hold.pickupLocation location";
-
-  public static final String GET_ALL_SORTED_COUNT_QUERY_NAME = "InnReachTransaction.getAllCount";
-  public static final String GET_ALL_SORTED_COUNT_QUERY = "SELECT count(transaction) FROM InnReachTransaction transaction ";
+  public static final String GET_ALL_COUNT_QUERY_NAME = "InnReachTransaction.getAllCount";
+  public static final String GET_ALL_COUNT_QUERY = "SELECT count(transaction) FROM InnReachTransaction transaction ";
 
   @Id
   @GeneratedValue(strategy = GenerationType.AUTO)

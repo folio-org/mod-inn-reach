@@ -1125,8 +1125,8 @@ paths:
         - $ref: '#/components/parameters/circulationOperationName'
   /transactions:
     get:
-      description: Get a sorted list of transactions for the given central server
-      operationId: getAllSorted
+      description: Get a list of transactions for the given central server
+      operationId: getAllTransactions
       tags:
         - inn-reach-transaction
       responses:

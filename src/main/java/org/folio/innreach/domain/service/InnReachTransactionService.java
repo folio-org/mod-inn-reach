@@ -15,5 +15,5 @@ public interface InnReachTransactionService {
 
   InnReachTransactionDTO getInnReachTransaction(UUID transactionId);
 
-  InnReachTransactionsDTO getTransactionsSorted(Integer offset, Integer limit);
+  InnReachTransactionsDTO getAllTransactions(Integer offset, Integer limit);
 }
