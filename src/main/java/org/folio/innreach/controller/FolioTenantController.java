@@ -1,7 +1,5 @@
 package org.folio.innreach.controller;
 
-import static java.util.Objects.nonNull;
-
 import lombok.extern.log4j.Log4j2;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -11,7 +9,6 @@ import org.springframework.web.bind.annotation.RestController;
 import org.folio.innreach.domain.service.impl.FolioTenantService;
 import org.folio.spring.controller.TenantController;
 import org.folio.spring.service.TenantService;
-import org.folio.tenant.domain.dto.Parameter;
 import org.folio.tenant.domain.dto.TenantAttributes;
 
 @Log4j2
