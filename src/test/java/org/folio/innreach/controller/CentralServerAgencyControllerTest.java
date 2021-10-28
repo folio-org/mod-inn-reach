@@ -1,7 +1,6 @@
 package org.folio.innreach.controller;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
-import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TEST_METHOD;
@@ -13,16 +12,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.folio.innreach.external.InnReachHeaders.X_TO_CODE;
 import static org.folio.innreach.fixture.TestUtil.readFile;
 
-import java.util.Collections;
 import java.util.Map;
 
-import com.github.tomakehurst.wiremock.client.MappingBuilder;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlMergeMode;
 
@@ -32,9 +27,9 @@ import org.folio.innreach.fixture.CentralServerFixture;
 import org.folio.innreach.repository.CentralServerRepository;
 
 @Sql(
-    scripts = {
-        "classpath:db/central-server/clear-central-server-tables.sql"},
-    executionPhase = AFTER_TEST_METHOD
+  scripts = {
+    "classpath:db/central-server/clear-central-server-tables.sql"},
+  executionPhase = AFTER_TEST_METHOD
 )
 @SqlMergeMode(MERGE)
 public
@@ -56,9 +51,9 @@ class CentralServerAgencyControllerTest extends BaseApiControllerTest {
     stubGet(INNREACH_LOCALSERVERS_URL, "agency-codes/d2ir-local-servers-response-01.json");
 
     mockMvc.perform(get(AGENCIES_URL))
-        .andExpect(status().isOk())
-        .andExpect(content()
-            .json(readTemplate("cs-agencies-single-server-response.json", cs.getId(), CS_TEST_CODE1)));
+      .andExpect(status().isOk())
+      .andExpect(content()
+        .json(readTemplate("cs-agencies-single-server-response.json", cs.getId(), CS_TEST_CODE1)));
   }
 
   @Test
@@ -67,22 +62,22 @@ class CentralServerAgencyControllerTest extends BaseApiControllerTest {
     var cs2 = createCentralServer(CS_TEST_CODE2);
 
     stubGet(INNREACH_LOCALSERVERS_URL, xToCodeHeader(CS_TEST_CODE1),
-        "agency-codes/d2ir-local-servers-response-01.json");
+      "agency-codes/d2ir-local-servers-response-01.json");
     stubGet(INNREACH_LOCALSERVERS_URL, xToCodeHeader(CS_TEST_CODE2),
-        "agency-codes/d2ir-local-servers-response-02.json");
+      "agency-codes/d2ir-local-servers-response-02.json");
 
     mockMvc.perform(get(AGENCIES_URL))
-        .andExpect(status().isOk())
-        .andExpect(content()
-            .json(readTemplate("cs-agencies-two-server-response.json", cs1.getId(), CS_TEST_CODE1,
-                cs2.getId(), CS_TEST_CODE2)));
+      .andExpect(status().isOk())
+      .andExpect(content()
+        .json(readTemplate("cs-agencies-two-server-response.json", cs1.getId(), CS_TEST_CODE1,
+          cs2.getId(), CS_TEST_CODE2)));
   }
 
   @Test
   void returnEmptyAgencyCodeListIfNoCentralServers() throws Exception {
     mockMvc.perform(get(AGENCIES_URL))
-        .andExpect(status().isOk())
-        .andExpect(content().json(readTemplate("cs-agencies-empty-response.json")));
+      .andExpect(status().isOk())
+      .andExpect(content().json(readTemplate("cs-agencies-empty-response.json")));
   }
 
   @Test
@@ -91,14 +86,14 @@ class CentralServerAgencyControllerTest extends BaseApiControllerTest {
     createCentralServer(CS_TEST_CODE2);
 
     stubGet(INNREACH_LOCALSERVERS_URL, xToCodeHeader(CS_TEST_CODE1),
-        "agency-codes/d2ir-local-servers-response-01.json");
+      "agency-codes/d2ir-local-servers-response-01.json");
     stubGet(INNREACH_LOCALSERVERS_URL, xToCodeHeader(CS_TEST_CODE2),
-        "agency-codes/d2ir-local-servers-broken-response.json");
+      "agency-codes/d2ir-local-servers-broken-response.json");
 
     mockMvc.perform(get(AGENCIES_URL))
-        .andExpect(status().isOk())
-        .andExpect(content()
-            .json(readTemplate("cs-agencies-single-server-response.json", cs1.getId(), CS_TEST_CODE1)));
+      .andExpect(status().isOk())
+      .andExpect(content()
+        .json(readTemplate("cs-agencies-single-server-response.json", cs1.getId(), CS_TEST_CODE1)));
   }
 
   @Test
@@ -106,12 +101,12 @@ class CentralServerAgencyControllerTest extends BaseApiControllerTest {
     createCentralServer(CS_TEST_CODE1);
 
     stubFor(WireMock.get(urlEqualTo(INNREACH_LOCALSERVERS_URL))
-        .willReturn(aResponse()
-            .withStatus(HttpStatus.UNAUTHORIZED.value())));
+      .willReturn(aResponse()
+        .withStatus(HttpStatus.UNAUTHORIZED.value())));
 
     mockMvc.perform(get(AGENCIES_URL))
-        .andExpect(status().isOk())
-        .andExpect(content().json(readTemplate("cs-agencies-empty-response.json")));
+      .andExpect(status().isOk())
+      .andExpect(content().json(readTemplate("cs-agencies-empty-response.json")));
   }
 
   @Test
@@ -121,8 +116,8 @@ class CentralServerAgencyControllerTest extends BaseApiControllerTest {
     stubGet(INNREACH_LOCALSERVERS_URL, "agency-codes/d2ir-local-servers-error-response.json");
 
     mockMvc.perform(get(AGENCIES_URL))
-        .andExpect(status().isOk())
-        .andExpect(content().json(readTemplate("cs-agencies-empty-response.json")));
+      .andExpect(status().isOk())
+      .andExpect(content().json(readTemplate("cs-agencies-empty-response.json")));
   }
 
   private CentralServer createCentralServer(String csCode) {

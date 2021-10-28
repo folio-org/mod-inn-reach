@@ -95,6 +95,10 @@ public class BaseApiControllerTest {
     stubGet(url, Collections.emptyMap(), responsePath);
   }
 
+  protected static void stubGet(String urlTemplate, String responsePath, String... pathVariables) {
+    stubGet(String.format(urlTemplate, pathVariables), Collections.emptyMap(), responsePath);
+  }
+
   protected static void stubGet(String url, Map<String, String> requestHeaders, String responsePath) {
     MappingBuilder getBuilder = WireMock.get(urlEqualTo(url));
 
@@ -107,10 +111,12 @@ public class BaseApiControllerTest {
         .withBodyFile(responsePath)));
   }
 
+  protected static void stubPost(String urlTemplate, String responsePath, String... pathVariables) {
+    stubPost(String.format(urlTemplate, pathVariables), responsePath);
+  }
+
   protected static void stubPost(String url, String responsePath) {
     MappingBuilder postBuilder = WireMock.post(urlEqualTo(url));
-
-//    requestHeaders.forEach((name, value) -> postBuilder.withHeader(name, equalTo(value)));
 
     stubFor(postBuilder
       .willReturn(aResponse()

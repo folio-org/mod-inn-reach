@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
 import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TEST_METHOD;
 import static org.springframework.test.context.jdbc.SqlMergeMode.MergeMode.MERGE;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -16,8 +17,8 @@ import static org.folio.innreach.fixture.CirculationFixture.createTransactionHol
 
 import java.util.UUID;
 
-import org.awaitility.Duration;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.boot.test.web.client.TestRestTemplate;
@@ -28,7 +29,7 @@ import org.springframework.test.context.jdbc.SqlMergeMode;
 
 import org.folio.innreach.controller.base.BaseApiControllerTest;
 import org.folio.innreach.domain.InnReachResponseStatus;
-import org.folio.innreach.domain.service.RequestService;
+import org.folio.innreach.domain.service.FolioCirculationService;
 import org.folio.innreach.dto.InnReachResponseDTO;
 import org.folio.innreach.repository.InnReachTransactionRepository;
 import org.folio.innreach.util.JsonHelper;
@@ -43,9 +44,24 @@ import org.folio.innreach.util.JsonHelper;
 @SqlMergeMode(MERGE)
 class InnReachCirculationControllerTest extends BaseApiControllerTest {
 
+  public static final String HRID_SETTINGS_URL = "/hrid-settings-storage/hrid-settings";
+  public static final String HOLDINGS_URL = "/holdings-storage/holdings";
+  public static final String ITEMS_URL = "/item-storage/items";
+  public static final String QUERY_INSTANCE_BY_HRID_URL_TEMPLATE = "/instance-storage/instances?query=(hrid==%s)";
+  public static final String QUERY_INVENTORY_ITEM_BY_HRID_URL_TEMPLATE = "/inventory/items?query=hrid==%s";
+  public static final String QUERY_REQUEST_BY_ITEM_ID_URL_TEMPLATE = "/request-storage/requests?query=(itemId==%s)";
+  public static final String MOVE_CIRCULATION_REQUEST_URL_TEMPLATE = "/circulation/requests/%s/move";
+
+  private static final String CIRCULATION_ENDPOINT = "/inn-reach/d2ir/circ/{circulationOperationName}/{trackingId}/{centralCode}";
+
   private static final String PRE_POPULATED_TRACKING_ID = "tracking1";
   private static final String PRE_POPULATED_CENTRAL_CODE = "d2ir";
-  private static final int PRE_POPULATED_CENTRAL_ITEM_TYPE = 1;
+  private static final int CENTRAL_ITEM_TYPE = 1;
+  private static final String INSTANCE_HRID = "intracking1d2ir";
+  private static final String ITEM_HRID = "it00000000001";
+  private static final String ITEM_ID = "45b706c2-63ff-4a01-b7c2-5483f19b8c8f";
+  private static final String CENTRAL_AGENCY_CODE = "5east";
+  private static final String OLD_REQUEST_ID = "ea11eba7-3c0f-4d15-9cca-c8608cd6bc8a";
   private static final UUID NEW_REQUEST_ID = UUID.fromString("89105c06-dbdb-4aa0-9695-d4d19c733270");
 
   @Autowired
@@ -58,7 +74,7 @@ class InnReachCirculationControllerTest extends BaseApiControllerTest {
   private JsonHelper jsonHelper;
 
   @SpyBean
-  private RequestService requestService;
+  private FolioCirculationService circulationService;
 
   @Test
   void processCreatePatronHoldCirculationRequest_and_createNewPatronHold() {
@@ -137,28 +153,32 @@ class InnReachCirculationControllerTest extends BaseApiControllerTest {
   })
   void patronHold_updateVirtualItems() throws Exception {
     var transactionHoldDTO = createTransactionHoldDTO();
-    transactionHoldDTO.setItemId("it00000000001");
-    transactionHoldDTO.setItemAgencyCode("5east");
-    transactionHoldDTO.setCentralItemType(PRE_POPULATED_CENTRAL_ITEM_TYPE);
+    transactionHoldDTO.setItemId(ITEM_HRID);
+    transactionHoldDTO.setItemAgencyCode(CENTRAL_AGENCY_CODE);
+    transactionHoldDTO.setCentralItemType(CENTRAL_ITEM_TYPE);
 
-    stubGet("/hrid-settings-storage/hrid-settings", "inventory-storage/hrid-settings-response.json");
-    stubGet("/instance-storage/instances?query=(hrid==intracking1d2ir)", "inventory-storage/query-instance-response.json");
+    stubGet(HRID_SETTINGS_URL, "inventory-storage/hrid-settings-response.json");
+    stubGet(QUERY_INSTANCE_BY_HRID_URL_TEMPLATE, "inventory-storage/query-instance-response.json", INSTANCE_HRID);
     stubGet(INNREACH_LOCALSERVERS_URL, "agency-codes/d2ir-local-servers-response-01.json");
-    stubPost("/holdings-storage/holdings", "inventory-storage/holding-response.json");
-    stubPost("/item-storage/items", "inventory-storage/item-response.json");
-    stubGet("/inventory/items?query=hrid==it00000000001", "inventory/query-items-response.json");
-    stubGet("/request-storage/requests?query=(itemId==45b706c2-63ff-4a01-b7c2-5483f19b8c8f)", "request-storage/empty-requests-response.json");
-    stubPost("/circulation/requests/ea11eba7-3c0f-4d15-9cca-c8608cd6bc8a/move", "request-storage/request.json");
+    stubPost(HOLDINGS_URL, "inventory-storage/holding-response.json");
+    stubPost(ITEMS_URL, "inventory-storage/item-response.json");
+    stubGet(QUERY_INVENTORY_ITEM_BY_HRID_URL_TEMPLATE, "inventory/query-items-response.json", ITEM_HRID);
+    stubGet(QUERY_REQUEST_BY_ITEM_ID_URL_TEMPLATE, "request-storage/empty-requests-response.json", ITEM_ID);
+    stubPost(MOVE_CIRCULATION_REQUEST_URL_TEMPLATE, "request-storage/request.json", OLD_REQUEST_ID);
 
-    var headers = getOkapiHeaders();
-
-    mockMvc.perform(post("/inn-reach/d2ir/circ/{circulationOperationName}/{trackingId}/{centralCode}", PATRON_HOLD.getOperationName(), PRE_POPULATED_TRACKING_ID, PRE_POPULATED_CENTRAL_CODE)
+    mockMvc.perform(post(CIRCULATION_ENDPOINT, PATRON_HOLD.getOperationName(), PRE_POPULATED_TRACKING_ID, PRE_POPULATED_CENTRAL_CODE)
         .content(jsonHelper.toJson(transactionHoldDTO))
         .contentType(MediaType.APPLICATION_JSON)
-        .headers(headers))
+        .headers(getOkapiHeaders()))
       .andExpect(status().isOk());
 
-    await().untilAsserted(() -> NEW_REQUEST_ID.equals(fetchFolioRequestId()));
+    await().untilAsserted(() ->
+      Mockito.verify(circulationService).moveRequest(any(), any())
+    );
+
+    var updatedFolioRequestId = fetchFolioRequestId();
+
+    assertEquals(NEW_REQUEST_ID, updatedFolioRequestId);
   }
 
   private UUID fetchFolioRequestId() {
