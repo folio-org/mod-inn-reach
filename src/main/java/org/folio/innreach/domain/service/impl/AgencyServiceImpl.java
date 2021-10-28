@@ -1,6 +1,7 @@
 package org.folio.innreach.domain.service.impl;
 
 import static java.util.Collections.emptyList;
+import static java.util.Optional.ofNullable;
 import static org.apache.commons.collections4.CollectionUtils.isNotEmpty;
 
 import static org.folio.innreach.external.dto.InnReachResponse.OK_STATUS;
@@ -59,9 +60,9 @@ public class AgencyServiceImpl implements AgencyService {
   }
 
   @Override
-  public List<LocalServer> getLocalServerAgencies(UUID centralServerId) {
+  public List<LocalServer> getLocalServers(UUID centralServerId) {
     var server = centralServerService.getCentralServer(centralServerId);
-    return Optional.ofNullable(retrieveLocalServerAgencies(server))
+    return ofNullable(retrieveLocalServerAgencies(server))
       .map(LocalServerAgenciesDTO::getLocalServerList)
       .orElse(Collections.emptyList());
   }

@@ -1,5 +1,6 @@
 package org.folio.innreach.controller;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -31,7 +32,7 @@ class FolioTenantControllerTest {
   void postTenant_shouldCallTenantInitialize() {
     tenantController.postTenant(TENANT_ATTRIBUTES);
 
-    verify(tenantService).initializeTenant();
+    verify(tenantService).initializeTenant(any());
   }
 
   @Test

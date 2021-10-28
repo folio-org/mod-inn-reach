@@ -108,7 +108,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   @SpyBean
   private RequestService requestService;
 
-  InventoryItemDTO mockInventoryClient(){
+  InventoryItemDTO mockInventoryClient() {
     var inventoryItemDTO = createInventoryItemDTO();
     inventoryItemDTO.setStatus(AVAILABLE);
     inventoryItemDTO.setMaterialType(new InventoryItemDTO.MaterialType(UUID.fromString(PRE_POPULATED_MATERIAL_TYPE_ID), "materialType"));
@@ -116,14 +116,14 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     return inventoryItemDTO;
   }
 
-  User mockUserClient(){
+  User mockUserClient() {
     var user = createUser();
     user.setBarcode(PRE_POPULATED_USER_BARCODE);
     when(usersClient.query(PRE_POPULATED_USER_BARCODE_QUERY)).thenReturn(ResultList.of(1, List.of(user)));
     return user;
   }
 
-  void mockInventoryStorageClient(User user){
+  void mockInventoryStorageClient(User user) {
     var servicePointUserDTO = new ServicePointUserDTO();
     servicePointUserDTO.setUserId(fromString(user.getId()));
     servicePointUserDTO.setDefaultServicePointId(randomUUID());
@@ -340,7 +340,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     assertEquals("failed", responseEntity.getBody().getStatus());
     assertEquals("An error occurred during creation of INN-Reach Transaction.", responseEntity.getBody().getReason());
     assertEquals("Material type mapping for central server id = "
-      + PRE_POPULATED_CENTRAL_SERVER_ID + " and material type id = " + PRE_POPULATED_MATERIAL_TYPE_ID + " not found",
+        + PRE_POPULATED_CENTRAL_SERVER_ID + " and material type id = " + PRE_POPULATED_MATERIAL_TYPE_ID + " not found",
       responseEntity.getBody().getErrors().get(0).getReason());
   }
 

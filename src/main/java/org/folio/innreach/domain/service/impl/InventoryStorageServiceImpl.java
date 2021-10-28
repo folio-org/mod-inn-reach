@@ -1,5 +1,7 @@
 package org.folio.innreach.domain.service.impl;
 
+import static org.folio.innreach.util.ListUtils.getFirstItem;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -14,7 +16,6 @@ import org.folio.innreach.domain.service.InventoryStorageService;
 import org.folio.innreach.dto.Holding;
 import org.folio.innreach.dto.Instance;
 import org.folio.innreach.dto.Item;
-import org.folio.innreach.util.ListUtils;
 
 @Service
 @RequiredArgsConstructor
@@ -30,26 +31,25 @@ public class InventoryStorageServiceImpl implements InventoryStorageService {
 
   @Override
   public Instance queryInstanceByHrid(String instanceHrid) {
-    return instanceStorageClient.queryInstanceByHrid(instanceHrid).getResult().stream()
-      .findFirst()
+    return getFirstItem(instanceStorageClient.queryInstanceByHrid(instanceHrid))
       .orElseThrow(() -> new IllegalArgumentException("No instance found by hrid " + instanceHrid));
   }
 
   @Override
   public ServicePointsClient.ServicePoint queryServicePointByCode(String locationCode) {
-    return ListUtils.getFirstItem(servicePointsClient.queryServicePointByCode(locationCode))
+    return getFirstItem(servicePointsClient.queryServicePointByCode(locationCode))
       .orElseThrow(() -> new IllegalStateException("Service point is not found for pickup location code: " + locationCode));
   }
 
   @Override
   public InstanceTypeClient.InstanceType queryInstanceTypeByName(String name) {
-    return ListUtils.getFirstItem(instanceTypeClient.queryInstanceTypeByName(name))
+    return getFirstItem(instanceTypeClient.queryInstanceTypeByName(name))
       .orElseThrow(() -> new IllegalStateException("Instance type is not found by name: " + name));
   }
 
   @Override
   public InstanceContributorTypeClient.NameType queryContributorTypeByName(String name) {
-    return ListUtils.getFirstItem(nameTypeClient.queryContributorTypeByName(name))
+    return getFirstItem(nameTypeClient.queryContributorTypeByName(name))
       .orElseThrow(() -> new IllegalStateException("Contributor name type is not found by name: " + name));
   }
 

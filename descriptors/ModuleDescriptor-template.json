@@ -336,7 +336,8 @@
             "inventory-storage.instances.item.post",
             "inventory-storage.items.item.post",
             "inventory-storage.holdings.item.post",
-            "inventory-storage.hrid-settings.item.get"
+            "inventory-storage.hrid-settings.item.get",
+            "inventory-storage.service-points.collection.get"
           ]
         },
         {

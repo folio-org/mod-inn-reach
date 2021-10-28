@@ -10,12 +10,13 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
 import org.folio.innreach.config.FolioFeignClientConfig;
+import org.folio.innreach.domain.dto.folio.requeststorage.RequestDTO;
 
 @FeignClient(value = "circulation", configuration = FolioFeignClientConfig.class)
 public interface CirculationClient {
 
   @PostMapping("/requests/{requestId}/move")
-  void moveRequest(@PathVariable("requestId") UUID requestId, @RequestBody MoveRequest payload);
+  RequestDTO moveRequest(@PathVariable("requestId") UUID requestId, @RequestBody MoveRequest payload);
 
   @Builder
   @Data

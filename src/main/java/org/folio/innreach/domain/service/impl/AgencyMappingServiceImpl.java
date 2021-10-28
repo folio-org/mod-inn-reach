@@ -69,7 +69,7 @@ public class AgencyMappingServiceImpl implements AgencyMappingService {
   }
 
   private LocalServer getLocalServerByAgencyCode(UUID centralServerId, String agencyCode) {
-    var localServers = agencyService.getLocalServerAgencies(centralServerId);
+    var localServers = agencyService.getLocalServers(centralServerId);
 
     for (var localServer : localServers) {
       var agencies = localServer.getAgencyList();

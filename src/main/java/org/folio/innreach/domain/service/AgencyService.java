@@ -10,6 +10,6 @@ public interface AgencyService {
 
   CentralServerAgenciesDTO getAllAgencies();
 
-  List<LocalServer> getLocalServerAgencies(UUID centralServerId);
+  List<LocalServer> getLocalServers(UUID centralServerId);
 
 }

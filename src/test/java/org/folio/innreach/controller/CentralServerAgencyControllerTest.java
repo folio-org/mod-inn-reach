@@ -37,11 +37,12 @@ import org.folio.innreach.repository.CentralServerRepository;
     executionPhase = AFTER_TEST_METHOD
 )
 @SqlMergeMode(MERGE)
+public
 class CentralServerAgencyControllerTest extends BaseApiControllerTest {
 
   private static final String CS_TEST_CODE1 = "test1";
   private static final String CS_TEST_CODE2 = "test2";
-  private static final String INNREACH_LOCALSERVERS_URL = "/innreach/v2/contribution/localservers";
+  public static final String INNREACH_LOCALSERVERS_URL = "/innreach/v2/contribution/localservers";
   private static final String AGENCIES_URL = "/inn-reach/central-servers/agencies";
 
   @Autowired
@@ -135,21 +136,6 @@ class CentralServerAgencyControllerTest extends BaseApiControllerTest {
 
   private static Map<String, String> xToCodeHeader(String code) {
     return Map.of(X_TO_CODE, code);
-  }
-
-  private static void stubGet(String url, String responsePath) {
-    stubGet(url, Collections.emptyMap(), responsePath);
-  }
-
-  private static void stubGet(String url, Map<String, String> requestHeaders, String responsePath) {
-    MappingBuilder getBuilder = WireMock.get(urlEqualTo(url));
-
-    requestHeaders.forEach((name, value) -> getBuilder.withHeader(name, equalTo(value)));
-
-    stubFor(getBuilder
-      .willReturn(aResponse()
-          .withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-          .withBodyFile(responsePath)));
   }
 
   private static String readTemplate(String templateFile, Object... params) {

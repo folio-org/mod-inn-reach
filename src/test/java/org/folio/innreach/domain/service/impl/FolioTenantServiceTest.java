@@ -4,6 +4,8 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 
+import static org.folio.innreach.domain.service.impl.FolioTenantService.LOAD_REF_DATA_PARAMETER;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -12,6 +14,8 @@ import org.mockito.MockitoAnnotations;
 
 import org.folio.innreach.batch.contribution.service.ContributionJobRunner;
 import org.folio.spring.FolioExecutionContext;
+import org.folio.tenant.domain.dto.Parameter;
+import org.folio.tenant.domain.dto.TenantAttributes;
 
 class FolioTenantServiceTest {
 
@@ -37,7 +41,10 @@ class FolioTenantServiceTest {
 
   @Test
   void shouldInitializeTenant() {
-    service.initializeTenant();
+    var tenantAttributes = new TenantAttributes()
+      .addParametersItem(new Parameter().key(LOAD_REF_DATA_PARAMETER).value("true"));
+
+    service.initializeTenant(tenantAttributes);
 
     verify(systemUserService).prepareSystemUser();
     verify(contributionJobRunner).cancelJobs();
@@ -48,7 +55,7 @@ class FolioTenantServiceTest {
   void shouldInitializeTenantIfSystemUserInitFailed() {
     doThrow(new RuntimeException("test")).when(systemUserService).prepareSystemUser();
 
-    assertThrows(RuntimeException.class, () -> service.initializeTenant());
+    assertThrows(RuntimeException.class, () -> service.initializeTenant(new TenantAttributes()));
   }
 
 }

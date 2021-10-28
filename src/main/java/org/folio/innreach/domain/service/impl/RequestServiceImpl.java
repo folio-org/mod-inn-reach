@@ -53,6 +53,7 @@ import org.folio.innreach.domain.entity.TransactionHold;
 import org.folio.innreach.domain.entity.TransactionItemHold;
 import org.folio.innreach.domain.exception.EntityNotFoundException;
 import org.folio.innreach.domain.exception.ItemNotRequestableException;
+import org.folio.innreach.domain.service.FolioCirculationService;
 import org.folio.innreach.domain.service.RequestService;
 import org.folio.innreach.external.service.InnReachExternalService;
 import org.folio.innreach.external.service.InventoryService;
@@ -81,7 +82,7 @@ public class RequestServiceImpl implements RequestService {
 
   private final InnReachTransactionPickupLocationMapper transactionPickupLocationMapper;
   private final RequestStorageClient requestsClient;
-  private final CirculationClient circulationClient;
+  private final FolioCirculationService circulationClient;
   private final ServicePointsUsersClient servicePointsUsersClient;
   private final UsersClient usersClient;
 
@@ -158,7 +159,7 @@ public class RequestServiceImpl implements RequestService {
   public void moveItemRequest(InnReachTransaction transaction) {
     log.info("Moving item request for transaction {}", transaction);
 
-    TransactionHold hold = transaction.getHold();
+    var hold = transaction.getHold();
     var itemHrId = hold.getItemId();
     var requestId = hold.getFolioRequestId();
 
@@ -169,14 +170,15 @@ public class RequestServiceImpl implements RequestService {
       throw new ItemNotRequestableException("Item with hrid " + itemHrId + " is not requestable");
     }
 
-    var request = CirculationClient.MoveRequest.builder()
+    var payload = CirculationClient.MoveRequest.builder()
       .requestType(PAGE.getName())
       .destinationItemId(item.getId())
       .build();
 
-    circulationClient.moveRequest(requestId, request);
+    var movedRequest = circulationClient.moveRequest(requestId, payload);
 
-    transaction.getHold().setFolioItemId(item.getId());
+    hold.setFolioItemId(item.getId());
+    hold.setFolioRequestId(movedRequest.getId());
     transactionRepository.save(transaction);
   }
 

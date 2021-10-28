@@ -10,7 +10,7 @@ import org.folio.innreach.dto.Holding;
 @FeignClient(name = "holdings-storage", configuration = FolioFeignClientConfig.class)
 public interface HoldingsStorageClient {
 
-  @PostMapping("/instances")
+  @PostMapping("/holdings")
   Holding createHolding(@RequestBody Holding holding);
 
 }

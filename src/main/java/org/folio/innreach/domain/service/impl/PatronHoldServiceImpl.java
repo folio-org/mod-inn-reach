@@ -106,7 +106,7 @@ public class PatronHoldServiceImpl implements PatronHoldService {
     holding.setInstanceId(instance.getId());
     holding = inventoryStorageService.createHolding(holding);
 
-    var item = prepareItem(centralServer, transaction, hold, hridSettings);
+    var item = prepareItem(centralServer, hold);
     item.setHoldingsRecordId(holding.getId());
     inventoryStorageService.createItem(item);
   }
@@ -126,12 +126,10 @@ public class PatronHoldServiceImpl implements PatronHoldService {
       .permanentLocationId(locationId);
   }
 
-  private Item prepareItem(CentralServerDTO centralServer, InnReachTransaction transaction, TransactionPatronHold hold, HridSettingsClient.HridSettings settings) {
+  private Item prepareItem(CentralServerDTO centralServer, TransactionPatronHold hold) {
     var centralItemType = hold.getCentralItemType();
     var centralServerId = centralServer.getId();
-    var itemHrid = settings.getItems().getPrefix()
-      + transaction.getTrackingId()
-      + hold.getItemAgencyCode();
+    var itemHrid = hold.getItemId();
 
     var materialTypeId =
       materialTypeMappingService.getMappingByCentralType(centralServerId, centralItemType).getMaterialTypeId();
