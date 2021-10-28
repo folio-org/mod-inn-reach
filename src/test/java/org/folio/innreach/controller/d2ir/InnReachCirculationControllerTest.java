@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.verify;
 import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TEST_METHOD;
@@ -29,6 +30,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlMergeMode;
 
+import org.folio.innreach.client.RequestStorageClient;
 import org.folio.innreach.controller.base.BaseApiControllerTest;
 import org.folio.innreach.domain.InnReachResponseStatus;
 import org.folio.innreach.domain.entity.InnReachTransaction;
@@ -80,6 +82,9 @@ class InnReachCirculationControllerTest extends BaseApiControllerTest {
 
   @SpyBean
   private InnReachTransactionRepository repository;
+
+  @SpyBean
+  private RequestStorageClient requestStorageClient;
 
   @Autowired
   private JsonHelper jsonHelper;
@@ -215,7 +220,6 @@ class InnReachCirculationControllerTest extends BaseApiControllerTest {
     stubPost(REQUEST_STORAGE_REQUESTS_URL, "request-storage/item-request-response.json");
     stubGet(QUERY_INVENTORY_ITEM_BY_HRID_URL_TEMPLATE, "inventory/query-items-response.json", ITEM_HRID);
     stubGet(QUERY_REQUEST_BY_ITEM_ID_URL_TEMPLATE, "request-storage/empty-requests-response.json", ITEM_ID);
-    stubPost(MOVE_CIRCULATION_REQUEST_URL_TEMPLATE, "request-storage/item-request-response.json", NEW_REQUEST_ID);
 
     mockMvc.perform(post(CIRCULATION_ENDPOINT, PATRON_HOLD.getOperationName(), "newtrackingid", PRE_POPULATED_CENTRAL_CODE)
         .content(jsonHelper.toJson(transactionHoldDTO))
@@ -224,8 +228,7 @@ class InnReachCirculationControllerTest extends BaseApiControllerTest {
       .andExpect(status().isOk());
 
     await().atMost(Duration.TEN_SECONDS).untilAsserted(() ->
-      verify(repository).save(
-        argThat((InnReachTransaction t) -> NEW_REQUEST_ID.equals(t.getHold().getFolioRequestId()))));
+      verify(requestStorageClient).sendRequest(any()));
   }
 
 }
