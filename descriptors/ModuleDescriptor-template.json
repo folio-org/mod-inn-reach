@@ -338,6 +338,11 @@
         },
         {
           "methods": ["GET"],
+          "pathPattern": "/inn-reach/central-servers/patron-types",
+          "permissionsRequired": ["inn-reach.central-server-patron-types.collection.get"]
+        },
+        {
+          "methods": ["GET"],
           "pathPattern": "/inn-reach/transactions",
           "permissionsRequired": ["inn-reach.inn-reach-transactions.collection.get"]
         }
@@ -817,12 +822,18 @@
       "description" : "Get a collection of all known item types from available central servers"
     },
     {
+      "permissionName" : "inn-reach.central-server-patron-types.collection.get",
+      "displayName" : "get a collection of all known patron types from available central servers",
+      "description" : "Get a collection of all known patron types from available central servers"
+    },
+    {
       "permissionName" : "inn-reach.central-server.sys-configuration.all",
       "displayName" : "inn reach API module - all permissions of central server system configuration",
       "description" : "All permissions of central server system configuration scope",
       "subPermissions" : [
         "inn-reach.central-server-agencies.collection.get",
-        "inn-reach.central-server-item-types.collection.get"
+        "inn-reach.central-server-item-types.collection.get",
+        "inn-reach.central-server-patron-types.collection.get"
       ]
     },
     {

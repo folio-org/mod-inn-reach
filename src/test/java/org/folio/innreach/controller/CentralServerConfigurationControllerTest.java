@@ -36,6 +36,8 @@ class CentralServerConfigurationControllerTest extends BaseApiControllerTest {
   private static final String AGENCIES_URL = "/inn-reach/central-servers/agencies";
   private static final String INNREACH_ITEMTYPES_URL = "/innreach/v2/contribution/itemtypes";
   private static final String ITEMTYPES_URL = "/inn-reach/central-servers/item-types";
+  private static final String INNREACH_PATRONTYPES_URL = "/innreach/v2/circ/patrontypes";
+  private static final String PATRONTYPES_URL = "/inn-reach/central-servers/patron-types";
 
   @Autowired
   private CentralServerRepository repository;
@@ -167,6 +169,70 @@ class CentralServerConfigurationControllerTest extends BaseApiControllerTest {
     stubGet(INNREACH_ITEMTYPES_URL, "error/d2ir-error-response.json");
 
     getAndExpect(ITEMTYPES_URL, Template.of("central-item-types/cs-item-types-empty-response.json"));
+  }
+
+  @Test
+  void returnPatronTypesForSingleCentralServer() throws Exception {
+    var cs = createCentralServer(CS_TEST_CODE1);
+
+    stubGet(INNREACH_PATRONTYPES_URL, "patron-types/d2ir-patron-types-response-01.json");
+
+    getAndExpect(PATRONTYPES_URL,
+        Template.of("central-patron-types/cs-patron-types-single-server-response.json", cs.getId(), CS_TEST_CODE1));
+  }
+
+  @Test
+  void returnPatronTypesForSeveralCentralServers() throws Exception {
+    var cs1 = createCentralServer(CS_TEST_CODE1);
+    var cs2 = createCentralServer(CS_TEST_CODE2);
+
+    stubGet(INNREACH_PATRONTYPES_URL, xToCodeHeader(CS_TEST_CODE1),
+        "patron-types/d2ir-patron-types-response-01.json");
+    stubGet(INNREACH_PATRONTYPES_URL, xToCodeHeader(CS_TEST_CODE2),
+        "patron-types/d2ir-patron-types-response-01.json");
+
+    getAndExpect(PATRONTYPES_URL,
+        Template.of("central-patron-types/cs-patron-types-two-server-response.json", cs1.getId(), CS_TEST_CODE1,
+            cs2.getId(), CS_TEST_CODE2));
+  }
+
+  @Test
+  void returnEmptyPatronTypesListIfNoCentralServers() throws Exception {
+    getAndExpect(PATRONTYPES_URL, Template.of("central-patron-types/cs-patron-types-empty-response.json"));
+  }
+
+  @Test
+  void returnPatronTypesListForOneServer_and_ignoreInvalidResponseForAnotherServers() throws Exception {
+    var cs1 = createCentralServer(CS_TEST_CODE1);
+    createCentralServer(CS_TEST_CODE2);
+
+    stubGet(INNREACH_PATRONTYPES_URL, xToCodeHeader(CS_TEST_CODE1),
+        "patron-types/d2ir-patron-types-response-01.json");
+    stubGet(INNREACH_PATRONTYPES_URL, xToCodeHeader(CS_TEST_CODE2),
+        "patron-types/d2ir-patron-types-broken-response.json");
+
+    getAndExpect(PATRONTYPES_URL,
+        Template.of("central-patron-types/cs-patron-types-single-server-response.json", cs1.getId(), CS_TEST_CODE1));
+  }
+
+  @Test
+  void returnEmptyPatronTypesList_when_requestIsNotAuthorized() throws Exception {
+    createCentralServer(CS_TEST_CODE1);
+
+    stubFor(WireMock.get(urlEqualTo(INNREACH_PATRONTYPES_URL))
+        .willReturn(aResponse()
+            .withStatus(HttpStatus.UNAUTHORIZED.value())));
+
+    getAndExpect(PATRONTYPES_URL, Template.of("central-patron-types/cs-patron-types-empty-response.json"));
+  }
+
+  @Test
+  void returnEmptyPatronTypesList_when_responseContainsErrors() throws Exception {
+    createCentralServer(CS_TEST_CODE1);
+
+    stubGet(INNREACH_PATRONTYPES_URL, "error/d2ir-error-response.json");
+
+    getAndExpect(PATRONTYPES_URL, Template.of("central-patron-types/cs-patron-types-empty-response.json"));
   }
 
   private CentralServer createCentralServer(String csCode) {

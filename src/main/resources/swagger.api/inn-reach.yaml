@@ -1019,6 +1019,21 @@ paths:
                 $ref: "#/components/schemas/centralServerItemTypesDTO"
         '500':
           $ref: "#/components/responses/trait_response_500"
+  /central-servers/patron-types:
+    get:
+      operationId: getCentralServerPatronTypes
+      description: Get a combined list of patron types available from all configured central servers
+      tags:
+        - central-server-configuration
+      responses:
+        '200':
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/centralServerPatronTypesDTO"
+        '500':
+          $ref: "#/components/responses/trait_response_500"
   /d2ir/getbibrecord/{bibId}/{centralCode}:
     get:
       operationId: getBibRecord
@@ -1232,6 +1247,10 @@ components:
       $ref: schemas/centralServerItemTypesDTO.json
     centralItemTypesDTO:
       $ref: schemas/d2ir/centralItemTypesDTO.json
+    centralServerPatronTypesDTO:
+      $ref: schemas/centralServerPatronTypesDTO.json
+    centralPatronTypesDTO:
+      $ref: schemas/d2ir/centralPatronTypesDTO.json
     bibInfoResponseDTO:
       $ref: schemas/d2ir/bibInfoResponseDTO.json
     innReachResponseDTO:

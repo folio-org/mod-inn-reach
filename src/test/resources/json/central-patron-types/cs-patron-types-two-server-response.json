@@ -1,0 +1,97 @@
+{
+  "centralServerPatronTypes": [
+    {
+      "centralServerId": "%s",
+      "centralServerCode": "%s",
+      "patronTypes": [
+        {
+          "centralPatronType": 200,
+          "description": "Patron"
+        },
+        {
+          "centralPatronType": 201,
+          "description": "Staff"
+        },
+        {
+          "centralPatronType": 202,
+          "description": "Non-Requesting"
+        },
+        {
+          "centralPatronType": 219,
+          "description": "IR Walk-in Public Adult"
+        },
+        {
+          "centralPatronType": 220,
+          "description": "IR Walk-in Public Juv/School"
+        },
+        {
+          "centralPatronType": 225,
+          "description": "IR Public Library Adult"
+        },
+        {
+          "centralPatronType": 226,
+          "description": "IR Public Library Child"
+        },
+        {
+          "centralPatronType": 227,
+          "description": "IR Library Staff"
+        },
+        {
+          "centralPatronType": 229,
+          "description": "IR Academic Student"
+        },
+        {
+          "centralPatronType": 236,
+          "description": "IR No Privileges"
+        }
+      ]
+    },
+    {
+      "centralServerId": "%s",
+      "centralServerCode": "%s",
+      "patronTypes": [
+        {
+          "centralPatronType": 200,
+          "description": "Patron"
+        },
+        {
+          "centralPatronType": 201,
+          "description": "Staff"
+        },
+        {
+          "centralPatronType": 202,
+          "description": "Non-Requesting"
+        },
+        {
+          "centralPatronType": 219,
+          "description": "IR Walk-in Public Adult"
+        },
+        {
+          "centralPatronType": 220,
+          "description": "IR Walk-in Public Juv/School"
+        },
+        {
+          "centralPatronType": 225,
+          "description": "IR Public Library Adult"
+        },
+        {
+          "centralPatronType": 226,
+          "description": "IR Public Library Child"
+        },
+        {
+          "centralPatronType": 227,
+          "description": "IR Library Staff"
+        },
+        {
+          "centralPatronType": 229,
+          "description": "IR Academic Student"
+        },
+        {
+          "centralPatronType": 236,
+          "description": "IR No Privileges"
+        }
+      ]
+    }
+  ],
+  "totalRecords": 2
+}

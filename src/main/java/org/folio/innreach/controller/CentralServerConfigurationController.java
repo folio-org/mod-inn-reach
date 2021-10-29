@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.folio.innreach.domain.service.CentralServerConfigurationService;
 import org.folio.innreach.dto.CentralServerAgenciesDTO;
 import org.folio.innreach.dto.CentralServerItemTypesDTO;
+import org.folio.innreach.dto.CentralServerPatronTypesDTO;
 import org.folio.innreach.rest.resource.CentralServerConfigurationApi;
 
 @Log4j2
@@ -36,6 +37,14 @@ public class CentralServerConfigurationController implements CentralServerConfig
     var itemTypes = service.getAllItemTypes();
 
     return ResponseEntity.ok(itemTypes);
+  }
+
+  @Override
+  @GetMapping("/patron-types")
+  public ResponseEntity<CentralServerPatronTypesDTO> getCentralServerPatronTypes() {
+    var patronTypes = service.getAllPatronTypes();
+
+    return ResponseEntity.ok(patronTypes);
   }
 
 }
