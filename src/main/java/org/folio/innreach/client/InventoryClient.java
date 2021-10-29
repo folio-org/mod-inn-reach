@@ -5,6 +5,8 @@ import java.util.UUID;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 
 import org.folio.innreach.config.FolioFeignClientConfig;
 import org.folio.innreach.domain.dto.folio.ResultList;
@@ -22,4 +24,10 @@ public interface InventoryClient {
 
   @GetMapping("/items?query=hrid=={hrId}")
   ResultList<InventoryItemDTO> getItemsByHrId(@PathVariable("hrId") String hrId);
+
+  @GetMapping("/items?query=barcode=={barcode}")
+  InventoryItemDTO getItemByBarcode(@PathVariable("barcode") String barcode);
+
+  @PutMapping("/items/{itemId}")
+  void updateItem(@PathVariable("itemId") UUID itemId, @RequestBody InventoryItemDTO inventoryItem);
 }

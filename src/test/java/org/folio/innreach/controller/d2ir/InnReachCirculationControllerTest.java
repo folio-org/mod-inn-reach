@@ -1,17 +1,27 @@
 package org.folio.innreach.controller.d2ir;
 
+import static org.folio.innreach.domain.CirculationOperation.ITEM_SHIPPED;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
 import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TEST_METHOD;
 import static org.springframework.test.context.jdbc.SqlMergeMode.MergeMode.MERGE;
 
 import static org.folio.innreach.domain.CirculationOperation.PATRON_HOLD;
 import static org.folio.innreach.fixture.CirculationFixture.createTransactionHoldDTO;
 
+import org.folio.innreach.client.InventoryClient;
+import org.folio.innreach.domain.dto.folio.inventory.InventoryItemDTO;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.context.jdbc.Sql;
@@ -40,6 +50,9 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
 
   @Autowired
   private InnReachTransactionRepository repository;
+
+  @MockBean
+  private InventoryClient inventoryClient;
 
   @Test
   void processCreatePatronHoldCirculationRequest_and_createNewPatronHold() {
@@ -92,6 +105,57 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     assertEquals(transactionHoldDTO.getTransactionTime(), innReachTransaction.getHold().getTransactionTime());
     assertEquals(transactionHoldDTO.getPatronId(), innReachTransaction.getHold().getPatronId());
     assertEquals(transactionHoldDTO.getPatronAgencyCode(), innReachTransaction.getHold().getPatronAgencyCode());
+  }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
+  })
+  void processItemShippedCircRequest_updateFolioItem_whenAssociatedItemExists() {
+    when(inventoryClient.getItemByBarcode(any())).thenReturn(InventoryItemDTO.builder().build());
+    when(inventoryClient.getItemById(any())).thenReturn(InventoryItemDTO.builder().build());
+
+    var transactionHoldDTO = createTransactionHoldDTO();
+
+    var responseEntity = testRestTemplate.postForEntity(
+      "/inn-reach/d2ir/circ/{circulationOperationName}/{trackingId}/{centralCode}",
+      transactionHoldDTO, InnReachResponseDTO.class, ITEM_SHIPPED.getOperationName(), PRE_POPULATED_TRACKING_ID, PRE_POPULATED_CENTRAL_CODE);
+
+    verify(inventoryClient).updateItem(any(), any());
+
+    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+
+    var responseEntityBody = responseEntity.getBody();
+
+    assertNotNull(responseEntityBody);
+    assertEquals("ok", responseEntityBody.getStatus());
+
+  }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
+  })
+  void processItemShippedCircRequest_doNotUpdateFolioItem_whenAssociatedItemDoesNotExist() {
+    when(inventoryClient.getItemByBarcode(any())).thenReturn(InventoryItemDTO.builder().build());
+    when(inventoryClient.getItemById(any())).thenReturn(null);
+
+    var transactionHoldDTO = createTransactionHoldDTO();
+
+    var responseEntity = testRestTemplate.postForEntity(
+      "/inn-reach/d2ir/circ/{circulationOperationName}/{trackingId}/{centralCode}",
+      transactionHoldDTO, InnReachResponseDTO.class, ITEM_SHIPPED.getOperationName(), PRE_POPULATED_TRACKING_ID, PRE_POPULATED_CENTRAL_CODE);
+
+    verify(inventoryClient, times(0)).updateItem(any(), any());
+
+    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+
+    var responseEntityBody = responseEntity.getBody();
+
+    assertNotNull(responseEntityBody);
+    assertEquals("ok", responseEntityBody.getStatus());
   }
 
   @Test

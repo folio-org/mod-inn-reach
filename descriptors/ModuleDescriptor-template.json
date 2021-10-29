@@ -327,6 +327,12 @@
           ]
         },
         {
+          //todo - add to permissionSets block
+          "methods": ["POST"],
+          "pathPattern": "/inn-reach/d2ir/circ/{circulationOperationName}/{trackingId}/{centralCode}",
+          "permissionsRequired": ["inn-reach.d2ir.circulation.item.post"]
+        },
+        {
           "methods": ["GET"],
           "pathPattern": "/inn-reach/central-servers/agencies",
           "permissionsRequired": ["inn-reach.central-server-agencies.collection.get"]

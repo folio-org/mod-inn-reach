@@ -16,6 +16,7 @@ public class InventoryItemDTO {
 
   private UUID id;
   private String hrId;
+  private String barcode;
 
   @JsonUnwrapped
   private InventoryItemStatus status;
