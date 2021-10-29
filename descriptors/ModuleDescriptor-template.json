@@ -333,6 +333,11 @@
         },
         {
           "methods": ["GET"],
+          "pathPattern": "/inn-reach/central-servers/item-types",
+          "permissionsRequired": ["inn-reach.central-server-item-types.collection.get"]
+        },
+        {
+          "methods": ["GET"],
           "pathPattern": "/inn-reach/transactions",
           "permissionsRequired": ["inn-reach.inn-reach-transactions.collection.get"]
         }
@@ -807,6 +812,20 @@
       "description" : "Get a collection of all known agencies from available central servers"
     },
     {
+      "permissionName" : "inn-reach.central-server-item-types.collection.get",
+      "displayName" : "get a collection of all known item types from available central servers",
+      "description" : "Get a collection of all known item types from available central servers"
+    },
+    {
+      "permissionName" : "inn-reach.central-server.sys-configuration.all",
+      "displayName" : "inn reach API module - all permissions of central server system configuration",
+      "description" : "All permissions of central server system configuration scope",
+      "subPermissions" : [
+        "inn-reach.central-server-agencies.collection.get",
+        "inn-reach.central-server-item-types.collection.get"
+      ]
+    },
+    {
       "permissionName" : "inn-reach.inn-reach-transactions.collection.get",
       "displayName" : "get a collection of existing INN-Reach Transactions",
       "description" : "Fet a collection of existing INN-Reach Transactions"
@@ -843,7 +862,7 @@
         "inn-reach.d2ir.inn-reach-transaction.all",
         "inn-reach.d2ir.bib-info.all",
         "inn-reach.d2ir.patron-info.all",
-        "inn-reach.central-server-agencies.collection.get",
+        "inn-reach.central-server.sys-configuration.all",
         "inn-reach.inn-reach-transactions.all"
       ]
     }
