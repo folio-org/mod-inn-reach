@@ -25,13 +25,17 @@ import org.folio.innreach.domain.service.CentralServerService;
 import org.folio.innreach.dto.AgenciesPerCentralServerDTO;
 import org.folio.innreach.dto.Agency;
 import org.folio.innreach.dto.CentralItemTypesDTO;
+import org.folio.innreach.dto.CentralPatronTypesDTO;
 import org.folio.innreach.dto.CentralServerAgenciesDTO;
 import org.folio.innreach.dto.CentralServerDTO;
 import org.folio.innreach.dto.CentralServerItemTypesDTO;
+import org.folio.innreach.dto.CentralServerPatronTypesDTO;
 import org.folio.innreach.dto.InnReachResponseDTO;
 import org.folio.innreach.dto.ItemType;
 import org.folio.innreach.dto.ItemTypesPerCentralServerDTO;
 import org.folio.innreach.dto.LocalServerAgenciesDTO;
+import org.folio.innreach.dto.PatronType;
+import org.folio.innreach.dto.PatronTypesPerCentralServerDTO;
 import org.folio.innreach.external.exception.InnReachException;
 import org.folio.innreach.external.service.InnReachExternalService;
 import org.folio.innreach.util.JsonHelper;
@@ -44,6 +48,7 @@ public class CentralServerConfigurationServiceImpl implements CentralServerConfi
 
   private static final String INN_REACH_LOCAL_SERVERS_URI = "/contribution/localservers";
   private static final String INN_REACH_ITEM_TYPES_URI = "/contribution/itemtypes";
+  private static final String INN_REACH_PATRON_TYPES_URI = "/circ/patrontypes";
 
   private final CentralServerService centralServerService;
   private final InnReachExternalService innReachService;
@@ -67,8 +72,18 @@ public class CentralServerConfigurationServiceImpl implements CentralServerConfi
         .centralServerItemTypes(csItemTypes)
         .totalRecords(csItemTypes.size());
   }
-  
-  private <Rec, CSResp extends InnReachResponseDTO> List<Rec> loadRecordsPerServer(String uri, 
+
+  @Override
+  public CentralServerPatronTypesDTO getAllPatronTypes() {
+    var csPatronTypes = loadRecordsPerServer(INN_REACH_PATRON_TYPES_URI, CentralPatronTypesDTO.class,
+                            this::toPatronTypesOrNull);
+
+    return new CentralServerPatronTypesDTO()
+        .centralServerPatronTypes(csPatronTypes)
+        .totalRecords(csPatronTypes.size());
+  }
+
+  private <Rec, CSResp extends InnReachResponseDTO> List<Rec> loadRecordsPerServer(String uri,
       Class<CSResp> centralServerRecordType, Function<Pair<CentralServerDTO, CSResp>, Rec> responseToRecordsMapper) {
 
     var servers = centralServerService.getAllCentralServers(0, Integer.MAX_VALUE).getCentralServers();
@@ -100,6 +115,16 @@ public class CentralServerConfigurationServiceImpl implements CentralServerConfi
     log.info("Number of item types received: {}", itList.size());
 
     return isNotEmpty(itList) ? createItemTypes(cs, itList) : null;
+  }
+
+  private PatronTypesPerCentralServerDTO toPatronTypesOrNull(
+      Pair<CentralServerDTO, CentralPatronTypesDTO> centralServerWithResponse) {
+    var ptList = emptyIfNull(centralServerWithResponse.getRight().getPatronTypeList());
+    var cs = centralServerWithResponse.getLeft();
+
+    log.info("Number of patron types received: {}", ptList.size());
+
+    return isNotEmpty(ptList) ? createPatronTypes(cs, ptList) : null;
   }
 
   private <CSResp extends InnReachResponseDTO> Function<CentralServerDTO, Pair<CentralServerDTO, CSResp>> retrieveAllConfigRecords(
@@ -146,6 +171,13 @@ public class CentralServerConfigurationServiceImpl implements CentralServerConfi
         .centralServerCode(cs.getCentralServerCode())
         .centralServerId(cs.getId())
         .itemTypes(itemTypes);
+  }
+
+  private PatronTypesPerCentralServerDTO createPatronTypes(CentralServerDTO cs, List<PatronType> patronTypes) {
+    return new PatronTypesPerCentralServerDTO()
+        .centralServerCode(cs.getCentralServerCode())
+        .centralServerId(cs.getId())
+        .patronTypes(patronTypes);
   }
 
   private static boolean isOk(InnReachResponseDTO innReachResponse) {
