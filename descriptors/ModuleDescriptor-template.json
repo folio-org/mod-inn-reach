@@ -839,7 +839,7 @@
     {
       "permissionName" : "inn-reach.inn-reach-transactions.collection.get",
       "displayName" : "get a collection of existing INN-Reach Transactions",
-      "description" : "Fet a collection of existing INN-Reach Transactions"
+      "description" : "Get a collection of existing INN-Reach Transactions"
     },
     {
       "permissionName" : "inn-reach.inn-reach-transactions.all",
