@@ -1,0 +1,76 @@
+{
+  "centralServerItemTypes":
+  [
+    {
+      "centralServerId": "%s",
+      "centralServerCode": "%s",
+      "itemTypes":
+      [
+        {
+          "centralItemType": 200,
+          "description": "Book"
+        },
+        {
+          "centralItemType": 201,
+          "description": "Av"
+        },
+        {
+          "centralItemType": 202,
+          "description": "Non-Circulation"
+        },
+        {
+          "centralItemType": 210,
+          "description": "Requestable 4-week"
+        },
+        {
+          "centralItemType": 211,
+          "description": "Non-Requestable"
+        },
+        {
+          "centralItemType": 215,
+          "description": "Requestable 7-day"
+        },
+        {
+          "centralItemType": 217,
+          "description": "Requestable 7-day non-renew"
+        }
+      ]
+    },
+    {
+      "centralServerId": "%s",
+      "centralServerCode": "%s",
+      "itemTypes":
+      [
+        {
+          "centralItemType": 200,
+          "description": "Book"
+        },
+        {
+          "centralItemType": 201,
+          "description": "Av"
+        },
+        {
+          "centralItemType": 202,
+          "description": "Non-Circulation"
+        },
+        {
+          "centralItemType": 210,
+          "description": "Requestable 4-week"
+        },
+        {
+          "centralItemType": 211,
+          "description": "Non-Requestable"
+        },
+        {
+          "centralItemType": 215,
+          "description": "Requestable 7-day"
+        },
+        {
+          "centralItemType": 217,
+          "description": "Requestable 7-day non-renew"
+        }
+      ]
+    }
+  ],
+  "totalRecords": 2
+}

@@ -344,6 +344,16 @@
           "methods": ["GET"],
           "pathPattern": "/inn-reach/central-servers/agencies",
           "permissionsRequired": ["inn-reach.central-server-agencies.collection.get"]
+        },
+        {
+          "methods": ["GET"],
+          "pathPattern": "/inn-reach/central-servers/item-types",
+          "permissionsRequired": ["inn-reach.central-server-item-types.collection.get"]
+        },
+        {
+          "methods": ["GET"],
+          "pathPattern": "/inn-reach/central-servers/patron-types",
+          "permissionsRequired": ["inn-reach.central-server-patron-types.collection.get"]
         }
       ]
     },
@@ -820,6 +830,26 @@
       "description" : "Get a collection of all known agencies from available central servers"
     },
     {
+      "permissionName" : "inn-reach.central-server-item-types.collection.get",
+      "displayName" : "get a collection of all known item types from available central servers",
+      "description" : "Get a collection of all known item types from available central servers"
+    },
+    {
+      "permissionName" : "inn-reach.central-server-patron-types.collection.get",
+      "displayName" : "get a collection of all known patron types from available central servers",
+      "description" : "Get a collection of all known patron types from available central servers"
+    },
+    {
+      "permissionName" : "inn-reach.central-server.sys-configuration.all",
+      "displayName" : "inn reach API module - all permissions of central server system configuration",
+      "description" : "All permissions of central server system configuration scope",
+      "subPermissions" : [
+        "inn-reach.central-server-agencies.collection.get",
+        "inn-reach.central-server-item-types.collection.get",
+        "inn-reach.central-server-patron-types.collection.get"
+      ]
+    },
+    {
       "permissionName" : "inn-reach.all",
       "displayName" : "inn reach API module - all permissions",
       "description" : "All permissions for inn reach",
@@ -843,7 +873,7 @@
         "inn-reach.d2ir.inn-reach-transaction.all",
         "inn-reach.d2ir.bib-info.all",
         "inn-reach.d2ir.patron-info.all",
-        "inn-reach.central-server-agencies.collection.get"
+        "inn-reach.central-server.sys-configuration.all"
       ]
     }
   ],
