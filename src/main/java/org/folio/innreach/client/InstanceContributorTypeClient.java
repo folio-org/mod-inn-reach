@@ -4,8 +4,10 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
 import java.util.UUID;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -25,6 +27,8 @@ public interface InstanceContributorTypeClient {
 
   @Builder
   @Data
+  @NoArgsConstructor
+  @AllArgsConstructor
   class NameType {
     private UUID id;
     private String name;
