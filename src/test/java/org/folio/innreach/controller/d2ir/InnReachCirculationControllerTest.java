@@ -1,5 +1,9 @@
 package org.folio.innreach.controller.d2ir;
 
+import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
+import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
+import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
+import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -13,18 +17,22 @@ import static org.springframework.test.context.jdbc.SqlMergeMode.MergeMode.MERGE
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import static org.folio.innreach.controller.CentralServerAgencyControllerTest.INNREACH_LOCALSERVERS_URL;
 import static org.folio.innreach.domain.CirculationOperation.PATRON_HOLD;
 import static org.folio.innreach.fixture.CirculationFixture.createTransactionHoldDTO;
 import static org.folio.innreach.util.UUIDHelper.toStringWithoutHyphens;
 
+import java.util.Collections;
+import java.util.Map;
 import java.util.UUID;
 
+import com.github.tomakehurst.wiremock.client.MappingBuilder;
+import com.github.tomakehurst.wiremock.client.WireMock;
 import org.awaitility.Duration;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.jdbc.Sql;
@@ -38,6 +46,7 @@ import org.folio.innreach.dto.InnReachResponseDTO;
 import org.folio.innreach.mapper.InnReachTransactionPickupLocationMapper;
 import org.folio.innreach.repository.InnReachTransactionRepository;
 import org.folio.innreach.util.JsonHelper;
+import org.folio.spring.integration.XOkapiHeaders;
 
 @Sql(
   scripts = {
@@ -49,6 +58,7 @@ import org.folio.innreach.util.JsonHelper;
 @SqlMergeMode(MERGE)
 class InnReachCirculationControllerTest extends BaseApiControllerTest {
 
+  public static final String INNREACH_LOCALSERVERS_URL = "/innreach/v2/contribution/localservers";
   public static final String HRID_SETTINGS_URL = "/hrid-settings-storage/hrid-settings";
   public static final String HOLDINGS_URL = "/holdings-storage/holdings";
   public static final String INSTANCES_URL = "/instance-storage/instances";
@@ -229,6 +239,32 @@ class InnReachCirculationControllerTest extends BaseApiControllerTest {
 
     await().atMost(Duration.TEN_SECONDS).untilAsserted(() ->
       verify(requestStorageClient).sendRequest(any()));
+  }
+
+  protected static void stubGet(String urlTemplate, String responsePath, Object... pathVariables) {
+    stubGet(String.format(urlTemplate, pathVariables), Collections.emptyMap(), responsePath);
+  }
+
+  protected static void stubGet(String url, Map<String, String> requestHeaders, String responsePath) {
+    MappingBuilder getBuilder = WireMock.get(urlEqualTo(url));
+
+    requestHeaders.forEach((name, value) -> getBuilder.withHeader(name, equalTo(value)));
+
+    stubFor(getBuilder
+      .willReturn(aResponse()
+        .withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+        .withHeader(XOkapiHeaders.URL, wm.baseUrl())
+        .withBodyFile(responsePath)));
+  }
+
+  protected static void stubPost(String urlTemplate, String responsePath, Object... pathVariables) {
+    stubPost(String.format(urlTemplate, pathVariables), responsePath);
+  }
+
+  public HttpHeaders getOkapiHeaders() {
+    HttpHeaders headers = new HttpHeaders();
+    headers.add(XOkapiHeaders.URL, wm.baseUrl());
+    return headers;
   }
 
 }

@@ -69,7 +69,7 @@ public class AgencyMappingServiceImpl implements AgencyMappingService {
   }
 
   private LocalServer getLocalServerByAgencyCode(UUID centralServerId, String agencyCode) {
-    var localServers = agencyService.getLocalServers(centralServerId);
+/*    var localServers = agencyService.getLocalServers(centralServerId);
 
     for (var localServer : localServers) {
       var agencies = localServer.getAgencyList();
@@ -78,7 +78,7 @@ public class AgencyMappingServiceImpl implements AgencyMappingService {
       if (agency.isPresent()) {
         return localServer;
       }
-    }
+    }*/
 
     throw new IllegalArgumentException("Central agency for code " + agencyCode + " is not found");
   }
