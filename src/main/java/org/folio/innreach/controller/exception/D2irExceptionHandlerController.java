@@ -2,7 +2,7 @@ package org.folio.innreach.controller.exception;
 
 import lombok.extern.log4j.Log4j2;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -15,12 +15,12 @@ public class D2irExceptionHandlerController {
 
   @ExceptionHandler(Exception.class)
   @ResponseStatus(HttpStatus.BAD_REQUEST)
-  public InnReachResponseDTO handleException(Exception e) {
-    log.warn(e.getMessage());
+  public ResponseEntity<InnReachResponseDTO> handleException(Exception e) {
+    log.warn("Handling exception", e.getMessage());
     var response = new InnReachResponseDTO();
     response.setStatus("failed");
     response.setReason(e.getMessage());
-    return response;
+    return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
   }
 
 }

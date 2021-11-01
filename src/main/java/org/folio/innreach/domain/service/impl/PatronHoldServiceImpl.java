@@ -49,14 +49,17 @@ public class PatronHoldServiceImpl implements PatronHoldService {
     var hold = (TransactionPatronHold) transaction.getHold();
     var hridSettings = inventoryStorageService.getHridSettings();
     var centralServer = centralServerService.getCentralServerByCentralCode(transaction.getCentralServerCode());
-
-    var instance = createInstance(transaction, hold, hridSettings);
-
-    createHoldingItem(transaction, hold, hridSettings, centralServer, instance);
-
-    var patronId = UUIDHelper.fromStringWithoutHyphens(hold.getPatronId());
     var locationCode = hold.getPickupLocation().getPickupLocCode();
     var servicePointId = getServicePointIdByCode(locationCode);
+    var patronId = UUIDHelper.fromStringWithoutHyphens(hold.getPatronId());
+
+    var instance = prepareInstance(transaction, hold, hridSettings);
+    var holding = prepareHolding(centralServer.getId(), transaction, hold, hridSettings);
+    var item = prepareItem(centralServer, transaction, hold, hridSettings);
+
+    instance = inventoryStorageService.createInstance(instance);
+
+    createHoldingAndItem(instance, holding, item, hold);
 
     requestService.createItemRequest(transaction, centralServer.getId(), servicePointId, patronId);
   }
@@ -70,51 +73,50 @@ public class PatronHoldServiceImpl implements PatronHoldService {
     var hridSettings = inventoryStorageService.getHridSettings();
     var centralServer = centralServerService.getCentralServerByCentralCode(transaction.getCentralServerCode());
 
-    var instanceHrid = getInstanceHrid(transaction, hridSettings);
+    var instance = fetchInstance(transaction, hridSettings);
+    var holding = prepareHolding(centralServer.getId(), transaction, hold, hridSettings);
+    var item = prepareItem(centralServer, transaction, hold, hridSettings);
 
-    var instance = fetchInstance(instanceHrid);
-
-    createHoldingItem(transaction, hold, hridSettings, centralServer, instance);
+    createHoldingAndItem(instance, holding, item, hold);
 
     requestService.moveItemRequest(transaction);
   }
 
-  private Instance createInstance(InnReachTransaction transaction, TransactionPatronHold hold, HridSettingsClient.HridSettings hridSettings) {
+  private Instance prepareInstance(InnReachTransaction transaction, TransactionPatronHold hold, HridSettingsClient.HridSettings hridSettings) {
     var instanceHrid = getInstanceHrid(transaction, hridSettings);
+    var instanceTypeId = getInstanceTypeId();
+    var author = getInstanceContributor();
 
-    var instance = new Instance()
+    return new Instance()
       .hrid(instanceHrid)
-      .instanceTypeId(getInstanceTypeId())
+      .instanceTypeId(instanceTypeId)
       .title(hold.getTitle())
-      .addContributorsItem(getInstanceContributor())
+      .addContributorsItem(author)
       .source(RECORD_SOURCE)
       .staffSuppress(true)
       .discoverySuppress(true);
-
-    return inventoryStorageService.createInstance(instance);
   }
 
   private String getInstanceHrid(InnReachTransaction transaction, HridSettingsClient.HridSettings hridSettings) {
-    return hridSettings.getInstances().getPrefix() + transaction.getTrackingId() + transaction.getCentralServerCode();
+    return hridSettings.getInstances().getPrefix()
+      + transaction.getTrackingId()
+      + transaction.getCentralServerCode();
   }
 
-  private Instance fetchInstance(String instanceHrid) {
+  private Instance fetchInstance(InnReachTransaction transaction, HridSettingsClient.HridSettings hridSettings) {
+    var instanceHrid = getInstanceHrid(transaction, hridSettings);
+
     return inventoryStorageService.queryInstanceByHrid(instanceHrid);
   }
 
-  private void createHoldingItem(InnReachTransaction transaction,
-                                 TransactionPatronHold hold,
-                                 HridSettingsClient.HridSettings hridSettings,
-                                 CentralServerDTO centralServer,
-                                 Instance instance) {
-
-    var holding = prepareHolding(centralServer.getId(), transaction, hold, hridSettings);
+  private void createHoldingAndItem(Instance instance, Holding holding, Item item, TransactionPatronHold hold) {
     holding.setInstanceId(instance.getId());
     holding = inventoryStorageService.createHolding(holding);
 
-    var item = prepareItem(centralServer, hold);
     item.setHoldingsRecordId(holding.getId());
     inventoryStorageService.createItem(item);
+
+    hold.setItemId(item.getHrid());
   }
 
   private Holding prepareHolding(UUID centralServerId, InnReachTransaction transaction, TransactionPatronHold hold, HridSettingsClient.HridSettings settings) {
@@ -132,10 +134,12 @@ public class PatronHoldServiceImpl implements PatronHoldService {
       .permanentLocationId(locationId);
   }
 
-  private Item prepareItem(CentralServerDTO centralServer, TransactionPatronHold hold) {
+  private Item prepareItem(CentralServerDTO centralServer, InnReachTransaction transaction, TransactionPatronHold hold, HridSettingsClient.HridSettings settings) {
     var centralItemType = hold.getCentralItemType();
     var centralServerId = centralServer.getId();
-    var itemHrid = hold.getItemId();
+    var itemHrid = settings.getItems().getPrefix()
+      + transaction.getTrackingId()
+      + hold.getItemAgencyCode();
 
     var materialTypeId =
       materialTypeMappingService.getMappingByCentralType(centralServerId, centralItemType).getMaterialTypeId();

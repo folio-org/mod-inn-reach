@@ -7,10 +7,10 @@ import static org.mockito.Mockito.when;
 
 import static org.folio.innreach.fixture.AgencyLocationMappingFixture.deserializeMapping;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-import org.junit.Ignore;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -18,7 +18,7 @@ import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import org.folio.innreach.domain.service.AgencyService;
+import org.folio.innreach.domain.service.CentralServerConfigurationService;
 import org.folio.innreach.dto.Agency;
 import org.folio.innreach.dto.LocalServer;
 import org.folio.innreach.mapper.AgencyLocationMappingMapper;
@@ -26,7 +26,6 @@ import org.folio.innreach.mapper.AgencyLocationMappingMapperImpl;
 import org.folio.innreach.mapper.MappingMethods;
 import org.folio.innreach.repository.AgencyLocationMappingRepository;
 
-@Ignore
 @ExtendWith(MockitoExtension.class)
 class AgencyMappingServiceImplTest {
 
@@ -47,7 +46,7 @@ class AgencyMappingServiceImplTest {
   @Spy
   private AgencyLocationMappingMapper mapper = new AgencyLocationMappingMapperImpl(new MappingMethods());
   @Mock
-  private AgencyService agencyService;
+  private CentralServerConfigurationService configurationService;
 
   @Test
   void getLocationIdByAgencyCode_usingAgencyCodeMapping() {
@@ -71,7 +70,7 @@ class AgencyMappingServiceImplTest {
     var localServer = new LocalServer().localCode(MAPPED_LOCAL_CODE).addAgencyListItem(unmappedAgency);
 
     when(repository.fetchOneByCsId(any())).thenReturn(Optional.of(mapping));
-//    when(agencyService.getLocalServers(any())).thenReturn(List.of(localServer));
+    when(configurationService.getLocalServers(any())).thenReturn(List.of(localServer));
 
     var locationId = service.getLocationIdByAgencyCode(UUID.randomUUID(), UNMAPPED_AGENCY_CODE);
 
@@ -88,6 +87,7 @@ class AgencyMappingServiceImplTest {
     var unmappedLocalServer = new LocalServer().localCode(UNMAPPED_LOCAL_CODE).addAgencyListItem(unmappedAgency);
 
     when(repository.fetchOneByCsId(any())).thenReturn(Optional.of(mapping));
+    when(configurationService.getLocalServers(any())).thenReturn(List.of(unmappedLocalServer));
 
     var locationId = service.getLocationIdByAgencyCode(UUID.randomUUID(), UNMAPPED_AGENCY_CODE);
 

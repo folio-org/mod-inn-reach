@@ -18,7 +18,7 @@ import org.folio.innreach.domain.entity.AgencyLocationLscMapping;
 import org.folio.innreach.domain.entity.AgencyLocationMapping;
 import org.folio.innreach.domain.exception.EntityNotFoundException;
 import org.folio.innreach.domain.service.AgencyMappingService;
-import org.folio.innreach.domain.service.AgencyService;
+import org.folio.innreach.domain.service.CentralServerConfigurationService;
 import org.folio.innreach.dto.AgencyLocationAcMappingDTO;
 import org.folio.innreach.dto.AgencyLocationLscMappingDTO;
 import org.folio.innreach.dto.AgencyLocationMappingDTO;
@@ -37,7 +37,7 @@ public class AgencyMappingServiceImpl implements AgencyMappingService {
 
   private final AgencyLocationMappingRepository repository;
   private final AgencyLocationMappingMapper mapper;
-  private final AgencyService agencyService;
+  private final CentralServerConfigurationService configurationService;
 
   @Override
   public AgencyLocationMappingDTO getMapping(UUID centralServerId) {
@@ -69,7 +69,7 @@ public class AgencyMappingServiceImpl implements AgencyMappingService {
   }
 
   private LocalServer getLocalServerByAgencyCode(UUID centralServerId, String agencyCode) {
-/*    var localServers = agencyService.getLocalServers(centralServerId);
+    var localServers = configurationService.getLocalServers(centralServerId);
 
     for (var localServer : localServers) {
       var agencies = localServer.getAgencyList();
@@ -78,7 +78,7 @@ public class AgencyMappingServiceImpl implements AgencyMappingService {
       if (agency.isPresent()) {
         return localServer;
       }
-    }*/
+    }
 
     throw new IllegalArgumentException("Central agency for code " + agencyCode + " is not found");
   }
