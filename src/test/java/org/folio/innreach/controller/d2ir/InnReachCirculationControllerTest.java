@@ -84,7 +84,7 @@ class InnReachCirculationControllerTest extends BaseApiControllerTest {
   private static final UUID PRE_POPULATED_REQUEST_ID = UUID.fromString("ea11eba7-3c0f-4d15-9cca-c8608cd6bc8a");
   private static final UUID NEW_REQUEST_ID = UUID.fromString("89105c06-dbdb-4aa0-9695-d4d19c733270");
 
-  private static final String ITEM_HRID = "it00000000001";
+  private static final String ITEM_HRID = "itnewtrackingid5east";
   private static final String ITEM_ID = "45b706c2-63ff-4a01-b7c2-5483f19b8c8f";
 
   @Autowired
@@ -179,7 +179,6 @@ class InnReachCirculationControllerTest extends BaseApiControllerTest {
   })
   void patronHold_updateVirtualItems() throws Exception {
     var transactionHoldDTO = createTransactionHoldDTO();
-    transactionHoldDTO.setItemId(ITEM_HRID);
     transactionHoldDTO.setItemAgencyCode(PRE_POPULATED_CENTRAL_AGENCY_CODE);
     transactionHoldDTO.setCentralItemType(PRE_POPULATED_CENTRAL_ITEM_TYPE);
 
@@ -188,7 +187,7 @@ class InnReachCirculationControllerTest extends BaseApiControllerTest {
     stubGet(INNREACH_LOCALSERVERS_URL, "agency-codes/d2ir-local-servers-response-01.json");
     stubPost(HOLDINGS_URL, "inventory-storage/holding-response.json");
     stubPost(ITEMS_URL, "inventory-storage/item-response.json");
-    stubGet(QUERY_INVENTORY_ITEM_BY_HRID_URL_TEMPLATE, "inventory/query-items-response.json", ITEM_HRID);
+    stubGet(QUERY_INVENTORY_ITEM_BY_HRID_URL_TEMPLATE, "inventory/query-items-response.json", "ittracking15east");
     stubGet(QUERY_REQUEST_BY_ITEM_ID_URL_TEMPLATE, "request-storage/empty-requests-response.json", ITEM_ID);
     stubPost(MOVE_CIRCULATION_REQUEST_URL_TEMPLATE, "request-storage/item-request-response.json", PRE_POPULATED_REQUEST_ID);
 
@@ -198,7 +197,7 @@ class InnReachCirculationControllerTest extends BaseApiControllerTest {
         .headers(getOkapiHeaders()))
       .andExpect(status().isOk());
 
-    await().atMost(Duration.TEN_SECONDS).untilAsserted(() ->
+    await().atMost(Duration.FIVE_MINUTES).untilAsserted(() ->
       verify(repository).save(
         argThat((InnReachTransaction t) -> NEW_REQUEST_ID.equals(t.getHold().getFolioRequestId()))));
   }
@@ -258,7 +257,15 @@ class InnReachCirculationControllerTest extends BaseApiControllerTest {
   }
 
   protected static void stubPost(String urlTemplate, String responsePath, Object... pathVariables) {
-    stubPost(String.format(urlTemplate, pathVariables), responsePath);
+    var url = String.format(urlTemplate, pathVariables);
+
+    MappingBuilder builder = WireMock.post(urlEqualTo(url));
+
+    stubFor(builder
+      .willReturn(aResponse()
+        .withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+        .withHeader(XOkapiHeaders.URL, wm.baseUrl())
+        .withBodyFile(responsePath)));
   }
 
   public HttpHeaders getOkapiHeaders() {
