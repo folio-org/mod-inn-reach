@@ -3,28 +3,51 @@
   "type": "object",
   "properties": {
     "id": {
-      "description": "Transaction Hold id",
+      "description": "Transaction id",
       "type": "string",
       "format": "UUID"
     },
     "trackingId": {
-      "description": "Transaction tracking id",
+      "description": "ID for transaction tracking",
       "type": "string"
     },
     "centralServerCode": {
-      "description": "Central server code",
+      "description": "Unique code that identifies the central server",
       "type": "string"
     },
     "state": {
       "description": "Transaction state",
-      "type": "string"
+      "type": "string",
+      "enum" : [
+        "ITEM_HOLD",
+        "PATRON_HOLD",
+        "LOCAL_HOLD",
+        "BORROWER_RENEW",
+        "BORROWING_SITE_CANCEL",
+        "ITEM_IN_TRANSIT",
+        "RECEIVE_UNANNOUNCED",
+        "RETURN_UNCIRCULATED",
+        "CLAIMS_RETURNED",
+        "ITEM_RECEIVED",
+        "ITEM_SHIPPED",
+        "LOCAL_CHECKOUT",
+        "CANCEL_REQUEST",
+        "FINAL_CHECKIN",
+        "RECALL",
+        "TRANSFER"
+      ]
     },
     "type": {
       "description": "Transaction type",
-      "type": "string"
+      "type": "string",
+      "enum" : [
+        "ITEM",
+        "PATRON",
+        "LOCAL"
+      ]
     },
-    "transactionHold": {
-      "description": "Transaction hold record",
+    "hold" : {
+      "description": "Transaction hold",
       "type": "object",
       "$ref": "transactionHoldDTO.json"
     },
@@ -36,6 +59,13 @@
   },
   "additionalProperties": false,
   "required": [
-    "transactionHold"
+    "transactionTime",
+    "pickupLocation",
+    "patronId",
+    "patronAgencyCode",
+    "itemAgencyCode",
+    "itemId",
+    "centralPatronType",
+    "patronName"
   ]
 }
