@@ -1153,7 +1153,26 @@ paths:
         - $ref: '#/components/parameters/trackingId'
         - $ref: '#/components/parameters/centralCode'
         - $ref: '#/components/parameters/circulationOperationName'
-
+  /transactions:
+    get:
+      description: Get a list of transactions for the given central server
+      operationId: getAllTransactions
+      tags:
+        - inn-reach-transaction
+      responses:
+        '200':
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/innReachTransactionsDTO"
+        '400':
+          $ref: "#/components/responses/trait_response_malformed_query_400"
+        '500':
+          $ref: "#/components/responses/trait_response_500"
+      parameters:
+        - $ref: "#/components/parameters/trait_pageable_offset"
+        - $ref: "#/components/parameters/trait_pageable_limit"
 components:
   schemas:
     UUID:
@@ -1246,6 +1265,8 @@ components:
       $ref: schemas/transactionHoldDTO.json
     circulationRequestDTO:
       $ref: schemas/d2ir/circulationRequestDTO.json
+    innReachTransactionsDTO:
+      $ref: schemas/innReachTransactionsDTO.json
   parameters:
     id:
       name: id

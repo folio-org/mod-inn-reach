@@ -26,6 +26,6 @@ central_patron_type, patron_name) VALUES
 ('709c1075-0378-48af-a682-b4e7ac170423', 'patronHomeLibrary1', null, 'title1', 'author1', '0123456789', 0, 'patronName1');
 
 INSERT INTO inn_reach_transaction (id, tracking_id, central_server_code, state, type, transaction_hold_id) VALUES
-('0aab1720-14b4-4210-9a19-0d0bf1cd64d3', 'tracking1', 'fli01', 1, 1, '76834d5a-08e8-45ea-84ca-4d9b10aa340c'),
-('ab2393a1-acc4-4849-82ac-8cc0c37339e1', 'tracking2', 'fli01', 0, 0, '891bfff3-ba79-4beb-8c25-f714f14c6a31'),
-('79b0a1fb-55be-4e55-9d84-01303aaec1ce', 'tracking3', 'fli01', 2, 2, '709c1075-0378-48af-a682-b4e7ac170423');
+('0aab1720-14b4-4210-9a19-0d0bf1cd64d3', 'tracking1', 'd2ir', 1, 1, '76834d5a-08e8-45ea-84ca-4d9b10aa340c'),
+('ab2393a1-acc4-4849-82ac-8cc0c37339e1', 'tracking2', 'd2ir', 0, 0, '891bfff3-ba79-4beb-8c25-f714f14c6a31'),
+('79b0a1fb-55be-4e55-9d84-01303aaec1ce', 'tracking3', 'd2ir', 2, 2, '709c1075-0378-48af-a682-b4e7ac170423');
