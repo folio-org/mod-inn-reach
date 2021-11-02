@@ -1,0 +1,80 @@
+{
+  "description": "INN-Reach Transaction sorting parameters",
+  "type": "object",
+  "properties": {
+    "types" : {
+      "description": "List of INN-Reach Transaction types",
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum" : [
+          "ITEM",
+          "PATRON",
+          "LOCAL"
+        ]
+      }
+    },
+    "states" : {
+      "description": "List of INN-Reach Transaction states",
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum" : [
+          "ITEM_HOLD",
+          "PATRON_HOLD",
+          "LOCAL_HOLD",
+          "BORROWER_RENEW",
+          "BORROWING_SITE_CANCEL",
+          "ITEM_IN_TRANSIT",
+          "RECEIVE_UNANNOUNCED",
+          "RETURN_UNCIRCULATED",
+          "CLAIMS_RETURNED",
+          "ITEM_RECEIVED",
+          "ITEM_SHIPPED",
+          "LOCAL_CHECKOUT",
+          "CANCEL_REQUEST",
+          "FINAL_CHECKIN",
+          "RECALL",
+          "TRANSFER"
+        ]
+      }
+    },
+    "centralServerCodes" : {
+      "description": "List of central server codes",
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "patronAgencyCodes" : {
+      "description": "List of patron agency codes",
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "itemAgencyCodes" : {
+      "description": "List of item agency codes",
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "patronTypes" : {
+      "description": "List of patron types",
+      "type": "array",
+      "items": {
+        "type": "integer"
+      }
+    },
+    "centralItemTypes" : {
+      "description": "List of central item types",
+      "type": "array",
+      "items": {
+        "type": "integer"
+      }
+    }
+  },
+  "additionalProperties": false,
+  "required": []
+}
