@@ -1,21 +1,24 @@
 package org.folio.innreach.specification;
 
-import org.folio.innreach.domain.entity.InnReachTransactionSortingParameters;
-import org.folio.innreach.domain.entity.InnReachTransaction;
-import org.folio.innreach.domain.entity.TransactionItemHold;
-import org.folio.innreach.domain.entity.TransactionLocalHold;
-import org.springframework.data.jpa.domain.Specification;
-import org.springframework.stereotype.Component;
-
-import java.util.List;
+import static org.apache.commons.collections4.CollectionUtils.isEmpty;
 
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionType.ITEM;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionType.LOCAL;
 
+import java.util.List;
+
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.stereotype.Component;
+
+import org.folio.innreach.domain.entity.InnReachTransaction;
+import org.folio.innreach.domain.entity.InnReachTransactionFilterParameters;
+import org.folio.innreach.domain.entity.TransactionItemHold;
+import org.folio.innreach.domain.entity.TransactionLocalHold;
+
 @Component
 public class InnReachTransactionSpecification {
 
-  public Specification<InnReachTransaction> filterByParameters(InnReachTransactionSortingParameters parameters) {
+  public Specification<InnReachTransaction> filterByParameters(InnReachTransactionFilterParameters parameters) {
     return fetchHoldAndPickupLocation()
       .and(isOfType(parameters.getTypes()))
       .and(isOfState(parameters.getStates()))
@@ -37,23 +40,23 @@ public class InnReachTransactionSpecification {
   }
 
   static Specification<InnReachTransaction> isOfType(List<InnReachTransaction.TransactionType> types) {
-    return (transaction, cq, cb) -> listIsNullOrEmpty(types) ? cb.conjunction() : transaction.get("type").in(types);
+    return (transaction, cq, cb) -> isEmpty(types) ? cb.conjunction() : transaction.get("type").in(types);
   }
 
   static Specification<InnReachTransaction> isOfState(List<InnReachTransaction.TransactionState> states) {
-    return (transaction, cq, cb) -> listIsNullOrEmpty(states) ? cb.conjunction() : transaction.get("state").in(states);
+    return (transaction, cq, cb) -> isEmpty(states) ? cb.conjunction() : transaction.get("state").in(states);
   }
 
   static Specification<InnReachTransaction> centralCodeIn(List<String> centralCodes) {
-    return (transaction, cq, cb) -> listIsNullOrEmpty(centralCodes) ? cb.conjunction() : transaction.get("centralServerCode").in(centralCodes);
+    return (transaction, cq, cb) -> isEmpty(centralCodes) ? cb.conjunction() : transaction.get("centralServerCode").in(centralCodes);
   }
 
   static Specification<InnReachTransaction> patronAgencyIn(List<String> patronAgencies) {
-    return (transaction, cq, cb) -> listIsNullOrEmpty(patronAgencies) ? cb.conjunction() : transaction.get("hold").get("patronAgencyCode").in(patronAgencies);
+    return (transaction, cq, cb) -> isEmpty(patronAgencies) ? cb.conjunction() : transaction.get("hold").get("patronAgencyCode").in(patronAgencies);
   }
 
   static Specification<InnReachTransaction> itemAgencyIn(List<String> itemAgencies) {
-    return (transaction, cq, cb) -> listIsNullOrEmpty(itemAgencies) ? cb.conjunction() : transaction.get("hold").get("itemAgencyCode").in(itemAgencies);
+    return (transaction, cq, cb) -> isEmpty(itemAgencies) ? cb.conjunction() : transaction.get("hold").get("itemAgencyCode").in(itemAgencies);
   }
 
   static Specification<InnReachTransaction> patronTypeIn(List<Integer> patronTypes) {
@@ -71,10 +74,7 @@ public class InnReachTransactionSpecification {
   }
 
   static Specification<InnReachTransaction> centralItemTypeIn(List<Integer> centralItemTypes) {
-    return (transaction, cq, cb) -> listIsNullOrEmpty(centralItemTypes) ? cb.conjunction() : transaction.get("hold").get("centralItemType").in(centralItemTypes);
+    return (transaction, cq, cb) -> isEmpty(centralItemTypes) ? cb.conjunction() : transaction.get("hold").get("centralItemType").in(centralItemTypes);
   }
 
-  private static boolean listIsNullOrEmpty(List<?> list){
-    return list == null || list.isEmpty();
-  }
 }
