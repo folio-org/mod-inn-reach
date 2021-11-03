@@ -8,11 +8,11 @@ import javax.persistence.EntityExistsException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.folio.innreach.domain.service.MaterialTypeMappingService;
-import org.folio.innreach.dto.InnReachTransactionSortingParametersDTO;
+import org.folio.innreach.dto.InnReachTransactionFilterParametersDTO;
 import org.folio.innreach.dto.InnReachTransactionsDTO;
 import org.folio.innreach.external.service.InventoryService;
 import org.folio.innreach.mapper.InnReachErrorMapper;
-import org.folio.innreach.mapper.InnReachTransactionSortingParametersMapper;
+import org.folio.innreach.mapper.InnReachTransactionFilterParametersMapper;
 import org.folio.innreach.specification.InnReachTransactionSpecification;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -42,7 +42,7 @@ public class InnReachTransactionServiceImpl implements InnReachTransactionServic
   private final InnReachTransactionMapper transactionMapper;
   private final InnReachTransactionHoldMapper transactionHoldMapper;
   private final InnReachErrorMapper errorMapper;
-  private final InnReachTransactionSortingParametersMapper parametersMapper;
+  private final InnReachTransactionFilterParametersMapper parametersMapper;
 
   private final CentralServerService centralServerService;
   private final MaterialTypeMappingService materialService;
@@ -103,7 +103,7 @@ public class InnReachTransactionServiceImpl implements InnReachTransactionServic
   @Override
   @Transactional(readOnly = true)
   public InnReachTransactionsDTO getAllTransactions(Integer offset, Integer limit,
-                                                    InnReachTransactionSortingParametersDTO parametersDTO) {
+                                                    InnReachTransactionFilterParametersDTO parametersDTO) {
     var parameters = parametersMapper.toEntity(parametersDTO);
     var transactions = repository.findAll(specification.filterByParameters(parameters), PageRequest.of(offset, limit));
     return transactionMapper.toDTOCollection(transactions);

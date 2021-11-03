@@ -6,37 +6,14 @@
       "description": "List of INN-Reach Transaction types",
       "type": "array",
       "items": {
-        "type": "string",
-        "enum" : [
-          "ITEM",
-          "PATRON",
-          "LOCAL"
-        ]
+        "$ref": "transactionTypeEnum.json"
       }
     },
     "states" : {
       "description": "List of INN-Reach Transaction states",
       "type": "array",
       "items": {
-        "type": "string",
-        "enum" : [
-          "ITEM_HOLD",
-          "PATRON_HOLD",
-          "LOCAL_HOLD",
-          "BORROWER_RENEW",
-          "BORROWING_SITE_CANCEL",
-          "ITEM_IN_TRANSIT",
-          "RECEIVE_UNANNOUNCED",
-          "RETURN_UNCIRCULATED",
-          "CLAIMS_RETURNED",
-          "ITEM_RECEIVED",
-          "ITEM_SHIPPED",
-          "LOCAL_CHECKOUT",
-          "CANCEL_REQUEST",
-          "FINAL_CHECKIN",
-          "RECALL",
-          "TRANSFER"
-        ]
+        "$ref": "transactionStateEnum.json"
       }
     },
     "centralServerCodes" : {

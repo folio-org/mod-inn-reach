@@ -3,6 +3,8 @@ package org.folio.innreach.controller;
 import static java.util.UUID.fromString;
 import static java.util.UUID.randomUUID;
 import static org.awaitility.Awaitility.await;
+import static org.folio.innreach.dto.TransactionStateEnum.PATRON_HOLD;
+import static org.folio.innreach.dto.TransactionTypeEnum.PATRON;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -215,8 +217,8 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     assertEquals(1, responseEntity.getBody().getTransactions().size());
     var transaction = responseEntity.getBody().getTransactions().stream()
       .findFirst().get();
-    assertEquals(InnReachTransactionDTO.TypeEnum.PATRON, transaction.getType());
-    assertEquals(InnReachTransactionDTO.StateEnum.PATRON_HOLD, transaction.getState());
+    assertEquals(PATRON, transaction.getType());
+    assertEquals(PATRON_HOLD, transaction.getState());
   }
 
   @Test

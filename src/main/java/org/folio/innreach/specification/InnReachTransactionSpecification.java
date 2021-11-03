@@ -16,7 +16,8 @@ import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionTy
 public class InnReachTransactionSpecification {
 
   public Specification<InnReachTransaction> filterByParameters(InnReachTransactionSortingParameters parameters) {
-    return isOfType(parameters.getTypes())
+    return fetchHoldAndPickupLocation()
+      .and(isOfType(parameters.getTypes()))
       .and(isOfState(parameters.getStates()))
       .and(centralCodeIn(parameters.getCentralServerCodes()))
       .and(patronAgencyIn(parameters.getPatronAgencyCodes()))
@@ -25,53 +26,34 @@ public class InnReachTransactionSpecification {
       .and(centralItemTypeIn(parameters.getCentralItemTypes()));
   }
 
-  static Specification<InnReachTransaction> isOfType(List<InnReachTransaction.TransactionType> types) {
+  static Specification<InnReachTransaction> fetchHoldAndPickupLocation() {
     return (transaction, cq, cb) -> {
       if (Long.class != cq.getResultType()) {
         var hold = transaction.fetch("hold");
         hold.fetch("pickupLocation");
       }
-      if (types == null || types.isEmpty()) {
-        return cb.conjunction();
-      }
-      return transaction.get("type").in(types);
+      return cb.conjunction();
     };
+  }
+
+  static Specification<InnReachTransaction> isOfType(List<InnReachTransaction.TransactionType> types) {
+    return (transaction, cq, cb) -> listIsNullOrEmpty(types) ? cb.conjunction() : transaction.get("type").in(types);
   }
 
   static Specification<InnReachTransaction> isOfState(List<InnReachTransaction.TransactionState> states) {
-    return (transaction, cq, cb) -> {
-      if (states == null || states.isEmpty()) {
-        return cb.conjunction();
-      }
-      return transaction.get("state").in(states);
-    };
+    return (transaction, cq, cb) -> listIsNullOrEmpty(states) ? cb.conjunction() : transaction.get("state").in(states);
   }
 
   static Specification<InnReachTransaction> centralCodeIn(List<String> centralCodes) {
-    return (transaction, cq, cb) -> {
-      if (centralCodes == null || centralCodes.isEmpty()) {
-        return cb.conjunction();
-      }
-      return transaction.get("centralServerCode").in(centralCodes);
-    };
+    return (transaction, cq, cb) -> listIsNullOrEmpty(centralCodes) ? cb.conjunction() : transaction.get("centralServerCode").in(centralCodes);
   }
 
   static Specification<InnReachTransaction> patronAgencyIn(List<String> patronAgencies) {
-    return (transaction, cq, cb) -> {
-      if (patronAgencies == null || patronAgencies.isEmpty()) {
-        return cb.conjunction();
-      }
-      return transaction.get("hold").get("patronAgencyCode").in(patronAgencies);
-    };
+    return (transaction, cq, cb) -> listIsNullOrEmpty(patronAgencies) ? cb.conjunction() : transaction.get("hold").get("patronAgencyCode").in(patronAgencies);
   }
 
   static Specification<InnReachTransaction> itemAgencyIn(List<String> itemAgencies) {
-    return (transaction, cq, cb) -> {
-      if (itemAgencies == null || itemAgencies.isEmpty()) {
-        return cb.conjunction();
-      }
-      return transaction.get("hold").get("itemAgencyCode").in(itemAgencies);
-    };
+    return (transaction, cq, cb) -> listIsNullOrEmpty(itemAgencies) ? cb.conjunction() : transaction.get("hold").get("itemAgencyCode").in(itemAgencies);
   }
 
   static Specification<InnReachTransaction> patronTypeIn(List<Integer> patronTypes) {
@@ -89,11 +71,10 @@ public class InnReachTransactionSpecification {
   }
 
   static Specification<InnReachTransaction> centralItemTypeIn(List<Integer> centralItemTypes) {
-    return (transaction, cq, cb) -> {
-      if (centralItemTypes == null || centralItemTypes.isEmpty()) {
-        return cb.conjunction();
-      }
-      return transaction.get("hold").get("centralItemType").in(centralItemTypes);
-    };
+    return (transaction, cq, cb) -> listIsNullOrEmpty(centralItemTypes) ? cb.conjunction() : transaction.get("hold").get("centralItemType").in(centralItemTypes);
+  }
+
+  private static boolean listIsNullOrEmpty(List<?> list){
+    return list == null || list.isEmpty();
   }
 }
