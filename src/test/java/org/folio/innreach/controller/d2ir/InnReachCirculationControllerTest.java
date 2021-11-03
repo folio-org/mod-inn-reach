@@ -43,7 +43,7 @@ import org.folio.innreach.repository.InnReachTransactionRepository;
 class InnReachCirculationControllerTest extends BaseControllerTest {
 
   private static final String PRE_POPULATED_TRACKING_ID = "tracking1";
-  private static final String PRE_POPULATED_CENTRAL_CODE = "fli01";
+  private static final String PRE_POPULATED_CENTRAL_CODE = "d2ir";
 
   @Autowired
   private TestRestTemplate testRestTemplate;

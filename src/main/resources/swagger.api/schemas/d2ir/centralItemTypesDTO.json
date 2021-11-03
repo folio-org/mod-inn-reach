@@ -1,0 +1,21 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "allOf": [
+    {
+      "$ref": "innReachResponseDTO.json"
+    }
+  ],
+  "description": "D2IR central item types response",
+  "type": "object",
+  "properties": {
+    "itemTypeList": {
+      "description": "D2IR central item types",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "$ref": "itemType.json"
+      }
+    }
+  },
+  "additionalProperties": false
+}

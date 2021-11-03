@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
-  "description": "Central server agencies",
+  "description": "Central server patron types",
   "type": "object",
   "properties": {
     "centralServerId": {
@@ -13,12 +13,12 @@
       "type": "string",
       "maxLength": 5
     },
-    "agencies": {
-      "description": "List of agencies for this central server",
+    "patronTypes": {
+      "description": "List of patron types for this central server",
       "type": "array",
       "items": {
         "type": "object",
-        "$ref": "d2ir/agency.json"
+        "$ref": "d2ir/patronType.json"
       }
     }
   },
@@ -26,6 +26,6 @@
   "required": [
     "centralServerId",
     "centralServerCode",
-    "agencies"
+    "patronTypes"
   ]
 }

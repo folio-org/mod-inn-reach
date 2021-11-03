@@ -26,7 +26,7 @@ class InnReachTransactionRepositoryTest extends BaseRepositoryTest {
   private static final String PRE_POPULATED_TRANSACTION_TRACKING_ID1 = "tracking1";
   private static final String PRE_POPULATED_TRANSACTION_PICKUP_LOCATION_ID1 = "809adcde-3e67-4822-9916-fd653a681358";
 
-  private static final String PRE_POPULATED_CENTRAL_SERVER_CODE = "fli01";
+  private static final String PRE_POPULATED_CENTRAL_SERVER_CODE = "d2ir";
 
   @Autowired
   private InnReachTransactionRepository repository;

@@ -30,8 +30,16 @@ import static org.folio.innreach.fixture.UserFixture.createUser;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
+import org.folio.innreach.client.RequestStorageClient;
+import org.folio.innreach.domain.dto.folio.User;
+import org.folio.innreach.domain.dto.folio.inventory.InventoryItemDTO;
+import org.folio.innreach.domain.entity.base.AuditableUser;
+import org.folio.innreach.dto.InnReachTransactionDTO;
+import org.folio.innreach.dto.InnReachTransactionsDTO;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.stubbing.Answer;
@@ -44,20 +52,16 @@ import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlMergeMode;
 
 import org.folio.innreach.client.InventoryClient;
-import org.folio.innreach.client.RequestStorageClient;
 import org.folio.innreach.client.ServicePointsUsersClient;
 import org.folio.innreach.client.UsersClient;
 import org.folio.innreach.controller.base.BaseControllerTest;
 import org.folio.innreach.domain.dto.OwningSiteCancelsRequestDTO;
 import org.folio.innreach.domain.dto.folio.ResultList;
-import org.folio.innreach.domain.dto.folio.User;
-import org.folio.innreach.domain.dto.folio.inventory.InventoryItemDTO;
 import org.folio.innreach.domain.dto.folio.inventorystorage.ServicePointUserDTO;
 import org.folio.innreach.domain.dto.folio.requeststorage.RequestDTO;
 import org.folio.innreach.domain.entity.TransactionItemHold;
 import org.folio.innreach.domain.service.RequestService;
 import org.folio.innreach.dto.InnReachResponseDTO;
-import org.folio.innreach.dto.InnReachTransactionDTO;
 import org.folio.innreach.dto.TransactionHoldDTO;
 import org.folio.innreach.external.client.feign.InnReachClient;
 import org.folio.innreach.mapper.InnReachTransactionPickupLocationMapper;
@@ -85,6 +89,12 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   public static final String TRANSACTION_WITH_ITEM_HOLD_ID = "ab2393a1-acc4-4849-82ac-8cc0c37339e1";
   public static final String TRANSACTION_WITH_LOCAL_HOLD_ID = "79b0a1fb-55be-4e55-9d84-01303aaec1ce";
   public static final String TRANSACTION_WITH_PATRON_HOLD_ID = "0aab1720-14b4-4210-9a19-0d0bf1cd64d3";
+
+  private static final UUID PRE_POPULATED_TRANSACTION_ID1 = UUID.fromString("0aab1720-14b4-4210-9a19-0d0bf1cd64d3");
+  private static final UUID PRE_POPULATED_TRANSACTION_ID2 = UUID.fromString("ab2393a1-acc4-4849-82ac-8cc0c37339e1");
+  private static final UUID PRE_POPULATED_TRANSACTION_ID3 = UUID.fromString("79b0a1fb-55be-4e55-9d84-01303aaec1ce");
+
+  private static final AuditableUser PRE_POPULATED_USER = AuditableUser.SYSTEM;
 
   @Autowired
   private TestRestTemplate testRestTemplate;
@@ -131,6 +141,57 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
 
   void mockFindRequestsReturnsEmptyList(InventoryItemDTO inventoryItemDTO) {
     when(requestsClient.findRequests(inventoryItemDTO.getId())).thenReturn(ResultList.of(0, Collections.emptyList()));
+  }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
+  })
+  void return200HttpCode_and_allExistingTransactions_when_getAllTransactionsWithNoFilters(){
+    var responseEntity = testRestTemplate.getForEntity(
+      "/inn-reach/transactions", InnReachTransactionsDTO.class
+    );
+
+    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+    assertNotNull(responseEntity.getBody());
+    assertEquals(3, responseEntity.getBody().getTotalRecords());
+
+    var transactionIds = responseEntity.getBody().getTransactions().stream()
+      .map(InnReachTransactionDTO::getId).collect(Collectors.toList());
+    assertTrue(transactionIds.containsAll(
+      List.of(PRE_POPULATED_TRANSACTION_ID1, PRE_POPULATED_TRANSACTION_ID2, PRE_POPULATED_TRANSACTION_ID3)));
+
+    var transactionMetadatas = responseEntity.getBody().getTransactions().stream()
+      .map(InnReachTransactionDTO::getMetadata).collect(Collectors.toList());
+    assertTrue(transactionMetadatas.stream().allMatch(Objects::nonNull));
+    assertTrue(transactionMetadatas.stream().allMatch(m -> m.getCreatedDate() != null));
+    assertTrue(transactionMetadatas.stream().allMatch(m -> m.getCreatedByUsername().equals(PRE_POPULATED_USER.getName())));
+  }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
+  })
+  void return200HttpCode_and_pageOfTransactions_when_getAllTransactionsWithOffsetAndLimit(){
+    var responseEntity = testRestTemplate.getForEntity(
+      "/inn-reach/transactions?offset=1&limit=1", InnReachTransactionsDTO.class
+    );
+
+    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+    assertNotNull(responseEntity.getBody());
+    assertEquals(3, responseEntity.getBody().getTotalRecords());
+
+    var transactionIds = responseEntity.getBody().getTransactions().stream()
+      .map(InnReachTransactionDTO::getId).collect(Collectors.toList());
+    assertTrue(transactionIds.containsAll(List.of(PRE_POPULATED_TRANSACTION_ID2)));
+
+    var transactionMetadatas = responseEntity.getBody().getTransactions().stream()
+      .map(InnReachTransactionDTO::getMetadata).collect(Collectors.toList());
+    assertTrue(transactionMetadatas.stream().allMatch(Objects::nonNull));
+    assertTrue(transactionMetadatas.stream().allMatch(m -> m.getCreatedDate() != null));
+    assertTrue(transactionMetadatas.stream().allMatch(m -> m.getCreatedByUsername().equals(PRE_POPULATED_USER.getName())));
   }
 
   @Test
@@ -433,10 +494,10 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     var responseBody = responseEntity.getBody();
 
     assertNotNull(responseBody);
-    assertNotNull(responseBody.getTransactionHold().getTitle());
-    assertNotNull(responseBody.getTransactionHold().getAuthor());
-    assertNotNull(responseBody.getTransactionHold().getCallNumber());
-    assertNotNull(responseBody.getTransactionHold().getShippedItemBarcode());
+    assertNotNull(responseBody.getHold().getTitle());
+    assertNotNull(responseBody.getHold().getAuthor());
+    assertNotNull(responseBody.getHold().getCallNumber());
+    assertNotNull(responseBody.getHold().getShippedItemBarcode());
   }
 
   @Test
@@ -453,8 +514,8 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     var responseBody = responseEntity.getBody();
 
     assertNotNull(responseBody);
-    assertNotNull(responseBody.getTransactionHold().getCentralPatronType());
-    assertNotNull(responseBody.getTransactionHold().getPatronName());
+    assertNotNull(responseBody.getHold().getCentralPatronType());
+    assertNotNull(responseBody.getHold().getPatronName());
   }
 
   @Test
@@ -471,12 +532,12 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     var responseBody = responseEntity.getBody();
 
     assertNotNull(responseBody);
-    assertNotNull(responseBody.getTransactionHold().getPatronHomeLibrary());
-    assertNotNull(responseBody.getTransactionHold().getTitle());
-    assertNotNull(responseBody.getTransactionHold().getAuthor());
-    assertNotNull(responseBody.getTransactionHold().getCallNumber());
-    assertNotNull(responseBody.getTransactionHold().getCentralPatronType());
-    assertNotNull(responseBody.getTransactionHold().getPatronName());
+    assertNotNull(responseBody.getHold().getPatronHomeLibrary());
+    assertNotNull(responseBody.getHold().getTitle());
+    assertNotNull(responseBody.getHold().getAuthor());
+    assertNotNull(responseBody.getHold().getCallNumber());
+    assertNotNull(responseBody.getHold().getCentralPatronType());
+    assertNotNull(responseBody.getHold().getPatronName());
   }
 
 }

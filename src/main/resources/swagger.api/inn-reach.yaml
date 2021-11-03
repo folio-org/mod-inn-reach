@@ -994,7 +994,7 @@ paths:
       operationId: getCentralServerAgencies
       description: Get a combined list of agencies available from all configured central servers
       tags:
-        - central-server-agencies
+        - central-server-configuration
       responses:
         '200':
           description: "OK"
@@ -1002,6 +1002,36 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/centralServerAgenciesDTO"
+        '500':
+          $ref: "#/components/responses/trait_response_500"
+  /central-servers/item-types:
+    get:
+      operationId: getCentralServerItemTypes
+      description: Get a combined list of item types available from all configured central servers
+      tags:
+        - central-server-configuration
+      responses:
+        '200':
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/centralServerItemTypesDTO"
+        '500':
+          $ref: "#/components/responses/trait_response_500"
+  /central-servers/patron-types:
+    get:
+      operationId: getCentralServerPatronTypes
+      description: Get a combined list of patron types available from all configured central servers
+      tags:
+        - central-server-configuration
+      responses:
+        '200':
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/centralServerPatronTypesDTO"
         '500':
           $ref: "#/components/responses/trait_response_500"
   /d2ir/getbibrecord/{bibId}/{centralCode}:
@@ -1123,7 +1153,26 @@ paths:
         - $ref: '#/components/parameters/trackingId'
         - $ref: '#/components/parameters/centralCode'
         - $ref: '#/components/parameters/circulationOperationName'
-
+  /transactions:
+    get:
+      description: Get a list of transactions for the given central server
+      operationId: getAllTransactions
+      tags:
+        - inn-reach-transaction
+      responses:
+        '200':
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/innReachTransactionsDTO"
+        '400':
+          $ref: "#/components/responses/trait_response_malformed_query_400"
+        '500':
+          $ref: "#/components/responses/trait_response_500"
+      parameters:
+        - $ref: "#/components/parameters/trait_pageable_offset"
+        - $ref: "#/components/parameters/trait_pageable_limit"
 components:
   schemas:
     UUID:
@@ -1194,6 +1243,14 @@ components:
       $ref: schemas/centralServerAgenciesDTO.json
     localServerAgenciesDTO:
       $ref: schemas/d2ir/localServerAgenciesDTO.json
+    centralServerItemTypesDTO:
+      $ref: schemas/centralServerItemTypesDTO.json
+    centralItemTypesDTO:
+      $ref: schemas/d2ir/centralItemTypesDTO.json
+    centralServerPatronTypesDTO:
+      $ref: schemas/centralServerPatronTypesDTO.json
+    centralPatronTypesDTO:
+      $ref: schemas/d2ir/centralPatronTypesDTO.json
     bibInfoResponseDTO:
       $ref: schemas/d2ir/bibInfoResponseDTO.json
     innReachResponseDTO:
@@ -1208,6 +1265,8 @@ components:
       $ref: schemas/transactionHoldDTO.json
     circulationRequestDTO:
       $ref: schemas/d2ir/circulationRequestDTO.json
+    innReachTransactionsDTO:
+      $ref: schemas/innReachTransactionsDTO.json
   parameters:
     id:
       name: id

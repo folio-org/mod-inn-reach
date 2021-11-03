@@ -11,14 +11,17 @@ import org.folio.innreach.dto.TransactionHoldDTO;
 @Mapper(componentModel = "spring", injectionStrategy = InjectionStrategy.CONSTRUCTOR, uses = {MappingMethods.class, InnReachTransactionPickupLocationMapper.class})
 public interface InnReachTransactionHoldMapper {
 
+  @AuditableMapping
   TransactionHoldDTO toItemHoldDTO(TransactionItemHold transactionItemHold);
 
   TransactionItemHold toItemHold(TransactionHoldDTO dto);
 
+  @AuditableMapping
   TransactionHoldDTO toLocalHoldDTO(TransactionLocalHold transactionLocalHold);
 
   TransactionLocalHold toLocalHold(TransactionHoldDTO dto);
 
+  @AuditableMapping
   TransactionHoldDTO toPatronHoldDTO(TransactionPatronHold transactionPatronHold);
 
   TransactionPatronHold toPatronHold(TransactionHoldDTO dto);
