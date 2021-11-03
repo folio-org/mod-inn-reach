@@ -32,7 +32,7 @@ public class InventoryStorageServiceImpl implements InventoryStorageService {
   @Override
   public Instance queryInstanceByHrid(String instanceHrid) {
     return getFirstItem(instanceStorageClient.queryInstanceByHrid(instanceHrid))
-      .orElseThrow(() -> new IllegalArgumentException("No instance found by hrid " + instanceHrid));
+      .orElseThrow(() -> new IllegalStateException("No instance found by hrid " + instanceHrid));
   }
 
   @Override

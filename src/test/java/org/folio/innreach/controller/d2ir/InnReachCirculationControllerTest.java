@@ -174,7 +174,7 @@ class InnReachCirculationControllerTest extends BaseApiControllerTest {
   @Sql(scripts = {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/agency-loc-mapping/pre-populate-agency-location-mapping.sql",
-    "classpath:db/mtype-mapping/pre-populate-material-type-mapping.sql",
+    "classpath:db/item-type-mapping/pre-populate-item-type-mapping.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
   })
   void patronHold_updateVirtualItems() throws Exception {
@@ -206,7 +206,7 @@ class InnReachCirculationControllerTest extends BaseApiControllerTest {
   @Sql(scripts = {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/agency-loc-mapping/pre-populate-agency-location-mapping.sql",
-    "classpath:db/mtype-mapping/pre-populate-material-type-mapping.sql",
+    "classpath:db/item-type-mapping/pre-populate-item-type-mapping.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
   })
   void patronHold_createVirtualItems() throws Exception {

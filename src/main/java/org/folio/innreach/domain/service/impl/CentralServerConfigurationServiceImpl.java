@@ -90,12 +90,8 @@ public class CentralServerConfigurationServiceImpl implements CentralServerConfi
 
   @Override
   public List<LocalServer> getLocalServers(UUID centralServerId) {
-    var agencies =
-      loadRecordPerServer(INN_REACH_LOCAL_SERVERS_URI, LocalServerAgenciesDTO.class, Function.identity(), centralServerId);
-
-    return ofNullable(agencies.getValue())
-      .map(LocalServerAgenciesDTO::getLocalServerList)
-      .orElse(Collections.emptyList());
+    return loadRecordPerServer(INN_REACH_LOCAL_SERVERS_URI, LocalServerAgenciesDTO.class,
+      resp -> emptyIfNull(resp.getRight().getLocalServerList()), centralServerId);
   }
 
   private <Rec, CSResp extends InnReachResponseDTO> List<Rec> loadRecordsPerServer(String uri,

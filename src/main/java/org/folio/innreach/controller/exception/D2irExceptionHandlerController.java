@@ -16,7 +16,7 @@ public class D2irExceptionHandlerController {
   @ExceptionHandler(Exception.class)
   @ResponseStatus(HttpStatus.BAD_REQUEST)
   public ResponseEntity<InnReachResponseDTO> handleException(Exception e) {
-    log.warn("Handling exception", e.getMessage());
+    log.warn("Handling exception", e);
     var response = new InnReachResponseDTO();
     response.setStatus("failed");
     response.setReason(e.getMessage());

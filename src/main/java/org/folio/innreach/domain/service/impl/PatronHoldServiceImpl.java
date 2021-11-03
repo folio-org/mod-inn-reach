@@ -15,6 +15,7 @@ import org.folio.innreach.domain.entity.TransactionPatronHold;
 import org.folio.innreach.domain.service.AgencyMappingService;
 import org.folio.innreach.domain.service.CentralServerService;
 import org.folio.innreach.domain.service.InventoryStorageService;
+import org.folio.innreach.domain.service.ItemTypeMappingService;
 import org.folio.innreach.domain.service.MaterialTypeMappingService;
 import org.folio.innreach.domain.service.PatronHoldService;
 import org.folio.innreach.domain.service.RequestService;
@@ -37,7 +38,7 @@ public class PatronHoldServiceImpl implements PatronHoldService {
 
   private final AgencyMappingService agencyMappingService;
   private final CentralServerService centralServerService;
-  private final MaterialTypeMappingService materialTypeMappingService;
+  private final ItemTypeMappingService itemTypeMappingService;
   private final RequestService requestService;
   private final InventoryStorageService inventoryStorageService;
 
@@ -142,7 +143,8 @@ public class PatronHoldServiceImpl implements PatronHoldService {
       + hold.getItemAgencyCode();
 
     var materialTypeId =
-      materialTypeMappingService.getMappingByCentralType(centralServerId, centralItemType).getMaterialTypeId();
+      itemTypeMappingService.getMappingByCentralType(centralServerId, centralItemType)
+        .getMaterialTypeId();
 
     return new Item()
       .hrid(itemHrid)

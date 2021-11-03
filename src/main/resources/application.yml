@@ -115,5 +115,9 @@ batch:
       retry-interval-ms: 20000
       reader-topic: inventory.instance-contribution
       reader-poll-timeout-sec: 300
+reference-data:
+  loader:
+    retry-attempts: 10
+    retry-interval-ms: 20000
 okapi.url: ${OKAPI_URL:http://localhost}
 environment: ${ENV:folio}

@@ -23,7 +23,4 @@ public interface MaterialTypeMappingService {
   long countByTypeIds(UUID centralServerId, List<UUID> typeIds);
 
   MaterialTypeMappingDTO findByCentralServerAndMaterialType(UUID centralServerId, UUID materialTypeId);
-
-  MaterialTypeMappingDTO getMappingByCentralType(UUID centralServerId, Integer centralType);
-
 }
