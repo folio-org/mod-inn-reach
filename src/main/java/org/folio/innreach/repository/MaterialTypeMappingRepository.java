@@ -16,6 +16,4 @@ public interface MaterialTypeMappingRepository extends JpaRepository<MaterialTyp
 
   Optional<MaterialTypeMapping> findOneByCentralServerIdAndMaterialTypeId(UUID centralServerId, UUID materialTypeId);
 
-  Optional<MaterialTypeMapping> findOneByCentralServerIdAndCentralItemType(UUID centralServerId, Integer centralItemType);
-
 }

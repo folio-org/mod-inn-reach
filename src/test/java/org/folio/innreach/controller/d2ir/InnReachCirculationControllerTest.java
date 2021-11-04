@@ -197,7 +197,7 @@ class InnReachCirculationControllerTest extends BaseApiControllerTest {
         .headers(getOkapiHeaders()))
       .andExpect(status().isOk());
 
-    await().atMost(Duration.FIVE_MINUTES).untilAsserted(() ->
+    await().atMost(Duration.TEN_SECONDS).untilAsserted(() ->
       verify(repository).save(
         argThat((InnReachTransaction t) -> NEW_REQUEST_ID.equals(t.getHold().getFolioRequestId()))));
   }
