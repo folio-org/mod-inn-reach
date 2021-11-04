@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import org.folio.innreach.domain.exception.CirculationProcessException;
 import org.folio.innreach.dto.InnReachResponseDTO;
 import org.folio.innreach.mapper.InnReachErrorMapper;
 
@@ -44,6 +45,16 @@ public class D2irExceptionHandlerController {
       .status("failed")
       .reason("Argument validation failed")
       .errors(innReachErrors);
+  }
+
+  @ExceptionHandler(CirculationProcessException.class)
+  @ResponseStatus(HttpStatus.BAD_REQUEST)
+  public InnReachResponseDTO handleException(CirculationProcessException e) {
+    log.warn("Unsupported circulation operation", e);
+
+    return new InnReachResponseDTO()
+      .status("failed")
+      .reason("Unsupported circulation operation");
   }
 
 }

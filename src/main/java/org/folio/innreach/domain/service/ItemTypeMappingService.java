@@ -1,6 +1,5 @@
 package org.folio.innreach.domain.service;
 
-import java.util.Optional;
 import java.util.UUID;
 
 import org.folio.innreach.dto.ItemTypeMappingDTO;
