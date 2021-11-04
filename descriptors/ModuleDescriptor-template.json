@@ -327,6 +327,11 @@
           ]
         },
         {
+          "methods": ["POST"],
+          "pathPattern": "/inn-reach/d2ir/circ/{circulationOperationName}/{trackingId}/{centralCode}",
+          "permissionsRequired": ["inn-reach.d2ir.circulation.item.post"]
+        },
+        {
           "methods": ["GET"],
           "pathPattern": "/inn-reach/central-servers/agencies",
           "permissionsRequired": ["inn-reach.central-server-agencies.collection.get"]
@@ -786,6 +791,11 @@
       ]
     },
     {
+      "permissionName" : "inn-reach.d2ir.circulation.item.post",
+      "displayName" : "perform circulation operation",
+      "description" : "Perform circulation operation",
+    },
+    {
       "permissionName" : "inn-reach.d2ir.bib-info.item.get",
       "displayName" : "get d2ir bib info",
       "description" : "get d2ir bib info"
@@ -809,6 +819,14 @@
       "description" : "All permissions of d2ir patron info scope",
       "subPermissions" : [
         "inn-reach.d2ir.patron-info.item.get"
+      ]
+    },
+    {
+      "permissionName" : "inn-reach.d2ir.circulation.all",
+      "displayName" : "all permissions of d2ir circulation operations",
+      "description" : "All permissions of d2ir circulation operations",
+      "subPermissions" : [
+        "inn-reach.d2ir.circulation.item.post"
       ]
     },
     {
@@ -874,7 +892,8 @@
         "inn-reach.d2ir.bib-info.all",
         "inn-reach.d2ir.patron-info.all",
         "inn-reach.central-server.sys-configuration.all",
-        "inn-reach.inn-reach-transactions.all"
+        "inn-reach.inn-reach-transactions.all",
+        "inn-reach.d2ir.circulation.all"
       ]
     }
   ],
