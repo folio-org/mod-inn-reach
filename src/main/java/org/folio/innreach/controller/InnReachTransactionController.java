@@ -9,6 +9,13 @@ import javax.validation.constraints.Min;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.folio.innreach.domain.service.InnReachTransactionService;
+import org.folio.innreach.domain.service.RequestService;
+import org.folio.innreach.dto.InnReachResponseDTO;
+import org.folio.innreach.dto.InnReachTransactionFilterParametersDTO;
+import org.folio.innreach.dto.InnReachTransactionsDTO;
+import org.folio.innreach.mapper.InnReachErrorMapper;
+import org.folio.innreach.rest.resource.InnReachTransactionApi;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -19,14 +26,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
-import org.folio.innreach.domain.service.InnReachTransactionService;
-import org.folio.innreach.domain.service.RequestService;
-import org.folio.innreach.dto.InnReachResponseDTO;
 import org.folio.innreach.dto.InnReachTransactionDTO;
-import org.folio.innreach.dto.InnReachTransactionsDTO;
 import org.folio.innreach.dto.TransactionHoldDTO;
-import org.folio.innreach.mapper.InnReachErrorMapper;
-import org.folio.innreach.rest.resource.InnReachTransactionApi;
 
 @Log4j2
 @RequiredArgsConstructor
@@ -63,8 +64,9 @@ public class InnReachTransactionController implements InnReachTransactionApi {
   @Override
   @GetMapping("/inn-reach/transactions")
   public ResponseEntity<InnReachTransactionsDTO> getAllTransactions(@Min(0) @Max(2147483647) @Valid Integer offset,
-                                                                    @Min(0) @Max(2147483647) @Valid Integer limit){
-    var transactions = transactionService.getAllTransactions(offset, limit);
+                                                                    @Min(0) @Max(2147483647) @Valid Integer limit,
+                                                                    @Valid InnReachTransactionFilterParametersDTO parameters) {
+    var transactions = transactionService.getAllTransactions(offset, limit, parameters);
     return ResponseEntity.ok(transactions);
   }
 

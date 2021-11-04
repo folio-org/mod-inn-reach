@@ -7,6 +7,13 @@ import javax.persistence.EntityExistsException;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.folio.innreach.domain.service.MaterialTypeMappingService;
+import org.folio.innreach.dto.InnReachTransactionFilterParametersDTO;
+import org.folio.innreach.dto.InnReachTransactionsDTO;
+import org.folio.innreach.external.service.InventoryService;
+import org.folio.innreach.mapper.InnReachErrorMapper;
+import org.folio.innreach.mapper.InnReachTransactionFilterParametersMapper;
+import org.folio.innreach.specification.InnReachTransactionSpecification;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,13 +23,9 @@ import org.folio.innreach.domain.entity.InnReachTransaction.TransactionType;
 import org.folio.innreach.domain.exception.EntityNotFoundException;
 import org.folio.innreach.domain.service.CentralServerService;
 import org.folio.innreach.domain.service.InnReachTransactionService;
-import org.folio.innreach.domain.service.MaterialTypeMappingService;
 import org.folio.innreach.dto.InnReachResponseDTO;
 import org.folio.innreach.dto.InnReachTransactionDTO;
-import org.folio.innreach.dto.InnReachTransactionsDTO;
 import org.folio.innreach.dto.TransactionHoldDTO;
-import org.folio.innreach.external.service.InventoryService;
-import org.folio.innreach.mapper.InnReachErrorMapper;
 import org.folio.innreach.mapper.InnReachTransactionHoldMapper;
 import org.folio.innreach.mapper.InnReachTransactionMapper;
 import org.folio.innreach.repository.InnReachTransactionRepository;
@@ -39,10 +42,13 @@ public class InnReachTransactionServiceImpl implements InnReachTransactionServic
   private final InnReachTransactionMapper transactionMapper;
   private final InnReachTransactionHoldMapper transactionHoldMapper;
   private final InnReachErrorMapper errorMapper;
+  private final InnReachTransactionFilterParametersMapper parametersMapper;
 
   private final CentralServerService centralServerService;
   private final MaterialTypeMappingService materialService;
   private final InventoryService inventoryService;
+
+  private final InnReachTransactionSpecification specification;
 
   private InnReachTransaction createTransactionWithItemHold(String trackingId, String centralCode) {
     var transaction = new InnReachTransaction();
@@ -96,8 +102,10 @@ public class InnReachTransactionServiceImpl implements InnReachTransactionServic
 
   @Override
   @Transactional(readOnly = true)
-  public InnReachTransactionsDTO getAllTransactions(Integer offset, Integer limit) {
-    var transactions = repository.getAll(PageRequest.of(offset, limit));
+  public InnReachTransactionsDTO getAllTransactions(Integer offset, Integer limit,
+                                                    InnReachTransactionFilterParametersDTO parametersDTO) {
+    var parameters = parametersMapper.toEntity(parametersDTO);
+    var transactions = repository.findAll(specification.filterByParameters(parameters), PageRequest.of(offset, limit));
     return transactionMapper.toDTOCollection(transactions);
   }
 }

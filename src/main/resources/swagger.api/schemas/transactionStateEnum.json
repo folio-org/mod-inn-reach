@@ -1,0 +1,25 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "Transaction State enum",
+  "description": "Transaction State enum",
+  "type": "string",
+  "additionalProperties": false,
+  "enum" : [
+    "ITEM_HOLD",
+    "PATRON_HOLD",
+    "LOCAL_HOLD",
+    "BORROWER_RENEW",
+    "BORROWING_SITE_CANCEL",
+    "ITEM_IN_TRANSIT",
+    "RECEIVE_UNANNOUNCED",
+    "RETURN_UNCIRCULATED",
+    "CLAIMS_RETURNED",
+    "ITEM_RECEIVED",
+    "ITEM_SHIPPED",
+    "LOCAL_CHECKOUT",
+    "CANCEL_REQUEST",
+    "FINAL_CHECKIN",
+    "RECALL",
+    "TRANSFER"
+  ]
+}

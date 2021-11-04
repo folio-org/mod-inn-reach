@@ -1,0 +1,57 @@
+{
+  "description": "INN-Reach Transaction sorting parameters",
+  "type": "object",
+  "properties": {
+    "types" : {
+      "description": "List of INN-Reach Transaction types",
+      "type": "array",
+      "items": {
+        "$ref": "transactionTypeEnum.json"
+      }
+    },
+    "states" : {
+      "description": "List of INN-Reach Transaction states",
+      "type": "array",
+      "items": {
+        "$ref": "transactionStateEnum.json"
+      }
+    },
+    "centralServerCodes" : {
+      "description": "List of central server codes",
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "patronAgencyCodes" : {
+      "description": "List of patron agency codes",
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "itemAgencyCodes" : {
+      "description": "List of item agency codes",
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "patronTypes" : {
+      "description": "List of patron types",
+      "type": "array",
+      "items": {
+        "type": "integer"
+      }
+    },
+    "centralItemTypes" : {
+      "description": "List of central item types",
+      "type": "array",
+      "items": {
+        "type": "integer"
+      }
+    }
+  },
+  "additionalProperties": false,
+  "required": []
+}
