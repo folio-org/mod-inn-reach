@@ -306,6 +306,11 @@
           "permissionsRequired": ["inn-reach.d2ir.inn-reach-transaction.item.post"]
         },
         {
+          "methods": ["POST"],
+          "pathPattern": "/inn-reach/d2ir/circ/{circulationOperationName}/{trackingId}/{centralCode}",
+          "permissionsRequired": ["inn-reach.d2ir.circulation.item.post"]
+        },
+        {
           "methods": ["GET"],
           "pathPattern": "/inn-reach/transactions/{transactionId}",
           "permissionsRequired": ["inn-reach.inn-reach-transaction.item.get"]
@@ -802,6 +807,19 @@
       "description" : "Get a collection of all known agencies from available central servers"
     },
     {
+      "permissionName" : "inn-reach.d2ir.circulation.item.post",
+      "displayName" : "perform circulation operation",
+      "description" : "Perform circulation operation"
+    },
+    {
+      "permissionName" : "inn-reach.d2ir.circulation.all",
+      "displayName" : "all permissions of d2ir circulation",
+      "description" : "All permissions of d2ir circulation",
+      "subPermissions" : [
+        "inn-reach.d2ir.circulation.item.post"
+      ]
+    },
+    {
       "permissionName" : "inn-reach.all",
       "displayName" : "inn reach API module - all permissions",
       "description" : "All permissions for inn reach",
@@ -825,7 +843,8 @@
         "inn-reach.d2ir.inn-reach-transaction.all",
         "inn-reach.d2ir.bib-info.all",
         "inn-reach.d2ir.patron-info.all",
-        "inn-reach.central-server-agencies.collection.get"
+        "inn-reach.central-server-agencies.collection.get",
+        "inn-reach.d2ir.circulation.all"
       ]
     }
   ],
