@@ -16,7 +16,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import org.folio.innreach.domain.entity.CentralServer;
 import org.folio.innreach.domain.entity.ItemTypeMapping;
+import org.folio.innreach.domain.exception.EntityNotFoundException;
 import org.folio.innreach.domain.service.ItemTypeMappingService;
+import org.folio.innreach.dto.ItemTypeMappingDTO;
 import org.folio.innreach.dto.ItemTypeMappingsDTO;
 import org.folio.innreach.mapper.ItemTypeMappingMapper;
 import org.folio.innreach.repository.ItemTypeMappingRepository;
@@ -37,6 +39,14 @@ public class ItemTypeMappingServiceImpl implements ItemTypeMappingService {
     Page<ItemTypeMapping> mappings = repository.findAll(example, PageRequest.of(offset, limit));
 
     return mapper.toDTOCollection(mappings);
+  }
+
+  @Override
+  public ItemTypeMappingDTO getMappingByCentralType(UUID centralServerId, Integer centralItemType) {
+    return repository.findByCentralServerIdAndCentralItemType(centralServerId, centralItemType)
+      .map(mapper::toDTO)
+      .orElseThrow(() -> new EntityNotFoundException(
+        String.format("Item type mapping for central server: %s and type: %s not found", centralServerId, centralItemType)));
   }
 
   @Override

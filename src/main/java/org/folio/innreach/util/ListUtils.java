@@ -5,11 +5,14 @@ import static org.apache.commons.collections4.CollectionUtils.emptyIfNull;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 import lombok.experimental.UtilityClass;
+
+import org.folio.innreach.domain.dto.folio.ResultList;
 
 @UtilityClass
 public class ListUtils {
@@ -23,12 +26,16 @@ public class ListUtils {
   }
 
   public static <T, R> List<R> mapItemsWithFilter(Collection<T> source, Function<? super T, ? extends R> mapper,
-      Predicate<? super R> predicate) {
+                                                  Predicate<? super R> predicate) {
     return toStream(source).map(mapper).filter(predicate).collect(toList());
   }
 
   public static <T, R> List<R> flatMapItems(Collection<T> source, Function<? super T, ? extends Stream<? extends R>> mapper) {
     return toStream(source).flatMap(mapper).collect(toList());
+  }
+
+  public static <T> Optional<T> getFirstItem(ResultList<T> source) {
+    return toStream(source.getResult()).findFirst();
   }
 
 }

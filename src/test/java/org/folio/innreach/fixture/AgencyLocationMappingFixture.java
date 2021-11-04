@@ -3,6 +3,8 @@ package org.folio.innreach.fixture;
 import static java.util.UUID.fromString;
 import static org.jeasy.random.FieldPredicates.named;
 
+import static org.folio.innreach.fixture.TestUtil.deserializeFromJsonFile;
+
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
@@ -14,6 +16,7 @@ import org.folio.innreach.domain.entity.AgencyLocationLscMapping;
 import org.folio.innreach.domain.entity.AgencyLocationMapping;
 import org.folio.innreach.domain.entity.CentralServer;
 import org.folio.innreach.domain.entity.base.AuditableUser;
+import org.folio.innreach.dto.AgencyLocationMappingDTO;
 
 @UtilityClass
 public class AgencyLocationMappingFixture {
@@ -77,6 +80,11 @@ public class AgencyLocationMappingFixture {
       .filter(m -> code.equals(m.getLocalServerCode()))
       .findFirst()
       .orElse(null);
+  }
+
+  public static AgencyLocationMappingDTO deserializeMapping() {
+    return deserializeFromJsonFile(
+      "/agency-mapping/create-agency-mappings-request.json", AgencyLocationMappingDTO.class);
   }
 
 }

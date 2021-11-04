@@ -37,7 +37,7 @@ import lombok.extern.log4j.Log4j2;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
-import org.folio.innreach.client.InventoryClient;
+import org.folio.innreach.client.CirculationClient;
 import org.folio.innreach.client.RequestStorageClient;
 import org.folio.innreach.client.ServicePointsUsersClient;
 import org.folio.innreach.client.UsersClient;
@@ -52,10 +52,10 @@ import org.folio.innreach.domain.entity.InnReachTransaction;
 import org.folio.innreach.domain.entity.TransactionHold;
 import org.folio.innreach.domain.entity.TransactionItemHold;
 import org.folio.innreach.domain.exception.EntityNotFoundException;
+import org.folio.innreach.domain.exception.ItemNotRequestableException;
 import org.folio.innreach.domain.service.RequestService;
 import org.folio.innreach.external.service.InnReachExternalService;
 import org.folio.innreach.external.service.InventoryService;
-import org.folio.innreach.mapper.InnReachTransactionMapper;
 import org.folio.innreach.mapper.InnReachTransactionPickupLocationMapper;
 import org.folio.innreach.repository.CentralPatronTypeMappingRepository;
 import org.folio.innreach.repository.CentralServerRepository;
@@ -79,11 +79,9 @@ public class RequestServiceImpl implements RequestService {
   private final CentralPatronTypeMappingRepository centralPatronTypeMappingRepository;
   private final CentralServerRepository centralServerRepository;
 
-  private final InnReachTransactionMapper transactionMapper;
-
   private final InnReachTransactionPickupLocationMapper transactionPickupLocationMapper;
-  private final InventoryClient inventoryClient;
   private final RequestStorageClient requestsClient;
+  private final CirculationClient circulationClient;
   private final ServicePointsUsersClient servicePointsUsersClient;
   private final UsersClient usersClient;
 
@@ -93,60 +91,98 @@ public class RequestServiceImpl implements RequestService {
   @Async
   @Override
   public void createItemRequest(String trackingId) {
-    log.info("Creating an item request...");
     var transaction = transactionRepository.fetchOneByTrackingId(trackingId).orElseThrow(() ->
       new EntityNotFoundException("Transaction not found for trackingId = " + trackingId)
     );
-    var itemHrId = transaction.getHold().getItemId();
     var centralServerId = getCentralServerId(transaction.getCentralServerCode());
 
-    var item = inventoryService.getItemByHrId(itemHrId);
-    var requests = requestsClient.findRequests(item.getId());
+    try {
+      var patronType = ((TransactionItemHold) transaction.getHold()).getCentralPatronType();
+      var patronBarcode = getUserBarcode(centralServerId, patronType);
+      var userId = UUID.fromString(getUserByBarcode(patronBarcode).getId());
+      var servicePointId = getDefaultServicePointId(userId);
 
-    if (itemIsRequestable(item, requests)) {
-      try {
-        //getting required data for a request
-        var comment = createPatronComment(transaction.getHold());
-        var patronType = ((TransactionItemHold) transaction.getHold()).getCentralPatronType();
-        var patronBarcode = getUserBarcode(centralServerId, patronType);
-        var userId = getUserByBarcode(patronBarcode).getId();
-        var defaultServicePointId = getDefaultServicePointId(userId);
-        var requestExpirationDate = getRequestExpirationDate(transaction.getHold());
-        var requestType = item.getStatus() == AVAILABLE ? PAGE.getName() : HOLD.getName();
-
-        //creating and sending new request
-        var newRequest = RequestDTO.builder()
-          .requestType(requestType)
-          .itemId(item.getId())
-          .requesterId(UUID.fromString(userId))
-          .pickupServicePointId(defaultServicePointId)
-          .requestExpirationDate(requestExpirationDate)
-          .patronComments(comment)
-          .requestDate(transaction.getCreatedDate())
-          .fulfilmentPreference(HOLD_SHELF.getName())
-          .build();
-        var createdRequest = requestsClient.sendRequest(newRequest);
-
-        //updating transaction data
-        transaction.getHold().setFolioRequestId(createdRequest.getId());
-        transaction.getHold().setFolioPatronId(UUID.fromString(userId));
-        transaction.getHold().setFolioItemId(item.getId());
-        transactionRepository.save(transaction);
-
-        log.info("Item request successfully created.");
-      } catch (Exception e) {
-        log.warn("An error occurred during request processing. Sending \"Owning site cancels\" request.", e);
-        var errorReason = "Request not permitted";
-        issueOwningSiteCancelsRequest(errorReason, transaction, centralServerId);
-      }
-    } else {
+      createItemRequest(transaction, centralServerId, servicePointId, userId);
+    } catch (ItemNotRequestableException e) {
       log.warn("Requested item is not available. Sending \"Owning site cancels\" request.");
       var errorReason = "Item not available";
+      issueOwningSiteCancelsRequest(errorReason, transaction, centralServerId);
+    } catch (Exception e) {
+      log.warn("An error occurred during request processing. Sending \"Owning site cancels\" request.", e);
+      var errorReason = "Request not permitted";
       issueOwningSiteCancelsRequest(errorReason, transaction, centralServerId);
     }
   }
 
-  private boolean itemIsRequestable(InventoryItemDTO item, ResultList<RequestDTO> requests) {
+  @Override
+  public void createItemRequest(InnReachTransaction transaction, UUID centralServerId, UUID servicePointId, UUID requesterId) {
+    log.info("Creating item request for transaction {}", transaction);
+    var itemHrId = transaction.getHold().getItemId();
+
+    var item = inventoryService.getItemByHrId(itemHrId);
+
+    var requests = requestsClient.findRequests(item.getId());
+    if (!isItemRequestable(item, requests)) {
+      throw new ItemNotRequestableException("Requested item is not available");
+    }
+
+    //getting required data for a request
+    var comment = createPatronComment(transaction.getHold());
+
+    var requestExpirationDate = getRequestExpirationDate(transaction.getHold());
+    var requestType = item.getStatus() == AVAILABLE ? PAGE : HOLD;
+
+    //creating and sending new request
+    var newRequest = RequestDTO.builder()
+      .requestType(requestType.getName())
+      .itemId(item.getId())
+      .requesterId(requesterId)
+      .pickupServicePointId(servicePointId)
+      .requestExpirationDate(requestExpirationDate)
+      .patronComments(comment)
+      .requestDate(transaction.getCreatedDate())
+      .fulfilmentPreference(HOLD_SHELF.getName())
+      .build();
+    var createdRequest = requestsClient.sendRequest(newRequest);
+
+    //updating transaction data
+    transaction.getHold().setFolioRequestId(createdRequest.getId());
+    transaction.getHold().setFolioPatronId(requesterId);
+    transaction.getHold().setFolioItemId(item.getId());
+    transactionRepository.save(transaction);
+
+    log.info("Item request successfully created.");
+  }
+
+  @Override
+  public void moveItemRequest(InnReachTransaction transaction) {
+    log.info("Moving item request for transaction {}", transaction);
+
+    var hold = transaction.getHold();
+    var itemHrId = hold.getItemId();
+    var requestId = hold.getFolioRequestId();
+
+    var item = inventoryService.getItemByHrId(itemHrId);
+
+    var requests = requestsClient.findRequests(item.getId());
+    if (!isItemRequestable(item, requests)) {
+      throw new ItemNotRequestableException("Item with hrid " + itemHrId + " is not requestable");
+    }
+
+    var payload = CirculationClient.MoveRequest.builder()
+      .requestType(PAGE.getName())
+      .destinationItemId(item.getId())
+      .build();
+
+    var movedRequest = circulationClient.moveRequest(requestId, payload);
+
+    hold.setFolioItemId(item.getId());
+    hold.setFolioRequestId(movedRequest.getId());
+    transactionRepository.save(transaction);
+    log.info("Item request successfully moved");
+  }
+
+  private boolean isItemRequestable(InventoryItemDTO item, ResultList<RequestDTO> requests) {
     return item.getStatus() == AVAILABLE ||
       !notAvailableItemStatuses.contains(item.getStatus()) ||
       noOpenRequests(requests) && noOpenRequestsAvailableStatuses.contains(item.getStatus());
@@ -167,8 +203,8 @@ public class RequestServiceImpl implements RequestService {
       ).getId();
   }
 
-  private UUID getDefaultServicePointId(String userId) {
-    return servicePointsUsersClient.findServicePointsUsers(UUID.fromString(userId))
+  private UUID getDefaultServicePointId(UUID userId) {
+    return servicePointsUsersClient.findServicePointsUsers(userId)
       .getResult().stream().findFirst().orElseThrow(
         () -> new EntityNotFoundException("Service points not found for user id = " + userId)
       ).getDefaultServicePointId();
@@ -187,9 +223,9 @@ public class RequestServiceImpl implements RequestService {
   private String getUserBarcode(UUID centralServerId, Integer patronType) {
     return centralPatronTypeMappingRepository.
       findOneByCentralServerIdAndCentralPatronType(centralServerId, patronType).orElseThrow(() ->
-      new EntityNotFoundException("User barcode not found for central server id = " + centralServerId +
-        " and patron type = " + patronType)
-    ).getBarcode();
+        new EntityNotFoundException("User barcode not found for central server id = " + centralServerId +
+          " and patron type = " + patronType)
+      ).getBarcode();
   }
 
   private OffsetDateTime getRequestExpirationDate(TransactionHold hold) {

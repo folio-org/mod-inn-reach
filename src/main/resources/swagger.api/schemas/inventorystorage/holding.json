@@ -8,6 +8,29 @@
       "description": "Unique ID of the holding record",
       "format": "UUID"
     },
+    "hrid": {
+      "type": "string",
+      "description": "the human readable ID, also called eye readable ID. A system-assigned sequential ID which maps to the Instance ID"
+    },
+    "holdingsTypeId": {
+      "type": "string",
+      "format": "UUID",
+      "description": "unique ID for the type of this holdings record"
+    },
+    "instanceId": {
+      "type": "string",
+      "description": "Inventory instances identifier",
+      "format": "UUID"
+    },
+    "callNumber": {
+      "type": "string",
+      "description": "Call Number is an identifier assigned to an item, usually printed on a label attached to the item."
+    },
+    "permanentLocationId": {
+      "type": "string",
+      "format": "UUID",
+      "description": "The permanent shelving location in which an item resides."
+    },
     "statisticalCodeIds": {
       "type": "array",
       "description": "List of statistical code IDs",
@@ -16,6 +39,18 @@
         "format": "UUID"
       },
       "uniqueItems": true
+    },
+    "discoverySuppress": {
+      "type": "boolean",
+      "description": "records the fact that the record should not be displayed in a discovery system"
+    },
+    "holdingsItems": {
+      "description": "Items related to holdings record",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "$ref": "item.json"
+      }
     }
   }
 }
