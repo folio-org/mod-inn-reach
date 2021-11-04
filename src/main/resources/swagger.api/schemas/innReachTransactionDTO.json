@@ -17,34 +17,13 @@
     },
     "state": {
       "description": "Transaction state",
-      "type": "string",
-      "enum" : [
-        "ITEM_HOLD",
-        "PATRON_HOLD",
-        "LOCAL_HOLD",
-        "BORROWER_RENEW",
-        "BORROWING_SITE_CANCEL",
-        "ITEM_IN_TRANSIT",
-        "RECEIVE_UNANNOUNCED",
-        "RETURN_UNCIRCULATED",
-        "CLAIMS_RETURNED",
-        "ITEM_RECEIVED",
-        "ITEM_SHIPPED",
-        "LOCAL_CHECKOUT",
-        "CANCEL_REQUEST",
-        "FINAL_CHECKIN",
-        "RECALL",
-        "TRANSFER"
-      ]
+      "type": "object",
+      "$ref": "transactionStateEnum.json"
     },
     "type": {
       "description": "Transaction type",
-      "type": "string",
-      "enum" : [
-        "ITEM",
-        "PATRON",
-        "LOCAL"
-      ]
+      "type": "object",
+      "$ref": "transactionTypeEnum.json"
     },
     "hold" : {
       "description": "Transaction hold",
