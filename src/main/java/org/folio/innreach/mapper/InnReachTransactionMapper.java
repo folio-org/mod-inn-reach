@@ -1,77 +1,63 @@
 package org.folio.innreach.mapper;
 
-import java.util.Map;
-import java.util.function.Function;
+import static org.apache.commons.collections4.ListUtils.emptyIfNull;
 
-import javax.annotation.PostConstruct;
+import java.util.LinkedList;
+import java.util.List;
 
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Component;
+import org.mapstruct.Builder;
+import org.mapstruct.InjectionStrategy;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 
 import org.folio.innreach.domain.entity.InnReachTransaction;
-import org.folio.innreach.domain.entity.TransactionHold;
 import org.folio.innreach.domain.entity.TransactionItemHold;
 import org.folio.innreach.domain.entity.TransactionLocalHold;
 import org.folio.innreach.domain.entity.TransactionPatronHold;
 import org.folio.innreach.dto.InnReachTransactionDTO;
-import org.folio.innreach.dto.Metadata;
-import org.folio.innreach.dto.TransactionHoldDTO;
+import org.folio.innreach.dto.InnReachTransactionsDTO;
 
-@Component
-@RequiredArgsConstructor
-public class InnReachTransactionMapper {
+@Mapper(componentModel = "spring", injectionStrategy = InjectionStrategy.CONSTRUCTOR, uses = MappingMethods.class, builder = @Builder(disableBuilder = true))
+public abstract class InnReachTransactionMapper {
+  @Autowired
+  InnReachTransactionHoldMapper holdMapper;
 
-  private final InnReachTransactionHoldMapper innReachTransactionHoldMapper;
-  private final MappingMethods mappingMethods;
+  @Mapping(target = "hold", ignore = true)
+  @AuditableMapping
+  public abstract InnReachTransactionDTO toDTOWithoutHold(InnReachTransaction entity);
 
-  private Map<Class<? extends TransactionHold>, Function<TransactionHold, TransactionHoldDTO>> holdMappers;
-
-  @PostConstruct
-  public void initTransactionHoldMappers() {
-    this.holdMappers = Map.of(
-      TransactionItemHold.class, hold -> innReachTransactionHoldMapper.toItemHoldDTO((TransactionItemHold) hold),
-      TransactionLocalHold.class, hold -> innReachTransactionHoldMapper.toLocalHoldDTO((TransactionLocalHold) hold),
-      TransactionPatronHold.class, hold -> innReachTransactionHoldMapper.toPatronHoldDTO((TransactionPatronHold) hold)
-    );
+  public InnReachTransactionDTO toDTO(InnReachTransaction entity){
+    var dto = toDTOWithoutHold(entity);
+    switch (entity.getType()){
+      case ITEM:
+        dto.setHold(holdMapper.toItemHoldDTO((TransactionItemHold) entity.getHold()));
+        break;
+      case LOCAL:
+        dto.setHold(holdMapper.toLocalHoldDTO((TransactionLocalHold) entity.getHold()));
+        break;
+      case PATRON:
+        dto.setHold(holdMapper.toPatronHoldDTO((TransactionPatronHold) entity.getHold()));
+        break;
+      default:
+        break;
+    }
+    return dto;
   }
 
-  public InnReachTransactionDTO toDto(InnReachTransaction innReachTransaction) {
-    var innReachTransactionDTO = new InnReachTransactionDTO()
-      .id(innReachTransaction.getId())
-      .trackingId(innReachTransaction.getTrackingId())
-      .centralServerCode(innReachTransaction.getCentralServerCode());
-
-    if (innReachTransaction.getState() != null) {
-      innReachTransactionDTO.state(innReachTransaction.getState().toString());
+  public List<InnReachTransactionDTO> toDTOs(Iterable<InnReachTransaction> entities){
+    List<InnReachTransactionDTO> dtos = new LinkedList<>();
+    for (InnReachTransaction transaction : entities) {
+      var dto = toDTO(transaction);
+      dtos.add(dto);
     }
-
-    if (innReachTransaction.getType() != null) {
-      innReachTransactionDTO.type(innReachTransaction.getType().toString());
-    }
-
-    if (innReachTransaction.getHold() != null) {
-      innReachTransactionDTO.transactionHold(holdMappers.get(innReachTransaction.getHold().getClass()).apply(innReachTransaction.getHold()));
-    }
-
-    innReachTransactionDTO.setMetadata(collectMetadata(innReachTransaction));
-    return innReachTransactionDTO;
+    return dtos;
   }
 
-  private Metadata collectMetadata(InnReachTransaction innReachTransaction) {
-    var metadata = new Metadata()
-      .createdDate(mappingMethods.offsetDateTimeAsDate(innReachTransaction.getCreatedDate()))
-      .updatedDate(mappingMethods.offsetDateTimeAsDate(innReachTransaction.getUpdatedDate()));
+  public InnReachTransactionsDTO toDTOCollection(Page<InnReachTransaction> pageable) {
+    List<InnReachTransactionDTO> dtos = emptyIfNull(toDTOs(pageable));
 
-    if (innReachTransaction.getCreatedBy() != null) {
-      metadata.createdByUserId(mappingMethods.uuidAsString(innReachTransaction.getCreatedBy().getId()))
-        .createdByUsername(innReachTransaction.getCreatedBy().getName());
-    }
-
-    if (innReachTransaction.getUpdatedBy() != null) {
-      metadata.updatedByUserId(mappingMethods.uuidAsString(innReachTransaction.getUpdatedBy().getId()))
-        .updatedByUsername(innReachTransaction.getUpdatedBy().getName());
-    }
-
-    return metadata;
+    return new InnReachTransactionsDTO().transactions(dtos).totalRecords((int) pageable.getTotalElements());
   }
 }

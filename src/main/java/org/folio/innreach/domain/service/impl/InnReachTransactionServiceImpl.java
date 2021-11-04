@@ -7,7 +7,9 @@ import javax.persistence.EntityExistsException;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import org.folio.innreach.domain.entity.InnReachTransaction;
 import org.folio.innreach.domain.entity.InnReachTransaction.TransactionType;
@@ -17,6 +19,7 @@ import org.folio.innreach.domain.service.InnReachTransactionService;
 import org.folio.innreach.domain.service.MaterialTypeMappingService;
 import org.folio.innreach.dto.InnReachResponseDTO;
 import org.folio.innreach.dto.InnReachTransactionDTO;
+import org.folio.innreach.dto.InnReachTransactionsDTO;
 import org.folio.innreach.dto.TransactionHoldDTO;
 import org.folio.innreach.external.service.InventoryService;
 import org.folio.innreach.mapper.InnReachErrorMapper;
@@ -86,9 +89,15 @@ public class InnReachTransactionServiceImpl implements InnReachTransactionServic
 
   @Override
   public InnReachTransactionDTO getInnReachTransaction(UUID transactionId) {
-    var innReachTransaction = repository.fetchOneById(transactionId)
+    return repository.fetchOneById(transactionId)
+      .map(transactionMapper::toDTO)
       .orElseThrow(() -> new EntityNotFoundException(String.format("InnReach transaction with id [%s] not found!", transactionId)));
+  }
 
-    return transactionMapper.toDto(innReachTransaction);
+  @Override
+  @Transactional(readOnly = true)
+  public InnReachTransactionsDTO getAllTransactions(Integer offset, Integer limit) {
+    var transactions = repository.getAll(PageRequest.of(offset, limit));
+    return transactionMapper.toDTOCollection(transactions);
   }
 }
