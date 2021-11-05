@@ -2,54 +2,81 @@
   "description": "INN-Reach Transaction sorting parameters",
   "type": "object",
   "properties": {
-    "types" : {
+    "type": {
       "description": "List of INN-Reach Transaction types",
       "type": "array",
       "items": {
         "$ref": "transactionTypeEnum.json"
       }
     },
-    "states" : {
+    "state": {
       "description": "List of INN-Reach Transaction states",
       "type": "array",
       "items": {
         "$ref": "transactionStateEnum.json"
       }
     },
-    "centralServerCodes" : {
+    "centralServerCode": {
       "description": "List of central server codes",
       "type": "array",
       "items": {
         "type": "string"
       }
     },
-    "patronAgencyCodes" : {
+    "patronAgencyCode": {
       "description": "List of patron agency codes",
       "type": "array",
       "items": {
         "type": "string"
       }
     },
-    "itemAgencyCodes" : {
+    "itemAgencyCode": {
       "description": "List of item agency codes",
       "type": "array",
       "items": {
         "type": "string"
       }
     },
-    "patronTypes" : {
+    "patronType": {
       "description": "List of patron types",
       "type": "array",
       "items": {
         "type": "integer"
       }
     },
-    "centralItemTypes" : {
+    "centralItemType": {
       "description": "List of central item types",
       "type": "array",
       "items": {
         "type": "integer"
       }
+    },
+    "sortBy": {
+      "description": "List of sorting parameters",
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "TRANSACTION_TIME",
+          "DATE_CREATED",
+          "DATE_MODIFIED",
+          "TRANSACTION_TYPE",
+          "TRANSACTION_STATUS",
+          "ITEM_AGENCY",
+          "PATRON_AGENCY",
+          "PATRON_TYPE",
+          "MATERIAL_TYPE"
+        ]
+      }
+    },
+    "sortOrder": {
+      "description": "Sorting order parameter",
+      "type": "string",
+      "enum": [
+        "ASCENDING",
+        "DESCENDING"
+      ],
+      "default": "ASCENDING"
     }
   },
   "additionalProperties": false,

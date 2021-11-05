@@ -88,6 +88,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   private static final String PRE_POPULATED_USER_BARCODE_QUERY = "(barcode==\"" + PRE_POPULATED_USER_BARCODE + "\")";
   private static final Integer PRE_POPULATED_CENTRAL_PATRON_TYPE = 200;
   private static final String PRE_POPULATED_MATERIAL_TYPE_ID = "1a54b431-2e4f-452d-9cae-9cee66c9a892";
+  private static final String PRE_POPULATED_PATRON_AGENCY = "qwe12";
 
   public static final String TRANSACTION_WITH_ITEM_HOLD_ID = "ab2393a1-acc4-4849-82ac-8cc0c37339e1";
   public static final String TRANSACTION_WITH_LOCAL_HOLD_ID = "79b0a1fb-55be-4e55-9d84-01303aaec1ce";
@@ -146,12 +147,19 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     when(requestsClient.findRequests(inventoryItemDTO.getId())).thenReturn(ResultList.of(0, Collections.emptyList()));
   }
 
+  void modifyTransactionsDateCreated() {
+    var transactions = repository.findAll();
+    int[] hours = { 0 };
+    transactions.forEach(t -> t.setCreatedDate(t.getCreatedDate().minusHours(hours[0]++)));
+    repository.saveAll(transactions);
+  }
+
   @Test
   @Sql(scripts = {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
   })
-  void return200HttpCode_and_allExistingTransactions_when_getAllTransactionsWithNoFilters(){
+  void return200HttpCode_and_allExistingTransactions_when_getAllTransactionsWithNoFilters() {
     var responseEntity = testRestTemplate.getForEntity(
       "/inn-reach/transactions", InnReachTransactionsDTO.class
     );
@@ -177,7 +185,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
   })
-  void return200HttpCode_and_pageOfTransactions_when_getAllTransactionsWithOffsetAndLimit(){
+  void return200HttpCode_and_pageOfTransactions_when_getAllTransactionsWithOffsetAndLimit() {
     var responseEntity = testRestTemplate.getForEntity(
       "/inn-reach/transactions?offset=1&limit=1", InnReachTransactionsDTO.class
     );
@@ -202,9 +210,9 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
   })
-  void return200HttpCode_and_sortedTransactions_when_getAllTransactionsWithTypeAndState(){
+  void return200HttpCode_and_sortedTransactions_when_getAllTransactionsWithTypeAndState() {
     var responseEntity = testRestTemplate.getForEntity(
-      "/inn-reach/transactions?types=PATRON&types=ITEM&states=PATRON_HOLD", InnReachTransactionsDTO.class
+      "/inn-reach/transactions?type=PATRON&type=ITEM&state=PATRON_HOLD", InnReachTransactionsDTO.class
     );
 
     assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
@@ -227,9 +235,9 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
   })
-  void return200HttpCode_and_sortedTransactions_when_getAllTransactionsWithCentralServerCodeAndPatronAgencyCode(){
+  void return200HttpCode_and_sortedTransactions_when_getAllTransactionsWithCentralServerCodeAndPatronAgencyCode() {
     var responseEntity = testRestTemplate.getForEntity(
-      "/inn-reach/transactions?centralServerCode=d2ir&patronAgencyCodes=qwe56", InnReachTransactionsDTO.class
+      "/inn-reach/transactions?centralServerCode=d2ir&patronAgencyCode=qwe56", InnReachTransactionsDTO.class
     );
 
     assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
@@ -254,9 +262,9 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
   })
-  void return200HttpCode_and_sortedTransactions_when_getAllTransactionsWithItemAgency(){
+  void return200HttpCode_and_sortedTransactions_when_getAllTransactionsWithItemAgency() {
     var responseEntity = testRestTemplate.getForEntity(
-      "/inn-reach/transactions?itemAgencyCodes=asd78", InnReachTransactionsDTO.class
+      "/inn-reach/transactions?itemAgencyCode=asd78", InnReachTransactionsDTO.class
     );
 
     assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
@@ -279,9 +287,9 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
   })
-  void return200HttpCode_and_sortedTransactions_when_getAllTransactionsWithPatronType(){
+  void return200HttpCode_and_sortedTransactions_when_getAllTransactionsWithPatronType() {
     var responseEntity = testRestTemplate.getForEntity(
-      "/inn-reach/transactions?patronTypes=1", InnReachTransactionsDTO.class
+      "/inn-reach/transactions?patronType=1", InnReachTransactionsDTO.class
     );
 
     assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
@@ -303,9 +311,9 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
   })
-  void return200HttpCode_and_sortedTransactions_when_getAllTransactionsWithCentralItemType(){
+  void return200HttpCode_and_sortedTransactions_when_getAllTransactionsWithCentralItemType() {
     var responseEntity = testRestTemplate.getForEntity(
-      "/inn-reach/transactions?centralItemTypes=1&centralItemTypes=2", InnReachTransactionsDTO.class
+      "/inn-reach/transactions?centralItemType=1&centralItemType=2", InnReachTransactionsDTO.class
     );
 
     assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
@@ -327,15 +335,78 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
   })
-  void return200HttpCode_and_emptyTransactionList_when_noTransactionsMatchFilters(){
+  void return200HttpCode_and_emptyTransactionList_when_noTransactionsMatchFilters() {
     var responseEntity = testRestTemplate.getForEntity(
-      "/inn-reach/transactions?types=ITEM&states=PATRON_HOLD&centralServerCodes=qwe12", InnReachTransactionsDTO.class
+      "/inn-reach/transactions?type=ITEM&state=PATRON_HOLD&centralServerCode=qwe12", InnReachTransactionsDTO.class
     );
 
     assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
     assertNotNull(responseEntity.getBody());
     assertEquals(0, responseEntity.getBody().getTotalRecords());
     assertTrue(responseEntity.getBody().getTransactions().isEmpty());
+  }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
+  })
+  void return200HttpCode_and_sortedTransactionList_when_SortByCreatedDateDescending() {
+    modifyTransactionsDateCreated();
+    var responseEntity = testRestTemplate.getForEntity(
+      "/inn-reach/transactions?sortBy=DATE_CREATED&sortOrder=DESCENDING", InnReachTransactionsDTO.class
+    );
+
+    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+    assertNotNull(responseEntity.getBody());
+    assertEquals(3, responseEntity.getBody().getTotalRecords());
+
+    var transactions = responseEntity.getBody().getTransactions();
+    assertTrue(transactions.get(0).getMetadata().getCreatedDate().after(
+      transactions.get(2).getMetadata().getCreatedDate()));
+  }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
+  })
+  void return200HttpCode_and_sortedTransactionList_when_SortByCentralItemTypeAscending() {
+    var responseEntity = testRestTemplate.getForEntity(
+      "/inn-reach/transactions?sortBy=MATERIAL_TYPE", InnReachTransactionsDTO.class
+    );
+
+    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+    assertNotNull(responseEntity.getBody());
+    assertEquals(3, responseEntity.getBody().getTotalRecords());
+
+    var transactions = responseEntity.getBody().getTransactions();
+    assertTrue(transactions.get(0).getHold().getCentralItemType() <
+      transactions.get(2).getHold().getCentralItemType());
+  }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
+  })
+  void return200HttpCode_and_sortedTransactionList_when_SortByPatronAgencyAndItemAgency() {
+    var responseEntity = testRestTemplate.getForEntity(
+      "/inn-reach/transactions?sortBy=PATRON_AGENCY&sortBy=ITEM_AGENCY", InnReachTransactionsDTO.class
+    );
+
+    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+    assertNotNull(responseEntity.getBody());
+    assertEquals(3, responseEntity.getBody().getTotalRecords());
+
+    var transactions = responseEntity.getBody().getTransactions();
+    assertTrue(transactions.get(0).getHold().getPatronAgencyCode().compareTo(
+      transactions.get(2).getHold().getPatronAgencyCode()) < 0);
+
+    var transactionsForFirstPatronAgency = transactions.stream().filter(t -> t.getHold().getPatronAgencyCode().equals(PRE_POPULATED_PATRON_AGENCY))
+    .collect(Collectors.toList());
+    assertTrue(transactionsForFirstPatronAgency.get(0).getHold().getItemAgencyCode().compareTo(
+      transactionsForFirstPatronAgency.get(1).getHold().getItemAgencyCode()) < 0);
   }
 
   @Test
