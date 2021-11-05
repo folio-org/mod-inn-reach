@@ -3,8 +3,6 @@ package org.folio.innreach.domain.service;
 import java.util.Optional;
 import java.util.UUID;
 
-import org.springframework.web.bind.annotation.PathVariable;
-
 import org.folio.innreach.client.HridSettingsClient;
 import org.folio.innreach.client.InstanceContributorTypeClient;
 import org.folio.innreach.client.InstanceTypeClient;
