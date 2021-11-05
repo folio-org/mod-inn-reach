@@ -3,6 +3,7 @@ package org.folio.innreach.domain.dto.folio.requeststorage;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
+import com.fasterxml.jackson.annotation.JsonValue;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -40,6 +41,7 @@ public class RequestDTO {
     CLOSED_UNFILLED("Closed - Unfilled"),
     CLOSED_PICKUP_EXPIRED("Closed - Pickup expired");
 
+    @JsonValue
     private final String name;
   }
 
