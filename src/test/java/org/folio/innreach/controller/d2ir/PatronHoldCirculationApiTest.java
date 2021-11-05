@@ -73,8 +73,8 @@ class PatronHoldCirculationApiTest extends BaseApiControllerTest {
   private static final int PRE_POPULATED_CENTRAL_ITEM_TYPE = 1;
   private static final UUID PRE_POPULATED_REQUEST_ID = UUID.fromString("ea11eba7-3c0f-4d15-9cca-c8608cd6bc8a");
   private static final UUID PRE_POPULATED_ITEM_ID = UUID.fromString("9a326225-6530-41cc-9399-a61987bfab3c");
-  private static final UUID NEW_REQUEST_ID = UUID.fromString("89105c06-dbdb-4aa0-9695-d4d19c733270");
 
+  private static final UUID NEW_REQUEST_ID = UUID.fromString("89105c06-dbdb-4aa0-9695-d4d19c733270");
   private static final String ITEM_HRID = "itnewtrackingid5east";
   private static final String HOLDING_ID = "16f40c4e-235d-4912-a683-2ad919cc8b07";
 
@@ -112,7 +112,7 @@ class PatronHoldCirculationApiTest extends BaseApiControllerTest {
     stubPost(ITEMS_URL, "inventory-storage/item-response.json");
     stubGet(format(QUERY_INVENTORY_ITEM_BY_HRID_URL_TEMPLATE, "ittracking15east"), "inventory/query-items-response.json");
     stubGet(format(QUERY_REQUEST_BY_ITEM_ID_URL_TEMPLATE, PRE_POPULATED_ITEM_ID), "request-storage/empty-requests-response.json");
-    stubPost(format(MOVE_CIRCULATION_REQUEST_URL_TEMPLATE, PRE_POPULATED_REQUEST_ID), "request-storage/item-request-response.json");
+    stubPost(format(MOVE_CIRCULATION_REQUEST_URL_TEMPLATE, PRE_POPULATED_REQUEST_ID), "request-storage/updated-request-response.json");
 
     mockMvc.perform(post(CIRCULATION_ENDPOINT, PATRON_HOLD.getOperationName(), PRE_POPULATED_TRACKING_ID, PRE_POPULATED_CENTRAL_CODE)
         .content(jsonHelper.toJson(transactionHoldDTO))
@@ -162,7 +162,6 @@ class PatronHoldCirculationApiTest extends BaseApiControllerTest {
     await().atMost(Duration.TEN_SECONDS).untilAsserted(() ->
       verify(requestStorageClient).sendRequest(any()));
   }
-
 
   @Test
   @Sql(scripts = {
