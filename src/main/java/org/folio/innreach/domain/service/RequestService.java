@@ -14,4 +14,5 @@ public interface RequestService {
 
   void moveItemRequest(InnReachTransaction transaction);
 
+  void cancelRequest(InnReachTransaction transaction, String reason);
 }

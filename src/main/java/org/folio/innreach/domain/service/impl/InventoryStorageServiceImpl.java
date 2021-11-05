@@ -2,6 +2,9 @@ package org.folio.innreach.domain.service.impl;
 
 import static org.folio.innreach.util.ListUtils.getFirstItem;
 
+import java.util.Optional;
+import java.util.UUID;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -71,6 +74,26 @@ public class InventoryStorageServiceImpl implements InventoryStorageService {
   @Override
   public Item createItem(Item item) {
     return itemsStorageClient.createItem(item);
+  }
+
+  @Override
+  public Item updateItem(Item item) {
+    return itemsStorageClient.updateItem(item.getId(), item);
+  }
+
+  @Override
+  public Optional<Item> findItem(UUID itemId) {
+    return itemsStorageClient.findItem(itemId);
+  }
+
+  @Override
+  public Optional<Holding> findHolding(UUID holdingId) {
+    return holdingsStorageClient.findHolding(holdingId);
+  }
+
+  @Override
+  public Holding updateHolding(Holding holding) {
+    return holdingsStorageClient.updateHolding(holding.getId(), holding);
   }
 
 }

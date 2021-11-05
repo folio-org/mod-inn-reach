@@ -1,7 +1,7 @@
 {
   "items": [
     {
-      "id": "45b706c2-63ff-4a01-b7c2-5483f19b8c8f",
+      "id": "9a326225-6530-41cc-9399-a61987bfab3c",
       "_version": "4",
       "status": {
         "name": "Available",
@@ -52,7 +52,7 @@
         "updatedByUserId": "e2f5ebb7-9285-58f8-bc1e-608ac2080861"
       },
       "links": {
-        "self": "http://volaris-okapi.ci.folio.org/inventory/items/45b706c2-63ff-4a01-b7c2-5483f19b8c8f"
+        "self": "http://volaris-okapi.ci.folio.org/inventory/items/9a326225-6530-41cc-9399-a61987bfab3c"
       },
       "effectiveCallNumberComponents": {
         "callNumber": "1234",

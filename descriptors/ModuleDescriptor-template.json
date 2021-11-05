@@ -329,7 +329,7 @@
         {
           "methods": ["POST"],
           "pathPattern": "/inn-reach/d2ir/circ/patronhold/{trackingId}/{centralCode}",
-          "permissionsRequired": ["inn-reach.d2ir.patron-hold.post"],
+          "permissionsRequired": ["inn-reach.d2ir.patronhold.post"],
           "modulePermissions": [
             "inventory-storage.instance-types.collection.get",
             "inventory-storage.contributor-name-types.collection.get",
@@ -337,7 +337,22 @@
             "inventory-storage.items.item.post",
             "inventory-storage.holdings.item.post",
             "inventory-storage.hrid-settings.item.get",
-            "inventory-storage.service-points.collection.get"
+            "inventory-storage.service-points.collection.get",
+            "circulation-storage.requests.item.get",
+            "circulation-storage.requests.item.post",
+            "circulation.requests.item.move.post"
+          ]
+        },
+        {
+          "methods": ["PUT"],
+          "pathPattern": "/inn-reach/d2ir/circ/cancelrequest/{trackingId}/{centralCode}",
+          "permissionsRequired": ["inn-reach.d2ir.cancelrequest.put"],
+          "modulePermissions": [
+            "inventory-storage.items.item.get",
+            "inventory-storage.items.item.put",
+            "inventory-storage.holdings.item.get",
+            "inventory-storage.holdings.item.put",
+            "circulation-storage.requests.item.put"
           ]
         },
         {
@@ -868,6 +883,25 @@
       ]
     },
     {
+      "permissionName" : "inn-reach.d2ir.patronhold.post",
+      "displayName" : "perform circulation patron hold operation",
+      "description" : "Perform circulation patron hold operation"
+    },
+    {
+      "permissionName" : "inn-reach.d2ir.cancelrequest.put",
+      "displayName" : "perform circulation cancel request operation",
+      "description" : "Perform circulation cancel request operation"
+    },
+    {
+      "permissionName" : "inn-reach.d2ir.circulation.all",
+      "displayName" : "all permissions of d2ir circulation operations",
+      "description" : "All permissions of d2ir circulation operations",
+      "subPermissions" : [
+        "inn-reach.d2ir.patronhold.post",
+        "inn-reach.d2ir.cancelrequest.put"
+      ]
+    },
+    {
       "permissionName" : "inn-reach.all",
       "displayName" : "inn reach API module - all permissions",
       "description" : "All permissions for inn reach",
@@ -892,7 +926,8 @@
         "inn-reach.d2ir.bib-info.all",
         "inn-reach.d2ir.patron-info.all",
         "inn-reach.central-server.sys-configuration.all",
-        "inn-reach.inn-reach-transactions.all"
+        "inn-reach.inn-reach-transactions.all",
+        "inn-reach.d2ir.circulation.all"
       ]
     }
   ],

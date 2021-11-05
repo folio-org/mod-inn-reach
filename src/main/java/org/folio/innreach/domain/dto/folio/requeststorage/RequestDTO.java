@@ -25,6 +25,8 @@ public class RequestDTO {
   private String patronComments;
   private OffsetDateTime requestDate;
   private String fulfilmentPreference;
+  private UUID cancellationReasonId;
+  private String cancellationAdditionalInformation;
 
   @Getter
   @RequiredArgsConstructor

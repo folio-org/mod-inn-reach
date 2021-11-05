@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.folio.innreach.domain.exception.CirculationProcessException;
 import org.folio.innreach.domain.processor.InnReachCirculationProcessor;
 import org.folio.innreach.domain.service.CirculationService;
+import org.folio.innreach.dto.CirculationRequestDTO;
 import org.folio.innreach.dto.InnReachResponseDTO;
 import org.folio.innreach.dto.TransactionHoldDTO;
 
@@ -20,7 +21,7 @@ public class CirculationServiceImpl implements CirculationService {
   private final List<InnReachCirculationProcessor> innReachCirculationProcessors;
 
   @Override
-  public InnReachResponseDTO processCirculationRequest(String trackingId, String centralCode, String circulationOperationName, TransactionHoldDTO transactionHold) {
+  public InnReachResponseDTO processCirculationRequest(String trackingId, String centralCode, String circulationOperationName, CirculationRequestDTO request) {
     var circulationProcessor = innReachCirculationProcessors.stream()
       .filter(processor -> processor.canProcess(circulationOperationName))
       .findFirst()
@@ -28,6 +29,6 @@ public class CirculationServiceImpl implements CirculationService {
 
     log.info("Circulation processor for circulation operation [{}] found! Start to process circulation...", circulationOperationName);
 
-    return circulationProcessor.process(trackingId, centralCode, transactionHold);
+    return circulationProcessor.process(trackingId, centralCode, request);
   }
 }

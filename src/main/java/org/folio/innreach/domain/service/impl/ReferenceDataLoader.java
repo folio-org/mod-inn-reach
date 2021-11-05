@@ -32,7 +32,7 @@ public class ReferenceDataLoader {
   private static final String CONTRIBUTION_NAME_TYPES_DIR = "contributor-name-types";
 
   private static final PathMatchingResourcePatternResolver resourcePatternResolver =
-        new PathMatchingResourcePatternResolver(ReferenceDataLoader.class.getClassLoader());
+    new PathMatchingResourcePatternResolver(ReferenceDataLoader.class.getClassLoader());
 
   private final InstanceContributorTypeClient instanceContributorTypeClient;
   private final InstanceTypeClient instanceTypeClient;
@@ -40,7 +40,7 @@ public class ReferenceDataLoader {
 
   @Async
   @Retryable(maxAttemptsExpression = "#{${reference-data.loader.retry-attempts}}",
-        backoff = @Backoff(delayExpression = "#{${reference-data.loader.retry-interval-ms}}"))
+    backoff = @Backoff(delayExpression = "#{${reference-data.loader.retry-interval-ms}}"))
   public void loadRefData() {
     try {
       log.info("Loading reference data");
@@ -50,19 +50,20 @@ public class ReferenceDataLoader {
       log.warn("Unable to load reference data", e);
       throw new IllegalStateException("Unable to load reference data", e);
     }
+    log.info("Finished loading reference data");
   }
 
   private void loadInstanceTypes() {
     load(INSTANCE_TYPES_DIR, InstanceType.class,
-          r -> instanceTypeClient.queryInstanceTypeByName(r.getName()),
-          r -> instanceTypeClient.createInstanceType(r)
+      r -> instanceTypeClient.queryInstanceTypeByName(r.getName()),
+      r -> instanceTypeClient.createInstanceType(r)
     );
   }
 
   private void loadContributorNameTypes() {
     load(CONTRIBUTION_NAME_TYPES_DIR, NameType.class,
-          r -> instanceContributorTypeClient.queryContributorTypeByName(r.getName()),
-          r -> instanceContributorTypeClient.createContributorType(r)
+      r -> instanceContributorTypeClient.queryContributorTypeByName(r.getName()),
+      r -> instanceContributorTypeClient.createContributorType(r)
     );
   }
 
