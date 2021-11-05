@@ -36,7 +36,7 @@ public interface InventoryViewClient {
     private List<Item> items = emptyList();
 
     public Instance toInstance() {
-      return instance.holdings(holdingsRecords).items(items);
+      return instance.holdingsRecords(holdingsRecords).items(items);
     }
   }
 }

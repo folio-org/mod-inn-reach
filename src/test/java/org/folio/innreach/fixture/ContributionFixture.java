@@ -102,7 +102,7 @@ public class ContributionFixture {
     instance.setSource("MARC");
     instance.setHrid("test");
     instance.setItems(singletonList(createItem()));
-    instance.setHoldings(singletonList(createHolding()));
+    instance.setHoldingsRecords(singletonList(createHolding()));
     return instance;
   }
 

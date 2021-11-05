@@ -14,7 +14,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.stereotype.Service;
 
-import org.folio.innreach.client.InventoryClient;
+import org.folio.innreach.client.InstanceStorageClient;
 import org.folio.innreach.client.SourceRecordStorageClient;
 import org.folio.innreach.converter.marc.TransformedMARCRecordConverter;
 import org.folio.innreach.domain.dto.folio.inventory.IdentifierWithConfigDTO;
@@ -41,14 +41,14 @@ public class MARCRecordTransformationServiceImpl implements MARCRecordTransforma
   private static final String MARC_FIELD_CODE_9XX_PREFIX = "9";
   private static final String NOT_NUMBERS_REGEXP = "\\D+";
 
-  private final InventoryClient inventoryClient;
+  private final InstanceStorageClient instanceStorageClient;
   private final SourceRecordStorageClient sourceRecordStorageClient;
   private final MARCTransformationOptionsSettingsService marcTransformationSettingsService;
   private final TransformedMARCRecordConverter transformedMarcRecordConverter;
 
   @Override
   public TransformedMARCRecordDTO transformRecord(UUID centralServerId, UUID inventoryId) {
-    var inventoryInstance = inventoryClient.getInstanceById(inventoryId);
+    var inventoryInstance = instanceStorageClient.getInstanceById(inventoryId);
 
     return transformRecord(centralServerId, inventoryInstance);
   }

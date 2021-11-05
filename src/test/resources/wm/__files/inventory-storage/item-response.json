@@ -1,0 +1,43 @@
+{
+  "id": "45b706c2-63ff-4a01-b7c2-5483f19b8c8f",
+  "_version": 4,
+  "hrid": "it00000000001",
+  "holdingsRecordId": "16f40c4e-235d-4912-a683-2ad919cc8b07",
+  "formerIds": [],
+  "discoverySuppress": false,
+  "barcode": "2222222",
+  "effectiveShelvingOrder": "",
+  "itemLevelCallNumber": "1234",
+  "itemLevelCallNumberPrefix": "ca",
+  "itemLevelCallNumberTypeId": "828ae637-dfa3-4265-a1af-5279c436edff",
+  "effectiveCallNumberComponents": {
+    "callNumber": "1234",
+    "prefix": "ca",
+    "typeId": "828ae637-dfa3-4265-a1af-5279c436edff"
+  },
+  "yearCaption": [],
+  "itemIdentifier": "9cb57315-deee-48c4-96f0-bc977ae49a3a",
+  "notes": [],
+  "circulationNotes": [],
+  "status": {
+    "name": "Available",
+    "date": "2021-10-05T10:23:43.453+00:00"
+  },
+  "materialTypeId": "dd0bf600-dbd9-44ab-9ff2-e2a61a6539f1",
+  "permanentLoanTypeId": "2b94c631-fca9-4892-a730-03ee529ffe27",
+  "permanentLocationId": "d428ca1d-f33b-4d4c-a160-d9f41c657bb7",
+  "effectiveLocationId": "d428ca1d-f33b-4d4c-a160-d9f41c657bb7",
+  "electronicAccess": [],
+  "statisticalCodeIds": [
+    "9d8abbe2-1a94-4866-8731-4d12ac09f7a8"
+  ],
+  "tags": {
+    "tagList": []
+  },
+  "metadata": {
+    "createdDate": "2021-10-05T10:23:43.452+00:00",
+    "createdByUserId": "e2f5ebb7-9285-58f8-bc1e-608ac2080861",
+    "updatedDate": "2021-10-06T13:28:29.832+00:00",
+    "updatedByUserId": "e2f5ebb7-9285-58f8-bc1e-608ac2080861"
+  }
+}

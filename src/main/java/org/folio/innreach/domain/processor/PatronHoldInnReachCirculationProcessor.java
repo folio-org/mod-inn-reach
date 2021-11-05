@@ -10,11 +10,14 @@ import org.folio.innreach.domain.CirculationOperation;
 import org.folio.innreach.domain.InnReachResponseStatus;
 import org.folio.innreach.domain.entity.InnReachTransaction;
 import org.folio.innreach.domain.entity.TransactionPatronHold;
+import org.folio.innreach.domain.service.PatronHoldService;
+import org.folio.innreach.domain.service.impl.TenantScopedExecutionService;
 import org.folio.innreach.dto.InnReachResponseDTO;
 import org.folio.innreach.dto.TransactionHoldDTO;
 import org.folio.innreach.mapper.InnReachTransactionHoldMapper;
 import org.folio.innreach.mapper.InnReachTransactionPickupLocationMapper;
 import org.folio.innreach.repository.InnReachTransactionRepository;
+import org.folio.spring.FolioExecutionContext;
 
 @Log4j2
 @Component
@@ -25,6 +28,10 @@ public class PatronHoldInnReachCirculationProcessor implements InnReachCirculati
 
   private final InnReachTransactionHoldMapper transactionHoldMapper;
   private final InnReachTransactionPickupLocationMapper pickupLocationMapper;
+  private final TenantScopedExecutionService tenantScopedExecutionService;
+  private final FolioExecutionContext executionContext;
+
+  private final PatronHoldService patronHoldService;
 
   @Override
   public boolean canProcess(String circulationOperationName) {
@@ -38,11 +45,17 @@ public class PatronHoldInnReachCirculationProcessor implements InnReachCirculati
 
     if (innReachTransaction.isPresent()) {
       log.info("Transaction patron hold with trackingId [{}] and centralCode [{}] exists, start to update...", trackingId, centralCode);
+
       updateTransactionPatronHold((TransactionPatronHold) innReachTransaction.get().getHold(), transactionHold);
+
+      patronHoldService.updateVirtualItems(innReachTransaction.get());
     } else {
       log.info("Transaction patron hold with trackingId [{}] and centralCode [{}] doesn't exist, create a new one...", trackingId, centralCode);
+
       InnReachTransaction newTransactionWithPatronHold = createTransactionWithPatronHold(trackingId, centralCode, transactionHold);
-      transactionRepository.save(newTransactionWithPatronHold);
+      var transaction = transactionRepository.save(newTransactionWithPatronHold);
+
+      patronHoldService.createVirtualItems(transaction);
     }
 
     return new InnReachResponseDTO().status(InnReachResponseStatus.OK.getResponseStatus());

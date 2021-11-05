@@ -335,6 +335,8 @@
           "methods": ["POST"],
           "pathPattern": "/inn-reach/d2ir/circ/patronhold/{trackingId}/{centralCode}",
           "permissionsRequired": ["inn-reach.d2ir.patronhold.post"],
+          "pathPattern": "/inn-reach/d2ir/circ/patronhold/{trackingId}/{centralCode}",
+          "permissionsRequired": ["inn-reach.d2ir.patron-hold.post"],
           "modulePermissions": [
             "inventory-storage.instance-types.collection.get",
             "inventory-storage.contributor-name-types.collection.get",
@@ -358,6 +360,7 @@
             "inventory-storage.holdings.item.get",
             "inventory-storage.holdings.item.put",
             "circulation-storage.requests.item.put"
+            "inventory-storage.service-points.collection.get"
           ]
         },
         {
@@ -395,7 +398,11 @@
             "users.item.post",
             "login.item.post",
             "perms.users.item.post",
-            "perms.users.get"
+            "perms.users.get",
+            "inventory-storage.instance-types.collection.get",
+            "inventory-storage.instance-types.item.post",
+            "inventory-storage.contributor-name-types.collection.get",
+            "inventory-storage.contributor-name-types.item.post"
           ],
           "permissionsRequired": []
         },
