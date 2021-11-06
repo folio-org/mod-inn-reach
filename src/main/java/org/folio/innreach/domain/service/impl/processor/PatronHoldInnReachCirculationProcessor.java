@@ -1,4 +1,4 @@
-package org.folio.innreach.domain.processor;
+package org.folio.innreach.domain.service.impl.processor;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -11,13 +11,11 @@ import org.folio.innreach.domain.InnReachResponseStatus;
 import org.folio.innreach.domain.entity.InnReachTransaction;
 import org.folio.innreach.domain.entity.TransactionPatronHold;
 import org.folio.innreach.domain.service.PatronHoldService;
-import org.folio.innreach.domain.service.impl.TenantScopedExecutionService;
 import org.folio.innreach.dto.InnReachResponseDTO;
 import org.folio.innreach.dto.TransactionHoldDTO;
 import org.folio.innreach.mapper.InnReachTransactionHoldMapper;
 import org.folio.innreach.mapper.InnReachTransactionPickupLocationMapper;
 import org.folio.innreach.repository.InnReachTransactionRepository;
-import org.folio.spring.FolioExecutionContext;
 
 @Log4j2
 @Component
@@ -28,8 +26,6 @@ public class PatronHoldInnReachCirculationProcessor implements InnReachCirculati
 
   private final InnReachTransactionHoldMapper transactionHoldMapper;
   private final InnReachTransactionPickupLocationMapper pickupLocationMapper;
-  private final TenantScopedExecutionService tenantScopedExecutionService;
-  private final FolioExecutionContext executionContext;
 
   private final PatronHoldService patronHoldService;
 

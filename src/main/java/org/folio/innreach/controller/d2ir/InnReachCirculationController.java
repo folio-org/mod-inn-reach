@@ -39,8 +39,10 @@ public class InnReachCirculationController implements InnReachCirculationApi {
   @Override
   @PutMapping("/transferrequest/{trackingId}/{centralCode}")
   public ResponseEntity<InnReachResponseDTO> putTransferRequest(@PathVariable String trackingId,
-      @PathVariable String centralCode, TransferRequestDTO transferRequestDTO) {
-    return InnReachCirculationApi.super.putTransferRequest(trackingId, centralCode, transferRequestDTO);
+      @PathVariable String centralCode, TransferRequestDTO transferRequest) {
+    var innReachResponse = circulationService.transferItem(trackingId, centralCode, transferRequest);
+
+    return ResponseEntity.ok(innReachResponse);
   }
 
 }
