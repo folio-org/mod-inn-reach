@@ -15,6 +15,8 @@ import org.springframework.retry.annotation.Retryable;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
+import org.folio.innreach.client.CancellationReasonClient;
+import org.folio.innreach.client.CancellationReasonClient.CancellationReason;
 import org.folio.innreach.client.InstanceContributorTypeClient;
 import org.folio.innreach.client.InstanceContributorTypeClient.NameType;
 import org.folio.innreach.client.InstanceTypeClient;
@@ -30,12 +32,14 @@ public class ReferenceDataLoader {
   private static final String BASE_DIR = "reference-data";
   private static final String INSTANCE_TYPES_DIR = "instance-types";
   private static final String CONTRIBUTION_NAME_TYPES_DIR = "contributor-name-types";
+  private static final String CANCELLATION_REASONS_DIR = "cancellation-reasons";
 
   private static final PathMatchingResourcePatternResolver resourcePatternResolver =
     new PathMatchingResourcePatternResolver(ReferenceDataLoader.class.getClassLoader());
 
   private final InstanceContributorTypeClient instanceContributorTypeClient;
   private final InstanceTypeClient instanceTypeClient;
+  private final CancellationReasonClient cancellationReasonClient;
   private final JsonHelper jsonHelper;
 
   @Async
@@ -46,6 +50,7 @@ public class ReferenceDataLoader {
       log.info("Loading reference data");
       loadInstanceTypes();
       loadContributorNameTypes();
+      loadCancellationReasons();
     } catch (Exception e) {
       log.warn("Unable to load reference data", e);
       throw new IllegalStateException("Unable to load reference data", e);
@@ -64,6 +69,13 @@ public class ReferenceDataLoader {
     load(CONTRIBUTION_NAME_TYPES_DIR, NameType.class,
       r -> instanceContributorTypeClient.queryContributorTypeByName(r.getName()),
       r -> instanceContributorTypeClient.createContributorType(r)
+    );
+  }
+
+  private void loadCancellationReasons() {
+    load(CANCELLATION_REASONS_DIR, CancellationReason.class,
+      r -> cancellationReasonClient.queryReasonByName(r.getName()),
+      r -> cancellationReasonClient.createReason(r)
     );
   }
 
