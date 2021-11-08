@@ -328,6 +328,11 @@
         },
         {
           "methods": ["POST"],
+          "pathPattern": "/inn-reach/d2ir/circ/{circulationOperationName}/{trackingId}/{centralCode}",
+          "permissionsRequired": ["inn-reach.d2ir.circulation.item.post"]
+        },
+        {
+          "methods": ["POST"],
           "pathPattern": "/inn-reach/d2ir/circ/patronhold/{trackingId}/{centralCode}",
           "permissionsRequired": ["inn-reach.d2ir.patronhold.post"],
           "modulePermissions": [
@@ -352,7 +357,8 @@
             "inventory-storage.items.item.put",
             "inventory-storage.holdings.item.get",
             "inventory-storage.holdings.item.put",
-            "circulation-storage.requests.item.put"
+            "circulation-storage.requests.item.put",
+            "inventory-storage.service-points.collection.get"
           ]
         },
         {
@@ -883,6 +889,11 @@
       ]
     },
     {
+      "permissionName" : "inn-reach.d2ir.circulation.item.post",
+      "displayName" : "perform circulation operation",
+      "description" : "Perform circulation operation"
+    },
+    {
       "permissionName" : "inn-reach.d2ir.patronhold.post",
       "displayName" : "perform circulation patron hold operation",
       "description" : "Perform circulation patron hold operation"
@@ -897,6 +908,7 @@
       "displayName" : "all permissions of d2ir circulation operations",
       "description" : "All permissions of d2ir circulation operations",
       "subPermissions" : [
+        "inn-reach.d2ir.circulation.item.post",
         "inn-reach.d2ir.patronhold.post",
         "inn-reach.d2ir.cancelrequest.put"
       ]
