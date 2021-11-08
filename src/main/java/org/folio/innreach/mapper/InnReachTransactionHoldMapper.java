@@ -6,6 +6,7 @@ import org.mapstruct.Mapper;
 import org.folio.innreach.domain.entity.TransactionItemHold;
 import org.folio.innreach.domain.entity.TransactionLocalHold;
 import org.folio.innreach.domain.entity.TransactionPatronHold;
+import org.folio.innreach.dto.CirculationRequestDTO;
 import org.folio.innreach.dto.TransactionHoldDTO;
 
 @Mapper(componentModel = "spring", injectionStrategy = InjectionStrategy.CONSTRUCTOR, uses = {MappingMethods.class, InnReachTransactionPickupLocationMapper.class})
@@ -25,4 +26,6 @@ public interface InnReachTransactionHoldMapper {
   TransactionHoldDTO toPatronHoldDTO(TransactionPatronHold transactionPatronHold);
 
   TransactionPatronHold toPatronHold(TransactionHoldDTO dto);
+
+  TransactionHoldDTO mapRequest(CirculationRequestDTO dto);
 }

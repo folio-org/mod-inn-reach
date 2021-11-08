@@ -115,10 +115,9 @@
       "format": "UUID",
       "description": "Temporary loan type, is the temporary loan type for a given item."
     },
-    "instanceHrid": {
+    "barcode": {
       "type": "string",
-      "description": "The human readable instanceID, also called eye readable ID. A system-assigned sequential alternate ID",
-      "hidden": true
+      "description": "Unique inventory control number for physical resources, used largely for circulation purposes"
     },
     "holdingStatisticalCodeIds": {
       "type": "array",

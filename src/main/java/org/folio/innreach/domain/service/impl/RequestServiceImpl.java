@@ -75,6 +75,8 @@ public class RequestServiceImpl implements RequestService {
   private static final Set<InventoryItemStatus> noOpenRequestsAvailableStatuses = Set.of(
     IN_TRANSIT, IN_PROCESS, ON_ORDER);
 
+  private static final UUID INN_REACH_CANCELLATION_REASON_ID = UUID.fromString("941c7055-04f8-4db3-82cb-f63965c1506f");
+
   private final InnReachTransactionRepository transactionRepository;
   private final CentralPatronTypeMappingRepository centralPatronTypeMappingRepository;
   private final CentralServerRepository centralServerRepository;
@@ -180,6 +182,27 @@ public class RequestServiceImpl implements RequestService {
     hold.setFolioRequestId(movedRequest.getId());
     transactionRepository.save(transaction);
     log.info("Item request successfully moved");
+  }
+
+  @Override
+  public void cancelRequest(InnReachTransaction transaction, String reason) {
+    log.info("Canceling item request for transaction {}", transaction);
+
+    var requestId = transaction.getHold().getFolioRequestId();
+
+    requestsClient.findRequest(requestId)
+      .ifPresentOrElse(r -> cancelRequest(r, reason),
+        () -> log.warn("No request found with id {}", requestId));
+  }
+
+  private void cancelRequest(RequestDTO request, String reason) {
+    request.setStatus(RequestStatus.CLOSED_CANCELLED);
+    request.setCancellationReasonId(INN_REACH_CANCELLATION_REASON_ID);
+    request.setCancellationAdditionalInformation(reason);
+
+    requestsClient.updateRequest(request.getId(), request);
+
+    log.info("Item request successfully cancelled");
   }
 
   private boolean isItemRequestable(InventoryItemDTO item, ResultList<RequestDTO> requests) {

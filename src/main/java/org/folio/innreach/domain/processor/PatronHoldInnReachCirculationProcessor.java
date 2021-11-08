@@ -11,13 +11,12 @@ import org.folio.innreach.domain.InnReachResponseStatus;
 import org.folio.innreach.domain.entity.InnReachTransaction;
 import org.folio.innreach.domain.entity.TransactionPatronHold;
 import org.folio.innreach.domain.service.PatronHoldService;
-import org.folio.innreach.domain.service.impl.TenantScopedExecutionService;
+import org.folio.innreach.dto.CirculationRequestDTO;
 import org.folio.innreach.dto.InnReachResponseDTO;
 import org.folio.innreach.dto.TransactionHoldDTO;
 import org.folio.innreach.mapper.InnReachTransactionHoldMapper;
 import org.folio.innreach.mapper.InnReachTransactionPickupLocationMapper;
 import org.folio.innreach.repository.InnReachTransactionRepository;
-import org.folio.spring.FolioExecutionContext;
 
 @Log4j2
 @Component
@@ -28,8 +27,6 @@ public class PatronHoldInnReachCirculationProcessor implements InnReachCirculati
 
   private final InnReachTransactionHoldMapper transactionHoldMapper;
   private final InnReachTransactionPickupLocationMapper pickupLocationMapper;
-  private final TenantScopedExecutionService tenantScopedExecutionService;
-  private final FolioExecutionContext executionContext;
 
   private final PatronHoldService patronHoldService;
 
@@ -40,7 +37,8 @@ public class PatronHoldInnReachCirculationProcessor implements InnReachCirculati
 
   @Override
   @Transactional
-  public InnReachResponseDTO process(String trackingId, String centralCode, TransactionHoldDTO transactionHold) {
+  public InnReachResponseDTO process(String trackingId, String centralCode, CirculationRequestDTO request) {
+    var transactionHold = transactionHoldMapper.mapRequest(request);
     var innReachTransaction = transactionRepository.findByTrackingIdAndCentralServerCode(trackingId, centralCode);
 
     if (innReachTransaction.isPresent()) {
