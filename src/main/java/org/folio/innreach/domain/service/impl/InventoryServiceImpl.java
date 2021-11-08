@@ -90,7 +90,7 @@ public class InventoryServiceImpl implements InventoryService {
   @Override
   public InventoryItemDTO getItemByHrId(String hrid) {
     return getFirstItem(inventoryClient.getItemsByHrId(hrid))
-      .orElseThrow(() -> new EntityNotFoundException("Item with hrid = " + hrid + " not found."));
+      .orElseThrow(() -> new IllegalArgumentException("Item with hrid = " + hrid + " not found."));
   }
 
   @Override
