@@ -43,6 +43,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.web.bind.annotation.RestController;
 
 import org.folio.innreach.ModInnReachApplication;
+import org.folio.spring.integration.XOkapiHeaders;
 import org.folio.spring.liquibase.FolioLiquibaseConfiguration;
 import org.folio.tenant.domain.dto.TenantAttributes;
 import org.folio.tenant.rest.resource.TenantApi;
@@ -116,15 +117,42 @@ public class BaseApiControllerTest {
     requestHeaders.forEach((name, value) -> getBuilder.withHeader(name, equalTo(value)));
 
     stubFor(getBuilder
-        .willReturn(aResponse()
-            .withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-            .withBodyFile(responsePath)));
+      .willReturn(aResponse()
+        .withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+        .withHeader(XOkapiHeaders.URL, wm.baseUrl())
+        .withBodyFile(responsePath)));
+  }
+
+  protected static void stubPost(String url, String responsePath) {
+    MappingBuilder builder = WireMock.post(urlEqualTo(url));
+
+    stubFor(builder
+      .willReturn(aResponse()
+        .withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+        .withHeader(XOkapiHeaders.URL, wm.baseUrl())
+        .withBodyFile(responsePath)));
+  }
+
+  protected static void stubPut(String url, String responsePath) {
+    MappingBuilder builder = WireMock.put(urlEqualTo(url));
+
+    stubFor(builder
+      .willReturn(aResponse()
+        .withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+        .withHeader(XOkapiHeaders.URL, wm.baseUrl())
+        .withBodyFile(responsePath)));
   }
 
   private static String readTemplate(Template template) {
     String path = "json/" + template.getFile();
 
     return String.format(readFile(path), template.getParams());
+  }
+
+  public static HttpHeaders getOkapiHeaders() {
+    HttpHeaders headers = new HttpHeaders();
+    headers.add(XOkapiHeaders.URL, wm.baseUrl());
+    return headers;
   }
 
   @RequiredArgsConstructor(staticName = "of")

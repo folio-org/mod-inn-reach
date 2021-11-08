@@ -11,6 +11,7 @@ import org.folio.innreach.domain.InnReachResponseStatus;
 import org.folio.innreach.domain.entity.InnReachTransaction;
 import org.folio.innreach.domain.entity.TransactionPatronHold;
 import org.folio.innreach.domain.service.PatronHoldService;
+import org.folio.innreach.dto.CirculationRequestDTO;
 import org.folio.innreach.dto.InnReachResponseDTO;
 import org.folio.innreach.dto.TransactionHoldDTO;
 import org.folio.innreach.mapper.InnReachTransactionHoldMapper;
@@ -36,7 +37,8 @@ public class PatronHoldInnReachCirculationProcessor implements InnReachCirculati
 
   @Override
   @Transactional
-  public InnReachResponseDTO process(String trackingId, String centralCode, TransactionHoldDTO transactionHold) {
+  public InnReachResponseDTO process(String trackingId, String centralCode, CirculationRequestDTO request) {
+    var transactionHold = transactionHoldMapper.mapRequest(request);
     var innReachTransaction = transactionRepository.findByTrackingIdAndCentralServerCode(trackingId, centralCode);
 
     if (innReachTransaction.isPresent()) {

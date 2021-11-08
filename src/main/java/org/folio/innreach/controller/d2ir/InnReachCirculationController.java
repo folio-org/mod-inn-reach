@@ -10,9 +10,11 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
 import org.folio.innreach.domain.service.CirculationService;
+import org.folio.innreach.dto.CirculationRequestDTO;
 import org.folio.innreach.dto.InnReachResponseDTO;
 import org.folio.innreach.dto.TransactionHoldDTO;
 import org.folio.innreach.dto.TransferRequestDTO;
@@ -27,12 +29,12 @@ public class InnReachCirculationController implements InnReachCirculationApi {
   private final CirculationService circulationService;
 
   @Override
-  @PostMapping("/{circulationOperationName}/{trackingId}/{centralCode}")
+  @RequestMapping(value = "/{circulationOperationName}/{trackingId}/{centralCode}", method = {RequestMethod.POST, RequestMethod.PUT})
   public ResponseEntity<InnReachResponseDTO> processCirculationRequest(@PathVariable String trackingId,
                                                                        @PathVariable String centralCode,
                                                                        @PathVariable String circulationOperationName,
-                                                                       @RequestBody @Valid TransactionHoldDTO transactionHold) {
-    var innReachResponse = circulationService.processCirculationRequest(trackingId, centralCode, circulationOperationName, transactionHold);
+                                                                       @RequestBody @Valid CirculationRequestDTO request) {
+    var innReachResponse = circulationService.processCirculationRequest(trackingId, centralCode, circulationOperationName, request);
     return ResponseEntity.ok(innReachResponse);
   }
 

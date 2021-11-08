@@ -14,6 +14,7 @@ import org.folio.innreach.domain.exception.CirculationProcessException;
 import org.folio.innreach.domain.exception.EntityNotFoundException;
 import org.folio.innreach.domain.service.CirculationService;
 import org.folio.innreach.domain.service.impl.processor.InnReachCirculationProcessor;
+import org.folio.innreach.dto.CirculationRequestDTO;
 import org.folio.innreach.dto.InnReachResponseDTO;
 import org.folio.innreach.dto.TransactionHoldDTO;
 import org.folio.innreach.dto.TransferRequestDTO;
@@ -28,7 +29,7 @@ public class CirculationServiceImpl implements CirculationService {
   private final InnReachTransactionRepository transactionRepository;
 
   @Override
-  public InnReachResponseDTO processCirculationRequest(String trackingId, String centralCode, String circulationOperationName, TransactionHoldDTO transactionHold) {
+  public InnReachResponseDTO processCirculationRequest(String trackingId, String centralCode, String circulationOperationName, CirculationRequestDTO request) {
     var circulationProcessor = innReachCirculationProcessors.stream()
       .filter(processor -> processor.canProcess(circulationOperationName))
       .findFirst()
@@ -36,7 +37,7 @@ public class CirculationServiceImpl implements CirculationService {
 
     log.info("Circulation processor for circulation operation [{}] found! Start to process circulation...", circulationOperationName);
 
-    return circulationProcessor.process(trackingId, centralCode, transactionHold);
+    return circulationProcessor.process(trackingId, centralCode, request);
   }
 
   @Override

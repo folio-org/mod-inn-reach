@@ -1,5 +1,8 @@
 package org.folio.innreach.domain.service;
 
+import java.util.Optional;
+import java.util.UUID;
+
 import org.folio.innreach.client.HridSettingsClient;
 import org.folio.innreach.client.InstanceContributorTypeClient;
 import org.folio.innreach.client.InstanceTypeClient;
@@ -27,4 +30,11 @@ public interface InventoryStorageService {
 
   Item createItem(Item item);
 
+  Item updateItem(Item item);
+
+  Optional<Item> findItem(UUID itemId);
+
+  Optional<Holding> findHolding(UUID holdingId);
+
+  Holding updateHolding(Holding holding);
 }
