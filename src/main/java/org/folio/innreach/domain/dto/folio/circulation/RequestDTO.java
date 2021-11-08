@@ -1,4 +1,4 @@
-package org.folio.innreach.domain.dto.folio.requeststorage;
+package org.folio.innreach.domain.dto.folio.circulation;
 
 import java.time.OffsetDateTime;
 import java.util.UUID;

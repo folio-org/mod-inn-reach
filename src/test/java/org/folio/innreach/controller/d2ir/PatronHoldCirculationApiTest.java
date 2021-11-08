@@ -30,7 +30,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlMergeMode;
 
-import org.folio.innreach.client.RequestStorageClient;
+import org.folio.innreach.client.CirculationClient;
 import org.folio.innreach.controller.base.BaseApiControllerTest;
 import org.folio.innreach.domain.entity.InnReachTransaction;
 import org.folio.innreach.domain.service.RequestService;
@@ -53,10 +53,10 @@ class PatronHoldCirculationApiTest extends BaseApiControllerTest {
   public static final String HOLDINGS_URL = "/holdings-storage/holdings";
   public static final String INSTANCES_URL = "/instance-storage/instances";
   public static final String ITEMS_URL = "/item-storage/items";
-  public static final String REQUESTS_URL = "/request-storage/requests";
+  public static final String REQUESTS_URL = "/circulation/requests";
   public static final String QUERY_INSTANCE_BY_HRID_URL_TEMPLATE = "/instance-storage/instances?query=(hrid==%s)";
   public static final String QUERY_INVENTORY_ITEM_BY_HRID_URL_TEMPLATE = "/inventory/items?query=hrid==%s";
-  public static final String QUERY_REQUEST_BY_ITEM_ID_URL_TEMPLATE = "/request-storage/requests?query=(itemId==%s)";
+  public static final String QUERY_REQUEST_BY_ITEM_ID_URL_TEMPLATE = "/circulation/requests?query=(itemId==%s)";
   public static final String MOVE_CIRCULATION_REQUEST_URL_TEMPLATE = "/circulation/requests/%s/move";
   public static final String QUERY_CONTRIBUTOR_TYPE_BY_NAME_URL_TEMPLATE = "/contributor-name-types?query=(name==%s)";
   public static final String QUERY_INSTANCE_TYPE_BY_NAME_URL_TEMPLATE = "/instance-types?query=(name==%s)";
@@ -82,7 +82,7 @@ class PatronHoldCirculationApiTest extends BaseApiControllerTest {
   private InnReachTransactionRepository repository;
 
   @SpyBean
-  private RequestStorageClient requestStorageClient;
+  private CirculationClient circulationClient;
 
   @SpyBean
   private RequestService requestService;
@@ -160,7 +160,7 @@ class PatronHoldCirculationApiTest extends BaseApiControllerTest {
       .andExpect(status().isOk());
 
     await().atMost(Duration.TEN_SECONDS).untilAsserted(() ->
-      verify(requestStorageClient).sendRequest(any()));
+      verify(circulationClient).sendRequest(any()));
   }
 
   @Test
@@ -194,7 +194,7 @@ class PatronHoldCirculationApiTest extends BaseApiControllerTest {
       .andExpect(status().isOk());
 
     verify(requestService).cancelRequest(any(), eq("Test reason"));
-    verify(requestStorageClient).updateRequest(any(), any());
+    verify(circulationClient).updateRequest(any(), any());
   }
 
   @Test
