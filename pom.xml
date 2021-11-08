@@ -26,7 +26,8 @@
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <folio-spring-base.version>1.0.5</folio-spring-base.version>
     <openapi-generator.version>4.3.1</openapi-generator.version>
-    <openapi.inn-reach.file>${project.basedir}/src/main/resources/swagger.api/inn-reach.yaml</openapi.inn-reach.file>
+    <openapi.settings.file>${project.basedir}/src/main/resources/swagger.api/settings.yaml</openapi.settings.file>
+    <openapi.contribution.file>${project.basedir}/src/main/resources/swagger.api/contribution.yaml</openapi.contribution.file>
     <openapi.circulation.file>${project.basedir}/src/main/resources/swagger.api/circulation.yaml</openapi.circulation.file>
     <mapstruct.version>1.4.2.Final</mapstruct.version>
     <commons-collections4.version>4.4</commons-collections4.version>
@@ -303,12 +304,40 @@
         <version>${openapi-generator.version}</version>
         <executions>
           <execution>
-            <id>inn-reach</id>
+            <id>settings</id>
             <goals>
               <goal>generate</goal>
             </goals>
             <configuration>
-              <inputSpec>${openapi.inn-reach.file}</inputSpec>
+              <inputSpec>${openapi.settings.file}</inputSpec>
+              <output>${project.build.directory}/generated-sources</output>
+              <generatorName>spring</generatorName>
+              <modelPackage>${project.groupId}.innreach.dto</modelPackage>
+              <apiPackage>${project.groupId}.innreach.rest.resource</apiPackage>
+              <generateApis>true</generateApis>
+              <generateApiTests>true</generateApiTests>
+              <generateApiDocumentation>true</generateApiDocumentation>
+              <generateModels>true</generateModels>
+              <generateModelTests>false</generateModelTests>
+              <generateSupportingFiles>true</generateSupportingFiles>
+              <supportingFilesToGenerate>ApiUtil.java</supportingFilesToGenerate>
+              <generateModelDocumentation>true</generateModelDocumentation>
+              <skipIfSpecIsUnchanged>true</skipIfSpecIsUnchanged>
+              <configOptions>
+                <java8>true</java8>
+                <dateLibrary>java</dateLibrary>
+                <interfaceOnly>true</interfaceOnly>
+                <useTags>true</useTags>
+              </configOptions>
+            </configuration>
+          </execution>
+          <execution>
+            <id>contribution</id>
+            <goals>
+              <goal>generate</goal>
+            </goals>
+            <configuration>
+              <inputSpec>${openapi.contribution.file}</inputSpec>
               <output>${project.build.directory}/generated-sources</output>
               <generatorName>spring</generatorName>
               <modelPackage>${project.groupId}.innreach.dto</modelPackage>

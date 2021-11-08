@@ -5,9 +5,26 @@ components:
       format: uuid
     error:
       $ref: schemas/error.json
+    validationErrorsDTO:
+      type: object
+      properties:
+        code:
+          type: integer
+        message:
+          type: string
+        validationErrors:
+          type: array
+          items:
+            $ref: schemas/validationErrorDTO.json
   parameters:
     id:
       name: id
+      in: path
+      required: true
+      schema:
+        $ref: "#/components/schemas/UUID"
+    centralServerId:
+      name: centralServerId
       in: path
       required: true
       schema:
@@ -63,6 +80,12 @@ components:
             $ref: "#/components/examples/error"
           schema:
             $ref: "#/components/schemas/error"
+    trait_response_validation_400:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/validationErrorsDTO"
   examples:
     error:
       value:
