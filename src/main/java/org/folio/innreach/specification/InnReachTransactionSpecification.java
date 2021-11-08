@@ -4,7 +4,7 @@ import static org.apache.commons.collections4.CollectionUtils.isEmpty;
 
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionType.ITEM;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionType.LOCAL;
-import static org.folio.innreach.domain.entity.InnReachTransactionFilterParameters.SortOrder.DESCENDING;
+import static org.folio.innreach.domain.entity.InnReachTransactionFilterParameters.SortOrder.DESC;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -90,7 +90,7 @@ public class InnReachTransactionSpecification {
     return (transaction, cq, cb) -> {
       if (!isEmpty(sortBy)) {
         var orderList = new ArrayList<Order>();
-        if (sortOrder == DESCENDING) {
+        if (sortOrder == DESC) {
           sortBy.forEach(sort -> orderList.add(cb.desc(getField(transaction, sort))));
         } else {
           sortBy.forEach(sort -> orderList.add(cb.asc(getField(transaction, sort))));

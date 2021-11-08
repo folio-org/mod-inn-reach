@@ -28,11 +28,11 @@ public class InnReachTransactionFilterParameters {
     ITEM_AGENCY("itemAgencyCode"),
     PATRON_AGENCY("patronAgencyCode"),
     PATRON_TYPE("patronType"),
-    MATERIAL_TYPE("centralItemType");
+    CENTRAL_ITEM_TYPE("centralItemType");
 
     @Getter
     private final String value;
   }
 
-  public enum SortOrder { ASCENDING, DESCENDING }
+  public enum SortOrder { ASC, DESC }
 }

@@ -65,7 +65,7 @@
           "ITEM_AGENCY",
           "PATRON_AGENCY",
           "PATRON_TYPE",
-          "MATERIAL_TYPE"
+          "CENTRAL_ITEM_TYPE"
         ]
       }
     },
@@ -73,10 +73,10 @@
       "description": "Sorting order parameter",
       "type": "string",
       "enum": [
-        "ASCENDING",
-        "DESCENDING"
+        "ASC",
+        "DESC"
       ],
-      "default": "ASCENDING"
+      "default": "ASC"
     }
   },
   "additionalProperties": false,

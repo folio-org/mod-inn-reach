@@ -354,7 +354,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   void return200HttpCode_and_sortedTransactionList_when_SortByCreatedDateDescending() {
     modifyTransactionsDateCreated();
     var responseEntity = testRestTemplate.getForEntity(
-      "/inn-reach/transactions?sortBy=DATE_CREATED&sortOrder=DESCENDING", InnReachTransactionsDTO.class
+      "/inn-reach/transactions?sortBy=DATE_CREATED&sortOrder=DESC", InnReachTransactionsDTO.class
     );
 
     assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
@@ -373,7 +373,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   })
   void return200HttpCode_and_sortedTransactionList_when_SortByCentralItemTypeAscending() {
     var responseEntity = testRestTemplate.getForEntity(
-      "/inn-reach/transactions?sortBy=MATERIAL_TYPE", InnReachTransactionsDTO.class
+      "/inn-reach/transactions?sortBy=CENTRAL_ITEM_TYPE", InnReachTransactionsDTO.class
     );
 
     assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
