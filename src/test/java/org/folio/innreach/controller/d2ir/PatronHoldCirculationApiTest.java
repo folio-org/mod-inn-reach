@@ -51,10 +51,10 @@ class PatronHoldCirculationApiTest extends BaseApiControllerTest {
   public static final String INNREACH_LOCALSERVERS_URL = "/innreach/v2/contribution/localservers";
   public static final String HRID_SETTINGS_URL = "/hrid-settings-storage/hrid-settings";
   public static final String HOLDINGS_URL = "/holdings-storage/holdings";
-  public static final String INSTANCES_URL = "/instance-storage/instances";
-  public static final String ITEMS_URL = "/item-storage/items";
+  public static final String INSTANCES_URL = "/inventory/instances";
+  public static final String ITEMS_URL = "/inventory/items";
   public static final String REQUESTS_URL = "/circulation/requests";
-  public static final String QUERY_INSTANCE_BY_HRID_URL_TEMPLATE = "/instance-storage/instances?query=(hrid==%s)";
+  public static final String QUERY_INSTANCE_BY_HRID_URL_TEMPLATE = "/inventory/instances?query=(hrid==%s)";
   public static final String QUERY_INVENTORY_ITEM_BY_HRID_URL_TEMPLATE = "/inventory/items?query=hrid==%s";
   public static final String QUERY_REQUEST_BY_ITEM_ID_URL_TEMPLATE = "/circulation/requests?query=(itemId==%s)";
   public static final String MOVE_CIRCULATION_REQUEST_URL_TEMPLATE = "/circulation/requests/%s/move";

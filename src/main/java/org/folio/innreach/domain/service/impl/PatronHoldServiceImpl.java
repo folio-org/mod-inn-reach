@@ -90,7 +90,6 @@ public class PatronHoldServiceImpl implements PatronHoldService {
 
     return InventoryInstanceDTO.builder()
       .hrid(instanceHrid)
-      .version("1")
       .instanceTypeId(instanceTypeId)
       .title(hold.getTitle())
       .contributors(List.of(author))
@@ -150,7 +149,6 @@ public class PatronHoldServiceImpl implements PatronHoldService {
 
     return InventoryItemDTO.builder()
       .hrid(itemHrid)
-      .version("1")
       .discoverySuppress(true)
       .materialType(new MaterialType(materialTypeId, null))
       .permanentLoanType(new PermanentLoanType(centralServer.getLoanTypeId(), null))
