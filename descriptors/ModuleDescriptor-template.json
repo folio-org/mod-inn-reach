@@ -357,8 +357,8 @@
             "inventory-storage.items.item.put",
             "inventory-storage.holdings.item.get",
             "inventory-storage.holdings.item.put",
-            "circulation-storage.requests.item.put",
-            "inventory-storage.service-points.collection.get"
+            "circulation-storage.requests.item.get",
+            "circulation-storage.requests.item.put"
           ]
         },
         {
