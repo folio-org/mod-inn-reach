@@ -19,9 +19,9 @@ paths:
         '400':
           $ref: "#/components/responses/trait_response_validation_400"
         '409':
-          $ref: "#/components/responses/trait_response_409"
+          $ref: "api-common.yaml#/components/responses/trait_response_409"
         '500':
-          $ref: "#/components/responses/trait_response_500"
+          $ref: "api-common.yaml#/components/responses/trait_response_500"
       description: Add new central server
       operationId: postCentralServer
       requestBody:
@@ -41,12 +41,12 @@ paths:
               schema:
                 $ref: "#/components/schemas/centralServersDTO"
         '500':
-          $ref: "#/components/responses/trait_response_500"
+          $ref: "api-common.yaml#/components/responses/trait_response_500"
       description: Get a list of central servers
       operationId: getCentralServers
       parameters:
-        - $ref: "#/components/parameters/trait_pageable_offset"
-        - $ref: "#/components/parameters/trait_pageable_limit"
+        - $ref: "api-common.yaml#/components/parameters/trait_pageable_offset"
+        - $ref: "api-common.yaml#/components/parameters/trait_pageable_limit"
   /central-servers/{centralServerId}:
     get:
       tags:
@@ -59,13 +59,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/centralServerDTO"
         '404':
-          $ref: "#/components/responses/trait_response_404"
+          $ref: "api-common.yaml#/components/responses/trait_response_404"
         '500':
-          $ref: "#/components/responses/trait_response_500"
+          $ref: "api-common.yaml#/components/responses/trait_response_500"
       description: Get central server by id
       operationId: getCentralServerById
       parameters:
-        - $ref: '#/components/parameters/id'
+        - $ref: 'api-common.yaml#/components/parameters/id'
     put:
       tags:
         - central-servers
@@ -75,9 +75,9 @@ paths:
         '400':
           $ref: "#/components/responses/trait_response_validation_400"
         '404':
-          $ref: "#/components/responses/trait_response_404"
+          $ref: "api-common.yaml#/components/responses/trait_response_404"
         '500':
-          $ref: "#/components/responses/trait_response_500"
+          $ref: "api-common.yaml#/components/responses/trait_response_500"
       description: Update central server
       operationId: updateCentralServer
       requestBody:
@@ -87,7 +87,7 @@ paths:
               $ref: "#/components/schemas/centralServerDTO"
         required: true
       parameters:
-        - $ref: '#/components/parameters/id'
+        - $ref: 'api-common.yaml#/components/parameters/id'
     delete:
       tags:
         - central-servers
@@ -95,13 +95,13 @@ paths:
         '204':
           description: No content
         '404':
-          $ref: "#/components/responses/trait_response_404"
+          $ref: "api-common.yaml#/components/responses/trait_response_404"
         '500':
-          $ref: "#/components/responses/trait_response_500"
+          $ref: "api-common.yaml#/components/responses/trait_response_500"
       description: Delete central server
       operationId: deleteCentralServer
       parameters:
-        - $ref: '#/components/parameters/id'
+        - $ref: 'api-common.yaml#/components/parameters/id'
   /central-servers/{centralServerId}/material-type-mappings:
     get:
       description: Get a list of material type mappings for the given central server
@@ -116,13 +116,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/materialTypeMappingsDTO"
         '400':
-          $ref: "#/components/responses/trait_response_malformed_query_400"
+          $ref: "api-common.yaml#/components/responses/trait_response_malformed_query_400"
         '500':
-          $ref: "#/components/responses/trait_response_500"
+          $ref: "api-common.yaml#/components/responses/trait_response_500"
       parameters:
         - $ref: "#/components/parameters/centralServerId"
-        - $ref: "#/components/parameters/trait_pageable_offset"
-        - $ref: "#/components/parameters/trait_pageable_limit"
+        - $ref: "api-common.yaml#/components/parameters/trait_pageable_offset"
+        - $ref: "api-common.yaml#/components/parameters/trait_pageable_limit"
     post:
       description: Add new material type mapping associated with the central server
       operationId: postMaterialTypeMapping
@@ -138,9 +138,9 @@ paths:
         '400':
           $ref: "#/components/responses/trait_response_validation_400"
         '409':
-          $ref: "#/components/responses/trait_response_409"
+          $ref: "api-common.yaml#/components/responses/trait_response_409"
         '500':
-          $ref: "#/components/responses/trait_response_500"
+          $ref: "api-common.yaml#/components/responses/trait_response_500"
       requestBody:
         content:
           application/json:
@@ -162,9 +162,9 @@ paths:
         '400':
           $ref: "#/components/responses/trait_response_validation_400"
         '409':
-          $ref: "#/components/responses/trait_response_409"
+          $ref: "api-common.yaml#/components/responses/trait_response_409"
         '500':
-          $ref: "#/components/responses/trait_response_500"
+          $ref: "api-common.yaml#/components/responses/trait_response_500"
       requestBody:
         content:
           application/json:
@@ -187,12 +187,12 @@ paths:
               schema:
                 $ref: "#/components/schemas/materialTypeMappingDTO"
         '404':
-          $ref: "#/components/responses/trait_response_404"
+          $ref: "api-common.yaml#/components/responses/trait_response_404"
         '500':
-          $ref: "#/components/responses/trait_response_500"
+          $ref: "api-common.yaml#/components/responses/trait_response_500"
       parameters:
         - $ref: "#/components/parameters/centralServerId"
-        - $ref: "#/components/parameters/id"
+        - $ref: "api-common.yaml#/components/parameters/id"
     put:
       description: Update material type mapping
       operationId: updateMaterialTypeMapping
@@ -204,9 +204,9 @@ paths:
         '400':
           $ref: "#/components/responses/trait_response_validation_400"
         '404':
-          $ref: "#/components/responses/trait_response_404"
+          $ref: "api-common.yaml#/components/responses/trait_response_404"
         '500':
-          $ref: "#/components/responses/trait_response_500"
+          $ref: "api-common.yaml#/components/responses/trait_response_500"
       requestBody:
         content:
           application/json:
@@ -215,7 +215,7 @@ paths:
         required: true
       parameters:
         - $ref: "#/components/parameters/centralServerId"
-        - $ref: "#/components/parameters/id"
+        - $ref: "api-common.yaml#/components/parameters/id"
     delete:
       description: Delete material type mapping
       operationId: deleteMaterialTypeMapping
@@ -225,12 +225,12 @@ paths:
         '204':
           description: No content
         '404':
-          $ref: "#/components/responses/trait_response_404"
+          $ref: "api-common.yaml#/components/responses/trait_response_404"
         '500':
-          $ref: "#/components/responses/trait_response_500"
+          $ref: "api-common.yaml#/components/responses/trait_response_500"
       parameters:
         - $ref: "#/components/parameters/centralServerId"
-        - $ref: "#/components/parameters/id"
+        - $ref: "api-common.yaml#/components/parameters/id"
   /locations:
     post:
       description: Add new InnReach location
@@ -247,7 +247,7 @@ paths:
         '400':
           $ref: "#/components/responses/trait_response_validation_400"
         '500':
-          $ref: "#/components/responses/trait_response_500"
+          $ref: "api-common.yaml#/components/responses/trait_response_500"
       requestBody:
         content:
           application/json:
@@ -267,10 +267,10 @@ paths:
               schema:
                 $ref: "#/components/schemas/innReachLocationsDTO"
         '500':
-          $ref: "#/components/responses/trait_response_500"
+          $ref: "api-common.yaml#/components/responses/trait_response_500"
       parameters:
-        - $ref: "#/components/parameters/trait_pageable_offset"
-        - $ref: "#/components/parameters/trait_pageable_limit"
+        - $ref: "api-common.yaml#/components/parameters/trait_pageable_offset"
+        - $ref: "api-common.yaml#/components/parameters/trait_pageable_limit"
   /locations/{locationId}:
     get:
       description: Get InnReach location by id
@@ -285,11 +285,11 @@ paths:
               schema:
                 $ref: "#/components/schemas/innReachLocationDTO"
         '404':
-          $ref: "#/components/responses/trait_response_404"
+          $ref: "api-common.yaml#/components/responses/trait_response_404"
         '500':
-          $ref: "#/components/responses/trait_response_500"
+          $ref: "api-common.yaml#/components/responses/trait_response_500"
       parameters:
-        - $ref: '#/components/parameters/id'
+        - $ref: 'api-common.yaml#/components/parameters/id'
     put:
       description: Update InnReach location
       operationId: updateLocation
@@ -301,9 +301,9 @@ paths:
         '400':
           $ref: "#/components/responses/trait_response_validation_400"
         '404':
-          $ref: "#/components/responses/trait_response_404"
+          $ref: "api-common.yaml#/components/responses/trait_response_404"
         '500':
-          $ref: "#/components/responses/trait_response_500"
+          $ref: "api-common.yaml#/components/responses/trait_response_500"
       requestBody:
         content:
           application/json:
@@ -311,7 +311,7 @@ paths:
               $ref: "#/components/schemas/innReachLocationDTO"
         required: true
       parameters:
-        - $ref: '#/components/parameters/id'
+        - $ref: 'api-common.yaml#/components/parameters/id'
     delete:
       description: Delete InnReach location
       operationId: deleteLocation
@@ -321,11 +321,11 @@ paths:
         '204':
           description: No content
         '404':
-          $ref: "#/components/responses/trait_response_404"
+          $ref: "api-common.yaml#/components/responses/trait_response_404"
         '500':
-          $ref: "#/components/responses/trait_response_500"
+          $ref: "api-common.yaml#/components/responses/trait_response_500"
       parameters:
-        - $ref: '#/components/parameters/id'
+        - $ref: 'api-common.yaml#/components/parameters/id'
   /central-servers/{centralServerId}/libraries/location-mappings/:
     get:
       description: Get a list of library to Inn-Reach location mappings for the given central server
@@ -340,13 +340,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/libraryMappingsDTO"
         '400':
-          $ref: "#/components/responses/trait_response_malformed_query_400"
+          $ref: "api-common.yaml#/components/responses/trait_response_malformed_query_400"
         '500':
-          $ref: "#/components/responses/trait_response_500"
+          $ref: "api-common.yaml#/components/responses/trait_response_500"
       parameters:
         - $ref: "#/components/parameters/centralServerId"
-        - $ref: "#/components/parameters/trait_pageable_offset"
-        - $ref: "#/components/parameters/trait_pageable_limit"
+        - $ref: "api-common.yaml#/components/parameters/trait_pageable_offset"
+        - $ref: "api-common.yaml#/components/parameters/trait_pageable_limit"
     put:
       description: >-
           Update (replace) the entire collection of library to Inn-Reach location mappings
@@ -360,9 +360,9 @@ paths:
         '400':
           $ref: "#/components/responses/trait_response_validation_400"
         '409':
-          $ref: "#/components/responses/trait_response_409"
+          $ref: "api-common.yaml#/components/responses/trait_response_409"
         '500':
-          $ref: "#/components/responses/trait_response_500"
+          $ref: "api-common.yaml#/components/responses/trait_response_500"
       requestBody:
         content:
           application/json:
@@ -385,14 +385,14 @@ paths:
               schema:
                 $ref: "#/components/schemas/locationMappingsDTO"
         '400':
-          $ref: "#/components/responses/trait_response_malformed_query_400"
+          $ref: "api-common.yaml#/components/responses/trait_response_malformed_query_400"
         '500':
-          $ref: "#/components/responses/trait_response_500"
+          $ref: "api-common.yaml#/components/responses/trait_response_500"
       parameters:
         - $ref: "#/components/parameters/centralServerId"
         - $ref: "#/components/parameters/libraryId"
-        - $ref: "#/components/parameters/trait_pageable_offset"
-        - $ref: "#/components/parameters/trait_pageable_limit"
+        - $ref: "api-common.yaml#/components/parameters/trait_pageable_offset"
+        - $ref: "api-common.yaml#/components/parameters/trait_pageable_limit"
     put:
       description: >-
         Update (replace) the entire collection of library location to Inn-Reach location mappings
@@ -406,9 +406,9 @@ paths:
         '400':
           $ref: "#/components/responses/trait_response_validation_400"
         '409':
-          $ref: "#/components/responses/trait_response_409"
+          $ref: "api-common.yaml#/components/responses/trait_response_409"
         '500':
-          $ref: "#/components/responses/trait_response_500"
+          $ref: "api-common.yaml#/components/responses/trait_response_500"
       requestBody:
         content:
           application/json:
@@ -432,9 +432,9 @@ paths:
               schema:
                 $ref: "#/components/schemas/contributionCriteriaDTO"
         '404':
-          $ref: "#/components/responses/trait_response_404"
+          $ref: "api-common.yaml#/components/responses/trait_response_404"
         '500':
-          $ref: "#/components/responses/trait_response_500"
+          $ref: "api-common.yaml#/components/responses/trait_response_500"
       parameters:
         - $ref: "#/components/parameters/centralServerId"
     post:
@@ -452,9 +452,9 @@ paths:
         '400':
           $ref: "#/components/responses/trait_response_validation_400"
         '409':
-          $ref: "#/components/responses/trait_response_409"
+          $ref: "api-common.yaml#/components/responses/trait_response_409"
         '500':
-          $ref: "#/components/responses/trait_response_500"
+          $ref: "api-common.yaml#/components/responses/trait_response_500"
       requestBody:
         content:
           application/json:
@@ -472,9 +472,9 @@ paths:
         '204':
           description: No content
         '404':
-          $ref: "#/components/responses/trait_response_404"
+          $ref: "api-common.yaml#/components/responses/trait_response_404"
         '500':
-          $ref: "#/components/responses/trait_response_500"
+          $ref: "api-common.yaml#/components/responses/trait_response_500"
       parameters:
         - $ref: "#/components/parameters/centralServerId"
     put:
@@ -488,11 +488,11 @@ paths:
         '400':
           $ref: "#/components/responses/trait_response_validation_400"
         '404':
-          $ref: "#/components/responses/trait_response_404"
+          $ref: "api-common.yaml#/components/responses/trait_response_404"
         '409':
-          $ref: "#/components/responses/trait_response_409"
+          $ref: "api-common.yaml#/components/responses/trait_response_409"
         '500':
-          $ref: "#/components/responses/trait_response_500"
+          $ref: "api-common.yaml#/components/responses/trait_response_500"
       requestBody:
         content:
           application/json:
@@ -518,7 +518,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/validationErrorsDTO"
         '500':
-          $ref: "#/components/responses/trait_response_500"
+          $ref: "api-common.yaml#/components/responses/trait_response_500"
       requestBody:
         content:
           application/json:
@@ -535,9 +535,9 @@ paths:
               schema:
                 $ref: "#/components/schemas/itemContributionOptionsConfigurationDTO"
         '404':
-          $ref: "#/components/responses/trait_response_404"
+          $ref: "api-common.yaml#/components/responses/trait_response_404"
         '500':
-          $ref: "#/components/responses/trait_response_500"
+          $ref: "api-common.yaml#/components/responses/trait_response_500"
       description: Get Item Contribution Options Configuration by id
       operationId: getItemContributionOptionsConfigurationById
       tags:
@@ -551,9 +551,9 @@ paths:
         '400':
           $ref: "#/components/responses/trait_response_validation_400"
         '404':
-          $ref: "#/components/responses/trait_response_404"
+          $ref: "api-common.yaml#/components/responses/trait_response_404"
         '500':
-          $ref: "#/components/responses/trait_response_500"
+          $ref: "api-common.yaml#/components/responses/trait_response_500"
       description: Update Item Contribution Options Configuration
       operationId: updateItemContributionOptionsConfiguration
       tags:
@@ -580,7 +580,7 @@ paths:
         '400':
           $ref: "#/components/responses/trait_response_validation_400"
         '500':
-          $ref: "#/components/responses/trait_response_500"
+          $ref: "api-common.yaml#/components/responses/trait_response_500"
       requestBody:
         content:
           application/json:
@@ -603,9 +603,9 @@ paths:
               schema:
                 $ref: "#/components/schemas/agencyLocationMappingDTO"
         '400':
-          $ref: "#/components/responses/trait_response_malformed_query_400"
+          $ref: "api-common.yaml#/components/responses/trait_response_malformed_query_400"
         '500':
-          $ref: "#/components/responses/trait_response_500"
+          $ref: "api-common.yaml#/components/responses/trait_response_500"
       parameters:
         - $ref: "#/components/parameters/centralServerId"
     put:
@@ -621,9 +621,9 @@ paths:
         '400':
           $ref: "#/components/responses/trait_response_validation_400"
         '409':
-          $ref: "#/components/responses/trait_response_409"
+          $ref: "api-common.yaml#/components/responses/trait_response_409"
         '500':
-          $ref: "#/components/responses/trait_response_500"
+          $ref: "api-common.yaml#/components/responses/trait_response_500"
       requestBody:
         content:
           application/json:
@@ -642,9 +642,9 @@ paths:
               schema:
                 $ref: "#/components/schemas/MARCTransformationOptionsSettingsDTO"
         '404':
-          $ref: "#/components/responses/trait_response_404"
+          $ref: "api-common.yaml#/components/responses/trait_response_404"
         '500':
-          $ref: "#/components/responses/trait_response_500"
+          $ref: "api-common.yaml#/components/responses/trait_response_500"
       description: Get MARC Transformation Options Settings by id
       operationId: getMARCTransformationOptionsSettingsById
       tags:
@@ -658,9 +658,9 @@ paths:
         '400':
           $ref: "#/components/responses/trait_response_validation_400"
         '404':
-          $ref: "#/components/responses/trait_response_404"
+          $ref: "api-common.yaml#/components/responses/trait_response_404"
         '500':
-          $ref: "#/components/responses/trait_response_500"
+          $ref: "api-common.yaml#/components/responses/trait_response_500"
       description: Update MARC Transformation Options Settings
       operationId: updateMARCTransformationOptionsSettings
       tags:
@@ -687,7 +687,7 @@ paths:
         '400':
           $ref: "#/components/responses/trait_response_validation_400"
         '500':
-          $ref: "#/components/responses/trait_response_500"
+          $ref: "api-common.yaml#/components/responses/trait_response_500"
       requestBody:
         content:
           application/json:
@@ -703,9 +703,9 @@ paths:
         '204':
           description: No content
         '404':
-          $ref: "#/components/responses/trait_response_404"
+          $ref: "api-common.yaml#/components/responses/trait_response_404"
         '500':
-          $ref: "#/components/responses/trait_response_500"
+          $ref: "api-common.yaml#/components/responses/trait_response_500"
       description: Delete Marc Transformation Options Settings
       operationId: deleteMARCTransformationOptionsSettings
       parameters:
@@ -722,12 +722,12 @@ paths:
               schema:
                 $ref: "#/components/schemas/MARCTransformationOptionsSettingsListDTO"
         '500':
-          $ref: "#/components/responses/trait_response_500"
+          $ref: "api-common.yaml#/components/responses/trait_response_500"
       description: Get a list of Marc Transformation Options Settings
       operationId: getAllMARCTransformationOptionsSettings
       parameters:
-        - $ref: "#/components/parameters/trait_pageable_offset"
-        - $ref: "#/components/parameters/trait_pageable_limit"
+        - $ref: "api-common.yaml#/components/parameters/trait_pageable_offset"
+        - $ref: "api-common.yaml#/components/parameters/trait_pageable_limit"
   /central-servers/{centralServerId}/patron-type-mappings:
     get:
       tags:
@@ -740,13 +740,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/patronTypeMappingsDTO"
         '500':
-          $ref: "#/components/responses/trait_response_500"
+          $ref: "api-common.yaml#/components/responses/trait_response_500"
       description: Get a list of Patron Type Mappings
       operationId: getPatronTypeMappingsByServerId
       parameters:
         - $ref: '#/components/parameters/centralServerId'
-        - $ref: "#/components/parameters/trait_pageable_offset"
-        - $ref: "#/components/parameters/trait_pageable_limit"
+        - $ref: "api-common.yaml#/components/parameters/trait_pageable_offset"
+        - $ref: "api-common.yaml#/components/parameters/trait_pageable_limit"
     put:
       description: Update Patron Type Mappings
       operationId: updatePatronTypeMappings
@@ -758,9 +758,9 @@ paths:
         '400':
           $ref: "#/components/responses/trait_response_validation_400"
         '404':
-          $ref: "#/components/responses/trait_response_404"
+          $ref: "api-common.yaml#/components/responses/trait_response_404"
         '500':
-          $ref: "#/components/responses/trait_response_500"
+          $ref: "api-common.yaml#/components/responses/trait_response_500"
       requestBody:
         content:
           application/json:
@@ -783,7 +783,7 @@ paths:
         '400':
           $ref: "#/components/responses/trait_response_validation_400"
         '500':
-          $ref: "#/components/responses/trait_response_500"
+          $ref: "api-common.yaml#/components/responses/trait_response_500"
       description: Transform MARC record by Id according to CentralServer settings
       operationId: transformMARCRecord
       parameters:
@@ -803,9 +803,9 @@ paths:
               schema:
                 $ref: "#/components/schemas/contributionDTO"
         '400':
-          $ref: "#/components/responses/trait_response_malformed_query_400"
+          $ref: "api-common.yaml#/components/responses/trait_response_malformed_query_400"
         '500':
-          $ref: "#/components/responses/trait_response_500"
+          $ref: "api-common.yaml#/components/responses/trait_response_500"
       parameters:
         - $ref: "#/components/parameters/centralServerId"
   /central-servers/{centralServerId}/contributions/history:
@@ -822,13 +822,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/contributionsDTO"
         '400':
-          $ref: "#/components/responses/trait_response_malformed_query_400"
+          $ref: "api-common.yaml#/components/responses/trait_response_malformed_query_400"
         '500':
-          $ref: "#/components/responses/trait_response_500"
+          $ref: "api-common.yaml#/components/responses/trait_response_500"
       parameters:
         - $ref: "#/components/parameters/centralServerId"
-        - $ref: "#/components/parameters/trait_pageable_offset"
-        - $ref: "#/components/parameters/trait_pageable_limit"
+        - $ref: "api-common.yaml#/components/parameters/trait_pageable_offset"
+        - $ref: "api-common.yaml#/components/parameters/trait_pageable_limit"
   /central-servers/{centralServerId}/contributions:
     post:
       description: Start initial contribution process
@@ -841,7 +841,7 @@ paths:
         '400':
           $ref: "#/components/responses/trait_response_validation_400"
         '500':
-          $ref: "#/components/responses/trait_response_500"
+          $ref: "api-common.yaml#/components/responses/trait_response_500"
       parameters:
         - $ref: '#/components/parameters/centralServerId'
   /central-servers/{centralServerId}/item-type-mappings:
@@ -856,13 +856,13 @@ paths:
               schema:
                 $ref: "#/components/schemas/itemTypeMappingsDTO"
         '500':
-          $ref: "#/components/responses/trait_response_500"
+          $ref: "api-common.yaml#/components/responses/trait_response_500"
       description: Get a list of Item Type Mappings
       operationId: getItemTypeMappingsByServerId
       parameters:
         - $ref: '#/components/parameters/centralServerId'
-        - $ref: "#/components/parameters/trait_pageable_offset"
-        - $ref: "#/components/parameters/trait_pageable_limit"
+        - $ref: "api-common.yaml#/components/parameters/trait_pageable_offset"
+        - $ref: "api-common.yaml#/components/parameters/trait_pageable_limit"
     put:
       description: Update Item Type Mappings
       operationId: updateItemTypeMappings
@@ -874,9 +874,9 @@ paths:
         '400':
           $ref: "#/components/responses/trait_response_validation_400"
         '404':
-          $ref: "#/components/responses/trait_response_404"
+          $ref: "api-common.yaml#/components/responses/trait_response_404"
         '500':
-          $ref: "#/components/responses/trait_response_500"
+          $ref: "api-common.yaml#/components/responses/trait_response_500"
       requestBody:
         content:
           application/json:
@@ -897,7 +897,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/userCustomFieldMappingDTO"
         '500':
-          $ref: "#/components/responses/trait_response_500"
+          $ref: "api-common.yaml#/components/responses/trait_response_500"
       description: Get a User Custom Field Mapping
       operationId: getUserCustomFieldMapping
       parameters:
@@ -913,9 +913,9 @@ paths:
         '400':
           $ref: "#/components/responses/trait_response_validation_400"
         '404':
-          $ref: "#/components/responses/trait_response_404"
+          $ref: "api-common.yaml#/components/responses/trait_response_404"
         '500':
-          $ref: "#/components/responses/trait_response_500"
+          $ref: "api-common.yaml#/components/responses/trait_response_500"
       requestBody:
         content:
           application/json:
@@ -939,7 +939,7 @@ paths:
         '400':
           $ref: "#/components/responses/trait_response_validation_400"
         '500':
-          $ref: "#/components/responses/trait_response_500"
+          $ref: "api-common.yaml#/components/responses/trait_response_500"
       requestBody:
         content:
           application/json:
@@ -962,11 +962,11 @@ paths:
               schema:
                 $ref: "#/components/schemas/centralPatronTypeMappingsDTO"
         '500':
-          $ref: "#/components/responses/trait_response_500"
+          $ref: "api-common.yaml#/components/responses/trait_response_500"
       parameters:
         - $ref: '#/components/parameters/centralServerId'
-        - $ref: "#/components/parameters/trait_pageable_offset"
-        - $ref: "#/components/parameters/trait_pageable_limit"
+        - $ref: "api-common.yaml#/components/parameters/trait_pageable_offset"
+        - $ref: "api-common.yaml#/components/parameters/trait_pageable_limit"
     put:
       description: Update Central Patron Type Mappings
       operationId: updateCentralPatronTypeMappings
@@ -978,9 +978,9 @@ paths:
         '400':
           $ref: "#/components/responses/trait_response_validation_400"
         '404':
-          $ref: "#/components/responses/trait_response_404"
+          $ref: "api-common.yaml#/components/responses/trait_response_404"
         '500':
-          $ref: "#/components/responses/trait_response_500"
+          $ref: "api-common.yaml#/components/responses/trait_response_500"
       requestBody:
         content:
           application/json:
@@ -989,225 +989,8 @@ paths:
         required: true
       parameters:
         - $ref: '#/components/parameters/centralServerId'
-  /central-servers/agencies:
-    get:
-      operationId: getCentralServerAgencies
-      description: Get a combined list of agencies available from all configured central servers
-      tags:
-        - central-server-configuration
-      responses:
-        '200':
-          description: "OK"
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/centralServerAgenciesDTO"
-        '500':
-          $ref: "#/components/responses/trait_response_500"
-  /central-servers/item-types:
-    get:
-      operationId: getCentralServerItemTypes
-      description: Get a combined list of item types available from all configured central servers
-      tags:
-        - central-server-configuration
-      responses:
-        '200':
-          description: "OK"
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/centralServerItemTypesDTO"
-        '500':
-          $ref: "#/components/responses/trait_response_500"
-  /central-servers/patron-types:
-    get:
-      operationId: getCentralServerPatronTypes
-      description: Get a combined list of patron types available from all configured central servers
-      tags:
-        - central-server-configuration
-      responses:
-        '200':
-          description: "OK"
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/centralServerPatronTypesDTO"
-        '500':
-          $ref: "#/components/responses/trait_response_500"
-  /d2ir/getbibrecord/{bibId}/{centralCode}:
-    get:
-      operationId: getBibRecord
-      description: Handles D2IR request from central server for an already-contributed Bib record.
-      tags:
-        - bib-info-d2ir
-      responses:
-        '200':
-          description: "OK"
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/bibInfoResponseDTO"
-        '500':
-          $ref: "#/components/responses/trait_response_500"
-      parameters:
-        - $ref: '#/components/parameters/bibId'
-        - $ref: '#/components/parameters/centralCode'
-  /d2ir/circ/itemhold/{trackingId}/{centralCode}:
-    post:
-      operationId: createInnReachTransactionItemHold
-      description: Originates an item hold at the owning site
-      tags:
-        - inn-reach-transaction
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/transactionHoldDTO"
-      responses:
-        '200':
-          description: Transaction record is created
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/innReachResponseDTO"
-        '400':
-          description: An error occurred during creation of transaction record
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/innReachResponseDTO"
-        '500':
-          $ref: "#/components/responses/trait_response_500"
-      parameters:
-        - $ref: '#/components/parameters/trackingId'
-        - $ref: '#/components/parameters/centralCode'
-  /transactions/{transactionId}:
-    get:
-      operationId: getInnReachTransaction
-      description: get inn-reach transaction by id
-      tags:
-        - inn-reach-transaction
-      responses:
-        '200':
-          description: "OK"
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/innReachTransactionDTO"
-        '404':
-          $ref: "#/components/responses/trait_response_404"
-        '500':
-          $ref: "#/components/responses/trait_response_500"
-      parameters:
-        - $ref: '#/components/parameters/id'
-  /d2ir/circ/verifypatron:
-    post:
-      operationId: verifyPatron
-      description: Handles D2IR request from central server for patron verification.
-      tags:
-        - verify-patron-d2ir
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/patronInfoRequestDTO"
-      responses:
-        '200':
-          description: "OK"
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/patronInfoResponseDTO"
-        '500':
-          $ref: "#/components/responses/trait_response_500"
-      parameters:
-        - $ref: '#/components/parameters/localCodeHeader'
-        - $ref: '#/components/parameters/centralCodeHeader'
-  /d2ir/circ/{circulationOperationName}/{trackingId}/{centralCode}:
-    post:
-      operationId: processCirculationRequest
-      description: Process circulation request
-      tags:
-        - inn-reach-circulation
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/transactionHoldDTO"
-      responses:
-        '200':
-          description: Transaction record is created
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/innReachResponseDTO"
-        '400':
-          description: An error occurred during creation of transaction record
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/innReachResponseDTO"
-        '500':
-          $ref: "#/components/responses/trait_response_500"
-      parameters:
-        - $ref: '#/components/parameters/trackingId'
-        - $ref: '#/components/parameters/centralCode'
-        - $ref: '#/components/parameters/circulationOperationName'
-  /d2ir/circ/transferrequest/{trackingId}/{centralCode}:
-    put:
-      operationId: putTransferRequest
-      description: Put transfer request
-      tags:
-        - inn-reach-circulation
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/transferRequestDTO"
-      responses:
-        '200':
-          description: Transfer request complete
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/innReachResponseDTO"
-        '400':
-          description: An error occurred during processing the request
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/innReachResponseDTO"
-        '500':
-          $ref: "#/components/responses/trait_response_500"
-      parameters:
-        - $ref: '#/components/parameters/trackingId'
-        - $ref: '#/components/parameters/centralCode'
-  /transactions:
-    get:
-      description: Get a list of transactions for the given central server
-      operationId: getAllTransactions
-      tags:
-        - inn-reach-transaction
-      responses:
-        '200':
-          description: "OK"
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/innReachTransactionsDTO"
-        '400':
-          $ref: "#/components/responses/trait_response_malformed_query_400"
-        '500':
-          $ref: "#/components/responses/trait_response_500"
-      parameters:
-        - $ref: "#/components/parameters/trait_pageable_offset"
-        - $ref: "#/components/parameters/trait_pageable_limit"
-        - $ref: "#/components/parameters/transaction_filter_parameters"
 components:
   schemas:
-    UUID:
-      type: string
-      format: uuid
     centralServerDTO:
       $ref: schemas/centralServerDTO.json
     centralServersDTO:
@@ -1237,8 +1020,6 @@ components:
       $ref: schemas/libraryMappingsDTO.json
     locationMappingsDTO:
       $ref: schemas/locationMappingsDTO.json
-    error:
-      $ref: schemas/error.json
     authenticationRequest:
       $ref: schemas/authenticationRequest.json
     itemContributionOptionsConfigurationDTO:
@@ -1268,174 +1049,36 @@ components:
     holding:
       $ref: schemas/inventorystorage/holding.json
     centralPatronTypeMappingsDTO:
-      $ref: schemas/centralPatronTypeMappingsDTO.json
-    centralServerAgenciesDTO:
-      $ref: schemas/centralServerAgenciesDTO.json
-    localServerAgenciesDTO:
-      $ref: schemas/d2ir/localServerAgenciesDTO.json
-    centralServerItemTypesDTO:
-      $ref: schemas/centralServerItemTypesDTO.json
-    centralItemTypesDTO:
-      $ref: schemas/d2ir/centralItemTypesDTO.json
-    centralServerPatronTypesDTO:
-      $ref: schemas/centralServerPatronTypesDTO.json
-    centralPatronTypesDTO:
-      $ref: schemas/d2ir/centralPatronTypesDTO.json
-    bibInfoResponseDTO:
-      $ref: schemas/d2ir/bibInfoResponseDTO.json
-    innReachResponseDTO:
-      $ref: schemas/d2ir/innReachResponseDTO.json
-    patronInfoResponseDTO:
-      $ref: schemas/d2ir/patronInfoResponseDTO.json
-    patronInfoRequestDTO:
-      $ref: schemas/d2ir/patronInfoRequestDTO.json
-    innReachTransactionDTO:
-      $ref: schemas/innReachTransactionDTO.json
-    transactionHoldDTO:
-      $ref: schemas/transactionHoldDTO.json
-    circulationRequestDTO:
-      $ref: schemas/d2ir/circulationRequestDTO.json
-    transferRequestDTO:
-      $ref: schemas/d2ir/transferRequestDTO.json
-    innReachTransactionsDTO:
-      $ref: schemas/innReachTransactionsDTO.json
-    innReachTransactionFilterParametersDTO:
-      $ref: schemas/innReachTransactionFilterParametersDTO.json
+      $ref: schemas/centralPatronTypeMappingsDTO.json    
   parameters:
-    id:
-      name: id
-      in: path
-      required: true
-      schema:
-        $ref: "#/components/schemas/UUID"
     centralServerId:
       name: centralServerId
       in: path
       required: true
       schema:
-        $ref: "#/components/schemas/UUID"
+        $ref: "api-common.yaml#/components/schemas/UUID"
     libraryId:
       name: libraryId
       in: path
       required: true
       schema:
-        $ref: "#/components/schemas/UUID"
+        $ref: "api-common.yaml#/components/schemas/UUID"
     inventoryInstanceId:
       name: inventoryInstanceId
       in: path
       required: true
       schema:
-        $ref: "#/components/schemas/UUID"
+        $ref: "api-common.yaml#/components/schemas/UUID"
     customFieldId:
       name: customFieldId
       in: path
       required: true
       schema:
-        $ref: "#/components/schemas/UUID"
-    bibId:
-      name: bibId
-      description: 32-character, alphanumeric id corresponding to a FOLIO instance record HRID
-      in: path
-      required: true
-      schema:
-        type: string
-    centralCode:
-      name: centralCode
-      description: Unique code that identifies the central server (match against value stored in Central Server settings, used to determine contribution status)
-      in: path
-      required: true
-      schema:
-        type: string
-    trackingId:
-      name: trackingId
-      in: path
-      required: true
-      schema:
-        type: string
-    circulationOperationName:
-      name: circulationOperationName
-      in: path
-      required: true
-      schema:
-        type: string
-    localCodeHeader:
-      name: X-To-Code
-      in: header
-      required: true
-      schema:
-        type: string
-        maxLength: 5
-    centralCodeHeader:
-      name: X-From-Code
-      in: header
-      required: true
-      schema:
-        type: string
-        maxLength: 5
-    transaction_filter_parameters:
-      name: parameters
-      in: query
-      description: Query parameters to filter transactions.
-      schema:
-        $ref: "#/components/schemas/innReachTransactionFilterParametersDTO"
-    trait_queryable_query:
-      name: query
-      in: query
-      description: A query string to filter rules based on matching criteria in fields.
-      schema:
-        type: string
-    trait_pageable_offset:
-      name: offset
-      in: query
-      description: Skip over a number of elements by specifying an offset value for the query
-      schema:
-        default: 0
-        minimum: 0
-        maximum: 2147483647
-        type: integer
-    trait_pageable_limit:
-      name: limit
-      in: query
-      description: Limit the number of elements returned in the response
-      schema:
-        default: 10
-        minimum: 0
-        maximum: 2147483647
-        type: integer
+        $ref: "api-common.yaml#/components/schemas/UUID"
   responses:
-    trait_response_500:
-      description: Internal server error
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/error"
-    trait_response_409:
-      description: Item state conflict
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/error"
-    trait_response_404:
-      description: Item not found
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/error"
     trait_response_validation_400:
       description: Bad request
       content:
         application/json:
           schema:
             $ref: "#/components/schemas/validationErrorsDTO"
-    trait_response_malformed_query_400:
-      description: Bad request, e.g. malformed query parameter.
-      content:
-        application/json:
-          example:
-            $ref: "#/components/examples/error"
-          schema:
-            $ref: "#/components/schemas/error"
-  examples:
-    error:
-      value:
-        $ref: examples/error.sample
