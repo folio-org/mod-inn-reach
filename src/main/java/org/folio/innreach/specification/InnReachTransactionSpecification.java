@@ -4,6 +4,7 @@ import static org.apache.commons.collections4.CollectionUtils.isEmpty;
 
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionType.ITEM;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionType.LOCAL;
+import static org.folio.innreach.domain.entity.InnReachTransactionFilterParameters.SortOrder.DESC;
 
 import java.util.List;
 
@@ -12,8 +13,13 @@ import org.springframework.stereotype.Component;
 
 import org.folio.innreach.domain.entity.InnReachTransaction;
 import org.folio.innreach.domain.entity.InnReachTransactionFilterParameters;
+import org.folio.innreach.domain.entity.InnReachTransactionFilterParameters.TransactionSortBy;
+import org.folio.innreach.domain.entity.InnReachTransactionFilterParameters.SortOrder;
 import org.folio.innreach.domain.entity.TransactionItemHold;
 import org.folio.innreach.domain.entity.TransactionLocalHold;
+
+import javax.persistence.criteria.Expression;
+import javax.persistence.criteria.Root;
 
 @Component
 public class InnReachTransactionSpecification {
@@ -26,7 +32,8 @@ public class InnReachTransactionSpecification {
       .and(patronAgencyIn(parameters.getPatronAgencyCodes()))
       .and(itemAgencyIn(parameters.getItemAgencyCodes()))
       .and(patronTypeIn(parameters.getPatronTypes()))
-      .and(centralItemTypeIn(parameters.getCentralItemTypes()));
+      .and(centralItemTypeIn(parameters.getCentralItemTypes()))
+      .and(sortBy(parameters.getSortBy(), parameters.getSortOrder()));
   }
 
   static Specification<InnReachTransaction> fetchHoldAndPickupLocation() {
@@ -61,7 +68,7 @@ public class InnReachTransactionSpecification {
 
   static Specification<InnReachTransaction> patronTypeIn(List<Integer> patronTypes) {
     return (transaction, cq, cb) -> {
-      if (patronTypes == null || patronTypes.isEmpty()) {
+      if (isEmpty(patronTypes)) {
         return cb.conjunction();
       }
       var itemHold = cb.treat(transaction.join("hold"), TransactionItemHold.class);
@@ -77,4 +84,28 @@ public class InnReachTransactionSpecification {
     return (transaction, cq, cb) -> isEmpty(centralItemTypes) ? cb.conjunction() : transaction.get("hold").get("centralItemType").in(centralItemTypes);
   }
 
+  static Specification<InnReachTransaction> sortBy(TransactionSortBy sortBy, SortOrder sortOrder) {
+    return (transaction, cq, cb) -> {
+      if (sortBy != null) {
+        var order = sortOrder == DESC ? cb.desc(getField(transaction, sortBy)) : cb.asc(getField(transaction, sortBy));
+        cq.orderBy(order);
+      }
+      return cb.conjunction();
+    };
+  }
+
+  private static Expression<InnReachTransaction> getField(Root<InnReachTransaction> root, TransactionSortBy sort) {
+    Expression<InnReachTransaction> expression;
+    switch (sort) {
+      case TRANSACTION_TIME:
+      case TRANSACTION_STATUS:
+      case DATE_CREATED:
+      case DATE_MODIFIED:
+        expression = root.get(sort.getValue());
+        break;
+      default:
+        expression = root.get("hold").get(sort.getValue());
+    }
+    return expression;
+  }
 }
