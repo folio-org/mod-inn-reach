@@ -8,6 +8,7 @@ import static org.folio.innreach.dto.TransactionTypeEnum.PATRON;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -390,7 +391,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
   })
-  void return200HttpCode_and_sortedTransactionList_when_SortByPatronAgencyAndItemAgency() {
+  void return200HttpCode_and_sortedTransactionList_when_SortByFirstParameterWhenMultipleSortsSpecified() {
     var responseEntity = testRestTemplate.getForEntity(
       "/inn-reach/transactions?sortBy=PATRON_AGENCY&sortBy=ITEM_AGENCY", InnReachTransactionsDTO.class
     );
@@ -405,7 +406,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
 
     var transactionsForFirstPatronAgency = transactions.stream().filter(t -> t.getHold().getPatronAgencyCode().equals(PRE_POPULATED_PATRON_AGENCY))
     .collect(Collectors.toList());
-    assertTrue(transactionsForFirstPatronAgency.get(0).getHold().getItemAgencyCode().compareTo(
+    assertFalse(transactionsForFirstPatronAgency.get(0).getHold().getItemAgencyCode().compareTo(
       transactionsForFirstPatronAgency.get(1).getHold().getItemAgencyCode()) < 0);
   }
 

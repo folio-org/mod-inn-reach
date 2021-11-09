@@ -53,21 +53,18 @@
     },
     "sortBy": {
       "description": "List of sorting parameters",
-      "type": "array",
-      "items": {
-        "type": "string",
-        "enum": [
-          "TRANSACTION_TIME",
-          "DATE_CREATED",
-          "DATE_MODIFIED",
-          "TRANSACTION_TYPE",
-          "TRANSACTION_STATUS",
-          "ITEM_AGENCY",
-          "PATRON_AGENCY",
-          "PATRON_TYPE",
-          "CENTRAL_ITEM_TYPE"
-        ]
-      }
+      "type": "string",
+      "enum": [
+        "TRANSACTION_TIME",
+        "DATE_CREATED",
+        "DATE_MODIFIED",
+        "TRANSACTION_TYPE",
+        "TRANSACTION_STATUS",
+        "ITEM_AGENCY",
+        "PATRON_AGENCY",
+        "PATRON_TYPE",
+        "CENTRAL_ITEM_TYPE"
+      ]
     },
     "sortOrder": {
       "description": "Sorting order parameter",

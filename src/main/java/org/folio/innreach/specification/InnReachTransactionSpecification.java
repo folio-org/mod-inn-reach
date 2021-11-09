@@ -6,7 +6,6 @@ import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionTy
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionType.LOCAL;
 import static org.folio.innreach.domain.entity.InnReachTransactionFilterParameters.SortOrder.DESC;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.data.jpa.domain.Specification;
@@ -86,16 +85,16 @@ public class InnReachTransactionSpecification {
     return (transaction, cq, cb) -> isEmpty(centralItemTypes) ? cb.conjunction() : transaction.get("hold").get("centralItemType").in(centralItemTypes);
   }
 
-  static Specification<InnReachTransaction> sortBy(List<TransactionSortBy> sortBy, SortOrder sortOrder) {
+  static Specification<InnReachTransaction> sortBy(TransactionSortBy sortBy, SortOrder sortOrder) {
     return (transaction, cq, cb) -> {
-      if (!isEmpty(sortBy)) {
-        var orderList = new ArrayList<Order>();
+      if (sortBy != null) {
+        Order order;
         if (sortOrder == DESC) {
-          sortBy.forEach(sort -> orderList.add(cb.desc(getField(transaction, sort))));
+          order = cb.desc(getField(transaction, sortBy));
         } else {
-          sortBy.forEach(sort -> orderList.add(cb.asc(getField(transaction, sort))));
+          order = cb.asc(getField(transaction, sortBy));
         }
-        cq.orderBy(orderList);
+        cq.orderBy(order);
       }
       return cb.conjunction();
     };
