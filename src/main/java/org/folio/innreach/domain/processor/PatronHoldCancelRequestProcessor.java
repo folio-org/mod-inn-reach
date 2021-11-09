@@ -16,7 +16,6 @@ import org.folio.innreach.domain.service.RequestService;
 import org.folio.innreach.dto.CirculationRequestDTO;
 import org.folio.innreach.dto.Holding;
 import org.folio.innreach.dto.InnReachResponseDTO;
-import org.folio.innreach.dto.Item;
 import org.folio.innreach.repository.InnReachTransactionRepository;
 
 @Log4j2

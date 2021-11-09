@@ -14,8 +14,6 @@ import org.folio.innreach.config.FolioFeignClientConfig;
 import org.folio.innreach.domain.dto.folio.ResultList;
 import org.folio.innreach.domain.dto.folio.inventory.InventoryInstanceDTO;
 import org.folio.innreach.domain.dto.folio.inventory.InventoryItemDTO;
-import org.folio.innreach.dto.Instance;
-import org.folio.innreach.dto.Item;
 
 @FeignClient(name = "inventory", configuration = FolioFeignClientConfig.class)
 public interface InventoryClient {

@@ -16,7 +16,6 @@ import org.folio.innreach.client.InventoryClient;
 import org.folio.innreach.client.ServicePointsClient;
 import org.folio.innreach.domain.dto.folio.inventory.InventoryInstanceDTO;
 import org.folio.innreach.domain.dto.folio.inventory.InventoryItemDTO;
-import org.folio.innreach.domain.exception.EntityNotFoundException;
 import org.folio.innreach.domain.service.InventoryService;
 import org.folio.innreach.dto.Holding;
 

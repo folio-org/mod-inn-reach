@@ -338,13 +338,16 @@
           "modulePermissions": [
             "inventory-storage.instance-types.collection.get",
             "inventory-storage.contributor-name-types.collection.get",
-            "inventory-storage.instances.item.post",
-            "inventory-storage.items.item.post",
             "inventory-storage.holdings.item.post",
             "inventory-storage.hrid-settings.item.get",
             "inventory-storage.service-points.collection.get",
-            "circulation-storage.requests.item.get",
-            "circulation-storage.requests.item.post",
+            "inventory.instances.collection.get",
+            "inventory.instances.item.post",
+            "inventory.items.collection.get",
+            "inventory.items.item.post",
+            "circulation.requests.collection.get",
+            "circulation.requests.item.get",
+            "circulation.requests.item.post",
             "circulation.requests.item.move.post"
           ]
         },
@@ -353,12 +356,12 @@
           "pathPattern": "/inn-reach/d2ir/circ/cancelrequest/{trackingId}/{centralCode}",
           "permissionsRequired": ["inn-reach.d2ir.cancelrequest.put"],
           "modulePermissions": [
-            "inventory-storage.items.item.get",
-            "inventory-storage.items.item.put",
             "inventory-storage.holdings.item.get",
             "inventory-storage.holdings.item.put",
-            "circulation-storage.requests.item.get",
-            "circulation-storage.requests.item.put"
+            "inventory.items.item.get",
+            "inventory.items.item.put",
+            "circulation.requests.item.get",
+            "circulation.requests.item.put"
           ]
         },
         {
