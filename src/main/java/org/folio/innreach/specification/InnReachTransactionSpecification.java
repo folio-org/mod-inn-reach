@@ -19,7 +19,6 @@ import org.folio.innreach.domain.entity.TransactionItemHold;
 import org.folio.innreach.domain.entity.TransactionLocalHold;
 
 import javax.persistence.criteria.Expression;
-import javax.persistence.criteria.Order;
 import javax.persistence.criteria.Root;
 
 @Component
@@ -88,12 +87,7 @@ public class InnReachTransactionSpecification {
   static Specification<InnReachTransaction> sortBy(TransactionSortBy sortBy, SortOrder sortOrder) {
     return (transaction, cq, cb) -> {
       if (sortBy != null) {
-        Order order;
-        if (sortOrder == DESC) {
-          order = cb.desc(getField(transaction, sortBy));
-        } else {
-          order = cb.asc(getField(transaction, sortBy));
-        }
+        var order = sortOrder == DESC ? cb.desc(getField(transaction, sortBy)) : cb.asc(getField(transaction, sortBy));
         cq.orderBy(order);
       }
       return cb.conjunction();
