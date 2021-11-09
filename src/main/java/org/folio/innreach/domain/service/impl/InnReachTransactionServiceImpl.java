@@ -7,10 +7,11 @@ import javax.persistence.EntityExistsException;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+
+import org.folio.innreach.domain.service.InventoryService;
 import org.folio.innreach.domain.service.MaterialTypeMappingService;
 import org.folio.innreach.dto.InnReachTransactionFilterParametersDTO;
 import org.folio.innreach.dto.InnReachTransactionsDTO;
-import org.folio.innreach.external.service.InventoryService;
 import org.folio.innreach.mapper.InnReachErrorMapper;
 import org.folio.innreach.mapper.InnReachTransactionFilterParametersMapper;
 import org.folio.innreach.specification.InnReachTransactionSpecification;

@@ -22,7 +22,7 @@ public class InventoryItemFixture {
 
   static {
     EasyRandomParameters params = new EasyRandomParameters()
-      .randomize(named("hrId"), () -> RandomStringUtils.randomAlphanumeric(10).toLowerCase(Locale.ROOT))
+      .randomize(named("hrid"), () -> RandomStringUtils.randomAlphanumeric(10).toLowerCase(Locale.ROOT))
       .randomize(named("createdBy"), () -> AuditableUser.SYSTEM)
       .randomize(named("createdDate"), OffsetDateTime::now)
       .excludeField(named("contribution"))

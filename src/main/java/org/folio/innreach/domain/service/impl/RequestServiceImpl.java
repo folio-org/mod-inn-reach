@@ -1,5 +1,12 @@
 package org.folio.innreach.domain.service.impl;
 
+import static org.folio.innreach.domain.dto.folio.circulation.RequestDTO.FulfilmentPreference.HOLD_SHELF;
+import static org.folio.innreach.domain.dto.folio.circulation.RequestDTO.RequestStatus.OPEN_AWAITING_DELIVERY;
+import static org.folio.innreach.domain.dto.folio.circulation.RequestDTO.RequestStatus.OPEN_AWAITING_PICKUP;
+import static org.folio.innreach.domain.dto.folio.circulation.RequestDTO.RequestStatus.OPEN_IN_TRANSIT;
+import static org.folio.innreach.domain.dto.folio.circulation.RequestDTO.RequestStatus.OPEN_NOT_YET_FILLED;
+import static org.folio.innreach.domain.dto.folio.circulation.RequestDTO.RequestType.HOLD;
+import static org.folio.innreach.domain.dto.folio.circulation.RequestDTO.RequestType.PAGE;
 import static org.folio.innreach.domain.dto.folio.inventory.InventoryItemStatus.AGED_TO_LOST;
 import static org.folio.innreach.domain.dto.folio.inventory.InventoryItemStatus.AVAILABLE;
 import static org.folio.innreach.domain.dto.folio.inventory.InventoryItemStatus.AWAITING_DELIVERY;
@@ -17,13 +24,6 @@ import static org.folio.innreach.domain.dto.folio.inventory.InventoryItemStatus.
 import static org.folio.innreach.domain.dto.folio.inventory.InventoryItemStatus.UNAVAILABLE;
 import static org.folio.innreach.domain.dto.folio.inventory.InventoryItemStatus.UNKNOWN;
 import static org.folio.innreach.domain.dto.folio.inventory.InventoryItemStatus.WITHDRAWN;
-import static org.folio.innreach.domain.dto.folio.requeststorage.RequestDTO.FulfilmentPreference.HOLD_SHELF;
-import static org.folio.innreach.domain.dto.folio.requeststorage.RequestDTO.RequestStatus.OPEN_AWAITING_DELIVERY;
-import static org.folio.innreach.domain.dto.folio.requeststorage.RequestDTO.RequestStatus.OPEN_AWAITING_PICKUP;
-import static org.folio.innreach.domain.dto.folio.requeststorage.RequestDTO.RequestStatus.OPEN_IN_TRANSIT;
-import static org.folio.innreach.domain.dto.folio.requeststorage.RequestDTO.RequestStatus.OPEN_NOT_YET_FILLED;
-import static org.folio.innreach.domain.dto.folio.requeststorage.RequestDTO.RequestType.HOLD;
-import static org.folio.innreach.domain.dto.folio.requeststorage.RequestDTO.RequestType.PAGE;
 
 import java.net.URI;
 import java.time.Instant;
@@ -39,24 +39,24 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 
 import org.folio.innreach.client.CirculationClient;
-import org.folio.innreach.client.RequestStorageClient;
 import org.folio.innreach.client.ServicePointsUsersClient;
 import org.folio.innreach.client.UsersClient;
 import org.folio.innreach.domain.dto.OwningSiteCancelsRequestDTO;
 import org.folio.innreach.domain.dto.folio.ResultList;
 import org.folio.innreach.domain.dto.folio.User;
+import org.folio.innreach.domain.dto.folio.circulation.MoveRequestDTO;
+import org.folio.innreach.domain.dto.folio.circulation.RequestDTO;
+import org.folio.innreach.domain.dto.folio.circulation.RequestDTO.RequestStatus;
 import org.folio.innreach.domain.dto.folio.inventory.InventoryItemDTO;
 import org.folio.innreach.domain.dto.folio.inventory.InventoryItemStatus;
-import org.folio.innreach.domain.dto.folio.requeststorage.RequestDTO;
-import org.folio.innreach.domain.dto.folio.requeststorage.RequestDTO.RequestStatus;
 import org.folio.innreach.domain.entity.InnReachTransaction;
 import org.folio.innreach.domain.entity.TransactionHold;
 import org.folio.innreach.domain.entity.TransactionItemHold;
 import org.folio.innreach.domain.exception.EntityNotFoundException;
 import org.folio.innreach.domain.exception.ItemNotRequestableException;
+import org.folio.innreach.domain.service.InventoryService;
 import org.folio.innreach.domain.service.RequestService;
 import org.folio.innreach.external.service.InnReachExternalService;
-import org.folio.innreach.external.service.InventoryService;
 import org.folio.innreach.mapper.InnReachTransactionPickupLocationMapper;
 import org.folio.innreach.repository.CentralPatronTypeMappingRepository;
 import org.folio.innreach.repository.CentralServerRepository;
@@ -83,7 +83,6 @@ public class RequestServiceImpl implements RequestService {
   private final CentralServerRepository centralServerRepository;
 
   private final InnReachTransactionPickupLocationMapper transactionPickupLocationMapper;
-  private final RequestStorageClient requestsClient;
   private final CirculationClient circulationClient;
   private final ServicePointsUsersClient servicePointsUsersClient;
   private final UsersClient usersClient;
@@ -124,7 +123,7 @@ public class RequestServiceImpl implements RequestService {
 
     var item = inventoryService.getItemByHrId(itemHrId);
 
-    var requests = requestsClient.findRequests(item.getId());
+    var requests = circulationClient.findRequests(item.getId());
     if (!isItemRequestable(item, requests)) {
       throw new ItemNotRequestableException("Requested item is not available");
     }
@@ -146,7 +145,7 @@ public class RequestServiceImpl implements RequestService {
       .requestDate(transaction.getCreatedDate())
       .fulfilmentPreference(HOLD_SHELF.getName())
       .build();
-    var createdRequest = requestsClient.sendRequest(newRequest);
+    var createdRequest = circulationClient.sendRequest(newRequest);
 
     //updating transaction data
     transaction.getHold().setFolioRequestId(createdRequest.getId());
@@ -167,12 +166,12 @@ public class RequestServiceImpl implements RequestService {
 
     var item = inventoryService.getItemByHrId(itemHrId);
 
-    var requests = requestsClient.findRequests(item.getId());
+    var requests = circulationClient.findRequests(item.getId());
     if (!isItemRequestable(item, requests)) {
       throw new ItemNotRequestableException("Item with hrid " + itemHrId + " is not requestable");
     }
 
-    var payload = CirculationClient.MoveRequest.builder()
+    var payload = MoveRequestDTO.builder()
       .requestType(PAGE.getName())
       .destinationItemId(item.getId())
       .build();
@@ -192,7 +191,7 @@ public class RequestServiceImpl implements RequestService {
     var requestId = transaction.getHold().getFolioRequestId();
     Assert.isTrue(requestId != null, "requestId is not set for transaction with trackingId: " + transaction.getTrackingId());
 
-    requestsClient.findRequest(requestId)
+    circulationClient.findRequest(requestId)
       .ifPresentOrElse(r -> cancelRequest(r, reason),
         () -> log.warn("No request found with id {}", requestId));
   }
@@ -202,7 +201,7 @@ public class RequestServiceImpl implements RequestService {
     request.setCancellationReasonId(INN_REACH_CANCELLATION_REASON_ID);
     request.setCancellationAdditionalInformation(reason);
 
-    requestsClient.updateRequest(request.getId(), request);
+    circulationClient.updateRequest(request.getId(), request);
 
     log.info("Item request successfully cancelled");
   }
