@@ -16,7 +16,6 @@ import org.folio.innreach.domain.service.CirculationService;
 import org.folio.innreach.domain.service.impl.processor.InnReachCirculationProcessor;
 import org.folio.innreach.dto.CirculationRequestDTO;
 import org.folio.innreach.dto.InnReachResponseDTO;
-import org.folio.innreach.dto.TransactionHoldDTO;
 import org.folio.innreach.dto.TransferRequestDTO;
 import org.folio.innreach.repository.InnReachTransactionRepository;
 
