@@ -18,11 +18,11 @@ import static org.folio.innreach.domain.CirculationOperation.PATRON_HOLD;
 import static org.folio.innreach.fixture.CirculationFixture.createTransactionHoldDTO;
 import static org.folio.innreach.util.UUIDHelper.toStringWithoutHyphens;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.Map;
 import java.util.UUID;
 
-import org.awaitility.Duration;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.SpyBean;
@@ -120,7 +120,7 @@ class PatronHoldCirculationApiTest extends BaseApiControllerTest {
         .headers(getOkapiHeaders()))
       .andExpect(status().isOk());
 
-    await().atMost(Duration.TEN_SECONDS).untilAsserted(() ->
+    await().atMost(Duration.ofSeconds(10)).untilAsserted(() ->
       verify(repository).save(
         argThat((InnReachTransaction t) -> NEW_REQUEST_ID.equals(t.getHold().getFolioRequestId()))));
   }
@@ -159,7 +159,7 @@ class PatronHoldCirculationApiTest extends BaseApiControllerTest {
         .headers(getOkapiHeaders()))
       .andExpect(status().isOk());
 
-    await().atMost(Duration.TEN_SECONDS).untilAsserted(() ->
+    await().atMost(Duration.ofSeconds(10)).untilAsserted(() ->
       verify(requestStorageClient).sendRequest(any()));
   }
 
