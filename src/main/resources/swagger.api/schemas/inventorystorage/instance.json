@@ -8,6 +8,10 @@
       "type": "string",
       "format": "UUID"
     },
+    "_version": {
+      "type": "integer",
+      "description": "Record version for optimistic locking"
+    },
     "title": {
       "type": "string",
       "description": "The primary title (or label) associated with the resource"

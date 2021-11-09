@@ -36,6 +36,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.util.Assert;
 
 import org.folio.innreach.client.CirculationClient;
 import org.folio.innreach.client.ServicePointsUsersClient;
@@ -188,6 +189,7 @@ public class RequestServiceImpl implements RequestService {
     log.info("Canceling item request for transaction {}", transaction);
 
     var requestId = transaction.getHold().getFolioRequestId();
+    Assert.isTrue(requestId != null, "requestId is not set for transaction with trackingId: " + transaction.getTrackingId());
 
     circulationClient.findRequest(requestId)
       .ifPresentOrElse(r -> cancelRequest(r, reason),
