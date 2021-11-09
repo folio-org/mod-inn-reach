@@ -183,7 +183,7 @@
         {
           "methods": ["GET"],
           "pathPattern": "/inn-reach/central-servers/{centralServerId}/d2r/*",
-          "permissionsRequired": ["inn-reach.d2r.settings.any.get"]
+          "permissionsRequired": ["inn-reach.d2ir.settings.any.get"]
         },
         {
           "methods": ["POST"],
@@ -600,7 +600,7 @@
       ]
     },
     {
-      "permissionName" : "inn-reach.d2r.settings.any.get",
+      "permissionName" : "inn-reach.d2ir.settings.any.get",
       "displayName" : "get inn reach settings",
       "description" : "Get inn reach settings"
     },
@@ -924,7 +924,7 @@
         "inn-reach.material-type-mappings.all",
         "inn-reach.library-mappings.all",
         "inn-reach.location-mappings.all",
-        "inn-reach.d2r.settings.any.get",
+        "inn-reach.d2ir.settings.any.get",
         "inn-reach.authentication.all",
         "inn-reach.central-servers.item-contribution-options-configuration.all",
         "inn-reach.agency-mappings.all",
