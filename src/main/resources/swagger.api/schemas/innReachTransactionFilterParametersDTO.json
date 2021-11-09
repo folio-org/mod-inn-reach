@@ -52,7 +52,7 @@
       }
     },
     "sortBy": {
-      "description": "List of sorting parameters",
+      "description": "Sorting parameter",
       "type": "string",
       "enum": [
         "TRANSACTION_TIME",
