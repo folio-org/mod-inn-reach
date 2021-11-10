@@ -60,16 +60,14 @@ public class D2irExceptionHandlerController {
     return failed(e);
   }
 
+  private InnReachResponseDTO failed(Exception e) {
+    return failed(e.getMessage());
+  }
+
   private InnReachResponseDTO failed(String reason) {
     return new InnReachResponseDTO()
         .status("failed")
         .reason(reason);
-  }
-
-  private InnReachResponseDTO failed(Exception e) {
-    return new InnReachResponseDTO()
-        .status("failed")
-        .reason(e.getMessage());
   }
 
 }
