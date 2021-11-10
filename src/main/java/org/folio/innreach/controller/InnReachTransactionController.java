@@ -47,7 +47,7 @@ public class InnReachTransactionController implements InnReachTransactionApi {
     HttpStatus status;
     if (response.getStatus().equals("ok")) {
       status = HttpStatus.OK;
-      requestService.createItemRequest(trackingId);
+      requestService.createItemHoldRequest(trackingId);
     } else {
       status = HttpStatus.BAD_REQUEST;
     }

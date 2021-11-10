@@ -87,7 +87,7 @@ class ContributionValidationServiceImplTest {
     var item = createItem();
     item.setStatus(new ItemStatus().name(ItemStatus.NameEnum.IN_TRANSIT));
 
-    when(circulationClient.findRequests(any())).thenReturn(ResultList.of(0, Collections.emptyList()));
+    when(circulationClient.queryRequestsByItemId(any())).thenReturn(ResultList.of(0, Collections.emptyList()));
 
     var itemCirculationStatus = service.getItemCirculationStatus(UUID.randomUUID(), item);
 
@@ -101,7 +101,7 @@ class ContributionValidationServiceImplTest {
     var item = createItem();
     item.setStatus(new ItemStatus().name(ItemStatus.NameEnum.IN_TRANSIT));
 
-    when(circulationClient.findRequests(any())).thenReturn(ResultList.of(1, List.of(new RequestDTO())));
+    when(circulationClient.queryRequestsByItemId(any())).thenReturn(ResultList.of(1, List.of(new RequestDTO())));
 
     var itemCirculationStatus = service.getItemCirculationStatus(UUID.randomUUID(), item);
 

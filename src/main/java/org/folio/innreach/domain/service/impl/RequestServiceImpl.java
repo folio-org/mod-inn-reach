@@ -92,7 +92,7 @@ public class RequestServiceImpl implements RequestService {
 
   @Async
   @Override
-  public void createItemRequest(String trackingId) {
+  public void createItemHoldRequest(String trackingId) {
     var transaction = transactionRepository.fetchOneByTrackingId(trackingId).orElseThrow(() ->
       new EntityNotFoundException("Transaction not found for trackingId = " + trackingId)
     );
@@ -123,7 +123,7 @@ public class RequestServiceImpl implements RequestService {
 
     var item = inventoryService.getItemByHrId(itemHrId);
 
-    var requests = circulationClient.findRequests(item.getId());
+    var requests = circulationClient.queryRequestsByItemId(item.getId());
     if (!isItemRequestable(item, requests)) {
       throw new ItemNotRequestableException("Requested item is not available");
     }
@@ -166,7 +166,7 @@ public class RequestServiceImpl implements RequestService {
 
     var item = inventoryService.getItemByHrId(itemHrId);
 
-    var requests = circulationClient.findRequests(item.getId());
+    var requests = circulationClient.queryRequestsByItemId(item.getId());
     if (!isItemRequestable(item, requests)) {
       throw new ItemNotRequestableException("Item with hrid " + itemHrId + " is not requestable");
     }

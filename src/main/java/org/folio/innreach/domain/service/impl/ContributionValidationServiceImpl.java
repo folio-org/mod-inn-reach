@@ -178,7 +178,7 @@ public class ContributionValidationServiceImpl implements ContributionValidation
   }
 
   private boolean isItemRequested(Item inventoryItem) {
-    var itemRequests = circulationClient.findRequests(inventoryItem.getId());
+    var itemRequests = circulationClient.queryRequestsByItemId(inventoryItem.getId());
     return itemRequests.getTotalRecords() != 0;
   }
 

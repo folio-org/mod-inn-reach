@@ -145,7 +145,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   }
 
   void mockFindRequestsReturnsEmptyList(InventoryItemDTO inventoryItemDTO) {
-    when(circulationClient.findRequests(inventoryItemDTO.getId())).thenReturn(ResultList.of(0, Collections.emptyList()));
+    when(circulationClient.queryRequestsByItemId(inventoryItemDTO.getId())).thenReturn(ResultList.of(0, Collections.emptyList()));
   }
 
   void modifyTransactionsDateCreated() {
@@ -197,7 +197,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
 
     var transactionIds = responseEntity.getBody().getTransactions().stream()
       .map(InnReachTransactionDTO::getId).collect(Collectors.toList());
-    assertTrue(transactionIds.containsAll(List.of(PRE_POPULATED_TRANSACTION_ID2)));
+    assertTrue(transactionIds.contains(PRE_POPULATED_TRANSACTION_ID2));
 
     var transactionMetadatas = responseEntity.getBody().getTransactions().stream()
       .map(InnReachTransactionDTO::getMetadata).collect(Collectors.toList());
@@ -222,7 +222,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
 
     var transactionIds = responseEntity.getBody().getTransactions().stream()
       .map(InnReachTransactionDTO::getId).collect(Collectors.toList());
-    assertTrue(transactionIds.containsAll(List.of(UUID.fromString(TRANSACTION_WITH_PATRON_HOLD_ID))));
+    assertTrue(transactionIds.contains(UUID.fromString(TRANSACTION_WITH_PATRON_HOLD_ID)));
 
     assertEquals(1, responseEntity.getBody().getTransactions().size());
     var transaction = responseEntity.getBody().getTransactions().stream()
@@ -247,7 +247,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
 
     var transactionIds = responseEntity.getBody().getTransactions().stream()
       .map(InnReachTransactionDTO::getId).collect(Collectors.toList());
-    assertTrue(transactionIds.containsAll(List.of(PRE_POPULATED_TRANSACTION_ID2)));
+    assertTrue(transactionIds.contains(PRE_POPULATED_TRANSACTION_ID2));
 
     assertEquals(1, responseEntity.getBody().getTransactions().size());
     assertTrue(responseEntity.getBody().getTransactions().stream().map(InnReachTransactionDTO::getCentralServerCode)
@@ -299,7 +299,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
 
     var transactionIds = responseEntity.getBody().getTransactions().stream()
       .map(InnReachTransactionDTO::getId).collect(Collectors.toList());
-    assertTrue(transactionIds.containsAll(List.of(UUID.fromString(TRANSACTION_WITH_ITEM_HOLD_ID))));
+    assertTrue(transactionIds.contains(UUID.fromString(TRANSACTION_WITH_ITEM_HOLD_ID)));
 
     assertEquals(1, responseEntity.getBody().getTransactions().size());
     var transaction = responseEntity.getBody().getTransactions().stream()
@@ -424,7 +424,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     inventoryItemDTO.setStatus(IN_TRANSIT);
     var requestDTO = createRequestDTO();
     requestDTO.setItemId(inventoryItemDTO.getId());
-    when(circulationClient.findRequests(inventoryItemDTO.getId())).thenReturn(ResultList.of(1,
+    when(circulationClient.queryRequestsByItemId(inventoryItemDTO.getId())).thenReturn(ResultList.of(1,
       List.of(requestDTO)));
     var user = mockUserClient();
     mockInventoryStorageClient(user);
@@ -443,16 +443,16 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
       "/inn-reach/d2ir/circ/itemhold/{trackingId}/{centralCode}", itemHoldDTO, InnReachResponseDTO.class, TRACKING_ID,
       PRE_POPULATED_CENTRAL_SERVER_CODE);
 
-    verify(requestService).createItemRequest(TRACKING_ID);
+    verify(requestService).createItemHoldRequest(TRACKING_ID);
     assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
     assertTrue(responseEntity.hasBody());
     assertEquals("ok", responseEntity.getBody().getStatus());
 
     await().until(() -> repository.fetchOneByTrackingId(TRACKING_ID).get().getHold().getFolioItemId() != null);
 
-    verify(requestService).createItemRequest(TRACKING_ID);
+    verify(requestService).createItemHoldRequest(TRACKING_ID);
     verify(inventoryClient, times(2)).getItemsByHrId(itemHoldDTO.getItemId());
-    verify(circulationClient).findRequests(inventoryItemDTO.getId());
+    verify(circulationClient).queryRequestsByItemId(inventoryItemDTO.getId());
     verify(usersClient).query(PRE_POPULATED_USER_BARCODE_QUERY);
     verify(servicePointsUsersClient).findServicePointsUsers(fromString(user.getId()));
     verify(circulationClient).sendRequest(any());
@@ -647,7 +647,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     await().untilAsserted(() -> verify(innReachClient).postInnReachApi(any(), anyString(), anyString(), anyString(), any()));
 
     verify(inventoryClient).getItemsByHrId(inventoryItemDTO.getHrid());
-    verify(circulationClient, never()).findRequests(inventoryItemDTO.getId());
+    verify(circulationClient, never()).queryRequestsByItemId(inventoryItemDTO.getId());
     verify(usersClient).query(PRE_POPULATED_USER_BARCODE_QUERY);
     verify(servicePointsUsersClient).findServicePointsUsers(fromString(user.getId()));
     verify(circulationClient, never()).sendRequest(any());
@@ -685,7 +685,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     await().untilAsserted(() -> verify(innReachClient).postInnReachApi(any(), anyString(), anyString(), anyString(), any()));
 
     verify(inventoryClient, times(2)).getItemsByHrId(inventoryItemDTO.getHrid());
-    verify(circulationClient).findRequests(inventoryItemDTO.getId());
+    verify(circulationClient).queryRequestsByItemId(inventoryItemDTO.getId());
     verify(usersClient).query(PRE_POPULATED_USER_BARCODE_QUERY);
     verify(servicePointsUsersClient).findServicePointsUsers(fromString(user.getId()));
     verify(circulationClient, never()).sendRequest(any());
