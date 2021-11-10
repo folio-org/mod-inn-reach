@@ -26,7 +26,7 @@ public interface InventoryClient {
   ResultList<InventoryItemDTO> getItemsByHrId(@PathVariable("hrId") String hrId);
 
   @GetMapping("/items?query=barcode=={barcode}")
-  InventoryItemDTO getItemByBarcode(@PathVariable("barcode") String barcode);
+  ResultList<InventoryItemDTO> getItemByBarcode(@PathVariable("barcode") String barcode);
 
   @PutMapping("/items/{itemId}")
   void updateItem(@PathVariable("itemId") UUID itemId, @RequestBody InventoryItemDTO inventoryItem);

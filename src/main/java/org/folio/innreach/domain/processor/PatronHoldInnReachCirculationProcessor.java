@@ -10,8 +10,10 @@ import org.folio.innreach.domain.CirculationOperation;
 import org.folio.innreach.domain.InnReachResponseStatus;
 import org.folio.innreach.domain.entity.InnReachTransaction;
 import org.folio.innreach.domain.entity.TransactionPatronHold;
+import org.folio.innreach.dto.CirculationRequestDTO;
 import org.folio.innreach.dto.InnReachResponseDTO;
 import org.folio.innreach.dto.TransactionHoldDTO;
+import org.folio.innreach.mapper.CirculationRequestMapper;
 import org.folio.innreach.mapper.InnReachTransactionHoldMapper;
 import org.folio.innreach.mapper.InnReachTransactionPickupLocationMapper;
 import org.folio.innreach.repository.InnReachTransactionRepository;
@@ -25,6 +27,7 @@ public class PatronHoldInnReachCirculationProcessor implements InnReachCirculati
 
   private final InnReachTransactionHoldMapper transactionHoldMapper;
   private final InnReachTransactionPickupLocationMapper pickupLocationMapper;
+  private final CirculationRequestMapper circulationRequestMapper;
 
   @Override
   public boolean canProcess(String circulationOperationName) {
@@ -33,15 +36,16 @@ public class PatronHoldInnReachCirculationProcessor implements InnReachCirculati
 
   @Override
   @Transactional
-  public InnReachResponseDTO process(String trackingId, String centralCode, TransactionHoldDTO transactionHold) {
+  public InnReachResponseDTO process(String trackingId, String centralCode, CirculationRequestDTO circulationRequest) {
     var innReachTransaction = transactionRepository.findByTrackingIdAndCentralServerCode(trackingId, centralCode);
+    var transactionHoldDTO = circulationRequestMapper.toTransactionHoldDTO(circulationRequest);
 
     if (innReachTransaction.isPresent()) {
       log.info("Transaction patron hold with trackingId [{}] and centralCode [{}] exists, start to update...", trackingId, centralCode);
-      updateTransactionPatronHold((TransactionPatronHold) innReachTransaction.get().getHold(), transactionHold);
+      updateTransactionPatronHold((TransactionPatronHold) innReachTransaction.get().getHold(), transactionHoldDTO);
     } else {
       log.info("Transaction patron hold with trackingId [{}] and centralCode [{}] doesn't exist, create a new one...", trackingId, centralCode);
-      InnReachTransaction newTransactionWithPatronHold = createTransactionWithPatronHold(trackingId, centralCode, transactionHold);
+      InnReachTransaction newTransactionWithPatronHold = createTransactionWithPatronHold(trackingId, centralCode, transactionHoldDTO);
       transactionRepository.save(newTransactionWithPatronHold);
     }
 
