@@ -13,21 +13,20 @@ import static org.folio.innreach.fixture.ItemContributionOptionsConfigurationFix
 
 import java.util.Collections;
 import java.util.List;
-import java.util.List;
 import java.util.UUID;
 
-import org.folio.innreach.domain.dto.folio.ResultList;
-import org.folio.innreach.domain.dto.folio.requeststorage.RequestDTO;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import org.folio.innreach.client.CirculationClient;
 import org.folio.innreach.client.InventoryClient;
 import org.folio.innreach.client.MaterialTypesClient;
-import org.folio.innreach.client.RequestStorageClient;
 import org.folio.innreach.domain.dto.folio.ContributionItemCirculationStatus;
+import org.folio.innreach.domain.dto.folio.ResultList;
+import org.folio.innreach.domain.dto.folio.circulation.RequestDTO;
 import org.folio.innreach.domain.service.CentralServerService;
 import org.folio.innreach.domain.service.ContributionCriteriaConfigurationService;
 import org.folio.innreach.domain.service.InnReachLocationService;
@@ -59,7 +58,7 @@ class ContributionValidationServiceImplTest {
   @Mock
   private InventoryClient inventoryClient;
   @Mock
-  private RequestStorageClient requestStorageClient;
+  private CirculationClient circulationClient;
 
   @InjectMocks
   private ContributionValidationServiceImpl service;
@@ -88,7 +87,7 @@ class ContributionValidationServiceImplTest {
     var item = createItem();
     item.setStatus(new ItemStatus().name(ItemStatus.NameEnum.IN_TRANSIT));
 
-    when(requestStorageClient.findRequests(any())).thenReturn(ResultList.of(0, Collections.emptyList()));
+    when(circulationClient.queryRequestsByItemId(any())).thenReturn(ResultList.of(0, Collections.emptyList()));
 
     var itemCirculationStatus = service.getItemCirculationStatus(UUID.randomUUID(), item);
 
@@ -102,7 +101,7 @@ class ContributionValidationServiceImplTest {
     var item = createItem();
     item.setStatus(new ItemStatus().name(ItemStatus.NameEnum.IN_TRANSIT));
 
-    when(requestStorageClient.findRequests(any())).thenReturn(ResultList.of(1, List.of(new RequestDTO())));
+    when(circulationClient.queryRequestsByItemId(any())).thenReturn(ResultList.of(1, List.of(new RequestDTO())));
 
     var itemCirculationStatus = service.getItemCirculationStatus(UUID.randomUUID(), item);
 

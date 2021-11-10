@@ -3,11 +3,13 @@ package org.folio.innreach.domain.dto.folio.inventory;
 import java.util.Arrays;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
 @Getter
 @RequiredArgsConstructor
+@JsonFormat(shape = JsonFormat.Shape.OBJECT)
 public enum InventoryItemStatus {
 
   AVAILABLE("Available"),

@@ -11,7 +11,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
 import org.folio.innreach.config.FolioFeignClientConfig;
-import org.folio.innreach.domain.dto.folio.ResultList;
 import org.folio.innreach.domain.dto.folio.inventorystorage.InstanceIterationRequest;
 import org.folio.innreach.domain.dto.folio.inventorystorage.JobResponse;
 import org.folio.innreach.dto.Instance;
@@ -21,12 +20,6 @@ public interface InstanceStorageClient {
 
   @GetMapping("/instances/{instanceId}")
   Instance getInstanceById(@PathVariable("instanceId") UUID instanceId);
-
-  @PostMapping("/instances")
-  Instance createInstance(@RequestBody Instance instance);
-
-  @GetMapping("/instances?query=(hrid=={hrid})")
-  ResultList<Instance> queryInstanceByHrid(@PathVariable("hrid") String hrid);
 
   @PostMapping(value = "/instances/iteration", consumes = APPLICATION_JSON_VALUE, produces = APPLICATION_JSON_VALUE)
   JobResponse startInitialContribution(@RequestBody InstanceIterationRequest request);
