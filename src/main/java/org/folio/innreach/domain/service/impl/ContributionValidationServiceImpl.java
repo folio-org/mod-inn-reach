@@ -20,8 +20,8 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 
-import org.folio.innreach.client.MaterialTypesClient;
 import org.folio.innreach.client.CirculationClient;
+import org.folio.innreach.client.MaterialTypesClient;
 import org.folio.innreach.domain.dto.folio.ContributionItemCirculationStatus;
 import org.folio.innreach.domain.dto.folio.inventorystorage.MaterialTypeDTO;
 import org.folio.innreach.domain.service.CentralServerService;
@@ -178,7 +178,7 @@ public class ContributionValidationServiceImpl implements ContributionValidation
   }
 
   private boolean isItemRequested(Item inventoryItem) {
-    var itemRequests = circulationClient.findRequests(inventoryItem.getId());
+    var itemRequests = circulationClient.queryRequestsByItemId(inventoryItem.getId());
     return itemRequests.getTotalRecords() != 0;
   }
 

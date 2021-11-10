@@ -15,17 +15,11 @@ import org.folio.innreach.domain.dto.folio.ResultList;
 import org.folio.innreach.domain.dto.folio.inventory.InventoryInstanceDTO;
 import org.folio.innreach.domain.dto.folio.inventory.InventoryItemDTO;
 
-@FeignClient(name = "inventory", configuration = FolioFeignClientConfig.class)
+@FeignClient(name = "inventory", configuration = FolioFeignClientConfig.class, decode404 = true)
 public interface InventoryClient {
-
-  @GetMapping("/items/{itemId}")
-  InventoryItemDTO getItemById(@PathVariable("itemId") UUID itemId);
 
   @GetMapping("/items?query=hrid=={hrId}")
   ResultList<InventoryItemDTO> getItemsByHrId(@PathVariable("hrId") String hrId);
-
-  @GetMapping("/instances/{instanceId}")
-  InventoryInstanceDTO getInstanceById(@PathVariable("instanceId") UUID instanceId);
 
   @PostMapping("/instances")
   void createInstance(@RequestBody InventoryInstanceDTO instance);
@@ -41,5 +35,8 @@ public interface InventoryClient {
 
   @GetMapping("/items/{itemId}")
   Optional<InventoryItemDTO> findItem(@PathVariable("itemId") UUID itemId);
+
+  @GetMapping("/instances/{instanceId}")
+  Optional<InventoryInstanceDTO> findInstance(@PathVariable("instanceId") UUID instanceId);
 
 }

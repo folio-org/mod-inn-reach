@@ -8,7 +8,7 @@ import org.folio.innreach.domain.entity.InnReachTransaction;
 
 public interface RequestService {
   @Async
-  void createItemRequest(String transactionTrackingId);
+  void createItemHoldRequest(String transactionTrackingId);
 
   void createItemRequest(InnReachTransaction transaction, UUID centralServerId, UUID servicePointId, UUID requesterId);
 

@@ -15,11 +15,11 @@ import org.folio.innreach.domain.dto.folio.ResultList;
 import org.folio.innreach.domain.dto.folio.circulation.MoveRequestDTO;
 import org.folio.innreach.domain.dto.folio.circulation.RequestDTO;
 
-@FeignClient(name = "circulation", configuration = FolioFeignClientConfig.class)
+@FeignClient(name = "circulation", configuration = FolioFeignClientConfig.class, decode404 = true)
 public interface CirculationClient {
 
   @GetMapping("/requests?query=(itemId=={itemId})")
-  ResultList<RequestDTO> findRequests(@PathVariable("itemId") UUID itemId);
+  ResultList<RequestDTO> queryRequestsByItemId(@PathVariable("itemId") UUID itemId);
 
   @GetMapping("/requests/{requestId}")
   Optional<RequestDTO> findRequest(@PathVariable("requestId") UUID requestId);
