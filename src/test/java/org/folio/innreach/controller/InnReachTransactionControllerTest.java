@@ -6,6 +6,7 @@ import static org.awaitility.Awaitility.await;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -23,6 +24,8 @@ import static org.folio.innreach.domain.dto.folio.inventory.InventoryItemStatus.
 import static org.folio.innreach.domain.dto.folio.inventory.InventoryItemStatus.MISSING;
 import static org.folio.innreach.domain.dto.folio.inventory.InventoryItemStatus.UNAVAILABLE;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionType.ITEM;
+import static org.folio.innreach.dto.TransactionStateEnum.PATRON_HOLD;
+import static org.folio.innreach.dto.TransactionTypeEnum.PATRON;
 import static org.folio.innreach.fixture.InventoryItemFixture.createInventoryItemDTO;
 import static org.folio.innreach.fixture.RequestFixture.createRequestDTO;
 import static org.folio.innreach.fixture.TestUtil.deserializeFromJsonFile;
@@ -34,12 +37,6 @@ import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import org.folio.innreach.client.RequestStorageClient;
-import org.folio.innreach.domain.dto.folio.User;
-import org.folio.innreach.domain.dto.folio.inventory.InventoryItemDTO;
-import org.folio.innreach.domain.entity.base.AuditableUser;
-import org.folio.innreach.dto.InnReachTransactionDTO;
-import org.folio.innreach.dto.InnReachTransactionsDTO;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.stubbing.Answer;
@@ -51,17 +48,23 @@ import org.springframework.http.HttpStatus;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlMergeMode;
 
+import org.folio.innreach.client.CirculationClient;
 import org.folio.innreach.client.InventoryClient;
 import org.folio.innreach.client.ServicePointsUsersClient;
 import org.folio.innreach.client.UsersClient;
 import org.folio.innreach.controller.base.BaseControllerTest;
 import org.folio.innreach.domain.dto.OwningSiteCancelsRequestDTO;
 import org.folio.innreach.domain.dto.folio.ResultList;
+import org.folio.innreach.domain.dto.folio.User;
+import org.folio.innreach.domain.dto.folio.circulation.RequestDTO;
+import org.folio.innreach.domain.dto.folio.inventory.InventoryItemDTO;
 import org.folio.innreach.domain.dto.folio.inventorystorage.ServicePointUserDTO;
-import org.folio.innreach.domain.dto.folio.requeststorage.RequestDTO;
 import org.folio.innreach.domain.entity.TransactionItemHold;
+import org.folio.innreach.domain.entity.base.AuditableUser;
 import org.folio.innreach.domain.service.RequestService;
 import org.folio.innreach.dto.InnReachResponseDTO;
+import org.folio.innreach.dto.InnReachTransactionDTO;
+import org.folio.innreach.dto.InnReachTransactionsDTO;
 import org.folio.innreach.dto.TransactionHoldDTO;
 import org.folio.innreach.external.client.feign.InnReachClient;
 import org.folio.innreach.mapper.InnReachTransactionPickupLocationMapper;
@@ -70,7 +73,8 @@ import org.folio.innreach.repository.InnReachTransactionRepository;
 @Sql(
   scripts = {"classpath:db/inn-reach-transaction/clear-inn-reach-transaction-tables.sql",
     "classpath:db/central-server/clear-central-server-tables.sql",
-    "classpath:db/mtype-mapping/clear-material-type-mapping-table.sql"
+    "classpath:db/mtype-mapping/clear-material-type-mapping-table.sql",
+    "classpath:db/central-patron-type-mapping/clear-central-patron-type-mapping-table.sql"
   },
   executionPhase = AFTER_TEST_METHOD
 )
@@ -85,6 +89,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   private static final String PRE_POPULATED_USER_BARCODE_QUERY = "(barcode==\"" + PRE_POPULATED_USER_BARCODE + "\")";
   private static final Integer PRE_POPULATED_CENTRAL_PATRON_TYPE = 200;
   private static final String PRE_POPULATED_MATERIAL_TYPE_ID = "1a54b431-2e4f-452d-9cae-9cee66c9a892";
+  private static final String PRE_POPULATED_PATRON_AGENCY = "qwe12";
 
   public static final String TRANSACTION_WITH_ITEM_HOLD_ID = "ab2393a1-acc4-4849-82ac-8cc0c37339e1";
   public static final String TRANSACTION_WITH_LOCAL_HOLD_ID = "79b0a1fb-55be-4e55-9d84-01303aaec1ce";
@@ -106,7 +111,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   @MockBean
   private InventoryClient inventoryClient;
   @MockBean
-  private RequestStorageClient requestsClient;
+  private CirculationClient circulationClient;
   @MockBean
   private ServicePointsUsersClient servicePointsUsersClient;
   @MockBean
@@ -117,22 +122,22 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   @SpyBean
   private RequestService requestService;
 
-  InventoryItemDTO mockInventoryClient(){
+  InventoryItemDTO mockInventoryClient() {
     var inventoryItemDTO = createInventoryItemDTO();
     inventoryItemDTO.setStatus(AVAILABLE);
     inventoryItemDTO.setMaterialType(new InventoryItemDTO.MaterialType(UUID.fromString(PRE_POPULATED_MATERIAL_TYPE_ID), "materialType"));
-    when(inventoryClient.getItemsByHrId(inventoryItemDTO.getHrId())).thenReturn(ResultList.of(1, List.of(inventoryItemDTO)));
+    when(inventoryClient.getItemsByHrId(inventoryItemDTO.getHrid())).thenReturn(ResultList.of(1, List.of(inventoryItemDTO)));
     return inventoryItemDTO;
   }
 
-  User mockUserClient(){
+  User mockUserClient() {
     var user = createUser();
     user.setBarcode(PRE_POPULATED_USER_BARCODE);
     when(usersClient.query(PRE_POPULATED_USER_BARCODE_QUERY)).thenReturn(ResultList.of(1, List.of(user)));
     return user;
   }
 
-  void mockInventoryStorageClient(User user){
+  void mockInventoryStorageClient(User user) {
     var servicePointUserDTO = new ServicePointUserDTO();
     servicePointUserDTO.setUserId(fromString(user.getId()));
     servicePointUserDTO.setDefaultServicePointId(randomUUID());
@@ -140,7 +145,14 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   }
 
   void mockFindRequestsReturnsEmptyList(InventoryItemDTO inventoryItemDTO) {
-    when(requestsClient.findRequests(inventoryItemDTO.getId())).thenReturn(ResultList.of(0, Collections.emptyList()));
+    when(circulationClient.findRequests(inventoryItemDTO.getId())).thenReturn(ResultList.of(0, Collections.emptyList()));
+  }
+
+  void modifyTransactionsDateCreated() {
+    var transactions = repository.findAll();
+    int[] hours = { 0 };
+    transactions.forEach(t -> t.setCreatedDate(t.getCreatedDate().minusHours(hours[0]++)));
+    repository.saveAll(transactions);
   }
 
   @Test
@@ -148,7 +160,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
   })
-  void return200HttpCode_and_allExistingTransactions_when_getAllTransactionsWithNoFilters(){
+  void return200HttpCode_and_allExistingTransactions_when_getAllTransactionsWithNoFilters() {
     var responseEntity = testRestTemplate.getForEntity(
       "/inn-reach/transactions", InnReachTransactionsDTO.class
     );
@@ -174,7 +186,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
   })
-  void return200HttpCode_and_pageOfTransactions_when_getAllTransactionsWithOffsetAndLimit(){
+  void return200HttpCode_and_pageOfTransactions_when_getAllTransactionsWithOffsetAndLimit() {
     var responseEntity = testRestTemplate.getForEntity(
       "/inn-reach/transactions?offset=1&limit=1", InnReachTransactionsDTO.class
     );
@@ -197,10 +209,214 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   @Test
   @Sql(scripts = {
     "classpath:db/central-server/pre-populate-central-server.sql",
-    "classpath:db/mtype-mapping/pre-populate-material-type-mapping.sql",
-    "classpath:db/central-patron-type-mapping/pre-populate-central-patron_type-mapping-table.sql.sql"
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
   })
-  @Sql(scripts = {"classpath:db/central-patron-type-mapping/clear-central-patron-type-mapping-table.sql.sql"},
+  void return200HttpCode_and_sortedTransactions_when_getAllTransactionsWithTypeAndState() {
+    var responseEntity = testRestTemplate.getForEntity(
+      "/inn-reach/transactions?type=PATRON&type=ITEM&state=PATRON_HOLD", InnReachTransactionsDTO.class
+    );
+
+    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+    assertNotNull(responseEntity.getBody());
+    assertEquals(1, responseEntity.getBody().getTotalRecords());
+
+    var transactionIds = responseEntity.getBody().getTransactions().stream()
+      .map(InnReachTransactionDTO::getId).collect(Collectors.toList());
+    assertTrue(transactionIds.containsAll(List.of(UUID.fromString(TRANSACTION_WITH_PATRON_HOLD_ID))));
+
+    assertEquals(1, responseEntity.getBody().getTransactions().size());
+    var transaction = responseEntity.getBody().getTransactions().stream()
+      .findFirst().get();
+    assertEquals(PATRON, transaction.getType());
+    assertEquals(PATRON_HOLD, transaction.getState());
+  }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
+  })
+  void return200HttpCode_and_sortedTransactions_when_getAllTransactionsWithCentralServerCodeAndPatronAgencyCode() {
+    var responseEntity = testRestTemplate.getForEntity(
+      "/inn-reach/transactions?centralServerCode=d2ir&patronAgencyCode=qwe56", InnReachTransactionsDTO.class
+    );
+
+    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+    assertNotNull(responseEntity.getBody());
+    assertEquals(1, responseEntity.getBody().getTotalRecords());
+
+    var transactionIds = responseEntity.getBody().getTransactions().stream()
+      .map(InnReachTransactionDTO::getId).collect(Collectors.toList());
+    assertTrue(transactionIds.containsAll(List.of(PRE_POPULATED_TRANSACTION_ID2)));
+
+    assertEquals(1, responseEntity.getBody().getTransactions().size());
+    assertTrue(responseEntity.getBody().getTransactions().stream().map(InnReachTransactionDTO::getCentralServerCode)
+      .allMatch(c -> c.equals("d2ir")));
+
+    var holdDTOs = responseEntity.getBody().getTransactions().stream()
+      .map(InnReachTransactionDTO::getHold).collect(Collectors.toList());
+    assertTrue(holdDTOs.stream().allMatch(h -> h.getPatronAgencyCode().equals("qwe56")));
+  }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
+  })
+  void return200HttpCode_and_sortedTransactions_when_getAllTransactionsWithItemAgency() {
+    var responseEntity = testRestTemplate.getForEntity(
+      "/inn-reach/transactions?itemAgencyCode=asd78", InnReachTransactionsDTO.class
+    );
+
+    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+    assertNotNull(responseEntity.getBody());
+    assertEquals(2, responseEntity.getBody().getTotalRecords());
+
+    var transactionIds = responseEntity.getBody().getTransactions().stream()
+      .map(InnReachTransactionDTO::getId).collect(Collectors.toList());
+    assertTrue(transactionIds.containsAll(List.of(UUID.fromString(TRANSACTION_WITH_ITEM_HOLD_ID),
+      UUID.fromString(TRANSACTION_WITH_LOCAL_HOLD_ID))));
+
+    assertEquals(2, responseEntity.getBody().getTransactions().size());
+    var holdDTOs = responseEntity.getBody().getTransactions().stream()
+      .map(InnReachTransactionDTO::getHold).collect(Collectors.toList());
+    assertTrue(holdDTOs.stream().allMatch(h -> h.getItemAgencyCode().equals("asd78")));
+  }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
+  })
+  void return200HttpCode_and_sortedTransactions_when_getAllTransactionsWithPatronType() {
+    var responseEntity = testRestTemplate.getForEntity(
+      "/inn-reach/transactions?patronType=1", InnReachTransactionsDTO.class
+    );
+
+    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+    assertNotNull(responseEntity.getBody());
+    assertEquals(1, responseEntity.getBody().getTotalRecords());
+
+    var transactionIds = responseEntity.getBody().getTransactions().stream()
+      .map(InnReachTransactionDTO::getId).collect(Collectors.toList());
+    assertTrue(transactionIds.containsAll(List.of(UUID.fromString(TRANSACTION_WITH_ITEM_HOLD_ID))));
+
+    assertEquals(1, responseEntity.getBody().getTransactions().size());
+    var transaction = responseEntity.getBody().getTransactions().stream()
+      .findFirst().get();
+    assertEquals(1, transaction.getHold().getCentralPatronType());
+  }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
+  })
+  void return200HttpCode_and_sortedTransactions_when_getAllTransactionsWithCentralItemType() {
+    var responseEntity = testRestTemplate.getForEntity(
+      "/inn-reach/transactions?centralItemType=1&centralItemType=2", InnReachTransactionsDTO.class
+    );
+
+    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+    assertNotNull(responseEntity.getBody());
+    assertEquals(2, responseEntity.getBody().getTotalRecords());
+
+    var transactionIds = responseEntity.getBody().getTransactions().stream()
+      .map(InnReachTransactionDTO::getId).collect(Collectors.toList());
+    assertTrue(transactionIds.containsAll(List.of(PRE_POPULATED_TRANSACTION_ID1, PRE_POPULATED_TRANSACTION_ID2)));
+
+    assertEquals(2, responseEntity.getBody().getTransactions().size());
+    var centralItemTypes = responseEntity.getBody().getTransactions().stream()
+      .map(InnReachTransactionDTO::getHold).map(TransactionHoldDTO::getCentralItemType).collect(Collectors.toList());
+    assertTrue(centralItemTypes.containsAll(List.of(1, 2)));
+  }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
+  })
+  void return200HttpCode_and_emptyTransactionList_when_noTransactionsMatchFilters() {
+    var responseEntity = testRestTemplate.getForEntity(
+      "/inn-reach/transactions?type=ITEM&state=PATRON_HOLD&centralServerCode=qwe12", InnReachTransactionsDTO.class
+    );
+
+    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+    assertNotNull(responseEntity.getBody());
+    assertEquals(0, responseEntity.getBody().getTotalRecords());
+    assertTrue(responseEntity.getBody().getTransactions().isEmpty());
+  }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
+  })
+  void return200HttpCode_and_sortedTransactionList_when_SortByCreatedDateDescending() {
+    modifyTransactionsDateCreated();
+    var responseEntity = testRestTemplate.getForEntity(
+      "/inn-reach/transactions?sortBy=DATE_CREATED&sortOrder=DESC", InnReachTransactionsDTO.class
+    );
+
+    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+    assertNotNull(responseEntity.getBody());
+    assertEquals(3, responseEntity.getBody().getTotalRecords());
+
+    var transactions = responseEntity.getBody().getTransactions();
+    assertTrue(transactions.get(0).getMetadata().getCreatedDate().after(
+      transactions.get(2).getMetadata().getCreatedDate()));
+  }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
+  })
+  void return200HttpCode_and_sortedTransactionList_when_SortByCentralItemTypeAscending() {
+    var responseEntity = testRestTemplate.getForEntity(
+      "/inn-reach/transactions?sortBy=CENTRAL_ITEM_TYPE", InnReachTransactionsDTO.class
+    );
+
+    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+    assertNotNull(responseEntity.getBody());
+    assertEquals(3, responseEntity.getBody().getTotalRecords());
+
+    var transactions = responseEntity.getBody().getTransactions();
+    assertTrue(transactions.get(0).getHold().getCentralItemType() <
+      transactions.get(2).getHold().getCentralItemType());
+  }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
+  })
+  void return200HttpCode_and_sortedTransactionList_when_SortByFirstParameterWhenMultipleSortsSpecified() {
+    var responseEntity = testRestTemplate.getForEntity(
+      "/inn-reach/transactions?sortBy=PATRON_AGENCY&sortBy=ITEM_AGENCY", InnReachTransactionsDTO.class
+    );
+
+    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+    assertNotNull(responseEntity.getBody());
+    assertEquals(3, responseEntity.getBody().getTotalRecords());
+
+    var transactions = responseEntity.getBody().getTransactions();
+    assertTrue(transactions.get(0).getHold().getPatronAgencyCode().compareTo(
+      transactions.get(2).getHold().getPatronAgencyCode()) < 0);
+
+    var transactionsForFirstPatronAgency = transactions.stream().filter(t -> t.getHold().getPatronAgencyCode().equals(PRE_POPULATED_PATRON_AGENCY))
+    .collect(Collectors.toList());
+    assertFalse(transactionsForFirstPatronAgency.get(0).getHold().getItemAgencyCode().compareTo(
+      transactionsForFirstPatronAgency.get(1).getHold().getItemAgencyCode()) < 0);
+  }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/mtype-mapping/pre-populate-material-type-mapping.sql",
+    "classpath:db/central-patron-type-mapping/pre-populate-central-patron_type-mapping-table.sql"
+  })
+  @Sql(scripts = {"classpath:db/central-patron-type-mapping/clear-central-patron-type-mapping-table.sql"},
     executionPhase = AFTER_TEST_METHOD)
   @SqlMergeMode(MERGE)
   void return200HttpCode_and_sendRequest_whenItemHoldTransactionCreated() {
@@ -208,11 +424,11 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     inventoryItemDTO.setStatus(IN_TRANSIT);
     var requestDTO = createRequestDTO();
     requestDTO.setItemId(inventoryItemDTO.getId());
-    when(requestsClient.findRequests(inventoryItemDTO.getId())).thenReturn(ResultList.of(1,
+    when(circulationClient.findRequests(inventoryItemDTO.getId())).thenReturn(ResultList.of(1,
       List.of(requestDTO)));
     var user = mockUserClient();
     mockInventoryStorageClient(user);
-    when(requestsClient.sendRequest(any(RequestDTO.class))).then((Answer<RequestDTO>) invocationOnMock -> {
+    when(circulationClient.sendRequest(any(RequestDTO.class))).then((Answer<RequestDTO>) invocationOnMock -> {
       var sentRequest = (RequestDTO) invocationOnMock.getArgument(0);
       sentRequest.setId(randomUUID());
       return sentRequest;
@@ -221,7 +437,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     var itemHoldDTO = deserializeFromJsonFile(
       "/inn-reach-transaction/create-item-hold-request.json", TransactionHoldDTO.class);
     itemHoldDTO.setCentralPatronType(PRE_POPULATED_CENTRAL_PATRON_TYPE);
-    itemHoldDTO.setItemId(inventoryItemDTO.getHrId());
+    itemHoldDTO.setItemId(inventoryItemDTO.getHrid());
 
     var responseEntity = testRestTemplate.postForEntity(
       "/inn-reach/d2ir/circ/itemhold/{trackingId}/{centralCode}", itemHoldDTO, InnReachResponseDTO.class, TRACKING_ID,
@@ -236,10 +452,10 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
 
     verify(requestService).createItemRequest(TRACKING_ID);
     verify(inventoryClient, times(2)).getItemsByHrId(itemHoldDTO.getItemId());
-    verify(requestsClient).findRequests(inventoryItemDTO.getId());
+    verify(circulationClient).findRequests(inventoryItemDTO.getId());
     verify(usersClient).query(PRE_POPULATED_USER_BARCODE_QUERY);
     verify(servicePointsUsersClient).findServicePointsUsers(fromString(user.getId()));
-    verify(requestsClient).sendRequest(any());
+    verify(circulationClient).sendRequest(any());
 
     var transaction = repository.fetchOneByTrackingId(TRACKING_ID);
 
@@ -262,7 +478,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   @Sql(scripts = {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/mtype-mapping/pre-populate-material-type-mapping.sql",
-    "classpath:db/central-patron-type-mapping/pre-populate-central-patron_type-mapping-table.sql.sql"
+    "classpath:db/central-patron-type-mapping/pre-populate-central-patron_type-mapping-table.sql"
   })
   void return200HttpCode_and_doNotSendRequest_whenItemHoldTransactionCreatedForNotAvailableItem() {
     var inventoryItemDTO = mockInventoryClient();
@@ -270,7 +486,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     mockFindRequestsReturnsEmptyList(inventoryItemDTO);
     var user = mockUserClient();
     mockInventoryStorageClient(user);
-    when(requestsClient.sendRequest(any(RequestDTO.class))).then((Answer<RequestDTO>) invocationOnMock -> {
+    when(circulationClient.sendRequest(any(RequestDTO.class))).then((Answer<RequestDTO>) invocationOnMock -> {
       var sentRequest = (RequestDTO) invocationOnMock.getArgument(0);
       sentRequest.setId(randomUUID());
       return sentRequest;
@@ -279,14 +495,14 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     var itemHoldDTO = deserializeFromJsonFile(
       "/inn-reach-transaction/create-item-hold-request.json", TransactionHoldDTO.class);
     itemHoldDTO.setCentralPatronType(PRE_POPULATED_CENTRAL_PATRON_TYPE);
-    itemHoldDTO.setItemId(inventoryItemDTO.getHrId());
+    itemHoldDTO.setItemId(inventoryItemDTO.getHrid());
 
     var responseEntity = testRestTemplate.postForEntity(
       "/inn-reach/d2ir/circ/itemhold/{trackingId}/{centralCode}", itemHoldDTO, InnReachResponseDTO.class, TRACKING_ID,
       PRE_POPULATED_CENTRAL_SERVER_CODE);
 
     assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
-    verify(requestsClient, never()).sendRequest(any());
+    verify(circulationClient, never()).sendRequest(any());
 
     var transaction = repository.fetchOneByTrackingId(TRACKING_ID);
     assertNotNull(transaction.get());
@@ -305,7 +521,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
 
     var itemHoldDTO = deserializeFromJsonFile(
       "/inn-reach-transaction/create-item-hold-invalid-patron-id-request.json", TransactionHoldDTO.class);
-    itemHoldDTO.setItemId(inventoryItemDTO.getHrId());
+    itemHoldDTO.setItemId(inventoryItemDTO.getHrid());
 
     var responseEntity = testRestTemplate.postForEntity(
       "/inn-reach/d2ir/circ/itemhold/{trackingId}/{centralCode}", itemHoldDTO, InnReachResponseDTO.class, TRACKING_ID,
@@ -328,7 +544,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
 
     var itemHoldDTO = deserializeFromJsonFile(
       "/inn-reach-transaction/create-item-hold-request.json", TransactionHoldDTO.class);
-    itemHoldDTO.setItemId(inventoryItemDTO.getHrId());
+    itemHoldDTO.setItemId(inventoryItemDTO.getHrid());
 
     var responseEntity = testRestTemplate.postForEntity(
       "/inn-reach/d2ir/circ/itemhold/{trackingId}/{centralCode}", itemHoldDTO, InnReachResponseDTO.class, PRE_POPULATED_TRACKING_ID,
@@ -347,7 +563,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
 
     var itemHoldDTO = deserializeFromJsonFile(
       "/inn-reach-transaction/create-item-hold-request.json", TransactionHoldDTO.class);
-    itemHoldDTO.setItemId(inventoryItemDTO.getHrId());
+    itemHoldDTO.setItemId(inventoryItemDTO.getHrid());
 
     var responseEntity = testRestTemplate.postForEntity(
       "/inn-reach/d2ir/circ/itemhold/{trackingId}/{centralCode}", itemHoldDTO, InnReachResponseDTO.class, PRE_POPULATED_TRACKING_ID,
@@ -369,7 +585,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
 
     var itemHoldDTO = deserializeFromJsonFile(
       "/inn-reach-transaction/create-item-hold-invalid-pickup-location-request.json", TransactionHoldDTO.class);
-    itemHoldDTO.setItemId(inventoryItemDTO.getHrId());
+    itemHoldDTO.setItemId(inventoryItemDTO.getHrid());
 
     var responseEntity = testRestTemplate.postForEntity(
       "/inn-reach/d2ir/circ/itemhold/{trackingId}/{centralCode}", itemHoldDTO, InnReachResponseDTO.class, PRE_POPULATED_TRACKING_ID,
@@ -390,7 +606,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
 
     var itemHoldDTO = deserializeFromJsonFile(
       "/inn-reach-transaction/create-item-hold-request.json", TransactionHoldDTO.class);
-    itemHoldDTO.setItemId(inventoryItemDTO.getHrId());
+    itemHoldDTO.setItemId(inventoryItemDTO.getHrid());
 
     var responseEntity = testRestTemplate.postForEntity(
       "/inn-reach/d2ir/circ/itemhold/{trackingId}/{centralCode}", itemHoldDTO, InnReachResponseDTO.class, TRACKING_ID,
@@ -400,7 +616,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     assertEquals("failed", responseEntity.getBody().getStatus());
     assertEquals("An error occurred during creation of INN-Reach Transaction.", responseEntity.getBody().getReason());
     assertEquals("Material type mapping for central server id = "
-      + PRE_POPULATED_CENTRAL_SERVER_ID + " and material type id = " + PRE_POPULATED_MATERIAL_TYPE_ID + " not found",
+        + PRE_POPULATED_CENTRAL_SERVER_ID + " and material type id = " + PRE_POPULATED_MATERIAL_TYPE_ID + " not found",
       responseEntity.getBody().getErrors().get(0).getReason());
   }
 
@@ -408,11 +624,8 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   @Sql(scripts = {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/mtype-mapping/pre-populate-material-type-mapping.sql",
-    "classpath:db/central-patron-type-mapping/pre-populate-central-patron_type-mapping-table.sql.sql"
+    "classpath:db/central-patron-type-mapping/pre-populate-central-patron_type-mapping-table.sql"
   })
-  @Sql(scripts = {"classpath:db/central-patron-type-mapping/clear-central-patron-type-mapping-table.sql.sql"},
-    executionPhase = AFTER_TEST_METHOD)
-  @SqlMergeMode(MERGE)
   void issueOwningSideCancelsRequest_when_createInnReachTransaction_and_creatingRequestFails() {
     var inventoryItemDTO = mockInventoryClient();
     mockFindRequestsReturnsEmptyList(inventoryItemDTO);
@@ -422,7 +635,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
 
     var itemHoldDTO = deserializeFromJsonFile(
       "/inn-reach-transaction/create-item-hold-request.json", TransactionHoldDTO.class);
-    itemHoldDTO.setItemId(inventoryItemDTO.getHrId());
+    itemHoldDTO.setItemId(inventoryItemDTO.getHrid());
     itemHoldDTO.setCentralPatronType(PRE_POPULATED_CENTRAL_PATRON_TYPE);
 
     var responseEntity = testRestTemplate.postForEntity(
@@ -433,11 +646,11 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
 
     await().untilAsserted(() -> verify(innReachClient).postInnReachApi(any(), anyString(), anyString(), anyString(), any()));
 
-    verify(inventoryClient, times(2)).getItemsByHrId(inventoryItemDTO.getHrId());
-    verify(requestsClient).findRequests(inventoryItemDTO.getId());
+    verify(inventoryClient).getItemsByHrId(inventoryItemDTO.getHrid());
+    verify(circulationClient, never()).findRequests(inventoryItemDTO.getId());
     verify(usersClient).query(PRE_POPULATED_USER_BARCODE_QUERY);
     verify(servicePointsUsersClient).findServicePointsUsers(fromString(user.getId()));
-    verify(requestsClient, never()).sendRequest(any());
+    verify(circulationClient, never()).sendRequest(any());
 
     var cancelRequest = ArgumentCaptor.forClass(OwningSiteCancelsRequestDTO.class);
     verify(innReachClient).postInnReachApi(any(), anyString(), anyString(), anyString(), cancelRequest.capture());
@@ -447,7 +660,8 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   @Test
   @Sql(scripts = {
     "classpath:db/central-server/pre-populate-central-server.sql",
-    "classpath:db/mtype-mapping/pre-populate-material-type-mapping.sql"
+    "classpath:db/mtype-mapping/pre-populate-material-type-mapping.sql",
+    "classpath:db/central-patron-type-mapping/pre-populate-central-patron_type-mapping-table.sql"
   })
   void issueOwningSideCancelsRequest_when_createInnReachTransaction_and_itemIsNotRequestable() {
     var inventoryItemDTO = mockInventoryClient();
@@ -459,7 +673,8 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
 
     var itemHoldDTO = deserializeFromJsonFile(
       "/inn-reach-transaction/create-item-hold-request.json", TransactionHoldDTO.class);
-    itemHoldDTO.setItemId(inventoryItemDTO.getHrId());
+    itemHoldDTO.setItemId(inventoryItemDTO.getHrid());
+    itemHoldDTO.setCentralPatronType(PRE_POPULATED_CENTRAL_PATRON_TYPE);
 
     var responseEntity = testRestTemplate.postForEntity(
       "/inn-reach/d2ir/circ/itemhold/{trackingId}/{centralCode}", itemHoldDTO, InnReachResponseDTO.class, PRE_POPULATED_TRACKING_ID,
@@ -469,11 +684,11 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
 
     await().untilAsserted(() -> verify(innReachClient).postInnReachApi(any(), anyString(), anyString(), anyString(), any()));
 
-    verify(inventoryClient, times(2)).getItemsByHrId(inventoryItemDTO.getHrId());
-    verify(requestsClient).findRequests(inventoryItemDTO.getId());
-    verify(usersClient, never()).query(PRE_POPULATED_USER_BARCODE_QUERY);
-    verify(servicePointsUsersClient, never()).findServicePointsUsers(fromString(user.getId()));
-    verify(requestsClient, never()).sendRequest(any());
+    verify(inventoryClient, times(2)).getItemsByHrId(inventoryItemDTO.getHrid());
+    verify(circulationClient).findRequests(inventoryItemDTO.getId());
+    verify(usersClient).query(PRE_POPULATED_USER_BARCODE_QUERY);
+    verify(servicePointsUsersClient).findServicePointsUsers(fromString(user.getId()));
+    verify(circulationClient, never()).sendRequest(any());
 
     var request = ArgumentCaptor.forClass(OwningSiteCancelsRequestDTO.class);
     verify(innReachClient).postInnReachApi(any(), anyString(), anyString(), anyString(), request.capture());

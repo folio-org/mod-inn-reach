@@ -1,5 +1,8 @@
 package org.folio.innreach.util;
 
+import java.io.IOException;
+import java.io.InputStream;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -32,6 +35,17 @@ public class JsonHelper {
     T obj;
     try {
       obj = mapper.readValue(jsonString, valueType);
+    } catch (JsonProcessingException e) {
+      log.info(OBJECT_DESERIALIZATION_FAILED, e);
+      throw new IllegalStateException(OBJECT_DESERIALIZATION_FAILED + ": " + e.getMessage());
+    }
+    return obj;
+  }
+
+  public <T> T fromJson(InputStream inputStream, Class<T> valueType) throws IOException {
+    T obj;
+    try {
+      obj = mapper.readValue(inputStream, valueType);
     } catch (JsonProcessingException e) {
       log.info(OBJECT_DESERIALIZATION_FAILED, e);
       throw new IllegalStateException(OBJECT_DESERIALIZATION_FAILED + ": " + e.getMessage());

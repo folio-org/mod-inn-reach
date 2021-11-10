@@ -15,9 +15,12 @@ import static org.folio.innreach.domain.CirculationOperation.ITEM_SHIPPED;
 import static org.folio.innreach.domain.CirculationOperation.PATRON_HOLD;
 import static org.folio.innreach.fixture.CirculationFixture.createTransactionHoldDTO;
 
+import java.util.Optional;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.context.jdbc.Sql;
@@ -26,8 +29,8 @@ import org.springframework.test.context.jdbc.SqlMergeMode;
 import org.folio.innreach.controller.base.BaseControllerTest;
 import org.folio.innreach.domain.InnReachResponseStatus;
 import org.folio.innreach.domain.dto.folio.inventory.InventoryItemDTO;
+import org.folio.innreach.domain.service.InventoryService;
 import org.folio.innreach.dto.InnReachResponseDTO;
-import org.folio.innreach.external.service.InventoryService;
 import org.folio.innreach.repository.InnReachTransactionRepository;
 
 @Sql(
@@ -46,7 +49,7 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
   @Autowired
   private TestRestTemplate testRestTemplate;
 
-  @Autowired
+  @SpyBean
   private InnReachTransactionRepository repository;
 
   @MockBean
@@ -112,7 +115,7 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
   })
   void processItemShippedCircRequest_updateFolioItem_whenAssociatedItemExists() {
     when(inventoryService.getItemByBarcode(any())).thenReturn(InventoryItemDTO.builder().build());
-    when(inventoryService.getItemById(any())).thenReturn(InventoryItemDTO.builder().build());
+    when(inventoryService.findItem(any())).thenReturn(Optional.of(InventoryItemDTO.builder().build()));
 
     var transactionHoldDTO = createTransactionHoldDTO();
 
@@ -120,7 +123,7 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
       "/inn-reach/d2ir/circ/{circulationOperationName}/{trackingId}/{centralCode}",
       transactionHoldDTO, InnReachResponseDTO.class, ITEM_SHIPPED.getOperationName(), PRE_POPULATED_TRACKING_ID, PRE_POPULATED_CENTRAL_CODE);
 
-    verify(inventoryService).updateItem(any(), any());
+    verify(inventoryService).updateItem(any());
 
     assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
 
@@ -138,7 +141,7 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
   })
   void processItemShippedCircRequest_doNotUpdateFolioItem_whenAssociatedItemDoesNotExist() {
     when(inventoryService.getItemByBarcode(any())).thenReturn(InventoryItemDTO.builder().build());
-    when(inventoryService.getItemById(any())).thenReturn(null);
+    when(inventoryService.findItem(any())).thenReturn(Optional.empty());
 
     var transactionHoldDTO = createTransactionHoldDTO();
 
@@ -146,7 +149,7 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
       "/inn-reach/d2ir/circ/{circulationOperationName}/{trackingId}/{centralCode}",
       transactionHoldDTO, InnReachResponseDTO.class, ITEM_SHIPPED.getOperationName(), PRE_POPULATED_TRACKING_ID, PRE_POPULATED_CENTRAL_CODE);
 
-    verify(inventoryService, times(0)).updateItem(any(), any());
+    verify(inventoryService, times(0)).updateItem(any());
 
     assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
 
@@ -170,4 +173,5 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
 
     assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
   }
+
 }

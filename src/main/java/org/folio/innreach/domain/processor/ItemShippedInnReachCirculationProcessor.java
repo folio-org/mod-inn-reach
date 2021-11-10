@@ -13,9 +13,9 @@ import org.springframework.transaction.annotation.Transactional;
 import org.folio.innreach.domain.entity.InnReachTransaction;
 import org.folio.innreach.domain.entity.TransactionPatronHold;
 import org.folio.innreach.domain.exception.EntityNotFoundException;
+import org.folio.innreach.domain.service.InventoryService;
 import org.folio.innreach.dto.CirculationRequestDTO;
 import org.folio.innreach.dto.InnReachResponseDTO;
-import org.folio.innreach.external.service.InventoryService;
 import org.folio.innreach.repository.InnReachTransactionRepository;
 
 @Log4j2
@@ -58,11 +58,11 @@ public class ItemShippedInnReachCirculationProcessor implements InnReachCirculat
   }
 
   private void updateFolioAssociatedItem(UUID folioItemId, String itemBarcode) {
-    var folioAssociatedItem = inventoryService.getItemById(folioItemId);
-    if (Objects.nonNull(folioAssociatedItem)) {
-      folioAssociatedItem.setBarcode(itemBarcode);
-      inventoryService.updateItem(folioAssociatedItem.getId(), folioAssociatedItem);
-    }
+    var folioAssociatedItem = inventoryService.findItem(folioItemId);
+    folioAssociatedItem.ifPresent(item -> {
+      item.setBarcode(itemBarcode);
+      inventoryService.updateItem(item);
+    });
   }
 
 }

@@ -23,6 +23,7 @@ import org.folio.innreach.domain.service.InnReachTransactionService;
 import org.folio.innreach.domain.service.RequestService;
 import org.folio.innreach.dto.InnReachResponseDTO;
 import org.folio.innreach.dto.InnReachTransactionDTO;
+import org.folio.innreach.dto.InnReachTransactionFilterParametersDTO;
 import org.folio.innreach.dto.InnReachTransactionsDTO;
 import org.folio.innreach.dto.TransactionHoldDTO;
 import org.folio.innreach.mapper.InnReachErrorMapper;
@@ -63,8 +64,9 @@ public class InnReachTransactionController implements InnReachTransactionApi {
   @Override
   @GetMapping("/inn-reach/transactions")
   public ResponseEntity<InnReachTransactionsDTO> getAllTransactions(@Min(0) @Max(2147483647) @Valid Integer offset,
-                                                                    @Min(0) @Max(2147483647) @Valid Integer limit){
-    var transactions = transactionService.getAllTransactions(offset, limit);
+                                                                    @Min(0) @Max(2147483647) @Valid Integer limit,
+                                                                    @Valid InnReachTransactionFilterParametersDTO parameters) {
+    var transactions = transactionService.getAllTransactions(offset, limit, parameters);
     return ResponseEntity.ok(transactions);
   }
 

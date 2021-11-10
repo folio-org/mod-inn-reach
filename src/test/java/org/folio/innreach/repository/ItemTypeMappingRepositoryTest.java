@@ -125,7 +125,9 @@ class ItemTypeMappingRepositoryTest extends BaseRepositoryTest {
   @Sql(scripts = {"classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/item-type-mapping/pre-populate-item-type-mapping.sql"})
   void shouldFindMappingByCentralItemType() {
-    var mapping = repository.findByCentralItemType(PRE_POPULATED_CENTRAL_ITEM_TYPE);
+    var centralServerId = fromString(PRE_POPULATED_CENTRAL_SERVER_ID);
+    var mapping =
+      repository.findByCentralServerIdAndCentralItemType(centralServerId, PRE_POPULATED_CENTRAL_ITEM_TYPE).get();
 
     assertEquals(PRE_POPULATED_CENTRAL_ITEM_TYPE, mapping.getCentralItemType());
     assertEquals(UUID.fromString(PRE_POPULATED_MATERIAL_TYPE_ID), mapping.getMaterialTypeId());

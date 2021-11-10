@@ -14,7 +14,7 @@ import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TES
 import static org.springframework.test.context.jdbc.SqlMergeMode.MergeMode.MERGE;
 
 import static org.folio.innreach.controller.ControllerTestUtils.createValidationError;
-import static org.folio.innreach.fixture.TestUtil.deserializeFromJsonFile;
+import static org.folio.innreach.fixture.AgencyLocationMappingFixture.deserializeMapping;
 
 import java.util.Collection;
 import java.util.List;
@@ -283,11 +283,6 @@ class AgencyMappingControllerTest extends BaseControllerTest {
 
   private static String baseMappingURL(String serverId) {
     return "/inn-reach/central-servers/" + serverId + "/agency-mappings";
-  }
-
-  private AgencyLocationMappingDTO deserializeMapping() {
-    return deserializeFromJsonFile(
-      "/agency-mapping/create-agency-mappings-request.json", AgencyLocationMappingDTO.class);
   }
 
   private AgencyLocationMapping fetchDbEntity() {

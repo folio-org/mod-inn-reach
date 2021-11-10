@@ -1173,6 +1173,7 @@ paths:
       parameters:
         - $ref: "#/components/parameters/trait_pageable_offset"
         - $ref: "#/components/parameters/trait_pageable_limit"
+        - $ref: "#/components/parameters/transaction_filter_parameters"
 components:
   schemas:
     UUID:
@@ -1267,6 +1268,8 @@ components:
       $ref: schemas/d2ir/circulationRequestDTO.json
     innReachTransactionsDTO:
       $ref: schemas/innReachTransactionsDTO.json
+    innReachTransactionFilterParametersDTO:
+      $ref: schemas/innReachTransactionFilterParametersDTO.json
   parameters:
     id:
       name: id
@@ -1338,6 +1341,12 @@ components:
       schema:
         type: string
         maxLength: 5
+    transaction_filter_parameters:
+      name: parameters
+      in: query
+      description: Query parameters to filter transactions.
+      schema:
+        $ref: "#/components/schemas/innReachTransactionFilterParametersDTO"
     trait_queryable_query:
       name: query
       in: query

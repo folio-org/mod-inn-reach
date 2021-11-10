@@ -10,6 +10,7 @@ public enum CirculationOperation {
 
   PATRON_HOLD("patronhold"),
   CANCEL_ITEM_HOLD ("cancel_itemhold"),
+  CANCEL_PATRON_HOLD("cancelrequest"),
   ITEM_SHIPPED("itemshipped");
 
   private final String operationName;

@@ -9,6 +9,8 @@ import static org.folio.innreach.util.ListUtils.toStream;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -33,6 +35,7 @@ import org.folio.innreach.dto.CentralServerPatronTypesDTO;
 import org.folio.innreach.dto.InnReachResponseDTO;
 import org.folio.innreach.dto.ItemType;
 import org.folio.innreach.dto.ItemTypesPerCentralServerDTO;
+import org.folio.innreach.dto.LocalServer;
 import org.folio.innreach.dto.LocalServerAgenciesDTO;
 import org.folio.innreach.dto.PatronType;
 import org.folio.innreach.dto.PatronTypesPerCentralServerDTO;
@@ -83,6 +86,12 @@ public class CentralServerConfigurationServiceImpl implements CentralServerConfi
         .totalRecords(csPatronTypes.size());
   }
 
+  @Override
+  public List<LocalServer> getLocalServers(UUID centralServerId) {
+    return loadRecordPerServer(INN_REACH_LOCAL_SERVERS_URI, LocalServerAgenciesDTO.class,
+      resp -> emptyIfNull(resp.getRight().getLocalServerList()), centralServerId);
+  }
+
   private <Rec, CSResp extends InnReachResponseDTO> List<Rec> loadRecordsPerServer(String uri,
       Class<CSResp> centralServerRecordType, Function<Pair<CentralServerDTO, CSResp>, Rec> responseToRecordsMapper) {
 
@@ -95,7 +104,22 @@ public class CentralServerConfigurationServiceImpl implements CentralServerConfi
         .filter(Objects::nonNull)
         .collect(Collectors.toList());
   }
-  
+
+  private <Rec, CSResp extends InnReachResponseDTO> Rec loadRecordPerServer(String uri,
+    Class<CSResp> centralServerRecordType,
+    Function<Pair<CentralServerDTO, CSResp>, Rec> responseToRecordsMapper,
+    UUID centralServerId) {
+
+    var server = centralServerService.getCentralServer(centralServerId);
+
+    return Optional.of(server)
+      .map(retrieveAllConfigRecords(uri, centralServerRecordType))
+      .filter(this::successfulResponse)
+      .map(responseToRecordsMapper)
+      .filter(Objects::nonNull)
+      .orElseThrow(() -> new IllegalStateException("Unable to load records for central server " + centralServerId));
+  }
+
   private AgenciesPerCentralServerDTO toAgenciesOrNull(
       Pair<CentralServerDTO, LocalServerAgenciesDTO> centralServerWithResponse) {
     var agencies = flatMapItems(centralServerWithResponse.getRight().getLocalServerList(),

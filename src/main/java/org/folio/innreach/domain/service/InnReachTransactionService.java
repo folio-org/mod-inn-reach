@@ -5,8 +5,9 @@ import java.util.UUID;
 
 import org.folio.innreach.dto.InnReachResponseDTO;
 import org.folio.innreach.dto.InnReachTransactionDTO;
-import org.folio.innreach.dto.TransactionHoldDTO;
+import org.folio.innreach.dto.InnReachTransactionFilterParametersDTO;
 import org.folio.innreach.dto.InnReachTransactionsDTO;
+import org.folio.innreach.dto.TransactionHoldDTO;
 
 public interface InnReachTransactionService {
   InnReachResponseDTO createInnReachTransactionItemHold(String trackingId, String centralCode, TransactionHoldDTO dto);
@@ -15,5 +16,5 @@ public interface InnReachTransactionService {
 
   InnReachTransactionDTO getInnReachTransaction(UUID transactionId);
 
-  InnReachTransactionsDTO getAllTransactions(Integer offset, Integer limit);
+  InnReachTransactionsDTO getAllTransactions(Integer offset, Integer limit, InnReachTransactionFilterParametersDTO parameters);
 }

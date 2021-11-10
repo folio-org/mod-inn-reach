@@ -43,8 +43,8 @@
       "version": "4.3"
     },
     {
-      "id": "request-storage",
-      "version": "3.4"
+      "id": "circulation",
+      "version": "11.0"
     },
     {
       "id": "source-storage-records",
@@ -183,7 +183,7 @@
         {
           "methods": ["GET"],
           "pathPattern": "/inn-reach/central-servers/{centralServerId}/d2r/*",
-          "permissionsRequired": ["inn-reach.d2r.settings.any.get"]
+          "permissionsRequired": ["inn-reach.d2ir.settings.any.get"]
         },
         {
           "methods": ["POST"],
@@ -332,6 +332,39 @@
           "permissionsRequired": ["inn-reach.d2ir.circulation.item.post"]
         },
         {
+          "methods": ["POST"],
+          "pathPattern": "/inn-reach/d2ir/circ/patronhold/{trackingId}/{centralCode}",
+          "permissionsRequired": ["inn-reach.d2ir.patronhold.post"],
+          "modulePermissions": [
+            "inventory-storage.instance-types.collection.get",
+            "inventory-storage.contributor-name-types.collection.get",
+            "inventory-storage.holdings.item.post",
+            "inventory-storage.hrid-settings.item.get",
+            "inventory-storage.service-points.collection.get",
+            "inventory.instances.collection.get",
+            "inventory.instances.item.post",
+            "inventory.items.collection.get",
+            "inventory.items.item.post",
+            "circulation.requests.collection.get",
+            "circulation.requests.item.get",
+            "circulation.requests.item.post",
+            "circulation.requests.item.move.post"
+          ]
+        },
+        {
+          "methods": ["PUT"],
+          "pathPattern": "/inn-reach/d2ir/circ/cancelrequest/{trackingId}/{centralCode}",
+          "permissionsRequired": ["inn-reach.d2ir.cancelrequest.put"],
+          "modulePermissions": [
+            "inventory-storage.holdings.item.get",
+            "inventory-storage.holdings.item.put",
+            "inventory.items.item.get",
+            "inventory.items.item.put",
+            "circulation.requests.item.get",
+            "circulation.requests.item.put"
+          ]
+        },
+        {
           "methods": ["GET"],
           "pathPattern": "/inn-reach/central-servers/agencies",
           "permissionsRequired": ["inn-reach.central-server-agencies.collection.get"]
@@ -366,7 +399,11 @@
             "users.item.post",
             "login.item.post",
             "perms.users.item.post",
-            "perms.users.get"
+            "perms.users.get",
+            "inventory-storage.instance-types.collection.get",
+            "inventory-storage.instance-types.item.post",
+            "inventory-storage.contributor-name-types.collection.get",
+            "inventory-storage.contributor-name-types.item.post"
           ],
           "permissionsRequired": []
         },
@@ -566,7 +603,7 @@
       ]
     },
     {
-      "permissionName" : "inn-reach.d2r.settings.any.get",
+      "permissionName" : "inn-reach.d2ir.settings.any.get",
       "displayName" : "get inn reach settings",
       "description" : "Get inn reach settings"
     },
@@ -855,6 +892,31 @@
       ]
     },
     {
+      "permissionName" : "inn-reach.d2ir.circulation.item.post",
+      "displayName" : "perform circulation operation",
+      "description" : "Perform circulation operation"
+    },
+    {
+      "permissionName" : "inn-reach.d2ir.patronhold.post",
+      "displayName" : "perform circulation patron hold operation",
+      "description" : "Perform circulation patron hold operation"
+    },
+    {
+      "permissionName" : "inn-reach.d2ir.cancelrequest.put",
+      "displayName" : "perform circulation cancel request operation",
+      "description" : "Perform circulation cancel request operation"
+    },
+    {
+      "permissionName" : "inn-reach.d2ir.circulation.all",
+      "displayName" : "all permissions of d2ir circulation operations",
+      "description" : "All permissions of d2ir circulation operations",
+      "subPermissions" : [
+        "inn-reach.d2ir.circulation.item.post",
+        "inn-reach.d2ir.patronhold.post",
+        "inn-reach.d2ir.cancelrequest.put"
+      ]
+    },
+    {
       "permissionName" : "inn-reach.all",
       "displayName" : "inn reach API module - all permissions",
       "description" : "All permissions for inn reach",
@@ -865,7 +927,7 @@
         "inn-reach.material-type-mappings.all",
         "inn-reach.library-mappings.all",
         "inn-reach.location-mappings.all",
-        "inn-reach.d2r.settings.any.get",
+        "inn-reach.d2ir.settings.any.get",
         "inn-reach.authentication.all",
         "inn-reach.central-servers.item-contribution-options-configuration.all",
         "inn-reach.agency-mappings.all",
@@ -879,7 +941,8 @@
         "inn-reach.d2ir.bib-info.all",
         "inn-reach.d2ir.patron-info.all",
         "inn-reach.central-server.sys-configuration.all",
-        "inn-reach.inn-reach-transactions.all"
+        "inn-reach.inn-reach-transactions.all",
+        "inn-reach.d2ir.circulation.all"
       ]
     }
   ],
