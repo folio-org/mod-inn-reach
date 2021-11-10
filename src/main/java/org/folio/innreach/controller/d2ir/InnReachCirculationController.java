@@ -1,13 +1,10 @@
 package org.folio.innreach.controller.d2ir;
 
-import javax.validation.Valid;
-
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
@@ -31,7 +28,7 @@ public class InnReachCirculationController implements InnReachCirculationApi {
   public ResponseEntity<InnReachResponseDTO> processCirculationRequest(@PathVariable String trackingId,
                                                                        @PathVariable String centralCode,
                                                                        @PathVariable String circulationOperationName,
-                                                                       @RequestBody @Valid CirculationRequestDTO request) {
+                                                                       CirculationRequestDTO request) {
     var innReachResponse = circulationService.processCirculationRequest(trackingId, centralCode, circulationOperationName, request);
     return ResponseEntity.ok(innReachResponse);
   }

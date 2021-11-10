@@ -43,6 +43,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.web.bind.annotation.RestController;
 
 import org.folio.innreach.ModInnReachApplication;
@@ -115,13 +116,17 @@ public class BaseApiControllerTest {
   }
 
   protected void putAndExpect(URI uri, Object requestBody, Template expectedResult) throws Exception {
-    mockMvc.perform(put(uri.getUrlTemplate(), uri.getUriVars())
-            .content(jsonHelper.toJson(requestBody))
-            .contentType(MediaType.APPLICATION_JSON)
-            .headers(getOkapiHeaders()))
+    putReq(uri, requestBody)
         .andExpect(status().isOk())
         .andExpect(content().json(
             readTemplate(expectedResult)));
+  }
+
+  protected ResultActions putReq(URI uri, Object requestBody) throws Exception {
+    return mockMvc.perform(put(uri.getUrlTemplate(), uri.getUriVars())
+        .content(jsonHelper.toJson(requestBody))
+        .contentType(MediaType.APPLICATION_JSON)
+        .headers(getOkapiHeaders()));
   }
 
   protected static void stubGet(String url, String responsePath) {

@@ -221,6 +221,9 @@ paths:
         - $ref: "#/components/parameters/transaction_filter_parameters"
 components:
   schemas:
+    code:
+      type: string
+      pattern: '[a-z,0-9]{3,5}'
     centralServerAgenciesDTO:
       description: Agency collection from all configured central servers
       type: object
@@ -279,7 +282,7 @@ components:
       in: path
       required: true
       schema:
-        type: string
+        $ref: '#/components/schemas/code'
     trackingId:
       name: trackingId
       in: path
@@ -297,15 +300,13 @@ components:
       in: header
       required: true
       schema:
-        type: string
-        maxLength: 5
+        $ref: '#/components/schemas/code'
     centralCodeHeader:
       name: X-From-Code
       in: header
       required: true
       schema:
-        type: string
-        maxLength: 5
+        $ref: '#/components/schemas/code'
     transaction_filter_parameters:
       name: parameters
       in: query

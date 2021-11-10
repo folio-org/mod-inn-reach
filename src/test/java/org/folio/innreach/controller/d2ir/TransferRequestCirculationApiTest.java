@@ -1,24 +1,33 @@
 package org.folio.innreach.controller.d2ir;
 
-import static io.github.benas.randombeans.FieldPredicates.named;
+import static org.hamcrest.Matchers.containsString;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.params.provider.Arguments.arguments;
 import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TEST_METHOD;
 import static org.springframework.test.context.jdbc.SqlMergeMode.MergeMode.MERGE;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import io.github.benas.randombeans.EnhancedRandomBuilder;
-import io.github.benas.randombeans.api.EnhancedRandom;
-import io.github.benas.randombeans.api.Randomizer;
-import io.github.glytching.junit.extension.random.Random;
-import io.github.glytching.junit.extension.random.RandomBeansExtension;
-import org.apache.commons.lang3.RandomStringUtils;
+import static org.folio.innreach.controller.d2ir.CirculationResultUtils.emptyErrors;
+import static org.folio.innreach.controller.d2ir.CirculationResultUtils.exceptionMatch;
+import static org.folio.innreach.controller.d2ir.CirculationResultUtils.failedWithReason;
+import static org.folio.innreach.controller.d2ir.CirculationResultUtils.logResponse;
+import static org.folio.innreach.fixture.CirculationFixture.createTransferRequestDTO;
+import static org.folio.innreach.fixture.TestUtil.randomAlphanumeric32Max;
+import static org.folio.innreach.fixture.TestUtil.randomAlphanumeric5;
+
+import java.util.stream.Stream;
+
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlMergeMode;
 
 import org.folio.innreach.controller.base.BaseApiControllerTest;
 import org.folio.innreach.domain.entity.InnReachTransaction;
+import org.folio.innreach.domain.exception.EntityNotFoundException;
 import org.folio.innreach.dto.TransferRequestDTO;
 import org.folio.innreach.repository.InnReachTransactionRepository;
 
@@ -37,17 +46,6 @@ public class TransferRequestCirculationApiTest extends BaseApiControllerTest {
 
   private static final String TRANSFERREQ_URL = "/inn-reach/d2ir/circ/transferrequest/{trackingId}/{centralCode}";
 
-  static EnhancedRandom enhancedRandom = EnhancedRandomBuilder.aNewEnhancedRandomBuilder()
-      .randomize(named("patronId"), randomAlphanumeric32Max())
-      .randomize(named("patronAgencyCode"), randomAlphanumeric5())
-      .randomize(named("itemAgencyCode"), randomAlphanumeric5())
-      .randomize(named("itemId"), randomAlphanumeric32Max())
-      .randomize(named("newItemId"), randomAlphanumeric32Max())
-      .build();
-
-  @RegisterExtension
-  static RandomBeansExtension randomBeansExtension = new RandomBeansExtension(enhancedRandom);
-
   @Autowired
   private InnReachTransactionRepository repository;
 
@@ -57,7 +55,8 @@ public class TransferRequestCirculationApiTest extends BaseApiControllerTest {
       "classpath:db/central-server/pre-populate-central-server.sql",
       "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
   })
-  void updateTransactionItemId_with_newItemFromRequest(@Random TransferRequestDTO req) throws Exception {
+  void updateTransactionItemId_with_newItemFromRequest() throws Exception {
+    TransferRequestDTO req = createTransferRequestDTO();
     req.setItemId(PRE_POPULATED_ITEM_ID);
     req.setNewItemId(NEW_ITEM_ID);
 
@@ -68,16 +67,35 @@ public class TransferRequestCirculationApiTest extends BaseApiControllerTest {
     assertEquals(NEW_ITEM_ID, trx.getHold().getItemId());
   }
 
-  private static Randomizer<String> randomAlphanumeric32Max() {
-    return () -> RandomStringUtils.randomAlphanumeric(1, 33).toLowerCase();
+  @ParameterizedTest
+  @MethodSource("transactionNotFoundArgProvider")
+  @Sql(scripts = {
+      "classpath:db/central-server/pre-populate-central-server.sql",
+      "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
+  })
+  void return400_when_TransactionNotFound(String trackingId, String centralCode, TransferRequestDTO req)
+      throws Exception {
+    putReq(transferReqUri(trackingId, centralCode), req)
+        .andDo(logResponse())
+        .andExpect(status().isBadRequest())
+        .andExpect(failedWithReason(containsString(trackingId), containsString(centralCode)))
+        .andExpect(emptyErrors())
+        .andExpect(exceptionMatch(EntityNotFoundException.class));
   }
 
-  private static Randomizer<String> randomAlphanumeric5() {
-    return () -> RandomStringUtils.randomAlphanumeric(5).toLowerCase();
+  static Stream<Arguments> transactionNotFoundArgProvider() {
+    return Stream.of(
+        arguments(PRE_POPULATED_TRACKING_ID, randomAlphanumeric5(), createTransferRequestDTO()),
+        arguments(randomAlphanumeric32Max(), PRE_POPULATED_CENTRAL_CODE, createTransferRequestDTO())
+    );
   }
 
   private static URI transferReqUri() {
-    return URI.of(TRANSFERREQ_URL, PRE_POPULATED_TRACKING_ID, PRE_POPULATED_CENTRAL_CODE);
+    return transferReqUri(PRE_POPULATED_TRACKING_ID, PRE_POPULATED_CENTRAL_CODE);
+  }
+
+  private static URI transferReqUri(String trackingId, String centralCode) {
+    return URI.of(TRANSFERREQ_URL, trackingId, centralCode);
   }
 
   private InnReachTransaction getTransaction(String trackingId, String centralCode) {
@@ -87,4 +105,5 @@ public class TransferRequestCirculationApiTest extends BaseApiControllerTest {
   private void putAndExpectOk(URI uri, Object requestBody) throws Exception {
     putAndExpect(uri, requestBody, Template.of("circulation/ok-response.json"));
   }
+
 }
