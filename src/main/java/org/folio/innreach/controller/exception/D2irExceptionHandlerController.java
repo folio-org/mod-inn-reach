@@ -55,7 +55,7 @@ public class D2irExceptionHandlerController {
   @ExceptionHandler({EntityNotFoundException.class, IllegalArgumentException.class})
   @ResponseStatus(HttpStatus.BAD_REQUEST)
   public InnReachResponseDTO handleEntityNotFoundException(Exception e) {
-    log.warn(e);
+    log.warn(e.getMessage(), e);
 
     return failed(e);
   }
