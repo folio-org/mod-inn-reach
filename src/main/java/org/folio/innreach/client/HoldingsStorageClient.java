@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.folio.innreach.config.FolioFeignClientConfig;
 import org.folio.innreach.dto.Holding;
 
-@FeignClient(name = "holdings-storage", configuration = FolioFeignClientConfig.class)
+@FeignClient(name = "holdings-storage", configuration = FolioFeignClientConfig.class, decode404 = true)
 public interface HoldingsStorageClient {
 
   @GetMapping("/holdings/{holdingId}")

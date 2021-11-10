@@ -1,12 +1,14 @@
 package org.folio.innreach.domain.processor;
 
 import static org.folio.innreach.domain.CirculationOperation.CANCEL_PATRON_HOLD;
+import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.CANCEL_REQUEST;
 
 import java.util.function.Function;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import org.folio.innreach.domain.dto.folio.inventory.InventoryItemDTO;
 import org.folio.innreach.domain.entity.InnReachTransaction;
@@ -33,11 +35,13 @@ public class PatronHoldCancelRequestProcessor implements InnReachCirculationProc
   }
 
   @Override
+  @Transactional
   public InnReachResponseDTO process(String trackingId, String centralCode, CirculationRequestDTO request) {
+    log.info("Cancelling request for transaction: {}", trackingId);
     var transaction = getInnReachTransaction(trackingId);
+    transaction.setState(CANCEL_REQUEST);
 
-    var hold = transaction.getHold();
-    var itemId = hold.getFolioItemId();
+    var itemId = transaction.getHold().getFolioItemId();
 
     requestService.cancelRequest(transaction, request.getReason());
 
@@ -48,6 +52,7 @@ public class PatronHoldCancelRequestProcessor implements InnReachCirculationProc
       .map(removeHoldingTransactionInfo())
       .ifPresent(inventoryService::updateHolding);
 
+    log.info("Item request successfully cancelled");
     return new InnReachResponseDTO().status("ok").reason("success");
   }
 

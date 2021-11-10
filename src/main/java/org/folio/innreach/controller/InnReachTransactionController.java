@@ -9,13 +9,6 @@ import javax.validation.constraints.Min;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
-import org.folio.innreach.domain.service.InnReachTransactionService;
-import org.folio.innreach.domain.service.RequestService;
-import org.folio.innreach.dto.InnReachResponseDTO;
-import org.folio.innreach.dto.InnReachTransactionFilterParametersDTO;
-import org.folio.innreach.dto.InnReachTransactionsDTO;
-import org.folio.innreach.mapper.InnReachErrorMapper;
-import org.folio.innreach.rest.resource.InnReachTransactionApi;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -26,8 +19,15 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import org.folio.innreach.domain.service.InnReachTransactionService;
+import org.folio.innreach.domain.service.RequestService;
+import org.folio.innreach.dto.InnReachResponseDTO;
 import org.folio.innreach.dto.InnReachTransactionDTO;
+import org.folio.innreach.dto.InnReachTransactionFilterParametersDTO;
+import org.folio.innreach.dto.InnReachTransactionsDTO;
 import org.folio.innreach.dto.TransactionHoldDTO;
+import org.folio.innreach.mapper.InnReachErrorMapper;
+import org.folio.innreach.rest.resource.InnReachTransactionApi;
 
 @Log4j2
 @RequiredArgsConstructor
@@ -47,7 +47,7 @@ public class InnReachTransactionController implements InnReachTransactionApi {
     HttpStatus status;
     if (response.getStatus().equals("ok")) {
       status = HttpStatus.OK;
-      requestService.createItemRequest(trackingId);
+      requestService.createItemHoldRequest(trackingId);
     } else {
       status = HttpStatus.BAD_REQUEST;
     }
