@@ -41,7 +41,7 @@ import org.folio.innreach.repository.InnReachTransactionRepository;
     executionPhase = AFTER_TEST_METHOD
 )
 @SqlMergeMode(MERGE)
-public class TransferRequestCirculationApiTest extends BaseApiControllerTest {
+class TransferRequestCirculationApiTest extends BaseApiControllerTest {
 
   private static final String PRE_POPULATED_TRACKING_ID = "tracking1";
   private static final String PRE_POPULATED_CENTRAL_CODE = "d2ir";
