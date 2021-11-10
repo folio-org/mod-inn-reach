@@ -52,10 +52,10 @@ public class D2irExceptionHandlerController {
     return failed("Unsupported circulation operation");
   }
 
-  @ExceptionHandler(EntityNotFoundException.class)
+  @ExceptionHandler({EntityNotFoundException.class, IllegalArgumentException.class})
   @ResponseStatus(HttpStatus.BAD_REQUEST)
-  public InnReachResponseDTO handleEntityNotFoundException(EntityNotFoundException e) {
-    log.warn("Entity not found", e);
+  public InnReachResponseDTO handleEntityNotFoundException(Exception e) {
+    log.warn(e);
 
     return failed(e);
   }

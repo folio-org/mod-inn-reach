@@ -32,6 +32,10 @@ import org.folio.innreach.dto.TransferRequestDTO;
 import org.folio.innreach.repository.InnReachTransactionRepository;
 
 @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
+})
+@Sql(scripts = {
         "classpath:db/central-server/clear-central-server-tables.sql",
         "classpath:db/inn-reach-transaction/clear-inn-reach-transaction-tables.sql"},
     executionPhase = AFTER_TEST_METHOD
@@ -51,10 +55,6 @@ public class TransferRequestCirculationApiTest extends BaseApiControllerTest {
 
 
   @Test
-  @Sql(scripts = {
-      "classpath:db/central-server/pre-populate-central-server.sql",
-      "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
-  })
   void updateTransactionItemId_with_newItemFromRequest() throws Exception {
     TransferRequestDTO req = createTransferRequestDTO();
     req.setItemId(PRE_POPULATED_ITEM_ID);
@@ -69,10 +69,6 @@ public class TransferRequestCirculationApiTest extends BaseApiControllerTest {
 
   @ParameterizedTest
   @MethodSource("transactionNotFoundArgProvider")
-  @Sql(scripts = {
-      "classpath:db/central-server/pre-populate-central-server.sql",
-      "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
-  })
   void return400_when_TransactionNotFound(String trackingId, String centralCode, TransferRequestDTO req)
       throws Exception {
     putReq(transferReqUri(trackingId, centralCode), req)
@@ -81,6 +77,19 @@ public class TransferRequestCirculationApiTest extends BaseApiControllerTest {
         .andExpect(failedWithReason(containsString(trackingId), containsString(centralCode)))
         .andExpect(emptyErrors())
         .andExpect(exceptionMatch(EntityNotFoundException.class));
+  }
+
+  @Test
+  void return400_when_ItemIdDoesntMatch() throws Exception {
+    var req = createTransferRequestDTO();
+    req.setItemId(randomAlphanumeric32Max());
+
+    putReq(transferReqUri(), req)
+        .andDo(logResponse())
+        .andExpect(status().isBadRequest())
+        .andExpect(failedWithReason(containsString(req.getItemId()), containsString(PRE_POPULATED_ITEM_ID)))
+        .andExpect(emptyErrors())
+        .andExpect(exceptionMatch(IllegalArgumentException.class));
   }
 
   static Stream<Arguments> transactionNotFoundArgProvider() {
