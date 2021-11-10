@@ -365,6 +365,11 @@
           ]
         },
         {
+          "methods": ["PUT"],
+          "pathPattern": "/inn-reach/d2ir/circ/transferrequest/{trackingId}/{centralCode}",
+          "permissionsRequired": ["inn-reach.d2ir.transferrequest.put"]
+        },
+        {
           "methods": ["GET"],
           "pathPattern": "/inn-reach/central-servers/agencies",
           "permissionsRequired": ["inn-reach.central-server-agencies.collection.get"]
@@ -907,13 +912,19 @@
       "description" : "Perform circulation cancel request operation"
     },
     {
+      "permissionName" : "inn-reach.d2ir.transferrequest.put",
+      "displayName" : "perform circulation transfer request operation",
+      "description" : "Perform circulation transfer request operation"
+    },
+    {
       "permissionName" : "inn-reach.d2ir.circulation.all",
       "displayName" : "all permissions of d2ir circulation operations",
       "description" : "All permissions of d2ir circulation operations",
       "subPermissions" : [
         "inn-reach.d2ir.circulation.item.post",
         "inn-reach.d2ir.patronhold.post",
-        "inn-reach.d2ir.cancelrequest.put"
+        "inn-reach.d2ir.cancelrequest.put",
+        "inn-reach.d2ir.transferrequest.put"
       ]
     },
     {
