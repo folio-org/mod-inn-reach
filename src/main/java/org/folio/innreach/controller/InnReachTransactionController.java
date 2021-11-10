@@ -53,9 +53,9 @@ public class InnReachTransactionController implements InnReachTransactionApi {
   }
 
   @Override
-  @GetMapping("/inn-reach/transactions/{transactionId}")
-  public ResponseEntity<InnReachTransactionDTO> getInnReachTransaction(@PathVariable UUID transactionId) {
-    var innReachTransaction = transactionService.getInnReachTransaction(transactionId);
+  @GetMapping("/inn-reach/transactions/{id}")
+  public ResponseEntity<InnReachTransactionDTO> getInnReachTransaction(@PathVariable UUID id) {
+    var innReachTransaction = transactionService.getInnReachTransaction(id);
     return ResponseEntity.ok(innReachTransaction);
   }
 
