@@ -61,6 +61,7 @@ class PatronHoldCirculationApiTest extends BaseApiControllerTest {
   public static final String QUERY_CONTRIBUTOR_TYPE_BY_NAME_URL_TEMPLATE = "/contributor-name-types?query=(name==%s)";
   public static final String QUERY_INSTANCE_TYPE_BY_NAME_URL_TEMPLATE = "/instance-types?query=(name==%s)";
   public static final String QUERY_SERVICE_POINTS_BY_CODE_ULR_TEMPLATE = "/service-points?query=code==%s";
+  public static final String USER_BY_ID_URL_TEMPLATE = "/users/%s";
 
   private static final String INSTANCE_TYPE_NAME_URLENCODED = "INN-Reach%20temporary%20record";
   private static final String INSTANCE_CONTRIBUTOR_NAME_URLENCODED = "INN-Reach%20author";
@@ -141,7 +142,7 @@ class PatronHoldCirculationApiTest extends BaseApiControllerTest {
     transactionHoldDTO.setPatronId(toStringWithoutHyphens(FOLIO_PATRON_ID));
     var pickupLocation = pickupLocationMapper.fromString(transactionHoldDTO.getPickupLocation());
 
-    stubGet("/users/ea11eba7-3c0f-4d15-9cca-c8608cd6bc8a", "users/user-response.json");
+    stubGet(format(USER_BY_ID_URL_TEMPLATE, FOLIO_PATRON_ID), "users/user-response.json");
     stubGet(format(QUERY_INSTANCE_TYPE_BY_NAME_URL_TEMPLATE, INSTANCE_TYPE_NAME_URLENCODED), "inventory-storage/query-instance-types-response.json");
     stubGet(format(QUERY_SERVICE_POINTS_BY_CODE_ULR_TEMPLATE, pickupLocation.getPickupLocCode()), "inventory-storage/query-service-points-response.json");
     stubGet(format(QUERY_CONTRIBUTOR_TYPE_BY_NAME_URL_TEMPLATE, INSTANCE_CONTRIBUTOR_NAME_URLENCODED), "inventory-storage/query-contributor-name-types-response.json");
