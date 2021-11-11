@@ -16,7 +16,6 @@ import org.folio.innreach.client.InventoryClient;
 import org.folio.innreach.client.ServicePointsClient;
 import org.folio.innreach.domain.dto.folio.inventory.InventoryInstanceDTO;
 import org.folio.innreach.domain.dto.folio.inventory.InventoryItemDTO;
-import org.folio.innreach.domain.exception.EntityNotFoundException;
 import org.folio.innreach.domain.service.InventoryService;
 import org.folio.innreach.dto.Holding;
 
@@ -98,7 +97,7 @@ public class InventoryServiceImpl implements InventoryService {
     return inventoryClient.getItemByBarcode(barcode).getResult()
       .stream()
       .findFirst()
-      .orElseThrow(() -> new EntityNotFoundException("Item with barcode = " + barcode + " not found"));
+      .orElseThrow(() -> new IllegalArgumentException("Item with barcode = " + barcode + " not found"));
   }
 
   @Override
