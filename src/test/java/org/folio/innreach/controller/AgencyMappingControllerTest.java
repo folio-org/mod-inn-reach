@@ -15,7 +15,6 @@ import static org.springframework.test.context.jdbc.SqlMergeMode.MergeMode.MERGE
 
 import static org.folio.innreach.controller.ControllerTestUtils.createValidationError;
 import static org.folio.innreach.fixture.AgencyLocationMappingFixture.deserializeMapping;
-import static org.folio.innreach.fixture.TestUtil.deserializeFromJsonFile;
 
 import java.util.Collection;
 import java.util.List;

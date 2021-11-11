@@ -39,4 +39,6 @@ public interface InventoryClient {
   @GetMapping("/instances/{instanceId}")
   Optional<InventoryInstanceDTO> findInstance(@PathVariable("instanceId") UUID instanceId);
 
+  @GetMapping("/items?query=barcode=={barcode}")
+  ResultList<InventoryItemDTO> getItemByBarcode(@PathVariable("barcode") String barcode);
 }

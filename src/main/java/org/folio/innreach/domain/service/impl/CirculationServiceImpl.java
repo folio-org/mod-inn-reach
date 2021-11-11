@@ -28,7 +28,7 @@ public class CirculationServiceImpl implements CirculationService {
   private final InnReachTransactionRepository transactionRepository;
 
   @Override
-  public InnReachResponseDTO processCirculationRequest(String trackingId, String centralCode, String circulationOperationName, CirculationRequestDTO request) {
+  public InnReachResponseDTO processCirculationRequest(String trackingId, String centralCode, String circulationOperationName, CirculationRequestDTO circulationRequest) {
     var circulationProcessor = innReachCirculationProcessors.stream()
       .filter(processor -> processor.canProcess(circulationOperationName))
       .findFirst()
@@ -36,7 +36,7 @@ public class CirculationServiceImpl implements CirculationService {
 
     log.info("Circulation processor for circulation operation [{}] found! Start to process circulation...", circulationOperationName);
 
-    return circulationProcessor.process(trackingId, centralCode, request);
+    return circulationProcessor.process(trackingId, centralCode, circulationRequest);
   }
 
   @Override

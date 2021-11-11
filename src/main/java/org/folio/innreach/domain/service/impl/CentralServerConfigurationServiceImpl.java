@@ -1,6 +1,5 @@
 package org.folio.innreach.domain.service.impl;
 
-import static java.util.Optional.ofNullable;
 import static org.apache.commons.collections4.CollectionUtils.isNotEmpty;
 import static org.apache.commons.collections4.ListUtils.emptyIfNull;
 
@@ -8,7 +7,6 @@ import static org.folio.innreach.external.dto.InnReachResponse.OK_STATUS;
 import static org.folio.innreach.util.ListUtils.flatMapItems;
 import static org.folio.innreach.util.ListUtils.toStream;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;

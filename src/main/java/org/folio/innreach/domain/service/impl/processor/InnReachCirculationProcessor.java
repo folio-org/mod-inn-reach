@@ -7,6 +7,6 @@ public interface InnReachCirculationProcessor {
 
   boolean canProcess(String circulationOperationName);
 
-  InnReachResponseDTO process(String trackingId, String centralCode, CirculationRequestDTO request);
+  InnReachResponseDTO process(String trackingId, String centralCode, CirculationRequestDTO circulationRequest);
 
 }
