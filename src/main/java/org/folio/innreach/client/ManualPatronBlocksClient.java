@@ -1,5 +1,7 @@
 package org.folio.innreach.client;
 
+import java.util.UUID;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -15,7 +17,7 @@ import org.folio.innreach.domain.dto.folio.ResultList;
 public interface ManualPatronBlocksClient {
 
   @GetMapping("?query=(userId=={userId})")
-  ResultList<ManualPatronBlock> getPatronBlocks(@PathVariable("userId") String userId);
+  ResultList<ManualPatronBlock> getPatronBlocks(@PathVariable("userId") UUID userId);
 
   @Data
   @Builder

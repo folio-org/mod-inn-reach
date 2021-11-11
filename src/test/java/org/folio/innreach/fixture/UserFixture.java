@@ -15,7 +15,7 @@ public class UserFixture {
 
   static {
     EasyRandomParameters params = new EasyRandomParameters()
-      .randomize(named("id"), () -> randomUUID().toString())
+      .randomize(named("id"), () -> randomUUID())
       .randomize(named("active"), () -> true);
     userRandom = new EasyRandom(params);
   }

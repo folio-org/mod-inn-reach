@@ -1,0 +1,55 @@
+{
+  "id": "9a326225-6530-41cc-9399-a61987bfab3c",
+  "_version": "1",
+  "status": {
+    "name": "Available",
+    "date": "2021-11-01T13:24:42.609+00:00"
+  },
+  "title": "Patron hold test",
+  "hrid": "it1234567891114fl1g2",
+  "contributorNames": [
+    {
+      "name": "INN-Reach author"
+    }
+  ],
+  "formerIds": [],
+  "discoverySuppress": true,
+  "holdingsRecordId": "16f40c4e-235d-4912-a683-2ad919cc8b07",
+  "notes": [],
+  "circulationNotes": [],
+  "tags": {
+    "tagList": []
+  },
+  "yearCaption": [],
+  "electronicAccess": [],
+  "statisticalCodeIds": [],
+  "purchaseOrderLineIdentifier": null,
+  "materialType": {
+    "id": "5ee11d91-f7e8-481d-b079-65d708582ccc",
+    "name": "dvd"
+  },
+  "permanentLoanType": {
+    "id": "f7171bd3-cd3e-44ea-b2dd-74e29884690a",
+    "name": "newLoanType 1"
+  },
+  "metadata": {
+    "createdDate": "2021-11-01T13:24:42.609+00:00",
+    "createdByUserId": "e2f5ebb7-9285-58f8-bc1e-608ac2080861",
+    "updatedDate": "2021-11-01T13:24:42.609+00:00",
+    "updatedByUserId": "e2f5ebb7-9285-58f8-bc1e-608ac2080861"
+  },
+  "links": {
+    "self": "http://volaris-okapi.ci.folio.org/inventory/items/0ebee29c-caf2-4894-a12c-ad5dbafa37f9"
+  },
+  "effectiveCallNumberComponents": {
+    "callNumber": null,
+    "prefix": null,
+    "suffix": null,
+    "typeId": null
+  },
+  "isBoundWith": false,
+  "effectiveLocation": {
+    "id": "ae5032a1-fe55-41d1-ab29-b7696b3312a4",
+    "name": "Big Circ"
+  }
+}

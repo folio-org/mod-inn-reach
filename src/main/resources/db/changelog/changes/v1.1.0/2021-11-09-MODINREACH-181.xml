@@ -4,7 +4,8 @@
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
                     http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.4.xsd">
 
-    <include file="2021-10-12-MODINREACH-147.xml" relativeToChangelogFile="true"/>
-    <include file="2021-11-09-MODINREACH-181.xml" relativeToChangelogFile="true"/>
+  <changeSet id="2021-11-09-01__alter-transaction_hold-table" author="oliinyko">
+    <sqlFile path="sql/2021-11-09-01__alter-transaction_hold-table.sql" relativeToChangelogFile="true"/>
+  </changeSet>
 
 </databaseChangeLog>

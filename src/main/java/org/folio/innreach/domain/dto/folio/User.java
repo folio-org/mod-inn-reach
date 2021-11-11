@@ -14,7 +14,7 @@ import lombok.NoArgsConstructor;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class User {
 
-  private String id;
+  private UUID id;
   private String externalSystemId;
   private String username;
   @JsonProperty("patronGroup")

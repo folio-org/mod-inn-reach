@@ -1,7 +1,5 @@
 package org.folio.innreach.domain.entity.base;
 
-import static java.util.UUID.fromString;
-
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -26,7 +24,7 @@ public class AuditorAwareImpl implements AuditorAware<AuditableUser> {
   public Optional<AuditableUser> getCurrentAuditor() {
     log.debug("Detecting current auditor by: userId = {}, userName = {}", execContext.getUserId(),
         execContext.getUserName());
-    
+
     var user = userService.getUserById(execContext.getUserId())
         .or(() -> userService.getUserByName(execContext.getUserName()));
 
@@ -44,7 +42,7 @@ public class AuditorAwareImpl implements AuditorAware<AuditableUser> {
             user.getId());
       }
 
-      return new AuditableUser(fromString(user.getId()), user.getUsername());
+      return new AuditableUser(user.getId(), user.getUsername());
     };
   }
 

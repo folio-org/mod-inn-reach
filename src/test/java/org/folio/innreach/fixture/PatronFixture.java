@@ -39,7 +39,7 @@ public class PatronFixture {
 
   public static User createUser() {
     var user = new User();
-    user.setId(USER_ID.toString());
+    user.setId(USER_ID);
     user.setActive(true);
     user.setExpirationDate(OffsetDateTime.ofInstant(Instant.ofEpochMilli(expiryDateTs), ZoneOffset.UTC));
     user.setPersonal(User.Personal.of(PATRON_FIRST_NAME, null, PATRON_LAST_NAME, null));
@@ -64,6 +64,6 @@ public class PatronFixture {
   }
 
   public static String getPatronId(User user) {
-    return user.getId().replace("-", "");
+    return user.getId().toString().replace("-", "");
   }
 }

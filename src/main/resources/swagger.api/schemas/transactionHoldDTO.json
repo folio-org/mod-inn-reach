@@ -81,6 +81,52 @@
       "description": "Shipped item barcode",
       "type": "string"
     },
+    "folioInstanceId": {
+      "description": "Folio instance id",
+      "type": "string",
+      "format": "UUID",
+      "readOnly": true
+    },
+    "folioHoldingId": {
+      "description": "Folio holding id",
+      "type": "string",
+      "format": "UUID",
+      "readOnly": true
+    },
+    "folioPatronId": {
+      "description": "Folio patron id",
+      "type": "string",
+      "format": "UUID",
+      "readOnly": true
+    },
+    "folioItemId": {
+      "description": "Folio item id",
+      "type": "string",
+      "format": "UUID",
+      "readOnly": true
+    },
+    "folioRequestId": {
+      "description": "Folio request id",
+      "type": "string",
+      "format": "UUID",
+      "readOnly": true
+    },
+    "folioLoanId": {
+      "description": "Folio loan id",
+      "type": "string",
+      "format": "UUID",
+      "readOnly": true
+    },
+    "folioPatronBarcode": {
+      "description": "Folio patron barcode",
+      "type": "string",
+      "readOnly": true
+    },
+    "folioItemBarcode": {
+      "description": "Folio item barcode",
+      "type": "string",
+      "readOnly": true
+    },
     "metadata": {
       "description": "Entity metadata",
       "type": "object",

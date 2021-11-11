@@ -112,11 +112,7 @@ public class PatronInfoServiceImpl implements PatronInfoService {
     }
 
     var manualBlocks = manualPatronBlocksClient.getPatronBlocks(user.getId()).getResult();
-    if (hasManualBlocks(manualBlocks)) {
-      return false;
-    }
-
-    return true;
+    return !hasManualBlocks(manualBlocks);
   }
 
   private boolean hasAutomatedBlocks(List<AutomatedPatronBlocksClient.AutomatedPatronBlock> blocks) {
@@ -134,7 +130,7 @@ public class PatronInfoServiceImpl implements PatronInfoService {
   }
 
   private String getPatronId(User user) {
-    return user.getId().replace("-", "");
+    return user.getId().toString().replace("-", "");
   }
 
   private PatronDTO getPatron(User user) {

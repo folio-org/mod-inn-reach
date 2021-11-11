@@ -1,6 +1,5 @@
 package org.folio.innreach.controller;
 
-import static java.util.UUID.fromString;
 import static java.util.UUID.randomUUID;
 import static org.awaitility.Awaitility.await;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -49,6 +48,7 @@ import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlMergeMode;
 
 import org.folio.innreach.client.CirculationClient;
+import org.folio.innreach.client.HoldingsStorageClient;
 import org.folio.innreach.client.InventoryClient;
 import org.folio.innreach.client.ServicePointsUsersClient;
 import org.folio.innreach.client.UsersClient;
@@ -111,6 +111,8 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   @MockBean
   private InventoryClient inventoryClient;
   @MockBean
+  private HoldingsStorageClient holdingsStorageClient;
+  @MockBean
   private CirculationClient circulationClient;
   @MockBean
   private ServicePointsUsersClient servicePointsUsersClient;
@@ -139,9 +141,9 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
 
   void mockInventoryStorageClient(User user) {
     var servicePointUserDTO = new ServicePointUserDTO();
-    servicePointUserDTO.setUserId(fromString(user.getId()));
+    servicePointUserDTO.setUserId(user.getId());
     servicePointUserDTO.setDefaultServicePointId(randomUUID());
-    when(servicePointsUsersClient.findServicePointsUsers(UUID.fromString(user.getId()))).thenReturn(ResultList.of(1, List.of(servicePointUserDTO)));
+    when(servicePointsUsersClient.findServicePointsUsers(user.getId())).thenReturn(ResultList.of(1, List.of(servicePointUserDTO)));
   }
 
   void mockFindRequestsReturnsEmptyList(InventoryItemDTO inventoryItemDTO) {
@@ -150,7 +152,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
 
   void modifyTransactionsDateCreated() {
     var transactions = repository.findAll();
-    int[] hours = { 0 };
+    int[] hours = {0};
     transactions.forEach(t -> t.setCreatedDate(t.getCreatedDate().minusHours(hours[0]++)));
     repository.saveAll(transactions);
   }
@@ -405,7 +407,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
       transactions.get(2).getHold().getPatronAgencyCode()) < 0);
 
     var transactionsForFirstPatronAgency = transactions.stream().filter(t -> t.getHold().getPatronAgencyCode().equals(PRE_POPULATED_PATRON_AGENCY))
-    .collect(Collectors.toList());
+      .collect(Collectors.toList());
     assertFalse(transactionsForFirstPatronAgency.get(0).getHold().getItemAgencyCode().compareTo(
       transactionsForFirstPatronAgency.get(1).getHold().getItemAgencyCode()) < 0);
   }
@@ -416,9 +418,6 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     "classpath:db/mtype-mapping/pre-populate-material-type-mapping.sql",
     "classpath:db/central-patron-type-mapping/pre-populate-central-patron_type-mapping-table.sql"
   })
-  @Sql(scripts = {"classpath:db/central-patron-type-mapping/clear-central-patron-type-mapping-table.sql"},
-    executionPhase = AFTER_TEST_METHOD)
-  @SqlMergeMode(MERGE)
   void return200HttpCode_and_sendRequest_whenItemHoldTransactionCreated() {
     var inventoryItemDTO = mockInventoryClient();
     inventoryItemDTO.setStatus(IN_TRANSIT);
@@ -454,7 +453,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     verify(inventoryClient, times(2)).getItemsByHrId(itemHoldDTO.getItemId());
     verify(circulationClient).queryRequestsByItemId(inventoryItemDTO.getId());
     verify(usersClient).query(PRE_POPULATED_USER_BARCODE_QUERY);
-    verify(servicePointsUsersClient).findServicePointsUsers(fromString(user.getId()));
+    verify(servicePointsUsersClient).findServicePointsUsers(user.getId());
     verify(circulationClient).sendRequest(any());
 
     var transaction = repository.fetchOneByTrackingId(TRACKING_ID);
@@ -471,7 +470,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
 
     assertEquals(inventoryItemDTO.getId(), transaction.get().getHold().getFolioItemId());
     assertNotNull(transaction.get().getHold().getFolioRequestId());
-    assertEquals(fromString(user.getId()), transaction.get().getHold().getFolioPatronId());
+    assertEquals(user.getId(), transaction.get().getHold().getFolioPatronId());
   }
 
   @Test
@@ -630,7 +629,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     var inventoryItemDTO = mockInventoryClient();
     mockFindRequestsReturnsEmptyList(inventoryItemDTO);
     var user = mockUserClient();
-    when(servicePointsUsersClient.findServicePointsUsers(fromString(user.getId()))).thenThrow(IllegalStateException.class);
+    when(servicePointsUsersClient.findServicePointsUsers(user.getId())).thenThrow(IllegalStateException.class);
     when(innReachClient.postInnReachApi(any(), anyString(), anyString(), anyString(), any())).thenReturn("response");
 
     var itemHoldDTO = deserializeFromJsonFile(
@@ -649,7 +648,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     verify(inventoryClient).getItemsByHrId(inventoryItemDTO.getHrid());
     verify(circulationClient, never()).queryRequestsByItemId(inventoryItemDTO.getId());
     verify(usersClient).query(PRE_POPULATED_USER_BARCODE_QUERY);
-    verify(servicePointsUsersClient).findServicePointsUsers(fromString(user.getId()));
+    verify(servicePointsUsersClient).findServicePointsUsers(user.getId());
     verify(circulationClient, never()).sendRequest(any());
 
     var cancelRequest = ArgumentCaptor.forClass(OwningSiteCancelsRequestDTO.class);
@@ -687,7 +686,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     verify(inventoryClient, times(2)).getItemsByHrId(inventoryItemDTO.getHrid());
     verify(circulationClient).queryRequestsByItemId(inventoryItemDTO.getId());
     verify(usersClient).query(PRE_POPULATED_USER_BARCODE_QUERY);
-    verify(servicePointsUsersClient).findServicePointsUsers(fromString(user.getId()));
+    verify(servicePointsUsersClient).findServicePointsUsers(user.getId());
     verify(circulationClient, never()).sendRequest(any());
 
     var request = ArgumentCaptor.forClass(OwningSiteCancelsRequestDTO.class);

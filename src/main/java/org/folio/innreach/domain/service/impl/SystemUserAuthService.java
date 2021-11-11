@@ -45,7 +45,7 @@ public class SystemUserAuthService {
   public void setupSystemUser() {
     var folioUser = userService.getUserByName(folioSystemUserConf.getUsername());
     var userId = folioUser.map(User::getId)
-      .orElse(UUID.randomUUID().toString());
+      .orElse(UUID.randomUUID());
 
     if (folioUser.isPresent()) {
       log.info("Setting up existing system user");
@@ -77,7 +77,7 @@ public class SystemUserAuthService {
     });
   }
 
-  private void createFolioUser(String id) {
+  private void createFolioUser(UUID id) {
     final var user = createUserObject(id);
     userService.saveUser(user);
   }
@@ -88,7 +88,7 @@ public class SystemUserAuthService {
     log.info("Saved credentials for user: [{}]", folioSystemUserConf.getUsername());
   }
 
-  private void assignPermissions(String userId) {
+  private void assignPermissions(UUID userId) {
     List<String> perms = getResourceLines(folioSystemUserConf.getPermissionsFilePath());
 
     if (isEmpty(perms)) {
@@ -101,7 +101,7 @@ public class SystemUserAuthService {
     permissionsClient.assignPermissionsToUser(permissions);
   }
 
-  private void addPermissions(String userId) {
+  private void addPermissions(UUID userId) {
     var expectedPermissions = getResourceLines(folioSystemUserConf.getPermissionsFilePath());
     var assignedPermissions = permissionsClient.getUserPermissions(userId);
 
@@ -116,7 +116,7 @@ public class SystemUserAuthService {
       permissionsClient.addPermission(userId, PermissionsClient.Permission.of(permission)));
   }
 
-  private User createUserObject(String id) {
+  private User createUserObject(UUID id) {
     final var user = new User();
 
     user.setId(id);
