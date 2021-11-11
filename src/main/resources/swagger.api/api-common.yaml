@@ -1,7 +1,3 @@
-openapi: 3.0.0
-info:
-  title: INN-Reach Common API artefacts
-  version: v1
 components:
   schemas:
     UUID:
