@@ -152,13 +152,13 @@ paths:
               $ref: "#/components/schemas/circulationRequestDTO"
       responses:
         '200':
-          description: Transaction record is created
+          description: Circulation request successfully processed
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/innReachResponseDTO"
         '400':
-          description: An error occurred during creation of transaction record
+          description: An error occurred during processing of circulation request
           content:
             application/json:
               schema:
