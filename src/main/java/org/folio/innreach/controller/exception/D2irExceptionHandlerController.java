@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import org.folio.innreach.domain.exception.CirculationProcessException;
+import org.folio.innreach.domain.exception.EntityNotFoundException;
 import org.folio.innreach.dto.InnReachResponseDTO;
 import org.folio.innreach.mapper.InnReachErrorMapper;
 
@@ -24,11 +25,9 @@ public class D2irExceptionHandlerController {
   @ExceptionHandler(Exception.class)
   @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
   public InnReachResponseDTO handleException(Exception e) {
-    log.warn("Handling exception", e);
+    log.error("Unexpected exception: " + e.getMessage(), e);
 
-    return new InnReachResponseDTO()
-      .status("failed")
-      .reason(e.getMessage());
+    return failed(e);
   }
 
   @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -41,9 +40,7 @@ public class D2irExceptionHandlerController {
       .map(mapper::toInnReachError)
       .collect(Collectors.toList());
 
-    return new InnReachResponseDTO()
-      .status("failed")
-      .reason("Argument validation failed")
+    return failed("Argument validation failed")
       .errors(innReachErrors);
   }
 
@@ -52,9 +49,25 @@ public class D2irExceptionHandlerController {
   public InnReachResponseDTO handleException(CirculationProcessException e) {
     log.warn("Unsupported circulation operation", e);
 
+    return failed("Unsupported circulation operation");
+  }
+
+  @ExceptionHandler({EntityNotFoundException.class, IllegalArgumentException.class})
+  @ResponseStatus(HttpStatus.BAD_REQUEST)
+  public InnReachResponseDTO handleEntityNotFoundException(Exception e) {
+    log.warn(e.getMessage(), e);
+
+    return failed(e);
+  }
+
+  private InnReachResponseDTO failed(Exception e) {
+    return failed(e.getMessage());
+  }
+
+  private InnReachResponseDTO failed(String reason) {
     return new InnReachResponseDTO()
-      .status("failed")
-      .reason("Unsupported circulation operation");
+        .status("failed")
+        .reason(reason);
   }
 
 }

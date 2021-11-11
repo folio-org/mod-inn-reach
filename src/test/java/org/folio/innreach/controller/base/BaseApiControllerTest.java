@@ -6,6 +6,7 @@ import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -20,6 +21,7 @@ import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.MappingBuilder;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.common.Slf4jNotifier;
+import io.github.glytching.junit.extension.watcher.WatcherExtension;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -28,6 +30,7 @@ import lombok.extern.log4j.Log4j2;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -40,9 +43,11 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.web.bind.annotation.RestController;
 
 import org.folio.innreach.ModInnReachApplication;
+import org.folio.innreach.util.JsonHelper;
 import org.folio.spring.integration.XOkapiHeaders;
 import org.folio.spring.liquibase.FolioLiquibaseConfiguration;
 import org.folio.tenant.domain.dto.TenantAttributes;
@@ -53,6 +58,7 @@ import org.folio.tenant.rest.resource.TenantApi;
     classes = { ModInnReachApplication.class,	BaseApiControllerTest.TestTenantController.class })
 @AutoConfigureMockMvc
 @ActiveProfiles({ "test", "testcontainers-pg" })
+@ExtendWith(WatcherExtension.class)
 public class BaseApiControllerTest {
 
   @EnableAutoConfiguration(exclude = { FolioLiquibaseConfiguration.class })
@@ -74,6 +80,8 @@ public class BaseApiControllerTest {
 
   @Autowired
   protected MockMvc mockMvc;
+  @Autowired
+  private JsonHelper jsonHelper;
 
 
   @DynamicPropertySource
@@ -105,6 +113,20 @@ public class BaseApiControllerTest {
         .andExpect(status().isOk())
         .andExpect(content()
             .json(readTemplate(expectedResult)));
+  }
+
+  protected void putAndExpect(URI uri, Object requestBody, Template expectedResult) throws Exception {
+    putReq(uri, requestBody)
+        .andExpect(status().isOk())
+        .andExpect(content().json(
+            readTemplate(expectedResult)));
+  }
+
+  protected ResultActions putReq(URI uri, Object requestBody) throws Exception {
+    return mockMvc.perform(put(uri.getUrlTemplate(), uri.getUriVars())
+        .content(jsonHelper.toJson(requestBody))
+        .contentType(MediaType.APPLICATION_JSON)
+        .headers(getOkapiHeaders()));
   }
 
   protected static void stubGet(String url, String responsePath) {
@@ -164,6 +186,18 @@ public class BaseApiControllerTest {
 
     public static Template of(String file, Object... params) {
       return new Template(file, params);
+    }
+  }
+
+  @RequiredArgsConstructor(staticName = "of")
+  @AllArgsConstructor(access = AccessLevel.PRIVATE)
+  @Getter
+  protected static class URI {
+    final String urlTemplate;
+    Object[] uriVars;
+
+    public static URI of(String urlTemplate, Object... uriVars) {
+      return new URI(urlTemplate, uriVars);
     }
   }
 

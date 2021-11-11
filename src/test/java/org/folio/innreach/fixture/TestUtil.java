@@ -17,6 +17,7 @@ import lombok.SneakyThrows;
 import lombok.experimental.UtilityClass;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.springframework.retry.support.RetryTemplate;
 
 import org.folio.innreach.domain.entity.CentralServer;
@@ -44,6 +45,14 @@ public class TestUtil {
       integer = random.nextInt(range);
     } while (except.contains(integer));
     return integer;
+  }
+
+  public static String randomAlphanumeric5() {
+    return RandomStringUtils.randomAlphanumeric(5).toLowerCase();
+  }
+
+  public static String randomAlphanumeric32Max() {
+    return RandomStringUtils.randomAlphanumeric(1, 33).toLowerCase();
   }
 
   @SneakyThrows
