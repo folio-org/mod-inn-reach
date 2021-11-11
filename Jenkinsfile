@@ -8,6 +8,7 @@ buildMvn {
   doApiDoc = true
   apiTypes = 'OAS'
   apiDirectories = 'src/main/resources/swagger.api'
+  apiExcludes = 'api-common.yaml'
 
   doDocker = {
     buildDocker {
