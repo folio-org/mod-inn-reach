@@ -9,6 +9,8 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import org.folio.innreach.client.HridSettingsClient;
+import org.folio.innreach.domain.dto.folio.User;
+import org.folio.innreach.domain.dto.folio.circulation.RequestDTO.RequestType;
 import org.folio.innreach.domain.dto.folio.inventory.InventoryInstanceDTO;
 import org.folio.innreach.domain.dto.folio.inventory.InventoryInstanceDTO.ContributorDTO;
 import org.folio.innreach.domain.dto.folio.inventory.InventoryItemDTO;
@@ -16,6 +18,7 @@ import org.folio.innreach.domain.dto.folio.inventory.InventoryItemDTO.MaterialTy
 import org.folio.innreach.domain.dto.folio.inventory.InventoryItemDTO.PermanentLoanType;
 import org.folio.innreach.domain.dto.folio.inventory.InventoryItemStatus;
 import org.folio.innreach.domain.entity.InnReachTransaction;
+import org.folio.innreach.domain.entity.TransactionHold;
 import org.folio.innreach.domain.entity.TransactionPatronHold;
 import org.folio.innreach.domain.service.AgencyMappingService;
 import org.folio.innreach.domain.service.CentralServerService;
@@ -23,6 +26,7 @@ import org.folio.innreach.domain.service.InventoryService;
 import org.folio.innreach.domain.service.ItemTypeMappingService;
 import org.folio.innreach.domain.service.PatronHoldService;
 import org.folio.innreach.domain.service.RequestService;
+import org.folio.innreach.domain.service.UserService;
 import org.folio.innreach.dto.CentralServerDTO;
 import org.folio.innreach.dto.Holding;
 import org.folio.innreach.util.UUIDHelper;
@@ -41,6 +45,7 @@ public class PatronHoldServiceImpl implements PatronHoldService {
   private final ItemTypeMappingService itemTypeMappingService;
   private final RequestService requestService;
   private final InventoryService inventoryService;
+  private final UserService userService;
 
   @Async
   @Override
@@ -52,7 +57,7 @@ public class PatronHoldServiceImpl implements PatronHoldService {
     var centralServer = centralServerService.getCentralServerByCentralCode(transaction.getCentralServerCode());
     var locationCode = hold.getPickupLocation().getPickupLocCode();
     var servicePointId = getServicePointIdByCode(locationCode);
-    var patronId = UUIDHelper.fromStringWithoutHyphens(hold.getPatronId());
+    var patron = getPatron(hold);
 
     var instance = prepareInstance(transaction, hold, hridSettings);
     var holding = prepareHolding(centralServer.getId(), transaction, hold, hridSettings);
@@ -60,9 +65,10 @@ public class PatronHoldServiceImpl implements PatronHoldService {
 
     instance = inventoryService.createInstance(instance);
 
-    createHoldingAndItem(instance, holding, item, hold);
+    holding = createHolding(instance, holding);
+    item = createItem(holding, item);
 
-    requestService.createItemRequest(transaction, centralServer.getId(), servicePointId, patronId);
+    requestService.createItemRequest(transaction, holding, item, patron, servicePointId, RequestType.PAGE);
   }
 
   @Async
@@ -78,9 +84,17 @@ public class PatronHoldServiceImpl implements PatronHoldService {
     var holding = prepareHolding(centralServer.getId(), transaction, hold, hridSettings);
     var item = prepareItem(centralServer, transaction, hold, hridSettings);
 
-    createHoldingAndItem(instance, holding, item, hold);
+    holding = createHolding(instance, holding);
+    item = createItem(holding, item);
 
-    requestService.moveItemRequest(transaction);
+    requestService.moveItemRequest(transaction, holding, item);
+  }
+
+  private User getPatron(TransactionHold hold) {
+    var patronId = UUIDHelper.fromStringWithoutHyphens(hold.getPatronId());
+
+    return userService.getUserById(patronId)
+      .orElseThrow(() -> new IllegalArgumentException("Patron is not found by id: " + patronId));
   }
 
   private InventoryInstanceDTO prepareInstance(InnReachTransaction transaction, TransactionPatronHold hold, HridSettingsClient.HridSettings hridSettings) {
@@ -111,14 +125,14 @@ public class PatronHoldServiceImpl implements PatronHoldService {
     return inventoryService.queryInstanceByHrid(instanceHrid);
   }
 
-  private void createHoldingAndItem(InventoryInstanceDTO instance, Holding holding, InventoryItemDTO item, TransactionPatronHold hold) {
+  private Holding createHolding(InventoryInstanceDTO instance, Holding holding) {
     holding.setInstanceId(instance.getId());
-    holding = inventoryService.createHolding(holding);
+    return inventoryService.createHolding(holding);
+  }
 
+  private InventoryItemDTO createItem(Holding holding, InventoryItemDTO item) {
     item.setHoldingsRecordId(holding.getId());
-    inventoryService.createItem(item);
-
-    hold.setItemId(item.getHrid());
+    return inventoryService.createItem(item);
   }
 
   private Holding prepareHolding(UUID centralServerId, InnReachTransaction transaction, TransactionPatronHold hold, HridSettingsClient.HridSettings settings) {

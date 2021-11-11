@@ -1,10 +1,6 @@
 package org.folio.innreach.domain.entity;
 
-import lombok.Getter;
-import lombok.Setter;
-import lombok.ToString;
-import org.folio.innreach.domain.entity.base.Auditable;
-import org.folio.innreach.domain.entity.base.Identifiable;
+import java.util.UUID;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
@@ -18,7 +14,13 @@ import javax.persistence.InheritanceType;
 import javax.persistence.JoinColumn;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
-import java.util.UUID;
+
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
+
+import org.folio.innreach.domain.entity.base.Auditable;
+import org.folio.innreach.domain.entity.base.Identifiable;
 
 @Getter
 @Setter
@@ -60,6 +62,12 @@ public abstract class TransactionHold extends Auditable implements Identifiable<
   @Column(name = "folio_patron_id")
   protected UUID folioPatronId;
 
+  @Column(name = "folio_instance_id")
+  protected UUID folioInstanceId;
+
+  @Column(name = "folio_holding_id")
+  protected UUID folioHoldingId;
+
   @Column(name = "folio_item_id")
   protected UUID folioItemId;
 
@@ -68,4 +76,11 @@ public abstract class TransactionHold extends Auditable implements Identifiable<
 
   @Column(name = "folio_loan_id")
   protected UUID folioLoanId;
+
+  @Column(name = "folio_patron_barcode")
+  protected String folioPatronBarcode;
+
+  @Column(name = "folio_item_barcode")
+  protected String folioItemBarcode;
+
 }

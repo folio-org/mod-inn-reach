@@ -47,6 +47,7 @@ import org.folio.innreach.domain.dto.folio.User;
 import org.folio.innreach.domain.dto.folio.circulation.MoveRequestDTO;
 import org.folio.innreach.domain.dto.folio.circulation.RequestDTO;
 import org.folio.innreach.domain.dto.folio.circulation.RequestDTO.RequestStatus;
+import org.folio.innreach.domain.dto.folio.circulation.RequestDTO.RequestType;
 import org.folio.innreach.domain.dto.folio.inventory.InventoryItemDTO;
 import org.folio.innreach.domain.dto.folio.inventory.InventoryItemStatus;
 import org.folio.innreach.domain.entity.InnReachTransaction;
@@ -56,6 +57,7 @@ import org.folio.innreach.domain.exception.EntityNotFoundException;
 import org.folio.innreach.domain.exception.ItemNotRequestableException;
 import org.folio.innreach.domain.service.InventoryService;
 import org.folio.innreach.domain.service.RequestService;
+import org.folio.innreach.dto.Holding;
 import org.folio.innreach.external.service.InnReachExternalService;
 import org.folio.innreach.mapper.InnReachTransactionPickupLocationMapper;
 import org.folio.innreach.repository.CentralPatronTypeMappingRepository;
@@ -99,12 +101,16 @@ public class RequestServiceImpl implements RequestService {
     var centralServerId = getCentralServerId(transaction.getCentralServerCode());
 
     try {
-      var patronType = ((TransactionItemHold) transaction.getHold()).getCentralPatronType();
+      var hold = (TransactionItemHold) transaction.getHold();
+      var patronType = hold.getCentralPatronType();
       var patronBarcode = getUserBarcode(centralServerId, patronType);
-      var userId = UUID.fromString(getUserByBarcode(patronBarcode).getId());
-      var servicePointId = getDefaultServicePointId(userId);
+      var patron = getUserByBarcode(patronBarcode);
+      var servicePointId = getDefaultServicePointId(patron.getId());
+      var item = inventoryService.getItemByHrId(hold.getItemId());
+      var requestType = item.getStatus() == AVAILABLE ? PAGE : HOLD;
+      var holding = inventoryService.findHolding(item.getHoldingsRecordId()).orElse(null);
 
-      createItemRequest(transaction, centralServerId, servicePointId, userId);
+      createItemRequest(transaction, holding, item, patron, servicePointId, requestType);
     } catch (ItemNotRequestableException e) {
       log.warn("Requested item is not available. Sending \"Owning site cancels\" request.");
       var errorReason = "Item not available";
@@ -117,28 +123,23 @@ public class RequestServiceImpl implements RequestService {
   }
 
   @Override
-  public void createItemRequest(InnReachTransaction transaction, UUID centralServerId, UUID servicePointId, UUID requesterId) {
+  public void createItemRequest(InnReachTransaction transaction, Holding holding, InventoryItemDTO item,
+                                User patron, UUID servicePointId, RequestType requestType) {
     log.info("Creating item request for transaction {}", transaction);
-    var itemHrId = transaction.getHold().getItemId();
+    var hold = transaction.getHold();
 
-    var item = inventoryService.getItemByHrId(itemHrId);
-
-    var requests = circulationClient.queryRequestsByItemId(item.getId());
-    if (!isItemRequestable(item, requests)) {
-      throw new ItemNotRequestableException("Requested item is not available");
-    }
+    validateItemAvailability(item);
 
     //getting required data for a request
-    var comment = createPatronComment(transaction.getHold());
+    var comment = createPatronComment(hold);
 
-    var requestExpirationDate = getRequestExpirationDate(transaction.getHold());
-    var requestType = item.getStatus() == AVAILABLE ? PAGE : HOLD;
+    var requestExpirationDate = getRequestExpirationDate(hold);
 
     //creating and sending new request
     var newRequest = RequestDTO.builder()
       .requestType(requestType.getName())
       .itemId(item.getId())
-      .requesterId(requesterId)
+      .requesterId(patron.getId())
       .pickupServicePointId(servicePointId)
       .requestExpirationDate(requestExpirationDate)
       .patronComments(comment)
@@ -147,29 +148,20 @@ public class RequestServiceImpl implements RequestService {
       .build();
     var createdRequest = circulationClient.sendRequest(newRequest);
 
-    //updating transaction data
-    transaction.getHold().setFolioRequestId(createdRequest.getId());
-    transaction.getHold().setFolioPatronId(requesterId);
-    transaction.getHold().setFolioItemId(item.getId());
-    transactionRepository.save(transaction);
+    updateTransaction(transaction, item, holding, createdRequest, patron);
 
     log.info("Item request successfully created.");
   }
 
   @Override
-  public void moveItemRequest(InnReachTransaction transaction) {
+  public void moveItemRequest(InnReachTransaction transaction, Holding holding, InventoryItemDTO item) {
     log.info("Moving item request for transaction {}", transaction);
 
     var hold = transaction.getHold();
-    var itemHrId = hold.getItemId();
     var requestId = hold.getFolioRequestId();
+    Assert.isTrue(requestId != null, "requestId is not set for transaction with trackingId: " + transaction.getTrackingId());
 
-    var item = inventoryService.getItemByHrId(itemHrId);
-
-    var requests = circulationClient.queryRequestsByItemId(item.getId());
-    if (!isItemRequestable(item, requests)) {
-      throw new ItemNotRequestableException("Item with hrid " + itemHrId + " is not requestable");
-    }
+    validateItemAvailability(item);
 
     var payload = MoveRequestDTO.builder()
       .requestType(PAGE.getName())
@@ -178,9 +170,8 @@ public class RequestServiceImpl implements RequestService {
 
     var movedRequest = circulationClient.moveRequest(requestId, payload);
 
-    hold.setFolioItemId(item.getId());
-    hold.setFolioRequestId(movedRequest.getId());
-    transactionRepository.save(transaction);
+    updateTransaction(transaction, item, holding, movedRequest, null);
+
     log.info("Item request successfully moved");
   }
 
@@ -204,6 +195,30 @@ public class RequestServiceImpl implements RequestService {
     circulationClient.updateRequest(request.getId(), request);
 
     log.info("Item request successfully cancelled");
+  }
+
+  private void validateItemAvailability(InventoryItemDTO item) {
+    var requests = circulationClient.queryRequestsByItemId(item.getId());
+    if (!isItemRequestable(item, requests)) {
+      throw new ItemNotRequestableException("Item is not requestable: " + item.getId());
+    }
+  }
+
+  private void updateTransaction(InnReachTransaction transaction, InventoryItemDTO item,
+                                 Holding holding, RequestDTO request, User patron) {
+    var hold = transaction.getHold();
+    hold.setFolioRequestId(request.getId());
+    hold.setFolioItemId(item.getId());
+    hold.setFolioItemBarcode(item.getBarcode());
+    if (holding != null) {
+      hold.setFolioHoldingId(holding.getId());
+      hold.setFolioInstanceId(holding.getInstanceId());
+    }
+    if (patron != null) {
+      hold.setFolioPatronId(patron.getId());
+      hold.setFolioPatronBarcode(patron.getBarcode());
+    }
+    transactionRepository.save(transaction);
   }
 
   private boolean isItemRequestable(InventoryItemDTO item, ResultList<RequestDTO> requests) {

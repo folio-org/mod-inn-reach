@@ -77,6 +77,7 @@ class PatronHoldCirculationApiTest extends BaseApiControllerTest {
   private static final UUID NEW_REQUEST_ID = UUID.fromString("89105c06-dbdb-4aa0-9695-d4d19c733270");
   private static final String ITEM_HRID = "itnewtrackingid5east";
   private static final String HOLDING_ID = "16f40c4e-235d-4912-a683-2ad919cc8b07";
+  private static final UUID FOLIO_PATRON_ID = UUID.fromString("ea11eba7-3c0f-4d15-9cca-c8608cd6bc8a");
 
   @SpyBean
   private InnReachTransactionRepository repository;
@@ -106,13 +107,13 @@ class PatronHoldCirculationApiTest extends BaseApiControllerTest {
     transactionHoldDTO.setCentralItemType(PRE_POPULATED_CENTRAL_ITEM_TYPE);
 
     stubGet(HRID_SETTINGS_URL, "inventory-storage/hrid-settings-response.json");
-    stubGet(format(QUERY_INSTANCE_BY_HRID_URL_TEMPLATE, "intracking1d2ir"), "inventory-storage/query-instance-response.json");
+    stubGet(format(QUERY_INSTANCE_BY_HRID_URL_TEMPLATE, "intracking1d2ir"), "inventory/query-instance-response.json");
     stubGet(INNREACH_LOCALSERVERS_URL, "agency-codes/d2ir-local-servers-response-01.json");
     stubPost(HOLDINGS_URL, "inventory-storage/holding-response.json");
-    stubPost(ITEMS_URL, "inventory-storage/item-response.json");
+    stubPost(ITEMS_URL, "inventory/item-response.json");
     stubGet(format(QUERY_INVENTORY_ITEM_BY_HRID_URL_TEMPLATE, "ittracking15east"), "inventory/query-items-response.json");
-    stubGet(format(QUERY_REQUEST_BY_ITEM_ID_URL_TEMPLATE, PRE_POPULATED_ITEM_ID), "request-storage/empty-requests-response.json");
-    stubPost(format(MOVE_CIRCULATION_REQUEST_URL_TEMPLATE, PRE_POPULATED_REQUEST_ID), "request-storage/updated-request-response.json");
+    stubGet(format(QUERY_REQUEST_BY_ITEM_ID_URL_TEMPLATE, PRE_POPULATED_ITEM_ID), "circulation/empty-requests-response.json");
+    stubPost(format(MOVE_CIRCULATION_REQUEST_URL_TEMPLATE, PRE_POPULATED_REQUEST_ID), "circulation/updated-request-response.json");
 
     mockMvc.perform(post(CIRCULATION_ENDPOINT, PATRON_HOLD.getOperationName(), PRE_POPULATED_TRACKING_ID, PRE_POPULATED_CENTRAL_CODE)
         .content(jsonHelper.toJson(transactionHoldDTO))
@@ -137,21 +138,22 @@ class PatronHoldCirculationApiTest extends BaseApiControllerTest {
     transactionHoldDTO.setItemId(ITEM_HRID);
     transactionHoldDTO.setItemAgencyCode(PRE_POPULATED_CENTRAL_AGENCY_CODE);
     transactionHoldDTO.setCentralItemType(PRE_POPULATED_CENTRAL_ITEM_TYPE);
-    transactionHoldDTO.setPatronId(toStringWithoutHyphens(UUID.randomUUID()));
+    transactionHoldDTO.setPatronId(toStringWithoutHyphens(FOLIO_PATRON_ID));
     var pickupLocation = pickupLocationMapper.fromString(transactionHoldDTO.getPickupLocation());
 
+    stubGet("/users/ea11eba7-3c0f-4d15-9cca-c8608cd6bc8a", "users/user-response.json");
     stubGet(format(QUERY_INSTANCE_TYPE_BY_NAME_URL_TEMPLATE, INSTANCE_TYPE_NAME_URLENCODED), "inventory-storage/query-instance-types-response.json");
     stubGet(format(QUERY_SERVICE_POINTS_BY_CODE_ULR_TEMPLATE, pickupLocation.getPickupLocCode()), "inventory-storage/query-service-points-response.json");
     stubGet(format(QUERY_CONTRIBUTOR_TYPE_BY_NAME_URL_TEMPLATE, INSTANCE_CONTRIBUTOR_NAME_URLENCODED), "inventory-storage/query-contributor-name-types-response.json");
     stubGet(HRID_SETTINGS_URL, "inventory-storage/hrid-settings-response.json");
-    stubGet(format(QUERY_INSTANCE_BY_HRID_URL_TEMPLATE, "innewtrackingidd2ir"), "inventory-storage/query-instance-response.json");
+    stubGet(format(QUERY_INSTANCE_BY_HRID_URL_TEMPLATE, "innewtrackingidd2ir"), "inventory/query-instance-response.json");
     stubGet(INNREACH_LOCALSERVERS_URL, "agency-codes/d2ir-local-servers-response-01.json");
-    stubPost(INSTANCES_URL, "inventory-storage/instance-response.json");
+    stubPost(INSTANCES_URL, "inventory/instance-response.json");
     stubPost(HOLDINGS_URL, "inventory-storage/holding-response.json");
-    stubPost(ITEMS_URL, "inventory-storage/item-response.json");
-    stubPost(REQUESTS_URL, "request-storage/item-request-response.json");
+    stubPost(ITEMS_URL, "inventory/item-response.json");
+    stubPost(REQUESTS_URL, "circulation/item-request-response.json");
     stubGet(format(QUERY_INVENTORY_ITEM_BY_HRID_URL_TEMPLATE, ITEM_HRID), "inventory/query-items-response.json");
-    stubGet(format(QUERY_REQUEST_BY_ITEM_ID_URL_TEMPLATE, PRE_POPULATED_ITEM_ID), "request-storage/empty-requests-response.json");
+    stubGet(format(QUERY_REQUEST_BY_ITEM_ID_URL_TEMPLATE, PRE_POPULATED_ITEM_ID), "circulation/empty-requests-response.json");
 
     mockMvc.perform(post(CIRCULATION_ENDPOINT, PATRON_HOLD.getOperationName(), "newtrackingid", PRE_POPULATED_CENTRAL_CODE)
         .content(jsonHelper.toJson(transactionHoldDTO))
@@ -180,12 +182,12 @@ class PatronHoldCirculationApiTest extends BaseApiControllerTest {
         "reason", "Test reason",
         "reasonCode", 7);
 
-    stubGet(format("%s/%s", ITEMS_URL, PRE_POPULATED_ITEM_ID), "inventory-storage/item-response.json");
-    stubPut(format("%s/%s", ITEMS_URL, PRE_POPULATED_ITEM_ID), "inventory-storage/item-response.json");
+    stubGet(format("%s/%s", ITEMS_URL, PRE_POPULATED_ITEM_ID), "inventory/item-response.json");
+    stubPut(format("%s/%s", ITEMS_URL, PRE_POPULATED_ITEM_ID), "inventory/item-response.json");
     stubGet(format("%s/%s", HOLDINGS_URL, HOLDING_ID), "inventory-storage/holding-response.json");
     stubPut(format("%s/%s", HOLDINGS_URL, HOLDING_ID), "inventory-storage/holding-response.json");
-    stubGet(format("%s/%s", REQUESTS_URL, PRE_POPULATED_REQUEST_ID), "request-storage/item-request-response.json");
-    stubPut(format("%s/%s", REQUESTS_URL, PRE_POPULATED_REQUEST_ID), "request-storage/item-request-response.json");
+    stubGet(format("%s/%s", REQUESTS_URL, PRE_POPULATED_REQUEST_ID), "circulation/item-request-response.json");
+    stubPut(format("%s/%s", REQUESTS_URL, PRE_POPULATED_REQUEST_ID), "circulation/item-request-response.json");
 
     mockMvc.perform(put(CIRCULATION_ENDPOINT, CANCEL_PATRON_HOLD.getOperationName(), PRE_POPULATED_TRACKING_ID, PRE_POPULATED_CENTRAL_CODE)
         .content(jsonHelper.toJson(requestPayload))
@@ -214,12 +216,12 @@ class PatronHoldCirculationApiTest extends BaseApiControllerTest {
         "reason", "Test reason",
         "reasonCode", 7);
 
-    stubGet(format("%s/%s", ITEMS_URL, PRE_POPULATED_ITEM_ID), "inventory-storage/item-response.json");
-    stubPut(format("%s/%s", ITEMS_URL, PRE_POPULATED_ITEM_ID), "inventory-storage/item-response.json");
+    stubGet(format("%s/%s", ITEMS_URL, PRE_POPULATED_ITEM_ID), "inventory/item-response.json");
+    stubPut(format("%s/%s", ITEMS_URL, PRE_POPULATED_ITEM_ID), "inventory/item-response.json");
     stubGet(format("%s/%s", HOLDINGS_URL, HOLDING_ID), "inventory-storage/holding-response.json");
     stubPut(format("%s/%s", HOLDINGS_URL, HOLDING_ID), "inventory-storage/holding-response.json");
-    stubGet(format("%s/%s", REQUESTS_URL, PRE_POPULATED_REQUEST_ID), "request-storage/item-request-response.json");
-    stubPut(format("%s/%s", REQUESTS_URL, PRE_POPULATED_REQUEST_ID), "request-storage/item-request-response.json");
+    stubGet(format("%s/%s", REQUESTS_URL, PRE_POPULATED_REQUEST_ID), "circulation/item-request-response.json");
+    stubPut(format("%s/%s", REQUESTS_URL, PRE_POPULATED_REQUEST_ID), "circulation/item-request-response.json");
 
     mockMvc.perform(put(CIRCULATION_ENDPOINT, CANCEL_PATRON_HOLD.getOperationName(), PRE_POPULATED_TRACKING_ID, PRE_POPULATED_CENTRAL_CODE)
         .content(jsonHelper.toJson(requestPayload))

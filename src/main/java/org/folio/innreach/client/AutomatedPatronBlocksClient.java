@@ -17,7 +17,7 @@ import org.folio.innreach.domain.dto.folio.ResultList;
 public interface AutomatedPatronBlocksClient {
 
   @GetMapping("/{userId}")
-  ResultList<AutomatedPatronBlock> getPatronBlocks(@PathVariable("userId") String userId);
+  ResultList<AutomatedPatronBlock> getPatronBlocks(@PathVariable("userId") UUID userId);
 
   @Data
   @Builder

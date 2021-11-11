@@ -62,7 +62,9 @@ public class PatronHoldInnReachCirculationProcessor implements InnReachCirculati
   private void updateTransactionPatronHold(TransactionPatronHold existingTransactionPatronHold, TransactionHoldDTO transactionHold) {
     // update transaction patron hold
     BeanUtils.copyProperties(transactionHold, existingTransactionPatronHold,
-      "pickupLocation", "id", "createdBy", "updatedBy", "createdDate", "updatedDate");
+      "pickupLocation", "id", "createdBy", "updatedBy", "createdDate", "updatedDate",
+      "folioPatronId", "folioInstanceId", "folioHoldingId", "folioItemId",
+      "folioRequestId", "folioLoanId", "folioPatronBarcode", "folioItemBarcode");
 
     // update pickupLocation
     var pickupLocation = pickupLocationMapper.fromString(transactionHold.getPickupLocation());

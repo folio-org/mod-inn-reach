@@ -4,6 +4,7 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.UUID;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
@@ -25,10 +26,10 @@ public interface PermissionsClient {
   void assignPermissionsToUser(@RequestBody Permissions permissions);
 
   @PostMapping(value = "/{userId}/permissions?indexField=userId", consumes = APPLICATION_JSON_VALUE)
-  void addPermission(@PathVariable("userId") String userId, Permission permission);
+  void addPermission(@PathVariable("userId") UUID userId, Permission permission);
 
   @GetMapping(value = "/{userId}/permissions?indexField=userId")
-  ResultList<String> getUserPermissions(@PathVariable("userId") String userId);
+  ResultList<String> getUserPermissions(@PathVariable("userId") UUID userId);
 
   @Data
   @AllArgsConstructor(staticName = "of")
@@ -42,7 +43,7 @@ public interface PermissionsClient {
   @NoArgsConstructor
   class Permissions {
     private String id;
-    private String userId;
+    private UUID userId;
     @JsonProperty("permissions")
     private List<String> allowedPermissions = Collections.emptyList();
   }
