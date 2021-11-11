@@ -1,4 +1,4 @@
-package org.folio.innreach.domain.processor;
+package org.folio.innreach.domain.service.impl.processor;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -62,9 +62,7 @@ public class PatronHoldInnReachCirculationProcessor implements InnReachCirculati
   private void updateTransactionPatronHold(TransactionPatronHold existingTransactionPatronHold, TransactionHoldDTO transactionHold) {
     // update transaction patron hold
     BeanUtils.copyProperties(transactionHold, existingTransactionPatronHold,
-      "pickupLocation", "id", "createdBy", "updatedBy", "createdDate", "updatedDate",
-      "folioPatronId", "folioInstanceId", "folioHoldingId", "folioItemId",
-      "folioRequestId", "folioLoanId", "folioPatronBarcode", "folioItemBarcode");
+      "pickupLocation", "id", "createdBy", "updatedBy", "createdDate", "updatedDate");
 
     // update pickupLocation
     var pickupLocation = pickupLocationMapper.fromString(transactionHold.getPickupLocation());

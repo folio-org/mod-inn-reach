@@ -14,6 +14,7 @@ import org.folio.innreach.domain.entity.InnReachTransaction;
 import org.folio.innreach.domain.entity.TransactionPatronHold;
 import org.folio.innreach.domain.exception.EntityNotFoundException;
 import org.folio.innreach.domain.service.InventoryService;
+import org.folio.innreach.domain.service.impl.processor.InnReachCirculationProcessor;
 import org.folio.innreach.dto.CirculationRequestDTO;
 import org.folio.innreach.dto.InnReachResponseDTO;
 import org.folio.innreach.repository.InnReachTransactionRepository;

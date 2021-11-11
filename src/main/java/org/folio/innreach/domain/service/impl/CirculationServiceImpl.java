@@ -7,8 +7,8 @@ import lombok.extern.log4j.Log4j2;
 import org.springframework.stereotype.Service;
 
 import org.folio.innreach.domain.exception.CirculationProcessException;
-import org.folio.innreach.domain.processor.InnReachCirculationProcessor;
 import org.folio.innreach.domain.service.CirculationService;
+import org.folio.innreach.domain.service.impl.processor.InnReachCirculationProcessor;
 import org.folio.innreach.dto.CirculationRequestDTO;
 import org.folio.innreach.dto.InnReachResponseDTO;
 
