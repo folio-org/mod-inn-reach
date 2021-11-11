@@ -5,5 +5,5 @@ import org.folio.innreach.dto.InnReachResponseDTO;
 
 public interface CirculationService {
 
-  InnReachResponseDTO processCirculationRequest(String trackingId, String centralCode, String circulationOperationName, CirculationRequestDTO request);
+  InnReachResponseDTO processCirculationRequest(String trackingId, String centralCode, String circulationOperationName, CirculationRequestDTO circulationRequest);
 }

@@ -37,9 +37,9 @@ public class PatronHoldInnReachCirculationProcessor implements InnReachCirculati
 
   @Override
   @Transactional
-  public InnReachResponseDTO process(String trackingId, String centralCode, CirculationRequestDTO request) {
-    var transactionHold = transactionHoldMapper.mapRequest(request);
+  public InnReachResponseDTO process(String trackingId, String centralCode, CirculationRequestDTO circulationRequest) {
     var innReachTransaction = transactionRepository.findByTrackingIdAndCentralServerCode(trackingId, centralCode);
+    var transactionHold = transactionHoldMapper.mapRequest(circulationRequest);
 
     if (innReachTransaction.isPresent()) {
       log.info("Transaction patron hold with trackingId [{}] and centralCode [{}] exists, start to update...", trackingId, centralCode);

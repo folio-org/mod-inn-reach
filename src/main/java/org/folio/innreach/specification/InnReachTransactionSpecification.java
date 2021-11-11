@@ -8,18 +8,18 @@ import static org.folio.innreach.domain.entity.InnReachTransactionFilterParamete
 
 import java.util.List;
 
+import javax.persistence.criteria.Expression;
+import javax.persistence.criteria.Root;
+
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Component;
 
 import org.folio.innreach.domain.entity.InnReachTransaction;
 import org.folio.innreach.domain.entity.InnReachTransactionFilterParameters;
-import org.folio.innreach.domain.entity.InnReachTransactionFilterParameters.TransactionSortBy;
 import org.folio.innreach.domain.entity.InnReachTransactionFilterParameters.SortOrder;
+import org.folio.innreach.domain.entity.InnReachTransactionFilterParameters.TransactionSortBy;
 import org.folio.innreach.domain.entity.TransactionItemHold;
 import org.folio.innreach.domain.entity.TransactionLocalHold;
-
-import javax.persistence.criteria.Expression;
-import javax.persistence.criteria.Root;
 
 @Component
 public class InnReachTransactionSpecification {

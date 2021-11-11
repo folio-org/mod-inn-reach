@@ -27,8 +27,8 @@ public class InnReachCirculationController implements InnReachCirculationApi {
   public ResponseEntity<InnReachResponseDTO> processCirculationRequest(@PathVariable String trackingId,
                                                                        @PathVariable String centralCode,
                                                                        @PathVariable String circulationOperationName,
-                                                                       @RequestBody @Valid CirculationRequestDTO request) {
-    var innReachResponse = circulationService.processCirculationRequest(trackingId, centralCode, circulationOperationName, request);
+                                                                       @RequestBody @Valid CirculationRequestDTO circulationRequest) {
+    var innReachResponse = circulationService.processCirculationRequest(trackingId, centralCode, circulationOperationName, circulationRequest);
     return ResponseEntity.ok(innReachResponse);
   }
 }

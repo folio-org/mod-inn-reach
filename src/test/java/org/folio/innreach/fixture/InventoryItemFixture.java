@@ -1,19 +1,19 @@
 package org.folio.innreach.fixture;
 
+import static org.jeasy.random.FieldPredicates.named;
+
 import java.time.OffsetDateTime;
 import java.util.Locale;
 import java.util.UUID;
 
 import lombok.experimental.UtilityClass;
-
 import org.apache.commons.lang3.RandomStringUtils;
-import org.folio.innreach.domain.dto.folio.inventory.InventoryItemDTO;
-import org.folio.innreach.domain.dto.folio.inventory.InventoryItemStatus;
-import org.folio.innreach.domain.entity.base.AuditableUser;
 import org.jeasy.random.EasyRandom;
 import org.jeasy.random.EasyRandomParameters;
 
-import static org.jeasy.random.FieldPredicates.named;
+import org.folio.innreach.domain.dto.folio.inventory.InventoryItemDTO;
+import org.folio.innreach.domain.dto.folio.inventory.InventoryItemStatus;
+import org.folio.innreach.domain.entity.base.AuditableUser;
 
 @UtilityClass
 public class InventoryItemFixture {

@@ -3,10 +3,10 @@ package org.folio.innreach.mapper;
 import org.mapstruct.Builder;
 import org.mapstruct.InjectionStrategy;
 import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
 
 import org.folio.innreach.domain.entity.InnReachTransactionFilterParameters;
 import org.folio.innreach.dto.InnReachTransactionFilterParametersDTO;
-import org.mapstruct.Mapping;
 
 @Mapper(componentModel = "spring", injectionStrategy = InjectionStrategy.CONSTRUCTOR, uses = MappingMethods.class, builder = @Builder(disableBuilder = true))
 public interface InnReachTransactionFilterParametersMapper {
