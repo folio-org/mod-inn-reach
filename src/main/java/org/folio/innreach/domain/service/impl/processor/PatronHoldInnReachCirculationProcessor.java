@@ -1,4 +1,4 @@
-package org.folio.innreach.domain.processor;
+package org.folio.innreach.domain.service.impl.processor;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;

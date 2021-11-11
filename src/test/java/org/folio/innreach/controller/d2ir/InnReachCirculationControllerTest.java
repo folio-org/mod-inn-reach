@@ -2,7 +2,6 @@ package org.folio.innreach.controller.d2ir;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.times;
@@ -68,7 +67,8 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     var responseBody = responseEntity.getBody();
 
     assertNotNull(responseBody);
-    assertNull(responseBody.getErrors());
+    assertNotNull(responseBody.getErrors());
+    assertEquals(0, responseBody.getErrors().size());
     assertEquals(InnReachResponseStatus.OK.getResponseStatus(), responseBody.getStatus());
 
     var innReachTransaction = repository.findByTrackingIdAndCentralServerCode("tracking99", PRE_POPULATED_CENTRAL_CODE);
@@ -94,7 +94,8 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     var responseBody = responseEntity.getBody();
 
     assertNotNull(responseBody);
-    assertNull(responseBody.getErrors());
+    assertNotNull(responseBody.getErrors());
+    assertEquals(0, responseBody.getErrors().size());
     assertEquals(InnReachResponseStatus.OK.getResponseStatus(), responseBody.getStatus());
 
     var updatedTransaction = repository.findByTrackingIdAndCentralServerCode(PRE_POPULATED_TRACKING_ID, PRE_POPULATED_CENTRAL_CODE);

@@ -1,0 +1,315 @@
+openapi: 3.0.0
+info:
+  title: INN-Reach Circulation API
+  version: v1
+servers:
+  - url: /inn-reach/
+paths:
+  /central-servers/agencies:
+    get:
+      operationId: getCentralServerAgencies
+      description: Get a combined list of agencies available from all configured central servers
+      tags:
+        - central-server-configuration
+      responses:
+        '200':
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/centralServerAgenciesDTO"
+        '500':
+          $ref: "api-common.yaml#/components/responses/trait_response_500"
+  /central-servers/item-types:
+    get:
+      operationId: getCentralServerItemTypes
+      description: Get a combined list of item types available from all configured central servers
+      tags:
+        - central-server-configuration
+      responses:
+        '200':
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/centralServerItemTypesDTO"
+        '500':
+          $ref: "api-common.yaml#/components/responses/trait_response_500"
+  /central-servers/patron-types:
+    get:
+      operationId: getCentralServerPatronTypes
+      description: Get a combined list of patron types available from all configured central servers
+      tags:
+        - central-server-configuration
+      responses:
+        '200':
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/centralServerPatronTypesDTO"
+        '500':
+          $ref: "api-common.yaml#/components/responses/trait_response_500"
+  /d2ir/getbibrecord/{bibId}/{centralCode}:
+    get:
+      operationId: getBibRecord
+      description: Handles D2IR request from central server for an already-contributed Bib record.
+      tags:
+        - bib-info-d2ir
+      responses:
+        '200':
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/bibInfoResponseDTO"
+        '500':
+          $ref: "api-common.yaml#/components/responses/trait_response_500"
+      parameters:
+        - $ref: '#/components/parameters/bibId'
+        - $ref: '#/components/parameters/centralCode'
+  /d2ir/circ/itemhold/{trackingId}/{centralCode}:
+    post:
+      operationId: createInnReachTransactionItemHold
+      description: Originates an item hold at the owning site
+      tags:
+        - inn-reach-transaction
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/transactionHoldDTO"
+      responses:
+        '200':
+          description: Transaction record is created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/innReachResponseDTO"
+        '400':
+          description: An error occurred during creation of transaction record
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/innReachResponseDTO"
+        '500':
+          $ref: "api-common.yaml#/components/responses/trait_response_500"
+      parameters:
+        - $ref: '#/components/parameters/trackingId'
+        - $ref: '#/components/parameters/centralCode'
+  /transactions/{id}:
+    get:
+      operationId: getInnReachTransaction
+      description: get inn-reach transaction by id
+      tags:
+        - inn-reach-transaction
+      responses:
+        '200':
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/innReachTransactionDTO"
+        '404':
+          $ref: "api-common.yaml#/components/responses/trait_response_404"
+        '500':
+          $ref: "api-common.yaml#/components/responses/trait_response_500"
+      parameters:
+        - $ref: 'api-common.yaml#/components/parameters/id'
+  /d2ir/circ/verifypatron:
+    post:
+      operationId: verifyPatron
+      description: Handles D2IR request from central server for patron verification.
+      tags:
+        - verify-patron-d2ir
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/patronInfoRequestDTO"
+      responses:
+        '200':
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/patronInfoResponseDTO"
+        '500':
+          $ref: "api-common.yaml#/components/responses/trait_response_500"
+      parameters:
+        - $ref: '#/components/parameters/localCodeHeader'
+        - $ref: '#/components/parameters/centralCodeHeader'
+  /d2ir/circ/{circulationOperationName}/{trackingId}/{centralCode}:
+    post:
+      operationId: processCirculationRequest
+      description: Process circulation request
+      tags:
+        - inn-reach-circulation
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/circulationRequestDTO"
+      responses:
+        '200':
+          description: Circulation request successfully processed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/innReachResponseDTO"
+        '400':
+          description: An error occurred during processing of circulation request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/innReachResponseDTO"
+        '500':
+          $ref: "api-common.yaml#/components/responses/trait_response_500"
+      parameters:
+        - $ref: '#/components/parameters/trackingId'
+        - $ref: '#/components/parameters/centralCode'
+        - $ref: '#/components/parameters/circulationOperationName'
+  /d2ir/circ/transferrequest/{trackingId}/{centralCode}:
+    put:
+      operationId: putTransferRequest
+      description: Put transfer request
+      tags:
+        - inn-reach-circulation
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/transferRequestDTO"
+      responses:
+        '200':
+          description: Transfer request complete
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/innReachResponseDTO"
+        '400':
+          description: An error occurred during processing the request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/innReachResponseDTO"
+        '500':
+          $ref: "api-common.yaml#/components/responses/trait_response_500"
+      parameters:
+        - $ref: '#/components/parameters/trackingId'
+        - $ref: '#/components/parameters/centralCode'
+  /transactions:
+    get:
+      description: Get a list of transactions for the given central server
+      operationId: getAllTransactions
+      tags:
+        - inn-reach-transaction
+      responses:
+        '200':
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/innReachTransactionsDTO"
+        '400':
+          $ref: "api-common.yaml#/components/responses/trait_response_malformed_query_400"
+        '500':
+          $ref: "api-common.yaml#/components/responses/trait_response_500"
+      parameters:
+        - $ref: "api-common.yaml#/components/parameters/trait_pageable_offset"
+        - $ref: "api-common.yaml#/components/parameters/trait_pageable_limit"
+        - $ref: "#/components/parameters/transaction_filter_parameters"
+components:
+  schemas:
+    code:
+      type: string
+      pattern: '[a-z,0-9]{3,5}'
+    centralServerAgenciesDTO:
+      description: Agency collection from all configured central servers
+      type: object
+      properties:
+        totalRecords:
+          type: integer
+        centralServerAgencies:
+          description: List of agencies per central server
+          type: array
+          items:
+            $ref: schemas/agenciesPerCentralServerDTO.json
+      required:
+        - centralServerAgencies
+      additionalProperties: false
+    localServerAgenciesDTO:
+      $ref: schemas/d2ir/localServerAgenciesDTO.json
+    centralServerItemTypesDTO:
+      $ref: schemas/centralServerItemTypesDTO.json
+    centralItemTypesDTO:
+      $ref: schemas/d2ir/centralItemTypesDTO.json
+    centralServerPatronTypesDTO:
+      $ref: schemas/centralServerPatronTypesDTO.json
+    centralPatronTypesDTO:
+      $ref: schemas/d2ir/centralPatronTypesDTO.json
+    bibInfoResponseDTO:
+      $ref: schemas/d2ir/bibInfoResponseDTO.json
+    innReachResponseDTO:
+      $ref: schemas/d2ir/innReachResponseDTO.json
+    patronInfoResponseDTO:
+      $ref: schemas/d2ir/patronInfoResponseDTO.json
+    patronInfoRequestDTO:
+      $ref: schemas/d2ir/patronInfoRequestDTO.json
+    innReachTransactionDTO:
+      $ref: schemas/innReachTransactionDTO.json
+    transactionHoldDTO:
+      $ref: schemas/transactionHoldDTO.json
+    circulationRequestDTO:
+      $ref: schemas/d2ir/circulationRequestDTO.json
+    transferRequestDTO:
+      $ref: schemas/d2ir/transferRequestDTO.json
+    innReachTransactionsDTO:
+      $ref: schemas/innReachTransactionsDTO.json
+    innReachTransactionFilterParametersDTO:
+      $ref: schemas/innReachTransactionFilterParametersDTO.json
+  parameters:
+    bibId:
+      name: bibId
+      description: 32-character, alphanumeric id corresponding to a FOLIO instance record HRID
+      in: path
+      required: true
+      schema:
+        type: string
+    centralCode:
+      name: centralCode
+      description: Unique code that identifies the central server (match against value stored in Central Server settings, used to determine contribution status)
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/code'
+    trackingId:
+      name: trackingId
+      in: path
+      required: true
+      schema:
+        type: string
+    circulationOperationName:
+      name: circulationOperationName
+      in: path
+      required: true
+      schema:
+        type: string
+    localCodeHeader:
+      name: X-To-Code
+      in: header
+      required: true
+      schema:
+        $ref: '#/components/schemas/code'
+    centralCodeHeader:
+      name: X-From-Code
+      in: header
+      required: true
+      schema:
+        $ref: '#/components/schemas/code'
+    transaction_filter_parameters:
+      name: parameters
+      in: query
+      description: Query parameters to filter transactions.
+      schema:
+        $ref: "#/components/schemas/innReachTransactionFilterParametersDTO"

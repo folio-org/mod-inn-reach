@@ -1,4 +1,4 @@
-package org.folio.innreach.domain.processor;
+package org.folio.innreach.domain.service.impl.processor;
 
 import org.folio.innreach.dto.CirculationRequestDTO;
 import org.folio.innreach.dto.InnReachResponseDTO;
