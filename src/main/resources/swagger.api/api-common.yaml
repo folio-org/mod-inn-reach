@@ -22,13 +22,15 @@ components:
       in: path
       required: true
       schema:
-        $ref: "#/components/schemas/UUID"
+        type: string
+        format: uuid
     centralServerId:
       name: centralServerId
       in: path
       required: true
       schema:
-        $ref: "#/components/schemas/UUID"
+        type: string
+        format: uuid
     trait_queryable_query:
       name: query
       in: query
