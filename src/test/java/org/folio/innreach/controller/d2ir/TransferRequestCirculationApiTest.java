@@ -11,6 +11,7 @@ import static org.folio.innreach.controller.d2ir.CirculationResultUtils.emptyErr
 import static org.folio.innreach.controller.d2ir.CirculationResultUtils.exceptionMatch;
 import static org.folio.innreach.controller.d2ir.CirculationResultUtils.failedWithReason;
 import static org.folio.innreach.controller.d2ir.CirculationResultUtils.logResponse;
+import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.TRANSFER;
 import static org.folio.innreach.fixture.CirculationFixture.createTransferRequestDTO;
 import static org.folio.innreach.fixture.TestUtil.randomAlphanumeric32Max;
 import static org.folio.innreach.fixture.TestUtil.randomAlphanumeric5;
@@ -65,6 +66,7 @@ class TransferRequestCirculationApiTest extends BaseApiControllerTest {
     var trx = getTransaction(PRE_POPULATED_TRACKING_ID, PRE_POPULATED_CENTRAL_CODE);
 
     assertEquals(NEW_ITEM_ID, trx.getHold().getItemId());
+    assertEquals(TRANSFER, trx.getState());
   }
 
   @ParameterizedTest

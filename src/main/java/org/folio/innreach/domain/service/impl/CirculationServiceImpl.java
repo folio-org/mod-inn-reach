@@ -1,5 +1,7 @@
 package org.folio.innreach.domain.service.impl;
 
+import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.TRANSFER;
+
 import java.util.List;
 import java.util.Objects;
 
@@ -47,6 +49,7 @@ public class CirculationServiceImpl implements CirculationService {
     validateItemIdsEqual(request, transaction);
 
     transaction.getHold().setItemId(request.getNewItemId());
+    transaction.setState(TRANSFER);
 
     return new InnReachResponseDTO().status("ok").reason("success");
   }
