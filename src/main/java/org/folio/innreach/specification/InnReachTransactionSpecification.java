@@ -2,24 +2,23 @@ package org.folio.innreach.specification;
 
 import static org.apache.commons.collections4.CollectionUtils.isEmpty;
 
-import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionType.ITEM;
-import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionType.LOCAL;
 import static org.folio.innreach.domain.entity.InnReachTransactionFilterParameters.SortOrder.DESC;
 
 import java.util.List;
-
-import javax.persistence.criteria.Expression;
-import javax.persistence.criteria.Root;
 
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Component;
 
 import org.folio.innreach.domain.entity.InnReachTransaction;
 import org.folio.innreach.domain.entity.InnReachTransactionFilterParameters;
-import org.folio.innreach.domain.entity.InnReachTransactionFilterParameters.SortOrder;
 import org.folio.innreach.domain.entity.InnReachTransactionFilterParameters.TransactionSortBy;
+import org.folio.innreach.domain.entity.InnReachTransactionFilterParameters.SortOrder;
 import org.folio.innreach.domain.entity.TransactionItemHold;
 import org.folio.innreach.domain.entity.TransactionLocalHold;
+
+import javax.persistence.criteria.Expression;
+import javax.persistence.criteria.Order;
+import javax.persistence.criteria.Root;
 
 @Component
 public class InnReachTransactionSpecification {
@@ -71,12 +70,12 @@ public class InnReachTransactionSpecification {
       if (isEmpty(patronTypes)) {
         return cb.conjunction();
       }
-      var itemHold = cb.treat(transaction.join("hold"), TransactionItemHold.class);
-      var localHold = cb.treat(transaction.join("hold"), TransactionLocalHold.class);
+      var join = transaction.join("hold");
+      var itemHold = cb.treat(join, TransactionItemHold.class);
+      var localHold = cb.treat(join, TransactionLocalHold.class);
       return cb.or(
-        cb.and(cb.equal(transaction.get("type"), ITEM), itemHold.get("centralPatronType").in(patronTypes)),
-        cb.and(cb.equal(transaction.get("type"), LOCAL), localHold.get("centralPatronType").in(patronTypes))
-      );
+        itemHold.get("centralPatronTypeItem").in(patronTypes),
+        localHold.get("centralPatronTypeLocal").in(patronTypes));
     };
   }
 
@@ -87,7 +86,19 @@ public class InnReachTransactionSpecification {
   static Specification<InnReachTransaction> sortBy(TransactionSortBy sortBy, SortOrder sortOrder) {
     return (transaction, cq, cb) -> {
       if (sortBy != null) {
-        var order = sortOrder == DESC ? cb.desc(getField(transaction, sortBy)) : cb.asc(getField(transaction, sortBy));
+        Order order;
+        if (sortBy == TransactionSortBy.PATRON_TYPE){
+          var join = transaction.join("hold");
+          var itemHold = cb.treat(join, TransactionItemHold.class);
+          var localHold = cb.treat(join, TransactionLocalHold.class);
+
+          var coalesce = cb.coalesce(itemHold.get("centralPatronTypeItem"),
+            localHold.get("centralPatronTypeLocal"));
+          order = sortOrder == DESC ? cb.desc(coalesce) : cb.asc(coalesce);
+        }
+        else {
+          order = sortOrder == DESC ? cb.desc(getField(transaction, sortBy)) : cb.asc(getField(transaction, sortBy));
+        }
         cq.orderBy(order);
       }
       return cb.conjunction();
@@ -97,7 +108,7 @@ public class InnReachTransactionSpecification {
   private static Expression<InnReachTransaction> getField(Root<InnReachTransaction> root, TransactionSortBy sort) {
     Expression<InnReachTransaction> expression;
     switch (sort) {
-      case TRANSACTION_TIME:
+      case TRANSACTION_TYPE:
       case TRANSACTION_STATUS:
       case DATE_CREATED:
       case DATE_MODIFIED:
