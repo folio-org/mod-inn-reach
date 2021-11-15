@@ -13,7 +13,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import static org.folio.innreach.domain.CirculationOperation.CANCEL_PATRON_HOLD;
 import static org.folio.innreach.fixture.CirculationFixture.createTransactionHoldDTO;
 import static org.folio.innreach.util.UUIDHelper.toStringWithoutHyphens;
 
@@ -66,6 +65,7 @@ class PatronHoldCirculationApiTest extends BaseApiControllerTest {
   private static final String INSTANCE_CONTRIBUTOR_NAME_URLENCODED = "INN-Reach%20author";
 
   private static final String PATRON_HOLD_OPERATION = "patronhold";
+  private static final String CANCEL_REQ_OPERATION = "cancelrequest";
   private static final String CIRCULATION_ENDPOINT = "/inn-reach/d2ir/circ/{circulationOperationName}/{trackingId}/{centralCode}";
 
   private static final String PRE_POPULATED_TRACKING_ID = "tracking1";
@@ -190,7 +190,7 @@ class PatronHoldCirculationApiTest extends BaseApiControllerTest {
     stubGet(format("%s/%s", REQUESTS_URL, PRE_POPULATED_REQUEST_ID), "circulation/item-request-response.json");
     stubPut(format("%s/%s", REQUESTS_URL, PRE_POPULATED_REQUEST_ID), "circulation/item-request-response.json");
 
-    mockMvc.perform(put(CIRCULATION_ENDPOINT, CANCEL_PATRON_HOLD.getOperationName(), PRE_POPULATED_TRACKING_ID, PRE_POPULATED_CENTRAL_CODE)
+    mockMvc.perform(put(CIRCULATION_ENDPOINT, CANCEL_REQ_OPERATION, PRE_POPULATED_TRACKING_ID, PRE_POPULATED_CENTRAL_CODE)
         .content(jsonHelper.toJson(requestPayload))
         .contentType(MediaType.APPLICATION_JSON)
         .headers(getOkapiHeaders()))
@@ -224,7 +224,7 @@ class PatronHoldCirculationApiTest extends BaseApiControllerTest {
     stubGet(format("%s/%s", REQUESTS_URL, PRE_POPULATED_REQUEST_ID), "circulation/item-request-response.json");
     stubPut(format("%s/%s", REQUESTS_URL, PRE_POPULATED_REQUEST_ID), "circulation/item-request-response.json");
 
-    mockMvc.perform(put(CIRCULATION_ENDPOINT, CANCEL_PATRON_HOLD.getOperationName(), PRE_POPULATED_TRACKING_ID, PRE_POPULATED_CENTRAL_CODE)
+    mockMvc.perform(put(CIRCULATION_ENDPOINT, CANCEL_REQ_OPERATION, PRE_POPULATED_TRACKING_ID, PRE_POPULATED_CENTRAL_CODE)
         .content(jsonHelper.toJson(requestPayload))
         .contentType(MediaType.APPLICATION_JSON)
         .headers(getOkapiHeaders()))

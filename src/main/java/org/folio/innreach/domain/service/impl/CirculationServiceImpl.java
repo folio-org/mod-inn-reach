@@ -1,10 +1,11 @@
 package org.folio.innreach.domain.service.impl;
 
+import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.CANCEL_REQUEST;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.TRANSFER;
 
-import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.function.Function;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -13,15 +14,16 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
 
+import org.folio.innreach.domain.dto.folio.inventory.InventoryItemDTO;
 import org.folio.innreach.domain.entity.InnReachTransaction;
 import org.folio.innreach.domain.entity.TransactionPatronHold;
-import org.folio.innreach.domain.exception.CirculationProcessException;
 import org.folio.innreach.domain.exception.EntityNotFoundException;
 import org.folio.innreach.domain.service.CirculationService;
 import org.folio.innreach.domain.service.InventoryService;
 import org.folio.innreach.domain.service.PatronHoldService;
-import org.folio.innreach.domain.service.impl.processor.InnReachCirculationProcessor;
-import org.folio.innreach.dto.CirculationRequestDTO;
+import org.folio.innreach.domain.service.RequestService;
+import org.folio.innreach.dto.CancelRequestDTO;
+import org.folio.innreach.dto.Holding;
 import org.folio.innreach.dto.InnReachResponseDTO;
 import org.folio.innreach.dto.ItemShippedDTO;
 import org.folio.innreach.dto.PatronHoldDTO;
@@ -37,25 +39,13 @@ import org.folio.innreach.repository.InnReachTransactionRepository;
 @RequiredArgsConstructor
 public class CirculationServiceImpl implements CirculationService {
 
-  private final List<InnReachCirculationProcessor> innReachCirculationProcessors;
   private final InnReachTransactionRepository transactionRepository;
   private final InnReachTransactionHoldMapper transactionHoldMapper;
   private final InnReachTransactionPickupLocationMapper pickupLocationMapper;
   private final PatronHoldService patronHoldService;
+  private final RequestService requestService;
   private final InventoryService inventoryService;
 
-
-  @Override
-  public InnReachResponseDTO processCirculationRequest(String trackingId, String centralCode, String circulationOperationName, CirculationRequestDTO circulationRequest) {
-    var circulationProcessor = innReachCirculationProcessors.stream()
-      .filter(processor -> processor.canProcess(circulationOperationName))
-      .findFirst()
-      .orElseThrow(() -> new CirculationProcessException("Can't find processor for circulation operation: " + circulationOperationName));
-
-    log.info("Circulation processor for circulation operation [{}] found! Start to process circulation...", circulationOperationName);
-
-    return circulationProcessor.process(trackingId, centralCode, circulationRequest);
-  }
 
   @Override
   public InnReachResponseDTO initiatePatronHold(String trackingId, String centralCode, PatronHoldDTO patronHold) {
@@ -107,6 +97,30 @@ public class CirculationServiceImpl implements CirculationService {
   }
 
   @Override
+  public InnReachResponseDTO cancelTransaction(String trackingId, String centralCode, CancelRequestDTO cancelRequest) {
+    log.info("Cancelling request for transaction: {}", trackingId);
+
+    var transaction = getTransaction(trackingId, centralCode);
+
+    transaction.setState(CANCEL_REQUEST);
+
+    var itemId = transaction.getHold().getFolioItemId();
+
+    requestService.cancelRequest(transaction, cancelRequest.getReason());
+
+    inventoryService.findItem(itemId)
+        .map(removeItemTransactionInfo())
+        .map(inventoryService::updateItem)
+        .flatMap(item -> inventoryService.findHolding(item.getHoldingsRecordId()))
+        .map(removeHoldingTransactionInfo())
+        .ifPresent(inventoryService::updateHolding);
+
+    log.info("Item request successfully cancelled");
+
+    return success();
+  }
+
+  @Override
   public InnReachResponseDTO transferItem(String trackingId, String centralCode, TransferRequestDTO request) {
     var transaction = getTransaction(trackingId, centralCode);
 
@@ -153,6 +167,21 @@ public class CirculationServiceImpl implements CirculationService {
       item.setBarcode(itemBarcode);
       inventoryService.updateItem(item);
     });
+  }
+
+  private Function<Holding, Holding> removeHoldingTransactionInfo() {
+    return holding -> {
+      holding.setCallNumber(null);
+      return holding;
+    };
+  }
+
+  private Function<InventoryItemDTO, InventoryItemDTO> removeItemTransactionInfo() {
+    return item -> {
+      item.setCallNumber(null);
+      item.setBarcode(null);
+      return item;
+    };
   }
 
   private void validateItemIdsEqual(TransferRequestDTO request, InnReachTransaction transaction) {

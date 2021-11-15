@@ -24,10 +24,10 @@ import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlMergeMode;
 
 import org.folio.innreach.controller.base.BaseControllerTest;
-import org.folio.innreach.domain.InnReachResponseStatus;
 import org.folio.innreach.domain.dto.folio.inventory.InventoryItemDTO;
 import org.folio.innreach.domain.service.InventoryService;
 import org.folio.innreach.dto.InnReachResponseDTO;
+import org.folio.innreach.external.dto.InnReachResponse;
 import org.folio.innreach.repository.InnReachTransactionRepository;
 
 @Sql(
@@ -45,6 +45,7 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
 
   private static final String PATRON_HOLD_OPERATION = "patronhold";
   private static final String ITEM_SHIPPED_OPERATION = "itemshipped";
+
 
   @Autowired
   private TestRestTemplate testRestTemplate;
@@ -70,7 +71,7 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     assertNotNull(responseBody);
     assertNotNull(responseBody.getErrors());
     assertEquals(0, responseBody.getErrors().size());
-    assertEquals(InnReachResponseStatus.OK.getResponseStatus(), responseBody.getStatus());
+    assertEquals(InnReachResponse.OK_STATUS, responseBody.getStatus());
 
     var innReachTransaction = repository.findByTrackingIdAndCentralServerCode("tracking99", PRE_POPULATED_CENTRAL_CODE);
 
@@ -97,7 +98,7 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     assertNotNull(responseBody);
     assertNotNull(responseBody.getErrors());
     assertEquals(0, responseBody.getErrors().size());
-    assertEquals(InnReachResponseStatus.OK.getResponseStatus(), responseBody.getStatus());
+    assertEquals(InnReachResponse.OK_STATUS, responseBody.getStatus());
 
     var updatedTransaction = repository.findByTrackingIdAndCentralServerCode(PRE_POPULATED_TRACKING_ID, PRE_POPULATED_CENTRAL_CODE);
 

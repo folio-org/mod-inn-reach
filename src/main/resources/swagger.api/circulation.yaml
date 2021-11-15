@@ -139,36 +139,6 @@ paths:
       parameters:
         - $ref: '#/components/parameters/localCodeHeader'
         - $ref: '#/components/parameters/centralCodeHeader'
-  /d2ir/circ/{circulationOperationName}/{trackingId}/{centralCode}:
-    post:
-      operationId: processCirculationRequest
-      description: Process circulation request
-      tags:
-        - inn-reach-circulation
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/circulationRequestDTO"
-      responses:
-        '200':
-          description: Circulation request successfully processed
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/innReachResponseDTO"
-        '400':
-          description: An error occurred during processing of circulation request
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/innReachResponseDTO"
-        '500':
-          $ref: "api-common.yaml#/components/responses/trait_response_500"
-      parameters:
-        - $ref: '#/components/parameters/trackingId'
-        - $ref: '#/components/parameters/centralCode'
-        - $ref: '#/components/parameters/circulationOperationName'
   /d2ir/circ/patronhold/{trackingId}/{centralCode}:
     post:
       operationId: patronHold
@@ -212,6 +182,35 @@ paths:
       responses:
         '200':
           description: Item shipped request complete
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/innReachResponseDTO"
+        '400':
+          description: An error occurred during processing the request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/innReachResponseDTO"
+        '500':
+          $ref: "api-common.yaml#/components/responses/trait_response_500"
+      parameters:
+        - $ref: '#/components/parameters/trackingId'
+        - $ref: '#/components/parameters/centralCode'
+  /d2ir/circ/cancelrequest/{trackingId}/{centralCode}:
+    put:
+      operationId: cancelRequest
+      description: Cancel request
+      tags:
+        - inn-reach-circulation
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/cancelRequestDTO"
+      responses:
+        '200':
+          description: Cancellation request complete
           content:
             application/json:
               schema:
@@ -318,12 +317,12 @@ components:
       $ref: schemas/innReachTransactionDTO.json
     transactionHoldDTO:
       $ref: schemas/transactionHoldDTO.json
-    circulationRequestDTO:
-      $ref: schemas/d2ir/circulationRequestDTO.json
     patronHoldDTO:
       $ref: schemas/d2ir/patronHoldDTO.json
     itemShippedDTO:
       $ref: schemas/d2ir/itemShippedDTO.json
+    cancelRequestDTO:
+      $ref: schemas/d2ir/cancelRequestDTO.json
     transferRequestDTO:
       $ref: schemas/d2ir/transferRequestDTO.json
     innReachTransactionsDTO:
