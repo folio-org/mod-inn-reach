@@ -27,7 +27,7 @@ public class InnReachCirculationController implements InnReachCirculationApi {
 
 
   @Override
-  @PostMapping("/patronHold/{trackingId}/{centralCode}")
+  @PostMapping("/patronhold/{trackingId}/{centralCode}")
   public ResponseEntity<InnReachResponseDTO> patronHold(@PathVariable String trackingId,
       @PathVariable String centralCode, PatronHoldDTO patronHold) {
     var innReachResponse = circulationService.initiatePatronHold(trackingId, centralCode, patronHold);
