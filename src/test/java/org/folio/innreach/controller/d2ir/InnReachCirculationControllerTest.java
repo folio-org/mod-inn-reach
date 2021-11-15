@@ -10,8 +10,6 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TEST_METHOD;
 import static org.springframework.test.context.jdbc.SqlMergeMode.MergeMode.MERGE;
 
-import static org.folio.innreach.domain.CirculationOperation.ITEM_SHIPPED;
-import static org.folio.innreach.domain.CirculationOperation.PATRON_HOLD;
 import static org.folio.innreach.fixture.CirculationFixture.createTransactionHoldDTO;
 
 import java.util.Optional;
@@ -45,6 +43,9 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
   private static final String PRE_POPULATED_TRACKING_ID = "tracking1";
   private static final String PRE_POPULATED_CENTRAL_CODE = "d2ir";
 
+  private static final String PATRON_HOLD_OPERATION = "patronhold";
+  private static final String ITEM_SHIPPED_OPERATION = "itemshipped";
+
   @Autowired
   private TestRestTemplate testRestTemplate;
 
@@ -60,7 +61,7 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
 
     var responseEntity = testRestTemplate.postForEntity(
       "/inn-reach/d2ir/circ/{circulationOperationName}/{trackingId}/{centralCode}",
-      transactionHoldDTO, InnReachResponseDTO.class, PATRON_HOLD.getOperationName(), "tracking99", PRE_POPULATED_CENTRAL_CODE);
+      transactionHoldDTO, InnReachResponseDTO.class, PATRON_HOLD_OPERATION, "tracking99", PRE_POPULATED_CENTRAL_CODE);
 
     assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
 
@@ -87,7 +88,7 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
 
     var responseEntity = testRestTemplate.postForEntity(
       "/inn-reach/d2ir/circ/{circulationOperationName}/{trackingId}/{centralCode}",
-      transactionHoldDTO, InnReachResponseDTO.class, PATRON_HOLD.getOperationName(), PRE_POPULATED_TRACKING_ID, PRE_POPULATED_CENTRAL_CODE);
+      transactionHoldDTO, InnReachResponseDTO.class, PATRON_HOLD_OPERATION, PRE_POPULATED_TRACKING_ID, PRE_POPULATED_CENTRAL_CODE);
 
     assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
 
@@ -122,7 +123,7 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
 
     var responseEntity = testRestTemplate.postForEntity(
       "/inn-reach/d2ir/circ/{circulationOperationName}/{trackingId}/{centralCode}",
-      transactionHoldDTO, InnReachResponseDTO.class, ITEM_SHIPPED.getOperationName(), PRE_POPULATED_TRACKING_ID, PRE_POPULATED_CENTRAL_CODE);
+      transactionHoldDTO, InnReachResponseDTO.class, ITEM_SHIPPED_OPERATION, PRE_POPULATED_TRACKING_ID, PRE_POPULATED_CENTRAL_CODE);
 
     verify(inventoryService).updateItem(any());
 
@@ -148,7 +149,7 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
 
     var responseEntity = testRestTemplate.postForEntity(
       "/inn-reach/d2ir/circ/{circulationOperationName}/{trackingId}/{centralCode}",
-      transactionHoldDTO, InnReachResponseDTO.class, ITEM_SHIPPED.getOperationName(), PRE_POPULATED_TRACKING_ID, PRE_POPULATED_CENTRAL_CODE);
+      transactionHoldDTO, InnReachResponseDTO.class, ITEM_SHIPPED_OPERATION, PRE_POPULATED_TRACKING_ID, PRE_POPULATED_CENTRAL_CODE);
 
     verify(inventoryService, times(0)).updateItem(any());
 

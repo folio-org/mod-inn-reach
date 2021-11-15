@@ -4,6 +4,7 @@ import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionSt
 
 import java.util.List;
 import java.util.Objects;
+import java.util.UUID;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -12,16 +13,17 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
 
-import org.folio.innreach.domain.InnReachResponseStatus;
 import org.folio.innreach.domain.entity.InnReachTransaction;
 import org.folio.innreach.domain.entity.TransactionPatronHold;
 import org.folio.innreach.domain.exception.CirculationProcessException;
 import org.folio.innreach.domain.exception.EntityNotFoundException;
 import org.folio.innreach.domain.service.CirculationService;
+import org.folio.innreach.domain.service.InventoryService;
 import org.folio.innreach.domain.service.PatronHoldService;
 import org.folio.innreach.domain.service.impl.processor.InnReachCirculationProcessor;
 import org.folio.innreach.dto.CirculationRequestDTO;
 import org.folio.innreach.dto.InnReachResponseDTO;
+import org.folio.innreach.dto.ItemShippedDTO;
 import org.folio.innreach.dto.PatronHoldDTO;
 import org.folio.innreach.dto.TransactionHoldDTO;
 import org.folio.innreach.dto.TransferRequestDTO;
@@ -40,6 +42,7 @@ public class CirculationServiceImpl implements CirculationService {
   private final InnReachTransactionHoldMapper transactionHoldMapper;
   private final InnReachTransactionPickupLocationMapper pickupLocationMapper;
   private final PatronHoldService patronHoldService;
+  private final InventoryService inventoryService;
 
 
   @Override
@@ -77,7 +80,30 @@ public class CirculationServiceImpl implements CirculationService {
       patronHoldService.createVirtualItems(transaction);
     }
 
-    return new InnReachResponseDTO().status(InnReachResponseStatus.OK.getResponseStatus());
+    return success();
+  }
+
+  @Override
+  public InnReachResponseDTO trackShippedItem(String trackingId, String centralCode, ItemShippedDTO itemShipped) {
+    var innReachTransaction = getTransaction(trackingId, centralCode);
+
+    var itemBarcode = itemShipped.getItemBarcode();
+
+    var transactionPatronHold = (TransactionPatronHold) innReachTransaction.getHold();
+    transactionPatronHold.setShippedItemBarcode(itemBarcode);
+
+    if (Objects.nonNull(itemBarcode)) {
+      var itemByBarcode = inventoryService.getItemByBarcode(itemBarcode);
+      if (Objects.nonNull(itemByBarcode)) {
+        transactionPatronHold.setShippedItemBarcode(itemBarcode + transactionPatronHold.getItemAgencyCode());
+      }
+    }
+
+    updateFolioAssociatedItem(transactionPatronHold.getFolioItemId(), itemBarcode);
+
+    innReachTransaction.setState(InnReachTransaction.TransactionState.ITEM_SHIPPED);
+
+    return success();
   }
 
   @Override
@@ -89,6 +115,10 @@ public class CirculationServiceImpl implements CirculationService {
     transaction.getHold().setItemId(request.getNewItemId());
     transaction.setState(TRANSFER);
 
+    return success();
+  }
+
+  private InnReachResponseDTO success() {
     return new InnReachResponseDTO().status("ok").reason("success");
   }
 
@@ -115,6 +145,14 @@ public class CirculationServiceImpl implements CirculationService {
     newInnReachTransaction.setState(InnReachTransaction.TransactionState.PATRON_HOLD);
     newInnReachTransaction.setType(InnReachTransaction.TransactionType.PATRON);
     return newInnReachTransaction;
+  }
+
+  private void updateFolioAssociatedItem(UUID folioItemId, String itemBarcode) {
+    var folioAssociatedItem = inventoryService.findItem(folioItemId);
+    folioAssociatedItem.ifPresent(item -> {
+      item.setBarcode(itemBarcode);
+      inventoryService.updateItem(item);
+    });
   }
 
   private void validateItemIdsEqual(TransferRequestDTO request, InnReachTransaction transaction) {

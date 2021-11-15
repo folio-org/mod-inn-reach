@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.folio.innreach.domain.service.CirculationService;
 import org.folio.innreach.dto.CirculationRequestDTO;
 import org.folio.innreach.dto.InnReachResponseDTO;
+import org.folio.innreach.dto.ItemShippedDTO;
 import org.folio.innreach.dto.PatronHoldDTO;
 import org.folio.innreach.dto.TransferRequestDTO;
 import org.folio.innreach.rest.resource.InnReachCirculationApi;
@@ -40,6 +41,15 @@ public class InnReachCirculationController implements InnReachCirculationApi {
   public ResponseEntity<InnReachResponseDTO> patronHold(@PathVariable String trackingId,
       @PathVariable String centralCode, PatronHoldDTO patronHold) {
     var innReachResponse = circulationService.initiatePatronHold(trackingId, centralCode, patronHold);
+
+    return ResponseEntity.ok(innReachResponse);
+  }
+
+  @Override
+  @PutMapping("/itemshipped/{trackingId}/{centralCode}")
+  public ResponseEntity<InnReachResponseDTO> itemShipped(@PathVariable String trackingId,
+      @PathVariable String centralCode, ItemShippedDTO itemShipped) {
+    var innReachResponse = circulationService.trackShippedItem(trackingId, centralCode, itemShipped);
 
     return ResponseEntity.ok(innReachResponse);
   }

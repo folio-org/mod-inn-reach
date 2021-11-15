@@ -8,10 +8,8 @@ import lombok.Getter;
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 public enum CirculationOperation {
 
-  PATRON_HOLD("patronhold"),
   CANCEL_ITEM_HOLD ("cancel_itemhold"),
-  CANCEL_PATRON_HOLD("cancelrequest"),
-  ITEM_SHIPPED("itemshipped");
+  CANCEL_PATRON_HOLD("cancelrequest");
 
   private final String operationName;
 
