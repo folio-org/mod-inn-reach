@@ -33,7 +33,7 @@ public class TransactionLocalHold extends TransactionHold {
   private String callNumber;
 
   @Column(name = "central_patron_type")
-  private Integer centralPatronType;
+  private Integer centralPatronTypeLocal;
 
   @Column(name = "patron_name")
   private String patronName;

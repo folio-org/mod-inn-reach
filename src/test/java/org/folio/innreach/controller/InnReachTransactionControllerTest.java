@@ -292,21 +292,22 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   })
   void return200HttpCode_and_sortedTransactions_when_getAllTransactionsWithPatronType() {
     var responseEntity = testRestTemplate.getForEntity(
-      "/inn-reach/transactions?patronType=1", InnReachTransactionsDTO.class
+      "/inn-reach/transactions?patronType=1&patronType=0", InnReachTransactionsDTO.class
     );
 
     assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
     assertNotNull(responseEntity.getBody());
-    assertEquals(1, responseEntity.getBody().getTotalRecords());
+    assertEquals(2, responseEntity.getBody().getTotalRecords());
 
     var transactionIds = responseEntity.getBody().getTransactions().stream()
       .map(InnReachTransactionDTO::getId).collect(Collectors.toList());
-    assertTrue(transactionIds.contains(UUID.fromString(TRANSACTION_WITH_ITEM_HOLD_ID)));
+    assertTrue(transactionIds.containsAll(List.of(UUID.fromString(TRANSACTION_WITH_ITEM_HOLD_ID),
+      UUID.fromString(TRANSACTION_WITH_LOCAL_HOLD_ID))));
 
-    assertEquals(1, responseEntity.getBody().getTransactions().size());
-    var transaction = responseEntity.getBody().getTransactions().stream()
-      .findFirst().get();
-    assertEquals(1, transaction.getHold().getCentralPatronType());
+    assertEquals(2, responseEntity.getBody().getTransactions().size());
+    var centralPatronTypes = responseEntity.getBody().getTransactions().stream()
+      .map(InnReachTransactionDTO::getHold).map(TransactionHoldDTO::getCentralPatronType).collect(Collectors.toList());
+    assertTrue(centralPatronTypes.containsAll(List.of(0, 1)));
   }
 
   @Test
@@ -386,6 +387,25 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     var transactions = responseEntity.getBody().getTransactions();
     assertTrue(transactions.get(0).getHold().getCentralItemType() <
       transactions.get(2).getHold().getCentralItemType());
+  }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
+  })
+  void return200HttpCode_and_sortedTransactionList_when_SortByCentralPatronType() {
+    var responseEntity = testRestTemplate.getForEntity(
+      "/inn-reach/transactions?sortBy=PATRON_TYPE", InnReachTransactionsDTO.class
+    );
+
+    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+    assertNotNull(responseEntity.getBody());
+    assertEquals(3, responseEntity.getBody().getTotalRecords());
+
+    var transactions = responseEntity.getBody().getTransactions();
+    assertTrue(transactions.get(0).getHold().getCentralPatronType() <
+      transactions.get(1).getHold().getCentralPatronType());
   }
 
   @Test
