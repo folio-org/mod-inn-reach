@@ -27,7 +27,7 @@ public class InnReachTransactionFilterParameters {
     TRANSACTION_STATUS("state"),
     ITEM_AGENCY("itemAgencyCode"),
     PATRON_AGENCY("patronAgencyCode"),
-    PATRON_TYPE("patronType"),
+    PATRON_TYPE("centralPatronType"),
     CENTRAL_ITEM_TYPE("centralItemType");
 
     @Getter
