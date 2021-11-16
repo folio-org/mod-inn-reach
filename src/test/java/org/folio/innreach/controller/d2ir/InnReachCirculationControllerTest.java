@@ -10,8 +10,6 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TEST_METHOD;
 import static org.springframework.test.context.jdbc.SqlMergeMode.MergeMode.MERGE;
 
-import static org.folio.innreach.domain.CirculationOperation.ITEM_SHIPPED;
-import static org.folio.innreach.domain.CirculationOperation.PATRON_HOLD;
 import static org.folio.innreach.fixture.CirculationFixture.createTransactionHoldDTO;
 
 import java.util.Optional;
@@ -21,15 +19,17 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlMergeMode;
 
 import org.folio.innreach.controller.base.BaseControllerTest;
-import org.folio.innreach.domain.InnReachResponseStatus;
 import org.folio.innreach.domain.dto.folio.inventory.InventoryItemDTO;
 import org.folio.innreach.domain.service.InventoryService;
 import org.folio.innreach.dto.InnReachResponseDTO;
+import org.folio.innreach.external.dto.InnReachResponse;
 import org.folio.innreach.repository.InnReachTransactionRepository;
 
 @Sql(
@@ -44,6 +44,10 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
 
   private static final String PRE_POPULATED_TRACKING_ID = "tracking1";
   private static final String PRE_POPULATED_CENTRAL_CODE = "d2ir";
+
+  private static final String PATRON_HOLD_OPERATION = "patronhold";
+  private static final String ITEM_SHIPPED_OPERATION = "itemshipped";
+
 
   @Autowired
   private TestRestTemplate testRestTemplate;
@@ -60,7 +64,7 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
 
     var responseEntity = testRestTemplate.postForEntity(
       "/inn-reach/d2ir/circ/{circulationOperationName}/{trackingId}/{centralCode}",
-      transactionHoldDTO, InnReachResponseDTO.class, PATRON_HOLD.getOperationName(), "tracking99", PRE_POPULATED_CENTRAL_CODE);
+      transactionHoldDTO, InnReachResponseDTO.class, PATRON_HOLD_OPERATION, "tracking99", PRE_POPULATED_CENTRAL_CODE);
 
     assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
 
@@ -69,7 +73,7 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     assertNotNull(responseBody);
     assertNotNull(responseBody.getErrors());
     assertEquals(0, responseBody.getErrors().size());
-    assertEquals(InnReachResponseStatus.OK.getResponseStatus(), responseBody.getStatus());
+    assertEquals(InnReachResponse.OK_STATUS, responseBody.getStatus());
 
     var innReachTransaction = repository.findByTrackingIdAndCentralServerCode("tracking99", PRE_POPULATED_CENTRAL_CODE);
 
@@ -87,7 +91,7 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
 
     var responseEntity = testRestTemplate.postForEntity(
       "/inn-reach/d2ir/circ/{circulationOperationName}/{trackingId}/{centralCode}",
-      transactionHoldDTO, InnReachResponseDTO.class, PATRON_HOLD.getOperationName(), PRE_POPULATED_TRACKING_ID, PRE_POPULATED_CENTRAL_CODE);
+      transactionHoldDTO, InnReachResponseDTO.class, PATRON_HOLD_OPERATION, PRE_POPULATED_TRACKING_ID, PRE_POPULATED_CENTRAL_CODE);
 
     assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
 
@@ -96,7 +100,7 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     assertNotNull(responseBody);
     assertNotNull(responseBody.getErrors());
     assertEquals(0, responseBody.getErrors().size());
-    assertEquals(InnReachResponseStatus.OK.getResponseStatus(), responseBody.getStatus());
+    assertEquals(InnReachResponse.OK_STATUS, responseBody.getStatus());
 
     var updatedTransaction = repository.findByTrackingIdAndCentralServerCode(PRE_POPULATED_TRACKING_ID, PRE_POPULATED_CENTRAL_CODE);
 
@@ -120,9 +124,10 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
 
     var transactionHoldDTO = createTransactionHoldDTO();
 
-    var responseEntity = testRestTemplate.postForEntity(
-      "/inn-reach/d2ir/circ/{circulationOperationName}/{trackingId}/{centralCode}",
-      transactionHoldDTO, InnReachResponseDTO.class, ITEM_SHIPPED.getOperationName(), PRE_POPULATED_TRACKING_ID, PRE_POPULATED_CENTRAL_CODE);
+    var responseEntity = testRestTemplate.exchange(
+        "/inn-reach/d2ir/circ/{circulationOperationName}/{trackingId}/{centralCode}", HttpMethod.PUT,
+        new HttpEntity<>(transactionHoldDTO), InnReachResponseDTO.class,
+        ITEM_SHIPPED_OPERATION, PRE_POPULATED_TRACKING_ID, PRE_POPULATED_CENTRAL_CODE);
 
     verify(inventoryService).updateItem(any());
 
@@ -146,9 +151,10 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
 
     var transactionHoldDTO = createTransactionHoldDTO();
 
-    var responseEntity = testRestTemplate.postForEntity(
-      "/inn-reach/d2ir/circ/{circulationOperationName}/{trackingId}/{centralCode}",
-      transactionHoldDTO, InnReachResponseDTO.class, ITEM_SHIPPED.getOperationName(), PRE_POPULATED_TRACKING_ID, PRE_POPULATED_CENTRAL_CODE);
+    var responseEntity = testRestTemplate.exchange(
+      "/inn-reach/d2ir/circ/{circulationOperationName}/{trackingId}/{centralCode}", HttpMethod.PUT,
+      new HttpEntity<>(transactionHoldDTO), InnReachResponseDTO.class,
+      ITEM_SHIPPED_OPERATION, PRE_POPULATED_TRACKING_ID, PRE_POPULATED_CENTRAL_CODE);
 
     verify(inventoryService, times(0)).updateItem(any());
 
@@ -158,21 +164,6 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
 
     assertNotNull(responseEntityBody);
     assertEquals("ok", responseEntityBody.getStatus());
-  }
-
-  @Test
-  @Sql(scripts = {
-    "classpath:db/central-server/pre-populate-central-server.sql",
-    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
-  })
-  void returnErrorMessage_whenCirculationOperationIsNotSupported() {
-    var circulationRequestDTO = createTransactionHoldDTO();
-
-    var responseEntity = testRestTemplate.postForEntity(
-      "/inn-reach/d2ir/circ/{circulationOperationName}/{trackingId}/{centralCode}",
-      circulationRequestDTO, InnReachResponseDTO.class, "notExistingOperation", PRE_POPULATED_TRACKING_ID, PRE_POPULATED_CENTRAL_CODE);
-
-    assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
   }
 
 }

@@ -2,7 +2,7 @@
   "$schema": "http://json-schema.org/draft-04/schema#",
   "allOf": [
     {
-      "$ref": "baseCircPutRequestDTO.json"
+      "$ref": "baseCircRequestDTO.json"
     }
   ],
   "description": "D2IR Transfer request",
