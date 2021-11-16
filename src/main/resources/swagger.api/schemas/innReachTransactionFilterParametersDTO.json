@@ -74,6 +74,34 @@
         "DESC"
       ],
       "default": "ASC"
+    },
+    "itemBarcode": {
+      "description": "Item barcode",
+      "type": "string"
+    },
+    "patronBarcode": {
+      "description": "Patron barcode",
+      "type": "string"
+    },
+    "itemTitle": {
+      "description": "Item title",
+      "type": "string"
+    },
+    "itemAuthor": {
+      "description": "Item author",
+      "type": "string"
+    },
+    "trackingId": {
+      "description": "Tracking id",
+      "type": "string"
+    },
+    "itemId": {
+      "description": "Item id",
+      "type": "string"
+    },
+    "patronId": {
+      "description": "Patron id",
+      "type": "string"
     }
   },
   "additionalProperties": false,

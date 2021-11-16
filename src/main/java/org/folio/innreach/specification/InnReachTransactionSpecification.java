@@ -6,6 +6,7 @@ import static org.folio.innreach.domain.entity.InnReachTransactionFilterParamete
 
 import java.util.List;
 
+import org.folio.innreach.domain.entity.TransactionPatronHold;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Component;
 
@@ -32,7 +33,14 @@ public class InnReachTransactionSpecification {
       .and(itemAgencyIn(parameters.getItemAgencyCodes()))
       .and(patronTypeIn(parameters.getPatronTypes()))
       .and(centralItemTypeIn(parameters.getCentralItemTypes()))
-      .and(sortBy(parameters.getSortBy(), parameters.getSortOrder()));
+      .and(sortBy(parameters.getSortBy(), parameters.getSortOrder()))
+      .and(itemBarcodeMatch(parameters.getItemBarcode()))
+      .and(patronBarcodeMatch(parameters.getPatronBarcode()))
+      .and(itemTitleLike(parameters.getItemTitle()))
+      .and(itemAuthorLike(parameters.getItemAuthor()))
+      .and(trackingIdMatch(parameters.getTrackingId()))
+      .and(itemIdMatch(parameters.getItemId()))
+      .and(patronIdMatch(parameters.getPatronId()));
   }
 
   static Specification<InnReachTransaction> fetchHoldAndPickupLocation() {
@@ -87,7 +95,7 @@ public class InnReachTransactionSpecification {
     return (transaction, cq, cb) -> {
       if (sortBy != null) {
         Order order;
-        if (sortBy == TransactionSortBy.PATRON_TYPE){
+        if (sortBy == TransactionSortBy.PATRON_TYPE) {
           var join = transaction.join("hold");
           var itemHold = cb.treat(join, TransactionItemHold.class);
           var localHold = cb.treat(join, TransactionLocalHold.class);
@@ -95,14 +103,70 @@ public class InnReachTransactionSpecification {
           var coalesce = cb.coalesce(itemHold.get("centralPatronTypeItem"),
             localHold.get("centralPatronTypeLocal"));
           order = sortOrder == DESC ? cb.desc(coalesce) : cb.asc(coalesce);
-        }
-        else {
+        } else {
           order = sortOrder == DESC ? cb.desc(getField(transaction, sortBy)) : cb.asc(getField(transaction, sortBy));
         }
         cq.orderBy(order);
       }
       return cb.conjunction();
     };
+  }
+
+  static Specification<InnReachTransaction> itemBarcodeMatch(String itemBarcode) {
+    return (transaction, cq, cb) -> itemBarcode == null ? cb.conjunction() :
+      cb.equal(transaction.get("hold").get("folioItemBarcode"), itemBarcode);
+  }
+
+  static Specification<InnReachTransaction> patronBarcodeMatch(String patronBarcode) {
+    return (transaction, cq, cb) -> patronBarcode == null ? cb.conjunction() :
+      cb.equal(transaction.get("hold").get("folioPatronBarcode"), patronBarcode);
+  }
+
+  static Specification<InnReachTransaction> itemTitleLike(String itemTitle) {
+    return (transaction, cq, cb) -> {
+      if (itemTitle == null) {
+        return cb.conjunction();
+      }
+      else {
+        var join = transaction.join("hold");
+        var localHold = cb.treat(join, TransactionLocalHold.class);
+        var patronHold = cb.treat(join, TransactionPatronHold.class);
+        return cb.or(
+          cb.like(cb.lower(localHold.get("titleLocal")), "%" + itemTitle.toLowerCase() + "%"),
+          cb.like(cb.lower(patronHold.get("titlePatron")), "%" + itemTitle.toLowerCase() + "%"));
+      }
+    };
+  }
+
+  static Specification<InnReachTransaction> itemAuthorLike(String itemAuthor) {
+    return (transaction, cq, cb) -> {
+      if (itemAuthor == null) {
+        return cb.conjunction();
+      }
+      else {
+        var join = transaction.join("hold");
+        var localHold = cb.treat(join, TransactionLocalHold.class);
+        var patronHold = cb.treat(join, TransactionPatronHold.class);
+        return cb.or(
+          cb.like(cb.lower(localHold.get("authorLocal")), "%" + itemAuthor.toLowerCase() + "%"),
+          cb.like(cb.lower(patronHold.get("authorPatron")), "%" + itemAuthor.toLowerCase() + "%"));
+      }
+    };
+  }
+
+  static Specification<InnReachTransaction> trackingIdMatch(String trackingId) {
+    return (transaction, cq, cb) -> trackingId == null ? cb.conjunction() :
+      cb.equal(transaction.get("trackingId"), trackingId);
+  }
+
+  static Specification<InnReachTransaction> patronIdMatch(String patronId) {
+    return (transaction, cq, cb) -> patronId == null ? cb.conjunction() :
+      cb.equal(transaction.get("hold").get("patronId"), patronId);
+  }
+
+  static Specification<InnReachTransaction> itemIdMatch(String itemId) {
+    return (transaction, cq, cb) -> itemId == null ? cb.conjunction() :
+      cb.equal(transaction.get("hold").get("itemId"), itemId);
   }
 
   private static Expression<InnReachTransaction> getField(Root<InnReachTransaction> root, TransactionSortBy sort) {

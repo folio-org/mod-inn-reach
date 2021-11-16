@@ -2,6 +2,7 @@ package org.folio.innreach.controller;
 
 import static java.util.UUID.randomUUID;
 import static org.awaitility.Awaitility.await;
+import static org.folio.innreach.dto.TransactionTypeEnum.LOCAL;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -36,6 +37,7 @@ import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import org.folio.innreach.dto.TransactionTypeEnum;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.stubbing.Answer;
@@ -438,6 +440,131 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
       .collect(Collectors.toList());
     assertFalse(transactionsForFirstPatronAgency.get(0).getHold().getItemAgencyCode().compareTo(
       transactionsForFirstPatronAgency.get(1).getHold().getItemAgencyCode()) < 0);
+  }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
+  })
+  void return200HttpCode_and_sortedTransactionList_when_getTransactionsWithItemBarcode() {
+    var responseEntity = testRestTemplate.getForEntity(
+      "/inn-reach/transactions?itemBarcode=ABC-abc-1234", InnReachTransactionsDTO.class
+    );
+
+    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+    assertNotNull(responseEntity.getBody());
+    assertEquals(1, responseEntity.getBody().getTotalRecords());
+
+    var transactions = responseEntity.getBody().getTransactions();
+    assertEquals(1, transactions.size());
+    assertEquals("ABC-abc-1234", transactions.get(0).getHold().getFolioItemBarcode());
+  }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
+  })
+  void return200HttpCode_and_sortedTransactionList_when_getTransactionsWithItemTitle() {
+    var responseEntity = testRestTemplate.getForEntity(
+      "/inn-reach/transactions?itemTitle=TITLE", InnReachTransactionsDTO.class
+    );
+
+    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+    assertNotNull(responseEntity.getBody());
+    assertEquals(2, responseEntity.getBody().getTotalRecords());
+
+    var titles = responseEntity.getBody().getTransactions().stream()
+      .map(InnReachTransactionDTO::getHold).map(TransactionHoldDTO::getTitle).collect(Collectors.toList());
+    assertEquals(2, titles.size());
+    assertTrue(titles.stream().allMatch(t -> t.toLowerCase().contains("title")));
+  }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
+  })
+  void return200HttpCode_and_sortedTransactionList_when_getTransactionsWithTrackingId() {
+    var responseEntity = testRestTemplate.getForEntity(
+      "/inn-reach/transactions?trackingId=tracking1", InnReachTransactionsDTO.class
+    );
+
+    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+    assertNotNull(responseEntity.getBody());
+    assertEquals(1, responseEntity.getBody().getTotalRecords());
+
+    var transactions = responseEntity.getBody().getTransactions();
+    assertEquals(1, transactions.size());
+    assertEquals("tracking1", transactions.get(0).getTrackingId());
+  }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
+  })
+  void return200HttpCode_and_sortedTransactionList_when_getTransactionsWithPatronId() {
+    var responseEntity = testRestTemplate.getForEntity(
+      "/inn-reach/transactions?patronId=patron2", InnReachTransactionsDTO.class
+    );
+
+    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+    assertNotNull(responseEntity.getBody());
+    assertEquals(1, responseEntity.getBody().getTotalRecords());
+
+    var transactions = responseEntity.getBody().getTransactions();
+    assertEquals(1, transactions.size());
+    assertEquals("patron2", transactions.get(0).getHold().getPatronId());
+  }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-another-inn-reach-transaction.sql"
+  })
+  void return200HttpCode_and_sortedTransactionList_when_getTransactionsWithMultipleFiltersAndSorted() {
+    var responseEntity = testRestTemplate.getForEntity(
+      "/inn-reach/transactions?type=ITEM&type=LOCAL&centralServerCode=d2ir1&itemAgencyCode=asd78&sortBy=PATRON_TYPE", InnReachTransactionsDTO.class
+    );
+
+    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+    assertNotNull(responseEntity.getBody());
+    assertEquals(2, responseEntity.getBody().getTotalRecords());
+
+    var transactions = responseEntity.getBody().getTransactions();
+    assertEquals(2, transactions.size());
+    assertTrue(transactions.stream().allMatch(t -> t.getType().equals(TransactionTypeEnum.ITEM) ||
+      t.getType().equals(LOCAL)));
+    assertTrue(transactions.stream().allMatch(t -> t.getCentralServerCode().equals("d2ir1")));
+    assertTrue(transactions.stream().allMatch(t -> t.getHold().getItemAgencyCode().equals("asd78")));
+    assertTrue(transactions.get(0).getHold().getCentralPatronType() <
+      transactions.get(1).getHold().getCentralPatronType());
+  }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-another-inn-reach-transaction.sql"
+  })
+  void return200HttpCode_and_sortedTransactionList_when_getTransactionsWithMultipleFiltersAndPaged() {
+    var responseEntity = testRestTemplate.getForEntity(
+      "/inn-reach/transactions?state=PATRON_HOLD&state=LOCAL_HOLD&patronAgencyCode=qwe12&itemAuthor=2&limit=1&offset=1", InnReachTransactionsDTO.class
+    );
+
+    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+    assertNotNull(responseEntity.getBody());
+    assertEquals(2, responseEntity.getBody().getTotalRecords());
+
+    var transactions = responseEntity.getBody().getTransactions();
+    assertEquals(1, transactions.size());
+    var transaction = transactions.get(0);
+    assertTrue(transaction.getType().equals(PATRON) || transaction.getType().equals(LOCAL));
+    assertEquals("qwe12", transaction.getHold().getPatronAgencyCode());
+    assertTrue(transaction.getHold().getAuthor().contains("2"));
   }
 
   @Test

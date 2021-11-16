@@ -18,10 +18,10 @@ import javax.persistence.Table;
 public class TransactionPatronHold extends TransactionHold {
 
   @Column(name = "title")
-  private String title;
+  private String titlePatron;
 
   @Column(name = "author")
-  private String author;
+  private String authorPatron;
 
   @Column(name = "call_number")
   private String callNumber;

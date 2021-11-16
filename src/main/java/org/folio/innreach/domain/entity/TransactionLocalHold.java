@@ -24,10 +24,10 @@ public class TransactionLocalHold extends TransactionHold {
   private String patronPhone;
 
   @Column(name = "title")
-  private String title;
+  private String titleLocal;
 
   @Column(name = "author")
-  private String author;
+  private String authorLocal;
 
   @Column(name = "callNumber")
   private String callNumber;

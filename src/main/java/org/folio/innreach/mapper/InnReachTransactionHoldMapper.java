@@ -22,14 +22,22 @@ public interface InnReachTransactionHoldMapper {
 
   @AuditableMapping
   @Mapping(target = "centralPatronType", source = "transactionLocalHold.centralPatronTypeLocal")
+  @Mapping(target = "title", source = "transactionLocalHold.titleLocal")
+  @Mapping(target = "author", source = "transactionLocalHold.authorLocal")
   TransactionHoldDTO toLocalHoldDTO(TransactionLocalHold transactionLocalHold);
 
   @Mapping(target = "centralPatronTypeLocal", source = "dto.centralPatronType")
+  @Mapping(target = "titleLocal", source = "dto.title")
+  @Mapping(target = "authorLocal", source = "dto.author")
   TransactionLocalHold toLocalHold(TransactionHoldDTO dto);
 
   @AuditableMapping
+  @Mapping(target = "title", source = "transactionPatronHold.titlePatron")
+  @Mapping(target = "author", source = "transactionPatronHold.authorPatron")
   TransactionHoldDTO toPatronHoldDTO(TransactionPatronHold transactionPatronHold);
 
+  @Mapping(target = "titlePatron", source = "dto.title")
+  @Mapping(target = "authorPatron", source = "dto.author")
   TransactionPatronHold toPatronHold(TransactionHoldDTO dto);
 
   TransactionHoldDTO mapRequest(PatronHoldDTO dto);
