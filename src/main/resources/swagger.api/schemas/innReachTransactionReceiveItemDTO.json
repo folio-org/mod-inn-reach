@@ -17,13 +17,5 @@
   },
   "additionalProperties": false,
   "required": [
-    "transactionTime",
-    "pickupLocation",
-    "patronId",
-    "patronAgencyCode",
-    "itemAgencyCode",
-    "itemId",
-    "centralPatronType",
-    "patronName"
   ]
 }
