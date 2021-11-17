@@ -22,7 +22,7 @@ public interface InnReachCirculationClient {
                                       @PathVariable("operation") String operation,
                                       @PathVariable("trackingId") String trackingId,
                                       @PathVariable("centralCode") String centralCode,
-                                      @RequestBody(required = false) Object payload);
+                                      @RequestBody Object payload);
 
   @PostMapping(value = "/{operation}/{trackingId}/{centralCode}",
     consumes = APPLICATION_JSON_VALUE, produces = APPLICATION_JSON_VALUE)
