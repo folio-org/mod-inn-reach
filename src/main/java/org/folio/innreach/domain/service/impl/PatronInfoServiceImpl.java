@@ -35,6 +35,7 @@ import org.folio.innreach.dto.PatronInfo;
 import org.folio.innreach.dto.PatronInfoResponseDTO;
 import org.folio.innreach.external.dto.PatronInfoResponse;
 import org.folio.innreach.external.mapper.InnReachResponseMapper;
+import org.folio.innreach.util.UUIDHelper;
 
 @Log4j2
 @Service
@@ -130,7 +131,7 @@ public class PatronInfoServiceImpl implements PatronInfoService {
   }
 
   private String getPatronId(User user) {
-    return user.getId().toString().replace("-", "");
+    return UUIDHelper.toStringWithoutHyphens(user.getId());
   }
 
   private PatronDTO getPatron(User user) {

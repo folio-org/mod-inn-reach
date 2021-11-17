@@ -13,14 +13,17 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import org.folio.innreach.domain.service.CirculationService;
 import org.folio.innreach.domain.service.InnReachTransactionService;
 import org.folio.innreach.domain.service.RequestService;
 import org.folio.innreach.dto.InnReachResponseDTO;
 import org.folio.innreach.dto.InnReachTransactionDTO;
 import org.folio.innreach.dto.InnReachTransactionFilterParametersDTO;
+import org.folio.innreach.dto.InnReachTransactionReceiveItemDTO;
 import org.folio.innreach.dto.InnReachTransactionsDTO;
 import org.folio.innreach.dto.TransactionHoldDTO;
 import org.folio.innreach.mapper.InnReachErrorMapper;
@@ -33,6 +36,7 @@ import org.folio.innreach.rest.resource.InnReachTransactionApi;
 public class InnReachTransactionController implements InnReachTransactionApi {
 
   private final RequestService requestService;
+  private final CirculationService circulationService;
   private final InnReachTransactionService transactionService;
   private final InnReachErrorMapper mapper;
 
@@ -57,6 +61,14 @@ public class InnReachTransactionController implements InnReachTransactionApi {
   public ResponseEntity<InnReachTransactionDTO> getInnReachTransaction(@PathVariable UUID id) {
     var innReachTransaction = transactionService.getInnReachTransaction(id);
     return ResponseEntity.ok(innReachTransaction);
+  }
+
+  @Override
+  @PutMapping("/inn-reach/transactions/{id}/receive-item/{servicePointId}")
+  public ResponseEntity<InnReachTransactionReceiveItemDTO> receivePatronHoldItem(UUID id, UUID servicePointId) {
+    var response = circulationService.receivePatronHoldItem(id, servicePointId);
+
+    return ResponseEntity.ok(response);
   }
 
   @Override
