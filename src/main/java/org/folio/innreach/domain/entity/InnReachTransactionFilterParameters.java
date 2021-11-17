@@ -15,7 +15,7 @@ public class InnReachTransactionFilterParameters {
   private List<String> itemAgencyCodes;
   private List<Integer> patronTypes;
   private List<Integer> centralItemTypes;
-  private TransactionSortBy sortBy;
+  private SortBy sortBy;
   private SortOrder sortOrder;
   private String itemBarcode;
   private String patronBarcode;
@@ -26,7 +26,7 @@ public class InnReachTransactionFilterParameters {
   private String itemId;
 
   @AllArgsConstructor
-  public enum TransactionSortBy {
+  public enum SortBy {
     TRANSACTION_TIME("transactionTime"),
     DATE_CREATED("createdDate"),
     DATE_MODIFIED("updatedDate"),
@@ -34,12 +34,17 @@ public class InnReachTransactionFilterParameters {
     TRANSACTION_STATUS("state"),
     ITEM_AGENCY("itemAgencyCode"),
     PATRON_AGENCY("patronAgencyCode"),
-    PATRON_TYPE("centralPatronType"),
+    CENTRAL_PATRON_TYPE("centralPatronType"),
     CENTRAL_ITEM_TYPE("centralItemType");
 
     @Getter
     private final String value;
   }
 
-  public enum SortOrder { ASC, DESC }
+  @AllArgsConstructor
+  public enum SortOrder {
+    ASC("asc"), DESC("desc");
+    @Getter
+    private final String value;
+  }
 }

@@ -6,6 +6,8 @@ import org.folio.innreach.domain.entity.TransactionLocalHold;
 import org.folio.innreach.domain.entity.TransactionPatronHold;
 import org.folio.innreach.dto.InnReachTransactionDTO;
 import org.folio.innreach.dto.InnReachTransactionsDTO;
+import org.folio.innreach.dto.TransactionStateEnum;
+import org.folio.innreach.dto.TransactionTypeEnum;
 import org.mapstruct.Builder;
 import org.mapstruct.InjectionStrategy;
 import org.mapstruct.Mapper;
@@ -13,6 +15,7 @@ import org.mapstruct.Mapping;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -27,9 +30,9 @@ public abstract class InnReachTransactionMapper {
   @AuditableMapping
   public abstract InnReachTransactionDTO toDTOWithoutHold(InnReachTransaction entity);
 
-  public InnReachTransactionDTO toDTO(InnReachTransaction entity){
+  public InnReachTransactionDTO toDTO(InnReachTransaction entity) {
     var dto = toDTOWithoutHold(entity);
-    switch (entity.getType()){
+    switch (entity.getType()) {
       case ITEM:
         dto.setHold(holdMapper.toItemHoldDTO((TransactionItemHold) entity.getHold()));
         break;
@@ -45,7 +48,7 @@ public abstract class InnReachTransactionMapper {
     return dto;
   }
 
-  public List<InnReachTransactionDTO> toDTOs(Iterable<InnReachTransaction> entities){
+  public List<InnReachTransactionDTO> toDTOs(Iterable<InnReachTransaction> entities) {
     List<InnReachTransactionDTO> dtos = new LinkedList<>();
     for (InnReachTransaction transaction : entities) {
       var dto = toDTO(transaction);
@@ -58,5 +61,17 @@ public abstract class InnReachTransactionMapper {
     List<InnReachTransactionDTO> dtos = emptyIfNull(toDTOs(pageable));
 
     return new InnReachTransactionsDTO().transactions(dtos).totalRecords((int) pageable.getTotalElements());
+  }
+
+  public TransactionStateEnum toDTOEnum(InnReachTransaction.TransactionState state) {
+    return state == null ? null : Arrays.stream(TransactionStateEnum.values())
+      .filter(e -> e.getValue().equals(state.getValue())).findFirst().orElseThrow(() ->
+        new IllegalArgumentException("No enum found for value " + state.getValue()));
+  }
+
+  public TransactionTypeEnum toDTOEnum(InnReachTransaction.TransactionType type) {
+    return type == null ? null : Arrays.stream(TransactionTypeEnum.values())
+      .filter(e -> e.getValue().equals(type.getValue())).findFirst().orElseThrow(() ->
+        new IllegalArgumentException("No enum found for value " + type.getValue()));
   }
 }

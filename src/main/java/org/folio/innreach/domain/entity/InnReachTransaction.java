@@ -21,6 +21,7 @@ import javax.persistence.NamedQuery;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
 
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -83,28 +84,36 @@ public class InnReachTransaction extends Auditable implements Identifiable<UUID>
   @JoinColumn(name = "transaction_hold_id", unique = true)
   private TransactionHold hold;
 
+  @AllArgsConstructor
   public enum TransactionState {
-    ITEM_HOLD,
-    PATRON_HOLD,
-    LOCAL_HOLD,
-    BORROWER_RENEW,
-    BORROWING_SITE_CANCEL,
-    ITEM_IN_TRANSIT,
-    RECEIVE_UNANNOUNCED,
-    RETURN_UNCIRCULATED,
-    CLAIMS_RETURNED,
-    ITEM_RECEIVED,
-    ITEM_SHIPPED,
-    LOCAL_CHECKOUT,
-    CANCEL_REQUEST,
-    FINAL_CHECKIN,
-    RECALL,
-    TRANSFER
+    ITEM_HOLD("itemHold"),
+    PATRON_HOLD("patronHold"),
+    LOCAL_HOLD("localHold"),
+    BORROWER_RENEW("borrowedRenew"),
+    BORROWING_SITE_CANCEL("borrowingSiteCancels"),
+    ITEM_IN_TRANSIT("itemInTransit"),
+    RECEIVE_UNANNOUNCED("receiveUnannounced"),
+    RETURN_UNCIRCULATED("returnUncirculated"),
+    CLAIMS_RETURNED("claimsReturned"),
+    ITEM_RECEIVED("itemReceived"),
+    ITEM_SHIPPED("itemShipped"),
+    LOCAL_CHECKOUT("localCheckout"),
+    CANCEL_REQUEST("cancelRequest"),
+    FINAL_CHECKIN("finalCheckin"),
+    RECALL("recall"),
+    TRANSFER("transfer");
+
+    @Getter
+    private final String value;
   }
 
+  @AllArgsConstructor
   public enum TransactionType {
-    ITEM,
-    PATRON,
-    LOCAL
+    ITEM("item"),
+    PATRON("patron"),
+    LOCAL("local");
+
+    @Getter
+    private final String value;
   }
 }
