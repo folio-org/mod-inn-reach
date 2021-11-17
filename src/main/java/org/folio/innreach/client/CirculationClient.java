@@ -35,7 +35,7 @@ public interface CirculationClient {
   @PostMapping("/requests/{requestId}/move")
   RequestDTO moveRequest(@PathVariable("requestId") UUID requestId, @RequestBody MoveRequestDTO payload);
 
-  @PostMapping("check-in-by-barcode")
+  @PostMapping("/check-in-by-barcode")
   CheckInResponseDTO checkInByBarcode(CheckInRequestDTO checkIn);
 
 }
