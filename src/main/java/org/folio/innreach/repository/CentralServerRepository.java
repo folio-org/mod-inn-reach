@@ -25,7 +25,7 @@ public interface CentralServerRepository extends JpaRepository<CentralServer, UU
   @Query(name = CentralServer.FETCH_ONE_BY_CENTRAL_CODE_QUERY_NAME)
   Optional<CentralServer> fetchOneByCentralCode(String code);
 
-  @Query(name = CentralServer.FETCH_CONNECTION_DETAILS_QUERY_NAME)
+  @Query(name = CentralServer.FETCH_CONNECTION_DETAILS_BY_ID_QUERY_NAME)
   Optional<CentralServerConnectionDetailsDTO> fetchConnectionDetails(UUID id);
 
   @Query(name = CentralServer.FETCH_CONNECTION_DETAILS_BY_CENTRAL_CODE_QUERY_NAME)

@@ -4,8 +4,8 @@ import static org.folio.innreach.domain.entity.CentralServer.FETCH_ALL_BY_ID_QUE
 import static org.folio.innreach.domain.entity.CentralServer.FETCH_ALL_BY_ID_QUERY_NAME;
 import static org.folio.innreach.domain.entity.CentralServer.FETCH_CONNECTION_DETAILS_BY_CENTRAL_CODE_QUERY;
 import static org.folio.innreach.domain.entity.CentralServer.FETCH_CONNECTION_DETAILS_BY_CENTRAL_CODE_QUERY_NAME;
-import static org.folio.innreach.domain.entity.CentralServer.FETCH_CONNECTION_DETAILS_QUERY;
-import static org.folio.innreach.domain.entity.CentralServer.FETCH_CONNECTION_DETAILS_QUERY_NAME;
+import static org.folio.innreach.domain.entity.CentralServer.FETCH_CONNECTION_DETAILS_BY_ID_QUERY;
+import static org.folio.innreach.domain.entity.CentralServer.FETCH_CONNECTION_DETAILS_BY_ID_QUERY_NAME;
 import static org.folio.innreach.domain.entity.CentralServer.FETCH_ONE_BY_CENTRAL_CODE_QUERY;
 import static org.folio.innreach.domain.entity.CentralServer.FETCH_ONE_BY_CENTRAL_CODE_QUERY_NAME;
 import static org.folio.innreach.domain.entity.CentralServer.FETCH_ONE_BY_ID_QUERY;
@@ -71,8 +71,8 @@ import org.folio.innreach.domain.entity.base.Identifiable;
   query = GET_ID_BY_CENTRAL_CODE_QUERY
 )
 @NamedQuery(
-  name = FETCH_CONNECTION_DETAILS_QUERY_NAME,
-  query = FETCH_CONNECTION_DETAILS_QUERY,
+  name = FETCH_CONNECTION_DETAILS_BY_ID_QUERY_NAME,
+  query = FETCH_CONNECTION_DETAILS_BY_ID_QUERY,
   hints = @QueryHint(name = QueryHints.PASS_DISTINCT_THROUGH, value = "false")
 )
 @NamedQuery(
@@ -106,7 +106,7 @@ public class CentralServer extends Auditable implements Identifiable<UUID> {
   public static final String GET_ID_BY_CENTRAL_CODE_QUERY_NAME = "CentralServer.getIdByCentralCode";
   public static final String GET_ID_BY_CENTRAL_CODE_QUERY = "SELECT cs.id FROM CentralServer cs WHERE cs.centralServerCode = :centralCode";
 
-  public static final String FETCH_CONNECTION_DETAILS_QUERY_NAME = "CentralServer.fetchConnectionDetails";
+  public static final String FETCH_CONNECTION_DETAILS_BY_ID_QUERY_NAME = "CentralServer.fetchConnectionDetails";
   public static final String FETCH_CONNECTION_DETAILS_BY_CENTRAL_CODE_QUERY_NAME = "CentralServer.fetchConnectionDetailsByCode";
 
   public static final String FETCH_CONNECTION_DETAILS_QUERY =
