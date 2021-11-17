@@ -158,7 +158,7 @@ public class CirculationServiceImpl implements CirculationService {
 
     transactionRepository.save(transaction);
 
-//    reportItemReceived(transaction);
+    reportItemReceived(transaction);
 
     return new InnReachTransactionReceiveItemDTO()
       .transaction(transactionMapper.toDTO(transaction))
