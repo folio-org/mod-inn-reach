@@ -47,6 +47,7 @@ class TransferRequestCirculationApiTest extends BaseApiControllerTest {
   private static final String PRE_POPULATED_TRACKING_ID = "tracking1";
   private static final String PRE_POPULATED_CENTRAL_CODE = "d2ir";
   private static final String PRE_POPULATED_ITEM_ID = "item1";
+  private static final String PRE_POPULATED_ITEM_AGENCY_CODE = "asd34";
   private static final String NEW_ITEM_ID = "newitem";
 
   private static final String TRANSFERREQ_URL = "/inn-reach/d2ir/circ/transferrequest/{trackingId}/{centralCode}";
@@ -57,8 +58,7 @@ class TransferRequestCirculationApiTest extends BaseApiControllerTest {
 
   @Test
   void updateTransactionItemId_with_newItemFromRequest() throws Exception {
-    TransferRequestDTO req = createTransferRequestDTO();
-    req.setItemId(PRE_POPULATED_ITEM_ID);
+    var req = createTransferRequest();
     req.setNewItemId(NEW_ITEM_ID);
 
     putAndExpectOk(transferReqUri(), req);
@@ -83,7 +83,7 @@ class TransferRequestCirculationApiTest extends BaseApiControllerTest {
 
   @Test
   void return400_when_ItemIdDoesntMatch() throws Exception {
-    var req = createTransferRequestDTO();
+    var req = createTransferRequest();
     req.setItemId(randomAlphanumeric32Max());
 
     putReq(transferReqUri(), req)
@@ -92,6 +92,28 @@ class TransferRequestCirculationApiTest extends BaseApiControllerTest {
         .andExpect(failedWithReason(containsString(req.getItemId()), containsString(PRE_POPULATED_ITEM_ID)))
         .andExpect(emptyErrors())
         .andExpect(exceptionMatch(IllegalArgumentException.class));
+  }
+
+  @Test
+  void return400_when_ItemAgencyCodeDoesntMatch() throws Exception {
+    var req = createTransferRequest();
+    req.setItemAgencyCode(randomAlphanumeric5());
+
+    putReq(transferReqUri(), req)
+        .andDo(logResponse())
+        .andExpect(status().isBadRequest())
+        .andExpect(failedWithReason(containsString(req.getItemAgencyCode()), containsString(PRE_POPULATED_ITEM_AGENCY_CODE)))
+        .andExpect(emptyErrors())
+        .andExpect(exceptionMatch(IllegalArgumentException.class));
+  }
+
+  private static TransferRequestDTO createTransferRequest() {
+    var req = createTransferRequestDTO();
+
+    req.setItemId(PRE_POPULATED_ITEM_ID);
+    req.setItemAgencyCode(PRE_POPULATED_ITEM_AGENCY_CODE);
+
+    return req;
   }
 
   static Stream<Arguments> transactionNotFoundArgProvider() {
