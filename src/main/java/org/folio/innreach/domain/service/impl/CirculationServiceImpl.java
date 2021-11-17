@@ -30,7 +30,8 @@ import org.folio.innreach.dto.ItemShippedDTO;
 import org.folio.innreach.dto.PatronHoldDTO;
 import org.folio.innreach.dto.TransactionHoldDTO;
 import org.folio.innreach.dto.TransferRequestDTO;
-import org.folio.innreach.external.client.feign.InnReachCirculationClient;
+import org.folio.innreach.external.exception.InnReachException;
+import org.folio.innreach.external.service.InnReachExternalService;
 import org.folio.innreach.mapper.InnReachTransactionHoldMapper;
 import org.folio.innreach.mapper.InnReachTransactionMapper;
 import org.folio.innreach.mapper.InnReachTransactionPickupLocationMapper;
@@ -49,7 +50,7 @@ public class CirculationServiceImpl implements CirculationService {
   private final PatronHoldService patronHoldService;
   private final RequestService requestService;
   private final InventoryService inventoryService;
-  private final InnReachCirculationClient innReachCirculationClient;
+  private final InnReachExternalService innReachExternalService;
 
   @Override
   public InnReachResponseDTO initiatePatronHold(String trackingId, String centralCode, PatronHoldDTO patronHold) {
@@ -168,12 +169,18 @@ public class CirculationServiceImpl implements CirculationService {
 
   private void reportItemReceived(InnReachTransaction transaction) {
     var centralCode = transaction.getCentralServerCode();
-    var response = innReachCirculationClient.postCircRequest(centralCode, "itemreceived",
-      transaction.getTrackingId(), centralCode);
 
-    if (!"ok".equals(response.getStatus())) {
-      log.warn("Unexpected D2IR response: {}", response);
+    var requestPath = resolveItemReceivedPath(transaction.getTrackingId(), centralCode);
+
+    try {
+      innReachExternalService.postInnReachApi(centralCode, requestPath);
+    } catch (InnReachException e) {
+      log.warn("Unexpected D2IR response: {}", e.getMessage(), e);
     }
+  }
+
+  private String resolveItemReceivedPath(String trackingId, String centralServerCode) {
+    return String.format("/circ/itemreceived/%s/%s", trackingId, centralServerCode);
   }
 
   private InnReachResponseDTO success() {

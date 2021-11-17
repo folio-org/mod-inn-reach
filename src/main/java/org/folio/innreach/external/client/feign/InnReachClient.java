@@ -30,4 +30,10 @@ public interface InnReachClient {
                          @RequestHeader(X_FROM_CODE) String xFromCode,
                          @RequestHeader(X_TO_CODE) String xToCode,
                          Object dto);
+
+  @PostMapping(consumes = APPLICATION_JSON_VALUE, produces = APPLICATION_JSON_VALUE)
+  String postInnReachApi(URI baseUri,
+                         @RequestHeader(AUTHORIZATION) String authorizationHeader,
+                         @RequestHeader(X_FROM_CODE) String xFromCode,
+                         @RequestHeader(X_TO_CODE) String xToCode);
 }
