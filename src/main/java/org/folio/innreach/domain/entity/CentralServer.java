@@ -24,6 +24,8 @@ import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
 import javax.persistence.NamedQuery;
 import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
@@ -152,6 +154,10 @@ public class CentralServer extends Auditable implements Identifiable<UUID> {
     orphanRemoval = true
   )
   private List<LocalAgency> localAgencies = new ArrayList<>();
+
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "inn_reach_recall_user_id")
+  private InnReachRecallUser innReachRecallUser;
 
   public void setCentralServerCredentials(CentralServerCredentials centralServerCredentials) {
     if (centralServerCredentials != null) {
