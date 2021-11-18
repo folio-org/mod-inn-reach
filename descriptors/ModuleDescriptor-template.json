@@ -809,12 +809,18 @@
       "description" : "Get INN-Reach Transaction with transaction hold by id"
     },
     {
+      "permissionName" : "inn-reach.inn-reach-transaction.item.put",
+      "displayName" : "update INN-Reach Transaction",
+      "description" : "Update INN-Reach Transaction"
+    },
+    {
       "permissionName" : "inn-reach.d2ir.inn-reach-transaction.all",
       "displayName" : "inn reach API module - all permissions of inn-reach transactions",
       "description" : "All permissions of inn-reach transactions scope",
       "subPermissions" : [
         "inn-reach.d2ir.inn-reach-transaction.item.post",
-        "inn-reach.inn-reach-transaction.item.get"
+        "inn-reach.inn-reach-transaction.item.get",
+        "inn-reach.inn-reach-transaction.item.put"
       ]
     },
     {
