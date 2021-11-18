@@ -1,11 +1,14 @@
 package org.folio.innreach.domain.service.impl;
 
+import static org.apache.commons.lang3.StringUtils.capitalize;
+
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.CANCEL_REQUEST;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.TRANSFER;
 
 import java.util.Objects;
 import java.util.UUID;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -124,7 +127,8 @@ public class CirculationServiceImpl implements CirculationService {
   public InnReachResponseDTO transferItem(String trackingId, String centralCode, TransferRequestDTO request) {
     var transaction = getTransaction(trackingId, centralCode);
 
-    validateItemIdsEqual(request, transaction);
+    validateEquals(request::getItemId, () -> transaction.getHold().getItemId(), "item id");
+    validateEquals(request::getItemAgencyCode, () -> transaction.getHold().getItemAgencyCode(), "item agency code");
 
     transaction.getHold().setItemId(request.getNewItemId());
     transaction.setState(TRANSFER);
@@ -184,13 +188,13 @@ public class CirculationServiceImpl implements CirculationService {
     };
   }
 
-  private void validateItemIdsEqual(TransferRequestDTO request, InnReachTransaction transaction) {
-    var trxItemId = transaction.getHold().getItemId();
-    var reqItemId = request.getItemId();
+  private <T> void validateEquals(Supplier<T> requestField, Supplier<T> trxField, String fieldName) {
+    T reqValue = requestField.get();
+    T trxValue = trxField.get();
 
-    Assert.isTrue(Objects.equals(reqItemId, trxItemId),
-        String.format("Item id [%s] from the request doesn't match with item id [%s] in the stored transaction",
-            reqItemId, trxItemId));
+    Assert.isTrue(Objects.equals(reqValue, trxValue),
+        String.format("%s [%s] from the request doesn't match with %s [%s] in the stored transaction",
+            capitalize(fieldName), reqValue, fieldName.toLowerCase(), trxValue));
   }
 
   private InnReachTransaction getTransaction(String trackingId, String centralCode) {
