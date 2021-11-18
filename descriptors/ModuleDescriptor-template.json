@@ -365,6 +365,14 @@
           "methods": ["GET"],
           "pathPattern": "/inn-reach/transactions",
           "permissionsRequired": ["inn-reach.inn-reach-transactions.collection.get"]
+        },
+        {
+          "methods": ["PUT"],
+          "pathPattern": "/inn-reach/transactions/{id}/receive-item/{servicePointId}",
+          "permissionsRequired": ["inn-reach.inn-reach-transaction.item.put"],
+          "modulePermissions": [
+            "circulation.check-in-by-barcode.post"
+          ]
         }
       ]
     },
