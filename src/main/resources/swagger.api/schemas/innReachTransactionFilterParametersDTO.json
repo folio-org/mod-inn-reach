@@ -37,7 +37,7 @@
         "type": "string"
       }
     },
-    "patronType": {
+    "centralPatronType": {
       "description": "List of patron types",
       "type": "array",
       "items": {
@@ -51,29 +51,48 @@
         "type": "integer"
       }
     },
+    "search": {
+      "type": "string",
+      "description": "Provides ability to perform a keyword-style lookup based on the information associated with the transaction"
+    },
     "sortBy": {
       "description": "Sorting parameter",
       "type": "string",
       "enum": [
-        "TRANSACTION_TIME",
-        "DATE_CREATED",
-        "DATE_MODIFIED",
-        "TRANSACTION_TYPE",
-        "TRANSACTION_STATUS",
-        "ITEM_AGENCY",
-        "PATRON_AGENCY",
-        "PATRON_TYPE",
-        "CENTRAL_ITEM_TYPE"
+        "transactionTime",
+        "createdDate",
+        "updatedDate",
+        "type",
+        "state",
+        "itemAgencyCode",
+        "patronAgencyCode",
+        "centralPatronType",
+        "centralItemType"
+      ],
+      "x-enum-varnames": [
+        "transactionTime",
+        "createdDate",
+        "updatedDate",
+        "type",
+        "state",
+        "itemAgencyCode",
+        "patronAgencyCode",
+        "centralPatronType",
+        "centralItemType"
       ]
     },
     "sortOrder": {
       "description": "Sorting order parameter",
       "type": "string",
       "enum": [
-        "ASC",
-        "DESC"
+        "asc",
+        "desc"
       ],
-      "default": "ASC"
+      "x-enum-varnames": [
+        "asc",
+        "desc"
+      ],
+      "default": "asc"
     }
   },
   "additionalProperties": false,

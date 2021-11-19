@@ -27,9 +27,9 @@ public abstract class InnReachTransactionMapper {
   @AuditableMapping
   public abstract InnReachTransactionDTO toDTOWithoutHold(InnReachTransaction entity);
 
-  public InnReachTransactionDTO toDTO(InnReachTransaction entity){
+  public InnReachTransactionDTO toDTO(InnReachTransaction entity) {
     var dto = toDTOWithoutHold(entity);
-    switch (entity.getType()){
+    switch (entity.getType()) {
       case ITEM:
         dto.setHold(holdMapper.toItemHoldDTO((TransactionItemHold) entity.getHold()));
         break;
@@ -45,7 +45,7 @@ public abstract class InnReachTransactionMapper {
     return dto;
   }
 
-  public List<InnReachTransactionDTO> toDTOs(Iterable<InnReachTransaction> entities){
+  public List<InnReachTransactionDTO> toDTOs(Iterable<InnReachTransaction> entities) {
     List<InnReachTransactionDTO> dtos = new LinkedList<>();
     for (InnReachTransaction transaction : entities) {
       var dto = toDTO(transaction);
