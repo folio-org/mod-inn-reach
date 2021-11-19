@@ -19,14 +19,14 @@ public class InnReachTransactionFilterParameters {
   private SortOrder sortOrder;
   private String itemBarcode;
   private String patronBarcode;
-  private String itemTitle;
-  private String itemAuthor;
+  private String title;
+  private String author;
   private String trackingId;
   private String patronId;
   private String itemId;
 
   @AllArgsConstructor
-  public enum SortBy {
+  public enum SortBy{
     TRANSACTION_TIME("transactionTime"),
     DATE_CREATED("createdDate"),
     DATE_MODIFIED("updatedDate"),

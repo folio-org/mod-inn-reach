@@ -1,8 +1,5 @@
 package org.folio.innreach.mapper;
 
-import org.folio.innreach.domain.entity.InnReachTransaction;
-import org.folio.innreach.dto.TransactionStateEnum;
-import org.folio.innreach.dto.TransactionTypeEnum;
 import org.mapstruct.Builder;
 import org.mapstruct.InjectionStrategy;
 import org.mapstruct.Mapper;
@@ -34,17 +31,5 @@ public interface InnReachTransactionFilterParametersMapper {
     return sort == null ? null : Arrays.stream(InnReachTransactionFilterParameters.SortOrder.values())
       .filter(e -> e.getValue().equals(sort.getValue())).findFirst().orElseThrow(() ->
         new IllegalArgumentException("No enum found for value " + sort.getValue()));
-  }
-
-  default InnReachTransaction.TransactionType toEntityEnum(TransactionTypeEnum type){
-    return type == null ? null : Arrays.stream(InnReachTransaction.TransactionType.values())
-      .filter(e -> e.getValue().equals(type.getValue())).findFirst().orElseThrow(() ->
-        new IllegalArgumentException("No enum found for value " + type.getValue()));
-  }
-
-  default InnReachTransaction.TransactionState toEntityEnum(TransactionStateEnum state) {
-    return state == null ? null : Arrays.stream(InnReachTransaction.TransactionState.values())
-      .filter(e -> e.getValue().equals(state.getValue())).findFirst().orElseThrow(() ->
-        new IllegalArgumentException("No enum found for value " + state.getValue()));
   }
 }

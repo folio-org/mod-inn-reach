@@ -98,11 +98,11 @@
       "description": "Patron barcode",
       "type": "string"
     },
-    "itemTitle": {
+    "title": {
       "description": "Item title",
       "type": "string"
     },
-    "itemAuthor": {
+    "author": {
       "description": "Item author",
       "type": "string"
     },

@@ -22,11 +22,10 @@ import static org.folio.innreach.domain.dto.folio.inventory.InventoryItemStatus.
 import static org.folio.innreach.domain.dto.folio.inventory.InventoryItemStatus.IN_TRANSIT;
 import static org.folio.innreach.domain.dto.folio.inventory.InventoryItemStatus.MISSING;
 import static org.folio.innreach.domain.dto.folio.inventory.InventoryItemStatus.UNAVAILABLE;
-import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionType.ITEM;
-import static org.folio.innreach.dto.TransactionStateEnum.patronHold;
-import static org.folio.innreach.dto.TransactionTypeEnum.item;
-import static org.folio.innreach.dto.TransactionTypeEnum.local;
-import static org.folio.innreach.dto.TransactionTypeEnum.patron;
+import static org.folio.innreach.dto.TransactionStateEnum.PATRON_HOLD;
+import static org.folio.innreach.dto.TransactionTypeEnum.ITEM;
+import static org.folio.innreach.dto.TransactionTypeEnum.LOCAL;
+import static org.folio.innreach.dto.TransactionTypeEnum.PATRON;
 import static org.folio.innreach.fixture.InventoryItemFixture.createInventoryItemDTO;
 import static org.folio.innreach.fixture.RequestFixture.createRequestDTO;
 import static org.folio.innreach.fixture.TestUtil.deserializeFromJsonFile;
@@ -38,6 +37,7 @@ import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import org.folio.innreach.domain.entity.InnReachTransaction;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.stubbing.Answer;
@@ -225,7 +225,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   })
   void return200HttpCode_and_sortedTransactions_when_getAllTransactionsWithTypeAndState() {
     var responseEntity = testRestTemplate.getForEntity(
-      "/inn-reach/transactions?type=patron&type=item&state=patronHold", InnReachTransactionsDTO.class
+      "/inn-reach/transactions?type=PATRON&type=ITEM&state=PATRON_HOLD", InnReachTransactionsDTO.class
     );
 
     assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
@@ -239,8 +239,8 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     assertEquals(1, responseEntity.getBody().getTransactions().size());
     var transaction = responseEntity.getBody().getTransactions().stream()
       .findFirst().get();
-    assertEquals(patron, transaction.getType());
-    assertEquals(patronHold, transaction.getState());
+    assertEquals(PATRON, transaction.getType());
+    assertEquals(PATRON_HOLD, transaction.getState());
   }
 
   @Test
@@ -351,7 +351,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   })
   void return200HttpCode_and_emptyTransactionList_when_noTransactionsMatchFilters() {
     var responseEntity = testRestTemplate.getForEntity(
-      "/inn-reach/transactions?type=item&state=patronHold&centralServerCode=qwe12", InnReachTransactionsDTO.class
+      "/inn-reach/transactions?type=ITEM&state=PATRON_HOLD&centralServerCode=qwe12", InnReachTransactionsDTO.class
     );
 
     assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
@@ -468,7 +468,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   })
   void return200HttpCode_and_sortedTransactionList_when_getTransactionsWithItemTitle() {
     var responseEntity = testRestTemplate.getForEntity(
-      "/inn-reach/transactions?itemTitle=TITLE", InnReachTransactionsDTO.class
+      "/inn-reach/transactions?title=TITLE", InnReachTransactionsDTO.class
     );
 
     assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
@@ -527,7 +527,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   })
   void return200HttpCode_and_sortedTransactionList_when_getTransactionsWithMultipleFiltersAndSorted() {
     var responseEntity = testRestTemplate.getForEntity(
-      "/inn-reach/transactions?type=item&type=local&centralServerCode=d2ir1&itemAgencyCode=asd78&sortBy=centralPatronType", InnReachTransactionsDTO.class
+      "/inn-reach/transactions?type=ITEM&type=LOCAL&centralServerCode=d2ir1&itemAgencyCode=asd78&sortBy=centralPatronType", InnReachTransactionsDTO.class
     );
 
     assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
@@ -536,8 +536,8 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
 
     var transactions = responseEntity.getBody().getTransactions();
     assertEquals(2, transactions.size());
-    assertTrue(transactions.stream().allMatch(t -> t.getType().equals(item) ||
-      t.getType().equals(local)));
+    assertTrue(transactions.stream().allMatch(t -> t.getType().equals(ITEM) ||
+      t.getType().equals(LOCAL)));
     assertTrue(transactions.stream().allMatch(t -> t.getCentralServerCode().equals("d2ir1")));
     assertTrue(transactions.stream().allMatch(t -> t.getHold().getItemAgencyCode().equals("asd78")));
     assertTrue(transactions.get(0).getHold().getCentralPatronType() <
@@ -552,7 +552,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   })
   void return200HttpCode_and_sortedTransactionList_when_getTransactionsWithMultipleFiltersAndPaged() {
     var responseEntity = testRestTemplate.getForEntity(
-      "/inn-reach/transactions?state=patronHold&state=localHold&patronAgencyCode=qwe12&itemAuthor=2&limit=1&offset=1", InnReachTransactionsDTO.class
+      "/inn-reach/transactions?state=PATRON_HOLD&state=LOCAL_HOLD&patronAgencyCode=qwe12&author=2&limit=1&offset=1", InnReachTransactionsDTO.class
     );
 
     assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
@@ -562,7 +562,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     var transactions = responseEntity.getBody().getTransactions();
     assertEquals(1, transactions.size());
     var transaction = transactions.get(0);
-    assertTrue(transaction.getType().equals(patron) || transaction.getType().equals(local));
+    assertTrue(transaction.getType().equals(PATRON) || transaction.getType().equals(LOCAL));
     assertEquals("qwe12", transaction.getHold().getPatronAgencyCode());
     assertTrue(transaction.getHold().getAuthor().contains("2"));
   }
@@ -615,7 +615,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
 
     assertTrue(transaction.isPresent());
     assertEquals(PRE_POPULATED_CENTRAL_SERVER_CODE, transaction.get().getCentralServerCode());
-    assertEquals(ITEM, transaction.get().getType());
+    assertEquals(InnReachTransaction.TransactionType.ITEM, transaction.get().getType());
     assertEquals(itemHoldDTO.getItemId(), transaction.get().getHold().getItemId());
     assertEquals(itemHoldDTO.getItemAgencyCode(), transaction.get().getHold().getItemAgencyCode());
     assertEquals(transactionPickupLocationMapper.fromString(itemHoldDTO.getPickupLocation()).getDisplayName(),

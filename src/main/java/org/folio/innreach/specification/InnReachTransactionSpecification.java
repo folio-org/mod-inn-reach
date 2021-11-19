@@ -36,8 +36,8 @@ public class InnReachTransactionSpecification {
       .and(sortBy(parameters.getSortBy(), parameters.getSortOrder()))
       .and(itemBarcodeMatch(parameters.getItemBarcode()))
       .and(patronBarcodeMatch(parameters.getPatronBarcode()))
-      .and(itemTitleLike(parameters.getItemTitle()))
-      .and(itemAuthorLike(parameters.getItemAuthor()))
+      .and(itemTitleLike(parameters.getTitle()))
+      .and(itemAuthorLike(parameters.getAuthor()))
       .and(trackingIdMatch(parameters.getTrackingId()))
       .and(itemIdMatch(parameters.getItemId()))
       .and(patronIdMatch(parameters.getPatronId()));

@@ -5,13 +5,8 @@
   "type": "string",
   "additionalProperties": false,
   "enum": [
-    "item",
-    "patron",
-    "local"
-  ],
-  "x-enum-varnames": [
-    "item",
-    "patron",
-    "local"
+    "ITEM",
+    "PATRON",
+    "LOCAL"
   ]
 }
