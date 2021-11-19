@@ -105,7 +105,7 @@ public class RequestServiceImpl implements RequestService {
 
     try {
       var hold = (TransactionItemHold) transaction.getHold();
-      var patronType = hold.getCentralPatronTypeItem();
+      var patronType = hold.getCentralPatronType();
       var patronBarcode = getUserBarcode(centralServerId, patronType);
       var patron = getUserByBarcode(patronBarcode);
       var servicePointId = getDefaultServicePointId(patron.getId());

@@ -105,7 +105,7 @@ public class PatronHoldServiceImpl implements PatronHoldService {
     return InventoryInstanceDTO.builder()
       .hrid(instanceHrid)
       .instanceTypeId(instanceTypeId)
-      .title(hold.getTitlePatron())
+      .title(hold.getTitle())
       .contributors(List.of(author))
       .source(RECORD_SOURCE)
       .staffSuppress(true)

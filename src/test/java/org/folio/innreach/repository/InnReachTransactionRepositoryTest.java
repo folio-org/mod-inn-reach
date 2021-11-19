@@ -45,7 +45,7 @@ class InnReachTransactionRepositoryTest extends BaseRepositoryTest {
     assertEquals(UUID.fromString(PRE_POPULATED_TRANSACTION_PICKUP_LOCATION_ID1), fromDb.getHold().getPickupLocation().getId());
 
     var hold = (TransactionPatronHold) fromDb.getHold();
-    assertEquals("title1", hold.getTitlePatron());
+    assertEquals("title1", hold.getTitle());
   }
 
   @Test
@@ -60,8 +60,8 @@ class InnReachTransactionRepositoryTest extends BaseRepositoryTest {
     assertEquals(created.getState(), saved.getState());
     switch (created.getType()) {
       case ITEM:
-        assertEquals(((TransactionItemHold) created.getHold()).getCentralPatronTypeItem(),
-          ((TransactionItemHold) saved.getHold()).getCentralPatronTypeItem());
+        assertEquals(((TransactionItemHold) created.getHold()).getCentralPatronType(),
+          ((TransactionItemHold) saved.getHold()).getCentralPatronType());
         break;
       case PATRON:
         assertEquals(((TransactionPatronHold) created.getHold()).getShippedItemBarcode(),
@@ -86,7 +86,7 @@ class InnReachTransactionRepositoryTest extends BaseRepositoryTest {
     updatedHold.setCentralItemType(randomInteger(256));
     updatedHold.setItemAgencyCode(randomFiveCharacterCode());
     updatedHold.setPatronId(updatedPatronId);
-    updatedHold.setTitlePatron(updatedTitle);
+    updatedHold.setTitle(updatedTitle);
 
     saved.setHold(updatedHold);
     saved.setState(updatedState);
@@ -97,7 +97,7 @@ class InnReachTransactionRepositoryTest extends BaseRepositoryTest {
     assertEquals(updatedHold.getCentralItemType(), savedUpdatedHold.getCentralItemType());
     assertEquals(updatedHold.getItemAgencyCode(), savedUpdatedHold.getItemAgencyCode());
     assertEquals(updatedHold.getPatronId(), savedUpdatedHold.getPatronId());
-    assertEquals(updatedTitle, savedUpdatedHold.getTitlePatron());
+    assertEquals(updatedTitle, savedUpdatedHold.getTitle());
     assertEquals(updatedState, updated.getState());
   }
 
