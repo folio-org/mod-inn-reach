@@ -43,6 +43,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlMergeMode;
@@ -62,8 +64,12 @@ import org.folio.innreach.domain.dto.folio.inventorystorage.ServicePointUserDTO;
 import org.folio.innreach.domain.entity.TransactionItemHold;
 import org.folio.innreach.domain.entity.base.AuditableUser;
 import org.folio.innreach.domain.service.RequestService;
+import org.folio.innreach.dto.CheckInRequestDTO;
+import org.folio.innreach.dto.CheckInResponseDTO;
+import org.folio.innreach.dto.CheckInResponseDTOItem;
 import org.folio.innreach.dto.InnReachResponseDTO;
 import org.folio.innreach.dto.InnReachTransactionDTO;
+import org.folio.innreach.dto.InnReachTransactionReceiveItemDTO;
 import org.folio.innreach.dto.InnReachTransactionsDTO;
 import org.folio.innreach.dto.TransactionHoldDTO;
 import org.folio.innreach.external.client.feign.InnReachClient;
@@ -98,6 +104,8 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   private static final UUID PRE_POPULATED_TRANSACTION_ID1 = UUID.fromString("0aab1720-14b4-4210-9a19-0d0bf1cd64d3");
   private static final UUID PRE_POPULATED_TRANSACTION_ID2 = UUID.fromString("ab2393a1-acc4-4849-82ac-8cc0c37339e1");
   private static final UUID PRE_POPULATED_TRANSACTION_ID3 = UUID.fromString("79b0a1fb-55be-4e55-9d84-01303aaec1ce");
+  private static final UUID PRE_POPULATED_ITEM_SHIPPED_TRANSACTION_ID = UUID.fromString("7106c3ac-890a-4126-bf9b-a10b67555b6e");
+  private static final String PRE_POPULATED_ITEM_BARCODE = "1111111";
 
   private static final AuditableUser PRE_POPULATED_USER = AuditableUser.SYSTEM;
 
@@ -772,6 +780,82 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     assertNotNull(responseBody.getHold().getCallNumber());
     assertNotNull(responseBody.getHold().getCentralPatronType());
     assertNotNull(responseBody.getHold().getPatronName());
+  }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-transaction-item-shipped.sql"
+  })
+  void testReceiveItem_shouldCheckIn() {
+    when(circulationClient.checkInByBarcode(any(CheckInRequestDTO.class)))
+      .thenReturn(new CheckInResponseDTO().item(new CheckInResponseDTOItem().barcode(PRE_POPULATED_ITEM_BARCODE)));
+
+    var responseEntity = testRestTemplate.exchange(
+      "/inn-reach/transactions/{id}/receive-item/{servicePointId}", HttpMethod.PUT, HttpEntity.EMPTY, InnReachTransactionReceiveItemDTO.class,
+      PRE_POPULATED_ITEM_SHIPPED_TRANSACTION_ID, UUID.randomUUID()
+    );
+
+    var response = responseEntity.getBody();
+    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+    assertNotNull(response);
+
+    var transaction = response.getTransaction();
+    assertEquals(PRE_POPULATED_ITEM_SHIPPED_TRANSACTION_ID, transaction.getId());
+
+    var checkInResponse = response.getFolioCheckIn();
+    assertEquals(PRE_POPULATED_ITEM_BARCODE, checkInResponse.getItem().getBarcode());
+
+    assertFalse(response.getBarcodeAugmented());
+  }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-transaction-item-shipped.sql"
+  })
+  void testReceiveItem_shouldCheckInWithBarcodeAugmented() {
+    modifyFolioItemBarcode();
+
+    when(circulationClient.checkInByBarcode(any(CheckInRequestDTO.class)))
+      .thenReturn(new CheckInResponseDTO().item(new CheckInResponseDTOItem().barcode(PRE_POPULATED_ITEM_BARCODE)));
+
+    var responseEntity = testRestTemplate.exchange(
+      "/inn-reach/transactions/{id}/receive-item/{servicePointId}", HttpMethod.PUT, HttpEntity.EMPTY, InnReachTransactionReceiveItemDTO.class,
+      PRE_POPULATED_ITEM_SHIPPED_TRANSACTION_ID, UUID.randomUUID()
+    );
+
+    var response = responseEntity.getBody();
+    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+    assertNotNull(response);
+
+    var transaction = response.getTransaction();
+    assertEquals(PRE_POPULATED_ITEM_SHIPPED_TRANSACTION_ID, transaction.getId());
+
+    var checkInResponse = response.getFolioCheckIn();
+    assertEquals(PRE_POPULATED_ITEM_BARCODE, checkInResponse.getItem().getBarcode());
+
+    assertTrue(response.getBarcodeAugmented());
+  }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
+  })
+  void testReceiveItem_invalidTransactionState() {
+    var responseEntity = testRestTemplate.exchange(
+      "/inn-reach/transactions/{id}/receive-item/{servicePointId}", HttpMethod.PUT, HttpEntity.EMPTY, InnReachTransactionReceiveItemDTO.class,
+      PRE_POPULATED_TRANSACTION_ID1, UUID.randomUUID()
+    );
+
+    assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
+  }
+
+  private void modifyFolioItemBarcode() {
+    var transaction = repository.fetchOneById(PRE_POPULATED_ITEM_SHIPPED_TRANSACTION_ID).get();
+    transaction.getHold().setFolioItemBarcode(PRE_POPULATED_ITEM_BARCODE + "1234");
+    repository.save(transaction);
   }
 
 }

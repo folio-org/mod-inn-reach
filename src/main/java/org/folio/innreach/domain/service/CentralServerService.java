@@ -22,4 +22,6 @@ public interface CentralServerService {
   void deleteCentralServer(UUID centralServerId);
 
   CentralServerConnectionDetailsDTO getCentralServerConnectionDetails(UUID centralServerId);
+
+  CentralServerConnectionDetailsDTO getConnectionDetailsByCode(String centralCode);
 }

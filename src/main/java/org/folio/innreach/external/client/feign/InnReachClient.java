@@ -1,10 +1,10 @@
 package org.folio.innreach.external.client.feign;
 
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
+import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
 import static org.folio.innreach.external.InnReachHeaders.X_FROM_CODE;
 import static org.folio.innreach.external.InnReachHeaders.X_TO_CODE;
-import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
 import java.net.URI;
 
@@ -30,4 +30,10 @@ public interface InnReachClient {
                          @RequestHeader(X_FROM_CODE) String xFromCode,
                          @RequestHeader(X_TO_CODE) String xToCode,
                          Object dto);
+
+  @PostMapping(consumes = APPLICATION_JSON_VALUE, produces = APPLICATION_JSON_VALUE)
+  String postInnReachApi(URI baseUri,
+                         @RequestHeader(AUTHORIZATION) String authorizationHeader,
+                         @RequestHeader(X_FROM_CODE) String xFromCode,
+                         @RequestHeader(X_TO_CODE) String xToCode);
 }

@@ -1,11 +1,14 @@
 package org.folio.innreach.domain.service.impl;
 
+import static org.apache.commons.lang3.StringUtils.capitalize;
+
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.CANCEL_REQUEST;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.TRANSFER;
 
 import java.util.Objects;
 import java.util.UUID;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -25,11 +28,15 @@ import org.folio.innreach.domain.service.RequestService;
 import org.folio.innreach.dto.CancelRequestDTO;
 import org.folio.innreach.dto.Holding;
 import org.folio.innreach.dto.InnReachResponseDTO;
+import org.folio.innreach.dto.InnReachTransactionReceiveItemDTO;
 import org.folio.innreach.dto.ItemShippedDTO;
 import org.folio.innreach.dto.PatronHoldDTO;
 import org.folio.innreach.dto.TransactionHoldDTO;
 import org.folio.innreach.dto.TransferRequestDTO;
+import org.folio.innreach.external.exception.InnReachException;
+import org.folio.innreach.external.service.InnReachExternalService;
 import org.folio.innreach.mapper.InnReachTransactionHoldMapper;
+import org.folio.innreach.mapper.InnReachTransactionMapper;
 import org.folio.innreach.mapper.InnReachTransactionPickupLocationMapper;
 import org.folio.innreach.repository.InnReachTransactionRepository;
 
@@ -40,12 +47,13 @@ import org.folio.innreach.repository.InnReachTransactionRepository;
 public class CirculationServiceImpl implements CirculationService {
 
   private final InnReachTransactionRepository transactionRepository;
+  private final InnReachTransactionMapper transactionMapper;
   private final InnReachTransactionHoldMapper transactionHoldMapper;
   private final InnReachTransactionPickupLocationMapper pickupLocationMapper;
   private final PatronHoldService patronHoldService;
   private final RequestService requestService;
   private final InventoryService inventoryService;
-
+  private final InnReachExternalService innReachExternalService;
 
   @Override
   public InnReachResponseDTO initiatePatronHold(String trackingId, String centralCode, PatronHoldDTO patronHold) {
@@ -124,12 +132,59 @@ public class CirculationServiceImpl implements CirculationService {
   public InnReachResponseDTO transferItem(String trackingId, String centralCode, TransferRequestDTO request) {
     var transaction = getTransaction(trackingId, centralCode);
 
-    validateItemIdsEqual(request, transaction);
+    validateEquals(request::getItemId, () -> transaction.getHold().getItemId(), "item id");
+    validateEquals(request::getItemAgencyCode, () -> transaction.getHold().getItemAgencyCode(), "item agency code");
 
     transaction.getHold().setItemId(request.getNewItemId());
     transaction.setState(TRANSFER);
 
     return success();
+  }
+
+  @Override
+  public InnReachTransactionReceiveItemDTO receivePatronHoldItem(UUID transactionId, UUID servicePointId) {
+    var transaction = transactionRepository.fetchOneById(transactionId)
+      .orElseThrow(() -> new EntityNotFoundException(String.format("InnReach transaction with id [%s] not found!", transactionId)));
+
+    Assert.isTrue(transaction.getState() == InnReachTransaction.TransactionState.ITEM_SHIPPED,
+      "Unexpected transaction state: " + transaction.getState());
+
+    var hold = (TransactionPatronHold) transaction.getHold();
+
+    var shippedItemBarcode = hold.getShippedItemBarcode();
+    var folioItemBarcode = hold.getFolioItemBarcode();
+
+    Assert.isTrue(shippedItemBarcode != null, "shippedItemBarcode is not set");
+    Assert.isTrue(folioItemBarcode != null, "folioItemBarcode is not set");
+
+    var checkInResponse = requestService.checkInItem(transaction, servicePointId);
+
+    transaction.setState(InnReachTransaction.TransactionState.ITEM_RECEIVED);
+
+    transactionRepository.save(transaction);
+
+    reportItemReceived(transaction);
+
+    return new InnReachTransactionReceiveItemDTO()
+      .transaction(transactionMapper.toDTO(transaction))
+      .folioCheckIn(checkInResponse)
+      .barcodeAugmented(!shippedItemBarcode.equals(folioItemBarcode));
+  }
+
+  private void reportItemReceived(InnReachTransaction transaction) {
+    var centralCode = transaction.getCentralServerCode();
+
+    var requestPath = resolveItemReceivedPath(transaction.getTrackingId(), centralCode);
+
+    try {
+      innReachExternalService.postInnReachApi(centralCode, requestPath);
+    } catch (InnReachException e) {
+      log.warn("Unexpected D2IR response: {}", e.getMessage(), e);
+    }
+  }
+
+  private String resolveItemReceivedPath(String trackingId, String centralServerCode) {
+    return String.format("/circ/itemreceived/%s/%s", trackingId, centralServerCode);
   }
 
   private InnReachResponseDTO success() {
@@ -184,13 +239,13 @@ public class CirculationServiceImpl implements CirculationService {
     };
   }
 
-  private void validateItemIdsEqual(TransferRequestDTO request, InnReachTransaction transaction) {
-    var trxItemId = transaction.getHold().getItemId();
-    var reqItemId = request.getItemId();
+  private <T> void validateEquals(Supplier<T> requestField, Supplier<T> trxField, String fieldName) {
+    T reqValue = requestField.get();
+    T trxValue = trxField.get();
 
-    Assert.isTrue(Objects.equals(reqItemId, trxItemId),
-        String.format("Item id [%s] from the request doesn't match with item id [%s] in the stored transaction",
-            reqItemId, trxItemId));
+    Assert.isTrue(Objects.equals(reqValue, trxValue),
+        String.format("%s [%s] from the request doesn't match with %s [%s] in the stored transaction",
+            capitalize(fieldName), reqValue, fieldName.toLowerCase(), trxValue));
   }
 
   private InnReachTransaction getTransaction(String trackingId, String centralCode) {
