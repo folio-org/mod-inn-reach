@@ -4,9 +4,14 @@ import static org.apache.commons.collections4.CollectionUtils.isEmpty;
 
 import static org.folio.innreach.domain.entity.InnReachTransactionFilterParameters.SortOrder.DESC;
 
-import java.util.List;
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.Expression;
+import javax.persistence.criteria.Join;
+import javax.persistence.criteria.Order;
+import javax.persistence.criteria.Predicate;
+import javax.persistence.criteria.Root;
 
-import org.folio.innreach.domain.entity.TransactionPatronHold;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Component;
 
@@ -16,31 +21,61 @@ import org.folio.innreach.domain.entity.InnReachTransactionFilterParameters.Sort
 import org.folio.innreach.domain.entity.InnReachTransactionFilterParameters.SortOrder;
 import org.folio.innreach.domain.entity.TransactionItemHold;
 import org.folio.innreach.domain.entity.TransactionLocalHold;
-
-import javax.persistence.criteria.Expression;
-import javax.persistence.criteria.Order;
-import javax.persistence.criteria.Root;
+import org.folio.innreach.domain.entity.TransactionPatronHold;
 
 @Component
 public class InnReachTransactionSpecification {
 
   public Specification<InnReachTransaction> filterByParameters(InnReachTransactionFilterParameters parameters) {
     return fetchHoldAndPickupLocation()
-      .and(isOfType(parameters.getTypes()))
-      .and(isOfState(parameters.getStates()))
-      .and(centralCodeIn(parameters.getCentralServerCodes()))
-      .and(patronAgencyIn(parameters.getPatronAgencyCodes()))
-      .and(itemAgencyIn(parameters.getItemAgencyCodes()))
-      .and(patronTypeIn(parameters.getPatronTypes()))
-      .and(centralItemTypeIn(parameters.getCentralItemTypes()))
-      .and(sortBy(parameters.getSortBy(), parameters.getSortOrder()))
-      .and(itemBarcodeMatch(parameters.getItemBarcode()))
-      .and(patronBarcodeMatch(parameters.getPatronBarcode()))
-      .and(itemTitleLike(parameters.getTitle()))
-      .and(itemAuthorLike(parameters.getAuthor()))
-      .and(trackingIdMatch(parameters.getTrackingId()))
-      .and(itemIdMatch(parameters.getItemId()))
-      .and(patronIdMatch(parameters.getPatronId()));
+      .and(fieldsLookup(parameters))
+      .and(keywordLookup(parameters.getSearch()))
+      .and(sortBy(parameters.getSortBy(), parameters.getSortOrder()));
+  }
+
+  static Specification<InnReachTransaction> fieldsLookup(InnReachTransactionFilterParameters parameters) {
+    return (transaction, cq, cb) -> {
+      var hold = transaction.join("hold");
+      var itemHold = cb.treat(hold, TransactionItemHold.class);
+      var localHold = cb.treat(hold, TransactionLocalHold.class);
+
+      var typeIs = isOfType(cb, transaction, parameters);
+      var stateIs = isOfState(cb, transaction, parameters);
+      var centralCodeIn = centralCodeIn(cb, transaction, parameters);
+      var patronAgencyIn = patronAgencyIn(cb, hold, parameters);
+      var itemAgencyIn = itemAgencyIn(cb, hold, parameters);
+      var patronTypeIn = patronTypeIn(cb, itemHold, localHold, parameters);
+      var centralItemTypeIn = centralItemTypeIn(cb, hold, parameters);
+
+      return cb.and(typeIs, stateIs, centralCodeIn, patronAgencyIn, itemAgencyIn, patronTypeIn, centralItemTypeIn);
+    };
+  }
+
+  static Specification<InnReachTransaction> keywordLookup(String keyword) {
+    return (transaction, cq, cb) -> {
+      if (StringUtils.isBlank(keyword)) {
+        return cb.conjunction();
+      }
+      var lowerCaseKeyword = keyword.toLowerCase();
+
+      var hold = transaction.join("hold");
+      var localHold = cb.treat(hold, TransactionLocalHold.class);
+      var patronHold = cb.treat(hold, TransactionPatronHold.class);
+
+      var itemIdMatch = cb.equal(hold.get("itemId"), keyword);
+      var patronIdMatch = cb.equal(hold.get("patronId"), keyword);
+      var trackingIdMatch = cb.equal(transaction.get("trackingId"), keyword);
+      var patronBarcodeMatch = cb.equal(hold.get("folioPatronBarcode"), keyword);
+      var itemBarcodeMatch = cb.equal(hold.get("folioItemBarcode"), keyword);
+      var itemAuthorLike = cb.or(
+        cb.like(cb.lower(localHold.get("authorLocal")), "%" + lowerCaseKeyword + "%"),
+        cb.like(cb.lower(patronHold.get("authorPatron")), "%" + lowerCaseKeyword + "%"));
+      var itemTitleLike = cb.or(
+        cb.like(cb.lower(localHold.get("titleLocal")), "%" + lowerCaseKeyword + "%"),
+        cb.like(cb.lower(patronHold.get("titlePatron")), "%" + lowerCaseKeyword + "%"));
+
+      return cb.or(itemIdMatch, patronIdMatch, trackingIdMatch, patronBarcodeMatch, itemBarcodeMatch, itemAuthorLike, itemTitleLike);
+    };
   }
 
   static Specification<InnReachTransaction> fetchHoldAndPickupLocation() {
@@ -53,42 +88,48 @@ public class InnReachTransactionSpecification {
     };
   }
 
-  static Specification<InnReachTransaction> isOfType(List<InnReachTransaction.TransactionType> types) {
-    return (transaction, cq, cb) -> isEmpty(types) ? cb.conjunction() : transaction.get("type").in(types);
+  static Predicate isOfType(CriteriaBuilder cb, Root<InnReachTransaction> transaction, InnReachTransactionFilterParameters parameters) {
+    var types = parameters.getTypes();
+    return isEmpty(types) ? cb.conjunction() : transaction.get("type").in(types);
   }
 
-  static Specification<InnReachTransaction> isOfState(List<InnReachTransaction.TransactionState> states) {
-    return (transaction, cq, cb) -> isEmpty(states) ? cb.conjunction() : transaction.get("state").in(states);
+  static Predicate isOfState(CriteriaBuilder cb, Root<InnReachTransaction> transaction, InnReachTransactionFilterParameters parameters) {
+    var states = parameters.getStates();
+    return isEmpty(states) ? cb.conjunction() : transaction.get("state").in(states);
   }
 
-  static Specification<InnReachTransaction> centralCodeIn(List<String> centralCodes) {
-    return (transaction, cq, cb) -> isEmpty(centralCodes) ? cb.conjunction() : transaction.get("centralServerCode").in(centralCodes);
+  static Predicate centralCodeIn(CriteriaBuilder cb, Root<InnReachTransaction> transaction, InnReachTransactionFilterParameters parameters) {
+    var centralCodes = parameters.getCentralServerCodes();
+    return isEmpty(centralCodes) ? cb.conjunction() : transaction.get("centralServerCode").in(centralCodes);
   }
 
-  static Specification<InnReachTransaction> patronAgencyIn(List<String> patronAgencies) {
-    return (transaction, cq, cb) -> isEmpty(patronAgencies) ? cb.conjunction() : transaction.get("hold").get("patronAgencyCode").in(patronAgencies);
+  static Predicate patronAgencyIn(CriteriaBuilder cb, Join<Object, Object> hold, InnReachTransactionFilterParameters parameters) {
+    var patronAgencies = parameters.getPatronAgencyCodes();
+    return isEmpty(patronAgencies) ? cb.conjunction() : hold.get("patronAgencyCode").in(patronAgencies);
   }
 
-  static Specification<InnReachTransaction> itemAgencyIn(List<String> itemAgencies) {
-    return (transaction, cq, cb) -> isEmpty(itemAgencies) ? cb.conjunction() : transaction.get("hold").get("itemAgencyCode").in(itemAgencies);
+  static Predicate itemAgencyIn(CriteriaBuilder cb, Join<Object, Object> hold, InnReachTransactionFilterParameters parameters) {
+    var itemAgencies = parameters.getItemAgencyCodes();
+    return isEmpty(itemAgencies) ? cb.conjunction() : hold.get("itemAgencyCode").in(itemAgencies);
   }
 
-  static Specification<InnReachTransaction> patronTypeIn(List<Integer> patronTypes) {
-    return (transaction, cq, cb) -> {
-      if (isEmpty(patronTypes)) {
-        return cb.conjunction();
-      }
-      var join = transaction.join("hold");
-      var itemHold = cb.treat(join, TransactionItemHold.class);
-      var localHold = cb.treat(join, TransactionLocalHold.class);
-      return cb.or(
-        itemHold.get("centralPatronTypeItem").in(patronTypes),
-        localHold.get("centralPatronTypeLocal").in(patronTypes));
-    };
+  static Predicate patronTypeIn(CriteriaBuilder cb,
+                                Join<Object, TransactionItemHold> itemHold,
+                                Join<Object, TransactionLocalHold> localHold,
+                                InnReachTransactionFilterParameters parameters) {
+    var patronTypes = parameters.getPatronTypes();
+    if (isEmpty(patronTypes)) {
+      return cb.conjunction();
+    }
+
+    return cb.or(
+      itemHold.get("centralPatronTypeItem").in(patronTypes),
+      localHold.get("centralPatronTypeLocal").in(patronTypes));
   }
 
-  static Specification<InnReachTransaction> centralItemTypeIn(List<Integer> centralItemTypes) {
-    return (transaction, cq, cb) -> isEmpty(centralItemTypes) ? cb.conjunction() : transaction.get("hold").get("centralItemType").in(centralItemTypes);
+  static Predicate centralItemTypeIn(CriteriaBuilder cb, Join<Object, Object> hold, InnReachTransactionFilterParameters parameters) {
+    var centralItemTypes = parameters.getCentralItemTypes();
+    return isEmpty(centralItemTypes) ? cb.conjunction() : hold.get("centralItemType").in(centralItemTypes);
   }
 
   static Specification<InnReachTransaction> sortBy(SortBy sortBy, SortOrder sortOrder) {
@@ -110,63 +151,6 @@ public class InnReachTransactionSpecification {
       }
       return cb.conjunction();
     };
-  }
-
-  static Specification<InnReachTransaction> itemBarcodeMatch(String itemBarcode) {
-    return (transaction, cq, cb) -> itemBarcode == null ? cb.conjunction() :
-      cb.equal(transaction.get("hold").get("folioItemBarcode"), itemBarcode);
-  }
-
-  static Specification<InnReachTransaction> patronBarcodeMatch(String patronBarcode) {
-    return (transaction, cq, cb) -> patronBarcode == null ? cb.conjunction() :
-      cb.equal(transaction.get("hold").get("folioPatronBarcode"), patronBarcode);
-  }
-
-  static Specification<InnReachTransaction> itemTitleLike(String itemTitle) {
-    return (transaction, cq, cb) -> {
-      if (itemTitle == null) {
-        return cb.conjunction();
-      }
-      else {
-        var join = transaction.join("hold");
-        var localHold = cb.treat(join, TransactionLocalHold.class);
-        var patronHold = cb.treat(join, TransactionPatronHold.class);
-        return cb.or(
-          cb.like(cb.lower(localHold.get("titleLocal")), "%" + itemTitle.toLowerCase() + "%"),
-          cb.like(cb.lower(patronHold.get("titlePatron")), "%" + itemTitle.toLowerCase() + "%"));
-      }
-    };
-  }
-
-  static Specification<InnReachTransaction> itemAuthorLike(String itemAuthor) {
-    return (transaction, cq, cb) -> {
-      if (itemAuthor == null) {
-        return cb.conjunction();
-      }
-      else {
-        var join = transaction.join("hold");
-        var localHold = cb.treat(join, TransactionLocalHold.class);
-        var patronHold = cb.treat(join, TransactionPatronHold.class);
-        return cb.or(
-          cb.like(cb.lower(localHold.get("authorLocal")), "%" + itemAuthor.toLowerCase() + "%"),
-          cb.like(cb.lower(patronHold.get("authorPatron")), "%" + itemAuthor.toLowerCase() + "%"));
-      }
-    };
-  }
-
-  static Specification<InnReachTransaction> trackingIdMatch(String trackingId) {
-    return (transaction, cq, cb) -> trackingId == null ? cb.conjunction() :
-      cb.equal(transaction.get("trackingId"), trackingId);
-  }
-
-  static Specification<InnReachTransaction> patronIdMatch(String patronId) {
-    return (transaction, cq, cb) -> patronId == null ? cb.conjunction() :
-      cb.equal(transaction.get("hold").get("patronId"), patronId);
-  }
-
-  static Specification<InnReachTransaction> itemIdMatch(String itemId) {
-    return (transaction, cq, cb) -> itemId == null ? cb.conjunction() :
-      cb.equal(transaction.get("hold").get("itemId"), itemId);
   }
 
   private static Expression<InnReachTransaction> getField(Root<InnReachTransaction> root, SortBy sort) {

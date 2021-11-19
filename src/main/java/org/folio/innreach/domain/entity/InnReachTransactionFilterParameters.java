@@ -15,15 +15,9 @@ public class InnReachTransactionFilterParameters {
   private List<String> itemAgencyCodes;
   private List<Integer> patronTypes;
   private List<Integer> centralItemTypes;
+  private String search;
   private SortBy sortBy;
   private SortOrder sortOrder;
-  private String itemBarcode;
-  private String patronBarcode;
-  private String title;
-  private String author;
-  private String trackingId;
-  private String patronId;
-  private String itemId;
 
   @AllArgsConstructor
   public enum SortBy{
