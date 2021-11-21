@@ -60,8 +60,8 @@ class InnReachTransactionRepositoryTest extends BaseRepositoryTest {
     assertEquals(created.getState(), saved.getState());
     switch (created.getType()) {
       case ITEM:
-        assertEquals(((TransactionItemHold) created.getHold()).getCentralPatronTypeItem(),
-          ((TransactionItemHold) saved.getHold()).getCentralPatronTypeItem());
+        assertEquals(((TransactionItemHold) created.getHold()).getCentralPatronType(),
+          ((TransactionItemHold) saved.getHold()).getCentralPatronType());
         break;
       case PATRON:
         assertEquals(((TransactionPatronHold) created.getHold()).getShippedItemBarcode(),

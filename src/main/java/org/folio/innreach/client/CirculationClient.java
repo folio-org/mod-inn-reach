@@ -14,6 +14,8 @@ import org.folio.innreach.config.FolioFeignClientConfig;
 import org.folio.innreach.domain.dto.folio.ResultList;
 import org.folio.innreach.domain.dto.folio.circulation.MoveRequestDTO;
 import org.folio.innreach.domain.dto.folio.circulation.RequestDTO;
+import org.folio.innreach.dto.CheckInRequestDTO;
+import org.folio.innreach.dto.CheckInResponseDTO;
 
 @FeignClient(name = "circulation", configuration = FolioFeignClientConfig.class, decode404 = true)
 public interface CirculationClient {
@@ -32,5 +34,8 @@ public interface CirculationClient {
 
   @PostMapping("/requests/{requestId}/move")
   RequestDTO moveRequest(@PathVariable("requestId") UUID requestId, @RequestBody MoveRequestDTO payload);
+
+  @PostMapping("/check-in-by-barcode")
+  CheckInResponseDTO checkInByBarcode(CheckInRequestDTO checkIn);
 
 }

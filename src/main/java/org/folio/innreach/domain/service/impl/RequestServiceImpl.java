@@ -29,6 +29,7 @@ import java.net.URI;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
+import java.util.Date;
 import java.util.Set;
 import java.util.UUID;
 
@@ -57,6 +58,8 @@ import org.folio.innreach.domain.exception.EntityNotFoundException;
 import org.folio.innreach.domain.exception.ItemNotRequestableException;
 import org.folio.innreach.domain.service.InventoryService;
 import org.folio.innreach.domain.service.RequestService;
+import org.folio.innreach.dto.CheckInRequestDTO;
+import org.folio.innreach.dto.CheckInResponseDTO;
 import org.folio.innreach.dto.Holding;
 import org.folio.innreach.external.service.InnReachExternalService;
 import org.folio.innreach.mapper.InnReachTransactionPickupLocationMapper;
@@ -102,7 +105,7 @@ public class RequestServiceImpl implements RequestService {
 
     try {
       var hold = (TransactionItemHold) transaction.getHold();
-      var patronType = hold.getCentralPatronTypeItem();
+      var patronType = hold.getCentralPatronType();
       var patronBarcode = getUserBarcode(centralServerId, patronType);
       var patron = getUserByBarcode(patronBarcode);
       var servicePointId = getDefaultServicePointId(patron.getId());
@@ -187,6 +190,18 @@ public class RequestServiceImpl implements RequestService {
         () -> log.warn("No request found with id {}", requestId));
   }
 
+  @Override
+  public CheckInResponseDTO checkInItem(InnReachTransaction transaction, UUID servicePointId) {
+    log.info("Processing item check-in for transaction {}", transaction);
+
+    var checkIn = new CheckInRequestDTO()
+      .servicePointId(servicePointId)
+      .itemBarcode(transaction.getHold().getFolioItemBarcode())
+      .checkInDate(new Date());
+
+    return circulationClient.checkInByBarcode(checkIn);
+  }
+
   private void cancelRequest(RequestDTO request, String reason) {
     request.setStatus(RequestStatus.CLOSED_CANCELLED);
     request.setCancellationReasonId(INN_REACH_CANCELLATION_REASON_ID);
@@ -269,7 +284,7 @@ public class RequestServiceImpl implements RequestService {
 
   private OffsetDateTime getRequestExpirationDate(TransactionHold hold) {
     return hold.getNeedBefore() == null ? null :
-      OffsetDateTime.ofInstant(Instant.ofEpochMilli(hold.getNeedBefore()), ZoneOffset.UTC);
+      OffsetDateTime.ofInstant(Instant.ofEpochSecond(hold.getNeedBefore()), ZoneOffset.UTC);
   }
 
   private URI createOwningSiteCancelsRequestUri(String trackingId, String centralServerCode) {

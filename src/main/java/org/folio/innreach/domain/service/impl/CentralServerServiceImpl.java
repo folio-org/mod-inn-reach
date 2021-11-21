@@ -211,4 +211,10 @@ public class CentralServerServiceImpl implements CentralServerService {
     return centralServerRepository.fetchConnectionDetails(centralServerId)
       .orElseThrow(() -> new EntityNotFoundException("Central server with ID: " + centralServerId + " not found"));
   }
+
+  @Override
+  public CentralServerConnectionDetailsDTO getConnectionDetailsByCode(String centralCode) {
+    return centralServerRepository.fetchConnectionDetailsByCentralCode(centralCode)
+      .orElseThrow(() -> new EntityNotFoundException("Central server with code: " + centralCode + " not found"));
+  }
 }

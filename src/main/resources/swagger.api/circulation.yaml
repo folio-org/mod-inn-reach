@@ -116,6 +116,26 @@ paths:
           $ref: "api-common.yaml#/components/responses/trait_response_500"
       parameters:
         - $ref: 'api-common.yaml#/components/parameters/id'
+  /transactions/{id}/receive-item/{servicePointId}:
+    put:
+      operationId: receivePatronHoldItem
+      description: receive item for patron hold transaction
+      tags:
+        - inn-reach-transaction
+      responses:
+        '200':
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/innReachTransactionReceiveItemDTO"
+        '404':
+          $ref: "api-common.yaml#/components/responses/trait_response_404"
+        '500':
+          $ref: "api-common.yaml#/components/responses/trait_response_500"
+      parameters:
+        - $ref: 'api-common.yaml#/components/parameters/id'
+        - $ref: 'circulation.yaml#/components/parameters/servicePointId'
   /d2ir/circ/verifypatron:
     post:
       operationId: verifyPatron
@@ -329,6 +349,12 @@ components:
       $ref: schemas/innReachTransactionsDTO.json
     innReachTransactionFilterParametersDTO:
       $ref: schemas/innReachTransactionFilterParametersDTO.json
+    checkInRequestDTO:
+      $ref: schemas/circulation/checkInRequestDTO.json
+    checkInResponseDTO:
+      $ref: schemas/circulation/checkInResponseDTO.json
+    innReachTransactionReceiveItemDTO:
+      $ref: schemas/innReachTransactionReceiveItemDTO.json
   parameters:
     bibId:
       name: bibId
@@ -350,6 +376,13 @@ components:
       required: true
       schema:
         type: string
+    servicePointId:
+      name: servicePointId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
     circulationOperationName:
       name: circulationOperationName
       in: path

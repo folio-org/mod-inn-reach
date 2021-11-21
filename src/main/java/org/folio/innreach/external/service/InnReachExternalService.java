@@ -8,4 +8,6 @@ public interface InnReachExternalService {
   String callInnReachApi(UUID centralServerId, String innReachRequestUri);
 
   String postInnReachApi(UUID centralServerId, URI innReachRequestUri, Object dto);
+
+  String postInnReachApi(String centralCode, String innReachRequestUri);
 }
