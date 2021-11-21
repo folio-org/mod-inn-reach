@@ -17,7 +17,7 @@ import org.folio.innreach.domain.entity.InnReachRecallUser;
 
 @Sql(scripts = {
   "/db/inn-reach-recall-user/pre-populate-inn-reach-recall-user.sql",
-  "/db/central-server/pre-populate-central-server.sql"
+  "/db/central-server/pre-populate-central-server-with-recall-user.sql"
 })
 @Sql(scripts = {
   "/db/central-server/clear-central-server-tables.sql",
