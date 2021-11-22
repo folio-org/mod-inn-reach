@@ -92,18 +92,14 @@ public class CirculationServiceImpl implements CirculationService {
     var transactionPatronHold = (TransactionPatronHold) innReachTransaction.getHold();
 
     if (nonNull(itemBarcode)) {
+      var itemByBarcode = inventoryService.findItemByBarcode(itemBarcode);
+      if (itemByBarcode.isPresent()) {
+        itemBarcode += transactionPatronHold.getItemAgencyCode();
+      }
       transactionPatronHold.setShippedItemBarcode(itemBarcode);
-
-      inventoryService.findItemByBarcode(itemBarcode).ifPresentOrElse(item -> {
-        transactionPatronHold.setShippedItemBarcode(itemBarcode + transactionPatronHold.getItemAgencyCode());
-        transactionPatronHold.setFolioItemBarcode(itemBarcode + transactionPatronHold.getItemAgencyCode());
-      }, () -> {
-        transactionPatronHold.setShippedItemBarcode(itemBarcode);
-        transactionPatronHold.setFolioItemBarcode(itemBarcode);
-      });
+      transactionPatronHold.setFolioItemBarcode(itemBarcode);
+      updateFolioAssociatedItem(transactionPatronHold.getFolioItemId(), itemBarcode);
     }
-
-    updateFolioAssociatedItem(transactionPatronHold.getFolioItemId(), itemBarcode);
 
     if (nonNull(callNumber)) {
       transactionPatronHold.setCallNumber(callNumber);
