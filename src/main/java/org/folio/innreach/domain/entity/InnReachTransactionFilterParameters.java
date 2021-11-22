@@ -15,7 +15,7 @@ public class InnReachTransactionFilterParameters {
   private List<String> itemAgencyCodes;
   private List<Integer> patronTypes;
   private List<Integer> centralItemTypes;
-  private String search;
+  private String query;
   private SortBy sortBy;
   private SortOrder sortOrder;
 

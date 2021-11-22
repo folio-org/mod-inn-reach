@@ -449,7 +449,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   })
   void return200HttpCode_and_sortedTransactionList_when_getTransactionsWithItemBarcode() {
     var responseEntity = testRestTemplate.getForEntity(
-      "/inn-reach/transactions?search=ABC-abc-1234", InnReachTransactionsDTO.class
+      "/inn-reach/transactions?query=ABC-abc-1234", InnReachTransactionsDTO.class
     );
 
     assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
@@ -468,7 +468,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   })
   void return200HttpCode_and_sortedTransactionList_when_getTransactionsWithItemTitle() {
     var responseEntity = testRestTemplate.getForEntity(
-      "/inn-reach/transactions?search=TITLE", InnReachTransactionsDTO.class
+      "/inn-reach/transactions?query=TITLE", InnReachTransactionsDTO.class
     );
 
     assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
@@ -488,7 +488,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   })
   void return200HttpCode_and_sortedTransactionList_when_getTransactionsWithTrackingId() {
     var responseEntity = testRestTemplate.getForEntity(
-      "/inn-reach/transactions?search=tracking1", InnReachTransactionsDTO.class
+      "/inn-reach/transactions?query=tracking1", InnReachTransactionsDTO.class
     );
 
     assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
@@ -507,7 +507,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   })
   void return200HttpCode_and_sortedTransactionList_when_getTransactionsWithPatronId() {
     var responseEntity = testRestTemplate.getForEntity(
-      "/inn-reach/transactions?search=patron2", InnReachTransactionsDTO.class
+      "/inn-reach/transactions?query=patron2", InnReachTransactionsDTO.class
     );
 
     assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
@@ -552,7 +552,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   })
   void return200HttpCode_and_sortedTransactionList_when_getTransactionsWithMultipleFiltersAndPaged() {
     var responseEntity = testRestTemplate.getForEntity(
-      "/inn-reach/transactions?state=PATRON_HOLD&state=LOCAL_HOLD&patronAgencyCode=qwe12&search=2&limit=1&offset=1", InnReachTransactionsDTO.class
+      "/inn-reach/transactions?state=PATRON_HOLD&state=LOCAL_HOLD&patronAgencyCode=qwe12&query=2&limit=1&offset=1", InnReachTransactionsDTO.class
     );
 
     assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
