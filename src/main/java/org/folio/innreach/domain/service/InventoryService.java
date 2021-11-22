@@ -38,6 +38,8 @@ public interface InventoryService {
 
   InventoryItemDTO getItemByBarcode(String barcode);
 
+  Optional<InventoryItemDTO> findItemByBarcode(String barcode);
+
   Optional<Holding> findHolding(UUID holdingId);
 
   Holding updateHolding(Holding holding);

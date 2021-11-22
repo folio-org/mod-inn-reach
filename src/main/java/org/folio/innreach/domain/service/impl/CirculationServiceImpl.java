@@ -1,5 +1,6 @@
 package org.folio.innreach.domain.service.impl;
 
+import static java.util.Objects.nonNull;
 import static org.apache.commons.lang3.StringUtils.capitalize;
 
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.CANCEL_REQUEST;
@@ -86,18 +87,27 @@ public class CirculationServiceImpl implements CirculationService {
     var innReachTransaction = getTransaction(trackingId, centralCode);
 
     var itemBarcode = itemShipped.getItemBarcode();
+    var callNumber = itemShipped.getCallNumber();
 
     var transactionPatronHold = (TransactionPatronHold) innReachTransaction.getHold();
-    transactionPatronHold.setShippedItemBarcode(itemBarcode);
 
-    if (Objects.nonNull(itemBarcode)) {
-      var itemByBarcode = inventoryService.getItemByBarcode(itemBarcode);
-      if (Objects.nonNull(itemByBarcode)) {
+    if (nonNull(itemBarcode)) {
+      transactionPatronHold.setShippedItemBarcode(itemBarcode);
+
+      inventoryService.findItemByBarcode(itemBarcode).ifPresentOrElse(item -> {
         transactionPatronHold.setShippedItemBarcode(itemBarcode + transactionPatronHold.getItemAgencyCode());
-      }
+        transactionPatronHold.setFolioItemBarcode(itemBarcode + transactionPatronHold.getItemAgencyCode());
+      }, () -> {
+        transactionPatronHold.setShippedItemBarcode(itemBarcode);
+        transactionPatronHold.setFolioItemBarcode(itemBarcode);
+      });
     }
 
     updateFolioAssociatedItem(transactionPatronHold.getFolioItemId(), itemBarcode);
+
+    if (nonNull(callNumber)) {
+      transactionPatronHold.setCallNumber(callNumber);
+    }
 
     innReachTransaction.setState(InnReachTransaction.TransactionState.ITEM_SHIPPED);
 
