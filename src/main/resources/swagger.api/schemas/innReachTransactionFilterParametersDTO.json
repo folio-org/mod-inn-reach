@@ -51,7 +51,7 @@
         "type": "integer"
       }
     },
-    "search": {
+    "query": {
       "type": "string",
       "description": "Provides ability to perform a keyword-style lookup based on the information associated with the transaction"
     },

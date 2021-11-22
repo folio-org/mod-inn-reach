@@ -29,7 +29,7 @@ public class InnReachTransactionSpecification {
   public Specification<InnReachTransaction> filterByParameters(InnReachTransactionFilterParameters parameters) {
     return fetchHoldAndPickupLocation()
       .and(fieldsLookup(parameters))
-      .and(keywordLookup(parameters.getSearch()))
+      .and(keywordLookup(parameters.getQuery()))
       .and(sortBy(parameters.getSortBy(), parameters.getSortOrder()));
   }
 
