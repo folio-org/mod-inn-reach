@@ -265,7 +265,7 @@ class PatronInfoServiceImplTest {
     var response = service.verifyPatron(CENTRAL_CODE, VISIBLE_PATRON_ID, AGENCY_CODE, PATRON_NAME);
 
     assertNotNull(response);
-    assertNotNull(response.getPatronInfo());
+    assertNull(response.getPatronInfo());
     assertFalse(response.getRequestAllowed());
   }
 
@@ -288,7 +288,7 @@ class PatronInfoServiceImplTest {
     var response = service.verifyPatron(CENTRAL_CODE, VISIBLE_PATRON_ID, AGENCY_CODE, PATRON_NAME);
 
     assertNotNull(response);
-    assertNotNull(response.getPatronInfo());
+    assertNull(response.getPatronInfo());
     assertFalse(response.getRequestAllowed());
   }
 
@@ -355,7 +355,7 @@ class PatronInfoServiceImplTest {
     var response = service.verifyPatron(CENTRAL_CODE, VISIBLE_PATRON_ID, AGENCY_CODE, PATRON_NAME);
 
     assertNotNull(response);
-    assertNotNull(response.getPatronInfo());
+    assertNull(response.getPatronInfo());
     assertFalse(response.getRequestAllowed());
   }
 

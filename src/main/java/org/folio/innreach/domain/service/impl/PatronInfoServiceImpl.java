@@ -118,16 +118,12 @@ public class PatronInfoServiceImpl implements PatronInfoService {
 
   private boolean hasAutomatedBlocks(List<AutomatedPatronBlocksClient.AutomatedPatronBlock> blocks) {
     return CollectionUtils.emptyIfNull(blocks).stream()
-      .filter(b -> TRUE.equals(b.getBlockBorrowing()) || TRUE.equals(b.getBlockRequests()))
-      .findFirst()
-      .isPresent();
+      .anyMatch(b -> TRUE.equals(b.getBlockBorrowing()) || TRUE.equals(b.getBlockRequests()));
   }
 
   private boolean hasManualBlocks(List<ManualPatronBlocksClient.ManualPatronBlock> blocks) {
     return CollectionUtils.emptyIfNull(blocks).stream()
-      .filter(b -> TRUE.equals(b.getBorrowing()) || TRUE.equals(b.getRequests()))
-      .findFirst()
-      .isPresent();
+      .anyMatch(b -> TRUE.equals(b.getBorrowing()) || TRUE.equals(b.getRequests()));
   }
 
   private String getPatronId(User user) {
