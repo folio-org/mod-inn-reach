@@ -64,9 +64,9 @@ public class PatronInfoServiceImpl implements PatronInfoService {
       var localAgencies = emptyIfNull(centralServer.getLocalAgencies());
       var user = findPatronUser(visiblePatronId, patronName);
 
-      var patronInfo = getPatronInfo(centralServerId, localAgencies, user);
-
       var requestAllowed = requestAllowed(user);
+      var patronInfo = requestAllowed ? getPatronInfo(centralServerId, localAgencies, user) : null;
+
       response = PatronInfoResponse.of(patronInfo, requestAllowed);
     } catch (Exception e) {
       log.warn(ERROR_REASON, e);
@@ -118,16 +118,12 @@ public class PatronInfoServiceImpl implements PatronInfoService {
 
   private boolean hasAutomatedBlocks(List<AutomatedPatronBlocksClient.AutomatedPatronBlock> blocks) {
     return CollectionUtils.emptyIfNull(blocks).stream()
-      .filter(b -> TRUE.equals(b.getBlockBorrowing()) || TRUE.equals(b.getBlockRequests()))
-      .findFirst()
-      .isPresent();
+      .anyMatch(b -> TRUE.equals(b.getBlockBorrowing()) || TRUE.equals(b.getBlockRequests()));
   }
 
   private boolean hasManualBlocks(List<ManualPatronBlocksClient.ManualPatronBlock> blocks) {
     return CollectionUtils.emptyIfNull(blocks).stream()
-      .filter(b -> TRUE.equals(b.getBorrowing()) || TRUE.equals(b.getRequests()))
-      .findFirst()
-      .isPresent();
+      .anyMatch(b -> TRUE.equals(b.getBorrowing()) || TRUE.equals(b.getRequests()));
   }
 
   private String getPatronId(User user) {
