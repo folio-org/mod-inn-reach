@@ -64,9 +64,9 @@ public class PatronInfoServiceImpl implements PatronInfoService {
       var localAgencies = emptyIfNull(centralServer.getLocalAgencies());
       var user = findPatronUser(visiblePatronId, patronName);
 
-      var patronInfo = getPatronInfo(centralServerId, localAgencies, user);
-
       var requestAllowed = requestAllowed(user);
+      var patronInfo = requestAllowed ? getPatronInfo(centralServerId, localAgencies, user) : null;
+
       response = PatronInfoResponse.of(patronInfo, requestAllowed);
     } catch (Exception e) {
       log.warn(ERROR_REASON, e);

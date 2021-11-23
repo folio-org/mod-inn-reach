@@ -24,7 +24,7 @@ public class PatronInfoResponse extends InnReachResponse {
     return PatronInfoResponse.builder()
       .status(OK_STATUS)
       .reason(OK_REASON)
-      .patronInfo(requestAllowed ? patronInfo : null)
+      .patronInfo(patronInfo)
       .requestAllowed(requestAllowed)
       .build();
   }
