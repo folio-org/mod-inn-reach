@@ -1,7 +1,10 @@
 package org.folio.innreach.controller.d2ir;
 
+import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
+import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static java.lang.String.format;
 import static org.awaitility.Awaitility.await;
+import static org.hamcrest.Matchers.containsString;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
@@ -13,6 +16,9 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import static org.folio.innreach.controller.d2ir.CirculationResultUtils.emptyErrors;
+import static org.folio.innreach.controller.d2ir.CirculationResultUtils.exceptionMatch;
+import static org.folio.innreach.controller.d2ir.CirculationResultUtils.failedWithReason;
 import static org.folio.innreach.fixture.CirculationFixture.createTransactionHoldDTO;
 import static org.folio.innreach.util.UUIDHelper.toStringWithoutHyphens;
 
@@ -21,9 +27,12 @@ import java.time.Instant;
 import java.util.Map;
 import java.util.UUID;
 
+import com.github.tomakehurst.wiremock.client.WireMock;
+import org.apache.http.HttpStatus;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlMergeMode;
@@ -31,10 +40,12 @@ import org.springframework.test.context.jdbc.SqlMergeMode;
 import org.folio.innreach.client.CirculationClient;
 import org.folio.innreach.controller.base.BaseApiControllerTest;
 import org.folio.innreach.domain.entity.InnReachTransaction;
+import org.folio.innreach.domain.exception.ResourceVersionConflictException;
 import org.folio.innreach.domain.service.RequestService;
 import org.folio.innreach.mapper.InnReachTransactionPickupLocationMapper;
 import org.folio.innreach.repository.InnReachTransactionRepository;
 import org.folio.innreach.util.JsonHelper;
+import org.folio.spring.integration.XOkapiHeaders;
 
 @Sql(
   scripts = {
@@ -198,6 +209,47 @@ class PatronHoldCirculationApiTest extends BaseApiControllerTest {
 
     verify(requestService).cancelRequest(any(), eq("Test reason"));
     verify(circulationClient).updateRequest(any(), any());
+  }
+
+  @Test
+  @Sql(scripts = {
+      "classpath:db/central-server/pre-populate-central-server.sql",
+      "classpath:db/agency-loc-mapping/pre-populate-agency-location-mapping.sql",
+      "classpath:db/item-type-mapping/pre-populate-item-type-mapping.sql",
+      "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
+  })
+  void patronHold_cancelRequestFailed_when_itemVersionConflict() throws Exception {
+    Map<String, Object> requestPayload = Map
+        .of("transactionTime", Instant.now().getEpochSecond(),
+            "patronId", "12534",
+            "patronAgencyCode", "12345",
+            "itemAgencyCode", PRE_POPULATED_CENTRAL_AGENCY_CODE,
+            "itemId", ITEM_HRID,
+            "reason", "Test reason",
+            "reasonCode", 7);
+
+    stubGet(format("%s/%s", ITEMS_URL, PRE_POPULATED_ITEM_ID), "inventory/item-response.json");
+    /*stubPut(format("%s/%s", ITEMS_URL, PRE_POPULATED_ITEM_ID), "inventory/item-response.json");*/
+
+    stubFor(WireMock.put(urlEqualTo(format("%s/%s", ITEMS_URL, PRE_POPULATED_ITEM_ID)))
+        .willReturn(WireMock.status(HttpStatus.SC_CONFLICT)
+            .withHeader(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_PLAIN_VALUE)
+            .withHeader(XOkapiHeaders.URL, wm.baseUrl())
+            .withBodyFile("inventory/version-conflict.txt")));
+
+    /*stubGet(format("%s/%s", HOLDINGS_URL, HOLDING_ID), "inventory-storage/holding-response.json");
+    stubPut(format("%s/%s", HOLDINGS_URL, HOLDING_ID), "inventory-storage/holding-response.json");*/
+    stubGet(format("%s/%s", REQUESTS_URL, PRE_POPULATED_REQUEST_ID), "circulation/item-request-response.json");
+    stubPut(format("%s/%s", REQUESTS_URL, PRE_POPULATED_REQUEST_ID), "circulation/item-request-response.json");
+
+    mockMvc.perform(put(CIRCULATION_ENDPOINT, CANCEL_REQ_OPERATION, PRE_POPULATED_TRACKING_ID, PRE_POPULATED_CENTRAL_CODE)
+            .content(jsonHelper.toJson(requestPayload))
+            .contentType(MediaType.APPLICATION_JSON)
+            .headers(getOkapiHeaders()))
+        .andExpect(status().isInternalServerError())
+        .andExpect(failedWithReason(containsString("optimistic locking")))
+        .andExpect(emptyErrors())
+        .andExpect(exceptionMatch(ResourceVersionConflictException.class));
   }
 
   @Test
