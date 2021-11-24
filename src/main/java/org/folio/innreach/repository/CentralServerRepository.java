@@ -37,4 +37,7 @@ public interface CentralServerRepository extends JpaRepository<CentralServer, UU
   @Query(name = CentralServer.GET_ID_BY_CENTRAL_CODE_QUERY_NAME)
   Optional<UUID> getIdByCentralCode(String centralCode);
 
+  @Query(name = CentralServer.FETCH_RECALL_USER_BY_ID_QUERY_NAME)
+  Optional<CentralServer> fetchRecallUser(UUID id);
+
 }
