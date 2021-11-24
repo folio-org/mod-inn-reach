@@ -1,5 +1,7 @@
 package org.folio.innreach.domain.service.impl;
 
+import static java.util.Objects.isNull;
+import static java.util.Objects.nonNull;
 import static org.apache.commons.lang3.StringUtils.capitalize;
 
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.CANCEL_REQUEST;
@@ -86,18 +88,26 @@ public class CirculationServiceImpl implements CirculationService {
     var innReachTransaction = getTransaction(trackingId, centralCode);
 
     var itemBarcode = itemShipped.getItemBarcode();
+    var folioItemBarcode = itemBarcode;
+    var callNumber = itemShipped.getCallNumber();
 
     var transactionPatronHold = (TransactionPatronHold) innReachTransaction.getHold();
-    transactionPatronHold.setShippedItemBarcode(itemBarcode);
 
-    if (Objects.nonNull(itemBarcode)) {
-      var itemByBarcode = inventoryService.getItemByBarcode(itemBarcode);
-      if (Objects.nonNull(itemByBarcode)) {
-        transactionPatronHold.setShippedItemBarcode(itemBarcode + transactionPatronHold.getItemAgencyCode());
+    if (nonNull(itemBarcode)) {
+      var itemByBarcode = inventoryService.findItemByBarcode(itemBarcode);
+
+      if (itemByBarcode.isPresent()) {
+        folioItemBarcode += transactionPatronHold.getItemAgencyCode();
       }
+
+      transactionPatronHold.setShippedItemBarcode(itemBarcode);
+      transactionPatronHold.setFolioItemBarcode(folioItemBarcode);
     }
 
-    updateFolioAssociatedItem(transactionPatronHold.getFolioItemId(), itemBarcode);
+    if (nonNull(callNumber)) {
+      transactionPatronHold.setCallNumber(callNumber);
+    }
+    updateFolioAssociatedItem(transactionPatronHold.getFolioItemId(), folioItemBarcode, callNumber);
 
     innReachTransaction.setState(InnReachTransaction.TransactionState.ITEM_SHIPPED);
 
@@ -216,12 +226,23 @@ public class CirculationServiceImpl implements CirculationService {
     return newInnReachTransaction;
   }
 
-  private void updateFolioAssociatedItem(UUID folioItemId, String itemBarcode) {
-    var folioAssociatedItem = inventoryService.findItem(folioItemId);
-    folioAssociatedItem.ifPresent(item -> {
-      item.setBarcode(itemBarcode);
-      inventoryService.updateItem(item);
-    });
+  private void updateFolioAssociatedItem(UUID folioItemId, String folioItemBarcode, String callNumber) {
+    var folioAssociatedItem = inventoryService.findItem(folioItemId)
+      .orElseThrow(() -> new IllegalArgumentException("Item with id = " + folioItemId + " not found!"));
+
+    if (isNull(folioItemBarcode) && isNull(callNumber)) {
+      return;
+    }
+
+    if (nonNull(folioItemBarcode)) {
+      folioAssociatedItem.setBarcode(folioItemBarcode);
+    }
+
+    if (nonNull(callNumber)) {
+      folioAssociatedItem.setCallNumber(callNumber);
+    }
+
+    inventoryService.updateItem(folioAssociatedItem);
   }
 
   private Function<Holding, Holding> removeHoldingTransactionInfo() {

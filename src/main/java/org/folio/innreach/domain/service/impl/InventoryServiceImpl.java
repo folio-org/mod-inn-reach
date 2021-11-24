@@ -94,10 +94,19 @@ public class InventoryServiceImpl implements InventoryService {
 
   @Override
   public InventoryItemDTO getItemByBarcode(String barcode) {
+    return findItem(barcode)
+      .orElseThrow(() -> new IllegalArgumentException("Item with barcode = " + barcode + " not found"));
+  }
+
+  @Override
+  public Optional<InventoryItemDTO> findItemByBarcode(String barcode) {
+    return findItem(barcode);
+  }
+
+  private Optional<InventoryItemDTO> findItem(String barcode) {
     return inventoryClient.getItemByBarcode(barcode).getResult()
       .stream()
-      .findFirst()
-      .orElseThrow(() -> new IllegalArgumentException("Item with barcode = " + barcode + " not found"));
+      .findFirst();
   }
 
   @Override

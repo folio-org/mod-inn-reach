@@ -10,6 +10,7 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TEST_METHOD;
 import static org.springframework.test.context.jdbc.SqlMergeMode.MergeMode.MERGE;
 
+import static org.folio.innreach.fixture.CirculationFixture.createItemShippedDTO;
 import static org.folio.innreach.fixture.CirculationFixture.createTransactionHoldDTO;
 
 import java.util.Optional;
@@ -121,12 +122,13 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
   void processItemShippedCircRequest_updateFolioItem_whenAssociatedItemExists() {
     when(inventoryService.getItemByBarcode(any())).thenReturn(InventoryItemDTO.builder().build());
     when(inventoryService.findItem(any())).thenReturn(Optional.of(InventoryItemDTO.builder().build()));
+    when(inventoryService.findItemByBarcode(any())).thenReturn(Optional.of(InventoryItemDTO.builder().build()));
 
-    var transactionHoldDTO = createTransactionHoldDTO();
+    var itemShippedDTO = createItemShippedDTO();
 
     var responseEntity = testRestTemplate.exchange(
         "/inn-reach/d2ir/circ/{circulationOperationName}/{trackingId}/{centralCode}", HttpMethod.PUT,
-        new HttpEntity<>(transactionHoldDTO), InnReachResponseDTO.class,
+        new HttpEntity<>(itemShippedDTO), InnReachResponseDTO.class,
         ITEM_SHIPPED_OPERATION, PRE_POPULATED_TRACKING_ID, PRE_POPULATED_CENTRAL_CODE);
 
     verify(inventoryService).updateItem(any());
@@ -145,7 +147,7 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
   })
-  void processItemShippedCircRequest_doNotUpdateFolioItem_whenAssociatedItemDoesNotExist() {
+  void processItemShippedCircRequest_returnFailedStatus_whenAssociatedItemDoesNotExist() {
     when(inventoryService.getItemByBarcode(any())).thenReturn(InventoryItemDTO.builder().build());
     when(inventoryService.findItem(any())).thenReturn(Optional.empty());
 
@@ -158,12 +160,12 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
 
     verify(inventoryService, times(0)).updateItem(any());
 
-    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+    assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
 
     var responseEntityBody = responseEntity.getBody();
 
     assertNotNull(responseEntityBody);
-    assertEquals("ok", responseEntityBody.getStatus());
+    assertEquals("failed", responseEntityBody.getStatus());
   }
 
 }
