@@ -147,7 +147,7 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
   })
-  void processItemShippedCircRequest_doNotUpdateFolioItem_whenAssociatedItemDoesNotExist() {
+  void processItemShippedCircRequest_returnFailedStatus_whenAssociatedItemDoesNotExist() {
     when(inventoryService.getItemByBarcode(any())).thenReturn(InventoryItemDTO.builder().build());
     when(inventoryService.findItem(any())).thenReturn(Optional.empty());
 
@@ -160,12 +160,12 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
 
     verify(inventoryService, times(0)).updateItem(any());
 
-    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+    assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
 
     var responseEntityBody = responseEntity.getBody();
 
     assertNotNull(responseEntityBody);
-    assertEquals("ok", responseEntityBody.getStatus());
+    assertEquals("failed", responseEntityBody.getStatus());
   }
 
 }
