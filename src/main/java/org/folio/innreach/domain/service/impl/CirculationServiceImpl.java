@@ -102,7 +102,7 @@ public class CirculationServiceImpl implements CirculationService {
       transactionPatronHold.setShippedItemBarcode(itemBarcode);
 
       transactionPatronHold.setFolioItemBarcode(folioItemBarcode);
-      updateFolioAssociatedItem(transactionPatronHold.getFolioItemId(), folioItemBarcode);
+      updateFolioAssociatedItem(transactionPatronHold.getFolioItemId(), folioItemBarcode, callNumber);
     }
 
     if (nonNull(callNumber)) {
@@ -226,10 +226,13 @@ public class CirculationServiceImpl implements CirculationService {
     return newInnReachTransaction;
   }
 
-  private void updateFolioAssociatedItem(UUID folioItemId, String itemBarcode) {
+  private void updateFolioAssociatedItem(UUID folioItemId, String folioItemBarcode, String callNumber) {
     var folioAssociatedItem = inventoryService.findItem(folioItemId);
     folioAssociatedItem.ifPresent(item -> {
-      item.setBarcode(itemBarcode);
+      item.setBarcode(folioItemBarcode);
+      if (nonNull(callNumber)) {
+        item.setCallNumber(callNumber);
+      }
       inventoryService.updateItem(item);
     });
   }
