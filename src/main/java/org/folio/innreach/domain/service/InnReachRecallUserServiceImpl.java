@@ -38,14 +38,14 @@ public class InnReachRecallUserServiceImpl implements InnReachRecallUserService 
 
   @Override
   public InnReachRecallUserDTO getInnReachRecallUser(UUID centralServerId) {
-    var centralServer = fetchRecallUser(centralServerId);
+    var centralServer = fetchCentralServerWithRecallUser(centralServerId);
     return recallUserMapper.toDto(centralServer.getInnReachRecallUser());
   }
 
   @Override
   @Transactional
   public InnReachRecallUserDTO updateInnReachRecallUser(UUID centralServerId, InnReachRecallUserDTO innReachRecallUserDTO) {
-    var centralServer = fetchRecallUser(centralServerId);
+    var centralServer = fetchCentralServerWithRecallUser(centralServerId);
 
     var innReachRecallUser = centralServer.getInnReachRecallUser();
     innReachRecallUser.setUserId(innReachRecallUserDTO.getUserId());
@@ -53,9 +53,9 @@ public class InnReachRecallUserServiceImpl implements InnReachRecallUserService 
     return recallUserMapper.toDto(centralServer.getInnReachRecallUser());
   }
 
-  private CentralServer fetchRecallUser(UUID centralServerId) {
+  private CentralServer fetchCentralServerWithRecallUser(UUID centralServerId) {
     return centralServerRepository
-      .fetchRecallUser(centralServerId)
+      .fetchOneWithRecallUser(centralServerId)
       .orElseThrow(() -> new EntityNotFoundException("Central server with id " + centralServerId + " not found"));
   }
 

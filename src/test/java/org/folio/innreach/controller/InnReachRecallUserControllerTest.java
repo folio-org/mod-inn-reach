@@ -25,6 +25,11 @@ import org.folio.innreach.repository.CentralServerRepository;
 @SqlMergeMode(SqlMergeMode.MergeMode.MERGE)
 class InnReachRecallUserControllerTest extends BaseControllerTest {
 
+  private static final UUID PRE_POPULATED_CENTRAL_SERVER_WITH_RECALL_USER_ID = UUID.fromString("edab6baf-c696-42b1-89bb-1bbb8759b0d2");
+  private static final UUID PRE_POPULATED_CENTRAL_SERVER_ID = UUID.fromString("edab6baf-c697-42b2-89bb-1bbb8759b0d3");
+
+  private static final String CENTRAL_SERVER_RECALL_USER_URI = "/inn-reach/central-servers/{id}/inn-reach-recall-user";
+
   @Autowired
   private CentralServerRepository centralServerRepository;
 
@@ -37,8 +42,8 @@ class InnReachRecallUserControllerTest extends BaseControllerTest {
     "classpath:db/central-server/pre-populate-central-server-with-recall-user.sql"
   })
   void returnRecallUser_when_centralUserRecallUserExists() {
-    var responseEntity = testRestTemplate.getForEntity("/inn-reach/central-servers/{id}/inn-reach-recall-user",
-        InnReachRecallUserDTO.class, UUID.fromString("edab6baf-c696-42b1-89bb-1bbb8759b0d2"));
+    var responseEntity = testRestTemplate.getForEntity(CENTRAL_SERVER_RECALL_USER_URI,
+        InnReachRecallUserDTO.class, PRE_POPULATED_CENTRAL_SERVER_WITH_RECALL_USER_ID);
 
     assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
 
@@ -53,8 +58,8 @@ class InnReachRecallUserControllerTest extends BaseControllerTest {
     "classpath:db/central-server/pre-populate-central-server-with-recall-user.sql"
   })
   void returnErrorMessage_when_centralServerRecallUserDoesNotExist() {
-    var responseEntity = testRestTemplate.getForEntity("/inn-reach/central-servers/{id}/inn-reach-recall-user",
-        InnReachRecallUserDTO.class, UUID.fromString("edab6baf-c697-42b2-89bb-1bbb8759b0d3"));
+    var responseEntity = testRestTemplate.getForEntity(CENTRAL_SERVER_RECALL_USER_URI,
+        InnReachRecallUserDTO.class, PRE_POPULATED_CENTRAL_SERVER_ID);
 
     assertEquals(HttpStatus.NOT_FOUND, responseEntity.getStatusCode());
 
@@ -73,8 +78,8 @@ class InnReachRecallUserControllerTest extends BaseControllerTest {
 
     var httpEntity = new HttpEntity<>(innReachRecallUserDTO);
 
-    var responseEntity = testRestTemplate.postForEntity("/inn-reach/central-servers/{id}/inn-reach-recall-user",
-        httpEntity, InnReachRecallUserDTO.class, UUID.fromString("edab6baf-c696-42b1-89bb-1bbb8759b0d2"));
+    var responseEntity = testRestTemplate.postForEntity(CENTRAL_SERVER_RECALL_USER_URI,
+        httpEntity, InnReachRecallUserDTO.class, PRE_POPULATED_CENTRAL_SERVER_WITH_RECALL_USER_ID);
 
     assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
 
@@ -82,7 +87,7 @@ class InnReachRecallUserControllerTest extends BaseControllerTest {
 
     assertNotNull(body);
 
-    var centralServer = centralServerRepository.fetchRecallUser(UUID.fromString("edab6baf-c696-42b1-89bb-1bbb8759b0d2")).orElseThrow();
+    var centralServer = centralServerRepository.fetchOneWithRecallUser(PRE_POPULATED_CENTRAL_SERVER_WITH_RECALL_USER_ID).orElseThrow();
     var innReachRecallUser = centralServer.getInnReachRecallUser();
 
     assertNotNull(innReachRecallUser);
@@ -100,19 +105,16 @@ class InnReachRecallUserControllerTest extends BaseControllerTest {
 
     var httpEntity = new HttpEntity<>(innReachRecallUserDTO);
 
-    var responseEntity = testRestTemplate.exchange("/inn-reach/central-servers/{id}/inn-reach-recall-user",
-      HttpMethod.PUT, httpEntity, Void.class, UUID.fromString("edab6baf-c696-42b1-89bb-1bbb8759b0d2"));
+    var responseEntity = testRestTemplate.exchange(CENTRAL_SERVER_RECALL_USER_URI,
+      HttpMethod.PUT, httpEntity, Void.class, PRE_POPULATED_CENTRAL_SERVER_WITH_RECALL_USER_ID);
 
     assertEquals(HttpStatus.NO_CONTENT, responseEntity.getStatusCode());
 
-    var centralServer = centralServerRepository.fetchRecallUser(UUID.fromString("edab6baf-c696-42b1-89bb-1bbb8759b0d2")).orElseThrow();
+    var centralServer = centralServerRepository.fetchOneWithRecallUser(PRE_POPULATED_CENTRAL_SERVER_WITH_RECALL_USER_ID).orElseThrow();
     var innReachRecallUser = centralServer.getInnReachRecallUser();
 
     assertNotNull(innReachRecallUser);
     assertEquals(innReachRecallUserDTO.getUserId(), innReachRecallUser.getUserId());
   }
-
-
-
 
 }

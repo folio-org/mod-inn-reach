@@ -302,6 +302,21 @@
         },
         {
           "methods": ["GET"],
+          "pathPattern": "/inn-reach/central-servers/{centralServerId}/inn-reach-recall-user",
+          "permissionsRequired": ["inn-reach.inn-reach-recall-user.item.get"]
+        },
+        {
+          "methods": ["POST"],
+          "pathPattern": "/inn-reach/central-servers/{centralServerId}/inn-reach-recall-user",
+          "permissionsRequired": ["inn-reach.inn-reach-recall-user.item.post"]
+        },
+        {
+          "methods": ["PUT"],
+          "pathPattern": "/inn-reach/central-servers/{centralServerId}/inn-reach-recall-user",
+          "permissionsRequired": ["inn-reach.inn-reach-recall-user.item.put"]
+        },
+        {
+          "methods": ["GET"],
           "pathPattern": "/inn-reach/transactions/{transactionId}",
           "permissionsRequired": ["inn-reach.inn-reach-transaction.item.get"]
         },
@@ -893,6 +908,31 @@
       "description" : "All permissions of d2ir circulation operations"
     },
     {
+      "permissionName" : "inn-reach.inn-reach-recall-user.item.get",
+      "displayName" : "get central server inn-reach recall user",
+      "description" : "Get central server inn-reach recall user"
+    },
+    {
+      "permissionName" : "inn-reach.inn-reach-recall-user.item.post",
+      "displayName" : "create central server inn-reach recall user",
+      "description" : "Create central server inn-reach recall user"
+    },
+    {
+      "permissionName" : "inn-reach.inn-reach-recall-user.item.put",
+      "displayName" : "update central server inn-reach recall user",
+      "description" : "Update central server inn-reach recall user"
+    },
+    {
+      "permissionName" : "inn-reach.inn-reach-recall-user.all",
+      "displayName" : "inn reach API module - all permissions of central server inn-reach recall user configuration",
+      "description" : "All permissions of inn-reach recall user",
+      "subPermissions" : [
+        "inn-reach.inn-reach-recall-user.item.get",
+        "inn-reach.inn-reach-recall-user.item.post",
+        "inn-reach.inn-reach-recall-user.item.put"
+      ]
+    },
+    {
       "permissionName" : "inn-reach.all",
       "displayName" : "inn reach API module - all permissions",
       "description" : "All permissions for inn reach",
@@ -918,7 +958,8 @@
         "inn-reach.d2ir.patron-info.all",
         "inn-reach.central-server.sys-configuration.all",
         "inn-reach.inn-reach-transactions.all",
-        "inn-reach.d2ir.circulation.all"
+        "inn-reach.d2ir.circulation.all",
+        "inn-reach.inn-reach-recall-user.all"
       ]
     }
   ],
