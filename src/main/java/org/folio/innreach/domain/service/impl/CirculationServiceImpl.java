@@ -4,6 +4,7 @@ import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 import static org.apache.commons.lang3.StringUtils.capitalize;
 
+import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.BORROWING_SITE_CANCEL;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.CANCEL_REQUEST;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.TRANSFER;
 
@@ -14,6 +15,7 @@ import java.util.function.Supplier;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.folio.innreach.dto.BaseCircRequestDTO;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -179,6 +181,21 @@ public class CirculationServiceImpl implements CirculationService {
       .transaction(transactionMapper.toDTO(transaction))
       .folioCheckIn(checkInResponse)
       .barcodeAugmented(!shippedItemBarcode.equals(folioItemBarcode));
+  }
+
+  @Override
+  public InnReachResponseDTO cancelItemHold(String trackingId, String centralCode, BaseCircRequestDTO cancelItemDTO) {
+    var transaction = getTransaction(trackingId, centralCode);
+
+    if (transaction.getHold().getFolioLoanId() != null){
+      throw new IllegalArgumentException("Requested item is already checked out.");
+    }
+    requestService.cancelRequest(transaction, "Request cancelled at borrowing site");
+    transaction.setState(BORROWING_SITE_CANCEL);
+
+    transactionRepository.save(transaction);
+
+    return success();
   }
 
   private void reportItemReceived(InnReachTransaction transaction) {
