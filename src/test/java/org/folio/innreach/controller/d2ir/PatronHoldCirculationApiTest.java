@@ -235,7 +235,7 @@ class PatronHoldCirculationApiTest extends BaseApiControllerTest {
         .willReturn(WireMock.status(HttpStatus.SC_CONFLICT)
             .withHeader(HttpHeaders.CONTENT_TYPE, MediaType.TEXT_PLAIN_VALUE)
             .withHeader(XOkapiHeaders.URL, wm.baseUrl())
-            .withBodyFile("inventory/version-conflict.txt")));
+            .withBodyFile("inventory/version-conflict.json")));
 
     /*stubGet(format("%s/%s", HOLDINGS_URL, HOLDING_ID), "inventory-storage/holding-response.json");
     stubPut(format("%s/%s", HOLDINGS_URL, HOLDING_ID), "inventory-storage/holding-response.json");*/
