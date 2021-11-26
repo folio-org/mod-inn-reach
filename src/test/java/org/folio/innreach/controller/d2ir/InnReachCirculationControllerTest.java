@@ -10,6 +10,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TEST_METHOD;
 import static org.springframework.test.context.jdbc.SqlMergeMode.MergeMode.MERGE;
@@ -224,7 +225,7 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     assertEquals("Requested item is already checked out.",
       responseEntityBody.getReason());
 
-    verify(requestService, times(0)).cancelRequest(any(), eq("Request cancelled at borrowing site"));
+    verifyNoInteractions(requestService);
     var transactionUpdated = repository.findByTrackingIdAndCentralServerCode(PRE_POPULATED_TRACKING_ID,
       PRE_POPULATED_CENTRAL_CODE).get();
     assertNotEquals(BORROWING_SITE_CANCEL, transactionUpdated.getState());
