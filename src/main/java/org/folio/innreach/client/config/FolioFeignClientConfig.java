@@ -1,9 +1,9 @@
-package org.folio.innreach.config;
+package org.folio.innreach.client.config;
 
 import feign.RequestInterceptor;
-import feign.codec.ErrorDecoder;
 import org.springframework.context.annotation.Bean;
 
+import org.folio.innreach.client.customization.FolioRequestInterceptor;
 import org.folio.spring.FolioExecutionContext;
 
 public class FolioFeignClientConfig {
@@ -11,11 +11,6 @@ public class FolioFeignClientConfig {
   @Bean
   public RequestInterceptor requestInterceptor(FolioExecutionContext folioExecutionContext) {
     return new FolioRequestInterceptor(folioExecutionContext);
-  }
-
-  @Bean
-  public ErrorDecoder defaultErrorDecoder() {
-    return new ErrorDecoder.Default();
   }
 
 }

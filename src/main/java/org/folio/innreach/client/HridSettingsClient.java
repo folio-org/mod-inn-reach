@@ -8,7 +8,7 @@ import lombok.Data;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 
-import org.folio.innreach.config.FolioFeignClientConfig;
+import org.folio.innreach.client.config.FolioFeignClientConfig;
 
 @FeignClient(value = "hrid-settings-storage", configuration = FolioFeignClientConfig.class)
 public interface HridSettingsClient {

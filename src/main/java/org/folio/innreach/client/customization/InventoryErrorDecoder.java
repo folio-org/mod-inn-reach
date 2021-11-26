@@ -1,4 +1,4 @@
-package org.folio.innreach.client;
+package org.folio.innreach.client.customization;
 
 import static org.apache.commons.lang3.ObjectUtils.getIfNull;
 

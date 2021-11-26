@@ -3,21 +3,19 @@ package org.folio.innreach.client;
 import java.util.Optional;
 import java.util.UUID;
 
-import feign.codec.ErrorDecoder;
 import org.springframework.cloud.openfeign.FeignClient;
-import org.springframework.context.annotation.Bean;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
+import org.folio.innreach.client.config.InventoryFeignClientConfig;
 import org.folio.innreach.domain.dto.folio.ResultList;
 import org.folio.innreach.domain.dto.folio.inventory.InventoryInstanceDTO;
 import org.folio.innreach.domain.dto.folio.inventory.InventoryItemDTO;
-import org.folio.innreach.util.JsonHelper;
 
-@FeignClient(name = "inventory", configuration = InventoryClient.Config.class, decode404 = true)
+@FeignClient(name = "inventory", configuration = InventoryFeignClientConfig.class, decode404 = true)
 public interface InventoryClient {
 
   @GetMapping("/items?query=hrid=={hrId}")
@@ -43,14 +41,5 @@ public interface InventoryClient {
 
   @GetMapping("/items?query=barcode=={barcode}")
   ResultList<InventoryItemDTO> getItemByBarcode(@PathVariable("barcode") String barcode);
-
-  class Config {
-
-    @Bean
-    public ErrorDecoder inventoryClientErrorDecoder(ErrorDecoder defaultErrorDecoder, JsonHelper jsonHelper) {
-      return new InventoryErrorDecoder(defaultErrorDecoder, jsonHelper);
-    }
-
-  }
 
 }
