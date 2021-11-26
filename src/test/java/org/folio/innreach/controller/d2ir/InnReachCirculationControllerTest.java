@@ -1,15 +1,20 @@
 package org.folio.innreach.controller.d2ir;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TEST_METHOD;
 import static org.springframework.test.context.jdbc.SqlMergeMode.MergeMode.MERGE;
 
+import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.BORROWING_SITE_CANCEL;
 import static org.folio.innreach.fixture.CirculationFixture.createItemShippedDTO;
 import static org.folio.innreach.fixture.CirculationFixture.createTransactionHoldDTO;
 
@@ -29,6 +34,7 @@ import org.springframework.test.context.jdbc.SqlMergeMode;
 import org.folio.innreach.controller.base.BaseControllerTest;
 import org.folio.innreach.domain.dto.folio.inventory.InventoryItemDTO;
 import org.folio.innreach.domain.service.InventoryService;
+import org.folio.innreach.domain.service.RequestService;
 import org.folio.innreach.dto.InnReachResponseDTO;
 import org.folio.innreach.external.dto.InnReachResponse;
 import org.folio.innreach.repository.InnReachTransactionRepository;
@@ -58,6 +64,8 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
 
   @MockBean
   private InventoryService inventoryService;
+  @MockBean
+  private RequestService requestService;
 
   @Test
   void processCreatePatronHoldCirculationRequest_and_createNewPatronHold() {
@@ -127,9 +135,9 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     var itemShippedDTO = createItemShippedDTO();
 
     var responseEntity = testRestTemplate.exchange(
-        "/inn-reach/d2ir/circ/{circulationOperationName}/{trackingId}/{centralCode}", HttpMethod.PUT,
-        new HttpEntity<>(itemShippedDTO), InnReachResponseDTO.class,
-        ITEM_SHIPPED_OPERATION, PRE_POPULATED_TRACKING_ID, PRE_POPULATED_CENTRAL_CODE);
+      "/inn-reach/d2ir/circ/{circulationOperationName}/{trackingId}/{centralCode}", HttpMethod.PUT,
+      new HttpEntity<>(itemShippedDTO), InnReachResponseDTO.class,
+      ITEM_SHIPPED_OPERATION, PRE_POPULATED_TRACKING_ID, PRE_POPULATED_CENTRAL_CODE);
 
     verify(inventoryService).updateItem(any());
 
@@ -166,6 +174,61 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
 
     assertNotNull(responseEntityBody);
     assertEquals("failed", responseEntityBody.getStatus());
+  }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
+  })
+  void processCancelItemHoldRequest_whenItemIsNotCheckedOut() {
+    doNothing().when(requestService).cancelRequest(any(), any());
+    var transaction = repository.findByTrackingIdAndCentralServerCode(PRE_POPULATED_TRACKING_ID,
+      PRE_POPULATED_CENTRAL_CODE).get();
+    transaction.getHold().setFolioLoanId(null);
+    repository.save(transaction);
+
+    var transactionHoldDTO = createTransactionHoldDTO();
+
+    var responseEntity = testRestTemplate.exchange(
+      "/inn-reach/d2ir/circ/cancelitemhold/{trackingId}/{centralCode}", HttpMethod.PUT,
+      new HttpEntity<>(transactionHoldDTO), InnReachResponseDTO.class,
+      PRE_POPULATED_TRACKING_ID, PRE_POPULATED_CENTRAL_CODE);
+
+    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+    var responseEntityBody = responseEntity.getBody();
+    assertNotNull(responseEntityBody);
+    assertEquals("ok", responseEntityBody.getStatus());
+
+    verify(requestService).cancelRequest(any(), eq("Request cancelled at borrowing site"));
+    var transactionUpdated = repository.findByTrackingIdAndCentralServerCode(PRE_POPULATED_TRACKING_ID,
+      PRE_POPULATED_CENTRAL_CODE).get();
+    assertEquals(BORROWING_SITE_CANCEL, transactionUpdated.getState());
+  }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
+  })
+  void processCancelItemHoldRequest_whenItemIsCheckedOut() {
+    var transactionHoldDTO = createTransactionHoldDTO();
+
+    var responseEntity = testRestTemplate.exchange(
+      "/inn-reach/d2ir/circ/cancelitemhold/{trackingId}/{centralCode}", HttpMethod.PUT,
+      new HttpEntity<>(transactionHoldDTO), InnReachResponseDTO.class,
+      PRE_POPULATED_TRACKING_ID, PRE_POPULATED_CENTRAL_CODE);
+
+    assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
+    var responseEntityBody = responseEntity.getBody();
+    assertNotNull(responseEntityBody);
+    assertEquals("Requested item is already checked out.",
+      responseEntityBody.getReason());
+
+    verifyNoInteractions(requestService);
+    var transactionUpdated = repository.findByTrackingIdAndCentralServerCode(PRE_POPULATED_TRACKING_ID,
+      PRE_POPULATED_CENTRAL_CODE).get();
+    assertNotEquals(BORROWING_SITE_CANCEL, transactionUpdated.getState());
   }
 
 }

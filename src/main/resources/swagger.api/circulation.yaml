@@ -275,6 +275,35 @@ paths:
       parameters:
         - $ref: '#/components/parameters/trackingId'
         - $ref: '#/components/parameters/centralCode'
+  /d2ir/circ/cancelitemhold/{trackingId}/{centralCode}:
+    put:
+      operationId: cancelItemHold
+      description: Cancel an item request
+      tags:
+        - inn-reach-circulation
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/baseCircRequestDTO"
+      responses:
+        '200':
+          description: Cancel request complete
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/innReachResponseDTO"
+        '400':
+          description: An error occurred during processing the request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/innReachResponseDTO"
+        '500':
+          $ref: "api-common.yaml#/components/responses/trait_response_500"
+      parameters:
+        - $ref: '#/components/parameters/trackingId'
+        - $ref: '#/components/parameters/centralCode'
   /transactions:
     get:
       description: Get a list of transactions for the given central server
@@ -355,6 +384,8 @@ components:
       $ref: schemas/circulation/checkInResponseDTO.json
     innReachTransactionReceiveItemDTO:
       $ref: schemas/innReachTransactionReceiveItemDTO.json
+    baseCircRequestDTO:
+      $ref: schemas/d2ir/baseCircRequestDTO.json
   parameters:
     bibId:
       name: bibId

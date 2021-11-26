@@ -1,6 +1,7 @@
 package org.folio.innreach.controller.d2ir;
 
 import lombok.RequiredArgsConstructor;
+import org.folio.innreach.dto.BaseCircRequestDTO;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -29,7 +30,7 @@ public class InnReachCirculationController implements InnReachCirculationApi {
   @Override
   @PostMapping("/patronhold/{trackingId}/{centralCode}")
   public ResponseEntity<InnReachResponseDTO> patronHold(@PathVariable String trackingId,
-      @PathVariable String centralCode, PatronHoldDTO patronHold) {
+                                                        @PathVariable String centralCode, PatronHoldDTO patronHold) {
     var innReachResponse = circulationService.initiatePatronHold(trackingId, centralCode, patronHold);
 
     return ResponseEntity.ok(innReachResponse);
@@ -38,7 +39,7 @@ public class InnReachCirculationController implements InnReachCirculationApi {
   @Override
   @PutMapping("/itemshipped/{trackingId}/{centralCode}")
   public ResponseEntity<InnReachResponseDTO> itemShipped(@PathVariable String trackingId,
-      @PathVariable String centralCode, ItemShippedDTO itemShipped) {
+                                                         @PathVariable String centralCode, ItemShippedDTO itemShipped) {
     var innReachResponse = circulationService.trackShippedItem(trackingId, centralCode, itemShipped);
 
     return ResponseEntity.ok(innReachResponse);
@@ -47,7 +48,7 @@ public class InnReachCirculationController implements InnReachCirculationApi {
   @Override
   @PutMapping("/cancelrequest/{trackingId}/{centralCode}")
   public ResponseEntity<InnReachResponseDTO> cancelRequest(@PathVariable String trackingId,
-      @PathVariable String centralCode, CancelRequestDTO cancelRequest) {
+                                                           @PathVariable String centralCode, CancelRequestDTO cancelRequest) {
     var innReachResponse = circulationService.cancelTransaction(trackingId, centralCode, cancelRequest);
 
     return ResponseEntity.ok(innReachResponse);
@@ -56,8 +57,17 @@ public class InnReachCirculationController implements InnReachCirculationApi {
   @Override
   @PutMapping("/transferrequest/{trackingId}/{centralCode}")
   public ResponseEntity<InnReachResponseDTO> transferRequest(@PathVariable String trackingId,
-      @PathVariable String centralCode, TransferRequestDTO transferRequest) {
+                                                             @PathVariable String centralCode, TransferRequestDTO transferRequest) {
     var innReachResponse = circulationService.transferItem(trackingId, centralCode, transferRequest);
+
+    return ResponseEntity.ok(innReachResponse);
+  }
+
+  @Override
+  @PutMapping("/cancelitemhold/{trackingId}/{centralCode}")
+  public ResponseEntity<InnReachResponseDTO> cancelItemHold(@PathVariable String trackingId,
+                                                            @PathVariable String centralCode, BaseCircRequestDTO cancelItemDTO) {
+    var innReachResponse = circulationService.cancelItemHold(trackingId, centralCode, cancelItemDTO);
 
     return ResponseEntity.ok(innReachResponse);
   }
