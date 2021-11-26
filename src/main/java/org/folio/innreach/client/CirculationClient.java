@@ -16,6 +16,8 @@ import org.folio.innreach.domain.dto.folio.circulation.MoveRequestDTO;
 import org.folio.innreach.domain.dto.folio.circulation.RequestDTO;
 import org.folio.innreach.dto.CheckInRequestDTO;
 import org.folio.innreach.dto.CheckInResponseDTO;
+import org.folio.innreach.dto.CheckOutRequestDTO;
+import org.folio.innreach.dto.CheckOutResponseDTO;
 
 @FeignClient(name = "circulation", configuration = FolioFeignClientConfig.class, decode404 = true)
 public interface CirculationClient {
@@ -37,5 +39,8 @@ public interface CirculationClient {
 
   @PostMapping("/check-in-by-barcode")
   CheckInResponseDTO checkInByBarcode(CheckInRequestDTO checkIn);
+
+  @PostMapping("/check-out-by-barcode")
+  CheckOutResponseDTO checkOutByBarcode(CheckOutRequestDTO checkOut);
 
 }

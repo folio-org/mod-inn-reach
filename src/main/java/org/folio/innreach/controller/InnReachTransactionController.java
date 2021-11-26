@@ -17,14 +17,15 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
-import org.folio.innreach.domain.service.CirculationService;
+import org.folio.innreach.domain.service.InnReachTransactionActionService;
 import org.folio.innreach.domain.service.InnReachTransactionService;
 import org.folio.innreach.domain.service.RequestService;
 import org.folio.innreach.dto.InnReachResponseDTO;
 import org.folio.innreach.dto.InnReachTransactionDTO;
 import org.folio.innreach.dto.InnReachTransactionFilterParametersDTO;
-import org.folio.innreach.dto.InnReachTransactionReceiveItemDTO;
 import org.folio.innreach.dto.InnReachTransactionsDTO;
+import org.folio.innreach.dto.ItemHoldCheckOutResponseDTO;
+import org.folio.innreach.dto.PatronHoldCheckInResponseDTO;
 import org.folio.innreach.dto.TransactionHoldDTO;
 import org.folio.innreach.mapper.InnReachErrorMapper;
 import org.folio.innreach.rest.resource.InnReachTransactionApi;
@@ -36,7 +37,7 @@ import org.folio.innreach.rest.resource.InnReachTransactionApi;
 public class InnReachTransactionController implements InnReachTransactionApi {
 
   private final RequestService requestService;
-  private final CirculationService circulationService;
+  private final InnReachTransactionActionService transactionActionService;
   private final InnReachTransactionService transactionService;
   private final InnReachErrorMapper mapper;
 
@@ -65,9 +66,17 @@ public class InnReachTransactionController implements InnReachTransactionApi {
 
   @Override
   @PutMapping("/inn-reach/transactions/{id}/receive-item/{servicePointId}")
-  public ResponseEntity<InnReachTransactionReceiveItemDTO> receivePatronHoldItem(UUID id, UUID servicePointId) {
-    var response = circulationService.receivePatronHoldItem(id, servicePointId);
+  public ResponseEntity<PatronHoldCheckInResponseDTO> checkInPatronHoldItem(@PathVariable UUID id,
+                                                                            @PathVariable UUID servicePointId) {
+    var response = transactionActionService.checkInPatronHoldItem(id, servicePointId);
+    return ResponseEntity.ok(response);
+  }
 
+  @Override
+  @PutMapping("/inn-reach/transactions/{itemBarcode}/check-out-item/{servicePointId}")
+  public ResponseEntity<ItemHoldCheckOutResponseDTO> checkOutItemHoldItem(@PathVariable String itemBarcode,
+                                                                          @PathVariable UUID servicePointId) {
+    var response = transactionActionService.checkOutItemHoldItem(itemBarcode, servicePointId);
     return ResponseEntity.ok(response);
   }
 

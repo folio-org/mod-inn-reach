@@ -40,16 +40,16 @@ public class InnReachCirculationController implements InnReachCirculationApi {
   @PutMapping("/itemshipped/{trackingId}/{centralCode}")
   public ResponseEntity<InnReachResponseDTO> itemShipped(@PathVariable String trackingId,
                                                          @PathVariable String centralCode, ItemShippedDTO itemShipped) {
-    var innReachResponse = circulationService.trackShippedItem(trackingId, centralCode, itemShipped);
+    var innReachResponse = circulationService.trackPatronHoldShippedItem(trackingId, centralCode, itemShipped);
 
     return ResponseEntity.ok(innReachResponse);
   }
 
   @Override
   @PutMapping("/cancelrequest/{trackingId}/{centralCode}")
-  public ResponseEntity<InnReachResponseDTO> cancelRequest(@PathVariable String trackingId,
+  public ResponseEntity<InnReachResponseDTO> cancelPatronHold(@PathVariable String trackingId,
                                                            @PathVariable String centralCode, CancelRequestDTO cancelRequest) {
-    var innReachResponse = circulationService.cancelTransaction(trackingId, centralCode, cancelRequest);
+    var innReachResponse = circulationService.cancelPatronHold(trackingId, centralCode, cancelRequest);
 
     return ResponseEntity.ok(innReachResponse);
   }
@@ -58,7 +58,7 @@ public class InnReachCirculationController implements InnReachCirculationApi {
   @PutMapping("/transferrequest/{trackingId}/{centralCode}")
   public ResponseEntity<InnReachResponseDTO> transferRequest(@PathVariable String trackingId,
                                                              @PathVariable String centralCode, TransferRequestDTO transferRequest) {
-    var innReachResponse = circulationService.transferItem(trackingId, centralCode, transferRequest);
+    var innReachResponse = circulationService.transferPatronHoldItem(trackingId, centralCode, transferRequest);
 
     return ResponseEntity.ok(innReachResponse);
   }

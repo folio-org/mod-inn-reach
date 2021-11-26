@@ -6,6 +6,7 @@ import static org.apache.commons.lang3.StringUtils.capitalize;
 
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.BORROWING_SITE_CANCEL;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.CANCEL_REQUEST;
+import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.ITEM_SHIPPED;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.TRANSFER;
 
 import java.util.Objects;
@@ -32,15 +33,11 @@ import org.folio.innreach.dto.BaseCircRequestDTO;
 import org.folio.innreach.dto.CancelRequestDTO;
 import org.folio.innreach.dto.Holding;
 import org.folio.innreach.dto.InnReachResponseDTO;
-import org.folio.innreach.dto.InnReachTransactionReceiveItemDTO;
 import org.folio.innreach.dto.ItemShippedDTO;
 import org.folio.innreach.dto.PatronHoldDTO;
 import org.folio.innreach.dto.TransactionHoldDTO;
 import org.folio.innreach.dto.TransferRequestDTO;
-import org.folio.innreach.external.exception.InnReachException;
-import org.folio.innreach.external.service.InnReachExternalService;
 import org.folio.innreach.mapper.InnReachTransactionHoldMapper;
-import org.folio.innreach.mapper.InnReachTransactionMapper;
 import org.folio.innreach.mapper.InnReachTransactionPickupLocationMapper;
 import org.folio.innreach.repository.InnReachTransactionRepository;
 
@@ -51,13 +48,11 @@ import org.folio.innreach.repository.InnReachTransactionRepository;
 public class CirculationServiceImpl implements CirculationService {
 
   private final InnReachTransactionRepository transactionRepository;
-  private final InnReachTransactionMapper transactionMapper;
   private final InnReachTransactionHoldMapper transactionHoldMapper;
   private final InnReachTransactionPickupLocationMapper pickupLocationMapper;
   private final PatronHoldService patronHoldService;
   private final RequestService requestService;
   private final InventoryService inventoryService;
-  private final InnReachExternalService innReachExternalService;
 
   @Override
   public InnReachResponseDTO initiatePatronHold(String trackingId, String centralCode, PatronHoldDTO patronHold) {
@@ -86,7 +81,7 @@ public class CirculationServiceImpl implements CirculationService {
   }
 
   @Override
-  public InnReachResponseDTO trackShippedItem(String trackingId, String centralCode, ItemShippedDTO itemShipped) {
+  public InnReachResponseDTO trackPatronHoldShippedItem(String trackingId, String centralCode, ItemShippedDTO itemShipped) {
     var innReachTransaction = getTransaction(trackingId, centralCode);
 
     var itemBarcode = itemShipped.getItemBarcode();
@@ -111,13 +106,13 @@ public class CirculationServiceImpl implements CirculationService {
     }
     updateFolioAssociatedItem(transactionPatronHold.getFolioItemId(), folioItemBarcode, callNumber);
 
-    innReachTransaction.setState(InnReachTransaction.TransactionState.ITEM_SHIPPED);
+    innReachTransaction.setState(ITEM_SHIPPED);
 
     return success();
   }
 
   @Override
-  public InnReachResponseDTO cancelTransaction(String trackingId, String centralCode, CancelRequestDTO cancelRequest) {
+  public InnReachResponseDTO cancelPatronHold(String trackingId, String centralCode, CancelRequestDTO cancelRequest) {
     log.info("Cancelling request for transaction: {}", trackingId);
 
     var transaction = getTransaction(trackingId, centralCode);
@@ -141,7 +136,7 @@ public class CirculationServiceImpl implements CirculationService {
   }
 
   @Override
-  public InnReachResponseDTO transferItem(String trackingId, String centralCode, TransferRequestDTO request) {
+  public InnReachResponseDTO transferPatronHoldItem(String trackingId, String centralCode, TransferRequestDTO request) {
     var transaction = getTransaction(trackingId, centralCode);
 
     validateEquals(request::getItemId, () -> transaction.getHold().getItemId(), "item id");
@@ -151,36 +146,6 @@ public class CirculationServiceImpl implements CirculationService {
     transaction.setState(TRANSFER);
 
     return success();
-  }
-
-  @Override
-  public InnReachTransactionReceiveItemDTO receivePatronHoldItem(UUID transactionId, UUID servicePointId) {
-    var transaction = transactionRepository.fetchOneById(transactionId)
-      .orElseThrow(() -> new EntityNotFoundException(String.format("InnReach transaction with id [%s] not found!", transactionId)));
-
-    Assert.isTrue(transaction.getState() == InnReachTransaction.TransactionState.ITEM_SHIPPED,
-      "Unexpected transaction state: " + transaction.getState());
-
-    var hold = (TransactionPatronHold) transaction.getHold();
-
-    var shippedItemBarcode = hold.getShippedItemBarcode();
-    var folioItemBarcode = hold.getFolioItemBarcode();
-
-    Assert.isTrue(shippedItemBarcode != null, "shippedItemBarcode is not set");
-    Assert.isTrue(folioItemBarcode != null, "folioItemBarcode is not set");
-
-    var checkInResponse = requestService.checkInItem(transaction, servicePointId);
-
-    transaction.setState(InnReachTransaction.TransactionState.ITEM_RECEIVED);
-
-    transactionRepository.save(transaction);
-
-    reportItemReceived(transaction);
-
-    return new InnReachTransactionReceiveItemDTO()
-      .transaction(transactionMapper.toDTO(transaction))
-      .folioCheckIn(checkInResponse)
-      .barcodeAugmented(!shippedItemBarcode.equals(folioItemBarcode));
   }
 
   @Override
@@ -196,22 +161,6 @@ public class CirculationServiceImpl implements CirculationService {
     transactionRepository.save(transaction);
 
     return success();
-  }
-
-  private void reportItemReceived(InnReachTransaction transaction) {
-    var centralCode = transaction.getCentralServerCode();
-
-    var requestPath = resolveItemReceivedPath(transaction.getTrackingId(), centralCode);
-
-    try {
-      innReachExternalService.postInnReachApi(centralCode, requestPath);
-    } catch (InnReachException e) {
-      log.warn("Unexpected D2IR response: {}", e.getMessage(), e);
-    }
-  }
-
-  private String resolveItemReceivedPath(String trackingId, String centralServerCode) {
-    return String.format("/circ/itemreceived/%s/%s", trackingId, centralServerCode);
   }
 
   private InnReachResponseDTO success() {

@@ -118,7 +118,7 @@ paths:
         - $ref: 'api-common.yaml#/components/parameters/id'
   /transactions/{id}/receive-item/{servicePointId}:
     put:
-      operationId: receivePatronHoldItem
+      operationId: checkInPatronHoldItem
       description: receive item for patron hold transaction
       tags:
         - inn-reach-transaction
@@ -128,13 +128,33 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/innReachTransactionReceiveItemDTO"
+                $ref: "#/components/schemas/patronHoldCheckInResponseDTO"
         '404':
           $ref: "api-common.yaml#/components/responses/trait_response_404"
         '500':
           $ref: "api-common.yaml#/components/responses/trait_response_500"
       parameters:
         - $ref: 'api-common.yaml#/components/parameters/id'
+        - $ref: 'circulation.yaml#/components/parameters/servicePointId'
+  /transactions/{itemBarcode}/check-out-item/{servicePointId}:
+    put:
+      operationId: checkOutItemHoldItem
+      description: checks out an item from the owning site to the borrowing site for an Item Hold transaction
+      tags:
+        - inn-reach-transaction
+      responses:
+        '200':
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/itemHoldCheckOutResponseDTO"
+        '404':
+          $ref: "api-common.yaml#/components/responses/trait_response_404"
+        '500':
+          $ref: "api-common.yaml#/components/responses/trait_response_500"
+      parameters:
+        - $ref: 'circulation.yaml#/components/parameters/itemBarcode'
         - $ref: 'circulation.yaml#/components/parameters/servicePointId'
   /d2ir/circ/verifypatron:
     post:
@@ -219,8 +239,8 @@ paths:
         - $ref: '#/components/parameters/centralCode'
   /d2ir/circ/cancelrequest/{trackingId}/{centralCode}:
     put:
-      operationId: cancelRequest
-      description: Cancel request
+      operationId: cancelPatronHold
+      description: Cancel Patron Hold transaction
       tags:
         - inn-reach-circulation
       requestBody:
@@ -382,10 +402,16 @@ components:
       $ref: schemas/circulation/checkInRequestDTO.json
     checkInResponseDTO:
       $ref: schemas/circulation/checkInResponseDTO.json
-    innReachTransactionReceiveItemDTO:
-      $ref: schemas/innReachTransactionReceiveItemDTO.json
     baseCircRequestDTO:
       $ref: schemas/d2ir/baseCircRequestDTO.json
+    checkOutRequestDTO:
+      $ref: schemas/circulation/checkOutRequestDTO.json
+    checkOutResponseDTO:
+      $ref: schemas/circulation/checkOutResponseDTO.json
+    patronHoldCheckInResponseDTO:
+      $ref: schemas/patronHoldCheckInResponseDTO.json
+    itemHoldCheckOutResponseDTO:
+      $ref: schemas/itemHoldCheckOutResponseDTO.json
   parameters:
     bibId:
       name: bibId
@@ -414,6 +440,13 @@ components:
       schema:
         type: string
         format: uuid
+    itemBarcode:
+      name: itemBarcode
+      description: Barcode of the item
+      in: path
+      required: true
+      schema:
+        type: string
     circulationOperationName:
       name: circulationOperationName
       in: path
