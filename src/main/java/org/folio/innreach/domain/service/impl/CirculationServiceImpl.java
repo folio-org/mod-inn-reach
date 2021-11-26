@@ -15,7 +15,6 @@ import java.util.function.Supplier;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
-import org.folio.innreach.dto.BaseCircRequestDTO;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,6 +28,7 @@ import org.folio.innreach.domain.service.CirculationService;
 import org.folio.innreach.domain.service.InventoryService;
 import org.folio.innreach.domain.service.PatronHoldService;
 import org.folio.innreach.domain.service.RequestService;
+import org.folio.innreach.dto.BaseCircRequestDTO;
 import org.folio.innreach.dto.CancelRequestDTO;
 import org.folio.innreach.dto.Holding;
 import org.folio.innreach.dto.InnReachResponseDTO;
@@ -66,17 +66,17 @@ public class CirculationServiceImpl implements CirculationService {
 
     if (innReachTransaction.isPresent()) {
       log.info("Transaction patron hold with trackingId [{}] and centralCode [{}] exists, start to update...",
-          trackingId, centralCode);
+        trackingId, centralCode);
 
       updateTransactionPatronHold((TransactionPatronHold) innReachTransaction.get().getHold(), transactionHold);
 
       patronHoldService.updateVirtualItems(innReachTransaction.get());
     } else {
       log.info("Transaction patron hold with trackingId [{}] and centralCode [{}] doesn't exist, create a new one...",
-          trackingId, centralCode);
+        trackingId, centralCode);
 
       InnReachTransaction newTransactionWithPatronHold = createTransactionWithPatronHold(trackingId, centralCode,
-          transactionHold);
+        transactionHold);
       var transaction = transactionRepository.save(newTransactionWithPatronHold);
 
       patronHoldService.createVirtualItems(transaction);
@@ -129,11 +129,11 @@ public class CirculationServiceImpl implements CirculationService {
     requestService.cancelRequest(transaction, cancelRequest.getReason());
 
     inventoryService.findItem(itemId)
-        .map(removeItemTransactionInfo())
-        .map(inventoryService::updateItem)
-        .flatMap(item -> inventoryService.findHolding(item.getHoldingsRecordId()))
-        .map(removeHoldingTransactionInfo())
-        .ifPresent(inventoryService::updateHolding);
+      .map(removeItemTransactionInfo())
+      .map(inventoryService::updateItem)
+      .flatMap(item -> inventoryService.findHolding(item.getHoldingsRecordId()))
+      .map(removeHoldingTransactionInfo())
+      .ifPresent(inventoryService::updateHolding);
 
     log.info("Item request successfully cancelled");
 
@@ -187,7 +187,7 @@ public class CirculationServiceImpl implements CirculationService {
   public InnReachResponseDTO cancelItemHold(String trackingId, String centralCode, BaseCircRequestDTO cancelItemDTO) {
     var transaction = getTransaction(trackingId, centralCode);
 
-    if (transaction.getHold().getFolioLoanId() != null){
+    if (transaction.getHold().getFolioLoanId() != null) {
       throw new IllegalArgumentException("Requested item is already checked out.");
     }
     requestService.cancelRequest(transaction, "Request cancelled at borrowing site");
@@ -219,21 +219,21 @@ public class CirculationServiceImpl implements CirculationService {
   }
 
   private void updateTransactionPatronHold(TransactionPatronHold existingTransactionPatronHold,
-      TransactionHoldDTO transactionHold) {
+                                           TransactionHoldDTO transactionHold) {
     // update transaction patron hold
     BeanUtils.copyProperties(transactionHold, existingTransactionPatronHold,
-        "pickupLocation", "id", "createdBy", "updatedBy", "createdDate", "updatedDate",
-        "folioPatronId", "folioInstanceId", "folioHoldingId", "folioItemId",
-        "folioRequestId", "folioLoanId", "folioPatronBarcode", "folioItemBarcode");
+      "pickupLocation", "id", "createdBy", "updatedBy", "createdDate", "updatedDate",
+      "folioPatronId", "folioInstanceId", "folioHoldingId", "folioItemId",
+      "folioRequestId", "folioLoanId", "folioPatronBarcode", "folioItemBarcode");
 
     // update pickupLocation
     var pickupLocation = pickupLocationMapper.fromString(transactionHold.getPickupLocation());
     BeanUtils.copyProperties(pickupLocation, existingTransactionPatronHold.getPickupLocation(),
-        "id", "createdBy", "updatedBy", "createdDate", "updatedDate");
+      "id", "createdBy", "updatedBy", "createdDate", "updatedDate");
   }
 
   private InnReachTransaction createTransactionWithPatronHold(String trackingId, String centralCode,
-      TransactionHoldDTO transactionHold) {
+                                                              TransactionHoldDTO transactionHold) {
     var newInnReachTransaction = new InnReachTransaction();
     newInnReachTransaction.setHold(transactionHoldMapper.toPatronHold(transactionHold));
     newInnReachTransaction.setCentralServerCode(centralCode);
@@ -282,14 +282,14 @@ public class CirculationServiceImpl implements CirculationService {
     T trxValue = trxField.get();
 
     Assert.isTrue(Objects.equals(reqValue, trxValue),
-        String.format("%s [%s] from the request doesn't match with %s [%s] in the stored transaction",
-            capitalize(fieldName), reqValue, fieldName.toLowerCase(), trxValue));
+      String.format("%s [%s] from the request doesn't match with %s [%s] in the stored transaction",
+        capitalize(fieldName), reqValue, fieldName.toLowerCase(), trxValue));
   }
 
   private InnReachTransaction getTransaction(String trackingId, String centralCode) {
     return transactionRepository.findByTrackingIdAndCentralServerCode(trackingId, centralCode)
-        .orElseThrow(() -> new EntityNotFoundException(String.format(
-            "InnReach transaction with tracking id [%s] and central code [%s] not found", trackingId, centralCode)));
+      .orElseThrow(() -> new EntityNotFoundException(String.format(
+        "InnReach transaction with tracking id [%s] and central code [%s] not found", trackingId, centralCode)));
   }
 
 }
