@@ -5,6 +5,7 @@ import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionSt
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.ITEM_SHIPPED;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.TRANSFER;
 
+import java.util.HashMap;
 import java.util.UUID;
 
 import lombok.RequiredArgsConstructor;
@@ -66,23 +67,24 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
   @Transactional
   @Override
   public ItemHoldCheckOutResponseDTO checkOutItemHoldItem(String itemBarcode, UUID servicePointId) {
-    var transaction = transactionRepository.fetchOneByItemBarcode(itemBarcode)
+    var transaction = transactionRepository.fetchOneByFolioItemBarcode(itemBarcode)
       .orElseThrow(() -> new EntityNotFoundException("INN-Reach transaction is not found by itemBarcode: " + itemBarcode));
 
     var hold = (TransactionItemHold) transaction.getHold();
     var state = transaction.getState();
     var folioPatronBarcode = hold.getFolioPatronBarcode();
-    var folioItemBarcode = hold.getFolioItemBarcode();
 
     Assert.isTrue(state == ITEM_HOLD || state == TRANSFER, "Unexpected transaction state: " + state);
     Assert.isTrue(folioPatronBarcode != null, "folioPatronBarcode is not set");
-    Assert.isTrue(folioItemBarcode != null, "folioItemBarcode is not set");
 
     var checkOutResponse = requestService.checkOutItem(transaction, servicePointId);
+    var callNumber = checkOutResponse.getItem().getCallNumber();
 
     hold.setFolioLoanId(checkOutResponse.getId());
 
     transaction.setState(ITEM_SHIPPED);
+
+    reportItemShipped(transaction.getTrackingId(), transaction.getCentralServerCode(), itemBarcode, callNumber);
 
     return new ItemHoldCheckOutResponseDTO()
       .transaction(transactionMapper.toDTO(transaction))
@@ -91,7 +93,6 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
 
   private void reportItemReceived(InnReachTransaction transaction) {
     var centralCode = transaction.getCentralServerCode();
-
     var requestPath = resolveItemReceivedPath(transaction.getTrackingId(), centralCode);
 
     try {
@@ -101,8 +102,26 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
     }
   }
 
+  private void reportItemShipped(String trackingId, String centralCode, String itemBarcode, String callNumber) {
+    var requestPath = resolveItemShippedPath(trackingId, centralCode);
+
+    try {
+      var payload = new HashMap<>();
+      payload.put("itemBarcode", itemBarcode);
+      payload.put("callNumber", callNumber);
+
+      innReachExternalService.postInnReachApi(centralCode, requestPath, payload);
+    } catch (InnReachException e) {
+      log.warn("Unexpected D2IR response: {}", e.getMessage(), e);
+    }
+  }
+
   private String resolveItemReceivedPath(String trackingId, String centralServerCode) {
     return String.format("/circ/itemreceived/%s/%s", trackingId, centralServerCode);
+  }
+
+  private String resolveItemShippedPath(String trackingId, String centralServerCode) {
+    return String.format("/circ/itemshipped/%s/%s", trackingId, centralServerCode);
   }
 
 }

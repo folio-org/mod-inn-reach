@@ -76,6 +76,7 @@ import org.folio.innreach.dto.InnReachResponseDTO;
 import org.folio.innreach.dto.InnReachTransactionDTO;
 import org.folio.innreach.dto.InnReachTransactionsDTO;
 import org.folio.innreach.dto.ItemHoldCheckOutResponseDTO;
+import org.folio.innreach.dto.LoanItem;
 import org.folio.innreach.dto.PatronHoldCheckInResponseDTO;
 import org.folio.innreach.dto.TransactionHoldDTO;
 import org.folio.innreach.external.client.feign.InnReachClient;
@@ -969,8 +970,11 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
   })
   void testCheckOutItemHoldItem() {
-    when(circulationClient.checkOutByBarcode(any(CheckOutRequestDTO.class)))
-      .thenReturn(new CheckOutResponseDTO().id(FOLIO_CHECKOUT_ID));
+    var checkOutResponse = new CheckOutResponseDTO()
+      .id(FOLIO_CHECKOUT_ID)
+      .item(new LoanItem().barcode(PRE_POPULATED_ITEM_HOLD_ITEM_BARCODE));
+
+    when(circulationClient.checkOutByBarcode(any(CheckOutRequestDTO.class))).thenReturn(checkOutResponse);
 
     var responseEntity = testRestTemplate.exchange(
       ITEM_HOLD_CHECK_OUT_ENDPOINT, HttpMethod.PUT, HttpEntity.EMPTY, ItemHoldCheckOutResponseDTO.class,

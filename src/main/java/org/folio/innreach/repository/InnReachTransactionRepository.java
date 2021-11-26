@@ -19,7 +19,7 @@ public interface InnReachTransactionRepository extends JpaRepository<InnReachTra
   Optional<InnReachTransaction> fetchOneById(UUID id);
 
   @Query(name = InnReachTransaction.FETCH_ONE_BY_ITEM_BARCODE_QUERY_NAME)
-  Optional<InnReachTransaction> fetchOneByItemBarcode(String itemBarcode);
+  Optional<InnReachTransaction> fetchOneByFolioItemBarcode(String itemBarcode);
 
   @Query(name = InnReachTransaction.FETCH_ONE_BY_TRACKING_ID_AND_CENTRAL_CODE_QUERY_NAME)
   Optional<InnReachTransaction> findByTrackingIdAndCentralServerCode(String trackingId, String centralServerCode);
