@@ -7,6 +7,8 @@ import java.util.Objects;
 
 import feign.Response;
 import feign.codec.ErrorDecoder;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
@@ -67,6 +69,7 @@ public class InventoryErrorDecoder implements ErrorDecoder {
   }
 
   @Data
+  @AllArgsConstructor(access = AccessLevel.PACKAGE)
   @NoArgsConstructor
   static class InventoryError {
 
