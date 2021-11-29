@@ -6,6 +6,8 @@ import static org.apache.commons.lang3.StringUtils.capitalize;
 
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.BORROWING_SITE_CANCEL;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.CANCEL_REQUEST;
+import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.ITEM_RECEIVED;
+import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.ITEM_SHIPPED;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.TRANSFER;
 
 import java.util.Objects;
@@ -33,6 +35,7 @@ import org.folio.innreach.dto.CancelRequestDTO;
 import org.folio.innreach.dto.Holding;
 import org.folio.innreach.dto.InnReachResponseDTO;
 import org.folio.innreach.dto.InnReachTransactionReceiveItemDTO;
+import org.folio.innreach.dto.ItemReceivedDTO;
 import org.folio.innreach.dto.ItemShippedDTO;
 import org.folio.innreach.dto.PatronHoldDTO;
 import org.folio.innreach.dto.TransactionHoldDTO;
@@ -193,6 +196,19 @@ public class CirculationServiceImpl implements CirculationService {
     requestService.cancelRequest(transaction, "Request cancelled at borrowing site");
     transaction.setState(BORROWING_SITE_CANCEL);
 
+    transactionRepository.save(transaction);
+
+    return success();
+  }
+
+  @Override
+  public InnReachResponseDTO itemReceived(String trackingId, String centralCode, ItemReceivedDTO itemReceivedDTO) {
+    var transaction = getTransaction(trackingId, centralCode);
+
+    if (transaction.getState() != ITEM_SHIPPED){
+      throw new IllegalArgumentException("Item is not shipped.");
+    }
+    transaction.setState(ITEM_RECEIVED);
     transactionRepository.save(transaction);
 
     return success();

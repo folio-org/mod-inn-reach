@@ -1,7 +1,6 @@
 package org.folio.innreach.controller.d2ir;
 
 import lombok.RequiredArgsConstructor;
-import org.folio.innreach.dto.BaseCircRequestDTO;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -11,8 +10,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import org.folio.innreach.domain.service.CirculationService;
+import org.folio.innreach.dto.BaseCircRequestDTO;
 import org.folio.innreach.dto.CancelRequestDTO;
 import org.folio.innreach.dto.InnReachResponseDTO;
+import org.folio.innreach.dto.ItemReceivedDTO;
 import org.folio.innreach.dto.ItemShippedDTO;
 import org.folio.innreach.dto.PatronHoldDTO;
 import org.folio.innreach.dto.TransferRequestDTO;
@@ -72,4 +73,12 @@ public class InnReachCirculationController implements InnReachCirculationApi {
     return ResponseEntity.ok(innReachResponse);
   }
 
+  @Override
+  @PutMapping("/itemreceived/{trackingId}/{centralCode}")
+  public ResponseEntity<InnReachResponseDTO> itemReceived(@PathVariable String trackingId,
+                                                            @PathVariable String centralCode, ItemReceivedDTO itemReceivedDTO) {
+    var innReachResponse = circulationService.itemReceived(trackingId, centralCode, itemReceivedDTO);
+
+    return ResponseEntity.ok(innReachResponse);
+  }
 }
