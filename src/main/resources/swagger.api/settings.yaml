@@ -788,7 +788,7 @@ paths:
       operationId: transformMARCRecord
       parameters:
         - $ref: 'api-common.yaml#/components/parameters/centralServerId'
-        - $ref: '#/components/parameters/inventoryInstanceId'  
+        - $ref: '#/components/parameters/inventoryInstanceId'
   /central-servers/{centralServerId}/item-type-mappings:
     get:
       tags:
@@ -934,6 +934,69 @@ paths:
         required: true
       parameters:
         - $ref: 'api-common.yaml#/components/parameters/centralServerId'
+  /central-servers/{centralServerId}/inn-reach-recall-user:
+    post:
+      description: Add new Inn-Reach recall user to central server
+      operationId: saveInnReachRecallUser
+      tags:
+        - inn-reach-recall-user
+      responses:
+        '201':
+          description: Inn-Reach recall user saved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/innReachRecallUserDTO"
+        '400':
+          $ref: "api-common.yaml#/components/responses/trait_response_validation_400"
+        '500':
+          $ref: "api-common.yaml#/components/responses/trait_response_500"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/innReachRecallUserDTO"
+        required: true
+      parameters:
+        - $ref: 'api-common.yaml#/components/parameters/centralServerId'
+    get:
+      description: Get Inn-Reach Central server recall user
+      operationId: getCentralServerRecallUser
+      tags:
+        - inn-reach-recall-user
+      responses:
+        '200':
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/innReachRecallUserDTO"
+        '500':
+          $ref: "api-common.yaml#/components/responses/trait_response_500"
+      parameters:
+        - $ref: 'api-common.yaml#/components/parameters/centralServerId'
+    put:
+      description: Update Inn-Reach Central server recall user
+      operationId: updateCentralServerRecallUser
+      tags:
+        - inn-reach-recall-user
+      responses:
+        '204':
+          description: No content
+        '400':
+          $ref: "api-common.yaml#/components/responses/trait_response_validation_400"
+        '404':
+          $ref: "api-common.yaml#/components/responses/trait_response_404"
+        '500':
+          $ref: "api-common.yaml#/components/responses/trait_response_500"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/innReachRecallUserDTO"
+        required: true
+      parameters:
+        - $ref: 'api-common.yaml#/components/parameters/centralServerId'
 components:
   schemas:
     centralServerDTO:
@@ -973,7 +1036,9 @@ components:
     userCustomFieldMappingDTO:
       $ref: schemas/userCustomFieldMappingDTO.json
     centralPatronTypeMappingsDTO:
-      $ref: schemas/centralPatronTypeMappingsDTO.json    
+      $ref: schemas/centralPatronTypeMappingsDTO.json
+    innReachRecallUserDTO:
+      $ref: schemas/innReachRecallUserDTO.json
   parameters:
     libraryId:
       name: libraryId
