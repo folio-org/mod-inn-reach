@@ -53,6 +53,21 @@ public class InnReachExternalServiceImpl implements InnReachExternalService {
   }
 
   @Override
+  public String postInnReachApi(String centralCode, String innReachRequestUri, Object payload) {
+    var connectionDetails = centralServerService.getConnectionDetailsByCode(centralCode);
+
+    var accessTokenDTO = innReachAuthExternalService.getAccessToken(connectionDetails);
+
+    return innReachClient.postInnReachApi(
+      buildInnReachRequestUrl(connectionDetails.getConnectionUrl(), innReachRequestUri),
+      buildBearerAuthHeader(accessTokenDTO.getAccessToken()),
+      connectionDetails.getLocalCode(),
+      connectionDetails.getCentralCode(),
+      payload
+    );
+  }
+
+  @Override
   public String postInnReachApi(String centralCode, String innReachRequestUri) {
     var connectionDetails = centralServerService.getConnectionDetailsByCode(centralCode);
 

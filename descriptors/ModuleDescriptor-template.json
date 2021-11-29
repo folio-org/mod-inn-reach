@@ -388,6 +388,14 @@
           "modulePermissions": [
             "circulation.check-in-by-barcode.post"
           ]
+        },
+        {
+          "methods": ["PUT"],
+          "pathPattern": "/inn-reach/transactions/{itemBarcode}/check-out-item/{servicePointId}",
+          "permissionsRequired": ["inn-reach.inn-reach-transaction.item.put"],
+          "modulePermissions": [
+            "circulation.check-out-by-barcode.post"
+          ]
         }
       ]
     },
