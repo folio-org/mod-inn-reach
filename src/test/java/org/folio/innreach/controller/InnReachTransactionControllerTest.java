@@ -423,30 +423,6 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
   })
-  void return200HttpCode_and_sortedTransactionList_when_SortByFirstParameterWhenMultipleSortsSpecified() {
-    var responseEntity = testRestTemplate.getForEntity(
-      "/inn-reach/transactions?sortBy=patronAgencyCode&sortBy=itemAgencyCode", InnReachTransactionsDTO.class
-    );
-
-    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
-    assertNotNull(responseEntity.getBody());
-    assertEquals(3, responseEntity.getBody().getTotalRecords());
-
-    var transactions = responseEntity.getBody().getTransactions();
-    assertTrue(transactions.get(0).getHold().getPatronAgencyCode().compareTo(
-      transactions.get(2).getHold().getPatronAgencyCode()) < 0);
-
-    var transactionsForFirstPatronAgency = transactions.stream().filter(t -> t.getHold().getPatronAgencyCode().equals(PRE_POPULATED_PATRON_AGENCY))
-      .collect(Collectors.toList());
-    assertFalse(transactionsForFirstPatronAgency.get(0).getHold().getItemAgencyCode().compareTo(
-      transactionsForFirstPatronAgency.get(1).getHold().getItemAgencyCode()) < 0);
-  }
-
-  @Test
-  @Sql(scripts = {
-    "classpath:db/central-server/pre-populate-central-server.sql",
-    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
-  })
   void return200HttpCode_and_sortedTransactionList_when_getTransactionsWithItemBarcode() {
     var responseEntity = testRestTemplate.getForEntity(
       "/inn-reach/transactions?query=ABC-abc-1234", InnReachTransactionsDTO.class

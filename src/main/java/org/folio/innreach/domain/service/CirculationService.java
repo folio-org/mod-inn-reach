@@ -2,6 +2,7 @@ package org.folio.innreach.domain.service;
 
 import java.util.UUID;
 
+import org.folio.innreach.dto.BaseCircRequestDTO;
 import org.folio.innreach.dto.CancelRequestDTO;
 import org.folio.innreach.dto.InnReachResponseDTO;
 import org.folio.innreach.dto.InnReachTransactionReceiveItemDTO;
@@ -20,4 +21,6 @@ public interface CirculationService {
   InnReachResponseDTO transferItem(String trackingId, String centralCode, TransferRequestDTO transferRequest);
 
   InnReachTransactionReceiveItemDTO receivePatronHoldItem(UUID transactionId, UUID servicePointId);
+
+  InnReachResponseDTO cancelItemHold(String trackingId, String centralCode, BaseCircRequestDTO cancelItemDTO);
 }
