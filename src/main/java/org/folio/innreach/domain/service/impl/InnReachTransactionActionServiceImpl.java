@@ -6,6 +6,7 @@ import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionSt
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.TRANSFER;
 
 import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
 import lombok.RequiredArgsConstructor;
@@ -14,7 +15,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
 
-import org.folio.innreach.domain.entity.InnReachTransaction;
 import org.folio.innreach.domain.entity.TransactionItemHold;
 import org.folio.innreach.domain.entity.TransactionPatronHold;
 import org.folio.innreach.domain.exception.EntityNotFoundException;
@@ -31,6 +31,9 @@ import org.folio.innreach.repository.InnReachTransactionRepository;
 @RequiredArgsConstructor
 @Service
 public class InnReachTransactionActionServiceImpl implements InnReachTransactionActionService {
+
+  private static final String D2IR_ITEM_RECEIVED_OPERATION = "itemreceived";
+  private static final String D2IR_ITEM_SHIPPED_OPERATION = "itemshipped";
 
   private final InnReachTransactionRepository transactionRepository;
   private final InnReachTransactionMapper transactionMapper;
@@ -56,7 +59,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
 
     transaction.setState(ITEM_RECEIVED);
 
-    reportItemReceived(transaction);
+    reportItemReceived(transaction.getCentralServerCode(), transaction.getTrackingId());
 
     return new PatronHoldCheckInResponseDTO()
       .transaction(transactionMapper.toDTO(transaction))
@@ -84,44 +87,41 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
 
     transaction.setState(ITEM_SHIPPED);
 
-    reportItemShipped(transaction.getTrackingId(), transaction.getCentralServerCode(), itemBarcode, callNumber);
+    reportItemShipped(transaction.getCentralServerCode(), transaction.getTrackingId(), itemBarcode, callNumber);
 
     return new ItemHoldCheckOutResponseDTO()
       .transaction(transactionMapper.toDTO(transaction))
       .folioCheckOut(checkOutResponse);
   }
 
-  private void reportItemReceived(InnReachTransaction transaction) {
-    var centralCode = transaction.getCentralServerCode();
-    var requestPath = resolveItemReceivedPath(transaction.getTrackingId(), centralCode);
+  private void reportItemReceived(String centralCode, String trackingId) {
+    callD2irCircOperation(D2IR_ITEM_RECEIVED_OPERATION, centralCode, trackingId, null);
+  }
 
+  private void reportItemShipped(String centralCode, String trackingId, String itemBarcode, String callNumber) {
+    var payload = new HashMap<>();
+    payload.put("itemBarcode", itemBarcode);
+    payload.put("callNumber", callNumber);
+
+    callD2irCircOperation(D2IR_ITEM_SHIPPED_OPERATION, centralCode, trackingId, payload);
+  }
+
+  private void callD2irCircOperation(String operation, String centralCode, String trackingId, Map<Object, Object> payload) {
+    var requestPath = resolveD2irCircPath(operation, trackingId, centralCode);
     try {
-      innReachExternalService.postInnReachApi(centralCode, requestPath);
+      if (payload == null) {
+        innReachExternalService.postInnReachApi(centralCode, requestPath);
+      } else {
+        innReachExternalService.postInnReachApi(centralCode, requestPath, payload);
+      }
     } catch (InnReachException e) {
+      //TODO: the suppression of error is temporal, see https://issues.folio.org/browse/MODINREACH-192 for more details.
       log.warn("Unexpected D2IR response: {}", e.getMessage(), e);
     }
   }
 
-  private void reportItemShipped(String trackingId, String centralCode, String itemBarcode, String callNumber) {
-    var requestPath = resolveItemShippedPath(trackingId, centralCode);
-
-    try {
-      var payload = new HashMap<>();
-      payload.put("itemBarcode", itemBarcode);
-      payload.put("callNumber", callNumber);
-
-      innReachExternalService.postInnReachApi(centralCode, requestPath, payload);
-    } catch (InnReachException e) {
-      log.warn("Unexpected D2IR response: {}", e.getMessage(), e);
-    }
-  }
-
-  private String resolveItemReceivedPath(String trackingId, String centralServerCode) {
-    return String.format("/circ/itemreceived/%s/%s", trackingId, centralServerCode);
-  }
-
-  private String resolveItemShippedPath(String trackingId, String centralServerCode) {
-    return String.format("/circ/itemshipped/%s/%s", trackingId, centralServerCode);
+  private String resolveD2irCircPath(String operation, String trackingId, String centralCode) {
+    return String.format("/circ/%s/%s/%s", operation, trackingId, centralCode);
   }
 
 }
