@@ -7,6 +7,7 @@ import static org.apache.commons.lang3.StringUtils.capitalize;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.BORROWING_SITE_CANCEL;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.CANCEL_REQUEST;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.ITEM_SHIPPED;
+import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.RECEIVE_UNANNOUNCED;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.TRANSFER;
 
 import java.util.Objects;
@@ -158,6 +159,23 @@ public class CirculationServiceImpl implements CirculationService {
     requestService.cancelRequest(transaction, "Request cancelled at borrowing site");
     transaction.setState(BORROWING_SITE_CANCEL);
 
+    transactionRepository.save(transaction);
+
+    return success();
+  }
+
+  @Override
+  public InnReachResponseDTO receiveUnshipped(String trackingId, String centralCode,
+    BaseCircRequestDTO receiveUnshippedRequestDTO) {
+    var transaction = getTransaction(trackingId, centralCode);
+
+    if (transaction.getState() == InnReachTransaction.TransactionState.ITEM_SHIPPED) {
+      throw new IllegalArgumentException("Unexpected transaction state: " + transaction.getState());
+    }
+
+    if (transaction.getState() == InnReachTransaction.TransactionState.ITEM_HOLD) {
+      transaction.setState(RECEIVE_UNANNOUNCED);
+    }
     transactionRepository.save(transaction);
 
     return success();

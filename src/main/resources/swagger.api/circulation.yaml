@@ -324,6 +324,33 @@ paths:
       parameters:
         - $ref: '#/components/parameters/trackingId'
         - $ref: '#/components/parameters/centralCode'
+  /d2ir/circ/receiveunshipped/{trackingId}/{centralCode}:
+    put:
+      operationId: receiveUnshipped
+      description: Report unshipped item received to owning site for item hold
+      tags:
+        - inn-reach-circulation
+      requestBody:
+        content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/baseCircRequestDTO"
+      responses:
+        '200':
+          description: report unshipped item complete
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/innReachResponseDTO"
+        '400':
+          description: An error occurred during processing the request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/innReachResponseDTO"
+      parameters:
+              - $ref: '#/components/parameters/trackingId'
+              - $ref: '#/components/parameters/centralCode'
   /transactions:
     get:
       description: Get a list of transactions for the given central server

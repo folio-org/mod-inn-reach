@@ -18,4 +18,7 @@ public interface CirculationService {
   InnReachResponseDTO transferPatronHoldItem(String trackingId, String centralCode, TransferRequestDTO transferRequest);
 
   InnReachResponseDTO cancelItemHold(String trackingId, String centralCode, BaseCircRequestDTO cancelItemDTO);
+
+  InnReachResponseDTO receiveUnshipped(String trackingId, String centralCode, BaseCircRequestDTO receiveUnshippedRequestDTO);
+
 }
