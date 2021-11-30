@@ -35,6 +35,7 @@ import java.util.UUID;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
@@ -60,6 +61,8 @@ import org.folio.innreach.domain.service.InventoryService;
 import org.folio.innreach.domain.service.RequestService;
 import org.folio.innreach.dto.CheckInRequestDTO;
 import org.folio.innreach.dto.CheckInResponseDTO;
+import org.folio.innreach.dto.CheckOutRequestDTO;
+import org.folio.innreach.dto.CheckOutResponseDTO;
 import org.folio.innreach.dto.Holding;
 import org.folio.innreach.external.service.InnReachExternalService;
 import org.folio.innreach.mapper.InnReachTransactionPickupLocationMapper;
@@ -200,6 +203,20 @@ public class RequestServiceImpl implements RequestService {
       .checkInDate(new Date());
 
     return circulationClient.checkInByBarcode(checkIn);
+  }
+
+  @Override
+  public CheckOutResponseDTO checkOutItem(InnReachTransaction transaction, UUID servicePointId) {
+    log.info("Processing item check-out for transaction {}", transaction);
+
+    var hold = transaction.getHold();
+
+    var checkOut = new CheckOutRequestDTO()
+      .servicePointId(servicePointId)
+      .userBarcode(hold.getFolioPatronBarcode())
+      .itemBarcode(hold.getFolioItemBarcode());
+
+    return circulationClient.checkOutByBarcode(checkOut);
   }
 
   private void cancelRequest(RequestDTO request, String reason) {

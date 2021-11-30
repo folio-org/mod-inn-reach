@@ -2,6 +2,8 @@ package org.folio.innreach.domain.entity;
 
 import static org.folio.innreach.domain.entity.InnReachTransaction.FETCH_ONE_BY_ID_QUERY;
 import static org.folio.innreach.domain.entity.InnReachTransaction.FETCH_ONE_BY_ID_QUERY_NAME;
+import static org.folio.innreach.domain.entity.InnReachTransaction.FETCH_ONE_BY_ITEM_BARCODE_QUERY;
+import static org.folio.innreach.domain.entity.InnReachTransaction.FETCH_ONE_BY_ITEM_BARCODE_QUERY_NAME;
 import static org.folio.innreach.domain.entity.InnReachTransaction.FETCH_ONE_BY_TRACKING_ID_AND_CENTRAL_CODE_QUERY;
 import static org.folio.innreach.domain.entity.InnReachTransaction.FETCH_ONE_BY_TRACKING_ID_AND_CENTRAL_CODE_QUERY_NAME;
 import static org.folio.innreach.domain.entity.InnReachTransaction.FETCH_ONE_BY_TRACKING_ID_QUERY;
@@ -42,6 +44,10 @@ import org.folio.innreach.domain.entity.base.Identifiable;
   query = FETCH_ONE_BY_ID_QUERY
 )
 @NamedQuery(
+  name = FETCH_ONE_BY_ITEM_BARCODE_QUERY_NAME,
+  query = FETCH_ONE_BY_ITEM_BARCODE_QUERY
+)
+@NamedQuery(
   name = FETCH_ONE_BY_TRACKING_ID_AND_CENTRAL_CODE_QUERY_NAME,
   query = FETCH_ONE_BY_TRACKING_ID_AND_CENTRAL_CODE_QUERY
 )
@@ -56,6 +62,9 @@ public class InnReachTransaction extends Auditable implements Identifiable<UUID>
 
   public static final String FETCH_ONE_BY_ID_QUERY_NAME = "InnReachTransaction.fetchOneById";
   public static final String FETCH_ONE_BY_ID_QUERY = GET_ALL_QUERY + " WHERE t.id = :id";
+
+  public static final String FETCH_ONE_BY_ITEM_BARCODE_QUERY_NAME = "InnReachTransaction.fetchOneByItemBarcode";
+  public static final String FETCH_ONE_BY_ITEM_BARCODE_QUERY = GET_ALL_QUERY + " WHERE hold.folioItemBarcode = :itemBarcode";
 
   public static final String FETCH_ONE_BY_TRACKING_ID_AND_CENTRAL_CODE_QUERY_NAME = "InnReachTransaction.fetchByTrackingIdAndCentralCode";
   public static final String FETCH_ONE_BY_TRACKING_ID_AND_CENTRAL_CODE_QUERY = "SELECT irt FROM InnReachTransaction AS irt " +
