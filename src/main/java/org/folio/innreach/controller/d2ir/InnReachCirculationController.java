@@ -72,4 +72,13 @@ public class InnReachCirculationController implements InnReachCirculationApi {
     return ResponseEntity.ok(innReachResponse);
   }
 
+  @Override
+  @PutMapping("/receiveunshipped/{trackingId}/{centralCode}")
+  public ResponseEntity<InnReachResponseDTO> receiveUnshipped(@PathVariable String trackingId,
+    @PathVariable String centralCode, BaseCircRequestDTO receiveUnshippedRequestDTO) {
+    var innReachResponse = circulationService.receiveUnshipped(trackingId, centralCode, receiveUnshippedRequestDTO);
+
+    return ResponseEntity.ok(innReachResponse);
+  }
+
 }
