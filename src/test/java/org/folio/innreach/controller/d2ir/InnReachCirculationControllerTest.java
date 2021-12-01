@@ -57,6 +57,8 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
   private static final String PATRON_HOLD_OPERATION = "patronhold";
   private static final String ITEM_SHIPPED_OPERATION = "itemshipped";
 
+  private static final String CANCEL_ITEM_HOLD_PATH = "/inn-reach/d2ir/circ/cancelitemhold/{trackingId}/{centralCode}";
+  private static final String ITEM_RECEIVED_PATH = "/inn-reach/d2ir/circ/itemreceived/{trackingId}/{centralCode}";
 
   @Autowired
   private TestRestTemplate testRestTemplate;
@@ -193,8 +195,7 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     var transactionHoldDTO = createTransactionHoldDTO();
 
     var responseEntity = testRestTemplate.exchange(
-      "/inn-reach/d2ir/circ/cancelitemhold/{trackingId}/{centralCode}", HttpMethod.PUT,
-      new HttpEntity<>(transactionHoldDTO), InnReachResponseDTO.class,
+      CANCEL_ITEM_HOLD_PATH, HttpMethod.PUT, new HttpEntity<>(transactionHoldDTO), InnReachResponseDTO.class,
       PRE_POPULATED_TRACKING_ID, PRE_POPULATED_CENTRAL_CODE);
 
     assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
@@ -217,8 +218,7 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     var transactionHoldDTO = createTransactionHoldDTO();
 
     var responseEntity = testRestTemplate.exchange(
-      "/inn-reach/d2ir/circ/cancelitemhold/{trackingId}/{centralCode}", HttpMethod.PUT,
-      new HttpEntity<>(transactionHoldDTO), InnReachResponseDTO.class,
+      CANCEL_ITEM_HOLD_PATH, HttpMethod.PUT, new HttpEntity<>(transactionHoldDTO), InnReachResponseDTO.class,
       PRE_POPULATED_TRACKING_ID, PRE_POPULATED_CENTRAL_CODE);
 
     assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
@@ -247,8 +247,7 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     var transactionHoldDTO = createTransactionHoldDTO();
 
     var responseEntity = testRestTemplate.exchange(
-      "/inn-reach/d2ir/circ/itemreceived/{trackingId}/{centralCode}", HttpMethod.PUT,
-      new HttpEntity<>(transactionHoldDTO), InnReachResponseDTO.class,
+      ITEM_RECEIVED_PATH, HttpMethod.PUT, new HttpEntity<>(transactionHoldDTO), InnReachResponseDTO.class,
       PRE_POPULATED_TRACKING_ID, PRE_POPULATED_CENTRAL_CODE);
 
     assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
@@ -270,15 +269,13 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     var transactionHoldDTO = createTransactionHoldDTO();
 
     var responseEntity = testRestTemplate.exchange(
-      "/inn-reach/d2ir/circ/itemreceived/{trackingId}/{centralCode}", HttpMethod.PUT,
-      new HttpEntity<>(transactionHoldDTO), InnReachResponseDTO.class,
+      ITEM_RECEIVED_PATH, HttpMethod.PUT, new HttpEntity<>(transactionHoldDTO), InnReachResponseDTO.class,
       PRE_POPULATED_TRACKING_ID, PRE_POPULATED_CENTRAL_CODE);
 
     assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
     var responseEntityBody = responseEntity.getBody();
     assertNotNull(responseEntityBody);
-    assertEquals("Item is not shipped.",
-      responseEntityBody.getReason());
+    assertEquals("Unexpected transaction state: PATRON_HOLD", responseEntityBody.getReason());
 
     verifyNoInteractions(requestService);
     var transactionUpdated = repository.findByTrackingIdAndCentralServerCode(PRE_POPULATED_TRACKING_ID,
