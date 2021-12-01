@@ -2,6 +2,7 @@ package org.folio.innreach.controller.d2ir;
 
 import lombok.RequiredArgsConstructor;
 import org.folio.innreach.dto.BaseCircRequestDTO;
+import org.folio.innreach.dto.ReturnUncirculatedDTO;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -77,6 +78,15 @@ public class InnReachCirculationController implements InnReachCirculationApi {
   public ResponseEntity<InnReachResponseDTO> receiveUnshipped(@PathVariable String trackingId,
     @PathVariable String centralCode, BaseCircRequestDTO receiveUnshippedRequestDTO) {
     var innReachResponse = circulationService.receiveUnshipped(trackingId, centralCode, receiveUnshippedRequestDTO);
+
+    return ResponseEntity.ok(innReachResponse);
+  }
+
+  @Override
+  @PutMapping("/returnuncirculated/{trackingId}/{centralCode}")
+  public ResponseEntity<InnReachResponseDTO> returnUncirculated(@PathVariable String trackingId,
+                                                                @PathVariable String centralCode, ReturnUncirculatedDTO returnUncirculated) {
+    var innReachResponse = circulationService.returnUncirculated(trackingId, centralCode, returnUncirculated);
 
     return ResponseEntity.ok(innReachResponse);
   }

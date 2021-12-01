@@ -1,0 +1,48 @@
+{
+  "description": "INN-Reach Return Circulation Message Put Request Data",
+  "type": "object",
+  "properties": {
+    "transactionTime": {
+      "description": "Transaction time",
+      "type": "integer"
+    },
+    "patronId": {
+      "description": "Patron id",
+      "type": "string",
+      "pattern": "[a-z,0-9]{1,32}"
+    },
+    "patronAgencyCode": {
+      "description": "Patron agency code",
+      "type": "string",
+      "pattern": "[a-z,0-9]{5}"
+    },
+    "itemAgencyCode": {
+      "description": "Item agency code",
+      "type": "string",
+      "pattern": "[a-z,0-9]{5}"
+    },
+    "itemId": {
+      "description": "Item id",
+      "type": "string",
+      "pattern": "[a-z,0-9]{1,32}"
+    },
+    "title": {
+      "description": "Item title",
+      "type": "string",
+      "maxLength": 256
+    },
+    "author": {
+      "description": "Author",
+      "type": "string",
+      "maxLength": 256
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "transactionTime",
+    "patronId",
+    "patronAgencyCode",
+    "itemAgencyCode",
+    "itemId"
+  ]
+}
