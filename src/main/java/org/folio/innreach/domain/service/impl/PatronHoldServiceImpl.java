@@ -22,7 +22,10 @@ import org.folio.innreach.domain.entity.TransactionHold;
 import org.folio.innreach.domain.entity.TransactionPatronHold;
 import org.folio.innreach.domain.service.AgencyMappingService;
 import org.folio.innreach.domain.service.CentralServerService;
+import org.folio.innreach.domain.service.HoldingsService;
+import org.folio.innreach.domain.service.InstanceService;
 import org.folio.innreach.domain.service.InventoryService;
+import org.folio.innreach.domain.service.ItemService;
 import org.folio.innreach.domain.service.ItemTypeMappingService;
 import org.folio.innreach.domain.service.PatronHoldService;
 import org.folio.innreach.domain.service.RequestService;
@@ -45,6 +48,9 @@ public class PatronHoldServiceImpl implements PatronHoldService {
   private final ItemTypeMappingService itemTypeMappingService;
   private final RequestService requestService;
   private final InventoryService inventoryService;
+  private final InstanceService instanceService;
+  private final ItemService itemService;
+  private final HoldingsService holdingsService;
   private final UserService userService;
 
   @Async
@@ -63,7 +69,7 @@ public class PatronHoldServiceImpl implements PatronHoldService {
     var holding = prepareHolding(centralServer.getId(), transaction, hold, hridSettings);
     var item = prepareItem(centralServer, transaction, hold, hridSettings);
 
-    instance = inventoryService.createInstance(instance);
+    instance = instanceService.create(instance);
 
     holding = createHolding(instance, holding);
     item = createItem(holding, item);
@@ -122,17 +128,17 @@ public class PatronHoldServiceImpl implements PatronHoldService {
   private InventoryInstanceDTO fetchInstance(InnReachTransaction transaction, HridSettingsClient.HridSettings hridSettings) {
     var instanceHrid = getInstanceHrid(transaction, hridSettings);
 
-    return inventoryService.queryInstanceByHrid(instanceHrid);
+    return instanceService.queryInstanceByHrid(instanceHrid);
   }
 
   private Holding createHolding(InventoryInstanceDTO instance, Holding holding) {
     holding.setInstanceId(instance.getId());
-    return inventoryService.createHolding(holding);
+    return holdingsService.create(holding);
   }
 
   private InventoryItemDTO createItem(Holding holding, InventoryItemDTO item) {
     item.setHoldingsRecordId(holding.getId());
-    return inventoryService.createItem(item);
+    return itemService.create(item);
   }
 
   private Holding prepareHolding(UUID centralServerId, InnReachTransaction transaction, TransactionPatronHold hold, HridSettingsClient.HridSettings settings) {

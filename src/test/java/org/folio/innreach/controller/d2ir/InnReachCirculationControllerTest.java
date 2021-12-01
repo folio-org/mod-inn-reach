@@ -28,6 +28,7 @@ import org.springframework.test.context.jdbc.SqlMergeMode;
 import org.folio.innreach.controller.base.BaseControllerTest;
 import org.folio.innreach.domain.dto.folio.inventory.InventoryItemDTO;
 import org.folio.innreach.domain.service.InventoryService;
+import org.folio.innreach.domain.service.ItemService;
 import org.folio.innreach.dto.InnReachResponseDTO;
 import org.folio.innreach.external.dto.InnReachResponse;
 import org.folio.innreach.repository.InnReachTransactionRepository;
@@ -57,6 +58,8 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
 
   @MockBean
   private InventoryService inventoryService;
+  @MockBean
+  private ItemService itemService;
 
   @Test
   void processCreatePatronHoldCirculationRequest_and_createNewPatronHold() {
@@ -119,8 +122,8 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
   })
   void processItemShippedCircRequest_updateFolioItem_whenAssociatedItemExists() {
-    when(inventoryService.getItemByBarcode(any())).thenReturn(InventoryItemDTO.builder().build());
-    when(inventoryService.findItem(any())).thenReturn(Optional.of(InventoryItemDTO.builder().build()));
+    when(itemService.getItemByBarcode(any())).thenReturn(InventoryItemDTO.builder().build());
+    when(itemService.find(any())).thenReturn(Optional.of(InventoryItemDTO.builder().build()));
 
     var transactionHoldDTO = createTransactionHoldDTO();
 
@@ -129,7 +132,7 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
         new HttpEntity<>(transactionHoldDTO), InnReachResponseDTO.class,
         ITEM_SHIPPED_OPERATION, PRE_POPULATED_TRACKING_ID, PRE_POPULATED_CENTRAL_CODE);
 
-    verify(inventoryService).updateItem(any());
+    verify(itemService).update(any());
 
     assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
 
@@ -146,8 +149,8 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
   })
   void processItemShippedCircRequest_doNotUpdateFolioItem_whenAssociatedItemDoesNotExist() {
-    when(inventoryService.getItemByBarcode(any())).thenReturn(InventoryItemDTO.builder().build());
-    when(inventoryService.findItem(any())).thenReturn(Optional.empty());
+    when(itemService.getItemByBarcode(any())).thenReturn(InventoryItemDTO.builder().build());
+    when(itemService.find(any())).thenReturn(Optional.empty());
 
     var transactionHoldDTO = createTransactionHoldDTO();
 
@@ -156,7 +159,7 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
       new HttpEntity<>(transactionHoldDTO), InnReachResponseDTO.class,
       ITEM_SHIPPED_OPERATION, PRE_POPULATED_TRACKING_ID, PRE_POPULATED_CENTRAL_CODE);
 
-    verify(inventoryService, times(0)).updateItem(any());
+    verify(itemService, times(0)).update(any());
 
     assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
 

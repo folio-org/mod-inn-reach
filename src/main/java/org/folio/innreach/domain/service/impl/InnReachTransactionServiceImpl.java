@@ -16,7 +16,7 @@ import org.folio.innreach.domain.entity.InnReachTransaction.TransactionType;
 import org.folio.innreach.domain.exception.EntityNotFoundException;
 import org.folio.innreach.domain.service.CentralServerService;
 import org.folio.innreach.domain.service.InnReachTransactionService;
-import org.folio.innreach.domain.service.InventoryService;
+import org.folio.innreach.domain.service.ItemService;
 import org.folio.innreach.domain.service.MaterialTypeMappingService;
 import org.folio.innreach.dto.InnReachResponseDTO;
 import org.folio.innreach.dto.InnReachTransactionDTO;
@@ -46,7 +46,7 @@ public class InnReachTransactionServiceImpl implements InnReachTransactionServic
 
   private final CentralServerService centralServerService;
   private final MaterialTypeMappingService materialService;
-  private final InventoryService inventoryService;
+  private final ItemService itemService;
 
   private final InnReachTransactionSpecification specification;
 
@@ -72,7 +72,7 @@ public class InnReachTransactionServiceImpl implements InnReachTransactionServic
       var centralServerId = centralServer.getId();
       var transaction = createTransactionWithItemHold(trackingId, centralCode);
       var itemHold = transactionHoldMapper.toItemHold(dto);
-      var item = inventoryService.getItemByHrId(itemHold.getItemId());
+      var item = itemService.getItemByHrId(itemHold.getItemId());
       var materialTypeId = item.getMaterialType().getId();
       var materialType = materialService.findByCentralServerAndMaterialType(centralServerId, materialTypeId);
       itemHold.setCentralItemType(materialType.getCentralItemType());

@@ -56,7 +56,8 @@ import org.folio.innreach.domain.entity.TransactionHold;
 import org.folio.innreach.domain.entity.TransactionItemHold;
 import org.folio.innreach.domain.exception.EntityNotFoundException;
 import org.folio.innreach.domain.exception.ItemNotRequestableException;
-import org.folio.innreach.domain.service.InventoryService;
+import org.folio.innreach.domain.service.HoldingsService;
+import org.folio.innreach.domain.service.ItemService;
 import org.folio.innreach.domain.service.RequestService;
 import org.folio.innreach.dto.CheckInRequestDTO;
 import org.folio.innreach.dto.CheckInResponseDTO;
@@ -93,7 +94,8 @@ public class RequestServiceImpl implements RequestService {
   private final UsersClient usersClient;
 
   private final InnReachExternalService innReachService;
-  private final InventoryService inventoryService;
+  private final ItemService itemService;
+  private final HoldingsService holdingsService;
 
   @Async
   @Override
@@ -109,9 +111,9 @@ public class RequestServiceImpl implements RequestService {
       var patronBarcode = getUserBarcode(centralServerId, patronType);
       var patron = getUserByBarcode(patronBarcode);
       var servicePointId = getDefaultServicePointId(patron.getId());
-      var item = inventoryService.getItemByHrId(hold.getItemId());
+      var item = itemService.getItemByHrId(hold.getItemId());
       var requestType = item.getStatus() == AVAILABLE ? PAGE : HOLD;
-      var holding = inventoryService.findHolding(item.getHoldingsRecordId()).orElse(null);
+      var holding = holdingsService.find(item.getHoldingsRecordId()).orElse(null);
 
       createItemRequest(transaction, holding, item, patron, servicePointId, requestType);
     } catch (ItemNotRequestableException e) {

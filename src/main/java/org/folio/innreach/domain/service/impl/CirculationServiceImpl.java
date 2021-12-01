@@ -22,7 +22,9 @@ import org.folio.innreach.domain.entity.InnReachTransaction;
 import org.folio.innreach.domain.entity.TransactionPatronHold;
 import org.folio.innreach.domain.exception.EntityNotFoundException;
 import org.folio.innreach.domain.service.CirculationService;
+import org.folio.innreach.domain.service.HoldingsService;
 import org.folio.innreach.domain.service.InventoryService;
+import org.folio.innreach.domain.service.ItemService;
 import org.folio.innreach.domain.service.PatronHoldService;
 import org.folio.innreach.domain.service.RequestService;
 import org.folio.innreach.dto.CancelRequestDTO;
@@ -53,6 +55,8 @@ public class CirculationServiceImpl implements CirculationService {
   private final PatronHoldService patronHoldService;
   private final RequestService requestService;
   private final InventoryService inventoryService;
+  private final ItemService itemService;
+  private final HoldingsService holdingsService;
   private final InnReachExternalService innReachExternalService;
 
   @Override
@@ -91,7 +95,7 @@ public class CirculationServiceImpl implements CirculationService {
     transactionPatronHold.setShippedItemBarcode(itemBarcode);
 
     if (Objects.nonNull(itemBarcode)) {
-      var itemByBarcode = inventoryService.getItemByBarcode(itemBarcode);
+      var itemByBarcode = itemService.getItemByBarcode(itemBarcode);
       if (Objects.nonNull(itemByBarcode)) {
         transactionPatronHold.setShippedItemBarcode(itemBarcode + transactionPatronHold.getItemAgencyCode());
       }
@@ -116,12 +120,12 @@ public class CirculationServiceImpl implements CirculationService {
 
     requestService.cancelRequest(transaction, cancelRequest.getReason());
 
-    inventoryService.findItem(itemId)
+    itemService.find(itemId)
         .map(removeItemTransactionInfo())
-        .map(inventoryService::updateItem)
-        .flatMap(item -> inventoryService.findHolding(item.getHoldingsRecordId()))
+        .map(itemService::update)
+        .flatMap(item -> holdingsService.find(item.getHoldingsRecordId()))
         .map(removeHoldingTransactionInfo())
-        .ifPresent(inventoryService::updateHolding);
+        .ifPresent(holdingsService::update);
 
     log.info("Item request successfully cancelled");
 
@@ -217,10 +221,10 @@ public class CirculationServiceImpl implements CirculationService {
   }
 
   private void updateFolioAssociatedItem(UUID folioItemId, String itemBarcode) {
-    var folioAssociatedItem = inventoryService.findItem(folioItemId);
+    var folioAssociatedItem = itemService.find(folioItemId);
     folioAssociatedItem.ifPresent(item -> {
       item.setBarcode(itemBarcode);
-      inventoryService.updateItem(item);
+      itemService.update(item);
     });
   }
 
