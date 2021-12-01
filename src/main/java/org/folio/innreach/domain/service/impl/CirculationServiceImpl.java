@@ -175,8 +175,8 @@ public class CirculationServiceImpl implements CirculationService {
 
     if (transaction.getState() == InnReachTransaction.TransactionState.ITEM_HOLD) {
       transaction.setState(RECEIVE_UNANNOUNCED);
+      transactionRepository.save(transaction);
     }
-    transactionRepository.save(transaction);
 
     return success();
   }

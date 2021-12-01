@@ -248,7 +248,7 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     var transactionHoldDTO = createTransactionHoldDTO();
 
     var responseEntity = testRestTemplate.exchange(
-      "/inn-reach/d2ir/circ/unshipedtemhold/{trackingId}/{centralCode}", HttpMethod.PUT,
+      "/inn-reach/d2ir/circ/receiveunshipped/{trackingId}/{centralCode}", HttpMethod.PUT,
       new HttpEntity<>(transactionHoldDTO), InnReachResponseDTO.class,
       PRE_POPULATED_TRACKING_ID, PRE_POPULATED_CENTRAL_CODE);
 
@@ -276,7 +276,7 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     var transactionHoldDTO = createTransactionHoldDTO();
 
     var responseEntity = testRestTemplate.exchange(
-      "/inn-reach/d2ir/circ/unshipedtemhold/{trackingId}/{centralCode}", HttpMethod.PUT,
+      "/inn-reach/d2ir/circ/receiveunshipped/{trackingId}/{centralCode}", HttpMethod.PUT,
       new HttpEntity<>(transactionHoldDTO), InnReachResponseDTO.class,
       PRE_POPULATED_TRACKING_ID, PRE_POPULATED_CENTRAL_CODE);
 
