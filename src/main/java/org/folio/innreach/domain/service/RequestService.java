@@ -5,6 +5,7 @@ import java.util.UUID;
 import org.springframework.scheduling.annotation.Async;
 
 import org.folio.innreach.domain.dto.folio.User;
+import org.folio.innreach.domain.dto.folio.circulation.RequestDTO;
 import org.folio.innreach.domain.dto.folio.circulation.RequestDTO.RequestType;
 import org.folio.innreach.domain.dto.folio.inventory.InventoryItemDTO;
 import org.folio.innreach.domain.entity.InnReachTransaction;
@@ -26,4 +27,8 @@ public interface RequestService {
   CheckInResponseDTO checkInItem(InnReachTransaction transaction, UUID servicePointId);
 
   CheckOutResponseDTO checkOutItem(InnReachTransaction transaction, UUID servicePointId);
+
+  void createRecallRequest(UUID userId, UUID itemId);
+
+  RequestDTO findRequest(UUID requestId);
 }

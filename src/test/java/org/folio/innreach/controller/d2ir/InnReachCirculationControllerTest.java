@@ -6,7 +6,6 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -21,10 +20,12 @@ import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionSt
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.ITEM_IN_TRANSIT;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.ITEM_RECEIVED;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.ITEM_SHIPPED;
+import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.RECALL;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.RECEIVE_UNANNOUNCED;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.RETURN_UNCIRCULATED;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.TRANSFER;
 import static org.folio.innreach.fixture.CirculationFixture.createItemShippedDTO;
+import static org.folio.innreach.fixture.CirculationFixture.createRecallDTO;
 import static org.folio.innreach.fixture.CirculationFixture.createTransactionHoldDTO;
 
 import java.util.Optional;
@@ -42,7 +43,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlMergeMode;
 
+import org.folio.innreach.client.CirculationClient;
 import org.folio.innreach.controller.base.BaseControllerTest;
+import org.folio.innreach.domain.dto.folio.circulation.RequestDTO;
 import org.folio.innreach.domain.dto.folio.inventory.InventoryItemDTO;
 import org.folio.innreach.domain.entity.InnReachTransaction;
 import org.folio.innreach.domain.service.ItemService;
@@ -70,6 +73,7 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
 
   private static final String PATRON_HOLD_OPERATION = "patronhold";
   private static final String ITEM_SHIPPED_OPERATION = "itemshipped";
+  private static final String RECALL_REQUEST_PATH = "/inn-reach/d2ir/circ/recall/{trackingId}/{centralCode}";
   private static final String LOCAL_HOLD_OPERATION = "localhold";
 
   private static final String CANCEL_ITEM_HOLD_PATH = "/inn-reach/d2ir/circ/cancelitemhold/{trackingId}/{centralCode}";
@@ -86,6 +90,8 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
   @MockBean
   private ItemService itemService;
   @MockBean
+  private CirculationClient circulationClient;
+  @SpyBean
   private RequestService requestService;
 
   @Test
@@ -201,7 +207,10 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
   })
   void processCancelItemHoldRequest_whenItemIsNotCheckedOut() {
-    doNothing().when(requestService).cancelRequest(any(), any());
+    var requestDTO = new RequestDTO();
+    when(circulationClient.findRequest(any())).thenReturn(Optional.of(requestDTO));
+    when(circulationClient.updateRequest(any(), any())).thenReturn(requestDTO);
+
     var transaction = fetchPrePopulatedTransaction();
     transaction.getHold().setFolioLoanId(null);
     repository.save(transaction);
@@ -509,5 +518,117 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     var transactionUpdated = repository.findByTrackingIdAndCentralServerCode(PRE_POPULATED_TRACKING_ID,
       PRE_POPULATED_CENTRAL_CODE).get();
     assertNotEquals(ITEM_RECEIVED, transactionUpdated.getState());
+  }
+  @Test
+  @Sql(scripts = {
+    "classpath:db/inn-reach-recall-user/pre-populate-inn-reach-recall-user.sql",
+    "classpath:db/central-server/pre-populate-central-server-with-recall-user.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
+  })
+  @Sql(scripts = {
+    "classpath:db/inn-reach-recall-user/clear-inn-reach-recall-user.sql"},
+    executionPhase = AFTER_TEST_METHOD
+  )
+  void processRecallRequest_whenItemIsOnLoanToThePatron() {
+    var requestDTO = new RequestDTO();
+    when(circulationClient.findRequest(any())).thenReturn(Optional.of(requestDTO));
+    when(circulationClient.sendRequest(any())).thenReturn(new RequestDTO());
+    var recallDTO = createRecallDTO();
+
+    var responseEntity = testRestTemplate.exchange(
+      RECALL_REQUEST_PATH, HttpMethod.PUT, new HttpEntity<>(recallDTO), InnReachResponseDTO.class,
+      PRE_POPULATED_TRACKING_ID, PRE_POPULATED_CENTRAL_CODE);
+
+    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+    var responseEntityBody = responseEntity.getBody();
+    assertNotNull(responseEntityBody);
+    assertEquals("ok", responseEntityBody.getStatus());
+
+    verify(requestService).createRecallRequest(any(), any());
+    var transactionUpdated = repository.findByTrackingIdAndCentralServerCode(PRE_POPULATED_TRACKING_ID,
+      PRE_POPULATED_CENTRAL_CODE).get();
+    assertEquals(RECALL, transactionUpdated.getState());
+  }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
+  })
+  void processRecallRequest_whenItemIsOnTheHoldShelf() {
+    var requestDTO = new RequestDTO();
+    requestDTO.setStatus(RequestDTO.RequestStatus.OPEN_AWAITING_PICKUP);
+    when(circulationClient.findRequest(any())).thenReturn(Optional.of(requestDTO));
+    when(circulationClient.updateRequest(any(), any())).thenReturn(requestDTO);
+
+    var transaction = repository.findByTrackingIdAndCentralServerCode(PRE_POPULATED_TRACKING_ID,
+      PRE_POPULATED_CENTRAL_CODE).get();
+    transaction.setState(ITEM_SHIPPED);
+    transaction.getHold().setFolioLoanId(null);
+    repository.save(transaction);
+
+    var recallDTO = createRecallDTO();
+
+    var responseEntity = testRestTemplate.exchange(
+      RECALL_REQUEST_PATH, HttpMethod.PUT, new HttpEntity<>(recallDTO), InnReachResponseDTO.class,
+      PRE_POPULATED_TRACKING_ID, PRE_POPULATED_CENTRAL_CODE);
+
+    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+    var responseEntityBody = responseEntity.getBody();
+    assertNotNull(responseEntityBody);
+    assertEquals("ok", responseEntityBody.getStatus());
+
+    verify(requestService).cancelRequest(any(), eq("Item has been recalled."));
+    var transactionUpdated = repository.findByTrackingIdAndCentralServerCode(PRE_POPULATED_TRACKING_ID,
+      PRE_POPULATED_CENTRAL_CODE).get();
+    assertEquals(RECALL, transactionUpdated.getState());
+  }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
+  })
+  void processRecallRequest_whenBadRequest() {
+    when(circulationClient.findRequest(any())).thenThrow(new IllegalArgumentException("Test exception."));
+
+    var recallDTO = createRecallDTO();
+
+    var responseEntity = testRestTemplate.exchange(
+      RECALL_REQUEST_PATH, HttpMethod.PUT, new HttpEntity<>(recallDTO), InnReachResponseDTO.class,
+      PRE_POPULATED_TRACKING_ID, PRE_POPULATED_CENTRAL_CODE);
+
+    assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
+    var responseEntityBody = responseEntity.getBody();
+    assertNotNull(responseEntityBody);
+    assertEquals("Test exception.", responseEntityBody.getReason());
+
+    var transactionUpdated = repository.findByTrackingIdAndCentralServerCode(PRE_POPULATED_TRACKING_ID,
+      PRE_POPULATED_CENTRAL_CODE).get();
+    assertNotEquals(RECALL, transactionUpdated.getState());
+  }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
+  })
+  void processRecallRequest_whenRecallUserIsNotSet() {
+    when(circulationClient.findRequest(any())).thenReturn(Optional.of(new RequestDTO()));
+    var recallDTO = createRecallDTO();
+
+    var responseEntity = testRestTemplate.exchange(
+      RECALL_REQUEST_PATH, HttpMethod.PUT, new HttpEntity<>(recallDTO), InnReachResponseDTO.class,
+      PRE_POPULATED_TRACKING_ID, PRE_POPULATED_CENTRAL_CODE);
+
+    assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
+    var responseEntityBody = responseEntity.getBody();
+    assertNotNull(responseEntityBody);
+    assertEquals("Recall user is not set for central server with code = " + PRE_POPULATED_CENTRAL_CODE,
+      responseEntityBody.getReason());
+
+    var transactionUpdated = repository.findByTrackingIdAndCentralServerCode(PRE_POPULATED_TRACKING_ID,
+      PRE_POPULATED_CENTRAL_CODE).get();
+    assertNotEquals(RECALL, transactionUpdated.getState());
   }
 }
