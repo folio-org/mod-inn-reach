@@ -19,5 +19,5 @@ public interface InnReachTransactionService {
 
   InnReachTransactionsDTO getAllTransactions(Integer offset, Integer limit, InnReachTransactionFilterParametersDTO parameters);
 
-  InnReachTransactionsDTO searchTransactions(InnReachTransactionSearchRequestDTO searchRequest);
+  InnReachTransactionsDTO searchTransactions(Integer offset, Integer limit, InnReachTransactionSearchRequestDTO searchRequest);
 }

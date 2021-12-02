@@ -92,8 +92,8 @@ public class InnReachTransactionController implements InnReachTransactionApi {
 
   @Override
   @GetMapping("/inn-reach/transactions/search")
-  public ResponseEntity<InnReachTransactionsDTO> searchTransaction(InnReachTransactionSearchRequestDTO parameters) {
-    var transactions = transactionService.searchTransactions(parameters);
+  public ResponseEntity<InnReachTransactionsDTO> searchTransaction(Integer offset, Integer limit, InnReachTransactionSearchRequestDTO searchRequest) {
+    var transactions = transactionService.searchTransactions(offset, limit, searchRequest);
     return ResponseEntity.ok(transactions);
   }
 

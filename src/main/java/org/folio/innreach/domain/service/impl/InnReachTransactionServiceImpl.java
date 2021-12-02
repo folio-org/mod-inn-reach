@@ -9,6 +9,7 @@ import javax.persistence.EntityExistsException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -113,14 +114,14 @@ public class InnReachTransactionServiceImpl implements InnReachTransactionServic
 
   @Override
   @Transactional(readOnly = true)
-  public InnReachTransactionsDTO searchTransactions(InnReachTransactionSearchRequestDTO searchRequest) {
+  public InnReachTransactionsDTO searchTransactions(Integer offset, Integer limit, InnReachTransactionSearchRequestDTO searchRequest) {
     var shippedItemBarcode = searchRequest.getShippedItemBarcode();
     var transactionStates = searchRequest.getTransactionStates()
       .stream()
       .map(InnReachTransaction.TransactionState::valueOf)
       .collect(Collectors.toList());
 
-    var pageRequest = PageRequest.of(0, 1);
+    var pageRequest = PageRequest.of(offset, limit, Sort.by(Sort.Direction.DESC, "updatedDate"));
     var page = repository.findByShippedItemBarcodeAndStateIn(shippedItemBarcode, transactionStates, pageRequest);
 
     return transactionMapper.toDTOCollection(page);
