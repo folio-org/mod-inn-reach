@@ -1009,6 +1009,50 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
   }
 
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
+  })
+  void returnTransactionByBarcodeAndState_when_transactionsFound() {
+    var responseEntity = testRestTemplate.getForEntity(
+        "/inn-reach/transactions/search?shippedItemBarcode={shippedItemBarcode}&transactionStates={transactionStates}",
+        InnReachTransactionsDTO.class, "ABC-abc-1234", new String[] {"PATRON_HOLD", "ITEM_HOLD"});
+
+    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+
+    var body = responseEntity.getBody();
+
+    assertNotNull(body);
+
+    var transactions = body.getTransactions();
+
+    assertNotNull(transactions);
+    assertFalse(transactions.isEmpty());
+  }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
+  })
+  void returnEmptyListByBarcodeAndState_when_transactionsNotFound() {
+    var responseEntity = testRestTemplate.getForEntity(
+        "/inn-reach/transactions/search?shippedItemBarcode={shippedItemBarcode}&transactionStates={transactionStates}",
+        InnReachTransactionsDTO.class, "ABC-abc-4321", new String[] {"PATRON_HOLD", "ITEM_HOLD"});
+
+    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+
+    var body = responseEntity.getBody();
+
+    assertNotNull(body);
+
+    var transactions = body.getTransactions();
+
+    assertNotNull(transactions);
+    assertTrue(transactions.isEmpty());
+  }
+
   private void modifyFolioItemBarcode(UUID transactionId, String newBarcode) {
     var transaction = repository.fetchOneById(transactionId).get();
     transaction.getHold().setFolioItemBarcode(newBarcode);

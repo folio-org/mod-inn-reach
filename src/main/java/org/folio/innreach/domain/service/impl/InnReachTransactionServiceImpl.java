@@ -2,6 +2,7 @@ package org.folio.innreach.domain.service.impl;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import javax.persistence.EntityExistsException;
 
@@ -21,6 +22,7 @@ import org.folio.innreach.domain.service.MaterialTypeMappingService;
 import org.folio.innreach.dto.InnReachResponseDTO;
 import org.folio.innreach.dto.InnReachTransactionDTO;
 import org.folio.innreach.dto.InnReachTransactionFilterParametersDTO;
+import org.folio.innreach.dto.InnReachTransactionSearchRequestDTO;
 import org.folio.innreach.dto.InnReachTransactionsDTO;
 import org.folio.innreach.dto.TransactionHoldDTO;
 import org.folio.innreach.mapper.InnReachErrorMapper;
@@ -107,5 +109,20 @@ public class InnReachTransactionServiceImpl implements InnReachTransactionServic
     var parameters = parametersMapper.toEntity(parametersDTO);
     var transactions = repository.findAll(specification.filterByParameters(parameters), PageRequest.of(offset, limit));
     return transactionMapper.toDTOCollection(transactions);
+  }
+
+  @Override
+  @Transactional(readOnly = true)
+  public InnReachTransactionsDTO searchTransactions(InnReachTransactionSearchRequestDTO searchRequest) {
+    var shippedItemBarcode = searchRequest.getShippedItemBarcode();
+    var transactionStates = searchRequest.getTransactionStates()
+      .stream()
+      .map(InnReachTransaction.TransactionState::valueOf)
+      .collect(Collectors.toList());
+
+    var pageRequest = PageRequest.of(0, 1);
+    var page = repository.findByShippedItemBarcodeAndStateIn(shippedItemBarcode, transactionStates, pageRequest);
+
+    return transactionMapper.toDTOCollection(page);
   }
 }

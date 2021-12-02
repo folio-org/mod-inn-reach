@@ -23,6 +23,7 @@ import org.folio.innreach.domain.service.RequestService;
 import org.folio.innreach.dto.InnReachResponseDTO;
 import org.folio.innreach.dto.InnReachTransactionDTO;
 import org.folio.innreach.dto.InnReachTransactionFilterParametersDTO;
+import org.folio.innreach.dto.InnReachTransactionSearchRequestDTO;
 import org.folio.innreach.dto.InnReachTransactionsDTO;
 import org.folio.innreach.dto.ItemHoldCheckOutResponseDTO;
 import org.folio.innreach.dto.PatronHoldCheckInResponseDTO;
@@ -86,6 +87,13 @@ public class InnReachTransactionController implements InnReachTransactionApi {
                                                                     Integer limit,
                                                                     InnReachTransactionFilterParametersDTO parameters) {
     var transactions = transactionService.getAllTransactions(offset, limit, parameters);
+    return ResponseEntity.ok(transactions);
+  }
+
+  @Override
+  @GetMapping("/inn-reach/transactions/search")
+  public ResponseEntity<InnReachTransactionsDTO> searchTransaction(InnReachTransactionSearchRequestDTO parameters) {
+    var transactions = transactionService.searchTransactions(parameters);
     return ResponseEntity.ok(transactions);
   }
 
