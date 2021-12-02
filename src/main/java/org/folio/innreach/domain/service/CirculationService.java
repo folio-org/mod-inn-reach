@@ -23,4 +23,7 @@ public interface CirculationService {
   InnReachResponseDTO receiveUnshipped(String trackingId, String centralCode, BaseCircRequestDTO receiveUnshippedRequestDTO);
 
   InnReachResponseDTO returnUncirculated(String trackingId, String centralCode, ReturnUncirculatedDTO returnUncirculated);
+
+  InnReachResponseDTO itemInTransit(String trackingId, String centralCode, BaseCircRequestDTO itemInTransitRequest);
+
 }

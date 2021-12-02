@@ -27,7 +27,6 @@ public class InnReachCirculationController implements InnReachCirculationApi {
 
   private final CirculationService circulationService;
 
-
   @Override
   @PostMapping("/patronhold/{trackingId}/{centralCode}")
   public ResponseEntity<InnReachResponseDTO> patronHold(@PathVariable String trackingId,
@@ -51,6 +50,15 @@ public class InnReachCirculationController implements InnReachCirculationApi {
   public ResponseEntity<InnReachResponseDTO> cancelPatronHold(@PathVariable String trackingId,
                                                            @PathVariable String centralCode, CancelRequestDTO cancelRequest) {
     var innReachResponse = circulationService.cancelPatronHold(trackingId, centralCode, cancelRequest);
+
+    return ResponseEntity.ok(innReachResponse);
+  }
+
+  @Override
+  @PutMapping("/intransit/{trackingId}/{centralCode}")
+  public ResponseEntity<InnReachResponseDTO> itemInTransit(@PathVariable String trackingId,
+                                                           @PathVariable  String centralCode, BaseCircRequestDTO itemInTransitRequest) {
+    var innReachResponse = circulationService.itemInTransit(trackingId, centralCode, itemInTransitRequest);
 
     return ResponseEntity.ok(innReachResponse);
   }
