@@ -187,7 +187,7 @@ public class CirculationServiceImpl implements CirculationService {
   @Override
   public InnReachResponseDTO returnUncirculated(String trackingId, String centralCode, ReturnUncirculatedDTO returnUncirculated) {
     var transaction = getTransaction(trackingId, centralCode);
-    InnReachTransaction.TransactionState state = transaction.getState();
+    var state = transaction.getState();
 
     if (state == ITEM_RECEIVED || state == RECEIVE_UNANNOUNCED) {
       transaction.setState(RETURN_UNCIRCULATED);
