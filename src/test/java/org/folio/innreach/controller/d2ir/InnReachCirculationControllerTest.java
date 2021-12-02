@@ -132,7 +132,7 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
         new HttpEntity<>(transactionHoldDTO), InnReachResponseDTO.class,
         ITEM_SHIPPED_OPERATION, PRE_POPULATED_TRACKING_ID, PRE_POPULATED_CENTRAL_CODE);
 
-    verify(itemService).update(any());
+    verify(itemService).changeAndUpdate(any(), any());
 
     assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
 
