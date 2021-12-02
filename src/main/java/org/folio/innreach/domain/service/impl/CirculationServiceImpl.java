@@ -183,7 +183,6 @@ public class CirculationServiceImpl implements CirculationService {
     return success();
   }
 
-  @Transactional
   @Override
   public InnReachResponseDTO itemInTransit(String trackingId, String centralCode, BaseCircRequestDTO itemInTransitRequest) {
     var transaction = getTransaction(trackingId, centralCode);
