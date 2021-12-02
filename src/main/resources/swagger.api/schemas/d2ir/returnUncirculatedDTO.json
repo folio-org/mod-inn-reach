@@ -15,8 +15,7 @@
     },
     "author": {
       "description": "Author",
-      "type": "string",
-      "maxLength": 256
+      "type": "string"
     }
   },
   "additionalProperties": false
