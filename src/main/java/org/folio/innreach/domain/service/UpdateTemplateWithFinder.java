@@ -1,11 +1,13 @@
 package org.folio.innreach.domain.service;
 
-public interface UpdateTemplateWithFinder<Key, Rec> extends UpdateTemplate<Key, Rec> {
+import java.util.Optional;
 
-  default Rec update(Key k, UpdateOperation<Rec> updater) {
-    return update(k, defaultFinder(), updater);
+public interface UpdateTemplateWithFinder<K, R> extends UpdateTemplate<K, R> {
+
+  default Optional<R> update(K k, UpdateOperation<R> updater) {
+    return update(k, finder(), updater);
   }
 
-  Finder<Key, Rec> defaultFinder();
+  Finder<K, R> finder();
 
 }

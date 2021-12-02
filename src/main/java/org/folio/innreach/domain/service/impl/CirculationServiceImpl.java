@@ -6,8 +6,8 @@ import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionSt
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.TRANSFER;
 
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
-import java.util.function.Function;
 import java.util.function.Supplier;
 
 import lombok.RequiredArgsConstructor;
@@ -23,10 +23,10 @@ import org.folio.innreach.domain.entity.TransactionPatronHold;
 import org.folio.innreach.domain.exception.EntityNotFoundException;
 import org.folio.innreach.domain.service.CirculationService;
 import org.folio.innreach.domain.service.HoldingsService;
-import org.folio.innreach.domain.service.InventoryService;
 import org.folio.innreach.domain.service.ItemService;
 import org.folio.innreach.domain.service.PatronHoldService;
 import org.folio.innreach.domain.service.RequestService;
+import org.folio.innreach.domain.service.UpdateTemplate;
 import org.folio.innreach.dto.CancelRequestDTO;
 import org.folio.innreach.dto.Holding;
 import org.folio.innreach.dto.InnReachResponseDTO;
@@ -54,7 +54,6 @@ public class CirculationServiceImpl implements CirculationService {
   private final InnReachTransactionPickupLocationMapper pickupLocationMapper;
   private final PatronHoldService patronHoldService;
   private final RequestService requestService;
-  private final InventoryService inventoryService;
   private final ItemService itemService;
   private final HoldingsService holdingsService;
   private final InnReachExternalService innReachExternalService;
@@ -101,7 +100,7 @@ public class CirculationServiceImpl implements CirculationService {
       }
     }
 
-    updateFolioAssociatedItem(transactionPatronHold.getFolioItemId(), itemBarcode);
+    itemService.changeAndUpdate(transactionPatronHold.getFolioItemId(), changeItemBarcode(itemBarcode));
 
     innReachTransaction.setState(InnReachTransaction.TransactionState.ITEM_SHIPPED);
 
@@ -120,12 +119,8 @@ public class CirculationServiceImpl implements CirculationService {
 
     requestService.cancelRequest(transaction, cancelRequest.getReason());
 
-    itemService.find(itemId)
-        .map(removeItemTransactionInfo())
-        .map(itemService::update)
-        .flatMap(item -> holdingsService.find(item.getHoldingsRecordId()))
-        .map(removeHoldingTransactionInfo())
-        .ifPresent(holdingsService::update);
+    removeItemTransactionInfo(itemId)
+        .ifPresent(this::removeHoldingsTransactionInfo);
 
     log.info("Item request successfully cancelled");
 
@@ -220,25 +215,24 @@ public class CirculationServiceImpl implements CirculationService {
     return newInnReachTransaction;
   }
 
-  private void updateFolioAssociatedItem(UUID folioItemId, String itemBarcode) {
-    var folioAssociatedItem = itemService.find(folioItemId);
-    folioAssociatedItem.ifPresent(item -> {
-      item.setBarcode(itemBarcode);
-      itemService.update(item);
+  private Optional<Holding> removeHoldingsTransactionInfo(InventoryItemDTO item) {
+    return holdingsService.changeAndUpdate(item.getHoldingsRecordId(), holding -> {
+      holding.setCallNumber(null);
+      return holding;
     });
   }
 
-  private Function<Holding, Holding> removeHoldingTransactionInfo() {
-    return holding -> {
-      holding.setCallNumber(null);
-      return holding;
-    };
-  }
-
-  private Function<InventoryItemDTO, InventoryItemDTO> removeItemTransactionInfo() {
-    return item -> {
+  private Optional<InventoryItemDTO> removeItemTransactionInfo(UUID itemId) {
+    return itemService.changeAndUpdate(itemId, item -> {
       item.setCallNumber(null);
       item.setBarcode(null);
+      return item;
+    });
+  }
+
+  private UpdateTemplate.UpdateOperation<InventoryItemDTO> changeItemBarcode(String itemBarcode) {
+    return item -> {
+      item.setBarcode(itemBarcode);
       return item;
     };
   }

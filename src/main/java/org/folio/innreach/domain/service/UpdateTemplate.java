@@ -1,25 +1,24 @@
 package org.folio.innreach.domain.service;
 
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.function.UnaryOperator;
 
-import org.folio.innreach.domain.exception.EntityNotFoundException;
+public interface UpdateTemplate<K, R> {
 
-public interface UpdateTemplate<Key, Rec> {
-
-  default Rec update(Key k, Finder<Key, Rec> finder, UpdateOperation<Rec> updater) {
-    return finder.apply(k)
-        .map(updater)
-        .orElseThrow(() -> notFoundExceptionProducer(k));
+  default Optional<R> update(K key, Finder<? super K, ? extends R> finder, UpdateOperation<R> updater) {
+    return finder.apply(key).map(updater);
   }
 
-  default EntityNotFoundException notFoundExceptionProducer(Key k) {
-    return new EntityNotFoundException("Record is not found: key = " + k);
+  interface Finder<K, R> extends Function<K, Optional<R>> {}
+
+  interface UpdateOperation<R> extends UnaryOperator<R> {
+
+    default UpdateOperation<R> andThen(UnaryOperator<R> after) {
+      Objects.requireNonNull(after);
+      return (R rec) -> after.apply(apply(rec));
+    }
+
   }
-
-  interface Finder<Key, Rec> extends Function<Key, Optional<Rec>> {}
-
-  interface UpdateOperation<Rec> extends UnaryOperator<Rec> {}
-
 }

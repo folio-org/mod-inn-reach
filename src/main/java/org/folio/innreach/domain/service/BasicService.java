@@ -2,16 +2,20 @@ package org.folio.innreach.domain.service;
 
 import java.util.Optional;
 
-public interface BasicService<Key, Rec> extends UpdateTemplateWithFinder<Key, Rec> {
+public interface BasicService<K, R> extends UpdateTemplateWithFinder<K, R> {
 
-  Rec create(Rec rec);
+  R create(R aRecord);
 
-  Rec update(Rec rec);
+  R update(R aRecord);
 
-  Optional<Rec> find(Key key);
+  Optional<R> find(K key);
+
+  default Optional<R> changeAndUpdate(K key, UpdateOperation<R> change) {
+    return update(key, change.andThen(this::update));
+  }
 
   @Override
-  default Finder<Key, Rec> defaultFinder() {
+  default Finder<K, R> finder() {
     return this::find;
   }
 
