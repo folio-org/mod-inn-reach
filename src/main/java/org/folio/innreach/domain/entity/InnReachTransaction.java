@@ -84,7 +84,7 @@ public class InnReachTransaction extends Auditable implements Identifiable<UUID>
     "JOIN FETCH h.pickupLocation " +
     "WHERE irt.trackingId = :trackingId AND irt.centralServerCode = :centralServerCode";
 
-  private static final String BY_SHIPPED_ITEM_BARCODE_AND_STATE_IN_QUERY_POSTFIX = "WHERE th.shippedItemBarcode = :shippedItemBarcode AND irt.state IN (:states)";
+  private static final String BY_SHIPPED_ITEM_BARCODE_AND_STATE_IN_QUERY_POSTFIX = "WHERE th.shippedItemBarcode = :shippedItemBarcode AND irt.state IN (:states) AND irt.type = 1";
 
   public static final String FETCH_ALL_BY_SHIPPED_ITEM_BARCODE_AND_STATE_IN_QUERY_NAME = "InnReachTransaction.fetchAllByShippedItemBarcodeAndStatesIn";
   public static final String FETCH_ALL_BY_SHIPPED_ITEM_BARCODE_AND_STATE_IN_QUERY = "SELECT irt FROM InnReachTransaction AS irt JOIN FETCH irt.hold AS th " +
