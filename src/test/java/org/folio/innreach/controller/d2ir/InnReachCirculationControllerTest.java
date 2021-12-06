@@ -29,6 +29,7 @@ import static org.folio.innreach.fixture.CirculationFixture.createTransactionHol
 import java.util.Optional;
 
 import org.folio.innreach.domain.entity.InnReachTransaction;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
@@ -61,12 +62,15 @@ import org.folio.innreach.repository.InnReachTransactionRepository;
 class InnReachCirculationControllerTest extends BaseControllerTest {
 
   private static final String ITEM_IN_TRANSIT_ENDPOINT = "/inn-reach/d2ir/circ/intransit/{trackingId}/{centralCode}";
+  private static final String CIRCULATION_OPERATION_ENDPOINT = "/inn-reach/d2ir/circ/{circulationOperationName}/{trackingId}/{centralCode}";
 
   private static final String PRE_POPULATED_TRACKING_ID = "tracking1";
+  private static final String NEW_TRANSACTION_TRACKING_ID = "tracking99";
   private static final String PRE_POPULATED_CENTRAL_CODE = "d2ir";
 
   private static final String PATRON_HOLD_OPERATION = "patronhold";
   private static final String ITEM_SHIPPED_OPERATION = "itemshipped";
+  private static final String LOCAL_HOLD_OPERATION = "localhold";
 
 
   @Autowired
@@ -347,10 +351,6 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     assertEquals(transaction.getState(), transactionUpdated.getState());
   }
 
-  private InnReachTransaction fetchPrePopulatedTransaction() {
-    return repository.findByTrackingIdAndCentralServerCode(PRE_POPULATED_TRACKING_ID, PRE_POPULATED_CENTRAL_CODE).get();
-  }
-
   @ParameterizedTest
   @EnumSource(names = {"ITEM_RECEIVED","RECEIVE_UNANNOUNCED"})
   @Sql(scripts = {
@@ -396,6 +396,70 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
 
     assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
     assertEquals(TRANSFER, transactionAfter.getState());
+  }
+
+  @Test
+  void processLocalHoldCirculationRequest_createNew() {
+    var transactionHoldDTO = createTransactionHoldDTO();
+
+    var responseEntity = testRestTemplate.exchange(
+      CIRCULATION_OPERATION_ENDPOINT, HttpMethod.PUT,
+      new HttpEntity<>(transactionHoldDTO), InnReachResponseDTO.class,
+      LOCAL_HOLD_OPERATION, NEW_TRANSACTION_TRACKING_ID, PRE_POPULATED_CENTRAL_CODE
+    );
+
+    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+
+    var responseBody = responseEntity.getBody();
+
+    assertNotNull(responseBody);
+    assertNotNull(responseBody.getErrors());
+    assertEquals(0, responseBody.getErrors().size());
+    assertEquals(InnReachResponse.OK_STATUS, responseBody.getStatus());
+
+    var innReachTransaction = fetchTransactionByTrackingId(NEW_TRANSACTION_TRACKING_ID);
+    assertNotNull(innReachTransaction);
+
+    assertNotNull(innReachTransaction.getHold());
+  }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
+  })
+  void processLocalHoldCirculationRequest_updateExiting() {
+    var transactionHoldDTO = createTransactionHoldDTO();
+
+    var responseEntity = testRestTemplate.exchange(
+      CIRCULATION_OPERATION_ENDPOINT, HttpMethod.PUT,
+      new HttpEntity<>(transactionHoldDTO), InnReachResponseDTO.class,
+      LOCAL_HOLD_OPERATION, PRE_POPULATED_TRACKING_ID, PRE_POPULATED_CENTRAL_CODE
+    );
+
+    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+
+    var responseBody = responseEntity.getBody();
+
+    assertNotNull(responseBody);
+    assertNotNull(responseBody.getErrors());
+    assertEquals(0, responseBody.getErrors().size());
+    assertEquals(InnReachResponse.OK_STATUS, responseBody.getStatus());
+
+    var innReachTransaction = fetchPrePopulatedTransaction();
+    assertNotNull(innReachTransaction);
+
+    assertEquals(transactionHoldDTO.getTransactionTime(), innReachTransaction.getHold().getTransactionTime());
+    assertEquals(transactionHoldDTO.getPatronId(), innReachTransaction.getHold().getPatronId());
+    assertEquals(transactionHoldDTO.getPatronAgencyCode(), innReachTransaction.getHold().getPatronAgencyCode());
+  }
+
+  private InnReachTransaction fetchPrePopulatedTransaction() {
+    return fetchTransactionByTrackingId(PRE_POPULATED_TRACKING_ID);
+  }
+
+  private InnReachTransaction fetchTransactionByTrackingId(String trackingId) {
+    return repository.findByTrackingIdAndCentralServerCode(trackingId, PRE_POPULATED_CENTRAL_CODE).get();
   }
 
 }
