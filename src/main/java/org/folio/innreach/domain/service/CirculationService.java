@@ -1,23 +1,32 @@
 package org.folio.innreach.domain.service;
 
-import java.util.UUID;
-
+import org.folio.innreach.dto.BaseCircRequestDTO;
 import org.folio.innreach.dto.CancelRequestDTO;
 import org.folio.innreach.dto.InnReachResponseDTO;
-import org.folio.innreach.dto.InnReachTransactionReceiveItemDTO;
 import org.folio.innreach.dto.ItemShippedDTO;
+import org.folio.innreach.dto.LocalHoldDTO;
 import org.folio.innreach.dto.PatronHoldDTO;
+import org.folio.innreach.dto.ReturnUncirculatedDTO;
 import org.folio.innreach.dto.TransferRequestDTO;
 
 public interface CirculationService {
 
   InnReachResponseDTO initiatePatronHold(String trackingId, String centralCode, PatronHoldDTO patronHold);
 
-  InnReachResponseDTO trackShippedItem(String trackingId, String centralCode, ItemShippedDTO itemShipped);
+  InnReachResponseDTO initiateLocalHold(String trackingId, String centralCode, LocalHoldDTO localHold);
 
-  InnReachResponseDTO cancelTransaction(String trackingId, String centralCode, CancelRequestDTO cancelRequest);
+  InnReachResponseDTO trackPatronHoldShippedItem(String trackingId, String centralCode, ItemShippedDTO itemShipped);
 
-  InnReachResponseDTO transferItem(String trackingId, String centralCode, TransferRequestDTO transferRequest);
+  InnReachResponseDTO cancelPatronHold(String trackingId, String centralCode, CancelRequestDTO cancelRequest);
 
-  InnReachTransactionReceiveItemDTO receivePatronHoldItem(UUID transactionId, UUID servicePointId);
+  InnReachResponseDTO transferPatronHoldItem(String trackingId, String centralCode, TransferRequestDTO transferRequest);
+
+  InnReachResponseDTO cancelItemHold(String trackingId, String centralCode, BaseCircRequestDTO cancelItemDTO);
+
+  InnReachResponseDTO receiveUnshipped(String trackingId, String centralCode, BaseCircRequestDTO receiveUnshippedRequestDTO);
+
+  InnReachResponseDTO itemInTransit(String trackingId, String centralCode, BaseCircRequestDTO itemInTransitRequest);
+
+  InnReachResponseDTO returnUncirculated(String trackingId, String centralCode, ReturnUncirculatedDTO returnUncirculated);
+
 }

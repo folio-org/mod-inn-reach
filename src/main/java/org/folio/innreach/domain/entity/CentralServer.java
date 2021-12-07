@@ -10,6 +10,8 @@ import static org.folio.innreach.domain.entity.CentralServer.FETCH_ONE_BY_CENTRA
 import static org.folio.innreach.domain.entity.CentralServer.FETCH_ONE_BY_CENTRAL_CODE_QUERY_NAME;
 import static org.folio.innreach.domain.entity.CentralServer.FETCH_ONE_BY_ID_QUERY;
 import static org.folio.innreach.domain.entity.CentralServer.FETCH_ONE_BY_ID_QUERY_NAME;
+import static org.folio.innreach.domain.entity.CentralServer.FETCH_RECALL_USER_BY_ID_QUERY;
+import static org.folio.innreach.domain.entity.CentralServer.FETCH_RECALL_USER_BY_ID_QUERY_NAME;
 import static org.folio.innreach.domain.entity.CentralServer.GET_IDS_QUERY;
 import static org.folio.innreach.domain.entity.CentralServer.GET_IDS_QUERY_NAME;
 import static org.folio.innreach.domain.entity.CentralServer.GET_ID_BY_CENTRAL_CODE_QUERY;
@@ -82,6 +84,10 @@ import org.folio.innreach.domain.entity.base.Identifiable;
   query = FETCH_CONNECTION_DETAILS_BY_CENTRAL_CODE_QUERY,
   hints = @QueryHint(name = QueryHints.PASS_DISTINCT_THROUGH, value = "false")
 )
+@NamedQuery(
+  name = FETCH_RECALL_USER_BY_ID_QUERY_NAME,
+  query = FETCH_RECALL_USER_BY_ID_QUERY
+)
 public class CentralServer extends Auditable implements Identifiable<UUID> {
 
   private static final String FETCH_BY_ID_POSTFIX = " WHERE cs.id = :id";
@@ -123,6 +129,9 @@ public class CentralServer extends Auditable implements Identifiable<UUID> {
 
   public static final String FETCH_CONNECTION_DETAILS_BY_ID_QUERY = FETCH_CONNECTION_DETAILS_QUERY + FETCH_BY_ID_POSTFIX;
   public static final String FETCH_CONNECTION_DETAILS_BY_CENTRAL_CODE_QUERY = FETCH_CONNECTION_DETAILS_QUERY + FETCH_BY_CENTRAL_CODE_POSTFIX;
+
+  public static final String FETCH_RECALL_USER_BY_ID_QUERY_NAME = "CentralServer.fetchRecallUser";
+  public static final String FETCH_RECALL_USER_BY_ID_QUERY = "SELECT cs FROM CentralServer AS cs LEFT JOIN FETCH cs.innReachRecallUser " + FETCH_BY_ID_POSTFIX;
 
 
   @Id
