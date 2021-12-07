@@ -6,6 +6,7 @@ import org.mapstruct.Mapper;
 import org.folio.innreach.domain.entity.TransactionItemHold;
 import org.folio.innreach.domain.entity.TransactionLocalHold;
 import org.folio.innreach.domain.entity.TransactionPatronHold;
+import org.folio.innreach.dto.LocalHoldDTO;
 import org.folio.innreach.dto.PatronHoldDTO;
 import org.folio.innreach.dto.TransactionHoldDTO;
 
@@ -28,4 +29,6 @@ public interface InnReachTransactionHoldMapper {
   TransactionPatronHold toPatronHold(TransactionHoldDTO dto);
 
   TransactionHoldDTO mapRequest(PatronHoldDTO dto);
+
+  TransactionHoldDTO mapRequest(LocalHoldDTO dto);
 }
