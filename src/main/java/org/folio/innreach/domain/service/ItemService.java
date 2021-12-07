@@ -4,8 +4,7 @@ import java.util.UUID;
 
 import org.folio.innreach.domain.dto.folio.inventory.InventoryItemDTO;
 
-public interface ItemService extends BasicService<UUID, InventoryItemDTO>,
-                                      RetryableUpdateTemplate<UUID, InventoryItemDTO> {
+public interface ItemService extends BasicService<UUID, InventoryItemDTO> {
 
   InventoryItemDTO getItemByHrId(String hrid);
 

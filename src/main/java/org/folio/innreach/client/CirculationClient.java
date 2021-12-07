@@ -30,7 +30,7 @@ public interface CirculationClient {
   RequestDTO sendRequest(@RequestBody RequestDTO requestDTO);
 
   @PutMapping("/requests/{requestId}")
-  RequestDTO updateRequest(@PathVariable("requestId") UUID requestId, @RequestBody RequestDTO request);
+  void updateRequest(@PathVariable("requestId") UUID requestId, @RequestBody RequestDTO request);
 
   @PostMapping("/requests/{requestId}/move")
   RequestDTO moveRequest(@PathVariable("requestId") UUID requestId, @RequestBody MoveRequestDTO payload);

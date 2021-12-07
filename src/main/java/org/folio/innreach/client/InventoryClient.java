@@ -31,7 +31,7 @@ public interface InventoryClient {
   InventoryItemDTO createItem(@RequestBody InventoryItemDTO item);
 
   @PutMapping("/items/{itemId}")
-  InventoryItemDTO updateItem(@PathVariable("itemId") UUID itemId, @RequestBody InventoryItemDTO item);
+  void updateItem(@PathVariable("itemId") UUID itemId, @RequestBody InventoryItemDTO item);
 
   @GetMapping("/items/{itemId}")
   Optional<InventoryItemDTO> findItem(@PathVariable("itemId") UUID itemId);

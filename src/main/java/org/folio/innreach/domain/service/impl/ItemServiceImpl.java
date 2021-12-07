@@ -25,7 +25,8 @@ public class ItemServiceImpl implements ItemService {
 
   @Override
   public InventoryItemDTO update(InventoryItemDTO item) {
-    return inventoryClient.updateItem(item.getId(), item);
+    inventoryClient.updateItem(item.getId(), item);
+    return item;
   }
 
   @Override

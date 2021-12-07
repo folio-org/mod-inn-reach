@@ -28,7 +28,8 @@ public class HoldingsServiceImpl implements HoldingsService {
 
   @Override
   public Holding update(Holding holding) {
-    return holdingsStorageClient.updateHolding(holding.getId(), holding);
+    holdingsStorageClient.updateHolding(holding.getId(), holding);
+    return holding;
   }
 
 }

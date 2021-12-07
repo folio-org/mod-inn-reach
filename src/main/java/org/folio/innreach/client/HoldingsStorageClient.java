@@ -23,6 +23,6 @@ public interface HoldingsStorageClient {
   Holding createHolding(@RequestBody Holding holding);
 
   @PutMapping("/holdings/{holdingId}")
-  Holding updateHolding(@PathVariable UUID holdingId, @RequestBody Holding holding);
+  void updateHolding(@PathVariable UUID holdingId, @RequestBody Holding holding);
 
 }

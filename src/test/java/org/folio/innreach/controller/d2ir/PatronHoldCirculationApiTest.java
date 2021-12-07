@@ -195,11 +195,11 @@ class PatronHoldCirculationApiTest extends BaseApiControllerTest {
         "reasonCode", 7);
 
     stubGet(format("%s/%s", ITEMS_URL, PRE_POPULATED_ITEM_ID), "inventory/item-response.json");
-    stubPut(format("%s/%s", ITEMS_URL, PRE_POPULATED_ITEM_ID), "inventory/item-response.json");
+    stubPut(format("%s/%s", ITEMS_URL, PRE_POPULATED_ITEM_ID));
     stubGet(format("%s/%s", HOLDINGS_URL, HOLDING_ID), "inventory-storage/holding-response.json");
-    stubPut(format("%s/%s", HOLDINGS_URL, HOLDING_ID), "inventory-storage/holding-response.json");
+    stubPut(format("%s/%s", HOLDINGS_URL, HOLDING_ID));
     stubGet(format("%s/%s", REQUESTS_URL, PRE_POPULATED_REQUEST_ID), "circulation/item-request-response.json");
-    stubPut(format("%s/%s", REQUESTS_URL, PRE_POPULATED_REQUEST_ID), "circulation/item-request-response.json");
+    stubPut(format("%s/%s", REQUESTS_URL, PRE_POPULATED_REQUEST_ID));
 
     mockMvc.perform(put(CIRCULATION_ENDPOINT, CANCEL_REQ_OPERATION, PRE_POPULATED_TRACKING_ID, PRE_POPULATED_CENTRAL_CODE)
         .content(jsonHelper.toJson(requestPayload))
@@ -229,7 +229,6 @@ class PatronHoldCirculationApiTest extends BaseApiControllerTest {
             "reasonCode", 7);
 
     stubGet(format("%s/%s", ITEMS_URL, PRE_POPULATED_ITEM_ID), "inventory/item-response.json");
-    /*stubPut(format("%s/%s", ITEMS_URL, PRE_POPULATED_ITEM_ID), "inventory/item-response.json");*/
 
     stubFor(WireMock.put(urlEqualTo(format("%s/%s", ITEMS_URL, PRE_POPULATED_ITEM_ID)))
         .willReturn(WireMock.status(HttpStatus.SC_CONFLICT)
@@ -237,10 +236,8 @@ class PatronHoldCirculationApiTest extends BaseApiControllerTest {
             .withHeader(XOkapiHeaders.URL, wm.baseUrl())
             .withBodyFile("inventory/version-conflict.json")));
 
-    /*stubGet(format("%s/%s", HOLDINGS_URL, HOLDING_ID), "inventory-storage/holding-response.json");
-    stubPut(format("%s/%s", HOLDINGS_URL, HOLDING_ID), "inventory-storage/holding-response.json");*/
     stubGet(format("%s/%s", REQUESTS_URL, PRE_POPULATED_REQUEST_ID), "circulation/item-request-response.json");
-    stubPut(format("%s/%s", REQUESTS_URL, PRE_POPULATED_REQUEST_ID), "circulation/item-request-response.json");
+    stubPut(format("%s/%s", REQUESTS_URL, PRE_POPULATED_REQUEST_ID));
 
     mockMvc.perform(put(CIRCULATION_ENDPOINT, CANCEL_REQ_OPERATION, PRE_POPULATED_TRACKING_ID, PRE_POPULATED_CENTRAL_CODE)
             .content(jsonHelper.toJson(requestPayload))
@@ -270,11 +267,11 @@ class PatronHoldCirculationApiTest extends BaseApiControllerTest {
         "reasonCode", 7);
 
     stubGet(format("%s/%s", ITEMS_URL, PRE_POPULATED_ITEM_ID), "inventory/item-response.json");
-    stubPut(format("%s/%s", ITEMS_URL, PRE_POPULATED_ITEM_ID), "inventory/item-response.json");
+    stubPut(format("%s/%s", ITEMS_URL, PRE_POPULATED_ITEM_ID));
     stubGet(format("%s/%s", HOLDINGS_URL, HOLDING_ID), "inventory-storage/holding-response.json");
-    stubPut(format("%s/%s", HOLDINGS_URL, HOLDING_ID), "inventory-storage/holding-response.json");
+    stubPut(format("%s/%s", HOLDINGS_URL, HOLDING_ID));
     stubGet(format("%s/%s", REQUESTS_URL, PRE_POPULATED_REQUEST_ID), "circulation/item-request-response.json");
-    stubPut(format("%s/%s", REQUESTS_URL, PRE_POPULATED_REQUEST_ID), "circulation/item-request-response.json");
+    stubPut(format("%s/%s", REQUESTS_URL, PRE_POPULATED_REQUEST_ID));
 
     mockMvc.perform(put(CIRCULATION_ENDPOINT, CANCEL_REQ_OPERATION, PRE_POPULATED_TRACKING_ID, PRE_POPULATED_CENTRAL_CODE)
         .content(jsonHelper.toJson(requestPayload))

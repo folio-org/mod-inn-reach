@@ -27,7 +27,6 @@ import org.springframework.test.context.jdbc.SqlMergeMode;
 
 import org.folio.innreach.controller.base.BaseControllerTest;
 import org.folio.innreach.domain.dto.folio.inventory.InventoryItemDTO;
-import org.folio.innreach.domain.service.InventoryService;
 import org.folio.innreach.domain.service.ItemService;
 import org.folio.innreach.dto.InnReachResponseDTO;
 import org.folio.innreach.external.dto.InnReachResponse;
@@ -56,8 +55,6 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
   @SpyBean
   private InnReachTransactionRepository repository;
 
-  @MockBean
-  private InventoryService inventoryService;
   @MockBean
   private ItemService itemService;
 

@@ -4,8 +4,7 @@ import java.util.UUID;
 
 import org.folio.innreach.domain.dto.folio.inventory.InventoryInstanceDTO;
 
-public interface InstanceService extends BasicService<UUID, InventoryInstanceDTO>,
-                                          RetryableUpdateTemplate<UUID, InventoryInstanceDTO> {
+public interface InstanceService extends BasicService<UUID, InventoryInstanceDTO> {
 
   InventoryInstanceDTO queryInstanceByHrid(String instanceHrid);
 

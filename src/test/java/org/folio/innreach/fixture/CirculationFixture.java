@@ -9,6 +9,7 @@ import org.jeasy.random.EasyRandom;
 import org.jeasy.random.EasyRandomParameters;
 import org.jeasy.random.randomizers.text.StringRandomizer;
 
+import org.folio.innreach.dto.ItemShippedDTO;
 import org.folio.innreach.dto.TransactionHoldDTO;
 import org.folio.innreach.dto.TransferRequestDTO;
 
@@ -17,6 +18,7 @@ public class CirculationFixture {
 
   private static final EasyRandom transactionHoldRandom;
   private static final EasyRandom transferRequestRandom;
+  private static final EasyRandom itemShippedRandom;
 
   static {
 
@@ -53,6 +55,22 @@ public class CirculationFixture {
             .randomize(named("itemId"), TestUtil::randomAlphanumeric32Max)
             .randomize(named("newItemId"), TestUtil::randomAlphanumeric32Max)
     );
+
+    itemShippedRandom = new EasyRandom(
+        new EasyRandomParameters()
+            .randomize(named("transactionTime"), () -> randomInteger(255))
+            .randomize(named("patronId"), TestUtil::randomAlphanumeric32Max)
+            .randomize(named("patronAgencyCode"), TestUtil::randomAlphanumeric5)
+            .randomize(named("itemAgencyCode"), TestUtil::randomAlphanumeric5)
+            .randomize(named("itemId"), TestUtil::randomAlphanumeric32Max)
+            .randomize(named("newItemId"), TestUtil::randomAlphanumeric32Max)
+            .randomize(named("pickupLocation"), () -> "a:b:c:d")
+            .randomize(named("centralItemType"), () -> randomInteger(255))
+            .randomize(named("itemBarcode"), new StringRandomizer(32))
+            .randomize(named("title"), new StringRandomizer(255))
+            .randomize(named("author"), new StringRandomizer(255))
+            .randomize(named("callNumber"), new StringRandomizer(255))
+    );
   }
 
   public static TransactionHoldDTO createTransactionHoldDTO() {
@@ -61,6 +79,10 @@ public class CirculationFixture {
 
   public static TransferRequestDTO createTransferRequestDTO() {
     return transferRequestRandom.nextObject(TransferRequestDTO.class);
+  }
+
+  public static ItemShippedDTO createItemShippedDTO() {
+    return itemShippedRandom.nextObject(ItemShippedDTO.class);
   }
 
 }

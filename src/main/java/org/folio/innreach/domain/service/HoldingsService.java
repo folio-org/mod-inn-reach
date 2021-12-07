@@ -4,6 +4,5 @@ import java.util.UUID;
 
 import org.folio.innreach.dto.Holding;
 
-public interface HoldingsService extends BasicService<UUID, Holding>,
-                                          RetryableUpdateTemplate<UUID, Holding> {
+public interface HoldingsService extends BasicService<UUID, Holding> {
 }
