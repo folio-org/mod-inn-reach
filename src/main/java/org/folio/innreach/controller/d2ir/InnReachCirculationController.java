@@ -1,6 +1,9 @@
 package org.folio.innreach.controller.d2ir;
 
 import lombok.RequiredArgsConstructor;
+import org.folio.innreach.dto.BaseCircRequestDTO;
+import org.folio.innreach.dto.LocalHoldDTO;
+import org.folio.innreach.dto.ReturnUncirculatedDTO;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -26,7 +29,6 @@ import org.folio.innreach.rest.resource.InnReachCirculationApi;
 public class InnReachCirculationController implements InnReachCirculationApi {
 
   private final CirculationService circulationService;
-
 
   @Override
   @PostMapping("/patronhold/{trackingId}/{centralCode}")
@@ -56,6 +58,24 @@ public class InnReachCirculationController implements InnReachCirculationApi {
   }
 
   @Override
+  @PutMapping("/localhold/{trackingId}/{centralCode}")
+  public ResponseEntity<InnReachResponseDTO> createLocalHold(@PathVariable String trackingId,
+                                                             @PathVariable String centralCode, LocalHoldDTO localHold) {
+    var innReachResponse = circulationService.initiateLocalHold(trackingId, centralCode, localHold);
+
+    return ResponseEntity.ok(innReachResponse);
+  }
+
+  @Override
+  @PutMapping("/intransit/{trackingId}/{centralCode}")
+  public ResponseEntity<InnReachResponseDTO> itemInTransit(@PathVariable String trackingId,
+                                                           @PathVariable  String centralCode, BaseCircRequestDTO itemInTransitRequest) {
+    var innReachResponse = circulationService.itemInTransit(trackingId, centralCode, itemInTransitRequest);
+
+    return ResponseEntity.ok(innReachResponse);
+  }
+
+  @Override
   @PutMapping("/transferrequest/{trackingId}/{centralCode}")
   public ResponseEntity<InnReachResponseDTO> transferRequest(@PathVariable String trackingId,
                                                              @PathVariable String centralCode, TransferRequestDTO transferRequest) {
@@ -69,6 +89,24 @@ public class InnReachCirculationController implements InnReachCirculationApi {
   public ResponseEntity<InnReachResponseDTO> cancelItemHold(@PathVariable String trackingId,
                                                             @PathVariable String centralCode, BaseCircRequestDTO cancelItemDTO) {
     var innReachResponse = circulationService.cancelItemHold(trackingId, centralCode, cancelItemDTO);
+
+    return ResponseEntity.ok(innReachResponse);
+  }
+
+  @Override
+  @PutMapping("/receiveunshipped/{trackingId}/{centralCode}")
+  public ResponseEntity<InnReachResponseDTO> receiveUnshipped(@PathVariable String trackingId,
+    @PathVariable String centralCode, BaseCircRequestDTO receiveUnshippedRequestDTO) {
+    var innReachResponse = circulationService.receiveUnshipped(trackingId, centralCode, receiveUnshippedRequestDTO);
+
+    return ResponseEntity.ok(innReachResponse);
+  }
+
+  @Override
+  @PutMapping("/returnuncirculated/{trackingId}/{centralCode}")
+  public ResponseEntity<InnReachResponseDTO> returnUncirculated(@PathVariable String trackingId,
+                                                                @PathVariable String centralCode, ReturnUncirculatedDTO returnUncirculated) {
+    var innReachResponse = circulationService.returnUncirculated(trackingId, centralCode, returnUncirculated);
 
     return ResponseEntity.ok(innReachResponse);
   }
