@@ -122,7 +122,7 @@ public class InnReachTransactionServiceImpl implements InnReachTransactionServic
       .collect(Collectors.toList());
 
     var pageRequest = PageRequest.of(offset, limit, Sort.by(Sort.Direction.DESC, "updatedDate"));
-    var page = repository.findByShippedItemBarcodeAndStateIn(shippedItemBarcode, transactionStates, pageRequest);
+    var page = repository.findByItemBarcodeAndStateIn(shippedItemBarcode, transactionStates, pageRequest);
 
     return transactionMapper.toDTOCollection(page);
   }
