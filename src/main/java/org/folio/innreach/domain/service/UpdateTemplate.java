@@ -3,6 +3,7 @@ package org.folio.innreach.domain.service;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
 
 public interface UpdateTemplate<K, R> {
@@ -11,7 +12,23 @@ public interface UpdateTemplate<K, R> {
     return finder.apply(key).map(updater);
   }
 
-  interface Finder<K, R> extends Function<K, Optional<R>> {}
+  interface Finder<K, R> extends Function<K, Optional<R>> {
+
+    default Finder<K, R> toRequired(Supplier<? extends RuntimeException> notFoundExceptionSupplier) {
+      Objects.requireNonNull(notFoundExceptionSupplier);
+
+      return key -> {
+        var rec = this.apply(key);
+
+        if (rec.isEmpty()) {
+          throw notFoundExceptionSupplier.get();
+        }
+
+        return rec;
+      };
+    }
+
+  }
 
   interface UpdateOperation<R> extends UnaryOperator<R> {
 
@@ -21,4 +38,5 @@ public interface UpdateTemplate<K, R> {
     }
 
   }
+
 }

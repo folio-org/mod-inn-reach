@@ -150,8 +150,10 @@ public class CirculationServiceImpl implements CirculationService {
     }
 
     UUID folioItemId = transactionPatronHold.getFolioItemId();
-    itemService.changeAndUpdate(folioItemId, changeFolioAssociatedItem(folioItemBarcode, callNumber))
-        .orElseThrow(() -> new IllegalArgumentException("Item with id = " + folioItemId + " not found!"));
+
+    itemService.changeAndUpdate(folioItemId,
+        () -> new IllegalArgumentException("Item with id = " + folioItemId + " not found!"),
+        changeFolioAssociatedItem(folioItemBarcode, callNumber));
 
     innReachTransaction.setState(ITEM_SHIPPED);
 
