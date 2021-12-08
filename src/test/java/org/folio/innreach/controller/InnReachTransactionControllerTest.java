@@ -905,8 +905,8 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     when(circulationClient.checkInByBarcode(any(CheckInRequestDTO.class)))
       .thenReturn(new CheckInResponseDTO().item(new CheckInResponseDTOItem().barcode(PRE_POPULATED_PATRON_HOLD_ITEM_BARCODE)));
 
-    var responseEntity = testRestTemplate.exchange(
-      PATRON_HOLD_CHECK_IN_ENDPOINT, HttpMethod.PUT, HttpEntity.EMPTY, PatronHoldCheckInResponseDTO.class,
+    var responseEntity = testRestTemplate.postForEntity(
+      PATRON_HOLD_CHECK_IN_ENDPOINT, null, PatronHoldCheckInResponseDTO.class,
       PRE_POPULATED_ITEM_SHIPPED_TRANSACTION_ID, UUID.randomUUID()
     );
 
@@ -934,8 +934,8 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     when(circulationClient.checkInByBarcode(any(CheckInRequestDTO.class)))
       .thenReturn(new CheckInResponseDTO().item(new CheckInResponseDTOItem().barcode(PRE_POPULATED_PATRON_HOLD_ITEM_BARCODE)));
 
-    var responseEntity = testRestTemplate.exchange(
-      PATRON_HOLD_CHECK_IN_ENDPOINT, HttpMethod.PUT, HttpEntity.EMPTY, PatronHoldCheckInResponseDTO.class,
+    var responseEntity = testRestTemplate.postForEntity(
+      PATRON_HOLD_CHECK_IN_ENDPOINT, null, PatronHoldCheckInResponseDTO.class,
       PRE_POPULATED_ITEM_SHIPPED_TRANSACTION_ID, UUID.randomUUID()
     );
 
@@ -955,34 +955,11 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   @Test
   @Sql(scripts = {
     "classpath:db/central-server/pre-populate-central-server.sql",
-    "classpath:db/inn-reach-transaction/pre-populate-transaction-item-shipped.sql"
-  })
-  void testCheckInPatronHoldItem_shouldAcceptPlainText() {
-    var requestHeaders = new HttpHeaders();
-    requestHeaders.setAccept(List.of(MediaType.TEXT_PLAIN));
-    var requestEntity = new HttpEntity<Void>(requestHeaders);
-
-    when(circulationClient.checkInByBarcode(any(CheckInRequestDTO.class)))
-      .thenReturn(new CheckInResponseDTO().item(new CheckInResponseDTOItem().barcode(PRE_POPULATED_PATRON_HOLD_ITEM_BARCODE)));
-
-    var responseEntity = testRestTemplate.exchange(
-      PATRON_HOLD_CHECK_IN_ENDPOINT, HttpMethod.PUT, requestEntity, PatronHoldCheckInResponseDTO.class,
-      PRE_POPULATED_ITEM_SHIPPED_TRANSACTION_ID, UUID.randomUUID()
-    );
-
-    var response = responseEntity.getBody();
-    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
-    assertNotNull(response);
-  }
-
-  @Test
-  @Sql(scripts = {
-    "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
   })
   void testCheckInPatronHoldItem_invalidTransactionState() {
-    var responseEntity = testRestTemplate.exchange(
-      PATRON_HOLD_CHECK_IN_ENDPOINT, HttpMethod.PUT, HttpEntity.EMPTY, PatronHoldCheckInResponseDTO.class,
+    var responseEntity = testRestTemplate.postForEntity(
+      PATRON_HOLD_CHECK_IN_ENDPOINT, null, PatronHoldCheckInResponseDTO.class,
       PRE_POPULATED_TRANSACTION_ID1, UUID.randomUUID()
     );
 
@@ -1001,8 +978,8 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
 
     when(circulationClient.checkOutByBarcode(any(CheckOutRequestDTO.class))).thenReturn(checkOutResponse);
 
-    var responseEntity = testRestTemplate.exchange(
-      ITEM_HOLD_CHECK_OUT_ENDPOINT, HttpMethod.PUT, HttpEntity.EMPTY, ItemHoldCheckOutResponseDTO.class,
+    var responseEntity = testRestTemplate.postForEntity(
+      ITEM_HOLD_CHECK_OUT_ENDPOINT, null, ItemHoldCheckOutResponseDTO.class,
       PRE_POPULATED_ITEM_HOLD_ITEM_BARCODE, UUID.randomUUID()
     );
 
@@ -1026,8 +1003,8 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   void testCheckOutItemHoldItem_invalidTransactionState() {
     modifyTransactionState(PRE_POPULATED_ITEM_HOLD_TRANSACTION_ID, CANCEL_REQUEST);
 
-    var responseEntity = testRestTemplate.exchange(
-      ITEM_HOLD_CHECK_OUT_ENDPOINT, HttpMethod.PUT, HttpEntity.EMPTY, ItemHoldCheckOutResponseDTO.class,
+    var responseEntity = testRestTemplate.postForEntity(
+      ITEM_HOLD_CHECK_OUT_ENDPOINT, null, ItemHoldCheckOutResponseDTO.class,
       PRE_POPULATED_ITEM_HOLD_ITEM_BARCODE, UUID.randomUUID()
     );
 
