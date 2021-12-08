@@ -15,7 +15,6 @@ public class InnReachTextJsonHttpMessageConverter extends MappingJackson2HttpMes
     super(objectMapper);
     var mediaTypeList = new ArrayList<>(this.getSupportedMediaTypes());
     mediaTypeList.add(new MediaType("text", "json", StandardCharsets.UTF_8));
-    mediaTypeList.add(new MediaType("text", "plain", StandardCharsets.UTF_8));
     this.setSupportedMediaTypes(mediaTypeList);
   }
 

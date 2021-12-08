@@ -382,17 +382,17 @@
           "permissionsRequired": ["inn-reach.inn-reach-transactions.collection.get"]
         },
         {
-          "methods": ["PUT"],
+          "methods": ["POST"],
           "pathPattern": "/inn-reach/transactions/{id}/receive-item/{servicePointId}",
-          "permissionsRequired": ["inn-reach.inn-reach-transaction.item.put"],
+          "permissionsRequired": ["inn-reach.d2ir.inn-reach-transaction.item.post"],
           "modulePermissions": [
             "circulation.check-in-by-barcode.post"
           ]
         },
         {
-          "methods": ["PUT"],
+          "methods": ["POST"],
           "pathPattern": "/inn-reach/transactions/{itemBarcode}/check-out-item/{servicePointId}",
-          "permissionsRequired": ["inn-reach.inn-reach-transaction.item.put"],
+          "permissionsRequired": ["inn-reach.d2ir.inn-reach-transaction.item.post"],
           "modulePermissions": [
             "circulation.check-out-by-barcode.post"
           ]
@@ -823,8 +823,8 @@
     },
     {
       "permissionName" : "inn-reach.d2ir.inn-reach-transaction.item.post",
-      "displayName" : "create INN-Reach Transaction with item hold at the owning site",
-      "description" : "Create INN-Reach Transaction with Item Hold at the owning site"
+      "displayName" : "create/update INN-Reach transaction",
+      "description" : "Create/update INN-Reach transaction"
     },
     {
       "permissionName" : "inn-reach.inn-reach-transaction.item.get",
@@ -842,8 +842,7 @@
       "description" : "All permissions of inn-reach transactions scope",
       "subPermissions" : [
         "inn-reach.d2ir.inn-reach-transaction.item.post",
-        "inn-reach.inn-reach-transaction.item.get",
-        "inn-reach.inn-reach-transaction.item.put"
+        "inn-reach.inn-reach-transaction.item.get"
       ]
     },
     {

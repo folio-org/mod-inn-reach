@@ -65,7 +65,7 @@ public class InnReachTransactionController implements InnReachTransactionApi {
   }
 
   @Override
-  @PutMapping("/inn-reach/transactions/{id}/receive-item/{servicePointId}")
+  @PostMapping("/inn-reach/transactions/{id}/receive-item/{servicePointId}")
   public ResponseEntity<PatronHoldCheckInResponseDTO> checkInPatronHoldItem(@PathVariable UUID id,
                                                                             @PathVariable UUID servicePointId) {
     var response = transactionActionService.checkInPatronHoldItem(id, servicePointId);
@@ -73,7 +73,7 @@ public class InnReachTransactionController implements InnReachTransactionApi {
   }
 
   @Override
-  @PutMapping("/inn-reach/transactions/{itemBarcode}/check-out-item/{servicePointId}")
+  @PostMapping("/inn-reach/transactions/{itemBarcode}/check-out-item/{servicePointId}")
   public ResponseEntity<ItemHoldCheckOutResponseDTO> checkOutItemHoldItem(@PathVariable String itemBarcode,
                                                                           @PathVariable UUID servicePointId) {
     var response = transactionActionService.checkOutItemHoldItem(itemBarcode, servicePointId);
