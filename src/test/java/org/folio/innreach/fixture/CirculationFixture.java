@@ -98,7 +98,7 @@ public class CirculationFixture {
   }
 
   public static CancelRequestDTO createCancelRequestDTO() {
-    return itemShippedRandom.nextObject(CancelRequestDTO.class);
+    return cancelRequestRandom.nextObject(CancelRequestDTO.class);
   }
 
 }

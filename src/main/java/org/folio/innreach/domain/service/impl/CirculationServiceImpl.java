@@ -1,8 +1,18 @@
 package org.folio.innreach.domain.service.impl;
 
+import static java.util.Objects.nonNull;
 import static org.apache.commons.lang3.StringUtils.capitalize;
 
+import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.BORROWING_SITE_CANCEL;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.CANCEL_REQUEST;
+import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.ITEM_HOLD;
+import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.ITEM_IN_TRANSIT;
+import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.ITEM_RECEIVED;
+import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.ITEM_SHIPPED;
+import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.LOCAL_HOLD;
+import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.PATRON_HOLD;
+import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.RECEIVE_UNANNOUNCED;
+import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.RETURN_UNCIRCULATED;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.TRANSFER;
 
 import java.util.Objects;
@@ -19,6 +29,9 @@ import org.springframework.util.Assert;
 
 import org.folio.innreach.domain.dto.folio.inventory.InventoryItemDTO;
 import org.folio.innreach.domain.entity.InnReachTransaction;
+import org.folio.innreach.domain.entity.InnReachTransaction.TransactionState;
+import org.folio.innreach.domain.entity.InnReachTransaction.TransactionType;
+import org.folio.innreach.domain.entity.TransactionHold;
 import org.folio.innreach.domain.entity.TransactionPatronHold;
 import org.folio.innreach.domain.exception.EntityNotFoundException;
 import org.folio.innreach.domain.service.CirculationService;
@@ -26,19 +39,18 @@ import org.folio.innreach.domain.service.HoldingsService;
 import org.folio.innreach.domain.service.ItemService;
 import org.folio.innreach.domain.service.PatronHoldService;
 import org.folio.innreach.domain.service.RequestService;
-import org.folio.innreach.domain.service.UpdateTemplate;
+import org.folio.innreach.domain.service.UpdateTemplate.UpdateOperation;
+import org.folio.innreach.dto.BaseCircRequestDTO;
 import org.folio.innreach.dto.CancelRequestDTO;
 import org.folio.innreach.dto.Holding;
 import org.folio.innreach.dto.InnReachResponseDTO;
-import org.folio.innreach.dto.InnReachTransactionReceiveItemDTO;
 import org.folio.innreach.dto.ItemShippedDTO;
+import org.folio.innreach.dto.LocalHoldDTO;
 import org.folio.innreach.dto.PatronHoldDTO;
+import org.folio.innreach.dto.ReturnUncirculatedDTO;
 import org.folio.innreach.dto.TransactionHoldDTO;
 import org.folio.innreach.dto.TransferRequestDTO;
-import org.folio.innreach.external.exception.InnReachException;
-import org.folio.innreach.external.service.InnReachExternalService;
 import org.folio.innreach.mapper.InnReachTransactionHoldMapper;
-import org.folio.innreach.mapper.InnReachTransactionMapper;
 import org.folio.innreach.mapper.InnReachTransactionPickupLocationMapper;
 import org.folio.innreach.repository.InnReachTransactionRepository;
 
@@ -48,15 +60,22 @@ import org.folio.innreach.repository.InnReachTransactionRepository;
 @RequiredArgsConstructor
 public class CirculationServiceImpl implements CirculationService {
 
+  private static final String[] TRANSACTION_HOLD_IGNORE_PROPS_ON_COPY = {
+    "pickupLocation", "id", "createdBy", "updatedBy", "createdDate", "updatedDate",
+    "folioPatronId", "folioInstanceId", "folioHoldingId", "folioItemId",
+    "folioRequestId", "folioLoanId", "folioPatronBarcode", "folioItemBarcode"
+  };
+  private static final String[] PICKUP_LOC_IGNORE_PROPS_ON_COPY = {
+    "id", "createdBy", "updatedBy", "createdDate", "updatedDate"
+  };
+
   private final InnReachTransactionRepository transactionRepository;
-  private final InnReachTransactionMapper transactionMapper;
   private final InnReachTransactionHoldMapper transactionHoldMapper;
   private final InnReachTransactionPickupLocationMapper pickupLocationMapper;
   private final PatronHoldService patronHoldService;
   private final RequestService requestService;
   private final ItemService itemService;
   private final HoldingsService holdingsService;
-  private final InnReachExternalService innReachExternalService;
 
   @Override
   public InnReachResponseDTO initiatePatronHold(String trackingId, String centralCode, PatronHoldDTO patronHold) {
@@ -65,17 +84,17 @@ public class CirculationServiceImpl implements CirculationService {
 
     if (innReachTransaction.isPresent()) {
       log.info("Transaction patron hold with trackingId [{}] and centralCode [{}] exists, start to update...",
-          trackingId, centralCode);
+        trackingId, centralCode);
 
-      updateTransactionPatronHold((TransactionPatronHold) innReachTransaction.get().getHold(), transactionHold);
+      updateTransactionHold(innReachTransaction.get().getHold(), transactionHold);
 
       patronHoldService.updateVirtualItems(innReachTransaction.get());
     } else {
       log.info("Transaction patron hold with trackingId [{}] and centralCode [{}] doesn't exist, create a new one...",
-          trackingId, centralCode);
+        trackingId, centralCode);
 
-      InnReachTransaction newTransactionWithPatronHold = createTransactionWithPatronHold(trackingId, centralCode,
-          transactionHold);
+      InnReachTransaction newTransactionWithPatronHold = createTransaction(trackingId, centralCode,
+        transactionHold, TransactionType.PATRON);
       var transaction = transactionRepository.save(newTransactionWithPatronHold);
 
       patronHoldService.createVirtualItems(transaction);
@@ -85,30 +104,62 @@ public class CirculationServiceImpl implements CirculationService {
   }
 
   @Override
-  public InnReachResponseDTO trackShippedItem(String trackingId, String centralCode, ItemShippedDTO itemShipped) {
-    var innReachTransaction = getTransaction(trackingId, centralCode);
+  public InnReachResponseDTO initiateLocalHold(String trackingId, String centralCode, LocalHoldDTO localHold) {
+    var innReachTransaction = transactionRepository.findByTrackingIdAndCentralServerCode(trackingId, centralCode);
+    var transactionHold = transactionHoldMapper.mapRequest(localHold);
 
-    var itemBarcode = itemShipped.getItemBarcode();
+    if (innReachTransaction.isPresent()) {
+      log.info("Transaction local hold with trackingId [{}] and centralCode [{}] exists, start to update...",
+        trackingId, centralCode);
 
-    var transactionPatronHold = (TransactionPatronHold) innReachTransaction.getHold();
-    transactionPatronHold.setShippedItemBarcode(itemBarcode);
+      updateTransactionHold(innReachTransaction.get().getHold(), transactionHold);
+    } else {
+      log.info("Transaction local hold with trackingId [{}] and centralCode [{}] doesn't exist, create a new one...",
+        trackingId, centralCode);
 
-    if (Objects.nonNull(itemBarcode)) {
-      var itemByBarcode = itemService.getItemByBarcode(itemBarcode);
-      if (Objects.nonNull(itemByBarcode)) {
-        transactionPatronHold.setShippedItemBarcode(itemBarcode + transactionPatronHold.getItemAgencyCode());
-      }
+      var newTransaction = createTransaction(trackingId, centralCode, transactionHold, TransactionType.LOCAL);
+      transactionRepository.save(newTransaction);
     }
-
-    itemService.changeAndUpdate(transactionPatronHold.getFolioItemId(), changeItemBarcode(itemBarcode));
-
-    innReachTransaction.setState(InnReachTransaction.TransactionState.ITEM_SHIPPED);
 
     return success();
   }
 
   @Override
-  public InnReachResponseDTO cancelTransaction(String trackingId, String centralCode, CancelRequestDTO cancelRequest) {
+  public InnReachResponseDTO trackPatronHoldShippedItem(String trackingId, String centralCode, ItemShippedDTO itemShipped) {
+    var innReachTransaction = getTransaction(trackingId, centralCode);
+
+    var itemBarcode = itemShipped.getItemBarcode();
+    var folioItemBarcode = itemBarcode;
+    var callNumber = itemShipped.getCallNumber();
+
+    var transactionPatronHold = (TransactionPatronHold) innReachTransaction.getHold();
+
+    if (nonNull(itemBarcode)) {
+      var itemByBarcode = itemService.findItemByBarcode(itemBarcode);
+
+      if (itemByBarcode.isPresent()) {
+        folioItemBarcode += transactionPatronHold.getItemAgencyCode();
+      }
+
+      transactionPatronHold.setShippedItemBarcode(itemBarcode);
+      transactionPatronHold.setFolioItemBarcode(folioItemBarcode);
+    }
+
+    if (nonNull(callNumber)) {
+      transactionPatronHold.setCallNumber(callNumber);
+    }
+
+    UUID folioItemId = transactionPatronHold.getFolioItemId();
+    itemService.changeAndUpdate(folioItemId, changeFolioAssociatedItem(folioItemBarcode, callNumber))
+        .orElseThrow(() -> new IllegalArgumentException("Item with id = " + folioItemId + " not found!"));
+
+    innReachTransaction.setState(ITEM_SHIPPED);
+
+    return success();
+  }
+
+  @Override
+  public InnReachResponseDTO cancelPatronHold(String trackingId, String centralCode, CancelRequestDTO cancelRequest) {
     log.info("Cancelling request for transaction: {}", trackingId);
 
     var transaction = getTransaction(trackingId, centralCode);
@@ -128,7 +179,7 @@ public class CirculationServiceImpl implements CirculationService {
   }
 
   @Override
-  public InnReachResponseDTO transferItem(String trackingId, String centralCode, TransferRequestDTO request) {
+  public InnReachResponseDTO transferPatronHoldItem(String trackingId, String centralCode, TransferRequestDTO request) {
     var transaction = getTransaction(trackingId, centralCode);
 
     validateEquals(request::getItemId, () -> transaction.getHold().getItemId(), "item id");
@@ -141,78 +192,113 @@ public class CirculationServiceImpl implements CirculationService {
   }
 
   @Override
-  public InnReachTransactionReceiveItemDTO receivePatronHoldItem(UUID transactionId, UUID servicePointId) {
-    var transaction = transactionRepository.fetchOneById(transactionId)
-      .orElseThrow(() -> new EntityNotFoundException(String.format("InnReach transaction with id [%s] not found!", transactionId)));
+  public InnReachResponseDTO cancelItemHold(String trackingId, String centralCode, BaseCircRequestDTO cancelItemDTO) {
+    var transaction = getTransaction(trackingId, centralCode);
 
-    Assert.isTrue(transaction.getState() == InnReachTransaction.TransactionState.ITEM_SHIPPED,
-      "Unexpected transaction state: " + transaction.getState());
-
-    var hold = (TransactionPatronHold) transaction.getHold();
-
-    var shippedItemBarcode = hold.getShippedItemBarcode();
-    var folioItemBarcode = hold.getFolioItemBarcode();
-
-    Assert.isTrue(shippedItemBarcode != null, "shippedItemBarcode is not set");
-    Assert.isTrue(folioItemBarcode != null, "folioItemBarcode is not set");
-
-    var checkInResponse = requestService.checkInItem(transaction, servicePointId);
-
-    transaction.setState(InnReachTransaction.TransactionState.ITEM_RECEIVED);
+    if (transaction.getHold().getFolioLoanId() != null) {
+      throw new IllegalArgumentException("Requested item is already checked out.");
+    }
+    requestService.cancelRequest(transaction, "Request cancelled at borrowing site");
+    transaction.setState(BORROWING_SITE_CANCEL);
 
     transactionRepository.save(transaction);
 
-    reportItemReceived(transaction);
-
-    return new InnReachTransactionReceiveItemDTO()
-      .transaction(transactionMapper.toDTO(transaction))
-      .folioCheckIn(checkInResponse)
-      .barcodeAugmented(!shippedItemBarcode.equals(folioItemBarcode));
+    return success();
   }
 
-  private void reportItemReceived(InnReachTransaction transaction) {
-    var centralCode = transaction.getCentralServerCode();
+  @Override
+  public InnReachResponseDTO receiveUnshipped(String trackingId, String centralCode,
+                                              BaseCircRequestDTO receiveUnshippedRequestDTO) {
+    var transaction = getTransaction(trackingId, centralCode);
 
-    var requestPath = resolveItemReceivedPath(transaction.getTrackingId(), centralCode);
-
-    try {
-      innReachExternalService.postInnReachApi(centralCode, requestPath);
-    } catch (InnReachException e) {
-      log.warn("Unexpected D2IR response: {}", e.getMessage(), e);
+    if (transaction.getState() == TransactionState.ITEM_SHIPPED) {
+      throw new IllegalArgumentException("Unexpected transaction state: " + transaction.getState());
     }
+
+    if (transaction.getState() == TransactionState.ITEM_HOLD) {
+      transaction.setState(RECEIVE_UNANNOUNCED);
+      transactionRepository.save(transaction);
+    }
+
+    return success();
   }
 
-  private String resolveItemReceivedPath(String trackingId, String centralServerCode) {
-    return String.format("/circ/itemreceived/%s/%s", trackingId, centralServerCode);
+  @Override
+  public InnReachResponseDTO itemInTransit(String trackingId, String centralCode, BaseCircRequestDTO itemInTransitRequest) {
+    var transaction = getTransaction(trackingId, centralCode);
+    var state = transaction.getState();
+
+    Assert.isTrue(state == ITEM_RECEIVED || state == RECEIVE_UNANNOUNCED, "Unexpected transaction state: " + state);
+
+    transaction.setState(ITEM_IN_TRANSIT);
+
+    return success();
+  }
+
+  @Override
+  public InnReachResponseDTO returnUncirculated(String trackingId, String centralCode, ReturnUncirculatedDTO returnUncirculated) {
+    var transaction = getTransaction(trackingId, centralCode);
+    var state = transaction.getState();
+
+    if (state == ITEM_RECEIVED || state == RECEIVE_UNANNOUNCED) {
+      transaction.setState(RETURN_UNCIRCULATED);
+      transactionRepository.save(transaction);
+      return success();
+    } else {
+      throw new IllegalArgumentException("Transaction state is not " + ITEM_RECEIVED.name() + " or " + RECEIVE_UNANNOUNCED.name());
+    }
   }
 
   private InnReachResponseDTO success() {
     return new InnReachResponseDTO().status("ok").reason("success");
   }
 
-  private void updateTransactionPatronHold(TransactionPatronHold existingTransactionPatronHold,
-      TransactionHoldDTO transactionHold) {
-    // update transaction patron hold
-    BeanUtils.copyProperties(transactionHold, existingTransactionPatronHold,
-        "pickupLocation", "id", "createdBy", "updatedBy", "createdDate", "updatedDate",
-        "folioPatronId", "folioInstanceId", "folioHoldingId", "folioItemId",
-        "folioRequestId", "folioLoanId", "folioPatronBarcode", "folioItemBarcode");
+  private void updateTransactionHold(TransactionHold existingTransactionHold, TransactionHoldDTO transactionHold) {
+    // update transaction hold
+    BeanUtils.copyProperties(transactionHold, existingTransactionHold, TRANSACTION_HOLD_IGNORE_PROPS_ON_COPY);
 
     // update pickupLocation
     var pickupLocation = pickupLocationMapper.fromString(transactionHold.getPickupLocation());
-    BeanUtils.copyProperties(pickupLocation, existingTransactionPatronHold.getPickupLocation(),
-        "id", "createdBy", "updatedBy", "createdDate", "updatedDate");
+    BeanUtils.copyProperties(pickupLocation, existingTransactionHold.getPickupLocation(), PICKUP_LOC_IGNORE_PROPS_ON_COPY);
   }
 
-  private InnReachTransaction createTransactionWithPatronHold(String trackingId, String centralCode,
-      TransactionHoldDTO transactionHold) {
+  private InnReachTransaction createTransaction(String trackingId, String centralCode,
+                                                TransactionHoldDTO transactionHold, TransactionType type) {
+    TransactionHold hold;
+    TransactionState state;
+    if (type == TransactionType.PATRON) {
+      hold = transactionHoldMapper.toPatronHold(transactionHold);
+      state = PATRON_HOLD;
+    } else if (type == TransactionType.LOCAL) {
+      hold = transactionHoldMapper.toLocalHold(transactionHold);
+      state = LOCAL_HOLD;
+    } else {
+      hold = transactionHoldMapper.toItemHold(transactionHold);
+      state = ITEM_HOLD;
+    }
+
     var newInnReachTransaction = new InnReachTransaction();
-    newInnReachTransaction.setHold(transactionHoldMapper.toPatronHold(transactionHold));
     newInnReachTransaction.setCentralServerCode(centralCode);
     newInnReachTransaction.setTrackingId(trackingId);
-    newInnReachTransaction.setState(InnReachTransaction.TransactionState.PATRON_HOLD);
-    newInnReachTransaction.setType(InnReachTransaction.TransactionType.PATRON);
+    newInnReachTransaction.setType(type);
+    newInnReachTransaction.setHold(hold);
+    newInnReachTransaction.setState(state);
+
     return newInnReachTransaction;
+  }
+
+  private UpdateOperation<InventoryItemDTO> changeFolioAssociatedItem(String folioItemBarcode, String callNumber) {
+    return item -> {
+      if (nonNull(folioItemBarcode)) {
+        item.setBarcode(folioItemBarcode);
+      }
+
+      if (nonNull(callNumber)) {
+        item.setCallNumber(callNumber);
+      }
+
+      return item;
+    };
   }
 
   private Optional<Holding> removeHoldingsTransactionInfo(InventoryItemDTO item) {
@@ -230,26 +316,19 @@ public class CirculationServiceImpl implements CirculationService {
     });
   }
 
-  private UpdateTemplate.UpdateOperation<InventoryItemDTO> changeItemBarcode(String itemBarcode) {
-    return item -> {
-      item.setBarcode(itemBarcode);
-      return item;
-    };
-  }
-
   private <T> void validateEquals(Supplier<T> requestField, Supplier<T> trxField, String fieldName) {
     T reqValue = requestField.get();
     T trxValue = trxField.get();
 
     Assert.isTrue(Objects.equals(reqValue, trxValue),
-        String.format("%s [%s] from the request doesn't match with %s [%s] in the stored transaction",
-            capitalize(fieldName), reqValue, fieldName.toLowerCase(), trxValue));
+      String.format("%s [%s] from the request doesn't match with %s [%s] in the stored transaction",
+        capitalize(fieldName), reqValue, fieldName.toLowerCase(), trxValue));
   }
 
   private InnReachTransaction getTransaction(String trackingId, String centralCode) {
     return transactionRepository.findByTrackingIdAndCentralServerCode(trackingId, centralCode)
-        .orElseThrow(() -> new EntityNotFoundException(String.format(
-            "InnReach transaction with tracking id [%s] and central code [%s] not found", trackingId, centralCode)));
+      .orElseThrow(() -> new EntityNotFoundException(String.format(
+        "InnReach transaction with tracking id [%s] and central code [%s] not found", trackingId, centralCode)));
   }
 
 }

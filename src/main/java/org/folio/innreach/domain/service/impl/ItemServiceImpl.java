@@ -48,4 +48,15 @@ public class ItemServiceImpl implements ItemService {
         .orElseThrow(() -> new IllegalArgumentException("Item with barcode = " + barcode + " not found"));
   }
 
+  @Override
+  public Optional<InventoryItemDTO> findItemByBarcode(String barcode) {
+    return findItem(barcode);
+  }
+
+  private Optional<InventoryItemDTO> findItem(String barcode) {
+    return inventoryClient.getItemByBarcode(barcode).getResult()
+      .stream()
+      .findFirst();
+  }
+
 }
