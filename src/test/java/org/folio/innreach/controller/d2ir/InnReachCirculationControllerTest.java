@@ -175,8 +175,8 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
   })
   void processItemShippedCircRequest_returnFailedStatus_whenAssociatedItemDoesNotExist() {
-    when(itemService.getItemByBarcode(any())).thenReturn(InventoryItemDTO.builder().build());
-    when(itemService.find(any())).thenReturn(Optional.empty());
+    when(itemService.findItemByBarcode(any())).thenReturn(Optional.of(InventoryItemDTO.builder().build()));
+    when(itemService.changeAndUpdate(any(), any(), any())).thenThrow(new IllegalArgumentException("Not found"));
 
     var transactionHoldDTO = createTransactionHoldDTO();
 
