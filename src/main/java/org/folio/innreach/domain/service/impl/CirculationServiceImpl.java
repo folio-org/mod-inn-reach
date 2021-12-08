@@ -10,7 +10,6 @@ import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionSt
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.ITEM_IN_TRANSIT;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.ITEM_RECEIVED;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.ITEM_SHIPPED;
-import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.ITEM_RECEIVED;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.LOCAL_HOLD;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.PATRON_HOLD;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.RECEIVE_UNANNOUNCED;
@@ -69,6 +68,8 @@ public class CirculationServiceImpl implements CirculationService {
   private static final String[] PICKUP_LOC_IGNORE_PROPS_ON_COPY = {
     "id", "createdBy", "updatedBy", "createdDate", "updatedDate"
   };
+
+  private static final String UNEXPECTED_TRANSACTION_STATE = "Unexpected transaction state: ";
 
   private final InnReachTransactionRepository transactionRepository;
   private final InnReachTransactionHoldMapper transactionHoldMapper;
@@ -211,7 +212,7 @@ public class CirculationServiceImpl implements CirculationService {
   public InnReachResponseDTO itemReceived(String trackingId, String centralCode, ItemReceivedDTO itemReceivedDTO) {
     var transaction = getTransaction(trackingId, centralCode);
 
-    Assert.isTrue(transaction.getState() == ITEM_SHIPPED, "Unexpected transaction state: " + transaction.getState());
+    Assert.isTrue(transaction.getState() == ITEM_SHIPPED, unexpectedTransactionState(transaction));
     transaction.setState(ITEM_RECEIVED);
     transactionRepository.save(transaction);
 
@@ -224,7 +225,7 @@ public class CirculationServiceImpl implements CirculationService {
     var transaction = getTransaction(trackingId, centralCode);
 
     if (transaction.getState() == TransactionState.ITEM_SHIPPED) {
-      throw new IllegalArgumentException("Unexpected transaction state: " + transaction.getState());
+      throw new IllegalArgumentException(unexpectedTransactionState(transaction));
     }
 
     if (transaction.getState() == TransactionState.ITEM_HOLD) {
@@ -240,7 +241,7 @@ public class CirculationServiceImpl implements CirculationService {
     var transaction = getTransaction(trackingId, centralCode);
     var state = transaction.getState();
 
-    Assert.isTrue(state == ITEM_RECEIVED || state == RECEIVE_UNANNOUNCED, "Unexpected transaction state: " + state);
+    Assert.isTrue(state == ITEM_RECEIVED || state == RECEIVE_UNANNOUNCED, unexpectedTransactionState(transaction));
 
     transaction.setState(ITEM_IN_TRANSIT);
 
@@ -346,6 +347,10 @@ public class CirculationServiceImpl implements CirculationService {
     return transactionRepository.findByTrackingIdAndCentralServerCode(trackingId, centralCode)
       .orElseThrow(() -> new EntityNotFoundException(String.format(
         "InnReach transaction with tracking id [%s] and central code [%s] not found", trackingId, centralCode)));
+  }
+
+  private String unexpectedTransactionState(InnReachTransaction transaction){
+    return UNEXPECTED_TRANSACTION_STATE + transaction.getState();
   }
 
 }
