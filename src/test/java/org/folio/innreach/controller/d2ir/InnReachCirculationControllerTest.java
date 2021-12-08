@@ -45,7 +45,6 @@ import org.springframework.test.context.jdbc.SqlMergeMode;
 import org.folio.innreach.controller.base.BaseControllerTest;
 import org.folio.innreach.domain.dto.folio.inventory.InventoryItemDTO;
 import org.folio.innreach.domain.entity.InnReachTransaction;
-import org.folio.innreach.domain.service.InventoryService;
 import org.folio.innreach.domain.service.ItemService;
 import org.folio.innreach.domain.service.RequestService;
 import org.folio.innreach.dto.InnReachResponseDTO;
@@ -80,8 +79,6 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
   @SpyBean
   private InnReachTransactionRepository repository;
 
-  @MockBean
-  private InventoryService inventoryService;
   @MockBean
   private ItemService itemService;
   @MockBean
@@ -148,9 +145,9 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
   })
   void processItemShippedCircRequest_updateFolioItem_whenAssociatedItemExists() {
-    when(itemService.getItemByBarcode(any())).thenReturn(InventoryItemDTO.builder().build());
     when(itemService.find(any())).thenReturn(Optional.of(InventoryItemDTO.builder().build()));
     when(itemService.findItemByBarcode(any())).thenReturn(Optional.of(InventoryItemDTO.builder().build()));
+    when(itemService.changeAndUpdate(any(), any())).thenReturn(Optional.of(InventoryItemDTO.builder().build()));
 
     var itemShippedDTO = createItemShippedDTO();
 
@@ -158,8 +155,6 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
       "/inn-reach/d2ir/circ/{circulationOperationName}/{trackingId}/{centralCode}", HttpMethod.PUT,
       new HttpEntity<>(itemShippedDTO), InnReachResponseDTO.class,
       ITEM_SHIPPED_OPERATION, PRE_POPULATED_TRACKING_ID, PRE_POPULATED_CENTRAL_CODE);
-
-    verify(itemService).update(any());
 
     assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
 
