@@ -1012,7 +1012,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   @Test
   @Sql(scripts = {
     "classpath:db/central-server/pre-populate-central-server.sql",
-    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction-for-search.sql"
   })
   void returnTransactionByBarcodeAndState_when_transactionsFound() {
     var responseEntity = testRestTemplate.getForEntity(
@@ -1024,17 +1024,32 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     var body = responseEntity.getBody();
 
     assertNotNull(body);
+    assertEquals(2, body.getTotalRecords());
 
     var transactions = body.getTransactions();
 
     assertNotNull(transactions);
     assertFalse(transactions.isEmpty());
+    assertEquals(2, transactions.size());
+
+    var allTransactionTypesEqualToSearched = transactions
+      .stream()
+      .allMatch(it -> it.getType().equals(ITEM) || it.getType().equals(PATRON));
+
+    assertTrue(allTransactionTypesEqualToSearched);
+
+    var allBarcodesEqualToSearched = transactions
+      .stream()
+      .allMatch(it -> it.getHold().getFolioItemBarcode().equals("ABC-abc-1234")
+        || it.getHold().getShippedItemBarcode().equals("ABC-abc-1234"));
+
+    assertTrue(allBarcodesEqualToSearched);
   }
 
   @Test
   @Sql(scripts = {
     "classpath:db/central-server/pre-populate-central-server.sql",
-    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction-for-search.sql"
   })
   void returnEmptyListByBarcodeAndState_when_transactionsNotFound() {
     var responseEntity = testRestTemplate.getForEntity(
