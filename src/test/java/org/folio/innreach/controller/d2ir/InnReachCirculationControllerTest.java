@@ -527,7 +527,7 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
       PRE_POPULATED_CENTRAL_CODE).get();
     assertNotEquals(ITEM_RECEIVED, transactionUpdated.getState());
   }
-  
+
   @Test
   @Sql(scripts = {
     "classpath:db/central-server/pre-populate-central-server.sql",

@@ -13,14 +13,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import org.folio.innreach.domain.service.CirculationService;
-import org.folio.innreach.dto.BaseCircRequestDTO;
 import org.folio.innreach.dto.CancelRequestDTO;
 import org.folio.innreach.dto.InnReachResponseDTO;
 import org.folio.innreach.dto.ItemReceivedDTO;
 import org.folio.innreach.dto.ItemShippedDTO;
 import org.folio.innreach.dto.LocalHoldDTO;
 import org.folio.innreach.dto.PatronHoldDTO;
-import org.folio.innreach.dto.ReturnUncirculatedDTO;
 import org.folio.innreach.dto.TransferRequestDTO;
 import org.folio.innreach.rest.resource.InnReachCirculationApi;
 
@@ -121,13 +119,13 @@ public class InnReachCirculationController implements InnReachCirculationApi {
 
     return ResponseEntity.ok(innReachResponse);
   }
-  
+
   @Override
   @PutMapping("/borrowerrenew/{trackingId}/{centralCode}")
   public ResponseEntity<InnReachResponseDTO> borrowerRenew(@PathVariable String trackingId,
                                                            @PathVariable String centralCode, BorrowerRenewDTO borrowerRenew) {
     var innReachResponse = circulationService.borrowerRenew(trackingId, centralCode, borrowerRenew);
-    
+
     return ResponseEntity.ok(innReachResponse);
   }
 }
