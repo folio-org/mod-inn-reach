@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
-import org.folio.innreach.config.FolioFeignClientConfig;
+import org.folio.innreach.client.config.FolioFeignClientConfig;
 import org.folio.innreach.domain.dto.folio.ResultList;
 import org.folio.innreach.domain.dto.folio.circulation.MoveRequestDTO;
 import org.folio.innreach.domain.dto.folio.circulation.RequestDTO;
@@ -32,7 +32,7 @@ public interface CirculationClient {
   RequestDTO sendRequest(@RequestBody RequestDTO requestDTO);
 
   @PutMapping("/requests/{requestId}")
-  RequestDTO updateRequest(@PathVariable("requestId") UUID requestId, @RequestBody RequestDTO request);
+  void updateRequest(@PathVariable("requestId") UUID requestId, @RequestBody RequestDTO request);
 
   @PostMapping("/requests/{requestId}/move")
   RequestDTO moveRequest(@PathVariable("requestId") UUID requestId, @RequestBody MoveRequestDTO payload);

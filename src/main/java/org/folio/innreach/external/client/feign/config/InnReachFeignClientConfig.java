@@ -18,7 +18,7 @@ public class InnReachFeignClientConfig {
   }
 
   @Bean
-  public ErrorDecoder feignErrorDecoder() {
+  public ErrorDecoder innReachErrorDecoder() {
     return new FeignErrorDecoder();
   }
 

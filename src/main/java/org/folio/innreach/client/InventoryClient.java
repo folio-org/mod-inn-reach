@@ -10,12 +10,12 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
-import org.folio.innreach.config.FolioFeignClientConfig;
+import org.folio.innreach.client.config.InventoryFeignClientConfig;
 import org.folio.innreach.domain.dto.folio.ResultList;
 import org.folio.innreach.domain.dto.folio.inventory.InventoryInstanceDTO;
 import org.folio.innreach.domain.dto.folio.inventory.InventoryItemDTO;
 
-@FeignClient(name = "inventory", configuration = FolioFeignClientConfig.class, decode404 = true)
+@FeignClient(name = "inventory", configuration = InventoryFeignClientConfig.class, decode404 = true)
 public interface InventoryClient {
 
   @GetMapping("/items?query=hrid=={hrId}")
@@ -31,7 +31,7 @@ public interface InventoryClient {
   InventoryItemDTO createItem(@RequestBody InventoryItemDTO item);
 
   @PutMapping("/items/{itemId}")
-  InventoryItemDTO updateItem(@PathVariable("itemId") UUID itemId, @RequestBody InventoryItemDTO item);
+  void updateItem(@PathVariable("itemId") UUID itemId, @RequestBody InventoryItemDTO item);
 
   @GetMapping("/items/{itemId}")
   Optional<InventoryItemDTO> findItem(@PathVariable("itemId") UUID itemId);
@@ -41,4 +41,5 @@ public interface InventoryClient {
 
   @GetMapping("/items?query=barcode=={barcode}")
   ResultList<InventoryItemDTO> getItemByBarcode(@PathVariable("barcode") String barcode);
+
 }
