@@ -2,6 +2,8 @@ package org.folio.innreach.controller.base;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
+import static com.github.tomakehurst.wiremock.client.WireMock.noContent;
+import static com.github.tomakehurst.wiremock.client.WireMock.ok;
 import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
@@ -14,11 +16,13 @@ import static org.folio.innreach.fixture.TestUtil.readFile;
 
 import java.util.Collections;
 import java.util.Map;
+import java.util.function.UnaryOperator;
 
 import javax.validation.Valid;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.MappingBuilder;
+import com.github.tomakehurst.wiremock.client.ResponseDefinitionBuilder;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.common.Slf4jNotifier;
 import io.github.glytching.junit.extension.watcher.WatcherExtension;
@@ -134,15 +138,36 @@ public class BaseApiControllerTest {
   }
 
   protected static void stubGet(String url, Map<String, String> requestHeaders, String responsePath) {
-    MappingBuilder getBuilder = WireMock.get(urlEqualTo(url));
+    stubGet(url, requestHeaders, responsePath, ResponseActions.none());
+  }
 
-    requestHeaders.forEach((name, value) -> getBuilder.withHeader(name, equalTo(value)));
+  protected static void stubGet(String url, String responsePath, ResponseActions additionalResponseActions) {
+    stubGet(url, Collections.emptyMap(), responsePath, additionalResponseActions);
+  }
 
-    stubFor(getBuilder
-      .willReturn(aResponse()
+  protected static void stubGet(String url, Map<String, String> requestHeaders, String responsePath,
+      ResponseActions additionalResponseActions) {
+    stubGet(url, responsePath, additionalResponseActions, mappingBuilder -> {
+      requestHeaders.forEach((name, value) -> mappingBuilder.withHeader(name, equalTo(value)));
+      return mappingBuilder;
+    });
+  }
+
+  protected static void stubGet(String url, String responsePath,
+      ResponseActions additionalResponseActions,
+      MappingActions additionalMapping) {
+
+    ResponseDefinitionBuilder responseBuilder = ok()
         .withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
         .withHeader(XOkapiHeaders.URL, wm.baseUrl())
-        .withBodyFile(responsePath)));
+        .withBodyFile(responsePath);
+
+    responseBuilder = additionalResponseActions.apply(responseBuilder);
+
+    MappingBuilder mappingBuilder = WireMock.get(urlEqualTo(url)).willReturn(responseBuilder);
+    mappingBuilder = additionalMapping.apply(mappingBuilder);
+
+    stubFor(mappingBuilder);
   }
 
   protected static void stubPost(String url, String responsePath) {
@@ -155,14 +180,20 @@ public class BaseApiControllerTest {
         .withBodyFile(responsePath)));
   }
 
-  protected static void stubPut(String url, String responsePath) {
-    MappingBuilder builder = WireMock.put(urlEqualTo(url));
+  protected static void stubPut(String url) {
+    stubPut(url, ResponseActions.none(), MappingActions.none());
+  }
 
-    stubFor(builder
-      .willReturn(aResponse()
-        .withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-        .withHeader(XOkapiHeaders.URL, wm.baseUrl())
-        .withBodyFile(responsePath)));
+  protected static void stubPut(String url,
+      ResponseActions additionalResponseActions,
+      MappingActions additionalMapping) {
+
+    ResponseDefinitionBuilder responseDefBuilder = additionalResponseActions.apply(noContent());
+
+    MappingBuilder mappingBuilder = WireMock.put(urlEqualTo(url)).willReturn(responseDefBuilder);
+    mappingBuilder = additionalMapping.apply(mappingBuilder);
+
+    stubFor(mappingBuilder);
   }
 
   private static String readTemplate(Template template) {
@@ -199,6 +230,22 @@ public class BaseApiControllerTest {
     public static URI of(String urlTemplate, Object... uriVars) {
       return new URI(urlTemplate, uriVars);
     }
+  }
+
+  protected interface MappingActions extends UnaryOperator<MappingBuilder> {
+
+    static MappingActions none() {
+      return t -> t;
+    }
+
+  }
+
+  protected interface ResponseActions extends UnaryOperator<ResponseDefinitionBuilder> {
+
+    static ResponseActions none() {
+      return t -> t;
+    }
+
   }
 
 }

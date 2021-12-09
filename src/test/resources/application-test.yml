@@ -27,6 +27,7 @@ logging:
     org.springframework.web: debug
     org.springframework.transaction.interceptor: trace
     org.folio.innreach.external: debug
+    org.folio.innreach.client.customization: debug
 inn-reach:
   jwt-access-token:
     cache:

@@ -1,4 +1,4 @@
-package org.folio.innreach.config;
+package org.folio.innreach.client.customization;
 
 import static org.folio.spring.integration.XOkapiHeaders.TENANT;
 import static org.folio.spring.integration.XOkapiHeaders.TOKEN;

@@ -10,10 +10,10 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
-import org.folio.innreach.config.FolioFeignClientConfig;
+import org.folio.innreach.client.config.InventoryFeignClientConfig;
 import org.folio.innreach.dto.Holding;
 
-@FeignClient(name = "holdings-storage", configuration = FolioFeignClientConfig.class, decode404 = true)
+@FeignClient(name = "holdings-storage", configuration = InventoryFeignClientConfig.class, decode404 = true)
 public interface HoldingsStorageClient {
 
   @GetMapping("/holdings/{holdingId}")
@@ -23,6 +23,6 @@ public interface HoldingsStorageClient {
   Holding createHolding(@RequestBody Holding holding);
 
   @PutMapping("/holdings/{holdingId}")
-  Holding updateHolding(@PathVariable UUID holdingId, @RequestBody Holding holding);
+  void updateHolding(@PathVariable UUID holdingId, @RequestBody Holding holding);
 
 }
