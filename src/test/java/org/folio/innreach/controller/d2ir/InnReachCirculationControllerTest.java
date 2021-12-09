@@ -6,6 +6,8 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -27,7 +29,9 @@ import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionSt
 import static org.folio.innreach.fixture.CirculationFixture.createItemShippedDTO;
 import static org.folio.innreach.fixture.CirculationFixture.createRecallDTO;
 import static org.folio.innreach.fixture.CirculationFixture.createTransactionHoldDTO;
+import static org.folio.innreach.fixture.ServicePointUserFixture.createServicePointUserDTO;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
@@ -44,7 +48,9 @@ import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlMergeMode;
 
 import org.folio.innreach.client.CirculationClient;
+import org.folio.innreach.client.ServicePointsUsersClient;
 import org.folio.innreach.controller.base.BaseControllerTest;
+import org.folio.innreach.domain.dto.folio.ResultList;
 import org.folio.innreach.domain.dto.folio.circulation.RequestDTO;
 import org.folio.innreach.domain.dto.folio.inventory.InventoryItemDTO;
 import org.folio.innreach.domain.entity.InnReachTransaction;
@@ -93,6 +99,8 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
   private CirculationClient circulationClient;
   @SpyBean
   private RequestService requestService;
+  @MockBean
+  private ServicePointsUsersClient servicePointsUsersClient;
 
   @Test
   void processCreatePatronHoldCirculationRequest_and_createNewPatronHold() {
@@ -209,7 +217,7 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
   void processCancelItemHoldRequest_whenItemIsNotCheckedOut() {
     var requestDTO = new RequestDTO();
     when(circulationClient.findRequest(any())).thenReturn(Optional.of(requestDTO));
-    when(circulationClient.updateRequest(any(), any())).thenReturn(requestDTO);
+    doNothing().when(circulationClient).updateRequest(any(), any());
 
     var transaction = fetchPrePopulatedTransaction();
     transaction.getHold().setFolioLoanId(null);
@@ -530,6 +538,7 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     executionPhase = AFTER_TEST_METHOD
   )
   void processRecallRequest_whenItemIsOnLoanToThePatron() {
+    when(servicePointsUsersClient.findServicePointsUsers(any())).thenReturn(ResultList.of(1, List.of(createServicePointUserDTO())));
     var requestDTO = new RequestDTO();
     when(circulationClient.findRequest(any())).thenReturn(Optional.of(requestDTO));
     when(circulationClient.sendRequest(any())).thenReturn(new RequestDTO());
@@ -559,7 +568,7 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     var requestDTO = new RequestDTO();
     requestDTO.setStatus(RequestDTO.RequestStatus.OPEN_AWAITING_PICKUP);
     when(circulationClient.findRequest(any())).thenReturn(Optional.of(requestDTO));
-    when(circulationClient.updateRequest(any(), any())).thenReturn(requestDTO);
+    doNothing().when(circulationClient).updateRequest(any(), any());
 
     var transaction = repository.findByTrackingIdAndCentralServerCode(PRE_POPULATED_TRACKING_ID,
       PRE_POPULATED_CENTRAL_CODE).get();
@@ -590,7 +599,10 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
   })
   void processRecallRequest_whenBadRequest() {
-    when(circulationClient.findRequest(any())).thenThrow(new IllegalArgumentException("Test exception."));
+    var requestDTO = new RequestDTO();
+    requestDTO.setStatus(RequestDTO.RequestStatus.OPEN_AWAITING_PICKUP);
+    when(circulationClient.findRequest(any())).thenReturn(Optional.of(requestDTO));
+    doThrow(new RuntimeException("Test exception.")).when(requestService).cancelRequest(any(), any());
 
     var recallDTO = createRecallDTO();
 
@@ -601,7 +613,7 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
     var responseEntityBody = responseEntity.getBody();
     assertNotNull(responseEntityBody);
-    assertEquals("Test exception.", responseEntityBody.getReason());
+    assertTrue(responseEntityBody.getReason().contains("Test exception."));
 
     var transactionUpdated = repository.findByTrackingIdAndCentralServerCode(PRE_POPULATED_TRACKING_ID,
       PRE_POPULATED_CENTRAL_CODE).get();
@@ -624,8 +636,7 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
     var responseEntityBody = responseEntity.getBody();
     assertNotNull(responseEntityBody);
-    assertEquals("Recall user is not set for central server with code = " + PRE_POPULATED_CENTRAL_CODE,
-      responseEntityBody.getReason());
+    assertTrue(responseEntityBody.getReason().contains("Recall user is not set for central server with code = " + PRE_POPULATED_CENTRAL_CODE));
 
     var transactionUpdated = repository.findByTrackingIdAndCentralServerCode(PRE_POPULATED_TRACKING_ID,
       PRE_POPULATED_CENTRAL_CODE).get();

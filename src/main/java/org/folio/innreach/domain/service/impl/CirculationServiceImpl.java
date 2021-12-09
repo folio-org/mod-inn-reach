@@ -3,6 +3,8 @@ package org.folio.innreach.domain.service.impl;
 import static java.util.Objects.nonNull;
 import static org.apache.commons.lang3.StringUtils.capitalize;
 
+import static org.folio.innreach.domain.dto.folio.circulation.RequestDTO.RequestStatus.OPEN_AWAITING_PICKUP;
+import static org.folio.innreach.domain.dto.folio.circulation.RequestDTO.RequestStatus.OPEN_IN_TRANSIT;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.BORROWING_SITE_CANCEL;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.CANCEL_REQUEST;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.ITEM_HOLD;
@@ -28,14 +30,15 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
 
-import org.folio.innreach.domain.dto.folio.circulation.RequestDTO;
 import org.folio.innreach.domain.dto.folio.inventory.InventoryItemDTO;
+import org.folio.innreach.domain.entity.CentralServer;
 import org.folio.innreach.domain.entity.InnReachRecallUser;
 import org.folio.innreach.domain.entity.InnReachTransaction;
 import org.folio.innreach.domain.entity.InnReachTransaction.TransactionState;
 import org.folio.innreach.domain.entity.InnReachTransaction.TransactionType;
 import org.folio.innreach.domain.entity.TransactionHold;
 import org.folio.innreach.domain.entity.TransactionPatronHold;
+import org.folio.innreach.domain.exception.CirculationException;
 import org.folio.innreach.domain.exception.EntityNotFoundException;
 import org.folio.innreach.domain.service.CirculationService;
 import org.folio.innreach.domain.service.HoldingsService;
@@ -212,8 +215,6 @@ public class CirculationServiceImpl implements CirculationService {
     requestService.cancelRequest(transaction, "Request cancelled at borrowing site");
     transaction.setState(BORROWING_SITE_CANCEL);
 
-    transactionRepository.save(transaction);
-
     return success();
   }
 
@@ -223,7 +224,6 @@ public class CirculationServiceImpl implements CirculationService {
 
     Assert.isTrue(transaction.getState() == ITEM_SHIPPED, unexpectedTransactionState(transaction));
     transaction.setState(ITEM_RECEIVED);
-    transactionRepository.save(transaction);
 
     return success();
   }
@@ -239,7 +239,6 @@ public class CirculationServiceImpl implements CirculationService {
 
     if (transaction.getState() == TransactionState.ITEM_HOLD) {
       transaction.setState(RECEIVE_UNANNOUNCED);
-      transactionRepository.save(transaction);
     }
 
     return success();
@@ -264,7 +263,6 @@ public class CirculationServiceImpl implements CirculationService {
 
     if (state == ITEM_RECEIVED || state == RECEIVE_UNANNOUNCED) {
       transaction.setState(RETURN_UNCIRCULATED);
-      transactionRepository.save(transaction);
       return success();
     } else {
       throw new IllegalArgumentException("Transaction state is not " + ITEM_RECEIVED.name() + " or " + RECEIVE_UNANNOUNCED.name());
@@ -276,30 +274,31 @@ public class CirculationServiceImpl implements CirculationService {
     var transaction = getTransaction(trackingId, centralCode);
     var requestId = transaction.getHold().getFolioRequestId();
     var request = requestService.findRequest(requestId);
+    var requestStatus = request.getStatus();
 
-    try {
-      if (request.getStatus() == RequestDTO.RequestStatus.OPEN_AWAITING_PICKUP ||
-        request.getStatus() == RequestDTO.RequestStatus.OPEN_IN_TRANSIT) {
+    if (requestStatus == OPEN_AWAITING_PICKUP || requestStatus == OPEN_IN_TRANSIT) {
+      try {
         requestService.cancelRequest(transaction, "Item has been recalled.");
-      } else {
+      } catch (Exception e) {
+        throw new CirculationException("Unable to create a cancel request on the item: " + e.getMessage(), e);
+      }
+    } else {
+      try {
         var recallUser = getRecallUserForCentralServer(centralCode);
         requestService.createRecallRequest(recallUser.getUserId(), transaction.getHold().getFolioItemId());
+      } catch (Exception e) {
+        throw new CirculationException("Unable to create a recall request on the item: " + e.getMessage(), e);
       }
-    } catch (Exception e) {
-      throw new IllegalArgumentException(e.getMessage());
     }
     transaction.setState(RECALL);
-    transactionRepository.save(transaction);
 
     return success();
   }
 
   private InnReachRecallUser getRecallUserForCentralServer(String centralCode) {
-    var user = centralserverRepository.fetchOneByCentralCode(centralCode).orElseThrow(
-      () -> new EntityNotFoundException("Central server with code = " + centralCode + " not found."))
-      .getInnReachRecallUser();
-    Assert.isTrue(user != null, "Recall user is not set for central server with code = " + centralCode);
-    return user;
+    return centralserverRepository.fetchOneByCentralCode(centralCode)
+      .map(CentralServer::getInnReachRecallUser)
+      .orElseThrow(() -> new EntityNotFoundException("Recall user is not set for central server with code = " + centralCode));
   }
 
   private InnReachResponseDTO success() {

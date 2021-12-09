@@ -36,6 +36,7 @@ import java.util.UUID;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.folio.innreach.domain.entity.CentralPatronTypeMapping;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
@@ -223,12 +224,15 @@ public class RequestServiceImpl implements RequestService {
 
   @Override
   public void createRecallRequest(UUID recallUserId, UUID itemId) {
+    var pickupServicePoint = getDefaultServicePointId(recallUserId);
+
     var request = RequestDTO.builder()
       .itemId(itemId)
-      .requesterId(itemId)
+      .requesterId(recallUserId)
       .requestType(RECALL.getName())
       .requestDate(OffsetDateTime.now())
       .fulfilmentPreference(HOLD_SHELF.getName())
+      .pickupServicePointId(pickupServicePoint)
       .build();
     circulationClient.sendRequest(request);
   }
@@ -312,11 +316,11 @@ public class RequestServiceImpl implements RequestService {
   }
 
   private String getUserBarcode(UUID centralServerId, Integer patronType) {
-    return centralPatronTypeMappingRepository.
-      findOneByCentralServerIdAndCentralPatronType(centralServerId, patronType).orElseThrow(() ->
-      new EntityNotFoundException("User barcode not found for central server id = " + centralServerId +
-        " and patron type = " + patronType)
-    ).getBarcode();
+    return centralPatronTypeMappingRepository.findOneByCentralServerIdAndCentralPatronType(centralServerId, patronType)
+      .map(CentralPatronTypeMapping::getBarcode)
+      .orElseThrow(() ->
+        new EntityNotFoundException("User barcode not found for central server id = " + centralServerId +
+          " and patron type = " + patronType));
   }
 
   private OffsetDateTime getRequestExpirationDate(TransactionHold hold) {
