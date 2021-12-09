@@ -150,6 +150,7 @@ public class CirculationServiceImpl implements CirculationService {
 
     if (nonNull(callNumber)) {
       transactionPatronHold.setCallNumber(callNumber);
+      transactionPatronHold.setFolioItemCallNumber(callNumber);
     }
 
     UUID folioItemId = transactionPatronHold.getFolioItemId();

@@ -83,4 +83,7 @@ public abstract class TransactionHold extends Auditable implements Identifiable<
   @Column(name = "folio_item_barcode")
   protected String folioItemBarcode;
 
+  @Column(name = "folio_item_call_number")
+  protected String folioItemCallNumber;
+
 }

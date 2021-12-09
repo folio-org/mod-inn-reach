@@ -127,6 +127,11 @@
       "type": "string",
       "readOnly": true
     },
+    "folioItemCallNumber": {
+      "description": "Folio item call number",
+      "type": "string",
+      "readOnly": true
+    },
     "metadata": {
       "description": "Entity metadata",
       "type": "object",

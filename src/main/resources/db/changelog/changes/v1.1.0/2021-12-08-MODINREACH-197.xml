@@ -4,9 +4,8 @@
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
                     http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.4.xsd">
 
-    <include file="2021-10-12-MODINREACH-147.xml" relativeToChangelogFile="true"/>
-    <include file="2021-11-09-MODINREACH-181.xml" relativeToChangelogFile="true"/>
-    <include file="2021-11-17-MODINREACH-170.xml" relativeToChangelogFile="true"/>
-    <include file="2021-12-08-MODINREACH-197.xml" relativeToChangelogFile="true"/>
+  <changeSet id="2021-12-08-01__add_folio_item_call_number_column_to_transaction_hold_table" author="andrii.khodyka">
+    <sqlFile path="sql/2021-12-08-01__add_folio_item_call_number_column_to_transaction_hold_table.sql" relativeToChangelogFile="true"/>
+  </changeSet>
 
 </databaseChangeLog>
