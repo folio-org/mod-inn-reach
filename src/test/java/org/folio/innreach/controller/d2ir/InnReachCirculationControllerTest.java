@@ -8,6 +8,7 @@ import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionSt
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.RECEIVE_UNANNOUNCED;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.RETURN_UNCIRCULATED;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.TRANSFER;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -24,9 +25,15 @@ import static org.springframework.http.HttpStatus.BAD_REQUEST;
 import static org.springframework.http.HttpStatus.OK;
 import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TEST_METHOD;
 import static org.springframework.test.context.jdbc.SqlMergeMode.MergeMode.MERGE;
+
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.BORROWING_SITE_CANCEL;
+import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.ITEM_HOLD;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.ITEM_IN_TRANSIT;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.ITEM_RECEIVED;
+import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.ITEM_SHIPPED;
+import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.RECEIVE_UNANNOUNCED;
+import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.RETURN_UNCIRCULATED;
+import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.TRANSFER;
 import static org.folio.innreach.fixture.CirculationFixture.createItemShippedDTO;
 import static org.folio.innreach.fixture.CirculationFixture.createTransactionHoldDTO;
 
@@ -36,6 +43,7 @@ import java.util.Optional;
 
 import org.folio.innreach.domain.entity.InnReachTransaction;
 import org.folio.innreach.dto.BorrowerRenewDTO;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
@@ -51,6 +59,7 @@ import org.springframework.test.context.jdbc.SqlMergeMode;
 
 import org.folio.innreach.controller.base.BaseControllerTest;
 import org.folio.innreach.domain.dto.folio.inventory.InventoryItemDTO;
+import org.folio.innreach.domain.entity.InnReachTransaction;
 import org.folio.innreach.domain.service.InventoryService;
 import org.folio.innreach.domain.service.RequestService;
 import org.folio.innreach.dto.InnReachResponseDTO;
@@ -68,13 +77,20 @@ import org.folio.innreach.repository.InnReachTransactionRepository;
 class InnReachCirculationControllerTest extends BaseControllerTest {
 
   private static final String ITEM_IN_TRANSIT_ENDPOINT = "/inn-reach/d2ir/circ/intransit/{trackingId}/{centralCode}";
+  private static final String CIRCULATION_OPERATION_ENDPOINT = "/inn-reach/d2ir/circ/{circulationOperationName}/{trackingId}/{centralCode}";
 
   private static final String PRE_POPULATED_TRACKING_ID = "tracking1";
+  private static final String NEW_TRANSACTION_TRACKING_ID = "tracking99";
   private static final String PRE_POPULATED_CENTRAL_CODE = "d2ir";
 
   private static final String PATRON_HOLD_OPERATION = "patronhold";
   private static final String ITEM_SHIPPED_OPERATION = "itemshipped";
+  private static final String LOCAL_HOLD_OPERATION = "localhold";
 
+  private static final String CANCEL_ITEM_HOLD_PATH = "/inn-reach/d2ir/circ/cancelitemhold/{trackingId}/{centralCode}";
+  private static final String ITEM_RECEIVED_PATH = "/inn-reach/d2ir/circ/itemreceived/{trackingId}/{centralCode}";
+
+  private static final String UNEXPECTED_TRANSACTION_STATE = "Unexpected transaction state: ";
 
   @Autowired
   private TestRestTemplate testRestTemplate;
@@ -210,8 +226,7 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     var transactionHoldDTO = createTransactionHoldDTO();
 
     var responseEntity = testRestTemplate.exchange(
-      "/inn-reach/d2ir/circ/cancelitemhold/{trackingId}/{centralCode}", HttpMethod.PUT,
-      new HttpEntity<>(transactionHoldDTO), InnReachResponseDTO.class,
+      CANCEL_ITEM_HOLD_PATH, HttpMethod.PUT, new HttpEntity<>(transactionHoldDTO), InnReachResponseDTO.class,
       PRE_POPULATED_TRACKING_ID, PRE_POPULATED_CENTRAL_CODE);
 
     assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
@@ -233,8 +248,7 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     var transactionHoldDTO = createTransactionHoldDTO();
 
     var responseEntity = testRestTemplate.exchange(
-      "/inn-reach/d2ir/circ/cancelitemhold/{trackingId}/{centralCode}", HttpMethod.PUT,
-      new HttpEntity<>(transactionHoldDTO), InnReachResponseDTO.class,
+      CANCEL_ITEM_HOLD_PATH, HttpMethod.PUT, new HttpEntity<>(transactionHoldDTO), InnReachResponseDTO.class,
       PRE_POPULATED_TRACKING_ID, PRE_POPULATED_CENTRAL_CODE);
 
     assertEquals(BAD_REQUEST, responseEntity.getStatusCode());
@@ -294,7 +308,7 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
     var responseEntityBody = responseEntity.getBody();
     assertNotNull(responseEntityBody);
-    assertEquals("Unexpected transaction state: " + transaction.getState(),
+    assertEquals(UNEXPECTED_TRANSACTION_STATE + transaction.getState(),
       responseEntityBody.getReason());
 
     var transactionUpdated = fetchPrePopulatedTransaction();
@@ -348,14 +362,10 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     var response = responseEntity.getBody();
     assertNotNull(response);
 
-    assertEquals("Unexpected transaction state: " + transaction.getState(), response.getReason());
+    assertEquals(UNEXPECTED_TRANSACTION_STATE + transaction.getState(), response.getReason());
 
     var transactionUpdated = fetchPrePopulatedTransaction();
     assertEquals(transaction.getState(), transactionUpdated.getState());
-  }
-
-  private InnReachTransaction fetchPrePopulatedTransaction() {
-    return repository.findByTrackingIdAndCentralServerCode(PRE_POPULATED_TRACKING_ID, PRE_POPULATED_CENTRAL_CODE).get();
   }
 
   @ParameterizedTest
@@ -405,6 +415,119 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     assertEquals(TRANSFER, transactionAfter.getState());
   }
 
+  @Test
+  void processLocalHoldCirculationRequest_createNew() {
+    var transactionHoldDTO = createTransactionHoldDTO();
+
+    var responseEntity = testRestTemplate.exchange(
+      CIRCULATION_OPERATION_ENDPOINT, HttpMethod.PUT,
+      new HttpEntity<>(transactionHoldDTO), InnReachResponseDTO.class,
+      LOCAL_HOLD_OPERATION, NEW_TRANSACTION_TRACKING_ID, PRE_POPULATED_CENTRAL_CODE
+    );
+
+    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+
+    var responseBody = responseEntity.getBody();
+
+    assertNotNull(responseBody);
+    assertNotNull(responseBody.getErrors());
+    assertEquals(0, responseBody.getErrors().size());
+    assertEquals(InnReachResponse.OK_STATUS, responseBody.getStatus());
+
+    var innReachTransaction = fetchTransactionByTrackingId(NEW_TRANSACTION_TRACKING_ID);
+    assertNotNull(innReachTransaction);
+
+    assertNotNull(innReachTransaction.getHold());
+  }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
+  })
+  void processLocalHoldCirculationRequest_updateExiting() {
+    var transactionHoldDTO = createTransactionHoldDTO();
+
+    var responseEntity = testRestTemplate.exchange(
+      CIRCULATION_OPERATION_ENDPOINT, HttpMethod.PUT,
+      new HttpEntity<>(transactionHoldDTO), InnReachResponseDTO.class,
+      LOCAL_HOLD_OPERATION, PRE_POPULATED_TRACKING_ID, PRE_POPULATED_CENTRAL_CODE
+    );
+
+    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+
+    var responseBody = responseEntity.getBody();
+
+    assertNotNull(responseBody);
+    assertNotNull(responseBody.getErrors());
+    assertEquals(0, responseBody.getErrors().size());
+    assertEquals(InnReachResponse.OK_STATUS, responseBody.getStatus());
+
+    var innReachTransaction = fetchPrePopulatedTransaction();
+    assertNotNull(innReachTransaction);
+
+    assertEquals(transactionHoldDTO.getTransactionTime(), innReachTransaction.getHold().getTransactionTime());
+    assertEquals(transactionHoldDTO.getPatronId(), innReachTransaction.getHold().getPatronId());
+    assertEquals(transactionHoldDTO.getPatronAgencyCode(), innReachTransaction.getHold().getPatronAgencyCode());
+  }
+
+  private InnReachTransaction fetchPrePopulatedTransaction() {
+    return fetchTransactionByTrackingId(PRE_POPULATED_TRACKING_ID);
+  }
+
+  private InnReachTransaction fetchTransactionByTrackingId(String trackingId) {
+    return repository.findByTrackingIdAndCentralServerCode(trackingId, PRE_POPULATED_CENTRAL_CODE).get();
+  }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
+  })
+  void processItemReceivedRequest_whenItemIsShipped() {
+    var transaction = repository.findByTrackingIdAndCentralServerCode(PRE_POPULATED_TRACKING_ID,
+      PRE_POPULATED_CENTRAL_CODE).get();
+    transaction.setState(ITEM_SHIPPED);
+    repository.save(transaction);
+
+    var transactionHoldDTO = createTransactionHoldDTO();
+
+    var responseEntity = testRestTemplate.exchange(
+      ITEM_RECEIVED_PATH, HttpMethod.PUT, new HttpEntity<>(transactionHoldDTO), InnReachResponseDTO.class,
+      PRE_POPULATED_TRACKING_ID, PRE_POPULATED_CENTRAL_CODE);
+
+    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+    var responseEntityBody = responseEntity.getBody();
+    assertNotNull(responseEntityBody);
+    assertEquals("ok", responseEntityBody.getStatus());
+
+    var transactionUpdated = repository.findByTrackingIdAndCentralServerCode(PRE_POPULATED_TRACKING_ID,
+      PRE_POPULATED_CENTRAL_CODE).get();
+    assertEquals(ITEM_RECEIVED, transactionUpdated.getState());
+  }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
+  })
+  void processItemReceivedRequest_whenItemIsNotShipped() {
+    var transactionHoldDTO = createTransactionHoldDTO();
+
+    var responseEntity = testRestTemplate.exchange(
+      ITEM_RECEIVED_PATH, HttpMethod.PUT, new HttpEntity<>(transactionHoldDTO), InnReachResponseDTO.class,
+      PRE_POPULATED_TRACKING_ID, PRE_POPULATED_CENTRAL_CODE);
+
+    assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
+    var responseEntityBody = responseEntity.getBody();
+    assertNotNull(responseEntityBody);
+    assertEquals(UNEXPECTED_TRANSACTION_STATE + "PATRON_HOLD", responseEntityBody.getReason());
+
+    var transactionUpdated = repository.findByTrackingIdAndCentralServerCode(PRE_POPULATED_TRACKING_ID,
+      PRE_POPULATED_CENTRAL_CODE).get();
+    assertNotEquals(ITEM_RECEIVED, transactionUpdated.getState());
+  }
+  
   @Test
   @Sql(scripts = {
     "classpath:db/central-server/pre-populate-central-server.sql",
