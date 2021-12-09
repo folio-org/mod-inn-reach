@@ -2,7 +2,6 @@ package org.folio.innreach.controller;
 
 import static java.util.UUID.randomUUID;
 import static org.awaitility.Awaitility.await;
-import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.RECALL;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -16,8 +15,6 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.springframework.http.HttpStatus.BAD_REQUEST;
-import static org.springframework.http.HttpStatus.OK;
 import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TEST_METHOD;
 import static org.springframework.test.context.jdbc.SqlMergeMode.MergeMode.MERGE;
 
@@ -35,16 +32,13 @@ import static org.folio.innreach.fixture.RequestFixture.createRequestDTO;
 import static org.folio.innreach.fixture.TestUtil.deserializeFromJsonFile;
 import static org.folio.innreach.fixture.UserFixture.createUser;
 
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import org.folio.innreach.dto.BorrowerRenewDTO;
-import org.folio.innreach.dto.InnReachRecallItemDTO;
+
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.stubbing.Answer;
@@ -52,11 +46,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.boot.test.web.client.TestRestTemplate;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlMergeMode;
 
@@ -1030,52 +1020,4 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     repository.save(transaction);
   }
 
-  @Test
-  @Sql(scripts = {
-    "classpath:db/central-server/pre-populate-central-server.sql",
-    "classpath:db/inn-reach-transaction/pre-populate-transaction-item-shipped.sql"
-  })
-  void recallItemRequestWhenTransactionStateItemShipped() {
-    var dueDateTime = (int) Instant.now().plus(1, ChronoUnit.DAYS).getEpochSecond();
-    var recallItem = new InnReachRecallItemDTO().dueDateTime(dueDateTime);
-
-    var responseEntity = testRestTemplate.postForEntity(
-      "/inn-reach/d2ir/circ/recall/{trackingId}/{centralCode}",
-      new HttpEntity<>(recallItem), InnReachRecallItemDTO.class,
-      PRE_POPULATED_TRACKING_ID, PRE_POPULATED_CENTRAL_SERVER_CODE);
-
-    var transaction = fetchPrePopulatedTransaction();
-
-    assertEquals(OK, responseEntity.getStatusCode());
-    assertEquals(RECALL, transaction.getState());
-  }
-
-  @Test
-  @Sql(scripts = {
-    "classpath:db/central-server/pre-populate-central-server.sql",
-    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
-  })
-  void recallItemRequestWhenTransactionStateNotItemShipped() {
-    var dueDateTime = (int) Instant.now().plus(1, ChronoUnit.DAYS).getEpochSecond();
-    var recallItem = new InnReachRecallItemDTO().dueDateTime(dueDateTime);
-    var transactionStateBefore = fetchPrePopulatedTransaction().getState();
-
-    var responseEntity = testRestTemplate.postForEntity(
-      "/inn-reach/d2ir/circ/recall/{trackingId}/{centralCode}",
-      new HttpEntity<>(recallItem), InnReachRecallItemDTO.class,
-      PRE_POPULATED_TRACKING_ID, PRE_POPULATED_CENTRAL_SERVER_CODE);
-
-    var transactionStateAfter = fetchPrePopulatedTransaction().getState();
-
-    assertEquals(BAD_REQUEST, responseEntity.getStatusCode());
-    assertEquals(transactionStateBefore, transactionStateAfter);
-  }
-
-  private InnReachTransaction fetchPrePopulatedTransaction() {
-    return fetchTransactionByTrackingId(PRE_POPULATED_TRACKING_ID);
-  }
-
-  private InnReachTransaction fetchTransactionByTrackingId(String trackingId) {
-    return repository.findByTrackingIdAndCentralServerCode(trackingId, PRE_POPULATED_CENTRAL_SERVER_CODE).get();
-  }
 }

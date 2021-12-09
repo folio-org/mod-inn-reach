@@ -13,6 +13,7 @@ import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionSt
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.ITEM_SHIPPED;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.LOCAL_HOLD;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.PATRON_HOLD;
+import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.RECALL;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.RECEIVE_UNANNOUNCED;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.RETURN_UNCIRCULATED;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.TRANSFER;
@@ -26,7 +27,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.folio.innreach.domain.service.InnReachTransactionService;
 import org.folio.innreach.dto.BorrowerRenewDTO;
-import org.folio.innreach.dto.InnReachRecallItemDTO;
 import org.folio.innreach.dto.ReturnUncirculatedDTO;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
@@ -270,20 +270,18 @@ public class CirculationServiceImpl implements CirculationService {
   @Override
   public InnReachResponseDTO borrowerRenew(String trackingId, String centralCode, BorrowerRenewDTO borrowerRenew) {
     var transaction = getTransaction(trackingId, centralCode);
+    var transactionState = transaction.getState();
     var calculatedDueDate = transaction.getHold().getNeedBefore();
     var requestedDueDate = borrowerRenew.getDueDateTime();
 
     if (calculatedDueDate >= requestedDueDate) {
       transaction.setState(BORROWER_RENEW);
       transactionRepository.save(transaction);
-    } else {
-      try {
-        var recallItem = new InnReachRecallItemDTO().dueDateTime(calculatedDueDate);
-        transactionService.recallItem(trackingId, centralCode, recallItem);
-      } catch (IllegalArgumentException e) {
-        var cancelRequest = new CancelRequestDTO().reason("Transaction cancelled at owning side");
-        cancelPatronHold(trackingId, centralCode, cancelRequest);
-      }
+    } else if (transactionState == ITEM_SHIPPED) {
+      transaction.setState(RECALL);
+      transactionRepository.save(transaction);
+      } else {
+      throw new IllegalArgumentException(UNEXPECTED_TRANSACTION_STATE + transactionState.name());
     }
 
     return success();

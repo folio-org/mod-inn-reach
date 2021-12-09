@@ -576,15 +576,16 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
   void borrowerRenewRequestHasNotAcceptableDueDateAndTransactionStateIsNotItemShipped() {
     var dueDateTime = (int) Instant.now().plus(1, ChronoUnit.DAYS).getEpochSecond();
     var borrowerItem = new BorrowerRenewDTO().dueDateTime(dueDateTime);
+    var transactionStateBefore = fetchPrePopulatedTransaction().getState();
 
     var responseEntity = testRestTemplate.exchange(
       "/inn-reach/d2ir/circ/borrowerrenew/{trackingId}/{centralCode}", HttpMethod.PUT,
       new HttpEntity<>(borrowerItem), BorrowerRenewDTO.class,
       PRE_POPULATED_TRACKING_ID, PRE_POPULATED_CENTRAL_CODE);
 
-    var transaction = fetchPrePopulatedTransaction();
+    var transactionStateAfter = fetchPrePopulatedTransaction().getState();
 
-    assertEquals(OK, responseEntity.getStatusCode());
-    assertEquals(CANCEL_REQUEST, transaction.getState());
+    assertEquals(BAD_REQUEST, responseEntity.getStatusCode());
+    assertEquals(transactionStateBefore, transactionStateAfter);
   }
 }
