@@ -5,6 +5,7 @@ import java.util.stream.Collectors;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.folio.innreach.dto.InnReachRecallItemDTO;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -100,5 +101,14 @@ public class InnReachTransactionController implements InnReachTransactionApi {
     response.setReason("Argument validation failed.");
     response.setErrors(innReachErrors);
     return response;
+  }
+
+  @Override
+  @PostMapping("/inn-reach/d2ir/circ/recall/{trackingId}/{centralCode}")
+  public ResponseEntity<InnReachResponseDTO> recallItem(@PathVariable String trackingId,
+                                                        @PathVariable String centralCode,
+                                                        InnReachRecallItemDTO recallItem) {
+    var response = transactionService.recallItem(trackingId, centralCode, recallItem);
+    return ResponseEntity.ok(response);
   }
 }

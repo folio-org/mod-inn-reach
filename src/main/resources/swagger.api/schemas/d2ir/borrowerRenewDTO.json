@@ -1,0 +1,14 @@
+{
+  "description": "Borrower Renew Message for Item Hold",
+  "type": "object",
+  "properties": {
+    "dueDateTime": {
+      "description": "Due Date time",
+      "type": "integer"
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "dueDateTime"
+  ]
+}

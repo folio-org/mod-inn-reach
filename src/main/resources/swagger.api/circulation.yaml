@@ -409,6 +409,64 @@ paths:
       parameters:
         - $ref: '#/components/parameters/trackingId'
         - $ref: '#/components/parameters/centralCode'
+  /d2ir/circ/borrowerrenew/{trackingId}/{centralCode}:
+    put:
+      operationId: borrowerRenew
+      description: Borrower Renew Message for Item Hold
+      tags:
+        - inn-reach-circulation
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/borrowerRenewDTO"
+      responses:
+        '200':
+          description: Set transaction state BORROWER_RENEW
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/innReachResponseDTO"
+        '400':
+          description: An error occurred during processing the request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/innReachResponseDTO"
+        '500':
+          $ref: "api-common.yaml#/components/responses/trait_response_500"
+      parameters:
+        - $ref: '#/components/parameters/trackingId'
+        - $ref: '#/components/parameters/centralCode'
+  /d2ir/circ/recall/{trackingId}/{centralCode}:
+    post:
+      operationId: recallItem
+      description: Sends a transaction from the owning site to the central
+      tags:
+        - inn-reach-transaction
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/innReachRecallItemDTO"
+      responses:
+        '200':
+          description: Transaction recalled
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/innReachResponseDTO"
+        '400':
+          description: An error occurred during recalling of transaction record
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/innReachResponseDTO"
+        '500':
+          $ref: "api-common.yaml#/components/responses/trait_response_500"
+      parameters:
+        - $ref: '#/components/parameters/trackingId'
+        - $ref: '#/components/parameters/centralCode'
   /transactions:
     get:
       description: Get a list of transactions for the given central server
@@ -499,6 +557,10 @@ components:
       $ref: schemas/itemHoldCheckOutResponseDTO.json
     returnUncirculatedDTO:
       $ref: schemas/d2ir/returnUncirculatedDTO.json
+    borrowerRenewDTO:
+      $ref: schemas/d2ir/borrowerRenewDTO.json
+    innReachRecallItemDTO:
+      $ref: schemas/innReachRecallItemDTO.json
   parameters:
     bibId:
       name: bibId

@@ -1,0 +1,14 @@
+{
+  "description": "Sends a transaction from the owning site to the central",
+  "type": "object",
+  "properties": {
+    "dueDateTime": {
+      "description": "Due Date time",
+      "type": "integer"
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "dueDateTime"
+  ]
+}

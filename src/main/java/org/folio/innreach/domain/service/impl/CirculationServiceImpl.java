@@ -4,6 +4,7 @@ import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 import static org.apache.commons.lang3.StringUtils.capitalize;
 
+import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.BORROWER_RENEW;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.BORROWING_SITE_CANCEL;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.CANCEL_REQUEST;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.ITEM_RECEIVED;
@@ -20,6 +21,9 @@ import java.util.function.Supplier;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.folio.innreach.domain.service.InnReachTransactionService;
+import org.folio.innreach.dto.BorrowerRenewDTO;
+import org.folio.innreach.dto.InnReachRecallItemDTO;
 import org.folio.innreach.dto.ReturnUncirculatedDTO;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
@@ -53,6 +57,7 @@ import org.folio.innreach.repository.InnReachTransactionRepository;
 public class CirculationServiceImpl implements CirculationService {
 
   private final InnReachTransactionRepository transactionRepository;
+  private final InnReachTransactionService transactionService;
   private final InnReachTransactionHoldMapper transactionHoldMapper;
   private final InnReachTransactionPickupLocationMapper pickupLocationMapper;
   private final PatronHoldService patronHoldService;
@@ -209,6 +214,28 @@ public class CirculationServiceImpl implements CirculationService {
     } else {
       throw new IllegalArgumentException("Transaction state is not " + ITEM_RECEIVED.name() + " or " + RECEIVE_UNANNOUNCED.name());
     }
+  }
+
+  @Override
+  public InnReachResponseDTO borrowerRenew(String trackingId, String centralCode, BorrowerRenewDTO borrowerRenew) {
+    var transaction = getTransaction(trackingId, centralCode);
+    var calculatedDueDate = transaction.getHold().getNeedBefore();
+    var requestedDueDate = borrowerRenew.getDueDateTime();
+
+    if (calculatedDueDate >= requestedDueDate) {
+      transaction.setState(BORROWER_RENEW);
+      transactionRepository.save(transaction);
+    } else {
+      try {
+        var recallItem = new InnReachRecallItemDTO().dueDateTime(calculatedDueDate);
+        transactionService.recallItem(trackingId, centralCode, recallItem);
+      } catch (IllegalArgumentException e) {
+        var cancelRequest = new CancelRequestDTO().reason("Transaction cancelled at owning side");
+        cancelPatronHold(trackingId, centralCode, cancelRequest);
+      }
+    }
+
+    return success();
   }
 
   private InnReachResponseDTO success() {

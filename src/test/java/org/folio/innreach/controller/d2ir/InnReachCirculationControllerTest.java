@@ -1,13 +1,17 @@
 package org.folio.innreach.controller.d2ir;
 
+import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.BORROWER_RENEW;
+import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.CANCEL_REQUEST;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.ITEM_HOLD;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.ITEM_SHIPPED;
+import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.RECALL;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.RECEIVE_UNANNOUNCED;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.RETURN_UNCIRCULATED;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.TRANSFER;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -26,9 +30,12 @@ import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionSt
 import static org.folio.innreach.fixture.CirculationFixture.createItemShippedDTO;
 import static org.folio.innreach.fixture.CirculationFixture.createTransactionHoldDTO;
 
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Optional;
 
 import org.folio.innreach.domain.entity.InnReachTransaction;
+import org.folio.innreach.dto.BorrowerRenewDTO;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
@@ -398,4 +405,63 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     assertEquals(TRANSFER, transactionAfter.getState());
   }
 
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
+  })
+  void borrowerRenewRequestHasAcceptableDueDate() {
+    var dueDateTime = (int) Instant.now().minus(1, ChronoUnit.DAYS).getEpochSecond();
+    var borrowerItem = new BorrowerRenewDTO().dueDateTime(dueDateTime);
+
+    var responseEntity = testRestTemplate.exchange(
+      "/inn-reach/d2ir/circ/borrowerrenew/{trackingId}/{centralCode}", HttpMethod.PUT,
+      new HttpEntity<>(borrowerItem), BorrowerRenewDTO.class,
+      PRE_POPULATED_TRACKING_ID, PRE_POPULATED_CENTRAL_CODE);
+
+    var transaction = fetchPrePopulatedTransaction();
+
+    assertEquals(OK, responseEntity.getStatusCode());
+    assertEquals(BORROWER_RENEW, transaction.getState());
+  }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-transaction-item-shipped.sql"
+  })
+  void borrowerRenewRequestHasNotAcceptableDueDateAndTransactionStateIsItemShipped() {
+    var dueDateTime = (int) Instant.now().plus(1, ChronoUnit.DAYS).getEpochSecond();
+    var borrowerItem = new BorrowerRenewDTO().dueDateTime(dueDateTime);
+
+    var responseEntity = testRestTemplate.exchange(
+      "/inn-reach/d2ir/circ/borrowerrenew/{trackingId}/{centralCode}", HttpMethod.PUT,
+      new HttpEntity<>(borrowerItem), BorrowerRenewDTO.class,
+      PRE_POPULATED_TRACKING_ID, PRE_POPULATED_CENTRAL_CODE);
+
+    var transaction = fetchPrePopulatedTransaction();
+
+    assertEquals(OK, responseEntity.getStatusCode());
+    assertEquals(RECALL, transaction.getState());
+  }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
+  })
+  void borrowerRenewRequestHasNotAcceptableDueDateAndTransactionStateIsNotItemShipped() {
+    var dueDateTime = (int) Instant.now().plus(1, ChronoUnit.DAYS).getEpochSecond();
+    var borrowerItem = new BorrowerRenewDTO().dueDateTime(dueDateTime);
+
+    var responseEntity = testRestTemplate.exchange(
+      "/inn-reach/d2ir/circ/borrowerrenew/{trackingId}/{centralCode}", HttpMethod.PUT,
+      new HttpEntity<>(borrowerItem), BorrowerRenewDTO.class,
+      PRE_POPULATED_TRACKING_ID, PRE_POPULATED_CENTRAL_CODE);
+
+    var transaction = fetchPrePopulatedTransaction();
+
+    assertEquals(OK, responseEntity.getStatusCode());
+    assertEquals(CANCEL_REQUEST, transaction.getState());
+  }
 }

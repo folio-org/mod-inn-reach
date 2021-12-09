@@ -7,6 +7,10 @@ import javax.persistence.EntityExistsException;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.folio.innreach.domain.service.CirculationService;
+import org.folio.innreach.domain.service.RequestService;
+import org.folio.innreach.dto.CancelRequestDTO;
+import org.folio.innreach.dto.InnReachRecallItemDTO;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,6 +34,9 @@ import org.folio.innreach.mapper.InnReachTransactionMapper;
 import org.folio.innreach.repository.InnReachTransactionRepository;
 import org.folio.innreach.repository.TransactionHoldRepository;
 import org.folio.innreach.specification.InnReachTransactionSpecification;
+
+import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.ITEM_SHIPPED;
+import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.RECALL;
 
 @Log4j2
 @RequiredArgsConstructor
@@ -107,5 +114,29 @@ public class InnReachTransactionServiceImpl implements InnReachTransactionServic
     var parameters = parametersMapper.toEntity(parametersDTO);
     var transactions = repository.findAll(specification.filterByParameters(parameters), PageRequest.of(offset, limit));
     return transactionMapper.toDTOCollection(transactions);
+  }
+
+  @Override
+  public InnReachResponseDTO recallItem(String trackingId, String centralCode, InnReachRecallItemDTO recallItem) {
+    var transaction = getTransaction(trackingId, centralCode);
+    var state = transaction.getState();
+
+    if (state == ITEM_SHIPPED) {
+      transaction.setState(RECALL);
+      repository.save(transaction);
+    } else {
+      throw new IllegalArgumentException("Transaction state is not " + state.toString());
+    }
+    return success();
+  }
+
+  private InnReachTransaction getTransaction(String trackingId, String centralCode) {
+    return repository.findByTrackingIdAndCentralServerCode(trackingId, centralCode)
+      .orElseThrow(() -> new EntityNotFoundException(String.format(
+        "InnReach transaction with tracking id [%s] and central code [%s] not found", trackingId, centralCode)));
+  }
+
+  private InnReachResponseDTO success() {
+    return new InnReachResponseDTO().status("ok").reason("success");
   }
 }

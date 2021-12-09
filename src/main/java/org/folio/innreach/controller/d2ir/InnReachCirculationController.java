@@ -2,6 +2,7 @@ package org.folio.innreach.controller.d2ir;
 
 import lombok.RequiredArgsConstructor;
 import org.folio.innreach.dto.BaseCircRequestDTO;
+import org.folio.innreach.dto.BorrowerRenewDTO;
 import org.folio.innreach.dto.ReturnUncirculatedDTO;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -99,4 +100,12 @@ public class InnReachCirculationController implements InnReachCirculationApi {
     return ResponseEntity.ok(innReachResponse);
   }
 
+  @Override
+  @PutMapping("/borrowerrenew/{trackingId}/{centralCode}")
+  public ResponseEntity<InnReachResponseDTO> borrowerRenew(@PathVariable String trackingId,
+                                                           @PathVariable String centralCode, BorrowerRenewDTO borrowerRenew) {
+    var innReachResponse = circulationService.borrowerRenew(trackingId, centralCode, borrowerRenew);
+
+    return ResponseEntity.ok(innReachResponse);
+  }
 }
