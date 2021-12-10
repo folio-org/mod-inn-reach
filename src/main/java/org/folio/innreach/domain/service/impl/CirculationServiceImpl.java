@@ -124,6 +124,8 @@ public class CirculationServiceImpl implements CirculationService {
       transactionRepository.save(newTransaction);
     }
 
+    requestService.createLocalHoldRequest(trackingId);
+
     return success();
   }
 
