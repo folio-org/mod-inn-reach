@@ -46,6 +46,7 @@ import org.folio.innreach.dto.Holding;
 import org.folio.innreach.dto.InnReachResponseDTO;
 import org.folio.innreach.dto.ItemReceivedDTO;
 import org.folio.innreach.dto.ItemShippedDTO;
+import org.folio.innreach.dto.LoanRenewedDTO;
 import org.folio.innreach.dto.LocalHoldDTO;
 import org.folio.innreach.dto.PatronHoldDTO;
 import org.folio.innreach.dto.ReturnUncirculatedDTO;
@@ -263,6 +264,11 @@ public class CirculationServiceImpl implements CirculationService {
     } else {
       throw new IllegalArgumentException("Transaction state is not " + ITEM_RECEIVED.name() + " or " + RECEIVE_UNANNOUNCED.name());
     }
+  }
+
+  @Override
+  public InnReachResponseDTO renewLoan(String trackingId, String centralCode, LoanRenewedDTO loanRenewed) {
+    return success();
   }
 
   private InnReachResponseDTO success() {
