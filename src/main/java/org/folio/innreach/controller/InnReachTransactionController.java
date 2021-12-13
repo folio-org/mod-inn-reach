@@ -100,5 +100,4 @@ public class InnReachTransactionController implements InnReachTransactionApi {
     response.setErrors(innReachErrors);
     return response;
   }
-
 }

@@ -623,6 +623,8 @@ components:
       $ref: schemas/d2ir/recallDTO.json
     borrowerRenewDTO:
       $ref: schemas/d2ir/borrowerRenewDTO.json
+    renewLoanDTO:
+      $ref: schemas/d2ir/renewLoanDTO.json
   parameters:
     bibId:
       name: bibId
