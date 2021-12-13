@@ -119,5 +119,9 @@ reference-data:
   loader:
     retry-attempts: 10
     retry-interval-ms: 20000
+retryable-update:
+  on-conflict:
+    retry-attempts: 2
+    retry-interval-ms: 0
 okapi.url: ${OKAPI_URL:http://localhost}
 environment: ${ENV:folio}
