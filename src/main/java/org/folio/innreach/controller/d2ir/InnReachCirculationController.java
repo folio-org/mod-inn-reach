@@ -18,6 +18,7 @@ import org.folio.innreach.dto.ItemShippedDTO;
 import org.folio.innreach.dto.LoanRenewedDTO;
 import org.folio.innreach.dto.LocalHoldDTO;
 import org.folio.innreach.dto.PatronHoldDTO;
+import org.folio.innreach.dto.RecallDTO;
 import org.folio.innreach.dto.ReturnUncirculatedDTO;
 import org.folio.innreach.dto.TransferRequestDTO;
 import org.folio.innreach.rest.resource.InnReachCirculationApi;
@@ -116,6 +117,14 @@ public class InnReachCirculationController implements InnReachCirculationApi {
   public ResponseEntity<InnReachResponseDTO> itemReceived(@PathVariable String trackingId,
                                                             @PathVariable String centralCode, ItemReceivedDTO itemReceivedDTO) {
     var innReachResponse = circulationService.itemReceived(trackingId, centralCode, itemReceivedDTO);
+
+    return ResponseEntity.ok(innReachResponse);
+  }
+
+  @Override
+  @PutMapping("/recall/{trackingId}/{centralCode}")
+  public ResponseEntity<InnReachResponseDTO> recall(String trackingId, String centralCode, RecallDTO recallDTO) {
+    var innReachResponse = circulationService.recall(trackingId, centralCode, recallDTO);
 
     return ResponseEntity.ok(innReachResponse);
   }

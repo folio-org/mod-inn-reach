@@ -7,6 +7,7 @@ import static org.folio.innreach.domain.dto.folio.circulation.RequestDTO.Request
 import static org.folio.innreach.domain.dto.folio.circulation.RequestDTO.RequestStatus.OPEN_NOT_YET_FILLED;
 import static org.folio.innreach.domain.dto.folio.circulation.RequestDTO.RequestType.HOLD;
 import static org.folio.innreach.domain.dto.folio.circulation.RequestDTO.RequestType.PAGE;
+import static org.folio.innreach.domain.dto.folio.circulation.RequestDTO.RequestType.RECALL;
 import static org.folio.innreach.domain.dto.folio.inventory.InventoryItemStatus.AGED_TO_LOST;
 import static org.folio.innreach.domain.dto.folio.inventory.InventoryItemStatus.AVAILABLE;
 import static org.folio.innreach.domain.dto.folio.inventory.InventoryItemStatus.AWAITING_DELIVERY;
@@ -35,7 +36,6 @@ import java.util.UUID;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
-import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
@@ -52,6 +52,7 @@ import org.folio.innreach.domain.dto.folio.circulation.RequestDTO.RequestStatus;
 import org.folio.innreach.domain.dto.folio.circulation.RequestDTO.RequestType;
 import org.folio.innreach.domain.dto.folio.inventory.InventoryItemDTO;
 import org.folio.innreach.domain.dto.folio.inventory.InventoryItemStatus;
+import org.folio.innreach.domain.entity.CentralPatronTypeMapping;
 import org.folio.innreach.domain.entity.InnReachTransaction;
 import org.folio.innreach.domain.entity.TransactionHold;
 import org.folio.innreach.domain.entity.TransactionItemHold;
@@ -221,6 +222,27 @@ public class RequestServiceImpl implements RequestService {
     return circulationClient.checkOutByBarcode(checkOut);
   }
 
+  @Override
+  public void createRecallRequest(UUID recallUserId, UUID itemId) {
+    var pickupServicePoint = getDefaultServicePointId(recallUserId);
+
+    var request = RequestDTO.builder()
+      .itemId(itemId)
+      .requesterId(recallUserId)
+      .requestType(RECALL.getName())
+      .requestDate(OffsetDateTime.now())
+      .fulfilmentPreference(HOLD_SHELF.getName())
+      .pickupServicePointId(pickupServicePoint)
+      .build();
+    circulationClient.sendRequest(request);
+  }
+
+  @Override
+  public RequestDTO findRequest(UUID requestId) {
+    return circulationClient.findRequest(requestId).orElseThrow(() -> new EntityNotFoundException(
+      "No request found with id = " + requestId));
+  }
+
   private void cancelRequest(RequestDTO request, String reason) {
     request.setStatus(RequestStatus.CLOSED_CANCELLED);
     request.setCancellationReasonId(INN_REACH_CANCELLATION_REASON_ID);
@@ -294,11 +316,11 @@ public class RequestServiceImpl implements RequestService {
   }
 
   private String getUserBarcode(UUID centralServerId, Integer patronType) {
-    return centralPatronTypeMappingRepository.
-      findOneByCentralServerIdAndCentralPatronType(centralServerId, patronType).orElseThrow(() ->
+    return centralPatronTypeMappingRepository.findOneByCentralServerIdAndCentralPatronType(centralServerId, patronType)
+      .map(CentralPatronTypeMapping::getBarcode)
+      .orElseThrow(() ->
         new EntityNotFoundException("User barcode not found for central server id = " + centralServerId +
-          " and patron type = " + patronType)
-      ).getBarcode();
+          " and patron type = " + patronType));
   }
 
   private OffsetDateTime getRequestExpirationDate(TransactionHold hold) {
