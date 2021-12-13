@@ -7,6 +7,7 @@ import static org.folio.innreach.domain.dto.folio.circulation.RequestDTO.Request
 import static org.folio.innreach.domain.dto.folio.circulation.RequestDTO.RequestStatus.OPEN_NOT_YET_FILLED;
 import static org.folio.innreach.domain.dto.folio.circulation.RequestDTO.RequestType.HOLD;
 import static org.folio.innreach.domain.dto.folio.circulation.RequestDTO.RequestType.PAGE;
+import static org.folio.innreach.domain.dto.folio.circulation.RequestDTO.RequestType.RECALL;
 import static org.folio.innreach.domain.dto.folio.inventory.InventoryItemStatus.AGED_TO_LOST;
 import static org.folio.innreach.domain.dto.folio.inventory.InventoryItemStatus.AVAILABLE;
 import static org.folio.innreach.domain.dto.folio.inventory.InventoryItemStatus.AWAITING_DELIVERY;
@@ -245,6 +246,26 @@ public class RequestServiceImpl implements RequestService {
   private void cancelTransaction(InnReachTransaction transaction) {
     transaction.setState(CANCEL_REQUEST);
     transactionRepository.save(transaction);
+
+  @Override
+  public void createRecallRequest(UUID recallUserId, UUID itemId) {
+    var pickupServicePoint = getDefaultServicePointId(recallUserId);
+
+    var request = RequestDTO.builder()
+      .itemId(itemId)
+      .requesterId(recallUserId)
+      .requestType(RECALL.getName())
+      .requestDate(OffsetDateTime.now())
+      .fulfilmentPreference(HOLD_SHELF.getName())
+      .pickupServicePointId(pickupServicePoint)
+      .build();
+    circulationClient.sendRequest(request);
+  }
+
+  @Override
+  public RequestDTO findRequest(UUID requestId) {
+    return circulationClient.findRequest(requestId).orElseThrow(() -> new EntityNotFoundException(
+      "No request found with id = " + requestId));
   }
 
   private void cancelRequest(RequestDTO request, String reason) {
@@ -325,11 +346,11 @@ public class RequestServiceImpl implements RequestService {
   }
 
   private String getUserBarcode(UUID centralServerId, Integer patronType) {
-    return centralPatronTypeMappingRepository.
-      findOneByCentralServerIdAndCentralPatronType(centralServerId, patronType).orElseThrow(() ->
+    return centralPatronTypeMappingRepository.findOneByCentralServerIdAndCentralPatronType(centralServerId, patronType)
+      .map(CentralPatronTypeMapping::getBarcode)
+      .orElseThrow(() ->
         new EntityNotFoundException("User barcode not found for central server id = " + centralServerId +
-          " and patron type = " + patronType)
-      ).getBarcode();
+          " and patron type = " + patronType));
   }
 
   private InnReachTransaction fetchTransactionByTrackingId(String trackingId) {
