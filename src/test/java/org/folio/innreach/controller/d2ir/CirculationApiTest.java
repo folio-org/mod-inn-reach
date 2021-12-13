@@ -82,6 +82,8 @@ class CirculationApiTest extends BaseApiControllerTest {
   private static final String HOLDING_ID = "16f40c4e-235d-4912-a683-2ad919cc8b07";
   private static final UUID FOLIO_PATRON_ID = UUID.fromString("ea11eba7-3c0f-4d15-9cca-c8608cd6bc8a");
 
+  private static final Duration ASYNC_AWAIT_TIMEOUT = Duration.ofSeconds(15);
+
   @SpyBean
   private InnReachTransactionRepository repository;
 
@@ -124,7 +126,7 @@ class CirculationApiTest extends BaseApiControllerTest {
         .headers(getOkapiHeaders()))
       .andExpect(status().isOk());
 
-    await().atMost(Duration.ofSeconds(10)).untilAsserted(() ->
+    await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() ->
       verify(repository).save(
         argThat((InnReachTransaction t) -> NEW_REQUEST_ID.equals(t.getHold().getFolioRequestId()))));
   }
@@ -164,7 +166,7 @@ class CirculationApiTest extends BaseApiControllerTest {
         .headers(getOkapiHeaders()))
       .andExpect(status().isOk());
 
-    await().atMost(Duration.ofSeconds(10)).untilAsserted(() ->
+    await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() ->
       verify(circulationClient).sendRequest(any()));
   }
 
@@ -263,7 +265,7 @@ class CirculationApiTest extends BaseApiControllerTest {
         .headers(getOkapiHeaders()))
       .andExpect(status().isOk());
 
-    await().atMost(Duration.ofSeconds(10)).untilAsserted(() ->
+    await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() ->
       verify(circulationClient).sendRequest(any()));
   }
 
