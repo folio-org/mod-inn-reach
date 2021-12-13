@@ -467,6 +467,35 @@ paths:
       parameters:
         - $ref: '#/components/parameters/trackingId'
         - $ref: '#/components/parameters/centralCode'
+  /d2ir/circ/recall/{trackingId}/{centralCode}:
+    put:
+      operationId: recall
+      description: Item has been recalled
+      tags:
+        - inn-reach-circulation
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/recallDTO"
+      responses:
+        '200':
+          description: Recall request complete
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/innReachResponseDTO"
+        '400':
+          description: An error occurred during processing the request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/innReachResponseDTO"
+        '500':
+          $ref: "api-common.yaml#/components/responses/trait_response_500"
+      parameters:
+        - $ref: '#/components/parameters/trackingId'
+        - $ref: '#/components/parameters/centralCode'
   /d2ir/circ/borrowerrenew/{trackingId}/{centralCode}:
     put:
       operationId: borrowerRenew
@@ -590,6 +619,8 @@ components:
       $ref: schemas/d2ir/returnUncirculatedDTO.json
     itemReceivedDTO:
       $ref: schemas/d2ir/itemReceivedDTO.json
+    recallDTO:
+      $ref: schemas/d2ir/recallDTO.json
     borrowerRenewDTO:
       $ref: schemas/d2ir/borrowerRenewDTO.json
   parameters:
