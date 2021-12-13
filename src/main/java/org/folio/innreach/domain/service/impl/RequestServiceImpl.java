@@ -246,6 +246,7 @@ public class RequestServiceImpl implements RequestService {
   private void cancelTransaction(InnReachTransaction transaction) {
     transaction.setState(CANCEL_REQUEST);
     transactionRepository.save(transaction);
+  }
 
   @Override
   public void createRecallRequest(UUID recallUserId, UUID itemId) {
