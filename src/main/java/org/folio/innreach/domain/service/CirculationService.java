@@ -33,8 +33,8 @@ public interface CirculationService {
   InnReachResponseDTO returnUncirculated(String trackingId, String centralCode, ReturnUncirculatedDTO returnUncirculated);
 
   InnReachResponseDTO itemReceived(String trackingId, String centralCode, ItemReceivedDTO itemReceivedDTO);
-  
+
   InnReachResponseDTO recall(String trackingId, String centralCode, RecallDTO recallDTO);
-  
+
   InnReachResponseDTO borrowerRenew(String trackingId, String centralCode, BorrowerRenewDTO borrowerRenew);
 }
