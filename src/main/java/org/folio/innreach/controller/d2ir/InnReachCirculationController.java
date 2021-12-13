@@ -123,7 +123,8 @@ public class InnReachCirculationController implements InnReachCirculationApi {
 
   @Override
   @PutMapping("/recall/{trackingId}/{centralCode}")
-  public ResponseEntity<InnReachResponseDTO> recall(String trackingId, String centralCode, RecallDTO recallDTO) {
+  public ResponseEntity<InnReachResponseDTO> recall(@PathVariable String trackingId,
+                                                    @PathVariable String centralCode, RecallDTO recallDTO) {
     var innReachResponse = circulationService.recall(trackingId, centralCode, recallDTO);
 
     return ResponseEntity.ok(innReachResponse);
