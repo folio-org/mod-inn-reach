@@ -215,8 +215,7 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
   })
   void processCancelItemHoldRequest_whenItemIsNotCheckedOut() {
-    var requestDTO = new RequestDTO();
-    when(circulationClient.findRequest(any())).thenReturn(Optional.of(requestDTO));
+    when(circulationClient.findRequest(any())).thenReturn(Optional.of(new RequestDTO()));
     doNothing().when(circulationClient).updateRequest(any(), any());
 
     var transaction = fetchPrePopulatedTransaction();
@@ -539,8 +538,7 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
   )
   void processRecallRequest_whenItemIsOnLoanToThePatron() {
     when(servicePointsUsersClient.findServicePointsUsers(any())).thenReturn(ResultList.of(1, List.of(createServicePointUserDTO())));
-    var requestDTO = new RequestDTO();
-    when(circulationClient.findRequest(any())).thenReturn(Optional.of(requestDTO));
+    when(circulationClient.findRequest(any())).thenReturn(Optional.of(new RequestDTO()));
     when(circulationClient.sendRequest(any())).thenReturn(new RequestDTO());
     var recallDTO = createRecallDTO();
 
