@@ -3,6 +3,7 @@ package org.folio.innreach.external.service.impl;
 import static org.folio.innreach.external.util.AuthUtils.buildBearerAuthHeader;
 
 import java.net.URI;
+import java.time.OffsetDateTime;
 import java.util.UUID;
 
 import lombok.RequiredArgsConstructor;
@@ -33,7 +34,8 @@ public class InnReachExternalServiceImpl implements InnReachExternalService {
       buildInnReachRequestUrl(connectionDetailsDTO.getConnectionUrl(), innReachRequestUri),
       buildBearerAuthHeader(accessTokenDTO.getAccessToken()),
       connectionDetailsDTO.getLocalCode(),
-      connectionDetailsDTO.getCentralCode()
+      connectionDetailsDTO.getCentralCode(),
+      (int) OffsetDateTime.now().toEpochSecond()
     );
   }
 
@@ -48,6 +50,7 @@ public class InnReachExternalServiceImpl implements InnReachExternalService {
       buildBearerAuthHeader(accessTokenDTO.getAccessToken()),
       connectionDetails.getLocalCode(),
       connectionDetails.getCentralCode(),
+      (int) OffsetDateTime.now().toEpochSecond(),
       payload
     );
   }
@@ -62,7 +65,8 @@ public class InnReachExternalServiceImpl implements InnReachExternalService {
       buildInnReachRequestUrl(connectionDetails.getConnectionUrl(), innReachRequestUri),
       buildBearerAuthHeader(accessTokenDTO.getAccessToken()),
       connectionDetails.getLocalCode(),
-      connectionDetails.getCentralCode()
+      connectionDetails.getCentralCode(),
+      (int) OffsetDateTime.now().toEpochSecond()
     );
   }
 
