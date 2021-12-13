@@ -18,7 +18,4 @@ public interface InnReachErrorMapper {
   @Mapping(target = "reason", source = "e.message")
   InnReachError toInnReachError(Exception e);
 
-  default String map(Object value){
-    return value.toString();
-  }
 }
