@@ -530,7 +530,7 @@ paths:
               $ref: "#/components/schemas/loanRenewedDTO"
       responses:
         '200':
-          description: Transfer request complete
+          description: Loan renew request complete
           content:
             application/json:
               schema:
