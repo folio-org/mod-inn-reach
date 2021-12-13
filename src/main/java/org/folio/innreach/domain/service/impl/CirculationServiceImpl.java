@@ -30,7 +30,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.folio.innreach.dto.BorrowerRenewDTO;
 import org.folio.innreach.dto.CheckOutResponseDTO;
-import org.folio.innreach.dto.RenewLoanDTO;
+import org.folio.innreach.dto.RenewLoanRequestDTO;
 import org.folio.innreach.dto.ReturnUncirculatedDTO;
 import org.folio.innreach.external.service.InnReachExternalService;
 import org.springframework.beans.BeanUtils;
@@ -358,11 +358,11 @@ public class CirculationServiceImpl implements CirculationService {
   }
 
   private CheckOutResponseDTO renewLoan(InnReachTransaction transaction) {
-    var renewLoanDto = new RenewLoanDTO();
-    renewLoanDto.setItemId(transaction.getHold().getItemId());
-    renewLoanDto.setUserId(transaction.getHold().getPatronId());
+    var RenewLoanRequestDTO = new RenewLoanRequestDTO();
+    RenewLoanRequestDTO.setItemId(UUID.fromString(transaction.getHold().getItemId()));
+    RenewLoanRequestDTO.setUserId(UUID.fromString(transaction.getHold().getPatronId()));
 
-    return requestService.renewLoan(renewLoanDto);
+    return requestService.renewLoan(RenewLoanRequestDTO);
   }
 
   private String resolveD2irCircPath(String operation, String trackingId, String centralCode) {
