@@ -3,6 +3,8 @@ package org.folio.innreach.domain.service.impl;
 import static java.util.Objects.nonNull;
 import static org.apache.commons.lang3.StringUtils.capitalize;
 
+import static org.folio.innreach.domain.dto.folio.circulation.RequestDTO.RequestStatus.OPEN_AWAITING_PICKUP;
+import static org.folio.innreach.domain.dto.folio.circulation.RequestDTO.RequestStatus.OPEN_IN_TRANSIT;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.BORROWING_SITE_CANCEL;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.CANCEL_REQUEST;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.ITEM_HOLD;
@@ -11,6 +13,7 @@ import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionSt
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.ITEM_SHIPPED;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.LOCAL_HOLD;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.PATRON_HOLD;
+import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.RECALL;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.RECEIVE_UNANNOUNCED;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.RETURN_UNCIRCULATED;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.TRANSFER;
@@ -28,11 +31,14 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
 
 import org.folio.innreach.domain.dto.folio.inventory.InventoryItemDTO;
+import org.folio.innreach.domain.entity.CentralServer;
+import org.folio.innreach.domain.entity.InnReachRecallUser;
 import org.folio.innreach.domain.entity.InnReachTransaction;
 import org.folio.innreach.domain.entity.InnReachTransaction.TransactionState;
 import org.folio.innreach.domain.entity.InnReachTransaction.TransactionType;
 import org.folio.innreach.domain.entity.TransactionHold;
 import org.folio.innreach.domain.entity.TransactionPatronHold;
+import org.folio.innreach.domain.exception.CirculationException;
 import org.folio.innreach.domain.exception.EntityNotFoundException;
 import org.folio.innreach.domain.service.CirculationService;
 import org.folio.innreach.domain.service.HoldingsService;
@@ -48,11 +54,13 @@ import org.folio.innreach.dto.ItemReceivedDTO;
 import org.folio.innreach.dto.ItemShippedDTO;
 import org.folio.innreach.dto.LocalHoldDTO;
 import org.folio.innreach.dto.PatronHoldDTO;
+import org.folio.innreach.dto.RecallDTO;
 import org.folio.innreach.dto.ReturnUncirculatedDTO;
 import org.folio.innreach.dto.TransactionHoldDTO;
 import org.folio.innreach.dto.TransferRequestDTO;
 import org.folio.innreach.mapper.InnReachTransactionHoldMapper;
 import org.folio.innreach.mapper.InnReachTransactionPickupLocationMapper;
+import org.folio.innreach.repository.CentralServerRepository;
 import org.folio.innreach.repository.InnReachTransactionRepository;
 
 @Log4j2
@@ -73,6 +81,7 @@ public class CirculationServiceImpl implements CirculationService {
   private static final String UNEXPECTED_TRANSACTION_STATE = "Unexpected transaction state: ";
 
   private final InnReachTransactionRepository transactionRepository;
+  private final CentralServerRepository centralserverRepository;
   private final InnReachTransactionHoldMapper transactionHoldMapper;
   private final InnReachTransactionPickupLocationMapper pickupLocationMapper;
   private final PatronHoldService patronHoldService;
@@ -206,8 +215,6 @@ public class CirculationServiceImpl implements CirculationService {
     requestService.cancelRequest(transaction, "Request cancelled at borrowing site");
     transaction.setState(BORROWING_SITE_CANCEL);
 
-    transactionRepository.save(transaction);
-
     return success();
   }
 
@@ -217,7 +224,6 @@ public class CirculationServiceImpl implements CirculationService {
 
     Assert.isTrue(transaction.getState() == ITEM_SHIPPED, unexpectedTransactionState(transaction));
     transaction.setState(ITEM_RECEIVED);
-    transactionRepository.save(transaction);
 
     return success();
   }
@@ -233,7 +239,6 @@ public class CirculationServiceImpl implements CirculationService {
 
     if (transaction.getState() == TransactionState.ITEM_HOLD) {
       transaction.setState(RECEIVE_UNANNOUNCED);
-      transactionRepository.save(transaction);
     }
 
     return success();
@@ -258,11 +263,42 @@ public class CirculationServiceImpl implements CirculationService {
 
     if (state == ITEM_RECEIVED || state == RECEIVE_UNANNOUNCED) {
       transaction.setState(RETURN_UNCIRCULATED);
-      transactionRepository.save(transaction);
       return success();
     } else {
       throw new IllegalArgumentException("Transaction state is not " + ITEM_RECEIVED.name() + " or " + RECEIVE_UNANNOUNCED.name());
     }
+  }
+
+  @Override
+  public InnReachResponseDTO recall(String trackingId, String centralCode, RecallDTO recallDTO) {
+    var transaction = getTransaction(trackingId, centralCode);
+    var requestId = transaction.getHold().getFolioRequestId();
+    var request = requestService.findRequest(requestId);
+    var requestStatus = request.getStatus();
+
+    if (requestStatus == OPEN_AWAITING_PICKUP || requestStatus == OPEN_IN_TRANSIT) {
+      try {
+        requestService.cancelRequest(transaction, "Item has been recalled.");
+      } catch (Exception e) {
+        throw new CirculationException("Unable to create a cancel request on the item: " + e.getMessage(), e);
+      }
+    } else {
+      try {
+        var recallUser = getRecallUserForCentralServer(centralCode);
+        requestService.createRecallRequest(recallUser.getUserId(), transaction.getHold().getFolioItemId());
+      } catch (Exception e) {
+        throw new CirculationException("Unable to create a recall request on the item: " + e.getMessage(), e);
+      }
+    }
+    transaction.setState(RECALL);
+
+    return success();
+  }
+
+  private InnReachRecallUser getRecallUserForCentralServer(String centralCode) {
+    return centralserverRepository.fetchOneByCentralCode(centralCode)
+      .map(CentralServer::getInnReachRecallUser)
+      .orElseThrow(() -> new EntityNotFoundException("Recall user is not set for central server with code = " + centralCode));
   }
 
   private InnReachResponseDTO success() {
@@ -347,7 +383,7 @@ public class CirculationServiceImpl implements CirculationService {
         "InnReach transaction with tracking id [%s] and central code [%s] not found", trackingId, centralCode)));
   }
 
-  private String unexpectedTransactionState(InnReachTransaction transaction){
+  private String unexpectedTransactionState(InnReachTransaction transaction) {
     return UNEXPECTED_TRANSACTION_STATE + transaction.getState();
   }
 
