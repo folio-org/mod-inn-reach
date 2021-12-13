@@ -358,11 +358,11 @@ public class CirculationServiceImpl implements CirculationService {
   }
 
   private CheckOutResponseDTO renewLoan(InnReachTransaction transaction) {
-    var RenewLoanRequestDTO = new RenewLoanRequestDTO();
-    RenewLoanRequestDTO.setItemId(UUID.fromString(transaction.getHold().getItemId()));
-    RenewLoanRequestDTO.setUserId(UUID.fromString(transaction.getHold().getPatronId()));
+    var renewLoanRequestDTO = new RenewLoanRequestDTO();
+    renewLoanRequestDTO.setItemId(UUID.fromString(transaction.getHold().getItemId()));
+    renewLoanRequestDTO.setUserId(UUID.fromString(transaction.getHold().getPatronId()));
 
-    return requestService.renewLoan(RenewLoanRequestDTO);
+    return requestService.renewLoan(renewLoanRequestDTO);
   }
 
   private String resolveD2irCircPath(String operation, String trackingId, String centralCode) {
