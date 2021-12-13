@@ -19,6 +19,7 @@ import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionSt
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.RETURN_UNCIRCULATED;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.TRANSFER;
 
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Objects;
 import java.util.Optional;
@@ -27,8 +28,6 @@ import java.util.function.Supplier;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
-import org.folio.innreach.domain.service.InnReachTransactionService;
-import org.folio.innreach.domain.service.InventoryService;
 import org.folio.innreach.dto.BorrowerRenewDTO;
 import org.folio.innreach.dto.CheckOutResponseDTO;
 import org.folio.innreach.dto.RenewLoanDTO;
@@ -64,7 +63,6 @@ import org.folio.innreach.dto.ItemShippedDTO;
 import org.folio.innreach.dto.LocalHoldDTO;
 import org.folio.innreach.dto.PatronHoldDTO;
 import org.folio.innreach.dto.RecallDTO;
-import org.folio.innreach.dto.ReturnUncirculatedDTO;
 import org.folio.innreach.dto.TransactionHoldDTO;
 import org.folio.innreach.dto.TransferRequestDTO;
 import org.folio.innreach.mapper.InnReachTransactionHoldMapper;
@@ -91,7 +89,6 @@ public class CirculationServiceImpl implements CirculationService {
   private static final String D2IR_ITEM_RECALL_OPERATION = "recall";
 
   private final InnReachTransactionRepository transactionRepository;
-  private final InnReachTransactionService transactionService;
   private final CentralServerRepository centralserverRepository;
   private final InnReachTransactionHoldMapper transactionHoldMapper;
   private final InnReachTransactionPickupLocationMapper pickupLocationMapper;
@@ -99,7 +96,6 @@ public class CirculationServiceImpl implements CirculationService {
   private final RequestService requestService;
   private final ItemService itemService;
   private final HoldingsService holdingsService;
-  private final InventoryService inventoryService;
   private final InnReachExternalService innReachExternalService;
 
   @Override
@@ -313,27 +309,25 @@ public class CirculationServiceImpl implements CirculationService {
   @Override
   public InnReachResponseDTO borrowerRenew(String trackingId, String centralCode, BorrowerRenewDTO borrowerRenew) {
     var transaction = getTransaction(trackingId, centralCode);
-    var requestedDueDate = borrowerRenew.getDueDateTime();
+    var hold = transaction.getHold();
+    var loan = requestService.getLoan(hold.getFolioLoanId());
+    var existingDueDate = loan.getDueDate();
+    var requestedDueDate = new Date(borrowerRenew.getDueDateTime());
 
     if (transaction.getHold().getFolioLoanId() != null) {
-      var existingDueDate = requestService.getLoan(transaction.getHold().getFolioLoanId()).getDueDate().getTime();
-      String uri = resolveD2irCircPath(D2IR_ITEM_RECALL_OPERATION, trackingId, centralCode);
-      var dueDateForRecallRequest = new HashMap<>();
-      dueDateForRecallRequest.put("dueDateTime", existingDueDate);
-
       try {
         var renewedLoan = renewLoan(transaction);
-        var calculatedDueDate = renewedLoan.getDueDate().getTime();
-        if (calculatedDueDate >= requestedDueDate) {
+        var calculatedDueDate = renewedLoan.getDueDate();
+        if (calculatedDueDate.after(requestedDueDate) || calculatedDueDate.equals(requestedDueDate)) {
           transaction.setState(BORROWER_RENEW);
         } else {
-          innReachExternalService.postInnReachApi(centralCode, uri, dueDateForRecallRequest);
-          transaction.setState(RECALL);
+          recallRequestToCentralSever(transaction, existingDueDate);
         }
       } catch (Exception e) {
-        if (existingDueDate < requestedDueDate) {
-          innReachExternalService.postInnReachApi(centralCode, uri, dueDateForRecallRequest);
-          transaction.setState(RECALL);
+        if (existingDueDate.before(requestedDueDate)) {
+          recallRequestToCentralSever(transaction, existingDueDate);
+        } else {
+          throw new CirculationException("Failed to renew loan: " + e.getMessage(), e);
         }
       }
     }
@@ -347,10 +341,27 @@ public class CirculationServiceImpl implements CirculationService {
       .orElseThrow(() -> new EntityNotFoundException("Recall user is not set for central server with code = " + centralCode));
   }
 
+  private void recallRequestToCentralSever(InnReachTransaction transaction, Date existingDueDate) {
+    var trackingId = transaction.getTrackingId();
+    var centralCode = transaction.getCentralServerCode();
+
+    String uri = resolveD2irCircPath(D2IR_ITEM_RECALL_OPERATION, trackingId, centralCode);
+
+    var dueDateForRecallRequest = new HashMap<>();
+    dueDateForRecallRequest.put("dueDateTime", existingDueDate);
+    try {
+      innReachExternalService.postInnReachApi(centralCode, uri, dueDateForRecallRequest);
+      transaction.setState(RECALL);
+    } catch (Exception e) {
+      throw new CirculationException("Failed to recall request to central server: " + e.getMessage(), e);
+    }
+  }
+
   private CheckOutResponseDTO renewLoan(InnReachTransaction transaction) {
     var renewLoanDto = new RenewLoanDTO();
     renewLoanDto.setItemId(transaction.getHold().getItemId());
     renewLoanDto.setUserId(transaction.getHold().getPatronId());
+
     return requestService.renewLoan(renewLoanDto);
   }
 
