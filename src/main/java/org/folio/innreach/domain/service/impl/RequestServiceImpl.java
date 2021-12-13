@@ -25,8 +25,8 @@ import static org.folio.innreach.domain.dto.folio.inventory.InventoryItemStatus.
 import static org.folio.innreach.domain.dto.folio.inventory.InventoryItemStatus.UNAVAILABLE;
 import static org.folio.innreach.domain.dto.folio.inventory.InventoryItemStatus.UNKNOWN;
 import static org.folio.innreach.domain.dto.folio.inventory.InventoryItemStatus.WITHDRAWN;
+import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.CANCEL_REQUEST;
 
-import java.net.URI;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
@@ -56,6 +56,7 @@ import org.folio.innreach.domain.entity.CentralPatronTypeMapping;
 import org.folio.innreach.domain.entity.InnReachTransaction;
 import org.folio.innreach.domain.entity.TransactionHold;
 import org.folio.innreach.domain.entity.TransactionItemHold;
+import org.folio.innreach.domain.entity.TransactionLocalHold;
 import org.folio.innreach.domain.exception.EntityNotFoundException;
 import org.folio.innreach.domain.exception.ItemNotRequestableException;
 import org.folio.innreach.domain.service.HoldingsService;
@@ -71,6 +72,7 @@ import org.folio.innreach.mapper.InnReachTransactionPickupLocationMapper;
 import org.folio.innreach.repository.CentralPatronTypeMappingRepository;
 import org.folio.innreach.repository.CentralServerRepository;
 import org.folio.innreach.repository.InnReachTransactionRepository;
+import org.folio.innreach.util.UUIDHelper;
 
 @Log4j2
 @RequiredArgsConstructor
@@ -104,31 +106,27 @@ public class RequestServiceImpl implements RequestService {
   @Async
   @Override
   public void createItemHoldRequest(String trackingId) {
-    var transaction = transactionRepository.fetchOneByTrackingId(trackingId).orElseThrow(() ->
-      new EntityNotFoundException("Transaction not found for trackingId = " + trackingId)
-    );
+    var transaction = fetchTransactionByTrackingId(trackingId);
     var centralServerId = getCentralServerId(transaction.getCentralServerCode());
+    var hold = (TransactionItemHold) transaction.getHold();
+    var patronType = hold.getCentralPatronType();
+    var patronBarcode = getUserBarcode(centralServerId, patronType);
+    var patron = getUserByBarcode(patronBarcode);
+    var centralPatronName = hold.getPatronName();
 
-    try {
-      var hold = (TransactionItemHold) transaction.getHold();
-      var patronType = hold.getCentralPatronType();
-      var patronBarcode = getUserBarcode(centralServerId, patronType);
-      var patron = getUserByBarcode(patronBarcode);
-      var servicePointId = getDefaultServicePointId(patron.getId());
-      var item = itemService.getItemByHrId(hold.getItemId());
-      var requestType = item.getStatus() == AVAILABLE ? PAGE : HOLD;
-      var holding = holdingsService.find(item.getHoldingsRecordId()).orElse(null);
+    createOwningSiteItemRequest(transaction, patron, centralPatronName);
+  }
 
-      createItemRequest(transaction, holding, item, patron, servicePointId, requestType);
-    } catch (ItemNotRequestableException e) {
-      log.warn("Requested item is not available. Sending \"Owning site cancels\" request.");
-      var errorReason = "Item not available";
-      issueOwningSiteCancelsRequest(errorReason, transaction, centralServerId);
-    } catch (Exception e) {
-      log.warn("An error occurred during request processing. Sending \"Owning site cancels\" request.", e);
-      var errorReason = "Request not permitted";
-      issueOwningSiteCancelsRequest(errorReason, transaction, centralServerId);
-    }
+  @Async
+  @Override
+  public void createLocalHoldRequest(String trackingId) {
+    var transaction = fetchTransactionByTrackingId(trackingId);
+    var hold = (TransactionLocalHold) transaction.getHold();
+    var patronId = UUIDHelper.fromStringWithoutHyphens(hold.getPatronId());
+    var patron = getUserById(patronId);
+    var centralPatronName = hold.getPatronName();
+
+    createOwningSiteItemRequest(transaction, patron, centralPatronName);
   }
 
   @Override
@@ -189,7 +187,10 @@ public class RequestServiceImpl implements RequestService {
     log.info("Canceling item request for transaction {}", transaction);
 
     var requestId = transaction.getHold().getFolioRequestId();
-    Assert.isTrue(requestId != null, "requestId is not set for transaction with trackingId: " + transaction.getTrackingId());
+    if (requestId == null) {
+      log.warn("FOLIO requestId is not set for transaction with trackingId: {}", transaction.getTrackingId());
+      return;
+    }
 
     circulationClient.findRequest(requestId)
       .ifPresentOrElse(r -> cancelRequest(r, reason),
@@ -220,6 +221,31 @@ public class RequestServiceImpl implements RequestService {
       .itemBarcode(hold.getFolioItemBarcode());
 
     return circulationClient.checkOutByBarcode(checkOut);
+  }
+
+  private void createOwningSiteItemRequest(InnReachTransaction transaction, User patron, String centralPatronName) {
+    try {
+      var hold = transaction.getHold();
+      var servicePointId = getDefaultServicePointId(patron.getId());
+      var item = itemService.getItemByHrId(hold.getItemId());
+      var requestType = item.getStatus() == AVAILABLE ? PAGE : HOLD;
+      var holding = holdingsService.find(item.getHoldingsRecordId()).orElse(null);
+
+      createItemRequest(transaction, holding, item, patron, servicePointId, requestType);
+
+    } catch (Exception e) {
+      log.warn("An error occurred during request processing", e);
+
+      cancelTransaction(transaction);
+
+      var errorReason = e instanceof ItemNotRequestableException ? "Item not available" : "Request not permitted";
+      issueOwningSiteCancelsRequest(transaction, centralPatronName, errorReason);
+    }
+  }
+
+  private void cancelTransaction(InnReachTransaction transaction) {
+    transaction.setState(CANCEL_REQUEST);
+    transactionRepository.save(transaction);
   }
 
   @Override
@@ -315,6 +341,11 @@ public class RequestServiceImpl implements RequestService {
     );
   }
 
+  private User getUserById(UUID patronId) {
+    return usersClient.getUserById(patronId)
+      .orElseThrow(() -> new IllegalArgumentException("Patron is not found by id: " + patronId));
+  }
+
   private String getUserBarcode(UUID centralServerId, Integer patronType) {
     return centralPatronTypeMappingRepository.findOneByCentralServerIdAndCentralPatronType(centralServerId, patronType)
       .map(CentralPatronTypeMapping::getBarcode)
@@ -323,24 +354,31 @@ public class RequestServiceImpl implements RequestService {
           " and patron type = " + patronType));
   }
 
+  private InnReachTransaction fetchTransactionByTrackingId(String trackingId) {
+    return transactionRepository.fetchOneByTrackingId(trackingId).orElseThrow(() ->
+      new EntityNotFoundException("INN-Reach transaction not found for trackingId = " + trackingId)
+    );
+  }
+
   private OffsetDateTime getRequestExpirationDate(TransactionHold hold) {
     return hold.getNeedBefore() == null ? null :
       OffsetDateTime.ofInstant(Instant.ofEpochSecond(hold.getNeedBefore()), ZoneOffset.UTC);
   }
 
-  private URI createOwningSiteCancelsRequestUri(String trackingId, String centralServerCode) {
-    return URI.create(OWNING_SITE_CANCELS_REQUEST_BASE_URI + trackingId + "/" + centralServerCode);
-  }
+  private void issueOwningSiteCancelsRequest(InnReachTransaction transaction, String patronName, String reason) {
+    log.info("Issuing owning site cancel request for transaction {}. Reason: {}", transaction.getTrackingId(), reason);
+    var trackingId = transaction.getTrackingId();
+    var centralCode = transaction.getCentralServerCode();
 
-  private void issueOwningSiteCancelsRequest(String reason, InnReachTransaction transaction, UUID centralServerId) {
+    var requestPath = OWNING_SITE_CANCELS_REQUEST_BASE_URI + trackingId + "/" + centralCode;
+
     var request = OwningSiteCancelsRequestDTO.builder()
       .reason(reason)
       .reasonCode(7)
       .localBibId(transaction.getHold().getItemId())
-      .patronName(((TransactionItemHold) transaction.getHold()).getPatronName())
+      .patronName(patronName)
       .build();
-    innReachService.postInnReachApi(
-      centralServerId, createOwningSiteCancelsRequestUri(transaction.getTrackingId(), transaction.getCentralServerCode()),
-      request);
+
+    innReachService.postInnReachApi(centralCode, requestPath, request);
   }
 }
