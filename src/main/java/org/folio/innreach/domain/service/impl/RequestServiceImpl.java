@@ -146,6 +146,8 @@ public class RequestServiceImpl implements RequestService {
     //creating and sending new request
     var newRequest = RequestDTO.builder()
       .requestType(requestType.getName())
+      .requestLevel("Item")
+      .instanceId(holding.getInstanceId())
       .itemId(item.getId())
       .requesterId(patron.getId())
       .pickupServicePointId(servicePointId)
@@ -222,9 +224,14 @@ public class RequestServiceImpl implements RequestService {
   }
 
   private void cancelRequest(RequestDTO request, String reason) {
+    var item = itemService.getItemByHrId(request.getItemId().toString());
+    var holding = holdingsService.find(item.getHoldingsRecordId()).orElse(null);
+
     request.setStatus(RequestStatus.CLOSED_CANCELLED);
     request.setCancellationReasonId(INN_REACH_CANCELLATION_REASON_ID);
     request.setCancellationAdditionalInformation(reason);
+    request.setInstanceId(holding.getInstanceId());
+    request.setRequestLevel("Item");
 
     circulationClient.updateRequest(request.getId(), request);
 
