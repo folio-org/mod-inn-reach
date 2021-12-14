@@ -59,7 +59,6 @@ class CirculationApiTest extends BaseApiControllerTest {
   public static final String QUERY_CONTRIBUTOR_TYPE_BY_NAME_URL_TEMPLATE = "/contributor-name-types?query=(name==%s)";
   public static final String QUERY_INSTANCE_TYPE_BY_NAME_URL_TEMPLATE = "/instance-types?query=(name==%s)";
   public static final String QUERY_SERVICE_POINTS_BY_CODE_ULR_TEMPLATE = "/service-points?query=code==%s";
-  public static final String QUERY_SERVICE_POINTS_USERS_BY_USER_ID_ULR_TEMPLATE = "/service-points-users?query=userId==%s";
   public static final String USER_BY_ID_URL_TEMPLATE = "/users/%s";
 
   private static final String INSTANCE_TYPE_NAME_URLENCODED = "INN-Reach%20temporary%20record";
@@ -248,11 +247,13 @@ class CirculationApiTest extends BaseApiControllerTest {
     var transactionHoldDTO = createTransactionHoldDTO();
     transactionHoldDTO.setItemId(ITEM_HRID);
     transactionHoldDTO.setItemAgencyCode(PRE_POPULATED_CENTRAL_AGENCY_CODE);
+    transactionHoldDTO.setPatronAgencyCode(PRE_POPULATED_CENTRAL_AGENCY_CODE);
     transactionHoldDTO.setCentralItemType(PRE_POPULATED_CENTRAL_ITEM_TYPE);
     transactionHoldDTO.setPatronId(toStringWithoutHyphens(FOLIO_PATRON_ID));
+    var pickupLocation = pickupLocationMapper.fromString(transactionHoldDTO.getPickupLocation());
 
     stubGet(format(USER_BY_ID_URL_TEMPLATE, FOLIO_PATRON_ID), "users/user-response.json");
-    stubGet(format(QUERY_SERVICE_POINTS_USERS_BY_USER_ID_ULR_TEMPLATE, FOLIO_PATRON_ID), "inventory-storage/query-service-points-response.json");
+    stubGet(format(QUERY_SERVICE_POINTS_BY_CODE_ULR_TEMPLATE, pickupLocation.getPickupLocCode()), "inventory-storage/query-service-points-response.json");
     stubPost(HOLDINGS_URL, "inventory-storage/holding-response.json");
     stubPost(ITEMS_URL, "inventory/item-response.json");
     stubPost(REQUESTS_URL, "circulation/item-request-response.json");

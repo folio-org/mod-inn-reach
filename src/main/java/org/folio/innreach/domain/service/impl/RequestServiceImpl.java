@@ -60,6 +60,7 @@ import org.folio.innreach.domain.entity.TransactionLocalHold;
 import org.folio.innreach.domain.exception.EntityNotFoundException;
 import org.folio.innreach.domain.exception.ItemNotRequestableException;
 import org.folio.innreach.domain.service.HoldingsService;
+import org.folio.innreach.domain.service.InventoryService;
 import org.folio.innreach.domain.service.ItemService;
 import org.folio.innreach.domain.service.RequestService;
 import org.folio.innreach.dto.CheckInRequestDTO;
@@ -97,6 +98,7 @@ public class RequestServiceImpl implements RequestService {
   private final InnReachTransactionPickupLocationMapper transactionPickupLocationMapper;
   private final CirculationClient circulationClient;
   private final ServicePointsUsersClient servicePointsUsersClient;
+  private final InventoryService inventoryService;
   private final UsersClient usersClient;
 
   private final InnReachExternalService innReachService;
@@ -107,14 +109,19 @@ public class RequestServiceImpl implements RequestService {
   @Override
   public void createItemHoldRequest(String trackingId) {
     var transaction = fetchTransactionByTrackingId(trackingId);
-    var centralServerId = getCentralServerId(transaction.getCentralServerCode());
     var hold = (TransactionItemHold) transaction.getHold();
-    var patronType = hold.getCentralPatronType();
-    var patronBarcode = getUserBarcode(centralServerId, patronType);
-    var patron = getUserByBarcode(patronBarcode);
     var centralPatronName = hold.getPatronName();
+    try {
+      var centralServerId = getCentralServerId(transaction.getCentralServerCode());
+      var patronType = hold.getCentralPatronType();
+      var patronBarcode = getUserBarcode(centralServerId, patronType);
+      var patron = getUserByBarcode(patronBarcode);
+      var servicePointId = getDefaultServicePointId(patron.getId());
 
-    createOwningSiteItemRequest(transaction, patron, centralPatronName);
+      createOwningSiteItemRequest(transaction, patron, servicePointId);
+    } catch (Exception e) {
+      handleOwningSiteRequestException(transaction, centralPatronName, e);
+    }
   }
 
   @Async
@@ -122,11 +129,17 @@ public class RequestServiceImpl implements RequestService {
   public void createLocalHoldRequest(String trackingId) {
     var transaction = fetchTransactionByTrackingId(trackingId);
     var hold = (TransactionLocalHold) transaction.getHold();
-    var patronId = UUIDHelper.fromStringWithoutHyphens(hold.getPatronId());
-    var patron = getUserById(patronId);
     var centralPatronName = hold.getPatronName();
+    try {
+      var patronId = UUIDHelper.fromStringWithoutHyphens(hold.getPatronId());
+      var patron = getUserById(patronId);
+      var pickupLocationCode = hold.getPickupLocation().getPickupLocCode();
+      var servicePointId = getServicePointIdByCode(pickupLocationCode);
 
-    createOwningSiteItemRequest(transaction, patron, centralPatronName);
+      createOwningSiteItemRequest(transaction, patron, servicePointId);
+    } catch (Exception e) {
+      handleOwningSiteRequestException(transaction, centralPatronName, e);
+    }
   }
 
   @Override
@@ -223,24 +236,22 @@ public class RequestServiceImpl implements RequestService {
     return circulationClient.checkOutByBarcode(checkOut);
   }
 
-  private void createOwningSiteItemRequest(InnReachTransaction transaction, User patron, String centralPatronName) {
-    try {
-      var hold = transaction.getHold();
-      var servicePointId = getDefaultServicePointId(patron.getId());
-      var item = itemService.getItemByHrId(hold.getItemId());
-      var requestType = item.getStatus() == AVAILABLE ? PAGE : HOLD;
-      var holding = holdingsService.find(item.getHoldingsRecordId()).orElse(null);
+  private void createOwningSiteItemRequest(InnReachTransaction transaction, User patron, UUID servicePointId) {
+    var hold = transaction.getHold();
+    var item = itemService.getItemByHrId(hold.getItemId());
+    var requestType = item.getStatus() == AVAILABLE ? PAGE : HOLD;
+    var holding = holdingsService.find(item.getHoldingsRecordId()).orElse(null);
 
-      createItemRequest(transaction, holding, item, patron, servicePointId, requestType);
+    createItemRequest(transaction, holding, item, patron, servicePointId, requestType);
+  }
 
-    } catch (Exception e) {
-      log.warn("An error occurred during request processing", e);
+  private void handleOwningSiteRequestException(InnReachTransaction transaction, String centralPatronName, Exception e) {
+    log.warn("An error occurred during request processing", e);
 
-      cancelTransaction(transaction);
+    cancelTransaction(transaction);
 
-      var errorReason = e instanceof ItemNotRequestableException ? "Item not available" : "Request not permitted";
-      issueOwningSiteCancelsRequest(transaction, centralPatronName, errorReason);
-    }
+    var errorReason = e instanceof ItemNotRequestableException ? "Item not available" : "Request not permitted";
+    issueOwningSiteCancelsRequest(transaction, centralPatronName, errorReason);
   }
 
   private void cancelTransaction(InnReachTransaction transaction) {
@@ -329,6 +340,10 @@ public class RequestServiceImpl implements RequestService {
       .getResult().stream().findFirst().orElseThrow(
         () -> new EntityNotFoundException("Service points not found for user id = " + userId)
       ).getDefaultServicePointId();
+  }
+
+  private UUID getServicePointIdByCode(String locationCode) {
+    return inventoryService.queryServicePointByCode(locationCode).getId();
   }
 
   private String queryByBarcode(String patronBarcode) {
