@@ -1,5 +1,6 @@
 package org.folio.innreach.domain.service.impl;
 
+import static java.lang.String.format;
 import static java.util.Objects.nonNull;
 import static org.apache.commons.lang3.StringUtils.capitalize;
 
@@ -12,12 +13,17 @@ import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionSt
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.ITEM_RECEIVED;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.ITEM_SHIPPED;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.LOCAL_HOLD;
+import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.OWNER_RENEW;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.PATRON_HOLD;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.RECALL;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.RECEIVE_UNANNOUNCED;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.RETURN_UNCIRCULATED;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.TRANSFER;
+import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionType.ITEM;
+import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionType.PATRON;
 
+import java.time.Instant;
+import java.util.Date;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
@@ -107,7 +113,7 @@ public class CirculationServiceImpl implements CirculationService {
         trackingId, centralCode);
 
       InnReachTransaction newTransactionWithPatronHold = createTransaction(trackingId, centralCode,
-        transactionHold, TransactionType.PATRON);
+        transactionHold, PATRON);
       var transaction = transactionRepository.save(newTransactionWithPatronHold);
 
       patronHoldService.createVirtualItems(transaction);
@@ -141,7 +147,7 @@ public class CirculationServiceImpl implements CirculationService {
 
   @Override
   public InnReachResponseDTO trackPatronHoldShippedItem(String trackingId, String centralCode, ItemShippedDTO itemShipped) {
-    var innReachTransaction = getTransaction(trackingId, centralCode);
+    var innReachTransaction = getTransactionOfType(trackingId, centralCode, PATRON);
 
     var itemBarcode = itemShipped.getItemBarcode();
     var folioItemBarcode = itemBarcode;
@@ -179,7 +185,7 @@ public class CirculationServiceImpl implements CirculationService {
   public InnReachResponseDTO cancelPatronHold(String trackingId, String centralCode, CancelRequestDTO cancelRequest) {
     log.info("Cancelling request for transaction: {}", trackingId);
 
-    var transaction = getTransaction(trackingId, centralCode);
+    var transaction = getTransactionOfType(trackingId, centralCode, PATRON);
 
     transaction.setState(CANCEL_REQUEST);
 
@@ -197,7 +203,7 @@ public class CirculationServiceImpl implements CirculationService {
 
   @Override
   public InnReachResponseDTO transferPatronHoldItem(String trackingId, String centralCode, TransferRequestDTO request) {
-    var transaction = getTransaction(trackingId, centralCode);
+    var transaction = getTransactionOfType(trackingId, centralCode, PATRON);
 
     validateEquals(request::getItemId, () -> transaction.getHold().getItemId(), "item id");
     validateEquals(request::getItemAgencyCode, () -> transaction.getHold().getItemAgencyCode(), "item agency code");
@@ -210,7 +216,7 @@ public class CirculationServiceImpl implements CirculationService {
 
   @Override
   public InnReachResponseDTO cancelItemHold(String trackingId, String centralCode, BaseCircRequestDTO cancelItemDTO) {
-    var transaction = getTransaction(trackingId, centralCode);
+    var transaction = getTransactionOfType(trackingId, centralCode, ITEM);
 
     if (transaction.getHold().getFolioLoanId() != null) {
       throw new IllegalArgumentException("Requested item is already checked out.");
@@ -223,7 +229,7 @@ public class CirculationServiceImpl implements CirculationService {
 
   @Override
   public InnReachResponseDTO itemReceived(String trackingId, String centralCode, ItemReceivedDTO itemReceivedDTO) {
-    var transaction = getTransaction(trackingId, centralCode);
+    var transaction = getTransactionOfType(trackingId, centralCode, ITEM);
 
     Assert.isTrue(transaction.getState() == ITEM_SHIPPED, unexpectedTransactionState(transaction));
     transaction.setState(ITEM_RECEIVED);
@@ -234,7 +240,7 @@ public class CirculationServiceImpl implements CirculationService {
   @Override
   public InnReachResponseDTO receiveUnshipped(String trackingId, String centralCode,
                                               BaseCircRequestDTO receiveUnshippedRequestDTO) {
-    var transaction = getTransaction(trackingId, centralCode);
+    var transaction = getTransactionOfType(trackingId, centralCode, ITEM);
 
     if (transaction.getState() == TransactionState.ITEM_SHIPPED) {
       throw new IllegalArgumentException(unexpectedTransactionState(transaction));
@@ -261,7 +267,7 @@ public class CirculationServiceImpl implements CirculationService {
 
   @Override
   public InnReachResponseDTO returnUncirculated(String trackingId, String centralCode, ReturnUncirculatedDTO returnUncirculated) {
-    var transaction = getTransaction(trackingId, centralCode);
+    var transaction = getTransactionOfType(trackingId, centralCode, ITEM);
     var state = transaction.getState();
 
     if (state == ITEM_RECEIVED || state == RECEIVE_UNANNOUNCED) {
@@ -274,7 +280,7 @@ public class CirculationServiceImpl implements CirculationService {
 
   @Override
   public InnReachResponseDTO recall(String trackingId, String centralCode, RecallDTO recallDTO) {
-    var transaction = getTransaction(trackingId, centralCode);
+    var transaction = getTransactionOfType(trackingId, centralCode, PATRON);
     var requestId = transaction.getHold().getFolioRequestId();
     var request = requestService.findRequest(requestId);
     var requestStatus = request.getStatus();
@@ -298,19 +304,34 @@ public class CirculationServiceImpl implements CirculationService {
     return success();
   }
 
-  private InnReachRecallUser getRecallUserForCentralServer(String centralCode) {
-    return centralserverRepository.fetchOneByCentralCode(centralCode)
-      .map(CentralServer::getInnReachRecallUser)
-      .orElseThrow(() -> new EntityNotFoundException("Recall user is not set for central server with code = " + centralCode));
-  }
-
   @Override
   public InnReachResponseDTO renewLoan(String trackingId, String centralCode, LoanRenewedDTO loanRenewed) {
+    var transaction = getTransactionOfType(trackingId, centralCode, PATRON);
+
+    var loanId = transaction.getHold().getFolioLoanId();
+    var loan = requestService.findLoan(loanId);
+    var currentDueDate = loan.getDueDate();
+
+    Instant dueDate = Instant.ofEpochSecond(loanRenewed.getDueDateTime());
+    if (currentDueDate.toInstant().isAfter(dueDate)) {
+      loan.setDueDate(Date.from(dueDate));
+
+      requestService.updateLoan(loan);
+    }
+
+    transaction.setState(OWNER_RENEW);
+
     return success();
   }
 
   private InnReachResponseDTO success() {
     return new InnReachResponseDTO().status("ok").reason("success");
+  }
+
+  private InnReachRecallUser getRecallUserForCentralServer(String centralCode) {
+    return centralserverRepository.fetchOneByCentralCode(centralCode)
+        .map(CentralServer::getInnReachRecallUser)
+        .orElseThrow(() -> new EntityNotFoundException("Recall user is not set for central server with code = " + centralCode));
   }
 
   private void updateTransactionHold(TransactionHold existingTransactionHold, TransactionHoldDTO transactionHold) {
@@ -326,7 +347,7 @@ public class CirculationServiceImpl implements CirculationService {
                                                 TransactionHoldDTO transactionHold, TransactionType type) {
     TransactionHold hold;
     TransactionState state;
-    if (type == TransactionType.PATRON) {
+    if (type == PATRON) {
       hold = transactionHoldMapper.toPatronHold(transactionHold);
       state = PATRON_HOLD;
     } else if (type == TransactionType.LOCAL) {
@@ -381,14 +402,25 @@ public class CirculationServiceImpl implements CirculationService {
     T trxValue = trxField.get();
 
     Assert.isTrue(Objects.equals(reqValue, trxValue),
-      String.format("%s [%s] from the request doesn't match with %s [%s] in the stored transaction",
+      format("%s [%s] from the request doesn't match with %s [%s] in the stored transaction",
         capitalize(fieldName), reqValue, fieldName.toLowerCase(), trxValue));
   }
 
   private InnReachTransaction getTransaction(String trackingId, String centralCode) {
     return transactionRepository.findByTrackingIdAndCentralServerCode(trackingId, centralCode)
-      .orElseThrow(() -> new EntityNotFoundException(String.format(
+      .orElseThrow(() -> new EntityNotFoundException(format(
         "InnReach transaction with tracking id [%s] and central code [%s] not found", trackingId, centralCode)));
+  }
+
+  private InnReachTransaction getTransactionOfType(String trackingId, String centralCode, TransactionType type) {
+    InnReachTransaction transaction = getTransaction(trackingId, centralCode);
+
+    if (transaction.getType() != type) {
+      throw new IllegalArgumentException(format("InnReach transaction with tracking id [%s] and " +
+          "central code [%s] is not of [%s] type", trackingId, centralCode, type));
+    }
+
+    return transaction;
   }
 
   private String unexpectedTransactionState(InnReachTransaction transaction) {

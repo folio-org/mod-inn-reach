@@ -132,7 +132,8 @@ public class InnReachTransaction extends Auditable implements Identifiable<UUID>
     CANCEL_REQUEST,
     FINAL_CHECKIN,
     RECALL,
-    TRANSFER
+    TRANSFER,
+    OWNER_RENEW
   }
 
   public enum TransactionType {

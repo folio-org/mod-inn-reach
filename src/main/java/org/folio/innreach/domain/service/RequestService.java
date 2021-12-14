@@ -10,8 +10,8 @@ import org.folio.innreach.domain.dto.folio.circulation.RequestDTO.RequestType;
 import org.folio.innreach.domain.dto.folio.inventory.InventoryItemDTO;
 import org.folio.innreach.domain.entity.InnReachTransaction;
 import org.folio.innreach.dto.CheckInResponseDTO;
-import org.folio.innreach.dto.CheckOutResponseDTO;
 import org.folio.innreach.dto.Holding;
+import org.folio.innreach.dto.LoanDTO;
 
 public interface RequestService {
   @Async
@@ -29,9 +29,14 @@ public interface RequestService {
 
   CheckInResponseDTO checkInItem(InnReachTransaction transaction, UUID servicePointId);
 
-  CheckOutResponseDTO checkOutItem(InnReachTransaction transaction, UUID servicePointId);
+  LoanDTO checkOutItem(InnReachTransaction transaction, UUID servicePointId);
 
   void createRecallRequest(UUID userId, UUID itemId);
 
   RequestDTO findRequest(UUID requestId);
+
+  LoanDTO findLoan(UUID loanId);
+
+  LoanDTO updateLoan(LoanDTO loan);
+
 }

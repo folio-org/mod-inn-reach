@@ -632,8 +632,8 @@ components:
       $ref: schemas/d2ir/baseCircRequestDTO.json
     checkOutRequestDTO:
       $ref: schemas/circulation/checkOutRequestDTO.json
-    checkOutResponseDTO:
-      $ref: schemas/circulation/checkOutResponseDTO.json
+    loanDTO:
+      $ref: schemas/circulation/loanDTO.json
     patronHoldCheckInResponseDTO:
       $ref: schemas/patronHoldCheckInResponseDTO.json
     itemHoldCheckOutResponseDTO:

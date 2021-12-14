@@ -45,16 +45,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.boot.test.web.client.TestRestTemplate;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlMergeMode;
 
 import org.folio.innreach.client.CirculationClient;
-import org.folio.innreach.client.HoldingsStorageClient;
 import org.folio.innreach.client.InventoryClient;
 import org.folio.innreach.client.ServicePointsUsersClient;
 import org.folio.innreach.client.UsersClient;
@@ -73,11 +68,11 @@ import org.folio.innreach.dto.CheckInRequestDTO;
 import org.folio.innreach.dto.CheckInResponseDTO;
 import org.folio.innreach.dto.CheckInResponseDTOItem;
 import org.folio.innreach.dto.CheckOutRequestDTO;
-import org.folio.innreach.dto.CheckOutResponseDTO;
 import org.folio.innreach.dto.InnReachResponseDTO;
 import org.folio.innreach.dto.InnReachTransactionDTO;
 import org.folio.innreach.dto.InnReachTransactionsDTO;
 import org.folio.innreach.dto.ItemHoldCheckOutResponseDTO;
+import org.folio.innreach.dto.LoanDTO;
 import org.folio.innreach.dto.LoanItem;
 import org.folio.innreach.dto.PatronHoldCheckInResponseDTO;
 import org.folio.innreach.dto.TransactionHoldDTO;
@@ -131,8 +126,6 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
 
   @MockBean
   private InventoryClient inventoryClient;
-  @MockBean
-  private HoldingsStorageClient holdingsStorageClient;
   @MockBean
   private CirculationClient circulationClient;
   @MockBean
@@ -972,7 +965,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
   })
   void testCheckOutItemHoldItem() {
-    var checkOutResponse = new CheckOutResponseDTO()
+    var checkOutResponse = new LoanDTO()
       .id(FOLIO_CHECKOUT_ID)
       .item(new LoanItem().barcode(PRE_POPULATED_ITEM_HOLD_ITEM_BARCODE));
 
