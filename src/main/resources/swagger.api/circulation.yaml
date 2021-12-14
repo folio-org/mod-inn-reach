@@ -177,6 +177,27 @@ paths:
       parameters:
         - $ref: 'circulation.yaml#/components/parameters/itemBarcode'
         - $ref: 'circulation.yaml#/components/parameters/servicePointId'
+  /transactions/search:
+    get:
+      operationId: searchTransaction
+      description: search for transactions
+      tags:
+        - inn-reach-transaction
+      responses:
+        '200':
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/innReachTransactionsDTO"
+        '404':
+          $ref: "api-common.yaml#/components/responses/trait_response_404"
+        '500':
+          $ref: "api-common.yaml#/components/responses/trait_response_500"
+      parameters:
+        - $ref: "api-common.yaml#/components/parameters/trait_pageable_offset"
+        - $ref: "api-common.yaml#/components/parameters/trait_pageable_limit"
+        - $ref: "#/components/parameters/transaction_search_request_parameters"
   /d2ir/circ/verifypatron:
     post:
       operationId: verifyPatron
@@ -601,6 +622,8 @@ components:
       $ref: schemas/innReachTransactionsDTO.json
     innReachTransactionFilterParametersDTO:
       $ref: schemas/innReachTransactionFilterParametersDTO.json
+    innReachTransactionSearchRequestDTO:
+      $ref: schemas/innReachTransactionSearchRequestDTO.json
     checkInRequestDTO:
       $ref: schemas/circulation/checkInRequestDTO.json
     checkInResponseDTO:
@@ -682,3 +705,9 @@ components:
       description: Query parameters to filter transactions.
       schema:
         $ref: "#/components/schemas/innReachTransactionFilterParametersDTO"
+    transaction_search_request_parameters:
+      name: searchRequest
+      in: query
+      description: Search parameters to search for transactions
+      schema:
+        $ref: "#/components/schemas/innReachTransactionSearchRequestDTO"
