@@ -11,6 +11,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -32,6 +33,7 @@ import static org.folio.innreach.fixture.RequestFixture.createRequestDTO;
 import static org.folio.innreach.fixture.TestUtil.deserializeFromJsonFile;
 import static org.folio.innreach.fixture.UserFixture.createUser;
 
+import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -122,9 +124,11 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
 
   private static final AuditableUser PRE_POPULATED_USER = AuditableUser.SYSTEM;
 
+  private static final Duration ASYNC_AWAIT_TIMEOUT = Duration.ofSeconds(15);
+
   @Autowired
   private TestRestTemplate testRestTemplate;
-  @Autowired
+  @SpyBean
   private InnReachTransactionRepository repository;
   @Autowired
   private InnReachTransactionPickupLocationMapper transactionPickupLocationMapper;
@@ -589,7 +593,9 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     assertTrue(responseEntity.hasBody());
     assertEquals("ok", responseEntity.getBody().getStatus());
 
-    await().until(() -> repository.fetchOneByTrackingId(TRACKING_ID).get().getHold().getFolioItemId() != null);
+    await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() ->
+      verify(repository).save(
+        argThat((InnReachTransaction t) -> t.getHold().getFolioRequestId() != null)));
 
     verify(requestService).createItemHoldRequest(TRACKING_ID);
     verify(inventoryClient, times(2)).getItemsByHrId(itemHoldDTO.getItemId());
