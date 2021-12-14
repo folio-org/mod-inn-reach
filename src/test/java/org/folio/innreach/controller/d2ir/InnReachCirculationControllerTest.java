@@ -414,6 +414,7 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
   @Test
   void processLocalHoldCirculationRequest_createNew() {
     var transactionHoldDTO = createTransactionHoldDTO();
+    transactionHoldDTO.setPatronAgencyCode(transactionHoldDTO.getItemAgencyCode());
 
     var responseEntity = testRestTemplate.exchange(
       CIRCULATION_OPERATION_ENDPOINT, HttpMethod.PUT,
@@ -443,6 +444,7 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
   })
   void processLocalHoldCirculationRequest_updateExiting() {
     var transactionHoldDTO = createTransactionHoldDTO();
+    transactionHoldDTO.setPatronAgencyCode(transactionHoldDTO.getItemAgencyCode());
 
     var responseEntity = testRestTemplate.exchange(
       CIRCULATION_OPERATION_ENDPOINT, HttpMethod.PUT,
@@ -465,6 +467,28 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     assertEquals(transactionHoldDTO.getTransactionTime(), innReachTransaction.getHold().getTransactionTime());
     assertEquals(transactionHoldDTO.getPatronId(), innReachTransaction.getHold().getPatronId());
     assertEquals(transactionHoldDTO.getPatronAgencyCode(), innReachTransaction.getHold().getPatronAgencyCode());
+  }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
+  })
+  void processLocalHoldCirculationRequest_invalidAgencyCodes() {
+    var transactionHoldDTO = createTransactionHoldDTO();
+    transactionHoldDTO.setPatronAgencyCode("abcd1");
+    transactionHoldDTO.setItemAgencyCode("abcd2");
+
+    var responseEntity = testRestTemplate.exchange(
+      CIRCULATION_OPERATION_ENDPOINT, HttpMethod.PUT,
+      new HttpEntity<>(transactionHoldDTO), InnReachResponseDTO.class,
+      LOCAL_HOLD_OPERATION, PRE_POPULATED_TRACKING_ID, PRE_POPULATED_CENTRAL_CODE
+    );
+    var responseBody = responseEntity.getBody();
+
+    assertEquals(BAD_REQUEST, responseEntity.getStatusCode());
+    assertNotNull(responseBody);
+    assertEquals("The patron and item agencies should be on the same local server", responseBody.getReason());
   }
 
   private InnReachTransaction fetchPrePopulatedTransaction() {

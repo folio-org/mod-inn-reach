@@ -28,11 +28,13 @@ import java.util.function.Supplier;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+
 import org.folio.innreach.dto.BorrowerRenewDTO;
 import org.folio.innreach.dto.CheckOutResponseDTO;
 import org.folio.innreach.dto.RenewLoanRequestDTO;
 import org.folio.innreach.dto.ReturnUncirculatedDTO;
 import org.folio.innreach.external.service.InnReachExternalService;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -126,6 +128,9 @@ public class CirculationServiceImpl implements CirculationService {
 
   @Override
   public InnReachResponseDTO initiateLocalHold(String trackingId, String centralCode, LocalHoldDTO localHold) {
+    Assert.isTrue(StringUtils.equals(localHold.getItemAgencyCode(), localHold.getPatronAgencyCode()),
+      "The patron and item agencies should be on the same local server");
+
     var innReachTransaction = transactionRepository.findByTrackingIdAndCentralServerCode(trackingId, centralCode);
     var transactionHold = transactionHoldMapper.mapRequest(localHold);
 
