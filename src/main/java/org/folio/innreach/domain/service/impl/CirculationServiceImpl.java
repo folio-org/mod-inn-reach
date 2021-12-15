@@ -103,6 +103,7 @@ public class CirculationServiceImpl implements CirculationService {
       var existingTransaction = optTransaction.get();
 
       updateTransactionHold(existingTransaction.getHold(), transactionHold);
+      existingTransaction = transactionRepository.save(existingTransaction);
 
       patronHoldService.updateVirtualItems(existingTransaction);
     } else {
@@ -110,7 +111,6 @@ public class CirculationServiceImpl implements CirculationService {
         trackingId, centralCode);
 
       var newTransaction = createTransaction(trackingId, centralCode, transactionHold, TransactionType.PATRON);
-
       newTransaction = transactionRepository.save(newTransaction);
 
       patronHoldService.createVirtualItems(newTransaction);
