@@ -668,4 +668,22 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
       PRE_POPULATED_CENTRAL_CODE).get();
     assertNotEquals(RECALL, transactionUpdated.getState());
   }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
+  })
+  void shouldNotProcessCircRequest_whenRequiredHeadersAreNotPresent() {
+    var transactionHoldDTO = createTransactionHoldDTO();
+
+    var responseEntity = testRestTemplate.exchange(
+      ITEM_RECEIVED_PATH, HttpMethod.PUT, new HttpEntity<>(transactionHoldDTO), InnReachResponseDTO.class,
+      PRE_POPULATED_TRACKING_ID, PRE_POPULATED_CENTRAL_CODE);
+
+    assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
+    var responseEntityBody = responseEntity.getBody();
+    assertNotNull(responseEntityBody);
+    assertEquals("Required request header 'X-To-Code' for method parameter type String is not present", responseEntityBody.getReason());
+  }
 }

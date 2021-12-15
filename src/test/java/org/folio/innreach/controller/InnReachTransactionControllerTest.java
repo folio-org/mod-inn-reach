@@ -10,7 +10,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.never;
@@ -678,7 +678,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
 
     assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
     assertEquals("failed", responseEntity.getBody().getStatus());
-    assertEquals("Argument validation failed.", responseEntity.getBody().getReason());
+    assertEquals("Argument validation failed", responseEntity.getBody().getReason());
     assertThat(responseEntity.getBody().getErrors().get(0).getReason(), containsString("must match \"[a-z,0-9]{1,32}\""));
   }
 
@@ -702,8 +702,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
     assertEquals("failed", responseEntity.getBody().getStatus());
 
-    assertEquals("An error occurred during creation of INN-Reach Transaction.", responseEntity.getBody().getReason());
-    assertEquals("INN-Reach Transaction with tracking ID = tracking1 already exists.", responseEntity.getBody().getErrors().get(0).getReason());
+    assertTrue(responseEntity.getBody().getReason().contains("INN-Reach Transaction with tracking ID = tracking1 already exists."));
   }
 
   @Test
@@ -720,8 +719,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
 
     assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
     assertEquals("failed", responseEntity.getBody().getStatus());
-    assertEquals("An error occurred during creation of INN-Reach Transaction.", responseEntity.getBody().getReason());
-    assertEquals("Central server with code: d2ir not found", responseEntity.getBody().getErrors().get(0).getReason());
+    assertTrue(responseEntity.getBody().getReason().contains("Central server with code: d2ir not found"));
   }
 
   @Test
@@ -742,8 +740,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
 
     assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
     assertEquals("failed", responseEntity.getBody().getStatus());
-    assertEquals("An error occurred during creation of INN-Reach Transaction.", responseEntity.getBody().getReason());
-    assertEquals("Pickup location must consist of 3 or 4 strings delimited by a colon.", responseEntity.getBody().getErrors().get(0).getReason());
+    assertTrue(responseEntity.getBody().getReason().contains("Pickup location must consist of 3 or 4 strings delimited by a colon."));
   }
 
   @Test
@@ -763,10 +760,9 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
 
     assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
     assertEquals("failed", responseEntity.getBody().getStatus());
-    assertEquals("An error occurred during creation of INN-Reach Transaction.", responseEntity.getBody().getReason());
-    assertEquals("Material type mapping for central server id = "
-        + PRE_POPULATED_CENTRAL_SERVER_ID + " and material type id = " + PRE_POPULATED_MATERIAL_TYPE_ID + " not found",
-      responseEntity.getBody().getErrors().get(0).getReason());
+    assertTrue(responseEntity.getBody().getReason()
+      .contains("Material type mapping for central server id = " + PRE_POPULATED_CENTRAL_SERVER_ID +
+        " and material type id = " + PRE_POPULATED_MATERIAL_TYPE_ID + " not found"));
   }
 
   @Test
@@ -793,7 +789,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
 
     assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
 
-    await().untilAsserted(() -> verify(innReachClient).postInnReachApi(any(), anyString(), anyString(), anyString(), anyInt(), any()));
+    await().untilAsserted(() -> verify(innReachClient).postInnReachApi(any(), anyString(), anyString(), anyString(), anyLong(), any()));
 
     verify(inventoryClient).getItemsByHrId(inventoryItemDTO.getHrid());
     verify(circulationClient, never()).queryRequestsByItemId(inventoryItemDTO.getId());
@@ -831,7 +827,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
 
     assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
 
-    await().untilAsserted(() -> verify(innReachClient).postInnReachApi(any(), anyString(), anyString(), anyString(), anyInt(), any()));
+    await().untilAsserted(() -> verify(innReachClient).postInnReachApi(any(), anyString(), anyString(), anyString(), anyLong(), any()));
 
     verify(inventoryClient, times(2)).getItemsByHrId(inventoryItemDTO.getHrid());
     verify(circulationClient).queryRequestsByItemId(inventoryItemDTO.getId());
@@ -1026,8 +1022,8 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   })
   void returnTransactionByBarcodeAndState_when_transactionsFound() {
     var responseEntity = testRestTemplate.getForEntity(
-        "/inn-reach/transactions/search?shippedItemBarcode={shippedItemBarcode}&transactionStates={transactionStates}",
-        InnReachTransactionsDTO.class, "ABC-abc-1234", new String[] {"PATRON_HOLD", "ITEM_HOLD"});
+      "/inn-reach/transactions/search?shippedItemBarcode={shippedItemBarcode}&transactionStates={transactionStates}",
+      InnReachTransactionsDTO.class, "ABC-abc-1234", new String[]{"PATRON_HOLD", "ITEM_HOLD"});
 
     assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
 
@@ -1063,8 +1059,8 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   })
   void returnEmptyListByBarcodeAndState_when_transactionsNotFound() {
     var responseEntity = testRestTemplate.getForEntity(
-        "/inn-reach/transactions/search?shippedItemBarcode={shippedItemBarcode}&transactionStates={transactionStates}",
-        InnReachTransactionsDTO.class, "ABC-abc-4321", new String[] {"PATRON_HOLD", "ITEM_HOLD"});
+      "/inn-reach/transactions/search?shippedItemBarcode={shippedItemBarcode}&transactionStates={transactionStates}",
+      InnReachTransactionsDTO.class, "ABC-abc-4321", new String[]{"PATRON_HOLD", "ITEM_HOLD"});
 
     assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
 

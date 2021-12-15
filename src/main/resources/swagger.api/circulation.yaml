@@ -70,15 +70,12 @@ paths:
       parameters:
         - $ref: '#/components/parameters/bibId'
         - $ref: '#/components/parameters/centralCode'
-        - $ref: '#/components/parameters/localCodeHeader'
-        - $ref: '#/components/parameters/centralCodeHeader'
-        - $ref: '#/components/parameters/requestCreationTime'
   /d2ir/circ/itemhold/{trackingId}/{centralCode}:
     post:
       operationId: createInnReachTransactionItemHold
       description: Originates an item hold at the owning site
       tags:
-        - inn-reach-transaction
+        - inn-reach-circulation
       requestBody:
         content:
           application/json:
@@ -102,9 +99,6 @@ paths:
       parameters:
         - $ref: '#/components/parameters/trackingId'
         - $ref: '#/components/parameters/centralCode'
-        - $ref: '#/components/parameters/localCodeHeader'
-        - $ref: '#/components/parameters/centralCodeHeader'
-        - $ref: '#/components/parameters/requestCreationTime'
   /transactions/{id}:
     get:
       operationId: getInnReachTransaction
@@ -208,7 +202,6 @@ paths:
       parameters:
         - $ref: '#/components/parameters/localCodeHeader'
         - $ref: '#/components/parameters/centralCodeHeader'
-        - $ref: '#/components/parameters/requestCreationTime'
   /d2ir/circ/patronhold/{trackingId}/{centralCode}:
     post:
       operationId: patronHold
@@ -238,9 +231,6 @@ paths:
       parameters:
         - $ref: '#/components/parameters/trackingId'
         - $ref: '#/components/parameters/centralCode'
-        - $ref: '#/components/parameters/localCodeHeader'
-        - $ref: '#/components/parameters/centralCodeHeader'
-        - $ref: '#/components/parameters/requestCreationTime'
   /d2ir/circ/itemshipped/{trackingId}/{centralCode}:
     put:
       operationId: itemShipped
@@ -270,9 +260,6 @@ paths:
       parameters:
         - $ref: '#/components/parameters/trackingId'
         - $ref: '#/components/parameters/centralCode'
-        - $ref: '#/components/parameters/localCodeHeader'
-        - $ref: '#/components/parameters/centralCodeHeader'
-        - $ref: '#/components/parameters/requestCreationTime'
   /d2ir/circ/cancelrequest/{trackingId}/{centralCode}:
     put:
       operationId: cancelPatronHold
@@ -302,9 +289,6 @@ paths:
       parameters:
         - $ref: '#/components/parameters/trackingId'
         - $ref: '#/components/parameters/centralCode'
-        - $ref: '#/components/parameters/localCodeHeader'
-        - $ref: '#/components/parameters/centralCodeHeader'
-        - $ref: '#/components/parameters/requestCreationTime'
   /d2ir/circ/transferrequest/{trackingId}/{centralCode}:
     put:
       operationId: transferRequest
@@ -334,9 +318,6 @@ paths:
       parameters:
         - $ref: '#/components/parameters/trackingId'
         - $ref: '#/components/parameters/centralCode'
-        - $ref: '#/components/parameters/localCodeHeader'
-        - $ref: '#/components/parameters/centralCodeHeader'
-        - $ref: '#/components/parameters/requestCreationTime'
   /d2ir/circ/cancelitemhold/{trackingId}/{centralCode}:
     put:
       operationId: cancelItemHold
@@ -366,9 +347,6 @@ paths:
       parameters:
         - $ref: '#/components/parameters/trackingId'
         - $ref: '#/components/parameters/centralCode'
-        - $ref: '#/components/parameters/localCodeHeader'
-        - $ref: '#/components/parameters/centralCodeHeader'
-        - $ref: '#/components/parameters/requestCreationTime'
   /d2ir/circ/receiveunshipped/{trackingId}/{centralCode}:
     put:
       operationId: receiveUnshipped
@@ -396,9 +374,6 @@ paths:
       parameters:
         - $ref: '#/components/parameters/trackingId'
         - $ref: '#/components/parameters/centralCode'
-        - $ref: '#/components/parameters/localCodeHeader'
-        - $ref: '#/components/parameters/centralCodeHeader'
-        - $ref: '#/components/parameters/requestCreationTime'
   /d2ir/circ/intransit/{trackingId}/{centralCode}:
     put:
       operationId: itemInTransit
@@ -428,9 +403,6 @@ paths:
       parameters:
         - $ref: '#/components/parameters/trackingId'
         - $ref: '#/components/parameters/centralCode'
-        - $ref: '#/components/parameters/localCodeHeader'
-        - $ref: '#/components/parameters/centralCodeHeader'
-        - $ref: '#/components/parameters/requestCreationTime'
   /d2ir/circ/returnuncirculated/{trackingId}/{centralCode}:
     put:
       operationId: returnUncirculated
@@ -460,9 +432,6 @@ paths:
       parameters:
         - $ref: '#/components/parameters/trackingId'
         - $ref: '#/components/parameters/centralCode'
-        - $ref: '#/components/parameters/localCodeHeader'
-        - $ref: '#/components/parameters/centralCodeHeader'
-        - $ref: '#/components/parameters/requestCreationTime'
   /d2ir/circ/localhold/{trackingId}/{centralCode}:
     put:
       operationId: createLocalHold
@@ -492,9 +461,6 @@ paths:
       parameters:
         - $ref: '#/components/parameters/trackingId'
         - $ref: '#/components/parameters/centralCode'
-        - $ref: '#/components/parameters/localCodeHeader'
-        - $ref: '#/components/parameters/centralCodeHeader'
-        - $ref: '#/components/parameters/requestCreationTime'
   /d2ir/circ/itemreceived/{trackingId}/{centralCode}:
     put:
       operationId: itemReceived
@@ -524,9 +490,6 @@ paths:
       parameters:
         - $ref: '#/components/parameters/trackingId'
         - $ref: '#/components/parameters/centralCode'
-        - $ref: '#/components/parameters/localCodeHeader'
-        - $ref: '#/components/parameters/centralCodeHeader'
-        - $ref: '#/components/parameters/requestCreationTime'
   /d2ir/circ/recall/{trackingId}/{centralCode}:
     put:
       operationId: recall
@@ -556,9 +519,6 @@ paths:
       parameters:
         - $ref: '#/components/parameters/trackingId'
         - $ref: '#/components/parameters/centralCode'
-        - $ref: '#/components/parameters/localCodeHeader'
-        - $ref: '#/components/parameters/centralCodeHeader'
-        - $ref: '#/components/parameters/requestCreationTime'
   /transactions:
     get:
       description: Get a list of transactions for the given central server
@@ -714,12 +674,6 @@ components:
       required: true
       schema:
         $ref: '#/components/schemas/code'
-    requestCreationTime:
-      name: X-Request-Creation-Time
-      in: header
-      required: true
-      schema:
-        type: integer
     transaction_filter_parameters:
       name: parameters
       in: query

@@ -35,7 +35,7 @@ public class InnReachExternalServiceImpl implements InnReachExternalService {
       buildBearerAuthHeader(accessTokenDTO.getAccessToken()),
       connectionDetailsDTO.getLocalCode(),
       connectionDetailsDTO.getCentralCode(),
-      (int) OffsetDateTime.now().toEpochSecond()
+      OffsetDateTime.now().toEpochSecond()
     );
   }
 
@@ -50,7 +50,7 @@ public class InnReachExternalServiceImpl implements InnReachExternalService {
       buildBearerAuthHeader(accessTokenDTO.getAccessToken()),
       connectionDetails.getLocalCode(),
       connectionDetails.getCentralCode(),
-      (int) OffsetDateTime.now().toEpochSecond(),
+      OffsetDateTime.now().toEpochSecond(),
       payload
     );
   }
@@ -66,7 +66,7 @@ public class InnReachExternalServiceImpl implements InnReachExternalService {
       buildBearerAuthHeader(accessTokenDTO.getAccessToken()),
       connectionDetails.getLocalCode(),
       connectionDetails.getCentralCode(),
-      (int) OffsetDateTime.now().toEpochSecond()
+      OffsetDateTime.now().toEpochSecond()
     );
   }
 

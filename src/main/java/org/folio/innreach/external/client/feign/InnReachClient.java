@@ -24,14 +24,14 @@ public interface InnReachClient {
                          @RequestHeader(AUTHORIZATION) String authorizationHeader,
                          @RequestHeader(X_FROM_CODE) String xFromCode,
                          @RequestHeader(X_TO_CODE) String xToCode,
-                         @RequestHeader(X_REQUEST_CREATION_TIME) Integer xRequestCreationType);
+                         @RequestHeader(X_REQUEST_CREATION_TIME) Long xRequestCreationTime);
 
   @PostMapping(consumes = APPLICATION_JSON_VALUE, produces = APPLICATION_JSON_VALUE)
   String postInnReachApi(URI baseUri,
                          @RequestHeader(AUTHORIZATION) String authorizationHeader,
                          @RequestHeader(X_FROM_CODE) String xFromCode,
                          @RequestHeader(X_TO_CODE) String xToCode,
-                         @RequestHeader(X_REQUEST_CREATION_TIME) Integer xRequestCreationType,
+                         @RequestHeader(X_REQUEST_CREATION_TIME) Long xRequestCreationTime,
                          Object dto);
 
   @PostMapping(consumes = APPLICATION_JSON_VALUE, produces = APPLICATION_JSON_VALUE)
@@ -39,5 +39,5 @@ public interface InnReachClient {
                          @RequestHeader(AUTHORIZATION) String authorizationHeader,
                          @RequestHeader(X_FROM_CODE) String xFromCode,
                          @RequestHeader(X_TO_CODE) String xToCode,
-                         @RequestHeader(X_REQUEST_CREATION_TIME) Integer xRequestCreationType);
+                         @RequestHeader(X_REQUEST_CREATION_TIME) Long xRequestCreationTime);
 }

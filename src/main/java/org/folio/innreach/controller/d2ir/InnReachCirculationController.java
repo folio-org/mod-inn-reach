@@ -1,17 +1,18 @@
 package org.folio.innreach.controller.d2ir;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import org.folio.innreach.domain.service.CirculationService;
+import org.folio.innreach.domain.service.RequestService;
 import org.folio.innreach.dto.BaseCircRequestDTO;
 import org.folio.innreach.dto.CancelRequestDTO;
 import org.folio.innreach.dto.InnReachResponseDTO;
@@ -21,6 +22,7 @@ import org.folio.innreach.dto.LocalHoldDTO;
 import org.folio.innreach.dto.PatronHoldDTO;
 import org.folio.innreach.dto.RecallDTO;
 import org.folio.innreach.dto.ReturnUncirculatedDTO;
+import org.folio.innreach.dto.TransactionHoldDTO;
 import org.folio.innreach.dto.TransferRequestDTO;
 import org.folio.innreach.rest.resource.InnReachCirculationApi;
 
@@ -31,15 +33,29 @@ import org.folio.innreach.rest.resource.InnReachCirculationApi;
 public class InnReachCirculationController implements InnReachCirculationApi {
 
   private final CirculationService circulationService;
+  private final RequestService requestService;
+
+  @Override
+  @PostMapping("/itemhold/{trackingId}/{centralCode}")
+  public ResponseEntity<InnReachResponseDTO> createInnReachTransactionItemHold(@PathVariable String trackingId,
+                                                                               @PathVariable String centralCode,
+                                                                               TransactionHoldDTO dto) {
+    var response = circulationService.createInnReachTransactionItemHold(trackingId, centralCode, dto);
+    HttpStatus status;
+    if (response.getStatus().equals("ok")) {
+      status = HttpStatus.OK;
+      requestService.createItemHoldRequest(trackingId);
+    } else {
+      status = HttpStatus.BAD_REQUEST;
+    }
+    return new ResponseEntity<>(response, status);
+  }
 
   @Override
   @PostMapping(value = "/patronhold/{trackingId}/{centralCode}", consumes = MediaType.APPLICATION_JSON_VALUE,
     produces = MediaType.APPLICATION_JSON_VALUE)
   public ResponseEntity<InnReachResponseDTO> patronHold(@PathVariable String trackingId,
                                                         @PathVariable String centralCode,
-                                                        @RequestHeader("X-To-Code") String xToCode,
-                                                        @RequestHeader("X-From-Code") String xFromCode,
-                                                        @RequestHeader("X-Request-Creation-Time") Integer requestTime,
                                                         PatronHoldDTO patronHold) {
     var innReachResponse = circulationService.initiatePatronHold(trackingId, centralCode, patronHold);
 
@@ -51,9 +67,6 @@ public class InnReachCirculationController implements InnReachCirculationApi {
     produces = MediaType.APPLICATION_JSON_VALUE)
   public ResponseEntity<InnReachResponseDTO> itemShipped(@PathVariable String trackingId,
                                                          @PathVariable String centralCode,
-                                                         @RequestHeader("X-To-Code") String xToCode,
-                                                         @RequestHeader("X-From-Code") String xFromCode,
-                                                         @RequestHeader("X-Request-Creation-Time") Integer requestTime,
                                                          ItemShippedDTO itemShipped) {
     var innReachResponse = circulationService.trackPatronHoldShippedItem(trackingId, centralCode, itemShipped);
 
@@ -65,9 +78,6 @@ public class InnReachCirculationController implements InnReachCirculationApi {
     produces = MediaType.APPLICATION_JSON_VALUE)
   public ResponseEntity<InnReachResponseDTO> cancelPatronHold(@PathVariable String trackingId,
                                                               @PathVariable String centralCode,
-                                                              @RequestHeader("X-To-Code") String xToCode,
-                                                              @RequestHeader("X-From-Code") String xFromCode,
-                                                              @RequestHeader("X-Request-Creation-Time") Integer requestTime,
                                                               CancelRequestDTO cancelRequest) {
     var innReachResponse = circulationService.cancelPatronHold(trackingId, centralCode, cancelRequest);
 
@@ -79,9 +89,6 @@ public class InnReachCirculationController implements InnReachCirculationApi {
     produces = MediaType.APPLICATION_JSON_VALUE)
   public ResponseEntity<InnReachResponseDTO> createLocalHold(@PathVariable String trackingId,
                                                              @PathVariable String centralCode,
-                                                             @RequestHeader("X-To-Code") String xToCode,
-                                                             @RequestHeader("X-From-Code") String xFromCode,
-                                                             @RequestHeader("X-Request-Creation-Time") Integer requestTime,
                                                              LocalHoldDTO localHold) {
     var innReachResponse = circulationService.initiateLocalHold(trackingId, centralCode, localHold);
 
@@ -93,9 +100,6 @@ public class InnReachCirculationController implements InnReachCirculationApi {
     produces = MediaType.APPLICATION_JSON_VALUE)
   public ResponseEntity<InnReachResponseDTO> itemInTransit(@PathVariable String trackingId,
                                                            @PathVariable String centralCode,
-                                                           @RequestHeader("X-To-Code") String xToCode,
-                                                           @RequestHeader("X-From-Code") String xFromCode,
-                                                           @RequestHeader("X-Request-Creation-Time") Integer requestTime,
                                                            BaseCircRequestDTO itemInTransitRequest) {
     var innReachResponse = circulationService.itemInTransit(trackingId, centralCode, itemInTransitRequest);
 
@@ -107,9 +111,6 @@ public class InnReachCirculationController implements InnReachCirculationApi {
     produces = MediaType.APPLICATION_JSON_VALUE)
   public ResponseEntity<InnReachResponseDTO> transferRequest(@PathVariable String trackingId,
                                                              @PathVariable String centralCode,
-                                                             @RequestHeader("X-To-Code") String xToCode,
-                                                             @RequestHeader("X-From-Code") String xFromCode,
-                                                             @RequestHeader("X-Request-Creation-Time") Integer requestTime,
                                                              TransferRequestDTO transferRequest) {
     var innReachResponse = circulationService.transferPatronHoldItem(trackingId, centralCode, transferRequest);
 
@@ -121,9 +122,6 @@ public class InnReachCirculationController implements InnReachCirculationApi {
     produces = MediaType.APPLICATION_JSON_VALUE)
   public ResponseEntity<InnReachResponseDTO> cancelItemHold(@PathVariable String trackingId,
                                                             @PathVariable String centralCode,
-                                                            @RequestHeader("X-To-Code") String xToCode,
-                                                            @RequestHeader("X-From-Code") String xFromCode,
-                                                            @RequestHeader("X-Request-Creation-Time") Integer requestTime,
                                                             BaseCircRequestDTO cancelItemDTO) {
     var innReachResponse = circulationService.cancelItemHold(trackingId, centralCode, cancelItemDTO);
 
@@ -135,9 +133,6 @@ public class InnReachCirculationController implements InnReachCirculationApi {
     produces = MediaType.APPLICATION_JSON_VALUE)
   public ResponseEntity<InnReachResponseDTO> receiveUnshipped(@PathVariable String trackingId,
                                                               @PathVariable String centralCode,
-                                                              @RequestHeader("X-To-Code") String xToCode,
-                                                              @RequestHeader("X-From-Code") String xFromCode,
-                                                              @RequestHeader("X-Request-Creation-Time") Integer requestTime,
                                                               BaseCircRequestDTO receiveUnshippedRequestDTO) {
     var innReachResponse = circulationService.receiveUnshipped(trackingId, centralCode, receiveUnshippedRequestDTO);
 
@@ -149,9 +144,6 @@ public class InnReachCirculationController implements InnReachCirculationApi {
     produces = MediaType.APPLICATION_JSON_VALUE)
   public ResponseEntity<InnReachResponseDTO> returnUncirculated(@PathVariable String trackingId,
                                                                 @PathVariable String centralCode,
-                                                                @RequestHeader("X-To-Code") String xToCode,
-                                                                @RequestHeader("X-From-Code") String xFromCode,
-                                                                @RequestHeader("X-Request-Creation-Time") Integer requestTime,
                                                                 ReturnUncirculatedDTO returnUncirculated) {
     var innReachResponse = circulationService.returnUncirculated(trackingId, centralCode, returnUncirculated);
 
@@ -163,25 +155,22 @@ public class InnReachCirculationController implements InnReachCirculationApi {
     produces = MediaType.APPLICATION_JSON_VALUE)
   public ResponseEntity<InnReachResponseDTO> itemReceived(@PathVariable String trackingId,
                                                           @PathVariable String centralCode,
-                                                          @RequestHeader("X-To-Code") String xToCode,
-                                                          @RequestHeader("X-From-Code") String xFromCode,
-                                                          @RequestHeader("X-Request-Creation-Time") Integer requestTime,
                                                           ItemReceivedDTO itemReceivedDTO) {
     var innReachResponse = circulationService.itemReceived(trackingId, centralCode, itemReceivedDTO);
 
     return ResponseEntity.ok(innReachResponse);
   }
+
   @Override
   @PutMapping(value = "/recall/{trackingId}/{centralCode}", consumes = MediaType.APPLICATION_JSON_VALUE,
     produces = MediaType.APPLICATION_JSON_VALUE)
   public ResponseEntity<InnReachResponseDTO> recall(String trackingId,
                                                     String centralCode,
-                                                    @RequestHeader("X-To-Code") String xToCode,
-                                                    @RequestHeader("X-From-Code") String xFromCode,
-                                                    @RequestHeader("X-Request-Creation-Time") Integer requestTime,
                                                     RecallDTO recallDTO) {
     var innReachResponse = circulationService.recall(trackingId, centralCode, recallDTO);
 
     return ResponseEntity.ok(innReachResponse);
   }
+
+
 }

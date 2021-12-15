@@ -43,25 +43,6 @@ public class InnReachTransactionController implements InnReachTransactionApi {
   private final InnReachErrorMapper mapper;
 
   @Override
-  @PostMapping("/inn-reach/d2ir/circ/itemhold/{trackingId}/{centralCode}")
-  public ResponseEntity<InnReachResponseDTO> createInnReachTransactionItemHold(@PathVariable String trackingId,
-                                                                               @PathVariable String centralCode,
-                                                                               @RequestHeader("X-To-Code") String xToCode,
-                                                                               @RequestHeader("X-From-Code") String xFromCode,
-                                                                               @RequestHeader("X-Request-Creation-Time") Integer requestTime,
-                                                                               TransactionHoldDTO dto) {
-    var response = transactionService.createInnReachTransactionItemHold(trackingId, centralCode, dto);
-    HttpStatus status;
-    if (response.getStatus().equals("ok")) {
-      status = HttpStatus.OK;
-      requestService.createItemHoldRequest(trackingId);
-    } else {
-      status = HttpStatus.BAD_REQUEST;
-    }
-    return new ResponseEntity<>(response, status);
-  }
-
-  @Override
   @GetMapping("/inn-reach/transactions/{id}")
   public ResponseEntity<InnReachTransactionDTO> getInnReachTransaction(@PathVariable UUID id) {
     var innReachTransaction = transactionService.getInnReachTransaction(id);
@@ -98,18 +79,5 @@ public class InnReachTransactionController implements InnReachTransactionApi {
   public ResponseEntity<InnReachTransactionsDTO> searchTransaction(Integer offset, Integer limit, InnReachTransactionSearchRequestDTO searchRequest) {
     var transactions = transactionService.searchTransactions(offset, limit, searchRequest);
     return ResponseEntity.ok(transactions);
-  }
-
-  @ExceptionHandler(MethodArgumentNotValidException.class)
-  @ResponseStatus(HttpStatus.BAD_REQUEST)
-  public InnReachResponseDTO handleMethodArgumentNotValidException(MethodArgumentNotValidException e) {
-    log.warn("Argument validation failed.", e);
-    var bindingResult = e.getBindingResult();
-    var innReachErrors = bindingResult.getFieldErrors().stream().map(mapper::toInnReachError).collect(Collectors.toList());
-    var response = new InnReachResponseDTO();
-    response.setStatus("failed");
-    response.setReason("Argument validation failed.");
-    response.setErrors(innReachErrors);
-    return response;
   }
 }
