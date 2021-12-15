@@ -57,21 +57,21 @@ import org.folio.innreach.domain.service.PatronHoldService;
 import org.folio.innreach.domain.service.RequestService;
 import org.folio.innreach.domain.service.UpdateTemplate.UpdateOperation;
 import org.folio.innreach.dto.BaseCircRequestDTO;
+import org.folio.innreach.dto.BorrowerRenewDTO;
 import org.folio.innreach.dto.CancelRequestDTO;
 import org.folio.innreach.dto.Holding;
 import org.folio.innreach.dto.InnReachResponseDTO;
 import org.folio.innreach.dto.ItemReceivedDTO;
 import org.folio.innreach.dto.ItemShippedDTO;
+import org.folio.innreach.dto.LoanDTO;
 import org.folio.innreach.dto.LoanRenewedDTO;
 import org.folio.innreach.dto.LocalHoldDTO;
 import org.folio.innreach.dto.PatronHoldDTO;
 import org.folio.innreach.dto.RecallDTO;
+import org.folio.innreach.dto.RenewLoanRequestDTO;
 import org.folio.innreach.dto.ReturnUncirculatedDTO;
 import org.folio.innreach.dto.TransactionHoldDTO;
 import org.folio.innreach.dto.TransferRequestDTO;
-import org.folio.innreach.dto.BorrowerRenewDTO;
-import org.folio.innreach.dto.CheckOutResponseDTO;
-import org.folio.innreach.dto.RenewLoanRequestDTO;
 import org.folio.innreach.external.service.InnReachExternalService;
 import org.folio.innreach.mapper.InnReachTransactionHoldMapper;
 import org.folio.innreach.mapper.InnReachTransactionPickupLocationMapper;
@@ -327,7 +327,7 @@ public class CirculationServiceImpl implements CirculationService {
   public InnReachResponseDTO borrowerRenew(String trackingId, String centralCode, BorrowerRenewDTO borrowerRenew) {
     var transaction = getTransaction(trackingId, centralCode);
     var hold = transaction.getHold();
-    var loan = requestService.getLoan(hold.getFolioLoanId());
+    var loan = requestService.findLoan(hold.getFolioLoanId());
     var existingDueDate = loan.getDueDate();
     var requestedDueDate = new Date(borrowerRenew.getDueDateTime() * 1000L);
 
@@ -398,7 +398,7 @@ public class CirculationServiceImpl implements CirculationService {
     }
   }
 
-  private CheckOutResponseDTO renewLoan(TransactionHold hold) {
+  private LoanDTO renewLoan(TransactionHold hold) {
     var renewLoanRequestDTO = new RenewLoanRequestDTO();
     renewLoanRequestDTO.setItemId(hold.getFolioItemId());
     renewLoanRequestDTO.setUserId(hold.getFolioPatronId());

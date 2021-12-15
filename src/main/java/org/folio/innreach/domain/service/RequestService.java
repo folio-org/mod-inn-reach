@@ -2,7 +2,6 @@ package org.folio.innreach.domain.service;
 
 import java.util.UUID;
 
-import org.folio.innreach.dto.RenewLoanRequestDTO;
 import org.springframework.scheduling.annotation.Async;
 
 import org.folio.innreach.domain.dto.folio.User;
@@ -13,6 +12,7 @@ import org.folio.innreach.domain.entity.InnReachTransaction;
 import org.folio.innreach.dto.CheckInResponseDTO;
 import org.folio.innreach.dto.Holding;
 import org.folio.innreach.dto.LoanDTO;
+import org.folio.innreach.dto.RenewLoanRequestDTO;
 
 public interface RequestService {
   @Async
@@ -40,6 +40,6 @@ public interface RequestService {
 
   LoanDTO updateLoan(LoanDTO loan);
 
-  CheckOutResponseDTO renewLoan(RenewLoanRequestDTO renewLoan);
+  LoanDTO renewLoan(RenewLoanRequestDTO renewLoan);
 
 }

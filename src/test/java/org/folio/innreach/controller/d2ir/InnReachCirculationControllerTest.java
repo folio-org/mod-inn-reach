@@ -60,9 +60,9 @@ import org.folio.innreach.domain.dto.folio.inventory.InventoryItemDTO;
 import org.folio.innreach.domain.entity.InnReachTransaction;
 import org.folio.innreach.domain.service.ItemService;
 import org.folio.innreach.domain.service.RequestService;
-import org.folio.innreach.dto.InnReachResponseDTO;
 import org.folio.innreach.dto.BorrowerRenewDTO;
-import org.folio.innreach.dto.CheckOutResponseDTO;
+import org.folio.innreach.dto.InnReachResponseDTO;
+import org.folio.innreach.dto.LoanDTO;
 import org.folio.innreach.external.dto.InnReachResponse;
 import org.folio.innreach.external.service.InnReachExternalService;
 import org.folio.innreach.repository.InnReachTransactionRepository;
@@ -681,11 +681,11 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
   })
   void borrowerRenewRequestCalculatedDueDateAfterBorrowerDueDate() {
-    var loan = new CheckOutResponseDTO();
+    var loan = new LoanDTO();
     loan.setDueDate(new Date(Instant.now().toEpochMilli()));
-    when(circulationClient.getLoanById(any())).thenReturn(loan);
+    when(circulationClient.findLoan(any())).thenReturn(Optional.of(loan));
 
-    var renew = new CheckOutResponseDTO();
+    var renew = new LoanDTO();
     renew.setDueDate(new Date(Instant.now().plus(1, ChronoUnit.DAYS).toEpochMilli()));
     when(circulationClient.renewLoan(any())).thenReturn(renew);
 
@@ -719,11 +719,11 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
   void borrowerRenewRequestCalculatedDueDateBeforeBorrowerDueDate() {
     when(innReachExternalService.postInnReachApi(any(), any(), any())).thenReturn("ok");
 
-    var loan = new CheckOutResponseDTO();
+    var loan = new LoanDTO();
     loan.setDueDate(new Date(Instant.now().toEpochMilli()));
-    when(circulationClient.getLoanById(any())).thenReturn(loan);
+    when(circulationClient.findLoan(any())).thenReturn(Optional.of(loan));
 
-    var renew = new CheckOutResponseDTO();
+    var renew = new LoanDTO();
     renew.setDueDate(new Date(Instant.now().minus(1, ChronoUnit.DAYS).toEpochMilli()));
     when(circulationClient.renewLoan(any())).thenReturn(renew);
 
@@ -757,9 +757,9 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
   void borrowerRenewRequestExistingDueDateBeforeRequestedDueDateAndExceptionOccurs() {
     when(innReachExternalService.postInnReachApi(any(), any(), any())).thenReturn("ok");
 
-    var loan = new CheckOutResponseDTO();
+    var loan = new LoanDTO();
     loan.setDueDate(new Date(Instant.now().toEpochMilli()));
-    when(circulationClient.getLoanById(any())).thenReturn(loan);
+    when(circulationClient.findLoan(any())).thenReturn(Optional.of(loan));
 
     when(circulationClient.renewLoan(any())).thenThrow(IllegalArgumentException.class);
 
@@ -791,9 +791,9 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
   })
   void borrowerRenewRequestFailedRenewLoan() {
-    var loan = new CheckOutResponseDTO();
+    var loan = new LoanDTO();
     loan.setDueDate(new Date(Instant.now().toEpochMilli()));
-    when(circulationClient.getLoanById(any())).thenReturn(loan);
+    when(circulationClient.findLoan(any())).thenReturn(Optional.of(loan));
 
     when(circulationClient.renewLoan(any())).thenThrow(IllegalArgumentException.class);
 
@@ -829,11 +829,11 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
   void borrowerRenewRequestFailedRecallRequest() {
     when(innReachExternalService.postInnReachApi(any(), any(), any())).thenThrow(IllegalArgumentException.class);
 
-    var loan = new CheckOutResponseDTO();
+    var loan = new LoanDTO();
     loan.setDueDate(new Date(Instant.now().toEpochMilli()));
-    when(circulationClient.getLoanById(any())).thenReturn(loan);
+    when(circulationClient.findLoan(any())).thenReturn(Optional.of(loan));
 
-    var renew = new CheckOutResponseDTO();
+    var renew = new LoanDTO();
     renew.setDueDate(new Date(Instant.now().minus(1, ChronoUnit.DAYS).toEpochMilli()));
     when(circulationClient.renewLoan(any())).thenReturn(renew);
 

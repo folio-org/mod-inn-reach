@@ -36,7 +36,6 @@ import java.util.UUID;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
-import org.folio.innreach.dto.RenewLoanRequestDTO;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
@@ -69,6 +68,7 @@ import org.folio.innreach.dto.CheckInResponseDTO;
 import org.folio.innreach.dto.CheckOutRequestDTO;
 import org.folio.innreach.dto.Holding;
 import org.folio.innreach.dto.LoanDTO;
+import org.folio.innreach.dto.RenewLoanRequestDTO;
 import org.folio.innreach.external.service.InnReachExternalService;
 import org.folio.innreach.mapper.InnReachTransactionPickupLocationMapper;
 import org.folio.innreach.repository.CentralPatronTypeMappingRepository;
@@ -292,7 +292,8 @@ public class RequestServiceImpl implements RequestService {
     return loan;
   }
 
-  public CheckOutResponseDTO renewLoan(RenewLoanRequestDTO renewLoan) {
+  @Override
+  public LoanDTO renewLoan(RenewLoanRequestDTO renewLoan) {
     return circulationClient.renewLoan(renewLoan);
   }
 
