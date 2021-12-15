@@ -1,3 +1,10 @@
+## v1.0.2 2021-12-15
+
+Resolve Log4Shell security issue ([CVE-2021-44228](https://nvd.nist.gov/vuln/detail/CVE-2021-44228) and [CVE-2021-45046](https://nvd.nist.gov/vuln/detail/CVE-2021-45046))
+
+### Stories
+* [MODINREACH-203](https://issues.folio.org/browse/MODINREACH-203) - Log4j vulnerability verification and correction
+
 ## v1.0.1 2021-10-08
 
 Release primarily addresses Initial Contribution issues found during testing. 

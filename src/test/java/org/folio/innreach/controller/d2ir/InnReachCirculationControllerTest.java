@@ -17,6 +17,7 @@ import static org.springframework.http.HttpStatus.OK;
 import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TEST_METHOD;
 import static org.springframework.test.context.jdbc.SqlMergeMode.MergeMode.MERGE;
 
+import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.BORROWER_RENEW;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.BORROWING_SITE_CANCEL;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.ITEM_HOLD;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.ITEM_IN_TRANSIT;
@@ -31,6 +32,9 @@ import static org.folio.innreach.fixture.CirculationFixture.createRecallDTO;
 import static org.folio.innreach.fixture.CirculationFixture.createTransactionHoldDTO;
 import static org.folio.innreach.fixture.ServicePointUserFixture.createServicePointUserDTO;
 
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
@@ -57,7 +61,10 @@ import org.folio.innreach.domain.entity.InnReachTransaction;
 import org.folio.innreach.domain.service.ItemService;
 import org.folio.innreach.domain.service.RequestService;
 import org.folio.innreach.dto.InnReachResponseDTO;
+import org.folio.innreach.dto.BorrowerRenewDTO;
+import org.folio.innreach.dto.CheckOutResponseDTO;
 import org.folio.innreach.external.dto.InnReachResponse;
+import org.folio.innreach.external.service.InnReachExternalService;
 import org.folio.innreach.repository.InnReachTransactionRepository;
 
 @Sql(
@@ -101,6 +108,8 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
   private RequestService requestService;
   @MockBean
   private ServicePointsUsersClient servicePointsUsersClient;
+  @MockBean
+  private InnReachExternalService innReachExternalService;
 
   @Test
   void processCreatePatronHoldCirculationRequest_and_createNewPatronHold() {
@@ -550,6 +559,7 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
       PRE_POPULATED_CENTRAL_CODE).get();
     assertNotEquals(ITEM_RECEIVED, transactionUpdated.getState());
   }
+
   @Test
   @Sql(scripts = {
     "classpath:db/inn-reach-recall-user/pre-populate-inn-reach-recall-user.sql",
@@ -663,5 +673,191 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     var transactionUpdated = repository.findByTrackingIdAndCentralServerCode(PRE_POPULATED_TRACKING_ID,
       PRE_POPULATED_CENTRAL_CODE).get();
     assertNotEquals(RECALL, transactionUpdated.getState());
+  }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
+  })
+  void borrowerRenewRequestCalculatedDueDateAfterBorrowerDueDate() {
+    var loan = new CheckOutResponseDTO();
+    loan.setDueDate(new Date(Instant.now().toEpochMilli()));
+    when(circulationClient.getLoanById(any())).thenReturn(loan);
+
+    var renew = new CheckOutResponseDTO();
+    renew.setDueDate(new Date(Instant.now().plus(1, ChronoUnit.DAYS).toEpochMilli()));
+    when(circulationClient.renewLoan(any())).thenReturn(renew);
+
+    var dueDateTime = (int) Instant.now().minus(1, ChronoUnit.DAYS).getEpochSecond();
+    var borrowerItem = new BorrowerRenewDTO();
+    borrowerItem.setDueDateTime(dueDateTime);
+
+    var transactionHoldDTO = createTransactionHoldDTO();
+    borrowerItem.setTransactionTime(transactionHoldDTO.getTransactionTime());
+    borrowerItem.setPatronId(transactionHoldDTO.getPatronId());
+    borrowerItem.setPatronAgencyCode(transactionHoldDTO.getPatronAgencyCode());
+    borrowerItem.setItemAgencyCode(transactionHoldDTO.getItemAgencyCode());
+    borrowerItem.setItemId(transactionHoldDTO.getItemId());
+
+    var responseEntity = testRestTemplate.exchange(
+      "/inn-reach/d2ir/circ/borrowerrenew/{trackingId}/{centralCode}", HttpMethod.PUT,
+      new HttpEntity<>(borrowerItem), BorrowerRenewDTO.class,
+      PRE_POPULATED_TRACKING_ID, PRE_POPULATED_CENTRAL_CODE);
+
+    var transactionState = fetchPrePopulatedTransaction().getState();
+
+    assertEquals(OK, responseEntity.getStatusCode());
+    assertEquals(BORROWER_RENEW, transactionState);
+  }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
+  })
+  void borrowerRenewRequestCalculatedDueDateBeforeBorrowerDueDate() {
+    when(innReachExternalService.postInnReachApi(any(), any(), any())).thenReturn("ok");
+
+    var loan = new CheckOutResponseDTO();
+    loan.setDueDate(new Date(Instant.now().toEpochMilli()));
+    when(circulationClient.getLoanById(any())).thenReturn(loan);
+
+    var renew = new CheckOutResponseDTO();
+    renew.setDueDate(new Date(Instant.now().minus(1, ChronoUnit.DAYS).toEpochMilli()));
+    when(circulationClient.renewLoan(any())).thenReturn(renew);
+
+    var dueDateTime = (int) Instant.now().plus(1, ChronoUnit.DAYS).getEpochSecond();
+    var borrowerItem = new BorrowerRenewDTO();
+    borrowerItem.setDueDateTime(dueDateTime);
+
+    var transactionHoldDTO = createTransactionHoldDTO();
+    borrowerItem.setTransactionTime(transactionHoldDTO.getTransactionTime());
+    borrowerItem.setPatronId(transactionHoldDTO.getPatronId());
+    borrowerItem.setPatronAgencyCode(transactionHoldDTO.getPatronAgencyCode());
+    borrowerItem.setItemAgencyCode(transactionHoldDTO.getItemAgencyCode());
+    borrowerItem.setItemId(transactionHoldDTO.getItemId());
+
+    var responseEntity = testRestTemplate.exchange(
+      "/inn-reach/d2ir/circ/borrowerrenew/{trackingId}/{centralCode}", HttpMethod.PUT,
+      new HttpEntity<>(borrowerItem), BorrowerRenewDTO.class,
+      PRE_POPULATED_TRACKING_ID, PRE_POPULATED_CENTRAL_CODE);
+
+    var transactionState = fetchPrePopulatedTransaction().getState();
+
+    assertEquals(OK, responseEntity.getStatusCode());
+    assertEquals(RECALL, transactionState);
+  }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
+  })
+  void borrowerRenewRequestExistingDueDateBeforeRequestedDueDateAndExceptionOccurs() {
+    when(innReachExternalService.postInnReachApi(any(), any(), any())).thenReturn("ok");
+
+    var loan = new CheckOutResponseDTO();
+    loan.setDueDate(new Date(Instant.now().toEpochMilli()));
+    when(circulationClient.getLoanById(any())).thenReturn(loan);
+
+    when(circulationClient.renewLoan(any())).thenThrow(IllegalArgumentException.class);
+
+    var dueDateTime = (int) Instant.now().plus(1, ChronoUnit.DAYS).getEpochSecond();
+    var borrowerItem = new BorrowerRenewDTO();
+    borrowerItem.setDueDateTime(dueDateTime);
+
+    var transactionHoldDTO = createTransactionHoldDTO();
+    borrowerItem.setTransactionTime(transactionHoldDTO.getTransactionTime());
+    borrowerItem.setPatronId(transactionHoldDTO.getPatronId());
+    borrowerItem.setPatronAgencyCode(transactionHoldDTO.getPatronAgencyCode());
+    borrowerItem.setItemAgencyCode(transactionHoldDTO.getItemAgencyCode());
+    borrowerItem.setItemId(transactionHoldDTO.getItemId());
+
+    var responseEntity = testRestTemplate.exchange(
+      "/inn-reach/d2ir/circ/borrowerrenew/{trackingId}/{centralCode}", HttpMethod.PUT,
+      new HttpEntity<>(borrowerItem), BorrowerRenewDTO.class,
+      PRE_POPULATED_TRACKING_ID, PRE_POPULATED_CENTRAL_CODE);
+
+    var transactionState = fetchPrePopulatedTransaction().getState();
+
+    assertEquals(OK, responseEntity.getStatusCode());
+    assertEquals(RECALL, transactionState);
+  }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
+  })
+  void borrowerRenewRequestFailedRenewLoan() {
+    var loan = new CheckOutResponseDTO();
+    loan.setDueDate(new Date(Instant.now().toEpochMilli()));
+    when(circulationClient.getLoanById(any())).thenReturn(loan);
+
+    when(circulationClient.renewLoan(any())).thenThrow(IllegalArgumentException.class);
+
+    var dueDateTime = (int) Instant.now().getEpochSecond();
+    var borrowerItem = new BorrowerRenewDTO();
+    borrowerItem.setDueDateTime(dueDateTime);
+
+    var transactionHoldDTO = createTransactionHoldDTO();
+    borrowerItem.setTransactionTime(transactionHoldDTO.getTransactionTime());
+    borrowerItem.setPatronId(transactionHoldDTO.getPatronId());
+    borrowerItem.setPatronAgencyCode(transactionHoldDTO.getPatronAgencyCode());
+    borrowerItem.setItemAgencyCode(transactionHoldDTO.getItemAgencyCode());
+    borrowerItem.setItemId(transactionHoldDTO.getItemId());
+
+    var transactionStateBefore = fetchPrePopulatedTransaction().getState();
+
+    var responseEntity = testRestTemplate.exchange(
+      "/inn-reach/d2ir/circ/borrowerrenew/{trackingId}/{centralCode}", HttpMethod.PUT,
+      new HttpEntity<>(borrowerItem), BorrowerRenewDTO.class,
+      PRE_POPULATED_TRACKING_ID, PRE_POPULATED_CENTRAL_CODE);
+
+    var transactionStateAfter = fetchPrePopulatedTransaction().getState();
+
+    assertEquals(BAD_REQUEST, responseEntity.getStatusCode());
+    assertEquals(transactionStateBefore, transactionStateAfter);
+  }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
+  })
+  void borrowerRenewRequestFailedRecallRequest() {
+    when(innReachExternalService.postInnReachApi(any(), any(), any())).thenThrow(IllegalArgumentException.class);
+
+    var loan = new CheckOutResponseDTO();
+    loan.setDueDate(new Date(Instant.now().toEpochMilli()));
+    when(circulationClient.getLoanById(any())).thenReturn(loan);
+
+    var renew = new CheckOutResponseDTO();
+    renew.setDueDate(new Date(Instant.now().minus(1, ChronoUnit.DAYS).toEpochMilli()));
+    when(circulationClient.renewLoan(any())).thenReturn(renew);
+
+    var dueDateTime = (int) Instant.now().getEpochSecond();
+    var borrowerItem = new BorrowerRenewDTO();
+    borrowerItem.setDueDateTime(dueDateTime);
+
+    var transactionHoldDTO = createTransactionHoldDTO();
+    borrowerItem.setTransactionTime(transactionHoldDTO.getTransactionTime());
+    borrowerItem.setPatronId(transactionHoldDTO.getPatronId());
+    borrowerItem.setPatronAgencyCode(transactionHoldDTO.getPatronAgencyCode());
+    borrowerItem.setItemAgencyCode(transactionHoldDTO.getItemAgencyCode());
+    borrowerItem.setItemId(transactionHoldDTO.getItemId());
+
+    var transactionStateBefore = fetchPrePopulatedTransaction().getState();
+
+    var responseEntity = testRestTemplate.exchange(
+      "/inn-reach/d2ir/circ/borrowerrenew/{trackingId}/{centralCode}", HttpMethod.PUT,
+      new HttpEntity<>(borrowerItem), BorrowerRenewDTO.class,
+      PRE_POPULATED_TRACKING_ID, PRE_POPULATED_CENTRAL_CODE);
+
+    var transactionStateAfter = fetchPrePopulatedTransaction().getState();
+
+    assertEquals(BAD_REQUEST, responseEntity.getStatusCode());
+    assertEquals(transactionStateBefore, transactionStateAfter);
   }
 }

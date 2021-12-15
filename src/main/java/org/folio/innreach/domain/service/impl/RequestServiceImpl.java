@@ -36,7 +36,7 @@ import java.util.UUID;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
-
+import org.folio.innreach.dto.RenewLoanRequestDTO;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
@@ -127,8 +127,7 @@ public class RequestServiceImpl implements RequestService {
 
   @Async
   @Override
-  public void createLocalHoldRequest(String trackingId) {
-    var transaction = fetchTransactionByTrackingId(trackingId);
+  public void createLocalHoldRequest(InnReachTransaction transaction) {
     var hold = (TransactionLocalHold) transaction.getHold();
     var centralPatronName = hold.getPatronName();
     try {
@@ -145,7 +144,7 @@ public class RequestServiceImpl implements RequestService {
 
   @Override
   public void createItemRequest(InnReachTransaction transaction, Holding holding, InventoryItemDTO item,
-    User patron, UUID servicePointId, RequestType requestType) {
+                                User patron, UUID servicePointId, RequestType requestType) {
     log.info("Creating item request for transaction {}", transaction);
     var hold = transaction.getHold();
 
@@ -283,6 +282,14 @@ public class RequestServiceImpl implements RequestService {
       "No request found with id = " + requestId));
   }
 
+  public CheckOutResponseDTO getLoan(UUID loanId) {
+    return circulationClient.getLoanById(loanId);
+  }
+
+  public CheckOutResponseDTO renewLoan(RenewLoanRequestDTO renewLoan) {
+    return circulationClient.renewLoan(renewLoan);
+  }
+
   private void cancelRequest(RequestDTO request, String reason) {
     var item = itemService.find(request.getItemId()).orElse(null);
     var holding = item == null ? null : holdingsService.find(item.getHoldingsRecordId()).orElse(null);
@@ -306,7 +313,7 @@ public class RequestServiceImpl implements RequestService {
   }
 
   private void updateTransaction(InnReachTransaction transaction, InventoryItemDTO item,
-    Holding holding, RequestDTO request, User patron) {
+                                 Holding holding, RequestDTO request, User patron) {
     var hold = transaction.getHold();
     hold.setFolioRequestId(request.getId());
     hold.setFolioItemId(item.getId());

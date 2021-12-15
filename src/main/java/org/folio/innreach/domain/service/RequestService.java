@@ -2,6 +2,7 @@ package org.folio.innreach.domain.service;
 
 import java.util.UUID;
 
+import org.folio.innreach.dto.RenewLoanRequestDTO;
 import org.springframework.scheduling.annotation.Async;
 
 import org.folio.innreach.domain.dto.folio.User;
@@ -18,7 +19,7 @@ public interface RequestService {
   void createItemHoldRequest(String transactionTrackingId);
 
   @Async
-  void createLocalHoldRequest(String transactionTrackingId);
+  void createLocalHoldRequest(InnReachTransaction transaction);
 
   void createItemRequest(InnReachTransaction transaction, Holding holding, InventoryItemDTO item,
                          User patron, UUID servicePointId, RequestType requestType);
@@ -34,4 +35,8 @@ public interface RequestService {
   void createRecallRequest(UUID userId, UUID itemId);
 
   RequestDTO findRequest(UUID requestId);
+
+  CheckOutResponseDTO getLoan(UUID loanId);
+
+  CheckOutResponseDTO renewLoan(RenewLoanRequestDTO renewLoan);
 }
