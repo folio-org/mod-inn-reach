@@ -156,6 +156,27 @@ paths:
       parameters:
         - $ref: 'circulation.yaml#/components/parameters/itemBarcode'
         - $ref: 'circulation.yaml#/components/parameters/servicePointId'
+  /transactions/search:
+    get:
+      operationId: searchTransaction
+      description: search for transactions
+      tags:
+        - inn-reach-transaction
+      responses:
+        '200':
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/innReachTransactionsDTO"
+        '404':
+          $ref: "api-common.yaml#/components/responses/trait_response_404"
+        '500':
+          $ref: "api-common.yaml#/components/responses/trait_response_500"
+      parameters:
+        - $ref: "api-common.yaml#/components/parameters/trait_pageable_offset"
+        - $ref: "api-common.yaml#/components/parameters/trait_pageable_limit"
+        - $ref: "#/components/parameters/transaction_search_request_parameters"
   /d2ir/circ/verifypatron:
     post:
       operationId: verifyPatron
@@ -467,6 +488,35 @@ paths:
       parameters:
         - $ref: '#/components/parameters/trackingId'
         - $ref: '#/components/parameters/centralCode'
+  /d2ir/circ/recall/{trackingId}/{centralCode}:
+    put:
+      operationId: recall
+      description: Item has been recalled
+      tags:
+        - inn-reach-circulation
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/recallDTO"
+      responses:
+        '200':
+          description: Recall request complete
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/innReachResponseDTO"
+        '400':
+          description: An error occurred during processing the request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/innReachResponseDTO"
+        '500':
+          $ref: "api-common.yaml#/components/responses/trait_response_500"
+      parameters:
+        - $ref: '#/components/parameters/trackingId'
+        - $ref: '#/components/parameters/centralCode'
   /transactions:
     get:
       description: Get a list of transactions for the given central server
@@ -543,6 +593,8 @@ components:
       $ref: schemas/innReachTransactionsDTO.json
     innReachTransactionFilterParametersDTO:
       $ref: schemas/innReachTransactionFilterParametersDTO.json
+    innReachTransactionSearchRequestDTO:
+      $ref: schemas/innReachTransactionSearchRequestDTO.json
     checkInRequestDTO:
       $ref: schemas/circulation/checkInRequestDTO.json
     checkInResponseDTO:
@@ -561,6 +613,8 @@ components:
       $ref: schemas/d2ir/returnUncirculatedDTO.json
     itemReceivedDTO:
       $ref: schemas/d2ir/itemReceivedDTO.json
+    recallDTO:
+      $ref: schemas/d2ir/recallDTO.json
   parameters:
     bibId:
       name: bibId
@@ -620,3 +674,9 @@ components:
       description: Query parameters to filter transactions.
       schema:
         $ref: "#/components/schemas/innReachTransactionFilterParametersDTO"
+    transaction_search_request_parameters:
+      name: searchRequest
+      in: query
+      description: Search parameters to search for transactions
+      schema:
+        $ref: "#/components/schemas/innReachTransactionSearchRequestDTO"

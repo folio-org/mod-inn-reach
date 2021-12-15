@@ -1,0 +1,22 @@
+{
+  "description": "INN-Reach Transaction search request",
+  "type": "object",
+  "properties": {
+    "shippedItemBarcode": {
+      "description": "Shipped item barcode",
+      "type": "string"
+    },
+    "transactionStates": {
+      "description": "List of INN-Reach Transaction states",
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "shippedItemBarcode",
+    "transactionStates"
+  ]
+}

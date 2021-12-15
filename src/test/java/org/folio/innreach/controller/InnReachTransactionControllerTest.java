@@ -11,6 +11,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -123,9 +124,11 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
 
   private static final AuditableUser PRE_POPULATED_USER = AuditableUser.SYSTEM;
 
+  private static final Duration ASYNC_AWAIT_TIMEOUT = Duration.ofSeconds(15);
+
   @Autowired
   private TestRestTemplate testRestTemplate;
-  @Autowired
+  @SpyBean
   private InnReachTransactionRepository repository;
   @Autowired
   private InnReachTransactionPickupLocationMapper transactionPickupLocationMapper;
@@ -590,7 +593,9 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     assertTrue(responseEntity.hasBody());
     assertEquals("ok", responseEntity.getBody().getStatus());
 
-    await().until(() -> repository.fetchOneByTrackingId(TRACKING_ID).get().getHold().getFolioItemId() != null);
+    await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() ->
+      verify(repository).save(
+        argThat((InnReachTransaction t) -> t.getHold().getFolioRequestId() != null)));
 
     verify(requestService).createItemHoldRequest(TRACKING_ID);
     verify(inventoryClient, times(2)).getItemsByHrId(itemHoldDTO.getItemId());
@@ -1010,6 +1015,65 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     );
 
     assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
+  }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction-for-search.sql"
+  })
+  void returnTransactionByBarcodeAndState_when_transactionsFound() {
+    var responseEntity = testRestTemplate.getForEntity(
+        "/inn-reach/transactions/search?shippedItemBarcode={shippedItemBarcode}&transactionStates={transactionStates}",
+        InnReachTransactionsDTO.class, "ABC-abc-1234", new String[] {"PATRON_HOLD", "ITEM_HOLD"});
+
+    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+
+    var body = responseEntity.getBody();
+
+    assertNotNull(body);
+    assertEquals(2, body.getTotalRecords());
+
+    var transactions = body.getTransactions();
+
+    assertNotNull(transactions);
+    assertFalse(transactions.isEmpty());
+    assertEquals(2, transactions.size());
+
+    var allTransactionTypesEqualToSearched = transactions
+      .stream()
+      .allMatch(it -> it.getType().equals(ITEM) || it.getType().equals(PATRON));
+
+    assertTrue(allTransactionTypesEqualToSearched);
+
+    var allBarcodesEqualToSearched = transactions
+      .stream()
+      .allMatch(it -> it.getHold().getFolioItemBarcode().equals("ABC-abc-1234")
+        || it.getHold().getShippedItemBarcode().equals("ABC-abc-1234"));
+
+    assertTrue(allBarcodesEqualToSearched);
+  }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction-for-search.sql"
+  })
+  void returnEmptyListByBarcodeAndState_when_transactionsNotFound() {
+    var responseEntity = testRestTemplate.getForEntity(
+        "/inn-reach/transactions/search?shippedItemBarcode={shippedItemBarcode}&transactionStates={transactionStates}",
+        InnReachTransactionsDTO.class, "ABC-abc-4321", new String[] {"PATRON_HOLD", "ITEM_HOLD"});
+
+    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+
+    var body = responseEntity.getBody();
+
+    assertNotNull(body);
+
+    var transactions = body.getTransactions();
+
+    assertNotNull(transactions);
+    assertTrue(transactions.isEmpty());
   }
 
   private void modifyFolioItemBarcode(UUID transactionId, String newBarcode) {

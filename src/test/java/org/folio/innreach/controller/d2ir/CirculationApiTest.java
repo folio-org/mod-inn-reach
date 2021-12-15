@@ -44,7 +44,7 @@ import org.folio.innreach.util.JsonHelper;
   executionPhase = AFTER_TEST_METHOD
 )
 @SqlMergeMode(MERGE)
-class PatronHoldCirculationApiTest extends BaseApiControllerTest {
+class CirculationApiTest extends BaseApiControllerTest {
 
   public static final String INNREACH_LOCALSERVERS_URL = "/innreach/v2/contribution/localservers";
   public static final String HRID_SETTINGS_URL = "/hrid-settings-storage/hrid-settings";
@@ -65,6 +65,7 @@ class PatronHoldCirculationApiTest extends BaseApiControllerTest {
   private static final String INSTANCE_CONTRIBUTOR_NAME_URLENCODED = "INN-Reach%20author";
 
   private static final String PATRON_HOLD_OPERATION = "patronhold";
+  private static final String LOCAL_HOLD_OPERATION = "localhold";
   private static final String CANCEL_REQ_OPERATION = "cancelrequest";
   private static final String CIRCULATION_ENDPOINT = "/inn-reach/d2ir/circ/{circulationOperationName}/{trackingId}/{centralCode}";
 
@@ -79,6 +80,8 @@ class PatronHoldCirculationApiTest extends BaseApiControllerTest {
   private static final String ITEM_HRID = "itnewtrackingid5east";
   private static final String HOLDING_ID = "16f40c4e-235d-4912-a683-2ad919cc8b07";
   private static final UUID FOLIO_PATRON_ID = UUID.fromString("ea11eba7-3c0f-4d15-9cca-c8608cd6bc8a");
+
+  private static final Duration ASYNC_AWAIT_TIMEOUT = Duration.ofSeconds(15);
 
   @SpyBean
   private InnReachTransactionRepository repository;
@@ -122,7 +125,7 @@ class PatronHoldCirculationApiTest extends BaseApiControllerTest {
         .headers(getOkapiHeaders()))
       .andExpect(status().isOk());
 
-    await().atMost(Duration.ofSeconds(10)).untilAsserted(() ->
+    await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() ->
       verify(repository).save(
         argThat((InnReachTransaction t) -> NEW_REQUEST_ID.equals(t.getHold().getFolioRequestId()))));
   }
@@ -162,7 +165,7 @@ class PatronHoldCirculationApiTest extends BaseApiControllerTest {
         .headers(getOkapiHeaders()))
       .andExpect(status().isOk());
 
-    await().atMost(Duration.ofSeconds(10)).untilAsserted(() ->
+    await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() ->
       verify(circulationClient).sendRequest(any()));
   }
 
@@ -231,6 +234,40 @@ class PatronHoldCirculationApiTest extends BaseApiControllerTest {
       .andExpect(status().isBadRequest());
 
     verifyNoInteractions(requestService);
+  }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/agency-loc-mapping/pre-populate-agency-location-mapping.sql",
+    "classpath:db/item-type-mapping/pre-populate-item-type-mapping.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
+  })
+  void localHold_createRequest() throws Exception {
+    var transactionHoldDTO = createTransactionHoldDTO();
+    transactionHoldDTO.setItemId(ITEM_HRID);
+    transactionHoldDTO.setItemAgencyCode(PRE_POPULATED_CENTRAL_AGENCY_CODE);
+    transactionHoldDTO.setPatronAgencyCode(PRE_POPULATED_CENTRAL_AGENCY_CODE);
+    transactionHoldDTO.setCentralItemType(PRE_POPULATED_CENTRAL_ITEM_TYPE);
+    transactionHoldDTO.setPatronId(toStringWithoutHyphens(FOLIO_PATRON_ID));
+    var pickupLocation = pickupLocationMapper.fromString(transactionHoldDTO.getPickupLocation());
+
+    stubGet(format(USER_BY_ID_URL_TEMPLATE, FOLIO_PATRON_ID), "users/user-response.json");
+    stubGet(format(QUERY_SERVICE_POINTS_BY_CODE_ULR_TEMPLATE, pickupLocation.getPickupLocCode()), "inventory-storage/query-service-points-response.json");
+    stubPost(HOLDINGS_URL, "inventory-storage/holding-response.json");
+    stubPost(ITEMS_URL, "inventory/item-response.json");
+    stubPost(REQUESTS_URL, "circulation/item-request-response.json");
+    stubGet(format(QUERY_INVENTORY_ITEM_BY_HRID_URL_TEMPLATE, ITEM_HRID), "inventory/query-items-response.json");
+    stubGet(format(QUERY_REQUEST_BY_ITEM_ID_URL_TEMPLATE, PRE_POPULATED_ITEM_ID), "circulation/empty-requests-response.json");
+
+    mockMvc.perform(put(CIRCULATION_ENDPOINT, LOCAL_HOLD_OPERATION, "newtrackingid", PRE_POPULATED_CENTRAL_CODE)
+        .content(jsonHelper.toJson(transactionHoldDTO))
+        .contentType(MediaType.APPLICATION_JSON)
+        .headers(getOkapiHeaders()))
+      .andExpect(status().isOk());
+
+    await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() ->
+      verify(circulationClient).sendRequest(any()));
   }
 
 }

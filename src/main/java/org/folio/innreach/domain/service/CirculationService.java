@@ -7,6 +7,7 @@ import org.folio.innreach.dto.ItemReceivedDTO;
 import org.folio.innreach.dto.ItemShippedDTO;
 import org.folio.innreach.dto.LocalHoldDTO;
 import org.folio.innreach.dto.PatronHoldDTO;
+import org.folio.innreach.dto.RecallDTO;
 import org.folio.innreach.dto.ReturnUncirculatedDTO;
 import org.folio.innreach.dto.TransferRequestDTO;
 
@@ -31,4 +32,6 @@ public interface CirculationService {
   InnReachResponseDTO returnUncirculated(String trackingId, String centralCode, ReturnUncirculatedDTO returnUncirculated);
 
   InnReachResponseDTO itemReceived(String trackingId, String centralCode, ItemReceivedDTO itemReceivedDTO);
+
+  InnReachResponseDTO recall(String trackingId, String centralCode, RecallDTO recallDTO);
 }
