@@ -18,7 +18,7 @@ public interface RequestService {
   void createItemHoldRequest(String transactionTrackingId);
 
   @Async
-  void createLocalHoldRequest(String transactionTrackingId);
+  void createLocalHoldRequest(InnReachTransaction transaction);
 
   void createItemRequest(InnReachTransaction transaction, Holding holding, InventoryItemDTO item,
                          User patron, UUID servicePointId, RequestType requestType);

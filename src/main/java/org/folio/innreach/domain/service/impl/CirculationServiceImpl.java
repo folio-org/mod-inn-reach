@@ -28,6 +28,7 @@ import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
 
@@ -90,54 +91,60 @@ public class CirculationServiceImpl implements CirculationService {
   private final ItemService itemService;
   private final HoldingsService holdingsService;
 
+  @Transactional(propagation = Propagation.NEVER)
   @Override
   public InnReachResponseDTO initiatePatronHold(String trackingId, String centralCode, PatronHoldDTO patronHold) {
-    var innReachTransaction = transactionRepository.findByTrackingIdAndCentralServerCode(trackingId, centralCode);
+    var optTransaction = transactionRepository.findByTrackingIdAndCentralServerCode(trackingId, centralCode);
     var transactionHold = transactionHoldMapper.mapRequest(patronHold);
 
-    if (innReachTransaction.isPresent()) {
+    if (optTransaction.isPresent()) {
       log.info("Transaction patron hold with trackingId [{}] and centralCode [{}] exists, start to update...",
         trackingId, centralCode);
+      var existingTransaction = optTransaction.get();
 
-      updateTransactionHold(innReachTransaction.get().getHold(), transactionHold);
+      updateTransactionHold(existingTransaction.getHold(), transactionHold);
 
-      patronHoldService.updateVirtualItems(innReachTransaction.get());
+      patronHoldService.updateVirtualItems(existingTransaction);
     } else {
       log.info("Transaction patron hold with trackingId [{}] and centralCode [{}] doesn't exist, create a new one...",
         trackingId, centralCode);
 
-      InnReachTransaction newTransactionWithPatronHold = createTransaction(trackingId, centralCode,
-        transactionHold, TransactionType.PATRON);
-      var transaction = transactionRepository.save(newTransactionWithPatronHold);
+      var newTransaction = createTransaction(trackingId, centralCode, transactionHold, TransactionType.PATRON);
 
-      patronHoldService.createVirtualItems(transaction);
+      newTransaction = transactionRepository.save(newTransaction);
+
+      patronHoldService.createVirtualItems(newTransaction);
     }
 
     return success();
   }
 
+  @Transactional(propagation = Propagation.NEVER)
   @Override
   public InnReachResponseDTO initiateLocalHold(String trackingId, String centralCode, LocalHoldDTO localHold) {
     Assert.isTrue(StringUtils.equals(localHold.getItemAgencyCode(), localHold.getPatronAgencyCode()),
       "The patron and item agencies should be on the same local server");
 
-    var innReachTransaction = transactionRepository.findByTrackingIdAndCentralServerCode(trackingId, centralCode);
+    var optTransaction = transactionRepository.findByTrackingIdAndCentralServerCode(trackingId, centralCode);
     var transactionHold = transactionHoldMapper.mapRequest(localHold);
 
-    if (innReachTransaction.isPresent()) {
+    InnReachTransaction transaction;
+    if (optTransaction.isPresent()) {
       log.info("Transaction local hold with trackingId [{}] and centralCode [{}] exists, start to update...",
         trackingId, centralCode);
 
-      updateTransactionHold(innReachTransaction.get().getHold(), transactionHold);
+      transaction = optTransaction.get();
+
+      updateTransactionHold(transaction.getHold(), transactionHold);
     } else {
       log.info("Transaction local hold with trackingId [{}] and centralCode [{}] doesn't exist, create a new one...",
         trackingId, centralCode);
 
-      var newTransaction = createTransaction(trackingId, centralCode, transactionHold, TransactionType.LOCAL);
-      transactionRepository.save(newTransaction);
+      transaction = createTransaction(trackingId, centralCode, transactionHold, TransactionType.LOCAL);
     }
+    transaction = transactionRepository.save(transaction);
 
-    requestService.createLocalHoldRequest(trackingId);
+    requestService.createLocalHoldRequest(transaction);
 
     return success();
   }
