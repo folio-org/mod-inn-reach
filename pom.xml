@@ -40,7 +40,7 @@
     <wiremock.version>2.31.0</wiremock.version>
     <awaitility.version>4.1.1</awaitility.version>
     <junit-extensions.version>2.5.0</junit-extensions.version>
-    <log4j2.version>2.15.0</log4j2.version>
+    <log4j2.version>2.16.0</log4j2.version>
     <argLine />
     <sonar.exclusions>
       src/main/java/org/folio/innreach/controller/TenantController.java,
