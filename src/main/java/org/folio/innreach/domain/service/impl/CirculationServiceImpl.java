@@ -317,11 +317,10 @@ public class CirculationServiceImpl implements CirculationService {
     var hold = transaction.getHold();
     var loan = requestService.getLoan(hold.getFolioLoanId());
     var existingDueDate = loan.getDueDate();
-    var requestedDueDate = new Date(borrowerRenew.getDueDateTime());
+    var requestedDueDate = new Date(borrowerRenew.getDueDateTime() * 1000L);
 
-    if (transaction.getHold().getFolioLoanId() != null) {
       try {
-        var renewedLoan = renewLoan(transaction);
+        var renewedLoan = renewLoan(hold);
         var calculatedDueDate = renewedLoan.getDueDate();
         if (calculatedDueDate.after(requestedDueDate) || calculatedDueDate.equals(requestedDueDate)) {
           transaction.setState(BORROWER_RENEW);
@@ -335,7 +334,6 @@ public class CirculationServiceImpl implements CirculationService {
           throw new CirculationException("Failed to renew loan: " + e.getMessage(), e);
         }
       }
-    }
 
     return success();
   }
@@ -358,14 +356,14 @@ public class CirculationServiceImpl implements CirculationService {
       innReachExternalService.postInnReachApi(centralCode, uri, dueDateForRecallRequest);
       transaction.setState(RECALL);
     } catch (Exception e) {
-      throw new CirculationException("Failed to recall request to central server: " + e.getMessage(), e);
+        throw new CirculationException("Failed to recall request to central server: " + e.getMessage(), e);
     }
   }
 
-  private CheckOutResponseDTO renewLoan(InnReachTransaction transaction) {
+  private CheckOutResponseDTO renewLoan(TransactionHold hold) {
     var renewLoanRequestDTO = new RenewLoanRequestDTO();
-    renewLoanRequestDTO.setItemId(UUID.fromString(transaction.getHold().getItemId()));
-    renewLoanRequestDTO.setUserId(UUID.fromString(transaction.getHold().getPatronId()));
+    renewLoanRequestDTO.setItemId(hold.getFolioItemId());
+    renewLoanRequestDTO.setUserId(hold.getFolioPatronId());
 
     return requestService.renewLoan(renewLoanRequestDTO);
   }
