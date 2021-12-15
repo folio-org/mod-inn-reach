@@ -35,6 +35,7 @@
     <coffee-boots.version>2.2.0</coffee-boots.version>
     <spring-kafka.version>2.6.3</spring-kafka.version>
     <spring-feign.version>3.0.2</spring-feign.version>
+    <log4j2.version>2.16.0</log4j2.version>
     <argLine />
     <sonar.exclusions>
       src/main/java/org/folio/innreach/controller/TenantController.java,
