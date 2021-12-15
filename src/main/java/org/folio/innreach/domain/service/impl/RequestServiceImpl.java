@@ -36,6 +36,7 @@ import java.util.UUID;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
@@ -144,7 +145,7 @@ public class RequestServiceImpl implements RequestService {
 
   @Override
   public void createItemRequest(InnReachTransaction transaction, Holding holding, InventoryItemDTO item,
-                                User patron, UUID servicePointId, RequestType requestType) {
+    User patron, UUID servicePointId, RequestType requestType) {
     log.info("Creating item request for transaction {}", transaction);
     var hold = transaction.getHold();
 
@@ -159,7 +160,7 @@ public class RequestServiceImpl implements RequestService {
     var newRequest = RequestDTO.builder()
       .requestType(requestType.getName())
       .requestLevel("Item")
-      .instanceId(holding.getInstanceId())
+      .instanceId(holding == null ? null : holding.getInstanceId())
       .itemId(item.getId())
       .requesterId(patron.getId())
       .pickupServicePointId(servicePointId)
@@ -283,13 +284,13 @@ public class RequestServiceImpl implements RequestService {
   }
 
   private void cancelRequest(RequestDTO request, String reason) {
-    var item = itemService.getItemByHrId(request.getItemId().toString());
-    var holding = holdingsService.find(item.getHoldingsRecordId()).orElse(null);
+    var item = itemService.find(request.getItemId()).orElse(null);
+    var holding = item == null ? null : holdingsService.find(item.getHoldingsRecordId()).orElse(null);
 
     request.setStatus(RequestStatus.CLOSED_CANCELLED);
     request.setCancellationReasonId(INN_REACH_CANCELLATION_REASON_ID);
     request.setCancellationAdditionalInformation(reason);
-    request.setInstanceId(holding.getInstanceId());
+    request.setInstanceId(holding == null ? null : holding.getInstanceId());
     request.setRequestLevel("Item");
 
     circulationClient.updateRequest(request.getId(), request);
@@ -305,7 +306,7 @@ public class RequestServiceImpl implements RequestService {
   }
 
   private void updateTransaction(InnReachTransaction transaction, InventoryItemDTO item,
-                                 Holding holding, RequestDTO request, User patron) {
+    Holding holding, RequestDTO request, User patron) {
     var hold = transaction.getHold();
     hold.setFolioRequestId(request.getId());
     hold.setFolioItemId(item.getId());
