@@ -62,7 +62,7 @@ public class PatronHoldServiceImpl implements PatronHoldService {
     var hridSettings = inventoryService.getHridSettings();
     var centralServer = centralServerService.getCentralServerByCentralCode(transaction.getCentralServerCode());
     var locationCode = hold.getPickupLocation().getPickupLocCode();
-    var servicePointId = getServicePointIdByCode(locationCode);
+    var servicePointId = requestService.getServicePointIdByCode(locationCode);
     var patron = getPatron(hold);
 
     var instance = prepareInstance(transaction, hold, hridSettings);
@@ -174,10 +174,6 @@ public class PatronHoldServiceImpl implements PatronHoldService {
       .permanentLoanType(new PermanentLoanType(centralServer.getLoanTypeId(), null))
       .status(InventoryItemStatus.AVAILABLE)
       .build();
-  }
-
-  private UUID getServicePointIdByCode(String locationCode) {
-    return inventoryService.queryServicePointByCode(locationCode).getId();
   }
 
   private UUID getInstanceTypeId() {
