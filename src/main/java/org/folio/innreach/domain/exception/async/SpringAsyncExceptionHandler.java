@@ -10,6 +10,6 @@ public class SpringAsyncExceptionHandler implements AsyncUncaughtExceptionHandle
 
   @Override
   public void handleUncaughtException(Throwable throwable, Method method, Object... objects) {
-    log.error("Async method [{}] throw exception {}", method, throwable);
+    log.error("Async method [{}] throw exception", method, throwable);
   }
 }

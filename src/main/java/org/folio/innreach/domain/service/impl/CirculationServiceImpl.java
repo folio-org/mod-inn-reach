@@ -18,12 +18,15 @@ import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionSt
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.RECEIVE_UNANNOUNCED;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.RETURN_UNCIRCULATED;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.TRANSFER;
+import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionType.LOCAL;
+import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionType.PATRON;
 
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 
 import lombok.RequiredArgsConstructor;
@@ -31,8 +34,8 @@ import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.util.Assert;
 
 import org.folio.innreach.domain.dto.folio.inventory.InventoryItemDTO;
@@ -52,7 +55,9 @@ import org.folio.innreach.domain.service.PatronHoldService;
 import org.folio.innreach.domain.service.RequestService;
 import org.folio.innreach.domain.service.UpdateTemplate.UpdateOperation;
 import org.folio.innreach.dto.BaseCircRequestDTO;
+import org.folio.innreach.dto.BorrowerRenewDTO;
 import org.folio.innreach.dto.CancelRequestDTO;
+import org.folio.innreach.dto.CheckOutResponseDTO;
 import org.folio.innreach.dto.Holding;
 import org.folio.innreach.dto.InnReachResponseDTO;
 import org.folio.innreach.dto.ItemReceivedDTO;
@@ -60,12 +65,10 @@ import org.folio.innreach.dto.ItemShippedDTO;
 import org.folio.innreach.dto.LocalHoldDTO;
 import org.folio.innreach.dto.PatronHoldDTO;
 import org.folio.innreach.dto.RecallDTO;
+import org.folio.innreach.dto.RenewLoanRequestDTO;
 import org.folio.innreach.dto.ReturnUncirculatedDTO;
 import org.folio.innreach.dto.TransactionHoldDTO;
 import org.folio.innreach.dto.TransferRequestDTO;
-import org.folio.innreach.dto.BorrowerRenewDTO;
-import org.folio.innreach.dto.CheckOutResponseDTO;
-import org.folio.innreach.dto.RenewLoanRequestDTO;
 import org.folio.innreach.external.service.InnReachExternalService;
 import org.folio.innreach.mapper.InnReachTransactionHoldMapper;
 import org.folio.innreach.mapper.InnReachTransactionPickupLocationMapper;
@@ -100,60 +103,33 @@ public class CirculationServiceImpl implements CirculationService {
   private final HoldingsService holdingsService;
   private final InnReachExternalService innReachExternalService;
 
-  @Transactional(propagation = Propagation.NEVER)
+  private final TransactionTemplate transactionTemplate;
+
   @Override
   public InnReachResponseDTO initiatePatronHold(String trackingId, String centralCode, PatronHoldDTO patronHold) {
-    var optTransaction = transactionRepository.findByTrackingIdAndCentralServerCode(trackingId, centralCode);
     var transactionHold = transactionHoldMapper.mapRequest(patronHold);
 
-    if (optTransaction.isPresent()) {
-      log.info("Transaction patron hold with trackingId [{}] and centralCode [{}] exists, start to update...",
-        trackingId, centralCode);
-      var existingTransaction = optTransaction.get();
-
-      updateTransactionHold(existingTransaction.getHold(), transactionHold);
-      existingTransaction = transactionRepository.save(existingTransaction);
-
-      patronHoldService.updateVirtualItems(existingTransaction);
-    } else {
-      log.info("Transaction patron hold with trackingId [{}] and centralCode [{}] doesn't exist, create a new one...",
-        trackingId, centralCode);
-
-      var newTransaction = createTransaction(trackingId, centralCode, transactionHold, TransactionType.PATRON);
-      newTransaction = transactionRepository.save(newTransaction);
-
-      patronHoldService.createVirtualItems(newTransaction);
-    }
+    initiateTransactionHold(trackingId, centralCode, transactionHold, PATRON,
+      (transaction, isExisting) -> {
+        if (isExisting) {
+          patronHoldService.updateVirtualItems(transaction);
+        } else {
+          patronHoldService.createVirtualItems(transaction);
+        }
+      });
 
     return success();
   }
 
-  @Transactional(propagation = Propagation.NEVER)
   @Override
   public InnReachResponseDTO initiateLocalHold(String trackingId, String centralCode, LocalHoldDTO localHold) {
     Assert.isTrue(StringUtils.equals(localHold.getItemAgencyCode(), localHold.getPatronAgencyCode()),
       "The patron and item agencies should be on the same local server");
 
-    var optTransaction = transactionRepository.findByTrackingIdAndCentralServerCode(trackingId, centralCode);
     var transactionHold = transactionHoldMapper.mapRequest(localHold);
 
-    InnReachTransaction transaction;
-    if (optTransaction.isPresent()) {
-      log.info("Transaction local hold with trackingId [{}] and centralCode [{}] exists, start to update...",
-        trackingId, centralCode);
-
-      transaction = optTransaction.get();
-
-      updateTransactionHold(transaction.getHold(), transactionHold);
-    } else {
-      log.info("Transaction local hold with trackingId [{}] and centralCode [{}] doesn't exist, create a new one...",
-        trackingId, centralCode);
-
-      transaction = createTransaction(trackingId, centralCode, transactionHold, TransactionType.LOCAL);
-    }
-    transaction = transactionRepository.save(transaction);
-
-    requestService.createLocalHoldRequest(transaction);
+    initiateTransactionHold(trackingId, centralCode, transactionHold, LOCAL,
+      (transaction, isExisting) -> requestService.createLocalHoldRequest(transaction));
 
     return success();
   }
@@ -345,6 +321,38 @@ public class CirculationServiceImpl implements CirculationService {
     return success();
   }
 
+
+  private void initiateTransactionHold(String trackingId, String centralCode,
+                                       TransactionHoldDTO transactionHold,
+                                       TransactionType transactionType,
+                                       BiConsumer<InnReachTransaction, Boolean> postProcessor) {
+
+    var optTransaction = transactionRepository.findByTrackingIdAndCentralServerCode(trackingId, centralCode);
+    var isExistingTransaction = optTransaction.isPresent();
+
+    var transaction = transactionTemplate.execute(status -> {
+      if (isExistingTransaction) {
+        log.info("Transaction {} hold with trackingId [{}] and centralCode [{}] exists, start to update...",
+          transactionType, trackingId, centralCode);
+
+        var existingTransaction = optTransaction.get();
+
+        updateTransactionHold(existingTransaction.getHold(), transactionHold);
+
+        return transactionRepository.save(existingTransaction);
+      } else {
+        log.info("Transaction {} hold with trackingId [{}] and centralCode [{}] doesn't exist, create a new one...",
+          transactionType, trackingId, centralCode);
+
+        var newTransaction = createTransaction(trackingId, centralCode, transactionHold, transactionType);
+
+        return transactionRepository.save(newTransaction);
+      }
+    });
+
+    postProcessor.accept(transaction, isExistingTransaction);
+  }
+
   private InnReachRecallUser getRecallUserForCentralServer(String centralCode) {
     return centralserverRepository.fetchOneByCentralCode(centralCode)
       .map(CentralServer::getInnReachRecallUser)
@@ -397,10 +405,10 @@ public class CirculationServiceImpl implements CirculationService {
                                                 TransactionHoldDTO transactionHold, TransactionType type) {
     TransactionHold hold;
     TransactionState state;
-    if (type == TransactionType.PATRON) {
+    if (type == PATRON) {
       hold = transactionHoldMapper.toPatronHold(transactionHold);
       state = PATRON_HOLD;
-    } else if (type == TransactionType.LOCAL) {
+    } else if (type == LOCAL) {
       hold = transactionHoldMapper.toLocalHold(transactionHold);
       state = LOCAL_HOLD;
     } else {
