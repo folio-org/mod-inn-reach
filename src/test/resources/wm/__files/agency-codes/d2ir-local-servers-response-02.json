@@ -1,0 +1,171 @@
+{
+  "status": "ok",
+  "reason": "success",
+  "errors":
+  [],
+  "localServerList":
+  [
+    {
+      "agencyList":
+      [
+        {
+          "agencyCode": "koag1",
+          "description": "Koha ByWater Solution Agency 1"
+        },
+        {
+          "agencyCode": "koag2",
+          "description": "Koha ByWater Solution Agency 2"
+        }
+      ],
+      "description": "Koha ByWater Solution",
+      "localCode": "koha1"
+    },
+    {
+      "agencyList":
+      [
+        {
+          "agencyCode": "khag1",
+          "description": "Koha2 ByWater Solution Agency 1"
+        },
+        {
+          "agencyCode": "khag2",
+          "description": "Koha2 ByWater Solution Agency 2"
+        }
+      ],
+      "description": "Koha2 ByWater Solution",
+      "localCode": "koha2"
+    },
+    {
+      "agencyList":
+      [
+        {
+          "agencyCode": "moag1",
+          "description": "Mobi Mobius Agency 1"
+        },
+        {
+          "agencyCode": "moag2",
+          "description": "Mobi Mobius Agency 2"
+        }
+      ],
+      "description": "Mobi Mobius",
+      "localCode": "mobi1"
+    },
+    {
+      "agencyList":
+      [
+        {
+          "agencyCode": "mobg1",
+          "description": "Mobi2 Mobius Agency 1"
+        },
+        {
+          "agencyCode": "mobg2",
+          "description": "Mobi2 Mobius Agency 2"
+        }
+      ],
+      "description": "Mobi2 Mobius",
+      "localCode": "mobi2"
+    },
+    {
+      "agencyList":
+      [
+        {
+          "agencyCode": "ocag1",
+          "description": "Oclc1 Agency 1"
+        },
+        {
+          "agencyCode": "ocag2",
+          "description": "Oclc1 Agency 2"
+        }
+      ],
+      "description": "Oclc1 Site",
+      "localCode": "oclc1"
+    },
+    {
+      "agencyList":
+      [
+        {
+          "agencyCode": "olag1",
+          "description": "Oclc2 Agency 1"
+        },
+        {
+          "agencyCode": "olag2",
+          "description": "Oclc2 Agency 2"
+        }
+      ],
+      "description": "Oclc2 Site",
+      "localCode": "oclc2"
+    },
+    {
+      "agencyList":
+      [
+        {
+          "agencyCode": "plage",
+          "description": "Polaris R&D Zelda MVLS"
+        },
+        {
+          "agencyCode": "plagf",
+          "description": "Polaris R&D Zelda SALS"
+        }
+      ],
+      "description": "Polaris R&D Zelda",
+      "localCode": "ploc8"
+    },
+    {
+      "agencyList":
+      [
+        {
+          "agencyCode": "siag1",
+          "description": "Sirsi-Dynix Agency 1"
+        },
+        {
+          "agencyCode": "siag2",
+          "description": "Sirsi-Dynix Agency 2"
+        },
+        {
+          "agencyCode": "sirs1",
+          "description": "Sirsi-Dynix"
+        }
+      ],
+      "description": "Sirsi-Dynix",
+      "localCode": "sirs1"
+    },
+    {
+      "agencyList":
+      [
+        {
+          "agencyCode": "tc1g1",
+          "description": "TLC01 Agency 1"
+        },
+        {
+          "agencyCode": "tc1g2",
+          "description": "TLC01 Agency 2"
+        },
+        {
+          "agencyCode": "tlc01",
+          "description": "TLC01"
+        }
+      ],
+      "description": "TLC01",
+      "localCode": "tlc01"
+    },
+    {
+      "agencyList":
+      [
+        {
+          "agencyCode": "tc2g1",
+          "description": "TLC02 Agency 1"
+        },
+        {
+          "agencyCode": "tc2g2",
+          "description": "TLC02 Agency 2"
+        },
+        {
+          "agencyCode": "tlc02",
+          "description": "TLC02"
+        }
+      ],
+      "description": "TLC02",
+      "localCode": "tlc02"
+    }
+  ]
+}

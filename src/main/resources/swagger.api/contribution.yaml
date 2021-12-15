@@ -1,0 +1,74 @@
+openapi: 3.0.0
+info:
+  title: INN-Reach Contribution API
+  version: v1
+servers:
+  - url: /inn-reach/
+paths:
+  /central-servers/{centralServerId}/contributions/current:
+    get:
+      description: Get current INN-Reach contribution for the given central server
+      operationId: getCurrentContributionByServerId
+      tags:
+        - contributions
+      responses:
+        '200':
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/contributionDTO"
+        '400':
+          $ref: "api-common.yaml#/components/responses/trait_response_malformed_query_400"
+        '500':
+          $ref: "api-common.yaml#/components/responses/trait_response_500"
+      parameters:
+        - $ref: "api-common.yaml#/components/parameters/centralServerId"
+  /central-servers/{centralServerId}/contributions/history:
+    get:
+      description: Get a list of Inn-Reach contributions for the given central server
+      operationId: getContributionHistoryByServerId
+      tags:
+        - contributions
+      responses:
+        '200':
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/contributionsDTO"
+        '400':
+          $ref: "api-common.yaml#/components/responses/trait_response_malformed_query_400"
+        '500':
+          $ref: "api-common.yaml#/components/responses/trait_response_500"
+      parameters:
+        - $ref: "api-common.yaml#/components/parameters/centralServerId"
+        - $ref: "api-common.yaml#/components/parameters/trait_pageable_offset"
+        - $ref: "api-common.yaml#/components/parameters/trait_pageable_limit"
+  /central-servers/{centralServerId}/contributions:
+    post:
+      description: Start initial contribution process
+      operationId: startInitialContribution
+      tags:
+        - contributions
+      responses:
+        '201':
+          description: Initial contribution process started
+        '400':
+          $ref: "api-common.yaml#/components/responses/trait_response_validation_400"
+        '500':
+          $ref: "api-common.yaml#/components/responses/trait_response_500"
+      parameters:
+        - $ref: 'api-common.yaml#/components/parameters/centralServerId'
+components:
+  schemas:
+    contributionDTO:
+      $ref: schemas/contributionDTO.json
+    contributionsDTO:
+      $ref: schemas/contributionsDTO.json
+    instance:
+      $ref: schemas/inventorystorage/instance.json
+    item:
+      $ref: schemas/inventorystorage/item.json
+    holding:
+      $ref: schemas/inventorystorage/holding.json

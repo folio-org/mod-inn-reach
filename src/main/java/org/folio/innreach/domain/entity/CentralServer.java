@@ -2,14 +2,20 @@ package org.folio.innreach.domain.entity;
 
 import static org.folio.innreach.domain.entity.CentralServer.FETCH_ALL_BY_ID_QUERY;
 import static org.folio.innreach.domain.entity.CentralServer.FETCH_ALL_BY_ID_QUERY_NAME;
-import static org.folio.innreach.domain.entity.CentralServer.FETCH_CONNECTION_DETAILS_QUERY;
-import static org.folio.innreach.domain.entity.CentralServer.FETCH_CONNECTION_DETAILS_QUERY_NAME;
+import static org.folio.innreach.domain.entity.CentralServer.FETCH_CONNECTION_DETAILS_BY_CENTRAL_CODE_QUERY;
+import static org.folio.innreach.domain.entity.CentralServer.FETCH_CONNECTION_DETAILS_BY_CENTRAL_CODE_QUERY_NAME;
+import static org.folio.innreach.domain.entity.CentralServer.FETCH_CONNECTION_DETAILS_BY_ID_QUERY;
+import static org.folio.innreach.domain.entity.CentralServer.FETCH_CONNECTION_DETAILS_BY_ID_QUERY_NAME;
 import static org.folio.innreach.domain.entity.CentralServer.FETCH_ONE_BY_CENTRAL_CODE_QUERY;
 import static org.folio.innreach.domain.entity.CentralServer.FETCH_ONE_BY_CENTRAL_CODE_QUERY_NAME;
 import static org.folio.innreach.domain.entity.CentralServer.FETCH_ONE_BY_ID_QUERY;
 import static org.folio.innreach.domain.entity.CentralServer.FETCH_ONE_BY_ID_QUERY_NAME;
+import static org.folio.innreach.domain.entity.CentralServer.FETCH_RECALL_USER_BY_ID_QUERY;
+import static org.folio.innreach.domain.entity.CentralServer.FETCH_RECALL_USER_BY_ID_QUERY_NAME;
 import static org.folio.innreach.domain.entity.CentralServer.GET_IDS_QUERY;
 import static org.folio.innreach.domain.entity.CentralServer.GET_IDS_QUERY_NAME;
+import static org.folio.innreach.domain.entity.CentralServer.GET_ID_BY_CENTRAL_CODE_QUERY;
+import static org.folio.innreach.domain.entity.CentralServer.GET_ID_BY_CENTRAL_CODE_QUERY_NAME;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -22,6 +28,8 @@ import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
 import javax.persistence.NamedQuery;
 import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
@@ -63,9 +71,22 @@ import org.folio.innreach.domain.entity.base.Identifiable;
   query = GET_IDS_QUERY
 )
 @NamedQuery(
-  name = FETCH_CONNECTION_DETAILS_QUERY_NAME,
-  query = FETCH_CONNECTION_DETAILS_QUERY,
+  name = GET_ID_BY_CENTRAL_CODE_QUERY_NAME,
+  query = GET_ID_BY_CENTRAL_CODE_QUERY
+)
+@NamedQuery(
+  name = FETCH_CONNECTION_DETAILS_BY_ID_QUERY_NAME,
+  query = FETCH_CONNECTION_DETAILS_BY_ID_QUERY,
   hints = @QueryHint(name = QueryHints.PASS_DISTINCT_THROUGH, value = "false")
+)
+@NamedQuery(
+  name = FETCH_CONNECTION_DETAILS_BY_CENTRAL_CODE_QUERY_NAME,
+  query = FETCH_CONNECTION_DETAILS_BY_CENTRAL_CODE_QUERY,
+  hints = @QueryHint(name = QueryHints.PASS_DISTINCT_THROUGH, value = "false")
+)
+@NamedQuery(
+  name = FETCH_RECALL_USER_BY_ID_QUERY_NAME,
+  query = FETCH_RECALL_USER_BY_ID_QUERY
 )
 public class CentralServer extends Auditable implements Identifiable<UUID> {
 
@@ -90,7 +111,12 @@ public class CentralServer extends Auditable implements Identifiable<UUID> {
   public static final String GET_IDS_QUERY_NAME = "CentralServer.getIds";
   public static final String GET_IDS_QUERY = "SELECT DISTINCT cs.id FROM CentralServer AS cs";
 
-  public static final String FETCH_CONNECTION_DETAILS_QUERY_NAME = "CentralServer.fetchConnectionDetails";
+  public static final String GET_ID_BY_CENTRAL_CODE_QUERY_NAME = "CentralServer.getIdByCentralCode";
+  public static final String GET_ID_BY_CENTRAL_CODE_QUERY = "SELECT cs.id FROM CentralServer cs WHERE cs.centralServerCode = :centralCode";
+
+  public static final String FETCH_CONNECTION_DETAILS_BY_ID_QUERY_NAME = "CentralServer.fetchConnectionDetails";
+  public static final String FETCH_CONNECTION_DETAILS_BY_CENTRAL_CODE_QUERY_NAME = "CentralServer.fetchConnectionDetailsByCode";
+
   public static final String FETCH_CONNECTION_DETAILS_QUERY =
     "SELECT new org.folio.innreach.domain.dto.CentralServerConnectionDetailsDTO(" +
       "cs.id, " +
@@ -99,7 +125,14 @@ public class CentralServer extends Auditable implements Identifiable<UUID> {
       "cs.centralServerCode, " +
       "cs.centralServerCredentials.centralServerKey, " +
       "cs.centralServerCredentials.centralServerSecret" +
-    ") FROM CentralServer AS cs " + FETCH_BY_ID_POSTFIX;
+    ") FROM CentralServer AS cs ";
+
+  public static final String FETCH_CONNECTION_DETAILS_BY_ID_QUERY = FETCH_CONNECTION_DETAILS_QUERY + FETCH_BY_ID_POSTFIX;
+  public static final String FETCH_CONNECTION_DETAILS_BY_CENTRAL_CODE_QUERY = FETCH_CONNECTION_DETAILS_QUERY + FETCH_BY_CENTRAL_CODE_POSTFIX;
+
+  public static final String FETCH_RECALL_USER_BY_ID_QUERY_NAME = "CentralServer.fetchRecallUser";
+  public static final String FETCH_RECALL_USER_BY_ID_QUERY = "SELECT cs FROM CentralServer AS cs LEFT JOIN FETCH cs.innReachRecallUser " + FETCH_BY_ID_POSTFIX;
+
 
   @Id
   @GeneratedValue(strategy = GenerationType.AUTO)
@@ -143,6 +176,10 @@ public class CentralServer extends Auditable implements Identifiable<UUID> {
     orphanRemoval = true
   )
   private List<LocalAgency> localAgencies = new ArrayList<>();
+
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "inn_reach_recall_user_id")
+  private InnReachRecallUser innReachRecallUser;
 
   public void setCentralServerCredentials(CentralServerCredentials centralServerCredentials) {
     if (centralServerCredentials != null) {

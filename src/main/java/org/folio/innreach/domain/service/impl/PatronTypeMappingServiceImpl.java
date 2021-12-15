@@ -4,6 +4,7 @@ import static org.folio.innreach.domain.service.impl.ServiceUtils.centralServerR
 import static org.folio.innreach.domain.service.impl.ServiceUtils.initId;
 import static org.folio.innreach.domain.service.impl.ServiceUtils.mergeAndSave;
 
+import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Consumer;
 
@@ -49,6 +50,12 @@ public class PatronTypeMappingServiceImpl implements PatronTypeMappingService {
     var saved = mergeAndSave(incoming, stored, repository, this::copyData);
 
     return mapper.toDTOCollection(saved);
+  }
+
+  @Override
+  public Optional<Integer> getCentralPatronType(UUID centralServerId, UUID patronGroupId) {
+    return repository.findOneByCentralServerIdAndPatronGroupId(centralServerId, patronGroupId)
+      .map(PatronTypeMapping::getPatronType);
   }
 
   private static Example<PatronTypeMapping> mappingExampleWithServerId(UUID centralServerId) {

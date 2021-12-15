@@ -3,7 +3,10 @@ package org.folio.innreach.fixture;
 import static java.lang.System.clearProperty;
 import static java.lang.System.setProperty;
 
-import java.util.HashSet;
+import java.io.File;
+import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
+import java.util.Objects;
 import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
@@ -11,10 +14,16 @@ import java.util.UUID;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.SneakyThrows;
+import lombok.experimental.UtilityClass;
+import lombok.extern.log4j.Log4j2;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.springframework.retry.support.RetryTemplate;
 
 import org.folio.innreach.domain.entity.CentralServer;
 
+@UtilityClass
+@Log4j2
 public class TestUtil {
 
   public static String randomUUIDString() {
@@ -36,6 +45,14 @@ public class TestUtil {
       integer = random.nextInt(range);
     } while (except.contains(integer));
     return integer;
+  }
+
+  public static String randomAlphanumeric5() {
+    return RandomStringUtils.randomAlphanumeric(5).toLowerCase();
+  }
+
+  public static String randomAlphanumeric32Max() {
+    return RandomStringUtils.randomAlphanumeric(1, 33).toLowerCase();
   }
 
   @SneakyThrows
@@ -65,4 +82,16 @@ public class TestUtil {
       .notRetryOn(Exception.class)
       .build();
   }
+
+  @SneakyThrows
+  public static String readFile(String filePath) {
+    log.info("Using mock datafile: {}", filePath);
+
+    return FileUtils.readFileToString(getFile(filePath), StandardCharsets.UTF_8);
+  }
+
+  private static File getFile(String filename) throws URISyntaxException {
+    return new File(Objects.requireNonNull(TestUtil.class.getClassLoader().getResource(filename)).toURI());
+  }
+
 }

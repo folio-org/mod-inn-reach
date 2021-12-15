@@ -1,0 +1,94 @@
+components:
+  schemas:
+    UUID:
+      type: string
+      format: uuid
+    error:
+      $ref: schemas/error.json
+    validationErrorsDTO:
+      type: object
+      properties:
+        code:
+          type: integer
+        message:
+          type: string
+        validationErrors:
+          type: array
+          items:
+            $ref: schemas/validationErrorDTO.json
+  parameters:
+    id:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    centralServerId:
+      name: centralServerId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    trait_queryable_query:
+      name: query
+      in: query
+      description: A query string to filter rules based on matching criteria in fields.
+      schema:
+        type: string
+    trait_pageable_offset:
+      name: offset
+      in: query
+      description: Skip over a number of elements by specifying an offset value for the query
+      schema:
+        default: 0
+        minimum: 0
+        maximum: 2147483647
+        type: integer
+    trait_pageable_limit:
+      name: limit
+      in: query
+      description: Limit the number of elements returned in the response
+      schema:
+        default: 10
+        minimum: 0
+        maximum: 2147483647
+        type: integer
+  responses:
+    trait_response_500:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/error"
+    trait_response_409:
+      description: Item state conflict
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/error"
+    trait_response_404:
+      description: Item not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/error"
+    trait_response_malformed_query_400:
+      description: Bad request, e.g. malformed query parameter.
+      content:
+        application/json:
+          example:
+            $ref: "#/components/examples/error"
+          schema:
+            $ref: "#/components/schemas/error"
+    trait_response_validation_400:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/validationErrorsDTO"
+  examples:
+    error:
+      value:
+        $ref: examples/error.sample

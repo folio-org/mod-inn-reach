@@ -2,8 +2,6 @@ package org.folio.innreach.repository;
 
 import static java.util.UUID.fromString;
 import static java.util.UUID.randomUUID;
-import static java.util.stream.Collectors.toList;
-import static org.folio.innreach.fixture.TestUtil.randomIntegerExcept;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.StringContains.containsString;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -12,6 +10,8 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import static org.folio.innreach.fixture.MappingFixture.createItemTypeMapping;
+import static org.folio.innreach.fixture.TestUtil.randomIntegerExcept;
+import static org.folio.innreach.util.ListUtils.mapItems;
 
 import java.util.List;
 import java.util.Optional;
@@ -52,9 +52,7 @@ class ItemTypeMappingRepositoryTest extends BaseRepositoryTest {
 
     assertEquals(4, mappings.size());
 
-    List<String> ids = mappings.stream()
-      .map(mapping -> mapping.getId().toString())
-      .collect(toList());
+    List<String> ids = mapItems(mappings, mapping -> mapping.getId().toString());
 
     assertEquals(List.of(PRE_POPULATED_ITEM_TYPE_MAPPING_ID1, PRE_POPULATED_ITEM_TYPE_MAPPING_ID2,
       PRE_POPULATED_ITEM_TYPE_MAPPING_ID3, PRE_POPULATED_ITEM_TYPE_MAPPING_ID4), ids);
@@ -95,16 +93,17 @@ class ItemTypeMappingRepositoryTest extends BaseRepositoryTest {
   @Sql(scripts = {"classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/item-type-mapping/pre-populate-item-type-mapping.sql"})
   void shouldUpdateExistingMapping() {
-    var mapping = repository.getOne(fromString(PRE_POPULATED_ITEM_TYPE_MAPPING_ID1));
+    var mapping1 = repository.getOne(fromString(PRE_POPULATED_ITEM_TYPE_MAPPING_ID1));
+    var mapping2 = repository.getOne(fromString(PRE_POPULATED_ITEM_TYPE_MAPPING_ID2));
 
     UUID newMaterialTypeId = randomUUID();
-    int newItemType = randomIntegerExcept(256, Set.of(mapping.getCentralItemType()));
-    mapping.setCentralItemType(newItemType);
-    mapping.setMaterialTypeId(newMaterialTypeId);
+    int newItemType = randomIntegerExcept(256, Set.of(mapping1.getCentralItemType(), mapping2.getCentralItemType()));
+    mapping1.setCentralItemType(newItemType);
+    mapping1.setMaterialTypeId(newMaterialTypeId);
 
-    repository.saveAndFlush(mapping);
+    repository.saveAndFlush(mapping1);
 
-    var saved = repository.getOne(mapping.getId());
+    var saved = repository.getOne(mapping1.getId());
 
     assertEquals(newItemType, saved.getCentralItemType());
     assertEquals(newMaterialTypeId, saved.getMaterialTypeId());
@@ -126,7 +125,9 @@ class ItemTypeMappingRepositoryTest extends BaseRepositoryTest {
   @Sql(scripts = {"classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/item-type-mapping/pre-populate-item-type-mapping.sql"})
   void shouldFindMappingByCentralItemType() {
-    var mapping = repository.findByCentralItemType(PRE_POPULATED_CENTRAL_ITEM_TYPE);
+    var centralServerId = fromString(PRE_POPULATED_CENTRAL_SERVER_ID);
+    var mapping =
+      repository.findByCentralServerIdAndCentralItemType(centralServerId, PRE_POPULATED_CENTRAL_ITEM_TYPE).get();
 
     assertEquals(PRE_POPULATED_CENTRAL_ITEM_TYPE, mapping.getCentralItemType());
     assertEquals(UUID.fromString(PRE_POPULATED_MATERIAL_TYPE_ID), mapping.getMaterialTypeId());

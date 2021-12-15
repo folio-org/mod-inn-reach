@@ -1,34 +1,62 @@
 package org.folio.innreach.mapper;
 
+import org.folio.innreach.domain.entity.InnReachTransaction;
 import org.folio.innreach.domain.entity.TransactionItemHold;
-import org.folio.innreach.domain.entity.TransactionPickupLocation;
-import org.folio.innreach.dto.TransactionItemHoldDTO;
+import org.folio.innreach.domain.entity.TransactionLocalHold;
+import org.folio.innreach.domain.entity.TransactionPatronHold;
+import org.folio.innreach.dto.InnReachTransactionDTO;
+import org.folio.innreach.dto.InnReachTransactionsDTO;
 import org.mapstruct.Builder;
 import org.mapstruct.InjectionStrategy;
 import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+
+import java.util.LinkedList;
+import java.util.List;
+
+import static org.apache.commons.collections4.ListUtils.emptyIfNull;
 
 @Mapper(componentModel = "spring", injectionStrategy = InjectionStrategy.CONSTRUCTOR, uses = MappingMethods.class, builder = @Builder(disableBuilder = true))
-public interface InnReachTransactionMapper {
+public abstract class InnReachTransactionMapper {
+  @Autowired
+  InnReachTransactionHoldMapper holdMapper;
 
-  String PICKUP_LOCATION_DELIMITER = ":";
+  @Mapping(target = "hold", ignore = true)
+  @AuditableMapping
+  public abstract InnReachTransactionDTO toDTOWithoutHold(InnReachTransaction entity);
 
-  TransactionItemHold toItemHold(TransactionItemHoldDTO dto);
+  public InnReachTransactionDTO toDTO(InnReachTransaction entity) {
+    var dto = toDTOWithoutHold(entity);
+    switch (entity.getType()) {
+      case ITEM:
+        dto.setHold(holdMapper.toItemHoldDTO((TransactionItemHold) entity.getHold()));
+        break;
+      case LOCAL:
+        dto.setHold(holdMapper.toLocalHoldDTO((TransactionLocalHold) entity.getHold()));
+        break;
+      case PATRON:
+        dto.setHold(holdMapper.toPatronHoldDTO((TransactionPatronHold) entity.getHold()));
+        break;
+      default:
+        break;
+    }
+    return dto;
+  }
 
-  default TransactionPickupLocation map(String value) {
-    if (value == null){
-      throw new IllegalArgumentException("Pickup location must not be null.");
+  public List<InnReachTransactionDTO> toDTOs(Iterable<InnReachTransaction> entities) {
+    List<InnReachTransactionDTO> dtos = new LinkedList<>();
+    for (InnReachTransaction transaction : entities) {
+      var dto = toDTO(transaction);
+      dtos.add(dto);
     }
-    var strings = value.split(PICKUP_LOCATION_DELIMITER);
-    if (strings.length > 4 || strings.length < 3){
-      throw new IllegalArgumentException("Pickup location must consist of 3 or 4 strings delimited by a colon.");
-    }
-    var pickupLocation = new TransactionPickupLocation();
-    pickupLocation.setPickupLocCode(strings[0]);
-    pickupLocation.setDisplayName(strings[1]);
-    pickupLocation.setPrintName(strings[2]);
-    if (strings.length > 3) {
-      pickupLocation.setDeliveryStop(strings[3]);
-    }
-    return pickupLocation;
+    return dtos;
+  }
+
+  public InnReachTransactionsDTO toDTOCollection(Page<InnReachTransaction> pageable) {
+    List<InnReachTransactionDTO> dtos = emptyIfNull(toDTOs(pageable));
+
+    return new InnReachTransactionsDTO().transactions(dtos).totalRecords((int) pageable.getTotalElements());
   }
 }

@@ -7,12 +7,12 @@ import static org.jeasy.random.FieldPredicates.named;
 
 import static org.folio.innreach.domain.entity.Contribution.Status.IN_PROGRESS;
 import static org.folio.innreach.fixture.TestUtil.deserializeFromJsonFile;
+import static org.folio.innreach.util.ListUtils.mapItems;
 
 import java.time.OffsetDateTime;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 import lombok.experimental.UtilityClass;
 import org.jeasy.random.EasyRandom;
@@ -102,7 +102,7 @@ public class ContributionFixture {
     instance.setSource("MARC");
     instance.setHrid("test");
     instance.setItems(singletonList(createItem()));
-    instance.setHoldings(singletonList(createHolding()));
+    instance.setHoldingsRecords(singletonList(createHolding()));
     return instance;
   }
 
@@ -115,16 +115,12 @@ public class ContributionFixture {
   }
 
   public static List<InnReachLocationDTO> createIrLocations() {
-    return Arrays.asList(IR_LOCATION_CODE, IR_LOCATION2_CODE, IR_LOCATION3_CODE).stream()
-      .map(c -> new InnReachLocationDTO(c, null))
-      .collect(Collectors.toList());
+    return mapItems(Arrays.asList(IR_LOCATION_CODE, IR_LOCATION2_CODE, IR_LOCATION3_CODE), c -> new InnReachLocationDTO(c, null));
   }
 
   public static ResultList<MaterialTypeDTO> createMaterialTypes() {
-    List<MaterialTypeDTO> results = Arrays.asList(PRE_POPULATED_TYPE_ID, PRE_POPULATED_TYPE2_ID, PRE_POPULATED_TYPE3_ID)
-      .stream()
-      .map(ContributionFixture::createMaterialType)
-      .collect(Collectors.toList());
+    List<MaterialTypeDTO> results = mapItems(Arrays.asList(PRE_POPULATED_TYPE_ID, PRE_POPULATED_TYPE2_ID, PRE_POPULATED_TYPE3_ID),
+        ContributionFixture::createMaterialType);
 
     return ResultList.of(results.size(), results);
   }

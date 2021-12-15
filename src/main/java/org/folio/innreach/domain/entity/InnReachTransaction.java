@@ -1,9 +1,19 @@
 package org.folio.innreach.domain.entity;
 
-import lombok.Getter;
-import lombok.Setter;
-import org.folio.innreach.domain.entity.base.Auditable;
-import org.folio.innreach.domain.entity.base.Identifiable;
+import static org.folio.innreach.domain.entity.InnReachTransaction.FETCH_ALL_BY_ITEM_BARCODE_AND_STATE_IN_COUNT_QUERY;
+import static org.folio.innreach.domain.entity.InnReachTransaction.FETCH_ALL_BY_ITEM_BARCODE_AND_STATE_IN_COUNT_QUERY_NAME;
+import static org.folio.innreach.domain.entity.InnReachTransaction.FETCH_ALL_BY_ITEM_BARCODE_AND_STATE_IN_QUERY;
+import static org.folio.innreach.domain.entity.InnReachTransaction.FETCH_ALL_BY_ITEM_BARCODE_AND_STATE_IN_QUERY_NAME;
+import static org.folio.innreach.domain.entity.InnReachTransaction.FETCH_ONE_BY_ID_QUERY;
+import static org.folio.innreach.domain.entity.InnReachTransaction.FETCH_ONE_BY_ID_QUERY_NAME;
+import static org.folio.innreach.domain.entity.InnReachTransaction.FETCH_ONE_BY_ITEM_BARCODE_QUERY;
+import static org.folio.innreach.domain.entity.InnReachTransaction.FETCH_ONE_BY_ITEM_BARCODE_QUERY_NAME;
+import static org.folio.innreach.domain.entity.InnReachTransaction.FETCH_ONE_BY_TRACKING_ID_AND_CENTRAL_CODE_QUERY;
+import static org.folio.innreach.domain.entity.InnReachTransaction.FETCH_ONE_BY_TRACKING_ID_AND_CENTRAL_CODE_QUERY_NAME;
+import static org.folio.innreach.domain.entity.InnReachTransaction.FETCH_ONE_BY_TRACKING_ID_QUERY;
+import static org.folio.innreach.domain.entity.InnReachTransaction.FETCH_ONE_BY_TRACKING_ID_QUERY_NAME;
+
+import java.util.UUID;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
@@ -16,26 +26,75 @@ import javax.persistence.JoinColumn;
 import javax.persistence.NamedQuery;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
-import java.util.UUID;
 
-import static org.folio.innreach.domain.entity.InnReachTransaction.FETCH_ONE_BY_TRACKING_ID_QUERY;
-import static org.folio.innreach.domain.entity.InnReachTransaction.FETCH_ONE_BY_TRACKING_ID_QUERY_NAME;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
+
+import org.folio.innreach.domain.entity.base.Auditable;
+import org.folio.innreach.domain.entity.base.Identifiable;
 
 @Entity
 @Getter
 @Setter
+@ToString(exclude = "hold")
 @Table(name = "inn_reach_transaction")
 @NamedQuery(
   name = FETCH_ONE_BY_TRACKING_ID_QUERY_NAME,
   query = FETCH_ONE_BY_TRACKING_ID_QUERY
 )
+@NamedQuery(
+  name = FETCH_ONE_BY_ID_QUERY_NAME,
+  query = FETCH_ONE_BY_ID_QUERY
+)
+@NamedQuery(
+  name = FETCH_ONE_BY_ITEM_BARCODE_QUERY_NAME,
+  query = FETCH_ONE_BY_ITEM_BARCODE_QUERY
+)
+@NamedQuery(
+  name = FETCH_ONE_BY_TRACKING_ID_AND_CENTRAL_CODE_QUERY_NAME,
+  query = FETCH_ONE_BY_TRACKING_ID_AND_CENTRAL_CODE_QUERY
+)
+@NamedQuery(
+  name = FETCH_ALL_BY_ITEM_BARCODE_AND_STATE_IN_QUERY_NAME,
+  query = FETCH_ALL_BY_ITEM_BARCODE_AND_STATE_IN_QUERY
+)
+@NamedQuery(
+  name = FETCH_ALL_BY_ITEM_BARCODE_AND_STATE_IN_COUNT_QUERY_NAME,
+  query = FETCH_ALL_BY_ITEM_BARCODE_AND_STATE_IN_COUNT_QUERY
+)
 public class InnReachTransaction extends Auditable implements Identifiable<UUID> {
 
+  public static final String GET_ALL_QUERY_NAME = "InnReachTransaction.getAll";
+  public static final String GET_ALL_QUERY = "SELECT t FROM InnReachTransaction t JOIN FETCH t.hold hold " +
+    "JOIN FETCH hold.pickupLocation location";
+
   public static final String FETCH_ONE_BY_TRACKING_ID_QUERY_NAME = "InnReachTransaction.fetchOne";
-  public static final String FETCH_ONE_BY_TRACKING_ID_QUERY =
-    "SELECT t FROM InnReachTransaction t JOIN FETCH t.hold hold " +
-      "JOIN FETCH hold.pickupLocation location " +
-      "WHERE t.trackingId = :trackingId AND location.id = hold.pickupLocation.id";
+  public static final String FETCH_ONE_BY_TRACKING_ID_QUERY = GET_ALL_QUERY + " WHERE t.trackingId = :trackingId AND location.id = hold.pickupLocation.id";
+
+  public static final String FETCH_ONE_BY_ID_QUERY_NAME = "InnReachTransaction.fetchOneById";
+  public static final String FETCH_ONE_BY_ID_QUERY = GET_ALL_QUERY + " WHERE t.id = :id";
+
+  public static final String FETCH_ONE_BY_ITEM_BARCODE_QUERY_NAME = "InnReachTransaction.fetchOneByItemBarcode";
+  public static final String FETCH_ONE_BY_ITEM_BARCODE_QUERY = GET_ALL_QUERY + " WHERE hold.folioItemBarcode = :itemBarcode";
+
+  public static final String FETCH_ONE_BY_TRACKING_ID_AND_CENTRAL_CODE_QUERY_NAME = "InnReachTransaction.fetchByTrackingIdAndCentralCode";
+  public static final String FETCH_ONE_BY_TRACKING_ID_AND_CENTRAL_CODE_QUERY = "SELECT irt FROM InnReachTransaction AS irt " +
+    "JOIN FETCH irt.hold AS h " +
+    "JOIN FETCH h.pickupLocation " +
+    "WHERE irt.trackingId = :trackingId AND irt.centralServerCode = :centralServerCode";
+
+  private static final String BY_ITEM_BARCODE_AND_STATE_IN_QUERY_POSTFIX = "WHERE (th.shippedItemBarcode = :itemBarcode AND irt.state IN (:states) AND irt.type = 1)" +
+    " OR (th.folioItemBarcode = :itemBarcode AND irt.state IN (:states) AND irt.type = 0)";
+
+  public static final String FETCH_ALL_BY_ITEM_BARCODE_AND_STATE_IN_QUERY_NAME = "InnReachTransaction.fetchAllByItemBarcodeAndStatesIn";
+  public static final String FETCH_ALL_BY_ITEM_BARCODE_AND_STATE_IN_QUERY = "SELECT irt FROM InnReachTransaction AS irt JOIN FETCH irt.hold AS th " +
+    BY_ITEM_BARCODE_AND_STATE_IN_QUERY_POSTFIX;
+
+  public static final String FETCH_ALL_BY_ITEM_BARCODE_AND_STATE_IN_COUNT_QUERY_NAME = "InnReachTransaction.countAllByItemBarcodeAndStatesIn";
+  public static final String FETCH_ALL_BY_ITEM_BARCODE_AND_STATE_IN_COUNT_QUERY = "SELECT COUNT(irt.id) FROM InnReachTransaction AS irt JOIN irt.hold AS th " +
+    BY_ITEM_BARCODE_AND_STATE_IN_QUERY_POSTFIX;
+
 
   @Id
   @GeneratedValue(strategy = GenerationType.AUTO)

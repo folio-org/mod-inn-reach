@@ -1,0 +1,100 @@
+{
+  "description": "INN-Reach Transaction sorting parameters",
+  "type": "object",
+  "properties": {
+    "type": {
+      "description": "List of INN-Reach Transaction types",
+      "type": "array",
+      "items": {
+        "$ref": "transactionTypeEnum.json"
+      }
+    },
+    "state": {
+      "description": "List of INN-Reach Transaction states",
+      "type": "array",
+      "items": {
+        "$ref": "transactionStateEnum.json"
+      }
+    },
+    "centralServerCode": {
+      "description": "List of central server codes",
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "patronAgencyCode": {
+      "description": "List of patron agency codes",
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "itemAgencyCode": {
+      "description": "List of item agency codes",
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "centralPatronType": {
+      "description": "List of patron types",
+      "type": "array",
+      "items": {
+        "type": "integer"
+      }
+    },
+    "centralItemType": {
+      "description": "List of central item types",
+      "type": "array",
+      "items": {
+        "type": "integer"
+      }
+    },
+    "query": {
+      "type": "string",
+      "description": "Provides ability to perform a keyword-style lookup based on the information associated with the transaction"
+    },
+    "sortBy": {
+      "description": "Sorting parameter",
+      "type": "string",
+      "enum": [
+        "transactionTime",
+        "createdDate",
+        "updatedDate",
+        "type",
+        "state",
+        "itemAgencyCode",
+        "patronAgencyCode",
+        "centralPatronType",
+        "centralItemType"
+      ],
+      "x-enum-varnames": [
+        "transactionTime",
+        "createdDate",
+        "updatedDate",
+        "type",
+        "state",
+        "itemAgencyCode",
+        "patronAgencyCode",
+        "centralPatronType",
+        "centralItemType"
+      ]
+    },
+    "sortOrder": {
+      "description": "Sorting order parameter",
+      "type": "string",
+      "enum": [
+        "asc",
+        "desc"
+      ],
+      "x-enum-varnames": [
+        "asc",
+        "desc"
+      ],
+      "default": "asc"
+    }
+  },
+  "additionalProperties": false,
+  "required": []
+}

@@ -7,6 +7,7 @@ import static org.folio.innreach.dto.ItemStatus.NameEnum.CHECKED_OUT;
 import static org.folio.innreach.dto.ItemStatus.NameEnum.IN_TRANSIT;
 import static org.folio.innreach.dto.MappingValidationStatusDTO.INVALID;
 import static org.folio.innreach.dto.MappingValidationStatusDTO.VALID;
+import static org.folio.innreach.util.ListUtils.mapItems;
 
 import java.util.List;
 import java.util.Objects;
@@ -19,8 +20,8 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 
+import org.folio.innreach.client.CirculationClient;
 import org.folio.innreach.client.MaterialTypesClient;
-import org.folio.innreach.client.RequestStorageClient;
 import org.folio.innreach.domain.dto.folio.ContributionItemCirculationStatus;
 import org.folio.innreach.domain.dto.folio.inventorystorage.MaterialTypeDTO;
 import org.folio.innreach.domain.service.CentralServerService;
@@ -57,7 +58,7 @@ public class ContributionValidationServiceImpl implements ContributionValidation
 
   private final ItemContributionOptionsConfigurationService itemContributionOptionsConfigurationService;
 
-  private final RequestStorageClient requestStorageClient;
+  private final CirculationClient circulationClient;
 
   @Override
   public ContributionItemCirculationStatus getItemCirculationStatus(UUID centralServerId, Item item) {
@@ -177,23 +178,18 @@ public class ContributionValidationServiceImpl implements ContributionValidation
   }
 
   private boolean isItemRequested(Item inventoryItem) {
-    var itemRequests = requestStorageClient.findRequests(inventoryItem.getId());
+    var itemRequests = circulationClient.queryRequestsByItemId(inventoryItem.getId());
     return itemRequests.getTotalRecords() != 0;
   }
 
   private List<UUID> getMaterialTypeIds() {
-    return materialTypesClient.getMaterialTypes(MATERIAL_TYPES_CQL, LIMIT).getResult()
-      .stream()
-      .map(MaterialTypeDTO::getId)
-      .collect(Collectors.toList());
+    return mapItems(materialTypesClient.getMaterialTypes(MATERIAL_TYPES_CQL, LIMIT).getResult(), MaterialTypeDTO::getId);
   }
 
   private MappingValidationStatusDTO validateLibraryMappings(UUID centralServerId, List<LibraryMappingDTO> libraryMappings) {
     List<UUID> centralServerFolioLibraryIds = getFolioLibraryIds(centralServerId);
 
-    var mappedLibraryIds = libraryMappings.stream()
-      .map(LibraryMappingDTO::getLibraryId)
-      .collect(Collectors.toList());
+    var mappedLibraryIds = mapItems(libraryMappings, LibraryMappingDTO::getLibraryId);
 
     return mappedLibraryIds.containsAll(centralServerFolioLibraryIds) ? VALID : INVALID;
   }
@@ -209,10 +205,8 @@ public class ContributionValidationServiceImpl implements ContributionValidation
   private List<String> getAllInnReachLocationCodes(UUID centralServerId) {
     var centralServerConnectionDetails = centralServerService.getCentralServerConnectionDetails(centralServerId);
 
-    return innReachLocationExternalService.getAllLocations(centralServerConnectionDetails)
-      .stream()
-      .map(org.folio.innreach.external.dto.InnReachLocationDTO::getCode)
-      .collect(Collectors.toList());
+    return mapItems(innReachLocationExternalService.getAllLocations(centralServerConnectionDetails),
+        org.folio.innreach.external.dto.InnReachLocationDTO::getCode);
   }
 
   private List<UUID> getFolioLibraryIds(UUID centralServerId) {
@@ -228,12 +222,9 @@ public class ContributionValidationServiceImpl implements ContributionValidation
   }
 
   private List<String> getMappedInnReachLocationCodes(List<LibraryMappingDTO> libraryMappings) {
-    var ids = libraryMappings.stream().map(LibraryMappingDTO::getInnReachLocationId).collect(Collectors.toList());
+    var ids = mapItems(libraryMappings, LibraryMappingDTO::getInnReachLocationId);
 
-    return innReachLocationService.getInnReachLocations(ids).getLocations()
-      .stream()
-      .map(InnReachLocationDTO::getCode)
-      .collect(Collectors.toList());
+    return mapItems(innReachLocationService.getInnReachLocations(ids).getLocations(), InnReachLocationDTO::getCode);
   }
 
   private ContributionCriteriaDTO getContributionConfigService(UUID centralServerId) {

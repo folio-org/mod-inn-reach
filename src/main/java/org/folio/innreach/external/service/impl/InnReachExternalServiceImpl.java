@@ -10,7 +10,6 @@ import lombok.extern.log4j.Log4j2;
 import org.springframework.stereotype.Service;
 
 import org.folio.innreach.domain.service.CentralServerService;
-import org.folio.innreach.external.InnReachHeaders;
 import org.folio.innreach.external.client.feign.InnReachClient;
 import org.folio.innreach.external.service.InnReachAuthExternalService;
 import org.folio.innreach.external.service.InnReachExternalService;
@@ -35,6 +34,35 @@ public class InnReachExternalServiceImpl implements InnReachExternalService {
       buildBearerAuthHeader(accessTokenDTO.getAccessToken()),
       connectionDetailsDTO.getLocalCode(),
       connectionDetailsDTO.getCentralCode()
+    );
+  }
+
+  @Override
+  public String postInnReachApi(String centralCode, String innReachRequestUri, Object payload) {
+    var connectionDetails = centralServerService.getConnectionDetailsByCode(centralCode);
+
+    var accessTokenDTO = innReachAuthExternalService.getAccessToken(connectionDetails);
+
+    return innReachClient.postInnReachApi(
+      buildInnReachRequestUrl(connectionDetails.getConnectionUrl(), innReachRequestUri),
+      buildBearerAuthHeader(accessTokenDTO.getAccessToken()),
+      connectionDetails.getLocalCode(),
+      connectionDetails.getCentralCode(),
+      payload
+    );
+  }
+
+  @Override
+  public String postInnReachApi(String centralCode, String innReachRequestUri) {
+    var connectionDetails = centralServerService.getConnectionDetailsByCode(centralCode);
+
+    var accessTokenDTO = innReachAuthExternalService.getAccessToken(connectionDetails);
+
+    return innReachClient.postInnReachApi(
+      buildInnReachRequestUrl(connectionDetails.getConnectionUrl(), innReachRequestUri),
+      buildBearerAuthHeader(accessTokenDTO.getAccessToken()),
+      connectionDetails.getLocalCode(),
+      connectionDetails.getCentralCode()
     );
   }
 
