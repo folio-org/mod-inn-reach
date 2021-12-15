@@ -3,9 +3,9 @@ package org.folio.innreach.domain.service.impl;
 import static java.util.Objects.nonNull;
 import static org.apache.commons.lang3.StringUtils.capitalize;
 
-import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.BORROWER_RENEW;
 import static org.folio.innreach.domain.dto.folio.circulation.RequestDTO.RequestStatus.OPEN_AWAITING_PICKUP;
 import static org.folio.innreach.domain.dto.folio.circulation.RequestDTO.RequestStatus.OPEN_IN_TRANSIT;
+import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.BORROWER_RENEW;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.BORROWING_SITE_CANCEL;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.CANCEL_REQUEST;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.ITEM_HOLD;
@@ -28,12 +28,6 @@ import java.util.function.Supplier;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
-
-import org.folio.innreach.dto.BorrowerRenewDTO;
-import org.folio.innreach.dto.CheckOutResponseDTO;
-import org.folio.innreach.dto.RenewLoanRequestDTO;
-import org.folio.innreach.dto.ReturnUncirculatedDTO;
-import org.folio.innreach.external.service.InnReachExternalService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
@@ -65,8 +59,13 @@ import org.folio.innreach.dto.ItemShippedDTO;
 import org.folio.innreach.dto.LocalHoldDTO;
 import org.folio.innreach.dto.PatronHoldDTO;
 import org.folio.innreach.dto.RecallDTO;
+import org.folio.innreach.dto.ReturnUncirculatedDTO;
 import org.folio.innreach.dto.TransactionHoldDTO;
 import org.folio.innreach.dto.TransferRequestDTO;
+import org.folio.innreach.dto.BorrowerRenewDTO;
+import org.folio.innreach.dto.CheckOutResponseDTO;
+import org.folio.innreach.dto.RenewLoanRequestDTO;
+import org.folio.innreach.external.service.InnReachExternalService;
 import org.folio.innreach.mapper.InnReachTransactionHoldMapper;
 import org.folio.innreach.mapper.InnReachTransactionPickupLocationMapper;
 import org.folio.innreach.repository.CentralServerRepository;
@@ -319,21 +318,22 @@ public class CirculationServiceImpl implements CirculationService {
     var existingDueDate = loan.getDueDate();
     var requestedDueDate = new Date(borrowerRenew.getDueDateTime() * 1000L);
 
-      try {
-        var renewedLoan = renewLoan(hold);
-        var calculatedDueDate = renewedLoan.getDueDate();
-        if (calculatedDueDate.after(requestedDueDate) || calculatedDueDate.equals(requestedDueDate)) {
-          transaction.setState(BORROWER_RENEW);
-        } else {
-          recallRequestToCentralSever(transaction, existingDueDate);
-        }
-      } catch (Exception e) {
-        if (existingDueDate.before(requestedDueDate)) {
-          recallRequestToCentralSever(transaction, existingDueDate);
-        } else {
-          throw new CirculationException("Failed to renew loan: " + e.getMessage(), e);
-        }
+    try {
+      var renewedLoan = renewLoan(hold);
+      var calculatedDueDate = renewedLoan.getDueDate();
+
+      if (calculatedDueDate.after(requestedDueDate) || calculatedDueDate.equals(requestedDueDate)) {
+        transaction.setState(BORROWER_RENEW);
+      } else {
+        recallRequestToCentralSever(transaction, existingDueDate);
       }
+    } catch (Exception e) {
+      if (existingDueDate.before(requestedDueDate)) {
+        recallRequestToCentralSever(transaction, existingDueDate);
+      } else {
+        throw new CirculationException("Failed to renew loan: " + e.getMessage(), e);
+      }
+    }
 
     return success();
   }
@@ -351,7 +351,8 @@ public class CirculationServiceImpl implements CirculationService {
     String uri = resolveD2irCircPath(D2IR_ITEM_RECALL_OPERATION, trackingId, centralCode);
 
     var dueDateForRecallRequest = new HashMap<>();
-    dueDateForRecallRequest.put("dueDateTime", existingDueDate);
+    var convertedDate = existingDueDate.getTime() / 1000;
+    dueDateForRecallRequest.put("dueDateTime", convertedDate);
     try {
       innReachExternalService.postInnReachApi(centralCode, uri, dueDateForRecallRequest);
       transaction.setState(RECALL);
