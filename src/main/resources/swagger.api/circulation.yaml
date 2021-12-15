@@ -538,6 +538,35 @@ paths:
       parameters:
         - $ref: '#/components/parameters/trackingId'
         - $ref: '#/components/parameters/centralCode'
+  /d2ir/circ/borrowerrenew/{trackingId}/{centralCode}:
+    put:
+      operationId: borrowerRenew
+      description: Borrower Renew Message for Item Hold
+      tags:
+        - inn-reach-circulation
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/borrowerRenewDTO"
+      responses:
+        '200':
+          description: Set transaction state BORROWER_RENEW
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/innReachResponseDTO"
+        '400':
+          description: An error occurred during processing the request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/innReachResponseDTO"
+        '500':
+          $ref: "api-common.yaml#/components/responses/trait_response_500"
+      parameters:
+        - $ref: '#/components/parameters/trackingId'
+        - $ref: '#/components/parameters/centralCode'
   /d2ir/circ/ownerrenew/{trackingId}/{centralCode}:
     put:
       operationId: renewLoan
@@ -644,6 +673,10 @@ components:
       $ref: schemas/d2ir/itemReceivedDTO.json
     recallDTO:
       $ref: schemas/d2ir/recallDTO.json
+    borrowerRenewDTO:
+      $ref: schemas/d2ir/borrowerRenewDTO.json
+    renewLoanRequestDTO:
+      $ref: schemas/circulation/renewLoanRequestDTO.json
     loanRenewedDTO:
       $ref: schemas/d2ir/loanRenewedDTO.json
   parameters:

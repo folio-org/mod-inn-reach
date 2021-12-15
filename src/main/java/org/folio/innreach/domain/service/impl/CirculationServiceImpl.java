@@ -6,6 +6,7 @@ import static org.apache.commons.lang3.StringUtils.capitalize;
 
 import static org.folio.innreach.domain.dto.folio.circulation.RequestDTO.RequestStatus.OPEN_AWAITING_PICKUP;
 import static org.folio.innreach.domain.dto.folio.circulation.RequestDTO.RequestStatus.OPEN_IN_TRANSIT;
+import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.BORROWER_RENEW;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.BORROWING_SITE_CANCEL;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.CANCEL_REQUEST;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.ITEM_HOLD;
@@ -24,6 +25,7 @@ import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionTy
 
 import java.time.Instant;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
@@ -31,8 +33,10 @@ import java.util.function.Supplier;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
 
@@ -65,6 +69,10 @@ import org.folio.innreach.dto.RecallDTO;
 import org.folio.innreach.dto.ReturnUncirculatedDTO;
 import org.folio.innreach.dto.TransactionHoldDTO;
 import org.folio.innreach.dto.TransferRequestDTO;
+import org.folio.innreach.dto.BorrowerRenewDTO;
+import org.folio.innreach.dto.CheckOutResponseDTO;
+import org.folio.innreach.dto.RenewLoanRequestDTO;
+import org.folio.innreach.external.service.InnReachExternalService;
 import org.folio.innreach.mapper.InnReachTransactionHoldMapper;
 import org.folio.innreach.mapper.InnReachTransactionPickupLocationMapper;
 import org.folio.innreach.repository.CentralServerRepository;
@@ -86,6 +94,7 @@ public class CirculationServiceImpl implements CirculationService {
   };
 
   private static final String UNEXPECTED_TRANSACTION_STATE = "Unexpected transaction state: ";
+  private static final String D2IR_ITEM_RECALL_OPERATION = "recall";
 
   private final InnReachTransactionRepository transactionRepository;
   private final CentralServerRepository centralserverRepository;
@@ -95,52 +104,62 @@ public class CirculationServiceImpl implements CirculationService {
   private final RequestService requestService;
   private final ItemService itemService;
   private final HoldingsService holdingsService;
+  private final InnReachExternalService innReachExternalService;
 
+  @Transactional(propagation = Propagation.NEVER)
   @Override
   public InnReachResponseDTO initiatePatronHold(String trackingId, String centralCode, PatronHoldDTO patronHold) {
-    var innReachTransaction = transactionRepository.findByTrackingIdAndCentralServerCode(trackingId, centralCode);
+    var optTransaction = transactionRepository.findByTrackingIdAndCentralServerCode(trackingId, centralCode);
     var transactionHold = transactionHoldMapper.mapRequest(patronHold);
 
-    if (innReachTransaction.isPresent()) {
+    if (optTransaction.isPresent()) {
       log.info("Transaction patron hold with trackingId [{}] and centralCode [{}] exists, start to update...",
         trackingId, centralCode);
+      var existingTransaction = optTransaction.get();
 
-      updateTransactionHold(innReachTransaction.get().getHold(), transactionHold);
+      updateTransactionHold(existingTransaction.getHold(), transactionHold);
+      existingTransaction = transactionRepository.save(existingTransaction);
 
-      patronHoldService.updateVirtualItems(innReachTransaction.get());
+      patronHoldService.updateVirtualItems(existingTransaction);
     } else {
       log.info("Transaction patron hold with trackingId [{}] and centralCode [{}] doesn't exist, create a new one...",
         trackingId, centralCode);
 
-      InnReachTransaction newTransactionWithPatronHold = createTransaction(trackingId, centralCode,
-        transactionHold, PATRON);
-      var transaction = transactionRepository.save(newTransactionWithPatronHold);
+      var newTransaction = createTransaction(trackingId, centralCode, transactionHold, TransactionType.PATRON);
+      newTransaction = transactionRepository.save(newTransaction);
 
-      patronHoldService.createVirtualItems(transaction);
+      patronHoldService.createVirtualItems(newTransaction);
     }
 
     return success();
   }
 
+  @Transactional(propagation = Propagation.NEVER)
   @Override
   public InnReachResponseDTO initiateLocalHold(String trackingId, String centralCode, LocalHoldDTO localHold) {
-    var innReachTransaction = transactionRepository.findByTrackingIdAndCentralServerCode(trackingId, centralCode);
+    Assert.isTrue(StringUtils.equals(localHold.getItemAgencyCode(), localHold.getPatronAgencyCode()),
+      "The patron and item agencies should be on the same local server");
+
+    var optTransaction = transactionRepository.findByTrackingIdAndCentralServerCode(trackingId, centralCode);
     var transactionHold = transactionHoldMapper.mapRequest(localHold);
 
-    if (innReachTransaction.isPresent()) {
+    InnReachTransaction transaction;
+    if (optTransaction.isPresent()) {
       log.info("Transaction local hold with trackingId [{}] and centralCode [{}] exists, start to update...",
         trackingId, centralCode);
 
-      updateTransactionHold(innReachTransaction.get().getHold(), transactionHold);
+      transaction = optTransaction.get();
+
+      updateTransactionHold(transaction.getHold(), transactionHold);
     } else {
       log.info("Transaction local hold with trackingId [{}] and centralCode [{}] doesn't exist, create a new one...",
         trackingId, centralCode);
 
-      var newTransaction = createTransaction(trackingId, centralCode, transactionHold, TransactionType.LOCAL);
-      transactionRepository.save(newTransaction);
+      transaction = createTransaction(trackingId, centralCode, transactionHold, TransactionType.LOCAL);
     }
+    transaction = transactionRepository.save(transaction);
 
-    requestService.createLocalHoldRequest(trackingId);
+    requestService.createLocalHoldRequest(transaction);
 
     return success();
   }
@@ -305,6 +324,34 @@ public class CirculationServiceImpl implements CirculationService {
   }
 
   @Override
+  public InnReachResponseDTO borrowerRenew(String trackingId, String centralCode, BorrowerRenewDTO borrowerRenew) {
+    var transaction = getTransaction(trackingId, centralCode);
+    var hold = transaction.getHold();
+    var loan = requestService.getLoan(hold.getFolioLoanId());
+    var existingDueDate = loan.getDueDate();
+    var requestedDueDate = new Date(borrowerRenew.getDueDateTime() * 1000L);
+
+    try {
+      var renewedLoan = renewLoan(hold);
+      var calculatedDueDate = renewedLoan.getDueDate();
+
+      if (calculatedDueDate.after(requestedDueDate) || calculatedDueDate.equals(requestedDueDate)) {
+        transaction.setState(BORROWER_RENEW);
+      } else {
+        recallRequestToCentralSever(transaction, existingDueDate);
+      }
+    } catch (Exception e) {
+      if (existingDueDate.before(requestedDueDate)) {
+        recallRequestToCentralSever(transaction, existingDueDate);
+      } else {
+        throw new CirculationException("Failed to renew loan: " + e.getMessage(), e);
+      }
+    }
+
+    return success();
+  }
+
+  @Override
   public InnReachResponseDTO renewLoan(String trackingId, String centralCode, LoanRenewedDTO loanRenewed) {
     var transaction = getTransactionOfType(trackingId, centralCode, PATRON);
 
@@ -330,8 +377,37 @@ public class CirculationServiceImpl implements CirculationService {
 
   private InnReachRecallUser getRecallUserForCentralServer(String centralCode) {
     return centralserverRepository.fetchOneByCentralCode(centralCode)
-        .map(CentralServer::getInnReachRecallUser)
-        .orElseThrow(() -> new EntityNotFoundException("Recall user is not set for central server with code = " + centralCode));
+      .map(CentralServer::getInnReachRecallUser)
+      .orElseThrow(() -> new EntityNotFoundException("Recall user is not set for central server with code = " + centralCode));
+  }
+
+  private void recallRequestToCentralSever(InnReachTransaction transaction, Date existingDueDate) {
+    var trackingId = transaction.getTrackingId();
+    var centralCode = transaction.getCentralServerCode();
+
+    String uri = resolveD2irCircPath(D2IR_ITEM_RECALL_OPERATION, trackingId, centralCode);
+
+    var dueDateForRecallRequest = new HashMap<>();
+    var convertedDate = existingDueDate.getTime() / 1000;
+    dueDateForRecallRequest.put("dueDateTime", convertedDate);
+    try {
+      innReachExternalService.postInnReachApi(centralCode, uri, dueDateForRecallRequest);
+      transaction.setState(RECALL);
+    } catch (Exception e) {
+        throw new CirculationException("Failed to recall request to central server: " + e.getMessage(), e);
+    }
+  }
+
+  private CheckOutResponseDTO renewLoan(TransactionHold hold) {
+    var renewLoanRequestDTO = new RenewLoanRequestDTO();
+    renewLoanRequestDTO.setItemId(hold.getFolioItemId());
+    renewLoanRequestDTO.setUserId(hold.getFolioPatronId());
+
+    return requestService.renewLoan(renewLoanRequestDTO);
+  }
+
+  private String resolveD2irCircPath(String operation, String trackingId, String centralCode) {
+    return String.format("/circ/%s/%s/%s", operation, trackingId, centralCode);
   }
 
   private void updateTransactionHold(TransactionHold existingTransactionHold, TransactionHoldDTO transactionHold) {
@@ -347,7 +423,7 @@ public class CirculationServiceImpl implements CirculationService {
                                                 TransactionHoldDTO transactionHold, TransactionType type) {
     TransactionHold hold;
     TransactionState state;
-    if (type == PATRON) {
+    if (type == TransactionType.PATRON) {
       hold = transactionHoldMapper.toPatronHold(transactionHold);
       state = PATRON_HOLD;
     } else if (type == TransactionType.LOCAL) {

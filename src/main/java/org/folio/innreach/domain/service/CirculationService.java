@@ -1,6 +1,7 @@
 package org.folio.innreach.domain.service;
 
 import org.folio.innreach.dto.BaseCircRequestDTO;
+import org.folio.innreach.dto.BorrowerRenewDTO;
 import org.folio.innreach.dto.CancelRequestDTO;
 import org.folio.innreach.dto.InnReachResponseDTO;
 import org.folio.innreach.dto.ItemReceivedDTO;
@@ -35,6 +36,8 @@ public interface CirculationService {
   InnReachResponseDTO itemReceived(String trackingId, String centralCode, ItemReceivedDTO itemReceivedDTO);
 
   InnReachResponseDTO recall(String trackingId, String centralCode, RecallDTO recallDTO);
+
+  InnReachResponseDTO borrowerRenew(String trackingId, String centralCode, BorrowerRenewDTO borrowerRenew);
 
   InnReachResponseDTO renewLoan(String trackingId, String centralCode, LoanRenewedDTO loanRenewed);
 

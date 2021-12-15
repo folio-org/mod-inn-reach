@@ -3,6 +3,7 @@ package org.folio.innreach.client;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.folio.innreach.dto.RenewLoanRequestDTO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -49,4 +50,9 @@ public interface CirculationClient {
   @PutMapping("/loans/{loanId}")
   void updateLoan(@PathVariable("loanId") UUID loanId, @RequestBody LoanDTO loan);
 
+  @GetMapping("/loans/{loanId}")
+  CheckOutResponseDTO getLoanById(@PathVariable("loanId") UUID loanId);
+
+  @PostMapping("/renew-by-id")
+  CheckOutResponseDTO renewLoan(@RequestBody RenewLoanRequestDTO renewLoan);
 }
