@@ -69,8 +69,8 @@ import org.folio.innreach.repository.InnReachTransactionRepository;
 
 @Sql(
   scripts = {
-  "classpath:db/central-server/clear-central-server-tables.sql",
-  "classpath:db/inn-reach-transaction/clear-inn-reach-transaction-tables.sql"
+    "classpath:db/central-server/clear-central-server-tables.sql",
+    "classpath:db/inn-reach-transaction/clear-inn-reach-transaction-tables.sql"
   },
   executionPhase = AFTER_TEST_METHOD
 )
