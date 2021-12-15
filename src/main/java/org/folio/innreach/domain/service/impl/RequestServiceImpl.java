@@ -127,8 +127,7 @@ public class RequestServiceImpl implements RequestService {
 
   @Async
   @Override
-  public void createLocalHoldRequest(String trackingId) {
-    var transaction = fetchTransactionByTrackingId(trackingId);
+  public void createLocalHoldRequest(InnReachTransaction transaction) {
     var hold = (TransactionLocalHold) transaction.getHold();
     var centralPatronName = hold.getPatronName();
     try {
