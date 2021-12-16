@@ -1,6 +1,9 @@
 package org.folio.innreach.controller.d2ir;
 
 import lombok.RequiredArgsConstructor;
+import org.folio.innreach.dto.BaseCircRequestDTO;
+import org.folio.innreach.dto.BorrowerRenewDTO;
+import org.folio.innreach.dto.ReturnUncirculatedDTO;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -55,8 +58,7 @@ public class InnReachCirculationController implements InnReachCirculationApi {
   @PostMapping(value = "/patronhold/{trackingId}/{centralCode}", consumes = MediaType.APPLICATION_JSON_VALUE,
     produces = MediaType.APPLICATION_JSON_VALUE)
   public ResponseEntity<InnReachResponseDTO> patronHold(@PathVariable String trackingId,
-                                                        @PathVariable String centralCode,
-                                                        PatronHoldDTO patronHold) {
+                                                        @PathVariable String centralCode, PatronHoldDTO patronHold) {
     var innReachResponse = circulationService.initiatePatronHold(trackingId, centralCode, patronHold);
 
     return ResponseEntity.ok(innReachResponse);
@@ -156,6 +158,7 @@ public class InnReachCirculationController implements InnReachCirculationApi {
   public ResponseEntity<InnReachResponseDTO> itemReceived(@PathVariable String trackingId,
                                                           @PathVariable String centralCode,
                                                           ItemReceivedDTO itemReceivedDTO) {
+                                                          @PathVariable String centralCode, ItemReceivedDTO itemReceivedDTO) {
     var innReachResponse = circulationService.itemReceived(trackingId, centralCode, itemReceivedDTO);
 
     return ResponseEntity.ok(innReachResponse);
@@ -168,6 +171,15 @@ public class InnReachCirculationController implements InnReachCirculationApi {
                                                     String centralCode,
                                                     RecallDTO recallDTO) {
     var innReachResponse = circulationService.recall(trackingId, centralCode, recallDTO);
+
+    return ResponseEntity.ok(innReachResponse);
+  }
+
+  @Override
+  @PutMapping("/borrowerrenew/{trackingId}/{centralCode}")
+  public ResponseEntity<InnReachResponseDTO> borrowerRenew(@PathVariable String trackingId,
+                                                           @PathVariable String centralCode, BorrowerRenewDTO borrowerRenew) {
+    var innReachResponse = circulationService.borrowerRenew(trackingId, centralCode, borrowerRenew);
 
     return ResponseEntity.ok(innReachResponse);
   }

@@ -36,6 +36,7 @@ import java.util.UUID;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.folio.innreach.dto.RenewLoanRequestDTO;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
@@ -277,6 +278,14 @@ public class RequestServiceImpl implements RequestService {
   public RequestDTO findRequest(UUID requestId) {
     return circulationClient.findRequest(requestId).orElseThrow(() -> new EntityNotFoundException(
       "No request found with id = " + requestId));
+  }
+
+  public CheckOutResponseDTO getLoan(UUID loanId) {
+    return circulationClient.getLoanById(loanId);
+  }
+
+  public CheckOutResponseDTO renewLoan(RenewLoanRequestDTO renewLoan) {
+    return circulationClient.renewLoan(renewLoan);
   }
 
   private void cancelRequest(RequestDTO request, String reason) {
