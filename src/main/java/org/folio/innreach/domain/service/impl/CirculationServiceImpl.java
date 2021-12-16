@@ -118,7 +118,6 @@ public class CirculationServiceImpl implements CirculationService {
   }
 
   @Override
-  @Transactional(propagation = Propagation.NEVER)
   public InnReachResponseDTO createInnReachTransactionItemHold(String trackingId, String centralCode, TransactionHoldDTO dto) {
     var response = new InnReachResponseDTO();
     response.setStatus("ok");
@@ -140,7 +139,7 @@ public class CirculationServiceImpl implements CirculationService {
     } catch (Exception e) {
       throw new CirculationException("An error occurred during creation of INN-Reach Transaction. " + e.getMessage(), e);
     }
-    return response;
+    return success();
   }
 
   @Transactional(propagation = Propagation.NEVER)

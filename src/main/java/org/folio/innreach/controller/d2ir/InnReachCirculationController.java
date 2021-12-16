@@ -4,7 +4,6 @@ import lombok.RequiredArgsConstructor;
 import org.folio.innreach.dto.BaseCircRequestDTO;
 import org.folio.innreach.dto.BorrowerRenewDTO;
 import org.folio.innreach.dto.ReturnUncirculatedDTO;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -42,14 +41,8 @@ public class InnReachCirculationController implements InnReachCirculationApi {
                                                                                @PathVariable String centralCode,
                                                                                TransactionHoldDTO dto) {
     var response = circulationService.createInnReachTransactionItemHold(trackingId, centralCode, dto);
-    HttpStatus status;
-    if (response.getStatus().equals("ok")) {
-      status = HttpStatus.OK;
-      requestService.createItemHoldRequest(trackingId);
-    } else {
-      status = HttpStatus.BAD_REQUEST;
-    }
-    return new ResponseEntity<>(response, status);
+    requestService.createItemHoldRequest(trackingId);
+    return ResponseEntity.ok(response);
   }
 
   @Override
