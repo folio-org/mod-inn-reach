@@ -16,7 +16,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import org.folio.innreach.domain.service.CirculationService;
 import org.folio.innreach.domain.service.RequestService;
-import org.folio.innreach.dto.BaseCircRequestDTO;
 import org.folio.innreach.dto.CancelRequestDTO;
 import org.folio.innreach.dto.InnReachResponseDTO;
 import org.folio.innreach.dto.ItemReceivedDTO;
@@ -24,7 +23,6 @@ import org.folio.innreach.dto.ItemShippedDTO;
 import org.folio.innreach.dto.LocalHoldDTO;
 import org.folio.innreach.dto.PatronHoldDTO;
 import org.folio.innreach.dto.RecallDTO;
-import org.folio.innreach.dto.ReturnUncirculatedDTO;
 import org.folio.innreach.dto.TransactionHoldDTO;
 import org.folio.innreach.dto.TransferRequestDTO;
 import org.folio.innreach.rest.resource.InnReachCirculationApi;
