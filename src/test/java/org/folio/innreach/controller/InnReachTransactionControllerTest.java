@@ -218,15 +218,9 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     assertNotNull(responseEntity.getBody());
     assertEquals(3, responseEntity.getBody().getTotalRecords());
 
-    var transactionIds = responseEntity.getBody().getTransactions().stream()
-      .map(InnReachTransactionDTO::getId).collect(Collectors.toList());
-    assertTrue(transactionIds.contains(PRE_POPULATED_ITEM_HOLD_TRANSACTION_ID));
+    var transactions = responseEntity.getBody().getTransactions();
 
-    var transactionMetadatas = responseEntity.getBody().getTransactions().stream()
-      .map(InnReachTransactionDTO::getMetadata).collect(Collectors.toList());
-    assertTrue(transactionMetadatas.stream().allMatch(Objects::nonNull));
-    assertTrue(transactionMetadatas.stream().allMatch(m -> m.getCreatedDate() != null));
-    assertTrue(transactionMetadatas.stream().allMatch(m -> m.getCreatedByUsername().equals(PRE_POPULATED_USER.getName())));
+    assertEquals(1, transactions.size());
   }
 
   @Test
