@@ -291,13 +291,10 @@ public class RequestServiceImpl implements RequestService {
   }
 
   private void cancelRequest(RequestDTO request, String reason) {
-    var item = itemService.find(request.getItemId()).orElse(null);
-    var holding = item == null ? null : holdingsService.find(item.getHoldingsRecordId()).orElse(null);
-
     request.setStatus(RequestStatus.CLOSED_CANCELLED);
     request.setCancellationReasonId(INN_REACH_CANCELLATION_REASON_ID);
     request.setCancellationAdditionalInformation(reason);
-    request.setInstanceId(holding == null ? null : holding.getInstanceId());
+    request.setInstanceId(request.getInstanceId());
     request.setRequestLevel("Item");
 
     circulationClient.updateRequest(request.getId(), request);
