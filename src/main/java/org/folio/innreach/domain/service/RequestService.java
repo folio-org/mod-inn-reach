@@ -12,7 +12,6 @@ import org.folio.innreach.domain.entity.InnReachTransaction;
 import org.folio.innreach.dto.CheckInResponseDTO;
 import org.folio.innreach.dto.Holding;
 import org.folio.innreach.dto.LoanDTO;
-import org.folio.innreach.dto.RenewLoanRequestDTO;
 
 public interface RequestService {
   @Async
@@ -35,11 +34,5 @@ public interface RequestService {
   void createRecallRequest(UUID userId, UUID itemId);
 
   RequestDTO findRequest(UUID requestId);
-
-  LoanDTO findLoan(UUID loanId);
-
-  LoanDTO updateLoan(LoanDTO loan);
-
-  LoanDTO renewLoan(RenewLoanRequestDTO renewLoan);
 
 }

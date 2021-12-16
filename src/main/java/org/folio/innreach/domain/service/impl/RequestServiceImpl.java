@@ -68,7 +68,6 @@ import org.folio.innreach.dto.CheckInResponseDTO;
 import org.folio.innreach.dto.CheckOutRequestDTO;
 import org.folio.innreach.dto.Holding;
 import org.folio.innreach.dto.LoanDTO;
-import org.folio.innreach.dto.RenewLoanRequestDTO;
 import org.folio.innreach.external.service.InnReachExternalService;
 import org.folio.innreach.mapper.InnReachTransactionPickupLocationMapper;
 import org.folio.innreach.repository.CentralPatronTypeMappingRepository;
@@ -278,23 +277,6 @@ public class RequestServiceImpl implements RequestService {
   public RequestDTO findRequest(UUID requestId) {
     return circulationClient.findRequest(requestId).orElseThrow(() -> new EntityNotFoundException(
       "No request found with id = " + requestId));
-  }
-
-  @Override
-  public LoanDTO findLoan(UUID loanId) {
-    return circulationClient.findLoan(loanId).orElseThrow(() -> new EntityNotFoundException (
-        "No loan found with id = " + loanId));
-  }
-
-  @Override
-  public LoanDTO updateLoan(LoanDTO loan) {
-    circulationClient.updateLoan(loan.getId(), loan);
-    return loan;
-  }
-
-  @Override
-  public LoanDTO renewLoan(RenewLoanRequestDTO renewLoan) {
-    return circulationClient.renewLoan(renewLoan);
   }
 
   private void cancelRequest(RequestDTO request, String reason) {

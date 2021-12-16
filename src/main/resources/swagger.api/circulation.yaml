@@ -548,7 +548,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/borrowerRenewDTO"
+              $ref: "#/components/schemas/renewLoanDTO"
       responses:
         '200':
           description: Set transaction state BORROWER_RENEW
@@ -569,15 +569,15 @@ paths:
         - $ref: '#/components/parameters/centralCode'
   /d2ir/circ/ownerrenew/{trackingId}/{centralCode}:
     put:
-      operationId: renewLoan
-      description: Renew loan
+      operationId: ownerRenew
+      description: Owner Renew loan
       tags:
         - inn-reach-circulation
       requestBody:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/loanRenewedDTO"
+              $ref: "#/components/schemas/renewLoanDTO"
       responses:
         '200':
           description: Loan renew request complete
@@ -673,12 +673,8 @@ components:
       $ref: schemas/d2ir/itemReceivedDTO.json
     recallDTO:
       $ref: schemas/d2ir/recallDTO.json
-    borrowerRenewDTO:
-      $ref: schemas/d2ir/borrowerRenewDTO.json
-    renewLoanRequestDTO:
-      $ref: schemas/circulation/renewLoanRequestDTO.json
-    loanRenewedDTO:
-      $ref: schemas/d2ir/loanRenewedDTO.json
+    renewLoanDTO:
+      $ref: schemas/d2ir/renewLoanDTO.json
   parameters:
     bibId:
       name: bibId

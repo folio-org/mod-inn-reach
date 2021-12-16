@@ -40,6 +40,7 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
 
+import org.folio.innreach.domain.dto.folio.circulation.RenewByIdDTO;
 import org.folio.innreach.domain.dto.folio.inventory.InventoryItemDTO;
 import org.folio.innreach.domain.entity.CentralServer;
 import org.folio.innreach.domain.entity.InnReachRecallUser;
@@ -53,22 +54,20 @@ import org.folio.innreach.domain.exception.EntityNotFoundException;
 import org.folio.innreach.domain.service.CirculationService;
 import org.folio.innreach.domain.service.HoldingsService;
 import org.folio.innreach.domain.service.ItemService;
+import org.folio.innreach.domain.service.LoanService;
 import org.folio.innreach.domain.service.PatronHoldService;
 import org.folio.innreach.domain.service.RequestService;
 import org.folio.innreach.domain.service.UpdateTemplate.UpdateOperation;
 import org.folio.innreach.dto.BaseCircRequestDTO;
-import org.folio.innreach.dto.BorrowerRenewDTO;
 import org.folio.innreach.dto.CancelRequestDTO;
 import org.folio.innreach.dto.Holding;
 import org.folio.innreach.dto.InnReachResponseDTO;
 import org.folio.innreach.dto.ItemReceivedDTO;
 import org.folio.innreach.dto.ItemShippedDTO;
-import org.folio.innreach.dto.LoanDTO;
-import org.folio.innreach.dto.LoanRenewedDTO;
 import org.folio.innreach.dto.LocalHoldDTO;
 import org.folio.innreach.dto.PatronHoldDTO;
 import org.folio.innreach.dto.RecallDTO;
-import org.folio.innreach.dto.RenewLoanRequestDTO;
+import org.folio.innreach.dto.RenewLoanDTO;
 import org.folio.innreach.dto.ReturnUncirculatedDTO;
 import org.folio.innreach.dto.TransactionHoldDTO;
 import org.folio.innreach.dto.TransferRequestDTO;
@@ -104,7 +103,9 @@ public class CirculationServiceImpl implements CirculationService {
   private final RequestService requestService;
   private final ItemService itemService;
   private final HoldingsService holdingsService;
+  private final LoanService loanService;
   private final InnReachExternalService innReachExternalService;
+
 
   @Transactional(propagation = Propagation.NEVER)
   @Override
@@ -324,15 +325,15 @@ public class CirculationServiceImpl implements CirculationService {
   }
 
   @Override
-  public InnReachResponseDTO borrowerRenew(String trackingId, String centralCode, BorrowerRenewDTO borrowerRenew) {
+  public InnReachResponseDTO borrowerRenewLoan(String trackingId, String centralCode, RenewLoanDTO renewLoan) {
     var transaction = getTransaction(trackingId, centralCode);
     var hold = transaction.getHold();
-    var loan = requestService.findLoan(hold.getFolioLoanId());
+    var loan = loanService.getById(hold.getFolioLoanId());
     var existingDueDate = loan.getDueDate();
-    var requestedDueDate = new Date(borrowerRenew.getDueDateTime() * 1000L);
+    var requestedDueDate = new Date(renewLoan.getDueDateTime() * 1000L);
 
     try {
-      var renewedLoan = renewLoan(hold);
+      var renewedLoan = loanService.renew(RenewByIdDTO.of(hold.getFolioItemId(), hold.getFolioPatronId()));
       var calculatedDueDate = renewedLoan.getDueDate();
 
       if (calculatedDueDate.after(requestedDueDate) || calculatedDueDate.equals(requestedDueDate)) {
@@ -352,18 +353,18 @@ public class CirculationServiceImpl implements CirculationService {
   }
 
   @Override
-  public InnReachResponseDTO renewLoan(String trackingId, String centralCode, LoanRenewedDTO loanRenewed) {
+  public InnReachResponseDTO ownerRenewLoan(String trackingId, String centralCode, RenewLoanDTO loanRenewed) {
     var transaction = getTransactionOfType(trackingId, centralCode, PATRON);
 
     var loanId = transaction.getHold().getFolioLoanId();
-    var loan = requestService.findLoan(loanId);
+    var loan = loanService.getById(loanId);
     var currentDueDate = loan.getDueDate();
 
     Instant dueDate = Instant.ofEpochSecond(loanRenewed.getDueDateTime());
     if (currentDueDate.toInstant().isAfter(dueDate)) {
       loan.setDueDate(Date.from(dueDate));
 
-      requestService.updateLoan(loan);
+      loanService.update(loan);
     }
 
     transaction.setState(OWNER_RENEW);
@@ -396,14 +397,6 @@ public class CirculationServiceImpl implements CirculationService {
     } catch (Exception e) {
         throw new CirculationException("Failed to recall request to central server: " + e.getMessage(), e);
     }
-  }
-
-  private LoanDTO renewLoan(TransactionHold hold) {
-    var renewLoanRequestDTO = new RenewLoanRequestDTO();
-    renewLoanRequestDTO.setItemId(hold.getFolioItemId());
-    renewLoanRequestDTO.setUserId(hold.getFolioPatronId());
-
-    return requestService.renewLoan(renewLoanRequestDTO);
   }
 
   private String resolveD2irCircPath(String operation, String trackingId, String centralCode) {

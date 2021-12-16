@@ -13,12 +13,12 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.folio.innreach.client.config.FolioFeignClientConfig;
 import org.folio.innreach.domain.dto.folio.ResultList;
 import org.folio.innreach.domain.dto.folio.circulation.MoveRequestDTO;
+import org.folio.innreach.domain.dto.folio.circulation.RenewByIdDTO;
 import org.folio.innreach.domain.dto.folio.circulation.RequestDTO;
 import org.folio.innreach.dto.CheckInRequestDTO;
 import org.folio.innreach.dto.CheckInResponseDTO;
 import org.folio.innreach.dto.CheckOutRequestDTO;
 import org.folio.innreach.dto.LoanDTO;
-import org.folio.innreach.dto.RenewLoanRequestDTO;
 
 @FeignClient(name = "circulation", configuration = FolioFeignClientConfig.class, decode404 = true)
 public interface CirculationClient {
@@ -47,9 +47,13 @@ public interface CirculationClient {
   @GetMapping("/loans/{loanId}")
   Optional<LoanDTO> findLoan(@PathVariable("loanId") UUID loanId);
 
+  @PostMapping("/loans")
+  LoanDTO createLoan(@RequestBody LoanDTO loan);
+
   @PutMapping("/loans/{loanId}")
   void updateLoan(@PathVariable("loanId") UUID loanId, @RequestBody LoanDTO loan);
 
   @PostMapping("/renew-by-id")
-  LoanDTO renewLoan(@RequestBody RenewLoanRequestDTO renewLoan);
+  LoanDTO renewLoan(@RequestBody RenewByIdDTO renewLoan);
+
 }

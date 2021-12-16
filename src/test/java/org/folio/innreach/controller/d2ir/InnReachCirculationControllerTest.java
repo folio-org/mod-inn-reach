@@ -60,9 +60,9 @@ import org.folio.innreach.domain.dto.folio.inventory.InventoryItemDTO;
 import org.folio.innreach.domain.entity.InnReachTransaction;
 import org.folio.innreach.domain.service.ItemService;
 import org.folio.innreach.domain.service.RequestService;
-import org.folio.innreach.dto.BorrowerRenewDTO;
 import org.folio.innreach.dto.InnReachResponseDTO;
 import org.folio.innreach.dto.LoanDTO;
+import org.folio.innreach.dto.RenewLoanDTO;
 import org.folio.innreach.external.dto.InnReachResponse;
 import org.folio.innreach.external.service.InnReachExternalService;
 import org.folio.innreach.repository.InnReachTransactionRepository;
@@ -690,7 +690,7 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     when(circulationClient.renewLoan(any())).thenReturn(renew);
 
     var dueDateTime = (int) Instant.now().minus(1, ChronoUnit.DAYS).getEpochSecond();
-    var borrowerItem = new BorrowerRenewDTO();
+    var borrowerItem = new RenewLoanDTO();
     borrowerItem.setDueDateTime(dueDateTime);
 
     var transactionHoldDTO = createTransactionHoldDTO();
@@ -702,7 +702,7 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
 
     var responseEntity = testRestTemplate.exchange(
       "/inn-reach/d2ir/circ/borrowerrenew/{trackingId}/{centralCode}", HttpMethod.PUT,
-      new HttpEntity<>(borrowerItem), BorrowerRenewDTO.class,
+      new HttpEntity<>(borrowerItem), RenewLoanDTO.class,
       PRE_POPULATED_TRACKING_ID, PRE_POPULATED_CENTRAL_CODE);
 
     var transactionState = fetchPrePopulatedTransaction().getState();
@@ -728,7 +728,7 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     when(circulationClient.renewLoan(any())).thenReturn(renew);
 
     var dueDateTime = (int) Instant.now().plus(1, ChronoUnit.DAYS).getEpochSecond();
-    var borrowerItem = new BorrowerRenewDTO();
+    var borrowerItem = new RenewLoanDTO();
     borrowerItem.setDueDateTime(dueDateTime);
 
     var transactionHoldDTO = createTransactionHoldDTO();
@@ -740,7 +740,7 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
 
     var responseEntity = testRestTemplate.exchange(
       "/inn-reach/d2ir/circ/borrowerrenew/{trackingId}/{centralCode}", HttpMethod.PUT,
-      new HttpEntity<>(borrowerItem), BorrowerRenewDTO.class,
+      new HttpEntity<>(borrowerItem), RenewLoanDTO.class,
       PRE_POPULATED_TRACKING_ID, PRE_POPULATED_CENTRAL_CODE);
 
     var transactionState = fetchPrePopulatedTransaction().getState();
@@ -764,7 +764,7 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     when(circulationClient.renewLoan(any())).thenThrow(IllegalArgumentException.class);
 
     var dueDateTime = (int) Instant.now().plus(1, ChronoUnit.DAYS).getEpochSecond();
-    var borrowerItem = new BorrowerRenewDTO();
+    var borrowerItem = new RenewLoanDTO();
     borrowerItem.setDueDateTime(dueDateTime);
 
     var transactionHoldDTO = createTransactionHoldDTO();
@@ -776,7 +776,7 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
 
     var responseEntity = testRestTemplate.exchange(
       "/inn-reach/d2ir/circ/borrowerrenew/{trackingId}/{centralCode}", HttpMethod.PUT,
-      new HttpEntity<>(borrowerItem), BorrowerRenewDTO.class,
+      new HttpEntity<>(borrowerItem), RenewLoanDTO.class,
       PRE_POPULATED_TRACKING_ID, PRE_POPULATED_CENTRAL_CODE);
 
     var transactionState = fetchPrePopulatedTransaction().getState();
@@ -798,7 +798,7 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     when(circulationClient.renewLoan(any())).thenThrow(IllegalArgumentException.class);
 
     var dueDateTime = (int) Instant.now().getEpochSecond();
-    var borrowerItem = new BorrowerRenewDTO();
+    var borrowerItem = new RenewLoanDTO();
     borrowerItem.setDueDateTime(dueDateTime);
 
     var transactionHoldDTO = createTransactionHoldDTO();
@@ -812,7 +812,7 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
 
     var responseEntity = testRestTemplate.exchange(
       "/inn-reach/d2ir/circ/borrowerrenew/{trackingId}/{centralCode}", HttpMethod.PUT,
-      new HttpEntity<>(borrowerItem), BorrowerRenewDTO.class,
+      new HttpEntity<>(borrowerItem), RenewLoanDTO.class,
       PRE_POPULATED_TRACKING_ID, PRE_POPULATED_CENTRAL_CODE);
 
     var transactionStateAfter = fetchPrePopulatedTransaction().getState();
@@ -838,7 +838,7 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     when(circulationClient.renewLoan(any())).thenReturn(renew);
 
     var dueDateTime = (int) Instant.now().getEpochSecond();
-    var borrowerItem = new BorrowerRenewDTO();
+    var borrowerItem = new RenewLoanDTO();
     borrowerItem.setDueDateTime(dueDateTime);
 
     var transactionHoldDTO = createTransactionHoldDTO();
@@ -852,7 +852,7 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
 
     var responseEntity = testRestTemplate.exchange(
       "/inn-reach/d2ir/circ/borrowerrenew/{trackingId}/{centralCode}", HttpMethod.PUT,
-      new HttpEntity<>(borrowerItem), BorrowerRenewDTO.class,
+      new HttpEntity<>(borrowerItem), RenewLoanDTO.class,
       PRE_POPULATED_TRACKING_ID, PRE_POPULATED_CENTRAL_CODE);
 
     var transactionStateAfter = fetchPrePopulatedTransaction().getState();
