@@ -13,6 +13,7 @@ public class InnReachTransactionFilterParameters {
   private List<String> centralServerCodes;
   private List<String> patronAgencyCodes;
   private List<String> itemAgencyCodes;
+  private List<String> itemBarcodes;
   private List<Integer> patronTypes;
   private List<Integer> centralItemTypes;
   private String query;

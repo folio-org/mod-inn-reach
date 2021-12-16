@@ -19,6 +19,7 @@ public interface InnReachTransactionFilterParametersMapper {
   @Mapping(target = "itemAgencyCodes", source = "dto.itemAgencyCode")
   @Mapping(target = "patronTypes", source = "dto.centralPatronType")
   @Mapping(target = "centralItemTypes", source = "dto.centralItemType")
+  @Mapping(target = "itemBarcodes", source = "dto.itemBarcode")
   InnReachTransactionFilterParameters toEntity(InnReachTransactionFilterParametersDTO dto);
 
   default InnReachTransactionFilterParameters.SortBy toEntityEnum(InnReachTransactionFilterParametersDTO.SortByEnum sort){
