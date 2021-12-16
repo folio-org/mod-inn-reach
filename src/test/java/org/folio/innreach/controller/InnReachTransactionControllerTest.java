@@ -584,7 +584,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
       "/inn-reach/d2ir/circ/itemhold/{trackingId}/{centralCode}", new HttpEntity<>(itemHoldDTO, headers), InnReachResponseDTO.class, TRACKING_ID,
       PRE_POPULATED_CENTRAL_SERVER_CODE);
 
-    verify(requestService).createItemHoldRequest(TRACKING_ID);
+    verify(requestService).createItemHoldRequest(TRACKING_ID, PRE_POPULATED_CENTRAL_SERVER_CODE);
     assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
     assertTrue(responseEntity.hasBody());
     assertEquals("ok", responseEntity.getBody().getStatus());
@@ -593,7 +593,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
       verify(repository).save(
         argThat((InnReachTransaction t) -> t.getHold().getFolioRequestId() != null)));
 
-    verify(requestService).createItemHoldRequest(TRACKING_ID);
+    verify(requestService).createItemHoldRequest(TRACKING_ID, PRE_POPULATED_CENTRAL_SERVER_CODE);
     verify(inventoryClient, times(2)).getItemsByHrId(itemHoldDTO.getItemId());
     verify(circulationClient).queryRequestsByItemId(inventoryItemDTO.getId());
     verify(usersClient).query(PRE_POPULATED_USER_BARCODE_QUERY);

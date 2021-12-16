@@ -108,8 +108,8 @@ public class RequestServiceImpl implements RequestService {
 
   @Async
   @Override
-  public void createItemHoldRequest(String trackingId) {
-    var transaction = fetchTransactionByTrackingId(trackingId);
+  public void createItemHoldRequest(String trackingId, String centralCode) {
+    var transaction = fetchTransaction(trackingId, centralCode);
     var hold = (TransactionItemHold) transaction.getHold();
     var centralPatronName = hold.getPatronName();
     try {
@@ -377,8 +377,8 @@ public class RequestServiceImpl implements RequestService {
           " and patron type = " + patronType));
   }
 
-  private InnReachTransaction fetchTransactionByTrackingId(String trackingId) {
-    return transactionRepository.fetchOneByTrackingId(trackingId).orElseThrow(() ->
+  private InnReachTransaction fetchTransaction(String trackingId, String centralCode) {
+    return transactionRepository.findByTrackingIdAndCentralServerCode(trackingId, centralCode).orElseThrow(() ->
       new EntityNotFoundException("INN-Reach transaction not found for trackingId = " + trackingId)
     );
   }

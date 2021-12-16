@@ -1,9 +1,6 @@
 package org.folio.innreach.controller.d2ir;
 
 import lombok.RequiredArgsConstructor;
-import org.folio.innreach.dto.BaseCircRequestDTO;
-import org.folio.innreach.dto.BorrowerRenewDTO;
-import org.folio.innreach.dto.ReturnUncirculatedDTO;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -15,6 +12,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import org.folio.innreach.domain.service.CirculationService;
 import org.folio.innreach.domain.service.RequestService;
+import org.folio.innreach.dto.BaseCircRequestDTO;
+import org.folio.innreach.dto.BorrowerRenewDTO;
 import org.folio.innreach.dto.CancelRequestDTO;
 import org.folio.innreach.dto.InnReachResponseDTO;
 import org.folio.innreach.dto.ItemReceivedDTO;
@@ -22,6 +21,7 @@ import org.folio.innreach.dto.ItemShippedDTO;
 import org.folio.innreach.dto.LocalHoldDTO;
 import org.folio.innreach.dto.PatronHoldDTO;
 import org.folio.innreach.dto.RecallDTO;
+import org.folio.innreach.dto.ReturnUncirculatedDTO;
 import org.folio.innreach.dto.TransactionHoldDTO;
 import org.folio.innreach.dto.TransferRequestDTO;
 import org.folio.innreach.rest.resource.InnReachCirculationApi;
@@ -41,7 +41,7 @@ public class InnReachCirculationController implements InnReachCirculationApi {
                                                                                @PathVariable String centralCode,
                                                                                TransactionHoldDTO dto) {
     var response = circulationService.createInnReachTransactionItemHold(trackingId, centralCode, dto);
-    requestService.createItemHoldRequest(trackingId);
+    requestService.createItemHoldRequest(trackingId, centralCode);
     return ResponseEntity.ok(response);
   }
 
@@ -173,6 +173,4 @@ public class InnReachCirculationController implements InnReachCirculationApi {
 
     return ResponseEntity.ok(innReachResponse);
   }
-
-
 }

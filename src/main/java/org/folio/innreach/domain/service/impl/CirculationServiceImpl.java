@@ -106,7 +106,6 @@ public class CirculationServiceImpl implements CirculationService {
   private final InnReachExternalService innReachExternalService;
   private final CentralServerService centralServerService;
   private final MaterialTypeMappingService materialService;
-  private final InnReachErrorMapper errorMapper;
 
   private InnReachTransaction createTransactionWithItemHold(String trackingId, String centralCode) {
     var transaction = new InnReachTransaction();
@@ -119,8 +118,6 @@ public class CirculationServiceImpl implements CirculationService {
 
   @Override
   public InnReachResponseDTO createInnReachTransactionItemHold(String trackingId, String centralCode, TransactionHoldDTO dto) {
-    var response = new InnReachResponseDTO();
-    response.setStatus("ok");
     try {
       transactionRepository.fetchOneByTrackingId(trackingId).ifPresent(m -> {
         throw new EntityExistsException("INN-Reach Transaction with tracking ID = " + trackingId
