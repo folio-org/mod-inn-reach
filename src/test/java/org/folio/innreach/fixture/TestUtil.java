@@ -2,6 +2,9 @@ package org.folio.innreach.fixture;
 
 import static java.lang.System.clearProperty;
 import static java.lang.System.setProperty;
+import static org.springframework.http.HttpHeaders.ACCEPT;
+import static org.springframework.http.HttpHeaders.AUTHORIZATION;
+import static org.springframework.http.HttpHeaders.CONTENT_TYPE;
 
 import java.io.File;
 import java.net.URISyntaxException;
@@ -101,6 +104,9 @@ public class TestUtil {
     headers.add("X-To-Code", "code1");
     headers.add("X-From-Code", "d2ir");
     headers.add("X-Request-Creation-Time", String.valueOf(OffsetDateTime.now().toEpochSecond()));
+    headers.add(AUTHORIZATION, "Bearer AccessToken");
+    headers.add(ACCEPT, "application/json");
+    headers.add(CONTENT_TYPE, "application/json");
     return headers;
   }
 
