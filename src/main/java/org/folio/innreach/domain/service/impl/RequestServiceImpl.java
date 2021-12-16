@@ -294,7 +294,6 @@ public class RequestServiceImpl implements RequestService {
     request.setStatus(RequestStatus.CLOSED_CANCELLED);
     request.setCancellationReasonId(INN_REACH_CANCELLATION_REASON_ID);
     request.setCancellationAdditionalInformation(reason);
-    request.setInstanceId(request.getInstanceId());
     request.setRequestLevel("Item");
 
     circulationClient.updateRequest(request.getId(), request);
