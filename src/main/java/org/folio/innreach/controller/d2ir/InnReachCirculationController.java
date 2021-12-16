@@ -158,7 +158,6 @@ public class InnReachCirculationController implements InnReachCirculationApi {
   public ResponseEntity<InnReachResponseDTO> itemReceived(@PathVariable String trackingId,
                                                           @PathVariable String centralCode,
                                                           ItemReceivedDTO itemReceivedDTO) {
-                                                          @PathVariable String centralCode, ItemReceivedDTO itemReceivedDTO) {
     var innReachResponse = circulationService.itemReceived(trackingId, centralCode, itemReceivedDTO);
 
     return ResponseEntity.ok(innReachResponse);
@@ -167,8 +166,8 @@ public class InnReachCirculationController implements InnReachCirculationApi {
   @Override
   @PutMapping(value = "/recall/{trackingId}/{centralCode}", consumes = MediaType.APPLICATION_JSON_VALUE,
     produces = MediaType.APPLICATION_JSON_VALUE)
-  public ResponseEntity<InnReachResponseDTO> recall(String trackingId,
-                                                    String centralCode,
+  public ResponseEntity<InnReachResponseDTO> recall(@PathVariable String trackingId,
+                                                    @PathVariable String centralCode,
                                                     RecallDTO recallDTO) {
     var innReachResponse = circulationService.recall(trackingId, centralCode, recallDTO);
 

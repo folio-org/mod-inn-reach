@@ -706,7 +706,7 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
 
     var responseEntity = testRestTemplate.exchange(
       "/inn-reach/d2ir/circ/borrowerrenew/{trackingId}/{centralCode}", HttpMethod.PUT,
-      new HttpEntity<>(borrowerItem), BorrowerRenewDTO.class,
+      new HttpEntity<>(borrowerItem, headers), BorrowerRenewDTO.class,
       PRE_POPULATED_TRACKING_ID, PRE_POPULATED_CENTRAL_CODE);
 
     var transactionState = fetchPrePopulatedTransaction().getState();
@@ -744,7 +744,7 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
 
     var responseEntity = testRestTemplate.exchange(
       "/inn-reach/d2ir/circ/borrowerrenew/{trackingId}/{centralCode}", HttpMethod.PUT,
-      new HttpEntity<>(borrowerItem), BorrowerRenewDTO.class,
+      new HttpEntity<>(borrowerItem, headers), BorrowerRenewDTO.class,
       PRE_POPULATED_TRACKING_ID, PRE_POPULATED_CENTRAL_CODE);
 
     var transactionState = fetchPrePopulatedTransaction().getState();
@@ -780,7 +780,7 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
 
     var responseEntity = testRestTemplate.exchange(
       "/inn-reach/d2ir/circ/borrowerrenew/{trackingId}/{centralCode}", HttpMethod.PUT,
-      new HttpEntity<>(borrowerItem), BorrowerRenewDTO.class,
+      new HttpEntity<>(borrowerItem, headers), BorrowerRenewDTO.class,
       PRE_POPULATED_TRACKING_ID, PRE_POPULATED_CENTRAL_CODE);
 
     var transactionState = fetchPrePopulatedTransaction().getState();
@@ -816,7 +816,7 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
 
     var responseEntity = testRestTemplate.exchange(
       "/inn-reach/d2ir/circ/borrowerrenew/{trackingId}/{centralCode}", HttpMethod.PUT,
-      new HttpEntity<>(borrowerItem), BorrowerRenewDTO.class,
+      new HttpEntity<>(borrowerItem, headers), BorrowerRenewDTO.class,
       PRE_POPULATED_TRACKING_ID, PRE_POPULATED_CENTRAL_CODE);
 
     var transactionStateAfter = fetchPrePopulatedTransaction().getState();
@@ -856,7 +856,7 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
 
     var responseEntity = testRestTemplate.exchange(
       "/inn-reach/d2ir/circ/borrowerrenew/{trackingId}/{centralCode}", HttpMethod.PUT,
-      new HttpEntity<>(borrowerItem), BorrowerRenewDTO.class,
+      new HttpEntity<>(borrowerItem, headers), BorrowerRenewDTO.class,
       PRE_POPULATED_TRACKING_ID, PRE_POPULATED_CENTRAL_CODE);
 
     var transactionStateAfter = fetchPrePopulatedTransaction().getState();
