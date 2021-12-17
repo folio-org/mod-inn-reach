@@ -137,4 +137,13 @@ public class InnReachCirculationController implements InnReachCirculationApi {
 
     return ResponseEntity.ok(innReachResponse);
   }
+
+  @Override
+  @PutMapping("/finalcheckin/{trackingId}/{centralCode}")
+  public ResponseEntity<InnReachResponseDTO> finalCheckIn(@PathVariable String trackingId,
+                                                          @PathVariable String centralCode, BaseCircRequestDTO finalCheckIn) {
+    var innReachResponse = circulationService.finalCheckIn(trackingId, centralCode, finalCheckIn);
+
+    return ResponseEntity.ok(innReachResponse);
+  }
 }

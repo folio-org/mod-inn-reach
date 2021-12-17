@@ -37,4 +37,6 @@ public interface CirculationService {
   InnReachResponseDTO recall(String trackingId, String centralCode, RecallDTO recallDTO);
 
   InnReachResponseDTO borrowerRenew(String trackingId, String centralCode, BorrowerRenewDTO borrowerRenew);
+
+  InnReachResponseDTO finalCheckIn(String trackingId, String centralCode, BaseCircRequestDTO finalCheckIn);
 }

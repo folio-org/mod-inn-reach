@@ -1,5 +1,6 @@
 package org.folio.innreach.controller.d2ir;
 
+import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.FINAL_CHECKIN;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -859,5 +860,52 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
 
     assertEquals(BAD_REQUEST, responseEntity.getStatusCode());
     assertEquals(transactionStateBefore, transactionStateAfter);
+  }
+
+  @ParameterizedTest
+  @EnumSource(names = {"ITEM_IN_TRANSIT","RETURN_UNCIRCULATED"})
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
+  })
+  void checkTransactionIsInStateItemInTransitOrReturnUncirculated(InnReachTransaction.TransactionState testEnums) {
+    var transactionHoldDTO = createTransactionHoldDTO();
+    var transactionBefore = fetchPrePopulatedTransaction();
+
+    transactionBefore.setState(testEnums);
+    repository.save(transactionBefore);
+
+    var responseEntity = testRestTemplate.exchange(
+      "/inn-reach/d2ir/circ/finalcheckin/{trackingId}/{centralCode}", HttpMethod.PUT,
+      new HttpEntity<>(transactionHoldDTO), InnReachResponseDTO.class,
+      PRE_POPULATED_TRACKING_ID, PRE_POPULATED_CENTRAL_CODE);
+
+    var transactionAfter = fetchPrePopulatedTransaction();
+
+    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+    assertEquals(FINAL_CHECKIN, transactionAfter.getState());
+  }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
+  })
+  void checkTransactionIsNotInStateItemInTransitOrReturnUncirculated() {
+    var transactionHoldDTO = createTransactionHoldDTO();
+    var transactionBefore = fetchPrePopulatedTransaction();
+
+    transactionBefore.setState(TRANSFER);
+    repository.save(transactionBefore);
+
+    var responseEntity = testRestTemplate.exchange(
+      "/inn-reach/d2ir/circ/finalcheckin/{trackingId}/{centralCode}", HttpMethod.PUT,
+      new HttpEntity<>(transactionHoldDTO), InnReachResponseDTO.class,
+      PRE_POPULATED_TRACKING_ID, PRE_POPULATED_CENTRAL_CODE);
+
+    var transactionAfter = fetchPrePopulatedTransaction();
+
+    assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
+    assertEquals(TRANSFER, transactionAfter.getState());
   }
 }
