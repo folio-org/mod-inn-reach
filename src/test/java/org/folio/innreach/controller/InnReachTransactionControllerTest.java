@@ -219,15 +219,9 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     assertNotNull(responseEntity.getBody());
     assertEquals(3, responseEntity.getBody().getTotalRecords());
 
-    var transactionIds = responseEntity.getBody().getTransactions().stream()
-      .map(InnReachTransactionDTO::getId).collect(Collectors.toList());
-    assertTrue(transactionIds.contains(PRE_POPULATED_ITEM_HOLD_TRANSACTION_ID));
+    var transactions = responseEntity.getBody().getTransactions();
 
-    var transactionMetadatas = responseEntity.getBody().getTransactions().stream()
-      .map(InnReachTransactionDTO::getMetadata).collect(Collectors.toList());
-    assertTrue(transactionMetadatas.stream().allMatch(Objects::nonNull));
-    assertTrue(transactionMetadatas.stream().allMatch(m -> m.getCreatedDate() != null));
-    assertTrue(transactionMetadatas.stream().allMatch(m -> m.getCreatedByUsername().equals(PRE_POPULATED_USER.getName())));
+    assertEquals(1, transactions.size());
   }
 
   @Test
@@ -1021,8 +1015,9 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   })
   void returnTransactionByBarcodeAndState_when_transactionsFound() {
     var responseEntity = testRestTemplate.getForEntity(
-        "/inn-reach/transactions/search?shippedItemBarcode={shippedItemBarcode}&transactionStates={transactionStates}",
-        InnReachTransactionsDTO.class, "ABC-abc-1234", new String[] {"PATRON_HOLD", "ITEM_HOLD"});
+      "/inn-reach/transactions?itemBarcode={itemBarcode}&state={state1}&state={state2}", InnReachTransactionsDTO.class,
+      "ABC-abc-1234", "PATRON_HOLD", "ITEM_HOLD"
+    );
 
     assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
 
@@ -1058,8 +1053,9 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   })
   void returnEmptyListByBarcodeAndState_when_transactionsNotFound() {
     var responseEntity = testRestTemplate.getForEntity(
-        "/inn-reach/transactions/search?shippedItemBarcode={shippedItemBarcode}&transactionStates={transactionStates}",
-        InnReachTransactionsDTO.class, "ABC-abc-4321", new String[] {"PATRON_HOLD", "ITEM_HOLD"});
+      "/inn-reach/transactions?itemBarcode={itemBarcode}&state={state1}&state={state2}", InnReachTransactionsDTO.class,
+      "ABC-abc-4321", "PATRON_HOLD", "ITEM_HOLD"
+    );
 
     assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
 

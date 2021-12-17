@@ -37,6 +37,13 @@
         "type": "string"
       }
     },
+    "itemBarcode": {
+      "description": "List of item barcodes",
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
     "centralPatronType": {
       "description": "List of patron types",
       "type": "array",

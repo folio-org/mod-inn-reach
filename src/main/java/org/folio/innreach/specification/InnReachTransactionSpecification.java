@@ -2,6 +2,7 @@ package org.folio.innreach.specification;
 
 import static org.apache.commons.collections4.CollectionUtils.isEmpty;
 
+import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionType.PATRON;
 import static org.folio.innreach.domain.entity.InnReachTransactionFilterParameters.SortOrder.DESC;
 
 import javax.persistence.criteria.CriteriaBuilder;
@@ -38,6 +39,7 @@ public class InnReachTransactionSpecification {
       var hold = transaction.join("hold");
       var itemHold = cb.treat(hold, TransactionItemHold.class);
       var localHold = cb.treat(hold, TransactionLocalHold.class);
+      var patronHold = cb.treat(hold, TransactionPatronHold.class);
 
       var typeIs = isOfType(cb, transaction, parameters);
       var stateIs = isOfState(cb, transaction, parameters);
@@ -46,8 +48,9 @@ public class InnReachTransactionSpecification {
       var itemAgencyIn = itemAgencyIn(cb, hold, parameters);
       var patronTypeIn = patronTypeIn(cb, itemHold, localHold, parameters);
       var centralItemTypeIn = centralItemTypeIn(cb, hold, parameters);
+      var itemBarcodeIn = itemBarcodeIn(cb, transaction, hold, patronHold, parameters);
 
-      return cb.and(typeIs, stateIs, centralCodeIn, patronAgencyIn, itemAgencyIn, patronTypeIn, centralItemTypeIn);
+      return cb.and(typeIs, stateIs, centralCodeIn, patronAgencyIn, itemAgencyIn, patronTypeIn, centralItemTypeIn, itemBarcodeIn);
     };
   }
 
@@ -125,6 +128,29 @@ public class InnReachTransactionSpecification {
     return cb.or(
       itemHold.get("centralPatronTypeItem").in(patronTypes),
       localHold.get("centralPatronTypeLocal").in(patronTypes));
+  }
+
+  static Predicate itemBarcodeIn(CriteriaBuilder cb,
+                                 Root<InnReachTransaction> transaction,
+                                 Join<Object, Object> hold,
+                                 Join<Object, TransactionPatronHold> patronHold,
+                                 InnReachTransactionFilterParameters parameters) {
+    var itemBarcodes = parameters.getItemBarcodes();
+    if (isEmpty(itemBarcodes)) {
+      return cb.conjunction();
+    }
+
+    var shippedItemBarcodePredicate = cb.and(
+      cb.equal(transaction.get("type"), PATRON),
+      patronHold.get("shippedItemBarcode").in(itemBarcodes)
+    );
+
+    var folioItemBarcodePredicate = cb.and(
+      cb.notEqual(transaction.get("type"), PATRON),
+      hold.get("folioItemBarcode").in(itemBarcodes)
+    );
+
+    return cb.or(shippedItemBarcodePredicate, folioItemBarcodePredicate);
   }
 
   static Predicate centralItemTypeIn(CriteriaBuilder cb, Join<Object, Object> hold, InnReachTransactionFilterParameters parameters) {
