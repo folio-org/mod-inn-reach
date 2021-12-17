@@ -354,14 +354,19 @@ public class CirculationServiceImpl implements CirculationService {
   private void recallRequestToCentralSever(InnReachTransaction transaction, Date existingDueDate) {
     var trackingId = transaction.getTrackingId();
     var centralCode = transaction.getCentralServerCode();
+    var hold = transaction.getHold();
 
     String uri = resolveD2irCircPath(D2IR_ITEM_RECALL_OPERATION, trackingId, centralCode);
 
-    var dueDateForRecallRequest = new HashMap<>();
-    var convertedDate = existingDueDate.getTime() / 1000;
-    dueDateForRecallRequest.put("dueDateTime", convertedDate);
+    var responseParameters = new HashMap<>();
+    responseParameters.put("dueDateTime", existingDueDate.getTime() / 1000L);
+    responseParameters.put("transactionTime", hold.getTransactionTime());
+    responseParameters.put("patronId", hold.getPatronId());
+    responseParameters.put("patronAgencyCode", hold.getPatronAgencyCode());
+    responseParameters.put("itemAgencyCode", hold.getItemAgencyCode());
+    responseParameters.put("itemId", hold.getItemId());
     try {
-      innReachExternalService.postInnReachApi(centralCode, uri, dueDateForRecallRequest);
+      innReachExternalService.postInnReachApi(centralCode, uri, responseParameters);
       transaction.setState(RECALL);
     } catch (Exception e) {
         throw new CirculationException("Failed to recall request to central server: " + e.getMessage(), e);
