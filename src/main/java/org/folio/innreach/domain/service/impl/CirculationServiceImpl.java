@@ -64,6 +64,7 @@ import org.folio.innreach.dto.Holding;
 import org.folio.innreach.dto.InnReachResponseDTO;
 import org.folio.innreach.dto.ItemReceivedDTO;
 import org.folio.innreach.dto.ItemShippedDTO;
+import org.folio.innreach.dto.LoanDTO;
 import org.folio.innreach.dto.LocalHoldDTO;
 import org.folio.innreach.dto.PatronHoldDTO;
 import org.folio.innreach.dto.RecallDTO;
@@ -333,7 +334,7 @@ public class CirculationServiceImpl implements CirculationService {
     var requestedDueDate = new Date(renewLoan.getDueDateTime() * 1000L);
 
     try {
-      var renewedLoan = loanService.renew(RenewByIdDTO.of(hold.getFolioItemId(), hold.getFolioPatronId()));
+      var renewedLoan = renewLoan(hold);
       var calculatedDueDate = renewedLoan.getDueDate();
 
       if (calculatedDueDate.after(requestedDueDate) || calculatedDueDate.equals(requestedDueDate)) {
@@ -356,15 +357,12 @@ public class CirculationServiceImpl implements CirculationService {
   public InnReachResponseDTO ownerRenewLoan(String trackingId, String centralCode, RenewLoanDTO loanRenewed) {
     var transaction = getTransactionOfType(trackingId, centralCode, PATRON);
 
-    var loanId = transaction.getHold().getFolioLoanId();
-    var loan = loanService.getById(loanId);
-    var currentDueDate = loan.getDueDate();
+    var renewedLoan = renewLoan(transaction.getHold());
 
-    Instant dueDate = Instant.ofEpochSecond(loanRenewed.getDueDateTime());
-    if (currentDueDate.toInstant().isAfter(dueDate)) {
-      loan.setDueDate(Date.from(dueDate));
-
-      loanService.update(loan);
+    Instant calculatedDueDate = renewedLoan.getDueDate().toInstant();
+    Instant requestedDueDate = Instant.ofEpochSecond(loanRenewed.getDueDateTime());
+    if (calculatedDueDate.isAfter(requestedDueDate)) {
+      loanService.changeDueDate(renewedLoan, Date.from(requestedDueDate));
     }
 
     transaction.setState(OWNER_RENEW);
@@ -374,6 +372,10 @@ public class CirculationServiceImpl implements CirculationService {
 
   private InnReachResponseDTO success() {
     return new InnReachResponseDTO().status("ok").reason("success");
+  }
+
+  private LoanDTO renewLoan(TransactionHold hold) {
+    return loanService.renew(RenewByIdDTO.of(hold.getFolioItemId(), hold.getFolioPatronId()));
   }
 
   private InnReachRecallUser getRecallUserForCentralServer(String centralCode) {

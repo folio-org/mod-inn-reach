@@ -1,5 +1,6 @@
 package org.folio.innreach.domain.service.impl;
 
+import java.util.Date;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -14,6 +15,8 @@ import org.folio.innreach.dto.LoanDTO;
 @Service
 @RequiredArgsConstructor
 public class LoanServiceImpl implements LoanService {
+
+  private static final String DUE_DATE_CHANGED_ACTION = "dueDateChanged";
 
   private final CirculationClient circulationClient;
 
@@ -42,6 +45,14 @@ public class LoanServiceImpl implements LoanService {
   @Override
   public LoanDTO renew(RenewByIdDTO renewLoan) {
     return circulationClient.renewLoan(renewLoan);
+  }
+
+  @Override
+  public LoanDTO changeDueDate(LoanDTO loan, Date dueDate) {
+    loan.setDueDate(dueDate);
+    loan.setAction(DUE_DATE_CHANGED_ACTION);
+
+    return update(loan);
   }
 
 }

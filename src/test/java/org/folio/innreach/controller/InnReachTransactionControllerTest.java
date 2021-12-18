@@ -37,6 +37,7 @@ import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -52,6 +53,7 @@ import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlMergeMode;
 
 import org.folio.innreach.client.CirculationClient;
+import org.folio.innreach.client.HoldingsStorageClient;
 import org.folio.innreach.client.InventoryClient;
 import org.folio.innreach.client.ServicePointsUsersClient;
 import org.folio.innreach.client.UsersClient;
@@ -138,6 +140,8 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   private UsersClient usersClient;
   @MockBean
   private InnReachClient innReachClient;
+  @MockBean
+  private HoldingsStorageClient holdingsStorageClient;
 
   @SpyBean
   private RequestService requestService;
@@ -810,6 +814,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     var user = mockUserClient();
     mockInventoryStorageClient(user);
     when(innReachClient.postInnReachApi(any(), anyString(), anyString(), anyString(), any())).thenReturn("response");
+    when(holdingsStorageClient.findHolding(any())).thenReturn(Optional.empty());
 
     var itemHoldDTO = deserializeFromJsonFile(
       "/inn-reach-transaction/create-item-hold-request.json", TransactionHoldDTO.class);
