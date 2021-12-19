@@ -77,6 +77,7 @@ import org.folio.innreach.mapper.InnReachTransactionHoldMapper;
 import org.folio.innreach.mapper.InnReachTransactionPickupLocationMapper;
 import org.folio.innreach.repository.CentralServerRepository;
 import org.folio.innreach.repository.InnReachTransactionRepository;
+import org.folio.innreach.util.UUIDHelper;
 
 @Log4j2
 @Service
@@ -268,6 +269,16 @@ public class CirculationServiceImpl implements CirculationService {
     }
 
     if (transaction.getState() == TransactionState.ITEM_HOLD) {
+      log.info("Attempting to create a loan");
+
+      var patronId = UUIDHelper.fromStringWithoutHyphens(receiveUnshippedRequest.getPatronId());
+      var servicePointId = requestService.getDefaultServicePointIdForPatron(patronId);
+      var checkOutResponse = requestService.checkOutItem(transaction, servicePointId);
+      var loanId = checkOutResponse.getId();
+
+      log.info("Created a loan with id {}", loanId);
+
+      transaction.getHold().setFolioLoanId(loanId);
       transaction.setState(RECEIVE_UNANNOUNCED);
     }
 

@@ -1,9 +1,5 @@
 package org.folio.innreach.domain.entity;
 
-import static org.folio.innreach.domain.entity.InnReachTransaction.FETCH_ALL_BY_ITEM_BARCODE_AND_STATE_IN_COUNT_QUERY;
-import static org.folio.innreach.domain.entity.InnReachTransaction.FETCH_ALL_BY_ITEM_BARCODE_AND_STATE_IN_COUNT_QUERY_NAME;
-import static org.folio.innreach.domain.entity.InnReachTransaction.FETCH_ALL_BY_ITEM_BARCODE_AND_STATE_IN_QUERY;
-import static org.folio.innreach.domain.entity.InnReachTransaction.FETCH_ALL_BY_ITEM_BARCODE_AND_STATE_IN_QUERY_NAME;
 import static org.folio.innreach.domain.entity.InnReachTransaction.FETCH_ONE_BY_ID_QUERY;
 import static org.folio.innreach.domain.entity.InnReachTransaction.FETCH_ONE_BY_ID_QUERY_NAME;
 import static org.folio.innreach.domain.entity.InnReachTransaction.FETCH_ONE_BY_ITEM_BARCODE_QUERY;
@@ -55,14 +51,6 @@ import org.folio.innreach.domain.entity.base.Identifiable;
   name = FETCH_ONE_BY_TRACKING_ID_AND_CENTRAL_CODE_QUERY_NAME,
   query = FETCH_ONE_BY_TRACKING_ID_AND_CENTRAL_CODE_QUERY
 )
-@NamedQuery(
-  name = FETCH_ALL_BY_ITEM_BARCODE_AND_STATE_IN_QUERY_NAME,
-  query = FETCH_ALL_BY_ITEM_BARCODE_AND_STATE_IN_QUERY
-)
-@NamedQuery(
-  name = FETCH_ALL_BY_ITEM_BARCODE_AND_STATE_IN_COUNT_QUERY_NAME,
-  query = FETCH_ALL_BY_ITEM_BARCODE_AND_STATE_IN_COUNT_QUERY
-)
 public class InnReachTransaction extends Auditable implements Identifiable<UUID> {
 
   public static final String GET_ALL_QUERY_NAME = "InnReachTransaction.getAll";
@@ -83,18 +71,6 @@ public class InnReachTransaction extends Auditable implements Identifiable<UUID>
     "JOIN FETCH irt.hold AS h " +
     "JOIN FETCH h.pickupLocation " +
     "WHERE irt.trackingId = :trackingId AND irt.centralServerCode = :centralServerCode";
-
-  private static final String BY_ITEM_BARCODE_AND_STATE_IN_QUERY_POSTFIX = "WHERE (th.shippedItemBarcode = :itemBarcode AND irt.state IN (:states) AND irt.type = 1)" +
-    " OR (th.folioItemBarcode = :itemBarcode AND irt.state IN (:states) AND irt.type = 0)";
-
-  public static final String FETCH_ALL_BY_ITEM_BARCODE_AND_STATE_IN_QUERY_NAME = "InnReachTransaction.fetchAllByItemBarcodeAndStatesIn";
-  public static final String FETCH_ALL_BY_ITEM_BARCODE_AND_STATE_IN_QUERY = "SELECT irt FROM InnReachTransaction AS irt JOIN FETCH irt.hold AS th " +
-    BY_ITEM_BARCODE_AND_STATE_IN_QUERY_POSTFIX;
-
-  public static final String FETCH_ALL_BY_ITEM_BARCODE_AND_STATE_IN_COUNT_QUERY_NAME = "InnReachTransaction.countAllByItemBarcodeAndStatesIn";
-  public static final String FETCH_ALL_BY_ITEM_BARCODE_AND_STATE_IN_COUNT_QUERY = "SELECT COUNT(irt.id) FROM InnReachTransaction AS irt JOIN irt.hold AS th " +
-    BY_ITEM_BARCODE_AND_STATE_IN_QUERY_POSTFIX;
-
 
   @Id
   @GeneratedValue(strategy = GenerationType.AUTO)

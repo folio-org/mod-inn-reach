@@ -7,7 +7,7 @@ import org.springframework.cloud.openfeign.clientconfig.OkHttpFeignConfiguration
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 
-import org.folio.innreach.external.client.feign.error.FeignErrorDecoder;
+import org.folio.innreach.external.client.feign.error.InnReachFeignErrorDecoder;
 
 @Import(OkHttpFeignConfiguration.class)
 public class InnReachFeignClientConfig {
@@ -19,7 +19,7 @@ public class InnReachFeignClientConfig {
 
   @Bean
   public ErrorDecoder innReachErrorDecoder() {
-    return new FeignErrorDecoder();
+    return new InnReachFeignErrorDecoder();
   }
 
 }

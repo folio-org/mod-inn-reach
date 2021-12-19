@@ -117,6 +117,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   private static final UUID PRE_POPULATED_ITEM_SHIPPED_TRANSACTION_ID = UUID.fromString("7106c3ac-890a-4126-bf9b-a10b67555b6e");
   private static final String PRE_POPULATED_PATRON_HOLD_ITEM_BARCODE = "1111111";
   private static final String PRE_POPULATED_ITEM_HOLD_ITEM_BARCODE = "DEF-def-5678";
+  private static final String PRE_POPULATED_CENTRAL_PATRON_ID2 = "a7853dda520b4f7aa1fb9383665ea770";
   private static final UUID FOLIO_CHECKOUT_ID = UUID.randomUUID();
 
   private static final AuditableUser PRE_POPULATED_USER = AuditableUser.SYSTEM;
@@ -219,15 +220,9 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     assertNotNull(responseEntity.getBody());
     assertEquals(3, responseEntity.getBody().getTotalRecords());
 
-    var transactionIds = responseEntity.getBody().getTransactions().stream()
-      .map(InnReachTransactionDTO::getId).collect(Collectors.toList());
-    assertTrue(transactionIds.contains(PRE_POPULATED_ITEM_HOLD_TRANSACTION_ID));
+    var transactions = responseEntity.getBody().getTransactions();
 
-    var transactionMetadatas = responseEntity.getBody().getTransactions().stream()
-      .map(InnReachTransactionDTO::getMetadata).collect(Collectors.toList());
-    assertTrue(transactionMetadatas.stream().allMatch(Objects::nonNull));
-    assertTrue(transactionMetadatas.stream().allMatch(m -> m.getCreatedDate() != null));
-    assertTrue(transactionMetadatas.stream().allMatch(m -> m.getCreatedByUsername().equals(PRE_POPULATED_USER.getName())));
+    assertEquals(1, transactions.size());
   }
 
   @Test
@@ -495,7 +490,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   })
   void return200HttpCode_and_sortedTransactionList_when_getTransactionsWithPatronId() {
     var responseEntity = testRestTemplate.getForEntity(
-      "/inn-reach/transactions?query=patron2", InnReachTransactionsDTO.class
+      "/inn-reach/transactions?query=" + PRE_POPULATED_CENTRAL_PATRON_ID2, InnReachTransactionsDTO.class
     );
 
     assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
@@ -504,7 +499,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
 
     var transactions = responseEntity.getBody().getTransactions();
     assertEquals(1, transactions.size());
-    assertEquals("patron2", transactions.get(0).getHold().getPatronId());
+    assertEquals(PRE_POPULATED_CENTRAL_PATRON_ID2, transactions.get(0).getHold().getPatronId());
   }
 
   @Test
@@ -1022,8 +1017,9 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   })
   void returnTransactionByBarcodeAndState_when_transactionsFound() {
     var responseEntity = testRestTemplate.getForEntity(
-        "/inn-reach/transactions/search?shippedItemBarcode={shippedItemBarcode}&transactionStates={transactionStates}",
-        InnReachTransactionsDTO.class, "ABC-abc-1234", new String[] {"PATRON_HOLD", "ITEM_HOLD"});
+      "/inn-reach/transactions?itemBarcode={itemBarcode}&state={state1}&state={state2}", InnReachTransactionsDTO.class,
+      "ABC-abc-1234", "PATRON_HOLD", "ITEM_HOLD"
+    );
 
     assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
 
@@ -1059,8 +1055,9 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   })
   void returnEmptyListByBarcodeAndState_when_transactionsNotFound() {
     var responseEntity = testRestTemplate.getForEntity(
-        "/inn-reach/transactions/search?shippedItemBarcode={shippedItemBarcode}&transactionStates={transactionStates}",
-        InnReachTransactionsDTO.class, "ABC-abc-4321", new String[] {"PATRON_HOLD", "ITEM_HOLD"});
+      "/inn-reach/transactions?itemBarcode={itemBarcode}&state={state1}&state={state2}", InnReachTransactionsDTO.class,
+      "ABC-abc-4321", "PATRON_HOLD", "ITEM_HOLD"
+    );
 
     assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
 

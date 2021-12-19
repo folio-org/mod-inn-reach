@@ -2,6 +2,9 @@ package org.folio.innreach.domain.service.impl;
 
 import static org.folio.innreach.util.ListUtils.getFirstItem;
 
+import java.util.Optional;
+import java.util.UUID;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -9,22 +12,30 @@ import org.folio.innreach.client.HridSettingsClient;
 import org.folio.innreach.client.InstanceContributorTypeClient;
 import org.folio.innreach.client.InstanceTypeClient;
 import org.folio.innreach.client.ServicePointsClient;
+import org.folio.innreach.client.ServicePointsUsersClient;
+import org.folio.innreach.domain.dto.folio.inventorystorage.ServicePointUserDTO;
 import org.folio.innreach.domain.service.InventoryService;
 
 @Service
 @RequiredArgsConstructor
 public class InventoryServiceImpl implements InventoryService {
 
+  private final ServicePointsUsersClient servicePointsUsersClient;
   private final ServicePointsClient servicePointsClient;
   private final HridSettingsClient hridSettingsClient;
   private final InstanceTypeClient instanceTypeClient;
   private final InstanceContributorTypeClient nameTypeClient;
 
+  @Override
+  public Optional<UUID> findDefaultServicePointIdForUser(UUID userId) {
+    return getFirstItem(servicePointsUsersClient.findServicePointsUsers(userId))
+      .map(ServicePointUserDTO::getDefaultServicePointId);
+  }
 
   @Override
-  public ServicePointsClient.ServicePoint queryServicePointByCode(String locationCode) {
-    return getFirstItem(servicePointsClient.queryServicePointByCode(locationCode))
-      .orElseThrow(() -> new IllegalArgumentException("Service point is not found for pickup location code: " + locationCode));
+  public Optional<UUID> findServicePointIdByCode(String code) {
+    return getFirstItem(servicePointsClient.queryServicePointByCode(code))
+      .map(ServicePointsClient.ServicePoint::getId);
   }
 
   @Override

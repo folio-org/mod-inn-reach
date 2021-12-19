@@ -29,7 +29,7 @@ public class CirculationFixture {
     transactionHoldRandom = new EasyRandom(
       new EasyRandomParameters()
         .randomize(named("transactionTime"), () -> randomInteger(255))
-        .randomize(named("patronId"), TestUtil::randomAlphanumeric32Max)
+        .randomize(named("patronId"), TestUtil::randomUUIDWithoutHyphens)
         .randomize(named("patronAgencyCode"), TestUtil::randomAlphanumeric5)
         .randomize(named("itemAgencyCode"), TestUtil::randomAlphanumeric5)
         .randomize(named("itemId"), TestUtil::randomAlphanumeric32Max)
@@ -53,7 +53,7 @@ public class CirculationFixture {
     transferRequestRandom = new EasyRandom(
       new EasyRandomParameters()
         .randomize(named("transactionTime"), () -> randomInteger(255))
-        .randomize(named("patronId"), TestUtil::randomAlphanumeric32Max)
+        .randomize(named("patronId"), TestUtil::randomUUIDWithoutHyphens)
         .randomize(named("patronAgencyCode"), TestUtil::randomAlphanumeric5)
         .randomize(named("itemAgencyCode"), TestUtil::randomAlphanumeric5)
         .randomize(named("itemId"), TestUtil::randomAlphanumeric32Max)
@@ -63,7 +63,7 @@ public class CirculationFixture {
     itemShippedRandom = new EasyRandom(
         new EasyRandomParameters()
             .randomize(named("transactionTime"), () -> randomInteger(255))
-            .randomize(named("patronId"), TestUtil::randomAlphanumeric32Max)
+            .randomize(named("patronId"), TestUtil::randomUUIDWithoutHyphens)
             .randomize(named("patronAgencyCode"), TestUtil::randomAlphanumeric5)
             .randomize(named("itemAgencyCode"), TestUtil::randomAlphanumeric5)
             .randomize(named("itemId"), TestUtil::randomAlphanumeric32Max)
@@ -79,7 +79,7 @@ public class CirculationFixture {
     cancelRequestRandom = new EasyRandom(
         new EasyRandomParameters()
             .randomize(named("transactionTime"), () -> randomInteger(255))
-            .randomize(named("patronId"), TestUtil::randomAlphanumeric32Max)
+            .randomize(named("patronId"), TestUtil::randomUUIDWithoutHyphens)
             .randomize(named("patronAgencyCode"), TestUtil::randomAlphanumeric5)
             .randomize(named("itemAgencyCode"), TestUtil::randomAlphanumeric5)
             .randomize(named("itemId"), TestUtil::randomAlphanumeric32Max)
@@ -90,7 +90,7 @@ public class CirculationFixture {
       new EasyRandomParameters()
         .randomize(named("itemAgencyCode"), TestUtil::randomAlphanumeric5)
         .randomize(named("itemId"), TestUtil::randomAlphanumeric32Max)
-        .randomize(named("patronId"), TestUtil::randomAlphanumeric32Max)
+        .randomize(named("patronId"), TestUtil::randomUUIDWithoutHyphens)
         .randomize(named("patronAgencyCode"), TestUtil::randomAlphanumeric5)
     );
   }
