@@ -21,6 +21,7 @@ import org.apache.commons.lang3.RandomStringUtils;
 import org.springframework.retry.support.RetryTemplate;
 
 import org.folio.innreach.domain.entity.CentralServer;
+import org.folio.innreach.util.UUIDHelper;
 
 @UtilityClass
 @Log4j2
@@ -53,6 +54,10 @@ public class TestUtil {
 
   public static String randomAlphanumeric32Max() {
     return RandomStringUtils.randomAlphanumeric(1, 33).toLowerCase();
+  }
+
+  public static String randomUUIDWithoutHyphens() {
+    return UUIDHelper.toStringWithoutHyphens(UUID.randomUUID());
   }
 
   @SneakyThrows

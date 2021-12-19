@@ -42,7 +42,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 
 import org.folio.innreach.client.CirculationClient;
-import org.folio.innreach.client.ServicePointsUsersClient;
 import org.folio.innreach.client.UsersClient;
 import org.folio.innreach.domain.dto.OwningSiteCancelsRequestDTO;
 import org.folio.innreach.domain.dto.folio.ResultList;
@@ -58,6 +57,7 @@ import org.folio.innreach.domain.entity.InnReachTransaction;
 import org.folio.innreach.domain.entity.TransactionHold;
 import org.folio.innreach.domain.entity.TransactionItemHold;
 import org.folio.innreach.domain.entity.TransactionLocalHold;
+import org.folio.innreach.domain.exception.CirculationException;
 import org.folio.innreach.domain.exception.EntityNotFoundException;
 import org.folio.innreach.domain.exception.ItemNotRequestableException;
 import org.folio.innreach.domain.service.HoldingsService;
@@ -98,7 +98,6 @@ public class RequestServiceImpl implements RequestService {
 
   private final InnReachTransactionPickupLocationMapper transactionPickupLocationMapper;
   private final CirculationClient circulationClient;
-  private final ServicePointsUsersClient servicePointsUsersClient;
   private final InventoryService inventoryService;
   private final UsersClient usersClient;
 
@@ -117,7 +116,7 @@ public class RequestServiceImpl implements RequestService {
       var patronType = hold.getCentralPatronType();
       var patronBarcode = getUserBarcode(centralServerId, patronType);
       var patron = getUserByBarcode(patronBarcode);
-      var servicePointId = getDefaultServicePointId(patron.getId());
+      var servicePointId = getDefaultServicePointIdForPatron(patron.getId());
 
       createOwningSiteItemRequest(transaction, patron, servicePointId);
     } catch (Exception e) {
@@ -263,7 +262,7 @@ public class RequestServiceImpl implements RequestService {
 
   @Override
   public void createRecallRequest(UUID recallUserId, UUID itemId) {
-    var pickupServicePoint = getDefaultServicePointId(recallUserId);
+    var pickupServicePoint = getDefaultServicePointIdForPatron(recallUserId);
 
     var request = RequestDTO.builder()
       .itemId(itemId)
@@ -288,6 +287,18 @@ public class RequestServiceImpl implements RequestService {
 
   public CheckOutResponseDTO renewLoan(RenewLoanRequestDTO renewLoan) {
     return circulationClient.renewLoan(renewLoan);
+  }
+
+  @Override
+  public UUID getDefaultServicePointIdForPatron(UUID patronId) {
+    return inventoryService.findDefaultServicePointIdForUser(patronId)
+      .orElseThrow(() -> new CirculationException("Default service point is not set for the patron: " + patronId));
+  }
+
+  @Override
+  public UUID getServicePointIdByCode(String locationCode) {
+    return inventoryService.findServicePointIdByCode(locationCode)
+      .orElseThrow(() -> new CirculationException("Service point is not found by location code: " + locationCode));
   }
 
   private void cancelRequest(RequestDTO request, String reason) {
@@ -344,17 +355,6 @@ public class RequestServiceImpl implements RequestService {
     return centralServerRepository.fetchOneByCentralCode(centralServerCode)
       .orElseThrow(() -> new EntityNotFoundException("Central server not found for central code = " + centralServerCode)
       ).getId();
-  }
-
-  private UUID getDefaultServicePointId(UUID userId) {
-    return servicePointsUsersClient.findServicePointsUsers(userId)
-      .getResult().stream().findFirst().orElseThrow(
-        () -> new EntityNotFoundException("Service points not found for user id = " + userId)
-      ).getDefaultServicePointId();
-  }
-
-  private UUID getServicePointIdByCode(String locationCode) {
-    return inventoryService.queryServicePointByCode(locationCode).getId();
   }
 
   private String queryByBarcode(String patronBarcode) {

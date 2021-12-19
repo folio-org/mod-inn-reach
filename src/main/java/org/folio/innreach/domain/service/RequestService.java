@@ -39,4 +39,9 @@ public interface RequestService {
   CheckOutResponseDTO getLoan(UUID loanId);
 
   CheckOutResponseDTO renewLoan(RenewLoanRequestDTO renewLoan);
+
+  UUID getDefaultServicePointIdForPatron(UUID patronId);
+
+  UUID getServicePointIdByCode(String locationCode);
+
 }
