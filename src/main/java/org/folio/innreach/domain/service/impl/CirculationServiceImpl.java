@@ -261,7 +261,7 @@ public class CirculationServiceImpl implements CirculationService {
 
   @Override
   public InnReachResponseDTO receiveUnshipped(String trackingId, String centralCode,
-                                              BaseCircRequestDTO receiveUnshippedRequestDTO) {
+                                              BaseCircRequestDTO receiveUnshippedRequest) {
     var transaction = getTransactionOfType(trackingId, centralCode, ITEM);
 
     if (transaction.getState() == TransactionState.ITEM_SHIPPED) {

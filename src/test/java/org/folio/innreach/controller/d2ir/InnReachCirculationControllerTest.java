@@ -288,7 +288,7 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     var transactionHoldDTO = createTransactionHoldDTO();
 
     when(servicePointsUsersClient.findServicePointsUsers(any())).thenReturn(ResultList.asSinglePage(createServicePointUserDTO()));
-    when(circulationClient.checkOutByBarcode(any(CheckOutRequestDTO.class))).thenReturn(new CheckOutResponseDTO().id(NEW_LOAN_ID));
+    when(circulationClient.checkOutByBarcode(any(CheckOutRequestDTO.class))).thenReturn(new LoanDTO().id(NEW_LOAN_ID));
 
     var responseEntity = testRestTemplate.exchange(
       "/inn-reach/d2ir/circ/receiveunshipped/{trackingId}/{centralCode}", HttpMethod.PUT,
