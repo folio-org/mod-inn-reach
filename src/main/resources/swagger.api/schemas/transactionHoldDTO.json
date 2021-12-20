@@ -41,6 +41,10 @@
       "description": "Need before time",
       "type": "integer"
     },
+    "dueDateTime": {
+      "description": "Due date time",
+      "type": "integer"
+    },
     "centralItemType": {
       "description": "Central item type",
       "type": "integer",
