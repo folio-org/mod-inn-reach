@@ -120,6 +120,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   private static final UUID PRE_POPULATED_ITEM_SHIPPED_TRANSACTION_ID = UUID.fromString("7106c3ac-890a-4126-bf9b-a10b67555b6e");
   private static final String PRE_POPULATED_PATRON_HOLD_ITEM_BARCODE = "1111111";
   private static final String PRE_POPULATED_ITEM_HOLD_ITEM_BARCODE = "DEF-def-5678";
+  private static final String PRE_POPULATED_CENTRAL_PATRON_ID2 = "a7853dda520b4f7aa1fb9383665ea770";
   private static final UUID FOLIO_CHECKOUT_ID = UUID.randomUUID();
 
   private static final AuditableUser PRE_POPULATED_USER = AuditableUser.SYSTEM;
@@ -494,7 +495,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   })
   void return200HttpCode_and_sortedTransactionList_when_getTransactionsWithPatronId() {
     var responseEntity = testRestTemplate.getForEntity(
-      "/inn-reach/transactions?query=patron2", InnReachTransactionsDTO.class
+      "/inn-reach/transactions?query=" + PRE_POPULATED_CENTRAL_PATRON_ID2, InnReachTransactionsDTO.class
     );
 
     assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
@@ -503,7 +504,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
 
     var transactions = responseEntity.getBody().getTransactions();
     assertEquals(1, transactions.size());
-    assertEquals("patron2", transactions.get(0).getHold().getPatronId());
+    assertEquals(PRE_POPULATED_CENTRAL_PATRON_ID2, transactions.get(0).getHold().getPatronId());
   }
 
   @Test

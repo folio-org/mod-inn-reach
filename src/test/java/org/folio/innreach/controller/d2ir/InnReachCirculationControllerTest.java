@@ -38,6 +38,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -62,6 +63,7 @@ import org.folio.innreach.domain.dto.folio.inventory.InventoryItemDTO;
 import org.folio.innreach.domain.entity.InnReachTransaction;
 import org.folio.innreach.domain.service.ItemService;
 import org.folio.innreach.domain.service.RequestService;
+import org.folio.innreach.dto.CheckOutRequestDTO;
 import org.folio.innreach.dto.InnReachResponseDTO;
 import org.folio.innreach.dto.BorrowerRenewDTO;
 import org.folio.innreach.dto.CheckOutResponseDTO;
@@ -95,6 +97,8 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
   private static final String ITEM_RECEIVED_PATH = "/inn-reach/d2ir/circ/itemreceived/{trackingId}/{centralCode}";
 
   private static final String UNEXPECTED_TRANSACTION_STATE = "Unexpected transaction state: ";
+
+  private static final UUID NEW_LOAN_ID = UUID.randomUUID();
 
   @Autowired
   private TestRestTemplate testRestTemplate;
@@ -286,6 +290,9 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
 
     var transactionHoldDTO = createTransactionHoldDTO();
 
+    when(servicePointsUsersClient.findServicePointsUsers(any())).thenReturn(ResultList.asSinglePage(createServicePointUserDTO()));
+    when(circulationClient.checkOutByBarcode(any(CheckOutRequestDTO.class))).thenReturn(new CheckOutResponseDTO().id(NEW_LOAN_ID));
+
     var responseEntity = testRestTemplate.exchange(
       "/inn-reach/d2ir/circ/receiveunshipped/{trackingId}/{centralCode}", HttpMethod.PUT,
       new HttpEntity<>(transactionHoldDTO, headers), InnReachResponseDTO.class,
@@ -298,6 +305,7 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
 
     var transactionUpdated = fetchPrePopulatedTransaction();
     assertEquals(RECEIVE_UNANNOUNCED, transactionUpdated.getState());
+    assertEquals(NEW_LOAN_ID, transactionUpdated.getHold().getFolioLoanId());
   }
 
   @Test
