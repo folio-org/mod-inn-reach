@@ -1,6 +1,6 @@
 package org.folio.innreach.controller.base;
 
-import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
+import static com.github.tomakehurst.wiremock.client.WireMock.created;
 import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.noContent;
 import static com.github.tomakehurst.wiremock.client.WireMock.ok;
@@ -172,13 +172,24 @@ public class BaseApiControllerTest {
   }
 
   protected static void stubPost(String url, String responsePath) {
-    MappingBuilder builder = WireMock.post(urlEqualTo(url));
+    stubPost(url, responsePath, ResponseActions.none(), MappingActions.none());
+  }
 
-    stubFor(builder
-      .willReturn(aResponse()
+  protected static void stubPost(String url, String responsePath,
+                                 ResponseActions additionalResponseActions,
+                                 MappingActions additionalMapping) {
+
+    ResponseDefinitionBuilder responseBuilder = created()
         .withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
         .withHeader(XOkapiHeaders.URL, wm.baseUrl())
-        .withBodyFile(responsePath)));
+        .withBodyFile(responsePath);
+
+    responseBuilder = additionalResponseActions.apply(responseBuilder);
+
+    MappingBuilder mappingBuilder = WireMock.post(urlEqualTo(url)).willReturn(responseBuilder);
+    mappingBuilder = additionalMapping.apply(mappingBuilder);
+
+    stubFor(mappingBuilder);
   }
 
   protected static void stubPut(String url) {
