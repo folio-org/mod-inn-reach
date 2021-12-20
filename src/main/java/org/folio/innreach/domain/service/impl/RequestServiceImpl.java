@@ -36,6 +36,7 @@ import java.util.UUID;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+
 import org.folio.innreach.dto.RenewLoanRequestDTO;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -143,7 +144,7 @@ public class RequestServiceImpl implements RequestService {
 
   @Override
   public void createItemRequest(InnReachTransaction transaction, Holding holding, InventoryItemDTO item,
-                                User patron, UUID servicePointId, RequestType requestType) {
+    User patron, UUID servicePointId, RequestType requestType) {
     log.info("Creating item request for transaction {}", transaction);
     var hold = transaction.getHold();
 
@@ -264,11 +265,16 @@ public class RequestServiceImpl implements RequestService {
   @Override
   public void createRecallRequest(UUID recallUserId, UUID itemId) {
     var pickupServicePoint = getDefaultServicePointIdForPatron(recallUserId);
+    var item = itemService.getItemByHrId(itemId.toString());
+    var holding = item == null ? null : holdingsService.find(item.getHoldingsRecordId()).orElse(null);
 
     var request = RequestDTO.builder()
       .itemId(itemId)
       .requesterId(recallUserId)
       .requestType(RECALL.getName())
+      .requestLevel(RequestDTO.RequestLevel.ITEM.getName())
+      .instanceId(holding == null ? null : holding.getInstanceId())
+      .holdingsRecordId(item == null ? null : item.getHoldingsRecordId())
       .requestDate(OffsetDateTime.now())
       .fulfilmentPreference(HOLD_SHELF.getName())
       .pickupServicePointId(pickupServicePoint)
@@ -320,7 +326,7 @@ public class RequestServiceImpl implements RequestService {
   }
 
   private void updateTransaction(InnReachTransaction transaction, InventoryItemDTO item,
-                                 Holding holding, RequestDTO request, User patron) {
+    Holding holding, RequestDTO request, User patron) {
     var hold = transaction.getHold();
     hold.setFolioRequestId(request.getId());
     hold.setFolioItemId(item.getId());
