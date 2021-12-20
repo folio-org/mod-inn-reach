@@ -10,9 +10,11 @@ import org.folio.innreach.dto.LocalHoldDTO;
 import org.folio.innreach.dto.PatronHoldDTO;
 import org.folio.innreach.dto.RecallDTO;
 import org.folio.innreach.dto.ReturnUncirculatedDTO;
+import org.folio.innreach.dto.TransactionHoldDTO;
 import org.folio.innreach.dto.TransferRequestDTO;
 
 public interface CirculationService {
+  InnReachResponseDTO createInnReachTransactionItemHold(String trackingId, String centralCode, TransactionHoldDTO dto);
 
   InnReachResponseDTO initiatePatronHold(String trackingId, String centralCode, PatronHoldDTO patronHold);
 

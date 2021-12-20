@@ -4,6 +4,7 @@ import static org.springframework.http.HttpHeaders.AUTHORIZATION;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
 import static org.folio.innreach.external.InnReachHeaders.X_FROM_CODE;
+import static org.folio.innreach.external.InnReachHeaders.X_REQUEST_CREATION_TIME;
 import static org.folio.innreach.external.InnReachHeaders.X_TO_CODE;
 
 import java.net.URI;
@@ -18,22 +19,25 @@ import org.folio.innreach.external.client.feign.config.InnReachFeignClientConfig
 @FeignClient(value = "innReach", configuration = InnReachFeignClientConfig.class)
 public interface InnReachClient {
 
-  @GetMapping(headers = "Accept=application/json")
+  @GetMapping(consumes = APPLICATION_JSON_VALUE, produces = APPLICATION_JSON_VALUE)
   String callInnReachApi(URI baseUri,
                          @RequestHeader(AUTHORIZATION) String authorizationHeader,
                          @RequestHeader(X_FROM_CODE) String xFromCode,
-                         @RequestHeader(X_TO_CODE) String xToCode);
+                         @RequestHeader(X_TO_CODE) String xToCode,
+                         @RequestHeader(X_REQUEST_CREATION_TIME) Long xRequestCreationTime);
 
   @PostMapping(consumes = APPLICATION_JSON_VALUE, produces = APPLICATION_JSON_VALUE)
   String postInnReachApi(URI baseUri,
                          @RequestHeader(AUTHORIZATION) String authorizationHeader,
                          @RequestHeader(X_FROM_CODE) String xFromCode,
                          @RequestHeader(X_TO_CODE) String xToCode,
+                         @RequestHeader(X_REQUEST_CREATION_TIME) Long xRequestCreationTime,
                          Object dto);
 
   @PostMapping(consumes = APPLICATION_JSON_VALUE, produces = APPLICATION_JSON_VALUE)
   String postInnReachApi(URI baseUri,
                          @RequestHeader(AUTHORIZATION) String authorizationHeader,
                          @RequestHeader(X_FROM_CODE) String xFromCode,
-                         @RequestHeader(X_TO_CODE) String xToCode);
+                         @RequestHeader(X_TO_CODE) String xToCode,
+                         @RequestHeader(X_REQUEST_CREATION_TIME) Long xRequestCreationTime);
 }
