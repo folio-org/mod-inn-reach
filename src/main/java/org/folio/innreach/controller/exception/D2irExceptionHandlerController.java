@@ -9,6 +9,7 @@ import lombok.extern.log4j.Log4j2;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingRequestHeaderException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -48,7 +49,8 @@ public class D2irExceptionHandlerController {
       .errors(innReachErrors);
   }
 
-  @ExceptionHandler({EntityNotFoundException.class, IllegalArgumentException.class, CirculationException.class})
+  @ExceptionHandler({EntityNotFoundException.class, IllegalArgumentException.class, CirculationException.class,
+    MissingRequestHeaderException.class})
   @ResponseStatus(HttpStatus.BAD_REQUEST)
   public InnReachResponseDTO handleEntityNotFoundException(Exception e) {
     log.warn(e.getMessage(), e);
