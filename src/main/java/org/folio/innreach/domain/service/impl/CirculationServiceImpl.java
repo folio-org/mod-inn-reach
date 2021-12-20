@@ -311,7 +311,7 @@ public class CirculationServiceImpl implements CirculationService {
   }
 
   @Override
-  public InnReachResponseDTO recall(String trackingId, String centralCode, RecallDTO recallDTO) {
+  public InnReachResponseDTO recall(String trackingId, String centralCode, RecallDTO recall) {
     var transaction = getTransactionOfType(trackingId, centralCode, PATRON);
     var requestId = transaction.getHold().getFolioRequestId();
     var request = requestService.findRequest(requestId);
@@ -331,6 +331,8 @@ public class CirculationServiceImpl implements CirculationService {
         throw new CirculationException("Unable to create a recall request on the item: " + e.getMessage(), e);
       }
     }
+
+    transaction.getHold().setDueDateTime(recall.getDueDateTime());
     transaction.setState(RECALL);
 
     return success();
@@ -342,9 +344,11 @@ public class CirculationServiceImpl implements CirculationService {
     var hold = transaction.getHold();
     var loan = loanService.getById(hold.getFolioLoanId());
     var existingDueDate = loan.getDueDate();
-    var requestedDueDate = new Date(renewLoan.getDueDateTime() * 1000L);
+    var requestedDueDate = Date.from(Instant.ofEpochSecond(renewLoan.getDueDateTime()));
 
     try {
+      hold.setDueDateTime(renewLoan.getDueDateTime());
+      
       var renewedLoan = renewLoan(hold);
       var calculatedDueDate = renewedLoan.getDueDate();
 
@@ -365,17 +369,18 @@ public class CirculationServiceImpl implements CirculationService {
   }
 
   @Override
-  public InnReachResponseDTO ownerRenewLoan(String trackingId, String centralCode, RenewLoanDTO loanRenewed) {
+  public InnReachResponseDTO ownerRenewLoan(String trackingId, String centralCode, RenewLoanDTO renewLoan) {
     var transaction = getTransactionOfType(trackingId, centralCode, PATRON);
 
     var renewedLoan = renewLoan(transaction.getHold());
 
     Instant calculatedDueDate = renewedLoan.getDueDate().toInstant();
-    Instant requestedDueDate = Instant.ofEpochSecond(loanRenewed.getDueDateTime());
+    Instant requestedDueDate = Instant.ofEpochSecond(renewLoan.getDueDateTime());
     if (calculatedDueDate.isAfter(requestedDueDate)) {
       loanService.changeDueDate(renewedLoan, Date.from(requestedDueDate));
     }
 
+    transaction.getHold().setDueDateTime(renewLoan.getDueDateTime());
     transaction.setState(OWNER_RENEW);
 
     return success();
