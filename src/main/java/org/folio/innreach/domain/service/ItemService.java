@@ -9,8 +9,6 @@ public interface ItemService extends BasicService<UUID, InventoryItemDTO> {
 
   InventoryItemDTO getItemByHrId(String hrid);
 
-  InventoryItemDTO getItemByBarcode(String barcode);
-
   Optional<InventoryItemDTO> findItemByBarcode(String barcode);
 
 }

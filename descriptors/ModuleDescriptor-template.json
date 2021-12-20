@@ -253,7 +253,10 @@
         {
           "methods": ["GET"],
           "pathPattern": "/inn-reach/central-servers/{centralServerId}/contributions/current",
-          "permissionsRequired": ["inn-reach.contributions.current.item.get"]
+          "permissionsRequired": [
+            "inn-reach.contributions.current.item.get",
+            "inventory-storage.material-types.collection.get"
+          ]
         },
         {
           "methods": ["GET"],
@@ -263,7 +266,13 @@
         {
           "methods": ["POST"],
           "pathPattern": "/inn-reach/central-servers/{centralServerId}/contributions",
-          "permissionsRequired": ["inn-reach.contributions.item.post"]
+          "permissionsRequired": [
+            "inn-reach.contributions.item.post",
+            "circulation.requests.collection.get",
+            "inventory-storage.instance.iteration.post",
+            "inventory-storage.inventory-view.instances.collection.get",
+            "inventory-storage.material-types.collection.get"
+          ]
         },
         {
           "methods": ["GET"],
@@ -323,7 +332,11 @@
         {
           "methods": ["GET"],
           "pathPattern": "/inn-reach/d2ir/getbibrecord/{bibId}/{centralCode}",
-          "permissionsRequired": ["inn-reach.d2ir.bib-info.item.get"]
+          "permissionsRequired": [
+            "inn-reach.d2ir.bib-info.item.get",
+            "inventory-storage.inventory-view.instances.collection.get",
+            "source-storage.records.get"
+          ]
         },
         {
           "methods": ["POST"],
@@ -358,7 +371,16 @@
             "circulation.requests.item.get",
             "circulation.requests.item.put",
             "circulation.requests.item.post",
-            "circulation.requests.item.move.post"
+            "circulation.requests.item.move.post",
+            "users.item.get",
+            "inventory-storage.service-points-users.collection.get",
+            "circulation.check-out-by-barcode.post",
+            "circulation-storage.loans.item.get",
+            "circulation.renew-by-id.post",
+            "circulation.loans.item.get",
+            "circulation.renew-by-id.post",
+            "inventory.instances.item.get",
+            "users.collection.get"
           ]
         },
         {
@@ -396,6 +418,15 @@
           "modulePermissions": [
             "circulation.check-out-by-barcode.post"
           ]
+        },
+        {
+          "methods": ["GET"],
+          "pathPattern": "/inn-reach/central-servers/{centralServerId}/marc-record-transformation/{inventoryInstanceId}",
+          "permissionsRequired": ["inn-reach.marc-record-transformation.item.get"],
+          "modulePermissions": [
+            "inventory-storage.instances.item.get",
+            "source-storage.records.get"
+          ]
         }
       ]
     },
@@ -416,7 +447,9 @@
             "inventory-storage.instance-types.collection.get",
             "inventory-storage.instance-types.item.post",
             "inventory-storage.contributor-name-types.collection.get",
-            "inventory-storage.contributor-name-types.item.post"
+            "inventory-storage.contributor-name-types.item.post",
+            "circulation-storage.cancellation-reasons.collection.get",
+            "circulation-storage.cancellation-reasons.item.post"
           ],
           "permissionsRequired": []
         },
@@ -937,6 +970,19 @@
         "inn-reach.recall-user.item.get",
         "inn-reach.recall-user.item.post",
         "inn-reach.recall-user.item.put"
+      ]
+    },
+    {
+      "permissionName" : "inn-reach.marc-record-transformation.item.get",
+      "displayName" : "get marc record transformation",
+      "description" : "Get MARC record transformation"
+    },
+    {
+      "permissionName" : "inn-reach.marc-record-transformation.item.all",
+      "displayName" : "inn reach API module - all permissions of marc record transformation",
+      "description" : "All permissions of MARC record transformation",
+      "subPermissions" : [
+        "inn-reach.marc-record-transformation.item.get"
       ]
     },
     {
