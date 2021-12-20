@@ -2,10 +2,14 @@ package org.folio.innreach.fixture;
 
 import static java.lang.System.clearProperty;
 import static java.lang.System.setProperty;
+import static org.springframework.http.HttpHeaders.ACCEPT;
+import static org.springframework.http.HttpHeaders.AUTHORIZATION;
+import static org.springframework.http.HttpHeaders.CONTENT_TYPE;
 
 import java.io.File;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
+import java.time.OffsetDateTime;
 import java.util.Objects;
 import java.util.Random;
 import java.util.Set;
@@ -18,6 +22,7 @@ import lombok.experimental.UtilityClass;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.springframework.http.HttpHeaders;
 import org.springframework.retry.support.RetryTemplate;
 
 import org.folio.innreach.domain.entity.CentralServer;
@@ -39,7 +44,7 @@ public class TestUtil {
     return new Random().nextInt(range);
   }
 
-  public static int randomIntegerExcept(int range, Set<Integer> except){
+  public static int randomIntegerExcept(int range, Set<Integer> except) {
     Random random = new Random();
     int integer;
     do {
@@ -97,6 +102,17 @@ public class TestUtil {
 
   private static File getFile(String filename) throws URISyntaxException {
     return new File(Objects.requireNonNull(TestUtil.class.getClassLoader().getResource(filename)).toURI());
+  }
+
+  public static HttpHeaders circHeaders() {
+    var headers = new HttpHeaders();
+    headers.add("X-To-Code", "code1");
+    headers.add("X-From-Code", "d2ir");
+    headers.add("X-Request-Creation-Time", String.valueOf(OffsetDateTime.now().toEpochSecond()));
+    headers.add(AUTHORIZATION, "Bearer AccessToken");
+    headers.add(ACCEPT, "application/json");
+    headers.add(CONTENT_TYPE, "application/json");
+    return headers;
   }
 
 }

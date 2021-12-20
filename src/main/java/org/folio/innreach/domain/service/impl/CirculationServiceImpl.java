@@ -31,6 +31,8 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Supplier;
 
+import javax.persistence.EntityExistsException;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.StringUtils;
@@ -51,10 +53,12 @@ import org.folio.innreach.domain.entity.TransactionHold;
 import org.folio.innreach.domain.entity.TransactionPatronHold;
 import org.folio.innreach.domain.exception.CirculationException;
 import org.folio.innreach.domain.exception.EntityNotFoundException;
+import org.folio.innreach.domain.service.CentralServerService;
 import org.folio.innreach.domain.service.CirculationService;
 import org.folio.innreach.domain.service.HoldingsService;
 import org.folio.innreach.domain.service.ItemService;
 import org.folio.innreach.domain.service.LoanService;
+import org.folio.innreach.domain.service.MaterialTypeMappingService;
 import org.folio.innreach.domain.service.PatronHoldService;
 import org.folio.innreach.domain.service.RequestService;
 import org.folio.innreach.domain.service.UpdateTemplate.UpdateOperation;
@@ -73,6 +77,7 @@ import org.folio.innreach.dto.ReturnUncirculatedDTO;
 import org.folio.innreach.dto.TransactionHoldDTO;
 import org.folio.innreach.dto.TransferRequestDTO;
 import org.folio.innreach.external.service.InnReachExternalService;
+import org.folio.innreach.mapper.InnReachErrorMapper;
 import org.folio.innreach.mapper.InnReachTransactionHoldMapper;
 import org.folio.innreach.mapper.InnReachTransactionPickupLocationMapper;
 import org.folio.innreach.repository.CentralServerRepository;
@@ -107,7 +112,40 @@ public class CirculationServiceImpl implements CirculationService {
   private final HoldingsService holdingsService;
   private final LoanService loanService;
   private final InnReachExternalService innReachExternalService;
+  private final CentralServerService centralServerService;
+  private final MaterialTypeMappingService materialService;
 
+  private InnReachTransaction createTransactionWithItemHold(String trackingId, String centralCode) {
+    var transaction = new InnReachTransaction();
+    transaction.setTrackingId(trackingId);
+    transaction.setCentralServerCode(centralCode);
+    transaction.setType(InnReachTransaction.TransactionType.ITEM);
+    transaction.setState(InnReachTransaction.TransactionState.ITEM_HOLD);
+    return transaction;
+  }
+
+  @Override
+  public InnReachResponseDTO createInnReachTransactionItemHold(String trackingId, String centralCode, TransactionHoldDTO dto) {
+    try {
+      transactionRepository.fetchOneByTrackingId(trackingId).ifPresent(m -> {
+        throw new EntityExistsException("INN-Reach Transaction with tracking ID = " + trackingId
+          + " already exists.");
+      });
+      var centralServer = centralServerService.getCentralServerByCentralCode(centralCode);
+      var centralServerId = centralServer.getId();
+      var transaction = createTransactionWithItemHold(trackingId, centralCode);
+      var itemHold = transactionHoldMapper.toItemHold(dto);
+      var item = itemService.getItemByHrId(itemHold.getItemId());
+      var materialTypeId = item.getMaterialType().getId();
+      var materialType = materialService.findByCentralServerAndMaterialType(centralServerId, materialTypeId);
+      itemHold.setCentralItemType(materialType.getCentralItemType());
+      transaction.setHold(itemHold);
+      transactionRepository.save(transaction);
+    } catch (Exception e) {
+      throw new CirculationException("An error occurred during creation of INN-Reach Transaction. " + e.getMessage(), e);
+    }
+    return success();
+  }
 
   @Transactional(propagation = Propagation.NEVER)
   @Override
@@ -348,7 +386,7 @@ public class CirculationServiceImpl implements CirculationService {
 
     try {
       hold.setDueDateTime(renewLoan.getDueDateTime());
-      
+
       var renewedLoan = renewLoan(hold);
       var calculatedDueDate = renewedLoan.getDueDate();
 

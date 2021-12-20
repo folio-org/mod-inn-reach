@@ -15,7 +15,7 @@ import org.folio.innreach.dto.LoanDTO;
 
 public interface RequestService {
   @Async
-  void createItemHoldRequest(String transactionTrackingId);
+  void createItemHoldRequest(String trackingId, String centralCode);
 
   @Async
   void createLocalHoldRequest(InnReachTransaction transaction);
