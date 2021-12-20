@@ -12,6 +12,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import static org.folio.innreach.fixture.TestUtil.circHeaders;
 import static org.folio.innreach.fixture.TestUtil.readFile;
 
 import java.util.Collections;
@@ -59,28 +60,28 @@ import org.folio.tenant.rest.resource.TenantApi;
 
 @Log4j2
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
-    classes = { ModInnReachApplication.class,	BaseApiControllerTest.TestTenantController.class })
+  classes = {ModInnReachApplication.class, BaseApiControllerTest.TestTenantController.class})
 @AutoConfigureMockMvc
-@ActiveProfiles({ "test", "testcontainers-pg" })
+@ActiveProfiles({"test", "testcontainers-pg"})
 @ExtendWith(WatcherExtension.class)
 public class BaseApiControllerTest {
 
-  @EnableAutoConfiguration(exclude = { FolioLiquibaseConfiguration.class })
+  @EnableAutoConfiguration(exclude = {FolioLiquibaseConfiguration.class})
   @RestController("folioTenantController")
   @Profile("test")
   static class TestTenantController implements TenantApi {
 
     @Override
     public ResponseEntity<String> postTenant(@Valid TenantAttributes tenantAttributes) {
-        return ResponseEntity.ok("OK");
+      return ResponseEntity.ok("OK");
     }
   }
 
   protected static WireMockServer wm =
-      new WireMockServer(wireMockConfig()
-          .dynamicPort()
-          .usingFilesUnderClasspath("wm")
-          .notifier(new Slf4jNotifier(true)));
+    new WireMockServer(wireMockConfig()
+      .dynamicPort()
+      .usingFilesUnderClasspath("wm")
+      .notifier(new Slf4jNotifier(true)));
 
   @Autowired
   protected MockMvc mockMvc;
@@ -114,23 +115,23 @@ public class BaseApiControllerTest {
 
   protected void getAndExpect(String url, Template expectedResult) throws Exception {
     mockMvc.perform(get(url))
-        .andExpect(status().isOk())
-        .andExpect(content()
-            .json(readTemplate(expectedResult)));
+      .andExpect(status().isOk())
+      .andExpect(content()
+        .json(readTemplate(expectedResult)));
   }
 
   protected void putAndExpect(URI uri, Object requestBody, Template expectedResult) throws Exception {
     putReq(uri, requestBody)
-        .andExpect(status().isOk())
-        .andExpect(content().json(
-            readTemplate(expectedResult)));
+      .andExpect(status().isOk())
+      .andExpect(content().json(
+        readTemplate(expectedResult)));
   }
 
   protected ResultActions putReq(URI uri, Object requestBody) throws Exception {
     return mockMvc.perform(put(uri.getUrlTemplate(), uri.getUriVars())
-        .content(jsonHelper.toJson(requestBody))
-        .contentType(MediaType.APPLICATION_JSON)
-        .headers(getOkapiHeaders()));
+      .content(jsonHelper.toJson(requestBody))
+      .contentType(MediaType.APPLICATION_JSON)
+      .headers(getOkapiHeaders()));
   }
 
   protected static void stubGet(String url, String responsePath) {
@@ -146,7 +147,7 @@ public class BaseApiControllerTest {
   }
 
   protected static void stubGet(String url, Map<String, String> requestHeaders, String responsePath,
-      ResponseActions additionalResponseActions) {
+                                ResponseActions additionalResponseActions) {
     stubGet(url, responsePath, additionalResponseActions, mappingBuilder -> {
       requestHeaders.forEach((name, value) -> mappingBuilder.withHeader(name, equalTo(value)));
       return mappingBuilder;
@@ -154,13 +155,13 @@ public class BaseApiControllerTest {
   }
 
   protected static void stubGet(String url, String responsePath,
-      ResponseActions additionalResponseActions,
-      MappingActions additionalMapping) {
+                                ResponseActions additionalResponseActions,
+                                MappingActions additionalMapping) {
 
     ResponseDefinitionBuilder responseBuilder = ok()
-        .withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-        .withHeader(XOkapiHeaders.URL, wm.baseUrl())
-        .withBodyFile(responsePath);
+      .withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+      .withHeader(XOkapiHeaders.URL, wm.baseUrl())
+      .withBodyFile(responsePath);
 
     responseBuilder = additionalResponseActions.apply(responseBuilder);
 
@@ -185,8 +186,8 @@ public class BaseApiControllerTest {
   }
 
   protected static void stubPut(String url,
-      ResponseActions additionalResponseActions,
-      MappingActions additionalMapping) {
+                                ResponseActions additionalResponseActions,
+                                MappingActions additionalMapping) {
 
     ResponseDefinitionBuilder responseDefBuilder = additionalResponseActions.apply(noContent());
 
@@ -203,7 +204,7 @@ public class BaseApiControllerTest {
   }
 
   public static HttpHeaders getOkapiHeaders() {
-    HttpHeaders headers = new HttpHeaders();
+    HttpHeaders headers = circHeaders();
     headers.add(XOkapiHeaders.URL, wm.baseUrl());
     return headers;
   }

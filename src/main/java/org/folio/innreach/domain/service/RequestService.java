@@ -16,7 +16,7 @@ import org.folio.innreach.dto.Holding;
 
 public interface RequestService {
   @Async
-  void createItemHoldRequest(String transactionTrackingId);
+  void createItemHoldRequest(String trackingId, String centralCode);
 
   @Async
   void createLocalHoldRequest(InnReachTransaction transaction);
@@ -39,4 +39,9 @@ public interface RequestService {
   CheckOutResponseDTO getLoan(UUID loanId);
 
   CheckOutResponseDTO renewLoan(RenewLoanRequestDTO renewLoan);
+
+  UUID getDefaultServicePointIdForPatron(UUID patronId);
+
+  UUID getServicePointIdByCode(String locationCode);
+
 }

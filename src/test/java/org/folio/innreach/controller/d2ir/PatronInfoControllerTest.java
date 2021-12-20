@@ -14,6 +14,7 @@ import static org.springframework.test.context.jdbc.SqlMergeMode.MergeMode.MERGE
 import static org.folio.innreach.fixture.PatronFixture.createCustomFieldMapping;
 import static org.folio.innreach.fixture.PatronFixture.createUser;
 import static org.folio.innreach.fixture.PatronInfoRequestFixture.createPatronInfoRequest;
+import static org.folio.innreach.fixture.TestUtil.circHeaders;
 
 import java.util.List;
 import java.util.UUID;
@@ -58,6 +59,8 @@ class PatronInfoControllerTest extends BaseApiControllerTest {
   @Mock
   private UserCustomFieldMappingService userCustomFieldService;
 
+  private HttpHeaders headers = circHeaders();
+
   @Test
   @Sql(scripts = {
     "classpath:db/central-server/pre-populate-central-server.sql",
@@ -73,9 +76,6 @@ class PatronInfoControllerTest extends BaseApiControllerTest {
     when(patronClient.getAccountDetails(any())).thenReturn(new PatronDTO());
     when(userCustomFieldService.getMapping(any())).thenReturn(createCustomFieldMapping());
 
-    var headers = new HttpHeaders();
-    headers.add("x-to-code", "code1");
-    headers.add("x-from-code", "d2ir");
     var patronInfoRequest = createPatronInfoRequest();
 
     var responseEntity = testRestTemplate.postForEntity(
@@ -107,9 +107,6 @@ class PatronInfoControllerTest extends BaseApiControllerTest {
     when(patronClient.getAccountDetails(any())).thenReturn(new PatronDTO());
     when(userCustomFieldService.getMapping(any())).thenReturn(createCustomFieldMapping());
 
-    var headers = new HttpHeaders();
-    headers.add("x-to-code", "code1");
-    headers.add("x-from-code", "d2ir");
     var patronInfoRequest = createPatronInfoRequest();
 
     var responseEntity = testRestTemplate.postForEntity(
@@ -132,9 +129,6 @@ class PatronInfoControllerTest extends BaseApiControllerTest {
   void return200HttpCode_and_patronInfoResponseWithError_when_verificationRequestFails() {
     when(usersClient.query(anyString())).thenThrow(new IllegalArgumentException("Test exception"));
 
-    var headers = new HttpHeaders();
-    headers.add("x-to-code", "code1");
-    headers.add("x-from-code", "d2ir");
     var patronInfoRequest = createPatronInfoRequest();
 
     var responseEntity = testRestTemplate.postForEntity(
