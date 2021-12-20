@@ -18,6 +18,7 @@ import lombok.RequiredArgsConstructor;
 public class RequestDTO {
   private UUID id;
   private UUID instanceId;
+  private UUID holdingsRecordId;
   private UUID itemId;
   private RequestStatus status;
   private String requestType;

@@ -157,8 +157,9 @@ public class RequestServiceImpl implements RequestService {
     //creating and sending new request
     var newRequest = RequestDTO.builder()
       .requestType(requestType.getName())
-      .requestLevel("Item")
+      .requestLevel(RequestDTO.RequestLevel.ITEM.getName())
       .instanceId(holding == null ? null : holding.getInstanceId())
+      .holdingsRecordId(item.getHoldingsRecordId())
       .itemId(item.getId())
       .requesterId(patron.getId())
       .pickupServicePointId(servicePointId)
@@ -305,7 +306,6 @@ public class RequestServiceImpl implements RequestService {
     request.setStatus(RequestStatus.CLOSED_CANCELLED);
     request.setCancellationReasonId(INN_REACH_CANCELLATION_REASON_ID);
     request.setCancellationAdditionalInformation(reason);
-    request.setRequestLevel("Item");
 
     circulationClient.updateRequest(request.getId(), request);
 
