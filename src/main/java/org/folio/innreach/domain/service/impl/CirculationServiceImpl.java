@@ -362,12 +362,11 @@ public class CirculationServiceImpl implements CirculationService {
     var transaction = getTransaction(trackingId, centralCode);
     var state = transaction.getState();
 
-    if (state == ITEM_IN_TRANSIT || state == RETURN_UNCIRCULATED) {
-      transaction.setState(FINAL_CHECKIN);
-      return success();
-    } else {
-      throw new IllegalArgumentException("Transaction state is not: " + ITEM_IN_TRANSIT.name() + " or " + RETURN_UNCIRCULATED.name());
-    }
+    Assert.isTrue(state == ITEM_IN_TRANSIT || state == RETURN_UNCIRCULATED, unexpectedTransactionState(transaction));
+
+    transaction.setState(FINAL_CHECKIN);
+
+    return success();
   }
 
   private InnReachRecallUser getRecallUserForCentralServer(String centralCode) {

@@ -1,6 +1,5 @@
 package org.folio.innreach.controller.d2ir;
 
-import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.FINAL_CHECKIN;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -20,10 +19,12 @@ import static org.springframework.test.context.jdbc.SqlMergeMode.MergeMode.MERGE
 
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.BORROWER_RENEW;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.BORROWING_SITE_CANCEL;
+import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.FINAL_CHECKIN;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.ITEM_HOLD;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.ITEM_IN_TRANSIT;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.ITEM_RECEIVED;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.ITEM_SHIPPED;
+import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.PATRON_HOLD;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.RECALL;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.RECEIVE_UNANNOUNCED;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.RETURN_UNCIRCULATED;
@@ -901,19 +902,15 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
   })
   void checkTransactionIsNotInStateItemInTransitOrReturnUncirculated() {
     var transactionHoldDTO = createTransactionHoldDTO();
-    var transactionBefore = fetchPrePopulatedTransaction();
-
-    transactionBefore.setState(TRANSFER);
-    repository.save(transactionBefore);
 
     var responseEntity = testRestTemplate.exchange(
       "/inn-reach/d2ir/circ/finalcheckin/{trackingId}/{centralCode}", HttpMethod.PUT,
       new HttpEntity<>(transactionHoldDTO), InnReachResponseDTO.class,
       PRE_POPULATED_TRACKING_ID, PRE_POPULATED_CENTRAL_CODE);
 
-    var transactionAfter = fetchPrePopulatedTransaction();
+    var transaction = fetchPrePopulatedTransaction();
 
     assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
-    assertEquals(TRANSFER, transactionAfter.getState());
+    assertEquals(PATRON_HOLD, transaction.getState());
   }
 }
