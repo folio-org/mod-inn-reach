@@ -19,10 +19,12 @@ import static org.springframework.test.context.jdbc.SqlMergeMode.MergeMode.MERGE
 
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.BORROWER_RENEW;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.BORROWING_SITE_CANCEL;
+import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.FINAL_CHECKIN;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.ITEM_HOLD;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.ITEM_IN_TRANSIT;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.ITEM_RECEIVED;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.ITEM_SHIPPED;
+import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.PATRON_HOLD;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.RECALL;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.RECEIVE_UNANNOUNCED;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.RETURN_UNCIRCULATED;
@@ -889,5 +891,48 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     var responseEntityBody = responseEntity.getBody();
     assertNotNull(responseEntityBody);
     assertEquals("Required request header 'X-To-Code' for method parameter type String is not present", responseEntityBody.getReason());
+  }
+
+  @ParameterizedTest
+  @EnumSource(names = {"ITEM_IN_TRANSIT","RETURN_UNCIRCULATED"})
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
+  })
+  void checkTransactionIsInStateItemInTransitOrReturnUncirculated(InnReachTransaction.TransactionState testEnums) {
+    var transactionHoldDTO = createTransactionHoldDTO();
+    var transactionBefore = fetchPrePopulatedTransaction();
+
+    transactionBefore.setState(testEnums);
+    repository.save(transactionBefore);
+
+    var responseEntity = testRestTemplate.exchange(
+      "/inn-reach/d2ir/circ/finalcheckin/{trackingId}/{centralCode}", HttpMethod.PUT,
+      new HttpEntity<>(transactionHoldDTO, headers), InnReachResponseDTO.class,
+      PRE_POPULATED_TRACKING_ID, PRE_POPULATED_CENTRAL_CODE);
+
+    var transactionAfter = fetchPrePopulatedTransaction();
+
+    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+    assertEquals(FINAL_CHECKIN, transactionAfter.getState());
+  }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
+  })
+  void checkTransactionIsNotInStateItemInTransitOrReturnUncirculated() {
+    var transactionHoldDTO = createTransactionHoldDTO();
+
+    var responseEntity = testRestTemplate.exchange(
+      "/inn-reach/d2ir/circ/finalcheckin/{trackingId}/{centralCode}", HttpMethod.PUT,
+      new HttpEntity<>(transactionHoldDTO, headers), InnReachResponseDTO.class,
+      PRE_POPULATED_TRACKING_ID, PRE_POPULATED_CENTRAL_CODE);
+
+    var transaction = fetchPrePopulatedTransaction();
+
+    assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
+    assertEquals(PATRON_HOLD, transaction.getState());
   }
 }

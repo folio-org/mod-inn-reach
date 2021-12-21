@@ -8,6 +8,7 @@ import static org.folio.innreach.domain.dto.folio.circulation.RequestDTO.Request
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.BORROWER_RENEW;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.BORROWING_SITE_CANCEL;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.CANCEL_REQUEST;
+import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.FINAL_CHECKIN;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.ITEM_HOLD;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.ITEM_IN_TRANSIT;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.ITEM_RECEIVED;
@@ -371,6 +372,17 @@ public class CirculationServiceImpl implements CirculationService {
     return success();
   }
 
+  @Override
+  public InnReachResponseDTO finalCheckIn(String trackingId, String centralCode, BaseCircRequestDTO finalCheckIn) {
+    var transaction = getTransaction(trackingId, centralCode);
+    var state = transaction.getState();
+
+    Assert.isTrue(state == ITEM_IN_TRANSIT || state == RETURN_UNCIRCULATED, unexpectedTransactionState(transaction));
+
+    transaction.setState(FINAL_CHECKIN);
+
+    return success();
+  }
 
   private void initiateTransactionHold(String trackingId, String centralCode,
                                        TransactionHoldDTO transactionHold,

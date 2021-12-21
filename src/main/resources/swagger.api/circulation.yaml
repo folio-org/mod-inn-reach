@@ -527,6 +527,35 @@ paths:
       parameters:
         - $ref: '#/components/parameters/trackingId'
         - $ref: '#/components/parameters/centralCode'
+  /d2ir/circ/finalcheckin/{trackingId}/{centralCode}:
+    put:
+      operationId: finalCheckIn
+      description: Indicating that a returned item has been received by its owning site. This is a terminating transaction.
+      tags:
+        - inn-reach-circulation
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/baseCircRequestDTO"
+      responses:
+        '200':
+          description: Set transaction state to FINAL_CHECKIN
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/innReachResponseDTO"
+        '400':
+          description: An error occurred during processing the request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/innReachResponseDTO"
+        '500':
+          $ref: "api-common.yaml#/components/responses/trait_response_500"
+      parameters:
+        - $ref: '#/components/parameters/trackingId'
+        - $ref: '#/components/parameters/centralCode'
   /transactions:
     get:
       description: Get a list of transactions for the given central server
