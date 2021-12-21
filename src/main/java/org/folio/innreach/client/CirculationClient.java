@@ -3,7 +3,6 @@ package org.folio.innreach.client;
 import java.util.Optional;
 import java.util.UUID;
 
-import org.folio.innreach.dto.RenewLoanRequestDTO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -14,11 +13,12 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.folio.innreach.client.config.FolioFeignClientConfig;
 import org.folio.innreach.domain.dto.folio.ResultList;
 import org.folio.innreach.domain.dto.folio.circulation.MoveRequestDTO;
+import org.folio.innreach.domain.dto.folio.circulation.RenewByIdDTO;
 import org.folio.innreach.domain.dto.folio.circulation.RequestDTO;
 import org.folio.innreach.dto.CheckInRequestDTO;
 import org.folio.innreach.dto.CheckInResponseDTO;
 import org.folio.innreach.dto.CheckOutRequestDTO;
-import org.folio.innreach.dto.CheckOutResponseDTO;
+import org.folio.innreach.dto.LoanDTO;
 
 @FeignClient(name = "circulation", configuration = FolioFeignClientConfig.class, decode404 = true)
 public interface CirculationClient {
@@ -42,11 +42,18 @@ public interface CirculationClient {
   CheckInResponseDTO checkInByBarcode(CheckInRequestDTO checkIn);
 
   @PostMapping("/check-out-by-barcode")
-  CheckOutResponseDTO checkOutByBarcode(CheckOutRequestDTO checkOut);
+  LoanDTO checkOutByBarcode(CheckOutRequestDTO checkOut);
 
   @GetMapping("/loans/{loanId}")
-  CheckOutResponseDTO getLoanById(@PathVariable("loanId") UUID loanId);
+  Optional<LoanDTO> findLoan(@PathVariable("loanId") UUID loanId);
+
+  @PostMapping("/loans")
+  LoanDTO createLoan(@RequestBody LoanDTO loan);
+
+  @PutMapping("/loans/{loanId}")
+  void updateLoan(@PathVariable("loanId") UUID loanId, @RequestBody LoanDTO loan);
 
   @PostMapping("/renew-by-id")
-  CheckOutResponseDTO renewLoan(@RequestBody RenewLoanRequestDTO renewLoan);
+  LoanDTO renewLoan(@RequestBody RenewByIdDTO renewLoan);
+
 }

@@ -5,11 +5,11 @@
       "$ref": "baseCircRequestDTO.json"
     }
   ],
-  "description": "Borrower Renew Message for Item Hold",
+  "description": "D2IR Renew loan request",
   "type": "object",
   "properties": {
     "dueDateTime": {
-      "description": "Due Date time",
+      "description": "Due date time",
       "type": "integer"
     }
   },

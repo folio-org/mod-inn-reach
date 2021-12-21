@@ -376,7 +376,8 @@
             "circulation-storage.loans.item.get",
             "circulation.renew-by-id.post",
             "circulation.loans.item.get",
-            "circulation.renew-by-id.post",
+            "circulation.loans.item.post",
+            "circulation.loans.item.put",
             "inventory.instances.item.get",
             "users.collection.get"
           ]

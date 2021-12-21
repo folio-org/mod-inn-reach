@@ -97,6 +97,27 @@ paths:
       parameters:
         - $ref: '#/components/parameters/trackingId'
         - $ref: '#/components/parameters/centralCode'
+  /transactions:
+    get:
+      description: Get a list of transactions for the given central server
+      operationId: getAllTransactions
+      tags:
+        - inn-reach-transaction
+      responses:
+        '200':
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/innReachTransactionsDTO"
+        '400':
+          $ref: "api-common.yaml#/components/responses/trait_response_malformed_query_400"
+        '500':
+          $ref: "api-common.yaml#/components/responses/trait_response_500"
+      parameters:
+        - $ref: "api-common.yaml#/components/parameters/trait_pageable_offset"
+        - $ref: "api-common.yaml#/components/parameters/trait_pageable_limit"
+        - $ref: "#/components/parameters/transaction_filter_parameters"
   /transactions/{id}:
     get:
       operationId: getInnReachTransaction
@@ -506,7 +527,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/borrowerRenewDTO"
+              $ref: "#/components/schemas/renewLoanDTO"
       responses:
         '200':
           description: Set transaction state BORROWER_RENEW
@@ -554,27 +575,35 @@ paths:
       parameters:
         - $ref: '#/components/parameters/trackingId'
         - $ref: '#/components/parameters/centralCode'
-  /transactions:
-    get:
-      description: Get a list of transactions for the given central server
-      operationId: getAllTransactions
+  /d2ir/circ/ownerrenew/{trackingId}/{centralCode}:
+    put:
+      operationId: ownerRenew
+      description: Owner Renew loan
       tags:
-        - inn-reach-transaction
+        - inn-reach-circulation
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/renewLoanDTO"
       responses:
         '200':
-          description: "OK"
+          description: Loan renew request complete
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/innReachTransactionsDTO"
+                $ref: "#/components/schemas/innReachResponseDTO"
         '400':
-          $ref: "api-common.yaml#/components/responses/trait_response_malformed_query_400"
+          description: An error occurred during processing the request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/innReachResponseDTO"
         '500':
           $ref: "api-common.yaml#/components/responses/trait_response_500"
       parameters:
-        - $ref: "api-common.yaml#/components/parameters/trait_pageable_offset"
-        - $ref: "api-common.yaml#/components/parameters/trait_pageable_limit"
-        - $ref: "#/components/parameters/transaction_filter_parameters"
+        - $ref: '#/components/parameters/trackingId'
+        - $ref: '#/components/parameters/centralCode'
 components:
   schemas:
     code:
@@ -638,8 +667,8 @@ components:
       $ref: schemas/d2ir/baseCircRequestDTO.json
     checkOutRequestDTO:
       $ref: schemas/circulation/checkOutRequestDTO.json
-    checkOutResponseDTO:
-      $ref: schemas/circulation/checkOutResponseDTO.json
+    loanDTO:
+      $ref: schemas/circulation/loanDTO.json
     patronHoldCheckInResponseDTO:
       $ref: schemas/patronHoldCheckInResponseDTO.json
     itemHoldCheckOutResponseDTO:
@@ -650,10 +679,8 @@ components:
       $ref: schemas/d2ir/itemReceivedDTO.json
     recallDTO:
       $ref: schemas/d2ir/recallDTO.json
-    borrowerRenewDTO:
-      $ref: schemas/d2ir/borrowerRenewDTO.json
-    renewLoanRequestDTO:
-      $ref: schemas/circulation/renewLoanRequestDTO.json
+    renewLoanDTO:
+      $ref: schemas/d2ir/renewLoanDTO.json
   parameters:
     bibId:
       name: bibId
