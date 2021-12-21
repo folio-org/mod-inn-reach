@@ -42,4 +42,6 @@ public interface CirculationService {
 
   InnReachResponseDTO ownerRenewLoan(String trackingId, String centralCode, RenewLoanDTO renewLoan);
 
+  InnReachResponseDTO finalCheckIn(String trackingId, String centralCode, BaseCircRequestDTO finalCheckIn);
+
 }
