@@ -4,8 +4,6 @@ info:
   version: v1
 servers:
   - url: /inn-reach/
-security:
-  - BearerAuth: []
 paths:
   /central-servers/agencies:
     get:
@@ -578,10 +576,6 @@ paths:
         - $ref: "api-common.yaml#/components/parameters/trait_pageable_limit"
         - $ref: "#/components/parameters/transaction_filter_parameters"
 components:
-  securitySchemes:
-    BearerAuth:
-      type: http
-      scheme: bearer
   schemas:
     code:
       type: string

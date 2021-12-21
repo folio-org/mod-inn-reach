@@ -14,7 +14,6 @@ public class HeadersAdvice {
   public void fetchHeader(@RequestHeader("X-To-Code") String xToCode,
                           @RequestHeader("X-From-Code") String xFromCode,
                           @RequestHeader("X-Request-Creation-Time") String xRequestCreationTime,
-                          @RequestHeader(AUTHORIZATION) String authorization,
                           @RequestHeader(ACCEPT) String accept,
                           @RequestHeader(CONTENT_TYPE) String contentType) {
     //will throw an exception if required headers are not present
