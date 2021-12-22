@@ -1,5 +1,7 @@
 package org.folio.innreach.domain.service.impl;
 
+import static java.util.Objects.nonNull;
+
 import java.util.List;
 import java.util.UUID;
 
@@ -29,6 +31,7 @@ import org.folio.innreach.domain.service.ItemService;
 import org.folio.innreach.domain.service.ItemTypeMappingService;
 import org.folio.innreach.domain.service.PatronHoldService;
 import org.folio.innreach.domain.service.RequestService;
+import org.folio.innreach.domain.service.UpdateTemplate;
 import org.folio.innreach.domain.service.UserService;
 import org.folio.innreach.dto.CentralServerDTO;
 import org.folio.innreach.dto.Holding;
@@ -94,6 +97,35 @@ public class PatronHoldServiceImpl implements PatronHoldService {
     item = createItem(holding, item);
 
     requestService.moveItemRequest(transaction, holding, item);
+  }
+
+  @Override
+  public void addItemBarcode(InnReachTransaction transaction, String itemBarcode) {
+    addItemBarcodeAndCallNumber(transaction, itemBarcode, null);
+  }
+
+  @Override
+  public void addItemBarcodeAndCallNumber(InnReachTransaction transaction, String itemBarcode, String callNumber) {
+    var hold = (TransactionPatronHold) transaction.getHold();
+    var folioItemBarcode = itemBarcode;
+
+    var itemByBarcode = itemService.findItemByBarcode(itemBarcode);
+    if (itemByBarcode.isPresent()) {
+      log.info("Item barcode {} already exists, appending agency code", itemBarcode);
+      folioItemBarcode += hold.getItemAgencyCode();
+    }
+
+    hold.setShippedItemBarcode(itemBarcode);
+    hold.setFolioItemBarcode(folioItemBarcode);
+
+    if (nonNull(callNumber)) {
+      hold.setCallNumber(callNumber);
+    }
+
+    var folioItemId = hold.getFolioItemId();
+    itemService.changeAndUpdate(folioItemId,
+      () -> new IllegalArgumentException("Item with id = " + folioItemId + " not found!"),
+      changeFolioAssociatedItem(folioItemBarcode, callNumber));
   }
 
   private User getPatron(TransactionHold hold) {
@@ -186,6 +218,20 @@ public class PatronHoldServiceImpl implements PatronHoldService {
     var author = inventoryService.queryContributorTypeByName(INN_REACH_AUTHOR);
 
     return new ContributorDTO(author.getId(), author.getName());
+  }
+
+  private UpdateTemplate.UpdateOperation<InventoryItemDTO> changeFolioAssociatedItem(String folioItemBarcode, String callNumber) {
+    return item -> {
+      if (nonNull(folioItemBarcode)) {
+        item.setBarcode(folioItemBarcode);
+      }
+
+      if (nonNull(callNumber)) {
+        item.setCallNumber(callNumber);
+      }
+
+      return item;
+    };
   }
 
 }
