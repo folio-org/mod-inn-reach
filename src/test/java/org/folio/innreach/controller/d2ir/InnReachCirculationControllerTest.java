@@ -42,6 +42,8 @@ import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.mock.mockito.SpyBean;
@@ -97,6 +99,10 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
   private static final String UNEXPECTED_TRANSACTION_STATE = "Unexpected transaction state: ";
 
   private static final UUID NEW_LOAN_ID = UUID.randomUUID();
+  private static final String PRE_POPULATED_INSTANCE_ID = "76834d5a-08e8-45ea-84ca-4d9b10aa341c";
+  private static final String PRE_POPULATED_HOLDINGS_RECORD_ID = "76834d5a-08e8-45ea-84ca-4d9b10aa342c";
+  private static final String PRE_POPULATED_ITEM_ID = "9a326225-6530-41cc-9399-a61987bfab3c";
+  private static final String PRE_POPULATED_REQUESTER_ID = "f75ffab1-2e2f-43be-b159-3031e2cfc458";
 
   @Autowired
   private TestRestTemplate testRestTemplate;
@@ -114,6 +120,9 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
   private ServicePointsUsersClient servicePointsUsersClient;
   @MockBean
   private InnReachExternalService innReachExternalService;
+
+  @Captor
+  ArgumentCaptor<RequestDTO> requestDtoCaptor;
 
   @Test
   void processCreatePatronHoldCirculationRequest_and_createNewPatronHold() {
@@ -581,7 +590,7 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
   void processRecallRequest_whenItemIsOnLoanToThePatron() {
     when(servicePointsUsersClient.findServicePointsUsers(any())).thenReturn(ResultList.of(1, List.of(createServicePointUserDTO())));
     when(circulationClient.findRequest(any())).thenReturn(Optional.of(new RequestDTO()));
-    when(circulationClient.sendRequest(any())).thenReturn(new RequestDTO());
+    when(circulationClient.sendRequest(requestDtoCaptor.capture())).thenReturn(new RequestDTO());
     var recallDTO = createRecallDTO();
 
     var responseEntity = testRestTemplate.exchange(
@@ -597,6 +606,13 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     var transactionUpdated = repository.findByTrackingIdAndCentralServerCode(PRE_POPULATED_TRACKING_ID,
       PRE_POPULATED_CENTRAL_CODE).get();
     assertEquals(RECALL, transactionUpdated.getState());
+
+    RequestDTO requestDTO = requestDtoCaptor.getValue();
+    assertEquals(RequestDTO.RequestLevel.ITEM.getName(), requestDTO.getRequestLevel());
+    assertEquals(PRE_POPULATED_INSTANCE_ID, requestDTO.getInstanceId().toString());
+    assertEquals(PRE_POPULATED_HOLDINGS_RECORD_ID, requestDTO.getHoldingsRecordId().toString());
+    assertEquals(PRE_POPULATED_ITEM_ID, requestDTO.getItemId().toString());
+    assertEquals(PRE_POPULATED_REQUESTER_ID, requestDTO.getRequesterId().toString());
   }
 
   @Test

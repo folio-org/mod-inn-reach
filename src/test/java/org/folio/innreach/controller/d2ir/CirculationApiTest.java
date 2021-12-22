@@ -2,6 +2,7 @@ package org.folio.innreach.controller.d2ir;
 
 import static java.lang.String.format;
 import static org.awaitility.Awaitility.await;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
@@ -21,7 +22,10 @@ import java.time.Instant;
 import java.util.Map;
 import java.util.UUID;
 
+import org.folio.innreach.domain.dto.folio.circulation.RequestDTO;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.http.MediaType;
@@ -82,6 +86,12 @@ class CirculationApiTest extends BaseApiControllerTest {
   private static final UUID FOLIO_PATRON_ID = UUID.fromString("ea11eba7-3c0f-4d15-9cca-c8608cd6bc8a");
 
   private static final Duration ASYNC_AWAIT_TIMEOUT = Duration.ofSeconds(15);
+  private static final String ITEM_ID = "9a326225-6530-41cc-9399-a61987bfab3c";
+  private static final String SERVICE_POINT_ID = "a197450b-6103-4206-8125-1a1cacc66edc";
+  private static final String PAGE = "Page";
+  private static final String HOLDINGS_RECORD_ID = "16f40c4e-235d-4912-a683-2ad919cc8b07";
+  private static final String PRE_POPULATED_INSTANCE_ID = "b81bcffd-9dd9-4e17-b6fd-eeecf790aad5";
+  private static final String HOLDING_URL = "/holdings-storage/holdings/%s";
 
   @SpyBean
   private InnReachTransactionRepository repository;
@@ -97,6 +107,9 @@ class CirculationApiTest extends BaseApiControllerTest {
 
   @Autowired
   private InnReachTransactionPickupLocationMapper pickupLocationMapper;
+
+  @Captor
+  ArgumentCaptor<RequestDTO> requestDtoCaptor;
 
   @Test
   @Sql(scripts = {
@@ -259,6 +272,7 @@ class CirculationApiTest extends BaseApiControllerTest {
     stubPost(REQUESTS_URL, "circulation/item-request-response.json");
     stubGet(format(QUERY_INVENTORY_ITEM_BY_HRID_URL_TEMPLATE, ITEM_HRID), "inventory/query-items-response.json");
     stubGet(format(QUERY_REQUEST_BY_ITEM_ID_URL_TEMPLATE, PRE_POPULATED_ITEM_ID), "circulation/empty-requests-response.json");
+    stubGet(format(HOLDING_URL, HOLDINGS_RECORD_ID), "inventory-storage/holding-response.json");
 
     mockMvc.perform(put(CIRCULATION_ENDPOINT, LOCAL_HOLD_OPERATION, "newtrackingid", PRE_POPULATED_CENTRAL_CODE)
         .content(jsonHelper.toJson(transactionHoldDTO))
@@ -267,7 +281,15 @@ class CirculationApiTest extends BaseApiControllerTest {
       .andExpect(status().isOk());
 
     await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() ->
-      verify(circulationClient).sendRequest(any()));
+      verify(circulationClient).sendRequest(requestDtoCaptor.capture()));
+    RequestDTO requestDTO = requestDtoCaptor.getValue();
+    assertEquals(PRE_POPULATED_INSTANCE_ID, requestDTO.getInstanceId().toString());
+    assertEquals(ITEM_ID, requestDTO.getItemId().toString());
+    assertEquals(HOLDINGS_RECORD_ID, requestDTO.getHoldingsRecordId().toString());
+    assertEquals(RequestDTO.RequestLevel.ITEM.getName(), requestDTO.getRequestLevel());
+    assertEquals(PAGE, requestDTO.getRequestType());
+    assertEquals(FOLIO_PATRON_ID, requestDTO.getRequesterId());
+    assertEquals(SERVICE_POINT_ID, requestDTO.getPickupServicePointId().toString());
   }
 
 }
