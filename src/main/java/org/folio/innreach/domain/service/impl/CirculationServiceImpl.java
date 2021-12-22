@@ -318,7 +318,7 @@ public class CirculationServiceImpl implements CirculationService {
     } else {
       try {
         var recallUser = getRecallUserForCentralServer(centralCode);
-        requestService.createRecallRequest(recallUser.getUserId(), transaction.getHold().getFolioItemId());
+        requestService.createRecallRequest(transaction, recallUser.getUserId());
       } catch (Exception e) {
         throw new CirculationException("Unable to create a recall request on the item: " + e.getMessage(), e);
       }
