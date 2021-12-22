@@ -36,7 +36,6 @@ import java.util.UUID;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
-import org.folio.innreach.dto.RenewLoanRequestDTO;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
@@ -67,8 +66,8 @@ import org.folio.innreach.domain.service.RequestService;
 import org.folio.innreach.dto.CheckInRequestDTO;
 import org.folio.innreach.dto.CheckInResponseDTO;
 import org.folio.innreach.dto.CheckOutRequestDTO;
-import org.folio.innreach.dto.CheckOutResponseDTO;
 import org.folio.innreach.dto.Holding;
+import org.folio.innreach.dto.LoanDTO;
 import org.folio.innreach.external.service.InnReachExternalService;
 import org.folio.innreach.mapper.InnReachTransactionPickupLocationMapper;
 import org.folio.innreach.repository.CentralPatronTypeMappingRepository;
@@ -107,8 +106,8 @@ public class RequestServiceImpl implements RequestService {
 
   @Async
   @Override
-  public void createItemHoldRequest(String trackingId) {
-    var transaction = fetchTransactionByTrackingId(trackingId);
+  public void createItemHoldRequest(String trackingId, String centralCode) {
+    var transaction = fetchTransaction(trackingId, centralCode);
     var hold = (TransactionItemHold) transaction.getHold();
     var centralPatronName = hold.getPatronName();
     try {
@@ -225,7 +224,7 @@ public class RequestServiceImpl implements RequestService {
   }
 
   @Override
-  public CheckOutResponseDTO checkOutItem(InnReachTransaction transaction, UUID servicePointId) {
+  public LoanDTO checkOutItem(InnReachTransaction transaction, UUID servicePointId) {
     log.info("Processing item check-out for transaction {}", transaction);
 
     var hold = transaction.getHold();
@@ -285,24 +284,16 @@ public class RequestServiceImpl implements RequestService {
       "No request found with id = " + requestId));
   }
 
-  public CheckOutResponseDTO getLoan(UUID loanId) {
-    return circulationClient.getLoanById(loanId);
-  }
-
-  public CheckOutResponseDTO renewLoan(RenewLoanRequestDTO renewLoan) {
-    return circulationClient.renewLoan(renewLoan);
-  }
-
   @Override
   public UUID getDefaultServicePointIdForPatron(UUID patronId) {
     return inventoryService.findDefaultServicePointIdForUser(patronId)
-      .orElseThrow(() -> new CirculationException("Default service point is not set for the patron: " + patronId));
+        .orElseThrow(() -> new CirculationException("Default service point is not set for the patron: " + patronId));
   }
 
   @Override
   public UUID getServicePointIdByCode(String locationCode) {
     return inventoryService.findServicePointIdByCode(locationCode)
-      .orElseThrow(() -> new CirculationException("Service point is not found by location code: " + locationCode));
+        .orElseThrow(() -> new CirculationException("Service point is not found by location code: " + locationCode));
   }
 
   private void cancelRequest(RequestDTO request, String reason) {
@@ -383,8 +374,8 @@ public class RequestServiceImpl implements RequestService {
           " and patron type = " + patronType));
   }
 
-  private InnReachTransaction fetchTransactionByTrackingId(String trackingId) {
-    return transactionRepository.fetchOneByTrackingId(trackingId).orElseThrow(() ->
+  private InnReachTransaction fetchTransaction(String trackingId, String centralCode) {
+    return transactionRepository.findByTrackingIdAndCentralServerCode(trackingId, centralCode).orElseThrow(() ->
       new EntityNotFoundException("INN-Reach transaction not found for trackingId = " + trackingId)
     );
   }

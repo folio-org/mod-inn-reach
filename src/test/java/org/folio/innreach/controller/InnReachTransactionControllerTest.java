@@ -10,6 +10,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.never;
@@ -30,6 +31,7 @@ import static org.folio.innreach.dto.TransactionTypeEnum.LOCAL;
 import static org.folio.innreach.dto.TransactionTypeEnum.PATRON;
 import static org.folio.innreach.fixture.InventoryItemFixture.createInventoryItemDTO;
 import static org.folio.innreach.fixture.RequestFixture.createRequestDTO;
+import static org.folio.innreach.fixture.TestUtil.circHeaders;
 import static org.folio.innreach.fixture.TestUtil.deserializeFromJsonFile;
 import static org.folio.innreach.fixture.UserFixture.createUser;
 
@@ -37,6 +39,7 @@ import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -47,6 +50,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlMergeMode;
@@ -71,11 +76,11 @@ import org.folio.innreach.dto.CheckInRequestDTO;
 import org.folio.innreach.dto.CheckInResponseDTO;
 import org.folio.innreach.dto.CheckInResponseDTOItem;
 import org.folio.innreach.dto.CheckOutRequestDTO;
-import org.folio.innreach.dto.CheckOutResponseDTO;
 import org.folio.innreach.dto.InnReachResponseDTO;
 import org.folio.innreach.dto.InnReachTransactionDTO;
 import org.folio.innreach.dto.InnReachTransactionsDTO;
 import org.folio.innreach.dto.ItemHoldCheckOutResponseDTO;
+import org.folio.innreach.dto.LoanDTO;
 import org.folio.innreach.dto.LoanItem;
 import org.folio.innreach.dto.PatronHoldCheckInResponseDTO;
 import org.folio.innreach.dto.TransactionHoldDTO;
@@ -133,8 +138,6 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   @MockBean
   private InventoryClient inventoryClient;
   @MockBean
-  private HoldingsStorageClient holdingsStorageClient;
-  @MockBean
   private CirculationClient circulationClient;
   @MockBean
   private ServicePointsUsersClient servicePointsUsersClient;
@@ -142,9 +145,13 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   private UsersClient usersClient;
   @MockBean
   private InnReachClient innReachClient;
+  @MockBean
+  private HoldingsStorageClient holdingsStorageClient;
 
   @SpyBean
   private RequestService requestService;
+
+  private static HttpHeaders headers = circHeaders();
 
   InventoryItemDTO mockInventoryClient() {
     var inventoryItemDTO = createInventoryItemDTO();
@@ -576,10 +583,10 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     itemHoldDTO.setItemId(inventoryItemDTO.getHrid());
 
     var responseEntity = testRestTemplate.postForEntity(
-      "/inn-reach/d2ir/circ/itemhold/{trackingId}/{centralCode}", itemHoldDTO, InnReachResponseDTO.class, TRACKING_ID,
+      "/inn-reach/d2ir/circ/itemhold/{trackingId}/{centralCode}", new HttpEntity<>(itemHoldDTO, headers), InnReachResponseDTO.class, TRACKING_ID,
       PRE_POPULATED_CENTRAL_SERVER_CODE);
 
-    verify(requestService).createItemHoldRequest(TRACKING_ID);
+    verify(requestService).createItemHoldRequest(TRACKING_ID, PRE_POPULATED_CENTRAL_SERVER_CODE);
     assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
     assertTrue(responseEntity.hasBody());
     assertEquals("ok", responseEntity.getBody().getStatus());
@@ -588,7 +595,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
       verify(repository).save(
         argThat((InnReachTransaction t) -> t.getHold().getFolioRequestId() != null)));
 
-    verify(requestService).createItemHoldRequest(TRACKING_ID);
+    verify(requestService).createItemHoldRequest(TRACKING_ID, PRE_POPULATED_CENTRAL_SERVER_CODE);
     verify(inventoryClient, times(2)).getItemsByHrId(itemHoldDTO.getItemId());
     verify(circulationClient).queryRequestsByItemId(inventoryItemDTO.getId());
     verify(usersClient).query(PRE_POPULATED_USER_BARCODE_QUERY);
@@ -636,7 +643,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     itemHoldDTO.setItemId(inventoryItemDTO.getHrid());
 
     var responseEntity = testRestTemplate.postForEntity(
-      "/inn-reach/d2ir/circ/itemhold/{trackingId}/{centralCode}", itemHoldDTO, InnReachResponseDTO.class, TRACKING_ID,
+      "/inn-reach/d2ir/circ/itemhold/{trackingId}/{centralCode}", new HttpEntity<>(itemHoldDTO, headers), InnReachResponseDTO.class, TRACKING_ID,
       PRE_POPULATED_CENTRAL_SERVER_CODE);
 
     assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
@@ -662,12 +669,12 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     itemHoldDTO.setItemId(inventoryItemDTO.getHrid());
 
     var responseEntity = testRestTemplate.postForEntity(
-      "/inn-reach/d2ir/circ/itemhold/{trackingId}/{centralCode}", itemHoldDTO, InnReachResponseDTO.class, TRACKING_ID,
+      "/inn-reach/d2ir/circ/itemhold/{trackingId}/{centralCode}", new HttpEntity<>(itemHoldDTO, headers), InnReachResponseDTO.class, TRACKING_ID,
       PRE_POPULATED_CENTRAL_SERVER_CODE);
 
     assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
     assertEquals("failed", responseEntity.getBody().getStatus());
-    assertEquals("Argument validation failed.", responseEntity.getBody().getReason());
+    assertEquals("Argument validation failed", responseEntity.getBody().getReason());
     assertThat(responseEntity.getBody().getErrors().get(0).getReason(), containsString("must match \"[a-z,0-9]{1,32}\""));
   }
 
@@ -685,14 +692,13 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     itemHoldDTO.setItemId(inventoryItemDTO.getHrid());
 
     var responseEntity = testRestTemplate.postForEntity(
-      "/inn-reach/d2ir/circ/itemhold/{trackingId}/{centralCode}", itemHoldDTO, InnReachResponseDTO.class, PRE_POPULATED_TRACKING_ID,
+      "/inn-reach/d2ir/circ/itemhold/{trackingId}/{centralCode}", new HttpEntity<>(itemHoldDTO, headers), InnReachResponseDTO.class, PRE_POPULATED_TRACKING_ID,
       PRE_POPULATED_CENTRAL_SERVER_CODE);
 
     assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
     assertEquals("failed", responseEntity.getBody().getStatus());
 
-    assertEquals("An error occurred during creation of INN-Reach Transaction.", responseEntity.getBody().getReason());
-    assertEquals("INN-Reach Transaction with tracking ID = tracking1 already exists.", responseEntity.getBody().getErrors().get(0).getReason());
+    assertTrue(responseEntity.getBody().getReason().contains("INN-Reach Transaction with tracking ID = tracking1 already exists."));
   }
 
   @Test
@@ -704,13 +710,12 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     itemHoldDTO.setItemId(inventoryItemDTO.getHrid());
 
     var responseEntity = testRestTemplate.postForEntity(
-      "/inn-reach/d2ir/circ/itemhold/{trackingId}/{centralCode}", itemHoldDTO, InnReachResponseDTO.class, PRE_POPULATED_TRACKING_ID,
+      "/inn-reach/d2ir/circ/itemhold/{trackingId}/{centralCode}", new HttpEntity<>(itemHoldDTO, headers), InnReachResponseDTO.class, PRE_POPULATED_TRACKING_ID,
       PRE_POPULATED_CENTRAL_SERVER_CODE);
 
     assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
     assertEquals("failed", responseEntity.getBody().getStatus());
-    assertEquals("An error occurred during creation of INN-Reach Transaction.", responseEntity.getBody().getReason());
-    assertEquals("Central server with code: d2ir not found", responseEntity.getBody().getErrors().get(0).getReason());
+    assertTrue(responseEntity.getBody().getReason().contains("Central server with code: d2ir not found"));
   }
 
   @Test
@@ -726,13 +731,12 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     itemHoldDTO.setItemId(inventoryItemDTO.getHrid());
 
     var responseEntity = testRestTemplate.postForEntity(
-      "/inn-reach/d2ir/circ/itemhold/{trackingId}/{centralCode}", itemHoldDTO, InnReachResponseDTO.class, PRE_POPULATED_TRACKING_ID,
+      "/inn-reach/d2ir/circ/itemhold/{trackingId}/{centralCode}", new HttpEntity<>(itemHoldDTO, headers), InnReachResponseDTO.class, PRE_POPULATED_TRACKING_ID,
       PRE_POPULATED_CENTRAL_SERVER_CODE);
 
     assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
     assertEquals("failed", responseEntity.getBody().getStatus());
-    assertEquals("An error occurred during creation of INN-Reach Transaction.", responseEntity.getBody().getReason());
-    assertEquals("Pickup location must consist of 3 or 4 strings delimited by a colon.", responseEntity.getBody().getErrors().get(0).getReason());
+    assertTrue(responseEntity.getBody().getReason().contains("Pickup location must consist of 3 or 4 strings delimited by a colon."));
   }
 
   @Test
@@ -747,15 +751,14 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     itemHoldDTO.setItemId(inventoryItemDTO.getHrid());
 
     var responseEntity = testRestTemplate.postForEntity(
-      "/inn-reach/d2ir/circ/itemhold/{trackingId}/{centralCode}", itemHoldDTO, InnReachResponseDTO.class, TRACKING_ID,
+      "/inn-reach/d2ir/circ/itemhold/{trackingId}/{centralCode}", new HttpEntity<>(itemHoldDTO, headers), InnReachResponseDTO.class, TRACKING_ID,
       PRE_POPULATED_CENTRAL_SERVER_CODE);
 
     assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
     assertEquals("failed", responseEntity.getBody().getStatus());
-    assertEquals("An error occurred during creation of INN-Reach Transaction.", responseEntity.getBody().getReason());
-    assertEquals("Material type mapping for central server id = "
-        + PRE_POPULATED_CENTRAL_SERVER_ID + " and material type id = " + PRE_POPULATED_MATERIAL_TYPE_ID + " not found",
-      responseEntity.getBody().getErrors().get(0).getReason());
+    assertTrue(responseEntity.getBody().getReason()
+      .contains("Material type mapping for central server id = " + PRE_POPULATED_CENTRAL_SERVER_ID +
+        " and material type id = " + PRE_POPULATED_MATERIAL_TYPE_ID + " not found"));
   }
 
   @Test
@@ -777,12 +780,12 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     itemHoldDTO.setCentralPatronType(PRE_POPULATED_CENTRAL_PATRON_TYPE);
 
     var responseEntity = testRestTemplate.postForEntity(
-      "/inn-reach/d2ir/circ/itemhold/{trackingId}/{centralCode}", itemHoldDTO, InnReachResponseDTO.class, TRACKING_ID,
+      "/inn-reach/d2ir/circ/itemhold/{trackingId}/{centralCode}", new HttpEntity<>(itemHoldDTO, headers), InnReachResponseDTO.class, TRACKING_ID,
       PRE_POPULATED_CENTRAL_SERVER_CODE);
 
     assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
 
-    await().untilAsserted(() -> verify(innReachClient).postInnReachApi(any(), anyString(), anyString(), anyString(), any()));
+    await().untilAsserted(() -> verify(innReachClient).postInnReachApi(any(), anyString(), anyString(), anyString(), anyLong(), any()));
 
     verify(inventoryClient).getItemsByHrId(inventoryItemDTO.getHrid());
     verify(circulationClient, never()).queryRequestsByItemId(inventoryItemDTO.getId());
@@ -791,7 +794,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     verify(circulationClient, never()).sendRequest(any());
 
     var cancelRequest = ArgumentCaptor.forClass(OwningSiteCancelsRequestDTO.class);
-    verify(innReachClient).postInnReachApi(any(), anyString(), anyString(), anyString(), cancelRequest.capture());
+    verify(innReachClient).postInnReachApi(any(), anyString(), anyString(), anyString(), any(), cancelRequest.capture());
     assertEquals("Request not permitted", cancelRequest.getValue().getReason());
   }
 
@@ -808,6 +811,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     var user = mockUserClient();
     mockInventoryStorageClient(user);
     when(innReachClient.postInnReachApi(any(), anyString(), anyString(), anyString(), any())).thenReturn("response");
+    when(holdingsStorageClient.findHolding(any())).thenReturn(Optional.empty());
 
     var itemHoldDTO = deserializeFromJsonFile(
       "/inn-reach-transaction/create-item-hold-request.json", TransactionHoldDTO.class);
@@ -815,12 +819,12 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     itemHoldDTO.setCentralPatronType(PRE_POPULATED_CENTRAL_PATRON_TYPE);
 
     var responseEntity = testRestTemplate.postForEntity(
-      "/inn-reach/d2ir/circ/itemhold/{trackingId}/{centralCode}", itemHoldDTO, InnReachResponseDTO.class, PRE_POPULATED_TRACKING_ID,
+      "/inn-reach/d2ir/circ/itemhold/{trackingId}/{centralCode}", new HttpEntity<>(itemHoldDTO, headers), InnReachResponseDTO.class, PRE_POPULATED_TRACKING_ID,
       PRE_POPULATED_CENTRAL_SERVER_CODE);
 
     assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
 
-    await().untilAsserted(() -> verify(innReachClient).postInnReachApi(any(), anyString(), anyString(), anyString(), any()));
+    await().untilAsserted(() -> verify(innReachClient).postInnReachApi(any(), anyString(), anyString(), anyString(), anyLong(), any()));
 
     verify(inventoryClient, times(2)).getItemsByHrId(inventoryItemDTO.getHrid());
     verify(circulationClient).queryRequestsByItemId(inventoryItemDTO.getId());
@@ -829,7 +833,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     verify(circulationClient, never()).sendRequest(any());
 
     var request = ArgumentCaptor.forClass(OwningSiteCancelsRequestDTO.class);
-    verify(innReachClient).postInnReachApi(any(), anyString(), anyString(), anyString(), request.capture());
+    verify(innReachClient).postInnReachApi(any(), anyString(), anyString(), anyString(), any(), request.capture());
     assertEquals("Item not available", request.getValue().getReason());
   }
 
@@ -969,7 +973,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
   })
   void testCheckOutItemHoldItem() {
-    var checkOutResponse = new CheckOutResponseDTO()
+    var checkOutResponse = new LoanDTO()
       .id(FOLIO_CHECKOUT_ID)
       .item(new LoanItem().barcode(PRE_POPULATED_ITEM_HOLD_ITEM_BARCODE));
 

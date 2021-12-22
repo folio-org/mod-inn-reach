@@ -20,6 +20,7 @@
     "CANCEL_REQUEST",
     "FINAL_CHECKIN",
     "RECALL",
-    "TRANSFER"
+    "TRANSFER",
+    "OWNER_RENEW"
   ]
 }

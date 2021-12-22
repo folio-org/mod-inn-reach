@@ -11,8 +11,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import org.folio.innreach.dto.BibInfoResponseDTO;
 import org.folio.innreach.domain.service.BibInfoService;
+import org.folio.innreach.dto.BibInfoResponseDTO;
 import org.folio.innreach.rest.resource.BibInfoD2irApi;
 
 @Log4j2

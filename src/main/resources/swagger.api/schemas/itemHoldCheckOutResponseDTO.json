@@ -8,7 +8,7 @@
     },
     "folioCheckOut": {
       "description": "the FOLIO check-out response",
-      "$ref": "circulation/checkOutResponseDTO.json"
+      "$ref": "circulation/loanDTO.json"
     }
   },
   "additionalProperties": false,
