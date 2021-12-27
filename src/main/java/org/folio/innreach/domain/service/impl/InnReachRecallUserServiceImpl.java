@@ -1,4 +1,4 @@
-package org.folio.innreach.domain.service;
+package org.folio.innreach.domain.service.impl;
 
 import java.util.UUID;
 
@@ -8,6 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import org.folio.innreach.domain.entity.CentralServer;
 import org.folio.innreach.domain.exception.EntityNotFoundException;
+import org.folio.innreach.domain.service.InnReachRecallUserService;
 import org.folio.innreach.dto.InnReachRecallUserDTO;
 import org.folio.innreach.mapper.InnReachRecallUserMapper;
 import org.folio.innreach.repository.CentralServerRepository;
