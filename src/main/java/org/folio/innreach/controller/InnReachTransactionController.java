@@ -9,6 +9,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import org.folio.innreach.domain.service.InnReachTransactionActionService;
@@ -63,5 +64,12 @@ public class InnReachTransactionController implements InnReachTransactionApi {
                                                                     InnReachTransactionFilterParametersDTO parameters) {
     var transactions = transactionService.getAllTransactions(offset, limit, parameters);
     return ResponseEntity.ok(transactions);
+  }
+
+  @Override
+  @PutMapping("/inn-reach/transactions/update/{id}")
+  public ResponseEntity<InnReachTransactionDTO> updateInnReachTransaction(@PathVariable UUID id, InnReachTransactionDTO transaction) {
+    var innReachTransaction = transactionService.updateInnReachTransaction(id, transaction);
+    return ResponseEntity.ok(innReachTransaction);
   }
 }

@@ -575,6 +575,30 @@ paths:
         - $ref: "api-common.yaml#/components/parameters/trait_pageable_offset"
         - $ref: "api-common.yaml#/components/parameters/trait_pageable_limit"
         - $ref: "#/components/parameters/transaction_filter_parameters"
+  /transactions/update/{id}:
+    put:
+      operationId: updateInnReachTransaction
+      description: update inn-reach transaction by id
+      tags:
+        - inn-reach-transaction
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/innReachTransactionDTO"
+      responses:
+        '200':
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/innReachTransactionDTO"
+        '404':
+          $ref: "api-common.yaml#/components/responses/trait_response_404"
+        '500':
+          $ref: "api-common.yaml#/components/responses/trait_response_500"
+      parameters:
+        - $ref: 'api-common.yaml#/components/parameters/id'
 components:
   schemas:
     code:
