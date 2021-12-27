@@ -177,6 +177,30 @@ paths:
       parameters:
         - $ref: 'circulation.yaml#/components/parameters/itemBarcode'
         - $ref: 'circulation.yaml#/components/parameters/servicePointId'
+  /transactions/update/{id}:
+    put:
+      operationId: updateInnReachTransaction
+      description: update inn-reach transaction by id
+      tags:
+        - inn-reach-transaction
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/innReachTransactionDTO"
+      responses:
+        '200':
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/innReachTransactionDTO"
+        '404':
+          $ref: "api-common.yaml#/components/responses/trait_response_404"
+        '500':
+          $ref: "api-common.yaml#/components/responses/trait_response_500"
+      parameters:
+        - $ref: 'api-common.yaml#/components/parameters/id'
   /d2ir/circ/verifypatron:
     post:
       operationId: verifyPatron
