@@ -1,0 +1,63 @@
+{
+  "id" : "19bb9798-d396-4b37-8fd6-5df0885e020e",
+  "userId" : "2205005b-ca51-4a04-87fd-938eefa8f6de",
+  "itemId" : "88006714-8ad0-433d-843f-b5db88919fae",
+  "itemEffectiveLocationIdAtCheckOut" : "4230e5c1-097b-44a9-8269-650e7353bfd6",
+  "status" : {
+    "name" : "Open"
+  },
+  "loanDate" : "2021-12-01T06:07:58.490Z",
+  "dueDate" : "2021-12-07T23:59:59.000+00:00",
+  "action" : "renewedThroughOverride",
+  "actionComment" : "renew override",
+  "renewalCount" : 1,
+  "loanPolicyId" : "d28f2519-5364-452c-8680-792e4ebc32b0",
+  "checkoutServicePointId" : "c4c90014-c8c9-4ade-8f24-b5e313319f4b",
+  "dueDateChangedByRecall" : true,
+  "overdueFinePolicyId" : "cd3f6cac-fa17-4079-9fae-2fb28e521412",
+  "lostItemPolicyId" : "ed892c0e-52e0-4cd9-8133-c0ef07b4a709",
+  "metadata" : {
+    "createdDate" : "2021-12-15T06:07:59.089+00:00",
+    "createdByUserId" : "aaa1fc51-9bcc-551a-afda-f0a25dd7a7e1",
+    "updatedDate" : "2021-12-20T14:59:56.093+00:00",
+    "updatedByUserId" : "aaa1fc51-9bcc-551a-afda-f0a25dd7a7e1"
+  },
+  "item" : {
+    "id" : "88006714-8ad0-433d-843f-b5db88919fae",
+    "holdingsRecordId" : "9360a433-f273-4142-99e6-d918ff569e73",
+    "instanceId" : "1d25964f-e536-4660-a870-af4832519843",
+    "title" : "God Emperor of Dune: Sianoq!",
+    "barcode" : "5465657781",
+    "contributors" : [ {
+      "name" : "INN-Reach author"
+    } ],
+    "callNumberComponents" : { },
+    "status" : {
+      "name" : "Checked out"
+    },
+    "location" : {
+      "name" : "D2IR Virtual Location"
+    },
+    "materialType" : {
+      "name" : "electronic resource"
+    }
+  },
+  "borrower" : {
+    "firstName" : "psych",
+    "lastName" : "rick",
+    "middleName" : null,
+    "barcode" : "123"
+  },
+  "loanPolicy" : {
+    "name" : "INN-Reach 4-week loan"
+  },
+  "overdueFinePolicy" : {
+    "name" : null
+  },
+  "lostItemPolicy" : {
+    "name" : null
+  },
+  "feesAndFines" : {
+    "amountRemainingToPay" : 0.0
+  }
+}

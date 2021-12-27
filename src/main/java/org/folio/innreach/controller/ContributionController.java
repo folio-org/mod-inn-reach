@@ -42,7 +42,7 @@ public class ContributionController implements ContributionsApi {
   }
 
   @Override
-  @PostMapping()
+  @PostMapping
   public ResponseEntity<Void> startInitialContribution(@PathVariable UUID centralServerId) {
     service.startInitialContribution(centralServerId);
     return ResponseEntity.status(HttpStatus.CREATED).build();

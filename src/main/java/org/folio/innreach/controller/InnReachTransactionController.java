@@ -14,13 +14,11 @@ import org.springframework.web.bind.annotation.RestController;
 
 import org.folio.innreach.domain.service.InnReachTransactionActionService;
 import org.folio.innreach.domain.service.InnReachTransactionService;
-import org.folio.innreach.domain.service.RequestService;
 import org.folio.innreach.dto.InnReachTransactionDTO;
 import org.folio.innreach.dto.InnReachTransactionFilterParametersDTO;
 import org.folio.innreach.dto.InnReachTransactionsDTO;
 import org.folio.innreach.dto.ItemHoldCheckOutResponseDTO;
 import org.folio.innreach.dto.PatronHoldCheckInResponseDTO;
-import org.folio.innreach.mapper.InnReachErrorMapper;
 import org.folio.innreach.rest.resource.InnReachTransactionApi;
 
 @Log4j2
@@ -29,10 +27,8 @@ import org.folio.innreach.rest.resource.InnReachTransactionApi;
 @Validated
 public class InnReachTransactionController implements InnReachTransactionApi {
 
-  private final RequestService requestService;
   private final InnReachTransactionActionService transactionActionService;
   private final InnReachTransactionService transactionService;
-  private final InnReachErrorMapper mapper;
 
   @Override
   @GetMapping("/inn-reach/transactions/{id}")

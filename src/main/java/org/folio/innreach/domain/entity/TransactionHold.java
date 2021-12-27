@@ -59,6 +59,9 @@ public abstract class TransactionHold extends Auditable implements Identifiable<
   @Column(name = "need_before")
   protected Integer needBefore;
 
+  @Column(name = "due_date_time")
+  protected Integer dueDateTime;
+
   @Column(name = "folio_patron_id")
   protected UUID folioPatronId;
 

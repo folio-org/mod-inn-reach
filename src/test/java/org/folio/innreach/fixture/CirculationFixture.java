@@ -5,13 +5,14 @@ import static org.jeasy.random.FieldPredicates.named;
 import static org.folio.innreach.fixture.TestUtil.randomInteger;
 
 import lombok.experimental.UtilityClass;
-import org.folio.innreach.dto.RecallDTO;
 import org.jeasy.random.EasyRandom;
 import org.jeasy.random.EasyRandomParameters;
 import org.jeasy.random.randomizers.text.StringRandomizer;
 
 import org.folio.innreach.dto.CancelRequestDTO;
 import org.folio.innreach.dto.ItemShippedDTO;
+import org.folio.innreach.dto.RecallDTO;
+import org.folio.innreach.dto.RenewLoanDTO;
 import org.folio.innreach.dto.TransactionHoldDTO;
 import org.folio.innreach.dto.TransferRequestDTO;
 
@@ -23,6 +24,7 @@ public class CirculationFixture {
   private static final EasyRandom itemShippedRandom;
   private static final EasyRandom cancelRequestRandom;
   private static final EasyRandom recallRandom;
+  private static final EasyRandom renewLoanRandom;
 
   static {
 
@@ -93,6 +95,16 @@ public class CirculationFixture {
         .randomize(named("patronId"), TestUtil::randomUUIDWithoutHyphens)
         .randomize(named("patronAgencyCode"), TestUtil::randomAlphanumeric5)
     );
+
+    renewLoanRandom = new EasyRandom(
+        new EasyRandomParameters()
+            .randomize(named("transactionTime"), () -> randomInteger(255))
+            .randomize(named("patronId"), TestUtil::randomUUIDWithoutHyphens)
+            .randomize(named("patronAgencyCode"), TestUtil::randomAlphanumeric5)
+            .randomize(named("itemAgencyCode"), TestUtil::randomAlphanumeric5)
+            .randomize(named("itemId"), TestUtil::randomAlphanumeric32Max)
+            .randomize(named("dueDateTime"), () -> randomInteger(Integer.MAX_VALUE))
+    );
   }
 
   public static TransactionHoldDTO createTransactionHoldDTO() {
@@ -114,4 +126,9 @@ public class CirculationFixture {
   public static RecallDTO createRecallDTO(){
     return recallRandom.nextObject(RecallDTO.class);
   }
+
+  public static RenewLoanDTO createRenewLoanDTO() {
+    return renewLoanRandom.nextObject(RenewLoanDTO.class);
+  }
+
 }

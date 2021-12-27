@@ -39,6 +39,7 @@ import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -75,11 +76,11 @@ import org.folio.innreach.dto.CheckInRequestDTO;
 import org.folio.innreach.dto.CheckInResponseDTO;
 import org.folio.innreach.dto.CheckInResponseDTOItem;
 import org.folio.innreach.dto.CheckOutRequestDTO;
-import org.folio.innreach.dto.CheckOutResponseDTO;
 import org.folio.innreach.dto.InnReachResponseDTO;
 import org.folio.innreach.dto.InnReachTransactionDTO;
 import org.folio.innreach.dto.InnReachTransactionsDTO;
 import org.folio.innreach.dto.ItemHoldCheckOutResponseDTO;
+import org.folio.innreach.dto.LoanDTO;
 import org.folio.innreach.dto.LoanItem;
 import org.folio.innreach.dto.PatronHoldCheckInResponseDTO;
 import org.folio.innreach.dto.TransactionHoldDTO;
@@ -137,8 +138,6 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   @MockBean
   private InventoryClient inventoryClient;
   @MockBean
-  private HoldingsStorageClient holdingsStorageClient;
-  @MockBean
   private CirculationClient circulationClient;
   @MockBean
   private ServicePointsUsersClient servicePointsUsersClient;
@@ -146,6 +145,8 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   private UsersClient usersClient;
   @MockBean
   private InnReachClient innReachClient;
+  @MockBean
+  private HoldingsStorageClient holdingsStorageClient;
 
   @SpyBean
   private RequestService requestService;
@@ -810,6 +811,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     var user = mockUserClient();
     mockInventoryStorageClient(user);
     when(innReachClient.postInnReachApi(any(), anyString(), anyString(), anyString(), any())).thenReturn("response");
+    when(holdingsStorageClient.findHolding(any())).thenReturn(Optional.empty());
 
     var itemHoldDTO = deserializeFromJsonFile(
       "/inn-reach-transaction/create-item-hold-request.json", TransactionHoldDTO.class);
@@ -971,7 +973,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
   })
   void testCheckOutItemHoldItem() {
-    var checkOutResponse = new CheckOutResponseDTO()
+    var checkOutResponse = new LoanDTO()
       .id(FOLIO_CHECKOUT_ID)
       .item(new LoanItem().barcode(PRE_POPULATED_ITEM_HOLD_ITEM_BARCODE));
 
