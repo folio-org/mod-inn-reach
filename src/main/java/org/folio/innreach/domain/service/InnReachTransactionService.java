@@ -15,5 +15,5 @@ public interface InnReachTransactionService {
 
   InnReachTransactionsDTO getAllTransactions(Integer offset, Integer limit, InnReachTransactionFilterParametersDTO parameters);
 
-  InnReachTransactionDTO updateInnReachTransaction(UUID transactionId, InnReachTransactionDTO transaction);
+  void updateInnReachTransaction(UUID transactionId, InnReachTransactionDTO transaction);
 }

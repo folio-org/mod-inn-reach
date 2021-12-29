@@ -56,22 +56,15 @@ public class InnReachTransactionServiceImpl implements InnReachTransactionServic
 
   @Override
   @Transactional
-  public InnReachTransactionDTO updateInnReachTransaction(UUID transactionId, InnReachTransactionDTO transaction) {
-    var oldTransaction = getInnReachTransaction(transactionId);
+  public void updateInnReachTransaction(UUID transactionId, InnReachTransactionDTO transaction) {
+    var oldTransaction = repository.getById(transactionId);
+    var updatedTransaction = transactionMapper.toEntity(transaction);
 
-    var oldTrackingId = oldTransaction.getTrackingId();
-    var oldCode = oldTransaction.getCentralServerCode();
-    var oldType = oldTransaction.getType().name();
+    updatedTransaction.setTrackingId( oldTransaction.getTrackingId());
+    updatedTransaction.setCentralServerCode( oldTransaction.getCentralServerCode());
+    updatedTransaction.setType( oldTransaction.getType());
 
-    var newTrackingId = transaction.getTrackingId();
-    var newCode = transaction.getCentralServerCode();
-    var newType = transaction.getType().name();
-
-    if (oldTrackingId.equals(newTrackingId) && oldCode.equals(newCode) && oldType.equals(newType)) {
-      repository.save(transactionMapper.toEntity(transaction));
-      return transaction;
-    }
-    return oldTransaction;
+    repository.save(updatedTransaction);
   }
 
 }

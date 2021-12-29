@@ -61,6 +61,9 @@ public abstract class InnReachTransactionMapper {
   }
 
   @Mapping(target = "hold", ignore = true)
+  @Mapping(target = "trackingId", ignore = true)
+  @Mapping(target = "type", ignore = true)
+  @Mapping(target = "centralServerCode", ignore = true)
   @AuditableMappingToEntity
   public abstract InnReachTransaction toEntityWithoutHold(InnReachTransactionDTO transactionDTO);
 

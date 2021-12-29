@@ -64,8 +64,8 @@ public class InnReachTransactionController implements InnReachTransactionApi {
 
   @Override
   @PutMapping("/inn-reach/transactions/{id}")
-  public ResponseEntity<InnReachTransactionDTO> updateInnReachTransaction(@PathVariable UUID id, InnReachTransactionDTO transaction) {
-    var innReachTransaction = transactionService.updateInnReachTransaction(id, transaction);
-    return ResponseEntity.ok(innReachTransaction);
+  public ResponseEntity<Void> updateInnReachTransaction(@PathVariable UUID id, InnReachTransactionDTO transaction) {
+    transactionService.updateInnReachTransaction(id, transaction);
+    return ResponseEntity.noContent().build();
   }
 }

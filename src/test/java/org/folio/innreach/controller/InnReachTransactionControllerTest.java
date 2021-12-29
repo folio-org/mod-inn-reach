@@ -24,8 +24,8 @@ import static org.folio.innreach.domain.dto.folio.inventory.InventoryItemStatus.
 import static org.folio.innreach.domain.dto.folio.inventory.InventoryItemStatus.IN_TRANSIT;
 import static org.folio.innreach.domain.dto.folio.inventory.InventoryItemStatus.MISSING;
 import static org.folio.innreach.domain.dto.folio.inventory.InventoryItemStatus.UNAVAILABLE;
-import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.ITEM_RECEIVED;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.CANCEL_REQUEST;
+import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.FINAL_CHECKIN;
 import static org.folio.innreach.dto.TransactionStateEnum.PATRON_HOLD;
 import static org.folio.innreach.dto.TransactionTypeEnum.ITEM;
 import static org.folio.innreach.dto.TransactionTypeEnum.LOCAL;
@@ -1098,7 +1098,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   })
   void updateTransactionWhenImmutableFieldsNotChanged() {
     var transaction = repository.fetchOneById(PRE_POPULATED_TRANSACTION_ID1).get();
-    transaction.setState(ITEM_RECEIVED);
+    transaction.setState(FINAL_CHECKIN);
 
     var transactionDTO = innReachTransactionMapper.toDTO(transaction);
 
@@ -1108,8 +1108,11 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
       PRE_POPULATED_TRANSACTION_ID1
     );
 
-    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
-    assertEquals(ITEM_RECEIVED.name(), responseEntity.getBody().getState().name());
+    var updatedTransaction = repository.fetchOneById(PRE_POPULATED_TRANSACTION_ID1).get();
+    var updatedState = updatedTransaction.getState();
+
+    assertEquals(HttpStatus.NO_CONTENT, responseEntity.getStatusCode());
+    assertEquals(FINAL_CHECKIN, updatedState);
   }
 
   @Test
@@ -1129,7 +1132,10 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
       PRE_POPULATED_TRANSACTION_ID1
     );
 
-    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
-    assertEquals(PRE_POPULATED_TRACKING_ID, responseEntity.getBody().getTrackingId());
+    var updatedTransaction = repository.fetchOneById(PRE_POPULATED_TRANSACTION_ID1).get();
+    var updatedTrackingId = updatedTransaction.getTrackingId();
+
+    assertEquals(HttpStatus.NO_CONTENT, responseEntity.getStatusCode());
+    assertEquals(PRE_POPULATED_TRACKING_ID, updatedTrackingId);
   }
 }
