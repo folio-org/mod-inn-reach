@@ -1098,6 +1098,10 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   })
   void updateTransactionWhenImmutableFieldsNotChanged() {
     var transaction = repository.fetchOneById(PRE_POPULATED_TRANSACTION_ID3).get();
+    var hold = transaction.getHold();
+
+    hold.setFolioRequestId(null);
+    transaction.setHold(hold);
     transaction.setState(FINAL_CHECKIN);
 
     var transactionDTO = innReachTransactionMapper.toDTO(transaction);
@@ -1110,9 +1114,11 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
 
     var updatedTransaction = repository.fetchOneById(PRE_POPULATED_TRANSACTION_ID3).get();
     var updatedState = updatedTransaction.getState();
+    var updatedFolioRequestId = updatedTransaction.getHold().getFolioRequestId();
 
     assertEquals(HttpStatus.NO_CONTENT, responseEntity.getStatusCode());
     assertEquals(FINAL_CHECKIN, updatedState);
+    assertNull(updatedFolioRequestId);
   }
 
 }
