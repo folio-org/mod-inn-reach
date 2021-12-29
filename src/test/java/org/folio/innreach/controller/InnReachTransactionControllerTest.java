@@ -573,7 +573,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     inventoryItemDTO.setStatus(IN_TRANSIT);
     var requestDTO = createRequestDTO();
     requestDTO.setItemId(inventoryItemDTO.getId());
-    when(circulationClient.queryRequestsByItemId(inventoryItemDTO.getId())).thenReturn(ResultList.of(1,
+    when(circulationClient.queryRequestsByItemId(inventoryItemDTO.getId())).thenReturn(ResultList.of(3,
       List.of(requestDTO)));
     var user = mockUserClient();
     mockInventoryStorageClient(user);
