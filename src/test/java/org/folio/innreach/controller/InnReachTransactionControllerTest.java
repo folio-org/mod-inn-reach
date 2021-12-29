@@ -24,6 +24,7 @@ import static org.folio.innreach.domain.dto.folio.inventory.InventoryItemStatus.
 import static org.folio.innreach.domain.dto.folio.inventory.InventoryItemStatus.IN_TRANSIT;
 import static org.folio.innreach.domain.dto.folio.inventory.InventoryItemStatus.MISSING;
 import static org.folio.innreach.domain.dto.folio.inventory.InventoryItemStatus.UNAVAILABLE;
+import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.ITEM_RECEIVED;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.CANCEL_REQUEST;
 import static org.folio.innreach.dto.TransactionStateEnum.PATRON_HOLD;
 import static org.folio.innreach.dto.TransactionTypeEnum.ITEM;
@@ -52,6 +53,7 @@ import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlMergeMode;
@@ -85,6 +87,7 @@ import org.folio.innreach.dto.LoanItem;
 import org.folio.innreach.dto.PatronHoldCheckInResponseDTO;
 import org.folio.innreach.dto.TransactionHoldDTO;
 import org.folio.innreach.external.client.feign.InnReachClient;
+import org.folio.innreach.mapper.InnReachTransactionMapper;
 import org.folio.innreach.mapper.InnReachTransactionPickupLocationMapper;
 import org.folio.innreach.repository.InnReachTransactionRepository;
 
@@ -101,6 +104,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
 
   private static final String PATRON_HOLD_CHECK_IN_ENDPOINT = "/inn-reach/transactions/{id}/receive-item/{servicePointId}";
   private static final String ITEM_HOLD_CHECK_OUT_ENDPOINT = "/inn-reach/transactions/{itemBarcode}/check-out-item/{servicePointId}";
+  private static final String UPDATE_TRANSACTION_ENDPOINT = "/inn-reach/transactions/{transactionId}";
 
   private static final String TRACKING_ID = "trackingid1";
   private static final String PRE_POPULATED_TRACKING_ID = "tracking1";
@@ -134,6 +138,8 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   private InnReachTransactionRepository repository;
   @Autowired
   private InnReachTransactionPickupLocationMapper transactionPickupLocationMapper;
+  @Autowired
+  private InnReachTransactionMapper innReachTransactionMapper;
 
   @MockBean
   private InventoryClient inventoryClient;
@@ -1085,4 +1091,45 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     repository.save(transaction);
   }
 
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
+  })
+  void updateTransactionWhenImmutableFieldsNotChanged() {
+    var transaction = repository.fetchOneById(PRE_POPULATED_TRANSACTION_ID1).get();
+    transaction.setState(ITEM_RECEIVED);
+
+    var transactionDTO = innReachTransactionMapper.toDTO(transaction);
+
+    var responseEntity = testRestTemplate.exchange(
+      UPDATE_TRANSACTION_ENDPOINT, HttpMethod.PUT,
+      new HttpEntity<>(transactionDTO, headers), InnReachTransactionDTO.class,
+      PRE_POPULATED_TRANSACTION_ID1
+    );
+
+    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+    assertEquals(ITEM_RECEIVED.name(), responseEntity.getBody().getState().name());
+  }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
+  })
+  void updateTransactionWhenImmutableFieldsChanged() {
+    var transaction = repository.fetchOneById(PRE_POPULATED_TRANSACTION_ID1).get();
+    transaction.setTrackingId(TRACKING_ID);
+
+    var transactionDTO = innReachTransactionMapper.toDTO(transaction);
+
+    var responseEntity = testRestTemplate.exchange(
+      UPDATE_TRANSACTION_ENDPOINT, HttpMethod.PUT,
+      new HttpEntity<>(transactionDTO, headers), InnReachTransactionDTO.class,
+      PRE_POPULATED_TRANSACTION_ID1
+    );
+
+    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+    assertEquals(PRE_POPULATED_TRACKING_ID, responseEntity.getBody().getTrackingId());
+  }
 }

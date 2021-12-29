@@ -426,6 +426,11 @@
             "inventory-storage.instances.item.get",
             "source-storage.records.get"
           ]
+        },
+        {
+          "methods": ["PUT"],
+          "pathPattern": "/inn-reach/transactions/{transactionId}",
+          "permissionsRequired": ["inn-reach.inn-reach-transaction.item.put"]
         }
       ]
     },
@@ -938,7 +943,8 @@
       "displayName" : "inn reach API module - all permissions of inn-reach transactions",
       "description" : "All permissions of inn-reach transactions scope",
       "subPermissions" : [
-        "inn-reach.inn-reach-transactions.collection.get"
+        "inn-reach.inn-reach-transactions.collection.get",
+        "inn-reach.inn-reach-transaction.item.put"
       ]
     },
     {

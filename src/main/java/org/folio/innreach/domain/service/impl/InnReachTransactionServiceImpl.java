@@ -25,8 +25,6 @@ import org.folio.innreach.specification.InnReachTransactionSpecification;
 @Service
 public class InnReachTransactionServiceImpl implements InnReachTransactionService {
 
-  private static final String IMMUTABLE_TRANSACTION_FIELDS_MESSAGE = "Transaction fields 'trackingId', 'centralServerCode', 'type' are immutable and can not be changed";
-
   private final InnReachTransactionRepository repository;
   private final TransactionHoldRepository holdRepository;
 
@@ -59,7 +57,7 @@ public class InnReachTransactionServiceImpl implements InnReachTransactionServic
   @Override
   @Transactional
   public InnReachTransactionDTO updateInnReachTransaction(UUID transactionId, InnReachTransactionDTO transaction) {
-    var oldTransaction = repository.fetchOneById(transactionId).get();
+    var oldTransaction = getInnReachTransaction(transactionId);
 
     var oldTrackingId = oldTransaction.getTrackingId();
     var oldCode = oldTransaction.getCentralServerCode();
@@ -72,9 +70,8 @@ public class InnReachTransactionServiceImpl implements InnReachTransactionServic
     if (oldTrackingId.equals(newTrackingId) && oldCode.equals(newCode) && oldType.equals(newType)) {
       repository.save(transactionMapper.toEntity(transaction));
       return transaction;
-    } else {
-      throw new IllegalArgumentException(IMMUTABLE_TRANSACTION_FIELDS_MESSAGE);
     }
+    return oldTransaction;
   }
 
 }
