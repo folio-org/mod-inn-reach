@@ -45,6 +45,8 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.stubbing.Answer;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -1091,13 +1093,16 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     repository.save(transaction);
   }
 
-  @Test
+  @ParameterizedTest
+  @ValueSource(strings = {"0aab1720-14b4-4210-9a19-0d0bf1cd64d3",
+                          "ab2393a1-acc4-4849-82ac-8cc0c37339e1",
+                          "79b0a1fb-55be-4e55-9d84-01303aaec1ce"})
   @Sql(scripts = {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
   })
-  void updateTransactionWhenImmutableFieldsNotChanged() {
-    var transaction = repository.fetchOneById(PRE_POPULATED_TRANSACTION_ID3).get();
+  void updateTransactionWhenImmutableFieldsNotChanged(String transactionId) {
+    var transaction = repository.fetchOneById(UUID.fromString(transactionId)).get();
     var hold = transaction.getHold();
 
     hold.setFolioRequestId(null);
@@ -1109,10 +1114,10 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     var responseEntity = testRestTemplate.exchange(
       UPDATE_TRANSACTION_ENDPOINT, HttpMethod.PUT,
       new HttpEntity<>(transactionDTO, headers), InnReachTransactionDTO.class,
-      PRE_POPULATED_TRANSACTION_ID3
+      UUID.fromString(transactionId)
     );
 
-    var updatedTransaction = repository.fetchOneById(PRE_POPULATED_TRANSACTION_ID3).get();
+    var updatedTransaction = repository.fetchOneById(UUID.fromString(transactionId)).get();
     var updatedState = updatedTransaction.getState();
     var updatedFolioRequestId = updatedTransaction.getHold().getFolioRequestId();
 
