@@ -573,7 +573,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     inventoryItemDTO.setStatus(IN_TRANSIT);
     var requestDTO = createRequestDTO();
     requestDTO.setItemId(inventoryItemDTO.getId());
-    when(circulationClient.queryRequestsByItemId(inventoryItemDTO.getId())).thenReturn(ResultList.of(3,
+    when(circulationClient.queryRequestsByItemId(inventoryItemDTO.getId())).thenReturn(ResultList.of(1,
       List.of(requestDTO)));
     var user = mockUserClient();
     mockInventoryStorageClient(user);
@@ -1097,7 +1097,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
   })
   void updateTransactionWhenImmutableFieldsNotChanged() {
-    var transaction = repository.fetchOneById(PRE_POPULATED_TRANSACTION_ID1).get();
+    var transaction = repository.fetchOneById(PRE_POPULATED_TRANSACTION_ID3).get();
     transaction.setState(FINAL_CHECKIN);
 
     var transactionDTO = innReachTransactionMapper.toDTO(transaction);
@@ -1105,37 +1105,14 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     var responseEntity = testRestTemplate.exchange(
       UPDATE_TRANSACTION_ENDPOINT, HttpMethod.PUT,
       new HttpEntity<>(transactionDTO, headers), InnReachTransactionDTO.class,
-      PRE_POPULATED_TRANSACTION_ID1
+      PRE_POPULATED_TRANSACTION_ID3
     );
 
-    var updatedTransaction = repository.fetchOneById(PRE_POPULATED_TRANSACTION_ID1).get();
+    var updatedTransaction = repository.fetchOneById(PRE_POPULATED_TRANSACTION_ID3).get();
     var updatedState = updatedTransaction.getState();
 
     assertEquals(HttpStatus.NO_CONTENT, responseEntity.getStatusCode());
     assertEquals(FINAL_CHECKIN, updatedState);
   }
 
-  @Test
-  @Sql(scripts = {
-    "classpath:db/central-server/pre-populate-central-server.sql",
-    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
-  })
-  void updateTransactionWhenImmutableFieldsChanged() {
-    var transaction = repository.fetchOneById(PRE_POPULATED_TRANSACTION_ID1).get();
-    transaction.setTrackingId(TRACKING_ID);
-
-    var transactionDTO = innReachTransactionMapper.toDTO(transaction);
-
-    var responseEntity = testRestTemplate.exchange(
-      UPDATE_TRANSACTION_ENDPOINT, HttpMethod.PUT,
-      new HttpEntity<>(transactionDTO, headers), InnReachTransactionDTO.class,
-      PRE_POPULATED_TRANSACTION_ID1
-    );
-
-    var updatedTransaction = repository.fetchOneById(PRE_POPULATED_TRANSACTION_ID1).get();
-    var updatedTrackingId = updatedTransaction.getTrackingId();
-
-    assertEquals(HttpStatus.NO_CONTENT, responseEntity.getStatusCode());
-    assertEquals(PRE_POPULATED_TRACKING_ID, updatedTrackingId);
-  }
 }
