@@ -17,9 +17,12 @@ import lombok.RequiredArgsConstructor;
 @Builder
 public class RequestDTO {
   private UUID id;
+  private UUID instanceId;
+  private UUID holdingsRecordId;
   private UUID itemId;
   private RequestStatus status;
   private String requestType;
+  private String requestLevel;
   private OffsetDateTime requestExpirationDate;
   private UUID requesterId;
   private UUID pickupServicePointId;
@@ -60,6 +63,14 @@ public class RequestDTO {
   public enum FulfilmentPreference {
     HOLD_SHELF("Hold Shelf"),
     DELIVERY("Delivery");
+
+    private final String name;
+  }
+
+  @Getter
+  @RequiredArgsConstructor
+  public enum RequestLevel {
+    ITEM("Item");
 
     private final String name;
   }
