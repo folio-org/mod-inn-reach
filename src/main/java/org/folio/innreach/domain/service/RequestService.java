@@ -31,7 +31,7 @@ public interface RequestService {
 
   LoanDTO checkOutItem(InnReachTransaction transaction, UUID servicePointId);
 
-  void createRecallRequest(UUID userId, UUID itemId);
+  void createRecallRequest(InnReachTransaction transaction, UUID userId);
 
   RequestDTO findRequest(UUID requestId);
 
