@@ -60,11 +60,10 @@ public class InnReachTransactionServiceImpl implements InnReachTransactionServic
     var oldTransaction = repository.getById(transactionId);
     var updatedTransaction = transactionMapper.toEntity(transaction);
 
-    updatedTransaction.setTrackingId( oldTransaction.getTrackingId());
-    updatedTransaction.setCentralServerCode( oldTransaction.getCentralServerCode());
-    updatedTransaction.setType( oldTransaction.getType());
+    oldTransaction.setState(updatedTransaction.getState());
+    oldTransaction.setHold(updatedTransaction.getHold());
 
-    repository.save(updatedTransaction);
+    repository.save(oldTransaction);
   }
 
 }
