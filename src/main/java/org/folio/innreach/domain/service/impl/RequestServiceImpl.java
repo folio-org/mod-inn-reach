@@ -156,6 +156,9 @@ public class RequestServiceImpl implements RequestService {
     //creating and sending new request
     var newRequest = RequestDTO.builder()
       .requestType(requestType.getName())
+      .requestLevel(RequestDTO.RequestLevel.ITEM.getName())
+      .instanceId(holding == null ? null : holding.getInstanceId())
+      .holdingsRecordId(item.getHoldingsRecordId())
       .itemId(item.getId())
       .requesterId(patron.getId())
       .pickupServicePointId(servicePointId)
@@ -258,13 +261,16 @@ public class RequestServiceImpl implements RequestService {
   }
 
   @Override
-  public void createRecallRequest(UUID recallUserId, UUID itemId) {
+  public void createRecallRequest(InnReachTransaction transaction, UUID recallUserId) {
     var pickupServicePoint = getDefaultServicePointIdForPatron(recallUserId);
 
     var request = RequestDTO.builder()
-      .itemId(itemId)
+      .itemId(transaction.getHold().getFolioItemId())
       .requesterId(recallUserId)
       .requestType(RECALL.getName())
+      .requestLevel(RequestDTO.RequestLevel.ITEM.getName())
+      .instanceId(transaction.getHold().getFolioInstanceId())
+      .holdingsRecordId(transaction.getHold().getFolioHoldingId())
       .requestDate(OffsetDateTime.now())
       .fulfilmentPreference(HOLD_SHELF.getName())
       .pickupServicePointId(pickupServicePoint)
