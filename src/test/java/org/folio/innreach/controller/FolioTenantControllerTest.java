@@ -6,8 +6,10 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 
 import static org.folio.innreach.domain.service.impl.FolioTenantService.LOAD_REF_DATA_PARAMETER;
+import static org.mockito.Mockito.when;
 
 import liquibase.exception.LiquibaseException;
+import org.folio.spring.FolioExecutionContext;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -29,11 +31,14 @@ class FolioTenantControllerTest {
   private FolioTenantService tenantService;
   @Mock
   private TenantService baseTenantService;
+  @Mock
+  private FolioExecutionContext folioExecutionContext;
   @InjectMocks
   private FolioTenantController tenantController;
 
   @Test
   void postTenant_shouldCallTenantInitialize() {
+    when(folioExecutionContext.getTenantId()).thenReturn("diku");
     tenantController.postTenant(TENANT_ATTRIBUTES);
 
     verify(tenantService).initializeTenant(any(TenantAttributes.class));
