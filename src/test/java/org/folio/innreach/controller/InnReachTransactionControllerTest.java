@@ -941,7 +941,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     var responseEntity = testRestTemplate.postForEntity(
       PATRON_HOLD_CHECK_IN_UNSHIPPED_ENDPOINT, null, PatronHoldCheckInResponseDTO.class,
       PRE_POPULATED_PATRON_HOLD_TRANSACTION_ID, UUID.randomUUID(), "newbarcode"
-      );
+    );
 
     var response = responseEntity.getBody();
     assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
@@ -954,6 +954,28 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     assertEquals("newbarcode", checkInResponse.getItem().getBarcode());
 
     assertFalse(response.getBarcodeAugmented());
+  }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
+  })
+  void checkInPatronHoldUnshippedItem_barcodeAugmented() {
+    modifyFolioItemBarcode(PRE_POPULATED_PATRON_HOLD_TRANSACTION_ID, null);
+
+    when(circulationClient.checkInByBarcode(any(CheckInRequestDTO.class)))
+      .thenReturn(new CheckInResponseDTO().item(new CheckInResponseDTOItem().barcode("newbarcode")));
+    when(inventoryClient.getItemByBarcode(any())).thenReturn(ResultList.asSinglePage(new InventoryItemDTO()));
+    when(inventoryClient.findItem(any())).thenReturn(Optional.of(createInventoryItemDTO()));
+
+    var responseEntity = testRestTemplate.postForEntity(
+      PATRON_HOLD_CHECK_IN_UNSHIPPED_ENDPOINT, null, PatronHoldCheckInResponseDTO.class,
+      PRE_POPULATED_PATRON_HOLD_TRANSACTION_ID, UUID.randomUUID(), "newbarcode"
+    );
+
+    var response = responseEntity.getBody();
+    assertTrue(response.getBarcodeAugmented());
   }
 
   @Test

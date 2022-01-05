@@ -74,7 +74,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
 
     patronHoldService.addItemBarcode(transaction, itemBarcode);
 
-    var response =  checkInItem(transaction, servicePointId);
+    var response = checkInItem(transaction, servicePointId);
 
     transaction.setState(RECEIVE_UNANNOUNCED);
 
