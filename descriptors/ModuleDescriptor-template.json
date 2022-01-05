@@ -412,6 +412,17 @@
         },
         {
           "methods": ["POST"],
+          "pathPattern": "/inn-reach/transactions/{id}/receive-unshipped-item/{servicePointId}/{itemBarcode}",
+          "permissionsRequired": ["inn-reach.d2ir.inn-reach-transaction.item.post"],
+          "modulePermissions": [
+            "circulation.check-in-by-barcode.post",
+            "inventory.items.collection.get",
+            "inventory.items.item.get",
+            "inventory.items.item.put"
+          ]
+        },
+        {
+          "methods": ["POST"],
           "pathPattern": "/inn-reach/transactions/{itemBarcode}/check-out-item/{servicePointId}",
           "permissionsRequired": ["inn-reach.d2ir.inn-reach-transaction.item.post"],
           "modulePermissions": [
