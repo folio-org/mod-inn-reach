@@ -185,31 +185,11 @@ public class CirculationServiceImpl implements CirculationService {
     var innReachTransaction = getTransactionOfType(trackingId, centralCode, PATRON);
 
     var itemBarcode = itemShipped.getItemBarcode();
-    var folioItemBarcode = itemBarcode;
     var callNumber = itemShipped.getCallNumber();
 
-    var transactionPatronHold = (TransactionPatronHold) innReachTransaction.getHold();
-
-    if (nonNull(itemBarcode)) {
-      var itemByBarcode = itemService.findItemByBarcode(itemBarcode);
-
-      if (itemByBarcode.isPresent()) {
-        folioItemBarcode += transactionPatronHold.getItemAgencyCode();
-      }
-
-      transactionPatronHold.setShippedItemBarcode(itemBarcode);
-      transactionPatronHold.setFolioItemBarcode(folioItemBarcode);
+    if (nonNull(itemBarcode) || nonNull(callNumber)) {
+      patronHoldService.addItemBarcodeAndCallNumber(innReachTransaction, itemBarcode, callNumber);
     }
-
-    if (nonNull(callNumber)) {
-      transactionPatronHold.setCallNumber(callNumber);
-    }
-
-    UUID folioItemId = transactionPatronHold.getFolioItemId();
-
-    itemService.changeAndUpdate(folioItemId,
-        () -> new IllegalArgumentException("Item with id = " + folioItemId + " not found!"),
-        changeFolioAssociatedItem(folioItemBarcode, callNumber));
 
     innReachTransaction.setState(ITEM_SHIPPED);
 
@@ -509,20 +489,6 @@ public class CirculationServiceImpl implements CirculationService {
     newInnReachTransaction.setState(state);
 
     return newInnReachTransaction;
-  }
-
-  private UpdateOperation<InventoryItemDTO> changeFolioAssociatedItem(String folioItemBarcode, String callNumber) {
-    return item -> {
-      if (nonNull(folioItemBarcode)) {
-        item.setBarcode(folioItemBarcode);
-      }
-
-      if (nonNull(callNumber)) {
-        item.setCallNumber(callNumber);
-      }
-
-      return item;
-    };
   }
 
   private Optional<Holding> removeHoldingsTransactionInfo(InventoryItemDTO item) {

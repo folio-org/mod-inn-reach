@@ -106,6 +106,7 @@ import org.folio.innreach.repository.InnReachTransactionRepository;
 class InnReachTransactionControllerTest extends BaseControllerTest {
 
   private static final String PATRON_HOLD_CHECK_IN_ENDPOINT = "/inn-reach/transactions/{id}/receive-item/{servicePointId}";
+  private static final String PATRON_HOLD_CHECK_IN_UNSHIPPED_ENDPOINT = "/inn-reach/transactions/{id}/receive-unshipped-item/{servicePointId}/{itemBarcode}";
   private static final String ITEM_HOLD_CHECK_OUT_ENDPOINT = "/inn-reach/transactions/{itemBarcode}/check-out-item/{servicePointId}";
   private static final String UPDATE_TRANSACTION_ENDPOINT = "/inn-reach/transactions/{transactionId}";
 
@@ -124,7 +125,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   public static final String TRANSACTION_WITH_LOCAL_HOLD_ID = "79b0a1fb-55be-4e55-9d84-01303aaec1ce";
   public static final String TRANSACTION_WITH_PATRON_HOLD_ID = "0aab1720-14b4-4210-9a19-0d0bf1cd64d3";
 
-  private static final UUID PRE_POPULATED_TRANSACTION_ID1 = UUID.fromString("0aab1720-14b4-4210-9a19-0d0bf1cd64d3");
+  private static final UUID PRE_POPULATED_PATRON_HOLD_TRANSACTION_ID = UUID.fromString("0aab1720-14b4-4210-9a19-0d0bf1cd64d3");
   private static final UUID PRE_POPULATED_ITEM_HOLD_TRANSACTION_ID = UUID.fromString("ab2393a1-acc4-4849-82ac-8cc0c37339e1");
   private static final UUID PRE_POPULATED_TRANSACTION_ID3 = UUID.fromString("79b0a1fb-55be-4e55-9d84-01303aaec1ce");
   private static final UUID PRE_POPULATED_ITEM_SHIPPED_TRANSACTION_ID = UUID.fromString("7106c3ac-890a-4126-bf9b-a10b67555b6e");
@@ -214,7 +215,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     var transactionIds = responseEntity.getBody().getTransactions().stream()
       .map(InnReachTransactionDTO::getId).collect(Collectors.toList());
     assertTrue(transactionIds.containsAll(
-      List.of(PRE_POPULATED_TRANSACTION_ID1, PRE_POPULATED_ITEM_HOLD_TRANSACTION_ID, PRE_POPULATED_TRANSACTION_ID3)));
+      List.of(PRE_POPULATED_PATRON_HOLD_TRANSACTION_ID, PRE_POPULATED_ITEM_HOLD_TRANSACTION_ID, PRE_POPULATED_TRANSACTION_ID3)));
 
     var transactionMetadatas = responseEntity.getBody().getTransactions().stream()
       .map(InnReachTransactionDTO::getMetadata).collect(Collectors.toList());
@@ -360,7 +361,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
 
     var transactionIds = responseEntity.getBody().getTransactions().stream()
       .map(InnReachTransactionDTO::getId).collect(Collectors.toList());
-    assertTrue(transactionIds.containsAll(List.of(PRE_POPULATED_TRANSACTION_ID1, PRE_POPULATED_ITEM_HOLD_TRANSACTION_ID)));
+    assertTrue(transactionIds.containsAll(List.of(PRE_POPULATED_PATRON_HOLD_TRANSACTION_ID, PRE_POPULATED_ITEM_HOLD_TRANSACTION_ID)));
 
     assertEquals(2, responseEntity.getBody().getTransactions().size());
     var centralItemTypes = responseEntity.getBody().getTransactions().stream()
@@ -938,6 +939,59 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   @Test
   @Sql(scripts = {
     "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
+  })
+  void testCheckInPatronHoldUnshippedItem() {
+    modifyFolioItemBarcode(PRE_POPULATED_PATRON_HOLD_TRANSACTION_ID, null);
+
+    when(circulationClient.checkInByBarcode(any(CheckInRequestDTO.class)))
+      .thenReturn(new CheckInResponseDTO().item(new CheckInResponseDTOItem().barcode("newbarcode")));
+    when(inventoryClient.getItemByBarcode(any())).thenReturn(ResultList.empty());
+    when(inventoryClient.findItem(any())).thenReturn(Optional.of(createInventoryItemDTO()));
+
+    var responseEntity = testRestTemplate.postForEntity(
+      PATRON_HOLD_CHECK_IN_UNSHIPPED_ENDPOINT, null, PatronHoldCheckInResponseDTO.class,
+      PRE_POPULATED_PATRON_HOLD_TRANSACTION_ID, UUID.randomUUID(), "newbarcode"
+    );
+
+    var response = responseEntity.getBody();
+    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+    assertNotNull(response);
+
+    var transaction = response.getTransaction();
+    assertEquals(PRE_POPULATED_PATRON_HOLD_TRANSACTION_ID, transaction.getId());
+
+    var checkInResponse = response.getFolioCheckIn();
+    assertEquals("newbarcode", checkInResponse.getItem().getBarcode());
+
+    assertFalse(response.getBarcodeAugmented());
+  }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
+  })
+  void checkInPatronHoldUnshippedItem_barcodeAugmented() {
+    modifyFolioItemBarcode(PRE_POPULATED_PATRON_HOLD_TRANSACTION_ID, null);
+
+    when(circulationClient.checkInByBarcode(any(CheckInRequestDTO.class)))
+      .thenReturn(new CheckInResponseDTO().item(new CheckInResponseDTOItem().barcode("newbarcode")));
+    when(inventoryClient.getItemByBarcode(any())).thenReturn(ResultList.asSinglePage(new InventoryItemDTO()));
+    when(inventoryClient.findItem(any())).thenReturn(Optional.of(createInventoryItemDTO()));
+
+    var responseEntity = testRestTemplate.postForEntity(
+      PATRON_HOLD_CHECK_IN_UNSHIPPED_ENDPOINT, null, PatronHoldCheckInResponseDTO.class,
+      PRE_POPULATED_PATRON_HOLD_TRANSACTION_ID, UUID.randomUUID(), "newbarcode"
+    );
+
+    var response = responseEntity.getBody();
+    assertTrue(response.getBarcodeAugmented());
+  }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-transaction-item-shipped.sql"
   })
   void testCheckInPatronHoldItem_withBarcodeAugmented() {
@@ -972,7 +1026,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   void testCheckInPatronHoldItem_invalidTransactionState() {
     var responseEntity = testRestTemplate.postForEntity(
       PATRON_HOLD_CHECK_IN_ENDPOINT, null, PatronHoldCheckInResponseDTO.class,
-      PRE_POPULATED_TRANSACTION_ID1, UUID.randomUUID()
+      PRE_POPULATED_PATRON_HOLD_TRANSACTION_ID, UUID.randomUUID()
     );
 
     assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
