@@ -18,7 +18,7 @@ import java.util.List;
 
 import static org.apache.commons.collections4.ListUtils.emptyIfNull;
 
-@Mapper(componentModel = "spring", injectionStrategy = InjectionStrategy.CONSTRUCTOR, uses = {MappingMethods.class, MappingMethodsToEntity.class}, builder = @Builder(disableBuilder = true))
+@Mapper(componentModel = "spring", injectionStrategy = InjectionStrategy.CONSTRUCTOR, uses = MappingMethods.class, builder = @Builder(disableBuilder = true))
 public abstract class InnReachTransactionMapper {
   @Autowired
   InnReachTransactionHoldMapper holdMapper;
@@ -64,7 +64,6 @@ public abstract class InnReachTransactionMapper {
   @Mapping(target = "trackingId", ignore = true)
   @Mapping(target = "type", ignore = true)
   @Mapping(target = "centralServerCode", ignore = true)
-  @AuditableMappingToEntity
   public abstract InnReachTransaction toEntityWithoutHold(InnReachTransactionDTO transactionDTO);
 
   public InnReachTransaction toEntity(InnReachTransactionDTO innReachTransactionDTO) {
