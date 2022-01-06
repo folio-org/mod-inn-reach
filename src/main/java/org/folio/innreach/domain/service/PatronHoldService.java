@@ -11,4 +11,8 @@ public interface PatronHoldService {
 
   @Async
   void updateVirtualItems(InnReachTransaction transaction);
+
+  void addItemBarcode(InnReachTransaction transaction, String itemBarcode);
+
+  void addItemBarcodeAndCallNumber(InnReachTransaction transaction, String itemBarcode, String callNumber);
 }

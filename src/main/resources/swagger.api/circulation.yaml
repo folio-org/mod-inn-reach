@@ -157,6 +157,27 @@ paths:
       parameters:
         - $ref: 'api-common.yaml#/components/parameters/id'
         - $ref: 'circulation.yaml#/components/parameters/servicePointId'
+  /transactions/{id}/receive-unshipped-item/{servicePointId}/{itemBarcode}:
+    put:
+      operationId: checkInPatronHoldUnshippedItem
+      description: receive un-shipped/unannounced item for patron hold transaction
+      tags:
+        - inn-reach-transaction
+      responses:
+        '200':
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/patronHoldCheckInResponseDTO"
+        '404':
+          $ref: "api-common.yaml#/components/responses/trait_response_404"
+        '500':
+          $ref: "api-common.yaml#/components/responses/trait_response_500"
+      parameters:
+        - $ref: 'api-common.yaml#/components/parameters/id'
+        - $ref: 'circulation.yaml#/components/parameters/servicePointId'
+        - $ref: 'circulation.yaml#/components/parameters/itemBarcode'
   /transactions/{itemBarcode}/check-out-item/{servicePointId}:
     put:
       operationId: checkOutItemHoldItem
