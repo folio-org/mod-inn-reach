@@ -8,5 +8,6 @@
     <include file="2021-11-09-MODINREACH-181.xml" relativeToChangelogFile="true"/>
     <include file="2021-11-17-MODINREACH-170.xml" relativeToChangelogFile="true"/>
     <include file="2021-12-20-MODINREACH-104.xml" relativeToChangelogFile="true"/>
+    <include file="2022-01-06-MODINREACH-206.xml" relativeToChangelogFile="true"/>
 
 </databaseChangeLog>

@@ -19,10 +19,6 @@ import javax.persistence.Table;
 public class TransactionPatronHold extends TransactionHold {
 
   @Getter(AccessLevel.NONE) @Setter(AccessLevel.NONE)
-  @Column(name = "title")
-  private String titlePatron;
-
-  @Getter(AccessLevel.NONE) @Setter(AccessLevel.NONE)
   @Column(name = "author")
   private String authorPatron;
 
@@ -31,14 +27,6 @@ public class TransactionPatronHold extends TransactionHold {
 
   @Column(name = "shipped_item_barcode")
   private String shippedItemBarcode;
-
-  public String getTitle() {
-    return titlePatron;
-  }
-
-  public void setTitle(String title) {
-    this.titlePatron = title;
-  }
 
   public String getAuthor() {
     return authorPatron;

@@ -25,10 +25,6 @@ public class TransactionLocalHold extends TransactionHold {
   private String patronPhone;
 
   @Getter(AccessLevel.NONE) @Setter(AccessLevel.NONE)
-  @Column(name = "title")
-  private String titleLocal;
-
-  @Getter(AccessLevel.NONE) @Setter(AccessLevel.NONE)
   @Column(name = "author")
   private String authorLocal;
 
@@ -41,14 +37,6 @@ public class TransactionLocalHold extends TransactionHold {
 
   @Column(name = "patron_name")
   private String patronName;
-
-  public String getTitle() {
-    return titleLocal;
-  }
-
-  public void setTitle(String title) {
-    this.titleLocal = title;
-  }
 
   public String getAuthor() {
     return authorLocal;

@@ -73,9 +73,7 @@ public class InnReachTransactionSpecification {
       var itemAuthorLike = cb.or(
         cb.like(cb.lower(localHold.get("authorLocal")), "%" + lowerCaseKeyword + "%"),
         cb.like(cb.lower(patronHold.get("authorPatron")), "%" + lowerCaseKeyword + "%"));
-      var itemTitleLike = cb.or(
-        cb.like(cb.lower(localHold.get("titleLocal")), "%" + lowerCaseKeyword + "%"),
-        cb.like(cb.lower(patronHold.get("titlePatron")), "%" + lowerCaseKeyword + "%"));
+      var itemTitleLike = cb.like(cb.lower(hold.get("title")), "%" + lowerCaseKeyword + "%");
 
       return cb.or(itemIdMatch, patronIdMatch, trackingIdMatch, patronBarcodeMatch, itemBarcodeMatch, itemAuthorLike, itemTitleLike);
     };
