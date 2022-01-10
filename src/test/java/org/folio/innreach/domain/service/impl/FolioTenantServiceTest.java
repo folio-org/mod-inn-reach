@@ -6,7 +6,9 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 
 import static org.folio.innreach.domain.service.impl.FolioTenantService.LOAD_REF_DATA_PARAMETER;
+import static org.mockito.Mockito.when;
 
+import org.folio.innreach.config.props.TestTenant;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -35,6 +37,9 @@ class FolioTenantServiceTest {
   @Mock
   private ReferenceDataLoader referenceDataLoader;
 
+  @Mock
+  private TestTenant testTenant;
+
   @InjectMocks
   private FolioTenantService service;
 
@@ -45,6 +50,8 @@ class FolioTenantServiceTest {
 
   @Test
   void shouldInitializeTenant() {
+    when(context.getTenantId()).thenReturn("diku");
+    when(testTenant.getTenantName()).thenReturn("test_inn-reach_integration");
     service.initializeTenant(TENANT_ATTRIBUTES);
 
     verify(systemUserService).prepareSystemUser();
@@ -54,6 +61,8 @@ class FolioTenantServiceTest {
 
   @Test
   void shouldNotLoadRefData() {
+    when(context.getTenantId()).thenReturn("diku");
+    when(testTenant.getTenantName()).thenReturn("test_inn-reach_integration");
     var tenantAttributes = new TenantAttributes()
       .addParametersItem(new Parameter().key(LOAD_REF_DATA_PARAMETER).value("false"));
 
@@ -66,6 +75,8 @@ class FolioTenantServiceTest {
 
   @Test
   void shouldNotLoadRefData_noParam() {
+    when(context.getTenantId()).thenReturn("diku");
+    when(testTenant.getTenantName()).thenReturn("test_inn-reach_integration");
     var tenantAttributes = new TenantAttributes();
 
     service.initializeTenant(tenantAttributes);
