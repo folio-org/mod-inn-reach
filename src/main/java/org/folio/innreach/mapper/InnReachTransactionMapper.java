@@ -59,4 +59,28 @@ public abstract class InnReachTransactionMapper {
 
     return new InnReachTransactionsDTO().transactions(dtos).totalRecords((int) pageable.getTotalElements());
   }
+
+  @Mapping(target = "hold", ignore = true)
+  @Mapping(target = "trackingId", ignore = true)
+  @Mapping(target = "type", ignore = true)
+  @Mapping(target = "centralServerCode", ignore = true)
+  public abstract InnReachTransaction toEntityWithoutHold(InnReachTransactionDTO transactionDTO);
+
+  public InnReachTransaction toEntity(InnReachTransactionDTO innReachTransactionDTO) {
+    var entity = toEntityWithoutHold(innReachTransactionDTO);
+    switch (innReachTransactionDTO.getType()) {
+      case ITEM:
+        entity.setHold(holdMapper.toItemHold(innReachTransactionDTO.getHold()));
+      break;
+      case LOCAL:
+        entity.setHold(holdMapper.toLocalHold(innReachTransactionDTO.getHold()));
+      break;
+      case PATRON:
+        entity.setHold(holdMapper.toPatronHold(innReachTransactionDTO.getHold()));
+      break;
+    }
+
+    return entity;
+  }
+
 }
