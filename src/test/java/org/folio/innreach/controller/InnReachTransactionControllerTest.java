@@ -6,7 +6,6 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -118,8 +117,9 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   private static final String PRE_POPULATED_USER_BARCODE_QUERY = "(barcode==\"" + PRE_POPULATED_USER_BARCODE + "\")";
   private static final Integer PRE_POPULATED_CENTRAL_PATRON_TYPE = 200;
   private static final String PRE_POPULATED_MATERIAL_TYPE_ID = "1a54b431-2e4f-452d-9cae-9cee66c9a892";
-  private static final String NEW_TRACKING_ID = "newTrackingId";
   private static final String NEW_CENTRAL_SERVER_CODE = "a0aa";
+  private static final String NEW_ITEM_AND_AGENCY_CODE = "a0aa0";
+  private static final String NEW_TEST_PARAMETER_VALUE = "abc";
 
   public static final String TRANSACTION_WITH_ITEM_HOLD_ID = "ab2393a1-acc4-4849-82ac-8cc0c37339e1";
   public static final String TRANSACTION_WITH_LOCAL_HOLD_ID = "79b0a1fb-55be-4e55-9d84-01303aaec1ce";
@@ -1160,10 +1160,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   })
   void updateTransactionWhenImmutableFieldsNotChanged(String transactionId) {
     var transaction = repository.fetchOneById(UUID.fromString(transactionId)).get();
-    var hold = transaction.getHold();
 
-    hold.setFolioRequestId(null);
-    transaction.setHold(hold);
     transaction.setState(FINAL_CHECKIN);
 
     var transactionDTO = innReachTransactionMapper.toDTO(transaction);
@@ -1178,7 +1175,6 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
 
     assertEquals(HttpStatus.NO_CONTENT, responseEntity.getStatusCode());
     assertEquals(FINAL_CHECKIN, updatedTransaction.getState());
-    assertNull(updatedTransaction.getHold().getFolioRequestId());
     assertEquals(transaction.getTrackingId(), updatedTransaction.getTrackingId());
     assertEquals(transaction.getCentralServerCode(), updatedTransaction.getCentralServerCode());
     assertEquals(transaction.getType(), updatedTransaction.getType());
@@ -1190,12 +1186,20 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
   })
   void updateTransactionWhenImmutableFieldsChanged() {
+    var oldTransaction = repository.fetchOneById(PRE_POPULATED_ITEM_HOLD_TRANSACTION_ID).get();
     var transaction = repository.fetchOneById(PRE_POPULATED_ITEM_HOLD_TRANSACTION_ID).get();
     var hold = transaction.getHold();
+    var pickupLocation = hold.getPickupLocation();
 
-    hold.setFolioRequestId(null);
+    pickupLocation.setDeliveryStop(NEW_TEST_PARAMETER_VALUE);
+    pickupLocation.setDisplayName(NEW_TEST_PARAMETER_VALUE);
+    pickupLocation.setPickupLocCode(NEW_TEST_PARAMETER_VALUE);
+    pickupLocation.setPrintName(NEW_TEST_PARAMETER_VALUE);
+    hold.setItemAgencyCode(NEW_ITEM_AND_AGENCY_CODE);
+    hold.setPatronAgencyCode(NEW_ITEM_AND_AGENCY_CODE);
+    hold.setPickupLocation(pickupLocation);
     transaction.setHold(hold);
-    transaction.setTrackingId(NEW_TRACKING_ID);
+    transaction.setTrackingId(TRACKING_ID);
     transaction.setCentralServerCode(NEW_CENTRAL_SERVER_CODE);
 
     var transactionDTO = innReachTransactionMapper.toDTO(transaction);
@@ -1209,8 +1213,13 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     var updatedTransaction = repository.fetchOneById(PRE_POPULATED_ITEM_HOLD_TRANSACTION_ID).get();
 
     assertEquals(HttpStatus.NO_CONTENT, responseEntity.getStatusCode());
-    assertNull(updatedTransaction.getHold().getFolioRequestId());
-    assertNotEquals(NEW_TRACKING_ID, updatedTransaction.getTrackingId());
-    assertNotEquals(NEW_CENTRAL_SERVER_CODE, updatedTransaction.getCentralServerCode());
+    assertEquals(oldTransaction.getTrackingId(), updatedTransaction.getTrackingId());
+    assertEquals(oldTransaction.getCentralServerCode(), updatedTransaction.getCentralServerCode());
+    assertEquals(NEW_ITEM_AND_AGENCY_CODE, updatedTransaction.getHold().getItemAgencyCode());
+    assertEquals(NEW_ITEM_AND_AGENCY_CODE, updatedTransaction.getHold().getPatronAgencyCode());
+    assertEquals(NEW_TEST_PARAMETER_VALUE, updatedTransaction.getHold().getPickupLocation().getDeliveryStop());
+    assertEquals(NEW_TEST_PARAMETER_VALUE, updatedTransaction.getHold().getPickupLocation().getDisplayName());
+    assertEquals(NEW_TEST_PARAMETER_VALUE, updatedTransaction.getHold().getPickupLocation().getPickupLocCode());
+    assertEquals(NEW_TEST_PARAMETER_VALUE, updatedTransaction.getHold().getPickupLocation().getPrintName());
   }
 }

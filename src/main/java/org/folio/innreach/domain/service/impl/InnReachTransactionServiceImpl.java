@@ -17,7 +17,6 @@ import org.folio.innreach.domain.service.InnReachTransactionService;
 import org.folio.innreach.dto.InnReachTransactionDTO;
 import org.folio.innreach.dto.InnReachTransactionFilterParametersDTO;
 import org.folio.innreach.dto.InnReachTransactionsDTO;
-import org.folio.innreach.dto.TransactionHoldDTO;
 import org.folio.innreach.mapper.InnReachTransactionFilterParametersMapper;
 import org.folio.innreach.mapper.InnReachTransactionMapper;
 import org.folio.innreach.repository.InnReachTransactionRepository;
@@ -36,6 +35,15 @@ public class InnReachTransactionServiceImpl implements InnReachTransactionServic
   private final InnReachTransactionFilterParametersMapper parametersMapper;
 
   private final InnReachTransactionSpecification specification;
+
+  private static final String[] TRANSACTION_HOLD_IGNORE_PROPS_ON_COPY = {
+    "pickupLocation", "id", "createdBy", "updatedBy", "createdDate", "updatedDate",
+    "folioPatronId", "folioInstanceId", "folioHoldingId", "folioItemId",
+    "folioRequestId", "folioLoanId", "folioPatronBarcode", "folioItemBarcode"
+  };
+  private static final String[] PICKUP_LOC_IGNORE_PROPS_ON_COPY = {
+    "id", "createdBy", "updatedBy", "createdDate", "updatedDate"
+  };
 
   @Override
   public Integer countInnReachLoans(String patronId, List<UUID> loanIds) {
@@ -65,16 +73,16 @@ public class InnReachTransactionServiceImpl implements InnReachTransactionServic
     var newTransaction = transactionMapper.toEntity(transactionDTO);
 
     oldTransaction.setState(newTransaction.getState());
-    updateTransactionHold(transactionDTO.getHold(), oldTransaction.getHold());
+    updateTransactionHold(newTransaction.getHold(), oldTransaction.getHold());
 
     repository.save(oldTransaction);
   }
 
-  private void updateTransactionHold(TransactionHoldDTO newHold, TransactionHold oldHold) {
+  private void updateTransactionHold(TransactionHold newHold, TransactionHold oldHold) {
     var oldPickupLocation = oldHold.getPickupLocation();
     var newPickupLocation = newHold.getPickupLocation();
 
-    BeanUtils.copyProperties(newHold, oldHold);
-    BeanUtils.copyProperties(newPickupLocation, oldPickupLocation);
+    BeanUtils.copyProperties(newHold, oldHold, TRANSACTION_HOLD_IGNORE_PROPS_ON_COPY);
+    BeanUtils.copyProperties(newPickupLocation, oldPickupLocation, PICKUP_LOC_IGNORE_PROPS_ON_COPY);
   }
 }
