@@ -6,6 +6,8 @@ import java.util.List;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.folio.innreach.config.props.TestTenant;
+import org.folio.spring.FolioExecutionContext;
 import org.springframework.stereotype.Service;
 
 import org.folio.innreach.batch.contribution.service.ContributionJobRunner;
@@ -22,12 +24,16 @@ public class FolioTenantService {
   private final SystemUserService systemUserService;
   private final ContributionJobRunner contributionJobRunner;
   private final ReferenceDataLoader referenceDataLoader;
+  private final TestTenant testTenant;
+  private final FolioExecutionContext context;
 
   public void initializeTenant(TenantAttributes tenantAttributes) {
-    systemUserService.prepareSystemUser();
-    contributionJobRunner.cancelJobs();
-    if (shouldLoadRefData(emptyIfNull(tenantAttributes.getParameters()))) {
-      referenceDataLoader.loadRefData();
+    if (!context.getTenantId().startsWith(testTenant.getTenantName())) {
+      systemUserService.prepareSystemUser();
+      contributionJobRunner.cancelJobs();
+      if (shouldLoadRefData(emptyIfNull(tenantAttributes.getParameters()))) {
+        referenceDataLoader.loadRefData();
+      }
     }
   }
 

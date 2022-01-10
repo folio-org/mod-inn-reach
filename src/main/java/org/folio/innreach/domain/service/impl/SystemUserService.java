@@ -2,7 +2,6 @@ package org.folio.innreach.domain.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
-import org.folio.innreach.config.props.TestTenant;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
@@ -19,13 +18,12 @@ public class SystemUserService {
   private final SystemUserAuthService authService;
   private final FolioExecutionContext context;
   private final SystemUserProperties systemUserConf;
-  private final TestTenant testTenant;
 
   @Value("${okapi.url}")
   private String okapiUrl;
 
   public void prepareSystemUser() {
-    if (!context.getTenantId().startsWith(testTenant.getTenantName())) {
+    {
        log.info("Preparing system user...");
 
        authService.setupSystemUser();
