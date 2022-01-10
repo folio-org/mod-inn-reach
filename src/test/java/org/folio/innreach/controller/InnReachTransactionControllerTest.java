@@ -1160,7 +1160,10 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   })
   void updateTransactionWhenImmutableFieldsNotChanged(String transactionId) {
     var transaction = repository.fetchOneById(UUID.fromString(transactionId)).get();
+    var hold = transaction.getHold();
 
+    hold.setFolioRequestId(null);
+    transaction.setHold(hold);
     transaction.setState(FINAL_CHECKIN);
 
     var transactionDTO = innReachTransactionMapper.toDTO(transaction);
@@ -1197,6 +1200,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     pickupLocation.setPrintName(NEW_TEST_PARAMETER_VALUE);
     hold.setItemAgencyCode(NEW_ITEM_AND_AGENCY_CODE);
     hold.setPatronAgencyCode(NEW_ITEM_AND_AGENCY_CODE);
+    hold.setFolioRequestId(null);
     hold.setPickupLocation(pickupLocation);
     transaction.setHold(hold);
     transaction.setTrackingId(TRACKING_ID);

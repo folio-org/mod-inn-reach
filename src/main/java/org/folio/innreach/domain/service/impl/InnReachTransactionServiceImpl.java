@@ -37,9 +37,7 @@ public class InnReachTransactionServiceImpl implements InnReachTransactionServic
   private final InnReachTransactionSpecification specification;
 
   private static final String[] TRANSACTION_HOLD_IGNORE_PROPS_ON_COPY = {
-    "pickupLocation", "id", "createdBy", "updatedBy", "createdDate", "updatedDate",
-    "folioPatronId", "folioInstanceId", "folioHoldingId", "folioItemId",
-    "folioRequestId", "folioLoanId", "folioPatronBarcode", "folioItemBarcode"
+    "pickupLocation", "id", "createdBy", "updatedBy", "createdDate", "updatedDate"
   };
   private static final String[] PICKUP_LOC_IGNORE_PROPS_ON_COPY = {
     "id", "createdBy", "updatedBy", "createdDate", "updatedDate"
