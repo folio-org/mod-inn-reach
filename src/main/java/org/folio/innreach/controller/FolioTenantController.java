@@ -1,7 +1,6 @@
 package org.folio.innreach.controller;
 
 import lombok.extern.log4j.Log4j2;
-import org.folio.spring.FolioExecutionContext;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -18,19 +17,17 @@ import org.folio.tenant.domain.dto.TenantAttributes;
 public class FolioTenantController extends TenantController {
 
   private final FolioTenantService tenantService;
-  private final FolioExecutionContext folioExecutionContext;
 
-  public FolioTenantController(TenantService baseTenantService, FolioTenantService tenantService, FolioExecutionContext folioExecutionContext) {
+  public FolioTenantController(TenantService baseTenantService, FolioTenantService tenantService) {
     super(baseTenantService);
     this.tenantService = tenantService;
-    this.folioExecutionContext = folioExecutionContext;
   }
 
   @Override
   public ResponseEntity<String> postTenant(TenantAttributes tenantAttributes) {
     var tenantInit = super.postTenant(tenantAttributes);
 
-    if (tenantInit.getStatusCode() == HttpStatus.OK && !folioExecutionContext.getTenantId().startsWith("test_inn_reach_integration")) {
+    if (tenantInit.getStatusCode() == HttpStatus.OK) {
       tenantService.initializeTenant(tenantAttributes);
     }
 
