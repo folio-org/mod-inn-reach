@@ -30,7 +30,7 @@ public class FolioTenantController extends TenantController {
   public ResponseEntity<String> postTenant(TenantAttributes tenantAttributes) {
     var tenantInit = super.postTenant(tenantAttributes);
 
-    if (tenantInit.getStatusCode() == HttpStatus.OK && folioExecutionContext.getTenantId().equals("diku")) {
+    if (tenantInit.getStatusCode() == HttpStatus.OK && !folioExecutionContext.getTenantId().startsWith("test_inn_reach_integration")) {
       tenantService.initializeTenant(tenantAttributes);
     }
 
