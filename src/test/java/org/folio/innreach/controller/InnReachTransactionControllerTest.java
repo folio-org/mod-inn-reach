@@ -474,11 +474,11 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
 
     assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
     assertNotNull(responseEntity.getBody());
-    assertEquals(2, responseEntity.getBody().getTotalRecords());
+    assertEquals(3, responseEntity.getBody().getTotalRecords());
 
     var titles = responseEntity.getBody().getTransactions().stream()
       .map(InnReachTransactionDTO::getHold).map(TransactionHoldDTO::getTitle).collect(Collectors.toList());
-    assertEquals(2, titles.size());
+    assertEquals(3, titles.size());
     assertTrue(titles.stream().allMatch(t -> t.toLowerCase().contains("title")));
   }
 
@@ -627,6 +627,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     assertEquals(itemHoldDTO.getPatronName(), ((TransactionItemHold) transaction.get().getHold()).getPatronName());
 
     assertEquals(inventoryItemDTO.getId(), transaction.get().getHold().getFolioItemId());
+    assertEquals(inventoryItemDTO.getTitle(), transaction.get().getHold().getTitle());
     assertNotNull(transaction.get().getHold().getFolioRequestId());
     assertEquals(user.getId(), transaction.get().getHold().getFolioPatronId());
   }

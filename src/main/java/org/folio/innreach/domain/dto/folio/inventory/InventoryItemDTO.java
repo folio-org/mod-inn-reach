@@ -27,6 +27,7 @@ public class InventoryItemDTO {
   private TemporaryLoanType temporaryLoanType;
   private PermanentLocation permanentLocation;
   private Boolean discoverySuppress;
+  private String title;
 
   @Data
   public static class MaterialType {
