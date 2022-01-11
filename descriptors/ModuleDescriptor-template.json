@@ -412,6 +412,17 @@
         },
         {
           "methods": ["POST"],
+          "pathPattern": "/inn-reach/transactions/{id}/receive-unshipped-item/{servicePointId}/{itemBarcode}",
+          "permissionsRequired": ["inn-reach.d2ir.inn-reach-transaction.item.post"],
+          "modulePermissions": [
+            "circulation.check-in-by-barcode.post",
+            "inventory.items.collection.get",
+            "inventory.items.item.get",
+            "inventory.items.item.put"
+          ]
+        },
+        {
+          "methods": ["POST"],
           "pathPattern": "/inn-reach/transactions/{itemBarcode}/check-out-item/{servicePointId}",
           "permissionsRequired": ["inn-reach.d2ir.inn-reach-transaction.item.post"],
           "modulePermissions": [
@@ -426,6 +437,11 @@
             "inventory-storage.instances.item.get",
             "source-storage.records.get"
           ]
+        },
+        {
+          "methods": ["PUT"],
+          "pathPattern": "/inn-reach/transactions/{transactionId}",
+          "permissionsRequired": ["inn-reach.inn-reach-transaction.item.put"]
         }
       ]
     },
@@ -443,6 +459,7 @@
             "login.item.post",
             "perms.users.item.post",
             "perms.users.get",
+            "perms.users.assign.immutable",
             "inventory-storage.instance-types.collection.get",
             "inventory-storage.instance-types.item.post",
             "inventory-storage.contributor-name-types.collection.get",
@@ -938,7 +955,8 @@
       "displayName" : "inn reach API module - all permissions of inn-reach transactions",
       "description" : "All permissions of inn-reach transactions scope",
       "subPermissions" : [
-        "inn-reach.inn-reach-transactions.collection.get"
+        "inn-reach.inn-reach-transactions.collection.get",
+        "inn-reach.inn-reach-transaction.item.put"
       ]
     },
     {

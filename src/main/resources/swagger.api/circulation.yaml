@@ -137,6 +137,25 @@ paths:
           $ref: "api-common.yaml#/components/responses/trait_response_500"
       parameters:
         - $ref: 'api-common.yaml#/components/parameters/id'
+    put:
+      operationId: updateInnReachTransaction
+      description: update inn-reach transaction by id
+      tags:
+        - inn-reach-transaction
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/innReachTransactionDTO"
+      responses:
+        '204':
+          description: No content
+        '404':
+          $ref: "api-common.yaml#/components/responses/trait_response_404"
+        '500':
+          $ref: "api-common.yaml#/components/responses/trait_response_500"
+      parameters:
+        - $ref: 'api-common.yaml#/components/parameters/id'
   /transactions/{id}/receive-item/{servicePointId}:
     put:
       operationId: checkInPatronHoldItem
@@ -157,6 +176,27 @@ paths:
       parameters:
         - $ref: 'api-common.yaml#/components/parameters/id'
         - $ref: 'circulation.yaml#/components/parameters/servicePointId'
+  /transactions/{id}/receive-unshipped-item/{servicePointId}/{itemBarcode}:
+    put:
+      operationId: checkInPatronHoldUnshippedItem
+      description: receive un-shipped/unannounced item for patron hold transaction
+      tags:
+        - inn-reach-transaction
+      responses:
+        '200':
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/patronHoldCheckInResponseDTO"
+        '404':
+          $ref: "api-common.yaml#/components/responses/trait_response_404"
+        '500':
+          $ref: "api-common.yaml#/components/responses/trait_response_500"
+      parameters:
+        - $ref: 'api-common.yaml#/components/parameters/id'
+        - $ref: 'circulation.yaml#/components/parameters/servicePointId'
+        - $ref: 'circulation.yaml#/components/parameters/itemBarcode'
   /transactions/{itemBarcode}/check-out-item/{servicePointId}:
     put:
       operationId: checkOutItemHoldItem

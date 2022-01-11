@@ -9,6 +9,8 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import org.folio.innreach.domain.service.InnReachTransactionActionService;
@@ -24,20 +26,21 @@ import org.folio.innreach.rest.resource.InnReachTransactionApi;
 @RequiredArgsConstructor
 @RestController
 @Validated
+@RequestMapping("/inn-reach/transactions")
 public class InnReachTransactionController implements InnReachTransactionApi {
 
   private final InnReachTransactionActionService transactionActionService;
   private final InnReachTransactionService transactionService;
 
   @Override
-  @GetMapping("/inn-reach/transactions/{id}")
+  @GetMapping("/{id}")
   public ResponseEntity<InnReachTransactionDTO> getInnReachTransaction(@PathVariable UUID id) {
     var innReachTransaction = transactionService.getInnReachTransaction(id);
     return ResponseEntity.ok(innReachTransaction);
   }
 
   @Override
-  @PostMapping("/inn-reach/transactions/{id}/receive-item/{servicePointId}")
+  @PostMapping("/{id}/receive-item/{servicePointId}")
   public ResponseEntity<PatronHoldCheckInResponseDTO> checkInPatronHoldItem(@PathVariable UUID id,
                                                                             @PathVariable UUID servicePointId) {
     var response = transactionActionService.checkInPatronHoldItem(id, servicePointId);
@@ -45,7 +48,16 @@ public class InnReachTransactionController implements InnReachTransactionApi {
   }
 
   @Override
-  @PostMapping("/inn-reach/transactions/{itemBarcode}/check-out-item/{servicePointId}")
+  @PostMapping("/{id}/receive-unshipped-item/{servicePointId}/{itemBarcode}")
+  public ResponseEntity<PatronHoldCheckInResponseDTO> checkInPatronHoldUnshippedItem(@PathVariable UUID id,
+                                                                                     @PathVariable UUID servicePointId,
+                                                                                     @PathVariable String itemBarcode) {
+    var response = transactionActionService.checkInPatronHoldUnshippedItem(id, servicePointId, itemBarcode);
+    return ResponseEntity.ok(response);
+  }
+
+  @Override
+  @PostMapping("/{itemBarcode}/check-out-item/{servicePointId}")
   public ResponseEntity<ItemHoldCheckOutResponseDTO> checkOutItemHoldItem(@PathVariable String itemBarcode,
                                                                           @PathVariable UUID servicePointId) {
     var response = transactionActionService.checkOutItemHoldItem(itemBarcode, servicePointId);
@@ -53,11 +65,18 @@ public class InnReachTransactionController implements InnReachTransactionApi {
   }
 
   @Override
-  @GetMapping("/inn-reach/transactions")
+  @GetMapping
   public ResponseEntity<InnReachTransactionsDTO> getAllTransactions(Integer offset,
                                                                     Integer limit,
                                                                     InnReachTransactionFilterParametersDTO parameters) {
     var transactions = transactionService.getAllTransactions(offset, limit, parameters);
     return ResponseEntity.ok(transactions);
+  }
+
+  @Override
+  @PutMapping("/{id}")
+  public ResponseEntity<Void> updateInnReachTransaction(@PathVariable UUID id, InnReachTransactionDTO transaction) {
+    transactionService.updateInnReachTransaction(id, transaction);
+    return ResponseEntity.noContent().build();
   }
 }
