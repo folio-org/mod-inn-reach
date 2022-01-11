@@ -3,6 +3,8 @@ package org.folio.innreach.domain.service.impl;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.ITEM_HOLD;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.ITEM_RECEIVED;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.ITEM_SHIPPED;
+import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.PATRON_HOLD;
+import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.RECEIVE_UNANNOUNCED;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.TRANSFER;
 
 import java.util.HashMap;
@@ -15,10 +17,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
 
+import org.folio.innreach.domain.entity.InnReachTransaction;
 import org.folio.innreach.domain.entity.TransactionItemHold;
 import org.folio.innreach.domain.entity.TransactionPatronHold;
 import org.folio.innreach.domain.exception.EntityNotFoundException;
 import org.folio.innreach.domain.service.InnReachTransactionActionService;
+import org.folio.innreach.domain.service.PatronHoldService;
 import org.folio.innreach.domain.service.RequestService;
 import org.folio.innreach.dto.ItemHoldCheckOutResponseDTO;
 import org.folio.innreach.dto.PatronHoldCheckInResponseDTO;
@@ -28,46 +32,57 @@ import org.folio.innreach.mapper.InnReachTransactionMapper;
 import org.folio.innreach.repository.InnReachTransactionRepository;
 
 @Log4j2
+@Transactional
 @RequiredArgsConstructor
 @Service
 public class InnReachTransactionActionServiceImpl implements InnReachTransactionActionService {
 
   private static final String D2IR_ITEM_RECEIVED_OPERATION = "itemreceived";
   private static final String D2IR_ITEM_SHIPPED_OPERATION = "itemshipped";
+  private static final String D2IR_RECEIVE_UNSHIPPED_OPERATION = "receiveunshipped";
 
   private final InnReachTransactionRepository transactionRepository;
   private final InnReachTransactionMapper transactionMapper;
   private final InnReachExternalService innReachExternalService;
   private final RequestService requestService;
+  private final PatronHoldService patronHoldService;
 
-  @Transactional
   @Override
   public PatronHoldCheckInResponseDTO checkInPatronHoldItem(UUID transactionId, UUID servicePointId) {
-    var transaction = transactionRepository.fetchOneById(transactionId)
-      .orElseThrow(() -> new EntityNotFoundException(String.format("InnReach transaction with id [%s] not found!", transactionId)));
-
-    var hold = (TransactionPatronHold) transaction.getHold();
+    var transaction = fetchTransactionById(transactionId);
     var state = transaction.getState();
-    var shippedItemBarcode = hold.getShippedItemBarcode();
-    var folioItemBarcode = hold.getFolioItemBarcode();
 
     Assert.isTrue(state == ITEM_SHIPPED, "Unexpected transaction state: " + state);
-    Assert.isTrue(shippedItemBarcode != null, "shippedItemBarcode is not set");
-    Assert.isTrue(folioItemBarcode != null, "folioItemBarcode is not set");
 
-    var checkInResponse = requestService.checkInItem(transaction, servicePointId);
+    var response = checkInItem(transaction, servicePointId);
 
     transaction.setState(ITEM_RECEIVED);
 
     reportItemReceived(transaction.getCentralServerCode(), transaction.getTrackingId());
 
-    return new PatronHoldCheckInResponseDTO()
-      .transaction(transactionMapper.toDTO(transaction))
-      .folioCheckIn(checkInResponse)
-      .barcodeAugmented(!shippedItemBarcode.equals(folioItemBarcode));
+    return response;
   }
 
-  @Transactional
+  @Override
+  public PatronHoldCheckInResponseDTO checkInPatronHoldUnshippedItem(UUID transactionId, UUID servicePointId, String itemBarcode) {
+    var transaction = fetchTransactionById(transactionId);
+    var state = transaction.getState();
+    var folioItemBarcode = transaction.getHold().getFolioItemBarcode();
+
+    Assert.isTrue(state == PATRON_HOLD || state == TRANSFER, "Unexpected transaction state: " + state);
+    Assert.isTrue(folioItemBarcode == null, "Item associated with the transaction has a barcode assigned");
+
+    patronHoldService.addItemBarcode(transaction, itemBarcode);
+
+    var response = checkInItem(transaction, servicePointId);
+
+    transaction.setState(RECEIVE_UNANNOUNCED);
+
+    reportUnshippedItemReceived(transaction.getCentralServerCode(), transaction.getTrackingId());
+
+    return response;
+  }
+
   @Override
   public ItemHoldCheckOutResponseDTO checkOutItemHoldItem(String itemBarcode, UUID servicePointId) {
     var transaction = transactionRepository.fetchOneByFolioItemBarcode(itemBarcode)
@@ -94,6 +109,27 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
       .folioCheckOut(checkOutResponse);
   }
 
+  private PatronHoldCheckInResponseDTO checkInItem(InnReachTransaction transaction, UUID servicePointId) {
+    var hold = (TransactionPatronHold) transaction.getHold();
+    var shippedItemBarcode = hold.getShippedItemBarcode();
+    var folioItemBarcode = hold.getFolioItemBarcode();
+
+    Assert.isTrue(shippedItemBarcode != null, "shippedItemBarcode is not set");
+    Assert.isTrue(folioItemBarcode != null, "folioItemBarcode is not set");
+
+    var checkInResponse = requestService.checkInItem(transaction, servicePointId);
+
+    return new PatronHoldCheckInResponseDTO()
+      .transaction(transactionMapper.toDTO(transaction))
+      .folioCheckIn(checkInResponse)
+      .barcodeAugmented(!shippedItemBarcode.equals(folioItemBarcode));
+  }
+
+  private InnReachTransaction fetchTransactionById(UUID transactionId) {
+    return transactionRepository.fetchOneById(transactionId)
+      .orElseThrow(() -> new EntityNotFoundException("INN-Reach transaction is not found by id: " + transactionId));
+  }
+
   private void reportItemReceived(String centralCode, String trackingId) {
     callD2irCircOperation(D2IR_ITEM_RECEIVED_OPERATION, centralCode, trackingId, null);
   }
@@ -104,6 +140,10 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
     payload.put("callNumber", callNumber);
 
     callD2irCircOperation(D2IR_ITEM_SHIPPED_OPERATION, centralCode, trackingId, payload);
+  }
+
+  private void reportUnshippedItemReceived(String centralCode, String trackingId) {
+    callD2irCircOperation(D2IR_RECEIVE_UNSHIPPED_OPERATION, centralCode, trackingId, null);
   }
 
   private void callD2irCircOperation(String operation, String centralCode, String trackingId, Map<Object, Object> payload) {
