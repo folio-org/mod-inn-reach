@@ -23,11 +23,13 @@ public class SystemUserService {
   private String okapiUrl;
 
   public void prepareSystemUser() {
-    log.info("Preparing system user...");
+    {
+       log.info("Preparing system user...");
 
-    authService.setupSystemUser();
+       authService.setupSystemUser();
 
-    log.info("System user has been prepared");
+       log.info("System user has been prepared");
+    }
   }
 
   @Cacheable(cacheNames = "system-user-cache", sync = true)

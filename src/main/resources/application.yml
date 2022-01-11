@@ -97,6 +97,8 @@ system-user:
   password: ${SYSTEM_USER_PASSWORD:Mod-innreach-1-0-0}
   lastname: System
   permissionsFilePath: permissions/mod-innreach.csv
+test-tenant:
+  tenantname: test_inn_reach_integration
 ###################################################
 # Caffeine cache configuration
 ###################################################

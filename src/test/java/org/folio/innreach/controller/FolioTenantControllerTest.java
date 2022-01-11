@@ -29,6 +29,7 @@ class FolioTenantControllerTest {
   private FolioTenantService tenantService;
   @Mock
   private TenantService baseTenantService;
+
   @InjectMocks
   private FolioTenantController tenantController;
 
