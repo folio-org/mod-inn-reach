@@ -127,3 +127,9 @@ retryable-update:
     retry-interval-ms: 0
 okapi.url: ${OKAPI_URL:http://localhost}
 environment: ${ENV:folio}
+kafka:
+  listener:
+    loan:
+      concurrency: ${KAFKA_EVENTS_CONCURRENCY:2}
+      topic-pattern: (${environment}\.)(.*\.)circulation\.loan
+      group-id: ${environment}-mod-inn-reach-events-group

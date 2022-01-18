@@ -2,7 +2,9 @@ package org.folio.innreach.domain.service;
 
 import java.util.UUID;
 
+import org.folio.innreach.domain.entity.InnReachTransaction;
 import org.folio.innreach.dto.ItemHoldCheckOutResponseDTO;
+import org.folio.innreach.dto.LoanDTO;
 import org.folio.innreach.dto.PatronHoldCheckInResponseDTO;
 
 public interface InnReachTransactionActionService {
@@ -13,4 +15,5 @@ public interface InnReachTransactionActionService {
 
   ItemHoldCheckOutResponseDTO checkOutItemHoldItem(String itemBarcode, UUID servicePointId);
 
+  void linkNewLoanToOpenTransaction(LoanDTO loan);
 }

@@ -25,6 +25,7 @@ import org.folio.innreach.domain.service.InnReachTransactionActionService;
 import org.folio.innreach.domain.service.PatronHoldService;
 import org.folio.innreach.domain.service.RequestService;
 import org.folio.innreach.dto.ItemHoldCheckOutResponseDTO;
+import org.folio.innreach.dto.LoanDTO;
 import org.folio.innreach.dto.PatronHoldCheckInResponseDTO;
 import org.folio.innreach.external.exception.InnReachException;
 import org.folio.innreach.external.service.InnReachExternalService;
@@ -107,6 +108,19 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
     return new ItemHoldCheckOutResponseDTO()
       .transaction(transactionMapper.toDTO(transaction))
       .folioCheckOut(checkOutResponse);
+  }
+
+  @Override
+  public void linkNewLoanToOpenTransaction(LoanDTO loan) {
+    var itemId = loan.getItemId();
+    var patronId = loan.getUserId();
+
+    transactionRepository.fetchOpenByFolioItemIdAndPatronId(itemId, patronId)
+      .ifPresent(transaction -> {
+        log.info("Linking open INN-Reach transaction {} with a new loan {}", transaction.getId(), loan.getId());
+        var hold = transaction.getHold();
+        hold.setFolioLoanId(loan.getId());
+      });
   }
 
   private PatronHoldCheckInResponseDTO checkInItem(InnReachTransaction transaction, UUID servicePointId) {
