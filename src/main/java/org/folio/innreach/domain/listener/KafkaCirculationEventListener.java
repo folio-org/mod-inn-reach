@@ -4,7 +4,6 @@ import static org.folio.innreach.config.KafkaListenerConfiguration.KAFKA_CONTAIN
 
 import java.util.List;
 import java.util.UUID;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import lombok.RequiredArgsConstructor;
@@ -26,14 +25,6 @@ public class KafkaCirculationEventListener {
   private final BatchDomainEventProcessor eventProcessor;
   private final InnReachTransactionActionService transactionActionService;
 
-  public static final Function<ConsumerRecord<String, DomainEvent<LoanDTO>>, DomainEvent<LoanDTO>> CONSUMER_REC_MAPPER =
-    consumerRec -> {
-      var event = consumerRec.value();
-      var recordId = UUID.fromString(consumerRec.key());
-      event.setRecordId(recordId);
-      return event;
-    };
-
   @KafkaListener(
     containerFactory = KAFKA_CONTAINER_FACTORY,
     id = "${kafka.listener.loan.id}",
@@ -44,7 +35,7 @@ public class KafkaCirculationEventListener {
     log.info("Handling circulation Loan events from Kafka [number of events: {}]", consumerRecords.size());
 
     var events = consumerRecords.stream()
-      .map(CONSUMER_REC_MAPPER)
+      .map(this::toDomainEventWithRecordId)
       .collect(Collectors.toList());
 
     eventProcessor.process(events, event -> {
@@ -56,5 +47,12 @@ public class KafkaCirculationEventListener {
           log.warn("Received event of unknown type {}", event.getType());
       }
     });
+  }
+
+  private <T> DomainEvent<T> toDomainEventWithRecordId(ConsumerRecord<String, DomainEvent<T>> consumerRecord) {
+    var key = consumerRecord.key();
+    var event = consumerRecord.value();
+    event.setRecordId(UUID.fromString(key));
+    return event;
   }
 }

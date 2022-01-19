@@ -36,8 +36,8 @@ public class KafkaListenerConfiguration {
   public static final String KAFKA_CONSUMER_FACTORY = "kafkaDomainEventConsumerFactory";
   public static final String KAFKA_RETRY_TEMPLATE = "kafkaRetryTemplate";
 
-  private final KafkaProperties kafkaProperties;
   private final ObjectMapper mapper;
+  private final KafkaProperties kafkaProperties;
   private final FolioKafkaProperties folioKafkaProperties;
 
   @Bean(KAFKA_CONSUMER_FACTORY)
@@ -78,7 +78,7 @@ public class KafkaListenerConfiguration {
       var listener = listeners.stream()
         .filter(e -> topic.matches(e.getTopicPattern()))
         .findFirst()
-        .orElseThrow(() -> new RuntimeException("No listener is registered for topic: " + topic));
+        .orElseThrow(() -> new RuntimeException("No listener is configured for topic: " + topic));
 
       return mapper.getTypeFactory().constructParametricType(DomainEvent.class, listener.getDataType());
     }

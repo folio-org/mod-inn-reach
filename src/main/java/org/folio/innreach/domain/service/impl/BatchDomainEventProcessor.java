@@ -26,18 +26,18 @@ public class BatchDomainEventProcessor {
 
   public <T> void process(List<DomainEvent<T>> batch, Consumer<DomainEvent<T>> recordProcessor) {
     var tenantEventsMap = batch.stream().collect(Collectors.groupingBy(DomainEvent::getTenant));
-    for (var tenantEvents : tenantEventsMap.entrySet()) {
-      var tenantId = tenantEvents.getKey();
-      var events = tenantEvents.getValue();
+    for (var tenantEventsEntry : tenantEventsMap.entrySet()) {
+      var tenantId = tenantEventsEntry.getKey();
+      var events = tenantEventsEntry.getValue();
+
+      log.info("Processing tenant {} events {}", tenantId, events.size());
 
       executionService.runTenantScoped(tenantId,
-        () -> processTenantEvents(tenantId, events, recordProcessor));
+        () -> processTenantEvents(events, recordProcessor));
     }
   }
 
-  private <T> void processTenantEvents(String tenant, List<DomainEvent<T>> events,
-                                       Consumer<DomainEvent<T>> recordProcessor) {
-    log.info("Processing tenant {} events {}", tenant, events.size());
+  private <T> void processTenantEvents(List<DomainEvent<T>> events, Consumer<DomainEvent<T>> recordProcessor) {
     for (var event : events) {
       log.info("Processing event {}", event);
       try {
