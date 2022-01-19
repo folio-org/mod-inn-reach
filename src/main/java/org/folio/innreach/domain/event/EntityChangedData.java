@@ -4,14 +4,19 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import lombok.Value;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@Value
-@AllArgsConstructor(access = AccessLevel.PACKAGE)
-public class EntityChangedData<E> {
+@Data
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
+public class EntityChangedData<T> {
   @JsonProperty("old")
-  E oldEntity;
+  T oldEntity;
   @JsonProperty("new")
-  E newEntity;
+  T newEntity;
 }
