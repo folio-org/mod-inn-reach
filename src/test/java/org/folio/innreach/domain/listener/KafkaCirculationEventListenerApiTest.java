@@ -23,7 +23,7 @@ import org.springframework.test.context.jdbc.SqlMergeMode;
 import org.folio.innreach.domain.event.DomainEvent;
 import org.folio.innreach.domain.event.DomainEventType;
 import org.folio.innreach.domain.event.EntityChangedData;
-import org.folio.innreach.domain.listener.base.KafkaTest;
+import org.folio.innreach.domain.listener.base.BaseKafkaApiTest;
 import org.folio.innreach.domain.service.impl.BatchDomainEventProcessor;
 import org.folio.innreach.dto.LoanDTO;
 import org.folio.innreach.repository.InnReachTransactionRepository;
@@ -35,7 +35,7 @@ import org.folio.innreach.repository.InnReachTransactionRepository;
   executionPhase = AFTER_TEST_METHOD
 )
 @SqlMergeMode(MERGE)
-class KafkaCirculationEventListenerApiTest extends KafkaTest {
+class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
   private static final UUID LOAN_ID = UUID.randomUUID();
   private static final UUID PRE_POPULATED_PATRON_ID = UUID.fromString("4154a604-4d5a-4d8e-9160-057fc7b6e6b8");
   private static final UUID PRE_POPULATED_ITEM_ID = UUID.fromString("9a326225-6530-41cc-9399-a61987bfab3c");
