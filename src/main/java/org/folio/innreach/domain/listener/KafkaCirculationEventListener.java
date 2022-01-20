@@ -35,6 +35,7 @@ public class KafkaCirculationEventListener {
     log.info("Handling circulation Loan events from Kafka [number of events: {}]", consumerRecords.size());
 
     var events = consumerRecords.stream()
+      .filter(e -> e.value() != null)
       .map(this::toDomainEventWithRecordId)
       .collect(Collectors.toList());
 
