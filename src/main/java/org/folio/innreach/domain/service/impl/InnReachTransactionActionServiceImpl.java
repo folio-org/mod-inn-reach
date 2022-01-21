@@ -1,5 +1,6 @@
 package org.folio.innreach.domain.service.impl;
 
+import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.BORROWER_RENEW;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.ITEM_HOLD;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.ITEM_RECEIVED;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.ITEM_SHIPPED;
@@ -7,12 +8,15 @@ import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionSt
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.RECEIVE_UNANNOUNCED;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.TRANSFER;
 
+import java.time.Instant;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.folio.innreach.client.BorrowingCentralServer;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
@@ -47,6 +51,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
   private final InnReachExternalService innReachExternalService;
   private final RequestService requestService;
   private final PatronHoldService patronHoldService;
+  private final BorrowingCentralServer borrowingCentralServer;
 
   @Override
   public PatronHoldCheckInResponseDTO checkInPatronHoldItem(UUID transactionId, UUID servicePointId) {
@@ -121,6 +126,26 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
         var hold = transaction.getHold();
         hold.setFolioLoanId(loan.getId());
       });
+  }
+
+  @Override
+  public void linkRenewalLoanToUpdateTransaction(LoanDTO loan) {
+    if (loan.getAction().equals("renewed")) {
+      var loanId = loan.getId();
+
+      transactionRepository.fetchAssociatedLoanWithInnReachTransaction(loanId)
+        .ifPresent(transaction -> {
+          log.info("Loan {} associated with transaction ", loanId);
+          var transactionHoldDueDate = Date.from(Instant.ofEpochSecond(transaction.getHold().getDueDateTime()));
+          int result = loan.getDueDate().compareTo(transactionHoldDueDate);
+          if (result != 0) {
+            var loanIntegerDueDate = (int) (loan.getDueDate().getTime()/1000);
+            borrowingCentralServer.borrowingToCentralServer(transaction.getTrackingId(), transaction.getCentralServerCode(), loanIntegerDueDate);
+            transaction.setState(BORROWER_RENEW);
+            transactionRepository.save(transaction);
+          }
+        });
+    }
   }
 
   private PatronHoldCheckInResponseDTO checkInItem(InnReachTransaction transaction, UUID servicePointId) {

@@ -1,5 +1,6 @@
 package org.folio.innreach.repository;
 
+import static org.folio.innreach.domain.entity.InnReachTransaction.FETCH_ASSOCIATED_QUERY_NAME;
 import static org.folio.innreach.domain.entity.InnReachTransaction.FETCH_OPEN_BY_ITEM_AND_PATRON_QUERY_NAME;
 
 import java.util.Optional;
@@ -29,4 +30,6 @@ public interface InnReachTransactionRepository extends JpaRepository<InnReachTra
   @Query(name = FETCH_OPEN_BY_ITEM_AND_PATRON_QUERY_NAME)
   Optional<InnReachTransaction> fetchOpenByFolioItemIdAndPatronId(UUID folioItemId, UUID folioPatronId);
 
+  @Query(name = FETCH_ASSOCIATED_QUERY_NAME)
+  Optional<InnReachTransaction> fetchAssociatedLoanWithInnReachTransaction(UUID loanId);
 }
