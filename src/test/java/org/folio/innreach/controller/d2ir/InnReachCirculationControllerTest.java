@@ -108,6 +108,7 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
   private static final String PRE_POPULATED_HOLDINGS_RECORD_ID = "76834d5a-08e8-45ea-84ca-4d9b10aa342c";
   private static final String PRE_POPULATED_ITEM_ID = "9a326225-6530-41cc-9399-a61987bfab3c";
   private static final String PRE_POPULATED_REQUESTER_ID = "f75ffab1-2e2f-43be-b159-3031e2cfc458";
+  private static final UUID PRE_POPULATED_PATRON2_ID = UUID.fromString("a7853dda-520b-4f7a-a1fb-9383665ea770");
 
   @Autowired
   private TestRestTemplate testRestTemplate;
@@ -302,7 +303,7 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
 
     var transactionHoldDTO = createTransactionHoldDTO();
 
-    when(servicePointsUsersClient.findServicePointsUsers(any())).thenReturn(ResultList.asSinglePage(createServicePointUserDTO()));
+    when(servicePointsUsersClient.findServicePointsUsers(eq(PRE_POPULATED_PATRON2_ID))).thenReturn(ResultList.asSinglePage(createServicePointUserDTO()));
     when(circulationClient.checkOutByBarcode(any(CheckOutRequestDTO.class))).thenReturn(new LoanDTO().id(NEW_LOAN_ID));
 
     var responseEntity = testRestTemplate.exchange(
