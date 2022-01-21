@@ -1,6 +1,6 @@
 package org.folio.innreach.domain.service.impl;
 
-import static org.folio.innreach.config.KafkaListenerConfiguration.KAFKA_RETRY_TEMPLATE;
+import static org.folio.innreach.config.KafkaListenerConfiguration.BATCH_EVENT_PROCESSOR_RETRY_TEMPLATE;
 
 import java.util.List;
 import java.util.function.Consumer;
@@ -21,7 +21,7 @@ public class BatchDomainEventProcessor {
 
   private final TenantScopedExecutionService executionService;
 
-  @Qualifier(value = KAFKA_RETRY_TEMPLATE)
+  @Qualifier(value = BATCH_EVENT_PROCESSOR_RETRY_TEMPLATE)
   private final RetryTemplate retryTemplate;
 
   public <T> void process(List<DomainEvent<T>> batch, Consumer<DomainEvent<T>> recordProcessor) {
@@ -41,7 +41,7 @@ public class BatchDomainEventProcessor {
     for (var event : events) {
       log.info("Processing event {}", event);
       try {
-        retryTemplate.execute((c) -> {
+        retryTemplate.execute(ctx -> {
           recordProcessor.accept(event);
           return null;
         });

@@ -1,6 +1,6 @@
 package org.folio.innreach.domain.listener.base;
 
-import static org.folio.innreach.domain.listener.base.KafkaTest.CIRC_LOAN_TOPIC;
+import static org.folio.innreach.domain.listener.base.BaseKafkaApiTest.CIRC_LOAN_TOPIC;
 
 import java.util.concurrent.Callable;
 
@@ -9,8 +9,6 @@ import javax.validation.Valid;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.TestInstance;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -24,29 +22,32 @@ import org.springframework.kafka.test.context.EmbeddedKafka;
 import org.springframework.kafka.test.utils.KafkaTestUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
-import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.web.bind.annotation.RestController;
+import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
 
 import org.folio.innreach.ModInnReachApplication;
 import org.folio.innreach.domain.event.DomainEvent;
-import org.folio.innreach.domain.service.impl.FolioExecutionContextBuilder;
-import org.folio.innreach.domain.service.impl.SystemUserService;
 import org.folio.innreach.domain.service.impl.TenantScopedExecutionService;
 import org.folio.spring.liquibase.FolioLiquibaseConfiguration;
 import org.folio.tenant.domain.dto.TenantAttributes;
 import org.folio.tenant.rest.resource.TenantApi;
 
+@ActiveProfiles("test")
 @EmbeddedKafka(topics = {CIRC_LOAN_TOPIC})
-@ExtendWith(SpringExtension.class)
-@RunWith(SpringRunner.class)
 @SpringBootTest(
-  classes = {ModInnReachApplication.class, KafkaTest.TestTenantController.class, KafkaTest.MockTenantScopedExecutionService.class})
-@ActiveProfiles({"test", "testcontainers-pg"})
+  classes = {ModInnReachApplication.class, BaseKafkaApiTest.TestTenantController.class, BaseKafkaApiTest.TestTenantScopedExecutionService.class})
+@Testcontainers
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-public class KafkaTest {
+public class BaseKafkaApiTest {
 
   public static final String CIRC_LOAN_TOPIC = "folio.testing.circulation.loan";
+
+  @Container
+  public static PostgreSQLContainer<?> postgresqlContainer = new PostgreSQLContainer<>("postgres:11-alpine");
 
   @Autowired
   protected EmbeddedKafkaBroker embeddedKafkaBroker;
@@ -56,6 +57,14 @@ public class KafkaTest {
   @BeforeAll
   public void setUp() {
     kafkaTemplate = buildKafkaTemplate();
+  }
+
+  @DynamicPropertySource
+  static void setDatasourceProperties(DynamicPropertyRegistry propertyRegistry) {
+    postgresqlContainer.start();
+    propertyRegistry.add("spring.datasource.url", postgresqlContainer::getJdbcUrl);
+    propertyRegistry.add("spring.datasource.password", postgresqlContainer::getPassword);
+    propertyRegistry.add("spring.datasource.username", postgresqlContainer::getUsername);
   }
 
   private KafkaTemplate<String, DomainEvent> buildKafkaTemplate() {
@@ -79,9 +88,9 @@ public class KafkaTest {
   @Primary
   @Service
   @Profile("test")
-  static class MockTenantScopedExecutionService extends TenantScopedExecutionService {
-    public MockTenantScopedExecutionService(FolioExecutionContextBuilder contextBuilder, SystemUserService systemUserService) {
-      super(contextBuilder, systemUserService);
+  static class TestTenantScopedExecutionService extends TenantScopedExecutionService {
+    public TestTenantScopedExecutionService() {
+      super(null, null);
     }
 
     @SneakyThrows
