@@ -263,8 +263,8 @@ public class CirculationServiceImpl implements CirculationService {
     if (transaction.getState() == TransactionState.ITEM_HOLD) {
       log.info("Attempting to create a loan");
 
-      var patronId = UUIDHelper.fromStringWithoutHyphens(receiveUnshippedRequest.getPatronId());
-      var servicePointId = requestService.getDefaultServicePointIdForPatron(patronId);
+      var folioPatronId = transaction.getHold().getFolioPatronId();
+      var servicePointId = requestService.getDefaultServicePointIdForPatron(folioPatronId);
       var checkOutResponse = requestService.checkOutItem(transaction, servicePointId);
       var loanId = checkOutResponse.getId();
 
