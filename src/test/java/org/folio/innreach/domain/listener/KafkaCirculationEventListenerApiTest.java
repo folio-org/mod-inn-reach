@@ -8,6 +8,7 @@ import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TES
 import static org.springframework.test.context.jdbc.SqlMergeMode.MergeMode.MERGE;
 
 import java.time.Duration;
+import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 import java.util.function.Consumer;
@@ -42,6 +43,7 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
   private static final UUID PRE_POPULATED_TRANSACTION_ID = UUID.fromString("0aab1720-14b4-4210-9a19-0d0bf1cd64d3");
   private static final String TEST_TENANT_ID = "testing";
   private static final Duration ASYNC_AWAIT_TIMEOUT = Duration.ofSeconds(15);
+  private static final Date DUE_DATE = new Date();
 
   @SpyBean
   private KafkaCirculationEventListener listener;
@@ -54,7 +56,7 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
 
   @Test
   void shouldReceiveLoanEvent() {
-    var event = getLoanDomainEvent();
+    var event = getLoanDomainEvent(DomainEventType.CREATED);
 
     kafkaTemplate.send(new ProducerRecord(CIRC_LOAN_TOPIC, LOAN_ID.toString(), event));
 
@@ -77,7 +79,7 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
   })
   void shouldLinkLoanToOpenTransaction() {
-    var event = getLoanDomainEvent();
+    var event = getLoanDomainEvent(DomainEventType.CREATED);
     event.setRecordId(null); // the listener should set this field from event key value
 
     var consumerRecord = new ConsumerRecord(CIRC_LOAN_TOPIC, 1, 1, LOAN_ID.toString(), event);
@@ -94,16 +96,20 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
 
     var transaction = transactionRepository.fetchOneById(PRE_POPULATED_TRANSACTION_ID).get();
     assertEquals(LOAN_ID, transaction.getHold().getFolioLoanId());
+    assertEquals((int) DUE_DATE.toInstant().getEpochSecond(), transaction.getHold().getDueDateTime());
   }
 
-  private DomainEvent<LoanDTO> getLoanDomainEvent() {
-    var loan = new LoanDTO().id(LOAN_ID).userId(PRE_POPULATED_PATRON_ID).itemId(PRE_POPULATED_ITEM_ID);
+  private DomainEvent<LoanDTO> getLoanDomainEvent(DomainEventType eventType) {
+    var loan = new LoanDTO().id(LOAN_ID)
+      .dueDate(DUE_DATE)
+      .userId(PRE_POPULATED_PATRON_ID)
+      .itemId(PRE_POPULATED_ITEM_ID);
 
     return DomainEvent.<LoanDTO>builder()
       .recordId(LOAN_ID)
       .tenant(TEST_TENANT_ID)
       .timestamp(System.currentTimeMillis())
-      .type(DomainEventType.CREATED)
+      .type(eventType)
       .data(new EntityChangedData<>(null, loan))
       .build();
   }
