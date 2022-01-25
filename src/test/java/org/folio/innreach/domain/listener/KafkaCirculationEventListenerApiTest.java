@@ -123,7 +123,12 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
     } catch (Exception e) {
       e.printStackTrace();
     }
-    var event = getLoanDomainEvent(folioLoanId, DomainEventType.UPDATED, "renewed", dueDate);
+    var event = getLoanDomainEvent(DomainEventType.UPDATED);
+    LoanDTO loanDTO = event.getData().getNewEntity();
+    loanDTO.setId(folioLoanId);
+    loanDTO.setAction("renewed");
+    loanDTO.setDueDate(dueDate);
+    event.setData(new EntityChangedData<>(null, loanDTO));
     event.setRecordId(null); // the listener should set this field from event key value
 
     var consumerRecord = new ConsumerRecord(CIRC_LOAN_TOPIC, 1, 1, folioLoanId.toString(), event);
@@ -138,8 +143,11 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
 
     var capturedEvent = capturedEvents.get(0);
     assertEquals(folioLoanId, capturedEvent.getRecordId());
-    Optional<InnReachTransaction> optional = transactionRepository.fetchOneByLoanId(folioLoanId);
-    InnReachTransaction transaction = optional.get();
+    Optional<InnReachTransaction> optionalInnReachTransaction = transactionRepository.fetchOneByLoanId(folioLoanId);
+    InnReachTransaction transaction = null;
+    if (optionalInnReachTransaction.isPresent()) {
+      transaction = optionalInnReachTransaction.get();
+    }
     assertEquals(InnReachTransaction.TransactionState.BORROWER_RENEW, transaction.getState());
   }
 
