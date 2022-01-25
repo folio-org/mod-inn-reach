@@ -15,6 +15,13 @@ spring:
     cache-names: system-user-cache
     caffeine:
       spec: maximumSize=500,expireAfterAccess=3600s
+  kafka:
+    bootstrap-servers: ${spring.embedded.kafka.brokers}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+    consumer:
+      auto-offset-reset: earliest
 folio:
   tenant:
     validation:

@@ -40,6 +40,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -52,12 +53,14 @@ import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.web.bind.annotation.RestController;
 
 import org.folio.innreach.ModInnReachApplication;
+import org.folio.innreach.domain.listener.KafkaCirculationEventListener;
 import org.folio.innreach.util.JsonHelper;
 import org.folio.spring.integration.XOkapiHeaders;
 import org.folio.spring.liquibase.FolioLiquibaseConfiguration;
 import org.folio.tenant.domain.dto.TenantAttributes;
 import org.folio.tenant.rest.resource.TenantApi;
 
+@MockBean(KafkaCirculationEventListener.class)
 @Log4j2
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
   classes = {ModInnReachApplication.class, BaseApiControllerTest.TestTenantController.class})
@@ -180,9 +183,9 @@ public class BaseApiControllerTest {
                                  MappingActions additionalMapping) {
 
     ResponseDefinitionBuilder responseBuilder = created()
-        .withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-        .withHeader(XOkapiHeaders.URL, wm.baseUrl())
-        .withBodyFile(responsePath);
+      .withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+      .withHeader(XOkapiHeaders.URL, wm.baseUrl())
+      .withBodyFile(responsePath);
 
     responseBuilder = additionalResponseActions.apply(responseBuilder);
 
