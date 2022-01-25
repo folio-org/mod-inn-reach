@@ -123,6 +123,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
         log.info("Linking open INN-Reach transaction {} with a new loan {}", transaction.getId(), loan.getId());
         var hold = transaction.getHold();
         hold.setFolioLoanId(loan.getId());
+        hold.setDueDateTime((int) loan.getDueDate().toInstant().getEpochSecond());
       });
   }
 

@@ -84,11 +84,14 @@ public class InnReachTransaction extends Auditable implements Identifiable<UUID>
     "JOIN FETCH h.pickupLocation " +
     "WHERE irt.trackingId = :trackingId AND irt.centralServerCode = :centralServerCode";
 
-  public static final String FETCH_OPEN_BY_ITEM_AND_PATRON_QUERY_NAME = "InnReachTransaction.fetchOpenByFolioItemIdAndPatronId";
-  public static final String FETCH_OPEN_BY_ITEM_AND_PATRON_QUERY = "SELECT irt FROM InnReachTransaction AS irt " +
+  public static final String FETCH_OPEN_TRANSACTIONS = "SELECT irt FROM InnReachTransaction AS irt " +
     "JOIN FETCH irt.hold AS h " +
     "JOIN FETCH h.pickupLocation " +
-    "WHERE h.folioItemId = :folioItemId AND h.folioPatronId = :folioPatronId AND irt.state NOT IN (4, 11, 12, 13)";
+    "WHERE irt.state NOT IN (4, 11, 12, 13)";
+
+  public static final String FETCH_OPEN_BY_ITEM_AND_PATRON_QUERY_NAME = "InnReachTransaction.fetchOpenByFolioItemIdAndPatronId";
+  public static final String FETCH_OPEN_BY_ITEM_AND_PATRON_QUERY = FETCH_OPEN_TRANSACTIONS +
+    " AND h.folioItemId = :folioItemId AND h.folioPatronId = :folioPatronId";
 
   public static final String FETCH_ASSOCIATED_QUERY_NAME = "InnReachTransaction.fetchAssociatedLoan";
   public static final String FETCH_ASSOCIATED_QUERY = "SELECT irt FROM InnReachTransaction AS irt " +

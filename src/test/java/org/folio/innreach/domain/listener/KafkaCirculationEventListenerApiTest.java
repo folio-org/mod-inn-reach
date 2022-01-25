@@ -49,6 +49,7 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
   private static final UUID PRE_POPULATED_TRANSACTION_ID = UUID.fromString("0aab1720-14b4-4210-9a19-0d0bf1cd64d3");
   private static final String TEST_TENANT_ID = "testing";
   private static final Duration ASYNC_AWAIT_TIMEOUT = Duration.ofSeconds(15);
+  private static final Date DUE_DATE = new Date();
 
   @MockBean
   private InnReachExternalService innReachExternalService;
@@ -64,7 +65,7 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
 
   @Test
   void shouldReceiveLoanEvent() {
-    var event = getLoanDomainEvent(LOAN_ID, DomainEventType.CREATED, null, null);
+    var event = getLoanDomainEvent(DomainEventType.CREATED);
 
     kafkaTemplate.send(new ProducerRecord(CIRC_LOAN_TOPIC, LOAN_ID.toString(), event));
 
@@ -87,7 +88,7 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
   })
   void shouldLinkLoanToOpenTransaction() {
-    var event = getLoanDomainEvent(LOAN_ID, DomainEventType.CREATED, null, null);
+    var event = getLoanDomainEvent(DomainEventType.CREATED);
     event.setRecordId(null); // the listener should set this field from event key value
 
     var consumerRecord = new ConsumerRecord(CIRC_LOAN_TOPIC, 1, 1, LOAN_ID.toString(), event);
@@ -104,6 +105,7 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
 
     var transaction = transactionRepository.fetchOneById(PRE_POPULATED_TRANSACTION_ID).get();
     assertEquals(LOAN_ID, transaction.getHold().getFolioLoanId());
+    assertEquals((int) DUE_DATE.toInstant().getEpochSecond(), transaction.getHold().getDueDateTime());
   }
 
   @Test
@@ -141,15 +143,17 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
     assertEquals(InnReachTransaction.TransactionState.BORROWER_RENEW, transaction.getState());
   }
 
-  private DomainEvent<LoanDTO> getLoanDomainEvent(UUID loanId, DomainEventType type, String action, Date dueDate) {
-
-    var loan = new LoanDTO().id(loanId).userId(PRE_POPULATED_PATRON_ID).itemId(PRE_POPULATED_ITEM_ID).action(action).dueDate(dueDate);
+  private DomainEvent<LoanDTO> getLoanDomainEvent(DomainEventType eventType) {
+    var loan = new LoanDTO().id(LOAN_ID)
+      .dueDate(DUE_DATE)
+      .userId(PRE_POPULATED_PATRON_ID)
+      .itemId(PRE_POPULATED_ITEM_ID);
 
     return DomainEvent.<LoanDTO>builder()
-      .recordId(loanId)
+      .recordId(LOAN_ID)
       .tenant(TEST_TENANT_ID)
       .timestamp(System.currentTimeMillis())
-      .type(type)
+      .type(eventType)
       .data(new EntityChangedData<>(null, loan))
       .build();
   }
