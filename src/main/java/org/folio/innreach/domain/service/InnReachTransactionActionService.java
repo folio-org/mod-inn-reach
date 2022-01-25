@@ -16,5 +16,5 @@ public interface InnReachTransactionActionService {
 
   void linkNewLoanToOpenTransaction(LoanDTO loan);
 
-  void linkRenewalLoanToUpdateTransaction(LoanDTO loan);
+  void borrowerRenewLoan(LoanDTO loan);
 }

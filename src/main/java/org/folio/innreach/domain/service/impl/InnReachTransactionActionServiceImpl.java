@@ -9,14 +9,13 @@ import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionSt
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.TRANSFER;
 
 import java.time.Instant;
-import java.util.Date;
+import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
-import org.folio.innreach.client.BorrowingCentralServer;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
@@ -51,7 +50,6 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
   private final InnReachExternalService innReachExternalService;
   private final RequestService requestService;
   private final PatronHoldService patronHoldService;
-  private final BorrowingCentralServer borrowingCentralServer;
 
   @Override
   public PatronHoldCheckInResponseDTO checkInPatronHoldItem(UUID transactionId, UUID servicePointId) {
@@ -129,19 +127,21 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
   }
 
   @Override
-  public void linkRenewalLoanToUpdateTransaction(LoanDTO loan) {
+  public void borrowerRenewLoan(LoanDTO loan) {
     if (loan.getAction().equals("renewed")) {
-      var loanId = loan.getId();
+      var folioLoanId = loan.getId();
 
-      transactionRepository.fetchAssociatedLoanWithInnReachTransaction(loanId)
+      transactionRepository.fetchOneByLoanId(folioLoanId)
         .ifPresent(transaction -> {
-          log.info("Loan {} associated with transaction ", loanId);
-          var transactionHoldDueDate = Date.from(Instant.ofEpochSecond(transaction.getHold().getDueDateTime()));
-          int result = loan.getDueDate().compareTo(transactionHoldDueDate);
-          if (result != 0) {
+          log.info("Loan {} associated with transaction ", folioLoanId);
+          var transactionDueDate = Instant.ofEpochSecond(transaction.getHold().getDueDateTime());
+          var loanDueDate = loan.getDueDate().toInstant().truncatedTo(ChronoUnit.SECONDS);
+          if (!loanDueDate.equals(transactionDueDate))  {
             var loanIntegerDueDate = (int) (loan.getDueDate().getTime()/1000);
-            borrowingCentralServer.borrowingToCentralServer(transaction.getTrackingId(), transaction.getCentralServerCode(), loanIntegerDueDate);
+            String innReachRequestUri = resolveD2irCircPath("borrowerrenew", transaction.getTrackingId(), transaction.getCentralServerCode());
+            innReachExternalService.postInnReachApi(transaction.getCentralServerCode(), innReachRequestUri, loanIntegerDueDate);
             transaction.setState(BORROWER_RENEW);
+            transaction.getHold().setDueDateTime(loanIntegerDueDate);
             transactionRepository.save(transaction);
           }
         });

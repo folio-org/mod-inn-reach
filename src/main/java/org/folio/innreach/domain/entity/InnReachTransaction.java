@@ -94,7 +94,7 @@ public class InnReachTransaction extends Auditable implements Identifiable<UUID>
   public static final String FETCH_ASSOCIATED_QUERY = "SELECT irt FROM InnReachTransaction AS irt " +
     "JOIN FETCH irt.hold AS h " +
     "JOIN FETCH h.pickupLocation " +
-    "WHERE h.folioLoanId = :folioLoanId";
+    "WHERE h.folioLoanId = :folioLoanId AND irt.state NOT IN (4, 11, 12, 13)";
 
   @Id
   @GeneratedValue(strategy = GenerationType.AUTO)

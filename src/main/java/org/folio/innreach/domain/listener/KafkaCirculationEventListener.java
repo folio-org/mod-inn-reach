@@ -45,7 +45,7 @@ public class KafkaCirculationEventListener {
           transactionActionService.linkNewLoanToOpenTransaction(event.getData().getNewEntity());
           break;
         case UPDATED:
-          transactionActionService.linkRenewalLoanToUpdateTransaction(event.getData().getNewEntity());
+          transactionActionService.borrowerRenewLoan(event.getData().getNewEntity());
           break;
         default:
           log.warn("Received event of unknown type {}", event.getType());
