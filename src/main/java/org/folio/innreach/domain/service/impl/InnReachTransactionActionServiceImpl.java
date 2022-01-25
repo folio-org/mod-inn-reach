@@ -47,6 +47,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
   private static final String D2IR_ITEM_SHIPPED_OPERATION = "itemshipped";
   private static final String D2IR_RECEIVE_UNSHIPPED_OPERATION = "receiveunshipped";
   private static final String D2IR_IN_TRANSIT = "intransit";
+  private static final String D2IR_BORROWER_RENEW = "borrowerrenew";
 
   private final InnReachTransactionRepository transactionRepository;
   private final InnReachTransactionMapper transactionMapper;
@@ -136,6 +137,23 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
         reportItemInTransit(transaction);
       });
     }
+
+    if (loan.getAction().equals("renewed")) {
+      var folioLoanId = loan.getId();
+
+      transactionRepository.fetchOneByLoanId(folioLoanId).ifPresent(transaction -> {
+        log.info("Loan with id: {} associated with transaction. Transaction id: {}", folioLoanId, transaction.getId());
+        var transactionDueDate = Instant.ofEpochSecond(transaction.getHold().getDueDateTime());
+        var loanDueDate = loan.getDueDate().toInstant().truncatedTo(ChronoUnit.SECONDS);
+        if (!loanDueDate.equals(transactionDueDate)) {
+          var loanIntegerDueDate = (int) (loanDueDate.getEpochSecond() / 1000);
+          borrowerRenew(transaction, loanIntegerDueDate);
+          transaction.setState(BORROWER_RENEW);
+          transaction.getHold().setDueDateTime(loanIntegerDueDate);
+          transactionRepository.save(transaction);
+        }
+      });
+    }
   }
 
   private void updateAssociatedTransaction(LoanDTO loan, Consumer<InnReachTransaction> transactionConsumer) {
@@ -146,26 +164,6 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
       .ifPresent(transactionConsumer);
   }
 
-  @Override
-  public void borrowerRenewLoan(LoanDTO loan) {
-    if (loan.getAction().equals("renewed")) {
-      var folioLoanId = loan.getId();
-
-      transactionRepository.fetchOneByLoanId(folioLoanId).ifPresent(transaction -> {
-        log.info("Loan {} associated with transaction ", folioLoanId);
-        var transactionDueDate = Instant.ofEpochSecond(transaction.getHold().getDueDateTime());
-        var loanDueDate = loan.getDueDate().toInstant().truncatedTo(ChronoUnit.SECONDS);
-        if (!loanDueDate.equals(transactionDueDate)) {
-          var loanIntegerDueDate = (int) (loan.getDueDate().getTime() / 1000);
-          String innReachRequestUri = resolveD2irCircPath("borrowerrenew", transaction.getTrackingId(), transaction.getCentralServerCode());
-          innReachExternalService.postInnReachApi(transaction.getCentralServerCode(), innReachRequestUri, loanIntegerDueDate);
-          transaction.setState(BORROWER_RENEW);
-          transaction.getHold().setDueDateTime(loanIntegerDueDate);
-          transactionRepository.save(transaction);
-        }
-      });
-    }
-  }
   private PatronHoldCheckInResponseDTO checkInItem(InnReachTransaction transaction, UUID servicePointId) {
     var hold = (TransactionPatronHold) transaction.getHold();
     var shippedItemBarcode = hold.getShippedItemBarcode();
@@ -189,6 +187,12 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
 
   private void reportItemReceived(InnReachTransaction transaction) {
     callD2irCircOperation(D2IR_ITEM_RECEIVED_OPERATION, transaction, null);
+  }
+
+  private void borrowerRenew(InnReachTransaction transaction, Integer loanIntegerDueDate) {
+    var payload = new HashMap<>();
+    payload.put("dueDateTime", loanIntegerDueDate);
+    callD2irCircOperation(D2IR_BORROWER_RENEW, transaction, payload);
   }
 
   private void reportItemShipped(InnReachTransaction transaction, String itemBarcode, String callNumber) {

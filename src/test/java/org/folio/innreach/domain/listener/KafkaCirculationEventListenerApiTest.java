@@ -13,6 +13,7 @@ import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionSt
 
 import java.text.SimpleDateFormat;
 import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
@@ -187,7 +188,8 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
       transaction = optionalTransaction.get();
     }
     assertEquals(InnReachTransaction.TransactionState.BORROWER_RENEW, transaction.getState());
-    var loanIntegerDueDate = (int) (dueDate.getTime() / 1000);
+    var loanDueDate = loanDTO.getDueDate().toInstant().truncatedTo(ChronoUnit.SECONDS);
+    var loanIntegerDueDate = (int) (loanDueDate.getEpochSecond() / 1000);
     assertEquals(loanIntegerDueDate, transaction.getHold().getDueDateTime());
 
   }

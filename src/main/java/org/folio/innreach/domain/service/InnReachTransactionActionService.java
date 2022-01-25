@@ -18,5 +18,4 @@ public interface InnReachTransactionActionService {
 
   void handleLoanUpdate(LoanDTO loan);
 
-  void borrowerRenewLoan(LoanDTO loan);
 }
