@@ -42,7 +42,7 @@ public class KafkaCirculationEventListener {
     eventProcessor.process(events, event -> {
       switch (event.getType()) {
         case CREATED:
-          transactionActionService.handleLoanCreation(event.getData().getNewEntity());
+          transactionActionService.associateNewLoanWithTransaction(event.getData().getNewEntity());
           break;
         case UPDATED:
           transactionActionService.handleLoanUpdate(event.getData().getNewEntity());
