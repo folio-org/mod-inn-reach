@@ -1,5 +1,6 @@
 package org.folio.innreach.domain.service.impl;
 
+import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.BORROWER_RENEW;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.ITEM_HOLD;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.ITEM_IN_TRANSIT;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.ITEM_RECEIVED;
@@ -8,6 +9,8 @@ import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionSt
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.RECEIVE_UNANNOUNCED;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.TRANSFER;
 
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -145,24 +148,24 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
 
   @Override
   public void borrowerRenewLoan(LoanDTO loan) {
-    /*if (loan.getAction().equals("renewed")) {
+    if (loan.getAction().equals("renewed")) {
       var folioLoanId = loan.getId();
 
-      transactionRepository.fetchOneByLoanId(folioLoanId)
-        .ifPresent(transaction -> {
-          log.info("Loan {} associated with transaction ", folioLoanId);
-          var transactionDueDate = Instant.ofEpochSecond(transaction.getHold().getDueDateTime());
-          var loanDueDate = loan.getDueDate().toInstant().truncatedTo(ChronoUnit.SECONDS);
-          if (!loanDueDate.equals(transactionDueDate))  {
-            var loanIntegerDueDate = (int) (loan.getDueDate().getTime()/1000);
-            String innReachRequestUri = resolveD2irCircPath("borrowerrenew", transaction.getTrackingId(), transaction.getCentralServerCode());
-            innReachExternalService.postInnReachApi(transaction.getCentralServerCode(), innReachRequestUri, loanIntegerDueDate);
-            transaction.setState(BORROWER_RENEW);
-            transaction.getHold().setDueDateTime(loanIntegerDueDate);
-            transactionRepository.save(transaction);
-          }
-        }); */
+      transactionRepository.fetchOneByLoanId(folioLoanId).ifPresent(transaction -> {
+        log.info("Loan {} associated with transaction ", folioLoanId);
+        var transactionDueDate = Instant.ofEpochSecond(transaction.getHold().getDueDateTime());
+        var loanDueDate = loan.getDueDate().toInstant().truncatedTo(ChronoUnit.SECONDS);
+        if (!loanDueDate.equals(transactionDueDate)) {
+          var loanIntegerDueDate = (int) (loan.getDueDate().getTime() / 1000);
+          String innReachRequestUri = resolveD2irCircPath("borrowerrenew", transaction.getTrackingId(), transaction.getCentralServerCode());
+          innReachExternalService.postInnReachApi(transaction.getCentralServerCode(), innReachRequestUri, loanIntegerDueDate);
+          transaction.setState(BORROWER_RENEW);
+          transaction.getHold().setDueDateTime(loanIntegerDueDate);
+          transactionRepository.save(transaction);
+        }
+      });
     }
+  }
   private PatronHoldCheckInResponseDTO checkInItem(InnReachTransaction transaction, UUID servicePointId) {
     var hold = (TransactionPatronHold) transaction.getHold();
     var shippedItemBarcode = hold.getShippedItemBarcode();

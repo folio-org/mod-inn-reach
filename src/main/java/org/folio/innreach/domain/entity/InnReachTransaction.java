@@ -10,6 +10,8 @@ import static org.folio.innreach.domain.entity.InnReachTransaction.FETCH_ONE_BY_
 import static org.folio.innreach.domain.entity.InnReachTransaction.FETCH_ONE_BY_TRACKING_ID_QUERY_NAME;
 import static org.folio.innreach.domain.entity.InnReachTransaction.FETCH_OPEN_BY_ITEM_AND_PATRON_QUERY;
 import static org.folio.innreach.domain.entity.InnReachTransaction.FETCH_OPEN_BY_ITEM_AND_PATRON_QUERY_NAME;
+import static org.folio.innreach.domain.entity.InnReachTransaction.FETCH_ASSOCIATED_QUERY_NAME;
+import static org.folio.innreach.domain.entity.InnReachTransaction.FETCH_ASSOCIATED_QUERY;
 
 import java.util.UUID;
 
@@ -56,6 +58,10 @@ import org.folio.innreach.domain.entity.base.Identifiable;
 @NamedQuery(
   name = FETCH_OPEN_BY_ITEM_AND_PATRON_QUERY_NAME,
   query = FETCH_OPEN_BY_ITEM_AND_PATRON_QUERY
+)
+@NamedQuery(
+  name = FETCH_ASSOCIATED_QUERY_NAME,
+  query = FETCH_ASSOCIATED_QUERY
 )
 public class InnReachTransaction extends Auditable implements Identifiable<UUID> {
 
