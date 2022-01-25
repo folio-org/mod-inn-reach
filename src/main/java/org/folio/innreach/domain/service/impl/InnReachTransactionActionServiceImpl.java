@@ -114,7 +114,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
   }
 
   @Override
-  public void linkNewLoanToOpenTransaction(LoanDTO loan) {
+  public void handleLoanCreation(LoanDTO loan) {
     updateAssociatedTransaction(loan, transaction -> {
       log.info("Linking open transaction {} with a new loan {}", transaction.getId(), loan.getId());
       var hold = transaction.getHold();
