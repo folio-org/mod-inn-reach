@@ -14,7 +14,5 @@ public interface InnReachTransactionActionService {
 
   ItemHoldCheckOutResponseDTO checkOutItemHoldItem(String itemBarcode, UUID servicePointId);
 
-  void linkNewLoanToOpenTransaction(LoanDTO loan);
-
-  void borrowerRenewLoan(LoanDTO loan);
+  void associateNewLoanWithTransaction(LoanDTO loan);
 }
