@@ -1,15 +1,13 @@
 package org.folio.innreach.domain.service.impl;
 
-import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.BORROWER_RENEW;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.ITEM_HOLD;
+import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.ITEM_IN_TRANSIT;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.ITEM_RECEIVED;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.ITEM_SHIPPED;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.PATRON_HOLD;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.RECEIVE_UNANNOUNCED;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.TRANSFER;
 
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -45,6 +43,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
   private static final String D2IR_ITEM_RECEIVED_OPERATION = "itemreceived";
   private static final String D2IR_ITEM_SHIPPED_OPERATION = "itemshipped";
   private static final String D2IR_RECEIVE_UNSHIPPED_OPERATION = "receiveunshipped";
+  private static final String D2IR_IN_TRANSIT = "intransit";
 
   private final InnReachTransactionRepository transactionRepository;
   private final InnReachTransactionMapper transactionMapper;
@@ -124,6 +123,18 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
     });
   }
 
+  @Override
+  public void handleLoanUpdate(LoanDTO loan) {
+    if ("checkedin".equals(loan.getAction()) && "Closed".equalsIgnoreCase(loan.getStatus().getName())) {
+      updateAssociatedTransaction(loan, transaction -> {
+        log.info("Updating transaction {} on loan closure {}", transaction.getId(), loan.getId());
+        transaction.getHold().setDueDateTime(null);
+        transaction.setState(ITEM_IN_TRANSIT);
+        reportItemInTransit(transaction);
+      });
+    }
+  }
+
   private void updateAssociatedTransaction(LoanDTO loan, Consumer<InnReachTransaction> transactionConsumer) {
     var itemId = loan.getItemId();
     var patronId = loan.getUserId();
@@ -134,7 +145,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
 
   @Override
   public void borrowerRenewLoan(LoanDTO loan) {
-    if (loan.getAction().equals("renewed")) {
+    /*if (loan.getAction().equals("renewed")) {
       var folioLoanId = loan.getId();
 
       transactionRepository.fetchOneByLoanId(folioLoanId)
@@ -150,10 +161,8 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
             transaction.getHold().setDueDateTime(loanIntegerDueDate);
             transactionRepository.save(transaction);
           }
-        });
+        }); */
     }
-  }
-
   private PatronHoldCheckInResponseDTO checkInItem(InnReachTransaction transaction, UUID servicePointId) {
     var hold = (TransactionPatronHold) transaction.getHold();
     var shippedItemBarcode = hold.getShippedItemBarcode();
@@ -189,6 +198,10 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
 
   private void reportUnshippedItemReceived(InnReachTransaction transaction) {
     callD2irCircOperation(D2IR_RECEIVE_UNSHIPPED_OPERATION, transaction, null);
+  }
+
+  private void reportItemInTransit(InnReachTransaction transaction) {
+    callD2irCircOperation(D2IR_IN_TRANSIT, transaction, null);
   }
 
   private void callD2irCircOperation(String operation, InnReachTransaction transaction, Map<Object, Object> payload) {

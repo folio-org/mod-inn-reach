@@ -16,5 +16,7 @@ public interface InnReachTransactionActionService {
 
   void associateNewLoanWithTransaction(LoanDTO loan);
 
+  void handleLoanUpdate(LoanDTO loan);
+
   void borrowerRenewLoan(LoanDTO loan);
 }

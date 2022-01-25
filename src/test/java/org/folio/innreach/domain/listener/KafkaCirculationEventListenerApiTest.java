@@ -2,27 +2,24 @@ package org.folio.innreach.domain.listener;
 
 import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TEST_METHOD;
 import static org.springframework.test.context.jdbc.SqlMergeMode.MergeMode.MERGE;
 
-import java.text.SimpleDateFormat;
+import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.ITEM_IN_TRANSIT;
+
 import java.time.Duration;
 import java.util.Date;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Consumer;
 
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.producer.ProducerRecord;
-import org.folio.innreach.domain.entity.InnReachTransaction;
-import org.folio.innreach.external.service.InnReachExternalService;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlMergeMode;
@@ -33,6 +30,8 @@ import org.folio.innreach.domain.event.EntityChangedData;
 import org.folio.innreach.domain.listener.base.BaseKafkaApiTest;
 import org.folio.innreach.domain.service.impl.BatchDomainEventProcessor;
 import org.folio.innreach.dto.LoanDTO;
+import org.folio.innreach.dto.LoanStatus;
+import org.folio.innreach.external.service.InnReachExternalService;
 import org.folio.innreach.repository.InnReachTransactionRepository;
 
 @Sql(
@@ -51,9 +50,6 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
   private static final Duration ASYNC_AWAIT_TIMEOUT = Duration.ofSeconds(15);
   private static final Date DUE_DATE = new Date();
 
-  @MockBean
-  private InnReachExternalService innReachExternalService;
-
   @SpyBean
   private KafkaCirculationEventListener listener;
 
@@ -62,6 +58,9 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
 
   @SpyBean
   private InnReachTransactionRepository transactionRepository;
+
+  @SpyBean
+  private InnReachExternalService innReachExternalService;
 
   @Test
   void shouldReceiveLoanEvent() {
@@ -111,44 +110,31 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
   @Test
   @Sql(scripts = {
     "classpath:db/central-server/pre-populate-central-server.sql",
-    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
   })
-  void shouldRenewalLoanToUpdateTransaction() {
-    UUID folioLoanId = UUID.fromString("fd5109c7-8934-4294-9504-c1a4a4f07c96");
-    String date = "01.07.2016";
-    SimpleDateFormat format = new SimpleDateFormat("dd.MM.yyyy");
-    Date dueDate = null;
-    try {
-      dueDate = format.parse(date);
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
+  void shouldReturnCheckedInItem() {
     var event = getLoanDomainEvent(DomainEventType.UPDATED);
-    LoanDTO loanDTO = event.getData().getNewEntity();
-    loanDTO.setId(folioLoanId);
-    loanDTO.setAction("renewed");
-    loanDTO.setDueDate(dueDate);
-    event.setData(new EntityChangedData<>(null, loanDTO));
     event.setRecordId(null); // the listener should set this field from event key value
+    var loan = event.getData().getNewEntity();
+    loan.setStatus(new LoanStatus().name("Closed"));
+    loan.setAction("checkedin");
 
-    var consumerRecord = new ConsumerRecord(CIRC_LOAN_TOPIC, 1, 1, folioLoanId.toString(), event);
+    var consumerRecord = new ConsumerRecord(CIRC_LOAN_TOPIC, 1, 1, LOAN_ID.toString(), event);
+
     listener.handleLoanEvents(List.of(consumerRecord));
 
     ArgumentCaptor<List<DomainEvent<LoanDTO>>> eventsCaptor = ArgumentCaptor.forClass(List.class);
-
     verify(eventProcessor).process(eventsCaptor.capture(), any(Consumer.class));
-    when(innReachExternalService.postInnReachApi(any(), any(), any())).thenReturn("ok");
+
     var capturedEvents = eventsCaptor.getValue();
     assertEquals(1, capturedEvents.size());
-
     var capturedEvent = capturedEvents.get(0);
-    assertEquals(folioLoanId, capturedEvent.getRecordId());
-    Optional<InnReachTransaction> optionalInnReachTransaction = transactionRepository.fetchOneByLoanId(folioLoanId);
-    InnReachTransaction transaction = null;
-    if (optionalInnReachTransaction.isPresent()) {
-      transaction = optionalInnReachTransaction.get();
-    }
-    assertEquals(InnReachTransaction.TransactionState.BORROWER_RENEW, transaction.getState());
+    assertEquals(LOAN_ID, capturedEvent.getRecordId());
+
+    var transaction = transactionRepository.fetchOneById(PRE_POPULATED_TRANSACTION_ID).get();
+    assertEquals(ITEM_IN_TRANSIT, transaction.getState());
+    assertNull(transaction.getHold().getDueDateTime());
+    verify(innReachExternalService).postInnReachApi(any(), any());
   }
 
   private DomainEvent<LoanDTO> getLoanDomainEvent(DomainEventType eventType) {

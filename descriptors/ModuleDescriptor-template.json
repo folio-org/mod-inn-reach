@@ -1090,6 +1090,10 @@
         "value": "Mod-innreach-1-0-0"
       },
       {
+        "name": "OKAPI_URL",
+        "value": "http://okapi:9130"
+      },
+      {
         "name": "KAFKA_HOST",
         "value": "kafka"
       },

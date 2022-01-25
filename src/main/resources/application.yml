@@ -125,7 +125,7 @@ retryable-update:
   on-conflict:
     retry-attempts: 2
     retry-interval-ms: 0
-okapi.url: ${OKAPI_URL:http://localhost}
+okapi.url: ${OKAPI_URL:http://okapi:9130}
 environment: ${ENV:folio}
 kafka:
   listener:
