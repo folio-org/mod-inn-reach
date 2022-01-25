@@ -10,6 +10,7 @@ import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionSt
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.function.Consumer;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -59,7 +60,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
 
     transaction.setState(ITEM_RECEIVED);
 
-    reportItemReceived(transaction.getCentralServerCode(), transaction.getTrackingId());
+    reportItemReceived(transaction);
 
     return response;
   }
@@ -79,7 +80,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
 
     transaction.setState(RECEIVE_UNANNOUNCED);
 
-    reportUnshippedItemReceived(transaction.getCentralServerCode(), transaction.getTrackingId());
+    reportUnshippedItemReceived(transaction);
 
     return response;
   }
@@ -103,7 +104,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
 
     transaction.setState(ITEM_SHIPPED);
 
-    reportItemShipped(transaction.getCentralServerCode(), transaction.getTrackingId(), itemBarcode, callNumber);
+    reportItemShipped(transaction, itemBarcode, callNumber);
 
     return new ItemHoldCheckOutResponseDTO()
       .transaction(transactionMapper.toDTO(transaction))
@@ -111,17 +112,21 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
   }
 
   @Override
-  public void linkNewLoanToOpenTransaction(LoanDTO loan) {
+  public void handleLoanCreation(LoanDTO loan) {
+    updateAssociatedTransaction(loan, transaction -> {
+      log.info("Linking open transaction {} with a new loan {}", transaction.getId(), loan.getId());
+      var hold = transaction.getHold();
+      hold.setFolioLoanId(loan.getId());
+      hold.setDueDateTime((int) loan.getDueDate().toInstant().getEpochSecond());
+    });
+  }
+
+  private void updateAssociatedTransaction(LoanDTO loan, Consumer<InnReachTransaction> transactionConsumer) {
     var itemId = loan.getItemId();
     var patronId = loan.getUserId();
 
     transactionRepository.fetchOpenByFolioItemIdAndPatronId(itemId, patronId)
-      .ifPresent(transaction -> {
-        log.info("Linking open INN-Reach transaction {} with a new loan {}", transaction.getId(), loan.getId());
-        var hold = transaction.getHold();
-        hold.setFolioLoanId(loan.getId());
-        hold.setDueDateTime((int) loan.getDueDate().toInstant().getEpochSecond());
-      });
+      .ifPresent(transactionConsumer);
   }
 
   private PatronHoldCheckInResponseDTO checkInItem(InnReachTransaction transaction, UUID servicePointId) {
@@ -145,23 +150,25 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
       .orElseThrow(() -> new EntityNotFoundException("INN-Reach transaction is not found by id: " + transactionId));
   }
 
-  private void reportItemReceived(String centralCode, String trackingId) {
-    callD2irCircOperation(D2IR_ITEM_RECEIVED_OPERATION, centralCode, trackingId, null);
+  private void reportItemReceived(InnReachTransaction transaction) {
+    callD2irCircOperation(D2IR_ITEM_RECEIVED_OPERATION, transaction, null);
   }
 
-  private void reportItemShipped(String centralCode, String trackingId, String itemBarcode, String callNumber) {
+  private void reportItemShipped(InnReachTransaction transaction, String itemBarcode, String callNumber) {
     var payload = new HashMap<>();
     payload.put("itemBarcode", itemBarcode);
     payload.put("callNumber", callNumber);
 
-    callD2irCircOperation(D2IR_ITEM_SHIPPED_OPERATION, centralCode, trackingId, payload);
+    callD2irCircOperation(D2IR_ITEM_SHIPPED_OPERATION, transaction, payload);
   }
 
-  private void reportUnshippedItemReceived(String centralCode, String trackingId) {
-    callD2irCircOperation(D2IR_RECEIVE_UNSHIPPED_OPERATION, centralCode, trackingId, null);
+  private void reportUnshippedItemReceived(InnReachTransaction transaction) {
+    callD2irCircOperation(D2IR_RECEIVE_UNSHIPPED_OPERATION, transaction, null);
   }
 
-  private void callD2irCircOperation(String operation, String centralCode, String trackingId, Map<Object, Object> payload) {
+  private void callD2irCircOperation(String operation, InnReachTransaction transaction, Map<Object, Object> payload) {
+    var centralCode = transaction.getCentralServerCode();
+    var trackingId = transaction.getTrackingId();
     var requestPath = resolveD2irCircPath(operation, trackingId, centralCode);
     try {
       if (payload == null) {
