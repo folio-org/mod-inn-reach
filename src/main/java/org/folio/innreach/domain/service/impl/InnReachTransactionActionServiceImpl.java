@@ -112,9 +112,9 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
   }
 
   @Override
-  public void handleLoanCreation(LoanDTO loan) {
+  public void associateNewLoanWithTransaction(LoanDTO loan) {
     updateAssociatedTransaction(loan, transaction -> {
-      log.info("Linking open transaction {} with a new loan {}", transaction.getId(), loan.getId());
+      log.info("Associating a new loan {} with transaction {}", loan.getId(), transaction.getId());
       var hold = transaction.getHold();
       hold.setFolioLoanId(loan.getId());
       hold.setDueDateTime((int) loan.getDueDate().toInstant().getEpochSecond());
