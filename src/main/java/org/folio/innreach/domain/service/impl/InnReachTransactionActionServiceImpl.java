@@ -142,12 +142,12 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
       var folioLoanId = loan.getId();
 
       transactionRepository.fetchOneByLoanId(folioLoanId).ifPresent(transaction -> {
-        log.info("Loan with id: {} associated with transaction. Transaction id: {}", folioLoanId, transaction.getId());
+        log.info("Updating transaction {} on loan renewed {}", transaction.getId(), loan.getId());
         var transactionDueDate = Instant.ofEpochSecond(transaction.getHold().getDueDateTime());
         var loanDueDate = loan.getDueDate().toInstant().truncatedTo(ChronoUnit.SECONDS);
         if (!loanDueDate.equals(transactionDueDate)) {
-          var loanIntegerDueDate = (int) (loanDueDate.getEpochSecond() / 1000);
-          borrowerRenew(transaction, loanIntegerDueDate);
+          var loanIntegerDueDate = (int) (loanDueDate.getEpochSecond());
+          reportBorrowerRenew(transaction, loanIntegerDueDate);
           transaction.setState(BORROWER_RENEW);
           transaction.getHold().setDueDateTime(loanIntegerDueDate);
           transactionRepository.save(transaction);
@@ -189,7 +189,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
     callD2irCircOperation(D2IR_ITEM_RECEIVED_OPERATION, transaction, null);
   }
 
-  private void borrowerRenew(InnReachTransaction transaction, Integer loanIntegerDueDate) {
+  private void reportBorrowerRenew(InnReachTransaction transaction, Integer loanIntegerDueDate) {
     var payload = new HashMap<>();
     payload.put("dueDateTime", loanIntegerDueDate);
     callD2irCircOperation(D2IR_BORROWER_RENEW, transaction, payload);

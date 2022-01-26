@@ -11,8 +11,8 @@ import static org.springframework.test.context.jdbc.SqlMergeMode.MergeMode.MERGE
 
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.ITEM_IN_TRANSIT;
 
-import java.text.SimpleDateFormat;
 import java.time.Duration;
+import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.List;
@@ -153,14 +153,9 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
   })
   void shouldRenewalLoanToUpdateTransaction() {
     UUID folioLoanId = UUID.fromString("fd5109c7-8934-4294-9504-c1a4a4f07c96");
-    String date = "01.07.2016";
-    SimpleDateFormat format = new SimpleDateFormat("dd.MM.yyyy");
-    Date dueDate = null;
-    try {
-      dueDate = format.parse(date);
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
+    String date = "2016-07-01T08:20:00.00Z";
+    Instant instant = Instant.parse(date);
+    Date dueDate = Date.from(instant);
     var event = getLoanDomainEvent(DomainEventType.UPDATED);
     LoanDTO loanDTO = event.getData().getNewEntity();
     loanDTO.setId(folioLoanId);
@@ -189,7 +184,7 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
     }
     assertEquals(InnReachTransaction.TransactionState.BORROWER_RENEW, transaction.getState());
     var loanDueDate = loanDTO.getDueDate().toInstant().truncatedTo(ChronoUnit.SECONDS);
-    var loanIntegerDueDate = (int) (loanDueDate.getEpochSecond() / 1000);
+    var loanIntegerDueDate = (int) (loanDueDate.getEpochSecond());
     assertEquals(loanIntegerDueDate, transaction.getHold().getDueDateTime());
 
   }
