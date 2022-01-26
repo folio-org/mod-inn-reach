@@ -56,9 +56,6 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
   private static final Duration ASYNC_AWAIT_TIMEOUT = Duration.ofSeconds(15);
   private static final Date DUE_DATE = new Date();
 
-  @MockBean
-  private InnReachExternalService innReachMockExternalService;
-
   @SpyBean
   private KafkaCirculationEventListener listener;
 
@@ -68,7 +65,7 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
   @SpyBean
   private InnReachTransactionRepository transactionRepository;
 
-  @SpyBean
+  @MockBean
   private InnReachExternalService innReachExternalService;
 
   @Test
@@ -171,7 +168,7 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
     ArgumentCaptor<List<DomainEvent<LoanDTO>>> eventsCaptor = ArgumentCaptor.forClass(List.class);
 
     verify(eventProcessor).process(eventsCaptor.capture(), any(Consumer.class));
-    when(innReachMockExternalService.postInnReachApi(any(), any(), any())).thenReturn("ok");
+    when(innReachExternalService.postInnReachApi(any(), any(), any())).thenReturn("ok");
     var capturedEvents = eventsCaptor.getValue();
     assertEquals(1, capturedEvents.size());
 
