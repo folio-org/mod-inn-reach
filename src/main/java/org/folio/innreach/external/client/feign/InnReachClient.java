@@ -9,6 +9,7 @@ import static org.folio.innreach.external.InnReachHeaders.X_TO_CODE;
 import java.net.URI;
 
 import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -36,4 +37,10 @@ public interface InnReachClient {
                          @RequestHeader(AUTHORIZATION) String authorizationHeader,
                          @RequestHeader(X_FROM_CODE) String xFromCode,
                          @RequestHeader(X_TO_CODE) String xToCode);
+
+  @DeleteMapping(consumes = APPLICATION_JSON_VALUE, produces = APPLICATION_JSON_VALUE)
+  String deleteInnReachApi(URI baseUri,
+                           @RequestHeader(AUTHORIZATION) String authorizationHeader,
+                           @RequestHeader(X_FROM_CODE) String xFromCode,
+                           @RequestHeader(X_TO_CODE) String xToCode);
 }

@@ -9,4 +9,6 @@ public interface InnReachExternalService {
   String postInnReachApi(String centralCode, String innReachRequestUri, Object payload);
 
   String postInnReachApi(String centralCode, String innReachRequestUri);
+
+  String deleteInnReachApi(String centralCode, String innReachRequestUri);
 }

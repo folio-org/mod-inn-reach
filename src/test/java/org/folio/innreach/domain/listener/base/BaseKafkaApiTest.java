@@ -1,6 +1,9 @@
 package org.folio.innreach.domain.listener.base;
 
 import static org.folio.innreach.domain.listener.base.BaseKafkaApiTest.CIRC_LOAN_TOPIC;
+import static org.folio.innreach.domain.listener.base.BaseKafkaApiTest.INVENTORY_HOLDING_TOPIC;
+import static org.folio.innreach.domain.listener.base.BaseKafkaApiTest.INVENTORY_INSTANCE_TOPIC;
+import static org.folio.innreach.domain.listener.base.BaseKafkaApiTest.INVENTORY_ITEM_TOPIC;
 
 import java.util.List;
 import java.util.UUID;
@@ -40,7 +43,7 @@ import org.folio.tenant.domain.dto.TenantAttributes;
 import org.folio.tenant.rest.resource.TenantApi;
 
 @ActiveProfiles("test")
-@EmbeddedKafka(topics = {CIRC_LOAN_TOPIC})
+@EmbeddedKafka(topics = {CIRC_LOAN_TOPIC, INVENTORY_ITEM_TOPIC, INVENTORY_INSTANCE_TOPIC, INVENTORY_HOLDING_TOPIC})
 @SpringBootTest(
   classes = {ModInnReachApplication.class, BaseKafkaApiTest.TestTenantController.class, BaseKafkaApiTest.TestTenantScopedExecutionService.class})
 @Testcontainers
@@ -49,6 +52,9 @@ public class BaseKafkaApiTest {
 
   public static final String CIRC_LOAN_TOPIC = "folio.testing.circulation.loan";
   public static final String CIRC_REQUEST_TOPIC = "folio.testing.circulation.request";
+  public static final String INVENTORY_ITEM_TOPIC = "folio.testing.inventory.item";
+  public static final String INVENTORY_INSTANCE_TOPIC = "folio.testing.inventory.instance";
+  public static final String INVENTORY_HOLDING_TOPIC = "folio.testing.inventory.holdings-record";
 
   @Container
   public static PostgreSQLContainer<?> postgresqlContainer = new PostgreSQLContainer<>("postgres:11-alpine");

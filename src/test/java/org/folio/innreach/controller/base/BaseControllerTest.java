@@ -2,6 +2,7 @@ package org.folio.innreach.controller.base;
 
 import javax.validation.Valid;
 
+import org.folio.innreach.domain.listener.KafkaInventoryEventListener;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -16,7 +17,7 @@ import org.folio.spring.liquibase.FolioLiquibaseConfiguration;
 import org.folio.tenant.domain.dto.TenantAttributes;
 import org.folio.tenant.rest.resource.TenantApi;
 
-@MockBean(KafkaCirculationEventListener.class)
+@MockBean(classes = {KafkaCirculationEventListener.class, KafkaInventoryEventListener.class})
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, classes = {ModInnReachApplication.class,
   BaseControllerTest.TestTenantController.class})
 @ActiveProfiles({"test", "testcontainers-pg"})

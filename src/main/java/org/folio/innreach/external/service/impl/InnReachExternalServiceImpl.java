@@ -66,6 +66,20 @@ public class InnReachExternalServiceImpl implements InnReachExternalService {
     );
   }
 
+  @Override
+  public String deleteInnReachApi(String centralCode, String innReachRequestUri) {
+    var connectionDetails = centralServerService.getConnectionDetailsByCode(centralCode);
+
+    var accessTokenDTO = innReachAuthExternalService.getAccessToken(connectionDetails);
+
+    return innReachClient.deleteInnReachApi(
+      buildInnReachRequestUrl(connectionDetails.getConnectionUrl(), innReachRequestUri),
+      buildBearerAuthHeader(accessTokenDTO.getAccessToken()),
+      connectionDetails.getLocalCode(),
+      connectionDetails.getCentralCode()
+    );
+  }
+
   private URI buildInnReachRequestUrl(String centralServerUrl, String innReachRequestUri) {
     var innReachRequestUrl = String.format("%s/innreach/v2%s", centralServerUrl, innReachRequestUri);
     return URI.create(innReachRequestUrl);

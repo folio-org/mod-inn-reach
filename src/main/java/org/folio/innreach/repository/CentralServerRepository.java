@@ -2,6 +2,7 @@ package org.folio.innreach.repository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 import org.springframework.data.domain.Page;
@@ -33,6 +34,9 @@ public interface CentralServerRepository extends JpaRepository<CentralServer, UU
 
   @Query(name = CentralServer.GET_IDS_QUERY_NAME)
   Page<UUID> getIds(Pageable pageable);
+
+  @Query(name = CentralServer.GET_IDS_QUERY_NAME)
+  Set<UUID> getIds();
 
   @Query(name = CentralServer.GET_ID_BY_CENTRAL_CODE_QUERY_NAME)
   Optional<UUID> getIdByCentralCode(String centralCode);
