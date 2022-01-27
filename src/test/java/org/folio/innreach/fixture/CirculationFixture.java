@@ -10,6 +10,7 @@ import org.jeasy.random.EasyRandomParameters;
 import org.jeasy.random.randomizers.text.StringRandomizer;
 
 import org.folio.innreach.dto.CancelRequestDTO;
+import org.folio.innreach.dto.ClaimsItemReturnedDTO;
 import org.folio.innreach.dto.ItemShippedDTO;
 import org.folio.innreach.dto.RecallDTO;
 import org.folio.innreach.dto.RenewLoanDTO;
@@ -121,6 +122,10 @@ public class CirculationFixture {
 
   public static CancelRequestDTO createCancelRequestDTO() {
     return cancelRequestRandom.nextObject(CancelRequestDTO.class);
+  }
+
+  public static ClaimsItemReturnedDTO createClaimsItemReturnedDTO() {
+    return transactionHoldRandom.nextObject(ClaimsItemReturnedDTO.class);
   }
 
   public static RecallDTO createRecallDTO(){

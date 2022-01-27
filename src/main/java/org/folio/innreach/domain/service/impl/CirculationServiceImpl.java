@@ -1,6 +1,7 @@
 package org.folio.innreach.domain.service.impl;
 
 import static java.lang.String.format;
+import static java.time.Instant.ofEpochSecond;
 import static java.util.Objects.nonNull;
 import static org.apache.commons.lang3.StringUtils.capitalize;
 
@@ -9,6 +10,7 @@ import static org.folio.innreach.domain.dto.folio.circulation.RequestDTO.Request
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.BORROWER_RENEW;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.BORROWING_SITE_CANCEL;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.CANCEL_REQUEST;
+import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.CLAIMS_RETURNED;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.FINAL_CHECKIN;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.ITEM_HOLD;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.ITEM_IN_TRANSIT;
@@ -65,6 +67,7 @@ import org.folio.innreach.domain.service.PatronHoldService;
 import org.folio.innreach.domain.service.RequestService;
 import org.folio.innreach.dto.BaseCircRequestDTO;
 import org.folio.innreach.dto.CancelRequestDTO;
+import org.folio.innreach.dto.ClaimsItemReturnedDTO;
 import org.folio.innreach.dto.Holding;
 import org.folio.innreach.dto.InnReachResponseDTO;
 import org.folio.innreach.dto.ItemReceivedDTO;
@@ -336,7 +339,7 @@ public class CirculationServiceImpl implements CirculationService {
     var hold = transaction.getHold();
     var loan = loanService.getById(hold.getFolioLoanId());
     var existingDueDate = loan.getDueDate();
-    var requestedDueDate = Date.from(Instant.ofEpochSecond(renewLoan.getDueDateTime()));
+    var requestedDueDate = Date.from(ofEpochSecond(renewLoan.getDueDateTime()));
 
     try {
       hold.setDueDateTime(renewLoan.getDueDateTime());
@@ -367,7 +370,7 @@ public class CirculationServiceImpl implements CirculationService {
     var renewedLoan = renewLoan(transaction.getHold());
 
     Instant calculatedDueDate = renewedLoan.getDueDate().toInstant();
-    Instant requestedDueDate = Instant.ofEpochSecond(renewLoan.getDueDateTime());
+    Instant requestedDueDate = ofEpochSecond(renewLoan.getDueDateTime());
     if (calculatedDueDate.isAfter(requestedDueDate)) {
       loanService.changeDueDate(renewedLoan, Date.from(requestedDueDate));
     }
@@ -386,6 +389,23 @@ public class CirculationServiceImpl implements CirculationService {
     Assert.isTrue(state == ITEM_IN_TRANSIT || state == RETURN_UNCIRCULATED, unexpectedTransactionState(transaction));
 
     transaction.setState(FINAL_CHECKIN);
+
+    return success();
+  }
+
+  @Override
+  public InnReachResponseDTO claimsReturned(String trackingId, String centralCode, ClaimsItemReturnedDTO claimsItemReturned) {
+    var transaction = getTransaction(trackingId, centralCode);
+
+    var returnedDateSec = claimsItemReturned.getClaimsReturnedDate();
+    var returnedDate = returnedDateSec != -1 ? Date.from(ofEpochSecond(returnedDateSec)) : new Date();
+
+    var folioLoanId = transaction.getHold().getFolioLoanId();
+    Assert.isTrue(folioLoanId != null, "Loan id is not set for transaction: " + trackingId);
+
+    loanService.claimItemReturned(folioLoanId, returnedDate);
+
+    transaction.setState(CLAIMS_RETURNED);
 
     return success();
   }
