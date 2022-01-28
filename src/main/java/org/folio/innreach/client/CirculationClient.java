@@ -18,6 +18,7 @@ import org.folio.innreach.domain.dto.folio.circulation.RequestDTO;
 import org.folio.innreach.dto.CheckInRequestDTO;
 import org.folio.innreach.dto.CheckInResponseDTO;
 import org.folio.innreach.dto.CheckOutRequestDTO;
+import org.folio.innreach.dto.ClaimItemReturnedRequestDTO;
 import org.folio.innreach.dto.LoanDTO;
 
 @FeignClient(name = "circulation", configuration = FolioFeignClientConfig.class, decode404 = true)
@@ -55,5 +56,8 @@ public interface CirculationClient {
 
   @PostMapping("/renew-by-id")
   LoanDTO renewLoan(@RequestBody RenewByIdDTO renewLoan);
+
+  @PostMapping("/loans/{loanId}/claim-item-returned")
+  void claimItemReturned(@PathVariable("loanId") UUID loanId, @RequestBody ClaimItemReturnedRequestDTO payload);
 
 }
