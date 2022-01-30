@@ -231,7 +231,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   })
   void return200HttpCode_and_pageOfTransactions_when_getAllTransactionsWithOffsetAndLimit() {
     var responseEntity = testRestTemplate.getForEntity(
-      "/inn-reach/transactions?offset=1&limit=1", InnReachTransactionsDTO.class
+      "/inn-reach/transactions?offset=2&limit=2", InnReachTransactionsDTO.class
     );
 
     assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
