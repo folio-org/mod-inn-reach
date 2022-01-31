@@ -41,13 +41,13 @@ class InnReachExternalServiceImplTest {
   void callInnReachApi_when_centralServerConnectionDetailsAreCorrect() {
     when(centralServerService.getCentralServerConnectionDetails(any())).thenReturn(createCentralServerConnectionDetailsDTO());
     when(innReachAuthExternalService.getAccessToken(any())).thenReturn(createAccessToken());
-    when(innReachClient.callInnReachApi(any(), any(), any(), any(), any())).thenReturn("response");
+    when(innReachClient.callInnReachApi(any(), any(), any(), any())).thenReturn("response");
 
     var innReachResponse = innReachExternalService.callInnReachApi(any(), "/contribution/itemtypes");
 
     assertNotNull(innReachResponse);
 
     verify(innReachAuthExternalService).getAccessToken(any());
-    verify(innReachClient).callInnReachApi(any(), any(), any(), any(), any());
+    verify(innReachClient).callInnReachApi(any(), any(), any(), any());
   }
 }

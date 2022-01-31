@@ -7,6 +7,5 @@ import lombok.NoArgsConstructor;
 public final class InnReachHeaders {
   public static final String X_FROM_CODE = "X-From-Code";
   public static final String X_TO_CODE = "X-To-Code";
-  public static final String X_REQUEST_CREATION_TIME = "X-Request-Creation-Time";
   public static final String X_D2IR_AUTHORIZATION = "X-D2IR-Authorization";
 }
