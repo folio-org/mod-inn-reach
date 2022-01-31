@@ -14,6 +14,7 @@ import org.folio.innreach.domain.service.CirculationService;
 import org.folio.innreach.domain.service.RequestService;
 import org.folio.innreach.dto.BaseCircRequestDTO;
 import org.folio.innreach.dto.CancelRequestDTO;
+import org.folio.innreach.dto.ClaimsItemReturnedDTO;
 import org.folio.innreach.dto.InnReachResponseDTO;
 import org.folio.innreach.dto.ItemReceivedDTO;
 import org.folio.innreach.dto.ItemShippedDTO;
@@ -73,6 +74,16 @@ public class InnReachCirculationController implements InnReachCirculationApi {
                                                               @PathVariable String centralCode,
                                                               CancelRequestDTO cancelRequest) {
     var innReachResponse = circulationService.cancelPatronHold(trackingId, centralCode, cancelRequest);
+
+    return ResponseEntity.ok(innReachResponse);
+  }
+
+  @Override
+  @PutMapping(value = "/claimsreturned/{trackingId}/{centralCode}")
+  public ResponseEntity<InnReachResponseDTO> claimsReturned(@PathVariable String trackingId,
+                                                            @PathVariable String centralCode,
+                                                            ClaimsItemReturnedDTO claimsItemReturnedDTO) {
+    var innReachResponse = circulationService.claimsReturned(trackingId, centralCode, claimsItemReturnedDTO);
 
     return ResponseEntity.ok(innReachResponse);
   }

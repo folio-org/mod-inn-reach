@@ -378,6 +378,7 @@
             "circulation.loans.item.get",
             "circulation.loans.item.post",
             "circulation.loans.item.put",
+            "circulation.loans.claim-item-returned.post",
             "inventory.instances.item.get",
             "users.collection.get"
           ]

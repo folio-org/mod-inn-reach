@@ -14,4 +14,5 @@ public interface LoanService extends BasicService<UUID, LoanDTO> {
 
   LoanDTO changeDueDate(LoanDTO loan, Date dueDate);
 
+  void claimItemReturned(UUID loanId, Date itemClaimedReturnedDateTime);
 }
