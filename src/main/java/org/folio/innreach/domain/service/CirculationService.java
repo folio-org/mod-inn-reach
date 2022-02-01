@@ -2,6 +2,7 @@ package org.folio.innreach.domain.service;
 
 import org.folio.innreach.dto.BaseCircRequestDTO;
 import org.folio.innreach.dto.CancelRequestDTO;
+import org.folio.innreach.dto.ClaimsItemReturnedDTO;
 import org.folio.innreach.dto.InnReachResponseDTO;
 import org.folio.innreach.dto.ItemReceivedDTO;
 import org.folio.innreach.dto.ItemShippedDTO;
@@ -44,4 +45,5 @@ public interface CirculationService {
 
   InnReachResponseDTO finalCheckIn(String trackingId, String centralCode, BaseCircRequestDTO finalCheckIn);
 
+  InnReachResponseDTO claimsReturned(String trackingId, String centralCode, ClaimsItemReturnedDTO claimsItemReturned);
 }

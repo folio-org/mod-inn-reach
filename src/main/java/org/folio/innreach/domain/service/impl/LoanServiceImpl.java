@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.folio.innreach.client.CirculationClient;
 import org.folio.innreach.domain.dto.folio.circulation.RenewByIdDTO;
 import org.folio.innreach.domain.service.LoanService;
+import org.folio.innreach.dto.ClaimItemReturnedRequestDTO;
 import org.folio.innreach.dto.LoanDTO;
 
 @Service
@@ -53,6 +54,14 @@ public class LoanServiceImpl implements LoanService {
     loan.setAction(DUE_DATE_CHANGED_ACTION);
 
     return update(loan);
+  }
+
+  @Override
+  public void claimItemReturned(UUID loanId, Date itemClaimedReturnedDate) {
+    var request = new ClaimItemReturnedRequestDTO()
+      .itemClaimedReturnedDateTime(itemClaimedReturnedDate);
+
+    circulationClient.claimItemReturned(loanId, request);
   }
 
 }
