@@ -6,6 +6,7 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.BeanUtils;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,7 +21,7 @@ import org.folio.innreach.mapper.InnReachTransactionMapper;
 import org.folio.innreach.repository.InnReachTransactionRepository;
 import org.folio.innreach.repository.TransactionHoldRepository;
 import org.folio.innreach.specification.InnReachTransactionSpecification;
-import org.folio.innreach.util.OffsetBasedPageRequest;
+import org.folio.spring.data.OffsetRequest;
 
 @Log4j2
 @RequiredArgsConstructor
@@ -59,7 +60,7 @@ public class InnReachTransactionServiceImpl implements InnReachTransactionServic
   public InnReachTransactionsDTO getAllTransactions(Integer offset, Integer limit,
                                                     InnReachTransactionFilterParametersDTO parametersDTO) {
     var parameters = parametersMapper.toEntity(parametersDTO);
-    var pageRequest = new OffsetBasedPageRequest(offset, limit);
+    var pageRequest = new OffsetRequest(offset, limit, Sort.unsorted());
     var transactions = repository.findAll(specification.filterByParameters(parameters), pageRequest);
     return transactionMapper.toDTOCollection(transactions);
   }
