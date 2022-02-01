@@ -23,7 +23,6 @@ import java.util.function.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.folio.innreach.domain.entity.InnReachTransaction;
-import org.folio.innreach.domain.entity.TransactionHold;
 import org.folio.innreach.domain.entity.TransactionItemHold;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -121,13 +120,16 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
   })
   void shouldReturnCheckedInItem() {
+    UUID folioLoanId = UUID.fromString("fd5109c7-8934-4294-9504-c1a4a4f07c96");
     var event = getLoanDomainEvent(DomainEventType.UPDATED);
     event.setRecordId(null); // the listener should set this field from event key value
     var loan = event.getData().getNewEntity();
+    loan.setId(folioLoanId);
     loan.setStatus(new LoanStatus().name("Closed"));
     loan.setAction("checkedin");
+    event.setData(new EntityChangedData<>(null, loan));
 
-    var consumerRecord = new ConsumerRecord(CIRC_LOAN_TOPIC, 1, 1, LOAN_ID.toString(), event);
+    var consumerRecord = new ConsumerRecord(CIRC_LOAN_TOPIC, 1, 1, folioLoanId.toString(), event);
 
     listener.handleLoanEvents(List.of(consumerRecord));
 
@@ -137,7 +139,7 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
     var capturedEvents = eventsCaptor.getValue();
     assertEquals(1, capturedEvents.size());
     var capturedEvent = capturedEvents.get(0);
-    assertEquals(LOAN_ID, capturedEvent.getRecordId());
+    assertEquals(folioLoanId, capturedEvent.getRecordId());
 
     var transaction = transactionRepository.fetchOneById(PRE_POPULATED_TRANSACTION_ID).get();
     assertEquals(ITEM_IN_TRANSIT, transaction.getState());

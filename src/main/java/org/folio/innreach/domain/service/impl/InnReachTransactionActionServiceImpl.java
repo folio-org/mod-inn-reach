@@ -15,7 +15,6 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Consumer;
 
@@ -32,7 +31,6 @@ import org.folio.innreach.domain.exception.EntityNotFoundException;
 import org.folio.innreach.domain.service.InnReachTransactionActionService;
 import org.folio.innreach.domain.service.PatronHoldService;
 import org.folio.innreach.domain.service.RequestService;
-import org.folio.innreach.domain.entity.TransactionHold;
 import org.folio.innreach.dto.ItemHoldCheckOutResponseDTO;
 import org.folio.innreach.dto.LoanDTO;
 import org.folio.innreach.dto.PatronHoldCheckInResponseDTO;
@@ -134,39 +132,40 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
 
   @Override
   public void handleLoanUpdate(LoanDTO loan) {
-    var transaction = transactionRepository.fetchOneByLoanId(loan.getId()).orElse(null);
-    if (transaction == null) {
+    var associateNewLoanWithTransaction = transactionRepository.fetchOneByLoanId(loan.getId()).orElse(null);
+    if (associateNewLoanWithTransaction == null) {
       return;
     }
 
     if ("checkedin".equals(loan.getAction()) && "Closed".equalsIgnoreCase(loan.getStatus().getName())) {
-      if (transaction != null && (transaction.getType() == ITEM)) {
-        log.info("Updating transaction {} on loan to final check-in {}", transaction.getId(), loan.getId());
-        transaction.getHold().setDueDateTime(null);
-        var transactionHold = (TransactionHold) transaction.getHold();
-        var transactionItemHold = (TransactionItemHold) transaction.getHold();
+      if (associateNewLoanWithTransaction.getType() == ITEM) {
+        log.info("Updating transaction {} on loan to final check-in {}", associateNewLoanWithTransaction.getId(), loan.getId());
+        associateNewLoanWithTransaction.getHold().setDueDateTime(null);
+        var transactionItemHold = (TransactionItemHold) associateNewLoanWithTransaction.getHold();
         transactionItemHold.setPatronName(null);
-        transactionHold.setPatronId(null);
-        transaction.setState(FINAL_CHECKIN);
-        reportFinalCheckIn(transaction);
-        transactionRepository.save(transaction);
-      }
-      else {
-        associateNewLoanWithTransaction(loan);
+        transactionItemHold.setPatronId(null);
+        associateNewLoanWithTransaction.setState(FINAL_CHECKIN);
+        reportFinalCheckIn(associateNewLoanWithTransaction);
+        transactionRepository.save(associateNewLoanWithTransaction);
+      } else {
+        log.info("Updating transaction {} on loan closure {}", associateNewLoanWithTransaction.getId(), loan.getId());
+        associateNewLoanWithTransaction.getHold().setDueDateTime(null);
+        associateNewLoanWithTransaction.setState(ITEM_IN_TRANSIT);
+        reportItemInTransit(associateNewLoanWithTransaction);
       }
     }
 
-    if (loan.getAction().equals("renewed") && transaction != null) {
+    if (loan.getAction().equals("renewed") && associateNewLoanWithTransaction != null) {
 
-      log.info("Updating transaction {} on loan renewed {}", transaction.getId(), loan.getId());
-      var transactionDueDate = Instant.ofEpochSecond(transaction.getHold().getDueDateTime());
+      log.info("Updating transaction {} on loan renewed {}", associateNewLoanWithTransaction.getId(), loan.getId());
+      var transactionDueDate = Instant.ofEpochSecond(associateNewLoanWithTransaction.getHold().getDueDateTime());
       var loanDueDate = loan.getDueDate().toInstant().truncatedTo(ChronoUnit.SECONDS);
       if (!loanDueDate.equals(transactionDueDate)) {
         var loanIntegerDueDate = (int) (loanDueDate.getEpochSecond());
-        reportBorrowerRenew(transaction, loanIntegerDueDate);
-        transaction.setState(BORROWER_RENEW);
-        transaction.getHold().setDueDateTime(loanIntegerDueDate);
-        transactionRepository.save(transaction);
+        reportBorrowerRenew(associateNewLoanWithTransaction, loanIntegerDueDate);
+        associateNewLoanWithTransaction.setState(BORROWER_RENEW);
+        associateNewLoanWithTransaction.getHold().setDueDateTime(loanIntegerDueDate);
+        transactionRepository.save(associateNewLoanWithTransaction);
       }
     }
   }
