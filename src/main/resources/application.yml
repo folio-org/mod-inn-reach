@@ -129,6 +129,11 @@ okapi.url: ${OKAPI_URL:http://okapi:9130}
 environment: ${ENV:folio}
 kafka:
   listener:
+    inventory:
+      id: ${environment}-mod-inn-reach-inventory
+      group-id: ${spring.kafka.consumer.group-id}
+      topic-pattern: ${environment}\.)(.*\.)inventory\.(instance|holdings-record|item)}
+      concurrency: ${KAFKA_EVENTS_CONCURRENCY:2}
     loan:
       id: ${environment}-mod-inn-reach-circ-loans
       group-id: ${spring.kafka.consumer.group-id}
