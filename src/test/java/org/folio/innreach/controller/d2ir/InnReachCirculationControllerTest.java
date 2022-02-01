@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
@@ -19,6 +20,7 @@ import static org.springframework.test.context.jdbc.SqlMergeMode.MergeMode.MERGE
 
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.BORROWER_RENEW;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.BORROWING_SITE_CANCEL;
+import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.CLAIMS_RETURNED;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.FINAL_CHECKIN;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.ITEM_HOLD;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.ITEM_IN_TRANSIT;
@@ -29,6 +31,7 @@ import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionSt
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.RECEIVE_UNANNOUNCED;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.RETURN_UNCIRCULATED;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.TRANSFER;
+import static org.folio.innreach.fixture.CirculationFixture.createClaimsItemReturnedDTO;
 import static org.folio.innreach.fixture.CirculationFixture.createItemShippedDTO;
 import static org.folio.innreach.fixture.CirculationFixture.createRecallDTO;
 import static org.folio.innreach.fixture.CirculationFixture.createTransactionHoldDTO;
@@ -951,5 +954,52 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
 
     assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
     assertEquals(PATRON_HOLD, transaction.getState());
+  }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
+  })
+  void testClaimsItemReturned() {
+    var request = createClaimsItemReturnedDTO();
+    var date = Instant.now().truncatedTo(ChronoUnit.SECONDS);
+    request.setClaimsReturnedDate((int) date.getEpochSecond());
+
+    var responseEntity = testRestTemplate.exchange(
+      "/inn-reach/d2ir/circ/claimsreturned/{trackingId}/{centralCode}", HttpMethod.PUT,
+      new HttpEntity<>(request, headers), InnReachResponseDTO.class,
+      PRE_POPULATED_TRACKING1_ID, PRE_POPULATED_CENTRAL_CODE);
+
+    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+
+    var updatedTransaction = fetchPrePopulatedTransaction();
+
+    assertEquals(CLAIMS_RETURNED, updatedTransaction.getState());
+
+    verify(circulationClient).claimItemReturned(any(), argThat(req -> date.equals(req.getItemClaimedReturnedDateTime().toInstant())));
+  }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
+  })
+  void testClaimsItemReturned_UnknownDate() {
+    var request = createClaimsItemReturnedDTO();
+    request.setClaimsReturnedDate(-1);
+
+    var responseEntity = testRestTemplate.exchange(
+      "/inn-reach/d2ir/circ/claimsreturned/{trackingId}/{centralCode}", HttpMethod.PUT,
+      new HttpEntity<>(request, headers), InnReachResponseDTO.class,
+      PRE_POPULATED_TRACKING1_ID, PRE_POPULATED_CENTRAL_CODE);
+
+    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+
+    var updatedTransaction = fetchPrePopulatedTransaction();
+
+    assertEquals(CLAIMS_RETURNED, updatedTransaction.getState());
+
+    verify(circulationClient).claimItemReturned(any(), argThat(req -> req.getItemClaimedReturnedDateTime() != null));
   }
 }
