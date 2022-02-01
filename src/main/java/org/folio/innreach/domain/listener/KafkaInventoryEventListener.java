@@ -28,10 +28,10 @@ public class KafkaInventoryEventListener {
 
   @KafkaListener(
     containerFactory = KAFKA_CONTAINER_FACTORY,
-    id = "${kafka.listener['inventory'].id}",
-    groupId = "${kafka.listener['inventory'].group-id}",
-    topicPattern = "${kafka.listener['inventory'].topic-pattern}",
-    concurrency = "${kafka.listener['inventory'].concurrency}"
+    id = "${kafka.listener.inventory.id}",
+    groupId = "${kafka.listener.inventory.group-id}",
+    topicPattern = "${kafka.listener.inventory.topic-pattern}",
+    concurrency = "${kafka.listener.inventory.concurrency}"
   )
   public void handleInventoryEvents(List<ConsumerRecord<String, DomainEvent>> consumerRecords) {
     log.info("Handling inventory events from Kafka [number of events: {}]", consumerRecords.size());
