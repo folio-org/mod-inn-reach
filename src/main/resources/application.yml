@@ -132,7 +132,7 @@ kafka:
     inventory:
       id: ${environment}-mod-inn-reach-inventory
       group-id: ${spring.kafka.consumer.group-id}
-      topic-pattern: ${environment}\.)(.*\.)inventory\.(instance|holdings-record|item)}
+      topic-pattern: (${environment}\.)(.*\.)inventory\.(instance|holdings-record|item)}
       concurrency: ${KAFKA_EVENTS_CONCURRENCY:2}
     loan:
       id: ${environment}-mod-inn-reach-circ-loans
