@@ -156,7 +156,6 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
     }
 
     if (loan.getAction().equals("renewed")) {
-
       log.info("Updating transaction {} on loan renewed {}", transaction.getId(), loan.getId());
       var transactionDueDate = Instant.ofEpochSecond(transaction.getHold().getDueDateTime());
       var loanDueDate = loan.getDueDate().toInstant().truncatedTo(ChronoUnit.SECONDS);
