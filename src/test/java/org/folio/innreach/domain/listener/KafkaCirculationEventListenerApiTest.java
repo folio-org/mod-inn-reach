@@ -120,14 +120,13 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
   })
   void shouldReturnCheckedInItem() {
-    UUID folioLoanId = UUID.fromString("fd5109c7-8934-4294-9504-c1a4a4f07c96");
+    var folioLoanId = UUID.fromString("fd5109c7-8934-4294-9504-c1a4a4f07c96");
     var event = getLoanDomainEvent(DomainEventType.UPDATED);
     event.setRecordId(null); // the listener should set this field from event key value
     var loan = event.getData().getNewEntity();
     loan.setId(folioLoanId);
     loan.setStatus(new LoanStatus().name("Closed"));
     loan.setAction("checkedin");
-    event.setData(new EntityChangedData<>(null, loan));
 
     var consumerRecord = new ConsumerRecord(CIRC_LOAN_TOPIC, 1, 1, folioLoanId.toString(), event);
 
