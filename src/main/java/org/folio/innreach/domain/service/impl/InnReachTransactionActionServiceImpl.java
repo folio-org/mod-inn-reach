@@ -134,45 +134,39 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
 
   @Override
   public void handleLoanUpdate(LoanDTO loan) {
-    InnReachTransaction associatedTransactionWithLoan = null;
-    Optional<InnReachTransaction> optionalTransaction = transactionRepository.fetchOneByLoanId(loan.getId());
-    if (optionalTransaction.isPresent()) {
-      associatedTransactionWithLoan = optionalTransaction.get();
+    var transaction = transactionRepository.fetchOneByLoanId(loan.getId()).orElse(null);
+    if (transaction == null) {
+      return;
     }
 
     if ("checkedin".equals(loan.getAction()) && "Closed".equalsIgnoreCase(loan.getStatus().getName())) {
-      if (associatedTransactionWithLoan != null && (associatedTransactionWithLoan.getType() == ITEM)) {
-        log.info("Updating transaction {} on loan to final check-in {}", associatedTransactionWithLoan.getId(), loan.getId());
-        associatedTransactionWithLoan.getHold().setDueDateTime(null);
-        var transactionHold = (TransactionHold) associatedTransactionWithLoan.getHold();
-        var transactionItemHold = (TransactionItemHold) associatedTransactionWithLoan.getHold();
+      if (transaction != null && (transaction.getType() == ITEM)) {
+        log.info("Updating transaction {} on loan to final check-in {}", transaction.getId(), loan.getId());
+        transaction.getHold().setDueDateTime(null);
+        var transactionHold = (TransactionHold) transaction.getHold();
+        var transactionItemHold = (TransactionItemHold) transaction.getHold();
         transactionItemHold.setPatronName(null);
         transactionHold.setPatronId(null);
-        associatedTransactionWithLoan.setState(FINAL_CHECKIN);
-        reportFinalCheckIn(associatedTransactionWithLoan);
-        transactionRepository.save(associatedTransactionWithLoan);
+        transaction.setState(FINAL_CHECKIN);
+        reportFinalCheckIn(transaction);
+        transactionRepository.save(transaction);
       }
       else {
-        updateAssociatedTransaction(loan, transaction -> {
-          log.info("Updating transaction {} on loan closure {}", transaction.getId(), loan.getId());
-          transaction.getHold().setDueDateTime(null);
-          transaction.setState(ITEM_IN_TRANSIT);
-          reportItemInTransit(transaction);
-        });
+        associateNewLoanWithTransaction(loan);
       }
     }
 
-    if (loan.getAction().equals("renewed") && associatedTransactionWithLoan != null) {
+    if (loan.getAction().equals("renewed") && transaction != null) {
 
-      log.info("Updating transaction {} on loan renewed {}", associatedTransactionWithLoan.getId(), loan.getId());
-      var transactionDueDate = Instant.ofEpochSecond(associatedTransactionWithLoan.getHold().getDueDateTime());
+      log.info("Updating transaction {} on loan renewed {}", transaction.getId(), loan.getId());
+      var transactionDueDate = Instant.ofEpochSecond(transaction.getHold().getDueDateTime());
       var loanDueDate = loan.getDueDate().toInstant().truncatedTo(ChronoUnit.SECONDS);
       if (!loanDueDate.equals(transactionDueDate)) {
         var loanIntegerDueDate = (int) (loanDueDate.getEpochSecond());
-        reportBorrowerRenew(associatedTransactionWithLoan, loanIntegerDueDate);
-        associatedTransactionWithLoan.setState(BORROWER_RENEW);
-        associatedTransactionWithLoan.getHold().setDueDateTime(loanIntegerDueDate);
-        transactionRepository.save(associatedTransactionWithLoan);
+        reportBorrowerRenew(transaction, loanIntegerDueDate);
+        transaction.setState(BORROWER_RENEW);
+        transaction.getHold().setDueDateTime(loanIntegerDueDate);
+        transactionRepository.save(transaction);
       }
     }
   }

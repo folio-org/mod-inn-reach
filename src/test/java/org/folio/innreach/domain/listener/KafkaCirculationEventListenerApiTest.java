@@ -195,6 +195,7 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
   })
   void shouldUpdateTransactionToCheckIn() {
     UUID folioLoanId = UUID.fromString("06e820e3-71a0-455e-8c73-3963aea677d4");
+    UUID transactionId =  UUID.fromString("ab2393a1-acc4-4849-82ac-8cc0c37339e1");
     String date = "2016-07-01T08:20:00.00Z";
     Instant instant = Instant.parse(date);
     Date dueDate = Date.from(instant);
@@ -219,15 +220,14 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
     assertEquals(1, capturedEvents.size());
 
     var capturedEvent = capturedEvents.get(0);
-    assertEquals(folioLoanId, capturedEvent.getRecordId());;
-    Optional<InnReachTransaction> optionalTransaction = transactionRepository.fetchTransactionByLoanId(folioLoanId);
+    assertEquals(folioLoanId, capturedEvent.getRecordId());
+    Optional<InnReachTransaction> optionalTransaction = transactionRepository.fetchOneById(transactionId);
     InnReachTransaction transaction = null;
     if (optionalTransaction.isPresent()) {
       transaction = optionalTransaction.get();
     }
-    var transactionHold = (TransactionHold) transaction.getHold();
-    var transactionItemHold = (TransactionItemHold) transaction.getHold();
-    assertEquals(null, transactionItemHold.getPatronName());
+    var transactionHold = (TransactionItemHold) transaction.getHold();
+    assertEquals(null, transactionHold.getPatronName());
     assertEquals(null, transactionHold.getPatronId());
     assertEquals(null, transaction.getHold().getDueDateTime());
     assertEquals(InnReachTransaction.TransactionState.FINAL_CHECKIN, transaction.getState());
