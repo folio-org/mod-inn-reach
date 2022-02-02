@@ -222,11 +222,8 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
 
     var capturedEvent = capturedEvents.get(0);
     assertEquals(folioLoanId, capturedEvent.getRecordId());
-    Optional<InnReachTransaction> optionalTransaction = transactionRepository.fetchOneById(transactionId);
-    InnReachTransaction transaction = null;
-    if (optionalTransaction.isPresent()) {
-      transaction = optionalTransaction.get();
-    }
+    var optionalTransaction = transactionRepository.fetchOneById(transactionId);
+    var transaction = optionalTransaction.orElse(null);
     var transactionHold = (TransactionItemHold) transaction.getHold();
     assertEquals(null, transactionHold.getPatronName());
     assertEquals(null, transactionHold.getPatronId());
