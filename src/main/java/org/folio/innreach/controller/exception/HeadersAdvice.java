@@ -5,7 +5,6 @@ import static org.springframework.http.HttpHeaders.CONTENT_TYPE;
 
 import static org.folio.innreach.external.InnReachHeaders.X_D2IR_AUTHORIZATION;
 import static org.folio.innreach.external.InnReachHeaders.X_FROM_CODE;
-import static org.folio.innreach.external.InnReachHeaders.X_REQUEST_CREATION_TIME;
 import static org.folio.innreach.external.InnReachHeaders.X_TO_CODE;
 
 import org.springframework.web.bind.annotation.ModelAttribute;
@@ -17,7 +16,6 @@ public class HeadersAdvice {
   @ModelAttribute
   public void fetchHeader(@RequestHeader(X_TO_CODE) String xToCode,
                           @RequestHeader(X_FROM_CODE) String xFromCode,
-                          @RequestHeader(X_REQUEST_CREATION_TIME) String xRequestCreationTime,
                           @RequestHeader(X_D2IR_AUTHORIZATION) String xD2IRAuthorization,
                           @RequestHeader(ACCEPT) String accept,
                           @RequestHeader(CONTENT_TYPE) String contentType) {

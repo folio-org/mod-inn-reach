@@ -7,13 +7,11 @@ import static org.springframework.http.HttpHeaders.CONTENT_TYPE;
 
 import static org.folio.innreach.external.InnReachHeaders.X_D2IR_AUTHORIZATION;
 import static org.folio.innreach.external.InnReachHeaders.X_FROM_CODE;
-import static org.folio.innreach.external.InnReachHeaders.X_REQUEST_CREATION_TIME;
 import static org.folio.innreach.external.InnReachHeaders.X_TO_CODE;
 
 import java.io.File;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
-import java.time.OffsetDateTime;
 import java.util.Objects;
 import java.util.Random;
 import java.util.Set;
@@ -112,7 +110,6 @@ public class TestUtil {
     var headers = new HttpHeaders();
     headers.add(X_TO_CODE, "code1");
     headers.add(X_FROM_CODE, "d2ir");
-    headers.add(X_REQUEST_CREATION_TIME, String.valueOf(OffsetDateTime.now().toEpochSecond()));
     headers.add(ACCEPT, "application/json");
     headers.add(CONTENT_TYPE, "application/json");
     headers.add(X_D2IR_AUTHORIZATION, "AccessToken");
