@@ -136,7 +136,7 @@ class InnReachTransactionRepositoryTest extends BaseRepositoryTest {
   void throwException_when_updatingInnReachTransactionWithoutRequiredFields() {
     var saved = repository.fetchOneByTrackingId(PRE_POPULATED_TRANSACTION_TRACKING_ID1).get();
 
-    saved.getHold().setPatronId(null);
+    saved.getHold().setPatronAgencyCode(null);
 
     assertThrows(DataIntegrityViolationException.class, () -> repository.saveAndFlush(saved));
   }
