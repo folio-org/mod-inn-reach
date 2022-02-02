@@ -785,7 +785,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     mockFindRequestsReturnsEmptyList(inventoryItemDTO);
     var user = mockUserClient();
     when(servicePointsUsersClient.findServicePointsUsers(user.getId())).thenThrow(IllegalStateException.class);
-    when(innReachClient.postInnReachApi(any(), anyString(), anyString(), anyString(), any())).thenReturn("response");
+    when(innReachClient.postInnReachApi(any(), anyString(), anyString(), anyString())).thenReturn("response");
 
     var itemHoldDTO = deserializeFromJsonFile(
       "/inn-reach-transaction/create-item-hold-request.json", TransactionHoldDTO.class);
@@ -798,7 +798,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
 
     assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
 
-    await().untilAsserted(() -> verify(innReachClient).postInnReachApi(any(), anyString(), anyString(), anyString(), anyLong(), any()));
+    await().untilAsserted(() -> verify(innReachClient).postInnReachApi(any(), anyString(), anyString(), anyString(), any()));
 
     verify(inventoryClient).getItemsByHrId(inventoryItemDTO.getHrid());
     verify(circulationClient, never()).queryRequestsByItemId(inventoryItemDTO.getId());
@@ -807,7 +807,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     verify(circulationClient, never()).sendRequest(any());
 
     var cancelRequest = ArgumentCaptor.forClass(OwningSiteCancelsRequestDTO.class);
-    verify(innReachClient).postInnReachApi(any(), anyString(), anyString(), anyString(), any(), cancelRequest.capture());
+    verify(innReachClient).postInnReachApi(any(), anyString(), anyString(), anyString(), cancelRequest.capture());
     assertEquals("Request not permitted", cancelRequest.getValue().getReason());
   }
 
@@ -823,7 +823,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     mockFindRequestsReturnsEmptyList(inventoryItemDTO);
     var user = mockUserClient();
     mockInventoryStorageClient(user);
-    when(innReachClient.postInnReachApi(any(), anyString(), anyString(), anyString(), any())).thenReturn("response");
+    when(innReachClient.postInnReachApi(any(), anyString(), anyString(), anyString())).thenReturn("response");
     when(holdingsStorageClient.findHolding(any())).thenReturn(Optional.empty());
 
     var itemHoldDTO = deserializeFromJsonFile(
@@ -837,7 +837,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
 
     assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
 
-    await().untilAsserted(() -> verify(innReachClient).postInnReachApi(any(), anyString(), anyString(), anyString(), anyLong(), any()));
+    await().untilAsserted(() -> verify(innReachClient).postInnReachApi(any(), anyString(), anyString(), anyString(), any()));
 
     verify(inventoryClient, times(2)).getItemsByHrId(inventoryItemDTO.getHrid());
     verify(circulationClient).queryRequestsByItemId(inventoryItemDTO.getId());
@@ -846,7 +846,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     verify(circulationClient, never()).sendRequest(any());
 
     var request = ArgumentCaptor.forClass(OwningSiteCancelsRequestDTO.class);
-    verify(innReachClient).postInnReachApi(any(), anyString(), anyString(), anyString(), any(), request.capture());
+    verify(innReachClient).postInnReachApi(any(), anyString(), anyString(), anyString(), request.capture());
     assertEquals("Item not available", request.getValue().getReason());
   }
 
