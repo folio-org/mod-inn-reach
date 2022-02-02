@@ -28,12 +28,12 @@ public class KafkaInventoryEventListener {
 
   @KafkaListener(
     containerFactory = KAFKA_CONTAINER_FACTORY,
-    id = "${kafka.listener.inventory.id}",
-    groupId = "${kafka.listener.inventory.group-id}",
-    topicPattern = "${kafka.listener.inventory.topic-pattern}",
-    concurrency = "${kafka.listener.inventory.concurrency}"
+    id = "${kafka.listener.item.id}",
+    groupId = "${kafka.listener.item.group-id}",
+    topicPattern = "${kafka.listener.item.topic-pattern}",
+    concurrency = "${kafka.listener.item.concurrency}"
   )
-  public void handleInventoryEvents(List<ConsumerRecord<String, DomainEvent>> consumerRecords) {
+  public void handleInventoryItemEvents(List<ConsumerRecord<String, DomainEvent<Item>>> consumerRecords) {
     log.info("Handling inventory events from Kafka [number of events: {}]", consumerRecords.size());
 
     var centralServers = centralServerRepository.findAll();
@@ -42,43 +42,72 @@ public class KafkaInventoryEventListener {
       .collect(Collectors.toList());
 
     consumerRecords.forEach(event -> {
-
-      if (Item.class.equals(event.value().getData().getNewEntity().getClass())) {
-        switch (event.value().getType()) {
-          case CREATED:
-            Item item = (Item) event.value().getData().getNewEntity();
-            evaluateService.handleItemEvent(item, centralServerCodes);
-            break;
-          case UPDATED:
-            item = (Item) event.value().getData().getNewEntity();
-            evaluateService.handleItemEvent(item, centralServerCodes);
-            break;
-          default:
-            log.warn("Received Item event of unknown type {}", event.value().getType());
-        }
-      }
-
-      if (Holding.class.equals(event.value().getData().getNewEntity().getClass())) {
-        switch (event.value().getType()) {
-          case CREATED:
-            Holding holding = (Holding) event.value().getData().getNewEntity();
-            evaluateService.handleHoldingEvent(holding, centralServerCodes);
-            break;
-          default:
-            log.warn("Received Holding event of unknown type {}", event.value().getType());
-        }
-      }
-
-      if (Instance.class.equals(event.value().getData().getNewEntity().getClass())) {
-        switch (event.value().getType()) {
-          case CREATED:
-            Instance instance = (Instance) event.value().getData().getNewEntity();
-            evaluateService.handleInstanceEvent(instance, centralServerCodes);
-            break;
-          default:
-            log.warn("Received Instance event of unknown type {}", event.value().getType());
-        }
+      var newItem = event.value().getData().getNewEntity();
+      switch (event.value().getType()) {
+        case CREATED:
+          evaluateService.handleItemEvent(newItem, centralServerCodes);
+          break;
+        case UPDATED:
+          evaluateService.handleItemEvent(newItem, centralServerCodes);
+          break;
+        default:
+          log.warn("Received Item event of unknown type {}", event.value().getType());
       }
     });
   }
+
+  @KafkaListener(
+    containerFactory = KAFKA_CONTAINER_FACTORY,
+    id = "${kafka.listener.holding.id}",
+    groupId = "${kafka.listener.holding.group-id}",
+    topicPattern = "${kafka.listener.holding.topic-pattern}",
+    concurrency = "${kafka.listener.holding.concurrency}"
+  )
+  public void handleInventoryHoldingEvents(List<ConsumerRecord<String, DomainEvent<Holding>>> consumerRecords) {
+    log.info("Handling inventory events from Kafka [number of events: {}]", consumerRecords.size());
+
+    var centralServers = centralServerRepository.findAll();
+    var centralServerCodes = centralServers.stream()
+      .map(CentralServer::getCentralServerCode)
+      .collect(Collectors.toList());
+
+    consumerRecords.forEach(event -> {
+      var newHolding = event.value().getData().getNewEntity();
+      switch (event.value().getType()) {
+        case CREATED:
+          evaluateService.handleHoldingEvent(newHolding, centralServerCodes);
+          break;
+        default:
+          log.warn("Received Holding event of unknown type {}", event.value().getType());
+      }
+    });
+  }
+
+  @KafkaListener(
+    containerFactory = KAFKA_CONTAINER_FACTORY,
+    id = "${kafka.listener.instance.id}",
+    groupId = "${kafka.listener.instance.group-id}",
+    topicPattern = "${kafka.listener.instance.topic-pattern}",
+    concurrency = "${kafka.listener.instance.concurrency}"
+  )
+  public void handleInventoryInstanceEvents(List<ConsumerRecord<String, DomainEvent<Instance>>> consumerRecords) {
+    log.info("Handling inventory events from Kafka [number of events: {}]", consumerRecords.size());
+
+    var centralServers = centralServerRepository.findAll();
+    var centralServerCodes = centralServers.stream()
+      .map(CentralServer::getCentralServerCode)
+      .collect(Collectors.toList());
+
+    consumerRecords.forEach(event -> {
+      var newInstance = event.value().getData().getNewEntity();
+      switch (event.value().getType()) {
+        case CREATED:
+          evaluateService.handleInstanceEvent(newInstance, centralServerCodes);
+          break;
+        default:
+          log.warn("Received Instance event of unknown type {}", event.value().getType());
+      }
+    });
+  }
+
 }

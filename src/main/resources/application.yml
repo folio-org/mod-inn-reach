@@ -129,11 +129,24 @@ okapi.url: ${OKAPI_URL:http://okapi:9130}
 environment: ${ENV:folio}
 kafka:
   listener:
-    inventory:
-      id: ${environment}-mod-inn-reach-inventory
+    item:
+      id: ${environment}-mod-inn-reach-inventory-item-events
       group-id: ${spring.kafka.consumer.group-id}
-      topic-pattern: (${environment}\.)(.*\.)inventory\.(instance|holdings-record|item)}
+      topic-pattern: (${environment}\.)(.*\.)inventory\.item
       concurrency: ${KAFKA_EVENTS_CONCURRENCY:2}
+      data-type: org.folio.innreach.dto.Item
+    instance:
+        id: ${environment}-mod-inn-reach-inventory-instance-events
+        group-id: ${spring.kafka.consumer.group-id}
+        topic-pattern: (${environment}\.)(.*\.)inventory\.instance
+        concurrency: ${KAFKA_EVENTS_CONCURRENCY:2}
+        data-type: org.folio.innreach.dto.Instance
+    holding:
+        id: ${environment}-mod-inn-reach-inventory-holding-events
+        group-id: ${spring.kafka.consumer.group-id}
+        topic-pattern: (${environment}\.)(.*\.)inventory\.holdings-record
+        concurrency: ${KAFKA_EVENTS_CONCURRENCY:2}
+        data-type: org.folio.innreach.dto.Holding
     loan:
       id: ${environment}-mod-inn-reach-circ-loans
       group-id: ${spring.kafka.consumer.group-id}
