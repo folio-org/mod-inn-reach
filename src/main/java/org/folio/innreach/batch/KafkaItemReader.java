@@ -30,7 +30,7 @@ public class KafkaItemReader<K, V> implements AutoCloseable {
   private static final long DEFAULT_POLL_TIMEOUT = 30L;
 
   private final Properties consumerProperties;
-  private final List<TopicPartition> topicPartitions;
+  private final String topic;
 
   private Map<TopicPartition, Long> partitionOffsets;
   private KafkaConsumer<K, V> kafkaConsumer;
@@ -43,8 +43,7 @@ public class KafkaItemReader<K, V> implements AutoCloseable {
       kafkaConsumer = new KafkaConsumer<>(consumerProperties);
     }
 
-    kafkaConsumer.assign(topicPartitions);
-    partitionOffsets.forEach(kafkaConsumer::seek);
+    kafkaConsumer.subscribe(List.of(topic));
   }
 
   public V read() {
