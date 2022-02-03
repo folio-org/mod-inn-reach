@@ -24,6 +24,7 @@ import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.folio.innreach.domain.dto.folio.circulation.RequestDTO;
 import org.folio.innreach.domain.entity.InnReachTransaction;
+import org.folio.innreach.domain.entity.TransactionHold;
 import org.folio.innreach.domain.entity.TransactionItemHold;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -52,7 +53,7 @@ import org.folio.innreach.repository.InnReachTransactionRepository;
 class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
   private static final UUID LOAN_ID = UUID.randomUUID();
   private static final UUID REQUESTER_ID = UUID.randomUUID();
-  private static final UUID ITEM_ID = UUID.fromString("9a326225-6530-41cc-9399-a61987bfab3c");
+  private static final UUID ITEM_ID = UUID.fromString("8a326225-6530-41cc-9399-a61987bfab3c");
   private static final UUID REQUEST_ID = UUID.randomUUID();
   private static final UUID PRE_POPULATED_PATRON_ID = UUID.fromString("4154a604-4d5a-4d8e-9160-057fc7b6e6b8");
   private static final UUID PRE_POPULATED_ITEM_ID = UUID.fromString("9a326225-6530-41cc-9399-a61987bfab3c");
@@ -248,10 +249,10 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
     event.setRecordId(null); // the listener should set this field from event key value
     requestDTO.setId(folioRequestId);
 
-    var consumerRecord = new ConsumerRecord(CIRC_LOAN_TOPIC, 1, 1, folioRequestId.toString(), event);
-    listener.handleLoanEvents(List.of(consumerRecord));
+    var consumerRecord = new ConsumerRecord(CIRC_REQUEST_TOPIC, 1, 1, folioRequestId.toString(), event);
+    listener.handleRequestStorage(List.of(consumerRecord));
 
-    ArgumentCaptor<List<DomainEvent<LoanDTO>>> eventsCaptor = ArgumentCaptor.forClass(List.class);
+    ArgumentCaptor<List<DomainEvent<RequestDTO>>> eventsCaptor = ArgumentCaptor.forClass(List.class);
 
     verify(eventProcessor).process(eventsCaptor.capture(), any(Consumer.class));
     when(innReachExternalService.postInnReachApi(any(), any(), any())).thenReturn("ok");
@@ -261,7 +262,10 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
     var capturedEvent = capturedEvents.get(0);
     assertEquals(folioRequestId, capturedEvent.getRecordId());
     var transaction = transactionRepository.fetchOneByRequestId(requestDTO.getId()).orElse(null);
-    var transactionHold = (TransactionItemHold) transaction.getHold();
+    var transactionHold = (TransactionHold) transaction.getHold();
+
+    assertEquals(ITEM_ID, transactionHold.getFolioItemId());
+    assertEquals(InnReachTransaction.TransactionState.TRANSFER, transaction.getState());
   }
 
   private DomainEvent<LoanDTO> getLoanDomainEvent(DomainEventType eventType) {

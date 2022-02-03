@@ -21,6 +21,7 @@ import java.util.function.Consumer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.folio.innreach.domain.dto.folio.circulation.RequestDTO;
+import org.folio.innreach.domain.entity.TransactionHold;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
@@ -178,9 +179,9 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
       return;
     }
 
-    TransactionItemHold transactionItemHold = (TransactionItemHold) transaction.getHold();
-    if (!UUID.fromString(transactionItemHold.getItemId()).equals(requestDTO.getItemId())) {
-      transactionItemHold.setItemId(requestDTO.getItemId().toString());
+    TransactionHold transactionItemHold = transaction.getHold();
+    if (!transactionItemHold.getFolioItemId().equals(requestDTO.getItemId())) {
+      transactionItemHold.setFolioItemId(requestDTO.getItemId());
       transaction.setState(TRANSFER);
       reportTransferRequest(transaction, requestDTO.getItemId().toString());
     }

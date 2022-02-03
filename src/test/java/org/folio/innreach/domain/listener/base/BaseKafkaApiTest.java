@@ -45,6 +45,7 @@ import org.folio.tenant.rest.resource.TenantApi;
 public class BaseKafkaApiTest {
 
   public static final String CIRC_LOAN_TOPIC = "folio.testing.circulation.loan";
+  public static final String CIRC_REQUEST_TOPIC = "folio.testing.circulation.request";
 
   @Container
   public static PostgreSQLContainer<?> postgresqlContainer = new PostgreSQLContainer<>("postgres:11-alpine");
