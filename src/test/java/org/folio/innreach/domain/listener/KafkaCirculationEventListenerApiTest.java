@@ -268,6 +268,30 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
     assertEquals(InnReachTransaction.TransactionState.TRANSFER, transaction.getState());
   }
 
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-another-inn-reach-transaction.sql"
+  })
+  void shouldSkipIfTransactionNotFoundByRequestId() {
+    var folioRequestId =  UUID.fromString("aa11eba7-3c0f-4d15-9cca-c8608cd6bc8a");
+    var event = getRequestDomainEvent(DomainEventType.UPDATED);
+
+    var consumerRecord = new ConsumerRecord(CIRC_REQUEST_TOPIC, 1, 1, folioRequestId.toString(), event);
+    listener.handleRequestStorage(List.of(consumerRecord));
+
+    ArgumentCaptor<List<DomainEvent<RequestDTO>>> eventsCaptor = ArgumentCaptor.forClass(List.class);
+    verify(eventProcessor).process(eventsCaptor.capture(), any(Consumer.class));
+    when(innReachExternalService.postInnReachApi(any(), any(), any())).thenReturn("ok");
+    var capturedEvents = eventsCaptor.getValue();
+    assertEquals(1, capturedEvents.size());
+
+    var capturedEvent = capturedEvents.get(0);
+    assertEquals(folioRequestId, capturedEvent.getRecordId());
+    var transaction = transactionRepository.fetchOneByRequestId(folioRequestId).orElse(null);
+    assertEquals(null, transaction);
+  }
+
   private DomainEvent<LoanDTO> getLoanDomainEvent(DomainEventType eventType) {
     var loan = new LoanDTO().id(LOAN_ID)
       .dueDate(DUE_DATE)
