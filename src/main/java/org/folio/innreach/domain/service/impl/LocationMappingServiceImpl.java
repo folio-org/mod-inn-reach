@@ -15,7 +15,6 @@ import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Example;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,6 +29,7 @@ import org.folio.innreach.external.service.InnReachLocationExternalService;
 import org.folio.innreach.mapper.LocationMappingMapper;
 import org.folio.innreach.repository.InnReachLocationRepository;
 import org.folio.innreach.repository.LocationMappingRepository;
+import org.folio.spring.data.OffsetRequest;
 
 @RequiredArgsConstructor
 @Service
@@ -47,7 +47,7 @@ public class LocationMappingServiceImpl implements LocationMappingService {
   public LocationMappingsDTO getAllMappings(UUID centralServerId, UUID libraryId, int offset, int limit) {
     var example = mappingExampleWithServerIdAndLibraryId(centralServerId, libraryId);
 
-    Page<LocationMapping> mappings = repository.findAll(example, PageRequest.of(offset, limit, DEFAULT_SORT));
+    Page<LocationMapping> mappings = repository.findAll(example, new OffsetRequest(offset, limit, DEFAULT_SORT));
 
     return mapper.toDTOCollection(mappings);
   }

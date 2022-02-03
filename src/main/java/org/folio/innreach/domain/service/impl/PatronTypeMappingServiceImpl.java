@@ -11,7 +11,6 @@ import java.util.function.Consumer;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Example;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,6 +20,7 @@ import org.folio.innreach.domain.service.PatronTypeMappingService;
 import org.folio.innreach.dto.PatronTypeMappingsDTO;
 import org.folio.innreach.mapper.PatronTypeMappingMapper;
 import org.folio.innreach.repository.PatronTypeMappingRepository;
+import org.folio.spring.data.OffsetRequest;
 
 @RequiredArgsConstructor
 @Service
@@ -34,7 +34,7 @@ public class PatronTypeMappingServiceImpl implements PatronTypeMappingService {
   public PatronTypeMappingsDTO getAllMappings(UUID centralServerId, int offset, int limit) {
     var example = mappingExampleWithServerId(centralServerId);
 
-    Page<PatronTypeMapping> mappings = repository.findAll(example, PageRequest.of(offset, limit));
+    Page<PatronTypeMapping> mappings = repository.findAll(example, new OffsetRequest(offset, limit));
 
     return mapper.toDTOCollection(mappings);
   }

@@ -5,27 +5,23 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.mockito.MockitoAnnotations.openMocks;
 
 import static org.folio.innreach.batch.contribution.IterationEventReaderFactory.CONSUMER_REC_PROCESSOR;
 import static org.folio.innreach.batch.contribution.IterationEventReaderFactory.ITERATION_JOB_ID_HEADER;
 
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
+import java.util.Properties;
 import java.util.UUID;
-import java.util.function.BiConsumer;
 
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
-import org.apache.kafka.common.TopicPartition;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Answers;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import org.folio.innreach.batch.KafkaItemReader;
@@ -34,27 +30,17 @@ import org.folio.innreach.domain.dto.folio.inventorystorage.InstanceIterationEve
 @ExtendWith(MockitoExtension.class)
 class KafkaItemReaderTest {
 
-  @Spy
-  private List<TopicPartition> topicPartitions;
-
-  @Spy
-  private Map<TopicPartition, Long> partitionOffsets;
-
   @Mock(answer = Answers.RETURNS_DEEP_STUBS)
   private KafkaConsumer<String, InstanceIterationEvent> kafkaConsumer;
 
   @Mock
   private Iterator<ConsumerRecord<String, InstanceIterationEvent>> consumerRecords;
 
-  @Mock
-  private BiConsumer<String, InstanceIterationEvent> consumer;
-
   @InjectMocks
-  private KafkaItemReader<String, InstanceIterationEvent> reader;
+  private KafkaItemReader<String, InstanceIterationEvent> reader = new KafkaItemReader<>(new Properties(), "topic");
 
   @BeforeEach
   void setUp() {
-    openMocks(this);
     reader.setRecordProcessor(CONSUMER_REC_PROCESSOR);
   }
 
@@ -62,14 +48,7 @@ class KafkaItemReaderTest {
   void shouldOpen() {
     reader.open();
 
-    verify(kafkaConsumer).assign(topicPartitions);
-  }
-
-  @Test
-  void shouldInitConsumerWhenOpen() {
-    reader.open();
-
-    verify(kafkaConsumer).assign(topicPartitions);
+    verify(kafkaConsumer).subscribe(any(List.class));
   }
 
   @Test
