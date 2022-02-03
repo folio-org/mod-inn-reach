@@ -16,7 +16,6 @@ import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.BeanFactoryAware;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
@@ -35,6 +34,7 @@ import org.folio.innreach.mapper.ContributionMapper;
 import org.folio.innreach.repository.ContributionErrorRepository;
 import org.folio.innreach.repository.ContributionRepository;
 import org.folio.spring.FolioExecutionContext;
+import org.folio.spring.data.OffsetRequest;
 
 @Log4j2
 @AllArgsConstructor
@@ -85,7 +85,7 @@ public class ContributionServiceImpl implements ContributionService, BeanFactory
 
   @Override
   public ContributionsDTO getHistory(UUID centralServerId, int offset, int limit) {
-    var page = repository.fetchHistoryByCentralServerId(centralServerId, PageRequest.of(offset, limit));
+    var page = repository.fetchHistoryByCentralServerId(centralServerId, new OffsetRequest(offset, limit));
     return mapper.toDTOCollection(page);
   }
 

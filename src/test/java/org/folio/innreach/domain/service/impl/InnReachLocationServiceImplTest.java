@@ -22,7 +22,6 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.mockito.Spy;
 import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
 
 import org.folio.innreach.domain.entity.InnReachLocation;
 import org.folio.innreach.domain.exception.EntityNotFoundException;
@@ -31,6 +30,7 @@ import org.folio.innreach.mapper.InnReachLocationMapper;
 import org.folio.innreach.mapper.InnReachLocationMapperImpl;
 import org.folio.innreach.mapper.MappingMethods;
 import org.folio.innreach.repository.InnReachLocationRepository;
+import org.folio.spring.data.OffsetRequest;
 
 class InnReachLocationServiceImplTest {
 
@@ -83,12 +83,12 @@ class InnReachLocationServiceImplTest {
 
 	@Test
 	void getAllInnReachLocations() {
-    when(innReachLocationRepository.findAll(any(PageRequest.class))).thenReturn(new PageImpl<>(List.of(
+    when(innReachLocationRepository.findAll(any(OffsetRequest.class))).thenReturn(new PageImpl<>(List.of(
         createInnReachLocation(), createInnReachLocation(), createInnReachLocation())));
 
     var innReachLocations = innReachLocationService.getAllInnReachLocations(0, 10);
 
-    verify(innReachLocationRepository).findAll(any(PageRequest.class));
+    verify(innReachLocationRepository).findAll(any(OffsetRequest.class));
 
 		assertNotNull(innReachLocations);
     assertNotNull(innReachLocations.getLocations());

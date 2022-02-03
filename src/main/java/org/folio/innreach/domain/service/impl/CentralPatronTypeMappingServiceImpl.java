@@ -9,7 +9,6 @@ import java.util.function.Consumer;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Example;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,6 +18,7 @@ import org.folio.innreach.domain.service.CentralPatronTypeMappingService;
 import org.folio.innreach.dto.CentralPatronTypeMappingsDTO;
 import org.folio.innreach.mapper.CentralPatronTypeMappingMapper;
 import org.folio.innreach.repository.CentralPatronTypeMappingRepository;
+import org.folio.spring.data.OffsetRequest;
 
 @Service
 @RequiredArgsConstructor
@@ -33,7 +33,7 @@ public class CentralPatronTypeMappingServiceImpl implements CentralPatronTypeMap
   public CentralPatronTypeMappingsDTO getCentralPatronTypeMappings(UUID centralServerId, Integer offset, Integer limit) {
     var centralPatronTypeMappingExample = mappingExampleWithServerId(centralServerId);
 
-    var centralPatronTypeMappings = repository.findAll(centralPatronTypeMappingExample, PageRequest.of(offset, limit));
+    var centralPatronTypeMappings = repository.findAll(centralPatronTypeMappingExample, new OffsetRequest(offset, limit));
 
     return mapper.toDTOCollection(centralPatronTypeMappings);
   }
