@@ -17,10 +17,10 @@ import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.test.context.jdbc.Sql;
 
 import org.folio.innreach.domain.entity.Contribution;
+import org.folio.spring.data.OffsetRequest;
 
 @Sql(scripts = {
   "classpath:db/central-server/pre-populate-central-server.sql",
@@ -48,7 +48,7 @@ class ContributionRepositoryTest extends BaseRepositoryTest {
 
   @Test
   void shouldFetchHistory() {
-    var foundPage = repository.fetchHistoryByCentralServerId(PRE_POPULATED_CS_ID, PageRequest.of(0, 10));
+    var foundPage = repository.fetchHistoryByCentralServerId(PRE_POPULATED_CS_ID, new OffsetRequest(0, 10));
 
     assertNotNull(foundPage);
     assertEquals(2, foundPage.getTotalElements());
@@ -68,7 +68,7 @@ class ContributionRepositoryTest extends BaseRepositoryTest {
 
   @Test
   void shouldFetchHistoryOnSecondPage() {
-    var foundPage = repository.fetchHistoryByCentralServerId(PRE_POPULATED_CS_ID, PageRequest.of(1, 1));
+    var foundPage = repository.fetchHistoryByCentralServerId(PRE_POPULATED_CS_ID, new OffsetRequest(1, 1));
 
     assertNotNull(foundPage);
     assertEquals(2, foundPage.getTotalElements());

@@ -23,6 +23,7 @@ import java.util.function.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.folio.innreach.domain.entity.InnReachTransaction;
+import org.folio.innreach.domain.entity.TransactionItemHold;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -119,13 +120,15 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
   })
   void shouldReturnCheckedInItem() {
+    var folioLoanId = UUID.fromString("fd5109c7-8934-4294-9504-c1a4a4f07c96");
     var event = getLoanDomainEvent(DomainEventType.UPDATED);
     event.setRecordId(null); // the listener should set this field from event key value
     var loan = event.getData().getNewEntity();
+    loan.setId(folioLoanId);
     loan.setStatus(new LoanStatus().name("Closed"));
     loan.setAction("checkedin");
 
-    var consumerRecord = new ConsumerRecord(CIRC_LOAN_TOPIC, 1, 1, LOAN_ID.toString(), event);
+    var consumerRecord = new ConsumerRecord(CIRC_LOAN_TOPIC, 1, 1, folioLoanId.toString(), event);
 
     listener.handleLoanEvents(List.of(consumerRecord));
 
@@ -135,7 +138,7 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
     var capturedEvents = eventsCaptor.getValue();
     assertEquals(1, capturedEvents.size());
     var capturedEvent = capturedEvents.get(0);
-    assertEquals(LOAN_ID, capturedEvent.getRecordId());
+    assertEquals(folioLoanId, capturedEvent.getRecordId());
 
     var transaction = transactionRepository.fetchOneById(PRE_POPULATED_TRANSACTION_ID).get();
     assertEquals(ITEM_IN_TRANSIT, transaction.getState());
@@ -184,6 +187,49 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
     var loanIntegerDueDate = (int) (loanDueDate.getEpochSecond());
     assertEquals(loanIntegerDueDate, transaction.getHold().getDueDateTime());
 
+  }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql",
+  })
+  void shouldUpdateTransactionToCheckIn() {
+    UUID folioLoanId = UUID.fromString("06e820e3-71a0-455e-8c73-3963aea677d4");
+    UUID transactionId =  UUID.fromString("ab2393a1-acc4-4849-82ac-8cc0c37339e1");
+    String date = "2016-07-01T08:20:00.00Z";
+    Instant instant = Instant.parse(date);
+    Date dueDate = Date.from(instant);
+    var event = getLoanDomainEvent(DomainEventType.UPDATED);
+    LoanDTO loanDTO = event.getData().getNewEntity();
+    loanDTO.setId(folioLoanId);
+    loanDTO.setDueDate(dueDate);
+    loanDTO.setAction("checkedin");
+    loanDTO.setStatus(new LoanStatus().name("Closed"));
+    event.setData(new EntityChangedData<>(null, loanDTO));
+
+    event.setRecordId(null); // the listener should set this field from event key value
+
+    var consumerRecord = new ConsumerRecord(CIRC_LOAN_TOPIC, 1, 1, folioLoanId.toString(), event);
+    listener.handleLoanEvents(List.of(consumerRecord));
+
+    ArgumentCaptor<List<DomainEvent<LoanDTO>>> eventsCaptor = ArgumentCaptor.forClass(List.class);
+
+    verify(eventProcessor).process(eventsCaptor.capture(), any(Consumer.class));
+    when(innReachExternalService.postInnReachApi(any(), any(), any())).thenReturn("ok");
+    var capturedEvents = eventsCaptor.getValue();
+    assertEquals(1, capturedEvents.size());
+
+    var capturedEvent = capturedEvents.get(0);
+    assertEquals(folioLoanId, capturedEvent.getRecordId());
+    var optionalTransaction = transactionRepository.fetchOneById(transactionId);
+    var transaction = optionalTransaction.orElse(null);
+    var transactionHold = (TransactionItemHold) transaction.getHold();
+
+    assertEquals(null, transactionHold.getPatronName());
+    assertEquals(null, transactionHold.getPatronId());
+    assertEquals(null, transaction.getHold().getDueDateTime());
+    assertEquals(InnReachTransaction.TransactionState.FINAL_CHECKIN, transaction.getState());
   }
 
   private DomainEvent<LoanDTO> getLoanDomainEvent(DomainEventType eventType) {

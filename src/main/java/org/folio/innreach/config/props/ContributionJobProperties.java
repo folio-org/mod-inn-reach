@@ -11,6 +11,7 @@ public class ContributionJobProperties {
   private int retryIntervalMs = 1000;
   private int retryAttempts = 3;
   private String readerTopic;
+  private String readerGroupId;
   private long readerPollTimeoutSec;
 
 }

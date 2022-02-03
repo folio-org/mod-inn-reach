@@ -33,4 +33,5 @@ public interface InnReachTransactionRepository extends JpaRepository<InnReachTra
 
   @Query(name = FETCH_OPEN_BY_LOAN_ID_QUERY_NAME)
   Optional<InnReachTransaction> fetchOneByLoanId(UUID folioLoanId);
+
 }
