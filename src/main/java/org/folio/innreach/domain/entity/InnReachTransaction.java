@@ -12,6 +12,8 @@ import static org.folio.innreach.domain.entity.InnReachTransaction.FETCH_OPEN_BY
 import static org.folio.innreach.domain.entity.InnReachTransaction.FETCH_OPEN_BY_ITEM_AND_PATRON_QUERY_NAME;
 import static org.folio.innreach.domain.entity.InnReachTransaction.FETCH_OPEN_BY_LOAN_ID_QUERY_NAME;
 import static org.folio.innreach.domain.entity.InnReachTransaction.FETCH_OPEN_BY_LOAN_ID_QUERY;
+import static org.folio.innreach.domain.entity.InnReachTransaction.FETCH_BY_REQUEST_ID_QUERY_NAME;
+import static org.folio.innreach.domain.entity.InnReachTransaction.FETCH_BY_REQUEST_ID_QUERY;
 
 import java.util.UUID;
 
@@ -63,6 +65,10 @@ import org.folio.innreach.domain.entity.base.Identifiable;
   name = FETCH_OPEN_BY_LOAN_ID_QUERY_NAME,
   query = FETCH_OPEN_BY_LOAN_ID_QUERY
 )
+@NamedQuery(
+  name = FETCH_BY_REQUEST_ID_QUERY_NAME,
+  query = FETCH_BY_REQUEST_ID_QUERY
+)
 public class InnReachTransaction extends Auditable implements Identifiable<UUID> {
 
   public static final String GET_ALL_QUERY_NAME = "InnReachTransaction.getAll";
@@ -99,6 +105,11 @@ public class InnReachTransaction extends Auditable implements Identifiable<UUID>
     "JOIN FETCH irt.hold AS h " +
     "JOIN FETCH h.pickupLocation " +
     "WHERE h.folioLoanId = :folioLoanId AND irt.state NOT IN (4, 11, 12, 13)";
+
+  public static final String FETCH_BY_REQUEST_ID_QUERY_NAME = "InnReachTransaction.fetchTransactionItemHoldByHoldingsRecord";
+  public static final String FETCH_BY_REQUEST_ID_QUERY = "SELECT irt FROM InnReachTransaction AS irt " +
+    "JOIN FETCH irt.hold AS h " +
+    "JOIN FETCH h.pickupLocation " + "WHERE h.folioRequestId = :folioRequestId AND irt.state NOT IN (4, 11, 12, 13)";
 
   @Id
   @GeneratedValue(strategy = GenerationType.AUTO)

@@ -20,6 +20,7 @@ import java.util.function.Consumer;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.folio.innreach.domain.dto.folio.circulation.RequestDTO;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
@@ -51,6 +52,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
   private static final String D2IR_IN_TRANSIT = "intransit";
   private static final String D2IR_BORROWER_RENEW = "borrowerrenew";
   private static final String D2IR_FINAL_CHECK_IN = "finalcheckin";
+  private static final String D2IR_TRASFER_REQUEST = "transferrequest";
 
   private final InnReachTransactionRepository transactionRepository;
   private final InnReachTransactionMapper transactionMapper;
@@ -169,6 +171,21 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
     }
   }
 
+  @Override
+  public void handleRequestUpdate(RequestDTO requestDTO) {
+    var transaction = transactionRepository.fetchOneByRequestId(requestDTO.getId()).orElse(null);
+    if (transaction == null) {
+      return;
+    }
+
+    TransactionItemHold transactionItemHold = (TransactionItemHold) transaction.getHold();
+    if (!UUID.fromString(transactionItemHold.getItemId()).equals(requestDTO.getItemId())) {
+      transactionItemHold.setItemId(requestDTO.getItemId().toString());
+      transaction.setState(TRANSFER);
+      reportTransferRequest(transaction, requestDTO.getItemId().toString());
+    }
+  }
+
   private void updateAssociatedTransaction(LoanDTO loan, Consumer<InnReachTransaction> transactionConsumer) {
     var itemId = loan.getItemId();
     var patronId = loan.getUserId();
@@ -226,6 +243,12 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
 
   private void reportItemInTransit(InnReachTransaction transaction) {
     callD2irCircOperation(D2IR_IN_TRANSIT, transaction, null);
+  }
+
+  private void reportTransferRequest(InnReachTransaction transaction, String newItemId) {
+    var payload = new HashMap<>();
+    payload.put("newItemId", newItemId);
+    callD2irCircOperation(D2IR_TRASFER_REQUEST, transaction, payload);
   }
 
   private void callD2irCircOperation(String operation, InnReachTransaction transaction, Map<Object, Object> payload) {
