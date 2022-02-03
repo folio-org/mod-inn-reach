@@ -2,6 +2,7 @@ package org.folio.innreach.batch.contribution;
 
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -28,6 +29,8 @@ class IterationEventReaderFactoryTest {
 
   @Test
   void createReader() {
+    when(jobProperties.getReaderGroupId()).thenReturn("topic");
+
     var reader = factory.createReader("test");
 
     assertNotNull(reader);

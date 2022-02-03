@@ -1,6 +1,7 @@
 package org.folio.innreach.batch;
 
 import java.time.Duration;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -31,8 +32,8 @@ public class KafkaItemReader<K, V> implements AutoCloseable {
 
   private final Properties consumerProperties;
   private final String topic;
+  private final Map<TopicPartition, Long> partitionOffsets = new HashMap<>();
 
-  private Map<TopicPartition, Long> partitionOffsets;
   private KafkaConsumer<K, V> kafkaConsumer;
   private Iterator<ConsumerRecord<K, V>> consumerRecords;
   private Consumer<ConsumerRecord<K, V>> recordProcessor;

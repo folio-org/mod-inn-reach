@@ -46,7 +46,6 @@ public class IterationEventReaderFactory {
 
     var reader = new KafkaItemReader<String, InstanceIterationEvent>(props, topic);
     reader.setPollTimeout(Duration.ofSeconds(jobProperties.getReaderPollTimeoutSec()));
-    reader.setPartitionOffsets(new HashMap<>());
     reader.setRecordProcessor(CONSUMER_REC_PROCESSOR);
     return reader;
   }
