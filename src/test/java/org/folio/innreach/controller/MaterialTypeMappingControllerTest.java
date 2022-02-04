@@ -126,7 +126,7 @@ class MaterialTypeMappingControllerTest extends BaseControllerTest {
     var response = responseEntity.getBody();
     assertNotNull(response);
 
-    var expectedMapping = findMapping(PRE_POPULATED_MAPPING2_ID);
+    var expectedMapping = findMapping(PRE_POPULATED_MAPPING1_ID);
 
     assertEquals(3, response.getTotalRecords());
     assertEquals(singletonList(expectedMapping), response.getMaterialTypeMappings());

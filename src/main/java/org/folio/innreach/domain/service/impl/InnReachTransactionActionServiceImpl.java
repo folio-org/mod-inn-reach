@@ -1,6 +1,7 @@
 package org.folio.innreach.domain.service.impl;
 
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.BORROWER_RENEW;
+import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.FINAL_CHECKIN;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.ITEM_HOLD;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.ITEM_IN_TRANSIT;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.ITEM_RECEIVED;
@@ -8,6 +9,7 @@ import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionSt
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.PATRON_HOLD;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.RECEIVE_UNANNOUNCED;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.TRANSFER;
+import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionType.ITEM;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -48,6 +50,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
   private static final String D2IR_RECEIVE_UNSHIPPED_OPERATION = "receiveunshipped";
   private static final String D2IR_IN_TRANSIT = "intransit";
   private static final String D2IR_BORROWER_RENEW = "borrowerrenew";
+  private static final String D2IR_FINAL_CHECK_IN = "finalcheckin";
 
   private final InnReachTransactionRepository transactionRepository;
   private final InnReachTransactionMapper transactionMapper;
@@ -129,30 +132,40 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
 
   @Override
   public void handleLoanUpdate(LoanDTO loan) {
+    var transaction = transactionRepository.fetchOneByLoanId(loan.getId()).orElse(null);
+    if (transaction == null) {
+      return;
+    }
+
     if ("checkedin".equals(loan.getAction()) && "Closed".equalsIgnoreCase(loan.getStatus().getName())) {
-      updateAssociatedTransaction(loan, transaction -> {
+      if (transaction.getType() == ITEM) {
+        log.info("Updating transaction {} on loan to final check-in {}", transaction.getId(), loan.getId());
+        transaction.getHold().setDueDateTime(null);
+        var transactionItemHold = (TransactionItemHold) transaction.getHold();
+        transactionItemHold.setPatronName(null);
+        transactionItemHold.setPatronId(null);
+        transaction.setState(FINAL_CHECKIN);
+        reportFinalCheckIn(transaction);
+        transactionRepository.save(transaction);
+      } else {
         log.info("Updating transaction {} on loan closure {}", transaction.getId(), loan.getId());
         transaction.getHold().setDueDateTime(null);
         transaction.setState(ITEM_IN_TRANSIT);
         reportItemInTransit(transaction);
-      });
+      }
     }
 
     if (loan.getAction().equals("renewed")) {
-      var folioLoanId = loan.getId();
-
-      transactionRepository.fetchOneByLoanId(folioLoanId).ifPresent(transaction -> {
-        log.info("Updating transaction {} on loan renewed {}", transaction.getId(), loan.getId());
-        var transactionDueDate = Instant.ofEpochSecond(transaction.getHold().getDueDateTime());
-        var loanDueDate = loan.getDueDate().toInstant().truncatedTo(ChronoUnit.SECONDS);
-        if (!loanDueDate.equals(transactionDueDate)) {
-          var loanIntegerDueDate = (int) (loanDueDate.getEpochSecond());
-          reportBorrowerRenew(transaction, loanIntegerDueDate);
-          transaction.setState(BORROWER_RENEW);
-          transaction.getHold().setDueDateTime(loanIntegerDueDate);
-          transactionRepository.save(transaction);
-        }
-      });
+      log.info("Updating transaction {} on loan renewed {}", transaction.getId(), loan.getId());
+      var transactionDueDate = Instant.ofEpochSecond(transaction.getHold().getDueDateTime());
+      var loanDueDate = loan.getDueDate().toInstant().truncatedTo(ChronoUnit.SECONDS);
+      if (!loanDueDate.equals(transactionDueDate)) {
+        var loanIntegerDueDate = (int) (loanDueDate.getEpochSecond());
+        reportBorrowerRenew(transaction, loanIntegerDueDate);
+        transaction.setState(BORROWER_RENEW);
+        transaction.getHold().setDueDateTime(loanIntegerDueDate);
+        transactionRepository.save(transaction);
+      }
     }
   }
 
@@ -193,6 +206,10 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
     var payload = new HashMap<>();
     payload.put("dueDateTime", loanIntegerDueDate);
     callD2irCircOperation(D2IR_BORROWER_RENEW, transaction, payload);
+  }
+
+  private void reportFinalCheckIn(InnReachTransaction transaction) {
+    callD2irCircOperation(D2IR_FINAL_CHECK_IN, transaction, null);
   }
 
   private void reportItemShipped(InnReachTransaction transaction, String itemBarcode, String callNumber) {

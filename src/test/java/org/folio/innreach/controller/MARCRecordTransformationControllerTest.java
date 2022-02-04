@@ -56,7 +56,7 @@ class MARCRecordTransformationControllerTest extends BaseControllerTest {
     when(instanceStorageClient.getInstanceById(any()))
       .thenReturn(deserializeFromJsonFile("/inventory-storage/american-bar-association.json", Instance.class));
 
-    when(sourceRecordStorageClient.getRecordById(any()))
+    when(sourceRecordStorageClient.getRecordByInstanceId(any()))
       .thenReturn(deserializeFromJsonFile("/source-record-storage/source-record-storage-example.json", SourceRecordDTO.class));
 
     var responseEntity = testRestTemplate.getForEntity(
@@ -81,7 +81,7 @@ class MARCRecordTransformationControllerTest extends BaseControllerTest {
     when(instanceStorageClient.getInstanceById(any()))
       .thenReturn(deserializeFromJsonFile("/inventory-storage/american-bar-association.json", Instance.class));
 
-    when(sourceRecordStorageClient.getRecordById(any()))
+    when(sourceRecordStorageClient.getRecordByInstanceId(any()))
       .thenReturn(deserializeFromJsonFile("/source-record-storage/source-record-storage-example.json", SourceRecordDTO.class));
 
     var responseEntity = testRestTemplate.getForEntity(

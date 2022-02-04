@@ -1,6 +1,5 @@
 package org.folio.innreach.controller;
 
-import static org.folio.innreach.fixture.TestUtil.deserializeFromJsonFile;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.samePropertyValuesAs;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -17,26 +16,26 @@ import static org.folio.innreach.fixture.ContributionFixture.createIrLocations;
 import static org.folio.innreach.fixture.ContributionFixture.createIterationJobResponse;
 import static org.folio.innreach.fixture.ContributionFixture.createMaterialTypes;
 import static org.folio.innreach.fixture.JobResponseFixture.createJobResponse;
+import static org.folio.innreach.fixture.TestUtil.deserializeFromJsonFile;
 
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
-import org.folio.innreach.batch.contribution.service.ContributionJobRunner;
-import org.folio.innreach.domain.dto.folio.inventorystorage.JobResponse;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.web.client.TestRestTemplate;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlMergeMode;
 
+import org.folio.innreach.batch.contribution.service.ContributionJobRunner;
 import org.folio.innreach.client.InstanceStorageClient;
 import org.folio.innreach.client.MaterialTypesClient;
 import org.folio.innreach.controller.base.BaseControllerTest;
 import org.folio.innreach.domain.dto.folio.inventorystorage.InstanceIterationRequest;
+import org.folio.innreach.domain.dto.folio.inventorystorage.JobResponse;
 import org.folio.innreach.domain.entity.Contribution;
 import org.folio.innreach.dto.ContributionDTO;
 import org.folio.innreach.dto.ContributionsDTO;
@@ -44,6 +43,7 @@ import org.folio.innreach.dto.MappingValidationStatusDTO;
 import org.folio.innreach.external.service.InnReachLocationExternalService;
 import org.folio.innreach.mapper.ContributionMapper;
 import org.folio.innreach.repository.ContributionRepository;
+import org.folio.spring.data.OffsetRequest;
 
 @Sql(
   scripts = {
@@ -233,7 +233,7 @@ class ContributionControllerTest extends BaseControllerTest {
   }
 
   private ContributionsDTO fetchContributionHistory() {
-    return mapper.toDTOCollection(repository.fetchHistoryByCentralServerId(PRE_POPULATED_CENTRAL_SERVER_ID, PageRequest.of(0, 10)));
+    return mapper.toDTOCollection(repository.fetchHistoryByCentralServerId(PRE_POPULATED_CENTRAL_SERVER_ID, new OffsetRequest(0, 10)));
   }
 
   private static String currentContributionUrl() {

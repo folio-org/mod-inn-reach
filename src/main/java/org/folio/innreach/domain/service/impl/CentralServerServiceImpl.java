@@ -8,7 +8,6 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,6 +24,7 @@ import org.folio.innreach.dto.CentralServersDTO;
 import org.folio.innreach.external.service.InnReachAuthExternalService;
 import org.folio.innreach.mapper.CentralServerMapper;
 import org.folio.innreach.repository.CentralServerRepository;
+import org.folio.spring.data.OffsetRequest;
 
 @RequiredArgsConstructor
 @Log4j2
@@ -104,7 +104,7 @@ public class CentralServerServiceImpl implements CentralServerService {
   @Override
   @Transactional(readOnly = true)
   public CentralServersDTO getAllCentralServers(int offset, int limit) {
-    Page<UUID> ids = centralServerRepository.getIds(PageRequest.of(offset, limit));
+    Page<UUID> ids = centralServerRepository.getIds(new OffsetRequest(offset, limit));
 
     var centralServerDTOS = mapItems(centralServerRepository.fetchAllById(ids.getContent()),
         centralServerMapper::mapToCentralServerDTO);
