@@ -92,8 +92,8 @@ public class MARCRecordTransformationServiceImpl implements MARCRecordTransforma
     return MARC_RECORD_SOURCE.equalsIgnoreCase(inventoryInstance.getSource());
   }
 
-  private SourceRecordDTO getSourceRecord(UUID inventoryId) {
-    return sourceRecordStorageClient.getRecordById(inventoryId);
+  private SourceRecordDTO getSourceRecord(UUID instanceId) {
+    return sourceRecordStorageClient.getRecordByInstanceId(instanceId);
   }
 
   private MARCTransformationOptionsSettingsDTO getMARCTransformationSettings(UUID centralServerId) {
