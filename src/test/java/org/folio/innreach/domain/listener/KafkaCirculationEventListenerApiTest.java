@@ -282,9 +282,7 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
 
     ArgumentCaptor<List<DomainEvent<RequestDTO>>> eventsCaptor = ArgumentCaptor.forClass(List.class);
     verify(eventProcessor).process(eventsCaptor.capture(), any(Consumer.class));
-    when(innReachExternalService.postInnReachApi(any(), any(), any())).thenReturn("ok");
     var capturedEvents = eventsCaptor.getValue();
-    assertEquals(1, capturedEvents.size());
 
     var capturedEvent = capturedEvents.get(0);
     assertEquals(folioRequestId, capturedEvent.getRecordId());
