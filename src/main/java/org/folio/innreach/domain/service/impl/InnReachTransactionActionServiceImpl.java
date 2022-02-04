@@ -181,6 +181,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
 
     TransactionHold transactionItemHold = transaction.getHold();
     if (!transactionItemHold.getFolioItemId().equals(requestDTO.getItemId())) {
+      log.info("Updating transaction {} on request to transfer {}", transaction.getId(),requestDTO.getId());
       transactionItemHold.setFolioItemId(requestDTO.getItemId());
       transaction.setState(TRANSFER);
       reportTransferRequest(transaction, requestDTO.getItemId().toString());
