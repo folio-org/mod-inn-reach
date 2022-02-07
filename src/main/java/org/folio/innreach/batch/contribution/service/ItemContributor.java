@@ -1,12 +1,13 @@
 package org.folio.innreach.batch.contribution.service;
 
+import static java.util.stream.Collectors.toMap;
+
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -21,6 +22,8 @@ import org.springframework.util.Assert;
 
 import org.folio.innreach.batch.contribution.ContributionJobContextManager;
 import org.folio.innreach.batch.contribution.listener.ContributionExceptionListener;
+import org.folio.innreach.client.LocationsClient;
+import org.folio.innreach.client.LocationsClient.LocationDTO;
 import org.folio.innreach.domain.dto.folio.ContributionItemCirculationStatus;
 import org.folio.innreach.domain.service.CentralServerService;
 import org.folio.innreach.domain.service.ContributionValidationService;
@@ -53,6 +56,7 @@ public class ItemContributor {
   private final InnReachLocationService irLocationService;
   private final CentralServerService centralServerService;
   private final LocationMappingService locationMappingService;
+  private final LocationsClient locationsClient;
 
   public int contributeItems(String bibId, List<Item> items) {
     log.info("Processing items of bib {}", bibId);
@@ -135,20 +139,19 @@ public class ItemContributor {
     Map<UUID, String> irLocIdToLocKeys = irLocationService.getAllInnReachLocations(0, FETCH_LIMIT)
       .getLocations()
       .stream()
-      .collect(Collectors.toMap(InnReachLocationDTO::getId, InnReachLocationDTO::getCode));
-    log.info("irLocIdToLocKeys: {}", irLocIdToLocKeys);
+      .collect(toMap(InnReachLocationDTO::getId, InnReachLocationDTO::getCode));
 
     Map<UUID, Integer> materialToCentralTypeMappings = getTypeMappings();
     Map<UUID, String> libIdToLocKeyMappings = getLibraryMappings(irLocIdToLocKeys);
     Map<UUID, String> locIdToLocKeyMappings = getLocationMappings(irLocIdToLocKeys, libIdToLocKeyMappings.keySet());
-    Map<UUID, UUID> locItToLibIdMappings = getLocationLibraryMappings(libIdToLocKeyMappings.keySet());
+    Map<UUID, UUID> locIdToLibIdMappings = getLocationLibraryMappings();
     Map<UUID, String> libIdToAgencyCodeMappings = getAgencyMappings();
 
     return ContributionMappings.builder()
       .materialToCentralTypes(materialToCentralTypeMappings)
       .libIdToLocKeys(libIdToLocKeyMappings)
       .locIdToLocKeys(locIdToLocKeyMappings)
-      .locIdToLibIds(locItToLibIdMappings)
+      .locIdToLibIds(locIdToLibIdMappings)
       .libIdToAgencyCodes(libIdToAgencyCodeMappings)
       .build();
   }
@@ -157,7 +160,7 @@ public class ItemContributor {
     return typeMappingService.getAllMappings(getCentralServerId(), 0, FETCH_LIMIT)
       .getMaterialTypeMappings()
       .stream()
-      .collect(Collectors.toMap(MaterialTypeMappingDTO::getMaterialTypeId, MaterialTypeMappingDTO::getCentralItemType));
+      .collect(toMap(MaterialTypeMappingDTO::getMaterialTypeId, MaterialTypeMappingDTO::getCentralItemType));
   }
 
   private Map<UUID, String> getLibraryMappings(Map<UUID, String> irLocations) {
@@ -173,18 +176,9 @@ public class ItemContributor {
     return mappings;
   }
 
-  private Map<UUID, UUID> getLocationLibraryMappings(Set<UUID> libraryIds) {
-    Map<UUID, UUID> mappings = new HashMap<>();
-
-    for (var libId : libraryIds) {
-      var locationMappings = locationMappingService
-        .getAllMappings(getCentralServerId(), libId, 0, FETCH_LIMIT)
-        .getLocationMappings();
-
-      locationMappings.forEach(loc -> mappings.put(loc.getLocationId(), libId));
-    }
-
-    return mappings;
+  private Map<UUID, UUID> getLocationLibraryMappings() {
+    return locationsClient.getLocations(FETCH_LIMIT).getResult().stream()
+      .collect(toMap(LocationDTO::getId, LocationDTO::getLibraryId));
   }
 
   private Map<UUID, String> getLocationMappings(Map<UUID, String> irLocations, Collection<UUID> libraryIds) {
