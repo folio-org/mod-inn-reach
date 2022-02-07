@@ -22,11 +22,12 @@ import java.util.function.Consumer;
 
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.producer.ProducerRecord;
-import org.folio.innreach.client.InventoryClient;
 import org.folio.innreach.domain.dto.folio.circulation.RequestDTO;
 import org.folio.innreach.domain.dto.folio.inventory.InventoryItemDTO;
 import org.folio.innreach.domain.entity.InnReachTransaction;
 import org.folio.innreach.domain.entity.TransactionItemHold;
+import org.folio.innreach.domain.service.ItemService;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -76,7 +77,7 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
   private InnReachExternalService innReachExternalService;
 
   @MockBean
-  private InventoryClient inventoryClient;
+  private ItemService itemService;
 
   @Test
   void shouldReceiveLoanEvent() {
@@ -256,7 +257,7 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
     event.setRecordId(null); // the listener should set this field from event key value
     requestDTO.setId(folioRequestId);
 
-    when(inventoryClient.findItem(any())).thenReturn(optionalInventoryItem);
+    when(itemService.find(any())).thenReturn(optionalInventoryItem);
     var consumerRecord = new ConsumerRecord(CIRC_REQUEST_TOPIC, 1, 1, folioRequestId.toString(), event);
     listener.handleRequestStorage(List.of(consumerRecord));
 
@@ -320,8 +321,6 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
 
     var capturedEvent = capturedEvents.get(0);
     assertEquals(folioRequestId, capturedEvent.getRecordId());
-    var transaction = transactionRepository.fetchActiveByRequestId(folioRequestId).orElse(null);
-    assertEquals(null, transaction);
   }
 
   private DomainEvent<LoanDTO> getLoanDomainEvent(DomainEventType eventType) {

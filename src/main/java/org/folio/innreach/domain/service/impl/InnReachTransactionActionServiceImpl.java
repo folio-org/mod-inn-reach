@@ -22,6 +22,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.folio.innreach.client.InventoryClient;
 import org.folio.innreach.domain.dto.folio.circulation.RequestDTO;
+import org.folio.innreach.domain.service.ItemService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
@@ -60,7 +61,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
   private final InnReachExternalService innReachExternalService;
   private final RequestService requestService;
   private final PatronHoldService patronHoldService;
-  private final InventoryClient inventoryClient;
+  private final ItemService itemService;
 
   @Override
   public PatronHoldCheckInResponseDTO checkInPatronHoldItem(UUID transactionId, UUID servicePointId) {
@@ -180,24 +181,18 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
       return;
     }
 
-    TransactionItemHold transactionItemHold = null;
-    try {
-      transactionItemHold = (TransactionItemHold) transaction.getHold();
-    } catch(ClassCastException e) {
+    if (transaction.getType() != ITEM) {
       log.info("Transaction {} isn't Item Hold", transaction.getId());
       return;
     }
 
-    var inventoryItemDTO = inventoryClient.findItem(requestDTO.getItemId()).orElse(null);
-    if(inventoryItemDTO == null) {
-      log.info("Can't retrieve inventoryItemDTO by itemId {} because it doesn't exit", requestDTO.getItemId());
-      return;
-    }
-
+    var transactionItemHold = (TransactionItemHold) transaction.getHold();
     if (!transactionItemHold.getFolioItemId().equals(requestDTO.getItemId())) {
       log.info("Updating transaction {} on request to transfer {}", transaction.getId(), requestDTO.getId());
       transactionItemHold.setFolioItemId(requestDTO.getItemId());
       transaction.setState(TRANSFER);
+      var inventoryItemDTO = itemService.find(requestDTO.getItemId())
+        .orElseThrow(() -> new IllegalArgumentException("Item is not found by id " + requestDTO.getItemId()));
       reportTransferRequest(transaction, inventoryItemDTO.getHrid());
     }
   }
@@ -261,9 +256,9 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
     callD2irCircOperation(D2IR_IN_TRANSIT, transaction, null);
   }
 
-  private void reportTransferRequest(InnReachTransaction transaction, String newItemId) {
+  private void reportTransferRequest(InnReachTransaction transaction, String hrid) {
     var payload = new HashMap<>();
-    payload.put("newItemId", newItemId);
+    payload.put("newItemId", hrid);
     callD2irCircOperation(D2IR_TRASFER_REQUEST, transaction, payload);
   }
 
