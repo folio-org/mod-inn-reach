@@ -22,9 +22,10 @@ import java.util.function.Consumer;
 
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.producer.ProducerRecord;
+import org.folio.innreach.client.InventoryClient;
 import org.folio.innreach.domain.dto.folio.circulation.RequestDTO;
+import org.folio.innreach.domain.dto.folio.inventory.InventoryItemDTO;
 import org.folio.innreach.domain.entity.InnReachTransaction;
-import org.folio.innreach.domain.entity.TransactionHold;
 import org.folio.innreach.domain.entity.TransactionItemHold;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -73,6 +74,9 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
 
   @MockBean
   private InnReachExternalService innReachExternalService;
+
+  @MockBean
+  private InventoryClient inventoryClient;
 
   @Test
   void shouldReceiveLoanEvent() {
@@ -243,12 +247,16 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
     "classpath:db/inn-reach-transaction/pre-populate-another-inn-reach-transaction.sql",
   })
   void shouldUpdateTransactionToTransfer() {
-    var folioRequestId =  UUID.fromString("ea11eba7-3c0f-4d15-9cca-c8608cd6bc8a");
+    var folioRequestId =  UUID.fromString("26278b3a-de32-4deb-b81b-896637b3dbeb");
+    var inventoryItemDTO = new InventoryItemDTO();
+    inventoryItemDTO.setHrid("inst000000000002");
+    Optional<InventoryItemDTO> optionalInventoryItem = Optional.of(inventoryItemDTO);
     var event = getRequestDomainEvent(DomainEventType.UPDATED);
     RequestDTO requestDTO = event.getData().getNewEntity();
     event.setRecordId(null); // the listener should set this field from event key value
     requestDTO.setId(folioRequestId);
 
+    when(inventoryClient.findItem(any())).thenReturn(optionalInventoryItem);
     var consumerRecord = new ConsumerRecord(CIRC_REQUEST_TOPIC, 1, 1, folioRequestId.toString(), event);
     listener.handleRequestStorage(List.of(consumerRecord));
 
@@ -261,11 +269,37 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
 
     var capturedEvent = capturedEvents.get(0);
     assertEquals(folioRequestId, capturedEvent.getRecordId());
-    var transaction = transactionRepository.fetchOneByRequestId(requestDTO.getId()).orElse(null);
-    var transactionHold = (TransactionHold) transaction.getHold();
+    var transaction = transactionRepository.fetchActiveByRequestId(requestDTO.getId()).orElse(null);
+    var transactionItemHold = (TransactionItemHold) transaction.getHold();
 
-    assertEquals(ITEM_ID, transactionHold.getFolioItemId());
+    assertEquals(ITEM_ID, transactionItemHold.getFolioItemId());
     assertEquals(InnReachTransaction.TransactionState.TRANSFER, transaction.getState());
+  }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-another-inn-reach-transaction.sql",
+  })
+  void shouldSkipTransactionThatIsNotItemHold() {
+    var folioRequestId =  UUID.fromString("ea11eba7-3c0f-4d15-9cca-c8608cd6bc8a");
+    var event = getRequestDomainEvent(DomainEventType.UPDATED);
+    RequestDTO requestDTO = event.getData().getNewEntity();
+    event.setRecordId(null); // the listener should set this field from event key value
+    requestDTO.setId(folioRequestId);
+
+    var consumerRecord = new ConsumerRecord(CIRC_REQUEST_TOPIC, 1, 1, folioRequestId.toString(), event);
+    listener.handleRequestStorage(List.of(consumerRecord));
+    ArgumentCaptor<List<DomainEvent<RequestDTO>>> eventsCaptor = ArgumentCaptor.forClass(List.class);
+
+    verify(eventProcessor).process(eventsCaptor.capture(), any(Consumer.class));
+    var capturedEvents = eventsCaptor.getValue();
+    assertEquals(1, capturedEvents.size());
+
+    var capturedEvent = capturedEvents.get(0);
+    assertEquals(folioRequestId, capturedEvent.getRecordId());
+    var transaction = transactionRepository.fetchActiveByRequestId(requestDTO.getId()).orElse(null);
+    assertEquals(InnReachTransaction.TransactionState.PATRON_HOLD, transaction.getState());
   }
 
   @Test
@@ -286,7 +320,7 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
 
     var capturedEvent = capturedEvents.get(0);
     assertEquals(folioRequestId, capturedEvent.getRecordId());
-    var transaction = transactionRepository.fetchOneByRequestId(folioRequestId).orElse(null);
+    var transaction = transactionRepository.fetchActiveByRequestId(folioRequestId).orElse(null);
     assertEquals(null, transaction);
   }
 

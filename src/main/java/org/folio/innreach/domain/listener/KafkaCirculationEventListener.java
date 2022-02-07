@@ -47,6 +47,7 @@ public class KafkaCirculationEventListener {
           break;
         case UPDATED:
           transactionActionService.handleLoanUpdate(event.getData().getNewEntity());
+          break;
         default:
           log.warn("Received event of unknown type {}", event.getType());
       }
@@ -73,7 +74,7 @@ public class KafkaCirculationEventListener {
         break;
       case UPDATED:
         transactionActionService.handleRequestUpdate(event.getData().getNewEntity());
-        // request is associated with an active INN-Reach Item Hold transaction
+        break;
       default:
         log.warn("Received event of unknown type {}", event.getType());
       }

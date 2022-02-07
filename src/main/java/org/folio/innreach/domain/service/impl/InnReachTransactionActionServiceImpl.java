@@ -20,8 +20,8 @@ import java.util.function.Consumer;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.folio.innreach.client.InventoryClient;
 import org.folio.innreach.domain.dto.folio.circulation.RequestDTO;
-import org.folio.innreach.domain.entity.TransactionHold;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
@@ -60,6 +60,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
   private final InnReachExternalService innReachExternalService;
   private final RequestService requestService;
   private final PatronHoldService patronHoldService;
+  private final InventoryClient inventoryClient;
 
   @Override
   public PatronHoldCheckInResponseDTO checkInPatronHoldItem(UUID transactionId, UUID servicePointId) {
@@ -174,17 +175,30 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
 
   @Override
   public void handleRequestUpdate(RequestDTO requestDTO) {
-    var transaction = transactionRepository.fetchOneByRequestId(requestDTO.getId()).orElse(null);
+    var transaction = transactionRepository.fetchActiveByRequestId(requestDTO.getId()).orElse(null);
     if (transaction == null) {
       return;
     }
 
-    TransactionHold transactionItemHold = transaction.getHold();
+    TransactionItemHold transactionItemHold = null;
+    try {
+      transactionItemHold = (TransactionItemHold) transaction.getHold();
+    } catch(ClassCastException e) {
+      log.info("Transaction {} isn't Item Hold", transaction.getId());
+      return;
+    }
+
+    var inventoryItemDTO = inventoryClient.findItem(requestDTO.getItemId()).orElse(null);
+    if(inventoryItemDTO == null) {
+      log.info("Can't retrieve inventoryItemDTO by itemId {} because it doesn't exit", requestDTO.getItemId());
+      return;
+    }
+
     if (!transactionItemHold.getFolioItemId().equals(requestDTO.getItemId())) {
-      log.info("Updating transaction {} on request to transfer {}", transaction.getId(),requestDTO.getId());
+      log.info("Updating transaction {} on request to transfer {}", transaction.getId(), requestDTO.getId());
       transactionItemHold.setFolioItemId(requestDTO.getItemId());
       transaction.setState(TRANSFER);
-      reportTransferRequest(transaction, requestDTO.getItemId().toString());
+      reportTransferRequest(transaction, inventoryItemDTO.getHrid());
     }
   }
 
