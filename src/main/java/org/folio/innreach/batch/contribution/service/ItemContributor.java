@@ -12,6 +12,7 @@ import java.util.stream.Collectors;
 
 import lombok.Builder;
 import lombok.RequiredArgsConstructor;
+import lombok.ToString;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -57,6 +58,7 @@ public class ItemContributor {
     log.info("Processing items of bib {}", bibId);
 
     var mappings = getContributionMappings();
+    log.info("Resolved contribution mappings: {}", mappings);
 
     var bibItems = items.stream()
       .map(item -> convertItem(item, mappings))
@@ -134,6 +136,7 @@ public class ItemContributor {
       .getLocations()
       .stream()
       .collect(Collectors.toMap(InnReachLocationDTO::getId, InnReachLocationDTO::getCode));
+    log.info("irLocIdToLocKeys: {}", irLocIdToLocKeys);
 
     Map<UUID, Integer> materialToCentralTypeMappings = getTypeMappings();
     Map<UUID, String> libIdToLocKeyMappings = getLibraryMappings(irLocIdToLocKeys);
@@ -215,6 +218,7 @@ public class ItemContributor {
   }
 
   @Builder
+  @ToString
   private static class ContributionMappings {
     private Map<UUID, Integer> materialToCentralTypes;
     private Map<UUID, String> libIdToLocKeys;
