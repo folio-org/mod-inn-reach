@@ -25,7 +25,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.folio.innreach.batch.contribution.ContributionJobContext;
 import org.folio.innreach.batch.contribution.ContributionJobContextManager;
 import org.folio.innreach.domain.dto.folio.inventorystorage.InstanceIterationEvent;
+import org.folio.innreach.domain.service.ContributionValidationService;
 import org.folio.innreach.domain.service.InventoryViewService;
+import org.folio.innreach.dto.Instance;
 
 @ExtendWith(MockitoExtension.class)
 class InstanceLoaderTest {
@@ -34,6 +36,9 @@ class InstanceLoaderTest {
 
   @Mock
   private InventoryViewService inventoryService;
+
+  @Mock
+  private ContributionValidationService validationService;
 
   @InjectMocks
   private InstanceLoader instanceLoader;
@@ -54,6 +59,7 @@ class InstanceLoaderTest {
       InstanceIterationEvent.of(JOB_CONTEXT.getIterationJobId(), "test", "test", randomUUID());
     var instance = createInstance();
 
+    when(validationService.isEligibleForContribution(any(UUID.class), any(Instance.class))).thenReturn(true);
     when(inventoryService.getInstance(any(UUID.class))).thenReturn(instance);
 
     var result = instanceLoader.load(event);
@@ -76,13 +82,12 @@ class InstanceLoaderTest {
   }
 
   @Test
-  void shouldSkipUnsupportedSource() {
+  void shouldSkipIneligibleInstance() {
     var event =
       InstanceIterationEvent.of(JOB_CONTEXT.getIterationJobId(), "test", "test", randomUUID());
-    var instance = createInstance();
-    instance.setSource("FOLIO");
 
-    when(inventoryService.getInstance(any(UUID.class))).thenReturn(instance);
+    when(validationService.isEligibleForContribution(any(UUID.class), any(Instance.class))).thenReturn(false);
+    when(inventoryService.getInstance(any(UUID.class))).thenReturn(createInstance());
 
     var result = instanceLoader.load(event);
 
