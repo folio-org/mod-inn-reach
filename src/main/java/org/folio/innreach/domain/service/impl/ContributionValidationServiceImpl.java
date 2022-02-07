@@ -136,7 +136,7 @@ public class ContributionValidationServiceImpl implements ContributionValidation
 
   @Override
   public Character getSuppressionStatus(UUID centralServerId, List<UUID> statisticalCodeIds) {
-    Assert.isTrue(statisticalCodeIds.size() == 1, "Multiple statistical codes defined");
+    Assert.isTrue(statisticalCodeIds.size() > 1, "Multiple statistical codes defined");
 
     var config = getContributionConfigService(centralServerId);
     if (config == null || CollectionUtils.isEmpty(statisticalCodeIds)) {
