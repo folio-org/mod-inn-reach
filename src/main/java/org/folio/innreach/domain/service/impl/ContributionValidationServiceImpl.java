@@ -136,10 +136,14 @@ public class ContributionValidationServiceImpl implements ContributionValidation
 
   @Override
   public Character getSuppressionStatus(UUID centralServerId, List<UUID> statisticalCodeIds) {
+    if (CollectionUtils.isEmpty(statisticalCodeIds)) {
+      return null;
+    }
+
     Assert.isTrue(statisticalCodeIds.size() < 2, "Multiple statistical codes defined");
 
     var config = getContributionConfigService(centralServerId);
-    if (config == null || CollectionUtils.isEmpty(statisticalCodeIds)) {
+    if (config == null) {
       log.warn("Contribution criteria is not set, skipping suppression status check");
       return null;
     }
