@@ -44,16 +44,15 @@ public class KafkaInventoryEventListener {
       .collect(Collectors.toList());
 
     eventProcessor.process(events, event -> {
-      var centralServersCodes = centralServerRepository.getIds();
       switch (event.getType()) {
         case UPDATED:
-          var notValidCodes = recordService.evaluateInventoryItemForContribution(event.getData().getNewEntity(), centralServersCodes);
-          if (!notValidCodes.isEmpty()) {
-            recordService.decontributeInventoryItemEvents(event.getData().getOldEntity(), notValidCodes);
+          var valid = recordService.evaluateInventoryItemForContribution(event.getData().getNewEntity());
+          if (!valid) {
+            recordService.decontributeInventoryItemEvents(event.getData().getOldEntity());
           }
           break;
         case DELETED:
-          recordService.decontributeInventoryItemEvents(event.getData().getOldEntity(), centralServersCodes);
+          recordService.decontributeInventoryItemEvents(event.getData().getOldEntity());
           break;
         default:
           log.warn(UNKNOWN_TYPE_MESSAGE, event.getType());
@@ -76,16 +75,15 @@ public class KafkaInventoryEventListener {
       .collect(Collectors.toList());
 
     eventProcessor.process(events, event -> {
-      var centralServersCodes = centralServerRepository.getIds();
       switch (event.getType()) {
         case UPDATED:
-          var notValidCodes = recordService.evaluateInventoryInstanceForContribution(event.getData().getNewEntity(), centralServersCodes);
-          if (!notValidCodes.isEmpty()) {
-            recordService.decontributeInventoryInstanceEvents(event.getData().getOldEntity(), notValidCodes);
+          var valid = recordService.evaluateInventoryInstanceForContribution(event.getData().getNewEntity());
+          if (!valid) {
+            recordService.decontributeInventoryInstanceEvents(event.getData().getOldEntity());
           }
           break;
         case DELETED:
-          recordService.decontributeInventoryInstanceEvents(event.getData().getOldEntity(), centralServersCodes);
+          recordService.decontributeInventoryInstanceEvents(event.getData().getOldEntity());
           break;
         default:
           log.warn(UNKNOWN_TYPE_MESSAGE, event.getType());
@@ -108,16 +106,15 @@ public class KafkaInventoryEventListener {
       .collect(Collectors.toList());
 
     eventProcessor.process(events, event -> {
-      var centralServersCodes = centralServerRepository.getIds();
       switch (event.getType()) {
         case UPDATED:
-          var notValidCodes = recordService.evaluateInventoryHoldingForContribution(event.getData().getNewEntity(), centralServersCodes);
-          if (!notValidCodes.isEmpty()) {
-            recordService.decontributeInventoryHoldingEvents(event.getData().getOldEntity(), notValidCodes);
+          var valid = recordService.evaluateInventoryHoldingForContribution(event.getData().getNewEntity());
+          if (!valid) {
+            recordService.decontributeInventoryHoldingEvents(event.getData().getOldEntity());
           }
           break;
         case DELETED:
-          recordService.decontributeInventoryHoldingEvents(event.getData().getOldEntity(), centralServersCodes);
+          recordService.decontributeInventoryHoldingEvents(event.getData().getOldEntity());
           break;
         default:
           log.warn(UNKNOWN_TYPE_MESSAGE, event.getType());

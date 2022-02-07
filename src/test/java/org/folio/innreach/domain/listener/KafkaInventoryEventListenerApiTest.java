@@ -4,7 +4,6 @@ import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.contains;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -15,9 +14,11 @@ import static org.springframework.test.context.jdbc.SqlMergeMode.MergeMode.MERGE
 import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 import java.util.UUID;
 import java.util.function.Consumer;
 
+import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.junit.jupiter.api.Test;
@@ -36,10 +37,12 @@ import org.folio.innreach.domain.service.impl.BatchDomainEventProcessor;
 import org.folio.innreach.dto.Holding;
 import org.folio.innreach.dto.Instance;
 import org.folio.innreach.dto.Item;
+import org.folio.innreach.dto.ItemStatus;
 import org.folio.innreach.external.service.InnReachExternalService;
 
 @Sql(
   scripts = {"classpath:db/contribution-criteria/clear-contribution-criteria-tables.sql",
+    "classpath:db/itm-contrib-opt-conf/clear-itm-contrib-opt-conf-tables.sql",
     "classpath:db/central-server/clear-central-server-tables.sql"},
   executionPhase = AFTER_TEST_METHOD
 )
@@ -49,6 +52,7 @@ class KafkaInventoryEventListenerApiTest extends BaseKafkaApiTest {
   private static final String TEST_TENANT_ID = "testing";
   private static final Duration ASYNC_AWAIT_TIMEOUT = Duration.ofSeconds(15);
   private static final UUID doNotContributeCode = UUID.fromString("5599f23f-d424-4fce-8a51-b7fce690cbda");
+  private static final UUID PERMANENT_LOCATION_ID = UUID.fromString("7C244444-AE7C-11EB-8529-0242AC130004");
 
   @SpyBean
   private KafkaInventoryEventListener listener;
@@ -100,8 +104,8 @@ class KafkaInventoryEventListenerApiTest extends BaseKafkaApiTest {
     var capturedEvent = capturedEvents.get(0);
     assertEquals(RECORD_ID, capturedEvent.getRecordId());
 
-    verify(service).decontributeInventoryItemEvents(eq(event.getData().getOldEntity()), any());
-    verify(innReachExternalService).deleteInnReachApi(any(), contains(RECORD_ID.toString()));
+    verify(service).decontributeInventoryItemEvents(event.getData().getOldEntity());
+    verify(innReachExternalService).deleteInnReachApi(any(), contains(event.getData().getOldEntity().getHrid()));
   }
 
   @Test
@@ -127,8 +131,8 @@ class KafkaInventoryEventListenerApiTest extends BaseKafkaApiTest {
     var capturedEvent = capturedEvents.get(0);
     assertEquals(RECORD_ID, capturedEvent.getRecordId());
 
-    verify(service).decontributeInventoryItemEvents(eq(event.getData().getOldEntity()), any());
-    verify(innReachExternalService).deleteInnReachApi(any(), contains(RECORD_ID.toString()));
+    verify(service).decontributeInventoryItemEvents(event.getData().getOldEntity());
+    verify(innReachExternalService).deleteInnReachApi(any(), contains(event.getData().getOldEntity().getHrid()));
   }
 
   @Test
@@ -153,8 +157,8 @@ class KafkaInventoryEventListenerApiTest extends BaseKafkaApiTest {
     var capturedEvent = capturedEvents.get(0);
     assertEquals(RECORD_ID, capturedEvent.getRecordId());
 
-    verify(service).evaluateInventoryItemForContribution(eq(event.getData().getNewEntity()), any());
-    verify(innReachExternalService, never()).deleteInnReachApi(any(), contains(RECORD_ID.toString()));
+    verify(service).evaluateInventoryItemForContribution(event.getData().getNewEntity());
+    verify(innReachExternalService, never()).deleteInnReachApi(any(), contains(event.getData().getOldEntity().getHrid()));
   }
 
   @Test
@@ -198,13 +202,14 @@ class KafkaInventoryEventListenerApiTest extends BaseKafkaApiTest {
     var capturedEvent = capturedEvents.get(0);
     assertEquals(RECORD_ID, capturedEvent.getRecordId());
 
-    verify(service).decontributeInventoryInstanceEvents(any(), any());
-    verify(innReachExternalService).deleteInnReachApi(any(), contains(RECORD_ID.toString()));
+    verify(service).decontributeInventoryInstanceEvents(any());
+    verify(innReachExternalService).deleteInnReachApi(any(), contains(event.getData().getOldEntity().getItems().get(0).getHrid()));
   }
 
   @Test
   @Sql(scripts = {
-    "classpath:db/central-server/pre-populate-central-server.sql"
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/contribution-criteria/pre-populate-contribution-criteria.sql"
   })
   void shouldDecontributeInvalidInstances() {
     when(innReachExternalService.deleteInnReachApi(any(), any())).thenReturn("test");
@@ -224,14 +229,15 @@ class KafkaInventoryEventListenerApiTest extends BaseKafkaApiTest {
     var capturedEvent = capturedEvents.get(0);
     assertEquals(RECORD_ID, capturedEvent.getRecordId());
 
-    verify(service).decontributeInventoryInstanceEvents(eq(event.getData().getOldEntity()), any());
-    verify(innReachExternalService).deleteInnReachApi(any(), contains(RECORD_ID.toString()));
+    verify(service).decontributeInventoryInstanceEvents(event.getData().getOldEntity());
+    verify(innReachExternalService).deleteInnReachApi(any(), contains(event.getData().getOldEntity().getItems().get(0).getHrid()));
   }
 
   @Test
   @Sql(scripts = {
     "classpath:db/central-server/pre-populate-central-server.sql",
-    "classpath:db/contribution-criteria/pre-populate-contribution-criteria.sql"
+    "classpath:db/contribution-criteria/pre-populate-contribution-criteria.sql",
+    "classpath:db/itm-contrib-opt-conf/pre-populate-itm-contrib-opt-conf.sql"
   })
   void shouldNotDecontributeValidInstances() {
     when(innReachExternalService.deleteInnReachApi(any(), any())).thenReturn("test");
@@ -250,8 +256,8 @@ class KafkaInventoryEventListenerApiTest extends BaseKafkaApiTest {
     var capturedEvent = capturedEvents.get(0);
     assertEquals(RECORD_ID, capturedEvent.getRecordId());
 
-    verify(service).evaluateInventoryInstanceForContribution(eq(event.getData().getNewEntity()), any());
-    verify(innReachExternalService, never()).deleteInnReachApi(any(), contains(RECORD_ID.toString()));
+    verify(service).evaluateInventoryInstanceForContribution(event.getData().getNewEntity());
+    verify(innReachExternalService, never()).deleteInnReachApi(any(), contains(event.getData().getOldEntity().getHrid()));
   }
 
   @Test
@@ -296,8 +302,8 @@ class KafkaInventoryEventListenerApiTest extends BaseKafkaApiTest {
     var capturedEvent = capturedEvents.get(0);
     assertEquals(RECORD_ID, capturedEvent.getRecordId());
 
-    verify(service).decontributeInventoryHoldingEvents(any(), any());
-    verify(innReachExternalService).deleteInnReachApi(any(), contains(RECORD_ID.toString()));
+    verify(service).decontributeInventoryHoldingEvents(any());
+    verify(innReachExternalService).deleteInnReachApi(any(), contains(event.getData().getOldEntity().getHrid()));
   }
 
   @Test
@@ -323,8 +329,8 @@ class KafkaInventoryEventListenerApiTest extends BaseKafkaApiTest {
     var capturedEvent = capturedEvents.get(0);
     assertEquals(RECORD_ID, capturedEvent.getRecordId());
 
-    verify(service).decontributeInventoryHoldingEvents(eq(event.getData().getOldEntity()), any());
-    verify(innReachExternalService).deleteInnReachApi(any(), contains(RECORD_ID.toString()));
+    verify(service).decontributeInventoryHoldingEvents(event.getData().getOldEntity());
+    verify(innReachExternalService).deleteInnReachApi(any(), contains(event.getData().getOldEntity().getHrid()));
   }
 
   @Test
@@ -349,13 +355,15 @@ class KafkaInventoryEventListenerApiTest extends BaseKafkaApiTest {
     var capturedEvent = capturedEvents.get(0);
     assertEquals(RECORD_ID, capturedEvent.getRecordId());
 
-    verify(service).evaluateInventoryHoldingForContribution(eq(event.getData().getNewEntity()), any());
-    verify(innReachExternalService, never()).deleteInnReachApi(any(), contains(RECORD_ID.toString()));
+    verify(service).evaluateInventoryHoldingForContribution(event.getData().getNewEntity());
+    verify(innReachExternalService, never()).deleteInnReachApi(any(), contains(event.getData().getOldEntity().getHrid()));
   }
 
   private DomainEvent<Item> getItemDomainEvent(DomainEventType eventType) {
     var item = new Item()
       .id(RECORD_ID)
+      .permanentLocationId(PERMANENT_LOCATION_ID)
+      .hrid(RandomStringUtils.randomAlphanumeric(10).toLowerCase(Locale.ROOT))
       .statisticalCodeIds(List.of(UUID.randomUUID()))
       .holdingStatisticalCodeIds(List.of(UUID.randomUUID()));
 
@@ -369,9 +377,16 @@ class KafkaInventoryEventListenerApiTest extends BaseKafkaApiTest {
   }
 
   private DomainEvent<Instance> getInstanceDomainEvent(DomainEventType eventType) {
+    var status = new ItemStatus().name(ItemStatus.NameEnum.AVAILABLE);
     var item = new Instance()
       .id(RECORD_ID)
-      .statisticalCodeIds(List.of(UUID.randomUUID()));
+      .hrid(RandomStringUtils.randomAlphanumeric(10).toLowerCase(Locale.ROOT))
+      .statisticalCodeIds(List.of(UUID.randomUUID()))
+      .items(List.of(new Item()
+        .hrid(RandomStringUtils.randomAlphanumeric(10).toLowerCase(Locale.ROOT))
+        .permanentLocationId(PERMANENT_LOCATION_ID)
+        .statisticalCodeIds(List.of(UUID.randomUUID()))
+        .status(status)));
 
     return DomainEvent.<Instance>builder()
       .recordId(RECORD_ID)
@@ -385,6 +400,8 @@ class KafkaInventoryEventListenerApiTest extends BaseKafkaApiTest {
   private DomainEvent<Holding> getHoldingDomainEvent(DomainEventType eventType) {
     var holding = new Holding()
       .id(RECORD_ID)
+      .permanentLocationId((PERMANENT_LOCATION_ID))
+      .hrid(RandomStringUtils.randomAlphanumeric(10).toLowerCase(Locale.ROOT))
       .statisticalCodeIds(List.of(UUID.randomUUID()))
       .holdingsItems(Collections.emptyList());
 

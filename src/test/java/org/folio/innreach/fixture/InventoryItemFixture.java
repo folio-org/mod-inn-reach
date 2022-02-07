@@ -14,6 +14,7 @@ import org.jeasy.random.EasyRandomParameters;
 import org.folio.innreach.domain.dto.folio.inventory.InventoryItemDTO;
 import org.folio.innreach.domain.dto.folio.inventory.InventoryItemStatus;
 import org.folio.innreach.domain.entity.base.AuditableUser;
+import org.folio.innreach.dto.Item;
 
 @UtilityClass
 public class InventoryItemFixture {
@@ -47,5 +48,9 @@ public class InventoryItemFixture {
 
   public static InventoryItemDTO createInventoryItemDTO(){
     return itemRandom.nextObject(InventoryItemDTO.class);
+  }
+
+  public static Item createInventoryItem(){
+    return itemRandom.nextObject(Item.class);
   }
 }

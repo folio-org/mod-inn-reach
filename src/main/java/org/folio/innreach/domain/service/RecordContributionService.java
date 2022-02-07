@@ -1,22 +1,19 @@
 package org.folio.innreach.domain.service;
 
-import java.util.Set;
-import java.util.UUID;
-
 import org.folio.innreach.dto.Holding;
 import org.folio.innreach.dto.Instance;
 import org.folio.innreach.dto.Item;
 
 public interface RecordContributionService {
-  Set<UUID> evaluateInventoryItemForContribution(Item item, Set<UUID> centralServerCodes);
+  boolean evaluateInventoryItemForContribution(Item item);
 
-  void decontributeInventoryItemEvents(Item item, Set<UUID> centralServersCodes);
+  void decontributeInventoryItemEvents(Item item);
 
-  Set<UUID> evaluateInventoryInstanceForContribution(Instance instance, Set<UUID> centralServerCodes);
+  boolean evaluateInventoryInstanceForContribution(Instance instance);
 
-  void decontributeInventoryInstanceEvents(Instance instance, Set<UUID> centralServersCodes);
+  void decontributeInventoryInstanceEvents(Instance instance);
 
-  Set<UUID> evaluateInventoryHoldingForContribution(Holding holding, Set<UUID> centralServerCodes);
+  boolean evaluateInventoryHoldingForContribution(Holding holding);
 
-  void decontributeInventoryHoldingEvents(Holding holding, Set<UUID> centralServersCodes);
+  void decontributeInventoryHoldingEvents(Holding holding);
 }
