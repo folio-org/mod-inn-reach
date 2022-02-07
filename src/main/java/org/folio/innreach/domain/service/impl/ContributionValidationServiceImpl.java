@@ -102,7 +102,9 @@ public class ContributionValidationServiceImpl implements ContributionValidation
   }
 
   private boolean isExcludedStatisticalCode(UUID centralServerId, List<UUID> statisticalCodeIds) {
-    if (CollectionUtils.isNotEmpty(statisticalCodeIds) && statisticalCodeIds.size() > 1) {
+    if (CollectionUtils.isEmpty(statisticalCodeIds)) {
+      return false;
+    } else if (statisticalCodeIds.size() > 1) {
       log.info("More than one statistical code defined");
       return true;
     }
