@@ -94,7 +94,7 @@ public class ItemContributor {
         .map(ItemEffectiveCallNumberComponents::getCallNumber)
         .orElse(null);
 
-      var folLocId = item.getPermanentLocationId();
+      var folLocId = item.getEffectiveLocationId();
       var folLibId = mappings.getLibraryId(folLocId);
 
       var bibItem = BibItem.builder()

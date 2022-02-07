@@ -179,7 +179,7 @@ class ContributionValidationServiceImplTest {
 
     var item = createItem();
     item.setStatus(new ItemStatus().name(ItemStatus.NameEnum.AVAILABLE));
-    item.setPermanentLocationId(nonLendableLocations.get(0));
+    item.setEffectiveLocationId(nonLendableLocations.get(0));
 
     when(itemContributionOptionsConfigurationService.getItmContribOptConf(any())).thenReturn(itmContribOptConfDTO);
 

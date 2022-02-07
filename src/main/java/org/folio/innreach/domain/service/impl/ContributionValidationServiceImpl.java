@@ -2,6 +2,7 @@ package org.folio.innreach.domain.service.impl;
 
 import static org.apache.commons.collections4.ListUtils.emptyIfNull;
 
+import static org.folio.innreach.domain.service.impl.MARCRecordTransformationServiceImpl.isMARCRecord;
 import static org.folio.innreach.dto.ItemStatus.NameEnum.AVAILABLE;
 import static org.folio.innreach.dto.ItemStatus.NameEnum.CHECKED_OUT;
 import static org.folio.innreach.dto.ItemStatus.NameEnum.IN_TRANSIT;
@@ -33,6 +34,7 @@ import org.folio.innreach.domain.service.LibraryMappingService;
 import org.folio.innreach.domain.service.MaterialTypeMappingService;
 import org.folio.innreach.dto.ContributionCriteriaDTO;
 import org.folio.innreach.dto.InnReachLocationDTO;
+import org.folio.innreach.dto.Instance;
 import org.folio.innreach.dto.Item;
 import org.folio.innreach.dto.ItemContributionOptionsConfigurationDTO;
 import org.folio.innreach.dto.LibraryMappingDTO;
@@ -46,6 +48,7 @@ public class ContributionValidationServiceImpl implements ContributionValidation
 
   private static final String MATERIAL_TYPES_CQL = "cql.allRecords=1";
   private static final int LIMIT = 2000;
+  public static final Character DO_NOT_CONTRIBUTE_CODE = Character.valueOf('n');
 
   private final MaterialTypesClient materialTypesClient;
   private final MaterialTypeMappingService typeMappingService;
@@ -59,6 +62,55 @@ public class ContributionValidationServiceImpl implements ContributionValidation
   private final ItemContributionOptionsConfigurationService itemContributionOptionsConfigurationService;
 
   private final CirculationClient circulationClient;
+
+  @Override
+  public boolean isEligibleForContribution(UUID centralServerId, Instance instance) {
+    if (!isMARCRecord(instance)) {
+      log.info("Source {} is not supported", instance.getSource());
+      return false;
+    }
+
+    if (isExcludedStatisticalCode(centralServerId, instance.getStatisticalCodeIds())) {
+      log.info("Instance has 'do not contribute' suppression status");
+      return false;
+    }
+
+    var contributionItemsCount = emptyIfNull(instance.getItems()).stream()
+      .filter(i -> isEligibleForContribution(centralServerId, i))
+      .count();
+
+    if (contributionItemsCount == 0) {
+      log.info("Instance has no items eligible for contribution");
+      return false;
+    }
+
+    return true;
+  }
+
+  @Override
+  public boolean isEligibleForContribution(UUID centralServerId, Item item) {
+    var statisticalCodeIds = item.getStatisticalCodeIds();
+    var holdingStatisticalCodeIds = item.getHoldingStatisticalCodeIds();
+
+    if (isExcludedStatisticalCode(centralServerId, statisticalCodeIds) ||
+      isExcludedStatisticalCode(centralServerId, holdingStatisticalCodeIds)) {
+      log.info("Item has 'do not contribute' suppression status");
+      return false;
+    }
+
+    return true;
+  }
+
+  private boolean isExcludedStatisticalCode(UUID centralServerId, List<UUID> statisticalCodeIds) {
+    if (CollectionUtils.isNotEmpty(statisticalCodeIds) && statisticalCodeIds.size() > 1) {
+      log.info("More than one statistical code defined");
+      return true;
+    }
+
+    var suppressionCode = getSuppressionStatus(centralServerId, statisticalCodeIds);
+
+    return DO_NOT_CONTRIBUTE_CODE.equals(suppressionCode);
+  }
 
   @Override
   public ContributionItemCirculationStatus getItemCirculationStatus(UUID centralServerId, Item item) {
@@ -82,12 +134,13 @@ public class ContributionValidationServiceImpl implements ContributionValidation
 
   @Override
   public Character getSuppressionStatus(UUID centralServerId, List<UUID> statisticalCodeIds) {
+    Assert.isTrue(statisticalCodeIds.size() == 1, "Multiple statistical codes defined");
+
     var config = getContributionConfigService(centralServerId);
     if (config == null || CollectionUtils.isEmpty(statisticalCodeIds)) {
+      log.warn("Contribution criteria is not set, skipping suppression status check");
       return null;
     }
-
-    Assert.isTrue(statisticalCodeIds.size() == 1, "Multiple statistical codes defined");
 
     var statisticalCodeId = statisticalCodeIds.get(0);
 
@@ -157,7 +210,7 @@ public class ContributionValidationServiceImpl implements ContributionValidation
   private boolean isItemNonLendableByLocations(Item inventoryItem,
                                                ItemContributionOptionsConfigurationDTO itemContributionConfig) {
     var nonLendableLocations = emptyIfNull(itemContributionConfig.getNonLendableLocations());
-    return nonLendableLocations.contains(inventoryItem.getPermanentLocationId());
+    return nonLendableLocations.contains(inventoryItem.getEffectiveLocationId());
   }
 
   private boolean isItemNonLendableByMaterialTypes(Item inventoryItem,
