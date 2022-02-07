@@ -7,10 +7,12 @@ import java.util.UUID;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.stereotype.Service;
 
 import org.folio.innreach.client.LocationsClient;
 import org.folio.innreach.domain.dto.folio.inventorystorage.LocationDTO;
 
+@Service
 @RequiredArgsConstructor
 public class FolioLocationServiceImpl implements FolioLocationService {
 
