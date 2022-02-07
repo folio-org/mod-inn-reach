@@ -140,7 +140,7 @@ public class ContributionValidationServiceImpl implements ContributionValidation
       return null;
     }
 
-    Assert.isTrue(statisticalCodeIds.size() < 2, "Multiple statistical codes defined");
+    Assert.isTrue(statisticalCodeIds.size() == 1, "Multiple statistical codes defined");
 
     var config = getContributionConfigService(centralServerId);
     if (config == null) {

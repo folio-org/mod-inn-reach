@@ -22,8 +22,6 @@ import org.springframework.util.Assert;
 
 import org.folio.innreach.batch.contribution.ContributionJobContextManager;
 import org.folio.innreach.batch.contribution.listener.ContributionExceptionListener;
-import org.folio.innreach.client.LocationsClient;
-import org.folio.innreach.client.LocationsClient.LocationDTO;
 import org.folio.innreach.domain.dto.folio.ContributionItemCirculationStatus;
 import org.folio.innreach.domain.service.CentralServerService;
 import org.folio.innreach.domain.service.ContributionValidationService;
@@ -31,6 +29,7 @@ import org.folio.innreach.domain.service.InnReachLocationService;
 import org.folio.innreach.domain.service.LibraryMappingService;
 import org.folio.innreach.domain.service.LocationMappingService;
 import org.folio.innreach.domain.service.MaterialTypeMappingService;
+import org.folio.innreach.domain.service.impl.FolioLocationService;
 import org.folio.innreach.dto.InnReachLocationDTO;
 import org.folio.innreach.dto.Item;
 import org.folio.innreach.dto.ItemEffectiveCallNumberComponents;
@@ -56,7 +55,7 @@ public class ItemContributor {
   private final InnReachLocationService irLocationService;
   private final CentralServerService centralServerService;
   private final LocationMappingService locationMappingService;
-  private final LocationsClient locationsClient;
+  private final FolioLocationService folioLocationService;
 
   public int contributeItems(String bibId, List<Item> items) {
     log.info("Processing items of bib {}", bibId);
@@ -144,7 +143,7 @@ public class ItemContributor {
     Map<UUID, Integer> materialToCentralTypeMappings = getTypeMappings();
     Map<UUID, String> libIdToLocKeyMappings = getLibraryMappings(irLocIdToLocKeys);
     Map<UUID, String> locIdToLocKeyMappings = getLocationMappings(irLocIdToLocKeys, libIdToLocKeyMappings.keySet());
-    Map<UUID, UUID> locIdToLibIdMappings = getLocationLibraryMappings();
+    Map<UUID, UUID> locIdToLibIdMappings = folioLocationService.getLocationLibraryMappings();
     Map<UUID, String> libIdToAgencyCodeMappings = getAgencyMappings();
 
     return ContributionMappings.builder()
@@ -174,11 +173,6 @@ public class ItemContributor {
     }
 
     return mappings;
-  }
-
-  private Map<UUID, UUID> getLocationLibraryMappings() {
-    return locationsClient.getLocations(FETCH_LIMIT).getResult().stream()
-      .collect(toMap(LocationDTO::getId, LocationDTO::getLibraryId));
   }
 
   private Map<UUID, String> getLocationMappings(Map<UUID, String> irLocations, Collection<UUID> libraryIds) {
