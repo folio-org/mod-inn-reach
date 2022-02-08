@@ -29,6 +29,7 @@ import org.folio.innreach.domain.service.InnReachLocationService;
 import org.folio.innreach.domain.service.LibraryMappingService;
 import org.folio.innreach.domain.service.LocationMappingService;
 import org.folio.innreach.domain.service.MaterialTypeMappingService;
+import org.folio.innreach.domain.service.impl.FolioLocationService;
 import org.folio.innreach.dto.CentralServerDTO;
 import org.folio.innreach.dto.InnReachLocationsDTO;
 import org.folio.innreach.dto.LibraryMappingsDTO;
@@ -54,6 +55,8 @@ class ItemContributorTest {
   private CentralServerService centralServerService;
   @Mock
   private LocationMappingService locationMappingService;
+  @Mock
+  private FolioLocationService folioLocationService;
   @Mock
   private ContributionExceptionListener exceptionListener;
 

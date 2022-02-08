@@ -117,7 +117,7 @@ batch:
       retry-interval-ms: 20000
       reader-topic: inventory.instance-contribution
       reader-group-id: ${ENV:folio}-mod-innreach-contribution-events-group
-      reader-poll-timeout-sec: 300
+      reader-poll-timeout-sec: 30
 reference-data:
   loader:
     retry-attempts: 10
