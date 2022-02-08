@@ -20,6 +20,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.retry.RetryCallback;
+import org.springframework.retry.support.RetryTemplate;
 
 import org.folio.innreach.batch.contribution.ContributionJobContext;
 import org.folio.innreach.batch.contribution.ContributionJobContextManager;
@@ -37,6 +39,8 @@ class InstanceContributorTest {
   private InnReachContributionService irContributionService;
   @Mock
   private InstanceTransformationService instanceTransformationService;
+  @Mock
+  private RetryTemplate retryTemplate;
 
   @InjectMocks
   private InstanceContributor instanceContributor;
@@ -44,6 +48,10 @@ class InstanceContributorTest {
   @BeforeEach
   public void init() {
     ContributionJobContextManager.beginContributionJobContext(JOB_CONTEXT);
+    when(retryTemplate.execute(any(), any(), any())).thenAnswer(invocation -> {
+      RetryCallback retry = invocation.getArgument(0);
+      return retry.doWithRetry(null);
+    });
   }
 
   @AfterEach

@@ -13,8 +13,8 @@ import org.folio.innreach.domain.service.ContributionService;
 @EnableConfigurationProperties(ContributionJobProperties.class)
 public class ContributionJobConfig {
 
-  @Bean
-  public RetryTemplate batchRetryTemplate(ContributionJobProperties jobProperties) {
+  @Bean("contributionRetryTemplate")
+  public RetryTemplate contributionRetryTemplate(ContributionJobProperties jobProperties) {
     return RetryTemplate.builder()
       .maxAttempts(jobProperties.getRetryAttempts())
       .fixedBackoff(jobProperties.getRetryIntervalMs())

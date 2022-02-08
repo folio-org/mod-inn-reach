@@ -49,17 +49,8 @@ public class InstanceTransformationServiceImpl implements InstanceTransformation
     }
     return (int) items.stream()
       .filter(Objects::nonNull)
-      .filter(i -> !excludedFromContribution(centralServerId, i))
+      .filter(i -> validationService.isEligibleForContribution(centralServerId, i))
       .count();
-  }
-
-  private boolean excludedFromContribution(UUID centralServerId, Item item) {
-    try {
-      var suppressionStatus = validationService.getSuppressionStatus(centralServerId, item.getStatisticalCodeIds());
-      return Character.valueOf('n').equals(suppressionStatus);
-    } catch (Exception e) {
-      return true;
-    }
   }
 
 }
