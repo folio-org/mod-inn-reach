@@ -4,6 +4,7 @@ import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TEST_METHOD;
@@ -56,6 +57,7 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
   private static final UUID REQUESTER_ID = UUID.randomUUID();
   private static final UUID ITEM_ID = UUID.fromString("8a326225-6530-41cc-9399-a61987bfab3c");
   private static final UUID INSTANCE_ID = UUID.fromString("ef32e52c-cd9b-462e-9bf0-65233b7a759c");
+  private static final UUID HOLDING_ID = UUID.fromString("55fb31a7-1223-4214-bea6-8e35f1ae40dc");
   private static final UUID REQUEST_ID = UUID.randomUUID();
   private static final UUID PRE_POPULATED_PATRON_ID = UUID.fromString("4154a604-4d5a-4d8e-9160-057fc7b6e6b8");
   private static final UUID PRE_POPULATED_ITEM_ID = UUID.fromString("9a326225-6530-41cc-9399-a61987bfab3c");
@@ -249,8 +251,9 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
   })
   void shouldUpdateTransactionToTransfer() {
     var folioRequestId =  UUID.fromString("26278b3a-de32-4deb-b81b-896637b3dbeb");
+    var barcode = "4820049490886";
     var inventoryItemDTO = new InventoryItemDTO();
-    inventoryItemDTO.setHrid("inst000000000002");
+    inventoryItemDTO.setBarcode(barcode);
     Optional<InventoryItemDTO> optionalInventoryItem = Optional.of(inventoryItemDTO);
     var event = getRequestDomainEvent(DomainEventType.UPDATED);
     RequestDTO requestDTO = event.getData().getNewEntity();
@@ -275,7 +278,10 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
 
     assertEquals(ITEM_ID, transactionItemHold.getFolioItemId());
     assertEquals(INSTANCE_ID, transactionItemHold.getFolioInstanceId());
+    assertEquals(HOLDING_ID, transactionItemHold.getFolioHoldingId());
+    assertEquals(barcode, transactionItemHold.getFolioItemBarcode());
     assertEquals(InnReachTransaction.TransactionState.TRANSFER, transaction.getState());
+    verify(innReachExternalService, times(1)).postInnReachApi(any(), any(), any());
   }
 
   @Test
@@ -322,6 +328,9 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
 
     var capturedEvent = capturedEvents.get(0);
     assertEquals(folioRequestId, capturedEvent.getRecordId());
+    verify(transactionRepository, times(1)).fetchActiveByRequestId(any());
+    verify(itemService, times(0)).find(any());
+    verify(innReachExternalService, times(0)).postInnReachApi(any(), any(), any());
   }
 
   private DomainEvent<LoanDTO> getLoanDomainEvent(DomainEventType eventType) {
@@ -345,6 +354,7 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
     request.setItemId(ITEM_ID);
     request.setRequesterId(REQUESTER_ID);
     request.setInstanceId(INSTANCE_ID);
+    request.setHoldingsRecordId(HOLDING_ID);
 
     return DomainEvent.<RequestDTO>builder()
       .recordId(REQUEST_ID)
