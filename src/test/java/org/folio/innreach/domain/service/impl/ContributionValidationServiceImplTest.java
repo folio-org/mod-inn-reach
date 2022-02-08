@@ -3,11 +3,14 @@ package org.folio.innreach.domain.service.impl;
 import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
+import static org.folio.innreach.fixture.ContributionFixture.createContributionCriteria;
 import static org.folio.innreach.fixture.ContributionFixture.createItem;
 import static org.folio.innreach.fixture.ItemContributionOptionsConfigurationFixture.createItmContribOptConfDTO;
 
@@ -34,10 +37,17 @@ import org.folio.innreach.domain.service.ItemContributionOptionsConfigurationSer
 import org.folio.innreach.domain.service.LibraryMappingService;
 import org.folio.innreach.domain.service.MaterialTypeMappingService;
 import org.folio.innreach.dto.ContributionCriteriaDTO;
+import org.folio.innreach.dto.Instance;
+import org.folio.innreach.dto.Item;
 import org.folio.innreach.dto.ItemStatus;
 import org.folio.innreach.external.service.InnReachLocationExternalService;
 
 class ContributionValidationServiceImplTest {
+
+  private static final ContributionCriteriaDTO CRITERIA = createContributionCriteria();
+  private static final UUID DO_NOT_CONTRIBUTE_CODE_ID = CRITERIA.getDoNotContributeId();
+  private static final String ELIGIBLE_SOURCE = "MARC";
+  private static final String INELIGIBLE_SOURCE = "FOLIO";
 
   @Mock
   private MaterialTypesClient materialTypesClient;
@@ -265,6 +275,86 @@ class ContributionValidationServiceImplTest {
     assertThatThrownBy(() -> service.getSuppressionStatus(UUID.randomUUID(), Collections.nCopies(3, UUID.randomUUID())))
       .isInstanceOf(IllegalArgumentException.class)
       .hasMessageContaining("Multiple statistical codes defined");
+  }
+
+  @Test
+  void testEligibleInstance_noStatisticalCodes() {
+    when(contributionConfigService.getCriteria(any())).thenReturn(CRITERIA);
+
+    var instance = new Instance();
+    instance.setSource(ELIGIBLE_SOURCE);
+    instance.setItems(List.of(new Item()));
+
+    var result = service.isEligibleForContribution(UUID.randomUUID(), instance);
+
+    assertTrue(result);
+  }
+
+  @Test
+  void testEligibleInstance_statisticalCodeAllowed() {
+    var allowedStatisticalCodeId = UUID.randomUUID();
+    var statisticalCodes = List.of(allowedStatisticalCodeId);
+
+    var instance = new Instance();
+    instance.setStatisticalCodeIds(statisticalCodes);
+    instance.setSource(ELIGIBLE_SOURCE);
+    instance.setItems(List.of(new Item().statisticalCodeIds(statisticalCodes)));
+
+    when(contributionConfigService.getCriteria(any())).thenReturn(CRITERIA);
+
+    var isEligible = service.isEligibleForContribution(UUID.randomUUID(), instance);
+
+    assertTrue(isEligible);
+  }
+
+  @Test
+  void testIneligibleInstance_statisticalCodeExcluded() {
+    var statisticalCodes = List.of(DO_NOT_CONTRIBUTE_CODE_ID);
+
+    var instance = new Instance();
+    instance.setStatisticalCodeIds(statisticalCodes);
+    instance.setSource(ELIGIBLE_SOURCE);
+    instance.setItems(List.of(new Item().statisticalCodeIds(statisticalCodes)));
+
+    when(contributionConfigService.getCriteria(any())).thenReturn(CRITERIA);
+
+    var isEligible = service.isEligibleForContribution(UUID.randomUUID(), instance);
+
+    assertFalse(isEligible);
+  }
+
+  @Test
+  void testIneligibleInstance_noEligibleItems() {
+    var instance = new Instance().source(ELIGIBLE_SOURCE);
+    instance.setItems(List.of(new Item().statisticalCodeIds(List.of(DO_NOT_CONTRIBUTE_CODE_ID))));
+
+    when(contributionConfigService.getCriteria(any())).thenReturn(CRITERIA);
+
+    var isEligible = service.isEligibleForContribution(UUID.randomUUID(), instance);
+
+    assertFalse(isEligible);
+  }
+
+  @Test
+  void testIneligibleInstance_noItems() {
+    var instance = new Instance().source(ELIGIBLE_SOURCE);
+
+    when(contributionConfigService.getCriteria(any())).thenReturn(CRITERIA);
+
+    var isEligible = service.isEligibleForContribution(UUID.randomUUID(), instance);
+
+    assertFalse(isEligible);
+  }
+
+  @Test
+  void testIneligibleInstance_unsupportedSource() {
+    var instance = new Instance().source(INELIGIBLE_SOURCE);
+
+    when(contributionConfigService.getCriteria(any())).thenReturn(CRITERIA);
+
+    var isEligible = service.isEligibleForContribution(UUID.randomUUID(), instance);
+
+    assertFalse(isEligible);
   }
 
 }
