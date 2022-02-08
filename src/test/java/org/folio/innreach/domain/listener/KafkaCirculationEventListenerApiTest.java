@@ -55,6 +55,7 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
   private static final UUID LOAN_ID = UUID.randomUUID();
   private static final UUID REQUESTER_ID = UUID.randomUUID();
   private static final UUID ITEM_ID = UUID.fromString("8a326225-6530-41cc-9399-a61987bfab3c");
+  private static final UUID INSTANCE_ID = UUID.fromString("ef32e52c-cd9b-462e-9bf0-65233b7a759c");
   private static final UUID REQUEST_ID = UUID.randomUUID();
   private static final UUID PRE_POPULATED_PATRON_ID = UUID.fromString("4154a604-4d5a-4d8e-9160-057fc7b6e6b8");
   private static final UUID PRE_POPULATED_ITEM_ID = UUID.fromString("9a326225-6530-41cc-9399-a61987bfab3c");
@@ -273,6 +274,7 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
     var transactionItemHold = (TransactionItemHold) transaction.getHold();
 
     assertEquals(ITEM_ID, transactionItemHold.getFolioItemId());
+    assertEquals(INSTANCE_ID, transactionItemHold.getFolioInstanceId());
     assertEquals(InnReachTransaction.TransactionState.TRANSFER, transaction.getState());
   }
 
@@ -342,6 +344,7 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
     request.setId(REQUEST_ID);
     request.setItemId(ITEM_ID);
     request.setRequesterId(REQUESTER_ID);
+    request.setInstanceId(INSTANCE_ID);
 
     return DomainEvent.<RequestDTO>builder()
       .recordId(REQUEST_ID)

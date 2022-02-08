@@ -190,8 +190,11 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
       log.info("Updating transaction {} on request to transfer {}", transaction.getId(), requestDTO.getId());
       transactionItemHold.setFolioItemId(requestDTO.getItemId());
       transaction.setState(TRANSFER);
+      transactionItemHold.setFolioInstanceId(requestDTO.getInstanceId());
+      transactionItemHold.setFolioHoldingId(requestDTO.getHoldingsRecordId());
       var inventoryItemDTO = itemService.find(requestDTO.getItemId())
         .orElseThrow(() -> new IllegalArgumentException("Item is not found by id " + requestDTO.getItemId()));
+      transactionItemHold.setFolioItemBarcode(inventoryItemDTO.getBarcode());
       reportTransferRequest(transaction, inventoryItemDTO.getHrid());
     }
   }
