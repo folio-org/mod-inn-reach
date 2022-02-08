@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.folio.innreach.domain.dto.folio.circulation.RequestDTO;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 
@@ -46,8 +47,36 @@ public class KafkaCirculationEventListener {
           break;
         case UPDATED:
           transactionActionService.handleLoanUpdate(event.getData().getNewEntity());
+          break;
         default:
           log.warn("Received event of unknown type {}", event.getType());
+      }
+    });
+  }
+
+  @KafkaListener(
+    containerFactory = KAFKA_CONTAINER_FACTORY,
+    id = "${kafka.listener.request.id}",
+    groupId = "${kafka.listener.request.group-id}",
+    topicPattern = "${kafka.listener.request.topic-pattern}",
+    concurrency = "${kafka.listener.request.concurrency}")
+  public void handleRequestStorage(List<ConsumerRecord<String, DomainEvent<RequestDTO>>> consumerRecords) {
+    log.info("Handling circulation Requests events from Kafka [number of events: {}]", consumerRecords.size());
+    var events = consumerRecords.stream()
+      .filter(e -> e.value() != null)
+      .map(this::toDomainEventWithRecordId)
+      .collect(Collectors.toList());
+
+    eventProcessor.process(events, event -> {
+      switch (event.getType()) {
+      case CREATED:
+        //
+        break;
+      case UPDATED:
+        transactionActionService.handleRequestUpdate(event.getData().getNewEntity());
+        break;
+      default:
+        log.warn("Received event of unknown type {}", event.getType());
       }
     });
   }

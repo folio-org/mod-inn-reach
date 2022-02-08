@@ -136,3 +136,9 @@ kafka:
       topic-pattern: (${environment}\.)(.*\.)circulation\.loan
       concurrency: ${KAFKA_EVENTS_CONCURRENCY:2}
       data-type: org.folio.innreach.dto.LoanDTO
+    request:
+      id: ${environment}-mod-inn-reach-circ-requests
+      group-id: ${spring.kafka.consumer.group-id}
+      topic-pattern: (${environment}\.)(.*\.)circulation\.request
+      concurrency: ${KAFKA_EVENTS_CONCURRENCY:2}
+      data-type: org.folio.innreach.domain.dto.folio.circulation.RequestDTO
