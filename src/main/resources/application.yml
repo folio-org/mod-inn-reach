@@ -142,3 +142,9 @@ kafka:
       topic-pattern: (${environment}\.)(.*\.)circulation\.request
       concurrency: ${KAFKA_EVENTS_CONCURRENCY:2}
       data-type: org.folio.innreach.domain.dto.folio.circulation.RequestDTO
+    check-in:
+      id: ${environment}-mod-inn-reach-circ-checkins
+      group-id: ${spring.kafka.consumer.group-id}
+      topic-pattern: (${environment}\.)(.*\.)circulation\.check-in
+      concurrency: ${KAFKA_EVENTS_CONCURRENCY:2}
+      data-type: org.folio.innreach.dto.CheckInDTO

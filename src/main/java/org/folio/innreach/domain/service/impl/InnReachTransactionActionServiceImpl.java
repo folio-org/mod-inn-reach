@@ -1,5 +1,7 @@
 package org.folio.innreach.domain.service.impl;
 
+import static org.folio.innreach.domain.dto.folio.circulation.RequestDTO.RequestStatus.CLOSED_CANCELLED;
+import static org.folio.innreach.domain.dto.folio.circulation.RequestDTO.RequestStatus.CLOSED_PICKUP_EXPIRED;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.BORROWER_RENEW;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.FINAL_CHECKIN;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.ITEM_HOLD;
@@ -8,31 +10,36 @@ import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionSt
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.ITEM_SHIPPED;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.PATRON_HOLD;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.RECEIVE_UNANNOUNCED;
+import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.RETURN_UNCIRCULATED;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.TRANSFER;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionType.ITEM;
+import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionType.PATRON;
+import static org.folio.innreach.dto.ItemStatus.NameEnum.AWAITING_PICKUP;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
-import java.util.function.Consumer;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
-import org.folio.innreach.domain.dto.folio.circulation.RequestDTO;
-import org.folio.innreach.domain.service.ItemService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
 
+import org.folio.innreach.domain.dto.folio.circulation.RequestDTO;
+import org.folio.innreach.domain.dto.folio.inventory.InventoryItemDTO;
 import org.folio.innreach.domain.entity.InnReachTransaction;
 import org.folio.innreach.domain.entity.TransactionItemHold;
 import org.folio.innreach.domain.entity.TransactionPatronHold;
 import org.folio.innreach.domain.exception.EntityNotFoundException;
 import org.folio.innreach.domain.service.InnReachTransactionActionService;
+import org.folio.innreach.domain.service.ItemService;
 import org.folio.innreach.domain.service.PatronHoldService;
 import org.folio.innreach.domain.service.RequestService;
+import org.folio.innreach.dto.CheckInDTO;
 import org.folio.innreach.dto.ItemHoldCheckOutResponseDTO;
 import org.folio.innreach.dto.LoanDTO;
 import org.folio.innreach.dto.PatronHoldCheckInResponseDTO;
@@ -54,6 +61,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
   private static final String D2IR_BORROWER_RENEW = "borrowerrenew";
   private static final String D2IR_FINAL_CHECK_IN = "finalcheckin";
   private static final String D2IR_TRASFER_REQUEST = "transferrequest";
+  private static final String D2IR_RETURN_UNCIRCULATED = "returnuncirculated";
 
   private final InnReachTransactionRepository transactionRepository;
   private final InnReachTransactionMapper transactionMapper;
@@ -126,85 +134,115 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
 
   @Override
   public void associateNewLoanWithTransaction(LoanDTO loan) {
-    updateAssociatedTransaction(loan, transaction -> {
-      log.info("Associating a new loan {} with transaction {}", loan.getId(), transaction.getId());
-      var hold = transaction.getHold();
-      hold.setFolioLoanId(loan.getId());
-      hold.setDueDateTime((int) loan.getDueDate().toInstant().getEpochSecond());
-    });
+    var itemId = loan.getItemId();
+    var patronId = loan.getUserId();
+
+    var transaction = transactionRepository.fetchActiveByFolioItemIdAndPatronId(itemId, patronId).orElse(null);
+    if (transaction == null || transaction.getType() != PATRON) {
+      return;
+    }
+
+    log.info("Associating a new loan {} with transaction {}", loan.getId(), transaction.getId());
+
+    var hold = transaction.getHold();
+    hold.setFolioLoanId(loan.getId());
+    hold.setDueDateTime(toEpochSec(loan.getDueDate()));
   }
 
   @Override
   public void handleLoanUpdate(LoanDTO loan) {
-    var transaction = transactionRepository.fetchOneByLoanId(loan.getId()).orElse(null);
+    var transaction = transactionRepository.fetchActiveByLoanId(loan.getId()).orElse(null);
     if (transaction == null) {
       return;
     }
 
     if ("checkedin".equals(loan.getAction()) && "Closed".equalsIgnoreCase(loan.getStatus().getName())) {
       if (transaction.getType() == ITEM) {
-        log.info("Updating transaction {} on loan to final check-in {}", transaction.getId(), loan.getId());
-        transaction.getHold().setDueDateTime(null);
-        var transactionItemHold = (TransactionItemHold) transaction.getHold();
-        transactionItemHold.setPatronName(null);
-        transactionItemHold.setPatronId(null);
+        log.info("Updating item transaction {} on the return of loan {}", transaction.getId(), loan.getId());
+
+        var hold = (TransactionItemHold) transaction.getHold();
+        hold.setPatronName(null);
+        hold.setPatronId(null);
+        hold.setDueDateTime(null);
+
         transaction.setState(FINAL_CHECKIN);
+
         reportFinalCheckIn(transaction);
-        transactionRepository.save(transaction);
-      } else {
-        log.info("Updating transaction {} on loan closure {}", transaction.getId(), loan.getId());
+      } else if (transaction.getType() == PATRON) {
+        log.info("Updating patron transaction {} on loan closure {}", transaction.getId(), loan.getId());
+
         transaction.getHold().setDueDateTime(null);
         transaction.setState(ITEM_IN_TRANSIT);
+
         reportItemInTransit(transaction);
       }
-    }
+    } else if ("renewed".equals(loan.getAction()) && transaction.getType() == PATRON) {
+      log.info("Updating patron transaction {} on the renewal of loan {}", transaction.getId(), loan.getId());
 
-    if (loan.getAction().equals("renewed")) {
-      log.info("Updating transaction {} on loan renewed {}", transaction.getId(), loan.getId());
       var transactionDueDate = Instant.ofEpochSecond(transaction.getHold().getDueDateTime());
-      var loanDueDate = loan.getDueDate().toInstant().truncatedTo(ChronoUnit.SECONDS);
+      var loanDueDate = toInstantTruncatedToSec(loan.getDueDate());
       if (!loanDueDate.equals(transactionDueDate)) {
-        var loanIntegerDueDate = (int) (loanDueDate.getEpochSecond());
-        reportBorrowerRenew(transaction, loanIntegerDueDate);
+        var loanIntegerDueDate = (int) loanDueDate.getEpochSecond();
+
         transaction.setState(BORROWER_RENEW);
         transaction.getHold().setDueDateTime(loanIntegerDueDate);
-        transactionRepository.save(transaction);
+
+        reportBorrowerRenew(transaction, loanIntegerDueDate);
       }
     }
   }
 
   @Override
   public void handleRequestUpdate(RequestDTO requestDTO) {
-    var transaction = transactionRepository.fetchActiveByRequestId(requestDTO.getId()).orElse(null);
-    if (transaction == null) {
+    var requestId = requestDTO.getId();
+    var itemId = requestDTO.getItemId();
+
+    var transaction = transactionRepository.fetchActiveByRequestId(requestId).orElse(null);
+    if (transaction == null || transaction.getType() != ITEM) {
       return;
     }
 
-    if (transaction.getType() != ITEM) {
-      log.info("Transaction {} isn't Item Hold", transaction.getId());
-      return;
-    }
+    var hold = transaction.getHold();
+    if (!hold.getFolioItemId().equals(itemId)) {
+      log.info("Updating transaction {} on moving a request {} from one item to another", transaction.getId(), requestId);
 
-    var transactionItemHold = (TransactionItemHold) transaction.getHold();
-    if (!transactionItemHold.getFolioItemId().equals(requestDTO.getItemId())) {
-      log.info("Updating transaction {} on request to transfer {}", transaction.getId(), requestDTO.getId());
-      transactionItemHold.setFolioItemId(requestDTO.getItemId());
+      var item = fetchItemById(itemId);
+
+      hold.setFolioItemId(itemId);
+      hold.setFolioInstanceId(requestDTO.getInstanceId());
+      hold.setFolioHoldingId(requestDTO.getHoldingsRecordId());
+      hold.setFolioItemBarcode(item.getBarcode());
       transaction.setState(TRANSFER);
-      transactionItemHold.setFolioInstanceId(requestDTO.getInstanceId());
-      transactionItemHold.setFolioHoldingId(requestDTO.getHoldingsRecordId());
-      var inventoryItemDTO = itemService.find(requestDTO.getItemId())
-        .orElseThrow(() -> new IllegalArgumentException("Item is not found by id " + requestDTO.getItemId()));
-      transactionItemHold.setFolioItemBarcode(inventoryItemDTO.getBarcode());
-      reportTransferRequest(transaction, inventoryItemDTO.getHrid());
+
+      reportTransferRequest(transaction, item.getHrid());
     }
   }
 
-  private void updateAssociatedTransaction(LoanDTO loan, Consumer<InnReachTransaction> transactionConsumer) {
-    var itemId = loan.getItemId();
-    var patronId = loan.getUserId();
+  @Override
+  public void handleCheckInCreation(CheckInDTO checkIn) {
+    var itemId = checkIn.getItemId();
+    var itemStatusPriorToCheckIn = checkIn.getItemStatusPriorToCheckIn();
 
-    transactionRepository.fetchOpenByFolioItemIdAndPatronId(itemId, patronId)
-      .ifPresent(transactionConsumer);
+    if (AWAITING_PICKUP.getValue().equalsIgnoreCase(itemStatusPriorToCheckIn)) {
+      var transaction = transactionRepository.fetchActiveByFolioItemId(itemId).orElse(null);
+
+      if (transaction == null || transaction.getType() != PATRON) {
+        return;
+      }
+
+      var requestId = transaction.getHold().getFolioRequestId();
+      var request = requestService.findRequest(requestId);
+      var requestStatus = request.getStatus();
+
+      if (requestStatus == CLOSED_PICKUP_EXPIRED || requestStatus == CLOSED_CANCELLED) {
+        log.info("Updating transaction {} on the hold shelf clearance for uncirculated items, check-in {}",
+          transaction.getId(), checkIn.getId());
+
+        transaction.setState(RETURN_UNCIRCULATED);
+
+        reportReturnUncirculated(transaction);
+      }
+    }
   }
 
   private PatronHoldCheckInResponseDTO checkInItem(InnReachTransaction transaction, UUID servicePointId) {
@@ -223,9 +261,22 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
       .barcodeAugmented(!shippedItemBarcode.equals(folioItemBarcode));
   }
 
+  private static Instant toInstantTruncatedToSec(Date date) {
+    return date.toInstant().truncatedTo(ChronoUnit.SECONDS);
+  }
+
+  private static int toEpochSec(Date date) {
+    return (int) toInstantTruncatedToSec(date).getEpochSecond();
+  }
+
   private InnReachTransaction fetchTransactionById(UUID transactionId) {
     return transactionRepository.fetchOneById(transactionId)
       .orElseThrow(() -> new EntityNotFoundException("INN-Reach transaction is not found by id: " + transactionId));
+  }
+
+  private InventoryItemDTO fetchItemById(UUID itemId) {
+    return itemService.find(itemId)
+      .orElseThrow(() -> new IllegalArgumentException("Item is not found by id: " + itemId));
   }
 
   private void reportItemReceived(InnReachTransaction transaction) {
@@ -262,6 +313,10 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
     var payload = new HashMap<>();
     payload.put("newItemId", hrid);
     callD2irCircOperation(D2IR_TRASFER_REQUEST, transaction, payload);
+  }
+
+  private void reportReturnUncirculated(InnReachTransaction transaction) {
+    callD2irCircOperation(D2IR_RETURN_UNCIRCULATED, transaction, null);
   }
 
   private void callD2irCircOperation(String operation, InnReachTransaction transaction, Map<Object, Object> payload) {
