@@ -2,11 +2,14 @@ package org.folio.innreach.domain.listener.base;
 
 import static org.folio.innreach.domain.listener.base.BaseKafkaApiTest.CIRC_LOAN_TOPIC;
 
+import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.Callable;
 
 import javax.validation.Valid;
 
 import lombok.SneakyThrows;
+import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -58,6 +61,10 @@ public class BaseKafkaApiTest {
   @BeforeAll
   public void setUp() {
     kafkaTemplate = buildKafkaTemplate();
+  }
+
+  protected static <T> List<ConsumerRecord<String, DomainEvent<T>>> asSingleConsumerRecord(String topic, UUID entityId, DomainEvent<T> event) {
+    return List.of(new ConsumerRecord(topic, 1, 1, entityId.toString(), event));
   }
 
   @DynamicPropertySource

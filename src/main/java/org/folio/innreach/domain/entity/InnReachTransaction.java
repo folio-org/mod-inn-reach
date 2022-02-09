@@ -1,5 +1,7 @@
 package org.folio.innreach.domain.entity;
 
+import static org.folio.innreach.domain.entity.InnReachTransaction.FETCH_ACTIVE_BY_ITEM_ID_QUERY;
+import static org.folio.innreach.domain.entity.InnReachTransaction.FETCH_ACTIVE_BY_ITEM_ID_QUERY_NAME;
 import static org.folio.innreach.domain.entity.InnReachTransaction.FETCH_ONE_BY_ID_QUERY;
 import static org.folio.innreach.domain.entity.InnReachTransaction.FETCH_ONE_BY_ID_QUERY_NAME;
 import static org.folio.innreach.domain.entity.InnReachTransaction.FETCH_ONE_BY_ITEM_BARCODE_QUERY;
@@ -8,10 +10,10 @@ import static org.folio.innreach.domain.entity.InnReachTransaction.FETCH_ONE_BY_
 import static org.folio.innreach.domain.entity.InnReachTransaction.FETCH_ONE_BY_TRACKING_ID_AND_CENTRAL_CODE_QUERY_NAME;
 import static org.folio.innreach.domain.entity.InnReachTransaction.FETCH_ONE_BY_TRACKING_ID_QUERY;
 import static org.folio.innreach.domain.entity.InnReachTransaction.FETCH_ONE_BY_TRACKING_ID_QUERY_NAME;
-import static org.folio.innreach.domain.entity.InnReachTransaction.FETCH_OPEN_BY_ITEM_AND_PATRON_QUERY;
-import static org.folio.innreach.domain.entity.InnReachTransaction.FETCH_OPEN_BY_ITEM_AND_PATRON_QUERY_NAME;
-import static org.folio.innreach.domain.entity.InnReachTransaction.FETCH_OPEN_BY_LOAN_ID_QUERY_NAME;
-import static org.folio.innreach.domain.entity.InnReachTransaction.FETCH_OPEN_BY_LOAN_ID_QUERY;
+import static org.folio.innreach.domain.entity.InnReachTransaction.FETCH_ACTIVE_BY_ITEM_ID_AND_PATRON_ID_QUERY;
+import static org.folio.innreach.domain.entity.InnReachTransaction.FETCH_ACTIVE_BY_ITEM_ID_AND_PATRON_ID_QUERY_NAME;
+import static org.folio.innreach.domain.entity.InnReachTransaction.FETCH_ACTIVE_BY_LOAN_ID_QUERY_NAME;
+import static org.folio.innreach.domain.entity.InnReachTransaction.FETCH_ACTIVE_BY_LOAN_ID_QUERY;
 import static org.folio.innreach.domain.entity.InnReachTransaction.FETCH_ACTIVE_BY_REQUEST_ID_QUERY_NAME;
 import static org.folio.innreach.domain.entity.InnReachTransaction.FETCH_ACTIVE_BY_REQUEST_ID_QUERY;
 
@@ -58,12 +60,16 @@ import org.folio.innreach.domain.entity.base.Identifiable;
   query = FETCH_ONE_BY_TRACKING_ID_AND_CENTRAL_CODE_QUERY
 )
 @NamedQuery(
-  name = FETCH_OPEN_BY_ITEM_AND_PATRON_QUERY_NAME,
-  query = FETCH_OPEN_BY_ITEM_AND_PATRON_QUERY
+  name = FETCH_ACTIVE_BY_ITEM_ID_QUERY_NAME,
+  query = FETCH_ACTIVE_BY_ITEM_ID_QUERY
 )
 @NamedQuery(
-  name = FETCH_OPEN_BY_LOAN_ID_QUERY_NAME,
-  query = FETCH_OPEN_BY_LOAN_ID_QUERY
+  name = FETCH_ACTIVE_BY_ITEM_ID_AND_PATRON_ID_QUERY_NAME,
+  query = FETCH_ACTIVE_BY_ITEM_ID_AND_PATRON_ID_QUERY
+)
+@NamedQuery(
+  name = FETCH_ACTIVE_BY_LOAN_ID_QUERY_NAME,
+  query = FETCH_ACTIVE_BY_LOAN_ID_QUERY
 )
 @NamedQuery(
   name = FETCH_ACTIVE_BY_REQUEST_ID_QUERY_NAME,
@@ -90,24 +96,25 @@ public class InnReachTransaction extends Auditable implements Identifiable<UUID>
     "JOIN FETCH h.pickupLocation " +
     "WHERE irt.trackingId = :trackingId AND irt.centralServerCode = :centralServerCode";
 
-  public static final String FETCH_OPEN_TRANSACTIONS = "SELECT irt FROM InnReachTransaction AS irt " +
+  public static final String FETCH_ACTIVE_TRANSACTIONS = "SELECT irt FROM InnReachTransaction AS irt " +
     "JOIN FETCH irt.hold AS h " +
     "JOIN FETCH h.pickupLocation " +
     "WHERE irt.state NOT IN (4, 11, 12, 13)";
 
-  public static final String FETCH_OPEN_BY_ITEM_AND_PATRON_QUERY_NAME = "InnReachTransaction.fetchOpenByFolioItemIdAndPatronId";
-  public static final String FETCH_OPEN_BY_ITEM_AND_PATRON_QUERY = FETCH_OPEN_TRANSACTIONS +
-    " AND h.folioItemId = :folioItemId AND h.folioPatronId = :folioPatronId";
+  public static final String FETCH_ACTIVE_BY_ITEM_ID_QUERY_NAME = "InnReachTransaction.fetchActiveByFolioItemId";
+  public static final String FETCH_ACTIVE_BY_ITEM_ID_QUERY = FETCH_ACTIVE_TRANSACTIONS +
+    " AND h.folioItemId = :folioItemId";
 
+  public static final String FETCH_ACTIVE_BY_ITEM_ID_AND_PATRON_ID_QUERY_NAME = "InnReachTransaction.fetchOpenByFolioItemIdAndPatronId";
+  public static final String FETCH_ACTIVE_BY_ITEM_ID_AND_PATRON_ID_QUERY = FETCH_ACTIVE_BY_ITEM_ID_QUERY +
+    " AND h.folioPatronId = :folioPatronId";
 
-  public static final String FETCH_OPEN_BY_LOAN_ID_QUERY_NAME = "InnReachTransaction.fetchAssociatedLoan";
-  public static final String FETCH_OPEN_BY_LOAN_ID_QUERY = "SELECT irt FROM InnReachTransaction AS irt " +
-    "JOIN FETCH irt.hold AS h " +
-    "JOIN FETCH h.pickupLocation " +
-    "WHERE h.folioLoanId = :folioLoanId AND irt.state NOT IN (4, 11, 12, 13)";
+  public static final String FETCH_ACTIVE_BY_LOAN_ID_QUERY_NAME = "InnReachTransaction.fetchActiveByLoanId";
+  public static final String FETCH_ACTIVE_BY_LOAN_ID_QUERY = FETCH_ACTIVE_TRANSACTIONS +
+    " AND h.folioLoanId = :folioLoanId";
 
-  public static final String FETCH_ACTIVE_BY_REQUEST_ID_QUERY_NAME = "InnReachTransaction.fetchActiveTransactionByRequestId";
-  public static final String FETCH_ACTIVE_BY_REQUEST_ID_QUERY = FETCH_OPEN_TRANSACTIONS +
+  public static final String FETCH_ACTIVE_BY_REQUEST_ID_QUERY_NAME = "InnReachTransaction.fetchActiveByRequestId";
+  public static final String FETCH_ACTIVE_BY_REQUEST_ID_QUERY = FETCH_ACTIVE_TRANSACTIONS +
     " AND h.folioRequestId = :folioRequestId";
 
   @Id

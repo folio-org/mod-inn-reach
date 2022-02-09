@@ -3,6 +3,7 @@ package org.folio.innreach.domain.service;
 import java.util.UUID;
 
 import org.folio.innreach.domain.dto.folio.circulation.RequestDTO;
+import org.folio.innreach.dto.CheckInDTO;
 import org.folio.innreach.dto.ItemHoldCheckOutResponseDTO;
 import org.folio.innreach.dto.LoanDTO;
 import org.folio.innreach.dto.PatronHoldCheckInResponseDTO;
@@ -20,4 +21,6 @@ public interface InnReachTransactionActionService {
   void handleLoanUpdate(LoanDTO loan);
 
   void handleRequestUpdate(RequestDTO requestDTO);
+
+  void handleCheckInCreation(CheckInDTO checkIn);
 }

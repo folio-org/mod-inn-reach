@@ -1,7 +1,8 @@
 package org.folio.innreach.repository;
 
-import static org.folio.innreach.domain.entity.InnReachTransaction.FETCH_OPEN_BY_ITEM_AND_PATRON_QUERY_NAME;
-import static org.folio.innreach.domain.entity.InnReachTransaction.FETCH_OPEN_BY_LOAN_ID_QUERY_NAME;
+import static org.folio.innreach.domain.entity.InnReachTransaction.FETCH_ACTIVE_BY_ITEM_ID_AND_PATRON_ID_QUERY_NAME;
+import static org.folio.innreach.domain.entity.InnReachTransaction.FETCH_ACTIVE_BY_ITEM_ID_QUERY_NAME;
+import static org.folio.innreach.domain.entity.InnReachTransaction.FETCH_ACTIVE_BY_LOAN_ID_QUERY_NAME;
 import static org.folio.innreach.domain.entity.InnReachTransaction.FETCH_ACTIVE_BY_REQUEST_ID_QUERY_NAME;
 
 import java.util.Optional;
@@ -29,11 +30,14 @@ public interface InnReachTransactionRepository extends JpaRepository<InnReachTra
   @Query(name = InnReachTransaction.FETCH_ONE_BY_TRACKING_ID_AND_CENTRAL_CODE_QUERY_NAME)
   Optional<InnReachTransaction> findByTrackingIdAndCentralServerCode(String trackingId, String centralServerCode);
 
-  @Query(name = FETCH_OPEN_BY_ITEM_AND_PATRON_QUERY_NAME)
-  Optional<InnReachTransaction> fetchOpenByFolioItemIdAndPatronId(UUID folioItemId, UUID folioPatronId);
+  @Query(name = FETCH_ACTIVE_BY_ITEM_ID_AND_PATRON_ID_QUERY_NAME)
+  Optional<InnReachTransaction> fetchActiveByFolioItemIdAndPatronId(UUID folioItemId, UUID folioPatronId);
 
-  @Query(name = FETCH_OPEN_BY_LOAN_ID_QUERY_NAME)
-  Optional<InnReachTransaction> fetchOneByLoanId(UUID folioLoanId);
+  @Query(name = FETCH_ACTIVE_BY_ITEM_ID_QUERY_NAME)
+  Optional<InnReachTransaction> fetchActiveByFolioItemId(UUID folioItemId);
+
+  @Query(name = FETCH_ACTIVE_BY_LOAN_ID_QUERY_NAME)
+  Optional<InnReachTransaction> fetchActiveByLoanId(UUID folioLoanId);
 
   @Query(name = FETCH_ACTIVE_BY_REQUEST_ID_QUERY_NAME)
   Optional<InnReachTransaction> fetchActiveByRequestId(UUID folioRequestId);

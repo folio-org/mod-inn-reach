@@ -4,16 +4,20 @@ import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TEST_METHOD;
 import static org.springframework.test.context.jdbc.SqlMergeMode.MergeMode.MERGE;
 
+import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.FINAL_CHECKIN;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.ITEM_IN_TRANSIT;
+import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.RETURN_UNCIRCULATED;
+import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.TRANSFER;
+import static org.folio.innreach.dto.ItemStatus.NameEnum.AWAITING_PICKUP;
 
 import java.time.Duration;
-import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.List;
@@ -23,23 +27,27 @@ import java.util.function.Consumer;
 
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.producer.ProducerRecord;
-import org.folio.innreach.domain.dto.folio.circulation.RequestDTO;
-import org.folio.innreach.domain.dto.folio.inventory.InventoryItemDTO;
-import org.folio.innreach.domain.entity.InnReachTransaction;
-import org.folio.innreach.domain.entity.TransactionItemHold;
-import org.folio.innreach.domain.service.ItemService;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.ArgumentCaptor;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlMergeMode;
 
+import org.folio.innreach.domain.dto.folio.circulation.RequestDTO;
+import org.folio.innreach.domain.dto.folio.inventory.InventoryItemDTO;
+import org.folio.innreach.domain.entity.InnReachTransaction;
+import org.folio.innreach.domain.entity.TransactionItemHold;
 import org.folio.innreach.domain.event.DomainEvent;
 import org.folio.innreach.domain.event.DomainEventType;
 import org.folio.innreach.domain.event.EntityChangedData;
 import org.folio.innreach.domain.listener.base.BaseKafkaApiTest;
+import org.folio.innreach.domain.service.ItemService;
+import org.folio.innreach.domain.service.RequestService;
 import org.folio.innreach.domain.service.impl.BatchDomainEventProcessor;
+import org.folio.innreach.dto.CheckInDTO;
 import org.folio.innreach.dto.LoanDTO;
 import org.folio.innreach.dto.LoanStatus;
 import org.folio.innreach.external.service.InnReachExternalService;
@@ -60,8 +68,9 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
   private static final UUID HOLDING_ID = UUID.fromString("55fb31a7-1223-4214-bea6-8e35f1ae40dc");
   private static final UUID REQUEST_ID = UUID.randomUUID();
   private static final UUID PRE_POPULATED_PATRON_ID = UUID.fromString("4154a604-4d5a-4d8e-9160-057fc7b6e6b8");
-  private static final UUID PRE_POPULATED_ITEM_ID = UUID.fromString("9a326225-6530-41cc-9399-a61987bfab3c");
+  private static final UUID PRE_POPULATED_PATRON_TRANSACTION_ITEM_ID = UUID.fromString("9a326225-6530-41cc-9399-a61987bfab3c");
   private static final UUID PRE_POPULATED_TRANSACTION_ID = UUID.fromString("0aab1720-14b4-4210-9a19-0d0bf1cd64d3");
+  private static final UUID PRE_POPULATED_PATRON_TRANSACTION_REQUEST_ID = UUID.fromString("ea11eba7-3c0f-4d15-9cca-c8608cd6bc8a");
   private static final String TEST_TENANT_ID = "testing";
   private static final Duration ASYNC_AWAIT_TIMEOUT = Duration.ofSeconds(15);
   private static final Date DUE_DATE = new Date();
@@ -81,9 +90,12 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
   @MockBean
   private ItemService itemService;
 
+  @MockBean
+  private RequestService requestService;
+
   @Test
   void shouldReceiveLoanEvent() {
-    var event = getLoanDomainEvent(DomainEventType.CREATED);
+    var event = createLoanDomainEvent(DomainEventType.CREATED);
 
     kafkaTemplate.send(new ProducerRecord(CIRC_LOAN_TOPIC, LOAN_ID.toString(), event));
 
@@ -106,24 +118,15 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
   })
   void shouldLinkLoanToOpenTransaction() {
-    var event = getLoanDomainEvent(DomainEventType.CREATED);
-    event.setRecordId(null); // the listener should set this field from event key value
+    var event = createLoanDomainEvent(DomainEventType.CREATED);
 
-    var consumerRecord = new ConsumerRecord(CIRC_LOAN_TOPIC, 1, 1, LOAN_ID.toString(), event);
+    listener.handleLoanEvents(asSingleConsumerRecord(CIRC_LOAN_TOPIC, LOAN_ID, event));
 
-    listener.handleLoanEvents(List.of(consumerRecord));
+    verify(eventProcessor).process(anyList(), any(Consumer.class));
 
-    ArgumentCaptor<List<DomainEvent<LoanDTO>>> eventsCaptor = ArgumentCaptor.forClass(List.class);
-    verify(eventProcessor).process(eventsCaptor.capture(), any(Consumer.class));
-
-    var capturedEvents = eventsCaptor.getValue();
-    assertEquals(1, capturedEvents.size());
-    var capturedEvent = capturedEvents.get(0);
-    assertEquals(LOAN_ID, capturedEvent.getRecordId());
-
-    var transaction = transactionRepository.fetchOneById(PRE_POPULATED_TRANSACTION_ID).get();
-    assertEquals(LOAN_ID, transaction.getHold().getFolioLoanId());
-    assertEquals((int) DUE_DATE.toInstant().getEpochSecond(), transaction.getHold().getDueDateTime());
+    var updatedTransaction = transactionRepository.fetchOneById(PRE_POPULATED_TRANSACTION_ID).get();
+    assertEquals(LOAN_ID, updatedTransaction.getHold().getFolioLoanId());
+    assertEquals((int) DUE_DATE.toInstant().getEpochSecond(), updatedTransaction.getHold().getDueDateTime());
   }
 
   @Test
@@ -133,29 +136,20 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
   })
   void shouldReturnCheckedInItem() {
     var folioLoanId = UUID.fromString("fd5109c7-8934-4294-9504-c1a4a4f07c96");
-    var event = getLoanDomainEvent(DomainEventType.UPDATED);
-    event.setRecordId(null); // the listener should set this field from event key value
+    var event = createLoanDomainEvent(DomainEventType.UPDATED);
     var loan = event.getData().getNewEntity();
     loan.setId(folioLoanId);
     loan.setStatus(new LoanStatus().name("Closed"));
     loan.setAction("checkedin");
 
-    var consumerRecord = new ConsumerRecord(CIRC_LOAN_TOPIC, 1, 1, folioLoanId.toString(), event);
+    listener.handleLoanEvents(asSingleConsumerRecord(CIRC_LOAN_TOPIC, folioLoanId, event));
 
-    listener.handleLoanEvents(List.of(consumerRecord));
-
-    ArgumentCaptor<List<DomainEvent<LoanDTO>>> eventsCaptor = ArgumentCaptor.forClass(List.class);
-    verify(eventProcessor).process(eventsCaptor.capture(), any(Consumer.class));
-
-    var capturedEvents = eventsCaptor.getValue();
-    assertEquals(1, capturedEvents.size());
-    var capturedEvent = capturedEvents.get(0);
-    assertEquals(folioLoanId, capturedEvent.getRecordId());
-
-    var transaction = transactionRepository.fetchOneById(PRE_POPULATED_TRANSACTION_ID).get();
-    assertEquals(ITEM_IN_TRANSIT, transaction.getState());
-    assertNull(transaction.getHold().getDueDateTime());
+    verify(eventProcessor).process(anyList(), any(Consumer.class));
     verify(innReachExternalService).postInnReachApi(any(), any());
+
+    var updatedTransaction = transactionRepository.fetchOneById(PRE_POPULATED_TRANSACTION_ID).get();
+    assertEquals(ITEM_IN_TRANSIT, updatedTransaction.getState());
+    assertNull(updatedTransaction.getHold().getDueDateTime());
   }
 
   @Test
@@ -164,41 +158,24 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql",
   })
   void shouldRenewalLoanToUpdateTransaction() {
-    UUID folioLoanId = UUID.fromString("fd5109c7-8934-4294-9504-c1a4a4f07c96");
-    String date = "2016-07-01T08:20:00.00Z";
-    Instant instant = Instant.parse(date);
-    Date dueDate = Date.from(instant);
-    var event = getLoanDomainEvent(DomainEventType.UPDATED);
-    LoanDTO loanDTO = event.getData().getNewEntity();
-    loanDTO.setId(folioLoanId);
-    loanDTO.setDueDate(dueDate);
-    loanDTO.setAction("renewed");
-    event.setData(new EntityChangedData<>(null, loanDTO));
+    var folioLoanId = UUID.fromString("fd5109c7-8934-4294-9504-c1a4a4f07c96");
+    var event = createLoanDomainEvent(DomainEventType.UPDATED);
+    var loan = event.getData().getNewEntity();
+    loan.setId(folioLoanId);
+    loan.setAction("renewed");
 
-    event.setRecordId(null); // the listener should set this field from event key value
-
-    var consumerRecord = new ConsumerRecord(CIRC_LOAN_TOPIC, 1, 1, folioLoanId.toString(), event);
-    listener.handleLoanEvents(List.of(consumerRecord));
-
-    ArgumentCaptor<List<DomainEvent<LoanDTO>>> eventsCaptor = ArgumentCaptor.forClass(List.class);
-
-    verify(eventProcessor).process(eventsCaptor.capture(), any(Consumer.class));
     when(innReachExternalService.postInnReachApi(any(), any(), any())).thenReturn("ok");
-    var capturedEvents = eventsCaptor.getValue();
-    assertEquals(1, capturedEvents.size());
 
-    var capturedEvent = capturedEvents.get(0);
-    assertEquals(folioLoanId, capturedEvent.getRecordId());
-    Optional<InnReachTransaction> optionalTransaction = transactionRepository.fetchOneByLoanId(folioLoanId);
-    InnReachTransaction transaction = null;
-    if (optionalTransaction.isPresent()) {
-      transaction = optionalTransaction.get();
-    }
-    assertEquals(InnReachTransaction.TransactionState.BORROWER_RENEW, transaction.getState());
-    var loanDueDate = loanDTO.getDueDate().toInstant().truncatedTo(ChronoUnit.SECONDS);
+    listener.handleLoanEvents(asSingleConsumerRecord(CIRC_LOAN_TOPIC, folioLoanId, event));
+
+    verify(eventProcessor).process(anyList(), any(Consumer.class));
+
+    var updatedTransaction = transactionRepository.fetchActiveByLoanId(folioLoanId).orElse(null);
+
+    assertEquals(InnReachTransaction.TransactionState.BORROWER_RENEW, updatedTransaction.getState());
+    var loanDueDate = loan.getDueDate().toInstant().truncatedTo(ChronoUnit.SECONDS);
     var loanIntegerDueDate = (int) (loanDueDate.getEpochSecond());
-    assertEquals(loanIntegerDueDate, transaction.getHold().getDueDateTime());
-
+    assertEquals(loanIntegerDueDate, updatedTransaction.getHold().getDueDateTime());
   }
 
   @Test
@@ -207,41 +184,27 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql",
   })
   void shouldUpdateTransactionToCheckIn() {
-    UUID folioLoanId = UUID.fromString("06e820e3-71a0-455e-8c73-3963aea677d4");
-    UUID transactionId =  UUID.fromString("ab2393a1-acc4-4849-82ac-8cc0c37339e1");
-    String date = "2016-07-01T08:20:00.00Z";
-    Instant instant = Instant.parse(date);
-    Date dueDate = Date.from(instant);
-    var event = getLoanDomainEvent(DomainEventType.UPDATED);
-    LoanDTO loanDTO = event.getData().getNewEntity();
-    loanDTO.setId(folioLoanId);
-    loanDTO.setDueDate(dueDate);
-    loanDTO.setAction("checkedin");
-    loanDTO.setStatus(new LoanStatus().name("Closed"));
-    event.setData(new EntityChangedData<>(null, loanDTO));
+    var folioLoanId = UUID.fromString("06e820e3-71a0-455e-8c73-3963aea677d4");
+    var transactionId = UUID.fromString("ab2393a1-acc4-4849-82ac-8cc0c37339e1");
+    var event = createLoanDomainEvent(DomainEventType.UPDATED);
+    var loan = event.getData().getNewEntity();
+    loan.setId(folioLoanId);
+    loan.setAction("checkedin");
+    loan.setStatus(new LoanStatus().name("Closed"));
 
-    event.setRecordId(null); // the listener should set this field from event key value
-
-    var consumerRecord = new ConsumerRecord(CIRC_LOAN_TOPIC, 1, 1, folioLoanId.toString(), event);
-    listener.handleLoanEvents(List.of(consumerRecord));
-
-    ArgumentCaptor<List<DomainEvent<LoanDTO>>> eventsCaptor = ArgumentCaptor.forClass(List.class);
-
-    verify(eventProcessor).process(eventsCaptor.capture(), any(Consumer.class));
     when(innReachExternalService.postInnReachApi(any(), any(), any())).thenReturn("ok");
-    var capturedEvents = eventsCaptor.getValue();
-    assertEquals(1, capturedEvents.size());
 
-    var capturedEvent = capturedEvents.get(0);
-    assertEquals(folioLoanId, capturedEvent.getRecordId());
-    var optionalTransaction = transactionRepository.fetchOneById(transactionId);
-    var transaction = optionalTransaction.orElse(null);
-    var transactionHold = (TransactionItemHold) transaction.getHold();
+    listener.handleLoanEvents(asSingleConsumerRecord(CIRC_LOAN_TOPIC, folioLoanId, event));
 
-    assertEquals(null, transactionHold.getPatronName());
-    assertEquals(null, transactionHold.getPatronId());
-    assertEquals(null, transaction.getHold().getDueDateTime());
-    assertEquals(InnReachTransaction.TransactionState.FINAL_CHECKIN, transaction.getState());
+    verify(eventProcessor).process(anyList(), any(Consumer.class));
+
+    var updatedTransaction = transactionRepository.fetchOneById(transactionId).orElse(null);
+    var updatedHold = (TransactionItemHold) updatedTransaction.getHold();
+
+    assertEquals(null, updatedHold.getPatronName());
+    assertEquals(null, updatedHold.getPatronId());
+    assertEquals(null, updatedTransaction.getHold().getDueDateTime());
+    assertEquals(FINAL_CHECKIN, updatedTransaction.getState());
   }
 
   @Test
@@ -250,38 +213,30 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
     "classpath:db/inn-reach-transaction/pre-populate-another-inn-reach-transaction.sql",
   })
   void shouldUpdateTransactionToTransfer() {
-    var folioRequestId =  UUID.fromString("26278b3a-de32-4deb-b81b-896637b3dbeb");
+    var folioRequestId = UUID.fromString("26278b3a-de32-4deb-b81b-896637b3dbeb");
     var barcode = "4820049490886";
-    var inventoryItemDTO = new InventoryItemDTO();
-    inventoryItemDTO.setBarcode(barcode);
-    Optional<InventoryItemDTO> optionalInventoryItem = Optional.of(inventoryItemDTO);
+    var item = new InventoryItemDTO();
+    item.setBarcode(barcode);
     var event = getRequestDomainEvent(DomainEventType.UPDATED);
-    RequestDTO requestDTO = event.getData().getNewEntity();
-    event.setRecordId(null); // the listener should set this field from event key value
-    requestDTO.setId(folioRequestId);
+    var request = event.getData().getNewEntity();
+    request.setId(folioRequestId);
 
-    when(itemService.find(any())).thenReturn(optionalInventoryItem);
-    var consumerRecord = new ConsumerRecord(CIRC_REQUEST_TOPIC, 1, 1, folioRequestId.toString(), event);
-    listener.handleRequestStorage(List.of(consumerRecord));
-
-    ArgumentCaptor<List<DomainEvent<RequestDTO>>> eventsCaptor = ArgumentCaptor.forClass(List.class);
-
-    verify(eventProcessor).process(eventsCaptor.capture(), any(Consumer.class));
+    when(itemService.find(any())).thenReturn(Optional.of(item));
     when(innReachExternalService.postInnReachApi(any(), any(), any())).thenReturn("ok");
-    var capturedEvents = eventsCaptor.getValue();
-    assertEquals(1, capturedEvents.size());
 
-    var capturedEvent = capturedEvents.get(0);
-    assertEquals(folioRequestId, capturedEvent.getRecordId());
-    var transaction = transactionRepository.fetchActiveByRequestId(requestDTO.getId()).orElse(null);
-    var transactionItemHold = (TransactionItemHold) transaction.getHold();
+    listener.handleRequestStorage(asSingleConsumerRecord(CIRC_REQUEST_TOPIC, folioRequestId, event));
 
-    assertEquals(ITEM_ID, transactionItemHold.getFolioItemId());
-    assertEquals(INSTANCE_ID, transactionItemHold.getFolioInstanceId());
-    assertEquals(HOLDING_ID, transactionItemHold.getFolioHoldingId());
-    assertEquals(barcode, transactionItemHold.getFolioItemBarcode());
-    assertEquals(InnReachTransaction.TransactionState.TRANSFER, transaction.getState());
+    verify(eventProcessor).process(anyList(), any(Consumer.class));
     verify(innReachExternalService, times(1)).postInnReachApi(any(), any(), any());
+
+    var updatedTransaction = transactionRepository.fetchActiveByRequestId(request.getId()).orElse(null);
+    var updatedHold = updatedTransaction.getHold();
+
+    assertEquals(ITEM_ID, updatedHold.getFolioItemId());
+    assertEquals(INSTANCE_ID, updatedHold.getFolioInstanceId());
+    assertEquals(HOLDING_ID, updatedHold.getFolioHoldingId());
+    assertEquals(barcode, updatedHold.getFolioItemBarcode());
+    assertEquals(TRANSFER, updatedTransaction.getState());
   }
 
   @Test
@@ -290,23 +245,16 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
     "classpath:db/inn-reach-transaction/pre-populate-another-inn-reach-transaction.sql",
   })
   void shouldSkipTransactionThatIsNotItemHold() {
-    var folioRequestId =  UUID.fromString("ea11eba7-3c0f-4d15-9cca-c8608cd6bc8a");
+    var folioRequestId = UUID.fromString("ea11eba7-3c0f-4d15-9cca-c8608cd6bc8a");
     var event = getRequestDomainEvent(DomainEventType.UPDATED);
-    RequestDTO requestDTO = event.getData().getNewEntity();
-    event.setRecordId(null); // the listener should set this field from event key value
-    requestDTO.setId(folioRequestId);
+    var request = event.getData().getNewEntity();
+    request.setId(folioRequestId);
 
-    var consumerRecord = new ConsumerRecord(CIRC_REQUEST_TOPIC, 1, 1, folioRequestId.toString(), event);
-    listener.handleRequestStorage(List.of(consumerRecord));
-    ArgumentCaptor<List<DomainEvent<RequestDTO>>> eventsCaptor = ArgumentCaptor.forClass(List.class);
+    listener.handleRequestStorage(asSingleConsumerRecord(CIRC_REQUEST_TOPIC, folioRequestId, event));
 
-    verify(eventProcessor).process(eventsCaptor.capture(), any(Consumer.class));
-    var capturedEvents = eventsCaptor.getValue();
-    assertEquals(1, capturedEvents.size());
+    verify(eventProcessor).process(anyList(), any(Consumer.class));
 
-    var capturedEvent = capturedEvents.get(0);
-    assertEquals(folioRequestId, capturedEvent.getRecordId());
-    var transaction = transactionRepository.fetchActiveByRequestId(requestDTO.getId()).orElse(null);
+    var transaction = transactionRepository.fetchActiveByRequestId(request.getId()).orElse(null);
     assertEquals(InnReachTransaction.TransactionState.PATRON_HOLD, transaction.getState());
   }
 
@@ -316,31 +264,50 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
     "classpath:db/inn-reach-transaction/pre-populate-another-inn-reach-transaction.sql"
   })
   void shouldSkipIfTransactionNotFoundByRequestId() {
-    var folioRequestId =  UUID.fromString("aa11eba7-3c0f-4d15-9cca-c8608cd6bc8a");
+    var folioRequestId = UUID.fromString("aa11eba7-3c0f-4d15-9cca-c8608cd6bc8a");
     var event = getRequestDomainEvent(DomainEventType.UPDATED);
 
-    var consumerRecord = new ConsumerRecord(CIRC_REQUEST_TOPIC, 1, 1, folioRequestId.toString(), event);
-    listener.handleRequestStorage(List.of(consumerRecord));
+    listener.handleRequestStorage(asSingleConsumerRecord(CIRC_REQUEST_TOPIC, folioRequestId, event));
 
-    ArgumentCaptor<List<DomainEvent<RequestDTO>>> eventsCaptor = ArgumentCaptor.forClass(List.class);
-    verify(eventProcessor).process(eventsCaptor.capture(), any(Consumer.class));
-    var capturedEvents = eventsCaptor.getValue();
+    verify(eventProcessor).process(anyList(), any(Consumer.class));
 
-    var capturedEvent = capturedEvents.get(0);
-    assertEquals(folioRequestId, capturedEvent.getRecordId());
     verify(transactionRepository, times(1)).fetchActiveByRequestId(any());
     verify(itemService, times(0)).find(any());
     verify(innReachExternalService, times(0)).postInnReachApi(any(), any(), any());
   }
 
-  private DomainEvent<LoanDTO> getLoanDomainEvent(DomainEventType eventType) {
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
+  })
+  @ParameterizedTest
+  @EnumSource(names = {"CLOSED_PICKUP_EXPIRED", "CLOSED_CANCELLED"})
+  void shouldHandleCheckInEvent(RequestDTO.RequestStatus requestStatus) {
+    var checkInId = UUID.randomUUID();
+    var event = getCheckInDomainEvent(DomainEventType.CREATED);
+    event.getData().getNewEntity().setItemId(PRE_POPULATED_PATRON_TRANSACTION_ITEM_ID);
+    var request = new RequestDTO();
+    request.setId(PRE_POPULATED_PATRON_TRANSACTION_REQUEST_ID);
+    request.setStatus(requestStatus);
+
+    when(requestService.findRequest(any())).thenReturn(request);
+
+    listener.handleCheckInEvents(asSingleConsumerRecord(CIRC_LOAN_TOPIC, checkInId, event));
+
+    verify(eventProcessor).process(anyList(), any(Consumer.class));
+    verify(innReachExternalService).postInnReachApi(any(), any());
+
+    var updatedTransaction = transactionRepository.fetchOneById(PRE_POPULATED_TRANSACTION_ID).get();
+    assertEquals(RETURN_UNCIRCULATED, updatedTransaction.getState());
+  }
+
+  private DomainEvent<LoanDTO> createLoanDomainEvent(DomainEventType eventType) {
     var loan = new LoanDTO().id(LOAN_ID)
       .dueDate(DUE_DATE)
       .userId(PRE_POPULATED_PATRON_ID)
-      .itemId(PRE_POPULATED_ITEM_ID);
+      .itemId(PRE_POPULATED_PATRON_TRANSACTION_ITEM_ID);
 
     return DomainEvent.<LoanDTO>builder()
-      .recordId(LOAN_ID)
       .tenant(TEST_TENANT_ID)
       .timestamp(System.currentTimeMillis())
       .type(eventType)
@@ -357,11 +324,24 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
     request.setHoldingsRecordId(HOLDING_ID);
 
     return DomainEvent.<RequestDTO>builder()
-      .recordId(REQUEST_ID)
       .tenant(TEST_TENANT_ID)
       .timestamp(System.currentTimeMillis())
       .type(eventType)
       .data(new EntityChangedData<>(null, request))
+      .build();
+  }
+
+  private DomainEvent<CheckInDTO> getCheckInDomainEvent(DomainEventType eventType) {
+    var checkIn = new CheckInDTO()
+      .id(UUID.randomUUID())
+      .itemStatusPriorToCheckIn(AWAITING_PICKUP.getValue())
+      .itemId(UUID.randomUUID());
+
+    return DomainEvent.<CheckInDTO>builder()
+      .tenant(TEST_TENANT_ID)
+      .timestamp(System.currentTimeMillis())
+      .type(eventType)
+      .data(new EntityChangedData<>(null, checkIn))
       .build();
   }
 }
