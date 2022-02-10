@@ -275,6 +275,8 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
   void shouldSkipIfTransactionNotFoundByRequestId() {
     var folioRequestId = UUID.fromString("aa11eba7-3c0f-4d15-9cca-c8608cd6bc8a");
     var event = getRequestDomainEvent(DomainEventType.UPDATED);
+    var request = event.getData().getNewEntity();
+    request.setId(folioRequestId);
 
     listener.handleRequestEvents(asSingleConsumerRecord(CIRC_REQUEST_TOPIC, folioRequestId, event));
 
