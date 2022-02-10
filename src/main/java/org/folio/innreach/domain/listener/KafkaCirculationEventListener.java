@@ -58,7 +58,7 @@ public class KafkaCirculationEventListener {
     groupId = "${kafka.listener.request.group-id}",
     topicPattern = "${kafka.listener.request.topic-pattern}",
     concurrency = "${kafka.listener.request.concurrency}")
-  public void handleRequestStorage(List<ConsumerRecord<String, DomainEvent<RequestDTO>>> consumerRecords) {
+  public void handleRequestEvents(List<ConsumerRecord<String, DomainEvent<RequestDTO>>> consumerRecords) {
     log.info("Handling circulation Requests events from Kafka [number of events: {}]", consumerRecords.size());
 
     var events = getEvents(consumerRecords);
