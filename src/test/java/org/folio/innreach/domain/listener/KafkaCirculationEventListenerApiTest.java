@@ -1,6 +1,7 @@
 package org.folio.innreach.domain.listener;
 
 import static org.awaitility.Awaitility.await;
+import static org.folio.innreach.domain.dto.folio.circulation.RequestDTO.RequestStatus.CLOSED_CANCELLED;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
@@ -27,10 +28,13 @@ import java.util.function.Consumer;
 
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.producer.ProducerRecord;
+import org.folio.innreach.client.InstanceStorageClient;
+import org.folio.innreach.dto.Instance;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.ArgumentCaptor;
+import org.mockito.Mockito;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.test.context.jdbc.Sql;
@@ -92,6 +96,9 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
 
   @MockBean
   private RequestService requestService;
+
+  @MockBean
+  private InstanceStorageClient instanceStorageClient;
 
   @Test
   void shouldReceiveLoanEvent() {
@@ -274,6 +281,36 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
     verify(transactionRepository, times(1)).fetchActiveByRequestId(any());
     verify(itemService, times(0)).find(any());
     verify(innReachExternalService, times(0)).postInnReachApi(any(), any(), any());
+  }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-another-inn-reach-transaction.sql"
+  })
+  void shouldUpdateTransactionWhenCancelRequest() {
+    var folioRequestId = UUID.fromString("26278b3a-de32-4deb-b81b-896637b3dbeb");
+    var transactionId = UUID.fromString("2d219267-4e51-4843-b2c6-d9c44d313739");
+    var instanceId =  UUID.fromString("18fedcfa-81d4-4c29-a7ee-2540f57cca71");
+    var event = getRequestDomainEvent(DomainEventType.UPDATED);
+    var request = event.getData().getNewEntity();
+    var instance = new Instance();
+    request.setId(folioRequestId);
+    request.setInstanceId(instanceId);
+    request.setStatus(CLOSED_CANCELLED);
+
+    when(instanceStorageClient.getInstanceById(request.getInstanceId())).thenReturn(instance);
+    when(innReachExternalService.postInnReachApi(any(), any(), any())).thenReturn("ok");
+
+    listener.handleRequestStorage(asSingleConsumerRecord(CIRC_REQUEST_TOPIC, folioRequestId, event));
+
+    verify(eventProcessor).process(anyList(), any(Consumer.class));
+    verify(instanceStorageClient, times(1)).getInstanceById(any());
+    verify(innReachExternalService, times(1)).postInnReachApi(any(), any(), any());
+    Mockito.verifyNoMoreInteractions(itemService);
+
+    var updatedTransaction = transactionRepository.fetchOneById(transactionId).orElse(null);
+    assertEquals(InnReachTransaction.TransactionState.CANCEL_REQUEST, updatedTransaction.getState());
   }
 
   @Sql(scripts = {
