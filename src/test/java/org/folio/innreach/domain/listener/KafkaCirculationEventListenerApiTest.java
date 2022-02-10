@@ -1,6 +1,8 @@
 package org.folio.innreach.domain.listener;
 
 import static org.awaitility.Awaitility.await;
+import static org.folio.innreach.domain.dto.folio.circulation.RequestDTO.RequestStatus.CLOSED_CANCELLED;
+import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.CANCEL_REQUEST;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
@@ -27,10 +29,13 @@ import java.util.function.Consumer;
 
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.producer.ProducerRecord;
+import org.folio.innreach.client.InstanceStorageClient;
+import org.folio.innreach.dto.Instance;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.ArgumentCaptor;
+import org.mockito.Mockito;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.test.context.jdbc.Sql;
@@ -66,7 +71,8 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
   private static final UUID ITEM_ID = UUID.fromString("8a326225-6530-41cc-9399-a61987bfab3c");
   private static final UUID INSTANCE_ID = UUID.fromString("ef32e52c-cd9b-462e-9bf0-65233b7a759c");
   private static final UUID HOLDING_ID = UUID.fromString("55fb31a7-1223-4214-bea6-8e35f1ae40dc");
-  private static final UUID REQUEST_ID = UUID.randomUUID();
+  private static final UUID REQUEST_ID = UUID.fromString("26278b3a-de32-4deb-b81b-896637b3dbeb");
+  private static final UUID TRANSACTION_ID = UUID.fromString("2d219267-4e51-4843-b2c6-d9c44d313739");
   private static final UUID PRE_POPULATED_PATRON_ID = UUID.fromString("4154a604-4d5a-4d8e-9160-057fc7b6e6b8");
   private static final UUID PRE_POPULATED_PATRON_TRANSACTION_ITEM_ID = UUID.fromString("9a326225-6530-41cc-9399-a61987bfab3c");
   private static final UUID PRE_POPULATED_TRANSACTION_ID = UUID.fromString("0aab1720-14b4-4210-9a19-0d0bf1cd64d3");
@@ -92,6 +98,9 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
 
   @MockBean
   private RequestService requestService;
+
+  @MockBean
+  private InstanceStorageClient instanceStorageClient;
 
   @Test
   void shouldReceiveLoanEvent() {
@@ -224,7 +233,7 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
     when(itemService.find(any())).thenReturn(Optional.of(item));
     when(innReachExternalService.postInnReachApi(any(), any(), any())).thenReturn("ok");
 
-    listener.handleRequestStorage(asSingleConsumerRecord(CIRC_REQUEST_TOPIC, folioRequestId, event));
+    listener.handleRequestEvents(asSingleConsumerRecord(CIRC_REQUEST_TOPIC, folioRequestId, event));
 
     verify(eventProcessor).process(anyList(), any(Consumer.class));
     verify(innReachExternalService, times(1)).postInnReachApi(any(), any(), any());
@@ -250,7 +259,7 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
     var request = event.getData().getNewEntity();
     request.setId(folioRequestId);
 
-    listener.handleRequestStorage(asSingleConsumerRecord(CIRC_REQUEST_TOPIC, folioRequestId, event));
+    listener.handleRequestEvents(asSingleConsumerRecord(CIRC_REQUEST_TOPIC, folioRequestId, event));
 
     verify(eventProcessor).process(anyList(), any(Consumer.class));
 
@@ -266,14 +275,43 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
   void shouldSkipIfTransactionNotFoundByRequestId() {
     var folioRequestId = UUID.fromString("aa11eba7-3c0f-4d15-9cca-c8608cd6bc8a");
     var event = getRequestDomainEvent(DomainEventType.UPDATED);
+    var request = event.getData().getNewEntity();
+    request.setId(folioRequestId);
 
-    listener.handleRequestStorage(asSingleConsumerRecord(CIRC_REQUEST_TOPIC, folioRequestId, event));
+    listener.handleRequestEvents(asSingleConsumerRecord(CIRC_REQUEST_TOPIC, folioRequestId, event));
 
     verify(eventProcessor).process(anyList(), any(Consumer.class));
 
     verify(transactionRepository, times(1)).fetchActiveByRequestId(any());
     verify(itemService, times(0)).find(any());
     verify(innReachExternalService, times(0)).postInnReachApi(any(), any(), any());
+  }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-another-inn-reach-transaction.sql"
+  })
+  void shouldUpdateTransactionWhenCancelRequest() {
+    var event = getRequestDomainEvent(DomainEventType.UPDATED);
+    var request = event.getData().getNewEntity();
+    var instance = new Instance();
+    request.setId(REQUEST_ID);
+    request.setInstanceId(INSTANCE_ID);
+    request.setStatus(CLOSED_CANCELLED);
+
+    when(instanceStorageClient.getInstanceById(request.getInstanceId())).thenReturn(instance);
+    when(innReachExternalService.postInnReachApi(any(), any(), any())).thenReturn("ok");
+
+    listener.handleRequestEvents(asSingleConsumerRecord(CIRC_REQUEST_TOPIC, REQUEST_ID, event));
+
+    verify(eventProcessor).process(anyList(), any(Consumer.class));
+    verify(instanceStorageClient, times(1)).getInstanceById(any());
+    verify(innReachExternalService, times(1)).postInnReachApi(any(), any(), any());
+    Mockito.verifyNoMoreInteractions(itemService);
+
+    var updatedTransaction = transactionRepository.fetchOneById(TRANSACTION_ID).orElse(null);
+    assertEquals(CANCEL_REQUEST, updatedTransaction.getState());
   }
 
   @Sql(scripts = {

@@ -3,6 +3,7 @@ package org.folio.innreach.domain.service.impl;
 import static org.folio.innreach.domain.dto.folio.circulation.RequestDTO.RequestStatus.CLOSED_CANCELLED;
 import static org.folio.innreach.domain.dto.folio.circulation.RequestDTO.RequestStatus.CLOSED_PICKUP_EXPIRED;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.BORROWER_RENEW;
+import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.CANCEL_REQUEST;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.FINAL_CHECKIN;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.ITEM_HOLD;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.ITEM_IN_TRANSIT;
@@ -25,6 +26,7 @@ import java.util.UUID;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.folio.innreach.client.InstanceStorageClient;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
@@ -62,6 +64,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
   private static final String D2IR_FINAL_CHECK_IN = "finalcheckin";
   private static final String D2IR_TRASFER_REQUEST = "transferrequest";
   private static final String D2IR_RETURN_UNCIRCULATED = "returnuncirculated";
+  private static final String D2IR_OWNING_SITE_CANCEL = "owningsitecancel";
 
   private final InnReachTransactionRepository transactionRepository;
   private final InnReachTransactionMapper transactionMapper;
@@ -69,6 +72,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
   private final RequestService requestService;
   private final PatronHoldService patronHoldService;
   private final ItemService itemService;
+  private final InstanceStorageClient instanceStorageClient;
 
   @Override
   public PatronHoldCheckInResponseDTO checkInPatronHoldItem(UUID transactionId, UUID servicePointId) {
@@ -202,6 +206,15 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
       return;
     }
 
+    if (requestDTO.getStatus() == CLOSED_CANCELLED) {
+      var transactionItemHold = (TransactionItemHold) transaction.getHold();
+      var instance = instanceStorageClient.getInstanceById(requestDTO.getInstanceId());
+      transaction.setState(CANCEL_REQUEST);
+
+      reportOwningSiteCancel(transaction, instance.getHrid(), transactionItemHold.getPatronName());
+      return;
+    }
+
     var hold = transaction.getHold();
     if (!hold.getFolioItemId().equals(itemId)) {
       log.info("Updating transaction {} on moving a request {} from one item to another", transaction.getId(), requestId);
@@ -281,6 +294,14 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
 
   private void reportItemReceived(InnReachTransaction transaction) {
     callD2irCircOperation(D2IR_ITEM_RECEIVED_OPERATION, transaction, null);
+  }
+
+  private void reportOwningSiteCancel(InnReachTransaction transaction, String localBibId, String patronName) {
+    var payload = new HashMap<>();
+    payload.put("localBibId", localBibId);
+    payload.put("reasonCode", 7);
+    payload.put("patronName", patronName);
+    callD2irCircOperation(D2IR_OWNING_SITE_CANCEL, transaction, payload);
   }
 
   private void reportBorrowerRenew(InnReachTransaction transaction, Integer loanIntegerDueDate) {
