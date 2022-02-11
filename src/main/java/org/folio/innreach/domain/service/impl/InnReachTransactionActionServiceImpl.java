@@ -181,7 +181,6 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
 
   @Override
   public void handleRequestUpdate(RequestDTO requestDTO) {
-
     var transaction = transactionRepository.fetchActiveByRequestId(requestDTO.getId()).orElse(null);
     if (transaction == null) {
       return;
