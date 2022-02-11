@@ -1,9 +1,12 @@
 package org.folio.innreach.domain.service.impl;
 
+import static java.util.Optional.ofNullable;
+
 import static org.folio.innreach.domain.dto.folio.circulation.RequestDTO.RequestStatus.CLOSED_CANCELLED;
 import static org.folio.innreach.domain.dto.folio.circulation.RequestDTO.RequestStatus.CLOSED_PICKUP_EXPIRED;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.BORROWER_RENEW;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.CANCEL_REQUEST;
+import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.CLAIMS_RETURNED;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.FINAL_CHECKIN;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.ITEM_HOLD;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.ITEM_IN_TRANSIT;
@@ -26,11 +29,11 @@ import java.util.UUID;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
-import org.folio.innreach.client.InstanceStorageClient;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
 
+import org.folio.innreach.client.InstanceStorageClient;
 import org.folio.innreach.domain.dto.folio.circulation.RequestDTO;
 import org.folio.innreach.domain.dto.folio.inventory.InventoryItemDTO;
 import org.folio.innreach.domain.entity.InnReachTransaction;
@@ -44,6 +47,7 @@ import org.folio.innreach.domain.service.RequestService;
 import org.folio.innreach.dto.CheckInDTO;
 import org.folio.innreach.dto.ItemHoldCheckOutResponseDTO;
 import org.folio.innreach.dto.LoanDTO;
+import org.folio.innreach.dto.LoanStatus;
 import org.folio.innreach.dto.PatronHoldCheckInResponseDTO;
 import org.folio.innreach.external.exception.InnReachException;
 import org.folio.innreach.external.service.InnReachExternalService;
@@ -65,6 +69,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
   private static final String D2IR_TRASFER_REQUEST = "transferrequest";
   private static final String D2IR_RETURN_UNCIRCULATED = "returnuncirculated";
   private static final String D2IR_OWNING_SITE_CANCEL = "owningsitecancel";
+  private static final String D2IR_CLAIMS_RETURNED = "claimsreturned";
 
   private final InnReachTransactionRepository transactionRepository;
   private final InnReachTransactionMapper transactionMapper;
@@ -146,7 +151,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
       return;
     }
 
-    log.info("Associating a new loan {} with transaction {}", loan.getId(), transaction.getId());
+    log.info("Associating a new loan {} with patron transaction {}", loan.getId(), transaction.getId());
 
     var hold = transaction.getHold();
     hold.setFolioLoanId(loan.getId());
@@ -160,39 +165,15 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
       return;
     }
 
-    if ("checkedin".equals(loan.getAction()) && "Closed".equalsIgnoreCase(loan.getStatus().getName())) {
-      if (transaction.getType() == ITEM) {
-        log.info("Updating item transaction {} on the return of loan {}", transaction.getId(), loan.getId());
+    var loanAction = loan.getAction();
+    var loanStatus = ofNullable(loan.getStatus()).map(LoanStatus::getName).orElse(null);
 
-        var hold = (TransactionItemHold) transaction.getHold();
-        hold.setPatronName(null);
-        hold.setPatronId(null);
-        hold.setDueDateTime(null);
-
-        transaction.setState(FINAL_CHECKIN);
-
-        reportFinalCheckIn(transaction);
-      } else if (transaction.getType() == PATRON) {
-        log.info("Updating patron transaction {} on loan closure {}", transaction.getId(), loan.getId());
-
-        transaction.getHold().setDueDateTime(null);
-        transaction.setState(ITEM_IN_TRANSIT);
-
-        reportItemInTransit(transaction);
-      }
-    } else if ("renewed".equals(loan.getAction()) && transaction.getType() == PATRON) {
-      log.info("Updating patron transaction {} on the renewal of loan {}", transaction.getId(), loan.getId());
-
-      var transactionDueDate = Instant.ofEpochSecond(transaction.getHold().getDueDateTime());
-      var loanDueDate = toInstantTruncatedToSec(loan.getDueDate());
-      if (!loanDueDate.equals(transactionDueDate)) {
-        var loanIntegerDueDate = (int) loanDueDate.getEpochSecond();
-
-        transaction.setState(BORROWER_RENEW);
-        transaction.getHold().setDueDateTime(loanIntegerDueDate);
-
-        reportBorrowerRenew(transaction, loanIntegerDueDate);
-      }
+    if ("checkedin".equalsIgnoreCase(loanAction) && "Closed".equalsIgnoreCase(loanStatus)) {
+      updateTransactionOnLoanClosure(loan, transaction);
+    } else if ("renewed".equalsIgnoreCase(loanAction)) {
+      updateTransactionOnLoanRenewal(loan, transaction);
+    } else if ("claimedReturned".equalsIgnoreCase(loanAction)) {
+      updateTransactionOnLoanClaimedReturned(loan, transaction);
     }
   }
 
@@ -255,6 +236,59 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
 
         reportReturnUncirculated(transaction);
       }
+    }
+  }
+
+  private void updateTransactionOnLoanClaimedReturned(LoanDTO loan, InnReachTransaction transaction) {
+    if (transaction.getType() != PATRON) {
+      return;
+    }
+
+    log.info("Updating patron transaction {} on the claimed returned loan {}", transaction.getId(), loan.getId());
+
+    transaction.setState(CLAIMS_RETURNED);
+
+    reportClaimsReturned(transaction, toEpochSec(new Date()));
+  }
+
+  private void updateTransactionOnLoanRenewal(LoanDTO loan, InnReachTransaction transaction) {
+    if (transaction.getType() != PATRON) {
+      return;
+    }
+
+    log.info("Updating patron transaction {} on the renewal of loan {}", transaction.getId(), loan.getId());
+
+    var transactionDueDate = Instant.ofEpochSecond(transaction.getHold().getDueDateTime());
+    var loanDueDate = toInstantTruncatedToSec(loan.getDueDate());
+    if (!loanDueDate.equals(transactionDueDate)) {
+      var loanIntegerDueDate = (int) loanDueDate.getEpochSecond();
+
+      transaction.setState(BORROWER_RENEW);
+      transaction.getHold().setDueDateTime(loanIntegerDueDate);
+
+      reportBorrowerRenew(transaction, loanIntegerDueDate);
+    }
+  }
+
+  private void updateTransactionOnLoanClosure(LoanDTO loan, InnReachTransaction transaction) {
+    if (transaction.getType() == ITEM) {
+      log.info("Updating item transaction {} on loan closure {}", transaction.getId(), loan.getId());
+
+      var hold = (TransactionItemHold) transaction.getHold();
+      hold.setPatronName(null);
+      hold.setPatronId(null);
+      hold.setDueDateTime(null);
+
+      transaction.setState(FINAL_CHECKIN);
+
+      reportFinalCheckIn(transaction);
+    } else if (transaction.getType() == PATRON) {
+      log.info("Updating patron transaction {} on loan closure {}", transaction.getId(), loan.getId());
+
+      transaction.getHold().setDueDateTime(null);
+      transaction.setState(ITEM_IN_TRANSIT);
+
+      reportItemInTransit(transaction);
     }
   }
 
@@ -338,6 +372,12 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
 
   private void reportReturnUncirculated(InnReachTransaction transaction) {
     callD2irCircOperation(D2IR_RETURN_UNCIRCULATED, transaction, null);
+  }
+
+  private void reportClaimsReturned(InnReachTransaction transaction, Integer claimsReturnedDateSec) {
+    var payload = new HashMap<>();
+    payload.put("claimsReturnedDateSec", claimsReturnedDateSec);
+    callD2irCircOperation(D2IR_CLAIMS_RETURNED, transaction, payload);
   }
 
   private void callD2irCircOperation(String operation, InnReachTransaction transaction, Map<Object, Object> payload) {
