@@ -2,6 +2,7 @@ package org.folio.innreach.domain.listener;
 
 import static org.awaitility.Awaitility.await;
 import static org.folio.innreach.domain.dto.folio.circulation.RequestDTO.RequestStatus.CLOSED_CANCELLED;
+import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.BORROWING_SITE_CANCEL;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.CANCEL_REQUEST;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -76,6 +77,7 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
   private static final UUID PRE_POPULATED_PATRON_ID = UUID.fromString("4154a604-4d5a-4d8e-9160-057fc7b6e6b8");
   private static final UUID PRE_POPULATED_PATRON_TRANSACTION_ITEM_ID = UUID.fromString("9a326225-6530-41cc-9399-a61987bfab3c");
   private static final UUID PRE_POPULATED_TRANSACTION_ID = UUID.fromString("0aab1720-14b4-4210-9a19-0d0bf1cd64d3");
+  private static final UUID PRE_POPULATED_PATRON_TRANSACTION_ID = UUID.fromString("0a8a62e1-77e3-4f36-8408-3b954a351b70");
   private static final UUID PRE_POPULATED_PATRON_TRANSACTION_REQUEST_ID = UUID.fromString("ea11eba7-3c0f-4d15-9cca-c8608cd6bc8a");
   private static final String TEST_TENANT_ID = "testing";
   private static final Duration ASYNC_AWAIT_TIMEOUT = Duration.ofSeconds(15);
@@ -292,7 +294,7 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-another-inn-reach-transaction.sql"
   })
-  void shouldUpdateTransactionWhenCancelRequest() {
+  void shouldUpdateTransactionWithItemHoldWhenCancelRequest() {
     var event = getRequestDomainEvent(DomainEventType.UPDATED);
     var request = event.getData().getNewEntity();
     var instance = new Instance();
@@ -312,6 +314,26 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
 
     var updatedTransaction = transactionRepository.fetchOneById(TRANSACTION_ID).orElse(null);
     assertEquals(CANCEL_REQUEST, updatedTransaction.getState());
+  }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-another-inn-reach-transaction.sql"
+  })
+  void shouldUpdateTransactionWithPatronHoldWhenCancelRequest() {
+    var event = getRequestDomainEvent(DomainEventType.UPDATED);
+    var request = event.getData().getNewEntity();
+    request.setId(PRE_POPULATED_PATRON_TRANSACTION_REQUEST_ID);
+    request.setStatus(CLOSED_CANCELLED);
+
+    listener.handleRequestEvents(asSingleConsumerRecord(CIRC_REQUEST_TOPIC, PRE_POPULATED_PATRON_TRANSACTION_REQUEST_ID, event));
+
+    verify(eventProcessor).process(anyList(), any(Consumer.class));
+    verify(innReachExternalService, times(1)).postInnReachApi(any(), any());
+
+    var updatedTransaction = transactionRepository.fetchOneById(PRE_POPULATED_PATRON_TRANSACTION_ID).orElse(null);
+    assertEquals(BORROWING_SITE_CANCEL, updatedTransaction.getState());
   }
 
   @Sql(scripts = {
