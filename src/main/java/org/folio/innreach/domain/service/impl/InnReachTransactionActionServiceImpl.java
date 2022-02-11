@@ -211,7 +211,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
         requestAssociatedWithItemHoldTransaction(requestDTO, transaction);
         break;
       case PATRON:
-        requestAssociatedWithPatronHoldTransaction(transaction);
+        requestAssociatedWithPatronHoldTransaction(requestDTO, transaction);
         break;
       default:
         return;
@@ -289,9 +289,11 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
     }
   }
 
-  private void requestAssociatedWithPatronHoldTransaction(InnReachTransaction transaction) {
-    transaction.setState(BORROWING_SITE_CANCEL);
-    reportCancelItemHold(transaction);
+  private void requestAssociatedWithPatronHoldTransaction(RequestDTO requestDTO, InnReachTransaction transaction) {
+    if (requestDTO.getStatus() == CLOSED_CANCELLED) {
+      transaction.setState(BORROWING_SITE_CANCEL);
+      reportCancelItemHold(transaction);
+    }
   }
 
   private static Instant toInstantTruncatedToSec(Date date) {

@@ -325,6 +325,7 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
     var event = getRequestDomainEvent(DomainEventType.UPDATED);
     var request = event.getData().getNewEntity();
     request.setId(PRE_POPULATED_PATRON_TRANSACTION_REQUEST_ID);
+    request.setStatus(CLOSED_CANCELLED);
 
     when(innReachExternalService.postInnReachApi(any(), any())).thenReturn("ok");
 
