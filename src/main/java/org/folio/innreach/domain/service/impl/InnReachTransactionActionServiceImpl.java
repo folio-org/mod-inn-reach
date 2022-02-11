@@ -260,7 +260,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
     var requestId = requestDTO.getId();
     var itemId = requestDTO.getItemId();
     if (requestDTO.getStatus() == CLOSED_CANCELLED) {
-      log.info("Updating item hold transaction {} on moving a request {} to closed cancelled", transaction.getId(), requestDTO.getId());
+      log.info("Updating item hold transaction {} on cancellation of a request {}", transaction.getId(), requestDTO.getId());
       var transactionItemHold = (TransactionItemHold) transaction.getHold();
       var instance = instanceStorageClient.getInstanceById(requestDTO.getInstanceId());
       transaction.setState(CANCEL_REQUEST);
@@ -287,7 +287,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
 
   private void updatePatronTransactionOnRequestChange(RequestDTO requestDTO, InnReachTransaction transaction) {
     if (requestDTO.getStatus() == CLOSED_CANCELLED) {
-      log.info("Updating patron hold transaction {} on moving a request {} to closed cancelled", transaction.getId(), requestDTO.getId());
+      log.info("Updating patron hold transaction {} on cancellation of a request {}", transaction.getId(), requestDTO.getId());
       transaction.setState(BORROWING_SITE_CANCEL);
       reportCancelItemHold(transaction);
     }
