@@ -206,15 +206,10 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
       return;
     }
 
-    switch (transaction.getType()) {
-      case ITEM:
-        requestAssociatedWithItemHoldTransaction(requestDTO, transaction);
-        break;
-      case PATRON:
-        requestAssociatedWithPatronHoldTransaction(requestDTO, transaction);
-        break;
-      default:
-        return;
+    if (transaction.getType() == ITEM) {
+      updateItemTransactionOnRequestChange(requestDTO, transaction);
+    } else if (transaction.getType() == PATRON) {
+      updatePatronTransactionOnRequestChange(requestDTO, transaction);
     }
   }
 
@@ -261,10 +256,11 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
       .barcodeAugmented(!shippedItemBarcode.equals(folioItemBarcode));
   }
 
-  private void requestAssociatedWithItemHoldTransaction(RequestDTO requestDTO, InnReachTransaction transaction) {
+  private void updateItemTransactionOnRequestChange(RequestDTO requestDTO, InnReachTransaction transaction) {
     var requestId = requestDTO.getId();
     var itemId = requestDTO.getItemId();
     if (requestDTO.getStatus() == CLOSED_CANCELLED) {
+      log.info("Updating item hold transaction {} on moving a request {} to closed cancelled", transaction.getId(), requestDTO.getId());
       var transactionItemHold = (TransactionItemHold) transaction.getHold();
       var instance = instanceStorageClient.getInstanceById(requestDTO.getInstanceId());
       transaction.setState(CANCEL_REQUEST);
@@ -289,8 +285,9 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
     }
   }
 
-  private void requestAssociatedWithPatronHoldTransaction(RequestDTO requestDTO, InnReachTransaction transaction) {
+  private void updatePatronTransactionOnRequestChange(RequestDTO requestDTO, InnReachTransaction transaction) {
     if (requestDTO.getStatus() == CLOSED_CANCELLED) {
+      log.info("Updating patron hold transaction {} on moving a request {} to closed cancelled", transaction.getId(), requestDTO.getId());
       transaction.setState(BORROWING_SITE_CANCEL);
       reportCancelItemHold(transaction);
     }

@@ -327,8 +327,6 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
     request.setId(PRE_POPULATED_PATRON_TRANSACTION_REQUEST_ID);
     request.setStatus(CLOSED_CANCELLED);
 
-    when(innReachExternalService.postInnReachApi(any(), any())).thenReturn("ok");
-
     listener.handleRequestEvents(asSingleConsumerRecord(CIRC_REQUEST_TOPIC, REQUEST_ID, event));
 
     verify(eventProcessor).process(anyList(), any(Consumer.class));
