@@ -5,6 +5,7 @@ import static java.util.Optional.ofNullable;
 import static org.folio.innreach.domain.dto.folio.circulation.RequestDTO.RequestStatus.CLOSED_CANCELLED;
 import static org.folio.innreach.domain.dto.folio.circulation.RequestDTO.RequestStatus.CLOSED_PICKUP_EXPIRED;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.BORROWER_RENEW;
+import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.BORROWING_SITE_CANCEL;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.CANCEL_REQUEST;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.CLAIMS_RETURNED;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.FINAL_CHECKIN;
@@ -70,6 +71,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
   private static final String D2IR_RETURN_UNCIRCULATED = "returnuncirculated";
   private static final String D2IR_OWNING_SITE_CANCEL = "owningsitecancel";
   private static final String D2IR_CLAIMS_RETURNED = "claimsreturned";
+  private static final String D2IR_CANCEL_ITEM_HOLD = "cancelitemhold";
 
   private final InnReachTransactionRepository transactionRepository;
   private final InnReachTransactionMapper transactionMapper;
@@ -179,36 +181,16 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
 
   @Override
   public void handleRequestUpdate(RequestDTO requestDTO) {
-    var requestId = requestDTO.getId();
-    var itemId = requestDTO.getItemId();
 
-    var transaction = transactionRepository.fetchActiveByRequestId(requestId).orElse(null);
-    if (transaction == null || transaction.getType() != ITEM) {
+    var transaction = transactionRepository.fetchActiveByRequestId(requestDTO.getId()).orElse(null);
+    if (transaction == null) {
       return;
     }
 
-    if (requestDTO.getStatus() == CLOSED_CANCELLED) {
-      var transactionItemHold = (TransactionItemHold) transaction.getHold();
-      var instance = instanceStorageClient.getInstanceById(requestDTO.getInstanceId());
-      transaction.setState(CANCEL_REQUEST);
-
-      reportOwningSiteCancel(transaction, instance.getHrid(), transactionItemHold.getPatronName());
-      return;
-    }
-
-    var hold = transaction.getHold();
-    if (!hold.getFolioItemId().equals(itemId)) {
-      log.info("Updating transaction {} on moving a request {} from one item to another", transaction.getId(), requestId);
-
-      var item = fetchItemById(itemId);
-
-      hold.setFolioItemId(itemId);
-      hold.setFolioInstanceId(requestDTO.getInstanceId());
-      hold.setFolioHoldingId(requestDTO.getHoldingsRecordId());
-      hold.setFolioItemBarcode(item.getBarcode());
-      transaction.setState(TRANSFER);
-
-      reportTransferRequest(transaction, item.getHrid());
+    if (transaction.getType() == ITEM) {
+      updateItemTransactionOnRequestChange(requestDTO, transaction);
+    } else if (transaction.getType() == PATRON) {
+      updatePatronTransactionOnRequestChange(requestDTO, transaction);
     }
   }
 
@@ -308,6 +290,43 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
       .barcodeAugmented(!shippedItemBarcode.equals(folioItemBarcode));
   }
 
+  private void updateItemTransactionOnRequestChange(RequestDTO requestDTO, InnReachTransaction transaction) {
+    var requestId = requestDTO.getId();
+    var itemId = requestDTO.getItemId();
+    if (requestDTO.getStatus() == CLOSED_CANCELLED) {
+      log.info("Updating item hold transaction {} on cancellation of a request {}", transaction.getId(), requestDTO.getId());
+      var transactionItemHold = (TransactionItemHold) transaction.getHold();
+      var instance = instanceStorageClient.getInstanceById(requestDTO.getInstanceId());
+      transaction.setState(CANCEL_REQUEST);
+
+      reportOwningSiteCancel(transaction, instance.getHrid(), transactionItemHold.getPatronName());
+      return;
+    }
+
+    var hold = transaction.getHold();
+    if (!hold.getFolioItemId().equals(itemId)) {
+      log.info("Updating transaction {} on moving a request {} from one item to another", transaction.getId(), requestId);
+
+      var item = fetchItemById(requestDTO.getItemId());
+
+      hold.setFolioItemId(itemId);
+      hold.setFolioInstanceId(requestDTO.getInstanceId());
+      hold.setFolioHoldingId(requestDTO.getHoldingsRecordId());
+      hold.setFolioItemBarcode(item.getBarcode());
+      transaction.setState(TRANSFER);
+
+      reportTransferRequest(transaction, item.getHrid());
+    }
+  }
+
+  private void updatePatronTransactionOnRequestChange(RequestDTO requestDTO, InnReachTransaction transaction) {
+    if (requestDTO.getStatus() == CLOSED_CANCELLED) {
+      log.info("Updating patron hold transaction {} on cancellation of a request {}", transaction.getId(), requestDTO.getId());
+      transaction.setState(BORROWING_SITE_CANCEL);
+      reportCancelItemHold(transaction);
+    }
+  }
+
   private static Instant toInstantTruncatedToSec(Date date) {
     return date.toInstant().truncatedTo(ChronoUnit.SECONDS);
   }
@@ -328,6 +347,10 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
 
   private void reportItemReceived(InnReachTransaction transaction) {
     callD2irCircOperation(D2IR_ITEM_RECEIVED_OPERATION, transaction, null);
+  }
+
+  private void reportCancelItemHold(InnReachTransaction transaction) {
+    callD2irCircOperation(D2IR_CANCEL_ITEM_HOLD, transaction, null);
   }
 
   private void reportOwningSiteCancel(InnReachTransaction transaction, String localBibId, String patronName) {

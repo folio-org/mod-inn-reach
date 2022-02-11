@@ -12,6 +12,7 @@ import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TES
 import static org.springframework.test.context.jdbc.SqlMergeMode.MergeMode.MERGE;
 
 import static org.folio.innreach.domain.dto.folio.circulation.RequestDTO.RequestStatus.CLOSED_CANCELLED;
+import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.BORROWING_SITE_CANCEL;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.CANCEL_REQUEST;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.CLAIMS_RETURNED;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.FINAL_CHECKIN;
@@ -346,7 +347,7 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
   })
-  void shouldUpdateTransactionWhenCancelRequest() {
+  void shouldUpdateTransactionWithItemHoldWhenCancelRequest() {
     var event = createRequestDomainEvent(DomainEventType.UPDATED);
     var request = event.getData().getNewEntity();
     var instance = new Instance();
@@ -365,6 +366,26 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
 
     var updatedTransaction = transactionRepository.fetchOneById(PRE_POPULATED_ITEM_TRANSACTION_ID).orElse(null);
     assertEquals(CANCEL_REQUEST, updatedTransaction.getState());
+  }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
+  })
+  void shouldUpdateTransactionWithPatronHoldWhenCancelRequest() {
+    var event = getRequestDomainEvent(DomainEventType.UPDATED);
+    var request = event.getData().getNewEntity();
+    request.setId(PRE_POPULATED_PATRON_TRANSACTION_REQUEST_ID);
+    request.setStatus(CLOSED_CANCELLED);
+
+    listener.handleRequestEvents(asSingleConsumerRecord(CIRC_REQUEST_TOPIC, PRE_POPULATED_PATRON_TRANSACTION_REQUEST_ID, event));
+
+    verify(eventProcessor).process(anyList(), any(Consumer.class));
+    verify(innReachExternalService, times(1)).postInnReachApi(any(), any());
+
+    var updatedTransaction = transactionRepository.fetchOneById(PRE_POPULATED_PATRON_TRANSACTION_ID).orElse(null);
+    assertEquals(BORROWING_SITE_CANCEL, updatedTransaction.getState());
   }
 
   @Sql(scripts = {
