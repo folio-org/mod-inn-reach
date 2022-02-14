@@ -1,5 +1,6 @@
 package org.folio.innreach.domain.listener.base;
 
+import static org.folio.innreach.domain.listener.base.BaseKafkaApiTest.*;
 import static org.folio.innreach.domain.listener.base.BaseKafkaApiTest.CIRC_LOAN_TOPIC;
 
 import java.util.List;
@@ -40,15 +41,16 @@ import org.folio.tenant.domain.dto.TenantAttributes;
 import org.folio.tenant.rest.resource.TenantApi;
 
 @ActiveProfiles("test")
-@EmbeddedKafka(topics = {CIRC_LOAN_TOPIC})
+@EmbeddedKafka(topics = {CIRC_LOAN_TOPIC, CIRC_REQUEST_TOPIC, CIRC_CHECKIN_TOPIC})
 @SpringBootTest(
-  classes = {ModInnReachApplication.class, BaseKafkaApiTest.TestTenantController.class, BaseKafkaApiTest.TestTenantScopedExecutionService.class})
+  classes = {ModInnReachApplication.class, TestTenantController.class, TestTenantScopedExecutionService.class})
 @Testcontainers
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class BaseKafkaApiTest {
 
   public static final String CIRC_LOAN_TOPIC = "folio.testing.circulation.loan";
   public static final String CIRC_REQUEST_TOPIC = "folio.testing.circulation.request";
+  public static final String CIRC_CHECKIN_TOPIC = "folio.testing.circulation.check-in";
 
   @Container
   public static PostgreSQLContainer<?> postgresqlContainer = new PostgreSQLContainer<>("postgres:11-alpine");

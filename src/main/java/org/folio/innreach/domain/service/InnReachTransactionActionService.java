@@ -7,6 +7,7 @@ import org.folio.innreach.dto.CheckInDTO;
 import org.folio.innreach.dto.ItemHoldCheckOutResponseDTO;
 import org.folio.innreach.dto.LoanDTO;
 import org.folio.innreach.dto.PatronHoldCheckInResponseDTO;
+import org.folio.innreach.dto.StorageLoanDTO;
 
 public interface InnReachTransactionActionService {
 
@@ -16,9 +17,9 @@ public interface InnReachTransactionActionService {
 
   ItemHoldCheckOutResponseDTO checkOutItemHoldItem(String itemBarcode, UUID servicePointId);
 
-  void associateNewLoanWithTransaction(LoanDTO loan);
+  void associateNewLoanWithTransaction(StorageLoanDTO loan);
 
-  void handleLoanUpdate(LoanDTO loan);
+  void handleLoanUpdate(StorageLoanDTO loan);
 
   void handleRequestUpdate(RequestDTO requestDTO);
 
