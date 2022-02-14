@@ -20,11 +20,13 @@ import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionSt
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.RETURN_UNCIRCULATED;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.TRANSFER;
 import static org.folio.innreach.dto.ItemStatus.NameEnum.AWAITING_PICKUP;
+import static org.folio.innreach.util.DateHelper.toEpochSec;
 
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Consumer;
@@ -55,8 +57,8 @@ import org.folio.innreach.domain.service.RequestService;
 import org.folio.innreach.domain.service.impl.BatchDomainEventProcessor;
 import org.folio.innreach.dto.CheckInDTO;
 import org.folio.innreach.dto.Instance;
-import org.folio.innreach.dto.LoanDTO;
 import org.folio.innreach.dto.LoanStatus;
+import org.folio.innreach.dto.StorageLoanDTO;
 import org.folio.innreach.external.service.InnReachExternalService;
 import org.folio.innreach.repository.InnReachTransactionRepository;
 
@@ -113,7 +115,7 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
 
     kafkaTemplate.send(new ProducerRecord(CIRC_LOAN_TOPIC, LOAN_ID.toString(), event));
 
-    ArgumentCaptor<List<ConsumerRecord<String, DomainEvent<LoanDTO>>>> eventsCaptor = ArgumentCaptor.forClass(List.class);
+    ArgumentCaptor<List<ConsumerRecord<String, DomainEvent<StorageLoanDTO>>>> eventsCaptor = ArgumentCaptor.forClass(List.class);
 
     await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() ->
       verify(listener).handleLoanEvents(eventsCaptor.capture()));
@@ -235,17 +237,23 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
   })
   void shouldUpdatePatronTransactionOnLoanClaimsReturned() {
     var event = createLoanDomainEvent(DomainEventType.UPDATED);
+    var claimedReturnedDate = new Date();
     var loan = event.getData().getNewEntity();
     loan.setId(PRE_POPULATED_PATRON_TRANSACTION_LOAN_ID);
+    loan.setClaimedReturnedDate(claimedReturnedDate);
     loan.setAction("claimedReturned");
 
     listener.handleLoanEvents(asSingleConsumerRecord(CIRC_LOAN_TOPIC, PRE_POPULATED_PATRON_TRANSACTION_LOAN_ID, event));
 
-    verify(eventProcessor).process(anyList(), any(Consumer.class));
-    verify(innReachExternalService).postInnReachApi(any(), any(), any());
+    ArgumentCaptor<Map<Object, Object>> payloadCaptor = ArgumentCaptor.forClass(Map.class);
 
+    verify(eventProcessor).process(anyList(), any(Consumer.class));
+    verify(innReachExternalService).postInnReachApi(any(), any(), payloadCaptor.capture());
+
+    var payload = payloadCaptor.getValue();
     var updatedTransaction = transactionRepository.fetchOneById(PRE_POPULATED_PATRON_TRANSACTION_ID).get();
     assertEquals(CLAIMS_RETURNED, updatedTransaction.getState());
+    assertEquals(toEpochSec(claimedReturnedDate), payload.get("claimsReturnedDate"));
   }
 
   @Test
@@ -413,13 +421,13 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
     assertEquals(RETURN_UNCIRCULATED, updatedTransaction.getState());
   }
 
-  private static DomainEvent<LoanDTO> createLoanDomainEvent(DomainEventType eventType) {
-    var loan = new LoanDTO().id(LOAN_ID)
+  private static DomainEvent<StorageLoanDTO> createLoanDomainEvent(DomainEventType eventType) {
+    var loan = new StorageLoanDTO().id(LOAN_ID)
       .dueDate(DUE_DATE)
       .userId(PRE_POPULATED_PATRON_ID)
       .itemId(PRE_POPULATED_PATRON_TRANSACTION_ITEM_ID);
 
-    return DomainEvent.<LoanDTO>builder()
+    return DomainEvent.<StorageLoanDTO>builder()
       .tenant(TEST_TENANT_ID)
       .timestamp(System.currentTimeMillis())
       .type(eventType)

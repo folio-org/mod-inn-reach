@@ -20,10 +20,10 @@ import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionSt
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionType.ITEM;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionType.PATRON;
 import static org.folio.innreach.dto.ItemStatus.NameEnum.AWAITING_PICKUP;
+import static org.folio.innreach.util.DateHelper.toEpochSec;
+import static org.folio.innreach.util.DateHelper.toInstantTruncatedToSec;
 
 import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -47,13 +47,14 @@ import org.folio.innreach.domain.service.PatronHoldService;
 import org.folio.innreach.domain.service.RequestService;
 import org.folio.innreach.dto.CheckInDTO;
 import org.folio.innreach.dto.ItemHoldCheckOutResponseDTO;
-import org.folio.innreach.dto.LoanDTO;
 import org.folio.innreach.dto.LoanStatus;
 import org.folio.innreach.dto.PatronHoldCheckInResponseDTO;
+import org.folio.innreach.dto.StorageLoanDTO;
 import org.folio.innreach.external.exception.InnReachException;
 import org.folio.innreach.external.service.InnReachExternalService;
 import org.folio.innreach.mapper.InnReachTransactionMapper;
 import org.folio.innreach.repository.InnReachTransactionRepository;
+import org.folio.innreach.util.DateHelper;
 
 @Log4j2
 @Transactional
@@ -144,7 +145,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
   }
 
   @Override
-  public void associateNewLoanWithTransaction(LoanDTO loan) {
+  public void associateNewLoanWithTransaction(StorageLoanDTO loan) {
     var itemId = loan.getItemId();
     var patronId = loan.getUserId();
 
@@ -161,7 +162,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
   }
 
   @Override
-  public void handleLoanUpdate(LoanDTO loan) {
+  public void handleLoanUpdate(StorageLoanDTO loan) {
     var transaction = transactionRepository.fetchActiveByLoanId(loan.getId()).orElse(null);
     if (transaction == null) {
       return;
@@ -220,7 +221,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
     }
   }
 
-  private void updateTransactionOnLoanClaimedReturned(LoanDTO loan, InnReachTransaction transaction) {
+  private void updateTransactionOnLoanClaimedReturned(StorageLoanDTO loan, InnReachTransaction transaction) {
     if (transaction.getType() != PATRON) {
       return;
     }
@@ -229,10 +230,12 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
 
     transaction.setState(CLAIMS_RETURNED);
 
-    reportClaimsReturned(transaction, toEpochSec(new Date()));
+    var claimedReturnedDateSec = ofNullable(loan.getClaimedReturnedDate()).map(DateHelper::toEpochSec).orElse(-1);
+
+    reportClaimsReturned(transaction, claimedReturnedDateSec);
   }
 
-  private void updateTransactionOnLoanRenewal(LoanDTO loan, InnReachTransaction transaction) {
+  private void updateTransactionOnLoanRenewal(StorageLoanDTO loan, InnReachTransaction transaction) {
     if (transaction.getType() != PATRON) {
       return;
     }
@@ -251,7 +254,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
     }
   }
 
-  private void updateTransactionOnLoanClosure(LoanDTO loan, InnReachTransaction transaction) {
+  private void updateTransactionOnLoanClosure(StorageLoanDTO loan, InnReachTransaction transaction) {
     if (transaction.getType() == ITEM) {
       log.info("Updating item transaction {} on loan closure {}", transaction.getId(), loan.getId());
 
@@ -326,14 +329,6 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
     }
   }
 
-  private static Instant toInstantTruncatedToSec(Date date) {
-    return date.toInstant().truncatedTo(ChronoUnit.SECONDS);
-  }
-
-  private static int toEpochSec(Date date) {
-    return (int) toInstantTruncatedToSec(date).getEpochSecond();
-  }
-
   private InnReachTransaction fetchTransactionById(UUID transactionId) {
     return transactionRepository.fetchOneById(transactionId)
       .orElseThrow(() -> new EntityNotFoundException("INN-Reach transaction is not found by id: " + transactionId));
@@ -398,7 +393,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
 
   private void reportClaimsReturned(InnReachTransaction transaction, Integer claimsReturnedDateSec) {
     var payload = new HashMap<>();
-    payload.put("claimsReturnedDateSec", claimsReturnedDateSec);
+    payload.put("claimsReturnedDate", claimsReturnedDateSec);
     callD2irCircOperation(D2IR_CLAIMS_RETURNED, transaction, payload);
   }
 
