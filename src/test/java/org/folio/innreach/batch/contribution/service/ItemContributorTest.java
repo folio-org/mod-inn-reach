@@ -11,6 +11,7 @@ import static org.folio.innreach.external.dto.InnReachResponse.okResponse;
 import static org.folio.innreach.fixture.ContributionFixture.createContributionJobContext;
 import static org.folio.innreach.fixture.ContributionFixture.createItem;
 
+import org.folio.innreach.dto.Item;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -80,6 +81,7 @@ class ItemContributorTest {
     when(typeMappingService.getAllMappings(any(), anyInt(), anyInt())).thenReturn(new MaterialTypeMappingsDTO());
     when(libraryMappingService.getAllMappings(any(), anyInt(), anyInt())).thenReturn(new LibraryMappingsDTO());
     when(centralServerService.getCentralServer(any())).thenReturn(new CentralServerDTO());
+    when(validationService.isEligibleForContribution(any(), any(Item.class))).thenReturn(true);
     when(validationService.getItemCirculationStatus(any(), any())).thenReturn(ContributionItemCirculationStatus.AVAILABLE);
 
     service.contributeItems("test", of(createItem()));

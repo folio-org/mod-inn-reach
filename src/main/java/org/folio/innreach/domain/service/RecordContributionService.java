@@ -5,15 +5,16 @@ import org.folio.innreach.dto.Instance;
 import org.folio.innreach.dto.Item;
 
 public interface RecordContributionService {
-  boolean evaluateInventoryItemForContribution(Item item);
 
   void decontributeInventoryItemEvents(Item item);
 
-  boolean evaluateInventoryInstanceForContribution(Instance instance);
-
   void decontributeInventoryInstanceEvents(Instance instance);
 
-  boolean evaluateInventoryHoldingForContribution(Holding holding);
-
   void decontributeInventoryHoldingEvents(Holding holding);
+
+  void updateInventoryItem(Item oldItem, Item newItem);
+
+  void updateInventoryInstance(Instance oldEntity, Instance newEntity);
+
+  void updateInventoryHolding(Holding oldEntity, Holding newEntity);
 }

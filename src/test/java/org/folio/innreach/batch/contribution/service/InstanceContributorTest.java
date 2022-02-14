@@ -13,6 +13,8 @@ import static org.folio.innreach.fixture.ContributionFixture.createInstance;
 
 import java.util.UUID;
 
+import org.folio.innreach.domain.service.ContributionValidationService;
+import org.folio.innreach.dto.Instance;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -41,6 +43,8 @@ class InstanceContributorTest {
   private InstanceTransformationService instanceTransformationService;
   @Mock
   private RetryTemplate retryTemplate;
+  @Mock
+  private ContributionValidationService validationService;
 
   @InjectMocks
   private InstanceContributor instanceContributor;
@@ -52,6 +56,7 @@ class InstanceContributorTest {
       RetryCallback retry = invocation.getArgument(0);
       return retry.doWithRetry(null);
     });
+    when(validationService.isEligibleForContribution(any(), any(Instance.class))).thenReturn(true);
   }
 
   @AfterEach

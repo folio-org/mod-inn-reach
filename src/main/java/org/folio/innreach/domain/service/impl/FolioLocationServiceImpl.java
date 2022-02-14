@@ -28,4 +28,9 @@ public class FolioLocationServiceImpl implements FolioLocationService {
       .collect(toMap(LocationDTO::getId, LocationDTO::getLibraryId));
   }
 
+  @Override
+  public LocationDTO getLocationById(UUID locationId) {
+    return locationsClient.getLocationById(locationId);
+  }
+
 }

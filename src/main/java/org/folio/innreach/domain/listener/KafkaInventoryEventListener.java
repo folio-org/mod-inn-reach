@@ -9,12 +9,11 @@ import org.folio.innreach.domain.service.impl.BatchDomainEventProcessor;
 import org.folio.innreach.dto.Holding;
 import org.folio.innreach.dto.Instance;
 import org.folio.innreach.dto.Item;
-import org.folio.innreach.repository.CentralServerRepository;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
-import java.util.UUID;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import static org.folio.innreach.config.KafkaListenerConfiguration.KAFKA_CONTAINER_FACTORY;
@@ -27,7 +26,6 @@ public class KafkaInventoryEventListener {
 
   private final BatchDomainEventProcessor eventProcessor;
   private final RecordContributionService recordService;
-  private final CentralServerRepository centralServerRepository;
 
   @KafkaListener(
     containerFactory = KAFKA_CONTAINER_FACTORY,
@@ -38,18 +36,12 @@ public class KafkaInventoryEventListener {
   public void handleItemEvents(List<ConsumerRecord<String, DomainEvent<Item>>> consumerRecords) {
     log.info("Handling inventory item events from Kafka [number of events: {}]", consumerRecords.size());
 
-    var events = consumerRecords.stream()
-      .filter(e -> e.value() != null)
-      .map(this::toDomainEventWithRecordId)
-      .collect(Collectors.toList());
+    var events = getEvents(consumerRecords);
 
     eventProcessor.process(events, event -> {
       switch (event.getType()) {
         case UPDATED:
-          var valid = recordService.evaluateInventoryItemForContribution(event.getData().getNewEntity());
-          if (!valid) {
-            recordService.decontributeInventoryItemEvents(event.getData().getOldEntity());
-          }
+          recordService.updateInventoryItem(event.getData().getOldEntity(), event.getData().getNewEntity());
           break;
         case DELETED:
           recordService.decontributeInventoryItemEvents(event.getData().getOldEntity());
@@ -69,18 +61,12 @@ public class KafkaInventoryEventListener {
   public void handleInstanceEvents(List<ConsumerRecord<String, DomainEvent<Instance>>> consumerRecords) {
     log.info("Handling inventory instance events from Kafka [number of events: {}]", consumerRecords.size());
 
-    var events = consumerRecords.stream()
-      .filter(e -> e.value() != null)
-      .map(this::toDomainEventWithRecordId)
-      .collect(Collectors.toList());
+    var events = getEvents(consumerRecords);
 
     eventProcessor.process(events, event -> {
       switch (event.getType()) {
         case UPDATED:
-          var valid = recordService.evaluateInventoryInstanceForContribution(event.getData().getNewEntity());
-          if (!valid) {
-            recordService.decontributeInventoryInstanceEvents(event.getData().getOldEntity());
-          }
+          recordService.updateInventoryInstance(event.getData().getOldEntity(), event.getData().getNewEntity());
           break;
         case DELETED:
           recordService.decontributeInventoryInstanceEvents(event.getData().getOldEntity());
@@ -100,18 +86,12 @@ public class KafkaInventoryEventListener {
   public void handleHoldingEvents(List<ConsumerRecord<String, DomainEvent<Holding>>> consumerRecords) {
     log.info("Handling inventory holding events from Kafka [number of events: {}]", consumerRecords.size());
 
-    var events = consumerRecords.stream()
-      .filter(e -> e.value() != null)
-      .map(this::toDomainEventWithRecordId)
-      .collect(Collectors.toList());
+    var events = getEvents(consumerRecords);
 
     eventProcessor.process(events, event -> {
       switch (event.getType()) {
         case UPDATED:
-          var valid = recordService.evaluateInventoryHoldingForContribution(event.getData().getNewEntity());
-          if (!valid) {
-            recordService.decontributeInventoryHoldingEvents(event.getData().getOldEntity());
-          }
+          recordService.updateInventoryHolding(event.getData().getOldEntity(), event.getData().getNewEntity());
           break;
         case DELETED:
           recordService.decontributeInventoryHoldingEvents(event.getData().getOldEntity());
@@ -122,10 +102,10 @@ public class KafkaInventoryEventListener {
     });
   }
 
-  private <T> DomainEvent<T> toDomainEventWithRecordId(ConsumerRecord<String, DomainEvent<T>> consumerRecord) {
-    var key = consumerRecord.key();
-    var event = consumerRecord.value();
-    event.setRecordId(UUID.fromString(key));
-    return event;
+  private static <T> List<DomainEvent<T>> getEvents(List<ConsumerRecord<String, DomainEvent<T>>> consumerRecords) {
+    return consumerRecords.stream()
+      .map(ConsumerRecord::value)
+      .filter(Objects::nonNull)
+      .collect(Collectors.toList());
   }
 }

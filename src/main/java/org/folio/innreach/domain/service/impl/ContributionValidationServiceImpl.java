@@ -18,6 +18,7 @@ import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.collections4.CollectionUtils;
+import org.folio.innreach.dto.Holding;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 
@@ -197,6 +198,16 @@ public class ContributionValidationServiceImpl implements ContributionValidation
       log.warn("Can't validate location mappings", e);
       return INVALID;
     }
+  }
+
+  @Override
+  public boolean isEligibleForContribution(UUID centralServerId, Holding holding) {
+    if (isExcludedStatisticalCode(centralServerId, holding.getStatisticalCodeIds())) {
+      log.info("Holding has 'do not contribute' suppression status");
+      return false;
+    }
+
+    return true;
   }
 
   private boolean isItemNonLendable(Item inventoryItem,
