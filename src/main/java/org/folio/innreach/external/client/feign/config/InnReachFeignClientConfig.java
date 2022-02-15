@@ -17,7 +17,7 @@ import org.folio.innreach.external.client.feign.error.InnReachFeignErrorDecoder;
 @Import(OkHttpFeignConfiguration.class)
 public class InnReachFeignClientConfig {
 
-  @Value("${http-logging.enabled:false}")
+  @Value("${http-logging.d2ir.enabled:false}")
   private boolean enableLogging;
 
   @Bean

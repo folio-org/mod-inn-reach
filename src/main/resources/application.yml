@@ -152,12 +152,12 @@ logging:
   level:
     org.zalando.logbook: TRACE
     org.folio.innreach.external.client.feign: DEBUG
-http-logging.enabled: ${LOG_D2IR_HTTP:false}
+http-logging.d2ir.enabled: ${LOG_D2IR_HTTP:false}
 logbook:
   include:
     - /inn-reach/d2ir/**
-  filter.enabled: ${http-logging.enabled}
-  secure-filter.enabled: ${http-logging.enabled}
+  filter.enabled: ${http-logging.d2ir.enabled}
+  secure-filter.enabled: ${http-logging.d2ir.enabled}
   format.style: http
   obfuscate:
     headers:
