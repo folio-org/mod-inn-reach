@@ -740,6 +740,8 @@ components:
       $ref: schemas/circulation/checkOutRequestDTO.json
     loanDTO:
       $ref: schemas/circulation/loanDTO.json
+    storageLoanDTO:
+      $ref: schemas/circulationstorage/loanDTO.json
     patronHoldCheckInResponseDTO:
       $ref: schemas/patronHoldCheckInResponseDTO.json
     itemHoldCheckOutResponseDTO:

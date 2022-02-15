@@ -135,7 +135,7 @@ kafka:
       group-id: ${spring.kafka.consumer.group-id}
       topic-pattern: (${environment}\.)(.*\.)circulation\.loan
       concurrency: ${KAFKA_EVENTS_CONCURRENCY:2}
-      data-type: org.folio.innreach.dto.LoanDTO
+      data-type: org.folio.innreach.dto.StorageLoanDTO
     item:
       id: ${environment}-mod-inn-reach-inventory-item-events
       group-id: ${spring.kafka.consumer.group-id}
