@@ -16,7 +16,6 @@ import lombok.ToString;
 @NoArgsConstructor
 @ToString(exclude = "data")
 public class DomainEvent<T> {
-  protected UUID recordId;
   protected DomainEventType type;
   protected String tenant;
   protected long timestamp;

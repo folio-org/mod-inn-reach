@@ -19,6 +19,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.folio.innreach.domain.service.ContributionValidationService;
 import org.folio.innreach.domain.service.MARCRecordTransformationService;
 import org.folio.innreach.dto.Instance;
+import org.folio.innreach.dto.Item;
 
 @ExtendWith(MockitoExtension.class)
 class InstanceTransformationServiceImplTest {
@@ -38,6 +39,7 @@ class InstanceTransformationServiceImplTest {
     Instance instance = createInstance();
 
     when(marcService.transformRecord(any(UUID.class), any(Instance.class))).thenReturn(createMARCRecord());
+    when(validationService.isEligibleForContribution(any(UUID.class), any(Item.class))).thenReturn(true);
 
     var bibInfo = service.getBibInfo(CENTRAL_SERVER_ID, instance);
 

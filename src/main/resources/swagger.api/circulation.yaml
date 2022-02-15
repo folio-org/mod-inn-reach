@@ -732,12 +732,16 @@ components:
       $ref: schemas/circulation/checkInRequestDTO.json
     checkInResponseDTO:
       $ref: schemas/circulation/checkInResponseDTO.json
+    checkInDTO:
+      $ref: schemas/circulationstorage/checkInDTO.json
     baseCircRequestDTO:
       $ref: schemas/d2ir/baseCircRequestDTO.json
     checkOutRequestDTO:
       $ref: schemas/circulation/checkOutRequestDTO.json
     loanDTO:
       $ref: schemas/circulation/loanDTO.json
+    storageLoanDTO:
+      $ref: schemas/circulationstorage/loanDTO.json
     patronHoldCheckInResponseDTO:
       $ref: schemas/patronHoldCheckInResponseDTO.json
     itemHoldCheckOutResponseDTO:

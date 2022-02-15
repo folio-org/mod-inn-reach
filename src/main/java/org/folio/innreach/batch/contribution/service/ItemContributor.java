@@ -1,17 +1,19 @@
 package org.folio.innreach.batch.contribution.service;
 
+import static java.util.stream.Collectors.toMap;
+
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
 import lombok.Builder;
 import lombok.RequiredArgsConstructor;
+import lombok.ToString;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -27,6 +29,7 @@ import org.folio.innreach.domain.service.InnReachLocationService;
 import org.folio.innreach.domain.service.LibraryMappingService;
 import org.folio.innreach.domain.service.LocationMappingService;
 import org.folio.innreach.domain.service.MaterialTypeMappingService;
+import org.folio.innreach.domain.service.impl.FolioLocationService;
 import org.folio.innreach.dto.InnReachLocationDTO;
 import org.folio.innreach.dto.Item;
 import org.folio.innreach.dto.ItemEffectiveCallNumberComponents;
@@ -52,11 +55,13 @@ public class ItemContributor {
   private final InnReachLocationService irLocationService;
   private final CentralServerService centralServerService;
   private final LocationMappingService locationMappingService;
+  private final FolioLocationService folioLocationService;
 
   public int contributeItems(String bibId, List<Item> items) {
     log.info("Processing items of bib {}", bibId);
 
     var mappings = getContributionMappings();
+    log.info("Resolved contribution mappings: {}", mappings);
 
     var bibItems = items.stream()
       .map(item -> convertItem(item, mappings))
@@ -94,7 +99,7 @@ public class ItemContributor {
         .map(ItemEffectiveCallNumberComponents::getCallNumber)
         .orElse(null);
 
-      var folLocId = item.getPermanentLocationId();
+      var folLocId = item.getEffectiveLocationId();
       var folLibId = mappings.getLibraryId(folLocId);
 
       var bibItem = BibItem.builder()
@@ -133,19 +138,19 @@ public class ItemContributor {
     Map<UUID, String> irLocIdToLocKeys = irLocationService.getAllInnReachLocations(0, FETCH_LIMIT)
       .getLocations()
       .stream()
-      .collect(Collectors.toMap(InnReachLocationDTO::getId, InnReachLocationDTO::getCode));
+      .collect(toMap(InnReachLocationDTO::getId, InnReachLocationDTO::getCode));
 
     Map<UUID, Integer> materialToCentralTypeMappings = getTypeMappings();
     Map<UUID, String> libIdToLocKeyMappings = getLibraryMappings(irLocIdToLocKeys);
     Map<UUID, String> locIdToLocKeyMappings = getLocationMappings(irLocIdToLocKeys, libIdToLocKeyMappings.keySet());
-    Map<UUID, UUID> locItToLibIdMappings = getLocationLibraryMappings(libIdToLocKeyMappings.keySet());
+    Map<UUID, UUID> locIdToLibIdMappings = folioLocationService.getLocationLibraryMappings();
     Map<UUID, String> libIdToAgencyCodeMappings = getAgencyMappings();
 
     return ContributionMappings.builder()
       .materialToCentralTypes(materialToCentralTypeMappings)
       .libIdToLocKeys(libIdToLocKeyMappings)
       .locIdToLocKeys(locIdToLocKeyMappings)
-      .locIdToLibIds(locItToLibIdMappings)
+      .locIdToLibIds(locIdToLibIdMappings)
       .libIdToAgencyCodes(libIdToAgencyCodeMappings)
       .build();
   }
@@ -154,7 +159,7 @@ public class ItemContributor {
     return typeMappingService.getAllMappings(getCentralServerId(), 0, FETCH_LIMIT)
       .getMaterialTypeMappings()
       .stream()
-      .collect(Collectors.toMap(MaterialTypeMappingDTO::getMaterialTypeId, MaterialTypeMappingDTO::getCentralItemType));
+      .collect(toMap(MaterialTypeMappingDTO::getMaterialTypeId, MaterialTypeMappingDTO::getCentralItemType));
   }
 
   private Map<UUID, String> getLibraryMappings(Map<UUID, String> irLocations) {
@@ -165,20 +170,6 @@ public class ItemContributor {
     for (var mapping : libraryMappings) {
       var code = irLocations.get(mapping.getInnReachLocationId());
       mappings.put(mapping.getLibraryId(), code);
-    }
-
-    return mappings;
-  }
-
-  private Map<UUID, UUID> getLocationLibraryMappings(Set<UUID> libraryIds) {
-    Map<UUID, UUID> mappings = new HashMap<>();
-
-    for (var libId : libraryIds) {
-      var locationMappings = locationMappingService
-        .getAllMappings(getCentralServerId(), libId, 0, FETCH_LIMIT)
-        .getLocationMappings();
-
-      locationMappings.forEach(loc -> mappings.put(loc.getLocationId(), libId));
     }
 
     return mappings;
@@ -215,6 +206,7 @@ public class ItemContributor {
   }
 
   @Builder
+  @ToString
   private static class ContributionMappings {
     private Map<UUID, Integer> materialToCentralTypes;
     private Map<UUID, String> libIdToLocKeys;
