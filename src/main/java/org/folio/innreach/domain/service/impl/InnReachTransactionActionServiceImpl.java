@@ -341,8 +341,10 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
   private void updatePatronTransactionOnRequestChange(RequestDTO requestDTO, InnReachTransaction transaction) {
     if (requestDTO.getStatus() == CLOSED_CANCELLED) {
       log.info("Updating patron hold transaction {} on cancellation of a request {}", transaction.getId(), requestDTO.getId());
-      transaction.setState(BORROWING_SITE_CANCEL);
-      reportCancelItemHold(transaction);
+      if (transaction.getState() == PATRON_HOLD || transaction.getState() == TRANSFER) {
+        transaction.setState(BORROWING_SITE_CANCEL);
+        reportCancelItemHold(transaction);
+      }
     }
   }
 
