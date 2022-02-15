@@ -43,10 +43,10 @@
       },
       "uniqueItems": true
     },
-    "permanentLocationId": {
+    "effectiveLocationId": {
       "type": "string",
       "format": "UUID",
-      "description": "The permanent shelving location in which an item resides."
+      "description": "Read only current home location for the item."
     },
     "effectiveCallNumberComponents": {
       "type": "object",

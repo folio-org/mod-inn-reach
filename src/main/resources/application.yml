@@ -117,7 +117,7 @@ batch:
       retry-interval-ms: 20000
       reader-topic: inventory.instance-contribution
       reader-group-id: ${ENV:folio}-mod-innreach-contribution-events-group
-      reader-poll-timeout-sec: 300
+      reader-poll-timeout-sec: 30
 reference-data:
   loader:
     retry-attempts: 10
@@ -153,4 +153,16 @@ kafka:
       group-id: ${spring.kafka.consumer.group-id}
       topic-pattern: (${environment}\.)(.*\.)circulation\.loan
       concurrency: ${KAFKA_EVENTS_CONCURRENCY:2}
-      data-type: org.folio.innreach.dto.LoanDTO
+      data-type: org.folio.innreach.dto.StorageLoanDTO
+    request:
+      id: ${environment}-mod-inn-reach-circ-requests
+      group-id: ${spring.kafka.consumer.group-id}
+      topic-pattern: (${environment}\.)(.*\.)circulation\.request
+      concurrency: ${KAFKA_EVENTS_CONCURRENCY:2}
+      data-type: org.folio.innreach.domain.dto.folio.circulation.RequestDTO
+    check-in:
+      id: ${environment}-mod-inn-reach-circ-checkins
+      group-id: ${spring.kafka.consumer.group-id}
+      topic-pattern: (${environment}\.)(.*\.)circulation\.check-in
+      concurrency: ${KAFKA_EVENTS_CONCURRENCY:2}
+      data-type: org.folio.innreach.dto.CheckInDTO

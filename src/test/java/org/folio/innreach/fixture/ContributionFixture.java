@@ -25,7 +25,9 @@ import org.folio.innreach.domain.dto.folio.inventorystorage.JobResponse;
 import org.folio.innreach.domain.dto.folio.inventorystorage.MaterialTypeDTO;
 import org.folio.innreach.domain.entity.CentralServer;
 import org.folio.innreach.domain.entity.Contribution;
+import org.folio.innreach.domain.entity.ContributionCriteriaConfiguration;
 import org.folio.innreach.domain.entity.base.AuditableUser;
+import org.folio.innreach.dto.ContributionCriteriaDTO;
 import org.folio.innreach.dto.Holding;
 import org.folio.innreach.dto.Instance;
 import org.folio.innreach.dto.Item;
@@ -86,6 +88,10 @@ public class ContributionFixture {
 
   public static ContributionJobContext createContributionJobContext() {
     return contributionRandom.nextObject(ContributionJobContext.class);
+  }
+
+  public static ContributionCriteriaDTO createContributionCriteria() {
+    return contributionRandom.nextObject(ContributionCriteriaDTO.class);
   }
 
   public static InventoryViewClient.InstanceView createInstanceView() {

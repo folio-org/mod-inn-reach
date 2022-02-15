@@ -45,9 +45,8 @@ public class ContributionJobRunner {
   private final InstanceContributor instanceContributor;
   private final ItemContributor itemContributor;
   private final ContributionJobProperties jobProperties;
-  private final FolioEnvironment folioEnv;
   private final ContributionService contributionService;
-  @Qualifier("batchRetryTemplate")
+  @Qualifier("contributionRetryTemplate")
   private final RetryTemplate retryTemplate;
   private final IterationEventReaderFactory itemReaderFactory;
 
