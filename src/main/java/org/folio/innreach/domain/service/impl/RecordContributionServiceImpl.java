@@ -5,10 +5,8 @@ import java.util.stream.Collectors;
 
 import lombok.AllArgsConstructor;
 import lombok.extern.log4j.Log4j2;
-import org.folio.innreach.batch.contribution.listener.ContributionExceptionListener;
-import org.folio.innreach.domain.service.ContributionService;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
+import org.springframework.util.Assert;
 
 import org.folio.innreach.domain.entity.CentralServer;
 import org.folio.innreach.domain.entity.LocalAgency;
@@ -19,7 +17,6 @@ import org.folio.innreach.dto.Instance;
 import org.folio.innreach.dto.Item;
 import org.folio.innreach.external.service.InnReachExternalService;
 import org.folio.innreach.repository.LocalAgencyRepository;
-import org.springframework.util.Assert;
 
 @Log4j2
 @AllArgsConstructor
@@ -29,13 +26,6 @@ public class RecordContributionServiceImpl implements RecordContributionService 
   private final InnReachExternalService innReachExternalService;
   private final LocalAgencyRepository localAgencyRepository;
   private final FolioLocationService locationService;
-  private final ContributionService contributionService;
-  @Qualifier("itemExceptionListener")
-  private final ContributionExceptionListener itemExceptionListener;
-  @Qualifier("instanceExceptionListener")
-  private final ContributionExceptionListener instanceExceptionListener;
-  @Qualifier("holdingExceptionListener")
-  private final ContributionExceptionListener holdingExceptionListener;
 
   @Override
   public void decontributeInventoryItemEvents(Item item) {
@@ -64,11 +54,16 @@ public class RecordContributionServiceImpl implements RecordContributionService 
   @Override
   public void updateInventoryItem(Item oldItem, Item newItem) {
     var centralServer = getCentralServer(newItem);
+    if (centralServer == null){
+      log.warn("Cannot find central server for item with id = {}, it is to be decontributed.", newItem.getHrid());
+      decontributeInventoryItemEvents(oldItem);
+      return;
+    }
     var centralServerId = centralServer.getId();
+
     var valid = validationService.isEligibleForContribution(centralServerId, newItem);
     if (!valid) {
-      itemExceptionListener.logError(oldItem.getId(),
-        "Item with id = " + newItem.getHrid() + " is not eligible for contribution, it is to be decontributed.");
+      log.warn("Item with id = " + newItem.getHrid() + " is not eligible for contribution, it is to be decontributed.");
       decontributeInventoryItemEvents(oldItem);
     }
   }
@@ -81,8 +76,7 @@ public class RecordContributionServiceImpl implements RecordContributionService 
     for (UUID centralServerId : centralServerIds) {
       valid = validationService.isEligibleForContribution(centralServerId, newInstance);
       if (!valid) {
-        instanceExceptionListener.logError(oldInstance.getId(),
-          "Item with id = " + newInstance.getHrid() + " is not eligible for contribution, it is to be decontributed.");
+        log.warn("Instance with id = {} is not eligible for contribution, it is to be decontributed.", newInstance.getHrid());
         decontributeInventoryInstanceEvents(oldInstance);
         break;
       }
@@ -92,11 +86,15 @@ public class RecordContributionServiceImpl implements RecordContributionService 
   @Override
   public void updateInventoryHolding(Holding oldHolding, Holding newHolding) {
     var centralServer = getCentralServer(newHolding);
+    if (centralServer == null){
+      log.warn("Cannot find central server for holding with id = " + newHolding.getHrid() + ", it is to be decontributed.");
+      decontributeInventoryHoldingEvents(oldHolding);
+      return;
+    }
     var centralServerId = centralServer.getId();
     var valid = validationService.isEligibleForContribution(centralServerId, newHolding);
     if (!valid) {
-      holdingExceptionListener.logError(oldHolding.getId(),
-        "Item with id = " + newHolding.getHrid() + " is not eligible for contribution, it is to be decontributed.");
+      log.warn("Holding with id = {} is not eligible for contribution, it is to be decontributed.", newHolding.getHrid());
       decontributeInventoryHoldingEvents(oldHolding);
     }
   }

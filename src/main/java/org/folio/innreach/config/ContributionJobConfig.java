@@ -31,9 +31,4 @@ public class ContributionJobConfig {
     return new ContributionExceptionListener(contributionService, "itemContribution");
   }
 
-  @Bean("holdingExceptionListener")
-  public ContributionExceptionListener holdingListener(ContributionService contributionService) {
-    return new ContributionExceptionListener(contributionService, "holdingContribution");
-  }
-
 }

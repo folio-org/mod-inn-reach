@@ -1,6 +1,7 @@
 package org.folio.innreach.batch.contribution.service;
 
 import static java.util.stream.Collectors.toMap;
+
 import static org.folio.innreach.batch.contribution.ContributionJobContextManager.getContributionJobContext;
 
 import java.util.Collection;
@@ -57,25 +58,16 @@ public class ItemContributor {
   private final CentralServerService centralServerService;
   private final LocationMappingService locationMappingService;
   private final FolioLocationService folioLocationService;
-  @Qualifier("itemExceptionListener")
-  private final ContributionExceptionListener itemExceptionListener;
 
   public int contributeItems(String bibId, List<Item> items) {
     log.info("Processing items of bib {}", bibId);
     var centralServerId = getContributionJobContext().getCentralServerId();
 
-    for (Item item : items){
-      var valid = validationService.isEligibleForContribution(centralServerId, item);
-      if (!valid){
-       itemExceptionListener.logError(item.getId(), "Item with id = " +  item.getHrid() + " is not eligible for contribution, it is not to be contributed.");
-       items.remove(item);
-      }
-    }
-
     var mappings = getContributionMappings();
     log.info("Resolved contribution mappings: {}", mappings);
 
     var bibItems = items.stream()
+      .filter(item -> validationService.isEligibleForContribution(centralServerId, item))
       .map(item -> convertItem(item, mappings))
       .filter(Objects::nonNull)
       .collect(Collectors.toList());

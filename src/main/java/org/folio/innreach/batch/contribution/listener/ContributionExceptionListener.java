@@ -21,20 +21,6 @@ public class ContributionExceptionListener {
   private final ContributionService contributionService;
   private final String stepName;
 
-  public void logError(UUID recordId, String msg){
-    try {
-      log.warn("An error occurred during ongoing contribution.");
-
-      var error = new ContributionErrorDTO();
-      error.setRecordId(recordId);
-      error.setMessage(msg);
-
-      contributionService.logContributionError(getContributionJobContext().getContributionId(), error);
-    } catch (Exception ex) {
-      log.warn("Can't persist record {} contribution error", recordId, ex);
-    }
-  }
-
   protected void logError(Exception e, UUID recordId, String stepStage) {
     try {
       log.warn("Step: [{}] error on stage {}", stepName, stepStage, e);

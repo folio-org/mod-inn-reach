@@ -21,24 +21,22 @@ import java.util.function.Consumer;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.producer.ProducerRecord;
-import org.folio.innreach.batch.contribution.listener.ContributionExceptionListener;
-import org.folio.innreach.domain.dto.folio.inventorystorage.LocationDTO;
-import org.folio.innreach.domain.service.ContributionValidationService;
-import org.folio.innreach.domain.service.impl.FolioLocationService;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlMergeMode;
 
+import org.folio.innreach.domain.dto.folio.inventorystorage.LocationDTO;
 import org.folio.innreach.domain.event.DomainEvent;
 import org.folio.innreach.domain.event.DomainEventType;
 import org.folio.innreach.domain.event.EntityChangedData;
 import org.folio.innreach.domain.listener.base.BaseKafkaApiTest;
+import org.folio.innreach.domain.service.ContributionValidationService;
 import org.folio.innreach.domain.service.RecordContributionService;
 import org.folio.innreach.domain.service.impl.BatchDomainEventProcessor;
+import org.folio.innreach.domain.service.impl.FolioLocationService;
 import org.folio.innreach.dto.Holding;
 import org.folio.innreach.dto.Instance;
 import org.folio.innreach.dto.Item;
@@ -72,15 +70,6 @@ class KafkaInventoryEventListenerApiTest extends BaseKafkaApiTest {
   private RecordContributionService service;
   @SpyBean
   private ContributionValidationService validationService;
-  @MockBean
-  @Qualifier("itemExceptionListener")
-  private ContributionExceptionListener itemExceptionListener;
-  @MockBean
-  @Qualifier("instanceExceptionListener")
-  private ContributionExceptionListener instanceExceptionListener;
-  @MockBean
-  @Qualifier("holdingExceptionListener")
-  private ContributionExceptionListener holdingExceptionListener;
 
   @Test
   void shouldReceiveInventoryItemEvent() {
@@ -133,7 +122,6 @@ class KafkaInventoryEventListenerApiTest extends BaseKafkaApiTest {
   void shouldDecontributeInvalidItems() {
     when(innReachExternalService.deleteInnReachApi(any(), any())).thenReturn("test");
     when(locationService.getLocationById(any())).thenReturn(new LocationDTO(UUID.randomUUID(), LIBRARY_ID));
-    doNothing().when(itemExceptionListener).logError(any(), any());
     var event = getItemDomainEvent(DomainEventType.UPDATED);
     event.getData().getNewEntity().setStatisticalCodeIds(List.of(doNotContributeCode));
 
@@ -225,7 +213,6 @@ class KafkaInventoryEventListenerApiTest extends BaseKafkaApiTest {
   void shouldDecontributeInvalidInstances() {
     when(innReachExternalService.deleteInnReachApi(any(), any())).thenReturn("test");
     when(locationService.getLocationById(any())).thenReturn(new LocationDTO(UUID.randomUUID(), LIBRARY_ID));
-    doNothing().when(instanceExceptionListener).logError(any(), any());
     var event = getInstanceDomainEvent(DomainEventType.UPDATED);
     event.getData().getNewEntity().setStatisticalCodeIds(List.of(UUID.randomUUID(), UUID.randomUUID()));
 
@@ -320,7 +307,6 @@ class KafkaInventoryEventListenerApiTest extends BaseKafkaApiTest {
   void shouldDecontributeInvalidHolding() {
     when(innReachExternalService.deleteInnReachApi(any(), any())).thenReturn("test");
     when(locationService.getLocationById(any())).thenReturn(new LocationDTO(UUID.randomUUID(), LIBRARY_ID));
-    doNothing().when(holdingExceptionListener).logError(any(), any());
     var event = getHoldingDomainEvent(DomainEventType.UPDATED);
     event.getData().getNewEntity().setStatisticalCodeIds(List.of(UUID.randomUUID(), UUID.randomUUID()));
 
