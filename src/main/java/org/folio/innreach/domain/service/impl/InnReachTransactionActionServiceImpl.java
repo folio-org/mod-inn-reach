@@ -238,17 +238,15 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
   }
 
   private void associateNewLoanWithLocalTransaction(StorageLoanDTO loan, InnReachTransaction transaction) {
-    if (transaction.getState() == LOCAL_HOLD) {//log and name
+    if (transaction.getState() == LOCAL_HOLD) {
       log.info("Associating a new loan {} with local transaction {}", loan.getId(), transaction.getId());
       var hold = transaction.getHold();
       hold.setFolioLoanId(loan.getId());
       transaction.setState(LOCAL_CHECKOUT);
       var inventoryItemDTO = itemService.find(loan.getItemId())
         .orElseThrow(() -> new IllegalArgumentException("Item is not found by id " + loan.getItemId()));
-      hold.setFolioItemBarcode(inventoryItemDTO.getBarcode());
       reportCheckOut(transaction, inventoryItemDTO.getHrid(), inventoryItemDTO.getBarcode());
     }
-
   }
 
   private void updateTransactionOnLoanClaimedReturned(StorageLoanDTO loan, InnReachTransaction transaction) {
