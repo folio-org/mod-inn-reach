@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -17,6 +18,7 @@ import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionSt
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.CLAIMS_RETURNED;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.FINAL_CHECKIN;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.ITEM_IN_TRANSIT;
+import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.ITEM_SHIPPED;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.RECALL;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.RETURN_UNCIRCULATED;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.TRANSFER;
@@ -397,6 +399,31 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
     assertEquals(BORROWING_SITE_CANCEL, updatedTransaction.getState());
   }
 
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
+  })
+  void shouldNotUpdateTransactionWithPatronHoldWhenCancelRequestAndWrongTransactionState() {
+    var transaction = transactionRepository.fetchOneById(PRE_POPULATED_PATRON_TRANSACTION_ID).get();
+    var state = ITEM_SHIPPED;
+    transaction.setState(state);
+    transactionRepository.save(transaction);
+
+    var event = createRequestDomainEvent(DomainEventType.UPDATED);
+    var request = event.getData().getNewEntity();
+    request.setId(PRE_POPULATED_PATRON_TRANSACTION_REQUEST_ID);
+    request.setStatus(CLOSED_CANCELLED);
+
+    listener.handleRequestEvents(asSingleConsumerRecord(CIRC_REQUEST_TOPIC, PRE_POPULATED_PATRON_TRANSACTION_REQUEST_ID, event));
+
+    verify(eventProcessor).process(anyList(), any(Consumer.class));
+    verify(innReachExternalService, never()).postInnReachApi(any(), any());
+
+    var updatedTransaction = transactionRepository.fetchOneById(PRE_POPULATED_PATRON_TRANSACTION_ID).orElse(null);
+    assertEquals(state, updatedTransaction.getState());
+  }
+
   @Sql(scripts = {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
@@ -424,8 +451,8 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
 
   @Test
   @Sql(scripts = {
-      "classpath:db/central-server/pre-populate-central-server.sql",
-      "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql",
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql",
   })
   void shouldUpdateItemTransactionOnLoanRecallRequested() {
     var event = createLoanDomainEvent(DomainEventType.UPDATED);
