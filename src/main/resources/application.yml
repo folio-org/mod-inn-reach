@@ -20,7 +20,7 @@ spring:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQL10Dialect
         format_sql: true
-    show-sql: true
+    show-sql: false
   liquibase:
     enabled: true
     change-log: classpath:db/changelog/changelog-master.xml
@@ -148,3 +148,19 @@ kafka:
       topic-pattern: (${environment}\.)(.*\.)circulation\.check-in
       concurrency: ${KAFKA_EVENTS_CONCURRENCY:2}
       data-type: org.folio.innreach.dto.CheckInDTO
+logging:
+  level:
+    org.zalando.logbook: TRACE
+    org.folio.innreach.external.client.feign: DEBUG
+http-logging.d2ir.enabled: ${LOG_D2IR_HTTP:false}
+logbook:
+  include:
+    - /inn-reach/d2ir/**
+  filter.enabled: ${http-logging.d2ir.enabled}
+  secure-filter.enabled: ${http-logging.d2ir.enabled}
+  format.style: http
+  obfuscate:
+    headers:
+      - Authorization
+      - X-d2ir-authorization
+      - X-okapi-token
