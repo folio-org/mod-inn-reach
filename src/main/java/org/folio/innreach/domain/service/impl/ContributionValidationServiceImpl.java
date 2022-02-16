@@ -18,6 +18,7 @@ import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.collections4.CollectionUtils;
+
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 
@@ -33,6 +34,7 @@ import org.folio.innreach.domain.service.ItemContributionOptionsConfigurationSer
 import org.folio.innreach.domain.service.LibraryMappingService;
 import org.folio.innreach.domain.service.MaterialTypeMappingService;
 import org.folio.innreach.dto.ContributionCriteriaDTO;
+import org.folio.innreach.dto.Holding;
 import org.folio.innreach.dto.InnReachLocationDTO;
 import org.folio.innreach.dto.Instance;
 import org.folio.innreach.dto.Item;
@@ -95,6 +97,16 @@ public class ContributionValidationServiceImpl implements ContributionValidation
     if (isExcludedStatisticalCode(centralServerId, statisticalCodeIds) ||
       isExcludedStatisticalCode(centralServerId, holdingStatisticalCodeIds)) {
       log.info("Item has 'do not contribute' suppression status");
+      return false;
+    }
+
+    return true;
+  }
+
+  @Override
+  public boolean isEligibleForContribution(UUID centralServerId, Holding holding) {
+    if (isExcludedStatisticalCode(centralServerId, holding.getStatisticalCodeIds())) {
+      log.info("Holding has 'do not contribute' suppression status");
       return false;
     }
 

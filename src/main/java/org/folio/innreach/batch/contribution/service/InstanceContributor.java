@@ -6,6 +6,7 @@ import java.util.UUID;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.folio.innreach.domain.service.ContributionValidationService;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.retry.support.RetryTemplate;
 import org.springframework.stereotype.Service;
@@ -26,13 +27,18 @@ public class InstanceContributor {
   private final RetryTemplate retryTemplate;
   private final InnReachContributionService contributionService;
   private final InstanceTransformationService instanceTransformationService;
+  private final ContributionValidationService validationService;
 
   public void contributeInstance(Instance instance) {
+    var centralServerId = getContributionJobContext().getCentralServerId();
+    var valid = validationService.isEligibleForContribution(centralServerId, instance);
+    if (!valid) {
+      return;
+    }
+
     var bibId = instance.getHrid();
 
     log.info("Contributing bib {}", bibId);
-
-    var centralServerId = getContributionJobContext().getCentralServerId();
 
     var bib = instanceTransformationService.getBibInfo(centralServerId, instance);
 

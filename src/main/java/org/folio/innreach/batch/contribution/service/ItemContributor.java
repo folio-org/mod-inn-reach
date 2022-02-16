@@ -1,6 +1,7 @@
 package org.folio.innreach.batch.contribution.service;
 
 import static java.util.stream.Collectors.toMap;
+import static org.folio.innreach.batch.contribution.ContributionJobContextManager.getContributionJobContext;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -20,7 +21,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 
-import org.folio.innreach.batch.contribution.ContributionJobContextManager;
 import org.folio.innreach.batch.contribution.listener.ContributionExceptionListener;
 import org.folio.innreach.domain.dto.folio.ContributionItemCirculationStatus;
 import org.folio.innreach.domain.service.CentralServerService;
@@ -58,12 +58,14 @@ public class ItemContributor {
   private final FolioLocationService folioLocationService;
 
   public int contributeItems(String bibId, List<Item> items) {
+    var centralServerId = getContributionJobContext().getCentralServerId();
     log.info("Processing items of bib {}", bibId);
 
     var mappings = getContributionMappings();
     log.info("Resolved contribution mappings: {}", mappings);
 
     var bibItems = items.stream()
+      .filter(item -> validationService.isEligibleForContribution(centralServerId, item))
       .map(item -> convertItem(item, mappings))
       .filter(Objects::nonNull)
       .collect(Collectors.toList());
@@ -202,7 +204,7 @@ public class ItemContributor {
   }
 
   private UUID getCentralServerId() {
-    return ContributionJobContextManager.getContributionJobContext().getCentralServerId();
+    return getContributionJobContext().getCentralServerId();
   }
 
   @Builder

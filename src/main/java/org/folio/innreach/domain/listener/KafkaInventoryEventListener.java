@@ -3,17 +3,17 @@ package org.folio.innreach.domain.listener;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
-import org.folio.innreach.domain.entity.CentralServer;
 import org.folio.innreach.domain.event.DomainEvent;
-import org.folio.innreach.domain.service.EvaluateService;
+import org.folio.innreach.domain.service.RecordContributionService;
+import org.folio.innreach.domain.service.impl.BatchDomainEventProcessor;
 import org.folio.innreach.dto.Holding;
 import org.folio.innreach.dto.Instance;
 import org.folio.innreach.dto.Item;
-import org.folio.innreach.repository.CentralServerRepository;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import static org.folio.innreach.config.KafkaListenerConfiguration.KAFKA_CONTAINER_FACTORY;
@@ -23,8 +23,8 @@ import static org.folio.innreach.config.KafkaListenerConfiguration.KAFKA_CONTAIN
 @Component
 public class KafkaInventoryEventListener {
 
-  private final CentralServerRepository centralServerRepository;
-  private final EvaluateService evaluateService;
+  private final BatchDomainEventProcessor eventProcessor;
+  private final RecordContributionService recordService;
 
   @KafkaListener(
     containerFactory = KAFKA_CONTAINER_FACTORY,
@@ -33,25 +33,24 @@ public class KafkaInventoryEventListener {
     topicPattern = "${kafka.listener.item.topic-pattern}",
     concurrency = "${kafka.listener.item.concurrency}"
   )
-  public void handleInventoryItemEvents(List<ConsumerRecord<String, DomainEvent<Item>>> consumerRecords) {
+  public void handleItemEvents(List<ConsumerRecord<String, DomainEvent<Item>>> consumerRecords) {
     log.info("Handling inventory events from Kafka [number of events: {}]", consumerRecords.size());
 
-    var centralServers = centralServerRepository.findAll();
-    var centralServerCodes = centralServers.stream()
-      .map(CentralServer::getCentralServerCode)
-      .collect(Collectors.toList());
+    var events = getEvents(consumerRecords);
 
-    consumerRecords.forEach(event -> {
-      var newItem = event.value().getData().getNewEntity();
-      switch (event.value().getType()) {
+    eventProcessor.process(events, event -> {
+      var newItem = event.getData().getNewEntity();
+      var oldItem = event.getData().getOldEntity();
+
+      switch (event.getType()) {
         case CREATED:
-          evaluateService.handleItemEvent(newItem, centralServerCodes);
+          recordService.contributeInventoryItemEvents(newItem);
           break;
         case UPDATED:
-          evaluateService.handleItemEvent(newItem, centralServerCodes);
+          recordService.updateInventoryItem(oldItem, newItem);
           break;
         default:
-          log.warn("Received Item event of unknown type {}", event.value().getType());
+          log.warn("Received Item event of unknown type {}", event.getType());
       }
     });
   }
@@ -63,22 +62,20 @@ public class KafkaInventoryEventListener {
     topicPattern = "${kafka.listener.holding.topic-pattern}",
     concurrency = "${kafka.listener.holding.concurrency}"
   )
-  public void handleInventoryHoldingEvents(List<ConsumerRecord<String, DomainEvent<Holding>>> consumerRecords) {
+  public void handleHoldingEvents(List<ConsumerRecord<String, DomainEvent<Holding>>> consumerRecords) {
     log.info("Handling inventory events from Kafka [number of events: {}]", consumerRecords.size());
 
-    var centralServers = centralServerRepository.findAll();
-    var centralServerCodes = centralServers.stream()
-      .map(CentralServer::getCentralServerCode)
-      .collect(Collectors.toList());
+    var events = getEvents(consumerRecords);
 
-    consumerRecords.forEach(event -> {
-      var newHolding = event.value().getData().getNewEntity();
-      switch (event.value().getType()) {
+    eventProcessor.process(events, event -> {
+      var newHolding = event.getData().getNewEntity();
+
+      switch (event.getType()) {
         case CREATED:
-          evaluateService.handleHoldingEvent(newHolding, centralServerCodes);
+          recordService.contributeInventoryHoldingEvents(newHolding);
           break;
         default:
-          log.warn("Received Holding event of unknown type {}", event.value().getType());
+          log.warn("Received Holding event of unknown type {}", event.getType());
       }
     });
   }
@@ -90,24 +87,28 @@ public class KafkaInventoryEventListener {
     topicPattern = "${kafka.listener.instance.topic-pattern}",
     concurrency = "${kafka.listener.instance.concurrency}"
   )
-  public void handleInventoryInstanceEvents(List<ConsumerRecord<String, DomainEvent<Instance>>> consumerRecords) {
+  public void handleInstanceEvents(List<ConsumerRecord<String, DomainEvent<Instance>>> consumerRecords) {
     log.info("Handling inventory events from Kafka [number of events: {}]", consumerRecords.size());
 
-    var centralServers = centralServerRepository.findAll();
-    var centralServerCodes = centralServers.stream()
-      .map(CentralServer::getCentralServerCode)
-      .collect(Collectors.toList());
+    var events = getEvents(consumerRecords);
 
-    consumerRecords.forEach(event -> {
-      var newInstance = event.value().getData().getNewEntity();
-      switch (event.value().getType()) {
+    eventProcessor.process(events, event -> {
+      var newInstance = event.getData().getNewEntity();
+
+      switch (event.getType()) {
         case CREATED:
-          evaluateService.handleInstanceEvent(newInstance, centralServerCodes);
+          recordService.contributeInventoryInstanceEvents(newInstance);
           break;
         default:
-          log.warn("Received Instance event of unknown type {}", event.value().getType());
+          log.warn("Received Instance event of unknown type {}", event.getType());
       }
     });
   }
 
+  private static <T> List<DomainEvent<T>> getEvents(List<ConsumerRecord<String, DomainEvent<T>>> consumerRecords) {
+    return consumerRecords.stream()
+      .map(ConsumerRecord::value)
+      .filter(Objects::nonNull)
+      .collect(Collectors.toList());
+  }
 }

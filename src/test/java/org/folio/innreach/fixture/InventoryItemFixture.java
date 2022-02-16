@@ -8,6 +8,7 @@ import java.util.UUID;
 
 import lombok.experimental.UtilityClass;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.folio.innreach.dto.Item;
 import org.jeasy.random.EasyRandom;
 import org.jeasy.random.EasyRandomParameters;
 
@@ -47,5 +48,9 @@ public class InventoryItemFixture {
 
   public static InventoryItemDTO createInventoryItemDTO(){
     return itemRandom.nextObject(InventoryItemDTO.class);
+  }
+
+  public static Item createInventoryItem(){
+    return itemRandom.nextObject(Item.class);
   }
 }
