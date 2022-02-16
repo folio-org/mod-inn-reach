@@ -49,6 +49,9 @@ public class KafkaInventoryEventListener {
         case UPDATED:
           recordService.updateInventoryItem(oldItem, newItem);
           break;
+        case DELETED:
+          recordService.decontributeInventoryItemEvents(event.getData().getOldEntity());
+          break;
         default:
           log.warn("Received Item event of unknown type {}", event.getType());
       }
@@ -74,6 +77,12 @@ public class KafkaInventoryEventListener {
         case CREATED:
           recordService.contributeInventoryHoldingEvents(newHolding);
           break;
+        case UPDATED:
+          recordService.updateInventoryHolding(event.getData().getOldEntity(), event.getData().getNewEntity());
+          break;
+        case DELETED:
+          recordService.decontributeInventoryHoldingEvents(event.getData().getOldEntity());
+          break;
         default:
           log.warn("Received Holding event of unknown type {}", event.getType());
       }
@@ -98,6 +107,12 @@ public class KafkaInventoryEventListener {
       switch (event.getType()) {
         case CREATED:
           recordService.contributeInventoryInstanceEvents(newInstance);
+          break;
+        case UPDATED:
+          recordService.updateInventoryInstance(event.getData().getOldEntity(), event.getData().getNewEntity());
+          break;
+        case DELETED:
+          recordService.decontributeInventoryInstanceEvents(event.getData().getOldEntity());
           break;
         default:
           log.warn("Received Instance event of unknown type {}", event.getType());
