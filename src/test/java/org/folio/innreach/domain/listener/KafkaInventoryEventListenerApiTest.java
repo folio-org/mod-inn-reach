@@ -133,7 +133,7 @@ class KafkaInventoryEventListenerApiTest extends BaseKafkaApiTest {
     verify(eventProcessor).process(eventsCaptor.capture(), any(Consumer.class));
 
     var capturedEvents = eventsCaptor.getValue();
-    assertEquals(2, capturedEvents.size());
+    assertEquals(1, capturedEvents.size());
 
     verify(service).decontributeInventoryItemEvents(event.getData().getOldEntity());
     verify(innReachExternalService).deleteInnReachApi(any(), contains(event.getData().getOldEntity().getHrid()));
@@ -157,7 +157,7 @@ class KafkaInventoryEventListenerApiTest extends BaseKafkaApiTest {
     verify(eventProcessor).process(eventsCaptor.capture(), any(Consumer.class));
 
     var capturedEvents = eventsCaptor.getValue();
-    assertEquals(2, capturedEvents.size());
+    assertEquals(1, capturedEvents.size());
     verify(validationService).isEligibleForContribution(any(), eq(event.getData().getNewEntity()));
     verify(innReachExternalService, never()).deleteInnReachApi(any(), contains(event.getData().getOldEntity().getHrid()));
   }
