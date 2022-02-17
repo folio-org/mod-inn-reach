@@ -28,7 +28,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.retry.support.RetryTemplate;
 
 import org.folio.innreach.domain.entity.CentralServer;
-import org.folio.innreach.util.UUIDHelper;
+import org.folio.innreach.util.UUIDEncoder;
 
 @UtilityClass
 @Log4j2
@@ -63,8 +63,8 @@ public class TestUtil {
     return RandomStringUtils.randomAlphanumeric(1, 33).toLowerCase();
   }
 
-  public static String randomUUIDWithoutHyphens() {
-    return UUIDHelper.toStringWithoutHyphens(UUID.randomUUID());
+  public static String randomEncodedUUID() {
+    return UUIDEncoder.encode(UUID.randomUUID());
   }
 
   @SneakyThrows

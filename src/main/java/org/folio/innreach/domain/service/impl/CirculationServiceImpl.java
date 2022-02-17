@@ -85,7 +85,6 @@ import org.folio.innreach.mapper.InnReachTransactionHoldMapper;
 import org.folio.innreach.mapper.InnReachTransactionPickupLocationMapper;
 import org.folio.innreach.repository.CentralServerRepository;
 import org.folio.innreach.repository.InnReachTransactionRepository;
-import org.folio.innreach.util.UUIDHelper;
 
 @Log4j2
 @Service
