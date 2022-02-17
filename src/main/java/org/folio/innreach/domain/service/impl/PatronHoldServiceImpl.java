@@ -35,7 +35,7 @@ import org.folio.innreach.domain.service.UpdateTemplate;
 import org.folio.innreach.domain.service.UserService;
 import org.folio.innreach.dto.CentralServerDTO;
 import org.folio.innreach.dto.Holding;
-import org.folio.innreach.util.UUIDHelper;
+import org.folio.innreach.util.UUIDEncoder;
 
 @Log4j2
 @Service
@@ -129,7 +129,7 @@ public class PatronHoldServiceImpl implements PatronHoldService {
   }
 
   private User getPatron(TransactionHold hold) {
-    var patronId = UUIDHelper.fromStringWithoutHyphens(hold.getPatronId());
+    var patronId = UUIDEncoder.decode(hold.getPatronId());
 
     return userService.getUserById(patronId)
       .orElseThrow(() -> new IllegalArgumentException("Patron is not found by id: " + patronId));
