@@ -28,7 +28,6 @@ public class InstanceContributor {
   private final InstanceTransformationService instanceTransformationService;
 
   public void contributeInstance(Instance instance) {
-
     var bibId = instance.getHrid();
 
     log.info("Contributing bib {}", bibId);

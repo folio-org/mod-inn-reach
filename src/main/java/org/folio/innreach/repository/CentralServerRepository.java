@@ -4,8 +4,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
@@ -30,9 +28,6 @@ public interface CentralServerRepository extends JpaRepository<CentralServer, UU
 
   @Query(name = CentralServer.FETCH_CONNECTION_DETAILS_BY_CENTRAL_CODE_QUERY_NAME)
   Optional<CentralServerConnectionDetailsDTO> fetchConnectionDetailsByCentralCode(String code);
-
-  @Query(name = CentralServer.GET_IDS_QUERY_NAME)
-  Page<UUID> getIds(Pageable pageable);
 
   @Query(name = CentralServer.GET_ID_BY_CENTRAL_CODE_QUERY_NAME)
   Optional<UUID> getIdByCentralCode(String centralCode);

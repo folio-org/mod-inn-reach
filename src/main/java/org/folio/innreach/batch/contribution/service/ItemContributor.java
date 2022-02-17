@@ -58,7 +58,6 @@ public class ItemContributor {
   private final FolioLocationService folioLocationService;
 
   public int contributeItems(String bibId, List<Item> items) {
-
     log.info("Processing items of bib {}", bibId);
 
     var mappings = getContributionMappings();
