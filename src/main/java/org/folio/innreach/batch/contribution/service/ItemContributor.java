@@ -58,14 +58,13 @@ public class ItemContributor {
   private final FolioLocationService folioLocationService;
 
   public int contributeItems(String bibId, List<Item> items) {
-    var centralServerId = getContributionJobContext().getCentralServerId();
+
     log.info("Processing items of bib {}", bibId);
 
     var mappings = getContributionMappings();
     log.info("Resolved contribution mappings: {}", mappings);
 
     var bibItems = items.stream()
-      .filter(item -> validationService.isEligibleForContribution(centralServerId, item))
       .map(item -> convertItem(item, mappings))
       .filter(Objects::nonNull)
       .collect(Collectors.toList());
