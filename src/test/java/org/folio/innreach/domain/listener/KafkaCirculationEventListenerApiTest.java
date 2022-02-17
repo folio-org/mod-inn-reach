@@ -73,10 +73,10 @@ import org.folio.innreach.repository.InnReachTransactionRepository;
 @SqlMergeMode(MERGE)
 class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
   private static final UUID LOAN_ID = UUID.randomUUID();
-  private static final UUID PRE_POPULATED_LOAN_ID = UUID.fromString("7b43b4bc-3a57-4506-815a-78b01c38a2a1");
+  private static final UUID PRE_POPULATED_LOCAL_LOAN_ID = UUID.fromString("7b43b4bc-3a57-4506-815a-78b01c38a2a1");
   private static final UUID REQUESTER_ID = UUID.randomUUID();
   private static final UUID ITEM_ID = UUID.fromString("8a326225-6530-41cc-9399-a61987bfab3c");
-  private static final UUID PRE_POPULATED_ITEM_ID = UUID.fromString("c633da85-8112-4453-af9c-c250e417179d");
+  private static final UUID PRE_POPULATED_LOCAL_ITEM_ID = UUID.fromString("c633da85-8112-4453-af9c-c250e417179d");
   private static final UUID INSTANCE_ID = UUID.fromString("ef32e52c-cd9b-462e-9bf0-65233b7a759c");
   private static final UUID HOLDING_ID = UUID.fromString("55fb31a7-1223-4214-bea6-8e35f1ae40dc");
   private static final UUID REQUEST_ID = UUID.fromString("26278b3a-de32-4deb-b81b-896637b3dbeb");
@@ -194,7 +194,7 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql",
   })
-  void shouldLinkLoanToLocRealTransaction() {
+  void shouldLinkLoanToLocalTransaction() {
     var hrid = "12343435";
     var barcode = "4820049490886";
     var item = new InventoryItemDTO();
@@ -202,17 +202,17 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
     item.setBarcode(barcode);
     var event = createLoanDomainEvent(DomainEventType.CREATED);
     var storageLoanDTO = event.getData().getNewEntity();
-    storageLoanDTO.setId(PRE_POPULATED_LOAN_ID);
-    storageLoanDTO.setItemId(PRE_POPULATED_ITEM_ID);
+    storageLoanDTO.setId(PRE_POPULATED_LOCAL_LOAN_ID);
+    storageLoanDTO.setItemId(PRE_POPULATED_LOCAL_ITEM_ID);
     storageLoanDTO.setUserId(PRE_POPULATED_LOCAL_PATRON_ID);
 
-    when(itemService.find(PRE_POPULATED_ITEM_ID)).thenReturn(Optional.of(item));
-    listener.handleLoanEvents(asSingleConsumerRecord(CIRC_LOAN_TOPIC, PRE_POPULATED_LOAN_ID, event));
+    when(itemService.find(PRE_POPULATED_LOCAL_ITEM_ID)).thenReturn(Optional.of(item));
+    listener.handleLoanEvents(asSingleConsumerRecord(CIRC_LOAN_TOPIC, PRE_POPULATED_LOCAL_LOAN_ID, event));
 
     verify(eventProcessor).process(anyList(), any(Consumer.class));
     verify(innReachExternalService).postInnReachApi(any(), any(), any());
     var updatedTransaction = transactionRepository.fetchOneById(PRE_POPULATED_LOCAL_TRANSACTION_ID).orElseThrow();
-    assertEquals(PRE_POPULATED_LOAN_ID, updatedTransaction.getHold().getFolioLoanId());
+    assertEquals(PRE_POPULATED_LOCAL_LOAN_ID, updatedTransaction.getHold().getFolioLoanId());
     assertEquals(LOCAL_CHECKOUT, updatedTransaction.getState());
   }
 

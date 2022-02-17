@@ -243,8 +243,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
       var hold = transaction.getHold();
       hold.setFolioLoanId(loan.getId());
       transaction.setState(LOCAL_CHECKOUT);
-      var inventoryItemDTO = itemService.find(loan.getItemId())
-        .orElseThrow(() -> new IllegalArgumentException("Item is not found by id " + loan.getItemId()));
+      var inventoryItemDTO = fetchItemById(loan.getItemId());
       reportCheckOut(transaction, inventoryItemDTO.getHrid(), inventoryItemDTO.getBarcode());
     }
   }
