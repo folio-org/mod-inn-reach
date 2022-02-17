@@ -15,7 +15,7 @@ class UUIDEncoderTest {
     var encoded = UUIDEncoder.encode(uuid);
 
     assertNotNull(encoded);
-    assertTrue(encoded.length() == 26);
+    assertEquals(26, encoded.length());
 
     var decoded = UUIDEncoder.decode(encoded);
 
