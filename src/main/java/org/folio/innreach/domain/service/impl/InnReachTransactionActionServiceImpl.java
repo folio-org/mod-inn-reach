@@ -238,12 +238,12 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
   }
 
   private void associateNewLoanWithLocalTransaction(StorageLoanDTO loan, InnReachTransaction transaction) {
-      log.info("Associating a new loan {} with local transaction {}", loan.getId(), transaction.getId());
-      var hold = transaction.getHold();
-      hold.setFolioLoanId(loan.getId());
-      transaction.setState(LOCAL_CHECKOUT);
-      var inventoryItemDTO = fetchItemById(loan.getItemId());
-      reportCheckOut(transaction, inventoryItemDTO.getHrid(), inventoryItemDTO.getBarcode());
+    log.info("Associating a new loan {} with local transaction {}", loan.getId(), transaction.getId());
+    var hold = transaction.getHold();
+    hold.setFolioLoanId(loan.getId());
+    transaction.setState(LOCAL_CHECKOUT);
+    var inventoryItemDTO = fetchItemById(loan.getItemId());
+    reportCheckOut(transaction, inventoryItemDTO.getHrid(), inventoryItemDTO.getBarcode());
   }
 
   private void updateTransactionOnLoanClaimedReturned(StorageLoanDTO loan, InnReachTransaction transaction) {
