@@ -13,12 +13,15 @@ import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionSt
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.ITEM_IN_TRANSIT;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.ITEM_RECEIVED;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.ITEM_SHIPPED;
+import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.LOCAL_CHECKOUT;
+import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.LOCAL_HOLD;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.PATRON_HOLD;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.RECALL;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.RECEIVE_UNANNOUNCED;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.RETURN_UNCIRCULATED;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.TRANSFER;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionType.ITEM;
+import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionType.LOCAL;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionType.PATRON;
 import static org.folio.innreach.dto.ItemStatus.NameEnum.AWAITING_PICKUP;
 import static org.folio.innreach.util.DateHelper.toEpochSec;
@@ -75,6 +78,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
   private static final String D2IR_CLAIMS_RETURNED = "claimsreturned";
   private static final String D2IR_CANCEL_ITEM_HOLD = "cancelitemhold";
   private static final String D2IR_RECALL = "recall";
+  private static final String D2IR_LOCAL_CHECKOUT = "localcheckout";
 
   private final InnReachTransactionRepository transactionRepository;
   private final InnReachTransactionMapper transactionMapper;
@@ -152,15 +156,16 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
     var patronId = loan.getUserId();
 
     var transaction = transactionRepository.fetchActiveByFolioItemIdAndPatronId(itemId, patronId).orElse(null);
-    if (transaction == null || transaction.getType() != PATRON) {
+    if (transaction == null) {
       return;
     }
 
-    log.info("Associating a new loan {} with patron transaction {}", loan.getId(), transaction.getId());
+    if (transaction.getType() == PATRON) {
+      associateNewLoanWithPatronTransaction(loan, transaction);
+    } else if (transaction.getType() == LOCAL) {
+      associateNewLoanWithLocalTransaction(loan, transaction);
+    }
 
-    var hold = transaction.getHold();
-    hold.setFolioLoanId(loan.getId());
-    hold.setDueDateTime(toEpochSec(loan.getDueDate()));
   }
 
   @Override
@@ -223,6 +228,22 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
         reportReturnUncirculated(transaction);
       }
     }
+  }
+
+  private void associateNewLoanWithPatronTransaction(StorageLoanDTO loan, InnReachTransaction transaction) {
+    log.info("Associating a new loan {} with patron transaction {}", loan.getId(), transaction.getId());
+    var hold = transaction.getHold();
+    hold.setFolioLoanId(loan.getId());
+    hold.setDueDateTime(toEpochSec(loan.getDueDate()));
+  }
+
+  private void associateNewLoanWithLocalTransaction(StorageLoanDTO loan, InnReachTransaction transaction) {
+    log.info("Associating a new loan {} with local transaction {}", loan.getId(), transaction.getId());
+    var hold = transaction.getHold();
+    hold.setFolioLoanId(loan.getId());
+    transaction.setState(LOCAL_CHECKOUT);
+    var inventoryItemDTO = fetchItemById(loan.getItemId());
+    reportCheckOut(transaction, inventoryItemDTO.getHrid(), inventoryItemDTO.getBarcode());
   }
 
   private void updateTransactionOnLoanClaimedReturned(StorageLoanDTO loan, InnReachTransaction transaction) {
@@ -356,6 +377,16 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
   private InventoryItemDTO fetchItemById(UUID itemId) {
     return itemService.find(itemId)
       .orElseThrow(() -> new IllegalArgumentException("Item is not found by id: " + itemId));
+  }
+
+  private void reportCheckOut(InnReachTransaction transaction, String localBibId, String itemBarcode) {
+    var payload = new HashMap<>();
+    payload.put("localBibId", localBibId);
+
+    if (itemBarcode != null) {
+      payload.put("itemBarcode", itemBarcode);
+    }
+    callD2irCircOperation(D2IR_LOCAL_CHECKOUT, transaction, payload);
   }
 
   private void reportItemReceived(InnReachTransaction transaction) {

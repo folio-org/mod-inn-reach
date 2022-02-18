@@ -1,6 +1,7 @@
 package org.folio.innreach.domain.listener;
 
 import static org.awaitility.Awaitility.await;
+import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.LOCAL_CHECKOUT;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
@@ -74,18 +75,22 @@ import org.folio.innreach.repository.InnReachTransactionRepository;
 @SqlMergeMode(MERGE)
 class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
   private static final UUID LOAN_ID = UUID.randomUUID();
+  private static final UUID PRE_POPULATED_LOCAL_LOAN_ID = UUID.fromString("7b43b4bc-3a57-4506-815a-78b01c38a2a1");
   private static final UUID REQUESTER_ID = UUID.randomUUID();
   private static final UUID ITEM_ID = UUID.fromString("8a326225-6530-41cc-9399-a61987bfab3c");
+  private static final UUID PRE_POPULATED_LOCAL_ITEM_ID = UUID.fromString("c633da85-8112-4453-af9c-c250e417179d");
   private static final UUID INSTANCE_ID = UUID.fromString("ef32e52c-cd9b-462e-9bf0-65233b7a759c");
   private static final UUID HOLDING_ID = UUID.fromString("55fb31a7-1223-4214-bea6-8e35f1ae40dc");
   private static final UUID REQUEST_ID = UUID.fromString("26278b3a-de32-4deb-b81b-896637b3dbeb");
   private static final UUID PRE_POPULATED_PATRON_ID = UUID.fromString("4154a604-4d5a-4d8e-9160-057fc7b6e6b8");
+  private static final UUID PRE_POPULATED_LOCAL_PATRON_ID = UUID.fromString("a8ffe3cb-f682-499d-893b-47ff9efb3803");
   private static final UUID PRE_POPULATED_PATRON_TRANSACTION_ID = UUID.fromString("0aab1720-14b4-4210-9a19-0d0bf1cd64d3");
   private static final UUID PRE_POPULATED_PATRON_TRANSACTION_ITEM_ID = UUID.fromString("9a326225-6530-41cc-9399-a61987bfab3c");
   private static final UUID PRE_POPULATED_PATRON_TRANSACTION_REQUEST_ID = UUID.fromString("ea11eba7-3c0f-4d15-9cca-c8608cd6bc8a");
   private static final UUID PRE_POPULATED_PATRON_TRANSACTION_LOAN_ID = UUID.fromString("fd5109c7-8934-4294-9504-c1a4a4f07c96");
   private static final UUID PRE_POPULATED_ITEM_TRANSACTION_ID = UUID.fromString("ab2393a1-acc4-4849-82ac-8cc0c37339e1");
   private static final UUID PRE_POPULATED_ITEM_TRANSACTION_LOAN_ID = UUID.fromString("06e820e3-71a0-455e-8c73-3963aea677d4");
+  private static final UUID PRE_POPULATED_LOCAL_TRANSACTION_ID = UUID.fromString("79b0a1fb-55be-4e55-9d84-01303aaec1ce");
   private static final String TEST_TENANT_ID = "testing";
   private static final Duration ASYNC_AWAIT_TIMEOUT = Duration.ofSeconds(15);
   private static final Date DUE_DATE = new Date();
@@ -184,6 +189,33 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
     var updatedTransaction = transactionRepository.fetchOneById(PRE_POPULATED_PATRON_TRANSACTION_ID).orElseThrow();
     assertEquals(LOAN_ID, updatedTransaction.getHold().getFolioLoanId());
     assertEquals((int) DUE_DATE.toInstant().getEpochSecond(), updatedTransaction.getHold().getDueDateTime());
+  }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql",
+  })
+  void shouldLinkLoanToLocalTransaction() {
+    var hrid = "12343435";
+    var barcode = "4820049490886";
+    var item = new InventoryItemDTO();
+    item.setHrid(hrid);
+    item.setBarcode(barcode);
+    var event = createLoanDomainEvent(DomainEventType.CREATED);
+    var storageLoanDTO = event.getData().getNewEntity();
+    storageLoanDTO.setId(PRE_POPULATED_LOCAL_LOAN_ID);
+    storageLoanDTO.setItemId(PRE_POPULATED_LOCAL_ITEM_ID);
+    storageLoanDTO.setUserId(PRE_POPULATED_LOCAL_PATRON_ID);
+
+    when(itemService.find(PRE_POPULATED_LOCAL_ITEM_ID)).thenReturn(Optional.of(item));
+    listener.handleLoanEvents(asSingleConsumerRecord(CIRC_LOAN_TOPIC, PRE_POPULATED_LOCAL_LOAN_ID, event));
+
+    verify(eventProcessor).process(anyList(), any(Consumer.class));
+    verify(innReachExternalService).postInnReachApi(any(), any(), any());
+    var updatedTransaction = transactionRepository.fetchOneById(PRE_POPULATED_LOCAL_TRANSACTION_ID).orElseThrow();
+    assertEquals(PRE_POPULATED_LOCAL_LOAN_ID, updatedTransaction.getHold().getFolioLoanId());
+    assertEquals(LOCAL_CHECKOUT, updatedTransaction.getState());
   }
 
   @Test
