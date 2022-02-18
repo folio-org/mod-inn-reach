@@ -89,4 +89,9 @@ public abstract class TransactionHold extends Auditable implements Identifiable<
   @Column(name = "folio_item_barcode")
   protected String folioItemBarcode;
 
+  @Column(name = "central_patron_type")
+  protected Integer centralPatronTypeItem;
+
+  @Column(name = "patron_name")
+  protected String patronName;
 }

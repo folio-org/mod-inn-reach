@@ -18,7 +18,7 @@ import javax.persistence.Table;
 @ToString
 public class TransactionItemHold extends TransactionHold {
 
-  @Getter(AccessLevel.NONE) @Setter(AccessLevel.NONE)
+  /*@Getter(AccessLevel.NONE) @Setter(AccessLevel.NONE)
   @Column(name = "central_patron_type")
   private Integer centralPatronTypeItem;
 
@@ -31,5 +31,5 @@ public class TransactionItemHold extends TransactionHold {
 
   public void setCentralPatronType(Integer centralPatronType) {
     this.centralPatronTypeItem = centralPatronType;
-  }
+  } */
 }
