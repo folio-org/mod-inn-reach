@@ -7,15 +7,15 @@ INSERT INTO transaction_hold (id, transaction_time, pickup_location_id, patron_i
 central_item_type, need_before, title, folio_patron_id, folio_item_id, folio_request_id, folio_loan_id,
 folio_item_barcode, folio_patron_barcode) VALUES
  ('d90cbfac-c70e-4d7c-a9b2-b5c00e6efe1d', 1636020000, 'f1b9adc7-82f4-4146-84d3-681a0f2a2cc3',
- '4154a6044d5a4d8e9160057fc7b6e6b8', 'qwe12', 'asd34', 'item1', 1, 1638525600, 'title2',
+ 'ifkkmbcnljgy5elaav74pnxgxa', 'qwe12', 'asd34', 'item1', 1, 1638525600, 'title2',
  '4154a604-4d5a-4d8e-9160-057fc7b6e6b8', '9a326225-6530-41cc-9399-a61987bfab3c',
  'ea11eba7-3c0f-4d15-9cca-c8608cd6bc8a', 'fd5109c7-8934-4294-9504-c1a4a4f07c96', 'ABC-abc-1234', '000001'),
 ('3ba02508-f216-4335-9812-ccc11a22a617', 1636106400, 'd5954db7-374e-4090-a345-4561e8152afa',
- 'a7853dda520b4f7aa1fb9383665ea770', 'qwe56', 'asd78', 'item2', 2, null, 'title3',
+ 'u6ct3wssbnhxvip3sobwmxvhoa', 'qwe56', 'asd78', 'item2', 2, null, 'title3',
  'a7853dda-520b-4f7a-a1fb-9383665ea770', '4def31b0-2b60-4531-ad44-7eab60fa5428',
  '26278b3a-de32-4deb-b81b-896637b3dbeb', '06e820e3-71a0-455e-8c73-3963aea677d4', 'DEF-def-5678', '000002'),
 ('d1154622-f7a7-4759-bec5-911406d8edc5', 1636192800, '4d4f5125-bc41-4613-9bb3-54d2aafe49a2',
-'a8ffe3cbf682499d893b47ff9efb3803', 'qwe12', 'asd78', 'item3', 3, null, 'title2',
+'vd76hs7wqjez3cj3i77z56zyam', 'qwe12', 'asd78', 'item3', 3, null, 'title2',
 'a8ffe3cb-f682-499d-893b-47ff9efb3803', 'c633da85-8112-4453-af9c-c250e417179d',
  '4106d147-9085-4dfa-a59f-b8d50d551a48', '7b43b4bc-3a57-4506-815a-78b01c38a2a1', 'GHI-ghi-9012', '000003');
 
