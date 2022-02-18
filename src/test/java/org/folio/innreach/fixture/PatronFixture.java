@@ -15,6 +15,7 @@ import org.folio.innreach.client.ManualPatronBlocksClient.ManualPatronBlock;
 import org.folio.innreach.domain.dto.folio.User;
 import org.folio.innreach.dto.PatronInfoResponseDTO;
 import org.folio.innreach.dto.UserCustomFieldMappingDTO;
+import org.folio.innreach.util.UUIDEncoder;
 
 @UtilityClass
 public class PatronFixture {
@@ -64,6 +65,6 @@ public class PatronFixture {
   }
 
   public static String getPatronId(User user) {
-    return user.getId().toString().replace("-", "");
+    return UUIDEncoder.encode(user.getId());
   }
 }

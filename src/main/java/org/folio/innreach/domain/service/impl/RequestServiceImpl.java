@@ -73,7 +73,7 @@ import org.folio.innreach.mapper.InnReachTransactionPickupLocationMapper;
 import org.folio.innreach.repository.CentralPatronTypeMappingRepository;
 import org.folio.innreach.repository.CentralServerRepository;
 import org.folio.innreach.repository.InnReachTransactionRepository;
-import org.folio.innreach.util.UUIDHelper;
+import org.folio.innreach.util.UUIDEncoder;
 
 @Log4j2
 @RequiredArgsConstructor
@@ -129,7 +129,7 @@ public class RequestServiceImpl implements RequestService {
     var hold = (TransactionLocalHold) transaction.getHold();
     var centralPatronName = hold.getPatronName();
     try {
-      var patronId = UUIDHelper.fromStringWithoutHyphens(hold.getPatronId());
+      var patronId = UUIDEncoder.decode(hold.getPatronId());
       var patron = getUserById(patronId);
       var pickupLocationCode = hold.getPickupLocation().getPickupLocCode();
       var servicePointId = getServicePointIdByCode(pickupLocationCode);

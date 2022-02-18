@@ -15,7 +15,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import static org.folio.innreach.fixture.CirculationFixture.createTransactionHoldDTO;
-import static org.folio.innreach.util.UUIDHelper.toStringWithoutHyphens;
+import static org.folio.innreach.util.UUIDEncoder.encode;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -155,7 +155,7 @@ class CirculationApiTest extends BaseApiControllerTest {
     transactionHoldDTO.setItemId(ITEM_HRID);
     transactionHoldDTO.setItemAgencyCode(PRE_POPULATED_CENTRAL_AGENCY_CODE);
     transactionHoldDTO.setCentralItemType(PRE_POPULATED_CENTRAL_ITEM_TYPE);
-    transactionHoldDTO.setPatronId(toStringWithoutHyphens(FOLIO_PATRON_ID));
+    transactionHoldDTO.setPatronId(encode(FOLIO_PATRON_ID));
     var pickupLocation = pickupLocationMapper.fromString(transactionHoldDTO.getPickupLocation());
 
     stubGet(format(USER_BY_ID_URL_TEMPLATE, FOLIO_PATRON_ID), "users/user-response.json");
@@ -262,7 +262,7 @@ class CirculationApiTest extends BaseApiControllerTest {
     transactionHoldDTO.setItemAgencyCode(PRE_POPULATED_CENTRAL_AGENCY_CODE);
     transactionHoldDTO.setPatronAgencyCode(PRE_POPULATED_CENTRAL_AGENCY_CODE);
     transactionHoldDTO.setCentralItemType(PRE_POPULATED_CENTRAL_ITEM_TYPE);
-    transactionHoldDTO.setPatronId(toStringWithoutHyphens(FOLIO_PATRON_ID));
+    transactionHoldDTO.setPatronId(encode(FOLIO_PATRON_ID));
     var pickupLocation = pickupLocationMapper.fromString(transactionHoldDTO.getPickupLocation());
 
     stubGet(format(USER_BY_ID_URL_TEMPLATE, FOLIO_PATRON_ID), "users/user-response.json");
