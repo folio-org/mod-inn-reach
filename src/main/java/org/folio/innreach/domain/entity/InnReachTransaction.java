@@ -4,8 +4,8 @@ import static org.folio.innreach.domain.entity.InnReachTransaction.FETCH_ACTIVE_
 import static org.folio.innreach.domain.entity.InnReachTransaction.FETCH_ACTIVE_BY_ITEM_ID_QUERY_NAME;
 import static org.folio.innreach.domain.entity.InnReachTransaction.FETCH_ONE_BY_ID_QUERY;
 import static org.folio.innreach.domain.entity.InnReachTransaction.FETCH_ONE_BY_ID_QUERY_NAME;
-import static org.folio.innreach.domain.entity.InnReachTransaction.FETCH_ONE_BY_ITEM_BARCODE_QUERY;
-import static org.folio.innreach.domain.entity.InnReachTransaction.FETCH_ONE_BY_ITEM_BARCODE_QUERY_NAME;
+import static org.folio.innreach.domain.entity.InnReachTransaction.FETCH_ONE_BY_ITEM_BARCODE_AND_STATES_QUERY;
+import static org.folio.innreach.domain.entity.InnReachTransaction.FETCH_ONE_BY_ITEM_BARCODE_AND_STATES_QUERY_NAME;
 import static org.folio.innreach.domain.entity.InnReachTransaction.FETCH_ONE_BY_TRACKING_ID_AND_CENTRAL_CODE_QUERY;
 import static org.folio.innreach.domain.entity.InnReachTransaction.FETCH_ONE_BY_TRACKING_ID_AND_CENTRAL_CODE_QUERY_NAME;
 import static org.folio.innreach.domain.entity.InnReachTransaction.FETCH_ONE_BY_TRACKING_ID_QUERY;
@@ -52,10 +52,6 @@ import org.folio.innreach.domain.entity.base.Identifiable;
   query = FETCH_ONE_BY_ID_QUERY
 )
 @NamedQuery(
-  name = FETCH_ONE_BY_ITEM_BARCODE_QUERY_NAME,
-  query = FETCH_ONE_BY_ITEM_BARCODE_QUERY
-)
-@NamedQuery(
   name = FETCH_ONE_BY_TRACKING_ID_AND_CENTRAL_CODE_QUERY_NAME,
   query = FETCH_ONE_BY_TRACKING_ID_AND_CENTRAL_CODE_QUERY
 )
@@ -75,6 +71,10 @@ import org.folio.innreach.domain.entity.base.Identifiable;
   name = FETCH_ACTIVE_BY_REQUEST_ID_QUERY_NAME,
   query = FETCH_ACTIVE_BY_REQUEST_ID_QUERY
 )
+@NamedQuery(
+  name = FETCH_ONE_BY_ITEM_BARCODE_AND_STATES_QUERY_NAME,
+  query = FETCH_ONE_BY_ITEM_BARCODE_AND_STATES_QUERY
+)
 public class InnReachTransaction extends Auditable implements Identifiable<UUID> {
 
   public static final String GET_ALL_QUERY_NAME = "InnReachTransaction.getAll";
@@ -86,9 +86,6 @@ public class InnReachTransaction extends Auditable implements Identifiable<UUID>
 
   public static final String FETCH_ONE_BY_ID_QUERY_NAME = "InnReachTransaction.fetchOneById";
   public static final String FETCH_ONE_BY_ID_QUERY = GET_ALL_QUERY + " WHERE t.id = :id";
-
-  public static final String FETCH_ONE_BY_ITEM_BARCODE_QUERY_NAME = "InnReachTransaction.fetchOneByItemBarcode";
-  public static final String FETCH_ONE_BY_ITEM_BARCODE_QUERY = GET_ALL_QUERY + " WHERE hold.folioItemBarcode = :itemBarcode";
 
   public static final String FETCH_ONE_BY_TRACKING_ID_AND_CENTRAL_CODE_QUERY_NAME = "InnReachTransaction.fetchByTrackingIdAndCentralCode";
   public static final String FETCH_ONE_BY_TRACKING_ID_AND_CENTRAL_CODE_QUERY = "SELECT irt FROM InnReachTransaction AS irt " +
@@ -116,6 +113,10 @@ public class InnReachTransaction extends Auditable implements Identifiable<UUID>
   public static final String FETCH_ACTIVE_BY_REQUEST_ID_QUERY_NAME = "InnReachTransaction.fetchActiveByRequestId";
   public static final String FETCH_ACTIVE_BY_REQUEST_ID_QUERY = FETCH_ACTIVE_TRANSACTIONS +
     " AND h.folioRequestId = :folioRequestId";
+
+  public static final String FETCH_ONE_BY_ITEM_BARCODE_AND_STATES_QUERY_NAME = "InnReachTransaction.fetchOneByItemBarcodeAndStates";
+  public static final String FETCH_ONE_BY_ITEM_BARCODE_AND_STATES_QUERY = GET_ALL_QUERY
+    + " WHERE hold.folioItemBarcode = :itemBarcode AND t.state IN :states";
 
   @Id
   @GeneratedValue(strategy = GenerationType.AUTO)
