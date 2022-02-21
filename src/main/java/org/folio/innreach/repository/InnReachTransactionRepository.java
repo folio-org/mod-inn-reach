@@ -5,8 +5,8 @@ import static org.folio.innreach.domain.entity.InnReachTransaction.FETCH_ACTIVE_
 import static org.folio.innreach.domain.entity.InnReachTransaction.FETCH_ACTIVE_BY_LOAN_ID_QUERY_NAME;
 import static org.folio.innreach.domain.entity.InnReachTransaction.FETCH_ACTIVE_BY_REQUEST_ID_QUERY_NAME;
 
-import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -26,7 +26,7 @@ public interface InnReachTransactionRepository extends JpaRepository<InnReachTra
   Optional<InnReachTransaction> fetchOneById(UUID id);
 
   @Query(name = InnReachTransaction.FETCH_ONE_BY_ITEM_BARCODE_AND_STATES_QUERY_NAME)
-  Optional<InnReachTransaction> fetchOneByFolioItemBarcodeAndStates(String itemBarcode, List<InnReachTransaction.TransactionState> states);
+  Optional<InnReachTransaction> fetchOneByFolioItemBarcodeAndStates(String itemBarcode, Set<InnReachTransaction.TransactionState> states);
 
   @Query(name = InnReachTransaction.FETCH_ONE_BY_TRACKING_ID_AND_CENTRAL_CODE_QUERY_NAME)
   Optional<InnReachTransaction> findByTrackingIdAndCentralServerCode(String trackingId, String centralServerCode);

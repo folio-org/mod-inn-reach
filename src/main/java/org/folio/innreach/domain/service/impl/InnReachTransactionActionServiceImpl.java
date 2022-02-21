@@ -28,8 +28,8 @@ import static org.folio.innreach.util.DateHelper.toEpochSec;
 import static org.folio.innreach.util.DateHelper.toInstantTruncatedToSec;
 
 import java.time.Instant;
+import java.util.EnumSet;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -128,7 +128,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
   @Override
   public ItemHoldCheckOutResponseDTO checkOutItemHoldItem(String itemBarcode, UUID servicePointId) {
     var transaction = transactionRepository.fetchOneByFolioItemBarcodeAndStates(itemBarcode,
-      List.of(ITEM_HOLD, TRANSFER))
+      EnumSet.of(ITEM_HOLD, TRANSFER))
       .orElseThrow(() -> new EntityNotFoundException("INN-Reach transaction is not found by itemBarcode: " + itemBarcode));
 
     var hold = (TransactionItemHold) transaction.getHold();

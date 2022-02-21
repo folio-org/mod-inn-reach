@@ -29,7 +29,7 @@ public class InnReachTransactionFixture {
       .randomize(named("patronAgencyCode"), TestUtil::randomFiveCharacterCode)
       .randomize(named("itemAgencyCode"), TestUtil::randomFiveCharacterCode)
       .randomize(named("itemId"), InnReachTransactionFixture::randomId)
-      .randomize(named("patronId"), InnReachTransactionFixture::randomId)
+      .randomize(named("patronId"), TestUtil::randomEncodedUUID)
       .randomize(named("centralItemType"), () -> randomInteger(255))
       .randomize(named("createdBy"), () -> AuditableUser.SYSTEM)
       .randomize(named("createdDate"), OffsetDateTime::now)
@@ -82,7 +82,7 @@ public class InnReachTransactionFixture {
         break;
       case ITEM:
         hold = transactionHoldRandom.nextObject(TransactionItemHold.class);
-        ((TransactionItemHold)hold).setCentralPatronType(randomInteger(255));
+        ((TransactionItemHold) hold).setCentralPatronType(randomInteger(255));
         break;
       case LOCAL:
         hold = transactionHoldRandom.nextObject(TransactionLocalHold.class);
