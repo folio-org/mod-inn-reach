@@ -8,9 +8,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.never;
@@ -541,7 +541,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
       t.getType().equals(LOCAL)));
     assertTrue(transactions.stream().allMatch(t -> t.getCentralServerCode().equals("d2ir1")));
     assertTrue(transactions.stream().allMatch(t -> t.getHold().getItemAgencyCode().equals("asd78")));
-    assertTrue(transactions.get(0).getHold().getCentralPatronType() <
+    assertSame(transactions.get(0).getHold().getCentralPatronType(),
       transactions.get(1).getHold().getCentralPatronType());
   }
 
