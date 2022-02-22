@@ -563,9 +563,8 @@ public class CirculationServiceImpl implements CirculationService {
   }
 
   private LocalAgency findLocalAgency(String code) {
-    var localAgency = localAgencyRepository.fetchOneByCode(code);
-    Assert.isTrue(localAgency.isPresent(), "Can't find local agency for code = " + code);
-    return localAgency.get();
+    return localAgencyRepository.fetchOneByCode(code)
+      .orElseThrow(() -> new EntityNotFoundException("Local agency with code: " + code + " not found."));
   }
 
 }
