@@ -18,17 +18,20 @@ public class ContributionJobStatsListener {
   private final ContributionService contributionService;
 
   public void updateStats(ContributionJobContext.Statistics statistics) {
-    var centralServerId = getContributionJobContext().getCentralServerId();
+    var contributionId = getContributionJobContext().getContributionId();
     var stats = collectStats(statistics);
 
-    contributionService.updateContributionStats(centralServerId, stats);
+    contributionService.updateContributionStats(contributionId, stats);
   }
 
   private ContributionDTO collectStats(ContributionJobContext.Statistics stats) {
     var contribution = new ContributionDTO();
-    contribution.setRecordsContributed((long) stats.getWriteCount());
-    contribution.setRecordsProcessed(contribution.getRecordsContributed() + stats.getWriteSkipCount());
-    contribution.setRecordsTotal((long) (stats.getReadCount()));
+    contribution.setRecordsContributed(stats.getRecordsContributed());
+    contribution.setRecordsProcessed(stats.getRecordsProcessed());
+    contribution.setRecordsTotal(stats.getRecordsTotal());
+    contribution.setRecordsDecontributed(stats.getRecordsDecontributed());
+    contribution.setRecordsUpdated(stats.getRecordsUpdated());
+    contribution.setRecordsTotal(stats.getRecordsTotal());
     return contribution;
   }
 

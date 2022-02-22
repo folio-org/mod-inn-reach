@@ -42,8 +42,14 @@ public class KafkaListenerConfiguration {
     JsonDeserializer<DomainEvent> deserializer = new JsonDeserializer<>(mapper);
     deserializer.setTypeResolver(typeResolver);
 
-    return new DefaultKafkaConsumerFactory<>(consumerProperties,
-      new StringDeserializer(), new ErrorHandlingDeserializer<>(deserializer));
+    var errorDeserializer = new ErrorHandlingDeserializer<>(deserializer);
+    errorDeserializer.setFailedDeserializationFunction(
+      info -> {
+        log.error("Unable to deserialize value from topic: " + info.getTopic(), info.getException());
+        return null;
+      });
+
+    return new DefaultKafkaConsumerFactory<>(consumerProperties, new StringDeserializer(), errorDeserializer);
   }
 
   @Bean(KAFKA_CONTAINER_FACTORY)

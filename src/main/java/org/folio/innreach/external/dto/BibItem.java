@@ -69,4 +69,14 @@ public class BibItem {
    */
   private Character suppress;
 
+  /**
+   * Item hold count
+   */
+  private Integer holdCount;
+
+  /**
+   * Epoch UNIX time stamp
+   */
+  private Integer dueDateTime;
+
 }

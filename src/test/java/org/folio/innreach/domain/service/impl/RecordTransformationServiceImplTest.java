@@ -22,7 +22,7 @@ import org.folio.innreach.dto.Instance;
 import org.folio.innreach.dto.Item;
 
 @ExtendWith(MockitoExtension.class)
-class InstanceTransformationServiceImplTest {
+class RecordTransformationServiceImplTest {
 
   private static final UUID CENTRAL_SERVER_ID = UUID.randomUUID();
 

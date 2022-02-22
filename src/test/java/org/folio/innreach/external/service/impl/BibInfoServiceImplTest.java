@@ -18,8 +18,8 @@ import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import org.folio.innreach.domain.service.CentralServerService;
-import org.folio.innreach.domain.service.InstanceTransformationService;
 import org.folio.innreach.domain.service.InventoryViewService;
+import org.folio.innreach.domain.service.RecordTransformationService;
 import org.folio.innreach.domain.service.impl.BibInfoServiceImpl;
 import org.folio.innreach.dto.BibInfo;
 import org.folio.innreach.dto.CentralServerDTO;
@@ -35,7 +35,7 @@ class BibInfoServiceImplTest {
   @Mock
   private InventoryViewService instanceService;
   @Mock
-  private InstanceTransformationService instanceTransformationService;
+  private RecordTransformationService instanceTransformationService;
   @Spy
   private InnReachResponseMapper mapper = new InnReachResponseMapperImpl();
 

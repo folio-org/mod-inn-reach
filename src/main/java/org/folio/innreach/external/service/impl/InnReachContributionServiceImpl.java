@@ -42,6 +42,34 @@ public class InnReachContributionServiceImpl implements InnReachContributionServ
   }
 
   @Override
+  public InnReachResponse deContributeBib(UUID centralServerId, String bibId) {
+    var connectionDetails = getConnectionDetails(centralServerId);
+
+    var accessTokenDTO = innReachAuthExternalService.getAccessToken(connectionDetails);
+    var connectionUrl = URI.create(connectionDetails.getConnectionUrl());
+    var authorizationHeader = buildBearerAuthHeader(accessTokenDTO.getAccessToken());
+    var localCode = connectionDetails.getLocalCode();
+    var centralCode = connectionDetails.getCentralCode();
+
+    return contributionClient.deContributeBib(connectionUrl, authorizationHeader, localCode,
+      centralCode, bibId);
+  }
+
+  @Override
+  public InnReachResponse deContributeBibItem(UUID centralServerId, String itemId) {
+    var connectionDetails = getConnectionDetails(centralServerId);
+
+    var accessTokenDTO = innReachAuthExternalService.getAccessToken(connectionDetails);
+    var connectionUrl = URI.create(connectionDetails.getConnectionUrl());
+    var authorizationHeader = buildBearerAuthHeader(accessTokenDTO.getAccessToken());
+    var localCode = connectionDetails.getLocalCode();
+    var centralCode = connectionDetails.getCentralCode();
+
+    return contributionClient.deContributeBibItem(connectionUrl, authorizationHeader, localCode,
+      centralCode, itemId);
+  }
+
+  @Override
   public InnReachResponse contributeBibItems(UUID centralServerId, String bibId, BibItemsInfo bibItems) {
     var connectionDetails = getConnectionDetails(centralServerId);
 
@@ -67,6 +95,20 @@ public class InnReachContributionServiceImpl implements InnReachContributionServ
 
     return contributionClient.lookUpBib(connectionUrl, authorizationHeader, localCode,
       centralCode, localCode, bibId);
+  }
+
+  @Override
+  public InnReachResponse lookUpBibItem(UUID centralServerId, String bibId, String itemId) {
+    var connectionDetails = getConnectionDetails(centralServerId);
+
+    var accessTokenDTO = innReachAuthExternalService.getAccessToken(connectionDetails);
+    var connectionUrl = URI.create(connectionDetails.getConnectionUrl());
+    var authorizationHeader = buildBearerAuthHeader(accessTokenDTO.getAccessToken());
+    var localCode = connectionDetails.getLocalCode();
+    var centralCode = connectionDetails.getCentralCode();
+
+    return contributionClient.lookUpBibItem(connectionUrl, authorizationHeader, localCode,
+      centralCode, localCode, bibId, itemId);
   }
 
   private CentralServerConnectionDetailsDTO getConnectionDetails(UUID centralServerId) {

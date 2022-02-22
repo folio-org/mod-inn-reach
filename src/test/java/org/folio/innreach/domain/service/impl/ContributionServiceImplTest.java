@@ -81,7 +81,7 @@ class ContributionServiceImplTest {
 
     verify(storageClient).startInitialContribution(any());
     verify(repository).save(any(Contribution.class));
-    verify(jobRunner).runAsync(any(), any(), any(), any());
+    verify(jobRunner).runInitialContributionAsync(any(), any(), any(), any());
   }
 
   @Test
@@ -109,7 +109,7 @@ class ContributionServiceImplTest {
     when(repository.fetchCurrentByCentralServerId(any())).thenReturn(Optional.of(contribution));
     when(repository.save(any())).thenReturn(contribution);
 
-    service.updateContributionStats(centralServerId, mapper.toDTO(contribution));
+    service.updateContributionStats(contribution.getId(), mapper.toDTO(contribution));
 
     ArgumentCaptor<Contribution> argument = ArgumentCaptor.forClass(Contribution.class);
     verify(repository).save(argument.capture());

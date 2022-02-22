@@ -2,13 +2,16 @@ package org.folio.innreach.batch.contribution.service;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import static org.folio.innreach.fixture.ContributionFixture.createContributionJobContext;
 import static org.folio.innreach.fixture.ContributionFixture.createInstance;
+import static org.folio.innreach.fixture.ContributionFixture.createInstanceView;
 import static org.folio.innreach.fixture.TestUtil.createNoRetryTemplate;
 
 import java.util.UUID;
@@ -32,12 +35,17 @@ import org.folio.innreach.config.props.ContributionJobProperties;
 import org.folio.innreach.config.props.FolioEnvironment;
 import org.folio.innreach.domain.dto.folio.inventorystorage.InstanceIterationEvent;
 import org.folio.innreach.domain.service.ContributionService;
+import org.folio.innreach.domain.service.ContributionValidationService;
+import org.folio.innreach.domain.service.InventoryViewService;
+import org.folio.innreach.domain.service.RecordContributionService;
 import org.folio.innreach.dto.Instance;
+import org.folio.innreach.dto.Item;
 
 @ExtendWith(MockitoExtension.class)
 class ContributionJobRunnerTest {
 
   private static final ContributionJobContext JOB_CONTEXT = createContributionJobContext();
+  private static final UUID JOB_ID = JOB_CONTEXT.getIterationJobId();
 
   @Qualifier("instanceExceptionListener")
   @Mock
@@ -48,11 +56,11 @@ class ContributionJobRunnerTest {
   @Mock
   private ContributionJobStatsListener statsListener;
   @Mock
-  private InstanceLoader instanceLoader;
+  private InventoryViewService inventoryViewService;
   @Mock
-  private InstanceContributor instanceContributor;
+  private ContributionValidationService validationService;
   @Mock
-  private ItemContributor itemContributor;
+  private RecordContributionService recordContributor;
   @Mock
   private ContributionJobProperties jobProperties;
   @Mock
@@ -72,23 +80,26 @@ class ContributionJobRunnerTest {
   private ContributionJobRunner jobRunner;
 
   @Test
-  void shouldRunJob() throws Exception {
+  void shouldRunJob() {
+    var event = InstanceIterationEvent.of(JOB_ID, "test", "test", UUID.randomUUID());
+
     when(factory.createReader(any())).thenReturn(reader);
     when(reader.read())
-      .thenReturn(new InstanceIterationEvent())
+      .thenReturn(event)
       .thenReturn(null);
-    when(instanceLoader.load(any())).thenReturn(createInstance());
-    when(jobProperties.getChunkSize()).thenReturn(100);
+    when(validationService.isEligibleForContribution(any(), any(Instance.class))).thenReturn(true);
+    when(validationService.isEligibleForContribution(any(), any(Item.class))).thenReturn(true);
+    when(inventoryViewService.getInstance(any())).thenReturn(createInstanceView().toInstance());
 
-    jobRunner.run(createContributionJobContext());
+    jobRunner.runInitialContribution(JOB_CONTEXT);
 
     verify(reader, times(2)).read();
-    verify(instanceContributor).contributeInstance(any());
-    verify(itemContributor).contributeItems(any(), any());
+    verify(recordContributor).contributeInstance(any(), any());
+    verify(recordContributor).contributeItems(any(), any(), anyList());
   }
 
   @Test
-  void shouldRunJob_noInstanceItems() throws Exception {
+  void shouldRunJob_noInstanceItems() {
     Instance instance = createInstance();
     instance.setItems(null);
 
@@ -96,30 +107,29 @@ class ContributionJobRunnerTest {
     when(reader.read())
       .thenReturn(new InstanceIterationEvent())
       .thenReturn(null);
-    when(instanceLoader.load(any())).thenReturn(instance);
+    when(inventoryViewService.getInstance(any())).thenReturn(instance);
 
-    jobRunner.run(createContributionJobContext());
+    jobRunner.runInitialContribution(createContributionJobContext());
 
     verify(reader, times(2)).read();
-    verify(instanceContributor).contributeInstance(any());
-    verifyNoInteractions(itemContributor);
+    verifyNoInteractions(recordContributor);
   }
 
   @Test
   void shouldRunJob_noInstances() {
-    var event = InstanceIterationEvent.of(UUID.randomUUID(), "test", "test", UUID.randomUUID());
+    var event = InstanceIterationEvent.of(JOB_ID, "test", "test", UUID.randomUUID());
 
     when(factory.createReader(any())).thenReturn(reader);
     when(reader.read())
       .thenReturn(event)
       .thenReturn(null);
-    when(instanceLoader.load(any())).thenReturn(null);
+    when(inventoryViewService.getInstance(any())).thenReturn(null);
 
-    jobRunner.run(JOB_CONTEXT);
+    jobRunner.runInitialContribution(JOB_CONTEXT);
 
     verify(reader, times(2)).read();
-    verify(instanceLoader).load(event);
-    verifyNoInteractions(itemContributor);
+    verify(inventoryViewService).getInstance(any());
+    verifyNoMoreInteractions(recordContributor);
   }
 
   @Test
@@ -127,11 +137,10 @@ class ContributionJobRunnerTest {
     when(factory.createReader(any())).thenReturn(reader);
     when(reader.read()).thenReturn(null);
 
-    jobRunner.run(JOB_CONTEXT);
+    jobRunner.runInitialContribution(JOB_CONTEXT);
 
     verify(reader).read();
-    verifyNoInteractions(instanceContributor);
-    verifyNoInteractions(itemContributor);
+    verifyNoInteractions(recordContributor);
   }
 
   @Test
@@ -140,14 +149,13 @@ class ContributionJobRunnerTest {
     String exceptionMsg = "test message";
     when(reader.read()).thenThrow(new RuntimeException(exceptionMsg));
 
-    assertThatThrownBy(() -> jobRunner.run(JOB_CONTEXT))
+    assertThatThrownBy(() -> jobRunner.runInitialContribution(JOB_CONTEXT))
       .isInstanceOf(RuntimeException.class)
       .hasMessageContaining(exceptionMsg);
 
     verify(reader).read();
-    verify(contributionService).completeContribution(JOB_CONTEXT.getCentralServerId());
-    verifyNoInteractions(instanceContributor);
-    verifyNoInteractions(itemContributor);
+    verify(contributionService).completeContribution(JOB_CONTEXT.getContributionId());
+    verifyNoInteractions(recordContributor);
   }
 
   @Test

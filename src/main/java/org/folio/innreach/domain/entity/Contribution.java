@@ -54,12 +54,12 @@ import org.folio.innreach.domain.entity.base.Identifiable;
 @Table(name = "contribution")
 public class Contribution extends Auditable implements Identifiable<UUID> {
 
-  private static final String FETCH_CURRENT_POSTFIX = " WHERE c.centralServer.id = :id AND c.status = 0";
+  private static final String FETCH_CURRENT_POSTFIX = " WHERE c.centralServer.id = :id AND c.status = 0 AND c.ongoing = FALSE";
   public static final String FETCH_CURRENT_QUERY_NAME = "Contribution.fetchCurrent";
   public static final String FETCH_CURRENT_QUERY = "SELECT DISTINCT c FROM Contribution AS c " +
     "LEFT JOIN FETCH c.errors" + FETCH_CURRENT_POSTFIX;
 
-  private static final String FETCH_HISTORY_POSTFIX = " WHERE c.centralServer.id = :id AND c.status != 0";
+  private static final String FETCH_HISTORY_POSTFIX = " WHERE c.centralServer.id = :id AND c.status != 0 AND c.ongoing = FALSE";
   public static final String FETCH_HISTORY_QUERY_NAME = "Contribution.fetchHistory";
   public static final String FETCH_HISTORY_QUERY = "SELECT DISTINCT c FROM Contribution AS c " +
     "LEFT JOIN FETCH c.errors" + FETCH_HISTORY_POSTFIX;
@@ -85,6 +85,8 @@ public class Contribution extends Auditable implements Identifiable<UUID> {
   private Long recordsUpdated;
 
   private Long recordsDecontributed;
+
+  private Boolean ongoing;
 
   @OneToMany(mappedBy = "contribution", fetch = FetchType.LAZY)
   private List<ContributionError> errors = new ArrayList<>();

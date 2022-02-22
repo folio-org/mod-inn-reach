@@ -10,8 +10,14 @@ public interface InnReachContributionService {
 
   InnReachResponse contributeBib(UUID centralServerId, String bibId, BibInfo bib);
 
+  InnReachResponse deContributeBib(UUID centralServerId, String bibId);
+
+  InnReachResponse deContributeBibItem(UUID centralServerId, String itemId);
+
   InnReachResponse contributeBibItems(UUID centralServerId, String bibId, BibItemsInfo bibItems);
 
   InnReachResponse lookUpBib(UUID centralServerId, String bibId);
+
+  InnReachResponse lookUpBibItem(UUID centralServerId, String bibId, String itemId);
 
 }

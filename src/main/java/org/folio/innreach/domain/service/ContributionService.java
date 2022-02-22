@@ -2,6 +2,7 @@ package org.folio.innreach.domain.service;
 
 import java.util.UUID;
 
+import org.folio.innreach.domain.entity.Contribution;
 import org.folio.innreach.dto.ContributionDTO;
 import org.folio.innreach.dto.ContributionErrorDTO;
 import org.folio.innreach.dto.ContributionsDTO;
@@ -12,11 +13,13 @@ public interface ContributionService {
 
   ContributionsDTO getHistory(UUID centralServerId, int offset, int limit);
 
-  void updateContributionStats(UUID centralServerId, ContributionDTO contribution);
+  void updateContributionStats(UUID contributionId, ContributionDTO contribution);
 
   void startInitialContribution(UUID centralServerId);
 
-  ContributionDTO completeContribution(UUID centralServerId);
+  ContributionDTO createOngoingContribution(UUID centralServerId);
+
+  ContributionDTO completeContribution(UUID contributionId);
 
   void cancelAll();
 

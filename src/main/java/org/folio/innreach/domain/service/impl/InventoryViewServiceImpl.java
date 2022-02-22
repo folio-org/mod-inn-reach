@@ -1,5 +1,6 @@
 package org.folio.innreach.domain.service.impl;
 
+import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Supplier;
 
@@ -22,30 +23,22 @@ public class InventoryViewServiceImpl implements InventoryViewService {
 
   @Override
   public Instance getInstance(UUID instanceId) {
-    try {
-      return fetchInstance(() -> inventoryViewClient.getInstanceById(instanceId));
-    } catch (Exception e) {
-      log.warn("Unable to load inventory-view instance with id {} ", instanceId, e);
-    }
-    return null;
+    return fetchInstance(() -> inventoryViewClient.getInstanceById(instanceId))
+      .orElseThrow(() -> new IllegalArgumentException("Unable to load inventory-view by instance id: " + instanceId));
   }
 
   @Override
   public Instance getInstanceByHrid(String instanceHrid) {
-    try {
-      return fetchInstance(() -> inventoryViewClient.getInstanceByHrid(instanceHrid));
-    } catch (Exception e) {
-      throw new RuntimeException("Unable to load inventory-view instance with hrid " + instanceHrid, e);
-    }
+    return fetchInstance(() -> inventoryViewClient.getInstanceByHrid(instanceHrid))
+      .orElseThrow(() -> new IllegalArgumentException("Unable to load inventory-view by instance hrid: " + instanceHrid));
   }
 
-  private Instance fetchInstance(Supplier<ResultList<InstanceView>> instanceViewSupplier) {
+  private Optional<Instance> fetchInstance(Supplier<ResultList<InstanceView>> instanceViewSupplier) {
     return instanceViewSupplier.get()
       .getResult()
       .stream()
       .findFirst()
-      .map(InstanceView::toInstance)
-      .orElseThrow(() -> new IllegalStateException("Instance not found"));
+      .map(InstanceView::toInstance);
   }
 
 }

@@ -30,6 +30,7 @@ import org.folio.innreach.domain.service.LibraryMappingService;
 import org.folio.innreach.domain.service.LocationMappingService;
 import org.folio.innreach.domain.service.MaterialTypeMappingService;
 import org.folio.innreach.domain.service.impl.FolioLocationService;
+import org.folio.innreach.domain.service.impl.RecordContributionServiceImpl;
 import org.folio.innreach.dto.CentralServerDTO;
 import org.folio.innreach.dto.InnReachLocationsDTO;
 import org.folio.innreach.dto.LibraryMappingsDTO;
@@ -61,7 +62,7 @@ class ItemContributorTest {
   private ContributionExceptionListener exceptionListener;
 
   @InjectMocks
-  private ItemContributor service;
+  private RecordContributionServiceImpl service;
 
   @BeforeEach
   public void init() {
@@ -82,7 +83,7 @@ class ItemContributorTest {
     when(centralServerService.getCentralServer(any())).thenReturn(new CentralServerDTO());
     when(validationService.getItemCirculationStatus(any(), any())).thenReturn(ContributionItemCirculationStatus.AVAILABLE);
 
-    service.contributeItems("test", of(createItem()));
+    service.contributeItems(JOB_CONTEXT.getCentralServerId(), "test", of(createItem()));
 
     verify(irContributionService).contributeBibItems(eq(JOB_CONTEXT.getCentralServerId()), any(), any());
   }

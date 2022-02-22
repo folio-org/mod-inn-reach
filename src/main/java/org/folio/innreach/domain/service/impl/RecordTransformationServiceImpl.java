@@ -1,6 +1,9 @@
-package org.folio.innreach.batch.contribution.service;
+package org.folio.innreach.domain.service.impl;
 
 import static java.util.stream.Collectors.toMap;
+
+import static org.folio.innreach.domain.dto.folio.ContributionItemCirculationStatus.ON_LOAN;
+import static org.folio.innreach.util.ListUtils.getFirstItem;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -9,47 +12,50 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 
 import lombok.Builder;
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 import lombok.extern.log4j.Log4j2;
+import org.apache.commons.lang3.CharUtils;
 import org.apache.commons.lang3.math.NumberUtils;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 
-import org.folio.innreach.batch.contribution.ContributionJobContextManager;
-import org.folio.innreach.batch.contribution.listener.ContributionExceptionListener;
+import org.folio.innreach.client.CirculationClient;
 import org.folio.innreach.domain.dto.folio.ContributionItemCirculationStatus;
 import org.folio.innreach.domain.service.CentralServerService;
 import org.folio.innreach.domain.service.ContributionValidationService;
 import org.folio.innreach.domain.service.InnReachLocationService;
 import org.folio.innreach.domain.service.LibraryMappingService;
 import org.folio.innreach.domain.service.LocationMappingService;
+import org.folio.innreach.domain.service.MARCRecordTransformationService;
 import org.folio.innreach.domain.service.MaterialTypeMappingService;
-import org.folio.innreach.domain.service.impl.FolioLocationService;
+import org.folio.innreach.domain.service.RecordTransformationService;
+import org.folio.innreach.dto.BibInfo;
 import org.folio.innreach.dto.InnReachLocationDTO;
+import org.folio.innreach.dto.Instance;
 import org.folio.innreach.dto.Item;
 import org.folio.innreach.dto.ItemEffectiveCallNumberComponents;
+import org.folio.innreach.dto.LoanDTO;
 import org.folio.innreach.dto.MaterialTypeMappingDTO;
 import org.folio.innreach.external.dto.BibItem;
-import org.folio.innreach.external.dto.BibItemsInfo;
-import org.folio.innreach.external.service.InnReachContributionService;
+import org.folio.innreach.util.DateHelper;
 
+@RequiredArgsConstructor
 @Log4j2
 @Service
-@RequiredArgsConstructor
-public class ItemContributor {
+public class RecordTransformationServiceImpl implements RecordTransformationService {
 
+  private static final String MARC_BIB_FORMAT = "ISO2709";
   private static final int FETCH_LIMIT = 2000;
   private static final String NON_DIGIT_REGEX = "\\D+";
 
-  @Qualifier("itemExceptionListener")
-  private final ContributionExceptionListener exceptionListener;
-  private final InnReachContributionService irContributionService;
+  private final MARCRecordTransformationService marcService;
   private final ContributionValidationService validationService;
+
   private final MaterialTypeMappingService typeMappingService;
   private final LibraryMappingService libraryMappingService;
   private final InnReachLocationService irLocationService;
@@ -57,36 +63,41 @@ public class ItemContributor {
   private final LocationMappingService locationMappingService;
   private final FolioLocationService folioLocationService;
 
-  public int contributeItems(String bibId, List<Item> items) {
-    log.info("Processing items of bib {}", bibId);
+  private final CirculationClient circulationClient;
 
-    var mappings = getContributionMappings();
-    log.info("Resolved contribution mappings: {}", mappings);
+  @Override
+  public BibInfo getBibInfo(UUID centralServerId, Instance instance) {
+    var bibId = instance.getHrid();
 
-    var bibItems = items.stream()
-      .map(item -> convertItem(item, mappings))
-      .filter(Objects::nonNull)
-      .collect(Collectors.toList());
+    var suppressionStatus = validationService.getSuppressionStatus(centralServerId, instance.getStatisticalCodeIds());
+    var marc = marcService.transformRecord(centralServerId, instance);
 
-    var bibItemsInfo = BibItemsInfo.of(bibItems);
+    var bibInfo = new BibInfo();
+    bibInfo.setBibId(bibId);
 
-    int writeCount = bibItemsInfo.getItemInfo().size();
-
-    log.info("Loaded {} items", writeCount);
-
-    var response = irContributionService.contributeBibItems(getCentralServerId(), bibId, bibItemsInfo);
-    Assert.isTrue(response.isOk(), "Unexpected items contribution response: " + response);
-
-    log.info("Finished contributing items of bib {}", bibId);
-
-    return writeCount;
+    bibInfo.setSuppress(CharUtils.toString(suppressionStatus));
+    bibInfo.setMarc21BibFormat(MARC_BIB_FORMAT);
+    bibInfo.setMarc21BibData(marc.getBase64rawContent());
+    bibInfo.setItemCount(countContributionItems(centralServerId, instance.getItems()));
+    return bibInfo;
   }
 
-  private BibItem convertItem(Item item, ContributionMappings mappings) {
+  @Override
+  public List<BibItem> getBibItems(UUID centralServerId, List<Item> items, BiConsumer<Item, Exception> errorHandler) {
+    var mappings = getContributionMappings(centralServerId);
+    log.info("Resolved contribution mappings: {}", mappings);
+
+    return items.stream()
+      .map(item -> convertItem(centralServerId, item, mappings, errorHandler))
+      .filter(Objects::nonNull)
+      .collect(Collectors.toList());
+  }
+
+  private BibItem convertItem(UUID centralServerId, Item item, ContributionMappings mappings, BiConsumer<Item, Exception> errorHandler) {
     log.info("Loading item {} info", item.getHrid());
     try {
-      var suppressionStatus = getSuppressionStatus(item);
-      var circulationStatus = getCirculationStatus(item);
+      var suppressionStatus = getSuppressionStatus(centralServerId, item);
+      var circulationStatus = getCirculationStatus(centralServerId, item);
 
       var copyNumber = Optional.ofNullable(item.getCopyNumber())
         .map(n -> n.replaceAll(NON_DIGIT_REGEX, ""))
@@ -102,6 +113,10 @@ public class ItemContributor {
       var folLocId = item.getEffectiveLocationId();
       var folLibId = mappings.getLibraryId(folLocId);
 
+      var itemId = item.getId();
+      var holdCount = countRequests(itemId);
+      var dueDateTime = getDueDateTime(itemId, circulationStatus);
+
       var bibItem = BibItem.builder()
         .itemId(item.getHrid())
         .itemCircStatus(circulationStatus.getStatus())
@@ -111,40 +126,84 @@ public class ItemContributor {
         .centralItemType(mappings.getCentralType(item.getMaterialTypeId()))
         .locationKey(mappings.getLocationKey(folLocId, folLibId))
         .agencyCode(mappings.getAgencyCode(folLibId))
+        .holdCount(holdCount)
+        .dueDateTime(dueDateTime)
         .build();
+
+      validateRequiredFields(bibItem);
 
       log.info("Loaded bibItem {}", bibItem);
 
       return bibItem;
     } catch (Exception e) {
-      exceptionListener.logWriteError(new RuntimeException("Unable to load item info: " + e.getMessage(), e), item.getId());
+      errorHandler.accept(item, e);
       return null;
     }
   }
 
-  private Character getSuppressionStatus(Item item) {
-    var centralServerId = getCentralServerId();
+  private Integer getDueDateTime(UUID itemId, ContributionItemCirculationStatus circulationStatus) {
+    try {
+      if (circulationStatus == ON_LOAN) {
+        return getFirstItem(circulationClient.queryLoansByItemId(itemId))
+          .map(LoanDTO::getDueDate)
+          .map(DateHelper::toEpochSec)
+          .orElse(null);
+      }
+    } catch (Exception e) {
+      log.warn("Failed to fetch due date time for item {}", itemId, e);
+    }
+    return null;
+  }
+
+  private Integer countRequests(UUID itemId) {
+    try {
+      return circulationClient.queryRequestsByItemId(itemId).getTotalRecords();
+    } catch (Exception e) {
+      log.warn("Failed to count requests for item {}", itemId, e);
+      return null;
+    }
+  }
+
+  private void validateRequiredFields(BibItem bibItem) {
+    Assert.isTrue(bibItem.getItemId() != null, "itemId is not resolved");
+    Assert.isTrue(bibItem.getItemCircStatus() != null, "itemCircStatus is not resolved");
+    Assert.isTrue(bibItem.getCentralItemType() != null, "centralItemType is not resolved");
+    Assert.isTrue(bibItem.getAgencyCode() != null, "agencyCode is not resolved");
+    Assert.isTrue(bibItem.getLocationKey() != null, "locationKey is not resolved");
+  }
+
+  private int countContributionItems(UUID centralServerId, List<Item> items) {
+    if (items == null) {
+      return 0;
+    }
+    return (int) items.stream()
+      .filter(Objects::nonNull)
+      .filter(i -> validationService.isEligibleForContribution(centralServerId, i))
+      .count();
+  }
+
+  private Character getSuppressionStatus(UUID centralServerId, Item item) {
     Character itemSuppress = validationService.getSuppressionStatus(centralServerId, item.getStatisticalCodeIds());
 
     return itemSuppress != null ? itemSuppress :
       validationService.getSuppressionStatus(centralServerId, item.getHoldingStatisticalCodeIds());
   }
 
-  private ContributionItemCirculationStatus getCirculationStatus(Item item) {
-    return validationService.getItemCirculationStatus(getCentralServerId(), item);
+  private ContributionItemCirculationStatus getCirculationStatus(UUID centralServerId, Item item) {
+    return validationService.getItemCirculationStatus(centralServerId, item);
   }
 
-  private ContributionMappings getContributionMappings() {
+  private ContributionMappings getContributionMappings(UUID centralServerId) {
     Map<UUID, String> irLocIdToLocKeys = irLocationService.getAllInnReachLocations(0, FETCH_LIMIT)
       .getLocations()
       .stream()
       .collect(toMap(InnReachLocationDTO::getId, InnReachLocationDTO::getCode));
 
-    Map<UUID, Integer> materialToCentralTypeMappings = getTypeMappings();
-    Map<UUID, String> libIdToLocKeyMappings = getLibraryMappings(irLocIdToLocKeys);
-    Map<UUID, String> locIdToLocKeyMappings = getLocationMappings(irLocIdToLocKeys, libIdToLocKeyMappings.keySet());
+    Map<UUID, Integer> materialToCentralTypeMappings = getTypeMappings(centralServerId);
+    Map<UUID, String> libIdToLocKeyMappings = getLibraryMappings(centralServerId, irLocIdToLocKeys);
+    Map<UUID, String> locIdToLocKeyMappings = getLocationMappings(centralServerId, irLocIdToLocKeys, libIdToLocKeyMappings.keySet());
+    Map<UUID, String> libIdToAgencyCodeMappings = getAgencyMappings(centralServerId);
     Map<UUID, UUID> locIdToLibIdMappings = folioLocationService.getLocationLibraryMappings();
-    Map<UUID, String> libIdToAgencyCodeMappings = getAgencyMappings();
 
     return ContributionMappings.builder()
       .materialToCentralTypes(materialToCentralTypeMappings)
@@ -155,16 +214,16 @@ public class ItemContributor {
       .build();
   }
 
-  private Map<UUID, Integer> getTypeMappings() {
-    return typeMappingService.getAllMappings(getCentralServerId(), 0, FETCH_LIMIT)
+  private Map<UUID, Integer> getTypeMappings(UUID centralServerId) {
+    return typeMappingService.getAllMappings(centralServerId, 0, FETCH_LIMIT)
       .getMaterialTypeMappings()
       .stream()
       .collect(toMap(MaterialTypeMappingDTO::getMaterialTypeId, MaterialTypeMappingDTO::getCentralItemType));
   }
 
-  private Map<UUID, String> getLibraryMappings(Map<UUID, String> irLocations) {
+  private Map<UUID, String> getLibraryMappings(UUID centralServerId, Map<UUID, String> irLocations) {
     var libraryMappings =
-      libraryMappingService.getAllMappings(getCentralServerId(), 0, FETCH_LIMIT).getLibraryMappings();
+      libraryMappingService.getAllMappings(centralServerId, 0, FETCH_LIMIT).getLibraryMappings();
 
     Map<UUID, String> mappings = new HashMap<>();
     for (var mapping : libraryMappings) {
@@ -175,12 +234,12 @@ public class ItemContributor {
     return mappings;
   }
 
-  private Map<UUID, String> getLocationMappings(Map<UUID, String> irLocations, Collection<UUID> libraryIds) {
+  private Map<UUID, String> getLocationMappings(UUID centralServerId, Map<UUID, String> irLocations, Collection<UUID> libraryIds) {
     Map<UUID, String> mappings = new HashMap<>();
 
     for (var libId : libraryIds) {
       var locationMappings =
-        locationMappingService.getAllMappings(getCentralServerId(), libId, 0, FETCH_LIMIT).getLocationMappings();
+        locationMappingService.getAllMappings(centralServerId, libId, 0, FETCH_LIMIT).getLocationMappings();
 
       locationMappings.forEach(loc -> mappings.put(loc.getLocationId(), irLocations.get(loc.getInnReachLocationId())));
     }
@@ -188,8 +247,8 @@ public class ItemContributor {
     return mappings;
   }
 
-  private Map<UUID, String> getAgencyMappings() {
-    var centralServer = centralServerService.getCentralServer(getCentralServerId());
+  private Map<UUID, String> getAgencyMappings(UUID centralServerId) {
+    var centralServer = centralServerService.getCentralServer(centralServerId);
 
     var localAgencies = centralServer.getLocalAgencies();
     Map<UUID, String> mappings = new HashMap<>();
@@ -199,10 +258,6 @@ public class ItemContributor {
     }
 
     return mappings;
-  }
-
-  private UUID getCentralServerId() {
-    return ContributionJobContextManager.getContributionJobContext().getCentralServerId();
   }
 
   @Builder

@@ -14,6 +14,7 @@ import org.springframework.stereotype.Component;
 
 import org.folio.innreach.domain.dto.folio.circulation.RequestDTO;
 import org.folio.innreach.domain.event.DomainEvent;
+import org.folio.innreach.domain.service.ContributionActionService;
 import org.folio.innreach.domain.service.InnReachTransactionActionService;
 import org.folio.innreach.domain.service.impl.BatchDomainEventProcessor;
 import org.folio.innreach.dto.CheckInDTO;
@@ -26,6 +27,7 @@ public class KafkaCirculationEventListener {
 
   private final BatchDomainEventProcessor eventProcessor;
   private final InnReachTransactionActionService transactionActionService;
+  private final ContributionActionService contributionActionService;
 
   @KafkaListener(
     containerFactory = KAFKA_CONTAINER_FACTORY,
@@ -39,12 +41,14 @@ public class KafkaCirculationEventListener {
     var events = getEvents(consumerRecords);
 
     eventProcessor.process(events, event -> {
+      var newEntity = event.getData().getNewEntity();
       switch (event.getType()) {
         case CREATED:
-          transactionActionService.associateNewLoanWithTransaction(event.getData().getNewEntity());
+          transactionActionService.associateNewLoanWithTransaction(newEntity);
           break;
         case UPDATED:
-          transactionActionService.handleLoanUpdate(event.getData().getNewEntity());
+          transactionActionService.handleLoanUpdate(newEntity);
+          contributionActionService.handleLoanUpdate(newEntity);
           break;
         default:
           log.warn("Received event of unknown type {}", event.getType());
@@ -64,12 +68,13 @@ public class KafkaCirculationEventListener {
     var events = getEvents(consumerRecords);
 
     eventProcessor.process(events, event -> {
+      var newEntity = event.getData().getNewEntity();
+
+      contributionActionService.handleRequestChange(newEntity);
+
       switch (event.getType()) {
-        case CREATED:
-          //
-          break;
         case UPDATED:
-          transactionActionService.handleRequestUpdate(event.getData().getNewEntity());
+          transactionActionService.handleRequestUpdate(newEntity);
           break;
         default:
           log.warn("Received event of unknown type {}", event.getType());
