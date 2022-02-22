@@ -113,6 +113,10 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
   private static final String PRE_POPULATED_REQUESTER_ID = "f75ffab1-2e2f-43be-b159-3031e2cfc458";
   private static final UUID PRE_POPULATED_PATRON2_ID = UUID.fromString("a7853dda-520b-4f7a-a1fb-9383665ea770");
 
+  private static final String PRE_POPULATED_LOCAL_AGENCY_CODE1 = "q1w2e";
+  private static final String PRE_POPULATED_LOCAL_AGENCY_CODE2 = "w2e3r";
+  private static final String PRE_POPULATED_ANOTHER_LOCAL_AGENCY_CODE1 = "g91ub";
+
   @Autowired
   private TestRestTemplate testRestTemplate;
 
@@ -452,9 +456,13 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
   }
 
   @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql"
+  })
   void processLocalHoldCirculationRequest_createNew() {
     var transactionHoldDTO = createTransactionHoldDTO();
-    transactionHoldDTO.setPatronAgencyCode(transactionHoldDTO.getItemAgencyCode());
+    transactionHoldDTO.setItemAgencyCode(PRE_POPULATED_LOCAL_AGENCY_CODE1);
+    transactionHoldDTO.setPatronAgencyCode(PRE_POPULATED_LOCAL_AGENCY_CODE2);
 
     var responseEntity = testRestTemplate.exchange(
       CIRCULATION_OPERATION_ENDPOINT, HttpMethod.PUT,
@@ -484,7 +492,8 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
   })
   void processLocalHoldCirculationRequest_updateExiting() {
     var transactionHoldDTO = createTransactionHoldDTO();
-    transactionHoldDTO.setPatronAgencyCode(transactionHoldDTO.getItemAgencyCode());
+    transactionHoldDTO.setItemAgencyCode(PRE_POPULATED_LOCAL_AGENCY_CODE1);
+    transactionHoldDTO.setPatronAgencyCode(PRE_POPULATED_LOCAL_AGENCY_CODE2);
 
     var responseEntity = testRestTemplate.exchange(
       CIRCULATION_OPERATION_ENDPOINT, HttpMethod.PUT,
@@ -512,12 +521,13 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
   @Test
   @Sql(scripts = {
     "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/central-server/pre-populate-another-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
   })
   void processLocalHoldCirculationRequest_invalidAgencyCodes() {
     var transactionHoldDTO = createTransactionHoldDTO();
-    transactionHoldDTO.setPatronAgencyCode("abcd1");
-    transactionHoldDTO.setItemAgencyCode("abcd2");
+    transactionHoldDTO.setPatronAgencyCode(PRE_POPULATED_LOCAL_AGENCY_CODE1);
+    transactionHoldDTO.setItemAgencyCode(PRE_POPULATED_ANOTHER_LOCAL_AGENCY_CODE1);
 
     var responseEntity = testRestTemplate.exchange(
       CIRCULATION_OPERATION_ENDPOINT, HttpMethod.PUT,
