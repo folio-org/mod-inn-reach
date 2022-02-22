@@ -13,6 +13,7 @@ import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 
 import org.apache.commons.lang3.StringUtils;
+import org.folio.innreach.domain.entity.TransactionHold;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Component;
 
@@ -20,7 +21,6 @@ import org.folio.innreach.domain.entity.InnReachTransaction;
 import org.folio.innreach.domain.entity.InnReachTransactionFilterParameters;
 import org.folio.innreach.domain.entity.InnReachTransactionFilterParameters.SortBy;
 import org.folio.innreach.domain.entity.InnReachTransactionFilterParameters.SortOrder;
-import org.folio.innreach.domain.entity.TransactionItemHold;
 import org.folio.innreach.domain.entity.TransactionLocalHold;
 import org.folio.innreach.domain.entity.TransactionPatronHold;
 
@@ -37,8 +37,7 @@ public class InnReachTransactionSpecification {
   static Specification<InnReachTransaction> fieldsLookup(InnReachTransactionFilterParameters parameters) {
     return (transaction, cq, cb) -> {
       var hold = transaction.join("hold");
-      var itemHold = cb.treat(hold, TransactionItemHold.class);
-      var localHold = cb.treat(hold, TransactionLocalHold.class);
+      var transactionHold = cb.treat(hold, TransactionHold.class);
       var patronHold = cb.treat(hold, TransactionPatronHold.class);
 
       var typeIs = isOfType(cb, transaction, parameters);
@@ -46,7 +45,7 @@ public class InnReachTransactionSpecification {
       var centralCodeIn = centralCodeIn(cb, transaction, parameters);
       var patronAgencyIn = patronAgencyIn(cb, hold, parameters);
       var itemAgencyIn = itemAgencyIn(cb, hold, parameters);
-      var patronTypeIn = patronTypeIn(cb, itemHold, localHold, parameters);
+      var patronTypeIn = patronTypeIn(cb, transactionHold, parameters);
       var centralItemTypeIn = centralItemTypeIn(cb, hold, parameters);
       var itemBarcodeIn = itemBarcodeIn(cb, transaction, hold, patronHold, parameters);
 
@@ -114,18 +113,13 @@ public class InnReachTransactionSpecification {
     return isEmpty(itemAgencies) ? cb.conjunction() : hold.get("itemAgencyCode").in(itemAgencies);
   }
 
-  static Predicate patronTypeIn(CriteriaBuilder cb,
-                                Join<Object, TransactionItemHold> itemHold,
-                                Join<Object, TransactionLocalHold> localHold,
-                                InnReachTransactionFilterParameters parameters) {
+  static Predicate patronTypeIn(CriteriaBuilder cb, Join<Object, TransactionHold>  transactionHold, InnReachTransactionFilterParameters parameters) {
     var patronTypes = parameters.getPatronTypes();
     if (isEmpty(patronTypes)) {
       return cb.conjunction();
     }
 
-    return cb.or(
-      itemHold.get("centralPatronTypeItem").in(patronTypes),
-      localHold.get("centralPatronTypeLocal").in(patronTypes));
+    return cb.or(transactionHold.get("centralPatronType").in(patronTypes));
   }
 
   static Predicate itemBarcodeIn(CriteriaBuilder cb,
@@ -162,11 +156,9 @@ public class InnReachTransactionSpecification {
         Order order;
         if (sortBy == SortBy.CENTRAL_PATRON_TYPE) {
           var join = transaction.join("hold");
-          var itemHold = cb.treat(join, TransactionItemHold.class);
-          var localHold = cb.treat(join, TransactionLocalHold.class);
+          var hold = cb.treat(join, TransactionHold.class);
 
-          var coalesce = cb.coalesce(itemHold.get("centralPatronTypeItem"),
-            localHold.get("centralPatronTypeLocal"));
+          var coalesce = cb.coalesce(hold.get("centralPatronType"), hold.get("centralPatronType"));
           order = sortOrder == DESC ? cb.desc(coalesce) : cb.asc(coalesce);
         } else {
           order = sortOrder == DESC ? cb.desc(getField(transaction, sortBy)) : cb.asc(getField(transaction, sortBy));

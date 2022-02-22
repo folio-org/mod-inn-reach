@@ -90,7 +90,7 @@ public abstract class TransactionHold extends Auditable implements Identifiable<
   protected String folioItemBarcode;
 
   @Column(name = "central_patron_type")
-  protected Integer centralPatronTypeItem;
+  protected Integer centralPatronType;
 
   @Column(name = "patron_name")
   protected String patronName;

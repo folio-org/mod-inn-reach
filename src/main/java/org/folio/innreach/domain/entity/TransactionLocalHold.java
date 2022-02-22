@@ -31,13 +31,6 @@ public class TransactionLocalHold extends TransactionHold {
   @Column(name = "callNumber")
   private String callNumber;
 
-  @Getter(AccessLevel.NONE) @Setter(AccessLevel.NONE)
-  @Column(name = "central_patron_type")
-  private Integer centralPatronTypeLocal;
-
-  @Column(name = "patron_name")
-  private String patronName;
-
   public String getAuthor() {
     return authorLocal;
   }
@@ -46,11 +39,4 @@ public class TransactionLocalHold extends TransactionHold {
     this.authorLocal = author;
   }
 
-  public Integer getCentralPatronType() {
-    return centralPatronTypeLocal;
-  }
-
-  public void setCentralPatronType(Integer centralPatronType) {
-    this.centralPatronTypeLocal = centralPatronType;
-  }
 }
