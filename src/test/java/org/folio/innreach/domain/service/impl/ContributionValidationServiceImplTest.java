@@ -16,6 +16,7 @@ import static org.folio.innreach.fixture.ItemContributionOptionsConfigurationFix
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -283,6 +284,7 @@ class ContributionValidationServiceImplTest {
   @Test
   void testEligibleInstance_noStatisticalCodes() {
     when(contributionConfigService.getCriteria(any())).thenReturn(CRITERIA);
+    when(holdingsService.find(any())).thenReturn(Optional.empty());
 
     var instance = new Instance();
     instance.setSource(ELIGIBLE_SOURCE);
@@ -304,6 +306,7 @@ class ContributionValidationServiceImplTest {
     instance.setItems(List.of(new Item().statisticalCodeIds(statisticalCodes)));
 
     when(contributionConfigService.getCriteria(any())).thenReturn(CRITERIA);
+    when(holdingsService.find(any())).thenReturn(Optional.empty());
 
     var isEligible = service.isEligibleForContribution(UUID.randomUUID(), instance);
 
@@ -332,6 +335,7 @@ class ContributionValidationServiceImplTest {
     instance.setItems(List.of(new Item().statisticalCodeIds(List.of(DO_NOT_CONTRIBUTE_CODE_ID))));
 
     when(contributionConfigService.getCriteria(any())).thenReturn(CRITERIA);
+    when(holdingsService.find(any())).thenReturn(Optional.empty());
 
     var isEligible = service.isEligibleForContribution(UUID.randomUUID(), instance);
 

@@ -29,6 +29,7 @@ import org.folio.innreach.domain.dto.folio.inventorystorage.MaterialTypeDTO;
 import org.folio.innreach.domain.service.CentralServerService;
 import org.folio.innreach.domain.service.ContributionCriteriaConfigurationService;
 import org.folio.innreach.domain.service.ContributionValidationService;
+import org.folio.innreach.domain.service.HoldingsService;
 import org.folio.innreach.domain.service.InnReachLocationService;
 import org.folio.innreach.domain.service.ItemContributionOptionsConfigurationService;
 import org.folio.innreach.domain.service.LibraryMappingService;
@@ -55,7 +56,7 @@ public class ContributionValidationServiceImpl implements ContributionValidation
   private final MaterialTypesClient materialTypesClient;
   private final MaterialTypeMappingService typeMappingService;
 
-  private final HoldingsServiceImpl holdingsService;
+  private final HoldingsService holdingsService;
   private final LibraryMappingService libraryMappingService;
   private final CentralServerService centralServerService;
   private final ContributionCriteriaConfigurationService contributionConfigService;
