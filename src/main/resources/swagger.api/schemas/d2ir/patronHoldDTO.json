@@ -36,6 +36,17 @@
     "needBefore": {
       "description": "Need before time",
       "type": "integer"
+    },
+    "patronName": {
+      "description": "Patron name",
+      "type": "string",
+      "maxLength": 255
+    },
+    "centralPatronType": {
+      "description": "Central patron type",
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 255
     }
   },
   "additionalProperties": false,
