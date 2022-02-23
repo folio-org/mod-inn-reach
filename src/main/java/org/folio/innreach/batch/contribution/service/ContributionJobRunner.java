@@ -98,7 +98,7 @@ public class ContributionJobRunner {
           if (validationService.isEligibleForContribution(centralServerId, instance)) {
             contributeInstance(centralServerId, instance, stats);
             contributeInstanceItems(centralServerId, instance, stats);
-          } else if (recordContributionService.isContributed(centralServerId, instance)) {
+          } else if (isContributed(centralServerId, instance)) {
             deContributeInstance(centralServerId, instance, stats);
           }
         }
@@ -108,8 +108,8 @@ public class ContributionJobRunner {
 
   public void runInstanceContribution(UUID centralServerId, Instance instance) {
     log.info("Validating instance {} for contribution to central server {}", instance.getId(), centralServerId);
-    boolean eligibleInstance = validationService.isEligibleForContribution(centralServerId, instance);
-    boolean contributedInstance = recordContributionService.isContributed(centralServerId, instance);
+    boolean eligibleInstance = isEligibleForContribution(centralServerId, instance);
+    boolean contributedInstance = isContributed(centralServerId, instance);
     if (!eligibleInstance && !contributedInstance) {
       log.info("Skipping ineligible and non-contributed instance");
       return;
@@ -119,12 +119,15 @@ public class ContributionJobRunner {
       log.info("Starting ongoing instance contribution job {}", ctx);
 
       if (eligibleInstance) {
+        log.info("Contributing instance");
         contributeInstance(centralServerId, instance, stats);
 
         if (!contributedInstance) {
+          log.info("Contributing items of new instance");
           contributeInstanceItems(centralServerId, instance, stats);
         }
       } else if (contributedInstance) {
+        log.info("De-contributing ineligible instance");
         deContributeInstance(centralServerId, instance, stats);
       }
     });
@@ -132,7 +135,7 @@ public class ContributionJobRunner {
 
   public void runInstanceDeContribution(UUID centralServerId, Instance deletedInstance) {
     log.info("Validating instance {} for de-contribution from central server {}", deletedInstance.getId(), centralServerId);
-    if (!recordContributionService.isContributed(centralServerId, deletedInstance)) {
+    if (!isContributed(centralServerId, deletedInstance)) {
       log.info("Skipping non-contributed instance");
       return;
     }
@@ -145,8 +148,8 @@ public class ContributionJobRunner {
 
   public void runItemContribution(UUID centralServerId, Instance instance, Item item) {
     log.info("Validating item {} for contribution to central server {}", item.getId(), centralServerId);
-    boolean eligibleItem = validationService.isEligibleForContribution(centralServerId, item);
-    boolean contributedItem = recordContributionService.isContributed(centralServerId, instance, item);
+    boolean eligibleItem = isEligibleForContribution(centralServerId, item);
+    boolean contributedItem = isContributed(centralServerId, instance, item);
     if (!eligibleItem && !contributedItem) {
       log.info("Skipping ineligible and non-contributed item");
       return;
@@ -155,21 +158,29 @@ public class ContributionJobRunner {
     runOngoing(centralServerId, (ctx, stats) -> {
       log.info("Starting ongoing item contribution job {}", ctx);
 
-      if (eligibleItem) {
-        contributeItem(centralServerId, instance.getHrid(), item, stats);
-      } else if (contributedItem) {
-        deContributeItem(centralServerId, item, stats);
-      }
+      if (isEligibleForContribution(centralServerId, instance)) {
+        log.info("Re-contributing instance to update bib status");
+        contributeInstance(centralServerId, instance, stats);
 
-      // re-contributing instance to update item count
-      contributeInstance(centralServerId, instance, stats);
+        if (eligibleItem) {
+          log.info("Contributing item");
+          contributeItem(centralServerId, instance.getHrid(), item, stats);
+        } else if (contributedItem) {
+          log.info("De-contributing item");
+          deContributeItem(centralServerId, item, stats);
+        }
+      } else if (contributedItem) {
+        log.info("De-contributing ineligible instance");
+        deContributeInstance(centralServerId, instance, stats);
+      }
     });
   }
 
   public void runItemMove(UUID centralServerId, Instance newInstance, Instance oldInstance, Item item) {
     log.info("Validating item {} for moving to a new instance {} on central server {}", item.getId(), newInstance.getId(), centralServerId);
-    boolean eligibleItem = validationService.isEligibleForContribution(centralServerId, item);
-    boolean contributedItem = recordContributionService.isContributed(centralServerId, oldInstance, item);
+
+    boolean eligibleItem = isEligibleForContribution(centralServerId, item);
+    boolean contributedItem = isContributed(centralServerId, oldInstance, item);
     if (!eligibleItem && !contributedItem) {
       log.info("Skipping ineligible and non-contributed item");
       return;
@@ -178,40 +189,75 @@ public class ContributionJobRunner {
     runOngoing(centralServerId, (ctx, stats) -> {
       log.info("Starting ongoing item move job {}", ctx);
 
+      // de-contribute item and update old instance
       if (contributedItem) {
-        deContributeItem(centralServerId, item, stats);
-        // re-contributing old instance to update item count
-        contributeInstance(centralServerId, oldInstance, stats);
+        if (isEligibleForContribution(centralServerId, oldInstance)) {
+          log.info("De-contributing item from old instance");
+          deContributeItem(centralServerId, item, stats);
+
+          log.info("Re-contributing old instance to update bib status");
+          contributeInstance(centralServerId, oldInstance, stats);
+        } else {
+          log.info("De-contributing old instance");
+          deContributeInstance(centralServerId, oldInstance, stats);
+        }
       }
 
-      if (eligibleItem) {
-        contributeItem(centralServerId, newInstance.getHrid(), item, stats);
-        // re-contributing new instance to update item count
+      // contribute item to a new instance
+      if (isEligibleForContribution(centralServerId, newInstance)) {
+        log.info("Re-contributing new instance to update bib status");
         contributeInstance(centralServerId, newInstance, stats);
+
+        if (eligibleItem) {
+          log.info("Contributing item to new instance");
+          contributeItem(centralServerId, newInstance.getHrid(), item, stats);
+        }
       }
     });
   }
 
   public void runItemDeContribution(UUID centralServerId, Instance instance, Item deletedItem) {
     log.info("Validating item {} for de-contribution from central server {}", deletedItem.getId(), centralServerId);
-    if (!recordContributionService.isContributed(centralServerId, instance, deletedItem)) {
+    if (!isContributed(centralServerId, instance, deletedItem)) {
       log.info("Skipping non-contributed item");
       return;
     }
 
     runOngoing(centralServerId, (context, stats) -> {
-      log.info("Starting ongoing contribution job {} on item delete {}", context);
+      log.info("Starting ongoing item de-contribution job {}", context);
 
-      deContributeItem(centralServerId, deletedItem, stats);
+      if (isEligibleForContribution(centralServerId, instance)) {
+        log.info("De-contributing item");
+        deContributeItem(centralServerId, deletedItem, stats);
 
-      // re-contributing instance to update item count
-      contributeInstance(centralServerId, instance, stats);
+        log.info("Re-contributing instance to update bib status");
+        contributeInstance(centralServerId, instance, stats);
+      } else {
+        log.info("De-contributing ineligible instance");
+        deContributeInstance(centralServerId, instance, stats);
+      }
     });
   }
 
   public void cancelJobs() {
     log.info("Cancelling unfinished contributions...");
     contributionService.cancelAll();
+  }
+
+  private boolean isEligibleForContribution(UUID centralServerId, Instance instance) {
+    return validationService.isEligibleForContribution(centralServerId, instance);
+  }
+
+  private boolean isContributed(UUID centralServerId, Instance instance) {
+    return recordContributionService.isContributed(centralServerId, instance);
+  }
+
+  private boolean isEligibleForContribution(UUID centralServerId, Item item) {
+    return validationService.isEligibleForContribution(centralServerId, item);
+  }
+
+  private boolean isContributed(UUID centralServerId, Instance instance, Item item) {
+    return recordContributionService.isContributed(centralServerId, instance, item);
   }
 
   private void contributeInstanceItems(UUID centralServerId, Instance instance, Statistics stats) {
