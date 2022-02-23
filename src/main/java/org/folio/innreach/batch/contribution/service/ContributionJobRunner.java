@@ -34,6 +34,7 @@ import org.folio.innreach.domain.service.InventoryViewService;
 import org.folio.innreach.domain.service.RecordContributionService;
 import org.folio.innreach.dto.Instance;
 import org.folio.innreach.dto.Item;
+import org.folio.spring.FolioExecutionContext;
 
 @Service
 @Log4j2
@@ -50,6 +51,7 @@ public class ContributionJobRunner {
   private final InventoryViewService inventoryViewService;
   private final ContributionJobProperties jobProperties;
   private final ContributionService contributionService;
+  private final FolioExecutionContext folioContext;
   @Qualifier("contributionRetryTemplate")
   private final RetryTemplate retryTemplate;
   private final IterationEventReaderFactory itemReaderFactory;
@@ -105,10 +107,11 @@ public class ContributionJobRunner {
   }
 
   public void runInstanceContribution(UUID centralServerId, Instance instance) {
+    log.info("Validating instance {} for contribution to central server {}", instance.getId(), centralServerId);
     boolean eligibleInstance = validationService.isEligibleForContribution(centralServerId, instance);
     boolean contributedInstance = recordContributionService.isContributed(centralServerId, instance);
     if (!eligibleInstance && !contributedInstance) {
-      log.info("Skipping ineligible and non-contributed item");
+      log.info("Skipping ineligible and non-contributed instance");
       return;
     }
 
@@ -128,31 +131,34 @@ public class ContributionJobRunner {
   }
 
   public void runInstanceDeContribution(UUID centralServerId, Instance deletedInstance) {
+    log.info("Validating instance {} for de-contribution from central server {}", deletedInstance.getId(), centralServerId);
     if (!recordContributionService.isContributed(centralServerId, deletedInstance)) {
       log.info("Skipping non-contributed instance");
       return;
     }
 
-    log.info("Starting ongoing contribution job on instance {} delete for central server {}", deletedInstance.getId(), centralServerId);
-
-    runOngoing(centralServerId, (ctx, stats) -> deContributeInstance(centralServerId, deletedInstance, stats));
+    runOngoing(centralServerId, (ctx, stats) -> {
+      log.info("Starting ongoing instance de-contribution job {}", ctx);
+      deContributeInstance(centralServerId, deletedInstance, stats);
+    });
   }
 
-  public void runItemContribution(UUID centralServerId, Instance instance, Item updatedItem) {
-    boolean eligibleItem = validationService.isEligibleForContribution(centralServerId, updatedItem);
-    boolean contributedItem = recordContributionService.isContributed(centralServerId, instance, updatedItem);
+  public void runItemContribution(UUID centralServerId, Instance instance, Item item) {
+    log.info("Validating item {} for contribution to central server {}", item.getId(), centralServerId);
+    boolean eligibleItem = validationService.isEligibleForContribution(centralServerId, item);
+    boolean contributedItem = recordContributionService.isContributed(centralServerId, instance, item);
     if (!eligibleItem && !contributedItem) {
       log.info("Skipping ineligible and non-contributed item");
       return;
     }
 
     runOngoing(centralServerId, (ctx, stats) -> {
-      log.info("Starting ongoing contribution job {} on item update", ctx);
+      log.info("Starting ongoing item contribution job {}", ctx);
 
       if (eligibleItem) {
-        contributeItem(centralServerId, instance.getHrid(), updatedItem, stats);
+        contributeItem(centralServerId, instance.getHrid(), item, stats);
       } else if (contributedItem) {
-        deContributeItem(centralServerId, updatedItem, stats);
+        deContributeItem(centralServerId, item, stats);
       }
 
       // re-contributing instance to update item count
@@ -161,15 +167,16 @@ public class ContributionJobRunner {
   }
 
   public void runItemMove(UUID centralServerId, Instance newInstance, Instance oldInstance, Item item) {
+    log.info("Validating item {} for moving to a new instance {} on central server {}", item.getId(), newInstance.getId(), centralServerId);
     boolean eligibleItem = validationService.isEligibleForContribution(centralServerId, item);
     boolean contributedItem = recordContributionService.isContributed(centralServerId, oldInstance, item);
     if (!eligibleItem && !contributedItem) {
-      log.info("Skipping ineligible item");
+      log.info("Skipping ineligible and non-contributed item");
       return;
     }
 
     runOngoing(centralServerId, (ctx, stats) -> {
-      log.info("Starting ongoing contribution job {} on item moved", ctx);
+      log.info("Starting ongoing item move job {}", ctx);
 
       if (contributedItem) {
         deContributeItem(centralServerId, item, stats);
@@ -186,6 +193,7 @@ public class ContributionJobRunner {
   }
 
   public void runItemDeContribution(UUID centralServerId, Instance instance, Item deletedItem) {
+    log.info("Validating item {} for de-contribution from central server {}", deletedItem.getId(), centralServerId);
     if (!recordContributionService.isContributed(centralServerId, instance, deletedItem)) {
       log.info("Skipping non-contributed item");
       return;
@@ -282,6 +290,7 @@ public class ContributionJobRunner {
     var context = ContributionJobContext.builder()
       .contributionId(contribution.getId())
       .centralServerId(centralServerId)
+      .tenantId(folioContext.getTenantId())
       .build();
 
     var stats = new Statistics();

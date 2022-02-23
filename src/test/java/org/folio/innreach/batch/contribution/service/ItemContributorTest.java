@@ -2,7 +2,6 @@ package org.folio.innreach.batch.contribution.service;
 
 import static com.google.common.collect.ImmutableList.of;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -11,6 +10,8 @@ import static org.folio.innreach.external.dto.InnReachResponse.okResponse;
 import static org.folio.innreach.fixture.ContributionFixture.createContributionJobContext;
 import static org.folio.innreach.fixture.ContributionFixture.createItem;
 
+import java.util.List;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -18,23 +19,15 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.retry.RetryCallback;
+import org.springframework.retry.support.RetryTemplate;
 
 import org.folio.innreach.batch.contribution.ContributionJobContext;
 import org.folio.innreach.batch.contribution.ContributionJobContextManager;
 import org.folio.innreach.batch.contribution.listener.ContributionExceptionListener;
-import org.folio.innreach.domain.dto.folio.ContributionItemCirculationStatus;
-import org.folio.innreach.domain.service.CentralServerService;
-import org.folio.innreach.domain.service.ContributionValidationService;
-import org.folio.innreach.domain.service.InnReachLocationService;
-import org.folio.innreach.domain.service.LibraryMappingService;
-import org.folio.innreach.domain.service.LocationMappingService;
-import org.folio.innreach.domain.service.MaterialTypeMappingService;
-import org.folio.innreach.domain.service.impl.FolioLocationService;
+import org.folio.innreach.domain.service.RecordTransformationService;
 import org.folio.innreach.domain.service.impl.RecordContributionServiceImpl;
-import org.folio.innreach.dto.CentralServerDTO;
-import org.folio.innreach.dto.InnReachLocationsDTO;
-import org.folio.innreach.dto.LibraryMappingsDTO;
-import org.folio.innreach.dto.MaterialTypeMappingsDTO;
+import org.folio.innreach.external.dto.BibItem;
 import org.folio.innreach.external.service.InnReachContributionService;
 
 @ExtendWith(MockitoExtension.class)
@@ -43,21 +36,11 @@ class ItemContributorTest {
   private static final ContributionJobContext JOB_CONTEXT = createContributionJobContext();
 
   @Mock
+  private RetryTemplate retryTemplate;
+  @Mock
   private InnReachContributionService irContributionService;
   @Mock
-  private ContributionValidationService validationService;
-  @Mock
-  private MaterialTypeMappingService typeMappingService;
-  @Mock
-  private LibraryMappingService libraryMappingService;
-  @Mock
-  private InnReachLocationService irLocationService;
-  @Mock
-  private CentralServerService centralServerService;
-  @Mock
-  private LocationMappingService locationMappingService;
-  @Mock
-  private FolioLocationService folioLocationService;
+  private RecordTransformationService recordTransformationService;
   @Mock
   private ContributionExceptionListener exceptionListener;
 
@@ -67,6 +50,10 @@ class ItemContributorTest {
   @BeforeEach
   public void init() {
     ContributionJobContextManager.beginContributionJobContext(JOB_CONTEXT);
+    when(retryTemplate.execute(any(), any(), any())).thenAnswer(invocation -> {
+      RetryCallback retry = invocation.getArgument(0);
+      return retry.doWithRetry(null);
+    });
   }
 
   @AfterEach
@@ -77,11 +64,7 @@ class ItemContributorTest {
   @Test
   void shouldContributeItems() {
     when(irContributionService.contributeBibItems(any(), any(), any())).thenReturn(okResponse());
-    when(irLocationService.getAllInnReachLocations(any(), any())).thenReturn(new InnReachLocationsDTO());
-    when(typeMappingService.getAllMappings(any(), anyInt(), anyInt())).thenReturn(new MaterialTypeMappingsDTO());
-    when(libraryMappingService.getAllMappings(any(), anyInt(), anyInt())).thenReturn(new LibraryMappingsDTO());
-    when(centralServerService.getCentralServer(any())).thenReturn(new CentralServerDTO());
-    when(validationService.getItemCirculationStatus(any(), any())).thenReturn(ContributionItemCirculationStatus.AVAILABLE);
+    when(recordTransformationService.getBibItems(any(), any(), any())).thenReturn(List.of(new BibItem()));
 
     service.contributeItems(JOB_CONTEXT.getCentralServerId(), "test", of(createItem()));
 

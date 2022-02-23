@@ -41,6 +41,7 @@ import org.folio.innreach.domain.service.InventoryViewService;
 import org.folio.innreach.domain.service.RecordContributionService;
 import org.folio.innreach.dto.Instance;
 import org.folio.innreach.dto.Item;
+import org.folio.spring.FolioExecutionContext;
 
 @ExtendWith(MockitoExtension.class)
 class ContributionJobRunnerTest {
@@ -69,6 +70,8 @@ class ContributionJobRunnerTest {
   private KafkaProperties kafkaProperties;
   @Mock
   private FolioEnvironment folioEnv;
+  @Mock
+  private FolioExecutionContext folioContext;
   @Mock
   private ContributionService contributionService;
   @Mock
