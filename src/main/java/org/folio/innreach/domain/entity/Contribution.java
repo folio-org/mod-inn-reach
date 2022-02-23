@@ -86,7 +86,7 @@ public class Contribution extends Auditable implements Identifiable<UUID> {
 
   private Long recordsDecontributed;
 
-  private Boolean ongoing;
+  private boolean ongoing;
 
   @OneToMany(mappedBy = "contribution", fetch = FetchType.LAZY)
   private List<ContributionError> errors = new ArrayList<>();
