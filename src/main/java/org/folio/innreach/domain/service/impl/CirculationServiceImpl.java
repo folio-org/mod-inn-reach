@@ -5,6 +5,7 @@ import static java.time.Instant.ofEpochSecond;
 import static java.util.Objects.nonNull;
 import static org.apache.commons.lang3.StringUtils.capitalize;
 
+import static org.folio.innreach.domain.dto.folio.circulation.RequestDTO.RequestStatus.CLOSED_CANCELLED;
 import static org.folio.innreach.domain.dto.folio.circulation.RequestDTO.RequestStatus.OPEN_AWAITING_PICKUP;
 import static org.folio.innreach.domain.dto.folio.circulation.RequestDTO.RequestStatus.OPEN_IN_TRANSIT;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.BORROWER_RENEW;
@@ -249,6 +250,12 @@ public class CirculationServiceImpl implements CirculationService {
 
     Assert.isTrue(transaction.getState() == ITEM_SHIPPED, unexpectedTransactionState(transaction));
     transaction.setState(ITEM_RECEIVED);
+
+    var request = requestService.findRequest(transaction.getHold().getFolioRequestId());
+    if (request.getStatus() == CLOSED_CANCELLED){
+      innReachExternalService.postInnReachApi(centralCode, String.format("/circ/returnuncirculated/%s/%s", trackingId, centralCode));
+      transaction.setState(RETURN_UNCIRCULATED);
+    }
 
     return success();
   }
