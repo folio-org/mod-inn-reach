@@ -4,8 +4,11 @@ inventory-storage.instances.item.get
 inventory-storage.items.collection.get
 inventory-storage.items.item.get
 inventory-storage.holdings.item.get
-inventory.items.item.get
+inventory-storage.locations.collection.get
 inventory-storage.material-types.collection.get
+inventory.items.item.get
 users.collection.get
 source-storage.records.get
 circulation.requests.item.get
+circulation.requests.collection.get
+circulation.loans.collection.get
