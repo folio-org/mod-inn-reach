@@ -5,7 +5,9 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.contains;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
@@ -112,6 +114,10 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
   private static final String PRE_POPULATED_ITEM_ID = "9a326225-6530-41cc-9399-a61987bfab3c";
   private static final String PRE_POPULATED_REQUESTER_ID = "f75ffab1-2e2f-43be-b159-3031e2cfc458";
   private static final UUID PRE_POPULATED_PATRON2_ID = UUID.fromString("a7853dda-520b-4f7a-a1fb-9383665ea770");
+
+  private static final String PRE_POPULATED_LOCAL_AGENCY_CODE1 = "q1w2e";
+  private static final String PRE_POPULATED_LOCAL_AGENCY_CODE2 = "w2e3r";
+  private static final String PRE_POPULATED_ANOTHER_LOCAL_AGENCY_CODE1 = "g91ub";
 
   @Autowired
   private TestRestTemplate testRestTemplate;
@@ -452,9 +458,13 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
   }
 
   @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql"
+  })
   void processLocalHoldCirculationRequest_createNew() {
     var transactionHoldDTO = createTransactionHoldDTO();
-    transactionHoldDTO.setPatronAgencyCode(transactionHoldDTO.getItemAgencyCode());
+    transactionHoldDTO.setItemAgencyCode(PRE_POPULATED_LOCAL_AGENCY_CODE1);
+    transactionHoldDTO.setPatronAgencyCode(PRE_POPULATED_LOCAL_AGENCY_CODE2);
 
     var responseEntity = testRestTemplate.exchange(
       CIRCULATION_OPERATION_ENDPOINT, HttpMethod.PUT,
@@ -484,7 +494,8 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
   })
   void processLocalHoldCirculationRequest_updateExiting() {
     var transactionHoldDTO = createTransactionHoldDTO();
-    transactionHoldDTO.setPatronAgencyCode(transactionHoldDTO.getItemAgencyCode());
+    transactionHoldDTO.setItemAgencyCode(PRE_POPULATED_LOCAL_AGENCY_CODE1);
+    transactionHoldDTO.setPatronAgencyCode(PRE_POPULATED_LOCAL_AGENCY_CODE2);
 
     var responseEntity = testRestTemplate.exchange(
       CIRCULATION_OPERATION_ENDPOINT, HttpMethod.PUT,
@@ -512,12 +523,13 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
   @Test
   @Sql(scripts = {
     "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/central-server/pre-populate-another-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
   })
   void processLocalHoldCirculationRequest_invalidAgencyCodes() {
     var transactionHoldDTO = createTransactionHoldDTO();
-    transactionHoldDTO.setPatronAgencyCode("abcd1");
-    transactionHoldDTO.setItemAgencyCode("abcd2");
+    transactionHoldDTO.setPatronAgencyCode(PRE_POPULATED_LOCAL_AGENCY_CODE1);
+    transactionHoldDTO.setItemAgencyCode(PRE_POPULATED_ANOTHER_LOCAL_AGENCY_CODE1);
 
     var responseEntity = testRestTemplate.exchange(
       CIRCULATION_OPERATION_ENDPOINT, HttpMethod.PUT,
@@ -545,6 +557,8 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
   })
   void processItemReceivedRequest_whenItemIsShipped() {
+    var requestDTO = new RequestDTO();
+    when(circulationClient.findRequest(any())).thenReturn(Optional.of(requestDTO));
     var transaction = repository.findByTrackingIdAndCentralServerCode(PRE_POPULATED_TRACKING2_ID,
       PRE_POPULATED_CENTRAL_CODE).get();
     transaction.setState(ITEM_SHIPPED);
@@ -585,6 +599,39 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
 
     var transactionUpdated = fetchTransactionByTrackingId(PRE_POPULATED_TRACKING2_ID);
     assertNotEquals(ITEM_RECEIVED, transactionUpdated.getState());
+  }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
+  })
+  void processItemReceivedRequest_whenItemIsShippedAndRequestIsCancelled() {
+    when(innReachExternalService.postInnReachApi(anyString(), anyString())).thenReturn("test");
+    var requestDTO = new RequestDTO();
+    requestDTO.setStatus(RequestDTO.RequestStatus.CLOSED_CANCELLED);
+    when(circulationClient.findRequest(any())).thenReturn(Optional.of(requestDTO));
+    var transaction = repository.findByTrackingIdAndCentralServerCode(PRE_POPULATED_TRACKING2_ID,
+      PRE_POPULATED_CENTRAL_CODE).get();
+    transaction.setState(ITEM_SHIPPED);
+    repository.save(transaction);
+
+    var transactionHoldDTO = createTransactionHoldDTO();
+
+    var responseEntity = testRestTemplate.exchange(
+      ITEM_RECEIVED_PATH, HttpMethod.PUT, new HttpEntity<>(transactionHoldDTO, headers), InnReachResponseDTO.class,
+      PRE_POPULATED_TRACKING2_ID, PRE_POPULATED_CENTRAL_CODE);
+
+    verify(innReachExternalService).postInnReachApi(anyString(), contains("returnuncirculated"));
+
+    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+    var responseEntityBody = responseEntity.getBody();
+    assertNotNull(responseEntityBody);
+    assertEquals("ok", responseEntityBody.getStatus());
+
+    var transactionUpdated = repository.findByTrackingIdAndCentralServerCode(PRE_POPULATED_TRACKING2_ID,
+      PRE_POPULATED_CENTRAL_CODE).get();
+    assertEquals(RETURN_UNCIRCULATED, transactionUpdated.getState());
   }
 
   @Test

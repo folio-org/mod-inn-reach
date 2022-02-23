@@ -22,7 +22,6 @@ import java.time.Instant;
 import java.util.Map;
 import java.util.UUID;
 
-import org.folio.innreach.domain.dto.folio.circulation.RequestDTO;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
@@ -34,6 +33,7 @@ import org.springframework.test.context.jdbc.SqlMergeMode;
 
 import org.folio.innreach.client.CirculationClient;
 import org.folio.innreach.controller.base.BaseApiControllerTest;
+import org.folio.innreach.domain.dto.folio.circulation.RequestDTO;
 import org.folio.innreach.domain.entity.InnReachTransaction;
 import org.folio.innreach.domain.service.RequestService;
 import org.folio.innreach.mapper.InnReachTransactionPickupLocationMapper;
@@ -93,6 +93,9 @@ class CirculationApiTest extends BaseApiControllerTest {
   private static final String PRE_POPULATED_INSTANCE_ID = "b81bcffd-9dd9-4e17-b6fd-eeecf790aad5";
   private static final String HOLDING_URL = "/holdings-storage/holdings/%s";
 
+  private static final String PRE_POPULATED_LOCAL_AGENCY_CODE1 = "q1w2e";
+  private static final String PRE_POPULATED_LOCAL_AGENCY_CODE2 = "w2e3r";
+
   @SpyBean
   private InnReachTransactionRepository repository;
 
@@ -133,9 +136,9 @@ class CirculationApiTest extends BaseApiControllerTest {
     stubPost(format(MOVE_CIRCULATION_REQUEST_URL_TEMPLATE, PRE_POPULATED_REQUEST_ID), "circulation/updated-request-response.json");
 
     mockMvc.perform(post(CIRCULATION_ENDPOINT, PATRON_HOLD_OPERATION, PRE_POPULATED_TRACKING_ID, PRE_POPULATED_CENTRAL_CODE)
-        .content(jsonHelper.toJson(transactionHoldDTO))
-        .contentType(MediaType.APPLICATION_JSON)
-        .headers(getOkapiHeaders()))
+      .content(jsonHelper.toJson(transactionHoldDTO))
+      .contentType(MediaType.APPLICATION_JSON)
+      .headers(getOkapiHeaders()))
       .andExpect(status().isOk());
 
     await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() ->
@@ -173,9 +176,9 @@ class CirculationApiTest extends BaseApiControllerTest {
     stubGet(format(QUERY_REQUEST_BY_ITEM_ID_URL_TEMPLATE, PRE_POPULATED_ITEM_ID), "circulation/empty-requests-response.json");
 
     mockMvc.perform(post(CIRCULATION_ENDPOINT, PATRON_HOLD_OPERATION, "newtrackingid", PRE_POPULATED_CENTRAL_CODE)
-        .content(jsonHelper.toJson(transactionHoldDTO))
-        .contentType(MediaType.APPLICATION_JSON)
-        .headers(getOkapiHeaders()))
+      .content(jsonHelper.toJson(transactionHoldDTO))
+      .contentType(MediaType.APPLICATION_JSON)
+      .headers(getOkapiHeaders()))
       .andExpect(status().isOk());
 
     await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() ->
@@ -207,9 +210,9 @@ class CirculationApiTest extends BaseApiControllerTest {
     stubPut(format("%s/%s", REQUESTS_URL, PRE_POPULATED_REQUEST_ID));
 
     mockMvc.perform(put(CIRCULATION_ENDPOINT, CANCEL_REQ_OPERATION, PRE_POPULATED_TRACKING_ID, PRE_POPULATED_CENTRAL_CODE)
-        .content(jsonHelper.toJson(requestPayload))
-        .contentType(MediaType.APPLICATION_JSON)
-        .headers(getOkapiHeaders()))
+      .content(jsonHelper.toJson(requestPayload))
+      .contentType(MediaType.APPLICATION_JSON)
+      .headers(getOkapiHeaders()))
       .andExpect(status().isOk());
 
     verify(requestService).cancelRequest(any(), eq("Test reason"));
@@ -241,9 +244,9 @@ class CirculationApiTest extends BaseApiControllerTest {
     stubPut(format("%s/%s", REQUESTS_URL, PRE_POPULATED_REQUEST_ID));
 
     mockMvc.perform(put(CIRCULATION_ENDPOINT, CANCEL_REQ_OPERATION, PRE_POPULATED_TRACKING_ID, PRE_POPULATED_CENTRAL_CODE)
-        .content(jsonHelper.toJson(requestPayload))
-        .contentType(MediaType.APPLICATION_JSON)
-        .headers(getOkapiHeaders()))
+      .content(jsonHelper.toJson(requestPayload))
+      .contentType(MediaType.APPLICATION_JSON)
+      .headers(getOkapiHeaders()))
       .andExpect(status().isBadRequest());
 
     verifyNoInteractions(requestService);
@@ -259,8 +262,8 @@ class CirculationApiTest extends BaseApiControllerTest {
   void localHold_createRequest() throws Exception {
     var transactionHoldDTO = createTransactionHoldDTO();
     transactionHoldDTO.setItemId(ITEM_HRID);
-    transactionHoldDTO.setItemAgencyCode(PRE_POPULATED_CENTRAL_AGENCY_CODE);
-    transactionHoldDTO.setPatronAgencyCode(PRE_POPULATED_CENTRAL_AGENCY_CODE);
+    transactionHoldDTO.setItemAgencyCode(PRE_POPULATED_LOCAL_AGENCY_CODE1);
+    transactionHoldDTO.setPatronAgencyCode(PRE_POPULATED_LOCAL_AGENCY_CODE2);
     transactionHoldDTO.setCentralItemType(PRE_POPULATED_CENTRAL_ITEM_TYPE);
     transactionHoldDTO.setPatronId(encode(FOLIO_PATRON_ID));
     var pickupLocation = pickupLocationMapper.fromString(transactionHoldDTO.getPickupLocation());
@@ -275,9 +278,9 @@ class CirculationApiTest extends BaseApiControllerTest {
     stubGet(format(HOLDING_URL, HOLDINGS_RECORD_ID), "inventory-storage/holding-response.json");
 
     mockMvc.perform(put(CIRCULATION_ENDPOINT, LOCAL_HOLD_OPERATION, "newtrackingid", PRE_POPULATED_CENTRAL_CODE)
-        .content(jsonHelper.toJson(transactionHoldDTO))
-        .contentType(MediaType.APPLICATION_JSON)
-        .headers(getOkapiHeaders()))
+      .content(jsonHelper.toJson(transactionHoldDTO))
+      .contentType(MediaType.APPLICATION_JSON)
+      .headers(getOkapiHeaders()))
       .andExpect(status().isOk());
 
     await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() ->
