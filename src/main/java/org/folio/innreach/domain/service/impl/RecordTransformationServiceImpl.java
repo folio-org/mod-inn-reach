@@ -35,6 +35,7 @@ import org.folio.innreach.domain.service.MARCRecordTransformationService;
 import org.folio.innreach.domain.service.MaterialTypeMappingService;
 import org.folio.innreach.domain.service.RecordTransformationService;
 import org.folio.innreach.dto.BibInfo;
+import org.folio.innreach.dto.Holding;
 import org.folio.innreach.dto.InnReachLocationDTO;
 import org.folio.innreach.dto.Instance;
 import org.folio.innreach.dto.Item;
@@ -56,6 +57,7 @@ public class RecordTransformationServiceImpl implements RecordTransformationServ
   private final MARCRecordTransformationService marcService;
   private final ContributionValidationService validationService;
 
+  private final HoldingsServiceImpl holdingsService;
   private final MaterialTypeMappingService typeMappingService;
   private final LibraryMappingService libraryMappingService;
   private final InnReachLocationService irLocationService;
@@ -186,7 +188,13 @@ public class RecordTransformationServiceImpl implements RecordTransformationServ
     Character itemSuppress = validationService.getSuppressionStatus(centralServerId, item.getStatisticalCodeIds());
 
     return itemSuppress != null ? itemSuppress :
-      validationService.getSuppressionStatus(centralServerId, item.getHoldingStatisticalCodeIds());
+      validationService.getSuppressionStatus(centralServerId, fetchHoldingStatisticalCodes(item));
+  }
+
+  private List<UUID> fetchHoldingStatisticalCodes(Item item) {
+    return holdingsService.find(item.getHoldingsRecordId())
+      .map(Holding::getStatisticalCodeIds)
+      .orElse(null);
   }
 
   private ContributionItemCirculationStatus getCirculationStatus(UUID centralServerId, Item item) {

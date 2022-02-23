@@ -32,6 +32,7 @@ import org.folio.innreach.domain.dto.folio.ResultList;
 import org.folio.innreach.domain.dto.folio.circulation.RequestDTO;
 import org.folio.innreach.domain.service.CentralServerService;
 import org.folio.innreach.domain.service.ContributionCriteriaConfigurationService;
+import org.folio.innreach.domain.service.HoldingsService;
 import org.folio.innreach.domain.service.InnReachLocationService;
 import org.folio.innreach.domain.service.ItemContributionOptionsConfigurationService;
 import org.folio.innreach.domain.service.LibraryMappingService;
@@ -69,6 +70,8 @@ class ContributionValidationServiceImplTest {
   private InventoryClient inventoryClient;
   @Mock
   private CirculationClient circulationClient;
+  @Mock
+  private HoldingsService holdingsService;
 
   @InjectMocks
   private ContributionValidationServiceImpl service;

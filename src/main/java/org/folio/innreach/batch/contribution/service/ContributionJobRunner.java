@@ -79,6 +79,7 @@ public class ContributionJobRunner {
           if (event == null) {
             return;
           }
+          log.info("Processing instance iteration event = {}", event);
 
           var instanceId = event.getInstanceId();
           var iterationJobId = context.getIterationJobId();
@@ -88,14 +89,12 @@ public class ContributionJobRunner {
             continue;
           }
 
-          log.info("Processing instance iteration event = {}", event);
-
           var instance = loadInstanceWithItems(instanceId);
           if (instance == null) {
             continue;
           }
 
-          if (validationService.isEligibleForContribution(centralServerId, instance)) {
+          if (isEligibleForContribution(centralServerId, instance)) {
             contributeInstance(centralServerId, instance, stats);
             contributeInstanceItems(centralServerId, instance, stats);
           } else if (isContributed(centralServerId, instance)) {
@@ -263,7 +262,7 @@ public class ContributionJobRunner {
   private void contributeInstanceItems(UUID centralServerId, Instance instance, Statistics stats) {
     var bibId = instance.getHrid();
     var items = instance.getItems().stream()
-      .filter(i -> validationService.isEligibleForContribution(centralServerId, i))
+      .filter(i -> isEligibleForContribution(centralServerId, i))
       .collect(Collectors.toList());
 
     int chunkSize = max(jobProperties.getChunkSize(), 1);

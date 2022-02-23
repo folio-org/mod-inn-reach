@@ -17,6 +17,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import org.folio.innreach.domain.service.ContributionValidationService;
+import org.folio.innreach.domain.service.HoldingsService;
 import org.folio.innreach.domain.service.MARCRecordTransformationService;
 import org.folio.innreach.dto.Instance;
 import org.folio.innreach.dto.Item;
@@ -30,6 +31,8 @@ class RecordTransformationServiceImplTest {
   private MARCRecordTransformationService marcService;
   @Mock
   private ContributionValidationService validationService;
+  @Mock
+  private HoldingsService holdingsService;
 
   @InjectMocks
   private RecordTransformationServiceImpl service;
