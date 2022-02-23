@@ -10,20 +10,14 @@ import static org.folio.innreach.dto.MappingValidationStatusDTO.VALID;
 
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
-import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
-import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanFactory;
-import org.springframework.beans.factory.BeanFactoryAware;
-import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
 
-import org.folio.innreach.batch.contribution.ContributionJobContext;
 import org.folio.innreach.batch.contribution.service.ContributionJobRunner;
 import org.folio.innreach.client.InstanceStorageClient;
 import org.folio.innreach.domain.dto.folio.inventorystorage.InstanceIterationRequest;
@@ -35,7 +29,6 @@ import org.folio.innreach.dto.ContributionDTO;
 import org.folio.innreach.dto.ContributionErrorDTO;
 import org.folio.innreach.dto.ContributionsDTO;
 import org.folio.innreach.mapper.ContributionMapper;
-import org.folio.innreach.repository.CentralServerRepository;
 import org.folio.innreach.repository.ContributionErrorRepository;
 import org.folio.innreach.repository.ContributionRepository;
 import org.folio.spring.FolioExecutionContext;
@@ -44,23 +37,17 @@ import org.folio.spring.data.OffsetRequest;
 @Log4j2
 @RequiredArgsConstructor
 @Service
-public class ContributionServiceImpl implements ContributionService, BeanFactoryAware {
+public class ContributionServiceImpl implements ContributionService {
 
   private final ContributionRepository repository;
   private final ContributionErrorRepository errorRepository;
   private final ContributionMapper mapper;
   private final ContributionValidationService validationService;
   private final FolioExecutionContext folioContext;
-  private final CentralServerRepository centralServerRepository;
   private final InstanceStorageClient client;
+  private final BeanFactory beanFactory;
 
-  private BeanFactory beanFactory;
   private ContributionJobRunner jobRunner;
-
-  @Override
-  public void setBeanFactory(BeanFactory beanFactory) throws BeansException {
-    this.beanFactory = beanFactory;
-  }
 
   @Override
   public ContributionDTO getCurrent(UUID centralServerId) {

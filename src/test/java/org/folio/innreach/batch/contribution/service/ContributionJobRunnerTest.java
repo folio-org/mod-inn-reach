@@ -3,6 +3,7 @@ package org.folio.innreach.batch.contribution.service;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -46,6 +47,7 @@ class ContributionJobRunnerTest {
 
   private static final ContributionJobContext JOB_CONTEXT = createContributionJobContext();
   private static final UUID JOB_ID = JOB_CONTEXT.getIterationJobId();
+  private static final UUID CENTRAL_SERVER_ID = JOB_CONTEXT.getCentralServerId();
 
   @Qualifier("instanceExceptionListener")
   @Mock
@@ -100,19 +102,39 @@ class ContributionJobRunnerTest {
 
   @Test
   void shouldRunJob_noInstanceItems() {
+    var event = InstanceIterationEvent.of(JOB_ID, "test", "test", UUID.randomUUID());
     Instance instance = createInstance();
     instance.setItems(null);
 
     when(factory.createReader(any())).thenReturn(reader);
     when(reader.read())
-      .thenReturn(new InstanceIterationEvent())
+      .thenReturn(event)
       .thenReturn(null);
     when(inventoryViewService.getInstance(any())).thenReturn(instance);
 
-    jobRunner.runInitialContribution(createContributionJobContext());
+    jobRunner.runInitialContribution(JOB_CONTEXT);
 
     verify(reader, times(2)).read();
-    verifyNoInteractions(recordContributor);
+    verify(recordContributor).isContributed(eq(CENTRAL_SERVER_ID), eq(instance));
+  }
+
+  @Test
+  void shouldRunJob_deContributeIneligibleInstance() {
+    var event = InstanceIterationEvent.of(JOB_ID, "test", "test", UUID.randomUUID());
+    Instance instance = createInstance();
+    instance.setItems(null);
+
+    when(factory.createReader(any())).thenReturn(reader);
+    when(reader.read())
+      .thenReturn(event)
+      .thenReturn(null);
+    when(inventoryViewService.getInstance(any())).thenReturn(instance);
+    when(recordContributor.isContributed(any(), any())).thenReturn(true);
+
+    jobRunner.runInitialContribution(JOB_CONTEXT);
+
+    verify(reader, times(2)).read();
+    verify(recordContributor).deContributeInstance(eq(CENTRAL_SERVER_ID), eq(instance));
   }
 
   @Test

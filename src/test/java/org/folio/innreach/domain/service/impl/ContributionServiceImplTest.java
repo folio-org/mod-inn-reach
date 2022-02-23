@@ -89,7 +89,7 @@ class ContributionServiceImplTest {
     var contribution = createContribution();
     var centralServerId = contribution.getCentralServer().getId();
 
-    when(repository.fetchCurrentByCentralServerId(any())).thenReturn(Optional.of(contribution));
+    when(repository.findById(any())).thenReturn(Optional.of(contribution));
     when(repository.save(any())).thenReturn(contribution);
 
     var updated = service.completeContribution(centralServerId);
@@ -106,15 +106,14 @@ class ContributionServiceImplTest {
     contribution.setRecordsProcessed(11L);
     contribution.setRecordsContributed(10L);
 
-    when(repository.fetchCurrentByCentralServerId(any())).thenReturn(Optional.of(contribution));
+    when(repository.findById(any())).thenReturn(Optional.of(contribution));
     when(repository.save(any())).thenReturn(contribution);
 
     service.updateContributionStats(contribution.getId(), mapper.toDTO(contribution));
 
     ArgumentCaptor<Contribution> argument = ArgumentCaptor.forClass(Contribution.class);
-    verify(repository).save(argument.capture());
 
-    Contribution saved = argument.getValue();
+    Contribution saved = repository.findById(contribution.getId()).get();
     assertEquals(contribution.getRecordsTotal(), saved.getRecordsTotal());
     assertEquals(contribution.getRecordsProcessed(), saved.getRecordsProcessed());
     assertEquals(contribution.getRecordsContributed(), saved.getRecordsContributed());
