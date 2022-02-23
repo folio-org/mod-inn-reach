@@ -108,9 +108,8 @@ public class RequestServiceImpl implements RequestService {
   @Override
   public void createItemHoldRequest(String trackingId, String centralCode) {
     var transaction = fetchTransaction(trackingId, centralCode);
-    var itemHold = (TransactionItemHold) transaction.getHold();
     var hold = transaction.getHold();
-    var centralPatronName = itemHold.getPatronName();
+    var centralPatronName = hold.getPatronName();
     try {
       var centralServerId = getCentralServerId(transaction.getCentralServerCode());
       var patronType = hold.getCentralPatronType();

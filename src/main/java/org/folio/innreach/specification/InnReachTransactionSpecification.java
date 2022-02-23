@@ -46,10 +46,11 @@ public class InnReachTransactionSpecification {
       var patronAgencyIn = patronAgencyIn(cb, hold, parameters);
       var itemAgencyIn = itemAgencyIn(cb, hold, parameters);
       var patronTypeIn = patronTypeIn(cb, transactionHold, parameters);
+      var patronNameIn = patronNameIn(cb, transactionHold, parameters);
       var centralItemTypeIn = centralItemTypeIn(cb, hold, parameters);
       var itemBarcodeIn = itemBarcodeIn(cb, transaction, hold, patronHold, parameters);
 
-      return cb.and(typeIs, stateIs, centralCodeIn, patronAgencyIn, itemAgencyIn, patronTypeIn, centralItemTypeIn, itemBarcodeIn);
+      return cb.and(typeIs, stateIs, centralCodeIn, patronAgencyIn, itemAgencyIn, patronTypeIn, centralItemTypeIn, itemBarcodeIn, patronNameIn);
     };
   }
 
@@ -120,6 +121,15 @@ public class InnReachTransactionSpecification {
     }
 
     return cb.or(transactionHold.get("centralPatronType").in(patronTypes));
+  }
+
+  static Predicate patronNameIn(CriteriaBuilder cb, Join<Object, TransactionHold>  transactionHold, InnReachTransactionFilterParameters parameters) {
+    var patronNames = parameters.getPatronNames();
+    if (isEmpty(patronNames)) {
+      return cb.conjunction();
+    }
+
+    return cb.or(transactionHold.get("patronName").in(patronNames));
   }
 
   static Predicate itemBarcodeIn(CriteriaBuilder cb,
