@@ -26,10 +26,12 @@ import static org.folio.innreach.domain.dto.folio.inventory.InventoryItemStatus.
 import static org.folio.innreach.domain.dto.folio.inventory.InventoryItemStatus.UNAVAILABLE;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.CANCEL_REQUEST;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.FINAL_CHECKIN;
+import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.TRANSFER;
 import static org.folio.innreach.dto.TransactionStateEnum.PATRON_HOLD;
 import static org.folio.innreach.dto.TransactionTypeEnum.ITEM;
 import static org.folio.innreach.dto.TransactionTypeEnum.LOCAL;
 import static org.folio.innreach.dto.TransactionTypeEnum.PATRON;
+import static org.folio.innreach.fixture.InnReachTransactionFixture.createInnReachTransaction;
 import static org.folio.innreach.fixture.InventoryItemFixture.createInventoryItemDTO;
 import static org.folio.innreach.fixture.RequestFixture.createRequestDTO;
 import static org.folio.innreach.fixture.TestUtil.circHeaders;
@@ -1075,7 +1077,44 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
       PRE_POPULATED_ITEM_HOLD_ITEM_BARCODE, UUID.randomUUID()
     );
 
-    assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
+    assertEquals(HttpStatus.NOT_FOUND, responseEntity.getStatusCode());
+  }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql",
+  })
+  void testCheckOutItemHoldItem_multipleTransactions() {
+    var transactionWithTheSameItem = createInnReachTransaction(InnReachTransaction.TransactionType.ITEM);
+    transactionWithTheSameItem.setCentralServerCode(PRE_POPULATED_CENTRAL_SERVER_CODE);
+    transactionWithTheSameItem.getHold().setFolioItemBarcode(PRE_POPULATED_ITEM_HOLD_ITEM_BARCODE);
+    transactionWithTheSameItem.setState(TRANSFER);
+    var savedTransaction = repository.save(transactionWithTheSameItem);
+
+    modifyTransactionState(PRE_POPULATED_ITEM_HOLD_TRANSACTION_ID, CANCEL_REQUEST);
+
+    var checkOutResponse = new LoanDTO()
+      .id(FOLIO_CHECKOUT_ID)
+      .item(new LoanItem().barcode(PRE_POPULATED_ITEM_HOLD_ITEM_BARCODE));
+
+    when(circulationClient.checkOutByBarcode(any(CheckOutRequestDTO.class))).thenReturn(checkOutResponse);
+
+    var responseEntity = testRestTemplate.postForEntity(
+      ITEM_HOLD_CHECK_OUT_ENDPOINT, null, ItemHoldCheckOutResponseDTO.class,
+      PRE_POPULATED_ITEM_HOLD_ITEM_BARCODE, UUID.randomUUID()
+    );
+
+    var response = responseEntity.getBody();
+    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+    assertNotNull(response);
+
+    var transaction = response.getTransaction();
+    assertEquals(savedTransaction.getId(), transaction.getId());
+
+    var folioCheckOut = response.getFolioCheckOut();
+    assertNotNull(folioCheckOut);
+    assertEquals(FOLIO_CHECKOUT_ID, folioCheckOut.getId());
   }
 
   @Test
@@ -1153,8 +1192,8 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
 
   @ParameterizedTest
   @ValueSource(strings = {"0aab1720-14b4-4210-9a19-0d0bf1cd64d3",
-                          "ab2393a1-acc4-4849-82ac-8cc0c37339e1",
-                          "79b0a1fb-55be-4e55-9d84-01303aaec1ce"})
+    "ab2393a1-acc4-4849-82ac-8cc0c37339e1",
+    "79b0a1fb-55be-4e55-9d84-01303aaec1ce"})
   @Sql(scripts = {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
