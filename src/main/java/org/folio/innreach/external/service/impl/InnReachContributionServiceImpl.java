@@ -1,5 +1,7 @@
 package org.folio.innreach.external.service.impl;
 
+import static java.util.Collections.emptyList;
+
 import static org.folio.innreach.external.util.AuthUtils.buildBearerAuthHeader;
 
 import java.net.URI;
@@ -93,8 +95,12 @@ public class InnReachContributionServiceImpl implements InnReachContributionServ
     var localCode = connectionDetails.getLocalCode();
     var centralCode = connectionDetails.getCentralCode();
 
-    return contributionClient.lookUpBib(connectionUrl, authorizationHeader, localCode,
-      centralCode, localCode, bibId);
+    try {
+      return contributionClient.lookUpBib(connectionUrl, authorizationHeader, localCode,
+        centralCode, localCode, bibId);
+    } catch (Exception e) {
+      return InnReachResponse.errorResponse(e.getMessage(), emptyList());
+    }
   }
 
   @Override
@@ -107,8 +113,12 @@ public class InnReachContributionServiceImpl implements InnReachContributionServ
     var localCode = connectionDetails.getLocalCode();
     var centralCode = connectionDetails.getCentralCode();
 
-    return contributionClient.lookUpBibItem(connectionUrl, authorizationHeader, localCode,
-      centralCode, localCode, bibId, itemId);
+    try {
+      return contributionClient.lookUpBibItem(connectionUrl, authorizationHeader, localCode,
+        centralCode, localCode, bibId, itemId);
+    } catch (Exception e) {
+      return InnReachResponse.errorResponse(e.getMessage(), emptyList());
+    }
   }
 
   private CentralServerConnectionDetailsDTO getConnectionDetails(UUID centralServerId) {
