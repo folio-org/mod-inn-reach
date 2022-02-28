@@ -72,7 +72,7 @@ public class BibItem {
   /**
    * Item hold count
    */
-  private Integer holdCount;
+  private Long holdCount;
 
   /**
    * Epoch UNIX time stamp

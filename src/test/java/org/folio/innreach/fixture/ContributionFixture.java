@@ -116,7 +116,7 @@ public class ContributionFixture {
     return instanceRandom.nextObject(Item.class);
   }
 
-  private static Holding createHolding() {
+  public static Holding createHolding() {
     return instanceRandom.nextObject(Holding.class);
   }
 

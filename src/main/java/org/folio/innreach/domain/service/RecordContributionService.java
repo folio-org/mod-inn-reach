@@ -2,7 +2,6 @@ package org.folio.innreach.domain.service;
 
 import java.util.List;
 import java.util.UUID;
-import java.util.function.BiConsumer;
 
 import org.folio.innreach.dto.Instance;
 import org.folio.innreach.dto.Item;

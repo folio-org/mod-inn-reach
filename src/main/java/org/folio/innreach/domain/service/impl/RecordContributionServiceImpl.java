@@ -88,7 +88,7 @@ public class RecordContributionServiceImpl implements RecordContributionService 
 
   @Override
   public int contributeItems(UUID centralServerId, String bibId, List<Item> items) {
-    var bibItems = recordTransformationService.getBibItems(centralServerId, items, (item, e) -> logItemTransformationError(item, e));
+    var bibItems = recordTransformationService.getBibItems(centralServerId, items, this::logItemTransformationError);
 
     int itemsCount = bibItems.size();
 

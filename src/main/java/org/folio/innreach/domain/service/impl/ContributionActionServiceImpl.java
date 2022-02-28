@@ -117,6 +117,20 @@ public class ContributionActionServiceImpl implements ContributionActionService 
 
   @Async
   @Override
+  public void handleLoanCreation(StorageLoanDTO loan) {
+    log.info("Handling loan creation {}", loan.getId());
+
+    var item = fetchItem(loan.getItemId());
+    var instance = fetchInstanceWithItems(item);
+    if (!isMARCRecord(instance)) {
+      return;
+    }
+
+    handleRecordPerCentralServer(item.getId(), csId -> contributionJobRunner.runItemContribution(csId, instance, item));
+  }
+
+  @Async
+  @Override
   public void handleLoanUpdate(StorageLoanDTO loan) {
     var loanAction = loan.getAction();
 

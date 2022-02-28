@@ -9,7 +9,7 @@
   </parent>
   <groupId>org.folio</groupId>
   <artifactId>mod-inn-reach</artifactId>
-  <version>1.1.0-SNAPSHOT</version>
+  <version>1.1.0-SNAPSHOT.192</version>
   <name>mod-inn-reach</name>
   <description>Access to INN-Reach service</description>
 

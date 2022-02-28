@@ -19,6 +19,7 @@ import lombok.Builder;
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 import lombok.extern.log4j.Log4j2;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.CharUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.springframework.stereotype.Service;
@@ -28,6 +29,7 @@ import org.folio.innreach.client.CirculationClient;
 import org.folio.innreach.domain.dto.folio.ContributionItemCirculationStatus;
 import org.folio.innreach.domain.service.CentralServerService;
 import org.folio.innreach.domain.service.ContributionValidationService;
+import org.folio.innreach.domain.service.HoldingsService;
 import org.folio.innreach.domain.service.InnReachLocationService;
 import org.folio.innreach.domain.service.LibraryMappingService;
 import org.folio.innreach.domain.service.LocationMappingService;
@@ -57,7 +59,7 @@ public class RecordTransformationServiceImpl implements RecordTransformationServ
   private final MARCRecordTransformationService marcService;
   private final ContributionValidationService validationService;
 
-  private final HoldingsServiceImpl holdingsService;
+  private final HoldingsService holdingsService;
   private final MaterialTypeMappingService typeMappingService;
   private final LibraryMappingService libraryMappingService;
   private final InnReachLocationService irLocationService;
@@ -157,9 +159,12 @@ public class RecordTransformationServiceImpl implements RecordTransformationServ
     return null;
   }
 
-  private Integer countRequests(UUID itemId) {
+  private Long countRequests(UUID itemId) {
     try {
-      return circulationClient.queryRequestsByItemId(itemId).getTotalRecords();
+      return circulationClient.queryRequestsByItemId(itemId).getResult()
+        .stream()
+        .filter(request -> request.getStatus().getName().startsWith("Open"))
+        .count();
     } catch (Exception e) {
       log.warn("Failed to count requests for item {}", itemId, e);
       return null;
@@ -175,7 +180,7 @@ public class RecordTransformationServiceImpl implements RecordTransformationServ
   }
 
   private int countContributionItems(UUID centralServerId, List<Item> items) {
-    if (items == null) {
+    if (CollectionUtils.isEmpty(items)) {
       return 0;
     }
     return (int) items.stream()

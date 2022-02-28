@@ -1,6 +1,7 @@
 package org.folio.innreach.domain.listener;
 
 import static org.folio.innreach.config.KafkaListenerConfiguration.KAFKA_CONTAINER_FACTORY;
+import static org.folio.innreach.domain.event.DomainEventType.UPDATED;
 
 import java.util.List;
 import java.util.Objects;
@@ -44,11 +45,12 @@ public class KafkaCirculationEventListener {
       var newEntity = event.getData().getNewEntity();
       switch (event.getType()) {
         case CREATED:
+          contributionActionService.handleLoanCreation(newEntity);
           transactionActionService.associateNewLoanWithTransaction(newEntity);
           break;
         case UPDATED:
-          transactionActionService.handleLoanUpdate(newEntity);
           contributionActionService.handleLoanUpdate(newEntity);
+          transactionActionService.handleLoanUpdate(newEntity);
           break;
         default:
           log.warn("Received event of unknown type {}", event.getType());
@@ -72,12 +74,8 @@ public class KafkaCirculationEventListener {
 
       contributionActionService.handleRequestChange(newEntity);
 
-      switch (event.getType()) {
-        case UPDATED:
-          transactionActionService.handleRequestUpdate(newEntity);
-          break;
-        default:
-          log.warn("Received event of unknown type {}", event.getType());
+      if (event.getType() == UPDATED) {
+        transactionActionService.handleRequestUpdate(newEntity);
       }
     });
   }

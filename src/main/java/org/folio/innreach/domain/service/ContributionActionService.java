@@ -20,6 +20,8 @@ public interface ContributionActionService {
 
   void handleItemDelete(Item deletedItem);
 
+  void handleLoanCreation(StorageLoanDTO loan);
+
   void handleLoanUpdate(StorageLoanDTO loan);
 
   void handleRequestChange(RequestDTO request);

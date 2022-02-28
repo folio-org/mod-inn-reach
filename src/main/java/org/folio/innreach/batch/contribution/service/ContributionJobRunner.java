@@ -41,6 +41,8 @@ import org.folio.spring.FolioExecutionContext;
 @RequiredArgsConstructor
 public class ContributionJobRunner {
 
+  private static final String DE_CONTRIBUTE_INSTANCE_MSG = "De-contributing ineligible instance";
+
   @Qualifier("instanceExceptionListener")
   private final ContributionExceptionListener instanceExceptionListener;
   @Qualifier("itemExceptionListener")
@@ -107,8 +109,10 @@ public class ContributionJobRunner {
 
   public void runInstanceContribution(UUID centralServerId, Instance instance) {
     log.info("Validating instance {} for contribution to central server {}", instance.getId(), centralServerId);
+
     boolean eligibleInstance = isEligibleForContribution(centralServerId, instance);
     boolean contributedInstance = isContributed(centralServerId, instance);
+
     if (!eligibleInstance && !contributedInstance) {
       log.info("Skipping ineligible and non-contributed instance");
       return;
@@ -126,7 +130,7 @@ public class ContributionJobRunner {
           contributeInstanceItems(centralServerId, instance, stats);
         }
       } else if (contributedInstance) {
-        log.info("De-contributing ineligible instance");
+        log.info(DE_CONTRIBUTE_INSTANCE_MSG);
         deContributeInstance(centralServerId, instance, stats);
       }
     });
@@ -134,6 +138,7 @@ public class ContributionJobRunner {
 
   public void runInstanceDeContribution(UUID centralServerId, Instance deletedInstance) {
     log.info("Validating instance {} for de-contribution from central server {}", deletedInstance.getId(), centralServerId);
+
     if (!isContributed(centralServerId, deletedInstance)) {
       log.info("Skipping non-contributed instance");
       return;
@@ -147,8 +152,10 @@ public class ContributionJobRunner {
 
   public void runItemContribution(UUID centralServerId, Instance instance, Item item) {
     log.info("Validating item {} for contribution to central server {}", item.getId(), centralServerId);
+
     boolean eligibleItem = isEligibleForContribution(centralServerId, item);
     boolean contributedItem = isContributed(centralServerId, instance, item);
+
     if (!eligibleItem && !contributedItem) {
       log.info("Skipping ineligible and non-contributed item");
       return;
@@ -169,7 +176,7 @@ public class ContributionJobRunner {
           deContributeItem(centralServerId, item, stats);
         }
       } else if (contributedItem) {
-        log.info("De-contributing ineligible instance");
+        log.info(DE_CONTRIBUTE_INSTANCE_MSG);
         deContributeInstance(centralServerId, instance, stats);
       }
     });
@@ -180,6 +187,7 @@ public class ContributionJobRunner {
 
     boolean eligibleItem = isEligibleForContribution(centralServerId, item);
     boolean contributedItem = isContributed(centralServerId, oldInstance, item);
+
     if (!eligibleItem && !contributedItem) {
       log.info("Skipping ineligible and non-contributed item");
       return;
@@ -232,7 +240,7 @@ public class ContributionJobRunner {
         log.info("Re-contributing instance to update bib status");
         contributeInstance(centralServerId, instance, stats);
       } else {
-        log.info("De-contributing ineligible instance");
+        log.info(DE_CONTRIBUTE_INSTANCE_MSG);
         deContributeInstance(centralServerId, instance, stats);
       }
     });

@@ -150,9 +150,7 @@ public class ContributionServiceImpl implements ContributionService {
 
 
   private void runInitialContributionJob(UUID centralServerId, Contribution contribution) {
-    var jobRunner = getJobRunner();
-
-    jobRunner.runInitialContributionAsync(centralServerId, folioContext.getTenantId(), contribution.getId(), contribution.getJobId());
+    getJobRunner().runInitialContributionAsync(centralServerId, folioContext.getTenantId(), contribution.getId(), contribution.getJobId());
   }
 
   private ContributionJobRunner getJobRunner() {
