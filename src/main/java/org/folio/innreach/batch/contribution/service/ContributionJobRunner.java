@@ -8,7 +8,6 @@ import static org.folio.innreach.batch.contribution.ContributionJobContextManage
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
 import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
@@ -18,6 +17,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.retry.support.RetryTemplate;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import org.folio.innreach.batch.KafkaItemReader;
@@ -58,6 +58,7 @@ public class ContributionJobRunner {
   private final RetryTemplate retryTemplate;
   private final IterationEventReaderFactory itemReaderFactory;
 
+  @Async
   public void runInitialContributionAsync(UUID centralServerId, String tenantId, UUID contributionId, UUID iterationJobId) {
     var context = ContributionJobContext.builder()
       .contributionId(contributionId)
@@ -66,7 +67,7 @@ public class ContributionJobRunner {
       .tenantId(tenantId)
       .build();
 
-    CompletableFuture.runAsync(() -> runInitialContribution(context));
+    runInitialContribution(context);
   }
 
   public void runInitialContribution(ContributionJobContext context) {

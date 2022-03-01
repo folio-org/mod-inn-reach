@@ -9,6 +9,7 @@ import static org.mockito.Mockito.when;
 import static org.folio.innreach.external.dto.InnReachResponse.okResponse;
 import static org.folio.innreach.fixture.ContributionFixture.createContributionJobContext;
 import static org.folio.innreach.fixture.ContributionFixture.createItem;
+import static org.folio.innreach.fixture.TestUtil.createNoRetryTemplate;
 
 import java.util.List;
 
@@ -18,8 +19,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.retry.RetryCallback;
 import org.springframework.retry.support.RetryTemplate;
 
 import org.folio.innreach.batch.contribution.ContributionJobContext;
@@ -35,8 +36,8 @@ class ItemContributorTest {
 
   private static final ContributionJobContext JOB_CONTEXT = createContributionJobContext();
 
-  @Mock
-  private RetryTemplate retryTemplate;
+  @Spy
+  private RetryTemplate retryTemplate = createNoRetryTemplate();
   @Mock
   private InnReachContributionService irContributionService;
   @Mock
@@ -50,10 +51,6 @@ class ItemContributorTest {
   @BeforeEach
   public void init() {
     ContributionJobContextManager.beginContributionJobContext(JOB_CONTEXT);
-    when(retryTemplate.execute(any(), any(), any())).thenAnswer(invocation -> {
-      RetryCallback retry = invocation.getArgument(0);
-      return retry.doWithRetry(null);
-    });
   }
 
   @AfterEach

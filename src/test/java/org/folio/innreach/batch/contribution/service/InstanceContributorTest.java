@@ -10,6 +10,7 @@ import static org.folio.innreach.external.dto.InnReachResponse.errorResponse;
 import static org.folio.innreach.external.dto.InnReachResponse.okResponse;
 import static org.folio.innreach.fixture.ContributionFixture.createContributionJobContext;
 import static org.folio.innreach.fixture.ContributionFixture.createInstance;
+import static org.folio.innreach.fixture.TestUtil.createNoRetryTemplate;
 
 import java.util.UUID;
 
@@ -19,8 +20,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.retry.RetryCallback;
 import org.springframework.retry.support.RetryTemplate;
 
 import org.folio.innreach.batch.contribution.ContributionJobContext;
@@ -40,8 +41,8 @@ class InstanceContributorTest {
   private InnReachContributionService irContributionService;
   @Mock
   private RecordTransformationService instanceTransformationService;
-  @Mock
-  private RetryTemplate retryTemplate;
+  @Spy
+  private RetryTemplate retryTemplate = createNoRetryTemplate();
 
   @InjectMocks
   private RecordContributionServiceImpl instanceContributor;
@@ -49,10 +50,6 @@ class InstanceContributorTest {
   @BeforeEach
   public void init() {
     ContributionJobContextManager.beginContributionJobContext(JOB_CONTEXT);
-    when(retryTemplate.execute(any(), any(), any())).thenAnswer(invocation -> {
-      RetryCallback retry = invocation.getArgument(0);
-      return retry.doWithRetry(null);
-    });
   }
 
   @AfterEach
@@ -79,7 +76,7 @@ class InstanceContributorTest {
     when(instanceTransformationService.getBibInfo(any(), any())).thenReturn(new BibInfo());
     when(irContributionService.contributeBib(any(), any(), any())).thenReturn(errorResponse());
 
-    assertThatThrownBy(() -> instanceContributor.contributeInstance(UUID.randomUUID(), instance))
+    assertThatThrownBy(() -> instanceContributor.contributeInstance(CENTRAL_SERVER_ID, instance))
       .isInstanceOf(IllegalArgumentException.class)
       .hasMessageContaining("Unexpected contribution response:");
   }
@@ -92,7 +89,7 @@ class InstanceContributorTest {
     when(irContributionService.contributeBib(any(), any(), any())).thenReturn(okResponse());
     when(irContributionService.lookUpBib(any(), any())).thenReturn(errorResponse());
 
-    assertThatThrownBy(() -> instanceContributor.contributeInstance(UUID.randomUUID(), instance))
+    assertThatThrownBy(() -> instanceContributor.contributeInstance(CENTRAL_SERVER_ID, instance))
       .isInstanceOf(IllegalArgumentException.class)
       .hasMessageContaining("Unexpected verification response:");
   }
