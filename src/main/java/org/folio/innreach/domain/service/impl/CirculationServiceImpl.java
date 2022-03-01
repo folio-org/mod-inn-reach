@@ -30,6 +30,7 @@ import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionTy
 import java.time.Instant;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
@@ -41,6 +42,8 @@ import javax.persistence.EntityExistsException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.StringUtils;
+import org.folio.innreach.domain.entity.TransactionPatronHold;
+import org.folio.innreach.external.exception.InnReachException;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -103,6 +106,7 @@ public class CirculationServiceImpl implements CirculationService {
 
   private static final String UNEXPECTED_TRANSACTION_STATE = "Unexpected transaction state: ";
   private static final String D2IR_ITEM_RECALL_OPERATION = "recall";
+  private static final String D2IR_VERIFY_PATRON = "verifypatron";
 
   private final InnReachTransactionRepository transactionRepository;
   private final CentralServerRepository centralserverRepository;
@@ -414,6 +418,7 @@ public class CirculationServiceImpl implements CirculationService {
       TransactionType transactionType,
       BiConsumer<InnReachTransaction, Boolean> postProcessor) {
 
+    transactionHold.setPatronName(normalizePatronName(transactionHold.getPatronName()));
     var optTransaction = transactionRepository.findByTrackingIdAndCentralServerCode(trackingId, centralCode);
     var isExistingTransaction = optTransaction.isPresent();
 
@@ -437,6 +442,7 @@ public class CirculationServiceImpl implements CirculationService {
       }
     });
 
+    reportVerifyPatron(transaction);
     postProcessor.accept(transaction, isExistingTransaction);
   }
 
@@ -482,6 +488,49 @@ public class CirculationServiceImpl implements CirculationService {
     // update pickupLocation
     var pickupLocation = pickupLocationMapper.fromString(transactionHold.getPickupLocation());
     BeanUtils.copyProperties(pickupLocation, existingTransactionHold.getPickupLocation(), PICKUP_LOC_IGNORE_PROPS_ON_COPY);
+  }
+
+  private void reportVerifyPatron(InnReachTransaction transaction) {
+    var payload = new HashMap<>();
+    var patronHold =  (TransactionPatronHold) transaction.getHold();
+    var visiblePatronId = patronHold.getPatronId();
+    var patronAgencyCode = patronHold.getPatronAgencyCode();
+    var patronName = patronHold.getPatronName();
+    payload.put("visiblePatronId", visiblePatronId);
+    payload.put("patronAgencyCode", patronAgencyCode);
+    payload.put("patronName", patronName);
+    callD2irCircOperation(D2IR_VERIFY_PATRON, transaction, payload);
+  }
+
+  private void callD2irCircOperation(String operation, InnReachTransaction transaction, Map<Object, Object> payload) {
+    var centralCode = transaction.getCentralServerCode();
+    var trackingId = transaction.getTrackingId();
+    var requestPath = resolveD2irCircPath(operation, trackingId, centralCode);
+    try {
+      if (payload == null) {
+        innReachExternalService.postInnReachApi(centralCode, requestPath);
+      } else {
+        innReachExternalService.postInnReachApi(centralCode, requestPath, payload);
+      }
+    } catch (InnReachException e) {
+      //TODO: the suppression of error is temporal, see https://issues.folio.org/browse/MODINREACH-192 for more details.
+      log.warn("Unexpected D2IR response: {}", e.getMessage(), e);
+    }
+  }
+
+  private String normalizePatronName(String patronFullName) {
+    String[] patronName = patronFullName.split(",");
+    String firstNameOrPreferredFirstName = null;
+    String lastName = null;
+    for (String word : patronName) {
+      String[] checkForName = word.trim().split(" ");
+      if (checkForName.length >= 2) {
+        firstNameOrPreferredFirstName = word.trim();
+      } else {
+        lastName = word.trim() + ", ";
+      }
+    }
+    return lastName + firstNameOrPreferredFirstName;
   }
 
   private InnReachTransaction createTransaction(String trackingId, String centralCode,

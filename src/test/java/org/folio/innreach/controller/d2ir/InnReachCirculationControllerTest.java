@@ -138,11 +138,14 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
   @Test
   void processCreatePatronHoldCirculationRequest_and_createNewPatronHold() {
     var transactionHoldDTO = createTransactionHoldDTO();
+    transactionHoldDTO.setPatronName("Paul MuaDibs, Atreides");
 
+    when(innReachExternalService.postInnReachApi(any(), any(), any())).thenReturn("ok");
     var responseEntity = testRestTemplate.postForEntity(
       "/inn-reach/d2ir/circ/{circulationOperationName}/{trackingId}/{centralCode}",
       new HttpEntity<>(transactionHoldDTO, headers), InnReachResponseDTO.class, PATRON_HOLD_OPERATION, "tracking99", PRE_POPULATED_CENTRAL_CODE);
 
+    verify(innReachExternalService, times(1)).postInnReachApi(any(), any(), any());
     assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
 
     var responseBody = responseEntity.getBody();
@@ -156,6 +159,7 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
 
     assertTrue(innReachTransaction.isPresent());
     assertNotNull(innReachTransaction.get().getHold());
+    assertEquals("Atreides, Paul MuaDibs", innReachTransaction.get().getHold().getPatronName());
   }
 
   @Test
@@ -165,7 +169,9 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
   })
   void processCreatePatronHoldCirculationRequest_and_updateExitingPatronHold() {
     var transactionHoldDTO = createTransactionHoldDTO();
+    transactionHoldDTO.setPatronName(" Atreides, Paul MuaDibs ");
 
+    when(innReachExternalService.postInnReachApi(any(), any(), any())).thenReturn("ok");
     var responseEntity = testRestTemplate.postForEntity(
       "/inn-reach/d2ir/circ/{circulationOperationName}/{trackingId}/{centralCode}",
       new HttpEntity<>(transactionHoldDTO, headers), InnReachResponseDTO.class, PATRON_HOLD_OPERATION, PRE_POPULATED_TRACKING1_ID, PRE_POPULATED_CENTRAL_CODE);
@@ -188,6 +194,7 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     assertEquals(transactionHoldDTO.getTransactionTime(), innReachTransaction.getHold().getTransactionTime());
     assertEquals(transactionHoldDTO.getPatronId(), innReachTransaction.getHold().getPatronId());
     assertEquals(transactionHoldDTO.getPatronAgencyCode(), innReachTransaction.getHold().getPatronAgencyCode());
+    assertEquals("Atreides, Paul MuaDibs", innReachTransaction.getHold().getPatronName());
   }
 
   @Test
