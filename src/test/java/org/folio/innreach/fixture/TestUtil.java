@@ -46,6 +46,10 @@ public class TestUtil {
     return new Random().nextInt(range);
   }
 
+  public static int randomInteger(int min, int maxExcluded) {
+    return new Random().nextInt(maxExcluded - min) + min;
+  }
+
   public static int randomIntegerExcept(int range, Set<Integer> except) {
     Random random = new Random();
     int integer;
