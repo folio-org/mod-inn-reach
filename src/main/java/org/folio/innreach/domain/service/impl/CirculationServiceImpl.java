@@ -457,8 +457,11 @@ public class CirculationServiceImpl implements CirculationService {
       }
     });
 
-    if (transaction.getType() == PATRON) {
-      reportVerifyPatron(transaction);
+    Optional<TransactionType> optionalTransactionType = Optional.of(transaction.getType());
+    if (optionalTransactionType.isPresent()) {
+      if (transaction.getType() == PATRON) {
+        reportVerifyPatron(transaction);
+      }
     }
 
     postProcessor.accept(transaction, isExistingTransaction);
