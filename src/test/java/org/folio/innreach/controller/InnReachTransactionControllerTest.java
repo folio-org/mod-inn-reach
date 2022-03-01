@@ -65,6 +65,7 @@ import org.springframework.test.context.jdbc.SqlMergeMode;
 import org.folio.innreach.client.CirculationClient;
 import org.folio.innreach.client.HoldingsStorageClient;
 import org.folio.innreach.client.InventoryClient;
+import org.folio.innreach.client.RequestPreferenceStorageClient;
 import org.folio.innreach.client.ServicePointsUsersClient;
 import org.folio.innreach.client.UsersClient;
 import org.folio.innreach.controller.base.BaseControllerTest;
@@ -73,7 +74,7 @@ import org.folio.innreach.domain.dto.folio.ResultList;
 import org.folio.innreach.domain.dto.folio.User;
 import org.folio.innreach.domain.dto.folio.circulation.RequestDTO;
 import org.folio.innreach.domain.dto.folio.inventory.InventoryItemDTO;
-import org.folio.innreach.domain.dto.folio.inventorystorage.ServicePointUserDTO;
+import org.folio.innreach.domain.dto.folio.requestpreference.RequestPreferenceDTO;
 import org.folio.innreach.domain.entity.InnReachTransaction;
 import org.folio.innreach.domain.entity.TransactionItemHold;
 import org.folio.innreach.domain.entity.base.AuditableUser;
@@ -161,6 +162,8 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   private InnReachClient innReachClient;
   @MockBean
   private HoldingsStorageClient holdingsStorageClient;
+  @MockBean
+  private RequestPreferenceStorageClient requestPreferenceClient;
 
   @SpyBean
   private RequestService requestService;
@@ -180,13 +183,6 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     user.setBarcode(PRE_POPULATED_USER_BARCODE);
     when(usersClient.query(PRE_POPULATED_USER_BARCODE_QUERY)).thenReturn(ResultList.of(1, List.of(user)));
     return user;
-  }
-
-  void mockInventoryStorageClient(User user) {
-    var servicePointUserDTO = new ServicePointUserDTO();
-    servicePointUserDTO.setUserId(user.getId());
-    servicePointUserDTO.setDefaultServicePointId(randomUUID());
-    when(servicePointsUsersClient.findServicePointsUsers(user.getId())).thenReturn(ResultList.of(1, List.of(servicePointUserDTO)));
   }
 
   void mockFindRequestsReturnsEmptyList(InventoryItemDTO inventoryItemDTO) {
@@ -584,7 +580,8 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     when(circulationClient.queryRequestsByItemId(inventoryItemDTO.getId())).thenReturn(ResultList.of(1,
       List.of(requestDTO)));
     var user = mockUserClient();
-    mockInventoryStorageClient(user);
+    var requestPreference = new RequestPreferenceDTO(user.getId(), randomUUID());
+    when(requestPreferenceClient.getUserRequestPreference(user.getId())).thenReturn(ResultList.of(1, List.of(requestPreference)));
     when(circulationClient.sendRequest(any(RequestDTO.class))).then((Answer<RequestDTO>) invocationOnMock -> {
       var sentRequest = (RequestDTO) invocationOnMock.getArgument(0);
       sentRequest.setId(randomUUID());
@@ -613,7 +610,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     verify(inventoryClient, times(2)).getItemsByHrId(itemHoldDTO.getItemId());
     verify(circulationClient).queryRequestsByItemId(inventoryItemDTO.getId());
     verify(usersClient).query(PRE_POPULATED_USER_BARCODE_QUERY);
-    verify(servicePointsUsersClient).findServicePointsUsers(user.getId());
+    verify(requestPreferenceClient).getUserRequestPreference(user.getId());
     verify(circulationClient).sendRequest(any());
 
     var transaction = repository.fetchOneByTrackingId(TRACKING_ID);
@@ -644,8 +641,6 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     var inventoryItemDTO = mockInventoryClient();
     inventoryItemDTO.setStatus(MISSING);
     mockFindRequestsReturnsEmptyList(inventoryItemDTO);
-    var user = mockUserClient();
-    mockInventoryStorageClient(user);
     when(circulationClient.sendRequest(any(RequestDTO.class))).then((Answer<RequestDTO>) invocationOnMock -> {
       var sentRequest = (RequestDTO) invocationOnMock.getArgument(0);
       sentRequest.setId(randomUUID());
@@ -786,7 +781,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     var inventoryItemDTO = mockInventoryClient();
     mockFindRequestsReturnsEmptyList(inventoryItemDTO);
     var user = mockUserClient();
-    when(servicePointsUsersClient.findServicePointsUsers(user.getId())).thenThrow(IllegalStateException.class);
+    when(requestPreferenceClient.getUserRequestPreference(user.getId())).thenThrow(IllegalStateException.class);
     when(innReachClient.postInnReachApi(any(), anyString(), anyString(), anyString())).thenReturn("response");
 
     var itemHoldDTO = deserializeFromJsonFile(
@@ -805,7 +800,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     verify(inventoryClient).getItemsByHrId(inventoryItemDTO.getHrid());
     verify(circulationClient, never()).queryRequestsByItemId(inventoryItemDTO.getId());
     verify(usersClient).query(PRE_POPULATED_USER_BARCODE_QUERY);
-    verify(servicePointsUsersClient).findServicePointsUsers(user.getId());
+    verify(requestPreferenceClient).getUserRequestPreference(user.getId());
     verify(circulationClient, never()).sendRequest(any());
 
     var cancelRequest = ArgumentCaptor.forClass(OwningSiteCancelsRequestDTO.class);
@@ -824,7 +819,8 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     inventoryItemDTO.setStatus(UNAVAILABLE);
     mockFindRequestsReturnsEmptyList(inventoryItemDTO);
     var user = mockUserClient();
-    mockInventoryStorageClient(user);
+    var requestPreference = new RequestPreferenceDTO(user.getId(), randomUUID());
+    when(requestPreferenceClient.getUserRequestPreference(user.getId())).thenReturn(ResultList.of(1, List.of(requestPreference)));
     when(innReachClient.postInnReachApi(any(), anyString(), anyString(), anyString())).thenReturn("response");
     when(holdingsStorageClient.findHolding(any())).thenReturn(Optional.empty());
 
@@ -844,7 +840,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     verify(inventoryClient, times(2)).getItemsByHrId(inventoryItemDTO.getHrid());
     verify(circulationClient).queryRequestsByItemId(inventoryItemDTO.getId());
     verify(usersClient).query(PRE_POPULATED_USER_BARCODE_QUERY);
-    verify(servicePointsUsersClient).findServicePointsUsers(user.getId());
+    verify(requestPreferenceClient).getUserRequestPreference(user.getId());
     verify(circulationClient, never()).sendRequest(any());
 
     var request = ArgumentCaptor.forClass(OwningSiteCancelsRequestDTO.class);

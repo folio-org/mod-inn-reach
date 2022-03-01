@@ -62,6 +62,7 @@ import org.folio.innreach.domain.exception.ItemNotRequestableException;
 import org.folio.innreach.domain.service.HoldingsService;
 import org.folio.innreach.domain.service.InventoryService;
 import org.folio.innreach.domain.service.ItemService;
+import org.folio.innreach.domain.service.RequestPreferenceService;
 import org.folio.innreach.domain.service.RequestService;
 import org.folio.innreach.dto.CheckInRequestDTO;
 import org.folio.innreach.dto.CheckInResponseDTO;
@@ -104,6 +105,8 @@ public class RequestServiceImpl implements RequestService {
   private final ItemService itemService;
   private final HoldingsService holdingsService;
 
+  private final RequestPreferenceService requestPreferenceService;
+
   @Async
   @Override
   public void createItemHoldRequest(String trackingId, String centralCode) {
@@ -115,7 +118,7 @@ public class RequestServiceImpl implements RequestService {
       var patronType = hold.getCentralPatronType();
       var patronBarcode = getUserBarcode(centralServerId, patronType);
       var patron = getUserByBarcode(patronBarcode);
-      var servicePointId = getDefaultServicePointIdForPatron(patron.getId());
+      var servicePointId = getUserRequestPreferenceDefaultServicePoint(patron.getId());
 
       createOwningSiteItemRequest(transaction, patron, servicePointId);
     } catch (Exception e) {
@@ -400,5 +403,11 @@ public class RequestServiceImpl implements RequestService {
       .build();
 
     innReachService.postInnReachApi(centralCode, requestPath, request);
+  }
+
+
+  private UUID getUserRequestPreferenceDefaultServicePoint(UUID patronId) {
+    var requestPreference = requestPreferenceService.findUserRequestPreference(patronId);
+    return requestPreference.getDefaultServicePointId();
   }
 }
