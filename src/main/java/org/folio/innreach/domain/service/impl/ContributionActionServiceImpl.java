@@ -50,18 +50,22 @@ public class ContributionActionServiceImpl implements ContributionActionService 
   @Async
   @Override
   public void handleInstanceUpdate(Instance updatedInstance) {
+    log.info("Handling instance creation/update {}", updatedInstance.getId());
+
     if (!isMARCRecord(updatedInstance)) {
       return;
     }
 
     var instance = fetchInstanceWithItems(updatedInstance.getId());
 
-    handleRecordPerCentralServer(instance.getId(), csId -> contributionJobRunner.runInstanceContribution(csId, instance));
+    handlePerCentralServer(instance.getId(), csId -> contributionJobRunner.runInstanceContribution(csId, instance));
   }
 
   @Async
   @Override
   public void handleInstanceDelete(Instance deletedInstance) {
+    log.info("Handling instance delete {}", deletedInstance.getId());
+
     if (!isMARCRecord(deletedInstance)) {
       return;
     }
@@ -74,17 +78,21 @@ public class ContributionActionServiceImpl implements ContributionActionService 
   @Async
   @Override
   public void handleItemCreation(Item newItem) {
+    log.info("Handling item creation {}", newItem.getId());
+
     var instance = fetchInstanceWithItems(newItem);
     if (!isMARCRecord(instance)) {
       return;
     }
 
-    handleRecordPerCentralServer(newItem.getId(), csId -> contributionJobRunner.runItemContribution(csId, instance, newItem));
+    handlePerCentralServer(newItem.getId(), csId -> contributionJobRunner.runItemContribution(csId, instance, newItem));
   }
 
   @Async
   @Override
   public void handleItemUpdate(Item newItem, Item oldItem) {
+    log.info("Handling item update {}", newItem.getId());
+
     var instance = fetchInstanceWithItems(newItem);
     if (!isMARCRecord(instance)) {
       return;
@@ -93,7 +101,7 @@ public class ContributionActionServiceImpl implements ContributionActionService 
     var oldInstance = fetchOldInstance(newItem, oldItem, instance);
     boolean itemMoved = !oldInstance.getId().equals(instance.getId());
 
-    handleRecordPerCentralServer(newItem.getId(), csId -> {
+    handlePerCentralServer(newItem.getId(), csId -> {
       if (itemMoved) {
         contributionJobRunner.runItemMove(csId, instance, oldInstance, newItem);
       } else {
@@ -105,6 +113,8 @@ public class ContributionActionServiceImpl implements ContributionActionService 
   @Async
   @Override
   public void handleItemDelete(Item deletedItem) {
+    log.info("Handling item delete {}", deletedItem.getId());
+
     var instance = fetchInstanceWithItems(deletedItem);
     if (!isMARCRecord(instance)) {
       return;
@@ -126,12 +136,14 @@ public class ContributionActionServiceImpl implements ContributionActionService 
       return;
     }
 
-    handleRecordPerCentralServer(item.getId(), csId -> contributionJobRunner.runItemContribution(csId, instance, item));
+    handlePerCentralServer(item.getId(), csId -> contributionJobRunner.runItemContribution(csId, instance, item));
   }
 
   @Async
   @Override
   public void handleLoanUpdate(StorageLoanDTO loan) {
+    log.info("Handling loan update {}", loan.getId());
+
     var loanAction = loan.getAction();
 
     if ("renewed".equalsIgnoreCase(loanAction)) {
@@ -143,14 +155,14 @@ public class ContributionActionServiceImpl implements ContributionActionService 
         return;
       }
 
-      handleRecordPerCentralServer(item.getId(), csId -> contributionJobRunner.runItemContribution(csId, instance, item));
+      handlePerCentralServer(item.getId(), csId -> contributionJobRunner.runItemContribution(csId, instance, item));
     }
   }
 
   @Async
   @Override
   public void handleRequestChange(RequestDTO request) {
-    log.info("Triggering ongoing contribution on the request changes {}", request.getId());
+    log.info("Handling request {}", request.getId());
 
     var item = fetchItem(request.getItemId());
     var instance = fetchInstanceWithItems(item);
@@ -158,25 +170,29 @@ public class ContributionActionServiceImpl implements ContributionActionService 
       return;
     }
 
-    handleRecordPerCentralServer(item.getId(), csId -> contributionJobRunner.runItemContribution(csId, instance, item));
+    handlePerCentralServer(item.getId(), csId -> contributionJobRunner.runItemContribution(csId, instance, item));
   }
 
   @Async
   @Override
   public void handleHoldingUpdate(Holding holding) {
+    log.info("Handling holding update {}", holding.getId());
+
     var instance = fetchInstanceWithItems(holding.getInstanceId());
     if (!isMARCRecord(instance)) {
       return;
     }
 
     var items = holding.getHoldingsItems();
-    handleRecordPerCentralServer(holding.getId(), csId ->
+    handlePerCentralServer(holding.getId(), csId ->
       items.forEach(i -> contributionJobRunner.runItemContribution(csId, instance, i)));
   }
 
   @Async
   @Override
   public void handleHoldingDelete(Holding holding) {
+    log.info("Handling holding delete {}", holding.getId());
+
     var instance = fetchInstanceWithItems(holding.getInstanceId());
     if (!isMARCRecord(instance)) {
       return;
@@ -188,7 +204,7 @@ public class ContributionActionServiceImpl implements ContributionActionService 
     }
   }
 
-  private void handleRecordPerCentralServer(UUID recordId, Consumer<UUID> centralServerHandler) {
+  private void handlePerCentralServer(UUID recordId, Consumer<UUID> centralServerHandler) {
     for (var csId : getCentralServerIds()) {
       try {
         if (validationService.getItemTypeMappingStatus(csId) == VALID &&

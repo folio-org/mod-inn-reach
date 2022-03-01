@@ -103,12 +103,16 @@ public class ContributionFixture {
   }
 
   public static Instance createInstance() {
+    var item = createItem();
+    var holding = createHolding();
+    holding.setHoldingsItems(singletonList(item));
+
     var instance = new Instance();
     instance.setId(UUID.randomUUID());
     instance.setSource("MARC");
     instance.setHrid("test");
-    instance.setItems(singletonList(createItem()));
-    instance.setHoldingsRecords(singletonList(createHolding()));
+    instance.setItems(singletonList(item));
+    instance.setHoldingsRecords(singletonList(holding));
     return instance;
   }
 
