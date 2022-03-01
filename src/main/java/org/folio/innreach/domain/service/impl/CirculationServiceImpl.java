@@ -513,7 +513,6 @@ public class CirculationServiceImpl implements CirculationService {
         innReachExternalService.postInnReachApi(centralCode, requestPath, payload);
       }
     } catch (InnReachException e) {
-      //TODO: the suppression of error is temporal, see https://issues.folio.org/browse/MODINREACH-192 for more details.
       log.warn("Unexpected D2IR response: {}", e.getMessage(), e);
     }
   }
