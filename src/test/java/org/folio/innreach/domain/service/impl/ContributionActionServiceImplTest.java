@@ -1,10 +1,11 @@
 package org.folio.innreach.domain.service.impl;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import static org.folio.innreach.dto.MappingValidationStatusDTO.INVALID;
 import static org.folio.innreach.dto.MappingValidationStatusDTO.VALID;
 import static org.folio.innreach.fixture.ContributionFixture.createInstance;
 import static org.folio.innreach.fixture.ContributionFixture.createItem;
@@ -63,7 +64,29 @@ class ContributionActionServiceImplTest {
 
     service.handleInstanceCreation(instance);
 
-    verify(contributionJobRunner).runInstanceContribution(eq(CENTRAL_SERVER_ID), eq(instance));
+    verify(contributionJobRunner).runInstanceContribution(CENTRAL_SERVER_ID, instance);
+  }
+
+  @Test
+  void handleInstanceCreation_skipUnsupportedSource() {
+    var instance = createInstance();
+
+    when(centralServerRepository.getIds(any())).thenReturn(new PageImpl<>(List.of(CENTRAL_SERVER_ID)));
+    when(inventoryViewService.getInstance(any())).thenReturn(instance);
+    when(validationService.getItemTypeMappingStatus(any())).thenReturn(INVALID);
+
+    service.handleInstanceCreation(instance);
+
+    verifyNoInteractions(contributionJobRunner);
+  }
+
+  @Test
+  void handleInstanceCreation_skipInvalidMappings() {
+    var instance = createInstance().source("test");
+
+    service.handleInstanceCreation(instance);
+
+    verifyNoInteractions(contributionJobRunner);
   }
 
   @Test
@@ -74,7 +97,7 @@ class ContributionActionServiceImplTest {
 
     service.handleInstanceDelete(instance);
 
-    verify(contributionJobRunner).runInstanceDeContribution(eq(CENTRAL_SERVER_ID), eq(instance));
+    verify(contributionJobRunner).runInstanceDeContribution(CENTRAL_SERVER_ID, instance);
   }
 
   @Test
@@ -91,7 +114,7 @@ class ContributionActionServiceImplTest {
 
     service.handleItemCreation(item);
 
-    verify(contributionJobRunner).runItemContribution(eq(CENTRAL_SERVER_ID), eq(instance), eq(item));
+    verify(contributionJobRunner).runItemContribution(CENTRAL_SERVER_ID, instance, item);
   }
 
   @Test
@@ -110,7 +133,7 @@ class ContributionActionServiceImplTest {
 
     service.handleItemUpdate(newItem, oldItem);
 
-    verify(contributionJobRunner).runItemContribution(eq(CENTRAL_SERVER_ID), eq(instance), eq(newItem));
+    verify(contributionJobRunner).runItemContribution(CENTRAL_SERVER_ID, instance, newItem);
   }
 
   @Test
@@ -130,7 +153,7 @@ class ContributionActionServiceImplTest {
 
     service.handleItemUpdate(newItem, oldItem);
 
-    verify(contributionJobRunner).runItemMove(eq(CENTRAL_SERVER_ID), eq(newInstance), eq(oldInstance), eq(newItem));
+    verify(contributionJobRunner).runItemMove(CENTRAL_SERVER_ID, newInstance, oldInstance, newItem);
   }
 
   @Test
@@ -145,7 +168,7 @@ class ContributionActionServiceImplTest {
 
     service.handleItemDelete(item);
 
-    verify(contributionJobRunner).runItemDeContribution(eq(CENTRAL_SERVER_ID), eq(instance), eq(item));
+    verify(contributionJobRunner).runItemDeContribution(CENTRAL_SERVER_ID, instance, item);
   }
 
   @Test
@@ -164,7 +187,7 @@ class ContributionActionServiceImplTest {
 
     service.handleLoanCreation(loan);
 
-    verify(contributionJobRunner).runItemContribution(eq(CENTRAL_SERVER_ID), eq(instance), eq(item));
+    verify(contributionJobRunner).runItemContribution(CENTRAL_SERVER_ID, instance, item);
   }
 
   @Test
@@ -183,7 +206,7 @@ class ContributionActionServiceImplTest {
 
     service.handleLoanUpdate(loan);
 
-    verify(contributionJobRunner).runItemContribution(eq(CENTRAL_SERVER_ID), eq(instance), eq(item));
+    verify(contributionJobRunner).runItemContribution(CENTRAL_SERVER_ID, instance, item);
   }
 
   @Test
@@ -202,7 +225,7 @@ class ContributionActionServiceImplTest {
 
     service.handleRequestChange(request);
 
-    verify(contributionJobRunner).runItemContribution(eq(CENTRAL_SERVER_ID), eq(instance), eq(item));
+    verify(contributionJobRunner).runItemContribution(CENTRAL_SERVER_ID, instance, item);
   }
 
   @Test
@@ -218,7 +241,7 @@ class ContributionActionServiceImplTest {
 
     service.handleHoldingUpdate(holding);
 
-    verify(contributionJobRunner).runItemContribution(eq(CENTRAL_SERVER_ID), eq(instance), eq(item));
+    verify(contributionJobRunner).runItemContribution(CENTRAL_SERVER_ID, instance, item);
   }
 
   @Test
@@ -232,6 +255,6 @@ class ContributionActionServiceImplTest {
 
     service.handleHoldingDelete(holding);
 
-    verify(contributionJobRunner).runItemDeContribution(eq(CENTRAL_SERVER_ID), eq(instance), eq(item));
+    verify(contributionJobRunner).runItemDeContribution(CENTRAL_SERVER_ID, instance, item);
   }
 }
