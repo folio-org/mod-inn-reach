@@ -53,6 +53,15 @@ public class LocationMappingServiceImpl implements LocationMappingService {
   }
 
   @Override
+  public LocationMappingsDTO getAllMappingsForAllLibraries(UUID centralServerId, int offset, int limit) {
+    var example = mappingExampleWithServerId(centralServerId);
+
+    Page<LocationMapping> mappings = repository.findAll(example, new OffsetRequest(offset, limit, DEFAULT_SORT));
+
+    return mapper.toDTOCollection(mappings);
+  }
+
+  @Override
   public LocationMappingsDTO updateAllMappings(UUID centralServerId, UUID libraryId,
                                                LocationMappingsDTO locationMappingsDTO) {
     var stored = repository.findByCentralServerIdAndLibraryId(centralServerId, libraryId);
@@ -94,6 +103,13 @@ public class LocationMappingServiceImpl implements LocationMappingService {
     var toFind = new LocationMapping();
     toFind.setCentralServer(centralServerRef(centralServerId));
     toFind.setLibraryId(libraryId);
+
+    return Example.of(toFind);
+  }
+
+  private static Example<LocationMapping> mappingExampleWithServerId(UUID centralServerId) {
+    var toFind = new LocationMapping();
+    toFind.setCentralServer(centralServerRef(centralServerId));
 
     return Example.of(toFind);
   }

@@ -8,6 +8,8 @@ public interface LocationMappingService {
 
   LocationMappingsDTO getAllMappings(UUID centralServerId, UUID libraryId, int offset, int limit);
 
+  LocationMappingsDTO getAllMappingsForAllLibraries(UUID centralServerId, int offset, int limit);
+
   LocationMappingsDTO updateAllMappings(UUID centralServerId, UUID libraryId, LocationMappingsDTO locationMappingsDTO);
 
 }

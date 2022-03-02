@@ -35,6 +35,16 @@ public class LocationMappingController implements LocationMappingsApi {
   }
 
   @Override
+  @GetMapping("/{centralServerId}/libraries/locations/location-mappings")
+  public ResponseEntity<LocationMappingsDTO> getLocationMappingsForAllLibrariesByServerId(@PathVariable UUID centralServerId,
+                                                                                          Integer offset, Integer limit) {
+
+    var mappings = libraryMappingService.getAllMappingsForAllLibraries(centralServerId, offset, limit);
+
+    return ResponseEntity.ok(mappings);
+  }
+
+  @Override
   @PutMapping("/{centralServerId}/libraries/{libraryId}/locations/location-mappings")
   public ResponseEntity<Void> putLocationMappings(@PathVariable UUID centralServerId, @PathVariable UUID libraryId,
       LocationMappingsDTO locationMappingsDTO) {
