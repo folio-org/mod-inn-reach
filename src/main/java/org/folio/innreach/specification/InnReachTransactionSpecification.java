@@ -1,14 +1,19 @@
 package org.folio.innreach.specification;
 
 import static org.apache.commons.collections4.CollectionUtils.isEmpty;
+import static org.apache.commons.collections4.CollectionUtils.isNotEmpty;
 
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionType.PATRON;
 import static org.folio.innreach.domain.entity.InnReachTransactionFilterParameters.SortOrder.DESC;
+
+import java.time.OffsetDateTime;
+import java.util.List;
 
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.Expression;
 import javax.persistence.criteria.Join;
 import javax.persistence.criteria.Order;
+import javax.persistence.criteria.Path;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 
@@ -49,8 +54,10 @@ public class InnReachTransactionSpecification {
       var patronTypeIn = patronTypeIn(cb, itemHold, localHold, parameters);
       var centralItemTypeIn = centralItemTypeIn(cb, hold, parameters);
       var itemBarcodeIn = itemBarcodeIn(cb, transaction, hold, patronHold, parameters);
+      var createDateIs = createDateIs(cb, transaction, parameters);
 
-      return cb.and(typeIs, stateIs, centralCodeIn, patronAgencyIn, itemAgencyIn, patronTypeIn, centralItemTypeIn, itemBarcodeIn);
+      return cb.and(typeIs, stateIs, centralCodeIn, patronAgencyIn, itemAgencyIn, patronTypeIn, centralItemTypeIn,
+          itemBarcodeIn, createDateIs);
     };
   }
 
@@ -89,27 +96,74 @@ public class InnReachTransactionSpecification {
     };
   }
 
-  static Predicate isOfType(CriteriaBuilder cb, Root<InnReachTransaction> transaction, InnReachTransactionFilterParameters parameters) {
+  private static Predicate createDateIs(CriteriaBuilder cb, Root<InnReachTransaction> transaction,
+      InnReachTransactionFilterParameters parameters) {
+    var dates = parameters.getCreateDates();
+    return isEmpty(dates) ? cb.conjunction() : buildDateCondition(cb, transaction.get("createdDate"), 
+        dates, parameters.getCreatedDateOperation());
+  }
+
+  private static Predicate buildDateCondition(CriteriaBuilder cb, Path<OffsetDateTime> date,
+      List<OffsetDateTime> dateValues, InnReachTransactionFilterParameters.DateOperation operation) {
+    assert isNotEmpty(dateValues);
+
+    var firstValue = dateValues.get(0);
+    var secondValue = dateValues.size() == 2 ? dateValues.get(1) : null;
+
+    Predicate result;
+    switch (operation) {
+      case LESS:
+        result = cb.lessThan(date, firstValue);
+        break;
+      case LESS_OR_EQUAL:
+        result = cb.lessThanOrEqualTo(date, firstValue);
+        break;
+      case NOT_EQUAL:
+        result = cb.notEqual(date, firstValue);
+        break;
+      case GREATER:
+        result = cb.greaterThan(date, firstValue);
+        break;
+      case GREATER_OR_EQUAL:
+        result = cb.greaterThanOrEqualTo(date, firstValue);
+        break;
+      case BETWEEN:
+        result = cb.between(date, firstValue, secondValue);
+        break;
+      case EQUAL:
+      default:
+        result = cb.equal(date, firstValue);
+    }
+
+    return result;
+  }
+
+  static Predicate isOfType(CriteriaBuilder cb, Root<InnReachTransaction> transaction,
+      InnReachTransactionFilterParameters parameters) {
     var types = parameters.getTypes();
     return isEmpty(types) ? cb.conjunction() : transaction.get("type").in(types);
   }
 
-  static Predicate isOfState(CriteriaBuilder cb, Root<InnReachTransaction> transaction, InnReachTransactionFilterParameters parameters) {
+  static Predicate isOfState(CriteriaBuilder cb, Root<InnReachTransaction> transaction,
+      InnReachTransactionFilterParameters parameters) {
     var states = parameters.getStates();
     return isEmpty(states) ? cb.conjunction() : transaction.get("state").in(states);
   }
 
-  static Predicate centralCodeIn(CriteriaBuilder cb, Root<InnReachTransaction> transaction, InnReachTransactionFilterParameters parameters) {
+  static Predicate centralCodeIn(CriteriaBuilder cb, Root<InnReachTransaction> transaction,
+      InnReachTransactionFilterParameters parameters) {
     var centralCodes = parameters.getCentralServerCodes();
     return isEmpty(centralCodes) ? cb.conjunction() : transaction.get("centralServerCode").in(centralCodes);
   }
 
-  static Predicate patronAgencyIn(CriteriaBuilder cb, Join<Object, Object> hold, InnReachTransactionFilterParameters parameters) {
+  static Predicate patronAgencyIn(CriteriaBuilder cb, Join<Object, Object> hold,
+      InnReachTransactionFilterParameters parameters) {
     var patronAgencies = parameters.getPatronAgencyCodes();
     return isEmpty(patronAgencies) ? cb.conjunction() : hold.get("patronAgencyCode").in(patronAgencies);
   }
 
-  static Predicate itemAgencyIn(CriteriaBuilder cb, Join<Object, Object> hold, InnReachTransactionFilterParameters parameters) {
+  static Predicate itemAgencyIn(CriteriaBuilder cb, Join<Object, Object> hold,
+      InnReachTransactionFilterParameters parameters) {
     var itemAgencies = parameters.getItemAgencyCodes();
     return isEmpty(itemAgencies) ? cb.conjunction() : hold.get("itemAgencyCode").in(itemAgencies);
   }
@@ -151,7 +205,8 @@ public class InnReachTransactionSpecification {
     return cb.or(shippedItemBarcodePredicate, folioItemBarcodePredicate);
   }
 
-  static Predicate centralItemTypeIn(CriteriaBuilder cb, Join<Object, Object> hold, InnReachTransactionFilterParameters parameters) {
+  static Predicate centralItemTypeIn(CriteriaBuilder cb, Join<Object, Object> hold,
+      InnReachTransactionFilterParameters parameters) {
     var centralItemTypes = parameters.getCentralItemTypes();
     return isEmpty(centralItemTypes) ? cb.conjunction() : hold.get("centralItemType").in(centralItemTypes);
   }
@@ -165,8 +220,7 @@ public class InnReachTransactionSpecification {
           var itemHold = cb.treat(join, TransactionItemHold.class);
           var localHold = cb.treat(join, TransactionLocalHold.class);
 
-          var coalesce = cb.coalesce(itemHold.get("centralPatronTypeItem"),
-            localHold.get("centralPatronTypeLocal"));
+          var coalesce = cb.coalesce(itemHold.get("centralPatronTypeItem"), localHold.get("centralPatronTypeLocal"));
           order = sortOrder == DESC ? cb.desc(coalesce) : cb.asc(coalesce);
         } else {
           order = sortOrder == DESC ? cb.desc(getField(transaction, sortBy)) : cb.asc(getField(transaction, sortBy));

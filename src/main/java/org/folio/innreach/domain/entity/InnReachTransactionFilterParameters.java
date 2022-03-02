@@ -1,5 +1,6 @@
 package org.folio.innreach.domain.entity;
 
+import java.time.OffsetDateTime;
 import java.util.List;
 
 import lombok.AllArgsConstructor;
@@ -17,11 +18,13 @@ public class InnReachTransactionFilterParameters {
   private List<Integer> patronTypes;
   private List<Integer> centralItemTypes;
   private String query;
+  private List<OffsetDateTime> createDates;
+  private DateOperation createdDateOperation;
   private SortBy sortBy;
   private SortOrder sortOrder;
 
   @AllArgsConstructor
-  public enum SortBy{
+  public enum SortBy {
     TRANSACTION_TIME("transactionTime"),
     DATE_CREATED("createdDate"),
     DATE_MODIFIED("updatedDate"),
@@ -42,4 +45,20 @@ public class InnReachTransactionFilterParameters {
     @Getter
     private final String value;
   }
+
+  @AllArgsConstructor
+  public enum DateOperation {
+
+    LESS("less"),
+    LESS_OR_EQUAL("lessOrEqual"),
+    EQUAL("equal"),
+    NOT_EQUAL("notEqual"),
+    GREATER("greater"),
+    GREATER_OR_EQUAL("greaterOrEqual"),
+    BETWEEN("between");
+
+    @Getter
+    private final String value;
+  }
+
 }

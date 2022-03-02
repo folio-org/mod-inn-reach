@@ -13,6 +13,10 @@ public class MappingMethods {
     return offsetDateTime == null ? null : Date.from(offsetDateTime.toInstant());
   }
 
+  public OffsetDateTime offsetDateTimeAsDate(Date date) {
+    return date == null ? null : Date.from(offsetDateTime.toInstant());
+  }
+
   public String uuidAsString(UUID uuid) {
     return uuid == null ? null : uuid.toString();
   }
