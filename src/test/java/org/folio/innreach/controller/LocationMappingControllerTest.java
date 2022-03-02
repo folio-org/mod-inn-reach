@@ -118,7 +118,8 @@ class LocationMappingControllerTest extends BaseControllerTest {
     "classpath:db/loc-mapping/pre-populate-another-location-mapping.sql"
   })
   void shouldGetAllExistingMappingsForAllLibraries() {
-    var responseEntity = testRestTemplate.getForEntity(baseMappingURLForAllLibraries(), LocationMappingsDTO.class);
+    var responseEntity = testRestTemplate.getForEntity(
+      baseMappingURLForAllLibraries(PRE_POPULATED_CENTRAL_SERVER_ID), LocationMappingsDTO.class);
 
     assertTrue(responseEntity.getStatusCode().is2xxSuccessful());
     assertTrue(responseEntity.hasBody());
@@ -378,16 +379,12 @@ class LocationMappingControllerTest extends BaseControllerTest {
     return baseMappingURL(PRE_POPULATED_CENTRAL_SERVER_ID, PRE_POPULATED_LIBRARY_ID);
   }
 
-  private static String baseMappingURLForAllLibraries() {
-    return baseMappingURLForAllLibraries(PRE_POPULATED_CENTRAL_SERVER_ID);
+  private static String baseMappingURLForAllLibraries(String serverId) {
+    return "/inn-reach/central-servers/" + serverId + "/libraries/locations/location-mappings";
   }
 
   private static String baseMappingURL(String serverId, String libraryId) {
     return "/inn-reach/central-servers/" + serverId + "/libraries/" + libraryId + "/locations/location-mappings";
-  }
-
-  private static String baseMappingURLForAllLibraries(String serverId) {
-    return "/inn-reach/central-servers/" + serverId + "/libraries/locations/location-mappings";
   }
 
   private LocationMappingDTO findMapping(UUID id) {
