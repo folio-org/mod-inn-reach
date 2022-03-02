@@ -111,6 +111,30 @@ class LocationMappingControllerTest extends BaseControllerTest {
 
   @Test
   @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-location/pre-populate-inn-reach-location-code.sql",
+    "classpath:db/inn-reach-location/pre-populate-another-inn-reach-location-code.sql",
+    "classpath:db/loc-mapping/pre-populate-location-mapping.sql"
+  })
+  void shouldGetAllExistingMappingsForAllLibraries() {
+    var responseEntity = testRestTemplate.getForEntity(baseMappingURL(), LocationMappingsDTO.class);
+
+    assertTrue(responseEntity.getStatusCode().is2xxSuccessful());
+    assertTrue(responseEntity.hasBody());
+
+    var response = responseEntity.getBody();
+    assertNotNull(response);
+
+    var mappings = response.getLocationMappings();
+
+    List<LocationMapping> dbMappings = repository.findByCentralServerId(UUID.fromString(PRE_POPULATED_CENTRAL_SERVER_ID));
+
+    assertEquals(dbMappings.size(), response.getTotalRecords());
+    assertThat(mappings, containsInAnyOrder(mapper.toDTOs(dbMappings).toArray()));
+  }
+
+  @Test
+  @Sql(scripts = {
     "classpath:db/central-server/pre-populate-central-server.sql"
   })
   void shouldGetEmptyMappingsWith0TotalIfNotSet() {

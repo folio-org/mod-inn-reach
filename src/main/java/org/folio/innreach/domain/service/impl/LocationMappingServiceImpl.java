@@ -53,6 +53,7 @@ public class LocationMappingServiceImpl implements LocationMappingService {
   }
 
   @Override
+  @Transactional(readOnly = true)
   public LocationMappingsDTO getAllMappingsForAllLibraries(UUID centralServerId, int offset, int limit) {
     var example = mappingExampleWithServerId(centralServerId);
 
