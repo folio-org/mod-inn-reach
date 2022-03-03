@@ -45,6 +45,9 @@ public interface CirculationClient {
   @PostMapping("/check-out-by-barcode")
   LoanDTO checkOutByBarcode(CheckOutRequestDTO checkOut);
 
+  @GetMapping("/loans?query=(itemId=={itemId})")
+  ResultList<LoanDTO> queryLoansByItemId(@PathVariable("itemId") UUID itemId);
+
   @GetMapping("/loans/{loanId}")
   Optional<LoanDTO> findLoan(@PathVariable("loanId") UUID loanId);
 

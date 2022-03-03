@@ -9,6 +9,7 @@ import static org.folio.innreach.external.InnReachHeaders.X_TO_CODE;
 import java.net.URI;
 
 import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -39,6 +40,20 @@ public interface InnReachContributionClient {
                                       @PathVariable String bibId,
                                       @RequestBody BibItemsInfo bibItems);
 
+  @DeleteMapping(value = "/innreach/v2/contribution/bib/{bibId}", produces = APPLICATION_JSON_VALUE)
+  InnReachResponse deContributeBib(URI baseUri,
+                                       @RequestHeader(AUTHORIZATION) String authorizationHeader,
+                                       @RequestHeader(X_FROM_CODE) String xFromCode,
+                                       @RequestHeader(X_TO_CODE) String xToCode,
+                                       @PathVariable String bibId);
+
+  @DeleteMapping(value = "/innreach/v2/contribution/item/{itemId}", produces = APPLICATION_JSON_VALUE)
+  InnReachResponse deContributeBibItem(URI baseUri,
+                                      @RequestHeader(AUTHORIZATION) String authorizationHeader,
+                                      @RequestHeader(X_FROM_CODE) String xFromCode,
+                                      @RequestHeader(X_TO_CODE) String xToCode,
+                                      @PathVariable String itemId);
+
   @GetMapping(value = "/innreach/v2/local/{localCode}/bib/{bibId}", produces = APPLICATION_JSON_VALUE)
   InnReachResponse lookUpBib(URI baseUri,
                              @RequestHeader(AUTHORIZATION) String authorizationHeader,
@@ -46,5 +61,14 @@ public interface InnReachContributionClient {
                              @RequestHeader(X_TO_CODE) String xToCode,
                              @PathVariable("localCode") String localCode,
                              @PathVariable("bibId") String bibId);
+
+  @GetMapping(value = "/innreach/v2/local/{localCode}/bib/{bibId}/item/{itemId}", produces = APPLICATION_JSON_VALUE)
+  InnReachResponse lookUpBibItem(URI baseUri,
+                                 @RequestHeader(AUTHORIZATION) String authorizationHeader,
+                                 @RequestHeader(X_FROM_CODE) String xFromCode,
+                                 @RequestHeader(X_TO_CODE) String xToCode,
+                                 @PathVariable("localCode") String localCode,
+                                 @PathVariable("bibId") String bibId,
+                                 @PathVariable("itemId") String itemId);
 
 }

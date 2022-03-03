@@ -55,7 +55,6 @@ class InventoryViewServiceImplTest {
     when(inventoryViewClient.getInstanceByHrid(any())).thenThrow(new RuntimeException());
 
     assertThatThrownBy(() -> service.getInstanceByHrid("in00343441"))
-      .isInstanceOf(RuntimeException.class)
-      .hasMessageContaining("Unable to load inventory-view instance");
+      .isInstanceOf(RuntimeException.class);
   }
 }
