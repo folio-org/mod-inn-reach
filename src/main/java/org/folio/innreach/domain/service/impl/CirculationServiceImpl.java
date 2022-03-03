@@ -32,6 +32,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.function.BiConsumer;
 import java.util.function.Supplier;
@@ -255,10 +256,17 @@ public class CirculationServiceImpl implements CirculationService {
   public InnReachResponseDTO itemReceived(String trackingId, String centralCode, ItemReceivedDTO itemReceivedDTO) {
     var transaction = getTransactionOfType(trackingId, centralCode, ITEM);
 
-    Assert.isTrue(transaction.getState() == ITEM_SHIPPED, unexpectedTransactionState(transaction));
+    Assert.isTrue(transactionStateIs(transaction, Set.of(ITEM_SHIPPED, ITEM_HOLD, TRANSFER)), unexpectedTransactionState(transaction));
+    if (transaction.getState() != ITEM_SHIPPED) {
+      createLoan(transaction);
+    }
     transaction.setState(ITEM_RECEIVED);
 
     return success();
+  }
+
+  private boolean transactionStateIs(InnReachTransaction transaction, Set<TransactionState> states) {
+    return states.contains(transaction.getState());
   }
 
   @Override
@@ -271,20 +279,24 @@ public class CirculationServiceImpl implements CirculationService {
     }
 
     if (transaction.getState() == TransactionState.ITEM_HOLD) {
-      log.info("Attempting to create a loan");
-
-      var folioPatronId = transaction.getHold().getFolioPatronId();
-      var servicePointId = requestService.getDefaultServicePointIdForPatron(folioPatronId);
-      var checkOutResponse = requestService.checkOutItem(transaction, servicePointId);
-      var loanId = checkOutResponse.getId();
-
-      log.info("Created a loan with id {}", loanId);
-
-      transaction.getHold().setFolioLoanId(loanId);
+      createLoan(transaction);
       transaction.setState(RECEIVE_UNANNOUNCED);
     }
 
     return success();
+  }
+
+  private void createLoan(InnReachTransaction transaction) {
+    log.info("Attempting to create a loan");
+
+    var folioPatronId = transaction.getHold().getFolioPatronId();
+    var servicePointId = requestService.getDefaultServicePointIdForPatron(folioPatronId);
+    var checkOutResponse = requestService.checkOutItem(transaction, servicePointId);
+    var loanId = checkOutResponse.getId();
+
+    log.info("Created a loan with id {}", loanId);
+
+    transaction.getHold().setFolioLoanId(loanId);
   }
 
   @Override
