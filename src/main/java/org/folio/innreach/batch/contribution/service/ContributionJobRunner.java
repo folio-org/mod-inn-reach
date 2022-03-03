@@ -382,8 +382,12 @@ public class ContributionJobRunner {
   }
 
   private void completeContribution(ContributionJobContext context) {
-    contributionService.completeContribution(context.getContributionId());
-    log.info("Completed contribution job {}", context);
+    try {
+      contributionService.completeContribution(context.getContributionId());
+      log.info("Completed contribution job {}", context);
+    } catch (Exception e) {
+      log.warn("Failed to complete contribution job {}", context, e);
+    }
   }
 
   private void updateStats(Statistics stats) {
