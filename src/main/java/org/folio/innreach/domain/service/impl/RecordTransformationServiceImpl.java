@@ -252,7 +252,7 @@ public class RecordTransformationServiceImpl implements RecordTransformationServ
 
     for (var libId : libraryIds) {
       var locationMappings =
-        locationMappingService.getAllMappings(centralServerId, libId, 0, FETCH_LIMIT).getLocationMappings();
+        locationMappingService.getMappingsByLibraryId(centralServerId, libId, 0, FETCH_LIMIT).getLocationMappings();
 
       locationMappings.forEach(loc -> mappings.put(loc.getLocationId(), irLocations.get(loc.getInnReachLocationId())));
     }

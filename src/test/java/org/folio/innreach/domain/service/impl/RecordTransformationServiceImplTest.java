@@ -146,7 +146,7 @@ class RecordTransformationServiceImplTest {
     when(irLocationService.getAllInnReachLocations(any(), any())).thenReturn(irLocations);
     when(typeMappingService.getAllMappings(any(), anyInt(), anyInt())).thenReturn(materialTypeMappings);
     when(libraryMappingService.getAllMappings(any(), anyInt(), anyInt())).thenReturn(libraryMappings);
-    when(locationMappingService.getAllMappings(any(), any(), anyInt(), anyInt())).thenReturn(locationMappings);
+    when(locationMappingService.getMappingsByLibraryId(any(), any(), anyInt(), anyInt())).thenReturn(locationMappings);
     when(folioLocationService.getLocationLibraryMappings()).thenReturn(Map.of(FOLIO_LOC_ID, LIBRARY_ID));
     when(validationService.getItemCirculationStatus(any(), any())).thenReturn(ON_LOAN);
     when(circulationClient.queryRequestsByItemId(any())).thenReturn(ResultList.asSinglePage(request));

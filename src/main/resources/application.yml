@@ -114,7 +114,7 @@ batch:
     contribution:
       chunk-size: 100
       retry-attempts: 3
-      retry-interval-ms: 20000
+      retry-interval-ms: 10000
       reader-topic: inventory.instance-contribution
       reader-group-id: ${ENV:folio}-mod-innreach-contribution-events-group
       reader-poll-timeout-sec: 30
