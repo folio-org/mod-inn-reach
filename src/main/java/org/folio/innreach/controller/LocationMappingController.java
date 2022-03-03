@@ -29,7 +29,17 @@ public class LocationMappingController implements LocationMappingsApi {
   public ResponseEntity<LocationMappingsDTO> getLocationMappingsByServerId(@PathVariable UUID centralServerId,
       @PathVariable UUID libraryId, Integer offset, Integer limit) {
 
-    var mappings = libraryMappingService.getAllMappings(centralServerId, libraryId, offset, limit);
+    var mappings = libraryMappingService.getMappingsByLibraryId(centralServerId, libraryId, offset, limit);
+
+    return ResponseEntity.ok(mappings);
+  }
+
+  @Override
+  @GetMapping("/{centralServerId}/libraries/locations/location-mappings")
+  public ResponseEntity<LocationMappingsDTO> getLocationMappingsForAllLibrariesByServerId(@PathVariable UUID centralServerId,
+                                                                                          Integer offset, Integer limit) {
+
+    var mappings = libraryMappingService.getAllMappings(centralServerId, offset, limit);
 
     return ResponseEntity.ok(mappings);
   }

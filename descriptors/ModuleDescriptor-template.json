@@ -176,6 +176,11 @@
           "permissionsRequired": ["inn-reach.location-mappings.collection.get"]
         },
         {
+          "methods": ["GET"],
+          "pathPattern": "/inn-reach/central-servers/{centralServerId}/libraries/locations/location-mappings",
+          "permissionsRequired": ["inn-reach.location-mappings.collection.get"]
+        },
+        {
           "methods": ["PUT"],
           "pathPattern": "/inn-reach/central-servers/{centralServerId}/libraries/{libraryId}/locations/location-mappings",
           "permissionsRequired": ["inn-reach.location-mappings.collection.put"]
