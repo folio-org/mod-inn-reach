@@ -26,6 +26,7 @@ import static org.folio.innreach.domain.dto.folio.inventory.InventoryItemStatus.
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.CANCEL_REQUEST;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.FINAL_CHECKIN;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.ITEM_RECEIVED;
+import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.RECEIVE_UNANNOUNCED;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.RETURN_UNCIRCULATED;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.TRANSFER;
 import static org.folio.innreach.dto.TransactionStateEnum.PATRON_HOLD;
@@ -949,9 +950,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   void testCheckInPatronHoldItem_whenItemIsShippedAndRequestIsCancelled() {
     when(innReachClient.postInnReachApi(any(), anyString(), anyString(), anyString())).thenReturn("test");
 
-    var requestDTO = new RequestDTO();
-    requestDTO.setStatus(RequestDTO.RequestStatus.CLOSED_CANCELLED);
-    when(circulationClient.findRequest(any())).thenReturn(Optional.of(requestDTO));
+    when(circulationClient.findRequest(any())).thenReturn(Optional.of(createCancelledRequest()));
 
     when(circulationClient.checkInByBarcode(any(CheckInRequestDTO.class)))
       .thenReturn(new CheckInResponseDTO().item(new CheckInResponseDTOItem().barcode(PRE_POPULATED_PATRON_HOLD_ITEM_BARCODE)));
@@ -985,6 +984,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   void testCheckInPatronHoldUnshippedItem() {
     modifyFolioItemBarcode(PRE_POPULATED_PATRON_HOLD_TRANSACTION_ID, null);
 
+    when(circulationClient.findRequest(any())).thenReturn(Optional.of(new RequestDTO()));
     when(circulationClient.checkInByBarcode(any(CheckInRequestDTO.class)))
       .thenReturn(new CheckInResponseDTO().item(new CheckInResponseDTOItem().barcode("newbarcode")));
     when(inventoryClient.getItemByBarcode(any())).thenReturn(ResultList.empty());
@@ -1006,6 +1006,9 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     assertEquals("newbarcode", checkInResponse.getItem().getBarcode());
 
     assertFalse(response.getBarcodeAugmented());
+
+    var updatedTransaction = repository.findById(PRE_POPULATED_PATRON_HOLD_TRANSACTION_ID).get();
+    assertEquals(RECEIVE_UNANNOUNCED, updatedTransaction.getState());
   }
 
   @Test
@@ -1016,6 +1019,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   void checkInPatronHoldUnshippedItem_barcodeAugmented() {
     modifyFolioItemBarcode(PRE_POPULATED_PATRON_HOLD_TRANSACTION_ID, null);
 
+    when(circulationClient.findRequest(any())).thenReturn(Optional.of(new RequestDTO()));
     when(circulationClient.checkInByBarcode(any(CheckInRequestDTO.class)))
       .thenReturn(new CheckInResponseDTO().item(new CheckInResponseDTOItem().barcode("newbarcode")));
     when(inventoryClient.getItemByBarcode(any())).thenReturn(ResultList.asSinglePage(new InventoryItemDTO()));
@@ -1028,6 +1032,41 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
 
     var response = responseEntity.getBody();
     assertTrue(response.getBarcodeAugmented());
+  }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
+  })
+  void testCheckInPatronHoldUnshippedItem_whenRequestIsCancelled() {
+    modifyFolioItemBarcode(PRE_POPULATED_PATRON_HOLD_TRANSACTION_ID, null);
+
+    when(circulationClient.findRequest(any())).thenReturn(Optional.of(createCancelledRequest()));
+    when(circulationClient.checkInByBarcode(any(CheckInRequestDTO.class)))
+      .thenReturn(new CheckInResponseDTO().item(new CheckInResponseDTOItem().barcode("newbarcode")));
+    when(inventoryClient.getItemByBarcode(any())).thenReturn(ResultList.empty());
+    when(inventoryClient.findItem(any())).thenReturn(Optional.of(createInventoryItemDTO()));
+
+    var responseEntity = testRestTemplate.postForEntity(
+      PATRON_HOLD_CHECK_IN_UNSHIPPED_ENDPOINT, null, PatronHoldCheckInResponseDTO.class,
+      PRE_POPULATED_PATRON_HOLD_TRANSACTION_ID, UUID.randomUUID(), "newbarcode"
+    );
+
+    var response = responseEntity.getBody();
+    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+    assertNotNull(response);
+
+    var transaction = response.getTransaction();
+    assertEquals(PRE_POPULATED_PATRON_HOLD_TRANSACTION_ID, transaction.getId());
+
+    var checkInResponse = response.getFolioCheckIn();
+    assertEquals("newbarcode", checkInResponse.getItem().getBarcode());
+
+    assertFalse(response.getBarcodeAugmented());
+
+    var updatedTransaction = repository.findById(PRE_POPULATED_PATRON_HOLD_TRANSACTION_ID).get();
+    assertEquals(RETURN_UNCIRCULATED, updatedTransaction.getState());
   }
 
   @Test
@@ -1305,5 +1344,11 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     assertEquals(NEW_TEST_PARAMETER_VALUE, updatedTransaction.getHold().getPickupLocation().getDisplayName());
     assertEquals(NEW_TEST_PARAMETER_VALUE, updatedTransaction.getHold().getPickupLocation().getPickupLocCode());
     assertEquals(NEW_TEST_PARAMETER_VALUE, updatedTransaction.getHold().getPickupLocation().getPrintName());
+  }
+
+  private RequestDTO createCancelledRequest() {
+    var request = new RequestDTO();
+    request.setStatus(RequestDTO.RequestStatus.CLOSED_CANCELLED);
+    return request;
   }
 }

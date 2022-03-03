@@ -101,11 +101,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
 
     reportItemReceived(transaction);
 
-    var request = requestService.findRequest(transaction.getHold().getFolioRequestId());
-    if (request.getStatus() == CLOSED_CANCELLED) {
-      reportReturnUncirculated(transaction);
-      transaction.setState(RETURN_UNCIRCULATED);
-    }
+    handleItemWithCanceledRequest(transaction);
 
     return response;
   }
@@ -126,6 +122,8 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
     transaction.setState(RECEIVE_UNANNOUNCED);
 
     reportUnshippedItemReceived(transaction);
+
+    handleItemWithCanceledRequest(transaction);
 
     return response;
   }
@@ -317,6 +315,18 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
 
     var loanDueDate = toInstantTruncatedToSec(loan.getDueDate());
     reportRecallRequested(transaction, loanDueDate);
+  }
+
+  private void handleItemWithCanceledRequest(InnReachTransaction transaction) {
+    var request = requestService.findRequest(transaction.getHold().getFolioRequestId());
+    if (request.getStatus() == CLOSED_CANCELLED) {
+      log.info("Updating transaction {} to uncirculated state due to cancelled request {}",
+        transaction.getId(), request.getId());
+
+      reportReturnUncirculated(transaction);
+
+      transaction.setState(RETURN_UNCIRCULATED);
+    }
   }
 
   private PatronHoldCheckInResponseDTO checkInItem(InnReachTransaction transaction, UUID servicePointId) {
