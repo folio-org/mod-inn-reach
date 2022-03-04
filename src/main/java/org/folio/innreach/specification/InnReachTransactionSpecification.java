@@ -125,11 +125,8 @@ public class InnReachTransactionSpecification {
 
   static Predicate patronNameIn(CriteriaBuilder cb, Join<Object, TransactionHold>  transactionHold, InnReachTransactionFilterParameters parameters) {
     var patronNames = parameters.getPatronNames();
-    if (isEmpty(patronNames)) {
-      return cb.conjunction();
-    }
 
-    return cb.or(transactionHold.get("patronName").in(patronNames));
+    return isEmpty(patronNames) ? cb.conjunction() : transactionHold.get("patronName").in(patronNames);
   }
 
   static Predicate itemBarcodeIn(CriteriaBuilder cb,

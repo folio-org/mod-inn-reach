@@ -17,6 +17,7 @@ import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.collections4.CollectionUtils;
+import org.folio.innreach.domain.service.UserService;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 
@@ -44,7 +45,7 @@ public class PatronInfoServiceImpl implements PatronInfoService {
 
   public static final String ERROR_REASON = "Unable to verify patron";
 
-  private final UserServiceImpl userService;
+  private final UserService userService;
   private final PatronTypeMappingService patronTypeMappingService;
   private final CentralServerService centralServerService;
   private final InnReachTransactionService transactionService;

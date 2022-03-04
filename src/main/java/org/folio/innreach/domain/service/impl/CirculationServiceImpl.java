@@ -5,6 +5,9 @@ import static java.time.Instant.ofEpochSecond;
 import static java.util.Objects.nonNull;
 import static org.apache.commons.lang3.StringUtils.capitalize;
 
+import static org.apache.commons.lang3.StringUtils.defaultIfEmpty;
+import static org.apache.commons.lang3.StringUtils.equalsAny;
+import static org.apache.commons.lang3.StringUtils.isNotEmpty;
 import static org.folio.innreach.domain.dto.folio.circulation.RequestDTO.RequestStatus.CLOSED_CANCELLED;
 import static org.folio.innreach.domain.dto.folio.circulation.RequestDTO.RequestStatus.OPEN_AWAITING_PICKUP;
 import static org.folio.innreach.domain.dto.folio.circulation.RequestDTO.RequestStatus.OPEN_IN_TRANSIT;
@@ -31,7 +34,6 @@ import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionTy
 import java.time.Instant;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
@@ -42,8 +44,10 @@ import javax.persistence.EntityExistsException;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
-import org.folio.innreach.domain.entity.TransactionPatronHold;
-import org.folio.innreach.external.exception.InnReachException;
+import org.folio.innreach.domain.dto.folio.User;
+import org.folio.innreach.domain.service.PatronTypeMappingService;
+import org.folio.innreach.domain.service.UserService;
+import org.folio.innreach.util.UUIDEncoder;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -108,7 +112,6 @@ public class CirculationServiceImpl implements CirculationService {
 
   private static final String UNEXPECTED_TRANSACTION_STATE = "Unexpected transaction state: ";
   private static final String D2IR_ITEM_RECALL_OPERATION = "recall";
-  private static final String D2IR_VERIFY_PATRON = "verifypatron";
 
   private final InnReachTransactionRepository transactionRepository;
   private final CentralServerRepository centralserverRepository;
@@ -123,6 +126,8 @@ public class CirculationServiceImpl implements CirculationService {
   private final CentralServerService centralServerService;
   private final MaterialTypeMappingService materialService;
   private final LocalAgencyRepository localAgencyRepository;
+  private final PatronTypeMappingService patronTypeMappingService;
+  private final UserService userService;
 
   private InnReachTransaction createTransactionWithItemHold(String trackingId, String centralCode) {
     var transaction = new InnReachTransaction();
@@ -433,7 +438,6 @@ public class CirculationServiceImpl implements CirculationService {
                                        TransactionType transactionType,
                                        BiConsumer<InnReachTransaction, Boolean> postProcessor) {
 
-    transactionHold.setPatronName(normalizePatronName(transactionHold.getPatronName()));
     var optTransaction = transactionRepository.findByTrackingIdAndCentralServerCode(trackingId, centralCode);
     var isExistingTransaction = optTransaction.isPresent();
 
@@ -445,6 +449,9 @@ public class CirculationServiceImpl implements CirculationService {
         var existingTransaction = optTransaction.get();
 
         updateTransactionHold(existingTransaction.getHold(), transactionHold);
+        if (transactionType == PATRON) {
+          populateTransactionHold(existingTransaction.getHold(), centralCode);
+        }
 
         return transactionRepository.save(existingTransaction);
       } else {
@@ -456,13 +463,6 @@ public class CirculationServiceImpl implements CirculationService {
         return transactionRepository.save(newTransaction);
       }
     });
-
-    Optional<TransactionType> optionalTransactionType = Optional.of(transaction.getType());
-    if (optionalTransactionType.isPresent()) {
-      if (transaction.getType() == PATRON) {
-        reportVerifyPatron(transaction);
-      }
-    }
 
     postProcessor.accept(transaction, isExistingTransaction);
   }
@@ -511,48 +511,6 @@ public class CirculationServiceImpl implements CirculationService {
     BeanUtils.copyProperties(pickupLocation, existingTransactionHold.getPickupLocation(), PICKUP_LOC_IGNORE_PROPS_ON_COPY);
   }
 
-  private void reportVerifyPatron(InnReachTransaction transaction) {
-    var payload = new HashMap<>();
-    var patronHold =  (TransactionPatronHold) transaction.getHold();
-    var visiblePatronId = patronHold.getPatronId();
-    var patronAgencyCode = patronHold.getPatronAgencyCode();
-    var patronName = patronHold.getPatronName();
-    payload.put("visiblePatronId", visiblePatronId);
-    payload.put("patronAgencyCode", patronAgencyCode);
-    payload.put("patronName", patronName);
-    callD2irCircOperation(D2IR_VERIFY_PATRON, transaction, payload);
-  }
-
-  private void callD2irCircOperation(String operation, InnReachTransaction transaction, Map<Object, Object> payload) {
-    var centralCode = transaction.getCentralServerCode();
-    var trackingId = transaction.getTrackingId();
-    var requestPath = resolveD2irCircPath(operation, trackingId, centralCode);
-    try {
-      if (payload == null) {
-        innReachExternalService.postInnReachApi(centralCode, requestPath);
-      } else {
-        innReachExternalService.postInnReachApi(centralCode, requestPath, payload);
-      }
-    } catch (InnReachException e) {
-      log.warn("Unexpected D2IR response: {}", e.getMessage(), e);
-    }
-  }
-
-  private String normalizePatronName(String patronFullName) {
-    String[] patronName = patronFullName.split(",");
-    String firstNameOrPreferredFirstName = null;
-    String lastName = null;
-    for (String word : patronName) {
-      String[] checkForName = word.trim().split(" ");
-      if (checkForName.length >= 2) {
-        firstNameOrPreferredFirstName = word.trim();
-      } else {
-        lastName = word.trim() + ", ";
-      }
-    }
-    return lastName + firstNameOrPreferredFirstName;
-  }
-
   private InnReachTransaction createTransaction(String trackingId, String centralCode,
                                                 TransactionHoldDTO transactionHold, TransactionType type) {
     TransactionHold hold;
@@ -560,6 +518,7 @@ public class CirculationServiceImpl implements CirculationService {
     if (type == PATRON) {
       hold = transactionHoldMapper.toPatronHold(transactionHold);
       state = PATRON_HOLD;
+      populateTransactionHold(hold, centralCode);
     } else if (type == LOCAL) {
       hold = transactionHoldMapper.toLocalHold(transactionHold);
       state = LOCAL_HOLD;
@@ -576,6 +535,62 @@ public class CirculationServiceImpl implements CirculationService {
     newInnReachTransaction.setState(state);
 
     return newInnReachTransaction;
+  }
+
+  private TransactionHold populateTransactionHold(TransactionHold hold, String centralCode) {
+    var user = getUser(hold);
+    boolean changeName = matchName(user, hold.getPatronName());
+    if (changeName) {
+      hold.setPatronName(getPatronName(user));
+    }
+    var centralPatronType = getCentralPatronType(centralCode, user);
+    hold.setCentralPatronType(centralPatronType);
+    return hold;
+  }
+
+  private User getUser(TransactionHold hold) {
+    var patronId = UUIDEncoder.decode(hold.getPatronId());
+    System.out.println("getUser transactionHoldDTO patron id " + hold.getPatronId());
+    return userService.getUserById(patronId)
+      .orElseThrow(() -> new IllegalArgumentException("Patron is not found by id for creation patron hold transaction: " + patronId));
+  }
+
+  private Integer getCentralPatronType(String centralCode, User user) {
+    var centralServer = centralServerService.getCentralServerByCentralCode(centralCode);
+    var centralServerId = centralServer.getId();
+    return patronTypeMappingService.getCentralPatronType(centralServerId, user.getPatronGroupId())
+      .orElseThrow(() -> new IllegalStateException("centralPatronType is not resolved for patron with public id: " + user.getBarcode()));
+  }
+
+  private String getPatronName(User user) {
+    var personal = user.getPersonal();
+
+    var nameBuilder = new StringBuilder(personal.getLastName())
+      .append(", ")
+      .append(defaultIfEmpty(personal.getPreferredFirstName(), personal.getFirstName()));
+
+    if (isNotEmpty(personal.getMiddleName())) {
+      nameBuilder.append(" ").append(personal.getMiddleName());
+    }
+    return nameBuilder.toString();
+  }
+
+  private boolean matchName(User user, String patronName) {
+    var personal = user.getPersonal();
+    String[] patronNameTokens = patronName.split("\\s");
+
+    if (patronNameTokens.length < 2) {
+      return false;
+    } else if (patronNameTokens.length == 2) {
+      // "First Last" or "Middle Last" format
+      return equalsAny(patronNameTokens[0], personal.getFirstName(), personal.getPreferredFirstName(), personal.getMiddleName()) &&
+        patronNameTokens[1].equals(personal.getLastName());
+    }
+
+    // "First Middle Last" format
+    return equalsAny(patronNameTokens[0], personal.getFirstName(), personal.getPreferredFirstName()) &&
+      patronNameTokens[1].equals(personal.getMiddleName()) &&
+      patronNameTokens[2].equals(personal.getLastName());
   }
 
   private Optional<Holding> removeHoldingsTransactionInfo(InventoryItemDTO item) {
