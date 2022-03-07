@@ -1,5 +1,6 @@
 package org.folio.innreach.domain.service.impl;
 
+import static java.util.Collections.emptyList;
 import static org.apache.commons.collections4.ListUtils.emptyIfNull;
 
 import static org.folio.innreach.domain.service.impl.MARCRecordTransformationServiceImpl.isMARCRecord;
@@ -28,11 +29,13 @@ import org.folio.innreach.domain.dto.folio.inventorystorage.MaterialTypeDTO;
 import org.folio.innreach.domain.service.CentralServerService;
 import org.folio.innreach.domain.service.ContributionCriteriaConfigurationService;
 import org.folio.innreach.domain.service.ContributionValidationService;
+import org.folio.innreach.domain.service.HoldingsService;
 import org.folio.innreach.domain.service.InnReachLocationService;
 import org.folio.innreach.domain.service.ItemContributionOptionsConfigurationService;
 import org.folio.innreach.domain.service.LibraryMappingService;
 import org.folio.innreach.domain.service.MaterialTypeMappingService;
 import org.folio.innreach.dto.ContributionCriteriaDTO;
+import org.folio.innreach.dto.Holding;
 import org.folio.innreach.dto.InnReachLocationDTO;
 import org.folio.innreach.dto.Instance;
 import org.folio.innreach.dto.Item;
@@ -53,6 +56,7 @@ public class ContributionValidationServiceImpl implements ContributionValidation
   private final MaterialTypesClient materialTypesClient;
   private final MaterialTypeMappingService typeMappingService;
 
+  private final HoldingsService holdingsService;
   private final LibraryMappingService libraryMappingService;
   private final CentralServerService centralServerService;
   private final ContributionCriteriaConfigurationService contributionConfigService;
@@ -90,7 +94,7 @@ public class ContributionValidationServiceImpl implements ContributionValidation
   @Override
   public boolean isEligibleForContribution(UUID centralServerId, Item item) {
     var statisticalCodeIds = item.getStatisticalCodeIds();
-    var holdingStatisticalCodeIds = item.getHoldingStatisticalCodeIds();
+    var holdingStatisticalCodeIds = fetchHoldingStatisticalCodes(item);
 
     if (isExcludedStatisticalCode(centralServerId, statisticalCodeIds) ||
       isExcludedStatisticalCode(centralServerId, holdingStatisticalCodeIds)) {
@@ -199,6 +203,12 @@ public class ContributionValidationServiceImpl implements ContributionValidation
     }
   }
 
+  private List<UUID> fetchHoldingStatisticalCodes(Item item) {
+    return holdingsService.find(item.getHoldingsRecordId())
+      .map(Holding::getStatisticalCodeIds)
+      .orElse(emptyList());
+  }
+
   private boolean isItemNonLendable(Item inventoryItem,
                                     ItemContributionOptionsConfigurationDTO itemContributionConfig) {
     return isItemNonLendableByLoanTypes(inventoryItem, itemContributionConfig) ||
@@ -265,7 +275,7 @@ public class ContributionValidationServiceImpl implements ContributionValidation
     var centralServerConnectionDetails = centralServerService.getCentralServerConnectionDetails(centralServerId);
 
     return mapItems(innReachLocationExternalService.getAllLocations(centralServerConnectionDetails),
-        org.folio.innreach.external.dto.InnReachLocationDTO::getCode);
+      org.folio.innreach.external.dto.InnReachLocationDTO::getCode);
   }
 
   private List<UUID> getFolioLibraryIds(UUID centralServerId) {

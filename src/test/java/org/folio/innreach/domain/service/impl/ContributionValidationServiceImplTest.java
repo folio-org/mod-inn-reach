@@ -16,6 +16,7 @@ import static org.folio.innreach.fixture.ItemContributionOptionsConfigurationFix
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -32,6 +33,7 @@ import org.folio.innreach.domain.dto.folio.ResultList;
 import org.folio.innreach.domain.dto.folio.circulation.RequestDTO;
 import org.folio.innreach.domain.service.CentralServerService;
 import org.folio.innreach.domain.service.ContributionCriteriaConfigurationService;
+import org.folio.innreach.domain.service.HoldingsService;
 import org.folio.innreach.domain.service.InnReachLocationService;
 import org.folio.innreach.domain.service.ItemContributionOptionsConfigurationService;
 import org.folio.innreach.domain.service.LibraryMappingService;
@@ -69,6 +71,8 @@ class ContributionValidationServiceImplTest {
   private InventoryClient inventoryClient;
   @Mock
   private CirculationClient circulationClient;
+  @Mock
+  private HoldingsService holdingsService;
 
   @InjectMocks
   private ContributionValidationServiceImpl service;
@@ -280,6 +284,7 @@ class ContributionValidationServiceImplTest {
   @Test
   void testEligibleInstance_noStatisticalCodes() {
     when(contributionConfigService.getCriteria(any())).thenReturn(CRITERIA);
+    when(holdingsService.find(any())).thenReturn(Optional.empty());
 
     var instance = new Instance();
     instance.setSource(ELIGIBLE_SOURCE);
@@ -301,6 +306,7 @@ class ContributionValidationServiceImplTest {
     instance.setItems(List.of(new Item().statisticalCodeIds(statisticalCodes)));
 
     when(contributionConfigService.getCriteria(any())).thenReturn(CRITERIA);
+    when(holdingsService.find(any())).thenReturn(Optional.empty());
 
     var isEligible = service.isEligibleForContribution(UUID.randomUUID(), instance);
 
@@ -329,6 +335,7 @@ class ContributionValidationServiceImplTest {
     instance.setItems(List.of(new Item().statisticalCodeIds(List.of(DO_NOT_CONTRIBUTE_CODE_ID))));
 
     when(contributionConfigService.getCriteria(any())).thenReturn(CRITERIA);
+    when(holdingsService.find(any())).thenReturn(Optional.empty());
 
     var isEligible = service.isEligibleForContribution(UUID.randomUUID(), instance);
 

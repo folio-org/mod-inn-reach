@@ -114,7 +114,7 @@ batch:
     contribution:
       chunk-size: 100
       retry-attempts: 3
-      retry-interval-ms: 20000
+      retry-interval-ms: 10000
       reader-topic: inventory.instance-contribution
       reader-group-id: ${ENV:folio}-mod-innreach-contribution-events-group
       reader-poll-timeout-sec: 30
@@ -148,6 +148,24 @@ kafka:
       topic-pattern: (${environment}\.)(.*\.)circulation\.check-in
       concurrency: ${KAFKA_EVENTS_CONCURRENCY:2}
       data-type: org.folio.innreach.dto.CheckInDTO
+    item:
+      id: ${environment}-mod-inn-reach-inventory-item-events
+      group-id: ${spring.kafka.consumer.group-id}
+      topic-pattern: (${environment}\.)(.*\.)inventory\.item
+      concurrency: ${KAFKA_EVENTS_CONCURRENCY:2}
+      data-type: org.folio.innreach.dto.Item
+    instance:
+      id: ${environment}-mod-inn-reach-inventory-instance-events
+      group-id: ${spring.kafka.consumer.group-id}
+      topic-pattern: (${environment}\.)(.*\.)inventory\.instance
+      concurrency: ${KAFKA_EVENTS_CONCURRENCY:2}
+      data-type: org.folio.innreach.dto.Instance
+    holding:
+      id: ${environment}-mod-inn-reach-inventory-holding-events
+      group-id: ${spring.kafka.consumer.group-id}
+      topic-pattern: (${environment}\.)(.*\.)inventory\.holdings-record
+      concurrency: ${KAFKA_EVENTS_CONCURRENCY:2}
+      data-type: org.folio.innreach.dto.Holding
 logging:
   level:
     org.zalando.logbook: TRACE

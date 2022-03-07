@@ -12,11 +12,12 @@ import org.springframework.web.bind.annotation.RestController;
 
 import org.folio.innreach.ModInnReachApplication;
 import org.folio.innreach.domain.listener.KafkaCirculationEventListener;
+import org.folio.innreach.domain.listener.KafkaInventoryEventListener;
 import org.folio.spring.liquibase.FolioLiquibaseConfiguration;
 import org.folio.tenant.domain.dto.TenantAttributes;
 import org.folio.tenant.rest.resource.TenantApi;
 
-@MockBean(KafkaCirculationEventListener.class)
+@MockBean(classes = {KafkaCirculationEventListener.class, KafkaInventoryEventListener.class})
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, classes = {ModInnReachApplication.class,
   BaseControllerTest.TestTenantController.class})
 @ActiveProfiles({"test", "testcontainers-pg"})

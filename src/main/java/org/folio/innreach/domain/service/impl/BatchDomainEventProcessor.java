@@ -30,8 +30,6 @@ public class BatchDomainEventProcessor {
       var tenantId = tenantEventsEntry.getKey();
       var events = tenantEventsEntry.getValue();
 
-      log.info("Processing tenant {} events {}", tenantId, events.size());
-
       executionService.runTenantScoped(tenantId,
         () -> processTenantEvents(events, recordProcessor));
     }

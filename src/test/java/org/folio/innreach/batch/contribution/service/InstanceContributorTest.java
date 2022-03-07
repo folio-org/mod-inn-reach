@@ -10,6 +10,7 @@ import static org.folio.innreach.external.dto.InnReachResponse.errorResponse;
 import static org.folio.innreach.external.dto.InnReachResponse.okResponse;
 import static org.folio.innreach.fixture.ContributionFixture.createContributionJobContext;
 import static org.folio.innreach.fixture.ContributionFixture.createInstance;
+import static org.folio.innreach.fixture.TestUtil.createNoRetryTemplate;
 
 import java.util.UUID;
 
@@ -19,13 +20,14 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.retry.RetryCallback;
 import org.springframework.retry.support.RetryTemplate;
 
 import org.folio.innreach.batch.contribution.ContributionJobContext;
 import org.folio.innreach.batch.contribution.ContributionJobContextManager;
-import org.folio.innreach.domain.service.InstanceTransformationService;
+import org.folio.innreach.domain.service.RecordTransformationService;
+import org.folio.innreach.domain.service.impl.RecordContributionServiceImpl;
 import org.folio.innreach.dto.BibInfo;
 import org.folio.innreach.external.service.InnReachContributionService;
 
@@ -38,20 +40,16 @@ class InstanceContributorTest {
   @Mock
   private InnReachContributionService irContributionService;
   @Mock
-  private InstanceTransformationService instanceTransformationService;
-  @Mock
-  private RetryTemplate retryTemplate;
+  private RecordTransformationService instanceTransformationService;
+  @Spy
+  private RetryTemplate retryTemplate = createNoRetryTemplate();
 
   @InjectMocks
-  private InstanceContributor instanceContributor;
+  private RecordContributionServiceImpl instanceContributor;
 
   @BeforeEach
   public void init() {
     ContributionJobContextManager.beginContributionJobContext(JOB_CONTEXT);
-    when(retryTemplate.execute(any(), any(), any())).thenAnswer(invocation -> {
-      RetryCallback retry = invocation.getArgument(0);
-      return retry.doWithRetry(null);
-    });
   }
 
   @AfterEach
@@ -65,7 +63,7 @@ class InstanceContributorTest {
     when(irContributionService.contributeBib(any(), any(), any())).thenReturn(okResponse());
     when(irContributionService.lookUpBib(any(), any())).thenReturn(okResponse());
 
-    instanceContributor.contributeInstance(createInstance());
+    instanceContributor.contributeInstance(CENTRAL_SERVER_ID, createInstance());
 
     verify(irContributionService).contributeBib(eq(CENTRAL_SERVER_ID), any(), any());
     verify(irContributionService).lookUpBib(eq(CENTRAL_SERVER_ID), any());
@@ -78,7 +76,7 @@ class InstanceContributorTest {
     when(instanceTransformationService.getBibInfo(any(), any())).thenReturn(new BibInfo());
     when(irContributionService.contributeBib(any(), any(), any())).thenReturn(errorResponse());
 
-    assertThatThrownBy(() -> instanceContributor.contributeInstance(instance))
+    assertThatThrownBy(() -> instanceContributor.contributeInstance(CENTRAL_SERVER_ID, instance))
       .isInstanceOf(IllegalArgumentException.class)
       .hasMessageContaining("Unexpected contribution response:");
   }
@@ -91,7 +89,7 @@ class InstanceContributorTest {
     when(irContributionService.contributeBib(any(), any(), any())).thenReturn(okResponse());
     when(irContributionService.lookUpBib(any(), any())).thenReturn(errorResponse());
 
-    assertThatThrownBy(() -> instanceContributor.contributeInstance(instance))
+    assertThatThrownBy(() -> instanceContributor.contributeInstance(CENTRAL_SERVER_ID, instance))
       .isInstanceOf(IllegalArgumentException.class)
       .hasMessageContaining("Unexpected verification response:");
   }
