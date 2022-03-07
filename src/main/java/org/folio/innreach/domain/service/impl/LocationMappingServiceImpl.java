@@ -13,6 +13,7 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import lombok.RequiredArgsConstructor;
+
 import org.springframework.data.domain.Example;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
@@ -23,9 +24,11 @@ import org.folio.innreach.domain.entity.InnReachLocation;
 import org.folio.innreach.domain.entity.LocationMapping;
 import org.folio.innreach.domain.service.CentralServerService;
 import org.folio.innreach.domain.service.LocationMappingService;
-import org.folio.innreach.dto.LocationMappingsDTO;
+import org.folio.innreach.dto.LocationMappingForAllLibrariesDTO;
+import org.folio.innreach.dto.LocationMappingsForOneLibraryDTO;
 import org.folio.innreach.external.dto.InnReachLocationDTO;
 import org.folio.innreach.external.service.InnReachLocationExternalService;
+import org.folio.innreach.mapper.LocationMappingForAllLibrariesMapper;
 import org.folio.innreach.mapper.LocationMappingMapper;
 import org.folio.innreach.repository.InnReachLocationRepository;
 import org.folio.innreach.repository.LocationMappingRepository;
@@ -38,36 +41,37 @@ public class LocationMappingServiceImpl implements LocationMappingService {
 
   private final LocationMappingRepository repository;
   private final InnReachLocationRepository innReachLocationRepository;
-  private final LocationMappingMapper mapper;
+  private final LocationMappingMapper locationMappingMapper;
+  private final LocationMappingForAllLibrariesMapper locationMappingForAllLibrariesMapper;
   private final CentralServerService centralServerService;
   private final InnReachLocationExternalService innReachLocationExternalService;
 
   @Override
   @Transactional(readOnly = true)
-  public LocationMappingsDTO getMappingsByLibraryId(UUID centralServerId, UUID libraryId, int offset, int limit) {
+  public LocationMappingsForOneLibraryDTO getMappingsByLibraryId(UUID centralServerId, UUID libraryId, int offset, int limit) {
     var example = mappingExampleWithServerIdAndLibraryId(centralServerId, libraryId);
 
     Page<LocationMapping> mappings = repository.findAll(example, new OffsetRequest(offset, limit, DEFAULT_SORT));
 
-    return mapper.toDTOCollection(mappings);
+    return locationMappingMapper.toDTOCollection(mappings);
   }
 
   @Override
   @Transactional(readOnly = true)
-  public LocationMappingsDTO getAllMappings(UUID centralServerId, int offset, int limit) {
+  public List<LocationMappingForAllLibrariesDTO> getAllMappings(UUID centralServerId) {
     var example = mappingExampleWithServerId(centralServerId);
 
-    Page<LocationMapping> mappings = repository.findAll(example, new OffsetRequest(offset, limit, DEFAULT_SORT));
+    List<LocationMapping> mappings = repository.findAll(example);
 
-    return mapper.toDTOCollection(mappings);
+    return locationMappingForAllLibrariesMapper.toDTOs(mappings);
   }
 
   @Override
-  public LocationMappingsDTO updateAllMappings(UUID centralServerId, UUID libraryId,
-                                               LocationMappingsDTO locationMappingsDTO) {
+  public LocationMappingsForOneLibraryDTO updateAllMappings(UUID centralServerId, UUID libraryId,
+                                               LocationMappingsForOneLibraryDTO locationMappingsDTO) {
     var stored = repository.findByCentralServerIdAndLibraryId(centralServerId, libraryId);
 
-    var incoming = mapper.toEntities(locationMappingsDTO.getLocationMappings());
+    var incoming = locationMappingMapper.toEntities(locationMappingsDTO.getLocationMappings());
     var csRef = centralServerRef(centralServerId);
     incoming.forEach(setCentralServerRef(csRef)
       .andThen(setLibraryId(libraryId))
@@ -80,7 +84,7 @@ public class LocationMappingServiceImpl implements LocationMappingService {
 
     innReachLocationExternalService.submitMappedLocationsToInnReach(centralServerConnectionDetails, centralServerMappedLocations);
 
-    return mapper.toDTOCollection(saved);
+    return locationMappingMapper.toDTOCollection(saved);
   }
 
   private void copyData(LocationMapping from, LocationMapping to) {

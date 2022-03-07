@@ -1,0 +1,38 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "description": "Location mapping",
+  "type": "object",
+  "properties": {
+    "id": {
+      "description": "Mapping id",
+      "type": "string",
+      "format": "uuid"
+    },
+    "innReachLocationId": {
+      "description": "Inn-Reach location id",
+      "type": "string",
+      "format": "uuid"
+    },
+    "locationId": {
+      "description": "Location id",
+      "type": "string",
+      "format": "uuid"
+    },
+    "libraryId": {
+      "description": "Library id",
+      "type": "string",
+      "format": "uuid"
+    },
+    "metadata": {
+      "description": "Entity metadata",
+      "type": "object",
+      "$ref": "metadata.json"
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "innReachLocationId",
+    "locationId",
+    "libraryId"
+  ]
+}

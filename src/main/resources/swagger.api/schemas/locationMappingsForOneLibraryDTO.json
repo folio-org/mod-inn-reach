@@ -8,7 +8,7 @@
       "type": "array",
       "items": {
         "type": "object",
-        "$ref": "locationMappingDTO.json"
+        "$ref": "locationMappingForOneLibraryDTO.json"
       }
     },
     "totalRecords": {

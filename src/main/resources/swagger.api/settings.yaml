@@ -383,7 +383,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/locationMappingsDTO"
+                $ref: "#/components/schemas/locationMappingsForOneLibraryDTO"
         '400':
           $ref: "api-common.yaml#/components/responses/trait_response_malformed_query_400"
         '500':
@@ -413,7 +413,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/locationMappingsDTO"
+              $ref: "#/components/schemas/locationMappingsForOneLibraryDTO"
         required: true
       parameters:
         - $ref: "api-common.yaml#/components/parameters/centralServerId"
@@ -430,15 +430,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/locationMappingsDTO"
+                $ref: "#/components/schemas/locationMappingsForAllLibrariesDTO"
         '400':
           $ref: "api-common.yaml#/components/responses/trait_response_malformed_query_400"
         '500':
           $ref: "api-common.yaml#/components/responses/trait_response_500"
       parameters:
         - $ref: "api-common.yaml#/components/parameters/centralServerId"
-        - $ref: "api-common.yaml#/components/parameters/trait_pageable_offset"
-        - $ref: "api-common.yaml#/components/parameters/trait_pageable_limit"
   /central-servers/{centralServerId}/contribution-criteria:
     get:
       description: Get Contribution Criteria by Central Server id
@@ -1036,8 +1034,8 @@ components:
       $ref: schemas/materialTypeMappingsDTO.json
     libraryMappingsDTO:
       $ref: schemas/libraryMappingsDTO.json
-    locationMappingsDTO:
-      $ref: schemas/locationMappingsDTO.json
+    locationMappingsForOneLibraryDTO:
+      $ref: schemas/locationMappingsForOneLibraryDTO.json
     authenticationRequest:
       $ref: schemas/authenticationRequest.json
     itemContributionOptionsConfigurationDTO:
@@ -1060,6 +1058,10 @@ components:
       $ref: schemas/centralPatronTypeMappingsDTO.json
     innReachRecallUserDTO:
       $ref: schemas/innReachRecallUserDTO.json
+    locationMappingForAllLibrariesDTO:
+      $ref: schemas/locationMappingForAllLibrariesDTO.json
+    locationMappingsForAllLibrariesDTO:
+      $ref: schemas/locationMappingsForAllLibrariesDTO.json
   parameters:
     libraryId:
       name: libraryId
