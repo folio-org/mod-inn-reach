@@ -582,19 +582,23 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
   })
   void processItemReceivedRequest_whenItemIsNotShipped() {
+    when(servicePointsUsersClient.findServicePointsUsers(PRE_POPULATED_PATRON2_ID)).thenReturn(ResultList.asSinglePage(createServicePointUserDTO()));
+    when(circulationClient.checkOutByBarcode(any(CheckOutRequestDTO.class))).thenReturn(new LoanDTO().id(NEW_LOAN_ID));
+
     var transactionHoldDTO = createTransactionHoldDTO();
 
     var responseEntity = testRestTemplate.exchange(
       ITEM_RECEIVED_PATH, HttpMethod.PUT, new HttpEntity<>(transactionHoldDTO, headers), InnReachResponseDTO.class,
       PRE_POPULATED_TRACKING2_ID, PRE_POPULATED_CENTRAL_CODE);
 
-    assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
+    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
     var responseEntityBody = responseEntity.getBody();
     assertNotNull(responseEntityBody);
-    assertEquals(UNEXPECTED_TRANSACTION_STATE + "ITEM_HOLD", responseEntityBody.getReason());
+    assertEquals("ok", responseEntityBody.getStatus());
 
     var transactionUpdated = fetchTransactionByTrackingId(PRE_POPULATED_TRACKING2_ID);
-    assertNotEquals(ITEM_RECEIVED, transactionUpdated.getState());
+    assertEquals(ITEM_RECEIVED, transactionUpdated.getState());
+    assertEquals(NEW_LOAN_ID, transactionUpdated.getHold().getFolioLoanId());
   }
 
   @Test
