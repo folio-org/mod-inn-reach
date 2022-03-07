@@ -18,7 +18,7 @@ import org.folio.innreach.domain.service.InnReachTransactionService;
 import org.folio.innreach.dto.InnReachTransactionDTO;
 import org.folio.innreach.dto.InnReachTransactionFilterParametersDTO;
 import org.folio.innreach.dto.InnReachTransactionsDTO;
-import org.folio.innreach.dto.ItemHoldCheckOutResponseDTO;
+import org.folio.innreach.dto.TransactionCheckOutResponseDTO;
 import org.folio.innreach.dto.PatronHoldCheckInResponseDTO;
 import org.folio.innreach.rest.resource.InnReachTransactionApi;
 
@@ -58,9 +58,17 @@ public class InnReachTransactionController implements InnReachTransactionApi {
 
   @Override
   @PostMapping("/{itemBarcode}/check-out-item/{servicePointId}")
-  public ResponseEntity<ItemHoldCheckOutResponseDTO> checkOutItemHoldItem(@PathVariable String itemBarcode,
-                                                                          @PathVariable UUID servicePointId) {
+  public ResponseEntity<TransactionCheckOutResponseDTO> checkOutItemHoldItem(@PathVariable String itemBarcode,
+                                                                             @PathVariable UUID servicePointId) {
     var response = transactionActionService.checkOutItemHoldItem(itemBarcode, servicePointId);
+    return ResponseEntity.ok(response);
+  }
+
+  @Override
+  @PostMapping("/{id}/patronhold/check-out-item/{servicePointId}")
+  public ResponseEntity<TransactionCheckOutResponseDTO> checkOutPatronHoldItem(@PathVariable UUID id,
+                                                                               @PathVariable UUID servicePointId) {
+    var response = transactionActionService.checkOutPatronHoldItem(id, servicePointId);
     return ResponseEntity.ok(response);
   }
 
