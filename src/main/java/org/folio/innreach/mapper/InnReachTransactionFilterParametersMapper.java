@@ -22,8 +22,14 @@ public interface InnReachTransactionFilterParametersMapper {
   @Mapping(target = "patronTypes", source = "dto.centralPatronType")
   @Mapping(target = "centralItemTypes", source = "dto.centralItemType")
   @Mapping(target = "itemBarcodes", source = "dto.itemBarcode")
-  @Mapping(target = "createDates", source = "dto.createdDate")
+  @Mapping(target = "createdDates", source = "dto.createdDate")
   @Mapping(target = "createdDateOperation", source = "dto.createdDateOp")
+  @Mapping(target = "updatedDates", source = "dto.updatedDate")
+  @Mapping(target = "updatedDateOperation", source = "dto.updatedDateOp")
+  @Mapping(target = "holdCreatedDates", source = "dto.holdCreatedDate")
+  @Mapping(target = "holdCreatedDateOperation", source = "dto.holdCreatedDateOp")
+  @Mapping(target = "holdUpdatedDates", source = "dto.holdUpdatedDate")
+  @Mapping(target = "holdUpdatedDateOperation", source = "dto.holdUpdatedDateOp")
   InnReachTransactionFilterParameters toEntity(InnReachTransactionFilterParametersDTO dto);
 
   default InnReachTransactionFilterParameters.SortBy toEntityEnum(InnReachTransactionFilterParametersDTO.SortByEnum sort){

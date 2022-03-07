@@ -18,8 +18,14 @@ public class InnReachTransactionFilterParameters {
   private List<Integer> patronTypes;
   private List<Integer> centralItemTypes;
   private String query;
-  private List<OffsetDateTime> createDates;
+  private List<OffsetDateTime> createdDates;
   private DateOperation createdDateOperation;
+  private List<OffsetDateTime> updatedDates;
+  private DateOperation updatedDateOperation;
+  private List<OffsetDateTime> holdCreatedDates;
+  private DateOperation holdCreatedDateOperation;
+  private List<OffsetDateTime> holdUpdatedDates;
+  private DateOperation holdUpdatedDateOperation;
   private SortBy sortBy;
   private SortOrder sortOrder;
 

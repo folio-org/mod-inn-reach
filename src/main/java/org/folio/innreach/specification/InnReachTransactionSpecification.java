@@ -98,7 +98,7 @@ public class InnReachTransactionSpecification {
 
   private static Predicate createDateIs(CriteriaBuilder cb, Root<InnReachTransaction> transaction,
       InnReachTransactionFilterParameters parameters) {
-    var dates = parameters.getCreateDates();
+    var dates = parameters.getCreatedDates();
     return isEmpty(dates) ? cb.conjunction() : buildDateCondition(cb, transaction.get("createdDate"), 
         dates, parameters.getCreatedDateOperation());
   }

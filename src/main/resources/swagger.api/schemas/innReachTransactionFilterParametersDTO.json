@@ -76,6 +76,48 @@
       "type": "string",
       "$ref" : "filterDateOperation.json"
     },
+    "updatedDate": {
+      "description": "Update date to which related comparison operation is applied. In case of 'between' operation there can be two values provided",
+      "type": "array",
+      "maxItems": 2,
+      "items": {
+        "type": "string",
+        "format": "date-time"
+      }
+    },
+    "updatedDateOp": {
+      "description": "Comparison operation applied to update date",
+      "type": "string",
+      "$ref" : "filterDateOperation.json"
+    },
+    "holdCreatedDate": {
+      "description": "Create date of hold entity to which related comparison operation is applied. In case of 'between' operation there can be two values provided",
+      "type": "array",
+      "maxItems": 2,
+      "items": {
+        "type": "string",
+        "format": "date-time"
+      }
+    },
+    "holdCreatedDateOp": {
+      "description": "Comparison operation applied to create date of hold entity",
+      "type": "string",
+      "$ref" : "filterDateOperation.json"
+    },
+    "holdUpdatedDate": {
+      "description": "Update date of hold entity to which related comparison operation is applied. In case of 'between' operation there can be two values provided",
+      "type": "array",
+      "maxItems": 2,
+      "items": {
+        "type": "string",
+        "format": "date-time"
+      }
+    },
+    "holdUpdatedDateOp": {
+      "description": "Comparison operation applied to update date of hold entity",
+      "type": "string",
+      "$ref" : "filterDateOperation.json"
+    },
     "sortBy": {
       "description": "Sorting parameter",
       "type": "string",
