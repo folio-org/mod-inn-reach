@@ -120,7 +120,7 @@ public class InnReachTransactionSpecification {
       return cb.conjunction();
     }
 
-    return cb.or(transactionHold.get("centralPatronType").in(patronTypes));
+    return transactionHold.get("centralPatronType").in(patronTypes);
   }
 
   static Predicate patronNameIn(CriteriaBuilder cb, Join<Object, TransactionHold>  transactionHold, InnReachTransactionFilterParameters parameters) {
@@ -163,10 +163,8 @@ public class InnReachTransactionSpecification {
         Order order;
         if (sortBy == SortBy.CENTRAL_PATRON_TYPE) {
           var join = transaction.join("hold");
-          var hold = cb.treat(join, TransactionHold.class);
 
-          var coalesce = cb.coalesce(hold.get("centralPatronType"), hold.get("centralPatronType"));
-          order = sortOrder == DESC ? cb.desc(coalesce) : cb.asc(coalesce);
+          order = sortOrder == DESC ? cb.desc(join.get("centralPatronType")) : cb.asc(join.get("centralPatronType"));
         } else {
           order = sortOrder == DESC ? cb.desc(getField(transaction, sortBy)) : cb.asc(getField(transaction, sortBy));
         }

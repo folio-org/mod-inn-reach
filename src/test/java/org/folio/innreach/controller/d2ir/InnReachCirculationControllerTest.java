@@ -1,5 +1,6 @@
 package org.folio.innreach.controller.d2ir;
 
+import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionType.PATRON;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -47,6 +48,17 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.folio.innreach.domain.dto.folio.User;
+import org.folio.innreach.domain.entity.TransactionPatronHold;
+import org.folio.innreach.domain.entity.TransactionPickupLocation;
+import org.folio.innreach.domain.service.CentralServerService;
+import org.folio.innreach.domain.service.PatronHoldService;
+import org.folio.innreach.domain.service.PatronInfoService;
+import org.folio.innreach.domain.service.PatronTypeMappingService;
+import org.folio.innreach.domain.service.UserService;
+import org.folio.innreach.dto.CentralServerDTO;
+import org.folio.innreach.mapper.InnReachTransactionHoldMapper;
+import org.folio.innreach.util.UUIDEncoder;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
@@ -114,10 +126,16 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
   private static final String PRE_POPULATED_ITEM_ID = "9a326225-6530-41cc-9399-a61987bfab3c";
   private static final String PRE_POPULATED_REQUESTER_ID = "f75ffab1-2e2f-43be-b159-3031e2cfc458";
   private static final UUID PRE_POPULATED_PATRON2_ID = UUID.fromString("a7853dda-520b-4f7a-a1fb-9383665ea770");
+  private static final UUID PRE_POPULATED_TRANSACTION_ID = UUID.fromString("01228432-0862-4ed6-803a-8ddc8cf1a83d");
+  private static final String PRE_POPULATED_PIC_UP_LOC_CODE = "loccode122";
+  private static final String PRE_POPULATED_DISPLAY_NAME = "New York Time";
+  private static final String PRE_POPULATED_PRINT_NAME = "Print name";
 
   private static final String PRE_POPULATED_LOCAL_AGENCY_CODE1 = "q1w2e";
   private static final String PRE_POPULATED_LOCAL_AGENCY_CODE2 = "w2e3r";
   private static final String PRE_POPULATED_ANOTHER_LOCAL_AGENCY_CODE1 = "g91ub";
+  private static final Integer PRE_POPULATED_CENTRAL_PATRON_TYPE = 122;
+  private static final Integer PRE_POPULATED_TRANSACTION_TIME = 1324334;
 
   @Autowired
   private TestRestTemplate testRestTemplate;
@@ -135,6 +153,20 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
   private ServicePointsUsersClient servicePointsUsersClient;
   @MockBean
   private InnReachExternalService innReachExternalService;
+  @MockBean
+  private UserService userService;
+  @MockBean
+  private CentralServerService centralServerService;
+  @MockBean
+  private PatronTypeMappingService patronTypeMappingService;
+  @MockBean
+  private PatronHoldService patronHoldService;
+  @Autowired
+  private PatronInfoService patronInfoService;
+  @Autowired
+  private InnReachTransactionRepository transactionRepository;
+  @Autowired
+  private InnReachTransactionHoldMapper transactionHoldMapper;
 
   private HttpHeaders headers = circHeaders();
 
@@ -144,14 +176,28 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
   @Test
   void processCreatePatronHoldCirculationRequest_and_createNewPatronHold() {
     var transactionHoldDTO = createTransactionHoldDTO();
-    transactionHoldDTO.setPatronName("Paul MuaDibs, Atreides");
+    var user = new User();
+    var personal = new User.Personal();
+    personal.setPreferredFirstName("Paul");
+    personal.setFirstName("MuaDibs");
+    personal.setLastName("Atreides");
+    user.setPersonal(personal);
+    var patronId = UUIDEncoder.decode(transactionHoldDTO.getPatronId());
+    var savedTransaction = new InnReachTransaction();
+    savedTransaction.setTrackingId(NEW_TRANSACTION_TRACKING_ID);
+    savedTransaction.setCentralServerCode(PRE_POPULATED_CENTRAL_CODE);
+    var centralServerDTO = new CentralServerDTO();
 
-    when(innReachExternalService.postInnReachApi(any(), any(), any())).thenReturn("ok");
+    when(userService.getUserById(patronId)).thenReturn(Optional.of(user));
+    when(centralServerService.getCentralServerByCentralCode(PRE_POPULATED_CENTRAL_CODE)).thenReturn(centralServerDTO);
+    when(patronTypeMappingService.getCentralPatronType(centralServerDTO.getId(), user.getPatronGroupId()))
+      .thenReturn(Optional.of(PRE_POPULATED_CENTRAL_PATRON_TYPE));
+    doNothing().when(patronHoldService).createVirtualItems(savedTransaction);
+
     var responseEntity = testRestTemplate.postForEntity(
       "/inn-reach/d2ir/circ/{circulationOperationName}/{trackingId}/{centralCode}",
       new HttpEntity<>(transactionHoldDTO, headers), InnReachResponseDTO.class, PATRON_HOLD_OPERATION, "tracking99", PRE_POPULATED_CENTRAL_CODE);
 
-    verify(innReachExternalService, times(1)).postInnReachApi(any(), any(), any());
     assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
 
     var responseBody = responseEntity.getBody();
@@ -165,7 +211,8 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
 
     assertTrue(innReachTransaction.isPresent());
     assertNotNull(innReachTransaction.get().getHold());
-    assertEquals("Atreides, Paul MuaDibs", innReachTransaction.get().getHold().getPatronName());
+    assertEquals("Atreides, Paul", innReachTransaction.get().getHold().getPatronName());
+    assertEquals(PRE_POPULATED_CENTRAL_PATRON_TYPE, innReachTransaction.get().getHold().getCentralPatronType());
   }
 
   @Test
@@ -175,9 +222,22 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
   })
   void processCreatePatronHoldCirculationRequest_and_updateExitingPatronHold() {
     var transactionHoldDTO = createTransactionHoldDTO();
-    transactionHoldDTO.setPatronName(" Atreides, Paul MuaDibs ");
+    var user = new User();
+    var personal = new User.Personal();
+    personal.setFirstName("Paul");
+    personal.setLastName("Atreides");
+    user.setPersonal(personal);
+    var patronId = UUIDEncoder.decode(transactionHoldDTO.getPatronId());
+    var savedTransaction = createTransaction();
+    var centralServerDTO = new CentralServerDTO();
+    transactionRepository.save(savedTransaction);
 
-    when(innReachExternalService.postInnReachApi(any(), any(), any())).thenReturn("ok");
+    when(userService.getUserById(patronId)).thenReturn(Optional.of(user));
+    when(centralServerService.getCentralServerByCentralCode(PRE_POPULATED_CENTRAL_CODE)).thenReturn(centralServerDTO);
+    when(patronTypeMappingService.getCentralPatronType(centralServerDTO.getId(), user.getPatronGroupId()))
+      .thenReturn(Optional.of(PRE_POPULATED_CENTRAL_PATRON_TYPE));
+    doNothing().when(patronHoldService).createVirtualItems(savedTransaction);
+
     var responseEntity = testRestTemplate.postForEntity(
       "/inn-reach/d2ir/circ/{circulationOperationName}/{trackingId}/{centralCode}",
       new HttpEntity<>(transactionHoldDTO, headers), InnReachResponseDTO.class, PATRON_HOLD_OPERATION, PRE_POPULATED_TRACKING1_ID, PRE_POPULATED_CENTRAL_CODE);
@@ -200,7 +260,8 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     assertEquals(transactionHoldDTO.getTransactionTime(), innReachTransaction.getHold().getTransactionTime());
     assertEquals(transactionHoldDTO.getPatronId(), innReachTransaction.getHold().getPatronId());
     assertEquals(transactionHoldDTO.getPatronAgencyCode(), innReachTransaction.getHold().getPatronAgencyCode());
-    assertEquals("Atreides, Paul MuaDibs", innReachTransaction.getHold().getPatronName());
+    assertEquals("Atreides, Paul", innReachTransaction.getHold().getPatronName());
+    assertEquals(PRE_POPULATED_CENTRAL_PATRON_TYPE, updatedTransaction.get().getHold().getCentralPatronType());
   }
 
   @Test
@@ -1055,5 +1116,28 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     assertEquals(CLAIMS_RETURNED, updatedTransaction.getState());
 
     verify(circulationClient).claimItemReturned(any(), argThat(req -> req.getItemClaimedReturnedDateTime() != null));
+  }
+
+  private InnReachTransaction createTransaction() {
+    var createTransaction = new InnReachTransaction();
+    createTransaction.setTrackingId(NEW_TRANSACTION_TRACKING_ID);
+    createTransaction.setId(PRE_POPULATED_TRANSACTION_ID);
+    createTransaction.setCentralServerCode(PRE_POPULATED_CENTRAL_CODE);
+    createTransaction.setState(PATRON_HOLD);
+    createTransaction.setType(PATRON);
+    var transactionHold = new TransactionPatronHold();
+    transactionHold.setTransactionTime(PRE_POPULATED_TRANSACTION_TIME);
+    var pickupLocation = new TransactionPickupLocation();
+    pickupLocation.setPickupLocCode(PRE_POPULATED_PIC_UP_LOC_CODE);
+    pickupLocation.setDisplayName(PRE_POPULATED_DISPLAY_NAME);
+    pickupLocation.setPrintName(PRE_POPULATED_PRINT_NAME);
+    transactionHold.setPickupLocation(pickupLocation);
+    transactionHold.setPatronAgencyCode("age");
+    transactionHold.setItemAgencyCode("item");
+    transactionHold.setItemId("item99");
+    transactionHold.setCentralItemType(124);
+    transactionHold.setCentralPatronType(PRE_POPULATED_CENTRAL_PATRON_TYPE);
+    createTransaction.setHold(transactionHold);
+    return createTransaction;
   }
 }
