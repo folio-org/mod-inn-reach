@@ -60,7 +60,6 @@ import org.folio.innreach.domain.service.CentralServerService;
 import org.folio.innreach.domain.service.InstanceService;
 import org.folio.innreach.domain.service.InventoryService;
 import org.folio.innreach.domain.service.ItemTypeMappingService;
-import org.folio.innreach.domain.service.PatronHoldService;
 import org.folio.innreach.domain.service.PatronInfoService;
 import org.folio.innreach.domain.service.PatronTypeMappingService;
 import org.folio.innreach.domain.service.UserService;
@@ -145,6 +144,7 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
   private static final UUID PRE_POPULATED_LOCATION_ID = UUID.fromString("ebfc7bad-b46d-4b30-9cf4-8d37eddd5adb");
   private static final Integer PRE_POPULATED_CENTRAL_ITEM_TYPE = 32;
   private static final UUID PICK_IP_SERVICE_POINT =  UUID.fromString("d08b7bbe-a978-4db8-b5af-a80556254a99");
+  private static final UUID PRE_POPULATE_SERVICE_ID = UUID.fromString("74a215e6-e3a1-475d-b7d6-f23b3a5d3c47");
 
   private static final String PRE_POPULATED_LOCAL_AGENCY_CODE1 = "q1w2e";
   private static final String PRE_POPULATED_LOCAL_AGENCY_CODE2 = "w2e3r";
@@ -175,8 +175,8 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
   @MockBean
   private PatronTypeMappingService patronTypeMappingService;
   //@MockBean
-  @Autowired
-  private PatronHoldService patronHoldService;
+  //@Autowired
+  //private PatronHoldService patronHoldService;
   @MockBean
   private InventoryService inventoryService;
   @MockBean
@@ -417,6 +417,7 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
 
     var transactionHoldDTO = createTransactionHoldDTO();
 
+    when(inventoryService.findDefaultServicePointIdForUser(PRE_POPULATED_PATRON2_ID)).thenReturn(Optional.of(PRE_POPULATE_SERVICE_ID));
     when(servicePointsUsersClient.findServicePointsUsers(eq(PRE_POPULATED_PATRON2_ID))).thenReturn(ResultList.asSinglePage(createServicePointUserDTO()));
     when(circulationClient.checkOutByBarcode(any(CheckOutRequestDTO.class))).thenReturn(new LoanDTO().id(NEW_LOAN_ID));
 
