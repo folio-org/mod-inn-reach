@@ -48,16 +48,26 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.folio.innreach.client.HridSettingsClient;
 import org.folio.innreach.domain.dto.folio.User;
+import org.folio.innreach.domain.dto.folio.inventory.InventoryInstanceDTO;
+import org.folio.innreach.domain.entity.CentralServer;
+import org.folio.innreach.domain.entity.InnReachRecallUser;
 import org.folio.innreach.domain.entity.TransactionPatronHold;
 import org.folio.innreach.domain.entity.TransactionPickupLocation;
+import org.folio.innreach.domain.service.AgencyMappingService;
 import org.folio.innreach.domain.service.CentralServerService;
+import org.folio.innreach.domain.service.InstanceService;
+import org.folio.innreach.domain.service.InventoryService;
+import org.folio.innreach.domain.service.ItemTypeMappingService;
 import org.folio.innreach.domain.service.PatronHoldService;
 import org.folio.innreach.domain.service.PatronInfoService;
 import org.folio.innreach.domain.service.PatronTypeMappingService;
 import org.folio.innreach.domain.service.UserService;
 import org.folio.innreach.dto.CentralServerDTO;
+import org.folio.innreach.dto.ItemTypeMappingDTO;
 import org.folio.innreach.mapper.InnReachTransactionHoldMapper;
+import org.folio.innreach.repository.CentralServerRepository;
 import org.folio.innreach.util.UUIDEncoder;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -130,6 +140,11 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
   private static final String PRE_POPULATED_PIC_UP_LOC_CODE = "loccode122";
   private static final String PRE_POPULATED_DISPLAY_NAME = "New York Time";
   private static final String PRE_POPULATED_PRINT_NAME = "Print name";
+  private static final String PRE_POPULATED_ITEM_AGENCY_CODE = "211";
+  private static final UUID PRE_POPULATED_CENTRAL_SERVER_ID = UUID.fromString("0f4fa711-2d6e-457b-a0db-3898d6a23a5f");
+  private static final UUID PRE_POPULATED_LOCATION_ID = UUID.fromString("ebfc7bad-b46d-4b30-9cf4-8d37eddd5adb");
+  private static final Integer PRE_POPULATED_CENTRAL_ITEM_TYPE = 32;
+  private static final UUID PICK_IP_SERVICE_POINT =  UUID.fromString("d08b7bbe-a978-4db8-b5af-a80556254a99");
 
   private static final String PRE_POPULATED_LOCAL_AGENCY_CODE1 = "q1w2e";
   private static final String PRE_POPULATED_LOCAL_AGENCY_CODE2 = "w2e3r";
@@ -159,8 +174,20 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
   private CentralServerService centralServerService;
   @MockBean
   private PatronTypeMappingService patronTypeMappingService;
-  @MockBean
+  //@MockBean
+  @Autowired
   private PatronHoldService patronHoldService;
+  @MockBean
+  private InventoryService inventoryService;
+  @MockBean
+  private AgencyMappingService agencyMappingService;
+  @MockBean
+  private ItemTypeMappingService itemTypeMappingService;
+  @MockBean
+  private InstanceService instanceService;
+  @MockBean
+  private CentralServerRepository centralServerRepository;
+
   @Autowired
   private PatronInfoService patronInfoService;
   @Autowired
@@ -192,7 +219,12 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     when(centralServerService.getCentralServerByCentralCode(PRE_POPULATED_CENTRAL_CODE)).thenReturn(centralServerDTO);
     when(patronTypeMappingService.getCentralPatronType(centralServerDTO.getId(), user.getPatronGroupId()))
       .thenReturn(Optional.of(PRE_POPULATED_CENTRAL_PATRON_TYPE));
-    doNothing().when(patronHoldService).createVirtualItems(savedTransaction);
+     //doNothing().when(patronHoldService).createVirtualItems(savedTransaction);
+    when(inventoryService.getHridSettings()).thenReturn(new HridSettingsClient.HridSettings());
+    when(centralServerService.getCentralServerByCentralCode(savedTransaction.getCentralServerCode())).thenReturn(new CentralServerDTO());
+    when(agencyMappingService.getLocationIdByAgencyCode(PRE_POPULATED_CENTRAL_SERVER_ID, PRE_POPULATED_ITEM_AGENCY_CODE)).thenReturn(PRE_POPULATED_LOCATION_ID);
+    when(itemTypeMappingService.getMappingByCentralType(PRE_POPULATED_CENTRAL_SERVER_ID, PRE_POPULATED_CENTRAL_ITEM_TYPE)).thenReturn(new ItemTypeMappingDTO());
+    when(instanceService.create(new InventoryInstanceDTO())).thenReturn(new InventoryInstanceDTO());
 
     var responseEntity = testRestTemplate.postForEntity(
       "/inn-reach/d2ir/circ/{circulationOperationName}/{trackingId}/{centralCode}",
@@ -236,7 +268,12 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     when(centralServerService.getCentralServerByCentralCode(PRE_POPULATED_CENTRAL_CODE)).thenReturn(centralServerDTO);
     when(patronTypeMappingService.getCentralPatronType(centralServerDTO.getId(), user.getPatronGroupId()))
       .thenReturn(Optional.of(PRE_POPULATED_CENTRAL_PATRON_TYPE));
-    doNothing().when(patronHoldService).createVirtualItems(savedTransaction);
+    //doNothing().when(patronHoldService).createVirtualItems(savedTransaction);
+    when(inventoryService.getHridSettings()).thenReturn(new HridSettingsClient.HridSettings());
+    when(centralServerService.getCentralServerByCentralCode(savedTransaction.getCentralServerCode())).thenReturn(new CentralServerDTO());
+    when(agencyMappingService.getLocationIdByAgencyCode(PRE_POPULATED_CENTRAL_SERVER_ID, PRE_POPULATED_ITEM_AGENCY_CODE)).thenReturn(PRE_POPULATED_LOCATION_ID);
+    when(itemTypeMappingService.getMappingByCentralType(PRE_POPULATED_CENTRAL_SERVER_ID, PRE_POPULATED_CENTRAL_ITEM_TYPE)).thenReturn(new ItemTypeMappingDTO());
+    when(instanceService.create(new InventoryInstanceDTO())).thenReturn(new InventoryInstanceDTO());
 
     var responseEntity = testRestTemplate.postForEntity(
       "/inn-reach/d2ir/circ/{circulationOperationName}/{trackingId}/{centralCode}",
@@ -717,6 +754,13 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     when(circulationClient.findRequest(any())).thenReturn(Optional.of(new RequestDTO()));
     when(circulationClient.sendRequest(requestDtoCaptor.capture())).thenReturn(new RequestDTO());
     var recallDTO = createRecallDTO();
+    CentralServer centralServer = new CentralServer();
+    InnReachRecallUser innReachUser = new InnReachRecallUser();
+    innReachUser.setUserId(UUID.fromString(PRE_POPULATED_REQUESTER_ID));
+    centralServer.setInnReachRecallUser(innReachUser);
+    when(centralServerRepository.fetchOneByCentralCode(PRE_POPULATED_CENTRAL_CODE)).thenReturn(Optional.of(centralServer));
+    when(inventoryService.findDefaultServicePointIdForUser(UUID.fromString(PRE_POPULATED_REQUESTER_ID)))
+      .thenReturn(Optional.of(PICK_IP_SERVICE_POINT));
 
     var responseEntity = testRestTemplate.exchange(
       RECALL_REQUEST_PATH, HttpMethod.PUT, new HttpEntity<>(recallDTO, headers), InnReachResponseDTO.class,

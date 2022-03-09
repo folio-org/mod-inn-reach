@@ -54,7 +54,6 @@ import org.folio.innreach.domain.dto.folio.inventory.InventoryItemStatus;
 import org.folio.innreach.domain.entity.CentralPatronTypeMapping;
 import org.folio.innreach.domain.entity.InnReachTransaction;
 import org.folio.innreach.domain.entity.TransactionHold;
-import org.folio.innreach.domain.entity.TransactionItemHold;
 import org.folio.innreach.domain.entity.TransactionLocalHold;
 import org.folio.innreach.domain.exception.CirculationException;
 import org.folio.innreach.domain.exception.EntityNotFoundException;
