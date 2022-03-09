@@ -43,8 +43,8 @@ import org.folio.innreach.controller.base.BaseControllerTest;
 import org.folio.innreach.domain.entity.LocationMapping;
 import org.folio.innreach.domain.service.CentralServerService;
 import org.folio.innreach.dto.Error;
-import org.folio.innreach.dto.LocationMappingForOneLibraryDTO;
-import org.folio.innreach.dto.LocationMappingsForOneLibraryDTO;
+import org.folio.innreach.dto.LocationMappingDTO;
+import org.folio.innreach.dto.LocationMappingsDTO;
 import org.folio.innreach.dto.ValidationErrorsDTO;
 import org.folio.innreach.external.service.InnReachLocationExternalService;
 import org.folio.innreach.mapper.LocationMappingMapper;
@@ -92,7 +92,7 @@ class LocationMappingControllerTest extends BaseControllerTest {
     "classpath:db/loc-mapping/pre-populate-another-location-mapping.sql"
   })
   void shouldGetAllExistingMappingsForOneLibrary() {
-    var responseEntity = testRestTemplate.getForEntity(baseMappingURL(), LocationMappingsForOneLibraryDTO.class);
+    var responseEntity = testRestTemplate.getForEntity(baseMappingURL(), LocationMappingsDTO.class);
 
     assertTrue(responseEntity.getStatusCode().is2xxSuccessful());
     assertTrue(responseEntity.hasBody());
@@ -137,7 +137,7 @@ class LocationMappingControllerTest extends BaseControllerTest {
     "classpath:db/central-server/pre-populate-central-server.sql"
   })
   void shouldGetEmptyMappingsWith0TotalIfNotSet() {
-    var responseEntity = testRestTemplate.getForEntity(baseMappingURL(), LocationMappingsForOneLibraryDTO.class);
+    var responseEntity = testRestTemplate.getForEntity(baseMappingURL(), LocationMappingsDTO.class);
 
     assertTrue(responseEntity.getStatusCode().is2xxSuccessful());
     assertTrue(responseEntity.hasBody());
@@ -159,7 +159,7 @@ class LocationMappingControllerTest extends BaseControllerTest {
   })
   void shouldApplyLimitAndOffsetWhenGettingAllExistingMappings() {
     var responseEntity = testRestTemplate.getForEntity(baseMappingURL() + "?offset={offset}&limit={limit}",
-      LocationMappingsForOneLibraryDTO.class, Map.of("offset", 1, "limit", 1));
+      LocationMappingsDTO.class, Map.of("offset", 1, "limit", 1));
 
     assertTrue(responseEntity.getStatusCode().is2xxSuccessful());
     assertTrue(responseEntity.hasBody());
@@ -193,7 +193,7 @@ class LocationMappingControllerTest extends BaseControllerTest {
   })
   void shouldCreateNewMappings() {
     var newMappings = deserializeFromJsonFile("/location-mapping/create-location-mappings-request.json",
-      LocationMappingsForOneLibraryDTO.class);
+      LocationMappingsDTO.class);
 
     var responseEntity = testRestTemplate.exchange(baseMappingURL(), HttpMethod.PUT, new HttpEntity<>(newMappings),
       Void.class);
@@ -219,7 +219,7 @@ class LocationMappingControllerTest extends BaseControllerTest {
   })
   void return400WhenCreatingNewMappingsAndLocationIdIsNull() {
     var newMappings = deserializeFromJsonFile("/location-mapping/create-location-mappings-request.json",
-      LocationMappingsForOneLibraryDTO.class);
+      LocationMappingsDTO.class);
     newMappings.getLocationMappings().get(0).setLocationId(null);
 
     var responseEntity = testRestTemplate.exchange(baseMappingURL(), HttpMethod.PUT, new HttpEntity<>(newMappings),
@@ -239,7 +239,7 @@ class LocationMappingControllerTest extends BaseControllerTest {
   })
   void return400WhenCreatingNewMappingsAndInnReachLocationIdIsNull() {
     var newMappings = deserializeFromJsonFile("/location-mapping/create-location-mappings-request.json",
-      LocationMappingsForOneLibraryDTO.class);
+      LocationMappingsDTO.class);
     newMappings.getLocationMappings().get(0).setInnReachLocationId(null);
 
     var responseEntity = testRestTemplate.exchange(baseMappingURL(), HttpMethod.PUT, new HttpEntity<>(newMappings),
@@ -260,7 +260,7 @@ class LocationMappingControllerTest extends BaseControllerTest {
   })
   void return409WhenCreatingNewMappingsAndLocationIdAlreadyMapped() {
     var newMappings = deserializeFromJsonFile("/location-mapping/create-location-mappings-request.json",
-      LocationMappingsForOneLibraryDTO.class);
+      LocationMappingsDTO.class);
     newMappings.getLocationMappings().get(0).setLocationId(PRE_POPULATED_LOCATION2_ID);
 
     var existing = mapper.toDTOs(repository.findByCentralServerIdAndLibraryId(
@@ -317,14 +317,14 @@ class LocationMappingControllerTest extends BaseControllerTest {
   void shouldCreateUpdateAndDeleteMappingsAtTheSameTime() {
     var mappings = mapper.toDTOCollection(repository.findByCentralServerIdAndLibraryId(
       UUID.fromString(PRE_POPULATED_CENTRAL_SERVER_ID), UUID.fromString(PRE_POPULATED_LIBRARY_ID)));
-    List<LocationMappingForOneLibraryDTO> em = mappings.getLocationMappings();
+    List<LocationMappingDTO> em = mappings.getLocationMappings();
 
     em.removeIf(idEqualsTo(PRE_POPULATED_MAPPING1_ID));         // to delete
     findInList(em, PRE_POPULATED_MAPPING2_ID)   // to update
       .ifPresent(mapping -> mapping.setInnReachLocationId(PRE_POPULATED_INN_REACH_LOCATION1_ID));
 
     var newMappings = deserializeFromJsonFile("/location-mapping/create-location-mappings-request.json",
-      LocationMappingsForOneLibraryDTO.class);
+      LocationMappingsDTO.class);
     em.addAll(newMappings.getLocationMappings());                // to insert
 
     var responseEntity = testRestTemplate.exchange(baseMappingURL(), HttpMethod.PUT, new HttpEntity<>(mappings),
@@ -342,7 +342,7 @@ class LocationMappingControllerTest extends BaseControllerTest {
     // verify updated
     assertEquals(PRE_POPULATED_INN_REACH_LOCATION1_ID,
       findInList(stored, PRE_POPULATED_MAPPING2_ID)
-        .map(LocationMappingForOneLibraryDTO::getInnReachLocationId).get());
+        .map(LocationMappingDTO::getInnReachLocationId).get());
     // verify inserted
     assertThat(stored, hasItems(
       samePropertyValuesAs(newMappings.getLocationMappings().get(0), "id", "metadata"),
@@ -357,7 +357,7 @@ class LocationMappingControllerTest extends BaseControllerTest {
     "classpath:db/loc-mapping/pre-populate-location-mapping.sql"
   })
   void shouldDeleteAllMappingsIfEmptyCollectionGiven() {
-    var mappings = new LocationMappingsForOneLibraryDTO();
+    var mappings = new LocationMappingsDTO();
 
     var responseEntity = testRestTemplate.exchange(baseMappingURL(), HttpMethod.PUT, new HttpEntity<>(mappings),
       Void.class);
@@ -368,7 +368,7 @@ class LocationMappingControllerTest extends BaseControllerTest {
     assertEquals(0, repository.count());
   }
 
-  private static Predicate<LocationMappingForOneLibraryDTO> idEqualsTo(UUID id) {
+  private static Predicate<LocationMappingDTO> idEqualsTo(UUID id) {
     return mapping -> Objects.equals(mapping.getId(), id);
   }
 
@@ -384,13 +384,13 @@ class LocationMappingControllerTest extends BaseControllerTest {
     return "/inn-reach/central-servers/" + serverId + "/libraries/" + libraryId + "/locations/location-mappings";
   }
 
-  private LocationMappingForOneLibraryDTO findMapping(UUID id) {
+  private LocationMappingDTO findMapping(UUID id) {
     var entity = repository.findById(id).get();
 
     return mapper.toDTO(entity);
   }
 
-  private static Optional<LocationMappingForOneLibraryDTO> findInList(List<LocationMappingForOneLibraryDTO> mappings, UUID id) {
+  private static Optional<LocationMappingDTO> findInList(List<LocationMappingDTO> mappings, UUID id) {
     return mappings.stream().filter(idEqualsTo(id)).findFirst();
   }
 

@@ -24,11 +24,10 @@ import org.folio.innreach.domain.entity.InnReachLocation;
 import org.folio.innreach.domain.entity.LocationMapping;
 import org.folio.innreach.domain.service.CentralServerService;
 import org.folio.innreach.domain.service.LocationMappingService;
-import org.folio.innreach.dto.LocationMappingForAllLibrariesDTO;
-import org.folio.innreach.dto.LocationMappingsForOneLibraryDTO;
+import org.folio.innreach.dto.LocationMappingDTO;
+import org.folio.innreach.dto.LocationMappingsDTO;
 import org.folio.innreach.external.dto.InnReachLocationDTO;
 import org.folio.innreach.external.service.InnReachLocationExternalService;
-import org.folio.innreach.mapper.LocationMappingForAllLibrariesMapper;
 import org.folio.innreach.mapper.LocationMappingMapper;
 import org.folio.innreach.repository.InnReachLocationRepository;
 import org.folio.innreach.repository.LocationMappingRepository;
@@ -42,13 +41,12 @@ public class LocationMappingServiceImpl implements LocationMappingService {
   private final LocationMappingRepository repository;
   private final InnReachLocationRepository innReachLocationRepository;
   private final LocationMappingMapper locationMappingMapper;
-  private final LocationMappingForAllLibrariesMapper locationMappingForAllLibrariesMapper;
   private final CentralServerService centralServerService;
   private final InnReachLocationExternalService innReachLocationExternalService;
 
   @Override
   @Transactional(readOnly = true)
-  public LocationMappingsForOneLibraryDTO getMappingsByLibraryId(UUID centralServerId, UUID libraryId, int offset, int limit) {
+  public LocationMappingsDTO getMappingsByLibraryId(UUID centralServerId, UUID libraryId, int offset, int limit) {
     var example = mappingExampleWithServerIdAndLibraryId(centralServerId, libraryId);
 
     Page<LocationMapping> mappings = repository.findAll(example, new OffsetRequest(offset, limit, DEFAULT_SORT));
@@ -58,17 +56,17 @@ public class LocationMappingServiceImpl implements LocationMappingService {
 
   @Override
   @Transactional(readOnly = true)
-  public List<LocationMappingForAllLibrariesDTO> getAllMappings(UUID centralServerId) {
+  public List<LocationMappingDTO> getAllMappings(UUID centralServerId) {
     var example = mappingExampleWithServerId(centralServerId);
 
     List<LocationMapping> mappings = repository.findAll(example);
 
-    return locationMappingForAllLibrariesMapper.toDTOs(mappings);
+    return locationMappingMapper.toDTOs(mappings);
   }
 
   @Override
-  public LocationMappingsForOneLibraryDTO updateAllMappings(UUID centralServerId, UUID libraryId,
-                                               LocationMappingsForOneLibraryDTO locationMappingsDTO) {
+  public LocationMappingsDTO updateAllMappings(UUID centralServerId, UUID libraryId,
+                                               LocationMappingsDTO locationMappingsDTO) {
     var stored = repository.findByCentralServerIdAndLibraryId(centralServerId, libraryId);
 
     var incoming = locationMappingMapper.toEntities(locationMappingsDTO.getLocationMappings());

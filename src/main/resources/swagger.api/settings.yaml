@@ -383,7 +383,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/locationMappingsForOneLibraryDTO"
+                $ref: "#/components/schemas/locationMappingsDTO"
         '400':
           $ref: "api-common.yaml#/components/responses/trait_response_malformed_query_400"
         '500':
@@ -413,7 +413,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/locationMappingsForOneLibraryDTO"
+              $ref: "#/components/schemas/locationMappingsDTO"
         required: true
       parameters:
         - $ref: "api-common.yaml#/components/parameters/centralServerId"
@@ -433,7 +433,7 @@ paths:
                 type: array
                 items:
                   allOf:
-                    - $ref: "#/components/schemas/locationMappingForAllLibrariesDTO"
+                    - $ref: "#/components/schemas/locationMappingDTO"
         '400':
           $ref: "api-common.yaml#/components/responses/trait_response_malformed_query_400"
         '500':
@@ -1037,8 +1037,10 @@ components:
       $ref: schemas/materialTypeMappingsDTO.json
     libraryMappingsDTO:
       $ref: schemas/libraryMappingsDTO.json
-    locationMappingsForOneLibraryDTO:
-      $ref: schemas/locationMappingsForOneLibraryDTO.json
+    locationMappingDTO:
+      $ref: schemas/locationMappingDTO.json
+    locationMappingsDTO:
+      $ref: schemas/locationMappingsDTO.json
     authenticationRequest:
       $ref: schemas/authenticationRequest.json
     itemContributionOptionsConfigurationDTO:
@@ -1061,8 +1063,6 @@ components:
       $ref: schemas/centralPatronTypeMappingsDTO.json
     innReachRecallUserDTO:
       $ref: schemas/innReachRecallUserDTO.json
-    locationMappingForAllLibrariesDTO:
-      $ref: schemas/locationMappingForAllLibrariesDTO.json
   parameters:
     libraryId:
       name: libraryId
