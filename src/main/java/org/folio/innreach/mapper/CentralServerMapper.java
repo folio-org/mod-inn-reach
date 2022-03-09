@@ -1,5 +1,9 @@
 package org.folio.innreach.mapper;
 
+import java.util.List;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
 import org.mapstruct.InjectionStrategy;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -29,7 +33,13 @@ public interface CentralServerMapper {
     return localServerCredentials;
   }
 
+  @Mapping(target = "folioLibraries", expression = "java(mapToFolioLibraries(localAgencyDTO))")
   LocalAgency mapToLocalAgency(LocalAgencyDTO localAgencyDTO);
+
+  default List<LocalAgency.FolioLibrary> mapToFolioLibraries(LocalAgencyDTO localAgencyDTO) {
+    var libraryIds = localAgencyDTO.getFolioLibraryIds();
+    return libraryIds.stream().map(id -> new LocalAgency.FolioLibrary(id, null)).collect(Collectors.toList());
+  }
 
   @Mapping(target = "centralServerKey", source = "centralServerCredentials.centralServerKey")
   @Mapping(target = "centralServerSecret", source = "centralServerCredentials.centralServerSecret")
@@ -38,5 +48,10 @@ public interface CentralServerMapper {
   @AuditableMapping
   CentralServerDTO mapToCentralServerDTO(CentralServer centralServer);
 
+  @Mapping(target = "folioLibraryIds", expression = "java(mapToFolioLibraryIds(localAgency))")
   LocalAgencyDTO mapToLocalAgencyDTO(LocalAgency localAgency);
+
+  default List<UUID> mapToFolioLibraryIds(LocalAgency localAgency) {
+    return localAgency.getFolioLibraries().stream().map(LocalAgency.FolioLibrary::getFolioLibraryId).collect(Collectors.toList());
+  }
 }

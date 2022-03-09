@@ -14,8 +14,8 @@ INSERT INTO local_agency(id, code, central_server_id)
 VALUES ('556a5930-0639-4caa-a66b-f7c99c39972a', 'q1w2e', 'edab6baf-c696-42b1-89bb-1bbb8759b0d2'),
        ('cc4aa062-f612-45d7-a1b4-ebba951a54fc', 'w2e3r', 'edab6baf-c696-42b1-89bb-1bbb8759b0d2');
 
-INSERT INTO folio_library(local_agency_id, folio_library_id)
-VALUES ('556a5930-0639-4caa-a66b-f7c99c39972a', '7c244444-ae7c-11eb-8529-0242ac130004'),
-       ('556a5930-0639-4caa-a66b-f7c99c39972a', '7f58859e-ae7c-11eb-8529-0242ac130004'),
-       ('cc4aa062-f612-45d7-a1b4-ebba951a54fc', '71fb3252-ae7c-11eb-8529-0242ac130004'),
-       ('cc4aa062-f612-45d7-a1b4-ebba951a54fc', '761451d4-ae7c-11eb-8529-0242ac130004');
+INSERT INTO folio_library(local_agency_id, folio_library_id, central_server_id)
+VALUES ('556a5930-0639-4caa-a66b-f7c99c39972a', '7c244444-ae7c-11eb-8529-0242ac130004', 'edab6baf-c696-42b1-89bb-1bbb8759b0d2'),
+       ('556a5930-0639-4caa-a66b-f7c99c39972a', '7f58859e-ae7c-11eb-8529-0242ac130004', 'edab6baf-c696-42b1-89bb-1bbb8759b0d2'),
+       ('cc4aa062-f612-45d7-a1b4-ebba951a54fc', '71fb3252-ae7c-11eb-8529-0242ac130004', 'edab6baf-c696-42b1-89bb-1bbb8759b0d2'),
+       ('cc4aa062-f612-45d7-a1b4-ebba951a54fc', '761451d4-ae7c-11eb-8529-0242ac130004', 'edab6baf-c696-42b1-89bb-1bbb8759b0d2');

@@ -125,7 +125,7 @@ public class CentralServer extends Auditable implements Identifiable<UUID> {
       "cs.centralServerCode, " +
       "cs.centralServerCredentials.centralServerKey, " +
       "cs.centralServerCredentials.centralServerSecret" +
-    ") FROM CentralServer AS cs ";
+      ") FROM CentralServer AS cs ";
 
   public static final String FETCH_CONNECTION_DETAILS_BY_ID_QUERY = FETCH_CONNECTION_DETAILS_QUERY + FETCH_BY_ID_POSTFIX;
   public static final String FETCH_CONNECTION_DETAILS_BY_CENTRAL_CODE_QUERY = FETCH_CONNECTION_DETAILS_QUERY + FETCH_BY_CENTRAL_CODE_POSTFIX;
@@ -198,6 +198,7 @@ public class CentralServer extends Auditable implements Identifiable<UUID> {
   public void addLocalAgency(LocalAgency localAgency) {
     if (localAgency != null) {
       localAgency.setCentralServer(this);
+      localAgency.getFolioLibraries().forEach(l -> l.setCentralServer(this));
     }
     this.localAgencies.add(localAgency);
   }
@@ -205,6 +206,7 @@ public class CentralServer extends Auditable implements Identifiable<UUID> {
   public void removeLocalAgency(LocalAgency localAgency) {
     if (localAgency != null) {
       localAgency.setCentralServer(null);
+      localAgency.getFolioLibraries().forEach(l -> l.setCentralServer(null));
     }
     this.localAgencies.remove(localAgency);
   }

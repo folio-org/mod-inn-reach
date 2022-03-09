@@ -11,8 +11,8 @@ public class LocalAgencyFixture {
   public static LocalAgency createLocalAgency() {
     var localAgency = new LocalAgency();
     localAgency.setCode(randomFiveCharacterCode());
-    localAgency.getFolioLibraryIds().add(UUID.randomUUID());
-    localAgency.getFolioLibraryIds().add(UUID.randomUUID());
+    localAgency.getFolioLibraries().add(new LocalAgency.FolioLibrary(UUID.randomUUID(), null));
+    localAgency.getFolioLibraries().add(new LocalAgency.FolioLibrary(UUID.randomUUID(), null));
     return localAgency;
   }
 }
