@@ -40,7 +40,7 @@ public class LocationMappingServiceImpl implements LocationMappingService {
 
   private final LocationMappingRepository repository;
   private final InnReachLocationRepository innReachLocationRepository;
-  private final LocationMappingMapper locationMappingMapper;
+  private final LocationMappingMapper mapper;
   private final CentralServerService centralServerService;
   private final InnReachLocationExternalService innReachLocationExternalService;
 
@@ -51,7 +51,7 @@ public class LocationMappingServiceImpl implements LocationMappingService {
 
     Page<LocationMapping> mappings = repository.findAll(example, new OffsetRequest(offset, limit, DEFAULT_SORT));
 
-    return locationMappingMapper.toDTOCollection(mappings);
+    return mapper.toDTOCollection(mappings);
   }
 
   @Override
@@ -61,7 +61,7 @@ public class LocationMappingServiceImpl implements LocationMappingService {
 
     List<LocationMapping> mappings = repository.findAll(example);
 
-    return locationMappingMapper.toDTOs(mappings);
+    return mapper.toDTOs(mappings);
   }
 
   @Override
@@ -69,7 +69,7 @@ public class LocationMappingServiceImpl implements LocationMappingService {
                                                LocationMappingsDTO locationMappingsDTO) {
     var stored = repository.findByCentralServerIdAndLibraryId(centralServerId, libraryId);
 
-    var incoming = locationMappingMapper.toEntities(locationMappingsDTO.getLocationMappings());
+    var incoming = mapper.toEntities(locationMappingsDTO.getLocationMappings());
     var csRef = centralServerRef(centralServerId);
     incoming.forEach(setCentralServerRef(csRef)
       .andThen(setLibraryId(libraryId))
@@ -82,7 +82,7 @@ public class LocationMappingServiceImpl implements LocationMappingService {
 
     innReachLocationExternalService.submitMappedLocationsToInnReach(centralServerConnectionDetails, centralServerMappedLocations);
 
-    return locationMappingMapper.toDTOCollection(saved);
+    return mapper.toDTOCollection(saved);
   }
 
   private void copyData(LocationMapping from, LocationMapping to) {

@@ -207,8 +207,8 @@ class LocationMappingControllerTest extends BaseControllerTest {
 
     assertEquals(expected.size(), created.size());
     assertThat(created, containsInAnyOrder(
-      samePropertyValuesAs(expected.get(0), "id", "metadata"),
-      samePropertyValuesAs(expected.get(1), "id", "metadata")
+      samePropertyValuesAs(expected.get(0), "id", "metadata", "libraryId"),
+      samePropertyValuesAs(expected.get(1), "id", "metadata", "libraryId")
     ));
   }
 
@@ -345,8 +345,8 @@ class LocationMappingControllerTest extends BaseControllerTest {
         .map(LocationMappingDTO::getInnReachLocationId).get());
     // verify inserted
     assertThat(stored, hasItems(
-      samePropertyValuesAs(newMappings.getLocationMappings().get(0), "id", "metadata"),
-      samePropertyValuesAs(newMappings.getLocationMappings().get(1), "id", "metadata")
+      samePropertyValuesAs(newMappings.getLocationMappings().get(0), "id", "metadata", "libraryId"),
+      samePropertyValuesAs(newMappings.getLocationMappings().get(1), "id", "metadata", "libraryId")
     ));
   }
 

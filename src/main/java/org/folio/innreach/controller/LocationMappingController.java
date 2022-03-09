@@ -28,7 +28,7 @@ public class LocationMappingController implements LocationMappingsApi {
   @Override
   @GetMapping("/{centralServerId}/libraries/{libraryId}/locations/location-mappings")
   public ResponseEntity<LocationMappingsDTO> getLocationMappingsByServerId(@PathVariable UUID centralServerId,
-                                                                                        @PathVariable UUID libraryId, Integer offset, Integer limit) {
+                                                                           @PathVariable UUID libraryId, Integer offset, Integer limit) {
 
     var mappings = libraryMappingService.getMappingsByLibraryId(centralServerId, libraryId, offset, limit);
 
