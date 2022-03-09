@@ -443,7 +443,7 @@ public class CirculationServiceImpl implements CirculationService {
 
         updateTransactionHold(existingTransaction.getHold(), transactionHold);
         if (transactionType == PATRON) {
-          //patronInfoService.populateTransactionPatronInfo(existingTransaction.getHold(), centralCode);
+          patronInfoService.populateTransactionPatronInfo(existingTransaction.getHold(), centralCode);
         }
 
         return transactionRepository.save(existingTransaction);
@@ -509,7 +509,7 @@ public class CirculationServiceImpl implements CirculationService {
     if (type == PATRON) {
       hold = transactionHoldMapper.toPatronHold(transactionHold);
       state = PATRON_HOLD;
-      //patronInfoService.populateTransactionPatronInfo(hold, centralCode);
+      patronInfoService.populateTransactionPatronInfo(hold, centralCode);
     } else if (type == LOCAL) {
       hold = transactionHoldMapper.toLocalHold(transactionHold);
       state = LOCAL_HOLD;

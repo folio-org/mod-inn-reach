@@ -13,7 +13,6 @@ import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 
 import org.apache.commons.lang3.StringUtils;
-import org.folio.innreach.domain.entity.TransactionHold;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Component;
 
@@ -37,7 +36,6 @@ public class InnReachTransactionSpecification {
   static Specification<InnReachTransaction> fieldsLookup(InnReachTransactionFilterParameters parameters) {
     return (transaction, cq, cb) -> {
       var hold = transaction.join("hold");
-      var transactionHold = cb.treat(hold, TransactionHold.class);
       var patronHold = cb.treat(hold, TransactionPatronHold.class);
 
       var typeIs = isOfType(cb, transaction, parameters);
@@ -45,8 +43,8 @@ public class InnReachTransactionSpecification {
       var centralCodeIn = centralCodeIn(cb, transaction, parameters);
       var patronAgencyIn = patronAgencyIn(cb, hold, parameters);
       var itemAgencyIn = itemAgencyIn(cb, hold, parameters);
-      var patronTypeIn = patronTypeIn(cb, transactionHold, parameters);
-      var patronNameIn = patronNameIn(cb, transactionHold, parameters);
+      var patronTypeIn = patronTypeIn(cb, hold, parameters);
+      var patronNameIn = patronNameIn(cb, hold, parameters);
       var centralItemTypeIn = centralItemTypeIn(cb, hold, parameters);
       var itemBarcodeIn = itemBarcodeIn(cb, transaction, hold, patronHold, parameters);
 
@@ -114,7 +112,7 @@ public class InnReachTransactionSpecification {
     return isEmpty(itemAgencies) ? cb.conjunction() : hold.get("itemAgencyCode").in(itemAgencies);
   }
 
-  static Predicate patronTypeIn(CriteriaBuilder cb, Join<Object, TransactionHold>  transactionHold, InnReachTransactionFilterParameters parameters) {
+  static Predicate patronTypeIn(CriteriaBuilder cb, Join<Object, Object>  transactionHold, InnReachTransactionFilterParameters parameters) {
     var patronTypes = parameters.getPatronTypes();
     if (isEmpty(patronTypes)) {
       return cb.conjunction();
@@ -123,7 +121,7 @@ public class InnReachTransactionSpecification {
     return transactionHold.get("centralPatronType").in(patronTypes);
   }
 
-  static Predicate patronNameIn(CriteriaBuilder cb, Join<Object, TransactionHold>  transactionHold, InnReachTransactionFilterParameters parameters) {
+  static Predicate patronNameIn(CriteriaBuilder cb, Join<Object, Object>  transactionHold, InnReachTransactionFilterParameters parameters) {
     var patronNames = parameters.getPatronNames();
 
     return isEmpty(patronNames) ? cb.conjunction() : transactionHold.get("patronName").in(patronNames);
@@ -160,14 +158,7 @@ public class InnReachTransactionSpecification {
   static Specification<InnReachTransaction> sortBy(SortBy sortBy, SortOrder sortOrder) {
     return (transaction, cq, cb) -> {
       if (sortBy != null) {
-        Order order;
-        if (sortBy == SortBy.CENTRAL_PATRON_TYPE) {
-          var join = transaction.join("hold");
-
-          order = sortOrder == DESC ? cb.desc(join.get("centralPatronType")) : cb.asc(join.get("centralPatronType"));
-        } else {
-          order = sortOrder == DESC ? cb.desc(getField(transaction, sortBy)) : cb.asc(getField(transaction, sortBy));
-        }
+        var order = sortOrder == DESC ? cb.desc(getField(transaction, sortBy)) : cb.asc(getField(transaction, sortBy));
         cq.orderBy(order);
       }
       return cb.conjunction();

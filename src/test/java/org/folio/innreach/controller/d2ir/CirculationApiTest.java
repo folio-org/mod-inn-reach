@@ -22,6 +22,7 @@ import java.time.Instant;
 import java.util.Map;
 import java.util.UUID;
 
+import org.folio.innreach.util.UUIDEncoder;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
@@ -95,6 +96,7 @@ class CirculationApiTest extends BaseApiControllerTest {
 
   private static final String PRE_POPULATED_LOCAL_AGENCY_CODE1 = "q1w2e";
   private static final String PRE_POPULATED_LOCAL_AGENCY_CODE2 = "w2e3r";
+  private static final String PRE_POPULATED_PATRON_ID = "lwn5appqgfecboxknxevh32lpm";
 
   @SpyBean
   private InnReachTransactionRepository repository;
@@ -119,13 +121,17 @@ class CirculationApiTest extends BaseApiControllerTest {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/agency-loc-mapping/pre-populate-agency-location-mapping.sql",
     "classpath:db/item-type-mapping/pre-populate-item-type-mapping.sql",
-    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql",
+    "classpath:db/patron-type-mapping/pre-populate-patron-type-mapping-circulation.sql"
   })
   void patronHold_updateVirtualItems() throws Exception {
     var transactionHoldDTO = createTransactionHoldDTO();
     transactionHoldDTO.setItemAgencyCode(PRE_POPULATED_CENTRAL_AGENCY_CODE);
     transactionHoldDTO.setCentralItemType(PRE_POPULATED_CENTRAL_ITEM_TYPE);
+    transactionHoldDTO.setPatronId(PRE_POPULATED_PATRON_ID);
+    var patronId = UUIDEncoder.decode(transactionHoldDTO.getPatronId());
 
+    stubGet(format(USER_BY_ID_URL_TEMPLATE, patronId), "users/user.json");
     stubGet(HRID_SETTINGS_URL, "inventory-storage/hrid-settings-response.json");
     stubGet(format(QUERY_INSTANCE_BY_HRID_URL_TEMPLATE, "intracking1d2ir"), "inventory/query-instance-response.json");
     stubGet(INNREACH_LOCALSERVERS_URL, "agency-codes/d2ir-local-servers-response-01.json");
@@ -151,16 +157,19 @@ class CirculationApiTest extends BaseApiControllerTest {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/agency-loc-mapping/pre-populate-agency-location-mapping.sql",
     "classpath:db/item-type-mapping/pre-populate-item-type-mapping.sql",
-    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql",
+    "classpath:db/patron-type-mapping/pre-populate-patron-type-mapping-circulation.sql"
   })
   void patronHold_createVirtualItems() throws Exception {
     var transactionHoldDTO = createTransactionHoldDTO();
     transactionHoldDTO.setItemId(ITEM_HRID);
     transactionHoldDTO.setItemAgencyCode(PRE_POPULATED_CENTRAL_AGENCY_CODE);
     transactionHoldDTO.setCentralItemType(PRE_POPULATED_CENTRAL_ITEM_TYPE);
-    transactionHoldDTO.setPatronId(encode(FOLIO_PATRON_ID));
+    transactionHoldDTO.setPatronId(PRE_POPULATED_PATRON_ID);
+    var patronId = UUIDEncoder.decode(transactionHoldDTO.getPatronId());
     var pickupLocation = pickupLocationMapper.fromString(transactionHoldDTO.getPickupLocation());
 
+    stubGet(format(USER_BY_ID_URL_TEMPLATE, patronId), "users/user.json");
     stubGet(format(USER_BY_ID_URL_TEMPLATE, FOLIO_PATRON_ID), "users/user-response.json");
     stubGet(format(QUERY_INSTANCE_TYPE_BY_NAME_URL_TEMPLATE, INSTANCE_TYPE_NAME_URLENCODED), "inventory-storage/query-instance-types-response.json");
     stubGet(format(QUERY_SERVICE_POINTS_BY_CODE_ULR_TEMPLATE, pickupLocation.getPickupLocCode()), "inventory-storage/query-service-points-response.json");

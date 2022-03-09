@@ -7,6 +7,6 @@ public interface PatronInfoService {
 
   PatronInfoResponseDTO verifyPatron(String localServerCode, String visiblePatronId, String patronAgencyCode, String patronName);
 
-  TransactionHold populateTransactionPatronInfo(TransactionHold hold, String centralCode);
+  void populateTransactionPatronInfo(TransactionHold hold, String centralCode);
 
 }

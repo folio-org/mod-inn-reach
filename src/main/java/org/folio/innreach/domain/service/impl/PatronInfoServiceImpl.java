@@ -78,14 +78,13 @@ public class PatronInfoServiceImpl implements PatronInfoService {
   }
 
   @Override
-  public TransactionHold populateTransactionPatronInfo(TransactionHold hold, String centralCode) {
+  public void populateTransactionPatronInfo(TransactionHold hold, String centralCode) {
     var user = getUser(hold);
     hold.setPatronName(getPatronName(user));
     var centralServer = centralServerService.getCentralServerByCentralCode(centralCode);
     var centralServerId = centralServer.getId();
     var centralPatronType = getCentralPatronType(centralServerId, user);
     hold.setCentralPatronType(centralPatronType);
-    return hold;
   }
 
   private PatronInfo getPatronInfo(UUID centralServerId, List<LocalAgencyDTO> agencies, User user) {
