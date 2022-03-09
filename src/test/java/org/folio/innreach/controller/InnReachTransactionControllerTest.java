@@ -12,6 +12,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -51,6 +52,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -64,6 +66,7 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlMergeMode;
 
@@ -110,6 +113,7 @@ import org.folio.innreach.repository.InnReachTransactionRepository;
   executionPhase = AFTER_TEST_METHOD
 )
 @SqlMergeMode(MERGE)
+@TestInstance(TestInstance.Lifecycle.PER_METHOD)
 class InnReachTransactionControllerTest extends BaseControllerTest {
 
   private static final String PATRON_HOLD_CHECK_IN_ENDPOINT = "/inn-reach/transactions/{id}/receive-item/{servicePointId}";
@@ -572,6 +576,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     assertTrue(transaction.getHold().getAuthor().contains("2"));
   }
 
+  @DirtiesContext
   @Test
   @Sql(scripts = {
     "classpath:db/central-server/pre-populate-central-server.sql",
@@ -609,7 +614,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     assertEquals("ok", responseEntity.getBody().getStatus());
 
     await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() ->
-      verify(repository).save(
+      verify(repository, atLeastOnce()).save(
         argThat((InnReachTransaction t) -> t.getHold().getFolioRequestId() != null)));
 
     verify(requestService).createItemHoldRequest(TRACKING_ID, PRE_POPULATED_CENTRAL_SERVER_CODE);
