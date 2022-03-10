@@ -18,6 +18,11 @@
       "type": "string",
       "format": "uuid"
     },
+    "libraryId": {
+      "description": "Library id",
+      "type": "string",
+      "format": "uuid"
+    },
     "metadata": {
       "description": "Entity metadata",
       "type": "object",
