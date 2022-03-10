@@ -119,7 +119,7 @@ class LocationMappingControllerTest extends BaseControllerTest {
   })
   void shouldGetAllExistingMappingsForAllLibraries() {
     var responseEntity = testRestTemplate.getForEntity(
-      baseMappingURLForAllLibraries(PRE_POPULATED_CENTRAL_SERVER_ID), LocationMappingsDTO.class);
+      baseMappingURLForAllLibraries(PRE_POPULATED_CENTRAL_SERVER_ID), List.class);
 
     assertTrue(responseEntity.getStatusCode().is2xxSuccessful());
     assertTrue(responseEntity.hasBody());
@@ -127,12 +127,9 @@ class LocationMappingControllerTest extends BaseControllerTest {
     var response = responseEntity.getBody();
     assertNotNull(response);
 
-    var mappings = response.getLocationMappings();
-
     List<LocationMapping> dbMappings = repository.findByCentralServerId(UUID.fromString(PRE_POPULATED_CENTRAL_SERVER_ID));
 
-    assertEquals(dbMappings.size(), response.getTotalRecords());
-    assertThat(mappings, containsInAnyOrder(mapper.toDTOs(dbMappings).toArray()));
+    assertEquals(dbMappings.size(), response.size());
   }
 
   @Test
@@ -210,8 +207,8 @@ class LocationMappingControllerTest extends BaseControllerTest {
 
     assertEquals(expected.size(), created.size());
     assertThat(created, containsInAnyOrder(
-      samePropertyValuesAs(expected.get(0), "id", "metadata"),
-      samePropertyValuesAs(expected.get(1), "id", "metadata")
+      samePropertyValuesAs(expected.get(0), "id", "metadata", "libraryId"),
+      samePropertyValuesAs(expected.get(1), "id", "metadata", "libraryId")
     ));
   }
 
@@ -348,8 +345,8 @@ class LocationMappingControllerTest extends BaseControllerTest {
         .map(LocationMappingDTO::getInnReachLocationId).get());
     // verify inserted
     assertThat(stored, hasItems(
-      samePropertyValuesAs(newMappings.getLocationMappings().get(0), "id", "metadata"),
-      samePropertyValuesAs(newMappings.getLocationMappings().get(1), "id", "metadata")
+      samePropertyValuesAs(newMappings.getLocationMappings().get(0), "id", "metadata", "libraryId"),
+      samePropertyValuesAs(newMappings.getLocationMappings().get(1), "id", "metadata", "libraryId")
     ));
   }
 
