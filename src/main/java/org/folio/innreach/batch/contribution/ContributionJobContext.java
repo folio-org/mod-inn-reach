@@ -27,9 +27,27 @@ public class ContributionJobContext {
 
   @Data
   public static class Statistics {
-    public int readCount = 0;
-    public int writeCount = 0;
-    public int writeSkipCount = 0;
+    private long recordsTotal;
+    private long recordsProcessed;
+    private long recordsContributed;
+    private long recordsUpdated;
+    private long recordsDecontributed;
+
+    public void addRecordsContributed(int itemsCount) {
+      recordsContributed += itemsCount;
+    }
+
+    public void addRecordsProcessed(int itemsCount) {
+      recordsProcessed += itemsCount;
+    }
+
+    public void addRecordsDeContributed(int itemsCount) {
+      recordsDecontributed += itemsCount;
+    }
+
+    public void addRecordsTotal(int itemsCount) {
+      recordsTotal += itemsCount;
+    }
   }
 
 }

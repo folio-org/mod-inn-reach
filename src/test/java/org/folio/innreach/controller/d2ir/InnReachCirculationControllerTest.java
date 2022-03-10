@@ -6,9 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
-import static org.mockito.ArgumentMatchers.contains;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
@@ -663,8 +661,6 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
   })
   void processItemReceivedRequest_whenItemIsShipped() {
-    var requestDTO = new RequestDTO();
-    when(circulationClient.findRequest(any())).thenReturn(Optional.of(requestDTO));
     var transaction = repository.findByTrackingIdAndCentralServerCode(PRE_POPULATED_TRACKING2_ID,
       PRE_POPULATED_CENTRAL_CODE).get();
     transaction.setState(ITEM_SHIPPED);
@@ -692,6 +688,8 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
   })
   void processItemReceivedRequest_whenItemIsNotShipped() {
+    when(servicePointsUsersClient.findServicePointsUsers(PRE_POPULATED_PATRON2_ID)).thenReturn(ResultList.asSinglePage(createServicePointUserDTO()));
+    when(circulationClient.checkOutByBarcode(any(CheckOutRequestDTO.class))).thenReturn(new LoanDTO().id(NEW_LOAN_ID));
     var transactionHoldDTO = createTransactionHoldDTO();
 
     var responseEntity = testRestTemplate.exchange(
@@ -728,16 +726,14 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
       ITEM_RECEIVED_PATH, HttpMethod.PUT, new HttpEntity<>(transactionHoldDTO, headers), InnReachResponseDTO.class,
       PRE_POPULATED_TRACKING2_ID, PRE_POPULATED_CENTRAL_CODE);
 
-    verify(innReachExternalService).postInnReachApi(anyString(), contains("returnuncirculated"));
-
     assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
     var responseEntityBody = responseEntity.getBody();
     assertNotNull(responseEntityBody);
     assertEquals("ok", responseEntityBody.getStatus());
 
-    var transactionUpdated = repository.findByTrackingIdAndCentralServerCode(PRE_POPULATED_TRACKING2_ID,
-      PRE_POPULATED_CENTRAL_CODE).get();
-    assertEquals(RETURN_UNCIRCULATED, transactionUpdated.getState());
+    var transactionUpdated = fetchTransactionByTrackingId(PRE_POPULATED_TRACKING2_ID);
+    assertEquals(ITEM_RECEIVED, transactionUpdated.getState());
+    assertEquals(NEW_LOAN_ID, transactionUpdated.getHold().getFolioLoanId());
   }
 
   @Test
@@ -1074,7 +1070,7 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
   }
 
   @ParameterizedTest
-  @EnumSource(names = {"ITEM_IN_TRANSIT","RETURN_UNCIRCULATED"})
+  @EnumSource(names = {"ITEM_IN_TRANSIT", "RETURN_UNCIRCULATED"})
   @Sql(scripts = {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
