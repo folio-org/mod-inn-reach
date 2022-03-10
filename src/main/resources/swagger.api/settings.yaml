@@ -430,15 +430,16 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/locationMappingsDTO"
+                type: array
+                items:
+                  allOf:
+                    - $ref: "#/components/schemas/locationMappingDTO"
         '400':
           $ref: "api-common.yaml#/components/responses/trait_response_malformed_query_400"
         '500':
           $ref: "api-common.yaml#/components/responses/trait_response_500"
       parameters:
         - $ref: "api-common.yaml#/components/parameters/centralServerId"
-        - $ref: "api-common.yaml#/components/parameters/trait_pageable_offset"
-        - $ref: "api-common.yaml#/components/parameters/trait_pageable_limit"
   /central-servers/{centralServerId}/contribution-criteria:
     get:
       description: Get Contribution Criteria by Central Server id
@@ -1036,6 +1037,8 @@ components:
       $ref: schemas/materialTypeMappingsDTO.json
     libraryMappingsDTO:
       $ref: schemas/libraryMappingsDTO.json
+    locationMappingDTO:
+      $ref: schemas/locationMappingDTO.json
     locationMappingsDTO:
       $ref: schemas/locationMappingsDTO.json
     authenticationRequest:

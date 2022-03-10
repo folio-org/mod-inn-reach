@@ -1,5 +1,6 @@
 package org.folio.innreach.controller;
 
+import java.util.List;
 import java.util.UUID;
 
 import lombok.RequiredArgsConstructor;
@@ -12,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import org.folio.innreach.domain.service.LocationMappingService;
+import org.folio.innreach.dto.LocationMappingDTO;
 import org.folio.innreach.dto.LocationMappingsDTO;
 import org.folio.innreach.rest.resource.LocationMappingsApi;
 
@@ -23,11 +25,10 @@ public class LocationMappingController implements LocationMappingsApi {
 
   private final LocationMappingService libraryMappingService;
 
-
   @Override
   @GetMapping("/{centralServerId}/libraries/{libraryId}/locations/location-mappings")
   public ResponseEntity<LocationMappingsDTO> getLocationMappingsByServerId(@PathVariable UUID centralServerId,
-      @PathVariable UUID libraryId, Integer offset, Integer limit) {
+                                                                           @PathVariable UUID libraryId, Integer offset, Integer limit) {
 
     var mappings = libraryMappingService.getMappingsByLibraryId(centralServerId, libraryId, offset, limit);
 
@@ -36,10 +37,9 @@ public class LocationMappingController implements LocationMappingsApi {
 
   @Override
   @GetMapping("/{centralServerId}/libraries/locations/location-mappings")
-  public ResponseEntity<LocationMappingsDTO> getLocationMappingsForAllLibrariesByServerId(@PathVariable UUID centralServerId,
-                                                                                          Integer offset, Integer limit) {
+  public ResponseEntity<List<LocationMappingDTO>> getLocationMappingsForAllLibrariesByServerId(@PathVariable UUID centralServerId) {
 
-    var mappings = libraryMappingService.getAllMappings(centralServerId, offset, limit);
+    var mappings = libraryMappingService.getAllMappings(centralServerId);
 
     return ResponseEntity.ok(mappings);
   }
