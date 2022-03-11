@@ -195,6 +195,7 @@ public class CirculationServiceImpl implements CirculationService {
   @Override
   public InnReachResponseDTO trackPatronHoldShippedItem(String trackingId, String centralCode, ItemShippedDTO itemShipped) {
     var innReachTransaction = getTransactionOfType(trackingId, centralCode, PATRON);
+    patronInfoService.populateTransactionPatronInfo(innReachTransaction.getHold(), centralCode);
 
     var itemBarcode = itemShipped.getItemBarcode();
     var callNumber = itemShipped.getCallNumber();
@@ -213,6 +214,7 @@ public class CirculationServiceImpl implements CirculationService {
     log.info("Cancelling request for transaction: {}", trackingId);
 
     var transaction = getTransactionOfType(trackingId, centralCode, PATRON);
+    patronInfoService.populateTransactionPatronInfo(transaction.getHold(), centralCode);
 
     transaction.setState(CANCEL_REQUEST);
 
@@ -231,6 +233,7 @@ public class CirculationServiceImpl implements CirculationService {
   @Override
   public InnReachResponseDTO transferPatronHoldItem(String trackingId, String centralCode, TransferRequestDTO request) {
     var transaction = getTransactionOfType(trackingId, centralCode, PATRON);
+    patronInfoService.populateTransactionPatronInfo(transaction.getHold(), centralCode);
 
     validateEquals(request::getItemId, () -> transaction.getHold().getItemId(), "item id");
     validateEquals(request::getItemAgencyCode, () -> transaction.getHold().getItemAgencyCode(), "item agency code");
@@ -329,6 +332,7 @@ public class CirculationServiceImpl implements CirculationService {
   @Override
   public InnReachResponseDTO recall(String trackingId, String centralCode, RecallDTO recall) {
     var transaction = getTransactionOfType(trackingId, centralCode, PATRON);
+    patronInfoService.populateTransactionPatronInfo(transaction.getHold(), centralCode);
     var requestId = transaction.getHold().getFolioRequestId();
     var request = requestService.findRequest(requestId);
     var requestStatus = request.getStatus();
@@ -387,6 +391,7 @@ public class CirculationServiceImpl implements CirculationService {
   @Override
   public InnReachResponseDTO ownerRenewLoan(String trackingId, String centralCode, RenewLoanDTO renewLoan) {
     var transaction = getTransactionOfType(trackingId, centralCode, PATRON);
+    patronInfoService.populateTransactionPatronInfo(transaction.getHold(), centralCode);
 
     var renewedLoan = renewLoan(transaction.getHold());
 

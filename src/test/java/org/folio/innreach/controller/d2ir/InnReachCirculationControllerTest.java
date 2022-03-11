@@ -42,7 +42,6 @@ import static org.folio.innreach.fixture.TestUtil.circHeaders;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -126,12 +125,13 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
   private static final String ITEM_RECEIVED_PATH = "/inn-reach/d2ir/circ/itemreceived/{trackingId}/{centralCode}";
 
   private static final String UNEXPECTED_TRANSACTION_STATE = "Unexpected transaction state: ";
-  
+
   private static final UUID NEW_LOAN_ID = UUID.fromString("dc02b484-4217-4207-8b2c-6e7f092b7057");
   private static final String PRE_POPULATED_INSTANCE_ID = "76834d5a-08e8-45ea-84ca-4d9b10aa341c";
   private static final String PRE_POPULATED_HOLDINGS_RECORD_ID = "76834d5a-08e8-45ea-84ca-4d9b10aa342c";
   private static final String PRE_POPULATED_ITEM_ID = "9a326225-6530-41cc-9399-a61987bfab3c";
   private static final String PRE_POPULATED_REQUESTER_ID = "f75ffab1-2e2f-43be-b159-3031e2cfc458";
+  private static final UUID PRE_POPULATED_PATRON_ID = UUID.fromString("4154a604-4d5a-4d8e-9160-057fc7b6e6b8");
   private static final UUID PRE_POPULATED_PATRON2_ID = UUID.fromString("a7853dda-520b-4f7a-a1fb-9383665ea770");
   private static final UUID PRE_POPULATED_TRANSACTION_ID = UUID.fromString("01228432-0862-4ed6-803a-8ddc8cf1a83d");
   private static final String PRE_POPULATED_PIC_UP_LOC_CODE = "loccode122";
@@ -143,6 +143,7 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
   private static final Integer PRE_POPULATED_CENTRAL_ITEM_TYPE = 32;
   private static final UUID PICK_IP_SERVICE_POINT =  UUID.fromString("d08b7bbe-a978-4db8-b5af-a80556254a99");
   private static final UUID PRE_POPULATE_SERVICE_ID = UUID.fromString("74a215e6-e3a1-475d-b7d6-f23b3a5d3c47");
+  private static final UUID PRE_POPULATE_PATRON_GROUP_ID = UUID.fromString("8534295a-e031-4738-a952-f7db900df8c0");
 
   private static final String PRE_POPULATED_LOCAL_AGENCY_CODE1 = "q1w2e";
   private static final String PRE_POPULATED_LOCAL_AGENCY_CODE2 = "w2e3r";
@@ -198,12 +199,7 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
   @Test
   void processCreatePatronHoldCirculationRequest_and_createNewPatronHold() {
     var transactionHoldDTO = createTransactionHoldDTO();
-    var user = new User();
-    var personal = new User.Personal();
-    personal.setPreferredFirstName("Paul");
-    personal.setFirstName("MuaDibs");
-    personal.setLastName("Atreides");
-    user.setPersonal(personal);
+    var user = populateUser();
     var patronId = UUIDEncoder.decode(transactionHoldDTO.getPatronId());
     var savedTransaction = new InnReachTransaction();
     savedTransaction.setTrackingId(NEW_TRANSACTION_TRACKING_ID);
@@ -300,6 +296,14 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
   })
   void processItemShippedCircRequest_updateFolioItem_whenAssociatedItemExists() {
+    var user = populateUser();
+    var centralServerDTO = new CentralServerDTO();
+    centralServerDTO.setId(PRE_POPULATED_CENTRAL_SERVER_ID);
+
+    when(userService.getUserById(PRE_POPULATED_PATRON_ID)).thenReturn(Optional.of(user));
+    when(centralServerService.getCentralServerByCentralCode(PRE_POPULATED_CENTRAL_CODE)).thenReturn(centralServerDTO);
+    when(patronTypeMappingService.getCentralPatronType(PRE_POPULATED_CENTRAL_SERVER_ID, PRE_POPULATE_PATRON_GROUP_ID))
+      .thenReturn(Optional.of(PRE_POPULATED_CENTRAL_PATRON_TYPE));
     when(itemService.find(any())).thenReturn(Optional.of(InventoryItemDTO.builder().build()));
     when(itemService.findItemByBarcode(any())).thenReturn(Optional.of(InventoryItemDTO.builder().build()));
     when(itemService.changeAndUpdate(any(), any())).thenReturn(Optional.of(InventoryItemDTO.builder().build()));
@@ -713,14 +717,21 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     executionPhase = AFTER_TEST_METHOD
   )
   void processRecallRequest_whenItemIsOnLoanToThePatron() {
-    when(servicePointsUsersClient.findServicePointsUsers(any())).thenReturn(ResultList.of(1, List.of(createServicePointUserDTO())));
-    when(circulationClient.findRequest(any())).thenReturn(Optional.of(new RequestDTO()));
-    when(circulationClient.sendRequest(requestDtoCaptor.capture())).thenReturn(new RequestDTO());
     var recallDTO = createRecallDTO();
     CentralServer centralServer = new CentralServer();
     InnReachRecallUser innReachUser = new InnReachRecallUser();
     innReachUser.setUserId(UUID.fromString(PRE_POPULATED_REQUESTER_ID));
     centralServer.setInnReachRecallUser(innReachUser);
+    var user = populateUser();
+    var centralServerDTO = new CentralServerDTO();
+    centralServerDTO.setId(PRE_POPULATED_CENTRAL_SERVER_ID);
+
+    when(userService.getUserById(PRE_POPULATED_PATRON_ID)).thenReturn(Optional.of(user));
+    when(centralServerService.getCentralServerByCentralCode(PRE_POPULATED_CENTRAL_CODE)).thenReturn(centralServerDTO);
+    when(patronTypeMappingService.getCentralPatronType(PRE_POPULATED_CENTRAL_SERVER_ID, PRE_POPULATE_PATRON_GROUP_ID))
+      .thenReturn(Optional.of(PRE_POPULATED_CENTRAL_PATRON_TYPE));
+    when(circulationClient.findRequest(any())).thenReturn(Optional.of(new RequestDTO()));
+    when(circulationClient.sendRequest(requestDtoCaptor.capture())).thenReturn(new RequestDTO());
     when(centralServerRepository.fetchOneByCentralCode(PRE_POPULATED_CENTRAL_CODE)).thenReturn(Optional.of(centralServer));
     when(inventoryService.findDefaultServicePointIdForUser(UUID.fromString(PRE_POPULATED_REQUESTER_ID)))
       .thenReturn(Optional.of(PICK_IP_SERVICE_POINT));
@@ -755,6 +766,16 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
   void processRecallRequest_whenItemIsOnTheHoldShelf() {
     var requestDTO = new RequestDTO();
     requestDTO.setStatus(RequestDTO.RequestStatus.OPEN_AWAITING_PICKUP);
+    var user = populateUser();
+    var centralServerDTO = new CentralServerDTO();
+    centralServerDTO.setId(PRE_POPULATED_CENTRAL_SERVER_ID);
+
+    when(userService.getUserById(PRE_POPULATED_PATRON_ID)).thenReturn(Optional.of(user));
+    when(centralServerService.getCentralServerByCentralCode(PRE_POPULATED_CENTRAL_CODE)).thenReturn(centralServerDTO);
+    when(patronTypeMappingService.getCentralPatronType(PRE_POPULATED_CENTRAL_SERVER_ID, PRE_POPULATE_PATRON_GROUP_ID))
+      .thenReturn(Optional.of(PRE_POPULATED_CENTRAL_PATRON_TYPE));
+    when(circulationClient.findRequest(any())).thenReturn(Optional.of(new RequestDTO()));
+    when(circulationClient.sendRequest(requestDtoCaptor.capture())).thenReturn(new RequestDTO());
     when(circulationClient.findRequest(any())).thenReturn(Optional.of(requestDTO));
     doNothing().when(circulationClient).updateRequest(any(), any());
 
@@ -789,6 +810,15 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
   void processRecallRequest_whenBadRequest() {
     var requestDTO = new RequestDTO();
     requestDTO.setStatus(RequestDTO.RequestStatus.OPEN_AWAITING_PICKUP);
+    var user = populateUser();
+    var centralServerDTO = new CentralServerDTO();
+    centralServerDTO.setId(PRE_POPULATED_CENTRAL_SERVER_ID);
+
+    when(userService.getUserById(PRE_POPULATED_PATRON_ID)).thenReturn(Optional.of(user));
+    when(centralServerService.getCentralServerByCentralCode(PRE_POPULATED_CENTRAL_CODE)).thenReturn(centralServerDTO);
+    when(patronTypeMappingService.getCentralPatronType(PRE_POPULATED_CENTRAL_SERVER_ID, PRE_POPULATE_PATRON_GROUP_ID))
+      .thenReturn(Optional.of(PRE_POPULATED_CENTRAL_PATRON_TYPE));
+    when(circulationClient.sendRequest(requestDtoCaptor.capture())).thenReturn(new RequestDTO());
     when(circulationClient.findRequest(any())).thenReturn(Optional.of(requestDTO));
     doThrow(new RuntimeException("Test exception.")).when(requestService).cancelRequest(any(), any());
 
@@ -814,6 +844,17 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
   })
   void processRecallRequest_whenRecallUserIsNotSet() {
+    var user = populateUser();
+    var centralServerDTO = new CentralServerDTO();
+    centralServerDTO.setId(PRE_POPULATED_CENTRAL_SERVER_ID);
+
+    when(userService.getUserById(PRE_POPULATED_PATRON_ID)).thenReturn(Optional.of(user));
+    when(centralServerService.getCentralServerByCentralCode(PRE_POPULATED_CENTRAL_CODE)).thenReturn(centralServerDTO);
+    when(patronTypeMappingService.getCentralPatronType(PRE_POPULATED_CENTRAL_SERVER_ID, PRE_POPULATE_PATRON_GROUP_ID))
+      .thenReturn(Optional.of(PRE_POPULATED_CENTRAL_PATRON_TYPE));
+    when(circulationClient.findRequest(any())).thenReturn(Optional.of(new RequestDTO()));
+    when(circulationClient.sendRequest(requestDtoCaptor.capture())).thenReturn(new RequestDTO());
+
     when(circulationClient.findRequest(any())).thenReturn(Optional.of(new RequestDTO()));
     var recallDTO = createRecallDTO();
 
@@ -1146,5 +1187,17 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     transactionHold.setCentralPatronType(PRE_POPULATED_CENTRAL_PATRON_TYPE);
     createTransaction.setHold(transactionHold);
     return createTransaction;
+  }
+
+  private User populateUser() {
+    var user = new User();
+    user.setId(PRE_POPULATED_PATRON_ID);
+    user.setPatronGroupId(PRE_POPULATE_PATRON_GROUP_ID);
+    var personal = new User.Personal();
+    personal.setPreferredFirstName("Paul");
+    personal.setFirstName("MuaDibs");
+    personal.setLastName("Atreides");
+    user.setPersonal(personal);
+    return user;
   }
 }
