@@ -26,6 +26,8 @@ public class InnReachTransactionFilterParameters {
   private DateOperation holdCreatedDateOperation;
   private List<OffsetDateTime> holdUpdatedDates;
   private DateOperation holdUpdatedDateOperation;
+  private List<OffsetDateTime> dueDates;
+  private DateOperation dueDateOperation;
   private SortBy sortBy;
   private SortOrder sortOrder;
 

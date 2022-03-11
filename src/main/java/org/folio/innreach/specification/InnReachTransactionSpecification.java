@@ -3,16 +3,25 @@ package org.folio.innreach.specification;
 import static org.apache.commons.collections4.CollectionUtils.isEmpty;
 
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionType.PATRON;
+import static org.folio.innreach.domain.entity.InnReachTransactionFilterParameters.DateOperation.BETWEEN;
+import static org.folio.innreach.domain.entity.InnReachTransactionFilterParameters.DateOperation.GREATER;
+import static org.folio.innreach.domain.entity.InnReachTransactionFilterParameters.DateOperation.GREATER_OR_EQUAL;
+import static org.folio.innreach.domain.entity.InnReachTransactionFilterParameters.DateOperation.LESS;
+import static org.folio.innreach.domain.entity.InnReachTransactionFilterParameters.DateOperation.LESS_OR_EQUAL;
+import static org.folio.innreach.domain.entity.InnReachTransactionFilterParameters.DateOperation.NOT_EQUAL;
 import static org.folio.innreach.domain.entity.InnReachTransactionFilterParameters.SortOrder.DESC;
+import static org.folio.innreach.specification.InnReachTransactionSpecification.Condition.positive;
+import static org.folio.innreach.util.ListUtils.mapItems;
 
 import java.time.OffsetDateTime;
+import java.util.EnumMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.Expression;
 import javax.persistence.criteria.Join;
 import javax.persistence.criteria.Order;
-import javax.persistence.criteria.Path;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 
@@ -57,18 +66,38 @@ public class InnReachTransactionSpecification {
       var centralItemTypeIn = centralItemTypeIn(cb, hold, parameters);
       var itemBarcodeIn = itemBarcodeIn(cb, transaction, hold, patronHold, parameters);
 
-      var createdDateIs = DateCondition.from(parameters.getCreatedDateOperation(), cb)
-          .construct(transaction.get(CREATED_DATE_FIELD), parameters.getCreatedDates());
-      var updatedDateIs = DateCondition.from(parameters.getUpdatedDateOperation(), cb)
-          .construct(transaction.get(UPDATED_DATE_FIELD), parameters.getUpdatedDates());
-      var holdCreatedDateIs = DateCondition.from(parameters.getHoldCreatedDateOperation(), cb)
-          .construct(hold.get(CREATED_DATE_FIELD), parameters.getHoldCreatedDates());
-      var holdUpdatedDateIs = DateCondition.from(parameters.getHoldUpdatedDateOperation(), cb)
-          .construct(hold.get(UPDATED_DATE_FIELD), parameters.getHoldUpdatedDates());
+      var createdDateIs = offsetDateTimeCondition(parameters.getCreatedDateOperation(), cb)
+          .applyArguments(transaction.get(CREATED_DATE_FIELD), parameters.getCreatedDates());
+      var updatedDateIs = offsetDateTimeCondition(parameters.getUpdatedDateOperation(), cb)
+          .applyArguments(transaction.get(UPDATED_DATE_FIELD), parameters.getUpdatedDates());
+      var holdCreatedDateIs = offsetDateTimeCondition(parameters.getHoldCreatedDateOperation(), cb)
+          .applyArguments(hold.get(CREATED_DATE_FIELD), parameters.getHoldCreatedDates());
+      var holdUpdatedDateIs = offsetDateTimeCondition(parameters.getHoldUpdatedDateOperation(), cb)
+          .applyArguments(hold.get(UPDATED_DATE_FIELD), parameters.getHoldUpdatedDates());
+
+      var dueDatesAsEpochSecs = mapItems(parameters.getDueDates(), odt -> (int) odt.toEpochSecond());
+      var dueDateIs = integerCondition(parameters.getDueDateOperation(), cb)
+          .applyArguments(hold.get("dueDateTime"), dueDatesAsEpochSecs);
 
       return cb.and(typeIs, stateIs, centralCodeIn, patronAgencyIn, itemAgencyIn, patronTypeIn, centralItemTypeIn,
-          itemBarcodeIn, createdDateIs, updatedDateIs, holdCreatedDateIs, holdUpdatedDateIs);
+          itemBarcodeIn, createdDateIs, updatedDateIs, holdCreatedDateIs, holdUpdatedDateIs, dueDateIs);
     };
+  }
+
+  private static Condition<OffsetDateTime> offsetDateTimeCondition(
+      InnReachTransactionFilterParameters.DateOperation operation, CriteriaBuilder cb) {
+    return ConditionBuilder.<OffsetDateTime>builder()
+        .operation(operation)
+        .criteriaBuilder(cb)
+        .build();
+  }
+
+  private static Condition<Integer> integerCondition(
+      InnReachTransactionFilterParameters.DateOperation operation, CriteriaBuilder cb) {
+    return ConditionBuilder.<Integer>builder()
+        .operation(operation)
+        .criteriaBuilder(cb)
+        .build();
   }
 
   static Specification<InnReachTransaction> keywordLookup(String keyword) {
@@ -214,53 +243,86 @@ public class InnReachTransactionSpecification {
     return expression;
   }
 
-  interface DateCondition {
+  interface Condition<T extends Comparable<? super T>> {
 
-    Predicate construct(Path<OffsetDateTime> dateField, List<OffsetDateTime> args);
+    Predicate applyArguments(Expression<? extends T> dateField, List<T> args);
 
-    static DateCondition positive(CriteriaBuilder cb) {
+    static <T extends Comparable<? super T>> Condition<T> positive(CriteriaBuilder cb) {
       return (dateField, args) -> cb.conjunction();
     }
 
-    static DateCondition from(InnReachTransactionFilterParameters.DateOperation operation,
-        CriteriaBuilder cb) {
-      return (dateField, args) -> isEmpty(args)
-          ? cb.conjunction()
-          : condition(operation, cb).construct(dateField, args);
+  }
+
+  private static class ConditionBuilder<T extends Comparable<? super T>> {
+
+    private final Map<InnReachTransactionFilterParameters.DateOperation, Condition<T>> operationToCondition =
+        new EnumMap<>(InnReachTransactionFilterParameters.DateOperation.class);
+
+    private InnReachTransactionFilterParameters.DateOperation operation;
+    private CriteriaBuilder cb;
+
+
+    static <T extends Comparable<? super T>> ConditionBuilder<T> builder() {
+      return new ConditionBuilder<>();
     }
 
-    private static DateCondition condition(InnReachTransactionFilterParameters.DateOperation operation,
-        CriteriaBuilder cb) {
-      if (operation == null) {
-        return positive(cb);
-      }
+    ConditionBuilder() {
+      operationToCondition.put(LESS, less());
+      operationToCondition.put(LESS_OR_EQUAL, lessOrEqual());
+      operationToCondition.put(NOT_EQUAL, notEqual());
+      operationToCondition.put(GREATER, greater());
+      operationToCondition.put(GREATER_OR_EQUAL, greaterOrEqual());
+      operationToCondition.put(BETWEEN, between());
+    }
 
-      DateCondition result;
-      switch (operation) {
-        case LESS:
-          result = (dateField, args) -> cb.lessThan(dateField, args.get(0));
-          break;
-        case LESS_OR_EQUAL:
-          result = (dateField, args) -> cb.lessThanOrEqualTo(dateField, args.get(0));
-          break;
-        case NOT_EQUAL:
-          result = (dateField, args) -> cb.notEqual(dateField, args.get(0));
-          break;
-        case GREATER:
-          result = (dateField, args) -> cb.greaterThan(dateField, args.get(0));
-          break;
-        case GREATER_OR_EQUAL:
-          result = (dateField, args) -> cb.greaterThanOrEqualTo(dateField, args.get(0));
-          break;
-        case BETWEEN:
-          result = (dateField, args) -> cb.between(dateField, args.get(0), args.get(1));
-          break;
-        case EQUAL:
-        default:
-          result = (dateField, args) -> cb.equal(dateField, args.get(0));
-      }
+    ConditionBuilder<T> operation(InnReachTransactionFilterParameters.DateOperation operation) {
+      this.operation = operation;
+      return this;
+    }
 
-      return result;
+    ConditionBuilder<T> criteriaBuilder(CriteriaBuilder criteriaBuilder) {
+      this.cb = criteriaBuilder;
+      return this;
+    }
+
+    Condition<T> build() {
+      return (dateField, args) -> isEmpty(args)
+          ? cb.conjunction()
+          : condition().applyArguments(dateField, args);
+    }
+
+    private Condition<T> condition() {
+      return operation == null
+          ? positive(cb)
+          : operationToCondition.getOrDefault(operation, equal());
+    }
+
+    private Condition<T> less() {
+      return (dateField, args) -> cb.lessThan(dateField, args.get(0));
+    }
+
+    private Condition<T> lessOrEqual() {
+      return (dateField, args) -> cb.lessThanOrEqualTo(dateField, args.get(0));
+    }
+
+    private Condition<T> equal() {
+      return (dateField, args) -> cb.equal(dateField, args.get(0));
+    }
+
+    private Condition<T> notEqual() {
+      return (dateField, args) -> cb.notEqual(dateField, args.get(0));
+    }
+
+    private Condition<T> greater() {
+      return (dateField, args) -> cb.greaterThan(dateField, args.get(0));
+    }
+
+    private Condition<T> greaterOrEqual() {
+      return (dateField, args) -> cb.greaterThanOrEqualTo(dateField, args.get(0));
+    }
+
+    private Condition<T> between() {
+      return (dateField, args) -> cb.between(dateField, args.get(0), args.get(1));
     }
 
   }
