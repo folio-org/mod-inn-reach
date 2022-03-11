@@ -39,6 +39,7 @@ import org.folio.innreach.dto.InnReachLocationDTO;
 import org.folio.innreach.dto.InnReachLocationsDTO;
 import org.folio.innreach.dto.Instance;
 import org.folio.innreach.dto.Item;
+import org.folio.innreach.dto.ItemEffectiveCallNumberComponents;
 import org.folio.innreach.dto.LibraryMappingDTO;
 import org.folio.innreach.dto.LibraryMappingsDTO;
 import org.folio.innreach.dto.LoanDTO;
@@ -60,6 +61,7 @@ class RecordTransformationServiceImplTest {
   private static final UUID INN_REACH_LOCATION_ID = UUID.fromString("5d78803e-ca04-4b4a-aeae-2c63b924518a");
   private static final Integer CENTRAL_ITEM_TYPE = 211;
   private static final String LOCAL_SERVER_CODE = "fli01";
+  private static final String ITEM_CALL_NUMBER = "TEST.42";
   private static final Date LOAN_DUE_DATE = new Date();
 
   @Mock
@@ -132,7 +134,8 @@ class RecordTransformationServiceImplTest {
 
   @Test
   void shouldGetBibItem() {
-    var item = createItem().materialTypeId(MATERIAL_TYPE_ID).effectiveLocationId(FOLIO_LOC_ID);
+    var callNumberComponents = new ItemEffectiveCallNumberComponents().callNumber("\r\n" + ITEM_CALL_NUMBER);
+    var item = createItem().materialTypeId(MATERIAL_TYPE_ID).effectiveLocationId(FOLIO_LOC_ID).effectiveCallNumberComponents(callNumberComponents);
     var irLocations = new InnReachLocationsDTO().addLocationsItem(new InnReachLocationDTO().id(INN_REACH_LOCATION_ID).code(CENTRAL_AGENCY_CODE));
     var materialTypeMappings = new MaterialTypeMappingsDTO().addMaterialTypeMappingsItem(new MaterialTypeMappingDTO().materialTypeId(MATERIAL_TYPE_ID).centralItemType(CENTRAL_ITEM_TYPE));
     var libraryMappings = new LibraryMappingsDTO().addLibraryMappingsItem(new LibraryMappingDTO().libraryId(LIBRARY_ID).innReachLocationId(INN_REACH_LOCATION_ID));
@@ -166,6 +169,7 @@ class RecordTransformationServiceImplTest {
     assertEquals(ON_LOAN.getStatus(), bibItem.getItemCircStatus());
     assertEquals(CENTRAL_AGENCY_CODE, bibItem.getLocationKey());
     assertEquals(CENTRAL_ITEM_TYPE, bibItem.getCentralItemType());
+    assertEquals(ITEM_CALL_NUMBER, bibItem.getCallNumber());
     assertEquals((Integer) DateHelper.toEpochSec(LOAN_DUE_DATE), bibItem.getDueDateTime());
     assertEquals(Long.valueOf(1), bibItem.getHoldCount());
   }

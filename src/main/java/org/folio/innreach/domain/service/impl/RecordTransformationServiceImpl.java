@@ -21,6 +21,7 @@ import lombok.ToString;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.CharUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
@@ -112,6 +113,7 @@ public class RecordTransformationServiceImpl implements RecordTransformationServ
 
       var callNumber = Optional.ofNullable(item.getEffectiveCallNumberComponents())
         .map(ItemEffectiveCallNumberComponents::getCallNumber)
+        .map(StringUtils::trim)
         .orElse(null);
 
       var folLocId = item.getEffectiveLocationId();
