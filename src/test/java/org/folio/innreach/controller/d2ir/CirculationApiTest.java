@@ -96,7 +96,7 @@ class CirculationApiTest extends BaseApiControllerTest {
 
   private static final String PRE_POPULATED_LOCAL_AGENCY_CODE1 = "q1w2e";
   private static final String PRE_POPULATED_LOCAL_AGENCY_CODE2 = "w2e3r";
-  private static final String PRE_POPULATED_PATRON_ID = "lwn5appqgfecboxknxevh32lpm";
+  private static final String PRE_POPULATED_PATRON_ID = "ifkkmbcnljgy5elaav74pnxgxa";
 
   @SpyBean
   private InnReachTransactionRepository repository;
@@ -199,7 +199,8 @@ class CirculationApiTest extends BaseApiControllerTest {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/agency-loc-mapping/pre-populate-agency-location-mapping.sql",
     "classpath:db/item-type-mapping/pre-populate-item-type-mapping.sql",
-    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql",
+    "classpath:db/patron-type-mapping/pre-populate-patron-type-mapping-circulation.sql"
   })
   void patronHold_cancelRequest() throws Exception {
     Map<String, Object> requestPayload = Map
@@ -211,6 +212,13 @@ class CirculationApiTest extends BaseApiControllerTest {
         "reason", "Test reason",
         "reasonCode", 7);
 
+    var transactionHoldDTO = createTransactionHoldDTO();
+    transactionHoldDTO.setPatronId(PRE_POPULATED_PATRON_ID);
+    transactionHoldDTO.setItemId(ITEM_HRID);
+    transactionHoldDTO.setItemAgencyCode(PRE_POPULATED_CENTRAL_AGENCY_CODE);
+    transactionHoldDTO.setCentralItemType(PRE_POPULATED_CENTRAL_ITEM_TYPE);
+    var patronId = UUIDEncoder.decode(transactionHoldDTO.getPatronId());
+    stubGet(format(USER_BY_ID_URL_TEMPLATE, patronId), "users/user.json");
     stubGet(format("%s/%s", ITEMS_URL, PRE_POPULATED_ITEM_ID), "inventory/item-response.json");
     stubPut(format("%s/%s", ITEMS_URL, PRE_POPULATED_ITEM_ID));
     stubGet(format("%s/%s", HOLDINGS_URL, HOLDING_ID), "inventory-storage/holding-response.json");
