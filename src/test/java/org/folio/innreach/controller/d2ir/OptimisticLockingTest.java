@@ -4,7 +4,6 @@ import static com.github.tomakehurst.wiremock.stubbing.Scenario.STARTED;
 import static java.lang.String.format;
 import static org.hamcrest.Matchers.containsString;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Mockito.when;
 import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TEST_METHOD;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -19,14 +18,9 @@ import static org.folio.innreach.fixture.CirculationFixture.createCancelRequestD
 import static org.folio.innreach.fixture.CirculationFixture.createItemShippedDTO;
 
 import org.apache.http.HttpStatus;
-import org.folio.innreach.domain.dto.folio.User;
-import org.folio.innreach.domain.service.CentralServerService;
-import org.folio.innreach.domain.service.PatronTypeMappingService;
-import org.folio.innreach.domain.service.UserService;
-import org.folio.innreach.dto.CentralServerDTO;
+import org.folio.innreach.util.UUIDEncoder;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.jdbc.Sql;
 
 import org.folio.innreach.controller.base.BaseApiControllerTest;
@@ -36,13 +30,13 @@ import org.folio.innreach.domain.exception.ResourceVersionConflictException;
 import org.folio.innreach.dto.BaseCircRequestDTO;
 import org.folio.innreach.repository.InnReachTransactionRepository;
 
-import java.util.Optional;
-import java.util.UUID;
-
 @Sql(
     scripts = {
-        "classpath:db/central-server/pre-populate-central-server.sql",
-        "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
+      "classpath:db/central-server/pre-populate-central-server.sql",
+      "classpath:db/agency-loc-mapping/pre-populate-agency-location-mapping.sql",
+      "classpath:db/item-type-mapping/pre-populate-item-type-mapping.sql",
+      "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql",
+      "classpath:db/patron-type-mapping/pre-populate-patron-type-mapping-circulation.sql"
 })
 @Sql(
     scripts = {
@@ -68,31 +62,20 @@ class OptimisticLockingTest extends BaseApiControllerTest {
   private static final String ITEM_CONFLICT_STATE = "Item Conflict";
   private static final String HOLDINGS_RETRY_SCENARIO = "Holdings Retry Scenario";
   private static final String HOLDINGS_CONFLICT_STATE = "Holdings Conflict";
-  private static final UUID PRE_POPULATED_PATRON_ID = UUID.fromString("4154a604-4d5a-4d8e-9160-057fc7b6e6b8");
-  private static final UUID PRE_POPULATE_PATRON_GROUP_ID = UUID.fromString("8534295a-e031-4738-a952-f7db900df8c0");
-  private static final Integer PRE_POPULATED_CENTRAL_PATRON_TYPE = 122;
+  private static final String PRE_POPULATED_PATRON_ID = "ifkkmbcnljgy5elaav74pnxgxa";
+  private static final String USER_BY_ID_URL_TEMPLATE = "/users/%s";
 
   @Autowired
   private InnReachTransactionRepository repository;
-  @MockBean
-  private UserService userService;
-  @MockBean
-  private PatronTypeMappingService patronTypeMappingService;
-  @MockBean
-  private CentralServerService centralServerService;
 
 
   @Test
   void recover_from_ItemVersionConflict_when_itemShipped() throws Exception {
     var req = createItemShippedDTO();
-    var user = populateUser();
-    var centralServerDTO = new CentralServerDTO();
+    req.setPatronId(PRE_POPULATED_PATRON_ID);
+    var patronId = UUIDEncoder.decode(req.getPatronId());
 
-    when(userService.getUserById(PRE_POPULATED_PATRON_ID)).thenReturn(Optional.of(user));
-    when(centralServerService.getCentralServerByCentralCode(PRE_POPULATED_CENTRAL_CODE)).thenReturn(centralServerDTO);
-    when(patronTypeMappingService.getCentralPatronType(centralServerDTO.getId(), user.getPatronGroupId()))
-      .thenReturn(Optional.of(PRE_POPULATED_CENTRAL_PATRON_TYPE));
-
+    stubGet(format(USER_BY_ID_URL_TEMPLATE, patronId), "users/user.json");
     stubGet(format("/inventory/items?query=barcode==%s", req.getItemBarcode()), "inventory/query-items-response.json");
 
     stubItemRecoverableScenario();
@@ -105,14 +88,10 @@ class OptimisticLockingTest extends BaseApiControllerTest {
   @Test
   void fail_from_ItemVersionConflict_when_itemShipped_if_RetriesExhausted() throws Exception {
     var req = createItemShippedDTO();
-    var user = populateUser();
-    var centralServerDTO = new CentralServerDTO();
+    req.setPatronId(PRE_POPULATED_PATRON_ID);
+    var patronId = UUIDEncoder.decode(req.getPatronId());
 
-    when(userService.getUserById(PRE_POPULATED_PATRON_ID)).thenReturn(Optional.of(user));
-    when(centralServerService.getCentralServerByCentralCode(PRE_POPULATED_CENTRAL_CODE)).thenReturn(centralServerDTO);
-    when(patronTypeMappingService.getCentralPatronType(centralServerDTO.getId(), user.getPatronGroupId()))
-      .thenReturn(Optional.of(PRE_POPULATED_CENTRAL_PATRON_TYPE));
-
+    stubGet(format(USER_BY_ID_URL_TEMPLATE, patronId), "users/user.json");
     stubGet(format("/inventory/items?query=barcode==%s", req.getItemBarcode()), "inventory/query-items-response.json");
 
     stubItemUnrecoverableScenarion();
@@ -125,13 +104,10 @@ class OptimisticLockingTest extends BaseApiControllerTest {
   @Test
   void recover_from_ItemVersionConflict_when_cancelingTransaction() throws Exception {
     var req = createCancelRequestDTO();
-    var user = populateUser();
-    var centralServerDTO = new CentralServerDTO();
+    req.setPatronId(PRE_POPULATED_PATRON_ID);
+    var patronId = UUIDEncoder.decode(req.getPatronId());
 
-    when(userService.getUserById(PRE_POPULATED_PATRON_ID)).thenReturn(Optional.of(user));
-    when(centralServerService.getCentralServerByCentralCode(PRE_POPULATED_CENTRAL_CODE)).thenReturn(centralServerDTO);
-    when(patronTypeMappingService.getCentralPatronType(centralServerDTO.getId(), user.getPatronGroupId()))
-      .thenReturn(Optional.of(PRE_POPULATED_CENTRAL_PATRON_TYPE));
+    stubGet(format(USER_BY_ID_URL_TEMPLATE, patronId), "users/user.json");
 
     stubGet(circRequestUrl(), "circulation/item-request-response.json");
     stubPut(circRequestUrl());
@@ -149,13 +125,10 @@ class OptimisticLockingTest extends BaseApiControllerTest {
   @Test
   void fail_from_ItemVersionConflict_when_cancelingTransaction_if_RetriesExhausted() throws Exception {
     var req = createCancelRequestDTO();
-    var user = populateUser();
-    var centralServerDTO = new CentralServerDTO();
+    req.setPatronId(PRE_POPULATED_PATRON_ID);
+    var patronId = UUIDEncoder.decode(req.getPatronId());
 
-    when(userService.getUserById(PRE_POPULATED_PATRON_ID)).thenReturn(Optional.of(user));
-    when(centralServerService.getCentralServerByCentralCode(PRE_POPULATED_CENTRAL_CODE)).thenReturn(centralServerDTO);
-    when(patronTypeMappingService.getCentralPatronType(centralServerDTO.getId(), user.getPatronGroupId()))
-      .thenReturn(Optional.of(PRE_POPULATED_CENTRAL_PATRON_TYPE));
+    stubGet(format(USER_BY_ID_URL_TEMPLATE, patronId), "users/user.json");
 
     stubGet(circRequestUrl(), "circulation/item-request-response.json");
     stubPut(circRequestUrl());
@@ -173,13 +146,10 @@ class OptimisticLockingTest extends BaseApiControllerTest {
   @Test
   void recover_from_HoldingsVersionConflict_when_cancelingTransaction() throws Exception {
     var req = createCancelRequestDTO();
-    var user = populateUser();
-    var centralServerDTO = new CentralServerDTO();
+    req.setPatronId(PRE_POPULATED_PATRON_ID);
+    var patronId = UUIDEncoder.decode(req.getPatronId());
 
-    when(userService.getUserById(PRE_POPULATED_PATRON_ID)).thenReturn(Optional.of(user));
-    when(centralServerService.getCentralServerByCentralCode(PRE_POPULATED_CENTRAL_CODE)).thenReturn(centralServerDTO);
-    when(patronTypeMappingService.getCentralPatronType(centralServerDTO.getId(), user.getPatronGroupId()))
-      .thenReturn(Optional.of(PRE_POPULATED_CENTRAL_PATRON_TYPE));
+    stubGet(format(USER_BY_ID_URL_TEMPLATE, patronId), "users/user.json");
 
     stubGet(circRequestUrl(), "circulation/item-request-response.json");
     stubPut(circRequestUrl());
@@ -197,13 +167,10 @@ class OptimisticLockingTest extends BaseApiControllerTest {
   @Test
   void fail_from_HoldingsVersionConflict_when_cancelingTransaction_if_RetriesExhausted() throws Exception {
     var req = createCancelRequestDTO();
-    var user = populateUser();
-    var centralServerDTO = new CentralServerDTO();
+    req.setPatronId(PRE_POPULATED_PATRON_ID);
+    var patronId = UUIDEncoder.decode(req.getPatronId());
 
-    when(userService.getUserById(PRE_POPULATED_PATRON_ID)).thenReturn(Optional.of(user));
-    when(centralServerService.getCentralServerByCentralCode(PRE_POPULATED_CENTRAL_CODE)).thenReturn(centralServerDTO);
-    when(patronTypeMappingService.getCentralPatronType(centralServerDTO.getId(), user.getPatronGroupId()))
-      .thenReturn(Optional.of(PRE_POPULATED_CENTRAL_PATRON_TYPE));
+    stubGet(format(USER_BY_ID_URL_TEMPLATE, patronId), "users/user.json");
 
     stubGet(circRequestUrl(), "circulation/item-request-response.json");
     stubPut(circRequestUrl());
@@ -221,13 +188,10 @@ class OptimisticLockingTest extends BaseApiControllerTest {
   @Test
   void recover_from_ItemAndHoldingsVersionConflict_when_cancelingTransaction() throws Exception {
     var req = createCancelRequestDTO();
-    var user = populateUser();
-    var centralServerDTO = new CentralServerDTO();
+    req.setPatronId(PRE_POPULATED_PATRON_ID);
+    var patronId = UUIDEncoder.decode(req.getPatronId());
 
-    when(userService.getUserById(PRE_POPULATED_PATRON_ID)).thenReturn(Optional.of(user));
-    when(centralServerService.getCentralServerByCentralCode(PRE_POPULATED_CENTRAL_CODE)).thenReturn(centralServerDTO);
-    when(patronTypeMappingService.getCentralPatronType(centralServerDTO.getId(), user.getPatronGroupId()))
-      .thenReturn(Optional.of(PRE_POPULATED_CENTRAL_PATRON_TYPE));
+    stubGet(format(USER_BY_ID_URL_TEMPLATE, patronId), "users/user.json");
 
     stubGet(circRequestUrl(), "circulation/item-request-response.json");
     stubPut(circRequestUrl());
@@ -350,15 +314,4 @@ class OptimisticLockingTest extends BaseApiControllerTest {
         .andExpect(exceptionMatch(ResourceVersionConflictException.class));
   }
 
-  private User populateUser() {
-    var user = new User();
-    user.setId(PRE_POPULATED_PATRON_ID);
-    user.setPatronGroupId(PRE_POPULATE_PATRON_GROUP_ID);
-    var personal = new User.Personal();
-    personal.setPreferredFirstName("Paul");
-    personal.setFirstName("MuaDibs");
-    personal.setLastName("Atreides");
-    user.setPersonal(personal);
-    return user;
-  }
 }
