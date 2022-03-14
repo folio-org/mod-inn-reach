@@ -8,10 +8,10 @@ import javax.persistence.criteria.Predicate;
 
 interface Condition<T extends Comparable<? super T>> {
 
-  Predicate applyArguments(Expression<? extends T> dateField, List<T> args);
+  Predicate applyArguments(Expression<? extends T> exp, List<T> args);
 
   static <T extends Comparable<? super T>> Condition<T> positive(CriteriaBuilder cb) {
-    return (dateField, args) -> cb.conjunction();
+    return (exp, args) -> cb.conjunction();
   }
 
 }

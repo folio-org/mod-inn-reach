@@ -36,9 +36,9 @@ class ConditionFactory<T extends Comparable<? super T>> {
   }
 
   Condition<T> create(InnReachTransactionFilterParameters.DateOperation operation) {
-    return (dateField, args) -> isEmpty(args)
+    return (exp, args) -> isEmpty(args)
         ? cb.conjunction()
-        : condition(operation).applyArguments(dateField, args);
+        : condition(operation).applyArguments(exp, args);
   }
 
   private Condition<T> condition(InnReachTransactionFilterParameters.DateOperation operation) {
@@ -48,31 +48,31 @@ class ConditionFactory<T extends Comparable<? super T>> {
   }
 
   private Condition<T> less() {
-    return (dateField, args) -> cb.lessThan(dateField, args.get(0));
+    return (exp, args) -> cb.lessThan(exp, args.get(0));
   }
 
   private Condition<T> lessOrEqual() {
-    return (dateField, args) -> cb.lessThanOrEqualTo(dateField, args.get(0));
+    return (exp, args) -> cb.lessThanOrEqualTo(exp, args.get(0));
   }
 
   private Condition<T> equal() {
-    return (dateField, args) -> cb.equal(dateField, args.get(0));
+    return (exp, args) -> cb.equal(exp, args.get(0));
   }
 
   private Condition<T> notEqual() {
-    return (dateField, args) -> cb.notEqual(dateField, args.get(0));
+    return (exp, args) -> cb.notEqual(exp, args.get(0));
   }
 
   private Condition<T> greater() {
-    return (dateField, args) -> cb.greaterThan(dateField, args.get(0));
+    return (exp, args) -> cb.greaterThan(exp, args.get(0));
   }
 
   private Condition<T> greaterOrEqual() {
-    return (dateField, args) -> cb.greaterThanOrEqualTo(dateField, args.get(0));
+    return (exp, args) -> cb.greaterThanOrEqualTo(exp, args.get(0));
   }
 
   private Condition<T> between() {
-    return (dateField, args) -> cb.between(dateField, args.get(0), args.get(1));
+    return (exp, args) -> cb.between(exp, args.get(0), args.get(1));
   }
 
 }
