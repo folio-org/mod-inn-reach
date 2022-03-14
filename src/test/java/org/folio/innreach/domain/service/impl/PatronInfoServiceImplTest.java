@@ -9,6 +9,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
 import static org.folio.innreach.domain.dto.folio.ResultList.asSinglePage;
@@ -31,22 +32,27 @@ import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import org.folio.innreach.client.AutomatedPatronBlocksClient;
+import org.folio.innreach.client.CustomFieldsClient;
 import org.folio.innreach.client.ManualPatronBlocksClient;
 import org.folio.innreach.client.PatronClient;
+import org.folio.innreach.domain.dto.folio.CustomFieldDTO;
 import org.folio.innreach.domain.dto.folio.ResultList;
 import org.folio.innreach.domain.dto.folio.User;
 import org.folio.innreach.domain.dto.folio.patron.PatronDTO;
 import org.folio.innreach.domain.dto.folio.patron.PatronDTO.Loan;
+import org.folio.innreach.domain.entity.VisiblePatronFieldConfiguration;
 import org.folio.innreach.domain.service.CentralServerService;
 import org.folio.innreach.domain.service.InnReachTransactionService;
 import org.folio.innreach.domain.service.PatronTypeMappingService;
 import org.folio.innreach.domain.service.UserCustomFieldMappingService;
+import org.folio.innreach.domain.service.VisiblePatronFieldConfigurationService;
 import org.folio.innreach.external.mapper.InnReachResponseMapper;
 import org.folio.innreach.external.mapper.InnReachResponseMapperImpl;
 
@@ -78,6 +84,10 @@ class PatronInfoServiceImplTest {
   private ManualPatronBlocksClient manualPatronBlocksClient;
   @Mock
   private UserCustomFieldMappingService userCustomFieldService;
+  @Mock
+  private VisiblePatronFieldConfigurationService fieldService;
+  @Mock
+  private CustomFieldsClient customFieldsClient;
 
   @Spy
   private InnReachResponseMapper mapper = new InnReachResponseMapperImpl();
@@ -91,7 +101,7 @@ class PatronInfoServiceImplTest {
     var patronId = getPatronId(user);
 
     when(centralServerService.getCentralServerByCentralCode(any())).thenReturn(createCentralServerDTO());
-    when(userService.getUserByPublicId(any())).thenReturn(Optional.of(user));
+    when(userService.getUserByBarcode(any())).thenReturn(Optional.of(user));
     when(automatedPatronBlocksClient.getPatronBlocks(any())).thenReturn(ResultList.empty());
     when(manualPatronBlocksClient.getPatronBlocks(any())).thenReturn(ResultList.empty());
     when(patronClient.getAccountDetails(any())).thenReturn(PatronDTO.of(TOTAL_LOANS, singletonList(Loan.of(UUID.randomUUID()))));
@@ -123,7 +133,7 @@ class PatronInfoServiceImplTest {
     centralServerDTO.setLocalAgencies(of(localAgency));
 
     when(centralServerService.getCentralServerByCentralCode(any())).thenReturn(centralServerDTO);
-    when(userService.getUserByPublicId(any())).thenReturn(Optional.of(user));
+    when(userService.getUserByBarcode(any())).thenReturn(Optional.of(user));
     when(automatedPatronBlocksClient.getPatronBlocks(any())).thenReturn(ResultList.empty());
     when(manualPatronBlocksClient.getPatronBlocks(any())).thenReturn(ResultList.empty());
     when(patronClient.getAccountDetails(any())).thenReturn(PatronDTO.of(TOTAL_LOANS, singletonList(Loan.of(UUID.randomUUID()))));
@@ -158,7 +168,7 @@ class PatronInfoServiceImplTest {
     var strUserId = getPatronId(user);
 
     when(centralServerService.getCentralServerByCentralCode(any())).thenReturn(createCentralServerDTO());
-    when(userService.getUserByPublicId(any())).thenReturn(Optional.of(user));
+    when(userService.getUserByBarcode(any())).thenReturn(Optional.of(user));
     when(automatedPatronBlocksClient.getPatronBlocks(any())).thenReturn(ResultList.empty());
     when(manualPatronBlocksClient.getPatronBlocks(any())).thenReturn(ResultList.empty());
     when(patronClient.getAccountDetails(any())).thenReturn(PatronDTO.of(TOTAL_LOANS, singletonList(Loan.of(UUID.randomUUID()))));
@@ -193,7 +203,7 @@ class PatronInfoServiceImplTest {
     var strUserId = getPatronId(user);
 
     when(centralServerService.getCentralServerByCentralCode(any())).thenReturn(createCentralServerDTO());
-    when(userService.getUserByPublicId(any())).thenReturn(Optional.of(user));
+    when(userService.getUserByBarcode(any())).thenReturn(Optional.of(user));
     when(automatedPatronBlocksClient.getPatronBlocks(any())).thenReturn(ResultList.empty());
     when(manualPatronBlocksClient.getPatronBlocks(any())).thenReturn(ResultList.empty());
     when(patronClient.getAccountDetails(any())).thenReturn(PatronDTO.of(TOTAL_LOANS, singletonList(Loan.of(UUID.randomUUID()))));
@@ -236,7 +246,7 @@ class PatronInfoServiceImplTest {
     user.getPersonal().setFirstName("Le " + PATRON_FIRST_NAME);
 
     when(centralServerService.getCentralServerByCentralCode(any())).thenReturn(createCentralServerDTO());
-    when(userService.getUserByPublicId(any())).thenReturn(Optional.of(user));
+    when(userService.getUserByBarcode(any())).thenReturn(Optional.of(user));
 
     var response = service.verifyPatron(CENTRAL_CODE, VISIBLE_PATRON_ID, AGENCY_CODE, PATRON_NAME);
 
@@ -255,7 +265,7 @@ class PatronInfoServiceImplTest {
     patronBlock.setBlockRequests(false);
 
     when(centralServerService.getCentralServerByCentralCode(any())).thenReturn(createCentralServerDTO());
-    when(userService.getUserByPublicId(any())).thenReturn(Optional.of(createUser()));
+    when(userService.getUserByBarcode(any())).thenReturn(Optional.of(createUser()));
     when(automatedPatronBlocksClient.getPatronBlocks(any())).thenReturn(ResultList.asSinglePage(patronBlock));
 
     var response = service.verifyPatron(CENTRAL_CODE, VISIBLE_PATRON_ID, AGENCY_CODE, PATRON_NAME);
@@ -272,7 +282,7 @@ class PatronInfoServiceImplTest {
     patronBlock.setRequests(false);
 
     when(centralServerService.getCentralServerByCentralCode(any())).thenReturn(createCentralServerDTO());
-    when(userService.getUserByPublicId(any())).thenReturn(Optional.of(createUser()));
+    when(userService.getUserByBarcode(any())).thenReturn(Optional.of(createUser()));
     when(automatedPatronBlocksClient.getPatronBlocks(any())).thenReturn(ResultList.empty());
     when(manualPatronBlocksClient.getPatronBlocks(any())).thenReturn(ResultList.asSinglePage(patronBlock));
 
@@ -290,7 +300,7 @@ class PatronInfoServiceImplTest {
     patronBlock.setRequests(false);
 
     when(centralServerService.getCentralServerByCentralCode(any())).thenReturn(createCentralServerDTO());
-    when(userService.getUserByPublicId(any())).thenReturn(Optional.of(createUser()));
+    when(userService.getUserByBarcode(any())).thenReturn(Optional.of(createUser()));
     when(automatedPatronBlocksClient.getPatronBlocks(any())).thenReturn(ResultList.empty());
     when(manualPatronBlocksClient.getPatronBlocks(any())).thenReturn(asSinglePage(patronBlock));
     when(patronClient.getAccountDetails(any())).thenReturn(PatronDTO.of(TOTAL_LOANS, singletonList(Loan.of(UUID.randomUUID()))));
@@ -313,7 +323,7 @@ class PatronInfoServiceImplTest {
     patronBlock.setBlockRequests(false);
 
     when(centralServerService.getCentralServerByCentralCode(any())).thenReturn(createCentralServerDTO());
-    when(userService.getUserByPublicId(any())).thenReturn(Optional.of(createUser()));
+    when(userService.getUserByBarcode(any())).thenReturn(Optional.of(createUser()));
     when(automatedPatronBlocksClient.getPatronBlocks(any())).thenReturn(asSinglePage(patronBlock));
     when(manualPatronBlocksClient.getPatronBlocks(any())).thenReturn(ResultList.empty());
     when(patronClient.getAccountDetails(any())).thenReturn(PatronDTO.of(TOTAL_LOANS, singletonList(Loan.of(UUID.randomUUID()))));
@@ -336,7 +346,7 @@ class PatronInfoServiceImplTest {
     patronBlock.setBlockRequests(true);
 
     when(centralServerService.getCentralServerByCentralCode(any())).thenReturn(createCentralServerDTO());
-    when(userService.getUserByPublicId(any())).thenReturn(Optional.of(createUser()));
+    when(userService.getUserByBarcode(any())).thenReturn(Optional.of(createUser()));
     when(automatedPatronBlocksClient.getPatronBlocks(any())).thenReturn(ResultList.asSinglePage(patronBlock));
 
     var response = service.verifyPatron(CENTRAL_CODE, VISIBLE_PATRON_ID, AGENCY_CODE, PATRON_NAME);
@@ -351,7 +361,7 @@ class PatronInfoServiceImplTest {
     User user = createUser();
 
     when(centralServerService.getCentralServerByCentralCode(any())).thenReturn(createCentralServerDTO());
-    when(userService.getUserByPublicId(any())).thenReturn(Optional.of(user));
+    when(userService.getUserByBarcode(any())).thenReturn(Optional.of(user));
     when(automatedPatronBlocksClient.getPatronBlocks(any())).thenReturn(ResultList.empty());
     when(manualPatronBlocksClient.getPatronBlocks(any())).thenReturn(ResultList.empty());
 
@@ -370,7 +380,7 @@ class PatronInfoServiceImplTest {
     var patronName = "testName";
 
     when(centralServerService.getCentralServerByCentralCode(any())).thenReturn(createCentralServerDTO());
-    when(userService.getUserByPublicId(any())).thenReturn(Optional.of(createUser()));
+    when(userService.getUserByBarcode(any())).thenReturn(Optional.of(createUser()));
 
     var response = service.verifyPatron(CENTRAL_CODE, VISIBLE_PATRON_ID, AGENCY_CODE, patronName);
 
@@ -390,7 +400,7 @@ class PatronInfoServiceImplTest {
     centralServer.setLocalAgencies(Collections.emptyList());
 
     when(centralServerService.getCentralServerByCentralCode(any())).thenReturn(centralServer);
-    when(userService.getUserByPublicId(any())).thenReturn(Optional.of(user));
+    when(userService.getUserByBarcode(any())).thenReturn(Optional.of(user));
     when(automatedPatronBlocksClient.getPatronBlocks(any())).thenReturn(ResultList.empty());
     when(manualPatronBlocksClient.getPatronBlocks(any())).thenReturn(ResultList.empty());
     when(patronClient.getAccountDetails(any())).thenReturn(PatronDTO.of(TOTAL_LOANS, singletonList(Loan.of(UUID.randomUUID()))));
@@ -406,6 +416,93 @@ class PatronInfoServiceImplTest {
     assertEquals(ERROR_STATUS, response.getStatus());
     assertEquals(ERROR_REASON, response.getReason());
     assertEquals("Patron agency code is not resolved", getErrorMsg(response));
+  }
+
+  @Test
+  void shouldReturnPatronInfo_withVisiblePatronFieldConfiguration() {
+    var user = createUser();
+    var patronId = getPatronId(user);
+    var fieldConfig = new VisiblePatronFieldConfiguration();
+    fieldConfig.getFields().add(VisiblePatronFieldConfiguration.VisiblePatronField.EXTERNAL_SYSTEM_ID);
+    fieldConfig.getFields().add(VisiblePatronFieldConfiguration.VisiblePatronField.USERNAME);
+
+    ArgumentCaptor<String> queryArgument = ArgumentCaptor.forClass(String.class);
+
+    when(centralServerService.getCentralServerByCentralCode(any())).thenReturn(createCentralServerDTO());
+    when(automatedPatronBlocksClient.getPatronBlocks(any())).thenReturn(ResultList.empty());
+    when(manualPatronBlocksClient.getPatronBlocks(any())).thenReturn(ResultList.empty());
+    when(patronClient.getAccountDetails(any())).thenReturn(PatronDTO.of(TOTAL_LOANS, singletonList(Loan.of(UUID.randomUUID()))));
+    when(transactionService.countInnReachLoans(any(), any())).thenReturn(INN_REACH_LOANS);
+    when(patronTypeMappingService.getCentralPatronType(any(), any())).thenReturn(Optional.of(CENTRAL_PATRON_TYPE));
+    when(userCustomFieldService.getMapping(any())).thenReturn(createCustomFieldMapping());
+    when(fieldService.getByCentralCode(anyString())).thenReturn(fieldConfig);
+    when(userService.getUserByQuery(queryArgument.capture())).thenReturn(Optional.of(user));
+
+    var response = service.verifyPatron(CENTRAL_CODE, VISIBLE_PATRON_ID, AGENCY_CODE, PATRON_NAME);
+
+    assertNotNull(response);
+    var patronInfo = response.getPatronInfo();
+
+    assertNotNull(patronInfo);
+    assertEquals(patronId, patronInfo.getPatronId());
+    assertEquals(FOLIO_PATRON_NAME, patronInfo.getPatronName());
+    assertEquals(CENTRAL_PATRON_TYPE, patronInfo.getCentralPatronType());
+    assertEquals(INN_REACH_LOANS, patronInfo.getNonLocalLoans());
+    assertEquals(TOTAL_LOANS - INN_REACH_LOANS, (int) patronInfo.getLocalLoans());
+    assertEquals(CENTRAL_AGENCY_CODE, patronInfo.getPatronAgencyCode());
+    assertNotNull(patronInfo.getPatronExpireDate());
+
+    var query = queryArgument.getValue();
+    assertEquals("externalSystemId==" + VISIBLE_PATRON_ID + " or username==" + VISIBLE_PATRON_ID, query);
+  }
+
+
+  @Test
+  void shouldReturnPatronInfo_withVisiblePatronFieldConfigurationAndCustomFields() {
+    var customFieldDTO1 = CustomFieldDTO.of(UUID.randomUUID(), "field1", CustomFieldDTO.FieldType.SINGLE_CHECKBOX);
+    var customFieldDTO2 = CustomFieldDTO.of(UUID.randomUUID(), "field2", CustomFieldDTO.FieldType.MULTI_SELECT_DROPDOWN);
+    var user = createUser();
+    var patronId = getPatronId(user);
+    var fieldConfig = new VisiblePatronFieldConfiguration();
+    fieldConfig.getFields().add(VisiblePatronFieldConfiguration.VisiblePatronField.EXTERNAL_SYSTEM_ID);
+    fieldConfig.getFields().add(VisiblePatronFieldConfiguration.VisiblePatronField.USERNAME);
+    fieldConfig.getFields().add(VisiblePatronFieldConfiguration.VisiblePatronField.USER_CUSTOM_FIELDS);
+    fieldConfig.getUserCustomFieldIds().add(customFieldDTO1.getId());
+    fieldConfig.getUserCustomFieldIds().add(customFieldDTO2.getId());
+
+    ArgumentCaptor<String> queryArgument = ArgumentCaptor.forClass(String.class);
+
+    when(centralServerService.getCentralServerByCentralCode(any())).thenReturn(createCentralServerDTO());
+    when(automatedPatronBlocksClient.getPatronBlocks(any())).thenReturn(ResultList.empty());
+    when(manualPatronBlocksClient.getPatronBlocks(any())).thenReturn(ResultList.empty());
+    when(patronClient.getAccountDetails(any())).thenReturn(PatronDTO.of(TOTAL_LOANS, singletonList(Loan.of(UUID.randomUUID()))));
+    when(transactionService.countInnReachLoans(any(), any())).thenReturn(INN_REACH_LOANS);
+    when(patronTypeMappingService.getCentralPatronType(any(), any())).thenReturn(Optional.of(CENTRAL_PATRON_TYPE));
+    when(userCustomFieldService.getMapping(any())).thenReturn(createCustomFieldMapping());
+    when(fieldService.getByCentralCode(anyString())).thenReturn(fieldConfig);
+    when(userService.getUserByQuery(queryArgument.capture())).thenReturn(Optional.of(user));
+    when(customFieldsClient.getCustomField(customFieldDTO1.getId())).thenReturn(customFieldDTO1);
+    when(customFieldsClient.getCustomField(customFieldDTO2.getId())).thenReturn(customFieldDTO2);
+
+    var response = service.verifyPatron(CENTRAL_CODE, VISIBLE_PATRON_ID, AGENCY_CODE, PATRON_NAME);
+
+    assertNotNull(response);
+    var patronInfo = response.getPatronInfo();
+
+    assertNotNull(patronInfo);
+    assertEquals(patronId, patronInfo.getPatronId());
+    assertEquals(FOLIO_PATRON_NAME, patronInfo.getPatronName());
+    assertEquals(CENTRAL_PATRON_TYPE, patronInfo.getCentralPatronType());
+    assertEquals(INN_REACH_LOANS, patronInfo.getNonLocalLoans());
+    assertEquals(TOTAL_LOANS - INN_REACH_LOANS, (int) patronInfo.getLocalLoans());
+    assertEquals(CENTRAL_AGENCY_CODE, patronInfo.getPatronAgencyCode());
+    assertNotNull(patronInfo.getPatronExpireDate());
+
+    var query = queryArgument.getValue();
+    assertTrue(query.contains("externalSystemId"));
+    assertTrue(query.contains("username"));
+    assertTrue(query.contains(customFieldDTO1.getRefId()));
+    assertTrue(query.contains(customFieldDTO2.getRefId()));
   }
 
 }

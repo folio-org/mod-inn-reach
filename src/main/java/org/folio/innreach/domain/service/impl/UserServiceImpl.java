@@ -52,8 +52,15 @@ public class UserServiceImpl implements UserService {
   }
 
   @Override
-  public Optional<User> getUserByPublicId(String userPublicId) {
-    var users = usersClient.query(String.format("barcode==%1$s OR externalSystemId==%1$s", userPublicId));
+  public Optional<User> getUserByBarcode(String userPublicId) {
+    var users = usersClient.query(String.format("barcode==%1$s", userPublicId));
+
+    return users.getResult().stream().findFirst();
+  }
+
+  @Override
+  public Optional<User> getUserByQuery(String query) {
+    var users = usersClient.query(query);
 
     return users.getResult().stream().findFirst();
   }
