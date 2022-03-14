@@ -567,29 +567,6 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
 
   @Test
   @Sql(scripts = {
-      "classpath:db/central-server/pre-populate-central-server.sql",
-      "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
-//      "classpath:db/inn-reach-transaction/pre-populate-another-inn-reach-transaction.sql"
-  })
-  void return200HttpCode_and_sortedTransactionList_when_getTransactionsWithFilterByCreateDate() {
-    var responseEntity = testRestTemplate.getForEntity(
-        "/inn-reach/transactions?createdDate=2022-03-04T00:00:00Z&createdDateOp=greater", InnReachTransactionsDTO.class
-    );
-
-    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
-    assertNotNull(responseEntity.getBody());
-    assertEquals(3, responseEntity.getBody().getTotalRecords());
-
-    var transactions = responseEntity.getBody().getTransactions();
-    assertEquals(3, transactions.size());
-    var transaction = transactions.get(0);
-    /*assertTrue(transaction.getType().equals(PATRON) || transaction.getType().equals(LOCAL));
-    assertEquals("qwe12", transaction.getHold().getPatronAgencyCode());
-    assertTrue(transaction.getHold().getAuthor().contains("2"));*/
-  }
-
-  @Test
-  @Sql(scripts = {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/mtype-mapping/pre-populate-material-type-mapping.sql",
     "classpath:db/central-patron-type-mapping/pre-populate-central-patron_type-mapping-table.sql"

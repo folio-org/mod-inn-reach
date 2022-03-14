@@ -8,7 +8,6 @@ import static org.folio.innreach.domain.entity.InnReachTransactionFilterParamete
 import static org.folio.innreach.domain.entity.InnReachTransactionFilterParameters.DateOperation.LESS;
 import static org.folio.innreach.domain.entity.InnReachTransactionFilterParameters.DateOperation.LESS_OR_EQUAL;
 import static org.folio.innreach.domain.entity.InnReachTransactionFilterParameters.DateOperation.NOT_EQUAL;
-import static org.folio.innreach.specification.Condition.positive;
 
 import java.util.EnumMap;
 import java.util.Map;
@@ -38,13 +37,7 @@ class ConditionFactory<T extends Comparable<? super T>> {
   Condition<T> create(InnReachTransactionFilterParameters.DateOperation operation) {
     return (exp, args) -> isEmpty(args)
         ? cb.conjunction()
-        : condition(operation).applyArguments(exp, args);
-  }
-
-  private Condition<T> condition(InnReachTransactionFilterParameters.DateOperation operation) {
-    return operation == null
-        ? positive(cb)
-        : operationToCondition.getOrDefault(operation, equal());
+        : operationToCondition.getOrDefault(operation, equal()).applyArguments(exp, args);
   }
 
   private Condition<T> less() {
