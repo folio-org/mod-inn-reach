@@ -11,7 +11,6 @@ import static java.lang.String.format;
 import static org.hamcrest.Matchers.containsString;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
-import static org.mockito.Mockito.when;
 import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TEST_METHOD;
 import static org.springframework.test.context.jdbc.SqlMergeMode.MergeMode.MERGE;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -28,21 +27,15 @@ import static org.folio.innreach.fixture.TestUtil.randomAlphanumeric5;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Stream;
 
-import org.folio.innreach.domain.dto.folio.User;
-import org.folio.innreach.domain.service.CentralServerService;
-import org.folio.innreach.domain.service.PatronTypeMappingService;
-import org.folio.innreach.domain.service.UserService;
-import org.folio.innreach.dto.CentralServerDTO;
+import org.folio.innreach.util.UUIDEncoder;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlMergeMode;
 
@@ -68,34 +61,30 @@ class OwnerRenewCirculationApiTest extends BaseApiControllerTest {
   private static final String PRE_POPULATED_CENTRAL_CODE = "d2ir";
 
   private static final String RENEWREQ_URL = "/inn-reach/d2ir/circ/ownerrenew/{trackingId}/{centralCode}";
+  private static final String USER_BY_ID_URL_TEMPLATE = "/users/%s";
   private static final int REQ_DUE_DATE_TIME_AFTER = (int) Instant.parse("2021-12-31T00:00:00Z").getEpochSecond();
   private static final int REQ_DUE_DATE_TIME_BEFORE = (int) Instant.parse("2021-12-01T00:00:00Z").getEpochSecond();
   private static final String LOAN_ID = "19bb9798-d396-4b37-8fd6-5df0885e020e";
-  private static final UUID PRE_POPULATED_PATRON_ID = UUID.fromString("4154a604-4d5a-4d8e-9160-057fc7b6e6b8");
+  private static final String PRE_POPULATED_PATRON_ID = "ifkkmbcnljgy5elaav74pnxgxa";
   private static final UUID PRE_POPULATE_PATRON_GROUP_ID = UUID.fromString("8534295a-e031-4738-a952-f7db900df8c0");
-  private static final Integer PRE_POPULATED_CENTRAL_PATRON_TYPE = 122;
 
   @Autowired
   private InnReachTransactionRepository repository;
-  @MockBean
-  private UserService userService;
-  @MockBean
-  private PatronTypeMappingService patronTypeMappingService;
-  @MockBean
-  private CentralServerService centralServerService;
-
 
   @Test
+  @Sql(
+    scripts = {
+      "classpath:db/agency-loc-mapping/pre-populate-agency-location-mapping.sql",
+      "classpath:db/item-type-mapping/pre-populate-item-type-mapping.sql",
+      "classpath:db/patron-type-mapping/pre-populate-patron-type-mapping-circulation.sql"
+    })
   void renewLoan_when_RequestDueDateIsAfterLoanDate() throws Exception {
     var req = createRenewLoanDTO();
     req.setDueDateTime(REQ_DUE_DATE_TIME_AFTER);
-    var user = populateUser();
-    var centralServerDTO = new CentralServerDTO();
+    req.setPatronId(PRE_POPULATED_PATRON_ID);
+    var patronId = UUIDEncoder.decode(req.getPatronId());
 
-    when(userService.getUserById(PRE_POPULATED_PATRON_ID)).thenReturn(Optional.of(user));
-    when(centralServerService.getCentralServerByCentralCode(PRE_POPULATED_CENTRAL_CODE)).thenReturn(centralServerDTO);
-    when(patronTypeMappingService.getCentralPatronType(centralServerDTO.getId(), user.getPatronGroupId()))
-      .thenReturn(Optional.of(PRE_POPULATED_CENTRAL_PATRON_TYPE));
+    stubGet(format(USER_BY_ID_URL_TEMPLATE, patronId), "users/user.json");
 
     stubPost("/circulation/renew-by-id", "circulation/renew-loan-response.json");
 
@@ -108,16 +97,19 @@ class OwnerRenewCirculationApiTest extends BaseApiControllerTest {
   }
 
   @Test
+  @Sql(
+    scripts = {
+      "classpath:db/agency-loc-mapping/pre-populate-agency-location-mapping.sql",
+      "classpath:db/item-type-mapping/pre-populate-item-type-mapping.sql",
+      "classpath:db/patron-type-mapping/pre-populate-patron-type-mapping-circulation.sql"
+    })
   void renewLoan_when_RequestDueDateIsBeforeLoanDate() throws Exception {
     var req = createRenewLoanDTO();
     req.setDueDateTime(REQ_DUE_DATE_TIME_BEFORE);
-    var user = populateUser();
-    var centralServerDTO = new CentralServerDTO();
+    req.setPatronId(PRE_POPULATED_PATRON_ID);
+    var patronId = UUIDEncoder.decode(req.getPatronId());
 
-    when(userService.getUserById(PRE_POPULATED_PATRON_ID)).thenReturn(Optional.of(user));
-    when(centralServerService.getCentralServerByCentralCode(PRE_POPULATED_CENTRAL_CODE)).thenReturn(centralServerDTO);
-    when(patronTypeMappingService.getCentralPatronType(centralServerDTO.getId(), user.getPatronGroupId()))
-      .thenReturn(Optional.of(PRE_POPULATED_CENTRAL_PATRON_TYPE));
+    stubGet(format(USER_BY_ID_URL_TEMPLATE, patronId), "users/user.json");
 
     stubPost("/circulation/renew-by-id", "circulation/renew-loan-response.json");
     stubPut(loanUrl());
@@ -138,8 +130,18 @@ class OwnerRenewCirculationApiTest extends BaseApiControllerTest {
 
   @ParameterizedTest
   @MethodSource("transactionNotFoundArgProvider")
+  @Sql(
+    scripts = {
+      "classpath:db/agency-loc-mapping/pre-populate-agency-location-mapping.sql",
+      "classpath:db/item-type-mapping/pre-populate-item-type-mapping.sql",
+      "classpath:db/patron-type-mapping/pre-populate-patron-type-mapping-circulation.sql"
+    })
   void return400_when_TransactionNotFound(String trackingId, String centralCode, RenewLoanDTO req)
       throws Exception {
+    req.setPatronId(PRE_POPULATED_PATRON_ID);
+    var patronId = UUIDEncoder.decode(req.getPatronId());
+
+    stubGet(format(USER_BY_ID_URL_TEMPLATE, patronId), "users/user.json");
     putReq(ownerRenewUri(trackingId, centralCode), req)
         .andDo(logResponse())
         .andExpect(status().isBadRequest())
@@ -178,15 +180,4 @@ class OwnerRenewCirculationApiTest extends BaseApiControllerTest {
     putAndExpect(uri, requestBody, Template.of("circulation/ok-response.json"));
   }
 
-  private User populateUser() {
-    var user = new User();
-    user.setId(PRE_POPULATED_PATRON_ID);
-    user.setPatronGroupId(PRE_POPULATE_PATRON_GROUP_ID);
-    var personal = new User.Personal();
-    personal.setPreferredFirstName("Paul");
-    personal.setFirstName("MuaDibs");
-    personal.setLastName("Atreides");
-    user.setPersonal(personal);
-    return user;
-  }
 }
