@@ -16,6 +16,7 @@ public class InnReachTransactionFilterParameters {
   private List<String> itemBarcodes;
   private List<Integer> patronTypes;
   private List<Integer> centralItemTypes;
+  private List<String> patronNames;
   private String query;
   private SortBy sortBy;
   private SortOrder sortOrder;
@@ -30,7 +31,8 @@ public class InnReachTransactionFilterParameters {
     ITEM_AGENCY("itemAgencyCode"),
     PATRON_AGENCY("patronAgencyCode"),
     CENTRAL_PATRON_TYPE("centralPatronType"),
-    CENTRAL_ITEM_TYPE("centralItemType");
+    CENTRAL_ITEM_TYPE("centralItemType"),
+    PATRON_NAME("patronName");
 
     @Getter
     private final String value;
