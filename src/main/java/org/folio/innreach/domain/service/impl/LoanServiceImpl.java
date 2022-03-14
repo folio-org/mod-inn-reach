@@ -1,5 +1,7 @@
 package org.folio.innreach.domain.service.impl;
 
+import static org.folio.innreach.util.ListUtils.getFirstItem;
+
 import java.util.Date;
 import java.util.Optional;
 import java.util.UUID;
@@ -36,6 +38,11 @@ public class LoanServiceImpl implements LoanService {
   @Override
   public Optional<LoanDTO> find(UUID loanId) {
     return circulationClient.findLoan(loanId);
+  }
+
+  @Override
+  public Optional<LoanDTO> findByItemId(UUID itemId) {
+    return getFirstItem(circulationClient.queryLoansByItemId(itemId));
   }
 
   @Override
