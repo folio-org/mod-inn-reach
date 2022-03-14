@@ -6,7 +6,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
 import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TEST_METHOD;
 import static org.springframework.test.context.jdbc.SqlMergeMode.MergeMode.MERGE;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import static org.folio.innreach.controller.d2ir.CirculationResultUtils.emptyErrors;
@@ -27,7 +26,6 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.MediaType;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlMergeMode;
 
@@ -58,8 +56,6 @@ class TransferRequestCirculationApiTest extends BaseApiControllerTest {
 
   private static final String TRANSFERREQ_URL = "/inn-reach/d2ir/circ/transferrequest/{trackingId}/{centralCode}";
   private static final String USER_BY_ID_URL_TEMPLATE = "/users/%s";
-  private static final String CIRCULATION_ENDPOINT = "/inn-reach/d2ir/circ/{circulationOperationName}/{trackingId}/{centralCode}";
-  private static final String TRANSFER_REQUEST = "transferrequest";
 
   @Autowired
   private InnReachTransactionRepository repository;
@@ -79,12 +75,7 @@ class TransferRequestCirculationApiTest extends BaseApiControllerTest {
     var patronId = UUIDEncoder.decode(req.getPatronId());
 
     stubGet(format(USER_BY_ID_URL_TEMPLATE, patronId), "users/user.json");
-
-    mockMvc.perform(put(CIRCULATION_ENDPOINT, TRANSFER_REQUEST, PRE_POPULATED_TRACKING_ID, PRE_POPULATED_CENTRAL_CODE)
-      .content(jsonHelper.toJson(req))
-      .contentType(MediaType.APPLICATION_JSON)
-      .headers(getOkapiHeaders()))
-      .andExpect(status().isOk());
+    putAndExpectOk(transferReqUri(), req);
 
     var trx = getTransaction(PRE_POPULATED_TRACKING_ID, PRE_POPULATED_CENTRAL_CODE);
 
