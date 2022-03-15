@@ -55,7 +55,7 @@ class CentralServerRepositoryTest extends BaseRepositoryTest {
     assertNotNull(centralServerById.getCentralServerCredentials().getCentralServerKey());
     assertNotNull(centralServerById.getLocalAgencies());
     assertFalse(centralServerById.getLocalAgencies().isEmpty());
-    assertFalse(centralServerById.getLocalAgencies().get(0).getFolioLibraries().isEmpty());
+    assertFalse(centralServerById.getLocalAgencies().get(0).getFolioLibraryIds().isEmpty());
   }
 
   @Test
@@ -72,7 +72,7 @@ class CentralServerRepositoryTest extends BaseRepositoryTest {
     centralServer.setLocalServerCode(PRE_POPULATED_LOCAL_SERVER_CODE);
 
     var ex = assertThrows(DataIntegrityViolationException.class,
-      () -> centralServerRepository.saveAndFlush(centralServer));
+        () -> centralServerRepository.saveAndFlush(centralServer));
 
     assertThat(ex.getMessage(), containsString("constraint [central_server_local_server_code_key]"));
   }
@@ -83,7 +83,7 @@ class CentralServerRepositoryTest extends BaseRepositoryTest {
     centralServer.setCentralServerCode(PRE_POPULATED_CENTRAL_SERVER_CODE);
 
     var ex = assertThrows(DataIntegrityViolationException.class,
-      () -> centralServerRepository.saveAndFlush(centralServer));
+        () -> centralServerRepository.saveAndFlush(centralServer));
 
     assertThat(ex.getMessage(), containsString("constraint [unq_central_server_cs_code]"));
   }
