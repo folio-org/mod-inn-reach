@@ -111,6 +111,29 @@ class LocationMappingControllerTest extends BaseControllerTest {
 
   @Test
   @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-location/pre-populate-inn-reach-location-code.sql",
+    "classpath:db/inn-reach-location/pre-populate-another-inn-reach-location-code.sql",
+    "classpath:db/loc-mapping/pre-populate-location-mapping.sql",
+    "classpath:db/loc-mapping/pre-populate-another-location-mapping.sql"
+  })
+  void shouldGetAllExistingMappingsForAllLibraries() {
+    var responseEntity = testRestTemplate.getForEntity(
+      baseMappingURLForAllLibraries(PRE_POPULATED_CENTRAL_SERVER_ID), List.class);
+
+    assertTrue(responseEntity.getStatusCode().is2xxSuccessful());
+    assertTrue(responseEntity.hasBody());
+
+    var response = responseEntity.getBody();
+    assertNotNull(response);
+
+    List<LocationMapping> dbMappings = repository.findByCentralServerId(UUID.fromString(PRE_POPULATED_CENTRAL_SERVER_ID));
+
+    assertEquals(dbMappings.size(), response.size());
+  }
+
+  @Test
+  @Sql(scripts = {
     "classpath:db/central-server/pre-populate-central-server.sql"
   })
   void shouldGetEmptyMappingsWith0TotalIfNotSet() {
@@ -184,8 +207,8 @@ class LocationMappingControllerTest extends BaseControllerTest {
 
     assertEquals(expected.size(), created.size());
     assertThat(created, containsInAnyOrder(
-      samePropertyValuesAs(expected.get(0), "id", "metadata"),
-      samePropertyValuesAs(expected.get(1), "id", "metadata")
+      samePropertyValuesAs(expected.get(0), "id", "metadata", "libraryId"),
+      samePropertyValuesAs(expected.get(1), "id", "metadata", "libraryId")
     ));
   }
 
@@ -322,8 +345,8 @@ class LocationMappingControllerTest extends BaseControllerTest {
         .map(LocationMappingDTO::getInnReachLocationId).get());
     // verify inserted
     assertThat(stored, hasItems(
-      samePropertyValuesAs(newMappings.getLocationMappings().get(0), "id", "metadata"),
-      samePropertyValuesAs(newMappings.getLocationMappings().get(1), "id", "metadata")
+      samePropertyValuesAs(newMappings.getLocationMappings().get(0), "id", "metadata", "libraryId"),
+      samePropertyValuesAs(newMappings.getLocationMappings().get(1), "id", "metadata", "libraryId")
     ));
   }
 
@@ -351,6 +374,10 @@ class LocationMappingControllerTest extends BaseControllerTest {
 
   private static String baseMappingURL() {
     return baseMappingURL(PRE_POPULATED_CENTRAL_SERVER_ID, PRE_POPULATED_LIBRARY_ID);
+  }
+
+  private static String baseMappingURLForAllLibraries(String serverId) {
+    return "/inn-reach/central-servers/" + serverId + "/libraries/locations/location-mappings";
   }
 
   private static String baseMappingURL(String serverId, String libraryId) {

@@ -18,6 +18,7 @@ import static org.folio.innreach.fixture.CirculationFixture.createCancelRequestD
 import static org.folio.innreach.fixture.CirculationFixture.createItemShippedDTO;
 
 import org.apache.http.HttpStatus;
+import org.folio.innreach.util.UUIDEncoder;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.jdbc.Sql;
@@ -31,8 +32,11 @@ import org.folio.innreach.repository.InnReachTransactionRepository;
 
 @Sql(
     scripts = {
-        "classpath:db/central-server/pre-populate-central-server.sql",
-        "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
+      "classpath:db/central-server/pre-populate-central-server.sql",
+      "classpath:db/agency-loc-mapping/pre-populate-agency-location-mapping.sql",
+      "classpath:db/item-type-mapping/pre-populate-item-type-mapping.sql",
+      "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql",
+      "classpath:db/patron-type-mapping/pre-populate-patron-type-mapping-circulation.sql"
 })
 @Sql(
     scripts = {
@@ -58,6 +62,8 @@ class OptimisticLockingTest extends BaseApiControllerTest {
   private static final String ITEM_CONFLICT_STATE = "Item Conflict";
   private static final String HOLDINGS_RETRY_SCENARIO = "Holdings Retry Scenario";
   private static final String HOLDINGS_CONFLICT_STATE = "Holdings Conflict";
+  private static final String PRE_POPULATED_PATRON_ID = "ifkkmbcnljgy5elaav74pnxgxa";
+  private static final String USER_BY_ID_URL_TEMPLATE = "/users/%s";
 
   @Autowired
   private InnReachTransactionRepository repository;
@@ -66,7 +72,10 @@ class OptimisticLockingTest extends BaseApiControllerTest {
   @Test
   void recover_from_ItemVersionConflict_when_itemShipped() throws Exception {
     var req = createItemShippedDTO();
-    
+    req.setPatronId(PRE_POPULATED_PATRON_ID);
+    var patronId = UUIDEncoder.decode(req.getPatronId());
+
+    stubGet(format(USER_BY_ID_URL_TEMPLATE, patronId), "users/user.json");
     stubGet(format("/inventory/items?query=barcode==%s", req.getItemBarcode()), "inventory/query-items-response.json");
 
     stubItemRecoverableScenario();
@@ -79,7 +88,10 @@ class OptimisticLockingTest extends BaseApiControllerTest {
   @Test
   void fail_from_ItemVersionConflict_when_itemShipped_if_RetriesExhausted() throws Exception {
     var req = createItemShippedDTO();
+    req.setPatronId(PRE_POPULATED_PATRON_ID);
+    var patronId = UUIDEncoder.decode(req.getPatronId());
 
+    stubGet(format(USER_BY_ID_URL_TEMPLATE, patronId), "users/user.json");
     stubGet(format("/inventory/items?query=barcode==%s", req.getItemBarcode()), "inventory/query-items-response.json");
 
     stubItemUnrecoverableScenarion();
@@ -92,6 +104,10 @@ class OptimisticLockingTest extends BaseApiControllerTest {
   @Test
   void recover_from_ItemVersionConflict_when_cancelingTransaction() throws Exception {
     var req = createCancelRequestDTO();
+    req.setPatronId(PRE_POPULATED_PATRON_ID);
+    var patronId = UUIDEncoder.decode(req.getPatronId());
+
+    stubGet(format(USER_BY_ID_URL_TEMPLATE, patronId), "users/user.json");
 
     stubGet(circRequestUrl(), "circulation/item-request-response.json");
     stubPut(circRequestUrl());
@@ -109,6 +125,10 @@ class OptimisticLockingTest extends BaseApiControllerTest {
   @Test
   void fail_from_ItemVersionConflict_when_cancelingTransaction_if_RetriesExhausted() throws Exception {
     var req = createCancelRequestDTO();
+    req.setPatronId(PRE_POPULATED_PATRON_ID);
+    var patronId = UUIDEncoder.decode(req.getPatronId());
+
+    stubGet(format(USER_BY_ID_URL_TEMPLATE, patronId), "users/user.json");
 
     stubGet(circRequestUrl(), "circulation/item-request-response.json");
     stubPut(circRequestUrl());
@@ -126,6 +146,10 @@ class OptimisticLockingTest extends BaseApiControllerTest {
   @Test
   void recover_from_HoldingsVersionConflict_when_cancelingTransaction() throws Exception {
     var req = createCancelRequestDTO();
+    req.setPatronId(PRE_POPULATED_PATRON_ID);
+    var patronId = UUIDEncoder.decode(req.getPatronId());
+
+    stubGet(format(USER_BY_ID_URL_TEMPLATE, patronId), "users/user.json");
 
     stubGet(circRequestUrl(), "circulation/item-request-response.json");
     stubPut(circRequestUrl());
@@ -143,6 +167,10 @@ class OptimisticLockingTest extends BaseApiControllerTest {
   @Test
   void fail_from_HoldingsVersionConflict_when_cancelingTransaction_if_RetriesExhausted() throws Exception {
     var req = createCancelRequestDTO();
+    req.setPatronId(PRE_POPULATED_PATRON_ID);
+    var patronId = UUIDEncoder.decode(req.getPatronId());
+
+    stubGet(format(USER_BY_ID_URL_TEMPLATE, patronId), "users/user.json");
 
     stubGet(circRequestUrl(), "circulation/item-request-response.json");
     stubPut(circRequestUrl());
@@ -160,6 +188,10 @@ class OptimisticLockingTest extends BaseApiControllerTest {
   @Test
   void recover_from_ItemAndHoldingsVersionConflict_when_cancelingTransaction() throws Exception {
     var req = createCancelRequestDTO();
+    req.setPatronId(PRE_POPULATED_PATRON_ID);
+    var patronId = UUIDEncoder.decode(req.getPatronId());
+
+    stubGet(format(USER_BY_ID_URL_TEMPLATE, patronId), "users/user.json");
 
     stubGet(circRequestUrl(), "circulation/item-request-response.json");
     stubPut(circRequestUrl());
@@ -281,5 +313,5 @@ class OptimisticLockingTest extends BaseApiControllerTest {
         .andExpect(emptyErrors())
         .andExpect(exceptionMatch(ResourceVersionConflictException.class));
   }
-  
+
 }

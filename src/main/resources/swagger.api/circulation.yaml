@@ -157,7 +157,7 @@ paths:
       parameters:
         - $ref: 'api-common.yaml#/components/parameters/id'
   /transactions/{id}/receive-item/{servicePointId}:
-    put:
+    post:
       operationId: checkInPatronHoldItem
       description: receive item for patron hold transaction
       tags:
@@ -177,7 +177,7 @@ paths:
         - $ref: 'api-common.yaml#/components/parameters/id'
         - $ref: 'circulation.yaml#/components/parameters/servicePointId'
   /transactions/{id}/receive-unshipped-item/{servicePointId}/{itemBarcode}:
-    put:
+    post:
       operationId: checkInPatronHoldUnshippedItem
       description: receive un-shipped/unannounced item for patron hold transaction
       tags:
@@ -197,6 +197,26 @@ paths:
         - $ref: 'api-common.yaml#/components/parameters/id'
         - $ref: 'circulation.yaml#/components/parameters/servicePointId'
         - $ref: 'circulation.yaml#/components/parameters/itemBarcode'
+  /transactions/{id}/patronhold/check-out-item/{servicePointId}:
+    post:
+      operationId: checkOutPatronHoldItem
+      description: Checks out to requesting patron
+      tags:
+        - inn-reach-transaction
+      responses:
+        '200':
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/transactionCheckOutResponseDTO"
+        '404':
+          $ref: "api-common.yaml#/components/responses/trait_response_404"
+        '500':
+          $ref: "api-common.yaml#/components/responses/trait_response_500"
+      parameters:
+        - $ref: 'api-common.yaml#/components/parameters/id'
+        - $ref: 'circulation.yaml#/components/parameters/servicePointId'
   /transactions/{itemBarcode}/check-out-item/{servicePointId}:
     put:
       operationId: checkOutItemHoldItem
@@ -209,7 +229,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/itemHoldCheckOutResponseDTO"
+                $ref: "#/components/schemas/transactionCheckOutResponseDTO"
         '404':
           $ref: "api-common.yaml#/components/responses/trait_response_404"
         '500':
@@ -744,8 +764,8 @@ components:
       $ref: schemas/circulationstorage/loanDTO.json
     patronHoldCheckInResponseDTO:
       $ref: schemas/patronHoldCheckInResponseDTO.json
-    itemHoldCheckOutResponseDTO:
-      $ref: schemas/itemHoldCheckOutResponseDTO.json
+    transactionCheckOutResponseDTO:
+      $ref: schemas/transactionCheckOutResponseDTO.json
     returnUncirculatedDTO:
       $ref: schemas/d2ir/returnUncirculatedDTO.json
     itemReceivedDTO:

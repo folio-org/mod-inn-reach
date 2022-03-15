@@ -418,6 +418,28 @@ paths:
       parameters:
         - $ref: "api-common.yaml#/components/parameters/centralServerId"
         - $ref: "#/components/parameters/libraryId"
+  /central-servers/{centralServerId}/libraries/locations/location-mappings/:
+    get:
+      description: Get a list of libraries locations to Inn-Reach location mappings for the given central server
+      operationId: getLocationMappingsForAllLibrariesByServerId
+      tags:
+        - location-mappings
+      responses:
+        '200':
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  allOf:
+                    - $ref: "#/components/schemas/locationMappingDTO"
+        '400':
+          $ref: "api-common.yaml#/components/responses/trait_response_malformed_query_400"
+        '500':
+          $ref: "api-common.yaml#/components/responses/trait_response_500"
+      parameters:
+        - $ref: "api-common.yaml#/components/parameters/centralServerId"
   /central-servers/{centralServerId}/contribution-criteria:
     get:
       description: Get Contribution Criteria by Central Server id
@@ -1015,6 +1037,8 @@ components:
       $ref: schemas/materialTypeMappingsDTO.json
     libraryMappingsDTO:
       $ref: schemas/libraryMappingsDTO.json
+    locationMappingDTO:
+      $ref: schemas/locationMappingDTO.json
     locationMappingsDTO:
       $ref: schemas/locationMappingsDTO.json
     authenticationRequest:

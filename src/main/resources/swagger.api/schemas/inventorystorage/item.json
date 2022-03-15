@@ -122,16 +122,6 @@
     "barcode": {
       "type": "string",
       "description": "Unique inventory control number for physical resources, used largely for circulation purposes"
-    },
-    "holdingStatisticalCodeIds": {
-      "type": "array",
-      "description": "List of statistical code of the holdings record the item is a member of",
-      "items": {
-        "type": "string",
-        "format": "UUID"
-      },
-      "uniqueItems": true,
-      "hidden": true
     }
   }
 }

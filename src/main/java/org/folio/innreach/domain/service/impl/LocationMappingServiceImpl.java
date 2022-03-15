@@ -13,6 +13,7 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import lombok.RequiredArgsConstructor;
+
 import org.springframework.data.domain.Example;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
@@ -23,6 +24,7 @@ import org.folio.innreach.domain.entity.InnReachLocation;
 import org.folio.innreach.domain.entity.LocationMapping;
 import org.folio.innreach.domain.service.CentralServerService;
 import org.folio.innreach.domain.service.LocationMappingService;
+import org.folio.innreach.dto.LocationMappingDTO;
 import org.folio.innreach.dto.LocationMappingsDTO;
 import org.folio.innreach.external.dto.InnReachLocationDTO;
 import org.folio.innreach.external.service.InnReachLocationExternalService;
@@ -44,12 +46,22 @@ public class LocationMappingServiceImpl implements LocationMappingService {
 
   @Override
   @Transactional(readOnly = true)
-  public LocationMappingsDTO getAllMappings(UUID centralServerId, UUID libraryId, int offset, int limit) {
+  public LocationMappingsDTO getMappingsByLibraryId(UUID centralServerId, UUID libraryId, int offset, int limit) {
     var example = mappingExampleWithServerIdAndLibraryId(centralServerId, libraryId);
 
     Page<LocationMapping> mappings = repository.findAll(example, new OffsetRequest(offset, limit, DEFAULT_SORT));
 
     return mapper.toDTOCollection(mappings);
+  }
+
+  @Override
+  @Transactional(readOnly = true)
+  public List<LocationMappingDTO> getAllMappings(UUID centralServerId) {
+    var example = mappingExampleWithServerId(centralServerId);
+
+    List<LocationMapping> mappings = repository.findAll(example);
+
+    return mapper.toDTOs(mappings);
   }
 
   @Override
@@ -94,6 +106,13 @@ public class LocationMappingServiceImpl implements LocationMappingService {
     var toFind = new LocationMapping();
     toFind.setCentralServer(centralServerRef(centralServerId));
     toFind.setLibraryId(libraryId);
+
+    return Example.of(toFind);
+  }
+
+  private static Example<LocationMapping> mappingExampleWithServerId(UUID centralServerId) {
+    var toFind = new LocationMapping();
+    toFind.setCentralServer(centralServerRef(centralServerId));
 
     return Example.of(toFind);
   }
