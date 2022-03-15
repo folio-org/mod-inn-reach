@@ -16,6 +16,8 @@ import static org.folio.innreach.domain.entity.CentralServer.GET_IDS_QUERY;
 import static org.folio.innreach.domain.entity.CentralServer.GET_IDS_QUERY_NAME;
 import static org.folio.innreach.domain.entity.CentralServer.GET_ID_BY_CENTRAL_CODE_QUERY;
 import static org.folio.innreach.domain.entity.CentralServer.GET_ID_BY_CENTRAL_CODE_QUERY_NAME;
+import static org.folio.innreach.domain.entity.CentralServer.VALIDATE_AGENCY_LIBRARIES_QUERY;
+import static org.folio.innreach.domain.entity.CentralServer.VALIDATE_AGENCY_LIBRARIES_QUERY_NAME;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,6 +32,7 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
+import javax.persistence.NamedNativeQuery;
 import javax.persistence.NamedQuery;
 import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
@@ -88,6 +91,10 @@ import org.folio.innreach.domain.entity.base.Identifiable;
   name = FETCH_RECALL_USER_BY_ID_QUERY_NAME,
   query = FETCH_RECALL_USER_BY_ID_QUERY
 )
+@NamedNativeQuery(
+  name = VALIDATE_AGENCY_LIBRARIES_QUERY_NAME,
+  query = VALIDATE_AGENCY_LIBRARIES_QUERY
+)
 public class CentralServer extends Auditable implements Identifiable<UUID> {
 
   private static final String FETCH_BY_ID_POSTFIX = " WHERE cs.id = :id";
@@ -125,7 +132,7 @@ public class CentralServer extends Auditable implements Identifiable<UUID> {
       "cs.centralServerCode, " +
       "cs.centralServerCredentials.centralServerKey, " +
       "cs.centralServerCredentials.centralServerSecret" +
-    ") FROM CentralServer AS cs ";
+      ") FROM CentralServer AS cs ";
 
   public static final String FETCH_CONNECTION_DETAILS_BY_ID_QUERY = FETCH_CONNECTION_DETAILS_QUERY + FETCH_BY_ID_POSTFIX;
   public static final String FETCH_CONNECTION_DETAILS_BY_CENTRAL_CODE_QUERY = FETCH_CONNECTION_DETAILS_QUERY + FETCH_BY_CENTRAL_CODE_POSTFIX;
@@ -133,6 +140,10 @@ public class CentralServer extends Auditable implements Identifiable<UUID> {
   public static final String FETCH_RECALL_USER_BY_ID_QUERY_NAME = "CentralServer.fetchRecallUser";
   public static final String FETCH_RECALL_USER_BY_ID_QUERY = "SELECT cs FROM CentralServer AS cs LEFT JOIN FETCH cs.innReachRecallUser " + FETCH_BY_ID_POSTFIX;
 
+  public static final String VALIDATE_AGENCY_LIBRARIES_QUERY_NAME = "CentralServer.validateAgencyLibraries";
+  public static final String VALIDATE_AGENCY_LIBRARIES_QUERY = "SELECT Cast(folio_library_id as varchar) folio_library_id FROM local_agency la, " +
+    "folio_library lib WHERE central_server_id = :id and lib.local_agency_id = la.id " +
+    "group by folio_library_id HAVING COUNT(*) > 1";
 
   @Id
   @GeneratedValue(strategy = GenerationType.AUTO)

@@ -1,5 +1,6 @@
 package org.folio.innreach.domain.service.impl;
 
+import static java.util.UUID.randomUUID;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -20,9 +21,11 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.mockito.Spy;
+import org.mockito.stubbing.Answer;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import org.folio.innreach.domain.entity.CentralServer;
 import org.folio.innreach.domain.exception.EntityNotFoundException;
 import org.folio.innreach.external.dto.AccessTokenDTO;
 import org.folio.innreach.external.service.InnReachAuthExternalService;
@@ -59,6 +62,11 @@ class CentralServerServiceImplTest {
   void createCentralServer_when_centralServerIsNew_and_connectionIsOK() {
     when(innReachAuthExternalService.getAccessToken(any())).thenReturn(
       new AccessTokenDTO("accessToken", "Bearer", 599));
+    when(centralServerRepository.save(any())).then((Answer<CentralServer>) setId -> {
+      var centralServer = (CentralServer) setId.getArgument(0);
+      centralServer.setId(randomUUID());
+      return centralServer;
+    });
 
     var centralServerDTO = createCentralServerDTO();
 

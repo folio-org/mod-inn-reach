@@ -11,6 +11,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.Assert;
 
 import org.folio.innreach.domain.dto.CentralServerConnectionDetailsDTO;
 import org.folio.innreach.domain.entity.CentralServer;
@@ -51,6 +52,9 @@ public class CentralServerServiceImpl implements CentralServerService {
     }
 
     var createdCentralServer = centralServerRepository.save(centralServer);
+
+    Assert.isTrue(centralServerRepository.validateAgencyLibraries(createdCentralServer.getId()).size() == 0,
+      "FOLIO library may only be associated with one agency per central server");
 
     return centralServerMapper.mapToCentralServerDTO(createdCentralServer);
   }
@@ -107,7 +111,7 @@ public class CentralServerServiceImpl implements CentralServerService {
     Page<UUID> ids = centralServerRepository.getIds(new OffsetRequest(offset, limit));
 
     var centralServerDTOS = mapItems(centralServerRepository.fetchAllById(ids.getContent()),
-        centralServerMapper::mapToCentralServerDTO);
+      centralServerMapper::mapToCentralServerDTO);
 
     return new CentralServersDTO()
       .centralServers(centralServerDTOS)
@@ -132,6 +136,9 @@ public class CentralServerServiceImpl implements CentralServerService {
     updateLocalAgencies(centralServer, updatedCentralServer);
 
     centralServerRepository.save(centralServer);
+
+    Assert.isTrue(centralServerRepository.validateAgencyLibraries(centralServer.getId()).size() == 0,
+      "FOLIO library may only be associated with one agency per central server");
 
     return centralServerMapper.mapToCentralServerDTO(centralServer);
   }
@@ -169,7 +176,7 @@ public class CentralServerServiceImpl implements CentralServerService {
   }
 
   private boolean existingCredentialsShouldBeUpdated(LocalServerCredentials localServerCredentials,
-      LocalServerCredentials updatedLocalServerCredentials) {
+                                                     LocalServerCredentials updatedLocalServerCredentials) {
     // LocalServerCredentials need to be re-hashed and re-salted only if they have been updated
     return !localServerCredentials.getLocalServerSecret().equals(updatedLocalServerCredentials.getLocalServerSecret());
   }
