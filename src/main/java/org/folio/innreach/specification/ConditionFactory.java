@@ -48,6 +48,7 @@ class ConditionFactory<T extends Comparable<? super T>> {
     return (exp, args) -> cb.lessThanOrEqualTo(exp, args.get(0));
   }
 
+  @SuppressWarnings("java:S1221")
   private Condition<T> equal() {
     return (exp, args) -> cb.equal(exp, args.get(0));
   }
