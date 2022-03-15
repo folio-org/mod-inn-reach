@@ -30,6 +30,8 @@ public interface InnReachTransactionFilterParametersMapper {
   @Mapping(target = "holdCreatedDateOperation", source = "dto.holdCreatedDateOp")
   @Mapping(target = "holdUpdatedDates", source = "dto.holdUpdatedDate")
   @Mapping(target = "holdUpdatedDateOperation", source = "dto.holdUpdatedDateOp")
+  @Mapping(target = "dueDates", source = "dto.dueDate")
+  @Mapping(target = "dueDateOperation", source = "dto.dueDateOp")
   InnReachTransactionFilterParameters toEntity(InnReachTransactionFilterParametersDTO dto);
 
   default InnReachTransactionFilterParameters.SortBy toEntityEnum(InnReachTransactionFilterParametersDTO.SortByEnum sort){

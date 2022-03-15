@@ -69,7 +69,7 @@ class InnReachTransactionDateFilterTest extends BaseControllerTest {
 
 
   @ParameterizedTest
-  @MethodSource("auditDateTestData")
+  @MethodSource("dateTestData")
   @Sql(scripts = "classpath:db/inn-reach-transaction/set-auditing-dates-for-inn-reach-transactions.sql")
   void returnTransactions_when_filteredByCreatedDate(List<OffsetDateTime> dates, FilterDateOperation operation,
       List<String> expectedTrxTrackingIds) {
@@ -105,7 +105,7 @@ class InnReachTransactionDateFilterTest extends BaseControllerTest {
   }
 
   @ParameterizedTest
-  @MethodSource("auditDateTestData")
+  @MethodSource("dateTestData")
   @Sql(scripts = "classpath:db/inn-reach-transaction/set-auditing-dates-for-inn-reach-transactions.sql")
   void returnTransactions_when_filteredByUpdatedDate(List<OffsetDateTime> dates, FilterDateOperation operation,
       List<String> expectedTrxTrackingIds) {
@@ -141,7 +141,7 @@ class InnReachTransactionDateFilterTest extends BaseControllerTest {
   }
 
   @ParameterizedTest
-  @MethodSource("auditDateTestData")
+  @MethodSource("dateTestData")
   @Sql(scripts = "classpath:db/inn-reach-transaction/set-auditing-dates-for-hold-transactions.sql")
   void returnTransactions_when_filteredByHoldCreatedDate(List<OffsetDateTime> dates, FilterDateOperation operation,
       List<String> expectedTrxTrackingIds) {
@@ -178,7 +178,7 @@ class InnReachTransactionDateFilterTest extends BaseControllerTest {
   }
 
   @ParameterizedTest
-  @MethodSource("auditDateTestData")
+  @MethodSource("dateTestData")
   @Sql(scripts = "classpath:db/inn-reach-transaction/set-auditing-dates-for-hold-transactions.sql")
   void returnTransactions_when_filteredByHoldUpdatedDate(List<OffsetDateTime> dates, FilterDateOperation operation,
       List<String> expectedTrxTrackingIds) {
@@ -214,7 +214,44 @@ class InnReachTransactionDateFilterTest extends BaseControllerTest {
     assertEquals(PRE_POPULATED_TRACKING_ID1, transactions.get(0).getTrackingId());
   }
 
-  static Stream<Arguments> auditDateTestData() {
+  @ParameterizedTest
+  @MethodSource("dateTestData")
+  @Sql(scripts = "classpath:db/inn-reach-transaction/set-due-dates-for-hold-transactions.sql")
+  void returnTransactions_when_filteredByDueDate(List<OffsetDateTime> dates, FilterDateOperation operation,
+      List<String> expectedTrxTrackingIds) {
+    var responseEntity = testRestTemplate.getForEntity(
+        constructUri("dueDate", dates, operation),
+        InnReachTransactionsDTO.class);
+
+    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+    assertNotNull(responseEntity.getBody());
+    assertEquals(expectedTrxTrackingIds.size(), responseEntity.getBody().getTotalRecords());
+
+    var transactions = responseEntity.getBody().getTransactions();
+    assertEquals(expectedTrxTrackingIds.size(), transactions.size());
+
+    var trackingIds = mapItems(transactions, InnReachTransactionDTO::getTrackingId);
+    assertThat(trackingIds, containsInAnyOrder(expectedTrxTrackingIds.toArray()));
+  }
+
+  @Test
+  @Sql(scripts = "classpath:db/inn-reach-transaction/set-due-dates-for-hold-transactions.sql")
+  void returnTransaction_when_filteredByDueDate_and_otherField() {
+    var responseEntity = testRestTemplate.getForEntity(
+        constructUri("dueDate", List.of(TARGET_DATE), equal) + "&patronAgencyCode=qwe12",
+        InnReachTransactionsDTO.class);
+
+    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+    assertNotNull(responseEntity.getBody());
+    assertEquals(1, responseEntity.getBody().getTotalRecords());
+
+    var transactions = responseEntity.getBody().getTransactions();
+    assertEquals(1, transactions.size());
+
+    assertEquals(PRE_POPULATED_TRACKING_ID1, transactions.get(0).getTrackingId());
+  }
+
+  static Stream<Arguments> dateTestData() {
     return Stream.of(
         arguments(List.of(TARGET_DATE), less, List.of(PRE_POPULATED_TRACKING_ID2)),
         arguments(List.of(TARGET_DATE), lessOrEqual, List.of(PRE_POPULATED_TRACKING_ID1, PRE_POPULATED_TRACKING_ID2)),

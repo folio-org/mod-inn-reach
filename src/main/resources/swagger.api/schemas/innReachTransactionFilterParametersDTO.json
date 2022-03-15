@@ -118,6 +118,20 @@
       "type": "string",
       "$ref" : "filterDateOperation.json"
     },
+    "dueDate": {
+      "description": "Due date of hold entity to which related comparison operation is applied. In case of 'between' operation there can be two values provided",
+      "type": "array",
+      "maxItems": 2,
+      "items": {
+        "type": "string",
+        "format": "date-time"
+      }
+    },
+    "dueDateOp": {
+      "description": "Comparison operation applied to due date of hold entity",
+      "type": "string",
+      "$ref" : "filterDateOperation.json"
+    },
     "sortBy": {
       "description": "Sorting parameter",
       "type": "string",
