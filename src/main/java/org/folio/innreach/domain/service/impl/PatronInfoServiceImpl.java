@@ -17,6 +17,8 @@ import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.collections4.CollectionUtils;
+import org.folio.innreach.domain.entity.TransactionHold;
+import org.folio.innreach.domain.service.UserService;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 
@@ -44,7 +46,7 @@ public class PatronInfoServiceImpl implements PatronInfoService {
 
   public static final String ERROR_REASON = "Unable to verify patron";
 
-  private final UserServiceImpl userService;
+  private final UserService userService;
   private final PatronTypeMappingService patronTypeMappingService;
   private final CentralServerService centralServerService;
   private final InnReachTransactionService transactionService;
@@ -73,6 +75,16 @@ public class PatronInfoServiceImpl implements PatronInfoService {
       response = PatronInfoResponse.error(ERROR_REASON, ofMessage(centralServerCode, e.getMessage()));
     }
     return mapper.toDto(response);
+  }
+
+  @Override
+  public void populateTransactionPatronInfo(TransactionHold hold, String centralCode) {
+    var user = getUser(hold);
+    hold.setPatronName(getPatronName(user));
+    var centralServer = centralServerService.getCentralServerByCentralCode(centralCode);
+    var centralServerId = centralServer.getId();
+    var centralPatronType = getCentralPatronType(centralServerId, user);
+    hold.setCentralPatronType(centralPatronType);
   }
 
   private PatronInfo getPatronInfo(UUID centralServerId, List<LocalAgencyDTO> agencies, User user) {
@@ -143,6 +155,12 @@ public class PatronInfoServiceImpl implements PatronInfoService {
     return patronTypeMappingService.getCentralPatronType(centralServerId, user.getPatronGroupId())
       .orElseThrow(() -> new IllegalStateException(
         "centralPatronType is not resolved for patron with public id: " + user.getBarcode()));
+  }
+
+  private User getUser(TransactionHold hold) {
+    var patronId = UUIDEncoder.decode(hold.getPatronId());
+    return userService.getUserById(patronId)
+      .orElseThrow(() -> new IllegalArgumentException("Patron is not found by id for creation patron hold transaction: " + patronId));
   }
 
   private String getPatronAgencyCode(UUID centralServerId, List<LocalAgencyDTO> agencies, User user) {

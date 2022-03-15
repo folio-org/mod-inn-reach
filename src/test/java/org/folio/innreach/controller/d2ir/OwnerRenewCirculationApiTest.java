@@ -27,8 +27,10 @@ import static org.folio.innreach.fixture.TestUtil.randomAlphanumeric5;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
+import java.util.UUID;
 import java.util.stream.Stream;
 
+import org.folio.innreach.util.UUIDEncoder;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -59,18 +61,30 @@ class OwnerRenewCirculationApiTest extends BaseApiControllerTest {
   private static final String PRE_POPULATED_CENTRAL_CODE = "d2ir";
 
   private static final String RENEWREQ_URL = "/inn-reach/d2ir/circ/ownerrenew/{trackingId}/{centralCode}";
+  private static final String USER_BY_ID_URL_TEMPLATE = "/users/%s";
   private static final int REQ_DUE_DATE_TIME_AFTER = (int) Instant.parse("2021-12-31T00:00:00Z").getEpochSecond();
   private static final int REQ_DUE_DATE_TIME_BEFORE = (int) Instant.parse("2021-12-01T00:00:00Z").getEpochSecond();
   private static final String LOAN_ID = "19bb9798-d396-4b37-8fd6-5df0885e020e";
+  private static final String PRE_POPULATED_PATRON_ID = "ifkkmbcnljgy5elaav74pnxgxa";
+  private static final UUID PRE_POPULATE_PATRON_GROUP_ID = UUID.fromString("8534295a-e031-4738-a952-f7db900df8c0");
 
   @Autowired
   private InnReachTransactionRepository repository;
 
-
   @Test
+  @Sql(
+    scripts = {
+      "classpath:db/agency-loc-mapping/pre-populate-agency-location-mapping.sql",
+      "classpath:db/item-type-mapping/pre-populate-item-type-mapping.sql",
+      "classpath:db/patron-type-mapping/pre-populate-patron-type-mapping-circulation.sql"
+    })
   void renewLoan_when_RequestDueDateIsAfterLoanDate() throws Exception {
     var req = createRenewLoanDTO();
     req.setDueDateTime(REQ_DUE_DATE_TIME_AFTER);
+    req.setPatronId(PRE_POPULATED_PATRON_ID);
+    var patronId = UUIDEncoder.decode(req.getPatronId());
+
+    stubGet(format(USER_BY_ID_URL_TEMPLATE, patronId), "users/user.json");
 
     stubPost("/circulation/renew-by-id", "circulation/renew-loan-response.json");
 
@@ -83,9 +97,19 @@ class OwnerRenewCirculationApiTest extends BaseApiControllerTest {
   }
 
   @Test
+  @Sql(
+    scripts = {
+      "classpath:db/agency-loc-mapping/pre-populate-agency-location-mapping.sql",
+      "classpath:db/item-type-mapping/pre-populate-item-type-mapping.sql",
+      "classpath:db/patron-type-mapping/pre-populate-patron-type-mapping-circulation.sql"
+    })
   void renewLoan_when_RequestDueDateIsBeforeLoanDate() throws Exception {
     var req = createRenewLoanDTO();
     req.setDueDateTime(REQ_DUE_DATE_TIME_BEFORE);
+    req.setPatronId(PRE_POPULATED_PATRON_ID);
+    var patronId = UUIDEncoder.decode(req.getPatronId());
+
+    stubGet(format(USER_BY_ID_URL_TEMPLATE, patronId), "users/user.json");
 
     stubPost("/circulation/renew-by-id", "circulation/renew-loan-response.json");
     stubPut(loanUrl());
@@ -106,8 +130,18 @@ class OwnerRenewCirculationApiTest extends BaseApiControllerTest {
 
   @ParameterizedTest
   @MethodSource("transactionNotFoundArgProvider")
+  @Sql(
+    scripts = {
+      "classpath:db/agency-loc-mapping/pre-populate-agency-location-mapping.sql",
+      "classpath:db/item-type-mapping/pre-populate-item-type-mapping.sql",
+      "classpath:db/patron-type-mapping/pre-populate-patron-type-mapping-circulation.sql"
+    })
   void return400_when_TransactionNotFound(String trackingId, String centralCode, RenewLoanDTO req)
       throws Exception {
+    req.setPatronId(PRE_POPULATED_PATRON_ID);
+    var patronId = UUIDEncoder.decode(req.getPatronId());
+
+    stubGet(format(USER_BY_ID_URL_TEMPLATE, patronId), "users/user.json");
     putReq(ownerRenewUri(trackingId, centralCode), req)
         .andDo(logResponse())
         .andExpect(status().isBadRequest())
