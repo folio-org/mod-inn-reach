@@ -72,14 +72,14 @@ class ContributionServiceImplTest {
   @Test
   void startInitialContributionProcess() {
     when(repository.save(any(Contribution.class))).thenReturn(createContribution());
-    when(storageClient.startInitialContribution(any())).thenReturn(createJobResponse());
+    when(storageClient.startInstanceIteration(any())).thenReturn(createJobResponse());
     when(validationService.getItemTypeMappingStatus(any())).thenReturn(VALID);
     when(validationService.getLocationMappingStatus(any())).thenReturn(VALID);
     when(beanFactory.getBean(ContributionJobRunner.class)).thenReturn(jobRunner);
 
     service.startInitialContribution(UUID.randomUUID());
 
-    verify(storageClient).startInitialContribution(any());
+    verify(storageClient).startInstanceIteration(any());
     verify(repository).save(any(Contribution.class));
     verify(jobRunner).runInitialContributionAsync(any(), any(), any(), any());
   }

@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TEST_METHOD;
 import static org.springframework.test.context.jdbc.SqlMergeMode.MergeMode.MERGE;
@@ -26,6 +27,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlMergeMode;
@@ -58,9 +60,11 @@ import org.folio.spring.data.OffsetRequest;
 class ContributionControllerTest extends BaseControllerTest {
 
   private static final UUID PRE_POPULATED_CENTRAL_SERVER_ID = UUID.fromString("edab6baf-c696-42b1-89bb-1bbb8759b0d2");
+  private static final UUID PRE_POPULATED_CONTRIBUTION_ID = UUID.fromString("ae274737-c398-4cf6-8dd3-d228e5b1f608");
+  private static final UUID PRE_POPULATED_ITERATION_JOB_ID = UUID.fromString("a193f510-b178-4ce6-ab70-d8e09f646a2d");
 
   @MockBean
-  private InstanceStorageClient client;
+  private InstanceStorageClient instanceStorageClient;
 
   @Autowired
   private TestRestTemplate testRestTemplate;
@@ -257,7 +261,7 @@ class ContributionControllerTest extends BaseControllerTest {
   })
   void return201HttpCode_whenInstanceIterationStarted() {
     var jobResponse = createJobResponse();
-    when(client.startInitialContribution(any(InstanceIterationRequest.class))).thenReturn(jobResponse);
+    when(instanceStorageClient.startInstanceIteration(any(InstanceIterationRequest.class))).thenReturn(jobResponse);
 
     when(materialTypesClient.getMaterialTypes(anyString(), anyInt())).thenReturn(createMaterialTypes());
     when(irLocationService.getAllLocations(any())).thenReturn(createIrLocations());
@@ -277,13 +281,33 @@ class ContributionControllerTest extends BaseControllerTest {
   @Test
   @Sql(scripts = {
     "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/contribution/pre-populate-contribution.sql"
+  })
+  void return204HttpCode_whenInstanceIterationCanceled() {
+    var responseEntity = testRestTemplate.exchange(
+      "/inn-reach/central-servers/{centralServerId}/contributions/current", HttpMethod.DELETE, HttpEntity.EMPTY, Void.class,
+      PRE_POPULATED_CENTRAL_SERVER_ID);
+
+    assertEquals(HttpStatus.NO_CONTENT, responseEntity.getStatusCode());
+
+    verify(instanceStorageClient).cancelInstanceIteration(PRE_POPULATED_ITERATION_JOB_ID);
+    verify(jobRunner).cancelInitialContribution(PRE_POPULATED_CENTRAL_SERVER_ID);
+
+    var updatedContribution = repository.findById(PRE_POPULATED_CONTRIBUTION_ID).get();
+    assertNotNull(updatedContribution);
+    assertEquals(Contribution.Status.CANCELLED, updatedContribution.getStatus());
+  }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/contribution/pre-populate-contribution.sql",
     "classpath:db/mtype-mapping/pre-populate-material-type-mapping.sql",
     "classpath:db/inn-reach-location/pre-populate-inn-reach-location-code.sql",
     "classpath:db/lib-mapping/pre-populate-another-library-mapping.sql",
   })
   void return409HttpCode_whenStartingInstanceIterationForNonExistingCentralServer() {
-    when(client.startInitialContribution(any(InstanceIterationRequest.class))).thenReturn(createIterationJobResponse());
+    when(instanceStorageClient.startInstanceIteration(any(InstanceIterationRequest.class))).thenReturn(createIterationJobResponse());
     when(materialTypesClient.getMaterialTypes(anyString(), anyInt())).thenReturn(createMaterialTypes());
     when(irLocationService.getAllLocations(any())).thenReturn(createIrLocations());
 
@@ -295,7 +319,7 @@ class ContributionControllerTest extends BaseControllerTest {
   }
 
   @Test
-  void shouldDeserializeJsonJobResponse(){
+  void shouldDeserializeJsonJobResponse() {
     var jobResponse = deserializeFromJsonFile("/contribution/job-response.json", JobResponse.class);
 
     assertEquals("813de9bd-d1ad-4687-9fd7-3239385e5fe5", jobResponse.getId().toString());

@@ -5,9 +5,12 @@ import static java.lang.Math.max;
 import static org.folio.innreach.batch.contribution.ContributionJobContextManager.beginContributionJobContext;
 import static org.folio.innreach.batch.contribution.ContributionJobContextManager.endContributionJobContext;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.concurrent.Future;
 import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
@@ -18,6 +21,7 @@ import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.retry.support.RetryTemplate;
 import org.springframework.scheduling.annotation.Async;
+import org.springframework.scheduling.annotation.AsyncResult;
 import org.springframework.stereotype.Service;
 
 import org.folio.innreach.batch.KafkaItemReader;
@@ -58,8 +62,10 @@ public class ContributionJobRunner {
   private final RetryTemplate retryTemplate;
   private final IterationEventReaderFactory itemReaderFactory;
 
+  private static final List<UUID> runningInitialContributions = Collections.synchronizedList(new ArrayList<>());
+
   @Async
-  public void runInitialContributionAsync(UUID centralServerId, String tenantId, UUID contributionId, UUID iterationJobId) {
+  public Future<Void> runInitialContributionAsync(UUID centralServerId, String tenantId, UUID contributionId, UUID iterationJobId) {
     var context = ContributionJobContext.builder()
       .contributionId(contributionId)
       .iterationJobId(iterationJobId)
@@ -68,16 +74,19 @@ public class ContributionJobRunner {
       .build();
 
     runInitialContribution(context);
+
+    return new AsyncResult<>(null);
   }
 
   public void runInitialContribution(ContributionJobContext context) {
     log.info("Starting initial contribution job {}", context);
 
+    var contributionId = context.getContributionId();
     try (var kafkaReader = itemReaderFactory.createReader(context.getTenantId())) {
       kafkaReader.open();
 
       run(context, (centralServerId, stats) -> {
-        while (true) {
+        while (!isCanceled(contributionId)) {
           var event = readEvent(kafkaReader);
           if (event == null) {
             return;
@@ -250,6 +259,12 @@ public class ContributionJobRunner {
   public void cancelJobs() {
     log.info("Cancelling unfinished contributions...");
     contributionService.cancelAll();
+    runningInitialContributions.clear();
+  }
+
+  public void cancelInitialContribution(UUID contributionId) {
+    log.info("Cancelling initial contribution job {}", contributionId);
+    runningInitialContributions.remove(contributionId);
   }
 
   private boolean isEligibleForContribution(UUID centralServerId, Instance instance) {
@@ -364,14 +379,16 @@ public class ContributionJobRunner {
   private void run(ContributionJobContext context, BiConsumer<UUID, Statistics> processor) {
     var stats = new Statistics();
     var centralServerId = context.getCentralServerId();
+    var contributionId = context.getContributionId();
     try {
+      runningInitialContributions.add(contributionId);
       beginContributionJobContext(context);
-
       processor.accept(centralServerId, stats);
     } catch (Exception e) {
       log.warn("Failed to run contribution job for central server {}", centralServerId, e);
       throw e;
     } finally {
+      runningInitialContributions.remove(contributionId);
       completeContribution(context);
       endContributionJobContext();
     }
@@ -388,6 +405,10 @@ public class ContributionJobRunner {
     } catch (Exception e) {
       log.warn("Failed to complete contribution job {}", context, e);
     }
+  }
+
+  private boolean isCanceled(UUID contributionId) {
+    return !runningInitialContributions.contains(contributionId);
   }
 
   private void updateStats(Statistics stats) {

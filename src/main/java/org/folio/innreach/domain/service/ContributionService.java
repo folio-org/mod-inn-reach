@@ -22,6 +22,8 @@ public interface ContributionService {
 
   void cancelAll();
 
+  void cancelCurrent(UUID centralServerId);
+
   void logContributionError(UUID contributionId, ContributionErrorDTO error);
 
 }

@@ -8,6 +8,7 @@ import static org.folio.innreach.domain.entity.Contribution.Status.COMPLETE;
 import static org.folio.innreach.domain.service.impl.ServiceUtils.centralServerRef;
 import static org.folio.innreach.dto.MappingValidationStatusDTO.VALID;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -44,7 +45,7 @@ public class ContributionServiceImpl implements ContributionService {
   private final ContributionMapper mapper;
   private final ContributionValidationService validationService;
   private final FolioExecutionContext folioContext;
-  private final InstanceStorageClient client;
+  private final InstanceStorageClient instanceStorageClient;
   private final BeanFactory beanFactory;
 
   private ContributionJobRunner jobRunner;
@@ -87,7 +88,6 @@ public class ContributionServiceImpl implements ContributionService {
   @Override
   public void updateContributionStats(UUID contributionId, ContributionDTO contribution) {
     var entity = fetchById(contributionId);
-
 
     Long total = defaultIfNull(contribution.getRecordsTotal(), entity.getRecordsTotal());
     Long processed = defaultIfNull(contribution.getRecordsProcessed(), entity.getRecordsProcessed());
@@ -148,6 +148,19 @@ public class ContributionServiceImpl implements ContributionService {
     errorRepository.save(error);
   }
 
+  @Transactional
+  @Override
+  public void cancelCurrent(UUID centralServerId) {
+    repository.fetchCurrentByCentralServerId(centralServerId).ifPresent(contribution -> {
+      log.info("Cancelling initial contribution for central server {}", centralServerId);
+
+      cancelInstanceIteration(contribution);
+
+      getJobRunner().cancelInitialContribution(contribution.getId());
+
+      contribution.setStatus(CANCELLED);
+    });
+  }
 
   private void runInitialContributionJob(UUID centralServerId, Contribution contribution) {
     getJobRunner().runInitialContributionAsync(centralServerId, folioContext.getTenantId(), contribution.getId(), contribution.getJobId());
@@ -173,10 +186,19 @@ public class ContributionServiceImpl implements ContributionService {
   private JobResponse triggerInstanceIteration() {
     var request = createInstanceIterationRequest();
 
-    var iterationJob = client.startInitialContribution(request);
+    var iterationJob = instanceStorageClient.startInstanceIteration(request);
     Assert.isTrue(iterationJob.getStatus() == IN_PROGRESS, "Unexpected iteration job status received: " + iterationJob.getStatus());
 
     return iterationJob;
+  }
+
+  private void cancelInstanceIteration(Contribution contribution) {
+    var iterationJobId = contribution.getJobId();
+    try {
+      instanceStorageClient.cancelInstanceIteration(iterationJobId);
+    } catch (Exception e) {
+      log.warn("Unable to cancel instance iteration job {}", iterationJobId, e);
+    }
   }
 
   private void validateContribution(UUID centralServerId) {
