@@ -291,7 +291,7 @@ class ContributionControllerTest extends BaseControllerTest {
     assertEquals(HttpStatus.NO_CONTENT, responseEntity.getStatusCode());
 
     verify(instanceStorageClient).cancelInstanceIteration(PRE_POPULATED_ITERATION_JOB_ID);
-    verify(jobRunner).cancelInitialContribution(PRE_POPULATED_CENTRAL_SERVER_ID);
+    verify(jobRunner).cancelInitialContribution(PRE_POPULATED_CONTRIBUTION_ID);
 
     var updatedContribution = repository.findById(PRE_POPULATED_CONTRIBUTION_ID).get();
     assertNotNull(updatedContribution);
