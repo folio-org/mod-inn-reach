@@ -1,5 +1,5 @@
 ALTER TABLE transaction_hold
-  ADD COLUMN central_patron_type SMALLINT NOT NULL CHECK(central_patron_type BETWEEN 0 AND 255),
+  ADD COLUMN central_patron_type SMALLINT DEFAULT 0 NOT NULL CHECK(central_patron_type BETWEEN 0 AND 255),
   ADD COLUMN patron_name VARCHAR(255);
 
 UPDATE transaction_hold SET central_patron_type = item_hold.central_patron_type, patron_name = item_hold.patron_name
