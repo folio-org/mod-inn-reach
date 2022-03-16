@@ -4,6 +4,9 @@ import static org.apache.commons.collections4.CollectionUtils.isEmpty;
 
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionType.PATRON;
 import static org.folio.innreach.domain.entity.InnReachTransactionFilterParameters.SortOrder.DESC;
+import static org.folio.innreach.util.ListUtils.mapItems;
+
+import java.time.OffsetDateTime;
 
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.Expression;
@@ -25,6 +28,9 @@ import org.folio.innreach.domain.entity.TransactionPatronHold;
 
 @Component
 public class InnReachTransactionSpecification {
+
+  private static final String CREATED_DATE_FIELD = "createdDate";
+  private static final String UPDATED_DATE_FIELD = "updatedDate";
 
   public Specification<InnReachTransaction> filterByParameters(InnReachTransactionFilterParameters parameters) {
     return fetchHoldAndPickupLocation()
@@ -48,7 +54,23 @@ public class InnReachTransactionSpecification {
       var centralItemTypeIn = centralItemTypeIn(cb, hold, parameters);
       var itemBarcodeIn = itemBarcodeIn(cb, transaction, hold, patronHold, parameters);
 
-      return cb.and(typeIs, stateIs, centralCodeIn, patronAgencyIn, itemAgencyIn, patronTypeIn, centralItemTypeIn, itemBarcodeIn, patronNameIn);
+      var odtConditionFactory = new ConditionFactory<OffsetDateTime>(cb);
+
+      var createdDateIs = odtConditionFactory.create(parameters.getCreatedDateOperation())
+          .applyArguments(transaction.get(CREATED_DATE_FIELD), parameters.getCreatedDates());
+      var updatedDateIs = odtConditionFactory.create(parameters.getUpdatedDateOperation())
+          .applyArguments(transaction.get(UPDATED_DATE_FIELD), parameters.getUpdatedDates());
+      var holdCreatedDateIs = odtConditionFactory.create(parameters.getHoldCreatedDateOperation())
+          .applyArguments(hold.get(CREATED_DATE_FIELD), parameters.getHoldCreatedDates());
+      var holdUpdatedDateIs = odtConditionFactory.create(parameters.getHoldUpdatedDateOperation())
+          .applyArguments(hold.get(UPDATED_DATE_FIELD), parameters.getHoldUpdatedDates());
+
+      var dueDatesAsEpochSecs = mapItems(parameters.getDueDates(), odt -> (int) odt.toEpochSecond());
+      var dueDateIs = new ConditionFactory<Integer>(cb).create(parameters.getDueDateOperation())
+          .applyArguments(hold.get("dueDateTime"), dueDatesAsEpochSecs);
+
+      return cb.and(typeIs, stateIs, centralCodeIn, patronAgencyIn, itemAgencyIn, patronTypeIn, centralItemTypeIn,
+          itemBarcodeIn, patronNameIn, createdDateIs, updatedDateIs, holdCreatedDateIs, holdUpdatedDateIs, dueDateIs);
     };
   }
 
@@ -87,27 +109,32 @@ public class InnReachTransactionSpecification {
     };
   }
 
-  static Predicate isOfType(CriteriaBuilder cb, Root<InnReachTransaction> transaction, InnReachTransactionFilterParameters parameters) {
+  static Predicate isOfType(CriteriaBuilder cb, Root<InnReachTransaction> transaction,
+      InnReachTransactionFilterParameters parameters) {
     var types = parameters.getTypes();
     return isEmpty(types) ? cb.conjunction() : transaction.get("type").in(types);
   }
 
-  static Predicate isOfState(CriteriaBuilder cb, Root<InnReachTransaction> transaction, InnReachTransactionFilterParameters parameters) {
+  static Predicate isOfState(CriteriaBuilder cb, Root<InnReachTransaction> transaction,
+      InnReachTransactionFilterParameters parameters) {
     var states = parameters.getStates();
     return isEmpty(states) ? cb.conjunction() : transaction.get("state").in(states);
   }
 
-  static Predicate centralCodeIn(CriteriaBuilder cb, Root<InnReachTransaction> transaction, InnReachTransactionFilterParameters parameters) {
+  static Predicate centralCodeIn(CriteriaBuilder cb, Root<InnReachTransaction> transaction,
+      InnReachTransactionFilterParameters parameters) {
     var centralCodes = parameters.getCentralServerCodes();
     return isEmpty(centralCodes) ? cb.conjunction() : transaction.get("centralServerCode").in(centralCodes);
   }
 
-  static Predicate patronAgencyIn(CriteriaBuilder cb, Join<Object, Object> hold, InnReachTransactionFilterParameters parameters) {
+  static Predicate patronAgencyIn(CriteriaBuilder cb, Join<Object, Object> hold,
+      InnReachTransactionFilterParameters parameters) {
     var patronAgencies = parameters.getPatronAgencyCodes();
     return isEmpty(patronAgencies) ? cb.conjunction() : hold.get("patronAgencyCode").in(patronAgencies);
   }
 
-  static Predicate itemAgencyIn(CriteriaBuilder cb, Join<Object, Object> hold, InnReachTransactionFilterParameters parameters) {
+  static Predicate itemAgencyIn(CriteriaBuilder cb, Join<Object, Object> hold,
+      InnReachTransactionFilterParameters parameters) {
     var itemAgencies = parameters.getItemAgencyCodes();
     return isEmpty(itemAgencies) ? cb.conjunction() : hold.get("itemAgencyCode").in(itemAgencies);
   }
@@ -150,7 +177,8 @@ public class InnReachTransactionSpecification {
     return cb.or(shippedItemBarcodePredicate, folioItemBarcodePredicate);
   }
 
-  static Predicate centralItemTypeIn(CriteriaBuilder cb, Join<Object, Object> hold, InnReachTransactionFilterParameters parameters) {
+  static Predicate centralItemTypeIn(CriteriaBuilder cb, Join<Object, Object> hold,
+      InnReachTransactionFilterParameters parameters) {
     var centralItemTypes = parameters.getCentralItemTypes();
     return isEmpty(centralItemTypes) ? cb.conjunction() : hold.get("centralItemType").in(centralItemTypes);
   }
@@ -179,4 +207,5 @@ public class InnReachTransactionSpecification {
     }
     return expression;
   }
+
 }
