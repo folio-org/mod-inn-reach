@@ -1,6 +1,5 @@
 package org.folio.innreach.controller.d2ir;
 
-import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionType.PATRON;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -32,10 +31,12 @@ import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionSt
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.RECEIVE_UNANNOUNCED;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.RETURN_UNCIRCULATED;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.TRANSFER;
+import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionType.PATRON;
 import static org.folio.innreach.fixture.CirculationFixture.createClaimsItemReturnedDTO;
 import static org.folio.innreach.fixture.CirculationFixture.createItemShippedDTO;
 import static org.folio.innreach.fixture.CirculationFixture.createRecallDTO;
 import static org.folio.innreach.fixture.CirculationFixture.createTransactionHoldDTO;
+import static org.folio.innreach.fixture.RequestFixture.createRequestDTO;
 import static org.folio.innreach.fixture.ServicePointUserFixture.createServicePointUserDTO;
 import static org.folio.innreach.fixture.TestUtil.circHeaders;
 
@@ -45,26 +46,6 @@ import java.util.Date;
 import java.util.Optional;
 import java.util.UUID;
 
-import org.folio.innreach.client.HridSettingsClient;
-import org.folio.innreach.domain.dto.folio.User;
-import org.folio.innreach.domain.dto.folio.inventory.InventoryInstanceDTO;
-import org.folio.innreach.domain.entity.CentralServer;
-import org.folio.innreach.domain.entity.InnReachRecallUser;
-import org.folio.innreach.domain.entity.TransactionPatronHold;
-import org.folio.innreach.domain.entity.TransactionPickupLocation;
-import org.folio.innreach.domain.service.AgencyMappingService;
-import org.folio.innreach.domain.service.CentralServerService;
-import org.folio.innreach.domain.service.InstanceService;
-import org.folio.innreach.domain.service.InventoryService;
-import org.folio.innreach.domain.service.ItemTypeMappingService;
-import org.folio.innreach.domain.service.PatronInfoService;
-import org.folio.innreach.domain.service.PatronTypeMappingService;
-import org.folio.innreach.domain.service.UserService;
-import org.folio.innreach.dto.CentralServerDTO;
-import org.folio.innreach.dto.ItemTypeMappingDTO;
-import org.folio.innreach.mapper.InnReachTransactionHoldMapper;
-import org.folio.innreach.repository.CentralServerRepository;
-import org.folio.innreach.util.UUIDEncoder;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
@@ -82,21 +63,41 @@ import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlMergeMode;
 
 import org.folio.innreach.client.CirculationClient;
+import org.folio.innreach.client.HridSettingsClient;
 import org.folio.innreach.client.ServicePointsUsersClient;
 import org.folio.innreach.controller.base.BaseControllerTest;
 import org.folio.innreach.domain.dto.folio.ResultList;
+import org.folio.innreach.domain.dto.folio.User;
 import org.folio.innreach.domain.dto.folio.circulation.RequestDTO;
+import org.folio.innreach.domain.dto.folio.inventory.InventoryInstanceDTO;
 import org.folio.innreach.domain.dto.folio.inventory.InventoryItemDTO;
+import org.folio.innreach.domain.entity.CentralServer;
+import org.folio.innreach.domain.entity.InnReachRecallUser;
 import org.folio.innreach.domain.entity.InnReachTransaction;
+import org.folio.innreach.domain.entity.TransactionPatronHold;
+import org.folio.innreach.domain.entity.TransactionPickupLocation;
+import org.folio.innreach.domain.service.AgencyMappingService;
+import org.folio.innreach.domain.service.CentralServerService;
+import org.folio.innreach.domain.service.InstanceService;
+import org.folio.innreach.domain.service.InventoryService;
 import org.folio.innreach.domain.service.ItemService;
+import org.folio.innreach.domain.service.ItemTypeMappingService;
+import org.folio.innreach.domain.service.PatronInfoService;
+import org.folio.innreach.domain.service.PatronTypeMappingService;
 import org.folio.innreach.domain.service.RequestService;
+import org.folio.innreach.domain.service.UserService;
+import org.folio.innreach.dto.CentralServerDTO;
 import org.folio.innreach.dto.CheckOutRequestDTO;
 import org.folio.innreach.dto.InnReachResponseDTO;
+import org.folio.innreach.dto.ItemTypeMappingDTO;
 import org.folio.innreach.dto.LoanDTO;
 import org.folio.innreach.dto.RenewLoanDTO;
 import org.folio.innreach.external.dto.InnReachResponse;
 import org.folio.innreach.external.service.InnReachExternalService;
+import org.folio.innreach.mapper.InnReachTransactionHoldMapper;
+import org.folio.innreach.repository.CentralServerRepository;
 import org.folio.innreach.repository.InnReachTransactionRepository;
+import org.folio.innreach.util.UUIDEncoder;
 
 @Sql(
   scripts = {
@@ -141,7 +142,7 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
   private static final UUID PRE_POPULATED_CENTRAL_SERVER_ID = UUID.fromString("0f4fa711-2d6e-457b-a0db-3898d6a23a5f");
   private static final UUID PRE_POPULATED_LOCATION_ID = UUID.fromString("ebfc7bad-b46d-4b30-9cf4-8d37eddd5adb");
   private static final Integer PRE_POPULATED_CENTRAL_ITEM_TYPE = 32;
-  private static final UUID PICK_IP_SERVICE_POINT =  UUID.fromString("d08b7bbe-a978-4db8-b5af-a80556254a99");
+  private static final UUID PICK_IP_SERVICE_POINT = UUID.fromString("d08b7bbe-a978-4db8-b5af-a80556254a99");
   private static final UUID PRE_POPULATE_SERVICE_ID = UUID.fromString("74a215e6-e3a1-475d-b7d6-f23b3a5d3c47");
   private static final UUID PRE_POPULATE_PATRON_GROUP_ID = UUID.fromString("8534295a-e031-4738-a952-f7db900df8c0");
 
@@ -414,7 +415,7 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
 
     var transactionHoldDTO = createTransactionHoldDTO();
 
-    when(inventoryService.findDefaultServicePointIdForUser(PRE_POPULATED_PATRON2_ID)).thenReturn(Optional.of(PRE_POPULATE_SERVICE_ID));
+    when(circulationClient.findRequest(transaction.getHold().getFolioRequestId())).thenReturn(Optional.of(createRequestDTO()));
     when(servicePointsUsersClient.findServicePointsUsers(eq(PRE_POPULATED_PATRON2_ID))).thenReturn(ResultList.asSinglePage(createServicePointUserDTO()));
     when(circulationClient.checkOutByBarcode(any(CheckOutRequestDTO.class))).thenReturn(new LoanDTO().id(NEW_LOAN_ID));
 
@@ -687,7 +688,7 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
   })
   void processItemReceivedRequest_whenItemIsNotShipped() {
-    when(servicePointsUsersClient.findServicePointsUsers(PRE_POPULATED_PATRON2_ID)).thenReturn(ResultList.asSinglePage(createServicePointUserDTO()));
+    when(circulationClient.findRequest(any())).thenReturn(Optional.of(createRequestDTO()));
     when(circulationClient.checkOutByBarcode(any(CheckOutRequestDTO.class))).thenReturn(new LoanDTO().id(NEW_LOAN_ID));
     when(inventoryService.findDefaultServicePointIdForUser(PRE_POPULATED_PATRON2_ID)).thenReturn(Optional.of(PRE_POPULATE_SERVICE_ID));
     var transactionHoldDTO = createTransactionHoldDTO();
