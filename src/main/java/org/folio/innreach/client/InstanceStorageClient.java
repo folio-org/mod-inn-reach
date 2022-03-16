@@ -5,6 +5,7 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 import java.util.UUID;
 
 import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -22,6 +23,9 @@ public interface InstanceStorageClient {
   Instance getInstanceById(@PathVariable("instanceId") UUID instanceId);
 
   @PostMapping(value = "/instances/iteration", consumes = APPLICATION_JSON_VALUE, produces = APPLICATION_JSON_VALUE)
-  JobResponse startInitialContribution(@RequestBody InstanceIterationRequest request);
+  JobResponse startInstanceIteration(@RequestBody InstanceIterationRequest request);
+
+  @DeleteMapping(value = "/instances/iteration/{jobId}")
+  void cancelInstanceIteration(@PathVariable("jobId") UUID jobId);
 
 }

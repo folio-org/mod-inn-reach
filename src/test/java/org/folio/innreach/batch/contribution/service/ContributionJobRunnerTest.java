@@ -18,6 +18,9 @@ import static org.folio.innreach.fixture.ContributionFixture.createItem;
 import static org.folio.innreach.fixture.TestUtil.createNoRetryTemplate;
 
 import java.util.UUID;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -51,7 +54,9 @@ class ContributionJobRunnerTest {
 
   private static final String MARC_RECORD_SOURCE = "MARC";
   private static final ContributionJobContext JOB_CONTEXT = createContributionJobContext();
-  private static final UUID JOB_ID = JOB_CONTEXT.getIterationJobId();
+  private static final String TENANT_ID = JOB_CONTEXT.getTenantId();
+  private static final UUID CONTRIBUTION_ID = JOB_CONTEXT.getContributionId();
+  private static final UUID ITERATION_JOB_ID = JOB_CONTEXT.getIterationJobId();
   private static final UUID CENTRAL_SERVER_ID = JOB_CONTEXT.getCentralServerId();
 
   @Qualifier("instanceExceptionListener")
@@ -90,7 +95,7 @@ class ContributionJobRunnerTest {
 
   @Test
   void shouldRunJob() {
-    var event = InstanceIterationEvent.of(JOB_ID, "test", "test", UUID.randomUUID());
+    var event = InstanceIterationEvent.of(ITERATION_JOB_ID, "test", "test", UUID.randomUUID());
 
     when(factory.createReader(any())).thenReturn(reader);
     when(reader.read())
@@ -109,7 +114,7 @@ class ContributionJobRunnerTest {
 
   @Test
   void shouldRunJob_noInstanceItems() {
-    var event = InstanceIterationEvent.of(JOB_ID, "test", "test", UUID.randomUUID());
+    var event = InstanceIterationEvent.of(ITERATION_JOB_ID, "test", "test", UUID.randomUUID());
     Instance instance = createInstance();
     instance.setItems(null);
 
@@ -127,7 +132,7 @@ class ContributionJobRunnerTest {
 
   @Test
   void shouldRunJob_deContributeIneligibleInstance() {
-    var event = InstanceIterationEvent.of(JOB_ID, "test", "test", UUID.randomUUID());
+    var event = InstanceIterationEvent.of(ITERATION_JOB_ID, "test", "test", UUID.randomUUID());
     Instance instance = createInstance();
     instance.setItems(null);
 
@@ -146,7 +151,7 @@ class ContributionJobRunnerTest {
 
   @Test
   void shouldRunJob_noInstances() {
-    var event = InstanceIterationEvent.of(JOB_ID, "test", "test", UUID.randomUUID());
+    var event = InstanceIterationEvent.of(ITERATION_JOB_ID, "test", "test", UUID.randomUUID());
 
     when(factory.createReader(any())).thenReturn(reader);
     when(reader.read())
@@ -183,12 +188,12 @@ class ContributionJobRunnerTest {
       .hasMessageContaining(exceptionMsg);
 
     verify(reader).read();
-    verify(contributionService).completeContribution(JOB_CONTEXT.getContributionId());
+    verify(contributionService).completeContribution(CONTRIBUTION_ID);
     verifyNoInteractions(recordContributor);
   }
 
   @Test
-  void shouldCancelJob() {
+  void shouldCancelJobs() {
     jobRunner.cancelJobs();
 
     verify(contributionService).cancelAll();
@@ -378,6 +383,27 @@ class ContributionJobRunnerTest {
     jobRunner.runItemDeContribution(CENTRAL_SERVER_ID, instance, item);
 
     verify(recordContributor).deContributeInstance(any(), any());
+  }
+
+  @Test
+  void shouldCancelJob_afterOneEvent() throws ExecutionException, InterruptedException, TimeoutException {
+    var event = InstanceIterationEvent.of(ITERATION_JOB_ID, "test", "test", UUID.randomUUID());
+
+    when(factory.createReader(any())).thenReturn(reader);
+    when(reader.read())
+      .thenAnswer(a -> {
+        jobRunner.cancelInitialContribution(CONTRIBUTION_ID);
+        return event;
+      })
+      .thenReturn(event);
+
+    var future = jobRunner.runInitialContributionAsync(
+      CENTRAL_SERVER_ID, TENANT_ID, CONTRIBUTION_ID, ITERATION_JOB_ID);
+
+    future.get(10, TimeUnit.SECONDS);
+
+    verify(reader, times(1)).read();
+    verify(contributionService, never()).completeContribution(CONTRIBUTION_ID);
   }
 
 }

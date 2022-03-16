@@ -24,6 +24,20 @@ paths:
           $ref: "api-common.yaml#/components/responses/trait_response_500"
       parameters:
         - $ref: "api-common.yaml#/components/parameters/centralServerId"
+    delete:
+      description: Cancel current INN-Reach contribution for the given central server
+      operationId: cancelCurrentContributionByServerId
+      tags:
+        - contributions
+      responses:
+        '204':
+          description: Initial contribution process canceled
+        '400':
+          $ref: "api-common.yaml#/components/responses/trait_response_malformed_query_400"
+        '500':
+          $ref: "api-common.yaml#/components/responses/trait_response_500"
+      parameters:
+        - $ref: "api-common.yaml#/components/parameters/centralServerId"
   /central-servers/{centralServerId}/contributions/history:
     get:
       description: Get a list of Inn-Reach contributions for the given central server

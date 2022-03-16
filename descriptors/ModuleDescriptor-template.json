@@ -262,6 +262,12 @@
           "modulePermissions": ["inventory-storage.material-types.collection.get"]
         },
         {
+          "methods": ["DELETE"],
+          "pathPattern": "/inn-reach/central-servers/{centralServerId}/contributions/current",
+          "permissionsRequired": ["inn-reach.contributions.current.item.delete"],
+          "modulePermissions": ["inventory-storage.instance.iteration.item.delete"]
+        },
+        {
           "methods": ["GET"],
           "pathPattern": "/inn-reach/central-servers/{centralServerId}/contributions/history",
           "permissionsRequired": ["inn-reach.contributions.history.collection.get"]
@@ -794,6 +800,11 @@
       "description" : "Get INN-Reach contribution job execution status tracking and basic statistics"
     },
     {
+      "permissionName" : "inn-reach.contributions.current.item.delete",
+      "displayName" : "Cancel INN-Reach contribution job",
+      "description" : "Cancel INN-Reach contribution job"
+    },
+    {
       "permissionName" : "inn-reach.contributions.history.collection.get",
       "displayName" : "Get history of INN-Reach contribution job execution status tracking and basic statistics",
       "description" : "Get history of INN-Reach contribution job execution status tracking and basic statistics"
@@ -809,6 +820,7 @@
       "description" : "All permissions of inn reach contribution scope",
       "subPermissions" : [
         "inn-reach.contributions.current.item.get",
+        "inn-reach.contributions.current.item.delete",
         "inn-reach.contributions.history.collection.get",
         "inn-reach.contributions.item.post"
       ]
