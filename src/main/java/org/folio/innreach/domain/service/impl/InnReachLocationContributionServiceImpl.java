@@ -12,6 +12,7 @@ import lombok.extern.log4j.Log4j2;
 import org.springframework.data.domain.Example;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import org.folio.innreach.domain.entity.InnReachLocation;
 import org.folio.innreach.domain.entity.LibraryMapping;
@@ -35,6 +36,7 @@ public class InnReachLocationContributionServiceImpl implements InnReachLocation
 
   @Async
   @Override
+  @Transactional(readOnly = true)
   public void contributeInnReachLocations(UUID centralServerId) {
     var mappedLocations = getCentralServerMappedLocations(centralServerId);
 
