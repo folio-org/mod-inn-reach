@@ -13,9 +13,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.argThat;
-import static org.mockito.Mockito.verify;
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
 import static org.springframework.http.HttpStatus.CONFLICT;
 import static org.springframework.http.HttpStatus.NO_CONTENT;
@@ -362,40 +359,6 @@ class LocationMappingControllerTest extends BaseControllerTest {
       samePropertyValuesAs(newMappings.getLocationMappings().get(0), "id", "metadata"),
       samePropertyValuesAs(newMappings.getLocationMappings().get(1), "id", "metadata")
     ));
-  }
-
-  @Test
-  @Sql(scripts = {
-    "classpath:db/central-server/pre-populate-central-server.sql",
-    "classpath:db/inn-reach-location/pre-populate-inn-reach-location-code.sql",
-    "classpath:db/inn-reach-location/pre-populate-another-inn-reach-location-code.sql",
-    "classpath:db/loc-mapping/pre-populate-location-mapping.sql",
-    "classpath:db/lib-mapping/pre-populate-library-mapping.sql"
-  })
-  void shouldNotDeContributeInnReachLocationAssignedToLibrary() {
-    var mappings = mapper.toDTOCollection(repository.findByCentralServerIdAndLibraryId(
-      UUID.fromString(PRE_POPULATED_CENTRAL_SERVER_ID), UUID.fromString(PRE_POPULATED_LIBRARY_ID)));
-    List<LocationMappingDTO> em = mappings.getLocationMappings();
-
-    em.removeIf(idEqualsTo(PRE_POPULATED_MAPPING1_ID));         // to delete
-
-    var responseEntity = testRestTemplate.exchange(baseMappingURL(), HttpMethod.PUT, new HttpEntity<>(mappings),
-      Void.class);
-
-    assertEquals(HttpStatus.NO_CONTENT, responseEntity.getStatusCode());
-    assertFalse(responseEntity.hasBody());
-
-    var stored = mapper.toDTOs(repository.findByCentralServerIdAndLibraryId(
-      UUID.fromString(PRE_POPULATED_CENTRAL_SERVER_ID), UUID.fromString(PRE_POPULATED_LIBRARY_ID)));
-
-    assertEquals(em.size(), stored.size());
-
-    // verify deleted
-    assertTrue(findInList(stored, PRE_POPULATED_MAPPING1_ID).isEmpty());
-
-    // verify contributed
-    verify(innReachLocationExternalService).submitMappedLocationsToInnReach(any(),
-      argThat(list -> findInList(list, PRE_POPULATED_INN_REACH_LOCATION_CODE).isPresent()));
   }
 
   @Test

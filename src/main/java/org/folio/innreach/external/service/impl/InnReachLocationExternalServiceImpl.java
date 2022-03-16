@@ -8,7 +8,6 @@ import java.util.stream.Collectors;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import org.folio.innreach.domain.dto.CentralServerConnectionDetailsDTO;
@@ -26,7 +25,6 @@ public class InnReachLocationExternalServiceImpl implements InnReachLocationExte
   private final InnReachLocationClient innReachLocationClient;
   private final InnReachAuthExternalService innReachAuthExternalService;
 
-  @Async
   @Override
   public void submitMappedLocationsToInnReach(CentralServerConnectionDetailsDTO connectionDetails,
                                               List<InnReachLocationDTO> actualMappedLocations) {

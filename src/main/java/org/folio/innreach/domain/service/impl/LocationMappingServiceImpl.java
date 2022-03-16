@@ -5,13 +5,10 @@ import static org.folio.innreach.domain.service.impl.ServiceUtils.centralServerR
 import static org.folio.innreach.domain.service.impl.ServiceUtils.equalIds;
 import static org.folio.innreach.domain.service.impl.ServiceUtils.initId;
 import static org.folio.innreach.domain.service.impl.ServiceUtils.mergeAndSave;
-import static org.folio.innreach.util.ListUtils.mapItems;
 
 import java.util.List;
 import java.util.UUID;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Example;
@@ -20,18 +17,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import org.folio.innreach.domain.entity.CentralServer;
-import org.folio.innreach.domain.entity.InnReachLocation;
-import org.folio.innreach.domain.entity.LibraryMapping;
 import org.folio.innreach.domain.entity.LocationMapping;
-import org.folio.innreach.domain.service.CentralServerService;
+import org.folio.innreach.domain.service.InnReachLocationContributionService;
 import org.folio.innreach.domain.service.LocationMappingService;
 import org.folio.innreach.dto.LocationMappingDTO;
 import org.folio.innreach.dto.LocationMappingsDTO;
-import org.folio.innreach.external.dto.InnReachLocationDTO;
-import org.folio.innreach.external.service.InnReachLocationExternalService;
 import org.folio.innreach.mapper.LocationMappingMapper;
-import org.folio.innreach.repository.InnReachLocationRepository;
-import org.folio.innreach.repository.LibraryMappingRepository;
 import org.folio.innreach.repository.LocationMappingRepository;
 import org.folio.spring.data.OffsetRequest;
 
@@ -41,11 +32,8 @@ import org.folio.spring.data.OffsetRequest;
 public class LocationMappingServiceImpl implements LocationMappingService {
 
   private final LocationMappingRepository repository;
-  private final LibraryMappingRepository libraryMappingRepository;
-  private final InnReachLocationRepository innReachLocationRepository;
   private final LocationMappingMapper mapper;
-  private final CentralServerService centralServerService;
-  private final InnReachLocationExternalService innReachLocationExternalService;
+  private final InnReachLocationContributionService locationContributionService;
 
   @Override
   @Transactional(readOnly = true)
@@ -83,12 +71,7 @@ public class LocationMappingServiceImpl implements LocationMappingService {
 
     var saved = mergeAndSave(incoming, stored, repository, this::copyData);
 
-    var libraryMappings = fetchLibraryMappingsByCentralServerId(centralServerId);
-    var centralServerMappedLocations = getCentralServerMappedLocations(saved, libraryMappings);
-
-    var centralServerConnectionDetails = centralServerService.getCentralServerConnectionDetails(centralServerId);
-
-    innReachLocationExternalService.submitMappedLocationsToInnReach(centralServerConnectionDetails, centralServerMappedLocations);
+    locationContributionService.contributeInnReachLocations(centralServerId);
 
     return mapper.toDTOCollection(saved);
   }
@@ -123,36 +106,6 @@ public class LocationMappingServiceImpl implements LocationMappingService {
     toFind.setCentralServer(centralServerRef(centralServerId));
 
     return Example.of(toFind);
-  }
-
-  private List<InnReachLocationDTO> getCentralServerMappedLocations(List<LocationMapping> locationMappings, List<LibraryMapping> libraryMappings) {
-    var locationsIds = getCentralServerMappedLocationIds(locationMappings, libraryMappings);
-
-    return mapItems(innReachLocationRepository.findAllById(locationsIds), this::toInnReachLocationDTO);
-  }
-
-  private List<UUID> getCentralServerMappedLocationIds(List<LocationMapping> locationMappings, List<LibraryMapping> libraryMappings) {
-    return Stream.concat(
-        locationMappings.stream().map(LocationMapping::getInnReachLocation),
-        libraryMappings.stream().map(LibraryMapping::getInnReachLocation))
-      .map(InnReachLocation::getId)
-      .distinct()
-      .collect(Collectors.toList());
-  }
-
-  private List<LibraryMapping> fetchLibraryMappingsByCentralServerId(UUID centralServerId) {
-    return libraryMappingRepository.findAll(libMappingExampleWithServerId(centralServerId));
-  }
-
-  private static Example<LibraryMapping> libMappingExampleWithServerId(UUID centralServerId) {
-    var toFind = new LibraryMapping();
-    toFind.setCentralServer(centralServerRef(centralServerId));
-
-    return Example.of(toFind);
-  }
-
-  private InnReachLocationDTO toInnReachLocationDTO(InnReachLocation innReachLocation) {
-    return new InnReachLocationDTO(innReachLocation.getCode(), innReachLocation.getDescription());
   }
 
 }
