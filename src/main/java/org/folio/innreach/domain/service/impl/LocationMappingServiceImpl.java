@@ -71,14 +71,7 @@ public class LocationMappingServiceImpl implements LocationMappingService {
 
     var incoming = mapper.toEntities(locationMappingsDTO.getLocationMappings());
 
-    var incomingWithoutInnReachLocations = incoming.stream()
-      .filter(mapping -> mapping.getInnReachLocation().getId() == null)
-      .collect(Collectors.toList());
-
-    if (!incomingWithoutInnReachLocations.isEmpty()) {
-      repository.deleteAll(incomingWithoutInnReachLocations);
-      incoming.removeAll(incomingWithoutInnReachLocations);
-    }
+    incoming.removeIf(mapping -> mapping.getInnReachLocation().getId() == null);
 
     var csRef = centralServerRef(centralServerId);
     incoming.forEach(setCentralServerRef(csRef)
