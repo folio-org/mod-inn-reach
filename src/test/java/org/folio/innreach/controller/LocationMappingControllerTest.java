@@ -13,6 +13,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.Mockito.verify;
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
 import static org.springframework.http.HttpStatus.CONFLICT;
 import static org.springframework.http.HttpStatus.NO_CONTENT;
@@ -68,6 +71,7 @@ class LocationMappingControllerTest extends BaseControllerTest {
   private static final UUID PRE_POPULATED_MAPPING2_ID = UUID.fromString("b4262548-3e38-424c-b3d9-509af233db5f");
   private static final UUID PRE_POPULATED_INN_REACH_LOCATION1_ID = UUID.fromString(
     "34c6a230-d264-44c5-90b3-6159ed2ebdc1");
+  private static final String PRE_POPULATED_INN_REACH_LOCATION_CODE = "u7y6t";
   private static final UUID PRE_POPULATED_LOCATION2_ID = UUID.fromString("c8092f39-b969-418e-83ac-d73dd5ab9564");
 
 
@@ -364,6 +368,40 @@ class LocationMappingControllerTest extends BaseControllerTest {
   @Sql(scripts = {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-location/pre-populate-inn-reach-location-code.sql",
+    "classpath:db/inn-reach-location/pre-populate-another-inn-reach-location-code.sql",
+    "classpath:db/loc-mapping/pre-populate-location-mapping.sql",
+    "classpath:db/lib-mapping/pre-populate-library-mapping.sql"
+  })
+  void shouldNotDeContributeInnReachLocationAssignedToLibrary() {
+    var mappings = mapper.toDTOCollection(repository.findByCentralServerIdAndLibraryId(
+      UUID.fromString(PRE_POPULATED_CENTRAL_SERVER_ID), UUID.fromString(PRE_POPULATED_LIBRARY_ID)));
+    List<LocationMappingDTO> em = mappings.getLocationMappings();
+
+    em.removeIf(idEqualsTo(PRE_POPULATED_MAPPING1_ID));         // to delete
+
+    var responseEntity = testRestTemplate.exchange(baseMappingURL(), HttpMethod.PUT, new HttpEntity<>(mappings),
+      Void.class);
+
+    assertEquals(HttpStatus.NO_CONTENT, responseEntity.getStatusCode());
+    assertFalse(responseEntity.hasBody());
+
+    var stored = mapper.toDTOs(repository.findByCentralServerIdAndLibraryId(
+      UUID.fromString(PRE_POPULATED_CENTRAL_SERVER_ID), UUID.fromString(PRE_POPULATED_LIBRARY_ID)));
+
+    assertEquals(em.size(), stored.size());
+
+    // verify deleted
+    assertTrue(findInList(stored, PRE_POPULATED_MAPPING1_ID).isEmpty());
+
+    // verify contributed
+    verify(innReachLocationExternalService).submitMappedLocationsToInnReach(any(),
+      argThat(list -> findInList(list, PRE_POPULATED_INN_REACH_LOCATION_CODE).isPresent()));
+  }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-location/pre-populate-inn-reach-location-code.sql",
     "classpath:db/loc-mapping/pre-populate-location-mapping.sql"
   })
   void shouldDeleteAllMappingsIfEmptyCollectionGiven() {
@@ -402,6 +440,11 @@ class LocationMappingControllerTest extends BaseControllerTest {
 
   private static Optional<LocationMappingDTO> findInList(List<LocationMappingDTO> mappings, UUID id) {
     return mappings.stream().filter(idEqualsTo(id)).findFirst();
+  }
+
+  private static Optional<org.folio.innreach.external.dto.InnReachLocationDTO> findInList(List<org.folio.innreach.external.dto.InnReachLocationDTO> irLocations,
+                                                                                          String code) {
+    return irLocations.stream().filter(loc -> Objects.equals(loc.getCode(), code)).findFirst();
   }
 
 }
