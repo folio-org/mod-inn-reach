@@ -31,7 +31,6 @@
   },
   "additionalProperties": false,
   "required": [
-    "locationId",
-    "innReachLocationId"
+    "locationId"
   ]
 }
