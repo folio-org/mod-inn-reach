@@ -388,8 +388,10 @@ public class ContributionJobRunner {
       log.warn("Failed to run contribution job for central server {}", centralServerId, e);
       throw e;
     } finally {
-      runningInitialContributions.remove(contributionId);
-      completeContribution(context);
+      if (!isCanceled(contributionId)) {
+        completeContribution(context);
+        runningInitialContributions.remove(contributionId);
+      }
       endContributionJobContext();
     }
   }
