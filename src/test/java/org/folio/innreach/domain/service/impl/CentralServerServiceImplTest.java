@@ -33,6 +33,7 @@ import org.folio.innreach.mapper.CentralServerMapper;
 import org.folio.innreach.mapper.CentralServerMapperImpl;
 import org.folio.innreach.mapper.MappingMethods;
 import org.folio.innreach.repository.CentralServerRepository;
+import org.folio.innreach.repository.LocalAgencyRepository;
 
 class CentralServerServiceImplTest {
 
@@ -47,6 +48,9 @@ class CentralServerServiceImplTest {
 
   @Mock
   private PasswordEncoder passwordEncoder;
+
+  @Mock
+  private LocalAgencyRepository localAgencyRepository;
 
   @InjectMocks
   private CentralServerServiceImpl centralServerService;

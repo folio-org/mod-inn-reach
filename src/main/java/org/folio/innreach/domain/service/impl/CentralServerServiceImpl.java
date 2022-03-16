@@ -25,6 +25,7 @@ import org.folio.innreach.dto.CentralServersDTO;
 import org.folio.innreach.external.service.InnReachAuthExternalService;
 import org.folio.innreach.mapper.CentralServerMapper;
 import org.folio.innreach.repository.CentralServerRepository;
+import org.folio.innreach.repository.LocalAgencyRepository;
 import org.folio.spring.data.OffsetRequest;
 
 @RequiredArgsConstructor
@@ -36,6 +37,7 @@ public class CentralServerServiceImpl implements CentralServerService {
   private final CentralServerMapper centralServerMapper;
   private final InnReachAuthExternalService innReachAuthExternalService;
   private final PasswordEncoder passwordEncoder;
+  private final LocalAgencyRepository localAgencyRepository;
 
   @Override
   @Transactional
@@ -53,7 +55,7 @@ public class CentralServerServiceImpl implements CentralServerService {
 
     var createdCentralServer = centralServerRepository.save(centralServer);
 
-    Assert.isTrue(centralServerRepository.validateAgencyLibraries(createdCentralServer.getId()).size() == 0,
+    Assert.isTrue(localAgencyRepository.findLibraryIdsAssignedToMultipleAgencies(createdCentralServer.getId()).isEmpty(),
       "FOLIO library may only be associated with one agency per central server");
 
     return centralServerMapper.mapToCentralServerDTO(createdCentralServer);
@@ -137,7 +139,7 @@ public class CentralServerServiceImpl implements CentralServerService {
 
     centralServerRepository.save(centralServer);
 
-    Assert.isTrue(centralServerRepository.validateAgencyLibraries(centralServer.getId()).size() == 0,
+    Assert.isTrue(localAgencyRepository.findLibraryIdsAssignedToMultipleAgencies(centralServer.getId()).isEmpty(),
       "FOLIO library may only be associated with one agency per central server");
 
     return centralServerMapper.mapToCentralServerDTO(centralServer);
