@@ -18,6 +18,9 @@ import static org.folio.innreach.fixture.ContributionFixture.createItem;
 import static org.folio.innreach.fixture.TestUtil.createNoRetryTemplate;
 
 import java.util.UUID;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -188,7 +191,7 @@ class ContributionJobRunnerTest {
   }
 
   @Test
-  void shouldCancelJob() {
+  void shouldCancelJobs() {
     jobRunner.cancelJobs();
 
     verify(contributionService).cancelAll();
@@ -378,6 +381,26 @@ class ContributionJobRunnerTest {
     jobRunner.runItemDeContribution(CENTRAL_SERVER_ID, instance, item);
 
     verify(recordContributor).deContributeInstance(any(), any());
+  }
+
+  @Test
+  void shouldCancelJob_afterOneEvent() throws ExecutionException, InterruptedException, TimeoutException {
+    var event = InstanceIterationEvent.of(JOB_ID, "test", "test", UUID.randomUUID());
+
+    when(factory.createReader(any())).thenReturn(reader);
+    when(reader.read())
+      .thenAnswer(a -> {
+        jobRunner.cancelInitialContribution(JOB_CONTEXT.getContributionId());
+        return event;
+      })
+      .thenReturn(event);
+
+    var future = jobRunner.runInitialContributionAsync(
+      JOB_CONTEXT.getCentralServerId(), JOB_CONTEXT.getTenantId(), JOB_CONTEXT.getContributionId(), JOB_CONTEXT.getIterationJobId());
+
+    future.get(10, TimeUnit.SECONDS);
+
+    verify(reader, times(1)).read();
   }
 
 }
