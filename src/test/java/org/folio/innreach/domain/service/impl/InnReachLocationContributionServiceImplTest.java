@@ -11,8 +11,6 @@ import static org.folio.innreach.fixture.MappingFixture.createLocationMapping;
 
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -25,7 +23,6 @@ import org.springframework.data.domain.Example;
 import org.folio.innreach.domain.service.CentralServerService;
 import org.folio.innreach.external.dto.InnReachLocationDTO;
 import org.folio.innreach.external.service.InnReachLocationExternalService;
-import org.folio.innreach.repository.InnReachLocationRepository;
 import org.folio.innreach.repository.LibraryMappingRepository;
 import org.folio.innreach.repository.LocationMappingRepository;
 
@@ -42,14 +39,12 @@ class InnReachLocationContributionServiceImplTest {
   private CentralServerService centralServerService;
   @Mock
   private InnReachLocationExternalService innReachLocationExternalService;
-  @Mock
-  private InnReachLocationRepository innReachLocationRepository;
 
   @InjectMocks
   private InnReachLocationContributionServiceImpl service;
 
   @Test
-  void shouldContributeInnReachLocations() throws ExecutionException, InterruptedException, TimeoutException {
+  void shouldContributeInnReachLocations() {
     var irLoc1 = createInnReachLocation();
     var irLoc2 = createInnReachLocation();
 
@@ -59,7 +54,6 @@ class InnReachLocationContributionServiceImplTest {
     var locMapping = createLocationMapping();
     locMapping.setInnReachLocation(irLoc2);
 
-    when(innReachLocationRepository.findAllById(any())).thenReturn(List.of(irLoc1, irLoc2));
     when(libraryMappingRepository.findAll(any(Example.class))).thenReturn(List.of(libMapping));
     when(locationMappingRepository.findByCentralServerId(any())).thenReturn(List.of(locMapping));
 

@@ -21,7 +21,6 @@ import org.folio.innreach.domain.service.CentralServerService;
 import org.folio.innreach.domain.service.InnReachLocationContributionService;
 import org.folio.innreach.external.dto.InnReachLocationDTO;
 import org.folio.innreach.external.service.InnReachLocationExternalService;
-import org.folio.innreach.repository.InnReachLocationRepository;
 import org.folio.innreach.repository.LibraryMappingRepository;
 import org.folio.innreach.repository.LocationMappingRepository;
 
@@ -32,7 +31,6 @@ public class InnReachLocationContributionServiceImpl implements InnReachLocation
 
   private final LocationMappingRepository locationMappingRepository;
   private final LibraryMappingRepository libraryMappingRepository;
-  private final InnReachLocationRepository innReachLocationRepository;
   private final CentralServerService centralServerService;
   private final InnReachLocationExternalService innReachLocationExternalService;
 
@@ -40,30 +38,21 @@ public class InnReachLocationContributionServiceImpl implements InnReachLocation
   @Override
   @Transactional(readOnly = true)
   public void contributeInnReachLocations(UUID centralServerId) {
-    var mappedLocations = getCentralServerMappedLocation(centralServerId);
+    var mappedLocations = getCentralServerMappedLocations(centralServerId);
 
     var centralServerConnectionDetails = centralServerService.getCentralServerConnectionDetails(centralServerId);
 
     innReachLocationExternalService.submitMappedLocationsToInnReach(centralServerConnectionDetails, mappedLocations);
   }
 
-  private List<InnReachLocationDTO> getCentralServerMappedLocation(UUID centralServerId) {
-    var mappedLocationIds = getCentralServerMappedLocationIds(centralServerId);
-    var mappedLocations = innReachLocationRepository.findAllById(mappedLocationIds);
-
-    return mappedLocations.stream()
-      .map(this::toInnReachLocationDTO)
-      .collect(Collectors.toList());
-  }
-
-  private List<UUID> getCentralServerMappedLocationIds(UUID centralServerId) {
+  private List<InnReachLocationDTO> getCentralServerMappedLocations(UUID centralServerId) {
     var locationMappings = fetchLocationMappings(centralServerId);
     var libraryMappings = fetchLibraryMappings(centralServerId);
 
     return Stream.concat(
         locationMappings.stream().map(LocationMapping::getInnReachLocation),
         libraryMappings.stream().map(LibraryMapping::getInnReachLocation))
-      .map(InnReachLocation::getId)
+      .map(this::toInnReachLocationDTO)
       .distinct()
       .collect(Collectors.toList());
   }
