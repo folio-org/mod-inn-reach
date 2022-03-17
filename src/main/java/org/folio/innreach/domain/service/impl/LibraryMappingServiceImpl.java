@@ -5,12 +5,9 @@ import static org.folio.innreach.domain.service.impl.ServiceUtils.centralServerR
 import static org.folio.innreach.domain.service.impl.ServiceUtils.equalIds;
 import static org.folio.innreach.domain.service.impl.ServiceUtils.initId;
 import static org.folio.innreach.domain.service.impl.ServiceUtils.mergeAndSave;
-import static org.folio.innreach.util.ListUtils.mapItems;
 
-import java.util.List;
 import java.util.UUID;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Example;
@@ -19,15 +16,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import org.folio.innreach.domain.entity.CentralServer;
-import org.folio.innreach.domain.entity.InnReachLocation;
 import org.folio.innreach.domain.entity.LibraryMapping;
-import org.folio.innreach.domain.service.CentralServerService;
+import org.folio.innreach.domain.service.InnReachLocationContributionService;
 import org.folio.innreach.domain.service.LibraryMappingService;
 import org.folio.innreach.dto.LibraryMappingsDTO;
-import org.folio.innreach.external.dto.InnReachLocationDTO;
-import org.folio.innreach.external.service.InnReachLocationExternalService;
 import org.folio.innreach.mapper.LibraryMappingMapper;
-import org.folio.innreach.repository.InnReachLocationRepository;
 import org.folio.innreach.repository.LibraryMappingRepository;
 import org.folio.spring.data.OffsetRequest;
 
@@ -37,10 +30,8 @@ import org.folio.spring.data.OffsetRequest;
 public class LibraryMappingServiceImpl implements LibraryMappingService {
 
   private final LibraryMappingRepository repository;
-  private final InnReachLocationRepository innReachLocationRepository;
   private final LibraryMappingMapper mapper;
-  private final CentralServerService centralServerService;
-  private final InnReachLocationExternalService innReachLocationExternalService;
+  private final InnReachLocationContributionService locationContributionService;
 
   @Override
   @Transactional(readOnly = true)
@@ -62,10 +53,7 @@ public class LibraryMappingServiceImpl implements LibraryMappingService {
 
     var saved = mergeAndSave(incoming, stored, repository, this::copyData);
 
-    var centralServerMappedLocations = getCentralServerMappedLocations(saved);
-    var centralServerConnectionDetails = centralServerService.getCentralServerConnectionDetails(centralServerId);
-
-    innReachLocationExternalService.submitMappedLocationsToInnReach(centralServerConnectionDetails, centralServerMappedLocations);
+    locationContributionService.contributeInnReachLocations(centralServerId);
 
     return mapper.toDTOCollection(saved);
   }
@@ -87,21 +75,6 @@ public class LibraryMappingServiceImpl implements LibraryMappingService {
     toFind.setCentralServer(centralServerRef(centralServerId));
 
     return Example.of(toFind);
-  }
-
-  private List<InnReachLocationDTO> getCentralServerMappedLocations(List<LibraryMapping> actualLibraryMappings) {
-    var locationsIds = getCentralServerMappedLocationsIds(actualLibraryMappings);
-
-    return mapItems(innReachLocationRepository.findAllById(locationsIds),
-        innReachLocation -> new InnReachLocationDTO(innReachLocation.getCode(), innReachLocation.getDescription()));
-  }
-
-  private List<UUID> getCentralServerMappedLocationsIds(List<LibraryMapping> actualLibraryMappings) {
-    return actualLibraryMappings.stream()
-      .map(LibraryMapping::getInnReachLocation)
-      .map(InnReachLocation::getId)
-      .distinct()
-      .collect(Collectors.toList());
   }
 
 }
