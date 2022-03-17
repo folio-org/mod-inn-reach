@@ -52,8 +52,8 @@ public class InnReachLocationContributionServiceImpl implements InnReachLocation
     return Stream.concat(
         locationMappings.stream().map(LocationMapping::getInnReachLocation),
         libraryMappings.stream().map(LibraryMapping::getInnReachLocation))
-      .map(this::toInnReachLocationDTO)
       .distinct()
+      .map(this::toInnReachLocationDTO)
       .collect(Collectors.toList());
   }
 
