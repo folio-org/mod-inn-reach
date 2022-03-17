@@ -18,14 +18,14 @@ CREATE TABLE visible_patron_fields
     visible_patron_field_config_id UUID NOT NULL,
     visible_patron_field SMALLINT NOT NULL,
     PRIMARY KEY (visible_patron_field_config_id, visible_patron_field),
-    FOREIGN KEY (visible_patron_field_config_id) REFERENCES visible_patron_field_config (id)
+    FOREIGN KEY (visible_patron_field_config_id) REFERENCES visible_patron_field_config (id) ON DELETE CASCADE
 );
 
 CREATE TABLE visible_patron_user_custom_fields
 (
     visible_patron_field_config_id UUID NOT NULL,
-    user_custom_field_id UUID NOT NULL,
-    PRIMARY KEY (visible_patron_field_config_id, user_custom_field_id),
-    FOREIGN KEY (visible_patron_field_config_id) REFERENCES visible_patron_field_config (id)
+    user_custom_field VARCHAR(255) NOT NULL,
+    PRIMARY KEY (visible_patron_field_config_id, user_custom_field),
+    FOREIGN KEY (visible_patron_field_config_id) REFERENCES visible_patron_field_config (id) ON DELETE CASCADE
 );
 

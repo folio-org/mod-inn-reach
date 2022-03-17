@@ -1,5 +1,7 @@
 package org.folio.innreach.domain.service.impl;
 
+import java.util.Optional;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -13,7 +15,7 @@ public class VisiblePatronFieldConfigurationServiceImpl implements VisiblePatron
   private final VisiblePatronFieldConfigurationRepository repository;
 
   @Override
-  public VisiblePatronFieldConfiguration getByCentralCode(String centralServerCode) {
+  public Optional<VisiblePatronFieldConfiguration> getByCentralCode(String centralServerCode) {
     return repository.findByCentralServerCode(centralServerCode);
   }
 }

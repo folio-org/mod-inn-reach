@@ -13,6 +13,9 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
 import static org.folio.innreach.domain.dto.folio.ResultList.asSinglePage;
+import static org.folio.innreach.domain.entity.VisiblePatronFieldConfiguration.VisiblePatronField.EXTERNAL_SYSTEM_ID;
+import static org.folio.innreach.domain.entity.VisiblePatronFieldConfiguration.VisiblePatronField.USERNAME;
+import static org.folio.innreach.domain.entity.VisiblePatronFieldConfiguration.VisiblePatronField.USER_CUSTOM_FIELDS;
 import static org.folio.innreach.domain.service.impl.PatronInfoServiceImpl.ERROR_REASON;
 import static org.folio.innreach.external.dto.InnReachResponse.ERROR_STATUS;
 import static org.folio.innreach.external.dto.InnReachResponse.OK_STATUS;
@@ -27,6 +30,7 @@ import static org.folio.innreach.fixture.PatronFixture.getErrorMsg;
 import static org.folio.innreach.fixture.PatronFixture.getPatronId;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -39,10 +43,8 @@ import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import org.folio.innreach.client.AutomatedPatronBlocksClient;
-import org.folio.innreach.client.CustomFieldsClient;
 import org.folio.innreach.client.ManualPatronBlocksClient;
 import org.folio.innreach.client.PatronClient;
-import org.folio.innreach.domain.dto.folio.CustomFieldDTO;
 import org.folio.innreach.domain.dto.folio.ResultList;
 import org.folio.innreach.domain.dto.folio.User;
 import org.folio.innreach.domain.dto.folio.patron.PatronDTO;
@@ -86,8 +88,6 @@ class PatronInfoServiceImplTest {
   private UserCustomFieldMappingService userCustomFieldService;
   @Mock
   private VisiblePatronFieldConfigurationService fieldService;
-  @Mock
-  private CustomFieldsClient customFieldsClient;
 
   @Spy
   private InnReachResponseMapper mapper = new InnReachResponseMapperImpl();
@@ -108,6 +108,7 @@ class PatronInfoServiceImplTest {
     when(transactionService.countInnReachLoans(any(), any())).thenReturn(INN_REACH_LOANS);
     when(patronTypeMappingService.getCentralPatronType(any(), any())).thenReturn(Optional.of(CENTRAL_PATRON_TYPE));
     when(userCustomFieldService.getMapping(any())).thenReturn(createCustomFieldMapping());
+    when(fieldService.getByCentralCode(anyString())).thenReturn(Optional.empty());
 
     var response = service.verifyPatron(CENTRAL_CODE, VISIBLE_PATRON_ID, AGENCY_CODE, PATRON_NAME);
 
@@ -423,8 +424,8 @@ class PatronInfoServiceImplTest {
     var user = createUser();
     var patronId = getPatronId(user);
     var fieldConfig = new VisiblePatronFieldConfiguration();
-    fieldConfig.getFields().add(VisiblePatronFieldConfiguration.VisiblePatronField.EXTERNAL_SYSTEM_ID);
-    fieldConfig.getFields().add(VisiblePatronFieldConfiguration.VisiblePatronField.USERNAME);
+    fieldConfig.getFields().add(EXTERNAL_SYSTEM_ID);
+    fieldConfig.getFields().add(USERNAME);
 
     ArgumentCaptor<String> queryArgument = ArgumentCaptor.forClass(String.class);
 
@@ -435,7 +436,7 @@ class PatronInfoServiceImplTest {
     when(transactionService.countInnReachLoans(any(), any())).thenReturn(INN_REACH_LOANS);
     when(patronTypeMappingService.getCentralPatronType(any(), any())).thenReturn(Optional.of(CENTRAL_PATRON_TYPE));
     when(userCustomFieldService.getMapping(any())).thenReturn(createCustomFieldMapping());
-    when(fieldService.getByCentralCode(anyString())).thenReturn(fieldConfig);
+    when(fieldService.getByCentralCode(anyString())).thenReturn(Optional.of(fieldConfig));
     when(userService.getUserByQuery(queryArgument.capture())).thenReturn(Optional.of(user));
 
     var response = service.verifyPatron(CENTRAL_CODE, VISIBLE_PATRON_ID, AGENCY_CODE, PATRON_NAME);
@@ -456,19 +457,13 @@ class PatronInfoServiceImplTest {
     assertEquals("externalSystemId==" + VISIBLE_PATRON_ID + " or username==" + VISIBLE_PATRON_ID, query);
   }
 
-
   @Test
   void shouldReturnPatronInfo_withVisiblePatronFieldConfigurationAndCustomFields() {
-    var customFieldDTO1 = CustomFieldDTO.of(UUID.randomUUID(), "field1", CustomFieldDTO.FieldType.SINGLE_CHECKBOX);
-    var customFieldDTO2 = CustomFieldDTO.of(UUID.randomUUID(), "field2", CustomFieldDTO.FieldType.MULTI_SELECT_DROPDOWN);
     var user = createUser();
     var patronId = getPatronId(user);
     var fieldConfig = new VisiblePatronFieldConfiguration();
-    fieldConfig.getFields().add(VisiblePatronFieldConfiguration.VisiblePatronField.EXTERNAL_SYSTEM_ID);
-    fieldConfig.getFields().add(VisiblePatronFieldConfiguration.VisiblePatronField.USERNAME);
-    fieldConfig.getFields().add(VisiblePatronFieldConfiguration.VisiblePatronField.USER_CUSTOM_FIELDS);
-    fieldConfig.getUserCustomFieldIds().add(customFieldDTO1.getId());
-    fieldConfig.getUserCustomFieldIds().add(customFieldDTO2.getId());
+    fieldConfig.getFields().addAll(List.of(EXTERNAL_SYSTEM_ID, USERNAME, USER_CUSTOM_FIELDS));
+    fieldConfig.getUserCustomFields().addAll(List.of("field1", "field2"));
 
     ArgumentCaptor<String> queryArgument = ArgumentCaptor.forClass(String.class);
 
@@ -479,10 +474,8 @@ class PatronInfoServiceImplTest {
     when(transactionService.countInnReachLoans(any(), any())).thenReturn(INN_REACH_LOANS);
     when(patronTypeMappingService.getCentralPatronType(any(), any())).thenReturn(Optional.of(CENTRAL_PATRON_TYPE));
     when(userCustomFieldService.getMapping(any())).thenReturn(createCustomFieldMapping());
-    when(fieldService.getByCentralCode(anyString())).thenReturn(fieldConfig);
+    when(fieldService.getByCentralCode(anyString())).thenReturn(Optional.of(fieldConfig));
     when(userService.getUserByQuery(queryArgument.capture())).thenReturn(Optional.of(user));
-    when(customFieldsClient.getCustomField(customFieldDTO1.getId())).thenReturn(customFieldDTO1);
-    when(customFieldsClient.getCustomField(customFieldDTO2.getId())).thenReturn(customFieldDTO2);
 
     var response = service.verifyPatron(CENTRAL_CODE, VISIBLE_PATRON_ID, AGENCY_CODE, PATRON_NAME);
 
@@ -499,10 +492,8 @@ class PatronInfoServiceImplTest {
     assertNotNull(patronInfo.getPatronExpireDate());
 
     var query = queryArgument.getValue();
-    assertTrue(query.contains("externalSystemId"));
-    assertTrue(query.contains("username"));
-    assertTrue(query.contains(customFieldDTO1.getRefId()));
-    assertTrue(query.contains(customFieldDTO2.getRefId()));
+    assertEquals("externalSystemId==" + VISIBLE_PATRON_ID + " or username==" + VISIBLE_PATRON_ID
+      + " or customFields.field1==" + VISIBLE_PATRON_ID + " or customFields.field2==" + VISIBLE_PATRON_ID, query);
   }
 
 }

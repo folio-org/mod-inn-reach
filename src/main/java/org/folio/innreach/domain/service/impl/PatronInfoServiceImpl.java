@@ -18,23 +18,22 @@ import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.collections4.CollectionUtils;
-import org.folio.innreach.domain.entity.TransactionHold;
-import org.folio.innreach.domain.service.UserService;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 
 import org.folio.innreach.client.AutomatedPatronBlocksClient;
-import org.folio.innreach.client.CustomFieldsClient;
 import org.folio.innreach.client.ManualPatronBlocksClient;
 import org.folio.innreach.client.PatronClient;
 import org.folio.innreach.domain.dto.folio.User;
 import org.folio.innreach.domain.dto.folio.patron.PatronDTO;
+import org.folio.innreach.domain.entity.TransactionHold;
 import org.folio.innreach.domain.entity.VisiblePatronFieldConfiguration;
 import org.folio.innreach.domain.service.CentralServerService;
 import org.folio.innreach.domain.service.InnReachTransactionService;
 import org.folio.innreach.domain.service.PatronInfoService;
 import org.folio.innreach.domain.service.PatronTypeMappingService;
 import org.folio.innreach.domain.service.UserCustomFieldMappingService;
+import org.folio.innreach.domain.service.UserService;
 import org.folio.innreach.domain.service.VisiblePatronFieldConfigurationService;
 import org.folio.innreach.dto.LocalAgencyDTO;
 import org.folio.innreach.dto.PatronInfo;
@@ -49,8 +48,7 @@ import org.folio.innreach.util.UUIDEncoder;
 public class PatronInfoServiceImpl implements PatronInfoService {
 
   public static final String ERROR_REASON = "Unable to verify patron";
-  public static final String QUERY_EXACT_DELIMITER = "==%1$s or ";
-  public static final String QUERY_ANY_DELIMITER = "%1$s any ";
+  public static final String QUERY_DELIMITER = "==%1$s";
 
   private final UserService userService;
   private final PatronTypeMappingService patronTypeMappingService;
@@ -62,7 +60,6 @@ public class PatronInfoServiceImpl implements PatronInfoService {
   private final ManualPatronBlocksClient manualPatronBlocksClient;
   private final InnReachResponseMapper mapper;
   private final VisiblePatronFieldConfigurationService fieldConfigurationService;
-  private final CustomFieldsClient customFieldsClient;
 
   @Override
   public PatronInfoResponseDTO verifyPatron(String centralServerCode, String visiblePatronId,
@@ -72,7 +69,8 @@ public class PatronInfoServiceImpl implements PatronInfoService {
       var centralServer = centralServerService.getCentralServerByCentralCode(centralServerCode);
       var centralServerId = centralServer.getId();
       var localAgencies = emptyIfNull(centralServer.getLocalAgencies());
-      var fieldConfig = fieldConfigurationService.getByCentralCode(centralServerCode);
+      var fieldConfig = fieldConfigurationService.getByCentralCode(centralServerCode)
+      .orElse(null);
       var user = findPatronUser(visiblePatronId, patronName, fieldConfig);
 
       var requestAllowed = requestAllowed(user);
@@ -133,36 +131,15 @@ public class PatronInfoServiceImpl implements PatronInfoService {
     var checkCustomFields = fields.remove(USER_CUSTOM_FIELDS);
     var fieldsString = fields.stream().map(VisiblePatronFieldConfiguration.VisiblePatronField::getValue)
       .collect(Collectors.toList());
-
-    var query = String.join(QUERY_EXACT_DELIMITER, fieldsString);
-    query += QUERY_EXACT_DELIMITER;
     if (checkCustomFields) {
-      query = addCustomFieldsToQuery(query, fieldConfig);
+      fieldsString.addAll(
+        fieldConfig.getUserCustomFields().stream().map(field -> "customFields." + field).collect(Collectors.toList()));
     }
-    query = query.substring(0, query.length() - 4);
+
+    var query = String.join(QUERY_DELIMITER + " or ", fieldsString);
+    query += QUERY_DELIMITER;
 
     return String.format(query, visiblePatronId);
-  }
-
-  private String addCustomFieldsToQuery(String query, VisiblePatronFieldConfiguration fieldConfig) {
-    var customFields = fieldConfig.getUserCustomFieldIds().stream()
-      .map(customFieldsClient::getCustomField).collect(Collectors.toList());
-    var queryBuilder = new StringBuilder(query);
-    customFields.forEach(field -> {
-      switch (field.getType()) {
-        case RADIO_BUTTON:
-        case SINGLE_CHECKBOX:
-        case SINGLE_SELECT_DROPDOWN:
-        case TEXTBOX_SHORT:
-        case TEXTBOX_LONG:
-          queryBuilder.append("customFields.").append(field.getRefId()).append(QUERY_EXACT_DELIMITER);
-          break;
-        case MULTI_SELECT_DROPDOWN:
-          queryBuilder.append(QUERY_ANY_DELIMITER).append("customFields.").append(field.getRefId()).append(" or ");
-          break;
-      }
-    });
-    return queryBuilder.toString();
   }
 
   private boolean requestAllowed(User user) {
