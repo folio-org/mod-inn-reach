@@ -68,7 +68,6 @@ class LocationMappingControllerTest extends BaseControllerTest {
   private static final UUID PRE_POPULATED_MAPPING2_ID = UUID.fromString("b4262548-3e38-424c-b3d9-509af233db5f");
   private static final UUID PRE_POPULATED_INN_REACH_LOCATION1_ID = UUID.fromString(
     "34c6a230-d264-44c5-90b3-6159ed2ebdc1");
-  private static final String PRE_POPULATED_INN_REACH_LOCATION_CODE = "u7y6t";
   private static final UUID PRE_POPULATED_LOCATION2_ID = UUID.fromString("c8092f39-b969-418e-83ac-d73dd5ab9564");
 
 
@@ -403,11 +402,6 @@ class LocationMappingControllerTest extends BaseControllerTest {
 
   private static Optional<LocationMappingDTO> findInList(List<LocationMappingDTO> mappings, UUID id) {
     return mappings.stream().filter(idEqualsTo(id)).findFirst();
-  }
-
-  private static Optional<org.folio.innreach.external.dto.InnReachLocationDTO> findInList(List<org.folio.innreach.external.dto.InnReachLocationDTO> irLocations,
-                                                                                          String code) {
-    return irLocations.stream().filter(loc -> Objects.equals(loc.getCode(), code)).findFirst();
   }
 
 }
