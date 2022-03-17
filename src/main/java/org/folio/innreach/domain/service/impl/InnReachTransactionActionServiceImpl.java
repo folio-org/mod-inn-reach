@@ -34,6 +34,7 @@ import java.util.UUID;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+
 import org.apache.commons.lang3.ArrayUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -51,11 +52,13 @@ import org.folio.innreach.domain.service.ItemService;
 import org.folio.innreach.domain.service.LoanService;
 import org.folio.innreach.domain.service.PatronHoldService;
 import org.folio.innreach.domain.service.RequestService;
+import org.folio.innreach.dto.CancelPatronHoldDTO;
 import org.folio.innreach.dto.CheckInDTO;
-import org.folio.innreach.dto.TransactionCheckOutResponseDTO;
+import org.folio.innreach.dto.InnReachTransactionDTO;
 import org.folio.innreach.dto.LoanStatus;
 import org.folio.innreach.dto.PatronHoldCheckInResponseDTO;
 import org.folio.innreach.dto.StorageLoanDTO;
+import org.folio.innreach.dto.TransactionCheckOutResponseDTO;
 import org.folio.innreach.external.exception.InnReachException;
 import org.folio.innreach.external.service.InnReachExternalService;
 import org.folio.innreach.mapper.InnReachTransactionMapper;
@@ -252,6 +255,12 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
         reportReturnUncirculated(transaction);
       }
     }
+  }
+
+  @Override
+  public InnReachTransactionDTO cancelPatronHold(UUID transactionId, UUID servicePointId,
+      CancelPatronHoldDTO cancelRequest) {
+    return null;
   }
 
   private void associateNewLoanWithPatronTransaction(StorageLoanDTO loan, InnReachTransaction transaction) {

@@ -4,6 +4,7 @@ import java.util.UUID;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -15,11 +16,12 @@ import org.springframework.web.bind.annotation.RestController;
 
 import org.folio.innreach.domain.service.InnReachTransactionActionService;
 import org.folio.innreach.domain.service.InnReachTransactionService;
+import org.folio.innreach.dto.CancelPatronHoldDTO;
 import org.folio.innreach.dto.InnReachTransactionDTO;
 import org.folio.innreach.dto.InnReachTransactionFilterParametersDTO;
 import org.folio.innreach.dto.InnReachTransactionsDTO;
-import org.folio.innreach.dto.TransactionCheckOutResponseDTO;
 import org.folio.innreach.dto.PatronHoldCheckInResponseDTO;
+import org.folio.innreach.dto.TransactionCheckOutResponseDTO;
 import org.folio.innreach.rest.resource.InnReachTransactionApi;
 
 @Log4j2
@@ -69,6 +71,15 @@ public class InnReachTransactionController implements InnReachTransactionApi {
   public ResponseEntity<TransactionCheckOutResponseDTO> checkOutPatronHoldItem(@PathVariable UUID id,
                                                                                @PathVariable UUID servicePointId) {
     var response = transactionActionService.checkOutPatronHoldItem(id, servicePointId);
+    return ResponseEntity.ok(response);
+  }
+
+  @Override
+  @PostMapping("/{id}/patronhold/cancel/{servicePointId}")
+  public ResponseEntity<InnReachTransactionDTO> cancelPatronHoldTransaction(@PathVariable UUID id,
+      @PathVariable UUID servicePointId, CancelPatronHoldDTO cancelRequest) {
+
+    var response = transactionActionService.cancelPatronHold(id, servicePointId, cancelRequest);
     return ResponseEntity.ok(response);
   }
 

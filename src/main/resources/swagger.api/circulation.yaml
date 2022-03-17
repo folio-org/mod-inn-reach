@@ -237,6 +237,31 @@ paths:
       parameters:
         - $ref: 'circulation.yaml#/components/parameters/itemBarcode'
         - $ref: 'circulation.yaml#/components/parameters/servicePointId'
+  /transactions/{id}/patronhold/cancel/{servicePointId}:
+    post:
+      operationId: cancelPatronHoldTransaction
+      description: Cancel patron hold transaction with the reason provided
+      tags:
+        - inn-reach-transaction
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/cancelPatronHoldDTO"
+      responses:
+        '200':
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/innReachTransactionDTO"
+        '404':
+          $ref: "api-common.yaml#/components/responses/trait_response_404"
+        '500':
+          $ref: "api-common.yaml#/components/responses/trait_response_500"
+      parameters:
+        - $ref: 'api-common.yaml#/components/parameters/id'
+        - $ref: 'circulation.yaml#/components/parameters/servicePointId'
   /d2ir/circ/verifypatron:
     post:
       operationId: verifyPatron
@@ -778,6 +803,8 @@ components:
       $ref: schemas/d2ir/claimsItemReturnedDTO.json
     claimItemReturnedRequestDTO:
       $ref: schemas/circulation/claimItemReturnedRequestDTO.json
+    cancelPatronHoldDTO:
+      $ref: schemas/cancelPatronHoldDTO.json
   parameters:
     bibId:
       name: bibId
