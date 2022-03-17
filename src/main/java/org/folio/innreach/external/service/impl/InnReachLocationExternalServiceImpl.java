@@ -29,7 +29,7 @@ public class InnReachLocationExternalServiceImpl implements InnReachLocationExte
   @Override
   public void submitMappedLocationsToInnReach(CentralServerConnectionDetailsDTO connectionDetails,
                                               List<InnReachLocationDTO> actualMappedLocations) {
-    log.info("Start submitting CentralServer [{}] mapped locations to INN-Reach", connectionDetails.getLocalCode());
+    log.info("Start submitting local server [{}] mapped locations to INN-Reach", connectionDetails.getLocalCode());
 
     var accessTokenDTO = innReachAuthExternalService.getAccessToken(connectionDetails);
     var connectionUrl = URI.create(connectionDetails.getConnectionUrl());
@@ -40,17 +40,17 @@ public class InnReachLocationExternalServiceImpl implements InnReachLocationExte
     var currentMappedLocations = getMappedLocationsFromInnReach(connectionUrl, authorizationHeader, localCode, centralCode);
 
     if (currentMappedLocations.isEmpty()) {
-      log.info("There are no mapped locations for CentralServer [{}] submitted to INN-Reach",
+      log.info("There are no mapped locations for local server [{}] submitted to INN-Reach",
         connectionDetails.getLocalCode());
 
       submitAllLocationsToInnReach(connectionDetails, actualMappedLocations, connectionUrl, authorizationHeader, localCode, centralCode);
     } else {
-      log.info("There are mapped locations for CentralServer [{}] submitted to INN-Reach",
+      log.info("There are mapped locations for local server [{}] submitted to INN-Reach",
         connectionDetails.getLocalCode());
 
       doUpdate(connectionUrl, authorizationHeader, localCode, centralCode, currentMappedLocations, actualMappedLocations);
     }
-    log.info("CentralServer [{}] mapped locations submitted to INN-Reach", connectionDetails.getLocalCode());
+    log.info("Local server [{}] mapped locations submitted to INN-Reach", connectionDetails.getLocalCode());
   }
 
   @Override
@@ -73,7 +73,7 @@ public class InnReachLocationExternalServiceImpl implements InnReachLocationExte
   private void submitAllLocationsToInnReach(CentralServerConnectionDetailsDTO connectionDetails,
                                             List<InnReachLocationDTO> actualMappedLocations,
                                             URI connectionUrl, String authorizationHeader, String localCode, String centralCode) {
-    log.info("Submit all CentralServer [{}] mapped locations to INN-Reach", connectionDetails.getLocalCode());
+    log.info("Submit all local server [{}] mapped locations to INN-Reach", connectionDetails.getLocalCode());
 
     innReachLocationClient.addAllLocations(connectionUrl, authorizationHeader, localCode,
       centralCode, new InnReachLocationsDTO(actualMappedLocations));
@@ -101,7 +101,7 @@ public class InnReachLocationExternalServiceImpl implements InnReachLocationExte
 
   private void deleteLocationFromInnReach(URI centralServerConnectionUrl, String authorizationHeader, String localCode, String centralCode,
                                           InnReachLocationDTO deletedLocation) {
-    log.info("Delete CentralServer [{}] mapped location [{}] from INN-Reach", localCode, deletedLocation.getCode());
+    log.info("Delete local server [{}] mapped location [{}] from INN-Reach", localCode, deletedLocation.getCode());
 
     innReachLocationClient.deleteLocation(centralServerConnectionUrl, authorizationHeader, localCode,
       centralCode, deletedLocation.getCode());
@@ -109,7 +109,7 @@ public class InnReachLocationExternalServiceImpl implements InnReachLocationExte
 
   private void submitUpdatedLocationToInnReach(URI centralServerConnectionUrl, String authorizationHeader,
                                                String localCode, String centralCode, InnReachLocationDTO updatedLocation) {
-    log.info("Submit updated CentralServer [{}] mapped location [{}] to INN-Reach", localCode, updatedLocation
+    log.info("Submit updated local server [{}] mapped location [{}] to INN-Reach", localCode, updatedLocation
       .getCode());
 
     innReachLocationClient.updateLocation(centralServerConnectionUrl, authorizationHeader, localCode,
@@ -118,7 +118,7 @@ public class InnReachLocationExternalServiceImpl implements InnReachLocationExte
 
   private void submitNewLocationToInnReach(URI centralServerConnectionUrl, String authorizationHeader, String localCode,
                                            String centralCode, InnReachLocationDTO newLocation) {
-    log.info("Submit the new CentralServer [{}] mapped location [{}] to INN-Reach", localCode, newLocation.getCode());
+    log.info("Submit the new local server [{}] mapped location [{}] to INN-Reach", localCode, newLocation.getCode());
 
     innReachLocationClient.addLocation(centralServerConnectionUrl, authorizationHeader, localCode,
       centralCode, newLocation.getCode(), newLocation);
