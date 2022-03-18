@@ -8,7 +8,7 @@
       "format": "UUID"
     },
     "cancellationAdditionalInformation": {
-      "description": "Additional information about a cancellation",
+      "description": "Additional information about cancellation",
       "type": "string"
     }
   },

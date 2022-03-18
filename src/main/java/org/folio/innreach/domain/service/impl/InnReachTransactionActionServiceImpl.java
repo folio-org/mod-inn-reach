@@ -260,7 +260,26 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
   @Override
   public InnReachTransactionDTO cancelPatronHold(UUID transactionId, UUID servicePointId,
       CancelPatronHoldDTO cancelRequest) {
-    return null;
+    var transaction = fetchTransactionById(transactionId);
+
+    if (transaction.getType() == PATRON) {
+      var requestId = transaction.getHold().getFolioRequestId();
+      var request = requestService.findRequest(requestId);
+
+      if (requestService.isOpenRequest(request)) {
+        requestService.cancelRequest(transaction, cancelRequest.getCancellationReasonId(),
+            cancelRequest.getCancellationAdditionalInformation());
+
+        if (transaction.getState() != ITEM_SHIPPED) {
+          transaction.setState(BORROWING_SITE_CANCEL);
+
+          reportCancelItemHold(transaction);
+        }
+      } else if (request.getStatus() == CLOSED_CANCELLED) {
+      }
+    }
+
+    return transactionMapper.toDTO(transaction);
   }
 
   private void associateNewLoanWithPatronTransaction(StorageLoanDTO loan, InnReachTransaction transaction) {
