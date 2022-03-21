@@ -31,11 +31,11 @@ import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionSt
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.RECEIVE_UNANNOUNCED;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.RETURN_UNCIRCULATED;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.TRANSFER;
-import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionType.PATRON;
 import static org.folio.innreach.fixture.CirculationFixture.createClaimsItemReturnedDTO;
 import static org.folio.innreach.fixture.CirculationFixture.createItemShippedDTO;
 import static org.folio.innreach.fixture.CirculationFixture.createRecallDTO;
 import static org.folio.innreach.fixture.CirculationFixture.createTransactionHoldDTO;
+import static org.folio.innreach.fixture.InventoryFixture.createInventoryItemDTO;
 import static org.folio.innreach.fixture.RequestFixture.createRequestDTO;
 import static org.folio.innreach.fixture.ServicePointUserFixture.createServicePointUserDTO;
 import static org.folio.innreach.fixture.TestUtil.circHeaders;
@@ -69,40 +69,31 @@ import org.folio.innreach.controller.base.BaseControllerTest;
 import org.folio.innreach.domain.dto.folio.ResultList;
 import org.folio.innreach.domain.dto.folio.User;
 import org.folio.innreach.domain.dto.folio.circulation.RequestDTO;
-import org.folio.innreach.domain.dto.folio.inventory.InventoryInstanceDTO;
-import org.folio.innreach.domain.dto.folio.inventory.InventoryItemDTO;
-import org.folio.innreach.domain.entity.CentralServer;
-import org.folio.innreach.domain.entity.InnReachRecallUser;
 import org.folio.innreach.domain.entity.InnReachTransaction;
 import org.folio.innreach.domain.entity.TransactionPatronHold;
-import org.folio.innreach.domain.entity.TransactionPickupLocation;
-import org.folio.innreach.domain.service.AgencyMappingService;
-import org.folio.innreach.domain.service.CentralServerService;
 import org.folio.innreach.domain.service.InstanceService;
 import org.folio.innreach.domain.service.InventoryService;
 import org.folio.innreach.domain.service.ItemService;
-import org.folio.innreach.domain.service.ItemTypeMappingService;
-import org.folio.innreach.domain.service.PatronInfoService;
-import org.folio.innreach.domain.service.PatronTypeMappingService;
+import org.folio.innreach.domain.service.PatronHoldService;
 import org.folio.innreach.domain.service.RequestService;
 import org.folio.innreach.domain.service.UserService;
-import org.folio.innreach.dto.CentralServerDTO;
 import org.folio.innreach.dto.CheckOutRequestDTO;
 import org.folio.innreach.dto.InnReachResponseDTO;
-import org.folio.innreach.dto.ItemTypeMappingDTO;
 import org.folio.innreach.dto.LoanDTO;
 import org.folio.innreach.dto.RenewLoanDTO;
 import org.folio.innreach.external.dto.InnReachResponse;
 import org.folio.innreach.external.service.InnReachExternalService;
 import org.folio.innreach.mapper.InnReachTransactionHoldMapper;
-import org.folio.innreach.repository.CentralServerRepository;
 import org.folio.innreach.repository.InnReachTransactionRepository;
-import org.folio.innreach.util.UUIDEncoder;
 
 @Sql(
   scripts = {
     "classpath:db/central-server/clear-central-server-tables.sql",
-    "classpath:db/inn-reach-transaction/clear-inn-reach-transaction-tables.sql"
+    "classpath:db/inn-reach-transaction/clear-inn-reach-transaction-tables.sql",
+    "classpath:db/patron-type-mapping/clear-patron-type-mapping-tables.sql",
+    "classpath:db/agency-loc-mapping/clear-agency-location-mapping.sql",
+    "classpath:db/item-type-mapping/clear-item-type-mapping-tables.sql",
+    "classpath:db/inn-reach-recall-user/clear-inn-reach-recall-user.sql"
   },
   executionPhase = AFTER_TEST_METHOD
 )
@@ -111,46 +102,36 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
 
   private static final String ITEM_IN_TRANSIT_ENDPOINT = "/inn-reach/d2ir/circ/intransit/{trackingId}/{centralCode}";
   private static final String CIRCULATION_OPERATION_ENDPOINT = "/inn-reach/d2ir/circ/{circulationOperationName}/{trackingId}/{centralCode}";
+  private static final String CANCEL_ITEM_HOLD_PATH = "/inn-reach/d2ir/circ/cancelitemhold/{trackingId}/{centralCode}";
+  private static final String ITEM_RECEIVED_PATH = "/inn-reach/d2ir/circ/itemreceived/{trackingId}/{centralCode}";
+  private static final String RECALL_REQUEST_PATH = "/inn-reach/d2ir/circ/recall/{trackingId}/{centralCode}";
+
+  private static final String PATRON_HOLD_OPERATION = "patronhold";
+  private static final String ITEM_SHIPPED_OPERATION = "itemshipped";
+  private static final String LOCAL_HOLD_OPERATION = "localhold";
+
+  private static final String UNEXPECTED_TRANSACTION_STATE = "Unexpected transaction state: ";
+
+  private static final UUID NEW_LOAN_ID = UUID.fromString("dc02b484-4217-4207-8b2c-6e7f092b7057");
+  private static final UUID PRE_POPULATED_INSTANCE_ID = UUID.fromString("76834d5a-08e8-45ea-84ca-4d9b10aa341c");
+  private static final UUID PRE_POPULATED_HOLDINGS_RECORD_ID = UUID.fromString("76834d5a-08e8-45ea-84ca-4d9b10aa342c");
+  private static final UUID PRE_POPULATED_ITEM_ID = UUID.fromString("9a326225-6530-41cc-9399-a61987bfab3c");
+  private static final UUID PRE_POPULATED_REQUESTER_ID = UUID.fromString("f75ffab1-2e2f-43be-b159-3031e2cfc458");
+  private static final UUID PRE_POPULATED_PATRON_ID = UUID.fromString("4154a604-4d5a-4d8e-9160-057fc7b6e6b8");
+  private static final UUID PRE_POPULATED_PATRON2_ID = UUID.fromString("a7853dda-520b-4f7a-a1fb-9383665ea770");
+  private static final UUID PICK_IP_SERVICE_POINT = UUID.fromString("d08b7bbe-a978-4db8-b5af-a80556254a99");
+  private static final UUID PRE_POPULATE_SERVICE_ID = UUID.fromString("74a215e6-e3a1-475d-b7d6-f23b3a5d3c47");
+  private static final UUID PRE_POPULATE_PATRON_GROUP_ID = UUID.fromString("54e17c4c-e315-4d20-8879-efc694dea1ce");
 
   private static final String PRE_POPULATED_TRACKING1_ID = "tracking1";
   private static final String PRE_POPULATED_TRACKING2_ID = "tracking2";
   private static final String NEW_TRANSACTION_TRACKING_ID = "tracking99";
   private static final String PRE_POPULATED_CENTRAL_CODE = "d2ir";
-
-  private static final String PATRON_HOLD_OPERATION = "patronhold";
-  private static final String ITEM_SHIPPED_OPERATION = "itemshipped";
-  private static final String RECALL_REQUEST_PATH = "/inn-reach/d2ir/circ/recall/{trackingId}/{centralCode}";
-  private static final String LOCAL_HOLD_OPERATION = "localhold";
-
-  private static final String CANCEL_ITEM_HOLD_PATH = "/inn-reach/d2ir/circ/cancelitemhold/{trackingId}/{centralCode}";
-  private static final String ITEM_RECEIVED_PATH = "/inn-reach/d2ir/circ/itemreceived/{trackingId}/{centralCode}";
-
-  private static final String UNEXPECTED_TRANSACTION_STATE = "Unexpected transaction state: ";
-
-  private static final UUID NEW_LOAN_ID = UUID.fromString("dc02b484-4217-4207-8b2c-6e7f092b7057");
-  private static final String PRE_POPULATED_INSTANCE_ID = "76834d5a-08e8-45ea-84ca-4d9b10aa341c";
-  private static final String PRE_POPULATED_HOLDINGS_RECORD_ID = "76834d5a-08e8-45ea-84ca-4d9b10aa342c";
-  private static final String PRE_POPULATED_ITEM_ID = "9a326225-6530-41cc-9399-a61987bfab3c";
-  private static final String PRE_POPULATED_REQUESTER_ID = "f75ffab1-2e2f-43be-b159-3031e2cfc458";
-  private static final UUID PRE_POPULATED_PATRON_ID = UUID.fromString("4154a604-4d5a-4d8e-9160-057fc7b6e6b8");
-  private static final UUID PRE_POPULATED_PATRON2_ID = UUID.fromString("a7853dda-520b-4f7a-a1fb-9383665ea770");
-  private static final UUID PRE_POPULATED_TRANSACTION_ID = UUID.fromString("01228432-0862-4ed6-803a-8ddc8cf1a83d");
-  private static final String PRE_POPULATED_PIC_UP_LOC_CODE = "loccode122";
-  private static final String PRE_POPULATED_DISPLAY_NAME = "New York Time";
-  private static final String PRE_POPULATED_PRINT_NAME = "Print name";
-  private static final String PRE_POPULATED_ITEM_AGENCY_CODE = "211";
-  private static final UUID PRE_POPULATED_CENTRAL_SERVER_ID = UUID.fromString("0f4fa711-2d6e-457b-a0db-3898d6a23a5f");
-  private static final UUID PRE_POPULATED_LOCATION_ID = UUID.fromString("ebfc7bad-b46d-4b30-9cf4-8d37eddd5adb");
-  private static final Integer PRE_POPULATED_CENTRAL_ITEM_TYPE = 32;
-  private static final UUID PICK_IP_SERVICE_POINT = UUID.fromString("d08b7bbe-a978-4db8-b5af-a80556254a99");
-  private static final UUID PRE_POPULATE_SERVICE_ID = UUID.fromString("74a215e6-e3a1-475d-b7d6-f23b3a5d3c47");
-  private static final UUID PRE_POPULATE_PATRON_GROUP_ID = UUID.fromString("8534295a-e031-4738-a952-f7db900df8c0");
-
   private static final String PRE_POPULATED_LOCAL_AGENCY_CODE1 = "q1w2e";
   private static final String PRE_POPULATED_LOCAL_AGENCY_CODE2 = "w2e3r";
   private static final String PRE_POPULATED_ANOTHER_LOCAL_AGENCY_CODE1 = "g91ub";
-  private static final Integer PRE_POPULATED_CENTRAL_PATRON_TYPE = 122;
-  private static final Integer PRE_POPULATED_TRANSACTION_TIME = 1324334;
+  private static final Integer PRE_POPULATED_CENTRAL_PATRON_TYPE = 1;
+  private static final String CENTRAL_PATRON_NAME = "Atreides, Paul";
 
   @Autowired
   private TestRestTemplate testRestTemplate;
@@ -171,22 +152,12 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
   @MockBean
   private UserService userService;
   @MockBean
-  private CentralServerService centralServerService;
-  @MockBean
-  private PatronTypeMappingService patronTypeMappingService;
-  @MockBean
   private InventoryService inventoryService;
-  @MockBean
-  private AgencyMappingService agencyMappingService;
-  @MockBean
-  private ItemTypeMappingService itemTypeMappingService;
   @MockBean
   private InstanceService instanceService;
   @MockBean
-  private CentralServerRepository centralServerRepository;
+  private PatronHoldService patronHoldService;
 
-  @Autowired
-  private PatronInfoService patronInfoService;
   @Autowired
   private InnReachTransactionRepository transactionRepository;
   @Autowired
@@ -198,28 +169,23 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
   ArgumentCaptor<RequestDTO> requestDtoCaptor;
 
   @Test
-  void processCreatePatronHoldCirculationRequest_and_createNewPatronHold() {
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql",
+    "classpath:db/patron-type-mapping/pre-populate-patron-type-mapping.sql",
+    "classpath:db/agency-loc-mapping/pre-populate-agency-location-mapping.sql",
+    "classpath:db/item-type-mapping/pre-populate-item-type-mapping.sql"
+  })
+  void processPatronHoldCirculationRequest_createNewPatronHold() {
     var transactionHoldDTO = createTransactionHoldDTO();
     var user = populateUser();
-    var patronId = UUIDEncoder.decode(transactionHoldDTO.getPatronId());
-    var savedTransaction = new InnReachTransaction();
-    savedTransaction.setTrackingId(NEW_TRANSACTION_TRACKING_ID);
-    savedTransaction.setCentralServerCode(PRE_POPULATED_CENTRAL_CODE);
-    var centralServerDTO = new CentralServerDTO();
 
-    when(userService.getUserById(patronId)).thenReturn(Optional.of(user));
-    when(centralServerService.getCentralServerByCentralCode(PRE_POPULATED_CENTRAL_CODE)).thenReturn(centralServerDTO);
-    when(patronTypeMappingService.getCentralPatronType(centralServerDTO.getId(), user.getPatronGroupId()))
-      .thenReturn(Optional.of(PRE_POPULATED_CENTRAL_PATRON_TYPE));
-    when(inventoryService.getHridSettings()).thenReturn(new HridSettingsClient.HridSettings());
-    when(centralServerService.getCentralServerByCentralCode(savedTransaction.getCentralServerCode())).thenReturn(new CentralServerDTO());
-    when(agencyMappingService.getLocationIdByAgencyCode(PRE_POPULATED_CENTRAL_SERVER_ID, PRE_POPULATED_ITEM_AGENCY_CODE)).thenReturn(PRE_POPULATED_LOCATION_ID);
-    when(itemTypeMappingService.getMappingByCentralType(PRE_POPULATED_CENTRAL_SERVER_ID, PRE_POPULATED_CENTRAL_ITEM_TYPE)).thenReturn(new ItemTypeMappingDTO());
-    when(instanceService.create(new InventoryInstanceDTO())).thenReturn(new InventoryInstanceDTO());
+    when(userService.getUserById(any())).thenReturn(Optional.of(user));
 
     var responseEntity = testRestTemplate.postForEntity(
-      "/inn-reach/d2ir/circ/{circulationOperationName}/{trackingId}/{centralCode}",
-      new HttpEntity<>(transactionHoldDTO, headers), InnReachResponseDTO.class, PATRON_HOLD_OPERATION, "tracking99", PRE_POPULATED_CENTRAL_CODE);
+      CIRCULATION_OPERATION_ENDPOINT,
+      new HttpEntity<>(transactionHoldDTO, headers), InnReachResponseDTO.class,
+      PATRON_HOLD_OPERATION, NEW_TRANSACTION_TRACKING_ID, PRE_POPULATED_CENTRAL_CODE);
 
     assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
 
@@ -230,44 +196,36 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     assertEquals(0, responseBody.getErrors().size());
     assertEquals(InnReachResponse.OK_STATUS, responseBody.getStatus());
 
-    var innReachTransaction = repository.findByTrackingIdAndCentralServerCode("tracking99", PRE_POPULATED_CENTRAL_CODE);
+    var innReachTransaction = repository.findByTrackingIdAndCentralServerCode(
+      NEW_TRANSACTION_TRACKING_ID, PRE_POPULATED_CENTRAL_CODE).orElse(null);
 
-    assertTrue(innReachTransaction.isPresent());
-    assertNotNull(innReachTransaction.get().getHold());
-    assertEquals("Atreides, Paul", innReachTransaction.get().getHold().getPatronName());
-    assertEquals(PRE_POPULATED_CENTRAL_PATRON_TYPE, innReachTransaction.get().getHold().getCentralPatronType());
+    assertNotNull(innReachTransaction);
+    assertNotNull(innReachTransaction.getHold());
+    assertEquals(CENTRAL_PATRON_NAME, innReachTransaction.getHold().getPatronName());
+    assertEquals(PRE_POPULATED_CENTRAL_PATRON_TYPE, innReachTransaction.getHold().getCentralPatronType());
   }
 
   @Test
   @Sql(scripts = {
     "classpath:db/central-server/pre-populate-central-server.sql",
-    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql",
+    "classpath:db/patron-type-mapping/pre-populate-patron-type-mapping.sql",
+    "classpath:db/agency-loc-mapping/pre-populate-agency-location-mapping.sql",
+    "classpath:db/item-type-mapping/pre-populate-item-type-mapping.sql"
   })
-  void processCreatePatronHoldCirculationRequest_and_updateExitingPatronHold() {
-    var transactionHoldDTO = createTransactionHoldDTO();
-    var user = new User();
-    var personal = new User.Personal();
-    personal.setFirstName("Paul");
-    personal.setLastName("Atreides");
-    user.setPersonal(personal);
-    var patronId = UUIDEncoder.decode(transactionHoldDTO.getPatronId());
-    var savedTransaction = createTransaction();
-    var centralServerDTO = new CentralServerDTO();
-    transactionRepository.save(savedTransaction);
+  void processPatronHoldCirculationRequest_updateExitingPatronHold() {
+    var existing = transactionRepository.findByTrackingIdAndCentralServerCode(
+      PRE_POPULATED_TRACKING1_ID, PRE_POPULATED_CENTRAL_CODE).get();
+    var transactionHoldDTO = transactionHoldMapper.toPatronHoldDTO((TransactionPatronHold) existing.getHold());
+    var user = populateUser();
 
-    when(userService.getUserById(patronId)).thenReturn(Optional.of(user));
-    when(centralServerService.getCentralServerByCentralCode(PRE_POPULATED_CENTRAL_CODE)).thenReturn(centralServerDTO);
-    when(patronTypeMappingService.getCentralPatronType(centralServerDTO.getId(), user.getPatronGroupId()))
-      .thenReturn(Optional.of(PRE_POPULATED_CENTRAL_PATRON_TYPE));
+    when(userService.getUserById(any())).thenReturn(Optional.of(user));
     when(inventoryService.getHridSettings()).thenReturn(new HridSettingsClient.HridSettings());
-    when(centralServerService.getCentralServerByCentralCode(savedTransaction.getCentralServerCode())).thenReturn(new CentralServerDTO());
-    when(agencyMappingService.getLocationIdByAgencyCode(PRE_POPULATED_CENTRAL_SERVER_ID, PRE_POPULATED_ITEM_AGENCY_CODE)).thenReturn(PRE_POPULATED_LOCATION_ID);
-    when(itemTypeMappingService.getMappingByCentralType(PRE_POPULATED_CENTRAL_SERVER_ID, PRE_POPULATED_CENTRAL_ITEM_TYPE)).thenReturn(new ItemTypeMappingDTO());
-    when(instanceService.create(new InventoryInstanceDTO())).thenReturn(new InventoryInstanceDTO());
 
     var responseEntity = testRestTemplate.postForEntity(
-      "/inn-reach/d2ir/circ/{circulationOperationName}/{trackingId}/{centralCode}",
-      new HttpEntity<>(transactionHoldDTO, headers), InnReachResponseDTO.class, PATRON_HOLD_OPERATION, PRE_POPULATED_TRACKING1_ID, PRE_POPULATED_CENTRAL_CODE);
+      CIRCULATION_OPERATION_ENDPOINT,
+      new HttpEntity<>(transactionHoldDTO, headers), InnReachResponseDTO.class,
+      PATRON_HOLD_OPERATION, PRE_POPULATED_TRACKING1_ID, PRE_POPULATED_CENTRAL_CODE);
 
     assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
 
@@ -278,7 +236,8 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     assertEquals(0, responseBody.getErrors().size());
     assertEquals(InnReachResponse.OK_STATUS, responseBody.getStatus());
 
-    var updatedTransaction = repository.findByTrackingIdAndCentralServerCode(PRE_POPULATED_TRACKING1_ID, PRE_POPULATED_CENTRAL_CODE);
+    var updatedTransaction = repository.findByTrackingIdAndCentralServerCode(
+      PRE_POPULATED_TRACKING1_ID, PRE_POPULATED_CENTRAL_CODE);
 
     assertTrue(updatedTransaction.isPresent());
 
@@ -287,32 +246,31 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     assertEquals(transactionHoldDTO.getTransactionTime(), innReachTransaction.getHold().getTransactionTime());
     assertEquals(transactionHoldDTO.getPatronId(), innReachTransaction.getHold().getPatronId());
     assertEquals(transactionHoldDTO.getPatronAgencyCode(), innReachTransaction.getHold().getPatronAgencyCode());
-    assertEquals("Atreides, Paul", innReachTransaction.getHold().getPatronName());
+    assertEquals(CENTRAL_PATRON_NAME, innReachTransaction.getHold().getPatronName());
     assertEquals(PRE_POPULATED_CENTRAL_PATRON_TYPE, updatedTransaction.get().getHold().getCentralPatronType());
   }
 
   @Test
   @Sql(scripts = {
     "classpath:db/central-server/pre-populate-central-server.sql",
-    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql",
+    "classpath:db/patron-type-mapping/pre-populate-patron-type-mapping.sql",
+    "classpath:db/agency-loc-mapping/pre-populate-agency-location-mapping.sql",
+    "classpath:db/item-type-mapping/pre-populate-item-type-mapping.sql"
   })
   void processItemShippedCircRequest_updateFolioItem_whenAssociatedItemExists() {
     var user = populateUser();
-    var centralServerDTO = new CentralServerDTO();
-    centralServerDTO.setId(PRE_POPULATED_CENTRAL_SERVER_ID);
+    var item = createInventoryItemDTO();
 
-    when(userService.getUserById(PRE_POPULATED_PATRON_ID)).thenReturn(Optional.of(user));
-    when(centralServerService.getCentralServerByCentralCode(PRE_POPULATED_CENTRAL_CODE)).thenReturn(centralServerDTO);
-    when(patronTypeMappingService.getCentralPatronType(PRE_POPULATED_CENTRAL_SERVER_ID, PRE_POPULATE_PATRON_GROUP_ID))
-      .thenReturn(Optional.of(PRE_POPULATED_CENTRAL_PATRON_TYPE));
-    when(itemService.find(any())).thenReturn(Optional.of(InventoryItemDTO.builder().build()));
-    when(itemService.findItemByBarcode(any())).thenReturn(Optional.of(InventoryItemDTO.builder().build()));
-    when(itemService.changeAndUpdate(any(), any())).thenReturn(Optional.of(InventoryItemDTO.builder().build()));
+    when(userService.getUserById(any())).thenReturn(Optional.of(user));
+    when(itemService.find(any())).thenReturn(Optional.of(item));
+    when(itemService.findItemByBarcode(any())).thenReturn(Optional.of(item));
+    when(itemService.changeAndUpdate(any(), any())).thenReturn(Optional.of(item));
 
     var itemShippedDTO = createItemShippedDTO();
 
     var responseEntity = testRestTemplate.exchange(
-      "/inn-reach/d2ir/circ/{circulationOperationName}/{trackingId}/{centralCode}", HttpMethod.PUT,
+      CIRCULATION_OPERATION_ENDPOINT, HttpMethod.PUT,
       new HttpEntity<>(itemShippedDTO, headers), InnReachResponseDTO.class,
       ITEM_SHIPPED_OPERATION, PRE_POPULATED_TRACKING1_ID, PRE_POPULATED_CENTRAL_CODE);
 
@@ -322,7 +280,6 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
 
     assertNotNull(responseEntityBody);
     assertEquals("ok", responseEntityBody.getStatus());
-
   }
 
   @Test
@@ -331,13 +288,13 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
   })
   void processItemShippedCircRequest_returnFailedStatus_whenAssociatedItemDoesNotExist() {
-    when(itemService.findItemByBarcode(any())).thenReturn(Optional.of(InventoryItemDTO.builder().build()));
+    when(itemService.findItemByBarcode(any())).thenReturn(Optional.of(createInventoryItemDTO()));
     when(itemService.changeAndUpdate(any(), any(), any())).thenThrow(new IllegalArgumentException("Not found"));
 
     var transactionHoldDTO = createTransactionHoldDTO();
 
     var responseEntity = testRestTemplate.exchange(
-      "/inn-reach/d2ir/circ/{circulationOperationName}/{trackingId}/{centralCode}", HttpMethod.PUT,
+      CIRCULATION_OPERATION_ENDPOINT, HttpMethod.PUT,
       new HttpEntity<>(transactionHoldDTO, headers), InnReachResponseDTO.class,
       ITEM_SHIPPED_OPERATION, PRE_POPULATED_TRACKING1_ID, PRE_POPULATED_CENTRAL_CODE);
 
@@ -711,30 +668,17 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
   @Sql(scripts = {
     "classpath:db/inn-reach-recall-user/pre-populate-inn-reach-recall-user.sql",
     "classpath:db/central-server/pre-populate-central-server-with-recall-user.sql",
-    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql",
+    "classpath:db/patron-type-mapping/pre-populate-patron-type-mapping.sql"
   })
-  @Sql(scripts = {
-    "classpath:db/inn-reach-recall-user/clear-inn-reach-recall-user.sql"},
-    executionPhase = AFTER_TEST_METHOD
-  )
   void processRecallRequest_whenItemIsOnLoanToThePatron() {
     var recallDTO = createRecallDTO();
-    CentralServer centralServer = new CentralServer();
-    InnReachRecallUser innReachUser = new InnReachRecallUser();
-    innReachUser.setUserId(UUID.fromString(PRE_POPULATED_REQUESTER_ID));
-    centralServer.setInnReachRecallUser(innReachUser);
     var user = populateUser();
-    var centralServerDTO = new CentralServerDTO();
-    centralServerDTO.setId(PRE_POPULATED_CENTRAL_SERVER_ID);
 
     when(userService.getUserById(PRE_POPULATED_PATRON_ID)).thenReturn(Optional.of(user));
-    when(centralServerService.getCentralServerByCentralCode(PRE_POPULATED_CENTRAL_CODE)).thenReturn(centralServerDTO);
-    when(patronTypeMappingService.getCentralPatronType(PRE_POPULATED_CENTRAL_SERVER_ID, PRE_POPULATE_PATRON_GROUP_ID))
-      .thenReturn(Optional.of(PRE_POPULATED_CENTRAL_PATRON_TYPE));
     when(circulationClient.findRequest(any())).thenReturn(Optional.of(new RequestDTO()));
     when(circulationClient.sendRequest(requestDtoCaptor.capture())).thenReturn(new RequestDTO());
-    when(centralServerRepository.fetchOneByCentralCode(PRE_POPULATED_CENTRAL_CODE)).thenReturn(Optional.of(centralServer));
-    when(inventoryService.findDefaultServicePointIdForUser(UUID.fromString(PRE_POPULATED_REQUESTER_ID)))
+    when(inventoryService.findDefaultServicePointIdForUser(PRE_POPULATED_REQUESTER_ID))
       .thenReturn(Optional.of(PICK_IP_SERVICE_POINT));
 
     var responseEntity = testRestTemplate.exchange(
@@ -753,28 +697,24 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
 
     RequestDTO requestDTO = requestDtoCaptor.getValue();
     assertEquals(RequestDTO.RequestLevel.ITEM.getName(), requestDTO.getRequestLevel());
-    assertEquals(PRE_POPULATED_INSTANCE_ID, requestDTO.getInstanceId().toString());
-    assertEquals(PRE_POPULATED_HOLDINGS_RECORD_ID, requestDTO.getHoldingsRecordId().toString());
-    assertEquals(PRE_POPULATED_ITEM_ID, requestDTO.getItemId().toString());
-    assertEquals(PRE_POPULATED_REQUESTER_ID, requestDTO.getRequesterId().toString());
+    assertEquals(PRE_POPULATED_INSTANCE_ID, requestDTO.getInstanceId());
+    assertEquals(PRE_POPULATED_HOLDINGS_RECORD_ID, requestDTO.getHoldingsRecordId());
+    assertEquals(PRE_POPULATED_ITEM_ID, requestDTO.getItemId());
+    assertEquals(PRE_POPULATED_REQUESTER_ID, requestDTO.getRequesterId());
   }
 
   @Test
   @Sql(scripts = {
     "classpath:db/central-server/pre-populate-central-server.sql",
-    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql",
+    "classpath:db/patron-type-mapping/pre-populate-patron-type-mapping.sql"
   })
   void processRecallRequest_whenItemIsOnTheHoldShelf() {
     var requestDTO = new RequestDTO();
     requestDTO.setStatus(RequestDTO.RequestStatus.OPEN_AWAITING_PICKUP);
     var user = populateUser();
-    var centralServerDTO = new CentralServerDTO();
-    centralServerDTO.setId(PRE_POPULATED_CENTRAL_SERVER_ID);
 
     when(userService.getUserById(PRE_POPULATED_PATRON_ID)).thenReturn(Optional.of(user));
-    when(centralServerService.getCentralServerByCentralCode(PRE_POPULATED_CENTRAL_CODE)).thenReturn(centralServerDTO);
-    when(patronTypeMappingService.getCentralPatronType(PRE_POPULATED_CENTRAL_SERVER_ID, PRE_POPULATE_PATRON_GROUP_ID))
-      .thenReturn(Optional.of(PRE_POPULATED_CENTRAL_PATRON_TYPE));
     when(circulationClient.findRequest(any())).thenReturn(Optional.of(new RequestDTO()));
     when(circulationClient.sendRequest(requestDtoCaptor.capture())).thenReturn(new RequestDTO());
     when(circulationClient.findRequest(any())).thenReturn(Optional.of(requestDTO));
@@ -806,19 +746,15 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
   @Test
   @Sql(scripts = {
     "classpath:db/central-server/pre-populate-central-server.sql",
-    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql",
+    "classpath:db/patron-type-mapping/pre-populate-patron-type-mapping.sql"
   })
   void processRecallRequest_whenBadRequest() {
     var requestDTO = new RequestDTO();
     requestDTO.setStatus(RequestDTO.RequestStatus.OPEN_AWAITING_PICKUP);
     var user = populateUser();
-    var centralServerDTO = new CentralServerDTO();
-    centralServerDTO.setId(PRE_POPULATED_CENTRAL_SERVER_ID);
 
     when(userService.getUserById(PRE_POPULATED_PATRON_ID)).thenReturn(Optional.of(user));
-    when(centralServerService.getCentralServerByCentralCode(PRE_POPULATED_CENTRAL_CODE)).thenReturn(centralServerDTO);
-    when(patronTypeMappingService.getCentralPatronType(PRE_POPULATED_CENTRAL_SERVER_ID, PRE_POPULATE_PATRON_GROUP_ID))
-      .thenReturn(Optional.of(PRE_POPULATED_CENTRAL_PATRON_TYPE));
     when(circulationClient.sendRequest(requestDtoCaptor.capture())).thenReturn(new RequestDTO());
     when(circulationClient.findRequest(any())).thenReturn(Optional.of(requestDTO));
     doThrow(new RuntimeException("Test exception.")).when(requestService).cancelRequest(any(), any());
@@ -842,17 +778,13 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
   @Test
   @Sql(scripts = {
     "classpath:db/central-server/pre-populate-central-server.sql",
-    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql",
+    "classpath:db/patron-type-mapping/pre-populate-patron-type-mapping.sql"
   })
   void processRecallRequest_whenRecallUserIsNotSet() {
     var user = populateUser();
-    var centralServerDTO = new CentralServerDTO();
-    centralServerDTO.setId(PRE_POPULATED_CENTRAL_SERVER_ID);
 
     when(userService.getUserById(PRE_POPULATED_PATRON_ID)).thenReturn(Optional.of(user));
-    when(centralServerService.getCentralServerByCentralCode(PRE_POPULATED_CENTRAL_CODE)).thenReturn(centralServerDTO);
-    when(patronTypeMappingService.getCentralPatronType(PRE_POPULATED_CENTRAL_SERVER_ID, PRE_POPULATE_PATRON_GROUP_ID))
-      .thenReturn(Optional.of(PRE_POPULATED_CENTRAL_PATRON_TYPE));
     when(circulationClient.findRequest(any())).thenReturn(Optional.of(new RequestDTO()));
     when(circulationClient.sendRequest(requestDtoCaptor.capture())).thenReturn(new RequestDTO());
 
@@ -1167,32 +1099,11 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     verify(circulationClient).claimItemReturned(any(), argThat(req -> req.getItemClaimedReturnedDateTime() != null));
   }
 
-  private InnReachTransaction createTransaction() {
-    var createTransaction = new InnReachTransaction();
-    createTransaction.setTrackingId(NEW_TRANSACTION_TRACKING_ID);
-    createTransaction.setId(PRE_POPULATED_TRANSACTION_ID);
-    createTransaction.setCentralServerCode(PRE_POPULATED_CENTRAL_CODE);
-    createTransaction.setState(PATRON_HOLD);
-    createTransaction.setType(PATRON);
-    var transactionHold = new TransactionPatronHold();
-    transactionHold.setTransactionTime(PRE_POPULATED_TRANSACTION_TIME);
-    var pickupLocation = new TransactionPickupLocation();
-    pickupLocation.setPickupLocCode(PRE_POPULATED_PIC_UP_LOC_CODE);
-    pickupLocation.setDisplayName(PRE_POPULATED_DISPLAY_NAME);
-    pickupLocation.setPrintName(PRE_POPULATED_PRINT_NAME);
-    transactionHold.setPickupLocation(pickupLocation);
-    transactionHold.setPatronAgencyCode("age");
-    transactionHold.setItemAgencyCode("item");
-    transactionHold.setItemId("item99");
-    transactionHold.setCentralItemType(124);
-    transactionHold.setCentralPatronType(PRE_POPULATED_CENTRAL_PATRON_TYPE);
-    createTransaction.setHold(transactionHold);
-    return createTransaction;
-  }
-
   private User populateUser() {
     var user = new User();
     user.setId(PRE_POPULATED_PATRON_ID);
+    user.setActive(true);
+    user.setUsername("test");
     user.setPatronGroupId(PRE_POPULATE_PATRON_GROUP_ID);
     var personal = new User.Personal();
     personal.setPreferredFirstName("Paul");
