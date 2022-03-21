@@ -36,7 +36,7 @@ import static org.folio.innreach.dto.TransactionTypeEnum.ITEM;
 import static org.folio.innreach.dto.TransactionTypeEnum.LOCAL;
 import static org.folio.innreach.dto.TransactionTypeEnum.PATRON;
 import static org.folio.innreach.fixture.InnReachTransactionFixture.createInnReachTransaction;
-import static org.folio.innreach.fixture.InventoryItemFixture.createInventoryItemDTO;
+import static org.folio.innreach.fixture.InventoryFixture.createInventoryItemDTO;
 import static org.folio.innreach.fixture.RequestFixture.createRequestDTO;
 import static org.folio.innreach.fixture.TestUtil.circHeaders;
 import static org.folio.innreach.fixture.TestUtil.deserializeFromJsonFile;

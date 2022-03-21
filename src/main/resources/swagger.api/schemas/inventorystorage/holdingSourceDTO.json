@@ -1,0 +1,27 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "description": "A holdings records source",
+  "type": "object",
+  "properties": {
+    "id": {
+      "description": "The unique ID of the holdings records source; UUID",
+      "type": "string",
+      "format": "UUID"
+    },
+    "name": {
+      "type": "string",
+      "description": "Name of the holdings records source"
+    },
+    "source": {
+      "type": "string",
+      "enum": [
+        "folio",
+        "local"
+      ],
+      "description": "The holdings records source"
+    }
+  },
+  "required": [
+    "name"
+  ]
+}

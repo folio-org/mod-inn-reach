@@ -11,12 +11,20 @@ import org.apache.commons.lang3.RandomStringUtils;
 import org.jeasy.random.EasyRandom;
 import org.jeasy.random.EasyRandomParameters;
 
+import org.folio.innreach.client.HridSettingsClient;
+import org.folio.innreach.client.HridSettingsClient.HridSettings;
+import org.folio.innreach.client.InstanceContributorTypeClient;
+import org.folio.innreach.client.InstanceContributorTypeClient.NameType;
+import org.folio.innreach.client.InstanceTypeClient;
+import org.folio.innreach.client.InstanceTypeClient.InstanceType;
+import org.folio.innreach.domain.dto.folio.inventory.InventoryInstanceDTO;
 import org.folio.innreach.domain.dto.folio.inventory.InventoryItemDTO;
 import org.folio.innreach.domain.dto.folio.inventory.InventoryItemStatus;
 import org.folio.innreach.domain.entity.base.AuditableUser;
+import org.folio.innreach.dto.HoldingSourceDTO;
 
 @UtilityClass
-public class InventoryItemFixture {
+public class InventoryFixture {
 
   private static final EasyRandom itemRandom;
 
@@ -48,4 +56,25 @@ public class InventoryItemFixture {
   public static InventoryItemDTO createInventoryItemDTO(){
     return itemRandom.nextObject(InventoryItemDTO.class);
   }
+
+  public static InventoryInstanceDTO createInventoryInstance() {
+    return itemRandom.nextObject(InventoryInstanceDTO.class);
+  }
+
+  public static HridSettings createHridSettings() {
+    return itemRandom.nextObject(HridSettings.class);
+  }
+
+  public static InstanceType createInstanceType() {
+    return itemRandom.nextObject(InstanceType.class);
+  }
+
+  public static NameType createContributorNameType() {
+    return itemRandom.nextObject(NameType.class);
+  }
+
+  public static HoldingSourceDTO createHoldingSource() {
+    return itemRandom.nextObject(HoldingSourceDTO.class);
+  }
+
 }
