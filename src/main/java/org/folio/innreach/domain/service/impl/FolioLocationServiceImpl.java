@@ -16,13 +16,13 @@ import org.folio.innreach.domain.dto.folio.inventorystorage.LocationDTO;
 @RequiredArgsConstructor
 public class FolioLocationServiceImpl implements FolioLocationService {
 
-  private static final String LOCATION_LIBRARY_MAPPING_CACHE = "folioLocationLibraryMappings";
+  private static final String LOCATION_LIBRARY_MAPPING_CACHE = "location-libraries";
   private static final int FETCH_LIMIT = 2000;
 
   private final LocationsClient locationsClient;
 
-  @Cacheable(value = LOCATION_LIBRARY_MAPPING_CACHE)
   @Override
+  @Cacheable(value = LOCATION_LIBRARY_MAPPING_CACHE, key = "@folioExecutionContext.tenantId")
   public Map<UUID, UUID> getLocationLibraryMappings() {
     return locationsClient.getLocations(FETCH_LIMIT).getResult().stream()
       .collect(toMap(LocationDTO::getId, LocationDTO::getLibraryId));

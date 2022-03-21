@@ -35,6 +35,7 @@ import org.folio.innreach.domain.service.UpdateTemplate;
 import org.folio.innreach.domain.service.UserService;
 import org.folio.innreach.dto.CentralServerDTO;
 import org.folio.innreach.dto.Holding;
+import org.folio.innreach.dto.HoldingSourceDTO;
 import org.folio.innreach.util.UUIDEncoder;
 
 @Log4j2
@@ -45,6 +46,7 @@ public class PatronHoldServiceImpl implements PatronHoldService {
   public static final String INN_REACH_AUTHOR = "INN-Reach author";
   public static final String INN_REACH_TEMPORARY_RECORD = "INN-Reach temporary record";
   public static final String RECORD_SOURCE = "INN-Reach";
+  public static final String HOLDING_SOURCE = "FOLIO";
 
   private final AgencyMappingService agencyMappingService;
   private final CentralServerService centralServerService;
@@ -181,11 +183,14 @@ public class PatronHoldServiceImpl implements PatronHoldService {
 
     var locationId = agencyMappingService.getLocationIdByAgencyCode(centralServerId, itemAgencyCode);
 
+    var holdingSourceId = getHoldingSourceId();
+
     return new Holding()
       .hrid(holdingHrid)
       .callNumber(hold.getCallNumber())
       .discoverySuppress(true)
-      .permanentLocationId(locationId);
+      .permanentLocationId(locationId)
+      .sourceId(holdingSourceId);
   }
 
   private InventoryItemDTO prepareItem(CentralServerDTO centralServer, InnReachTransaction transaction, TransactionPatronHold hold, HridSettingsClient.HridSettings settings) {
@@ -218,6 +223,12 @@ public class PatronHoldServiceImpl implements PatronHoldService {
     var author = inventoryService.queryContributorTypeByName(INN_REACH_AUTHOR);
 
     return new ContributorDTO(author.getId(), author.getName());
+  }
+
+  private UUID getHoldingSourceId() {
+    return holdingsService.findHoldingSourceByName(HOLDING_SOURCE)
+      .map(HoldingSourceDTO::getId)
+      .orElseThrow(() -> new IllegalArgumentException("Can't find holding source for name: " + HOLDING_SOURCE));
   }
 
   private UpdateTemplate.UpdateOperation<InventoryItemDTO> changeFolioAssociatedItem(String folioItemBarcode, String callNumber) {
