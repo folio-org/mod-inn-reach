@@ -57,6 +57,7 @@ import org.folio.innreach.domain.entity.InnReachTransaction.TransactionState;
 import org.folio.innreach.domain.entity.InnReachTransaction.TransactionType;
 import org.folio.innreach.domain.entity.LocalAgency;
 import org.folio.innreach.domain.entity.TransactionHold;
+import org.folio.innreach.domain.entity.TransactionPatronHold;
 import org.folio.innreach.domain.exception.CirculationException;
 import org.folio.innreach.domain.exception.EntityNotFoundException;
 import org.folio.innreach.domain.service.CentralServerService;
@@ -410,7 +411,34 @@ public class CirculationServiceImpl implements CirculationService {
 
     transaction.setState(FINAL_CHECKIN);
 
+    removeFinalCheckInFieldsFromItem(transaction);
+    removeFinalCheckInFieldsFromHold(transaction);
+
     return success();
+  }
+
+  private void removeFinalCheckInFieldsFromItem(InnReachTransaction transaction) {
+    var itemBarcode = transaction.getHold().getFolioItemBarcode();
+    var itemDTO = itemService.findItemByBarcode(itemBarcode).orElseThrow(
+      () -> new EntityNotFoundException("FOLIO item record is not found for barcode: " + itemBarcode));
+
+    itemDTO.setBarcode(null);
+
+    itemService.update(itemDTO);
+  }
+
+  private void removeFinalCheckInFieldsFromHold(InnReachTransaction transaction) {
+    var patronHold = (TransactionPatronHold) transaction.getHold();
+    patronHold.setPatronId(null);
+    patronHold.setPatronName(null);
+    patronHold.setFolioPatronId(null);
+    patronHold.setFolioPatronBarcode(null);
+    patronHold.setFolioItemId(null);
+    patronHold.setFolioHoldingId(null);
+    patronHold.setFolioInstanceId(null);
+    patronHold.setFolioRequestId(null);
+    patronHold.setFolioLoanId(null);
+    patronHold.setFolioItemBarcode(null);
   }
 
   @Override
