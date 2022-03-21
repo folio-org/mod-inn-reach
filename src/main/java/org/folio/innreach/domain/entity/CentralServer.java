@@ -125,14 +125,13 @@ public class CentralServer extends Auditable implements Identifiable<UUID> {
       "cs.centralServerCode, " +
       "cs.centralServerCredentials.centralServerKey, " +
       "cs.centralServerCredentials.centralServerSecret" +
-    ") FROM CentralServer AS cs ";
+      ") FROM CentralServer AS cs ";
 
   public static final String FETCH_CONNECTION_DETAILS_BY_ID_QUERY = FETCH_CONNECTION_DETAILS_QUERY + FETCH_BY_ID_POSTFIX;
   public static final String FETCH_CONNECTION_DETAILS_BY_CENTRAL_CODE_QUERY = FETCH_CONNECTION_DETAILS_QUERY + FETCH_BY_CENTRAL_CODE_POSTFIX;
 
   public static final String FETCH_RECALL_USER_BY_ID_QUERY_NAME = "CentralServer.fetchRecallUser";
   public static final String FETCH_RECALL_USER_BY_ID_QUERY = "SELECT cs FROM CentralServer AS cs LEFT JOIN FETCH cs.innReachRecallUser " + FETCH_BY_ID_POSTFIX;
-
 
   @Id
   @GeneratedValue(strategy = GenerationType.AUTO)

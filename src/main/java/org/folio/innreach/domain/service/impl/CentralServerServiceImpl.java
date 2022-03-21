@@ -11,6 +11,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.Assert;
 
 import org.folio.innreach.domain.dto.CentralServerConnectionDetailsDTO;
 import org.folio.innreach.domain.entity.CentralServer;
@@ -24,6 +25,7 @@ import org.folio.innreach.dto.CentralServersDTO;
 import org.folio.innreach.external.service.InnReachAuthExternalService;
 import org.folio.innreach.mapper.CentralServerMapper;
 import org.folio.innreach.repository.CentralServerRepository;
+import org.folio.innreach.repository.LocalAgencyRepository;
 import org.folio.spring.data.OffsetRequest;
 
 @RequiredArgsConstructor
@@ -35,6 +37,7 @@ public class CentralServerServiceImpl implements CentralServerService {
   private final CentralServerMapper centralServerMapper;
   private final InnReachAuthExternalService innReachAuthExternalService;
   private final PasswordEncoder passwordEncoder;
+  private final LocalAgencyRepository localAgencyRepository;
 
   @Override
   @Transactional
@@ -51,6 +54,9 @@ public class CentralServerServiceImpl implements CentralServerService {
     }
 
     var createdCentralServer = centralServerRepository.save(centralServer);
+
+    Assert.isTrue(localAgencyRepository.findLibraryIdsAssignedToMultipleAgencies(createdCentralServer.getId()).isEmpty(),
+      "FOLIO library may only be associated with one agency per central server");
 
     return centralServerMapper.mapToCentralServerDTO(createdCentralServer);
   }
@@ -107,7 +113,7 @@ public class CentralServerServiceImpl implements CentralServerService {
     Page<UUID> ids = centralServerRepository.getIds(new OffsetRequest(offset, limit));
 
     var centralServerDTOS = mapItems(centralServerRepository.fetchAllById(ids.getContent()),
-        centralServerMapper::mapToCentralServerDTO);
+      centralServerMapper::mapToCentralServerDTO);
 
     return new CentralServersDTO()
       .centralServers(centralServerDTOS)
@@ -132,6 +138,9 @@ public class CentralServerServiceImpl implements CentralServerService {
     updateLocalAgencies(centralServer, updatedCentralServer);
 
     centralServerRepository.save(centralServer);
+
+    Assert.isTrue(localAgencyRepository.findLibraryIdsAssignedToMultipleAgencies(centralServer.getId()).isEmpty(),
+      "FOLIO library may only be associated with one agency per central server");
 
     return centralServerMapper.mapToCentralServerDTO(centralServer);
   }
@@ -169,7 +178,7 @@ public class CentralServerServiceImpl implements CentralServerService {
   }
 
   private boolean existingCredentialsShouldBeUpdated(LocalServerCredentials localServerCredentials,
-      LocalServerCredentials updatedLocalServerCredentials) {
+                                                     LocalServerCredentials updatedLocalServerCredentials) {
     // LocalServerCredentials need to be re-hashed and re-salted only if they have been updated
     return !localServerCredentials.getLocalServerSecret().equals(updatedLocalServerCredentials.getLocalServerSecret());
   }
