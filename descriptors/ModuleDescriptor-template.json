@@ -442,6 +442,15 @@
           ]
         },
         {
+          "methods": ["POST"],
+          "pathPattern": "/inn-reach/transactions/{id}/patronhold/check-out-item/{servicePointId}",
+          "permissionsRequired": ["inn-reach.d2ir.inn-reach-transaction.item.post"],
+          "modulePermissions": [
+            "circulation.check-out-by-barcode.post",
+            "circulation.loans.item.get"
+          ]
+        },
+        {
           "methods": ["GET"],
           "pathPattern": "/inn-reach/central-servers/{centralServerId}/marc-record-transformation/{inventoryInstanceId}",
           "permissionsRequired": ["inn-reach.marc-record-transformation.item.get"],
