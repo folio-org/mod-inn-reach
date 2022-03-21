@@ -29,7 +29,6 @@ import static org.folio.innreach.util.DateHelper.toInstantTruncatedToSec;
 
 import java.time.Instant;
 import java.util.EnumSet;
-import java.util.Set;
 import java.util.UUID;
 
 import lombok.RequiredArgsConstructor;
@@ -426,7 +425,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
       transaction.setState(BORROWING_SITE_CANCEL);
 
       notifier.reportCancelItemHold(transaction);
-    } else if (Set.of(ITEM_SHIPPED, RECEIVE_UNANNOUNCED, ITEM_RECEIVED).contains(transaction.getState())) {
+    } else if (EnumSet.of(ITEM_SHIPPED, RECEIVE_UNANNOUNCED, ITEM_RECEIVED).contains(transaction.getState())) {
       var item = fetchItemById(transaction.getHold().getFolioItemId());
 
       if (item.getStatus() != InventoryItemStatus.AWAITING_PICKUP) {
