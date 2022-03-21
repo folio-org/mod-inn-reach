@@ -7,6 +7,7 @@ import static org.apache.commons.lang3.StringUtils.defaultIfEmpty;
 import static org.apache.commons.lang3.StringUtils.equalsAny;
 import static org.apache.commons.lang3.StringUtils.isNotEmpty;
 
+import static org.folio.innreach.domain.entity.VisiblePatronFieldConfiguration.VisiblePatronField.USER_CUSTOM_FIELDS;
 import static org.folio.innreach.external.dto.InnReachResponse.Error.ofMessage;
 
 import java.time.OffsetDateTime;
@@ -17,8 +18,6 @@ import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.collections4.CollectionUtils;
-import org.folio.innreach.domain.entity.TransactionHold;
-import org.folio.innreach.domain.service.UserService;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 
@@ -27,11 +26,15 @@ import org.folio.innreach.client.ManualPatronBlocksClient;
 import org.folio.innreach.client.PatronClient;
 import org.folio.innreach.domain.dto.folio.User;
 import org.folio.innreach.domain.dto.folio.patron.PatronDTO;
+import org.folio.innreach.domain.entity.TransactionHold;
+import org.folio.innreach.domain.entity.VisiblePatronFieldConfiguration;
 import org.folio.innreach.domain.service.CentralServerService;
 import org.folio.innreach.domain.service.InnReachTransactionService;
 import org.folio.innreach.domain.service.PatronInfoService;
 import org.folio.innreach.domain.service.PatronTypeMappingService;
 import org.folio.innreach.domain.service.UserCustomFieldMappingService;
+import org.folio.innreach.domain.service.UserService;
+import org.folio.innreach.domain.service.VisiblePatronFieldConfigurationService;
 import org.folio.innreach.dto.LocalAgencyDTO;
 import org.folio.innreach.dto.PatronInfo;
 import org.folio.innreach.dto.PatronInfoResponseDTO;
@@ -45,6 +48,7 @@ import org.folio.innreach.util.UUIDEncoder;
 public class PatronInfoServiceImpl implements PatronInfoService {
 
   public static final String ERROR_REASON = "Unable to verify patron";
+  public static final String QUERY_DELIMITER = "==%1$s";
 
   private final UserService userService;
   private final PatronTypeMappingService patronTypeMappingService;
@@ -55,6 +59,7 @@ public class PatronInfoServiceImpl implements PatronInfoService {
   private final AutomatedPatronBlocksClient automatedPatronBlocksClient;
   private final ManualPatronBlocksClient manualPatronBlocksClient;
   private final InnReachResponseMapper mapper;
+  private final VisiblePatronFieldConfigurationService fieldConfigurationService;
 
   @Override
   public PatronInfoResponseDTO verifyPatron(String centralServerCode, String visiblePatronId,
@@ -64,7 +69,9 @@ public class PatronInfoServiceImpl implements PatronInfoService {
       var centralServer = centralServerService.getCentralServerByCentralCode(centralServerCode);
       var centralServerId = centralServer.getId();
       var localAgencies = emptyIfNull(centralServer.getLocalAgencies());
-      var user = findPatronUser(visiblePatronId, patronName);
+      var fieldConfig = fieldConfigurationService.getByCentralCode(centralServerCode)
+      .orElse(null);
+      var user = findPatronUser(visiblePatronId, patronName, fieldConfig);
 
       var requestAllowed = requestAllowed(user);
       var patronInfo = requestAllowed ? getPatronInfo(centralServerId, localAgencies, user) : null;
@@ -108,14 +115,31 @@ public class PatronInfoServiceImpl implements PatronInfoService {
     return patronInfo;
   }
 
-  private User findPatronUser(String visiblePatronId, String patronName) {
-    var user = userService.getUserByPublicId(visiblePatronId).orElse(null);
+  private User findPatronUser(String visiblePatronId, String patronName, VisiblePatronFieldConfiguration fieldConfig) {
+    var user = fieldConfig == null ? userService.getUserByBarcode(visiblePatronId).orElse(null) :
+      userService.getUserByQuery(constructPublicIdQuery(fieldConfig, visiblePatronId)).orElse(null);
 
     Assert.isTrue(user != null, "Patron is not found by visiblePatronId: " + visiblePatronId);
     Assert.isTrue(user.isActive(), "Patron is not active");
     Assert.isTrue(matchName(user, patronName), "Patron is not found by name: " + patronName);
 
     return user;
+  }
+
+  private String constructPublicIdQuery(VisiblePatronFieldConfiguration fieldConfig, String visiblePatronId) {
+    var fields = fieldConfig.getFields();
+    var checkCustomFields = fields.remove(USER_CUSTOM_FIELDS);
+    var fieldsString = fields.stream().map(VisiblePatronFieldConfiguration.VisiblePatronField::getValue)
+      .collect(Collectors.toList());
+    if (checkCustomFields) {
+      fieldsString.addAll(
+        fieldConfig.getUserCustomFields().stream().map(field -> "customFields." + field).collect(Collectors.toList()));
+    }
+
+    var query = String.join(QUERY_DELIMITER + " or ", fieldsString);
+    query += QUERY_DELIMITER;
+
+    return String.format(query, visiblePatronId);
   }
 
   private boolean requestAllowed(User user) {
