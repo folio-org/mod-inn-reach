@@ -19,7 +19,7 @@ import org.folio.innreach.dto.HoldingSourceDTO;
 @RequiredArgsConstructor
 public class HoldingsServiceImpl implements HoldingsService {
 
-  private static final String HOLDING_SOURCE_CACHE = "holding-source-cache";
+  private static final String HOLDING_SOURCE_CACHE = "holding-source";
 
   private final HoldingsStorageClient holdingsStorageClient;
   private final HoldingSourcesClient holdingSourcesClient;
@@ -41,7 +41,7 @@ public class HoldingsServiceImpl implements HoldingsService {
   }
 
   @Override
-  @Cacheable(cacheNames = HOLDING_SOURCE_CACHE)
+  @Cacheable(cacheNames = HOLDING_SOURCE_CACHE, key = "@folioExecutionContext.tenantId + ': ' + #sourceName")
   public Optional<HoldingSourceDTO> findHoldingSourceByName(String sourceName) {
     return getFirstItem(holdingSourcesClient.querySourceByName(sourceName));
   }
