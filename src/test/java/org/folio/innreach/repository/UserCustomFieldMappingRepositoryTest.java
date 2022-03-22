@@ -81,9 +81,9 @@ class UserCustomFieldMappingRepositoryTest extends BaseRepositoryTest {
     var saved = repository.saveAndFlush(newMapping);
 
     assertNotNull(saved);
-    assertEquals(newMapping.getId(), saved.getId());
-    assertEquals(saved.getCustomFieldId(), saved.getCustomFieldId());
-    assertEquals(saved.getConfiguredOptions(), saved.getConfiguredOptions());
+    assertNotNull(saved.getId());
+    assertEquals(newMapping.getCustomFieldId(), saved.getCustomFieldId());
+    assertEquals(newMapping.getConfiguredOptions(), saved.getConfiguredOptions());
   }
 
   @Test

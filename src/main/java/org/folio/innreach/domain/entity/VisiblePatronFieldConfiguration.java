@@ -65,8 +65,8 @@ public class VisiblePatronFieldConfiguration extends Auditable implements Identi
 
   @ElementCollection(fetch = FetchType.LAZY)
   @CollectionTable(
-    name = "visible_patron_user_custom_field_id",
-    joinColumns = @JoinColumn(name = "visible_patron_field_config")
+    name = "visible_patron_user_custom_fields",
+    joinColumns = @JoinColumn(name = "visible_patron_field_config_id")
   )
   @Column(name = "user_custom_field")
   @Fetch(value = SUBSELECT)
