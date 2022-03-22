@@ -19,6 +19,7 @@ import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.collections4.CollectionUtils;
+import org.folio.innreach.dto.LocalAgencyDTO;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 
@@ -69,6 +70,7 @@ public class ContributionValidationServiceImpl implements ContributionValidation
 
   @Override
   public boolean isEligibleForContribution(UUID centralServerId, Instance instance) {
+
     if (!isMARCRecord(instance)) {
       log.info("Source {} is not supported", instance.getSource());
       return false;
@@ -88,17 +90,47 @@ public class ContributionValidationServiceImpl implements ContributionValidation
       return false;
     }
 
+    var centralServer = centralServerService.getCentralServer(centralServerId);
+    var itemsEffectiveLocations = instance.getItems().stream()
+      .map(Item::getEffectiveLocationId)
+      .collect(Collectors.toList());
+    var folioLibraryIds = centralServer.getLocalAgencies().stream()
+      .map(LocalAgencyDTO::getFolioLibraryIds)
+      .collect(Collectors.toList());
+
+    var result = emptyIfNull(folioLibraryIds.stream()
+      .filter(itemsEffectiveLocations::contains)
+      .collect(Collectors.toList()));
+
+    if (result.isEmpty()) {
+      return false;
+    }
+
     return true;
   }
 
   @Override
   public boolean isEligibleForContribution(UUID centralServerId, Item item) {
+
     var statisticalCodeIds = item.getStatisticalCodeIds();
     var holdingStatisticalCodeIds = fetchHoldingStatisticalCodes(item);
 
     if (isExcludedStatisticalCode(centralServerId, statisticalCodeIds) ||
       isExcludedStatisticalCode(centralServerId, holdingStatisticalCodeIds)) {
       log.info("Item has 'do not contribute' suppression status");
+      return false;
+    }
+
+    var centralServer = centralServerService.getCentralServer(centralServerId);
+    var itemEffectiveLocation = item.getEffectiveLocationId();
+    var folioLibraryIds = centralServer.getLocalAgencies().stream()
+      .map(LocalAgencyDTO::getFolioLibraryIds)
+      .collect(Collectors.toList());
+    var result = emptyIfNull(folioLibraryIds.stream()
+      .filter(id -> id.contains(itemEffectiveLocation))
+      .collect(Collectors.toList()));
+
+    if (result.isEmpty()) {
       return false;
     }
 
