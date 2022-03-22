@@ -28,6 +28,6 @@ public interface InnReachTransactionActionService {
 
   void handleCheckInCreation(CheckInDTO checkIn);
 
-  InnReachTransactionDTO cancelPatronHold(UUID transactionId, UUID servicePointId, CancelPatronHoldDTO cancelRequest);
+  InnReachTransactionDTO cancelPatronHold(UUID transactionId, CancelPatronHoldDTO cancelRequest);
 
 }

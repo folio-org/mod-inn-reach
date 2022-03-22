@@ -242,8 +242,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
   }
 
   @Override
-  public InnReachTransactionDTO cancelPatronHold(UUID transactionId, UUID servicePointId,
-      CancelPatronHoldDTO cancelRequest) {
+  public InnReachTransactionDTO cancelPatronHold(UUID transactionId, CancelPatronHoldDTO cancelRequest) {
     var transaction = fetchTransactionOfType(transactionId, PATRON);
 
     var requestId = transaction.getHold().getFolioRequestId();
@@ -410,13 +409,17 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
 
   private void cancelPatronHoldWithOpenRequest(CancelPatronHoldDTO cancelRequest,
       InnReachTransaction transaction) {
-    requestService.cancelRequest(transaction, cancelRequest.getCancellationReasonId(),
-        cancelRequest.getCancellationAdditionalInformation());
-
     if (transaction.getState() != ITEM_SHIPPED) {
       transaction.setState(BORROWING_SITE_CANCEL);
+      transactionRepository.saveAndFlush(transaction);
+
+      requestService.cancelRequest(transaction, cancelRequest.getCancellationReasonId(),
+          cancelRequest.getCancellationAdditionalInformation());
 
       notifier.reportCancelItemHold(transaction);
+    } else {
+      requestService.cancelRequest(transaction, cancelRequest.getCancellationReasonId(),
+          cancelRequest.getCancellationAdditionalInformation());
     }
   }
 

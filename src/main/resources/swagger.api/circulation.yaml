@@ -237,7 +237,7 @@ paths:
       parameters:
         - $ref: 'circulation.yaml#/components/parameters/itemBarcode'
         - $ref: 'circulation.yaml#/components/parameters/servicePointId'
-  /transactions/{id}/patronhold/cancel/{servicePointId}:
+  /transactions/{id}/patronhold/cancel:
     post:
       operationId: cancelPatronHoldTransaction
       description: Cancel patron hold transaction with the reason provided
@@ -261,7 +261,6 @@ paths:
           $ref: "api-common.yaml#/components/responses/trait_response_500"
       parameters:
         - $ref: 'api-common.yaml#/components/parameters/id'
-        - $ref: 'circulation.yaml#/components/parameters/servicePointId'
   /d2ir/circ/verifypatron:
     post:
       operationId: verifyPatron

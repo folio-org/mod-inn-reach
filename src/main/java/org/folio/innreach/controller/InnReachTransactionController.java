@@ -75,11 +75,11 @@ public class InnReachTransactionController implements InnReachTransactionApi {
   }
 
   @Override
-  @PostMapping("/{id}/patronhold/cancel/{servicePointId}")
+  @PostMapping("/{id}/patronhold/cancel")
   public ResponseEntity<InnReachTransactionDTO> cancelPatronHoldTransaction(@PathVariable UUID id,
-      @PathVariable UUID servicePointId, CancelPatronHoldDTO cancelRequest) {
+      CancelPatronHoldDTO cancelRequest) {
 
-    var response = transactionActionService.cancelPatronHold(id, servicePointId, cancelRequest);
+    var response = transactionActionService.cancelPatronHold(id, cancelRequest);
     return ResponseEntity.ok(response);
   }
 
