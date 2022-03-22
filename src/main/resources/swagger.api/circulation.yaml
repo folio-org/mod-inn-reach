@@ -807,8 +807,6 @@ components:
       $ref: schemas/cancelPatronHoldDTO.json
     holdingSourceDTO:
       $ref: schemas/inventorystorage/holdingSourceDTO.json
-    cancelPatronHoldDTO:
-      $ref: schemas/cancelPatronHoldDTO.json
   parameters:
     bibId:
       name: bibId
