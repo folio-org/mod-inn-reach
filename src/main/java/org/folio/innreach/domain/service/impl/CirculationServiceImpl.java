@@ -41,7 +41,6 @@ import javax.persistence.EntityExistsException;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
-import org.folio.innreach.domain.service.PatronInfoService;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -66,6 +65,7 @@ import org.folio.innreach.domain.service.ItemService;
 import org.folio.innreach.domain.service.LoanService;
 import org.folio.innreach.domain.service.MaterialTypeMappingService;
 import org.folio.innreach.domain.service.PatronHoldService;
+import org.folio.innreach.domain.service.PatronInfoService;
 import org.folio.innreach.domain.service.RequestService;
 import org.folio.innreach.dto.BaseCircRequestDTO;
 import org.folio.innreach.dto.CancelRequestDTO;
@@ -294,8 +294,8 @@ public class CirculationServiceImpl implements CirculationService {
   private void createLoan(InnReachTransaction transaction) {
     log.info("Attempting to create a loan");
 
-    var folioPatronId = transaction.getHold().getFolioPatronId();
-    var servicePointId = requestService.getDefaultServicePointIdForPatron(folioPatronId);
+    var request = requestService.findRequest(transaction.getHold().getFolioRequestId());
+    var servicePointId = request.getPickupServicePointId();
     var checkOutResponse = requestService.checkOutItem(transaction, servicePointId);
     var loanId = checkOutResponse.getId();
 
