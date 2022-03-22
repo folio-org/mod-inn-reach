@@ -104,19 +104,8 @@ public class ContributionValidationServiceImpl implements ContributionValidation
       return false;
     }
 
-    var centralServer = centralServerService.getCentralServer(centralServerId);
-    var locationLibraryMappings = folioLocationService.getLocationLibraryMappings();
-    var libId = locationLibraryMappings.get(item.getEffectiveLocationId());
-
-    var folioLibraryIds = centralServer.getLocalAgencies().stream()
-      .map(LocalAgencyDTO::getFolioLibraryIds)
-      .collect(Collectors.toList());
-
-    var result = emptyIfNull(folioLibraryIds.stream()
-      .filter(id -> id.contains(libId))
-      .collect(Collectors.toList()));
-
-    if (result.isEmpty()) {
+    if (!isItemHasAssociatedLibrary(centralServerId, item)) {
+      log.info("Item's location is not associated with INN-Reach local agencies");
       return false;
     }
 
@@ -323,6 +312,14 @@ public class ContributionValidationServiceImpl implements ContributionValidation
       return null;
     }
     return config;
+  }
+
+  private boolean isItemHasAssociatedLibrary(UUID centralServerId, Item item) {
+    var localAgencyLibraryIds = getFolioLibraryIds(centralServerId);
+    var locationLibraryMappings = folioLocationService.getLocationLibraryMappings();
+    var itemLibraryId = locationLibraryMappings.get(item.getEffectiveLocationId());
+
+    return localAgencyLibraryIds.contains(itemLibraryId);
   }
 
 }
