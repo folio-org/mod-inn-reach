@@ -109,6 +109,7 @@ coffee-boots:
       system-user-cache: maximumSize=5
       users-by-id: maximumSize=100,expireAfterAccess=3h
       users-by-name: maximumSize=10,expireAfterAccess=3h
+      location-libraries: maximumSize=2000,expireAfterWrite=5m
 batch:
   jobs:
     contribution:

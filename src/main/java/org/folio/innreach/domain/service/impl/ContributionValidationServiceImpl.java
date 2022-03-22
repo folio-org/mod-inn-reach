@@ -70,7 +70,6 @@ public class ContributionValidationServiceImpl implements ContributionValidation
 
   @Override
   public boolean isEligibleForContribution(UUID centralServerId, Instance instance) {
-
     if (!isMARCRecord(instance)) {
       log.info("Source {} is not supported", instance.getSource());
       return false;
@@ -111,7 +110,6 @@ public class ContributionValidationServiceImpl implements ContributionValidation
 
   @Override
   public boolean isEligibleForContribution(UUID centralServerId, Item item) {
-
     var statisticalCodeIds = item.getStatisticalCodeIds();
     var holdingStatisticalCodeIds = fetchHoldingStatisticalCodes(item);
 

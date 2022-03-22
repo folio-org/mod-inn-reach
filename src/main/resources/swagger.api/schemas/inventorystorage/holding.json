@@ -55,6 +55,11 @@
         "type": "object",
         "$ref": "item.json"
       }
+    },
+    "sourceId": {
+      "description": "(A reference to) the source of a holdings record",
+      "type": "string",
+      "format": "UUID"
     }
   }
 }
