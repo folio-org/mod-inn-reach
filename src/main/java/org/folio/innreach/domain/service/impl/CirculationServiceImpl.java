@@ -28,6 +28,7 @@ import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionTy
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionType.PATRON;
 import static org.folio.innreach.util.DateHelper.toEpochSec;
 import static org.folio.innreach.util.InnReachTransactionUtils.clearCentralPatronInfo;
+import static org.folio.innreach.util.InnReachTransactionUtils.clearPatronAndItemInfo;
 import static org.folio.innreach.util.InnReachTransactionUtils.verifyState;
 
 import java.util.Date;
@@ -57,7 +58,6 @@ import org.folio.innreach.domain.entity.InnReachTransaction.TransactionState;
 import org.folio.innreach.domain.entity.InnReachTransaction.TransactionType;
 import org.folio.innreach.domain.entity.LocalAgency;
 import org.folio.innreach.domain.entity.TransactionHold;
-import org.folio.innreach.domain.entity.TransactionPatronHold;
 import org.folio.innreach.domain.exception.CirculationException;
 import org.folio.innreach.domain.exception.EntityNotFoundException;
 import org.folio.innreach.domain.service.CentralServerService;
@@ -411,34 +411,11 @@ public class CirculationServiceImpl implements CirculationService {
 
     transaction.setState(FINAL_CHECKIN);
 
-    removeFinalCheckInFieldsFromItem(transaction);
-    removeFinalCheckInFieldsFromHold(transaction);
+    removeItemTransactionInfo(transaction.getHold().getFolioItemId())
+      .ifPresent(this::removeHoldingsTransactionInfo);
+    clearPatronAndItemInfo(transaction.getHold());
 
     return success();
-  }
-
-  private void removeFinalCheckInFieldsFromItem(InnReachTransaction transaction) {
-    var itemBarcode = transaction.getHold().getFolioItemBarcode();
-    var itemDTO = itemService.findItemByBarcode(itemBarcode).orElseThrow(
-      () -> new EntityNotFoundException("FOLIO item record is not found for barcode: " + itemBarcode));
-
-    itemDTO.setBarcode(null);
-
-    itemService.update(itemDTO);
-  }
-
-  private void removeFinalCheckInFieldsFromHold(InnReachTransaction transaction) {
-    var patronHold = (TransactionPatronHold) transaction.getHold();
-    patronHold.setPatronId(null);
-    patronHold.setPatronName(null);
-    patronHold.setFolioPatronId(null);
-    patronHold.setFolioPatronBarcode(null);
-    patronHold.setFolioItemId(null);
-    patronHold.setFolioHoldingId(null);
-    patronHold.setFolioInstanceId(null);
-    patronHold.setFolioRequestId(null);
-    patronHold.setFolioLoanId(null);
-    patronHold.setFolioItemBarcode(null);
   }
 
   @Override

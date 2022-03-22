@@ -2,6 +2,7 @@ package org.folio.innreach.util;
 
 import lombok.experimental.UtilityClass;
 import org.apache.commons.lang3.ArrayUtils;
+import org.folio.innreach.domain.entity.TransactionHold;
 import org.springframework.util.Assert;
 
 import org.folio.innreach.domain.entity.InnReachTransaction;
@@ -14,23 +15,22 @@ public class InnReachTransactionUtils {
     Assert.isTrue(ArrayUtils.contains(expectedStates, actualState), "Unexpected transaction state: " + actualState);
   }
 
+  public static void clearPatronAndItemInfo(TransactionHold hold) {
+    hold.setPatronId(null);
+    hold.setPatronName(null);
+    hold.setFolioPatronId(null);
+    hold.setFolioPatronBarcode(null);
+    hold.setFolioItemId(null);
+    hold.setFolioHoldingId(null);
+    hold.setFolioInstanceId(null);
+    hold.setFolioRequestId(null);
+    hold.setFolioLoanId(null);
+    hold.setFolioItemBarcode(null);
+  }
+
   public static void clearCentralPatronInfo(InnReachTransaction transaction) {
     var hold = transaction.getHold();
     hold.setPatronId(null);
     hold.setPatronName(null);
-  }
-
-  public static void clearPatronAndItemInfo(InnReachTransaction transaction) {
-    var itemhold = transaction.getHold();
-    itemhold.setPatronId(null);
-    itemhold.setPatronName(null);
-    itemhold.setFolioPatronId(null);
-    itemhold.setFolioPatronBarcode(null);
-    itemhold.setFolioItemId(null);
-    itemhold.setFolioHoldingId(null);
-    itemhold.setFolioInstanceId(null);
-    itemhold.setFolioRequestId(null);
-    itemhold.setFolioItemBarcode(null);
-    itemhold.setFolioLoanId(null);
   }
 }

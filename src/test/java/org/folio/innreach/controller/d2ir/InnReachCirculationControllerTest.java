@@ -1022,7 +1022,6 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
   })
   void checkTransactionIsInStateItemInTransitOrReturnUncirculated(InnReachTransaction.TransactionState testEnums) {
-    when(itemService.findItemByBarcode(any())).thenReturn(Optional.of(new InventoryItemDTO()));
     var transactionHoldDTO = createTransactionHoldDTO();
     var transactionBefore = fetchPrePopulatedTransaction();
 
@@ -1038,8 +1037,19 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
 
     assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
     assertEquals(FINAL_CHECKIN, transactionAfter.getState());
-    assertNull(transactionAfter.getHold().getPatronId());
-    assertNull(transactionAfter.getHold().getFolioItemBarcode());
+    assertPatronHoldFieldsAreNull((TransactionPatronHold)transactionAfter.getHold());
+  }
+
+  private void assertPatronHoldFieldsAreNull(TransactionPatronHold hold) {
+    assertNull(hold.getPatronId());
+    assertNull(hold.getPatronName());
+    assertNull(hold.getFolioPatronId());
+    assertNull(hold.getFolioPatronBarcode());
+    assertNull(hold.getFolioItemId());
+    assertNull(hold.getFolioHoldingId());
+    assertNull(hold.getFolioInstanceId());
+    assertNull(hold.getFolioLoanId());
+    assertNull(hold.getFolioItemBarcode());
   }
 
   @Test
