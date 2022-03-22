@@ -256,8 +256,8 @@ public class CirculationServiceImpl implements CirculationService {
 
     // the state should be updated before cancelRequest called as the transaction should be in a proper state when
     // kafka event for a request update is consumed after the cancellation
-    transactionRepository.saveAndFlush(transaction);
     transaction.setState(BORROWING_SITE_CANCEL);
+    transactionRepository.saveAndFlush(transaction);
 
     requestService.cancelRequest(transaction, "Request cancelled at borrowing site");
 
