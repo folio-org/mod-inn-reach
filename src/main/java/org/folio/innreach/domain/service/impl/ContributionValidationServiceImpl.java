@@ -63,6 +63,7 @@ public class ContributionValidationServiceImpl implements ContributionValidation
   private final ContributionCriteriaConfigurationService contributionConfigService;
   private final InnReachLocationService innReachLocationService;
   private final InnReachLocationExternalService innReachLocationExternalService;
+  private final FolioLocationService folioLocationService;
 
   private final ItemContributionOptionsConfigurationService itemContributionOptionsConfigurationService;
 
@@ -89,22 +90,6 @@ public class ContributionValidationServiceImpl implements ContributionValidation
       return false;
     }
 
-    var centralServer = centralServerService.getCentralServer(centralServerId);
-    var itemsEffectiveLocations = instance.getItems().stream()
-      .map(Item::getEffectiveLocationId)
-      .collect(Collectors.toList());
-    var folioLibraryIds = centralServer.getLocalAgencies().stream()
-      .map(LocalAgencyDTO::getFolioLibraryIds)
-      .collect(Collectors.toList());
-
-    var result = emptyIfNull(folioLibraryIds.stream()
-      .filter(itemsEffectiveLocations::contains)
-      .collect(Collectors.toList()));
-
-    if (result.isEmpty()) {
-      return false;
-    }
-
     return true;
   }
 
@@ -120,12 +105,15 @@ public class ContributionValidationServiceImpl implements ContributionValidation
     }
 
     var centralServer = centralServerService.getCentralServer(centralServerId);
-    var itemEffectiveLocation = item.getEffectiveLocationId();
+    var locationLibraryMappings = folioLocationService.getLocationLibraryMappings();
+    var libId = locationLibraryMappings.get(item.getEffectiveLocationId());
+
     var folioLibraryIds = centralServer.getLocalAgencies().stream()
       .map(LocalAgencyDTO::getFolioLibraryIds)
       .collect(Collectors.toList());
+
     var result = emptyIfNull(folioLibraryIds.stream()
-      .filter(id -> id.contains(itemEffectiveLocation))
+      .filter(id -> id.contains(libId))
       .collect(Collectors.toList()));
 
     if (result.isEmpty()) {
