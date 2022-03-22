@@ -251,8 +251,10 @@ public class CirculationServiceImpl implements CirculationService {
     if (transaction.getHold().getFolioLoanId() != null) {
       throw new IllegalArgumentException("Requested item is already checked out.");
     }
-    requestService.cancelRequest(transaction, "Request cancelled at borrowing site");
+
     transaction.setState(BORROWING_SITE_CANCEL);
+
+    requestService.cancelRequest(transaction, "Request cancelled at borrowing site");
 
     return success();
   }
