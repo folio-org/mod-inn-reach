@@ -211,7 +211,7 @@ public class CirculationServiceImpl implements CirculationService {
 
   @Override
   public InnReachResponseDTO cancelPatronHold(String trackingId, String centralCode, CancelRequestDTO cancelRequest) {
-    log.info("Cancelling request for transaction: {}", trackingId);
+    log.info("Cancelling Patron Hold transaction: {}", trackingId);
 
     var transaction = getTransactionOfType(trackingId, centralCode, PATRON);
     patronInfoService.populateTransactionPatronInfo(transaction.getHold(), centralCode);
@@ -246,12 +246,17 @@ public class CirculationServiceImpl implements CirculationService {
 
   @Override
   public InnReachResponseDTO cancelItemHold(String trackingId, String centralCode, BaseCircRequestDTO cancelItemDTO) {
+    log.info("Cancelling Item Hold transaction: {}", trackingId);
+
     var transaction = getTransactionOfType(trackingId, centralCode, ITEM);
 
     if (transaction.getHold().getFolioLoanId() != null) {
       throw new IllegalArgumentException("Requested item is already checked out.");
     }
 
+    // the state should be updated before cancelRequest called as the transaction should be in a proper state when
+    // kafka event for a request update is consumed after the cancellation
+    transactionRepository.saveAndFlush(transaction);
     transaction.setState(BORROWING_SITE_CANCEL);
 
     requestService.cancelRequest(transaction, "Request cancelled at borrowing site");
