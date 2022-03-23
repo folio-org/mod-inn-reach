@@ -1212,6 +1212,8 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
 
     var transaction = response.getTransaction();
     assertEquals(savedTransaction.getId(), transaction.getId());
+    assertNull(transaction.getHold().getPatronId());
+    assertNull(transaction.getHold().getPatronName());
 
     var folioCheckOut = response.getFolioCheckOut();
     assertNotNull(folioCheckOut);

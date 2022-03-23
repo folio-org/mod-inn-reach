@@ -215,7 +215,6 @@ public class CirculationServiceImpl implements CirculationService {
 
     removeItemTransactionInfo(itemId)
       .ifPresent(this::removeHoldingsTransactionInfo);
-    var patronHold = (TransactionPatronHold) transaction.getHold();
 
     log.info("Item request successfully cancelled");
 
