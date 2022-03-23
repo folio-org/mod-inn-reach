@@ -27,10 +27,6 @@ public interface RequestService {
 
   void cancelRequest(InnReachTransaction transaction, String reason);
 
-  CheckInResponseDTO checkInItem(InnReachTransaction transaction, UUID servicePointId);
-
-  LoanDTO checkOutItem(InnReachTransaction transaction, UUID servicePointId);
-
   void createRecallRequest(InnReachTransaction transaction, UUID userId);
 
   RequestDTO findRequest(UUID requestId);

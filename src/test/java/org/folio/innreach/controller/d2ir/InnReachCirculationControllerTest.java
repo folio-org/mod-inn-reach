@@ -335,7 +335,7 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
 
     var inOrder = inOrder(transactionRepository, requestService);
 
-    inOrder.verify(transactionRepository).saveAndFlush(argThat(t -> t.getState() == BORROWING_SITE_CANCEL));
+    inOrder.verify(transactionRepository).save(argThat(t -> t.getState() == BORROWING_SITE_CANCEL));
     inOrder.verify(requestService).cancelRequest(any(), eq("Request cancelled at borrowing site"));
   }
 

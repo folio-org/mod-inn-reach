@@ -25,6 +25,7 @@ import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionTy
 import static org.folio.innreach.dto.ItemStatus.NameEnum.AWAITING_PICKUP;
 import static org.folio.innreach.util.DateHelper.toEpochSec;
 import static org.folio.innreach.util.DateHelper.toInstantTruncatedToSec;
+import static org.folio.innreach.util.InnReachTransactionUtils.verifyState;
 
 import java.time.Instant;
 import java.util.EnumSet;
@@ -34,7 +35,6 @@ import java.util.UUID;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
-import org.apache.commons.lang3.ArrayUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
@@ -52,10 +52,10 @@ import org.folio.innreach.domain.service.LoanService;
 import org.folio.innreach.domain.service.PatronHoldService;
 import org.folio.innreach.domain.service.RequestService;
 import org.folio.innreach.dto.CheckInDTO;
-import org.folio.innreach.dto.TransactionCheckOutResponseDTO;
 import org.folio.innreach.dto.LoanStatus;
 import org.folio.innreach.dto.PatronHoldCheckInResponseDTO;
 import org.folio.innreach.dto.StorageLoanDTO;
+import org.folio.innreach.dto.TransactionCheckOutResponseDTO;
 import org.folio.innreach.external.exception.InnReachException;
 import org.folio.innreach.external.service.InnReachExternalService;
 import org.folio.innreach.mapper.InnReachTransactionMapper;
@@ -132,7 +132,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
   @Override
   public TransactionCheckOutResponseDTO checkOutItemHoldItem(String itemBarcode, UUID servicePointId) {
     var transaction = transactionRepository.fetchOneByFolioItemBarcodeAndStates(itemBarcode,
-      EnumSet.of(ITEM_HOLD, TRANSFER))
+        EnumSet.of(ITEM_HOLD, TRANSFER))
       .orElseThrow(() -> new EntityNotFoundException("INN-Reach transaction is not found by itemBarcode: " + itemBarcode));
 
     var hold = (TransactionItemHold) transaction.getHold();
@@ -140,7 +140,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
 
     Assert.isTrue(folioPatronBarcode != null, "folioPatronBarcode is not set");
 
-    var checkOutResponse = requestService.checkOutItem(transaction, servicePointId);
+    var checkOutResponse = loanService.checkOutItem(transaction, servicePointId);
     var callNumber = checkOutResponse.getItem().getCallNumber();
 
     hold.setFolioLoanId(checkOutResponse.getId());
@@ -164,7 +164,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
     Assert.isTrue(hold.getFolioItemId() != null, "folioItemId is not set");
 
     var loan = loanService.findByItemId(folioItemId)
-      .orElse(requestService.checkOutItem(transaction, servicePointId));
+      .orElse(loanService.checkOutItem(transaction, servicePointId));
 
     hold.setFolioLoanId(loan.getId());
     hold.setDueDateTime(toEpochSec(loan.getDueDate()));
@@ -358,7 +358,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
     Assert.isTrue(shippedItemBarcode != null, "shippedItemBarcode is not set");
     Assert.isTrue(folioItemBarcode != null, "folioItemBarcode is not set");
 
-    var checkInResponse = requestService.checkInItem(transaction, servicePointId);
+    var checkInResponse = loanService.checkInItem(transaction, servicePointId);
 
     return new PatronHoldCheckInResponseDTO()
       .transaction(transactionMapper.toDTO(transaction))
@@ -402,11 +402,6 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
       transaction.setState(BORROWING_SITE_CANCEL);
       reportCancelItemHold(transaction);
     }
-  }
-
-  private void verifyState(InnReachTransaction transaction, InnReachTransaction.TransactionState... states) {
-    var state = transaction.getState();
-    Assert.isTrue(ArrayUtils.contains(states, state), "Unexpected transaction state: " + state);
   }
 
   private InnReachTransaction fetchTransactionById(UUID transactionId) {
