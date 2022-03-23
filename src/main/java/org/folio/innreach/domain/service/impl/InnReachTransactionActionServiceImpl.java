@@ -411,7 +411,6 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
       InnReachTransaction transaction) {
     if (transaction.getState() != ITEM_SHIPPED) {
       transaction.setState(BORROWING_SITE_CANCEL);
-      transactionRepository.saveAndFlush(transaction);
 
       requestService.cancelRequest(transaction, cancelRequest.getCancellationReasonId(),
           cancelRequest.getCancellationAdditionalInformation());

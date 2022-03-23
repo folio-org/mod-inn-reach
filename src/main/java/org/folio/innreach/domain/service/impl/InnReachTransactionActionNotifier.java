@@ -16,7 +16,7 @@ import org.folio.innreach.external.service.InnReachExternalService;
 @Log4j2
 @RequiredArgsConstructor
 @Component
-class InnReachTransactionActionNotifier {
+public class InnReachTransactionActionNotifier {
 
   private static final String D2IR_ITEM_RECEIVED_OPERATION = "itemreceived";
   private static final String D2IR_ITEM_SHIPPED_OPERATION = "itemshipped";
@@ -34,7 +34,7 @@ class InnReachTransactionActionNotifier {
 
   private final InnReachExternalService innReachExternalService;
 
-  void reportCheckOut(InnReachTransaction transaction, String localBibId, String itemBarcode) {
+  public void reportCheckOut(InnReachTransaction transaction, String localBibId, String itemBarcode) {
     var payload = new HashMap<>();
     payload.put("localBibId", localBibId);
 
@@ -44,15 +44,15 @@ class InnReachTransactionActionNotifier {
     callD2irCircOperation(D2IR_LOCAL_CHECKOUT, transaction, payload);
   }
 
-  void reportItemReceived(InnReachTransaction transaction) {
+  public void reportItemReceived(InnReachTransaction transaction) {
     callD2irCircOperation(D2IR_ITEM_RECEIVED_OPERATION, transaction, null);
   }
 
-  void reportCancelItemHold(InnReachTransaction transaction) {
+  public void reportCancelItemHold(InnReachTransaction transaction) {
     callD2irCircOperation(D2IR_CANCEL_ITEM_HOLD, transaction, null);
   }
 
-  void reportOwningSiteCancel(InnReachTransaction transaction, String localBibId, String patronName) {
+  public void reportOwningSiteCancel(InnReachTransaction transaction, String localBibId, String patronName) {
     var payload = new HashMap<>();
     payload.put("localBibId", localBibId);
     payload.put("reasonCode", 7);
@@ -60,23 +60,23 @@ class InnReachTransactionActionNotifier {
     callD2irCircOperation(D2IR_OWNING_SITE_CANCEL, transaction, payload);
   }
 
-  void reportRecallRequested(InnReachTransaction transaction, Instant loanDueDate) {
+  public void reportRecallRequested(InnReachTransaction transaction, Instant loanDueDate) {
     var payload = new HashMap<>();
     payload.put("dueDateTime", loanDueDate.getEpochSecond());
     callD2irCircOperation(D2IR_RECALL, transaction, payload);
   }
 
-  void reportBorrowerRenew(InnReachTransaction transaction, Integer loanIntegerDueDate) {
+  public void reportBorrowerRenew(InnReachTransaction transaction, Integer loanIntegerDueDate) {
     var payload = new HashMap<>();
     payload.put("dueDateTime", loanIntegerDueDate);
     callD2irCircOperation(D2IR_BORROWER_RENEW, transaction, payload);
   }
 
-  void reportFinalCheckIn(InnReachTransaction transaction) {
+  public void reportFinalCheckIn(InnReachTransaction transaction) {
     callD2irCircOperation(D2IR_FINAL_CHECK_IN, transaction, null);
   }
 
-  void reportItemShipped(InnReachTransaction transaction, String itemBarcode, String callNumber) {
+  public void reportItemShipped(InnReachTransaction transaction, String itemBarcode, String callNumber) {
     var payload = new HashMap<>();
     payload.put("itemBarcode", itemBarcode);
     payload.put("callNumber", callNumber);
@@ -84,31 +84,31 @@ class InnReachTransactionActionNotifier {
     callD2irCircOperation(D2IR_ITEM_SHIPPED_OPERATION, transaction, payload);
   }
 
-  void reportUnshippedItemReceived(InnReachTransaction transaction) {
+  public void reportUnshippedItemReceived(InnReachTransaction transaction) {
     callD2irCircOperation(D2IR_RECEIVE_UNSHIPPED_OPERATION, transaction, null);
   }
 
-  void reportItemInTransit(InnReachTransaction transaction) {
+  public void reportItemInTransit(InnReachTransaction transaction) {
     callD2irCircOperation(D2IR_IN_TRANSIT, transaction, null);
   }
 
-  void reportTransferRequest(InnReachTransaction transaction, String hrid) {
+  public void reportTransferRequest(InnReachTransaction transaction, String hrid) {
     var payload = new HashMap<>();
     payload.put("newItemId", hrid);
     callD2irCircOperation(D2IR_TRASFER_REQUEST, transaction, payload);
   }
 
-  void reportReturnUncirculated(InnReachTransaction transaction) {
+  public void reportReturnUncirculated(InnReachTransaction transaction) {
     callD2irCircOperation(D2IR_RETURN_UNCIRCULATED, transaction, null);
   }
 
-  void reportClaimsReturned(InnReachTransaction transaction, Integer claimsReturnedDateSec) {
+  public void reportClaimsReturned(InnReachTransaction transaction, Integer claimsReturnedDateSec) {
     var payload = new HashMap<>();
     payload.put("claimsReturnedDate", claimsReturnedDateSec);
     callD2irCircOperation(D2IR_CLAIMS_RETURNED, transaction, payload);
   }
 
-  void callD2irCircOperation(String operation, InnReachTransaction transaction, Map<Object, Object> payload) {
+  private void callD2irCircOperation(String operation, InnReachTransaction transaction, Map<Object, Object> payload) {
     var centralCode = transaction.getCentralServerCode();
     var trackingId = transaction.getTrackingId();
     var requestPath = resolveD2irCircPath(operation, trackingId, centralCode);
@@ -124,7 +124,7 @@ class InnReachTransactionActionNotifier {
     }
   }
 
-  String resolveD2irCircPath(String operation, String trackingId, String centralCode) {
+  private String resolveD2irCircPath(String operation, String trackingId, String centralCode) {
     return String.format("/circ/%s/%s/%s", operation, trackingId, centralCode);
   }
 
