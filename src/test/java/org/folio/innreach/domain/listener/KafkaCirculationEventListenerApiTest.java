@@ -409,6 +409,8 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
 
     var updatedTransaction = transactionRepository.fetchOneById(PRE_POPULATED_ITEM_TRANSACTION_ID).orElse(null);
     assertEquals(CANCEL_REQUEST, updatedTransaction.getState());
+    assertNull(updatedTransaction.getHold().getPatronId());
+    assertNull(updatedTransaction.getHold().getPatronName());
   }
 
   @Test
