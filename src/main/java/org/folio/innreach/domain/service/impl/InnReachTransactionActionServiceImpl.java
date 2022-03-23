@@ -37,6 +37,7 @@ import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.ArrayUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.util.Assert;
 
 import org.folio.innreach.client.InstanceStorageClient;
@@ -77,6 +78,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
   private final ItemService itemService;
   private final InstanceStorageClient instanceStorageClient;
   private final InnReachTransactionActionNotifier notifier;
+  private final TransactionTemplate transactionTemplate;
 
   @Override
   public PatronHoldCheckInResponseDTO checkInPatronHoldItem(UUID transactionId, UUID servicePointId) {
@@ -412,6 +414,8 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
     if (transaction.getState() != ITEM_SHIPPED) {
       transaction.setState(BORROWING_SITE_CANCEL);
 
+      transaction = saveInNewDbTransaction(transaction);
+
       requestService.cancelRequest(transaction, cancelRequest.getCancellationReasonId(),
           cancelRequest.getCancellationAdditionalInformation());
 
@@ -462,6 +466,10 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
   private InventoryItemDTO fetchItemById(UUID itemId) {
     return itemService.find(itemId)
       .orElseThrow(() -> new IllegalArgumentException("Item is not found by id: " + itemId));
+  }
+
+  private InnReachTransaction saveInNewDbTransaction(InnReachTransaction transaction) {
+    return transactionTemplate.execute(status -> transactionRepository.save(transaction));
   }
 
 }
