@@ -328,6 +328,24 @@ class ContributionValidationServiceImplTest {
   }
 
   @Test
+  void testNotEligibleInstanceWhenItemsLocationNotAssociatedWithInnreachLibrary() {
+    when(contributionConfigService.getCriteria(any())).thenReturn(CRITERIA);
+    when(holdingsService.find(any())).thenReturn(Optional.empty());
+    when(folioLocationService.getLocationLibraryMappings()).thenReturn(Map.of(UUID.randomUUID(), UUID.randomUUID()));
+    when(centralServerService.getCentralServer(any()))
+      .thenReturn(new CentralServerDTO().id(UUID.randomUUID()).localAgencies(List.of(
+        new LocalAgencyDTO().id(UUID.randomUUID()).folioLibraryIds(List.of(UUID.randomUUID())))));
+
+    var instance = new Instance();
+    instance.setSource(ELIGIBLE_SOURCE);
+    instance.setItems(List.of(new Item().effectiveLocationId(UUID.randomUUID())));
+
+    var result = service.isEligibleForContribution(UUID.randomUUID(), instance);
+
+    assertFalse(result);
+  }
+
+  @Test
   void testIneligibleInstance_statisticalCodeExcluded() {
     var statisticalCodes = List.of(DO_NOT_CONTRIBUTE_CODE_ID);
 
