@@ -218,32 +218,6 @@ public class RequestServiceImpl implements RequestService {
             () -> log.warn("No request found with id {}", requestId));
   }
 
-  @Override
-  public CheckInResponseDTO checkInItem(InnReachTransaction transaction, UUID servicePointId) {
-    log.info("Processing item check-in for transaction {}", transaction);
-
-    var checkIn = new CheckInRequestDTO()
-      .servicePointId(servicePointId)
-      .itemBarcode(transaction.getHold().getFolioItemBarcode())
-      .checkInDate(new Date());
-
-    return circulationClient.checkInByBarcode(checkIn);
-  }
-
-  @Override
-  public LoanDTO checkOutItem(InnReachTransaction transaction, UUID servicePointId) {
-    log.info("Processing item check-out for transaction {}", transaction);
-
-    var hold = transaction.getHold();
-
-    var checkOut = new CheckOutRequestDTO()
-      .servicePointId(servicePointId)
-      .userBarcode(hold.getFolioPatronBarcode())
-      .itemBarcode(hold.getFolioItemBarcode());
-
-    return circulationClient.checkOutByBarcode(checkOut);
-  }
-
   private void createOwningSiteItemRequest(InnReachTransaction transaction, User patron, UUID servicePointId) {
     var hold = transaction.getHold();
     var item = itemService.getItemByHrId(hold.getItemId());

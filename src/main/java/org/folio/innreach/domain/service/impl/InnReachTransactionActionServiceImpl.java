@@ -26,6 +26,7 @@ import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionTy
 import static org.folio.innreach.dto.ItemStatus.NameEnum.AWAITING_PICKUP;
 import static org.folio.innreach.util.DateHelper.toEpochSec;
 import static org.folio.innreach.util.DateHelper.toInstantTruncatedToSec;
+import static org.folio.innreach.util.InnReachTransactionUtils.verifyState;
 
 import java.time.Instant;
 import java.util.EnumSet;
@@ -33,10 +34,10 @@ import java.util.UUID;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
-
 import org.apache.commons.lang3.ArrayUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.util.Assert;
 
 import org.folio.innreach.client.InstanceStorageClient;
@@ -77,6 +78,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
   private final ItemService itemService;
   private final InstanceStorageClient instanceStorageClient;
   private final InnReachTransactionActionNotifier notifier;
+  private final TransactionTemplate transactionTemplate;
 
   @Override
   public PatronHoldCheckInResponseDTO checkInPatronHoldItem(UUID transactionId, UUID servicePointId) {
@@ -119,7 +121,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
   @Override
   public TransactionCheckOutResponseDTO checkOutItemHoldItem(String itemBarcode, UUID servicePointId) {
     var transaction = transactionRepository.fetchOneByFolioItemBarcodeAndStates(itemBarcode,
-      EnumSet.of(ITEM_HOLD, TRANSFER))
+        EnumSet.of(ITEM_HOLD, TRANSFER))
       .orElseThrow(() -> new EntityNotFoundException("INN-Reach transaction is not found by itemBarcode: " + itemBarcode));
 
     var hold = (TransactionItemHold) transaction.getHold();
@@ -127,7 +129,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
 
     Assert.isTrue(folioPatronBarcode != null, "folioPatronBarcode is not set");
 
-    var checkOutResponse = requestService.checkOutItem(transaction, servicePointId);
+    var checkOutResponse = loanService.checkOutItem(transaction, servicePointId);
     var callNumber = checkOutResponse.getItem().getCallNumber();
 
     hold.setFolioLoanId(checkOutResponse.getId());
@@ -151,7 +153,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
     Assert.isTrue(hold.getFolioItemId() != null, "folioItemId is not set");
 
     var loan = loanService.findByItemId(folioItemId)
-      .orElse(requestService.checkOutItem(transaction, servicePointId));
+      .orElse(loanService.checkOutItem(transaction, servicePointId));
 
     hold.setFolioLoanId(loan.getId());
     hold.setDueDateTime(toEpochSec(loan.getDueDate()));
@@ -361,7 +363,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
     Assert.isTrue(shippedItemBarcode != null, "shippedItemBarcode is not set");
     Assert.isTrue(folioItemBarcode != null, "folioItemBarcode is not set");
 
-    var checkInResponse = requestService.checkInItem(transaction, servicePointId);
+    var checkInResponse = loanService.checkInItem(transaction, servicePointId);
 
     return new PatronHoldCheckInResponseDTO()
       .transaction(transactionMapper.toDTO(transaction))
@@ -411,6 +413,8 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
       InnReachTransaction transaction) {
     if (transaction.getState() != ITEM_SHIPPED) {
       transaction.setState(BORROWING_SITE_CANCEL);
+
+      transaction = saveInNewDbTransaction(transaction);
 
       requestService.cancelRequest(transaction, cancelRequest.getCancellationReasonId(),
           cancelRequest.getCancellationAdditionalInformation());
@@ -462,6 +466,10 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
   private InventoryItemDTO fetchItemById(UUID itemId) {
     return itemService.find(itemId)
       .orElseThrow(() -> new IllegalArgumentException("Item is not found by id: " + itemId));
+  }
+
+  private InnReachTransaction saveInNewDbTransaction(InnReachTransaction transaction) {
+    return transactionTemplate.execute(status -> transactionRepository.save(transaction));
   }
 
 }

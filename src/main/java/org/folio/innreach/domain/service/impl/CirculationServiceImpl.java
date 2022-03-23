@@ -26,13 +26,13 @@ import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionSt
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionType.ITEM;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionType.LOCAL;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionType.PATRON;
+import static org.folio.innreach.util.DateHelper.toEpochSec;
+import static org.folio.innreach.util.InnReachTransactionUtils.verifyState;
 
-import java.time.Instant;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
 import java.util.UUID;
 import java.util.function.BiConsumer;
 import java.util.function.Supplier;
@@ -121,15 +121,7 @@ public class CirculationServiceImpl implements CirculationService {
   private final MaterialTypeMappingService materialService;
   private final LocalAgencyRepository localAgencyRepository;
   private final PatronInfoService patronInfoService;
-
-  private InnReachTransaction createTransactionWithItemHold(String trackingId, String centralCode) {
-    var transaction = new InnReachTransaction();
-    transaction.setTrackingId(trackingId);
-    transaction.setCentralServerCode(centralCode);
-    transaction.setType(InnReachTransaction.TransactionType.ITEM);
-    transaction.setState(InnReachTransaction.TransactionState.ITEM_HOLD);
-    return transaction;
-  }
+  private final TransactionTemplate transactionTemplate;
 
   @Override
   public InnReachResponseDTO createInnReachTransactionItemHold(String trackingId, String centralCode, TransactionHoldDTO dto) {
@@ -154,8 +146,6 @@ public class CirculationServiceImpl implements CirculationService {
     }
     return success();
   }
-
-  private final TransactionTemplate transactionTemplate;
 
   @Override
   public InnReachResponseDTO initiatePatronHold(String trackingId, String centralCode, PatronHoldDTO patronHold) {
@@ -257,7 +247,8 @@ public class CirculationServiceImpl implements CirculationService {
     // the state should be updated before cancelRequest called as the transaction should be in a proper state when
     // kafka event for a request update is consumed after the cancellation
     transaction.setState(BORROWING_SITE_CANCEL);
-    transactionRepository.saveAndFlush(transaction);
+
+    transaction = saveInNewDbTransaction(transaction);
 
     requestService.cancelRequest(transaction, "Request cancelled at borrowing site");
 
@@ -268,17 +259,14 @@ public class CirculationServiceImpl implements CirculationService {
   public InnReachResponseDTO itemReceived(String trackingId, String centralCode, ItemReceivedDTO itemReceivedDTO) {
     var transaction = getTransactionOfType(trackingId, centralCode, ITEM);
 
-    Assert.isTrue(transactionStateIs(transaction, Set.of(ITEM_SHIPPED, ITEM_HOLD, TRANSFER)), unexpectedTransactionState(transaction));
+    verifyState(transaction, ITEM_SHIPPED, ITEM_HOLD, TRANSFER);
+
     if (transaction.getState() != ITEM_SHIPPED) {
       createLoan(transaction);
     }
     transaction.setState(ITEM_RECEIVED);
 
     return success();
-  }
-
-  private boolean transactionStateIs(InnReachTransaction transaction, Set<TransactionState> states) {
-    return states.contains(transaction.getState());
   }
 
   @Override
@@ -303,7 +291,7 @@ public class CirculationServiceImpl implements CirculationService {
 
     var request = requestService.findRequest(transaction.getHold().getFolioRequestId());
     var servicePointId = request.getPickupServicePointId();
-    var checkOutResponse = requestService.checkOutItem(transaction, servicePointId);
+    var checkOutResponse = loanService.checkOutItem(transaction, servicePointId);
     var loanId = checkOutResponse.getId();
 
     log.info("Created a loan with id {}", loanId);
@@ -314,9 +302,8 @@ public class CirculationServiceImpl implements CirculationService {
   @Override
   public InnReachResponseDTO itemInTransit(String trackingId, String centralCode, BaseCircRequestDTO itemInTransitRequest) {
     var transaction = getTransaction(trackingId, centralCode);
-    var state = transaction.getState();
 
-    Assert.isTrue(state == ITEM_RECEIVED || state == RECEIVE_UNANNOUNCED, unexpectedTransactionState(transaction));
+    verifyState(transaction, ITEM_RECEIVED, RECEIVE_UNANNOUNCED);
 
     transaction.setState(ITEM_IN_TRANSIT);
 
@@ -326,14 +313,12 @@ public class CirculationServiceImpl implements CirculationService {
   @Override
   public InnReachResponseDTO returnUncirculated(String trackingId, String centralCode, ReturnUncirculatedDTO returnUncirculated) {
     var transaction = getTransactionOfType(trackingId, centralCode, ITEM);
-    var state = transaction.getState();
 
-    if (state == ITEM_RECEIVED || state == RECEIVE_UNANNOUNCED) {
-      transaction.setState(RETURN_UNCIRCULATED);
-      return success();
-    } else {
-      throw new IllegalArgumentException("Transaction state is not " + ITEM_RECEIVED.name() + " or " + RECEIVE_UNANNOUNCED.name());
-    }
+    verifyState(transaction, ITEM_RECEIVED, RECEIVE_UNANNOUNCED);
+
+    transaction.setState(RETURN_UNCIRCULATED);
+
+    return success();
   }
 
   @Override
@@ -402,8 +387,8 @@ public class CirculationServiceImpl implements CirculationService {
 
     var renewedLoan = renewLoan(transaction.getHold());
 
-    Instant calculatedDueDate = renewedLoan.getDueDate().toInstant();
-    Instant requestedDueDate = ofEpochSecond(renewLoan.getDueDateTime());
+    var calculatedDueDate = renewedLoan.getDueDate().toInstant();
+    var requestedDueDate = ofEpochSecond(renewLoan.getDueDateTime());
     if (calculatedDueDate.isAfter(requestedDueDate)) {
       loanService.changeDueDate(renewedLoan, Date.from(requestedDueDate));
     }
@@ -417,9 +402,8 @@ public class CirculationServiceImpl implements CirculationService {
   @Override
   public InnReachResponseDTO finalCheckIn(String trackingId, String centralCode, BaseCircRequestDTO finalCheckIn) {
     var transaction = getTransaction(trackingId, centralCode);
-    var state = transaction.getState();
 
-    Assert.isTrue(state == ITEM_IN_TRANSIT || state == RETURN_UNCIRCULATED, unexpectedTransactionState(transaction));
+    verifyState(transaction, ITEM_IN_TRANSIT, RETURN_UNCIRCULATED);
 
     transaction.setState(FINAL_CHECKIN);
 
@@ -441,6 +425,19 @@ public class CirculationServiceImpl implements CirculationService {
     transaction.setState(CLAIMS_RETURNED);
 
     return success();
+  }
+
+  private InnReachTransaction createTransactionWithItemHold(String trackingId, String centralCode) {
+    var transaction = new InnReachTransaction();
+    transaction.setTrackingId(trackingId);
+    transaction.setCentralServerCode(centralCode);
+    transaction.setType(InnReachTransaction.TransactionType.ITEM);
+    transaction.setState(InnReachTransaction.TransactionState.ITEM_HOLD);
+    return transaction;
+  }
+
+  private InnReachTransaction saveInNewDbTransaction(InnReachTransaction transaction) {
+    return transactionTemplate.execute(status -> transactionRepository.save(transaction));
   }
 
   private void initiateTransactionHold(String trackingId, String centralCode,
@@ -493,13 +490,12 @@ public class CirculationServiceImpl implements CirculationService {
     var trackingId = transaction.getTrackingId();
     var centralCode = transaction.getCentralServerCode();
 
-    String uri = resolveD2irCircPath(D2IR_ITEM_RECALL_OPERATION, trackingId, centralCode);
+    var uri = resolveD2irCircPath(D2IR_ITEM_RECALL_OPERATION, trackingId, centralCode);
 
-    var dueDateForRecallRequest = new HashMap<>();
-    var convertedDate = existingDueDate.getTime() / 1000;
-    dueDateForRecallRequest.put("dueDateTime", convertedDate);
+    var payload = new HashMap<>();
+    payload.put("dueDateTime", toEpochSec(existingDueDate));
     try {
-      innReachExternalService.postInnReachApi(centralCode, uri, dueDateForRecallRequest);
+      innReachExternalService.postInnReachApi(centralCode, uri, payload);
       transaction.setState(RECALL);
     } catch (Exception e) {
       throw new CirculationException("Failed to recall request to central server: " + e.getMessage(), e);
