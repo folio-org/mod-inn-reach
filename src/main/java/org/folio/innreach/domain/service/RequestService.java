@@ -9,9 +9,7 @@ import org.folio.innreach.domain.dto.folio.circulation.RequestDTO;
 import org.folio.innreach.domain.dto.folio.circulation.RequestDTO.RequestType;
 import org.folio.innreach.domain.dto.folio.inventory.InventoryItemDTO;
 import org.folio.innreach.domain.entity.InnReachTransaction;
-import org.folio.innreach.dto.CheckInResponseDTO;
 import org.folio.innreach.dto.Holding;
-import org.folio.innreach.dto.LoanDTO;
 
 public interface RequestService {
   @Async
