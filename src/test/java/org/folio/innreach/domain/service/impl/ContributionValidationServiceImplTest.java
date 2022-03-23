@@ -330,9 +330,7 @@ class ContributionValidationServiceImplTest {
     when(contributionConfigService.getCriteria(any())).thenReturn(CRITERIA);
     when(holdingsService.find(any())).thenReturn(Optional.empty());
     when(folioLocationService.getLocationLibraryMappings()).thenReturn(Map.of(UUID.randomUUID(), UUID.randomUUID()));
-    when(centralServerService.getCentralServer(any()))
-      .thenReturn(new CentralServerDTO().id(UUID.randomUUID()).localAgencies(List.of(
-        new LocalAgencyDTO().id(UUID.randomUUID()).folioLibraryIds(List.of(UUID.randomUUID())))));
+    when(centralServerService.getCentralServer(any())).thenReturn(CentralServerFixture.createCentralServerDTO());
 
     var instance = new Instance();
     instance.setSource(ELIGIBLE_SOURCE);
