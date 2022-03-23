@@ -25,6 +25,8 @@ public interface RequestService {
 
   void cancelRequest(InnReachTransaction transaction, String reason);
 
+  void cancelRequest(InnReachTransaction transaction, UUID reasonId, String reason);
+
   void createRecallRequest(InnReachTransaction transaction, UUID userId);
 
   RequestDTO findRequest(UUID requestId);
@@ -32,5 +34,7 @@ public interface RequestService {
   UUID getDefaultServicePointIdForPatron(UUID patronId);
 
   UUID getServicePointIdByCode(String locationCode);
+
+  boolean isOpenRequest(RequestDTO request);
 
 }
