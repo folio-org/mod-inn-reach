@@ -41,6 +41,7 @@ import javax.persistence.EntityExistsException;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.folio.innreach.domain.entity.TransactionPatronHold;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -214,6 +215,9 @@ public class CirculationServiceImpl implements CirculationService {
 
     removeItemTransactionInfo(itemId)
       .ifPresent(this::removeHoldingsTransactionInfo);
+    var patronHold = (TransactionPatronHold) transaction.getHold();
+    patronHold.setPatronId(null);
+    patronHold.setPatronName(null);
 
     log.info("Item request successfully cancelled");
 
