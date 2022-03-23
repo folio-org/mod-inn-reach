@@ -1,5 +1,6 @@
 package org.folio.innreach.domain.service.impl;
 
+import static java.lang.String.format;
 import static java.util.Optional.ofNullable;
 
 import static org.folio.innreach.domain.dto.folio.circulation.RequestDTO.RequestStatus.CLOSED_CANCELLED;
@@ -28,12 +29,11 @@ import static org.folio.innreach.util.DateHelper.toInstantTruncatedToSec;
 
 import java.time.Instant;
 import java.util.EnumSet;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.UUID;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+
 import org.apache.commons.lang3.ArrayUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -42,6 +42,7 @@ import org.springframework.util.Assert;
 import org.folio.innreach.client.InstanceStorageClient;
 import org.folio.innreach.domain.dto.folio.circulation.RequestDTO;
 import org.folio.innreach.domain.dto.folio.inventory.InventoryItemDTO;
+import org.folio.innreach.domain.dto.folio.inventory.InventoryItemStatus;
 import org.folio.innreach.domain.entity.InnReachTransaction;
 import org.folio.innreach.domain.entity.TransactionItemHold;
 import org.folio.innreach.domain.entity.TransactionPatronHold;
@@ -51,13 +52,13 @@ import org.folio.innreach.domain.service.ItemService;
 import org.folio.innreach.domain.service.LoanService;
 import org.folio.innreach.domain.service.PatronHoldService;
 import org.folio.innreach.domain.service.RequestService;
+import org.folio.innreach.dto.CancelPatronHoldDTO;
 import org.folio.innreach.dto.CheckInDTO;
-import org.folio.innreach.dto.TransactionCheckOutResponseDTO;
+import org.folio.innreach.dto.InnReachTransactionDTO;
 import org.folio.innreach.dto.LoanStatus;
 import org.folio.innreach.dto.PatronHoldCheckInResponseDTO;
 import org.folio.innreach.dto.StorageLoanDTO;
-import org.folio.innreach.external.exception.InnReachException;
-import org.folio.innreach.external.service.InnReachExternalService;
+import org.folio.innreach.dto.TransactionCheckOutResponseDTO;
 import org.folio.innreach.mapper.InnReachTransactionMapper;
 import org.folio.innreach.repository.InnReachTransactionRepository;
 import org.folio.innreach.util.DateHelper;
@@ -68,28 +69,14 @@ import org.folio.innreach.util.DateHelper;
 @Service
 public class InnReachTransactionActionServiceImpl implements InnReachTransactionActionService {
 
-  private static final String D2IR_ITEM_RECEIVED_OPERATION = "itemreceived";
-  private static final String D2IR_ITEM_SHIPPED_OPERATION = "itemshipped";
-  private static final String D2IR_RECEIVE_UNSHIPPED_OPERATION = "receiveunshipped";
-  private static final String D2IR_IN_TRANSIT = "intransit";
-  private static final String D2IR_BORROWER_RENEW = "borrowerrenew";
-  private static final String D2IR_FINAL_CHECK_IN = "finalcheckin";
-  private static final String D2IR_TRASFER_REQUEST = "transferrequest";
-  private static final String D2IR_RETURN_UNCIRCULATED = "returnuncirculated";
-  private static final String D2IR_OWNING_SITE_CANCEL = "owningsitecancel";
-  private static final String D2IR_CLAIMS_RETURNED = "claimsreturned";
-  private static final String D2IR_CANCEL_ITEM_HOLD = "cancelitemhold";
-  private static final String D2IR_RECALL = "recall";
-  private static final String D2IR_LOCAL_CHECKOUT = "localcheckout";
-
   private final InnReachTransactionRepository transactionRepository;
   private final InnReachTransactionMapper transactionMapper;
-  private final InnReachExternalService innReachExternalService;
   private final RequestService requestService;
   private final LoanService loanService;
   private final PatronHoldService patronHoldService;
   private final ItemService itemService;
   private final InstanceStorageClient instanceStorageClient;
+  private final InnReachTransactionActionNotifier notifier;
 
   @Override
   public PatronHoldCheckInResponseDTO checkInPatronHoldItem(UUID transactionId, UUID servicePointId) {
@@ -101,7 +88,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
 
     transaction.setState(ITEM_RECEIVED);
 
-    reportItemReceived(transaction);
+    notifier.reportItemReceived(transaction);
 
     handleItemWithCanceledRequest(transaction);
 
@@ -122,7 +109,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
 
     transaction.setState(RECEIVE_UNANNOUNCED);
 
-    reportUnshippedItemReceived(transaction);
+    notifier.reportUnshippedItemReceived(transaction);
 
     handleItemWithCanceledRequest(transaction);
 
@@ -147,7 +134,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
 
     transaction.setState(ITEM_SHIPPED);
 
-    reportItemShipped(transaction, itemBarcode, callNumber);
+    notifier.reportItemShipped(transaction, itemBarcode, callNumber);
 
     return new TransactionCheckOutResponseDTO()
       .transaction(transactionMapper.toDTO(transaction))
@@ -249,9 +236,25 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
 
         transaction.setState(RETURN_UNCIRCULATED);
 
-        reportReturnUncirculated(transaction);
+        notifier.reportReturnUncirculated(transaction);
       }
     }
+  }
+
+  @Override
+  public InnReachTransactionDTO cancelPatronHold(UUID transactionId, CancelPatronHoldDTO cancelRequest) {
+    var transaction = fetchTransactionOfType(transactionId, PATRON);
+
+    var requestId = transaction.getHold().getFolioRequestId();
+    var request = requestService.findRequest(requestId);
+
+    if (requestService.isOpenRequest(request)) {
+      cancelPatronHoldWithOpenRequest(cancelRequest, transaction);
+    } else if (request.getStatus() == CLOSED_CANCELLED) {
+      cancelPatronHoldWithClosedRequest(transaction);
+    }
+
+    return transactionMapper.toDTO(transaction);
   }
 
   private void associateNewLoanWithPatronTransaction(StorageLoanDTO loan, InnReachTransaction transaction) {
@@ -267,7 +270,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
     hold.setFolioLoanId(loan.getId());
     transaction.setState(LOCAL_CHECKOUT);
     var inventoryItemDTO = fetchItemById(loan.getItemId());
-    reportCheckOut(transaction, inventoryItemDTO.getHrid(), inventoryItemDTO.getBarcode());
+    notifier.reportCheckOut(transaction, inventoryItemDTO.getHrid(), inventoryItemDTO.getBarcode());
   }
 
   private void updateTransactionOnLoanClaimedReturned(StorageLoanDTO loan, InnReachTransaction transaction) {
@@ -281,7 +284,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
 
     var claimedReturnedDateSec = ofNullable(loan.getClaimedReturnedDate()).map(DateHelper::toEpochSec).orElse(-1);
 
-    reportClaimsReturned(transaction, claimedReturnedDateSec);
+    notifier.reportClaimsReturned(transaction, claimedReturnedDateSec);
   }
 
   private void updateTransactionOnLoanRenewal(StorageLoanDTO loan, InnReachTransaction transaction) {
@@ -299,7 +302,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
       transaction.setState(BORROWER_RENEW);
       transaction.getHold().setDueDateTime(loanIntegerDueDate);
 
-      reportBorrowerRenew(transaction, loanIntegerDueDate);
+      notifier.reportBorrowerRenew(transaction, loanIntegerDueDate);
     }
   }
 
@@ -314,14 +317,14 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
 
       transaction.setState(FINAL_CHECKIN);
 
-      reportFinalCheckIn(transaction);
+      notifier.reportFinalCheckIn(transaction);
     } else if (transaction.getType() == PATRON) {
       log.info("Updating patron transaction {} on loan closure {}", transaction.getId(), loan.getId());
 
       transaction.getHold().setDueDateTime(null);
       transaction.setState(ITEM_IN_TRANSIT);
 
-      reportItemInTransit(transaction);
+      notifier.reportItemInTransit(transaction);
     }
   }
 
@@ -335,7 +338,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
     transaction.setState(RECALL);
 
     var loanDueDate = toInstantTruncatedToSec(loan.getDueDate());
-    reportRecallRequested(transaction, loanDueDate);
+    notifier.reportRecallRequested(transaction, loanDueDate);
   }
 
   private void handleItemWithCanceledRequest(InnReachTransaction transaction) {
@@ -344,7 +347,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
       log.info("Updating transaction {} to uncirculated state due to cancelled request {}",
         transaction.getId(), request.getId());
 
-      reportReturnUncirculated(transaction);
+      notifier.reportReturnUncirculated(transaction);
 
       transaction.setState(RETURN_UNCIRCULATED);
     }
@@ -375,7 +378,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
       var instance = instanceStorageClient.getInstanceById(requestDTO.getInstanceId());
       transaction.setState(CANCEL_REQUEST);
 
-      reportOwningSiteCancel(transaction, instance.getHrid(), transactionItemHold.getPatronName());
+      notifier.reportOwningSiteCancel(transaction, instance.getHrid(), transactionItemHold.getPatronName());
       return;
     }
 
@@ -391,7 +394,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
       hold.setFolioItemBarcode(item.getBarcode());
       transaction.setState(TRANSFER);
 
-      reportTransferRequest(transaction, item.getHrid());
+      notifier.reportTransferRequest(transaction, item.getHrid());
     }
   }
 
@@ -400,7 +403,38 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
       (transaction.getState() == PATRON_HOLD || transaction.getState() == TRANSFER)) {
       log.info("Updating patron hold transaction {} on cancellation of a request {}", transaction.getId(), requestDTO.getId());
       transaction.setState(BORROWING_SITE_CANCEL);
-      reportCancelItemHold(transaction);
+      notifier.reportCancelItemHold(transaction);
+    }
+  }
+
+  private void cancelPatronHoldWithOpenRequest(CancelPatronHoldDTO cancelRequest,
+      InnReachTransaction transaction) {
+    if (transaction.getState() != ITEM_SHIPPED) {
+      transaction.setState(BORROWING_SITE_CANCEL);
+
+      requestService.cancelRequest(transaction, cancelRequest.getCancellationReasonId(),
+          cancelRequest.getCancellationAdditionalInformation());
+
+      notifier.reportCancelItemHold(transaction);
+    } else {
+      requestService.cancelRequest(transaction, cancelRequest.getCancellationReasonId(),
+          cancelRequest.getCancellationAdditionalInformation());
+    }
+  }
+
+  private void cancelPatronHoldWithClosedRequest(InnReachTransaction transaction) {
+    if (transaction.getState() == PATRON_HOLD || transaction.getState() == TRANSFER) {
+      transaction.setState(BORROWING_SITE_CANCEL);
+
+      notifier.reportCancelItemHold(transaction);
+    } else if (EnumSet.of(ITEM_SHIPPED, RECEIVE_UNANNOUNCED, ITEM_RECEIVED).contains(transaction.getState())) {
+      var item = fetchItemById(transaction.getHold().getFolioItemId());
+
+      if (item.getStatus() != InventoryItemStatus.AWAITING_PICKUP) {
+        transaction.setState(RETURN_UNCIRCULATED);
+
+        notifier.reportReturnUncirculated(transaction);
+      }
     }
   }
 
@@ -414,103 +448,20 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
       .orElseThrow(() -> new EntityNotFoundException("INN-Reach transaction is not found by id: " + transactionId));
   }
 
+  private InnReachTransaction fetchTransactionOfType(UUID transactionId, InnReachTransaction.TransactionType type) {
+    InnReachTransaction transaction = fetchTransactionById(transactionId);
+
+    if (transaction.getType() != type) {
+      throw new IllegalArgumentException(format("InnReach transaction with transaction id [%s] " +
+          "is not of [%s] type", transactionId, type));
+    }
+
+    return transaction;
+  }
+
   private InventoryItemDTO fetchItemById(UUID itemId) {
     return itemService.find(itemId)
       .orElseThrow(() -> new IllegalArgumentException("Item is not found by id: " + itemId));
-  }
-
-  private void reportCheckOut(InnReachTransaction transaction, String localBibId, String itemBarcode) {
-    var payload = new HashMap<>();
-    payload.put("localBibId", localBibId);
-
-    if (itemBarcode != null) {
-      payload.put("itemBarcode", itemBarcode);
-    }
-    callD2irCircOperation(D2IR_LOCAL_CHECKOUT, transaction, payload);
-  }
-
-  private void reportItemReceived(InnReachTransaction transaction) {
-    callD2irCircOperation(D2IR_ITEM_RECEIVED_OPERATION, transaction, null);
-  }
-
-  private void reportCancelItemHold(InnReachTransaction transaction) {
-    callD2irCircOperation(D2IR_CANCEL_ITEM_HOLD, transaction, null);
-  }
-
-  private void reportOwningSiteCancel(InnReachTransaction transaction, String localBibId, String patronName) {
-    var payload = new HashMap<>();
-    payload.put("localBibId", localBibId);
-    payload.put("reasonCode", 7);
-    payload.put("patronName", patronName);
-    callD2irCircOperation(D2IR_OWNING_SITE_CANCEL, transaction, payload);
-  }
-
-  private void reportRecallRequested(InnReachTransaction transaction, Instant loanDueDate) {
-    var payload = new HashMap<>();
-    payload.put("dueDateTime", loanDueDate.getEpochSecond());
-    callD2irCircOperation(D2IR_RECALL, transaction, payload);
-  }
-
-  private void reportBorrowerRenew(InnReachTransaction transaction, Integer loanIntegerDueDate) {
-    var payload = new HashMap<>();
-    payload.put("dueDateTime", loanIntegerDueDate);
-    callD2irCircOperation(D2IR_BORROWER_RENEW, transaction, payload);
-  }
-
-  private void reportFinalCheckIn(InnReachTransaction transaction) {
-    callD2irCircOperation(D2IR_FINAL_CHECK_IN, transaction, null);
-  }
-
-  private void reportItemShipped(InnReachTransaction transaction, String itemBarcode, String callNumber) {
-    var payload = new HashMap<>();
-    payload.put("itemBarcode", itemBarcode);
-    payload.put("callNumber", callNumber);
-
-    callD2irCircOperation(D2IR_ITEM_SHIPPED_OPERATION, transaction, payload);
-  }
-
-  private void reportUnshippedItemReceived(InnReachTransaction transaction) {
-    callD2irCircOperation(D2IR_RECEIVE_UNSHIPPED_OPERATION, transaction, null);
-  }
-
-  private void reportItemInTransit(InnReachTransaction transaction) {
-    callD2irCircOperation(D2IR_IN_TRANSIT, transaction, null);
-  }
-
-  private void reportTransferRequest(InnReachTransaction transaction, String hrid) {
-    var payload = new HashMap<>();
-    payload.put("newItemId", hrid);
-    callD2irCircOperation(D2IR_TRASFER_REQUEST, transaction, payload);
-  }
-
-  private void reportReturnUncirculated(InnReachTransaction transaction) {
-    callD2irCircOperation(D2IR_RETURN_UNCIRCULATED, transaction, null);
-  }
-
-  private void reportClaimsReturned(InnReachTransaction transaction, Integer claimsReturnedDateSec) {
-    var payload = new HashMap<>();
-    payload.put("claimsReturnedDate", claimsReturnedDateSec);
-    callD2irCircOperation(D2IR_CLAIMS_RETURNED, transaction, payload);
-  }
-
-  private void callD2irCircOperation(String operation, InnReachTransaction transaction, Map<Object, Object> payload) {
-    var centralCode = transaction.getCentralServerCode();
-    var trackingId = transaction.getTrackingId();
-    var requestPath = resolveD2irCircPath(operation, trackingId, centralCode);
-    try {
-      if (payload == null) {
-        innReachExternalService.postInnReachApi(centralCode, requestPath);
-      } else {
-        innReachExternalService.postInnReachApi(centralCode, requestPath, payload);
-      }
-    } catch (InnReachException e) {
-      //TODO: the suppression of error is temporal, see https://issues.folio.org/browse/MODINREACH-192 for more details.
-      log.warn("Unexpected D2IR response: {}", e.getMessage(), e);
-    }
-  }
-
-  private String resolveD2irCircPath(String operation, String trackingId, String centralCode) {
-    return String.format("/circ/%s/%s/%s", operation, trackingId, centralCode);
   }
 
 }

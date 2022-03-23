@@ -27,6 +27,8 @@ public interface RequestService {
 
   void cancelRequest(InnReachTransaction transaction, String reason);
 
+  void cancelRequest(InnReachTransaction transaction, UUID reasonId, String reason);
+
   CheckInResponseDTO checkInItem(InnReachTransaction transaction, UUID servicePointId);
 
   LoanDTO checkOutItem(InnReachTransaction transaction, UUID servicePointId);
@@ -38,5 +40,7 @@ public interface RequestService {
   UUID getDefaultServicePointIdForPatron(UUID patronId);
 
   UUID getServicePointIdByCode(String locationCode);
+
+  boolean isOpenRequest(RequestDTO request);
 
 }
