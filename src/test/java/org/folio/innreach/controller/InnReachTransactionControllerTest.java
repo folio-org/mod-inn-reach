@@ -93,7 +93,6 @@ import org.folio.innreach.domain.dto.folio.requestpreference.RequestPreferenceDT
 import org.folio.innreach.domain.entity.InnReachTransaction;
 import org.folio.innreach.domain.entity.TransactionItemHold;
 import org.folio.innreach.domain.entity.base.AuditableUser;
-import org.folio.innreach.domain.service.ItemService;
 import org.folio.innreach.domain.service.RequestService;
 import org.folio.innreach.domain.service.impl.InnReachTransactionActionNotifier;
 import org.folio.innreach.dto.CancelPatronHoldDTO;
@@ -190,8 +189,6 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   private RequestPreferenceStorageClient requestPreferenceClient;
   @SpyBean
   private RequestService requestService;
-  @MockBean
-  private ItemService itemService;
   @SpyBean
   private InnReachTransactionActionNotifier actionNotifier;
 
@@ -1571,7 +1568,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     itemDTO.setId(PRE_POPULATED_PATRON_HOLD_ITEM_ID);
     itemDTO.setStatus(status);
 
-    when(itemService.find(PRE_POPULATED_PATRON_HOLD_ITEM_ID))
+    when(inventoryClient.findItem(PRE_POPULATED_PATRON_HOLD_ITEM_ID))
         .thenReturn(Optional.of(itemDTO));
   }
 
