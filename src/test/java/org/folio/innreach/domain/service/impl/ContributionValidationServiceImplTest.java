@@ -16,9 +16,13 @@ import static org.folio.innreach.fixture.ItemContributionOptionsConfigurationFix
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.folio.innreach.dto.CentralServerDTO;
+import org.folio.innreach.dto.LocalAgencyDTO;
+import org.folio.innreach.fixture.CentralServerFixture;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -50,6 +54,8 @@ class ContributionValidationServiceImplTest {
   private static final UUID DO_NOT_CONTRIBUTE_CODE_ID = CRITERIA.getDoNotContributeId();
   private static final String ELIGIBLE_SOURCE = "MARC";
   private static final String INELIGIBLE_SOURCE = "FOLIO";
+  private static final UUID LOCATION_ID = UUID.fromString("6802c458-b19e-476f-9187-e8ab7417ecd4");
+  private static final UUID LIBRARY_ID = UUID.fromString("97858fdf-1e48-4eff-abb3-82421c530368");
 
   @Mock
   private MaterialTypesClient materialTypesClient;
@@ -73,6 +79,8 @@ class ContributionValidationServiceImplTest {
   private CirculationClient circulationClient;
   @Mock
   private HoldingsService holdingsService;
+  @Mock
+  private FolioLocationService folioLocationService;
 
   @InjectMocks
   private ContributionValidationServiceImpl service;
@@ -285,10 +293,12 @@ class ContributionValidationServiceImplTest {
   void testEligibleInstance_noStatisticalCodes() {
     when(contributionConfigService.getCriteria(any())).thenReturn(CRITERIA);
     when(holdingsService.find(any())).thenReturn(Optional.empty());
+    when(folioLocationService.getLocationLibraryMappings()).thenReturn(Map.of(LOCATION_ID, LIBRARY_ID));
+    when(centralServerService.getCentralServer(any())).thenReturn(createCentralServerWithLibraryId());
 
     var instance = new Instance();
     instance.setSource(ELIGIBLE_SOURCE);
-    instance.setItems(List.of(new Item()));
+    instance.setItems(List.of(new Item().effectiveLocationId(LOCATION_ID)));
 
     var result = service.isEligibleForContribution(UUID.randomUUID(), instance);
 
@@ -303,14 +313,32 @@ class ContributionValidationServiceImplTest {
     var instance = new Instance();
     instance.setStatisticalCodeIds(statisticalCodes);
     instance.setSource(ELIGIBLE_SOURCE);
-    instance.setItems(List.of(new Item().statisticalCodeIds(statisticalCodes)));
+    instance.setItems(List.of(new Item().statisticalCodeIds(statisticalCodes).effectiveLocationId(LOCATION_ID)));
 
     when(contributionConfigService.getCriteria(any())).thenReturn(CRITERIA);
     when(holdingsService.find(any())).thenReturn(Optional.empty());
+    when(folioLocationService.getLocationLibraryMappings()).thenReturn(Map.of(LOCATION_ID, LIBRARY_ID));
+    when(centralServerService.getCentralServer(any())).thenReturn(createCentralServerWithLibraryId());
 
     var isEligible = service.isEligibleForContribution(UUID.randomUUID(), instance);
 
     assertTrue(isEligible);
+  }
+
+  @Test
+  void testNotEligibleInstanceWhenItemsLocationNotAssociatedWithInnreachLibrary() {
+    when(contributionConfigService.getCriteria(any())).thenReturn(CRITERIA);
+    when(holdingsService.find(any())).thenReturn(Optional.empty());
+    when(folioLocationService.getLocationLibraryMappings()).thenReturn(Map.of(UUID.randomUUID(), UUID.randomUUID()));
+    when(centralServerService.getCentralServer(any())).thenReturn(CentralServerFixture.createCentralServerDTO());
+
+    var instance = new Instance();
+    instance.setSource(ELIGIBLE_SOURCE);
+    instance.setItems(List.of(new Item().effectiveLocationId(UUID.randomUUID())));
+
+    var result = service.isEligibleForContribution(UUID.randomUUID(), instance);
+
+    assertFalse(result);
   }
 
   @Test
@@ -364,4 +392,8 @@ class ContributionValidationServiceImplTest {
     assertFalse(isEligible);
   }
 
+  private CentralServerDTO createCentralServerWithLibraryId() {
+    return CentralServerFixture.createCentralServerDTO()
+      .localAgencies(List.of(new LocalAgencyDTO().folioLibraryIds(List.of(LIBRARY_ID))));
+  }
 }

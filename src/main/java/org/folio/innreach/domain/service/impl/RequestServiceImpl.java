@@ -199,7 +199,12 @@ public class RequestServiceImpl implements RequestService {
   }
 
   @Override
-  public void cancelRequest(InnReachTransaction transaction, String reason) {
+  public void cancelRequest(InnReachTransaction transaction, String reasonDetails) {
+    cancelRequest(transaction, INN_REACH_CANCELLATION_REASON_ID, reasonDetails);
+  }
+
+  @Override
+  public void cancelRequest(InnReachTransaction transaction, UUID reasonId, String reasonDetails) {
     log.info("Canceling item request for transaction {}", transaction);
 
     var requestId = transaction.getHold().getFolioRequestId();
@@ -209,34 +214,8 @@ public class RequestServiceImpl implements RequestService {
     }
 
     circulationClient.findRequest(requestId)
-      .ifPresentOrElse(r -> cancelRequest(r, reason),
-        () -> log.warn("No request found with id {}", requestId));
-  }
-
-  @Override
-  public CheckInResponseDTO checkInItem(InnReachTransaction transaction, UUID servicePointId) {
-    log.info("Processing item check-in for transaction {}", transaction);
-
-    var checkIn = new CheckInRequestDTO()
-      .servicePointId(servicePointId)
-      .itemBarcode(transaction.getHold().getFolioItemBarcode())
-      .checkInDate(new Date());
-
-    return circulationClient.checkInByBarcode(checkIn);
-  }
-
-  @Override
-  public LoanDTO checkOutItem(InnReachTransaction transaction, UUID servicePointId) {
-    log.info("Processing item check-out for transaction {}", transaction);
-
-    var hold = transaction.getHold();
-
-    var checkOut = new CheckOutRequestDTO()
-      .servicePointId(servicePointId)
-      .userBarcode(hold.getFolioPatronBarcode())
-      .itemBarcode(hold.getFolioItemBarcode());
-
-    return circulationClient.checkOutByBarcode(checkOut);
+        .ifPresentOrElse(r -> cancelRequest(r, reasonId, reasonDetails),
+            () -> log.warn("No request found with id {}", requestId));
   }
 
   private void createOwningSiteItemRequest(InnReachTransaction transaction, User patron, UUID servicePointId) {
@@ -298,10 +277,15 @@ public class RequestServiceImpl implements RequestService {
         .orElseThrow(() -> new CirculationException("Service point is not found by location code: " + locationCode));
   }
 
-  private void cancelRequest(RequestDTO request, String reason) {
+  @Override
+  public boolean isOpenRequest(RequestDTO request) {
+    return openRequestStatuses.contains(request.getStatus());
+  }
+
+  private void cancelRequest(RequestDTO request, UUID reasonId, String reasonDetails) {
     request.setStatus(RequestStatus.CLOSED_CANCELLED);
-    request.setCancellationReasonId(INN_REACH_CANCELLATION_REASON_ID);
-    request.setCancellationAdditionalInformation(reason);
+    request.setCancellationReasonId(reasonId);
+    request.setCancellationAdditionalInformation(reasonDetails);
 
     circulationClient.updateRequest(request.getId(), request);
 

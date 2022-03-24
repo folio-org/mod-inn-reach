@@ -19,6 +19,7 @@ import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.collections4.CollectionUtils;
+import org.folio.innreach.dto.LocalAgencyDTO;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 
@@ -62,6 +63,7 @@ public class ContributionValidationServiceImpl implements ContributionValidation
   private final ContributionCriteriaConfigurationService contributionConfigService;
   private final InnReachLocationService innReachLocationService;
   private final InnReachLocationExternalService innReachLocationExternalService;
+  private final FolioLocationService folioLocationService;
 
   private final ItemContributionOptionsConfigurationService itemContributionOptionsConfigurationService;
 
@@ -99,6 +101,11 @@ public class ContributionValidationServiceImpl implements ContributionValidation
     if (isExcludedStatisticalCode(centralServerId, statisticalCodeIds) ||
       isExcludedStatisticalCode(centralServerId, holdingStatisticalCodeIds)) {
       log.info("Item has 'do not contribute' suppression status");
+      return false;
+    }
+
+    if (!isItemHasAssociatedLibrary(centralServerId, item)) {
+      log.info("Item's location is not associated with INN-Reach local agencies");
       return false;
     }
 
@@ -305,6 +312,14 @@ public class ContributionValidationServiceImpl implements ContributionValidation
       return null;
     }
     return config;
+  }
+
+  private boolean isItemHasAssociatedLibrary(UUID centralServerId, Item item) {
+    var localAgencyLibraryIds = getFolioLibraryIds(centralServerId);
+    var locationLibraryMappings = folioLocationService.getLocationLibraryMappings();
+    var itemLibraryId = locationLibraryMappings.get(item.getEffectiveLocationId());
+
+    return localAgencyLibraryIds.contains(itemLibraryId);
   }
 
 }

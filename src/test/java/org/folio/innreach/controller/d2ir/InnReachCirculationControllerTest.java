@@ -3,12 +3,14 @@ package org.folio.innreach.controller.d2ir;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -332,9 +334,10 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     assertNotNull(responseEntityBody);
     assertEquals("ok", responseEntityBody.getStatus());
 
-    verify(requestService).cancelRequest(any(), eq("Request cancelled at borrowing site"));
-    var transactionUpdated = fetchTransactionByTrackingId(PRE_POPULATED_TRACKING2_ID);
-    assertEquals(BORROWING_SITE_CANCEL, transactionUpdated.getState());
+    var inOrder = inOrder(transactionRepository, requestService);
+
+    inOrder.verify(transactionRepository).save(argThat(t -> t.getState() == BORROWING_SITE_CANCEL));
+    inOrder.verify(requestService).cancelRequest(any(), eq("Request cancelled at borrowing site"));
   }
 
   @Test
@@ -1072,6 +1075,8 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     var updatedTransaction = fetchPrePopulatedTransaction();
 
     assertEquals(CLAIMS_RETURNED, updatedTransaction.getState());
+    assertNull(updatedTransaction.getHold().getPatronId());
+    assertNull(updatedTransaction.getHold().getPatronName());
 
     verify(circulationClient).claimItemReturned(any(), argThat(req -> date.equals(req.getItemClaimedReturnedDateTime().toInstant())));
   }
@@ -1095,6 +1100,8 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     var updatedTransaction = fetchPrePopulatedTransaction();
 
     assertEquals(CLAIMS_RETURNED, updatedTransaction.getState());
+    assertNull(updatedTransaction.getHold().getPatronId());
+    assertNull(updatedTransaction.getHold().getPatronName());
 
     verify(circulationClient).claimItemReturned(any(), argThat(req -> req.getItemClaimedReturnedDateTime() != null));
   }

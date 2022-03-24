@@ -9,9 +9,7 @@ import org.folio.innreach.domain.dto.folio.circulation.RequestDTO;
 import org.folio.innreach.domain.dto.folio.circulation.RequestDTO.RequestType;
 import org.folio.innreach.domain.dto.folio.inventory.InventoryItemDTO;
 import org.folio.innreach.domain.entity.InnReachTransaction;
-import org.folio.innreach.dto.CheckInResponseDTO;
 import org.folio.innreach.dto.Holding;
-import org.folio.innreach.dto.LoanDTO;
 
 public interface RequestService {
   @Async
@@ -27,9 +25,7 @@ public interface RequestService {
 
   void cancelRequest(InnReachTransaction transaction, String reason);
 
-  CheckInResponseDTO checkInItem(InnReachTransaction transaction, UUID servicePointId);
-
-  LoanDTO checkOutItem(InnReachTransaction transaction, UUID servicePointId);
+  void cancelRequest(InnReachTransaction transaction, UUID reasonId, String reason);
 
   void createRecallRequest(InnReachTransaction transaction, UUID userId);
 
@@ -38,5 +34,7 @@ public interface RequestService {
   UUID getDefaultServicePointIdForPatron(UUID patronId);
 
   UUID getServicePointIdByCode(String locationCode);
+
+  boolean isOpenRequest(RequestDTO request);
 
 }

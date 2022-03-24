@@ -7,14 +7,20 @@ import java.util.Optional;
 import java.util.UUID;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.stereotype.Service;
 
 import org.folio.innreach.client.CirculationClient;
 import org.folio.innreach.domain.dto.folio.circulation.RenewByIdDTO;
+import org.folio.innreach.domain.entity.InnReachTransaction;
 import org.folio.innreach.domain.service.LoanService;
+import org.folio.innreach.dto.CheckInRequestDTO;
+import org.folio.innreach.dto.CheckInResponseDTO;
+import org.folio.innreach.dto.CheckOutRequestDTO;
 import org.folio.innreach.dto.ClaimItemReturnedRequestDTO;
 import org.folio.innreach.dto.LoanDTO;
 
+@Log4j2
 @Service
 @RequiredArgsConstructor
 public class LoanServiceImpl implements LoanService {
@@ -61,6 +67,32 @@ public class LoanServiceImpl implements LoanService {
     loan.setAction(DUE_DATE_CHANGED_ACTION);
 
     return update(loan);
+  }
+
+  @Override
+  public CheckInResponseDTO checkInItem(InnReachTransaction transaction, UUID servicePointId) {
+    log.info("Processing item check-in for transaction {}", transaction);
+
+    var checkIn = new CheckInRequestDTO()
+      .servicePointId(servicePointId)
+      .itemBarcode(transaction.getHold().getFolioItemBarcode())
+      .checkInDate(new Date());
+
+    return circulationClient.checkInByBarcode(checkIn);
+  }
+
+  @Override
+  public LoanDTO checkOutItem(InnReachTransaction transaction, UUID servicePointId) {
+    log.info("Processing item check-out for transaction {}", transaction);
+
+    var hold = transaction.getHold();
+
+    var checkOut = new CheckOutRequestDTO()
+      .servicePointId(servicePointId)
+      .userBarcode(hold.getFolioPatronBarcode())
+      .itemBarcode(hold.getFolioItemBarcode());
+
+    return circulationClient.checkOutByBarcode(checkOut);
   }
 
   @Override
