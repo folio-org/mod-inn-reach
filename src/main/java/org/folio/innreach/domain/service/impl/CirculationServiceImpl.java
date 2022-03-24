@@ -27,6 +27,7 @@ import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionTy
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionType.LOCAL;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionType.PATRON;
 import static org.folio.innreach.util.DateHelper.toEpochSec;
+import static org.folio.innreach.util.InnReachTransactionUtils.clearCentralPatronInfo;
 import static org.folio.innreach.util.InnReachTransactionUtils.verifyState;
 
 import java.util.Date;
@@ -248,7 +249,9 @@ public class CirculationServiceImpl implements CirculationService {
     // kafka event for a request update is consumed after the cancellation
     transaction.setState(BORROWING_SITE_CANCEL);
 
-    transaction = saveInNewDbTransaction(transaction);
+    clearCentralPatronInfo(transaction);
+
+    transaction = saveAndPersist(transaction);
 
     requestService.cancelRequest(transaction, "Request cancelled at borrowing site");
 
@@ -439,7 +442,13 @@ public class CirculationServiceImpl implements CirculationService {
     return transaction;
   }
 
-  private InnReachTransaction saveInNewDbTransaction(InnReachTransaction transaction) {
+  /**
+   * Executes save operation in a new DB transaction without waiting for existing transaction to be completed
+   *
+   * @param transaction INN-Reach transaction to be saved
+   * @return the saved entity
+   */
+  private InnReachTransaction saveAndPersist(InnReachTransaction transaction) {
     return transactionTemplate.execute(status -> transactionRepository.save(transaction));
   }
 
