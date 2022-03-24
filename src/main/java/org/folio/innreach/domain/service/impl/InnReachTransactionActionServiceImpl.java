@@ -26,7 +26,7 @@ import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionTy
 import static org.folio.innreach.dto.ItemStatus.NameEnum.AWAITING_PICKUP;
 import static org.folio.innreach.util.DateHelper.toEpochSec;
 import static org.folio.innreach.util.DateHelper.toInstantTruncatedToSec;
-import static org.folio.innreach.util.InnReachTransactionUtils.verifyState;
+import static org.folio.innreach.util.InnReachTransactionUtils.clearCentralPatronInfo;
 
 import java.time.Instant;
 import java.util.EnumSet;
@@ -312,13 +312,13 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
   }
 
   private void updateTransactionOnLoanClosure(StorageLoanDTO loan, InnReachTransaction transaction) {
+    var hold = transaction.getHold();
     if (transaction.getType() == ITEM) {
       log.info("Updating item transaction {} on loan closure {}", transaction.getId(), loan.getId());
 
-      var hold = (TransactionItemHold) transaction.getHold();
-      hold.setPatronName(null);
-      hold.setPatronId(null);
       hold.setDueDateTime(null);
+
+      clearCentralPatronInfo(transaction);
 
       transaction.setState(FINAL_CHECKIN);
 
@@ -326,7 +326,8 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
     } else if (transaction.getType() == PATRON) {
       log.info("Updating patron transaction {} on loan closure {}", transaction.getId(), loan.getId());
 
-      transaction.getHold().setDueDateTime(null);
+      hold.setDueDateTime(null);
+
       transaction.setState(ITEM_IN_TRANSIT);
 
       notifier.reportItemInTransit(transaction);
@@ -377,20 +378,17 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
   private void updateItemTransactionOnRequestChange(RequestDTO requestDTO, InnReachTransaction transaction) {
     var requestId = requestDTO.getId();
     var itemId = requestDTO.getItemId();
+    var hold = transaction.getHold();
     if (requestDTO.getStatus() == CLOSED_CANCELLED) {
       log.info("Updating item hold transaction {} on cancellation of a request {}", transaction.getId(), requestDTO.getId());
-      var transactionItemHold = (TransactionItemHold) transaction.getHold();
-      var instance = instanceStorageClient.getInstanceById(requestDTO.getInstanceId());
+
       transaction.setState(CANCEL_REQUEST);
-      transactionItemHold.setPatronId(null);
-      transactionItemHold.setPatronName(null);
 
-      notifier.reportOwningSiteCancel(transaction, instance.getHrid(), transactionItemHold.getPatronName());
-      return;
-    }
+      clearCentralPatronInfo(transaction);
 
-    var hold = transaction.getHold();
-    if (!hold.getFolioItemId().equals(itemId)) {
+      var instance = instanceStorageClient.getInstanceById(requestDTO.getInstanceId());
+      notifier.reportOwningSiteCancel(transaction, instance.getHrid(), hold.getPatronName());
+    } else if (!itemId.equals(hold.getFolioItemId())) {
       log.info("Updating transaction {} on moving a request {} from one item to another", transaction.getId(), requestId);
 
       var item = fetchItemById(requestDTO.getItemId());
@@ -418,19 +416,19 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
   }
 
   private void cancelPatronHoldWithOpenRequest(CancelPatronHoldDTO cancelRequest,
-      InnReachTransaction transaction) {
+                                               InnReachTransaction transaction) {
     if (transaction.getState() != ITEM_SHIPPED) {
       transaction.setState(BORROWING_SITE_CANCEL);
 
       transaction = saveInNewDbTransaction(transaction);
 
       requestService.cancelRequest(transaction, cancelRequest.getCancellationReasonId(),
-          cancelRequest.getCancellationAdditionalInformation());
+        cancelRequest.getCancellationAdditionalInformation());
 
       notifier.reportCancelItemHold(transaction);
     } else {
       requestService.cancelRequest(transaction, cancelRequest.getCancellationReasonId(),
-          cancelRequest.getCancellationAdditionalInformation());
+        cancelRequest.getCancellationAdditionalInformation());
     }
   }
 
@@ -491,7 +489,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
 
     if (transaction.getType() != type) {
       throw new IllegalArgumentException(format("InnReach transaction with transaction id [%s] " +
-          "is not of [%s] type", transactionId, type));
+        "is not of [%s] type", transactionId, type));
     }
 
     return transaction;
