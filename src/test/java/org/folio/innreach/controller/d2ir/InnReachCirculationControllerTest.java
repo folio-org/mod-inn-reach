@@ -3,6 +3,7 @@ package org.folio.innreach.controller.d2ir;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.argThat;
@@ -1074,6 +1075,8 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     var updatedTransaction = fetchPrePopulatedTransaction();
 
     assertEquals(CLAIMS_RETURNED, updatedTransaction.getState());
+    assertNull(updatedTransaction.getHold().getPatronId());
+    assertNull(updatedTransaction.getHold().getPatronName());
 
     verify(circulationClient).claimItemReturned(any(), argThat(req -> date.equals(req.getItemClaimedReturnedDateTime().toInstant())));
   }
@@ -1097,6 +1100,8 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     var updatedTransaction = fetchPrePopulatedTransaction();
 
     assertEquals(CLAIMS_RETURNED, updatedTransaction.getState());
+    assertNull(updatedTransaction.getHold().getPatronId());
+    assertNull(updatedTransaction.getHold().getPatronName());
 
     verify(circulationClient).claimItemReturned(any(), argThat(req -> req.getItemClaimedReturnedDateTime() != null));
   }
