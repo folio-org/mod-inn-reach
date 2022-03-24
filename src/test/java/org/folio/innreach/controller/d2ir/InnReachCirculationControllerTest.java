@@ -1075,8 +1075,6 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     var updatedTransaction = fetchPrePopulatedTransaction();
 
     assertEquals(CLAIMS_RETURNED, updatedTransaction.getState());
-    assertNull(updatedTransaction.getHold().getPatronId());
-    assertNull(updatedTransaction.getHold().getPatronName());
 
     verify(circulationClient).claimItemReturned(any(), argThat(req -> date.equals(req.getItemClaimedReturnedDateTime().toInstant())));
   }
@@ -1100,8 +1098,6 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     var updatedTransaction = fetchPrePopulatedTransaction();
 
     assertEquals(CLAIMS_RETURNED, updatedTransaction.getState());
-    assertNull(updatedTransaction.getHold().getPatronId());
-    assertNull(updatedTransaction.getHold().getPatronName());
 
     verify(circulationClient).claimItemReturned(any(), argThat(req -> req.getItemClaimedReturnedDateTime() != null));
   }

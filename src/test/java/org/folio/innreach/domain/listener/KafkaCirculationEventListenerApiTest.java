@@ -288,6 +288,8 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
     var payload = payloadCaptor.getValue();
     var updatedTransaction = transactionRepository.fetchOneById(PRE_POPULATED_PATRON_TRANSACTION_ID).orElseThrow();
     assertEquals(CLAIMS_RETURNED, updatedTransaction.getState());
+    assertNull(updatedTransaction.getHold().getPatronId());
+    assertNull(updatedTransaction.getHold().getPatronName());
     assertEquals(toEpochSec(claimedReturnedDate), payload.get("claimsReturnedDate"));
   }
 
