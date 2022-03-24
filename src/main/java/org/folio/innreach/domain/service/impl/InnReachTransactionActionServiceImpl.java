@@ -35,6 +35,8 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.ArrayUtils;
+import org.folio.innreach.client.ItemStorageClient;
+import org.folio.innreach.dto.Item;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
@@ -90,6 +92,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
   private final PatronHoldService patronHoldService;
   private final ItemService itemService;
   private final InstanceStorageClient instanceStorageClient;
+  private final ItemStorageClient itemStorageClient;
 
   @Override
   public PatronHoldCheckInResponseDTO checkInPatronHoldItem(UUID transactionId, UUID servicePointId) {
@@ -399,9 +402,38 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
     if (requestDTO.getStatus() == CLOSED_CANCELLED &&
       (transaction.getState() == PATRON_HOLD || transaction.getState() == TRANSFER)) {
       log.info("Updating patron hold transaction {} on cancellation of a request {}", transaction.getId(), requestDTO.getId());
+      if (transaction.getState() != ITEM_SHIPPED) {
+        clearPatronTransactionAndItemRecord(requestDTO.getItemId(), transaction);
+      }
       transaction.setState(BORROWING_SITE_CANCEL);
       reportCancelItemHold(transaction);
     }
+  }
+
+  private void clearPatronTransactionAndItemRecord(UUID itemId, InnReachTransaction transaction) {
+    var patronTransaction = (TransactionPatronHold) transaction.getHold();
+    patronTransaction.setPatronId(null);
+    patronTransaction.setPatronName(null);
+    patronTransaction.setFolioPatronId(null);
+    patronTransaction.setFolioPatronBarcode(null);
+    patronTransaction.setFolioItemId(null);
+    patronTransaction.setFolioHoldingId(null);
+    patronTransaction.setFolioInstanceId(null);
+    patronTransaction.setFolioRequestId(null);
+    patronTransaction.setFolioLoanId(null);
+    patronTransaction.setFolioItemBarcode(null);
+    Item item = fetchItem(itemId);
+    item.setBarcode(null);
+    updateItem(itemId, item);
+  }
+
+  private Item fetchItem(UUID itemId) {
+    return itemStorageClient.getItemById(itemId)
+      .orElseThrow(() -> new IllegalArgumentException("Item is not found by id: " + itemId));
+  }
+
+  private void updateItem(UUID itemId, Item item) {
+    itemStorageClient.updateItemByItemId(itemId, item);
   }
 
   private void verifyState(InnReachTransaction transaction, InnReachTransaction.TransactionState... states) {

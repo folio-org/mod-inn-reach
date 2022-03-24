@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -37,6 +38,9 @@ import java.util.function.Consumer;
 
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.producer.ProducerRecord;
+import org.folio.innreach.client.ItemStorageClient;
+import org.folio.innreach.domain.entity.TransactionPatronHold;
+import org.folio.innreach.dto.Item;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
@@ -116,6 +120,9 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
 
   @MockBean
   private InstanceStorageClient instanceStorageClient;
+
+  @MockBean
+  private ItemStorageClient itemStorageClient;
 
   @Test
   void shouldReceiveLoanEvent() {
@@ -421,6 +428,11 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
     var request = event.getData().getNewEntity();
     request.setId(PRE_POPULATED_PATRON_TRANSACTION_REQUEST_ID);
     request.setStatus(CLOSED_CANCELLED);
+    Item item = new Item();
+    item.setBarcode("454535");
+
+    when(itemStorageClient.getItemById(ITEM_ID)).thenReturn(Optional.of(item));
+    doNothing().when(itemStorageClient).updateItemByItemId(ITEM_ID, item);
 
     listener.handleRequestEvents(asSingleConsumerRecord(CIRC_REQUEST_TOPIC, PRE_POPULATED_PATRON_TRANSACTION_REQUEST_ID, event));
 
@@ -428,7 +440,19 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
     verify(innReachExternalService, times(1)).postInnReachApi(any(), any());
 
     var updatedTransaction = transactionRepository.fetchOneById(PRE_POPULATED_PATRON_TRANSACTION_ID).orElse(null);
+    var patronTransaction = (TransactionPatronHold) updatedTransaction.getHold();
     assertEquals(BORROWING_SITE_CANCEL, updatedTransaction.getState());
+    assertEquals(null, item.getBarcode());
+    assertEquals(null, patronTransaction.getPatronId());
+    assertEquals(null, patronTransaction.getPatronName());
+    assertEquals(null, patronTransaction.getFolioPatronId());
+    assertEquals(null, patronTransaction.getFolioPatronBarcode());
+    assertEquals(null, patronTransaction.getFolioItemId());
+    assertEquals(null, patronTransaction.getFolioHoldingId());
+    assertEquals(null, patronTransaction.getFolioInstanceId());
+    assertEquals(null, patronTransaction.getFolioRequestId());
+    assertEquals(null, patronTransaction.getFolioLoanId());
+    assertEquals(null, patronTransaction.getFolioItemBarcode());
   }
 
   @Test
