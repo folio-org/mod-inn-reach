@@ -250,7 +250,7 @@ public class CirculationServiceImpl implements CirculationService {
     // kafka event for a request update is consumed after the cancellation
     transaction.setState(BORROWING_SITE_CANCEL);
 
-    clearCentralPatronInfo(transaction);
+    clearCentralPatronInfo(transaction.getHold());
 
     transaction = saveAndPersist(transaction);
 
@@ -431,7 +431,7 @@ public class CirculationServiceImpl implements CirculationService {
     loanService.claimItemReturned(folioLoanId, returnedDate);
 
     transaction.setState(CLAIMS_RETURNED);
-    clearCentralPatronInfo(transaction);
+    clearCentralPatronInfo(transaction.getHold());
 
     return success();
   }

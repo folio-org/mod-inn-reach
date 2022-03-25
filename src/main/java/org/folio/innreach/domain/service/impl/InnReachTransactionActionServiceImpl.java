@@ -269,11 +269,15 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
 
   private void associateNewLoanWithLocalTransaction(StorageLoanDTO loan, InnReachTransaction transaction) {
     log.info("Associating a new loan {} with local transaction {}", loan.getId(), transaction.getId());
+
     var hold = transaction.getHold();
     hold.setFolioLoanId(loan.getId());
     transaction.setState(LOCAL_CHECKOUT);
+
     var inventoryItemDTO = fetchItemById(loan.getItemId());
     notifier.reportCheckOut(transaction, inventoryItemDTO.getHrid(), inventoryItemDTO.getBarcode());
+
+    clearPatronAndItemInfo(hold);
   }
 
   private void updateTransactionOnLoanClaimedReturned(StorageLoanDTO loan, InnReachTransaction transaction) {
@@ -318,7 +322,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
 
       hold.setDueDateTime(null);
 
-      clearCentralPatronInfo(transaction);
+      clearCentralPatronInfo(transaction.getHold());
 
       transaction.setState(FINAL_CHECKIN);
 
@@ -387,7 +391,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
       var instance = instanceStorageClient.getInstanceById(requestDTO.getInstanceId());
       notifier.reportOwningSiteCancel(transaction, instance.getHrid(), hold.getPatronName());
 
-      clearCentralPatronInfo(transaction);
+      clearCentralPatronInfo(transaction.getHold());
     } else if (!itemId.equals(hold.getFolioItemId())) {
       log.info("Updating transaction {} on moving a request {} from one item to another", transaction.getId(), requestId);
 
