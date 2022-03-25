@@ -20,4 +20,17 @@ public class InnReachTransactionUtils {
     hold.setPatronName(null);
   }
 
+  public static void clearPatronAndItemInfo(InnReachTransaction transaction) {
+    var itemhold = transaction.getHold();
+    itemhold.setPatronId(null);
+    itemhold.setPatronName(null);
+    itemhold.setFolioPatronId(null);
+    itemhold.setFolioPatronBarcode(null);
+    itemhold.setFolioItemId(null);
+    itemhold.setFolioHoldingId(null);
+    itemhold.setFolioInstanceId(null);
+    itemhold.setFolioRequestId(null);
+    itemhold.setFolioItemBarcode(null);
+    itemhold.setFolioLoanId(null);
+  }
 }

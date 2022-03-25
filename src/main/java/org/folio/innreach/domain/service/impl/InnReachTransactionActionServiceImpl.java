@@ -27,6 +27,7 @@ import static org.folio.innreach.dto.ItemStatus.NameEnum.AWAITING_PICKUP;
 import static org.folio.innreach.util.DateHelper.toEpochSec;
 import static org.folio.innreach.util.DateHelper.toInstantTruncatedToSec;
 import static org.folio.innreach.util.InnReachTransactionUtils.clearCentralPatronInfo;
+import static org.folio.innreach.util.InnReachTransactionUtils.clearPatronAndItemInfo;
 
 import java.time.Instant;
 import java.util.EnumSet;
@@ -283,25 +284,11 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
     log.info("Updating patron transaction {} on the claimed returned loan {}", transaction.getId(), loan.getId());
 
     transaction.setState(CLAIMS_RETURNED);
-    removeItemHoldFieldsFromTransaction(transaction);
+    clearPatronAndItemInfo(transaction);
 
     var claimedReturnedDateSec = ofNullable(loan.getClaimedReturnedDate()).map(DateHelper::toEpochSec).orElse(-1);
 
     notifier.reportClaimsReturned(transaction, claimedReturnedDateSec);
-  }
-
-  private void removeItemHoldFieldsFromTransaction(InnReachTransaction transaction) {
-    var itemhold = transaction.getHold();
-    itemhold.setPatronId(null);
-    itemhold.setPatronName(null);
-    itemhold.setFolioPatronId(null);
-    itemhold.setFolioPatronBarcode(null);
-    itemhold.setFolioItemId(null);
-    itemhold.setFolioHoldingId(null);
-    itemhold.setFolioInstanceId(null);
-    itemhold.setFolioRequestId(null);
-    itemhold.setFolioItemBarcode(null);
-    itemhold.setFolioLoanId(null);
   }
 
   private void updateTransactionOnLoanRenewal(StorageLoanDTO loan, InnReachTransaction transaction) {
