@@ -27,6 +27,7 @@ import static org.folio.innreach.dto.ItemStatus.NameEnum.AWAITING_PICKUP;
 import static org.folio.innreach.util.DateHelper.toEpochSec;
 import static org.folio.innreach.util.DateHelper.toInstantTruncatedToSec;
 import static org.folio.innreach.util.InnReachTransactionUtils.clearCentralPatronInfo;
+import static org.folio.innreach.util.InnReachTransactionUtils.clearPatronAndItemInfo;
 
 import java.time.Instant;
 import java.util.EnumSet;
@@ -283,6 +284,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
     log.info("Updating patron transaction {} on the claimed returned loan {}", transaction.getId(), loan.getId());
 
     transaction.setState(CLAIMS_RETURNED);
+    clearPatronAndItemInfo(transaction);
 
     var claimedReturnedDateSec = ofNullable(loan.getClaimedReturnedDate()).map(DateHelper::toEpochSec).orElse(-1);
 
