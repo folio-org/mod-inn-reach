@@ -288,11 +288,12 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
     log.info("Updating patron transaction {} on the claimed returned loan {}", transaction.getId(), loan.getId());
 
     transaction.setState(CLAIMS_RETURNED);
-    clearPatronAndItemInfo(transaction.getHold());
 
     var claimedReturnedDateSec = ofNullable(loan.getClaimedReturnedDate()).map(DateHelper::toEpochSec).orElse(-1);
 
     notifier.reportClaimsReturned(transaction, claimedReturnedDateSec);
+
+    clearPatronAndItemInfo(transaction.getHold());
   }
 
   private void updateTransactionOnLoanRenewal(StorageLoanDTO loan, InnReachTransaction transaction) {
@@ -387,10 +388,10 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
 
       transaction.setState(CANCEL_REQUEST);
 
-      clearCentralPatronInfo(transaction.getHold());
-
       var instance = instanceStorageClient.getInstanceById(requestDTO.getInstanceId());
       notifier.reportOwningSiteCancel(transaction, instance.getHrid(), hold.getPatronName());
+
+      clearCentralPatronInfo(transaction.getHold());
     } else if (!itemId.equals(hold.getFolioItemId())) {
       log.info("Updating transaction {} on moving a request {} from one item to another", transaction.getId(), requestId);
 
