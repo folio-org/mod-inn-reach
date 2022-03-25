@@ -431,9 +431,7 @@ public class CirculationServiceImpl implements CirculationService {
     loanService.claimItemReturned(folioLoanId, returnedDate);
 
     transaction.setState(CLAIMS_RETURNED);
-    var itemHold = transaction.getHold();
-    itemHold.setPatronId(null);
-    itemHold.setPatronName(null);
+    clearCentralPatronInfo(transaction);
 
     return success();
   }

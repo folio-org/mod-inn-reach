@@ -288,7 +288,8 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
     var claimedReturnedDateSec = ofNullable(loan.getClaimedReturnedDate()).map(DateHelper::toEpochSec).orElse(-1);
 
     notifier.reportClaimsReturned(transaction, claimedReturnedDateSec);
-    clearPatronAndItemInfo(transaction);
+
+    clearPatronAndItemInfo(transaction.getHold());
   }
 
   private void updateTransactionOnLoanRenewal(StorageLoanDTO loan, InnReachTransaction transaction) {
@@ -383,10 +384,9 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
 
       transaction.setState(CANCEL_REQUEST);
 
-      clearCentralPatronInfo(transaction);
-
       var instance = instanceStorageClient.getInstanceById(requestDTO.getInstanceId());
       notifier.reportOwningSiteCancel(transaction, instance.getHrid(), hold.getPatronName());
+
       clearCentralPatronInfo(transaction);
     } else if (!itemId.equals(hold.getFolioItemId())) {
       log.info("Updating transaction {} on moving a request {} from one item to another", transaction.getId(), requestId);
