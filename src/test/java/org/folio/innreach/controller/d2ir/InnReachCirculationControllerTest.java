@@ -1037,6 +1037,19 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
 
     assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
     assertEquals(FINAL_CHECKIN, transactionAfter.getState());
+    assertPatronHoldFieldsAreNull((TransactionPatronHold)transactionAfter.getHold());
+  }
+
+  private void assertPatronHoldFieldsAreNull(TransactionPatronHold hold) {
+    assertNull(hold.getPatronId());
+    assertNull(hold.getPatronName());
+    assertNull(hold.getFolioPatronId());
+    assertNull(hold.getFolioPatronBarcode());
+    assertNull(hold.getFolioItemId());
+    assertNull(hold.getFolioHoldingId());
+    assertNull(hold.getFolioInstanceId());
+    assertNull(hold.getFolioLoanId());
+    assertNull(hold.getFolioItemBarcode());
   }
 
   @Test

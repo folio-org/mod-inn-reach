@@ -284,7 +284,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
     log.info("Updating patron transaction {} on the claimed returned loan {}", transaction.getId(), loan.getId());
 
     transaction.setState(CLAIMS_RETURNED);
-    clearPatronAndItemInfo(transaction);
+    clearPatronAndItemInfo(transaction.getHold());
 
     var claimedReturnedDateSec = ofNullable(loan.getClaimedReturnedDate()).map(DateHelper::toEpochSec).orElse(-1);
 
