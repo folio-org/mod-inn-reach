@@ -1,11 +1,12 @@
 package org.folio.innreach.util;
 
 import lombok.experimental.UtilityClass;
+
 import org.apache.commons.lang3.ArrayUtils;
-import org.folio.innreach.domain.entity.TransactionHold;
 import org.springframework.util.Assert;
 
 import org.folio.innreach.domain.entity.InnReachTransaction;
+import org.folio.innreach.domain.entity.TransactionHold;
 
 @UtilityClass
 public class InnReachTransactionUtils {
@@ -28,9 +29,9 @@ public class InnReachTransactionUtils {
     hold.setFolioItemBarcode(null);
   }
 
-  public static void clearCentralPatronInfo(InnReachTransaction transaction) {
-    var hold = transaction.getHold();
+  public static void clearCentralPatronInfo(TransactionHold hold) {
     hold.setPatronId(null);
     hold.setPatronName(null);
   }
+
 }
