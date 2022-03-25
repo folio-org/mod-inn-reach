@@ -383,6 +383,8 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
 
       transaction.setState(CANCEL_REQUEST);
 
+      clearCentralPatronInfo(transaction);
+
       var instance = instanceStorageClient.getInstanceById(requestDTO.getInstanceId());
       notifier.reportOwningSiteCancel(transaction, instance.getHrid(), hold.getPatronName());
       clearCentralPatronInfo(transaction);

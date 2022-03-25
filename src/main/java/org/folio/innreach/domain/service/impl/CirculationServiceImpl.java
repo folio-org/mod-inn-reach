@@ -28,6 +28,7 @@ import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionTy
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionType.PATRON;
 import static org.folio.innreach.util.DateHelper.toEpochSec;
 import static org.folio.innreach.util.InnReachTransactionUtils.clearCentralPatronInfo;
+import static org.folio.innreach.util.InnReachTransactionUtils.clearPatronAndItemInfo;
 import static org.folio.innreach.util.InnReachTransactionUtils.verifyState;
 
 import java.util.Date;
@@ -409,6 +410,10 @@ public class CirculationServiceImpl implements CirculationService {
     verifyState(transaction, ITEM_IN_TRANSIT, RETURN_UNCIRCULATED);
 
     transaction.setState(FINAL_CHECKIN);
+
+    removeItemTransactionInfo(transaction.getHold().getFolioItemId())
+      .ifPresent(this::removeHoldingsTransactionInfo);
+    clearPatronAndItemInfo(transaction.getHold());
 
     return success();
   }
