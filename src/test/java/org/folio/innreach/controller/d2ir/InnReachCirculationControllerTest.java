@@ -48,6 +48,7 @@ import java.util.Date;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.apache.commons.lang3.ObjectUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
@@ -336,7 +337,9 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
 
     var inOrder = inOrder(transactionRepository, requestService);
 
-    inOrder.verify(transactionRepository).save(argThat(t -> t.getState() == BORROWING_SITE_CANCEL));
+    inOrder.verify(transactionRepository).save(
+      argThat(t -> t.getState() == BORROWING_SITE_CANCEL && isCentralPatronInfoCleared(t))
+    );
     inOrder.verify(requestService).cancelRequest(any(), eq("Request cancelled at borrowing site"));
   }
 
@@ -1118,5 +1121,10 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     personal.setLastName("Atreides");
     user.setPersonal(personal);
     return user;
+  }
+
+  private static boolean isCentralPatronInfoCleared(InnReachTransaction transaction) {
+    var hold = transaction.getHold();
+    return ObjectUtils.allNull(hold.getPatronId(), hold.getPatronName());
   }
 }
