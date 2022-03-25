@@ -215,7 +215,6 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
     verify(eventProcessor).process(anyList(), any(Consumer.class));
     verify(innReachExternalService).postInnReachApi(any(), any(), any());
     var updatedTransaction = transactionRepository.fetchOneById(PRE_POPULATED_LOCAL_TRANSACTION_ID).orElseThrow();
-    assertEquals(PRE_POPULATED_LOCAL_LOAN_ID, updatedTransaction.getHold().getFolioLoanId());
     assertEquals(LOCAL_CHECKOUT, updatedTransaction.getState());
 
     assertPatronAndItemInfoCleared(updatedTransaction.getHold());
