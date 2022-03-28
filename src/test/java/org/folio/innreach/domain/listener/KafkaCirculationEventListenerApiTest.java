@@ -1,6 +1,7 @@
 package org.folio.innreach.domain.listener;
 
 import static org.awaitility.Awaitility.await;
+import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.PATRON_HOLD;
 import static org.folio.innreach.fixture.InventoryFixture.createInventoryItemDTO;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -455,6 +456,10 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
     when(holdingsService.find(any())).thenReturn(any());
     when(itemStorageClient.getItemById(ITEM_ID)).thenReturn(Optional.of(item));
     doNothing().when(inventoryClient).updateItem(ITEM_ID, inventoryItemDTO);
+
+    var transaction = transactionRepository.fetchOneById(PRE_POPULATED_PATRON_TRANSACTION_ID).orElse(null);
+
+    assertEquals(PATRON_HOLD, transaction.getState());
 
     listener.handleRequestEvents(asSingleConsumerRecord(CIRC_REQUEST_TOPIC, PRE_POPULATED_PATRON_TRANSACTION_REQUEST_ID, event));
 
