@@ -43,7 +43,6 @@ import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.folio.innreach.client.InventoryClient;
 import org.folio.innreach.client.ItemStorageClient;
-import org.folio.innreach.domain.entity.TransactionPatronHold;
 import org.folio.innreach.domain.service.HoldingsService;
 import org.folio.innreach.dto.Item;
 import org.junit.jupiter.api.Test;
@@ -463,18 +462,8 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
     verify(innReachExternalService, times(1)).postInnReachApi(any(), any());
 
     var updatedTransaction = transactionRepository.fetchOneById(PRE_POPULATED_PATRON_TRANSACTION_ID).orElse(null);
-    var patronTransaction = (TransactionPatronHold) updatedTransaction.getHold();
     assertEquals(BORROWING_SITE_CANCEL, updatedTransaction.getState());
-    assertEquals(null, patronTransaction.getPatronId());
-    assertEquals(null, patronTransaction.getPatronName());
-    assertEquals(null, patronTransaction.getFolioPatronId());
-    assertEquals(null, patronTransaction.getFolioPatronBarcode());
-    assertEquals(null, patronTransaction.getFolioItemId());
-    assertEquals(null, patronTransaction.getFolioHoldingId());
-    assertEquals(null, patronTransaction.getFolioInstanceId());
-    assertEquals(null, patronTransaction.getFolioRequestId());
-    assertEquals(null, patronTransaction.getFolioLoanId());
-    assertEquals(null, patronTransaction.getFolioItemBarcode());
+    assertPatronAndItemInfoCleared(updatedTransaction.getHold());
   }
 
   @Test
