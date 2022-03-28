@@ -2,6 +2,7 @@ package org.folio.innreach.domain.listener;
 
 import static org.awaitility.Awaitility.await;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.LOCAL_CHECKOUT;
+import static org.folio.innreach.fixture.InventoryFixture.createInventoryItemDTO;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
@@ -38,8 +39,10 @@ import java.util.function.Consumer;
 
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.producer.ProducerRecord;
+import org.folio.innreach.client.InventoryClient;
 import org.folio.innreach.client.ItemStorageClient;
 import org.folio.innreach.domain.entity.TransactionPatronHold;
+import org.folio.innreach.domain.service.HoldingsService;
 import org.folio.innreach.dto.Item;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -60,7 +63,6 @@ import org.folio.innreach.domain.event.DomainEvent;
 import org.folio.innreach.domain.event.DomainEventType;
 import org.folio.innreach.domain.event.EntityChangedData;
 import org.folio.innreach.domain.listener.base.BaseKafkaApiTest;
-import org.folio.innreach.domain.service.ItemService;
 import org.folio.innreach.domain.service.RequestService;
 import org.folio.innreach.domain.service.impl.BatchDomainEventProcessor;
 import org.folio.innreach.dto.CheckInDTO;
@@ -113,7 +115,10 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
   private InnReachExternalService innReachExternalService;
 
   @MockBean
-  private ItemService itemService;
+  private HoldingsService holdingsService;
+
+  @MockBean
+  InventoryClient inventoryClient;
 
   @MockBean
   private RequestService requestService;
@@ -215,7 +220,7 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
     storageLoanDTO.setItemId(PRE_POPULATED_LOCAL_ITEM_ID);
     storageLoanDTO.setUserId(PRE_POPULATED_LOCAL_PATRON_ID);
 
-    when(itemService.find(PRE_POPULATED_LOCAL_ITEM_ID)).thenReturn(Optional.of(item));
+    when(inventoryClient.findItem(PRE_POPULATED_LOCAL_ITEM_ID)).thenReturn(Optional.of(item));
     listener.handleLoanEvents(asSingleConsumerRecord(CIRC_LOAN_TOPIC, PRE_POPULATED_LOCAL_LOAN_ID, event));
 
     verify(eventProcessor).process(anyList(), any(Consumer.class));
@@ -347,7 +352,7 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
     item.setBarcode(barcode);
     var event = createRequestDomainEvent(DomainEventType.UPDATED);
 
-    when(itemService.find(any())).thenReturn(Optional.of(item));
+    when(inventoryClient.findItem(any())).thenReturn(Optional.of(item));
 
     listener.handleRequestEvents(asSingleConsumerRecord(CIRC_REQUEST_TOPIC, REQUEST_ID, event));
 
@@ -399,7 +404,7 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
     verify(eventProcessor).process(anyList(), any(Consumer.class));
 
     verify(transactionRepository, times(1)).fetchActiveByRequestId(any());
-    verify(itemService, times(0)).find(any());
+    verify(inventoryClient, times(0)).findItem(any());
     verify(innReachExternalService, times(0)).postInnReachApi(any(), any(), any());
   }
 
@@ -423,7 +428,7 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
     verify(eventProcessor).process(anyList(), any(Consumer.class));
     verify(instanceStorageClient, times(1)).getInstanceById(any());
     verify(innReachExternalService, times(1)).postInnReachApi(any(), any(), any());
-    Mockito.verifyNoMoreInteractions(itemService);
+    Mockito.verifyNoMoreInteractions(inventoryClient);
 
     var updatedTransaction = transactionRepository.fetchOneById(PRE_POPULATED_ITEM_TRANSACTION_ID).orElse(null);
     assertEquals(CANCEL_REQUEST, updatedTransaction.getState());
@@ -441,11 +446,12 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
     var request = event.getData().getNewEntity();
     request.setId(PRE_POPULATED_PATRON_TRANSACTION_REQUEST_ID);
     request.setStatus(CLOSED_CANCELLED);
-    Item item = new Item();
-    item.setBarcode("454535");
+    var inventoryItemDTO = createInventoryItemDTO();
+    var item = new Item();
 
+    when(holdingsService.find(any())).thenReturn(any());
     when(itemStorageClient.getItemById(ITEM_ID)).thenReturn(Optional.of(item));
-    doNothing().when(itemStorageClient).updateItemByItemId(ITEM_ID, item);
+    doNothing().when(inventoryClient).updateItem(ITEM_ID, inventoryItemDTO);
 
     listener.handleRequestEvents(asSingleConsumerRecord(CIRC_REQUEST_TOPIC, PRE_POPULATED_PATRON_TRANSACTION_REQUEST_ID, event));
 
@@ -455,7 +461,6 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
     var updatedTransaction = transactionRepository.fetchOneById(PRE_POPULATED_PATRON_TRANSACTION_ID).orElse(null);
     var patronTransaction = (TransactionPatronHold) updatedTransaction.getHold();
     assertEquals(BORROWING_SITE_CANCEL, updatedTransaction.getState());
-    assertEquals(null, item.getBarcode());
     assertEquals(null, patronTransaction.getPatronId());
     assertEquals(null, patronTransaction.getPatronName());
     assertEquals(null, patronTransaction.getFolioPatronId());

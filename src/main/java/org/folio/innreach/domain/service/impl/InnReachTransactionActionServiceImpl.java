@@ -31,13 +31,13 @@ import static org.folio.innreach.util.InnReachTransactionUtils.clearPatronAndIte
 
 import java.time.Instant;
 import java.util.EnumSet;
+import java.util.Optional;
 import java.util.UUID;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.ArrayUtils;
 import org.folio.innreach.client.ItemStorageClient;
-import org.folio.innreach.dto.Item;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
@@ -82,7 +82,6 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
   private final InstanceStorageClient instanceStorageClient;
   private final InnReachTransactionActionNotifier notifier;
   private final TransactionTemplate transactionTemplate;
-  private final ItemStorageClient itemStorageClient;
 
   @Override
   public PatronHoldCheckInResponseDTO checkInPatronHoldItem(UUID transactionId, UUID servicePointId) {
@@ -462,18 +461,14 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
     patronTransaction.setFolioRequestId(null);
     patronTransaction.setFolioLoanId(null);
     patronTransaction.setFolioItemBarcode(null);
-    Item item = fetchItem(itemId);
-    item.setBarcode(null);
-    updateItem(itemId, item);
+    updateItem(itemId);
   }
 
-  private Item fetchItem(UUID itemId) {
-    return itemStorageClient.getItemById(itemId)
-      .orElseThrow(() -> new IllegalArgumentException("Item is not found by id: " + itemId));
-  }
-
-  private void updateItem(UUID itemId, Item item) {
-    itemStorageClient.updateItemByItemId(itemId, item);
+  private Optional<InventoryItemDTO> updateItem(UUID itemId) {
+    return itemService.changeAndUpdate(itemId, item -> {
+      item.setBarcode(null);
+      return item;
+    });
   }
 
   private void verifyState(InnReachTransaction transaction, InnReachTransaction.TransactionState... states) {

@@ -17,6 +17,4 @@ public interface ItemStorageClient {
   @GetMapping("/items/{itemId}")
   Optional<Item> getItemById(@PathVariable("itemId") UUID itemId);
 
-  @PutMapping("/items/{itemId}")
-  void updateItemByItemId(@PathVariable("itemId") UUID itemId, Item item);
 }
