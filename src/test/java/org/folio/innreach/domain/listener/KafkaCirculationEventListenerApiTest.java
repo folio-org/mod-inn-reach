@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -22,6 +23,7 @@ import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionSt
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.FINAL_CHECKIN;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.ITEM_IN_TRANSIT;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.ITEM_SHIPPED;
+import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.LOCAL_CHECKOUT;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.RECALL;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.RETURN_UNCIRCULATED;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.TRANSFER;
@@ -31,6 +33,7 @@ import static org.folio.innreach.util.DateHelper.toEpochSec;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -58,6 +61,7 @@ import org.folio.innreach.client.InstanceStorageClient;
 import org.folio.innreach.domain.dto.folio.circulation.RequestDTO;
 import org.folio.innreach.domain.dto.folio.inventory.InventoryItemDTO;
 import org.folio.innreach.domain.entity.InnReachTransaction;
+import org.folio.innreach.domain.entity.TransactionHold;
 import org.folio.innreach.domain.entity.TransactionItemHold;
 import org.folio.innreach.domain.event.DomainEvent;
 import org.folio.innreach.domain.event.DomainEventType;
@@ -98,6 +102,7 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
   private static final UUID PRE_POPULATED_ITEM_TRANSACTION_LOAN_ID = UUID.fromString("06e820e3-71a0-455e-8c73-3963aea677d4");
   private static final UUID PRE_POPULATED_LOCAL_TRANSACTION_ID = UUID.fromString("79b0a1fb-55be-4e55-9d84-01303aaec1ce");
   private static final String TEST_TENANT_ID = "testing";
+  private static final String TEST_PATRON_NAME = "patronName2";
   private static final Duration ASYNC_AWAIT_TIMEOUT = Duration.ofSeconds(15);
   private static final Date DUE_DATE = new Date();
   private static final UUID CHECKIN_ID = UUID.randomUUID();
@@ -226,8 +231,9 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
     verify(eventProcessor).process(anyList(), any(Consumer.class));
     verify(innReachExternalService).postInnReachApi(any(), any(), any());
     var updatedTransaction = transactionRepository.fetchOneById(PRE_POPULATED_LOCAL_TRANSACTION_ID).orElseThrow();
-    assertEquals(PRE_POPULATED_LOCAL_LOAN_ID, updatedTransaction.getHold().getFolioLoanId());
     assertEquals(LOCAL_CHECKOUT, updatedTransaction.getState());
+
+    assertPatronAndItemInfoCleared(updatedTransaction.getHold());
   }
 
   @Test
@@ -300,17 +306,10 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
     var payload = payloadCaptor.getValue();
     var updatedTransaction = transactionRepository.fetchOneById(PRE_POPULATED_PATRON_TRANSACTION_ID).orElseThrow();
     assertEquals(CLAIMS_RETURNED, updatedTransaction.getState());
+
     var itemHold = updatedTransaction.getHold();
-    assertNull(itemHold.getPatronId());
-    assertNull(itemHold.getPatronName());
-    assertNull(itemHold.getFolioPatronId());
-    assertNull(itemHold.getFolioPatronBarcode());
-    assertNull(itemHold.getFolioItemId());
-    assertNull(itemHold.getFolioHoldingId());
-    assertNull(itemHold.getFolioInstanceId());
-    assertNull(itemHold.getFolioRequestId());
-    assertNull(itemHold.getFolioLoanId());
-    assertNull(itemHold.getFolioItemBarcode());
+    assertPatronAndItemInfoCleared(itemHold);
+
     assertEquals(toEpochSec(claimedReturnedDate), payload.get("claimsReturnedDate"));
   }
 
@@ -335,9 +334,9 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
     var updatedTransaction = transactionRepository.fetchOneById(transactionId).orElse(null);
     var updatedHold = (TransactionItemHold) updatedTransaction.getHold();
 
-    assertEquals(null, updatedHold.getPatronName());
-    assertEquals(null, updatedHold.getPatronId());
-    assertEquals(null, updatedTransaction.getHold().getDueDateTime());
+    assertNull(updatedHold.getPatronName());
+    assertNull(updatedHold.getPatronId());
+    assertNull(updatedTransaction.getHold().getDueDateTime());
     assertEquals(FINAL_CHECKIN, updatedTransaction.getState());
   }
 
@@ -421,12 +420,19 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
     request.setInstanceId(INSTANCE_ID);
     request.setStatus(CLOSED_CANCELLED);
 
+    var payload = new HashMap<>();
+    payload.put("localBibId", instance.getHrid());
+    payload.put("reasonCode", 7);
+    payload.put("patronName", TEST_PATRON_NAME);
+
     when(instanceStorageClient.getInstanceById(request.getInstanceId())).thenReturn(instance);
 
     listener.handleRequestEvents(asSingleConsumerRecord(CIRC_REQUEST_TOPIC, REQUEST_ID, event));
 
     verify(eventProcessor).process(anyList(), any(Consumer.class));
     verify(instanceStorageClient, times(1)).getInstanceById(any());
+    verify(innReachExternalService, times(1)).postInnReachApi(any(), any(), eq(payload));
+    Mockito.verifyNoMoreInteractions(itemService);
     verify(innReachExternalService, times(1)).postInnReachApi(any(), any(), any());
     Mockito.verifyNoMoreInteractions(inventoryClient);
 
@@ -589,4 +595,18 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
       .data(new EntityChangedData<>(null, checkIn))
       .build();
   }
+
+  private static void assertPatronAndItemInfoCleared(TransactionHold itemHold) {
+    assertNull(itemHold.getPatronId());
+    assertNull(itemHold.getPatronName());
+    assertNull(itemHold.getFolioPatronId());
+    assertNull(itemHold.getFolioPatronBarcode());
+    assertNull(itemHold.getFolioItemId());
+    assertNull(itemHold.getFolioHoldingId());
+    assertNull(itemHold.getFolioInstanceId());
+    assertNull(itemHold.getFolioRequestId());
+    assertNull(itemHold.getFolioLoanId());
+    assertNull(itemHold.getFolioItemBarcode());
+  }
+
 }

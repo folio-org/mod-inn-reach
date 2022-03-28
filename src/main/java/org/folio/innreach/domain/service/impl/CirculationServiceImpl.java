@@ -28,6 +28,7 @@ import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionTy
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionType.PATRON;
 import static org.folio.innreach.util.DateHelper.toEpochSec;
 import static org.folio.innreach.util.InnReachTransactionUtils.clearCentralPatronInfo;
+import static org.folio.innreach.util.InnReachTransactionUtils.clearPatronAndItemInfo;
 import static org.folio.innreach.util.InnReachTransactionUtils.verifyState;
 
 import java.util.Date;
@@ -249,7 +250,7 @@ public class CirculationServiceImpl implements CirculationService {
     // kafka event for a request update is consumed after the cancellation
     transaction.setState(BORROWING_SITE_CANCEL);
 
-    clearCentralPatronInfo(transaction);
+    clearCentralPatronInfo(transaction.getHold());
 
     transaction = saveAndPersist(transaction);
 
@@ -410,6 +411,10 @@ public class CirculationServiceImpl implements CirculationService {
 
     transaction.setState(FINAL_CHECKIN);
 
+    removeItemTransactionInfo(transaction.getHold().getFolioItemId())
+      .ifPresent(this::removeHoldingsTransactionInfo);
+    clearPatronAndItemInfo(transaction.getHold());
+
     return success();
   }
 
@@ -426,9 +431,7 @@ public class CirculationServiceImpl implements CirculationService {
     loanService.claimItemReturned(folioLoanId, returnedDate);
 
     transaction.setState(CLAIMS_RETURNED);
-    var itemHold = transaction.getHold();
-    itemHold.setPatronId(null);
-    itemHold.setPatronName(null);
+    clearCentralPatronInfo(transaction.getHold());
 
     return success();
   }
