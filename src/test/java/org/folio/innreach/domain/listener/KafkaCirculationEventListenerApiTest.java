@@ -42,9 +42,10 @@ import java.util.function.Consumer;
 
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.producer.ProducerRecord;
+import org.folio.innreach.client.HoldingsStorageClient;
 import org.folio.innreach.client.InventoryClient;
 import org.folio.innreach.client.ItemStorageClient;
-import org.folio.innreach.domain.service.HoldingsService;
+import org.folio.innreach.dto.Holding;
 import org.folio.innreach.dto.Item;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -119,10 +120,10 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
   private InnReachExternalService innReachExternalService;
 
   @MockBean
-  private HoldingsService holdingsService;
+  private HoldingsStorageClient holdingsStorageClient;
 
   @MockBean
-  InventoryClient inventoryClient;
+  private InventoryClient inventoryClient;
 
   @MockBean
   private RequestService requestService;
@@ -452,8 +453,9 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
     request.setStatus(CLOSED_CANCELLED);
     var inventoryItemDTO = createInventoryItemDTO();
     var item = new Item();
+    var holding = new Holding();
 
-    when(holdingsService.find(any())).thenReturn(any());
+    when(holdingsStorageClient.findHolding(HOLDING_ID)).thenReturn(Optional.of(holding));
     when(itemStorageClient.getItemById(ITEM_ID)).thenReturn(Optional.of(item));
     doNothing().when(inventoryClient).updateItem(ITEM_ID, inventoryItemDTO);
 
