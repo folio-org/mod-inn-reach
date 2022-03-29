@@ -261,6 +261,22 @@ paths:
           $ref: "api-common.yaml#/components/responses/trait_response_500"
       parameters:
         - $ref: 'api-common.yaml#/components/parameters/id'
+  /transactions/{id}/patronhold/return-item/{servicePointId}:
+    post:
+      operationId: returnPatronHoldItem
+      description: Returns Patron Hold item
+      tags:
+        - inn-reach-transaction
+      responses:
+        '204':
+          description: No content
+        '404':
+          $ref: "api-common.yaml#/components/responses/trait_response_404"
+        '500':
+          $ref: "api-common.yaml#/components/responses/trait_response_500"
+      parameters:
+        - $ref: 'api-common.yaml#/components/parameters/id'
+        - $ref: 'circulation.yaml#/components/parameters/servicePointId'
   /d2ir/circ/verifypatron:
     post:
       operationId: verifyPatron

@@ -37,4 +37,5 @@ public interface RequestService {
 
   boolean isOpenRequest(RequestDTO request);
 
+  boolean isCanceledOrExpired(RequestDTO request);
 }

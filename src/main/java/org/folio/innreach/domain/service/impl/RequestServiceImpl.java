@@ -1,6 +1,8 @@
 package org.folio.innreach.domain.service.impl;
 
 import static org.folio.innreach.domain.dto.folio.circulation.RequestDTO.FulfilmentPreference.HOLD_SHELF;
+import static org.folio.innreach.domain.dto.folio.circulation.RequestDTO.RequestStatus.CLOSED_CANCELLED;
+import static org.folio.innreach.domain.dto.folio.circulation.RequestDTO.RequestStatus.CLOSED_PICKUP_EXPIRED;
 import static org.folio.innreach.domain.dto.folio.circulation.RequestDTO.RequestStatus.OPEN_AWAITING_DELIVERY;
 import static org.folio.innreach.domain.dto.folio.circulation.RequestDTO.RequestStatus.OPEN_AWAITING_PICKUP;
 import static org.folio.innreach.domain.dto.folio.circulation.RequestDTO.RequestStatus.OPEN_IN_TRANSIT;
@@ -30,7 +32,6 @@ import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionSt
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
-import java.util.Date;
 import java.util.Set;
 import java.util.UUID;
 
@@ -63,11 +64,7 @@ import org.folio.innreach.domain.service.InventoryService;
 import org.folio.innreach.domain.service.ItemService;
 import org.folio.innreach.domain.service.RequestPreferenceService;
 import org.folio.innreach.domain.service.RequestService;
-import org.folio.innreach.dto.CheckInRequestDTO;
-import org.folio.innreach.dto.CheckInResponseDTO;
-import org.folio.innreach.dto.CheckOutRequestDTO;
 import org.folio.innreach.dto.Holding;
-import org.folio.innreach.dto.LoanDTO;
 import org.folio.innreach.external.service.InnReachExternalService;
 import org.folio.innreach.mapper.InnReachTransactionPickupLocationMapper;
 import org.folio.innreach.repository.CentralPatronTypeMappingRepository;
@@ -81,8 +78,10 @@ import org.folio.innreach.util.UUIDEncoder;
 public class RequestServiceImpl implements RequestService {
   private static final String OWNING_SITE_CANCELS_REQUEST_BASE_URI = "/circ/owningsitecancel/";
 
-  private static final Set<RequestStatus> openRequestStatuses = Set.of(OPEN_AWAITING_PICKUP, OPEN_AWAITING_DELIVERY,
-    OPEN_IN_TRANSIT, OPEN_NOT_YET_FILLED);
+  private static final Set<RequestStatus> openRequestStatuses = Set.of(
+    OPEN_AWAITING_PICKUP, OPEN_AWAITING_DELIVERY, OPEN_IN_TRANSIT, OPEN_NOT_YET_FILLED);
+  private static final Set<RequestStatus> canceledExpiredStatuses = Set.of(CLOSED_CANCELLED, CLOSED_PICKUP_EXPIRED);
+
   private static final Set<InventoryItemStatus> notAvailableItemStatuses = Set.of(
     LONG_MISSING, DECLARED_LOST, AGED_TO_LOST, LOST_AND_PAID, AWAITING_PICKUP, MISSING, PAGED, CLAIMED_RETURNED,
     WITHDRAWN, AWAITING_DELIVERY, IN_PROCESS_NON_REQUESTABLE, UNAVAILABLE, UNKNOWN);
@@ -280,6 +279,11 @@ public class RequestServiceImpl implements RequestService {
   @Override
   public boolean isOpenRequest(RequestDTO request) {
     return openRequestStatuses.contains(request.getStatus());
+  }
+
+  @Override
+  public boolean isCanceledOrExpired(RequestDTO request) {
+    return canceledExpiredStatuses.contains(request.getStatus());
   }
 
   private void cancelRequest(RequestDTO request, UUID reasonId, String reasonDetails) {
