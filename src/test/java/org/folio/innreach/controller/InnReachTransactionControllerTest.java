@@ -1529,21 +1529,6 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     verify(innReachClient).postInnReachApi(any(), anyString(), anyString(), anyString());
   }
 
-  @Test
-  @Sql(scripts = {
-    "classpath:db/central-server/pre-populate-central-server.sql",
-    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
-  })
-  void shouldThrowException_when_TransactionIsNotPatronType() {
-    var cancelPatronHold = createCancelPatronHold();
-
-    var responseEntity = testRestTemplate.postForEntity(
-      PATRON_HOLD_CANCEL_ENDPOINT, cancelPatronHold, InnReachTransactionDTO.class,
-      PRE_POPULATED_ITEM_HOLD_TRANSACTION_ID);
-
-    assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
-  }
-
   @ParameterizedTest
   @EnumSource(names = {"ITEM_SHIPPED", "RECEIVE_UNANNOUNCED", "ITEM_RECEIVED"})
   @Sql(scripts = {
