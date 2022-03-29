@@ -324,6 +324,8 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
 
       transaction.setState(FINAL_CHECKIN);
 
+      saveInNewDbTransaction(transaction);
+
       notifier.reportFinalCheckIn(transaction);
 
       clearCentralPatronInfo(hold);
