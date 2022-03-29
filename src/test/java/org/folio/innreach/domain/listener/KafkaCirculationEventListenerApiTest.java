@@ -49,6 +49,7 @@ import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlMergeMode;
 
+import org.folio.innreach.client.CirculationClient;
 import org.folio.innreach.client.InstanceStorageClient;
 import org.folio.innreach.domain.dto.folio.circulation.RequestDTO;
 import org.folio.innreach.domain.dto.folio.inventory.InventoryItemDTO;
@@ -60,7 +61,6 @@ import org.folio.innreach.domain.event.DomainEventType;
 import org.folio.innreach.domain.event.EntityChangedData;
 import org.folio.innreach.domain.listener.base.BaseKafkaApiTest;
 import org.folio.innreach.domain.service.ItemService;
-import org.folio.innreach.domain.service.RequestService;
 import org.folio.innreach.domain.service.impl.BatchDomainEventProcessor;
 import org.folio.innreach.dto.CheckInDTO;
 import org.folio.innreach.dto.Instance;
@@ -116,7 +116,7 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
   private ItemService itemService;
 
   @MockBean
-  private RequestService requestService;
+  private CirculationClient circulationClient;
 
   @MockBean
   private InstanceStorageClient instanceStorageClient;
@@ -486,7 +486,7 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
     request.setId(PRE_POPULATED_PATRON_TRANSACTION_REQUEST_ID);
     request.setStatus(requestStatus);
 
-    when(requestService.findRequest(any())).thenReturn(request);
+    when(circulationClient.findRequest(any())).thenReturn(Optional.of(request));
 
     listener.handleCheckInEvents(asSingleConsumerRecord(CIRC_LOAN_TOPIC, checkInId, event));
 
