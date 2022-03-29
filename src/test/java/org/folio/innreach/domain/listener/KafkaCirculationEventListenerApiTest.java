@@ -1,8 +1,6 @@
 package org.folio.innreach.domain.listener;
 
 import static org.awaitility.Awaitility.await;
-import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.PATRON_HOLD;
-import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionType.PATRON;
 import static org.folio.innreach.fixture.InventoryFixture.createInventoryItemDTO;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -45,7 +43,9 @@ import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.folio.innreach.client.HoldingsStorageClient;
 import org.folio.innreach.client.InventoryClient;
+import org.folio.innreach.client.InventoryViewClient;
 import org.folio.innreach.client.ItemStorageClient;
+import org.folio.innreach.domain.dto.folio.ResultList;
 import org.folio.innreach.dto.Holding;
 import org.folio.innreach.dto.Item;
 import org.junit.jupiter.api.Test;
@@ -134,6 +134,9 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
 
   @MockBean
   private ItemStorageClient itemStorageClient;
+
+  @MockBean
+  private InventoryViewClient inventoryViewClient;
 
   @Test
   void shouldReceiveLoanEvent() {
@@ -451,24 +454,26 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
     var event = createRequestDomainEvent(DomainEventType.UPDATED);
     var request = event.getData().getNewEntity();
     request.setId(PRE_POPULATED_PATRON_TRANSACTION_REQUEST_ID);
-    request.setStatus(CLOSED_CANCELLED);
-    var inventoryItemDTO = createInventoryItemDTO();
     var item = new Item();
+    item.setId(ITEM_ID);
+    request.setStatus(CLOSED_CANCELLED);
+    request.setItemId(ITEM_ID);
+    item.setHoldingsRecordId(HOLDING_ID);
+    var inventoryItemDTO = createInventoryItemDTO();
     var holding = new Holding();
+    holding.setInstanceId(INSTANCE_ID);
+    ResultList<InventoryViewClient.InstanceView> resultList = new ResultList<>();
 
-    when(holdingsStorageClient.findHolding(HOLDING_ID)).thenReturn(Optional.of(holding));
     when(itemStorageClient.getItemById(ITEM_ID)).thenReturn(Optional.of(item));
+    when(holdingsStorageClient.findHolding(item.getHoldingsRecordId())).thenReturn(Optional.of(holding));
+    when(inventoryViewClient.getInstanceById(holding.getInstanceId())).thenReturn(resultList);
     doNothing().when(inventoryClient).updateItem(ITEM_ID, inventoryItemDTO);
-
-    var transaction = transactionRepository.fetchOneById(PRE_POPULATED_PATRON_TRANSACTION_ID).orElse(null);
-
-    assertEquals(PATRON, transaction.getType());
-    assertEquals(PATRON_HOLD, transaction.getState());
 
     listener.handleRequestEvents(asSingleConsumerRecord(CIRC_REQUEST_TOPIC, PRE_POPULATED_PATRON_TRANSACTION_REQUEST_ID, event));
 
     verify(eventProcessor).process(anyList(), any(Consumer.class));
     verify(innReachExternalService, times(1)).postInnReachApi(any(), any());
+    verify(inventoryClient, times(1)).findItem(any());
 
     var updatedTransaction = transactionRepository.fetchOneById(PRE_POPULATED_PATRON_TRANSACTION_ID).orElse(null);
     assertEquals(BORROWING_SITE_CANCEL, updatedTransaction.getState());
