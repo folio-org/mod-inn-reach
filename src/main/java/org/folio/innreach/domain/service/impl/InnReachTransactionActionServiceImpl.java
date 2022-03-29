@@ -31,11 +31,13 @@ import static org.folio.innreach.util.InnReachTransactionUtils.clearPatronAndIte
 
 import java.time.Instant;
 import java.util.EnumSet;
+import java.util.Optional;
 import java.util.UUID;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.ArrayUtils;
+import org.folio.innreach.util.InnReachTransactionUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
@@ -415,6 +417,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
       log.info("Updating patron hold transaction {} on cancellation of a request {}", transaction.getId(), requestDTO.getId());
       transaction.setState(BORROWING_SITE_CANCEL);
       notifier.reportCancelItemHold(transaction);
+      clearPatronTransactionAndItemRecord(requestDTO.getItemId(), transaction);
     }
   }
 
@@ -449,6 +452,19 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
         notifier.reportReturnUncirculated(transaction);
       }
     }
+  }
+
+  private void clearPatronTransactionAndItemRecord(UUID itemId, InnReachTransaction transaction) {
+    var patronTransaction = (TransactionPatronHold) transaction.getHold();
+    InnReachTransactionUtils.clearPatronAndItemInfo(patronTransaction);
+    updateItem(itemId);
+  }
+
+  private Optional<InventoryItemDTO> updateItem(UUID itemId) {
+    return itemService.changeAndUpdate(itemId, item -> {
+      item.setBarcode(null);
+      return item;
+    });
   }
 
   private void verifyState(InnReachTransaction transaction, InnReachTransaction.TransactionState... states) {
