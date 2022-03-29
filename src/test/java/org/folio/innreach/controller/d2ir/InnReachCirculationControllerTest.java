@@ -1136,7 +1136,7 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
       new HttpEntity<>(cancelRequestDTO, headers), InnReachResponseDTO.class,
       PRE_POPULATED_TRACKING1_ID, PRE_POPULATED_CENTRAL_CODE);
 
-    verify(requestService).cancelRequest(any(), anyString());
+    verify(requestService).cancelRequest(anyString(), any(UUID.class), anyString());
 
     var transactionAfter = fetchPrePopulatedTransaction();
 

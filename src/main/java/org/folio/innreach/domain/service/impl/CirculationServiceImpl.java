@@ -212,12 +212,15 @@ public class CirculationServiceImpl implements CirculationService {
     transaction.setState(CANCEL_REQUEST);
 
     var itemId = transaction.getHold().getFolioItemId();
-
-    requestService.cancelRequest(transaction, cancelRequest.getReason());
+    var requestId = transaction.getHold().getFolioRequestId();
 
     removeItemTransactionInfo(itemId)
       .ifPresent(this::removeHoldingsTransactionInfo);
     clearPatronAndItemInfo(transaction.getHold());
+
+    saveAndPersist(transaction);
+
+    requestService.cancelRequest(trackingId, requestId, cancelRequest.getReason());
 
     log.info("Item request successfully cancelled");
 
@@ -607,5 +610,4 @@ public class CirculationServiceImpl implements CirculationService {
     return localAgencyRepository.fetchOneByCode(code)
       .orElseThrow(() -> new EntityNotFoundException("Local agency with code: " + code + " not found."));
   }
-
 }

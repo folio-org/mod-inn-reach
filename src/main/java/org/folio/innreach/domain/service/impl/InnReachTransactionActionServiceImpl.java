@@ -426,12 +426,14 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
 
       transaction = saveInNewDbTransaction(transaction);
 
-      requestService.cancelRequest(transaction, cancelRequest.getCancellationReasonId(),
+      Assert.notNull(transaction, "Transaction is null.");
+
+      requestService.cancelRequest(transaction.getTrackingId(), transaction.getHold().getFolioRequestId(), cancelRequest.getCancellationReasonId(),
         cancelRequest.getCancellationAdditionalInformation());
 
       notifier.reportCancelItemHold(transaction);
     } else {
-      requestService.cancelRequest(transaction, cancelRequest.getCancellationReasonId(),
+      requestService.cancelRequest(transaction.getTrackingId(), transaction.getHold().getFolioRequestId(), cancelRequest.getCancellationReasonId(),
         cancelRequest.getCancellationAdditionalInformation());
     }
   }
