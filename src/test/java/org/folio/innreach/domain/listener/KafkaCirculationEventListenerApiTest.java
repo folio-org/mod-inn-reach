@@ -467,6 +467,7 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
     when(itemStorageClient.getItemById(ITEM_ID)).thenReturn(Optional.of(item));
     when(holdingsStorageClient.findHolding(item.getHoldingsRecordId())).thenReturn(Optional.of(holding));
     when(inventoryViewClient.getInstanceById(holding.getInstanceId())).thenReturn(resultList);
+    when(inventoryClient.findItem(item.getId())).thenReturn(Optional.of(inventoryItemDTO));
     doNothing().when(inventoryClient).updateItem(ITEM_ID, inventoryItemDTO);
 
     listener.handleRequestEvents(asSingleConsumerRecord(CIRC_REQUEST_TOPIC, PRE_POPULATED_PATRON_TRANSACTION_REQUEST_ID, event));
@@ -474,6 +475,7 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
     verify(eventProcessor).process(anyList(), any(Consumer.class));
     verify(innReachExternalService, times(1)).postInnReachApi(any(), any());
     verify(inventoryClient, times(1)).findItem(any());
+    verify(inventoryClient, times(1)).updateItem(any(), any());
 
     var updatedTransaction = transactionRepository.fetchOneById(PRE_POPULATED_PATRON_TRANSACTION_ID).orElse(null);
     assertEquals(BORROWING_SITE_CANCEL, updatedTransaction.getState());
