@@ -3,7 +3,6 @@ package org.folio.innreach.domain.listener;
 import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.verify;
 
 import static org.folio.innreach.fixture.ContributionFixture.createHolding;
@@ -50,9 +49,9 @@ class KafkaInventoryEventListenerApiTest extends BaseKafkaApiTest {
     ArgumentCaptor<List<ConsumerRecord<String, DomainEvent<Item>>>> eventsCaptor = ArgumentCaptor.forClass(List.class);
 
     await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() ->
-      verify(listener).handleItemEvents(eventsCaptor.capture()));
+      verify(actionService).handleItemDelete(any()));
 
-    verify(actionService).handleItemDelete(any());
+    verify(listener).handleItemEvents(eventsCaptor.capture());
 
     var records = eventsCaptor.getValue();
     assertEquals(1, records.size());
@@ -71,9 +70,9 @@ class KafkaInventoryEventListenerApiTest extends BaseKafkaApiTest {
     ArgumentCaptor<List<ConsumerRecord<String, DomainEvent<Holding>>>> eventsCaptor = ArgumentCaptor.forClass(List.class);
 
     await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() ->
-      verify(listener).handleHoldingEvents(eventsCaptor.capture()));
+      verify(actionService).handleHoldingDelete(any()));
 
-    verify(actionService).handleHoldingDelete(any());
+    verify(listener).handleHoldingEvents(eventsCaptor.capture());
 
     var records = eventsCaptor.getValue();
     assertEquals(1, records.size());
@@ -92,9 +91,9 @@ class KafkaInventoryEventListenerApiTest extends BaseKafkaApiTest {
     ArgumentCaptor<List<ConsumerRecord<String, DomainEvent<Instance>>>> eventsCaptor = ArgumentCaptor.forClass(List.class);
 
     await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() ->
-      verify(listener).handleInstanceEvents(eventsCaptor.capture()));
+      verify(actionService).handleInstanceCreation(any()));
 
-    verify(actionService).handleInstanceCreation(any());
+    verify(listener).handleInstanceEvents(eventsCaptor.capture());
 
     var records = eventsCaptor.getValue();
     assertEquals(1, records.size());

@@ -30,4 +30,5 @@ public interface InnReachTransactionActionService {
 
   InnReachTransactionDTO cancelPatronHold(UUID transactionId, CancelPatronHoldDTO cancelRequest);
 
+  void returnPatronHoldItem(UUID transactionId, UUID servicePointId);
 }
