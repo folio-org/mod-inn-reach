@@ -4,6 +4,7 @@ import static java.lang.String.format;
 import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
@@ -244,7 +245,7 @@ class CirculationApiTest extends BaseApiControllerTest {
         .headers(getOkapiHeaders()))
       .andExpect(status().isOk());
 
-    verify(requestService).cancelRequest(any(), eq("Test reason"));
+    verify(requestService).cancelRequest(anyString(), any(UUID.class), eq("Test reason"));
     verify(circulationClient).updateRequest(any(), any());
   }
 

@@ -30,7 +30,6 @@ import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionSt
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
-import java.util.Date;
 import java.util.Set;
 import java.util.UUID;
 
@@ -63,11 +62,7 @@ import org.folio.innreach.domain.service.InventoryService;
 import org.folio.innreach.domain.service.ItemService;
 import org.folio.innreach.domain.service.RequestPreferenceService;
 import org.folio.innreach.domain.service.RequestService;
-import org.folio.innreach.dto.CheckInRequestDTO;
-import org.folio.innreach.dto.CheckInResponseDTO;
-import org.folio.innreach.dto.CheckOutRequestDTO;
 import org.folio.innreach.dto.Holding;
-import org.folio.innreach.dto.LoanDTO;
 import org.folio.innreach.external.service.InnReachExternalService;
 import org.folio.innreach.mapper.InnReachTransactionPickupLocationMapper;
 import org.folio.innreach.repository.CentralPatronTypeMappingRepository;
@@ -200,16 +195,19 @@ public class RequestServiceImpl implements RequestService {
 
   @Override
   public void cancelRequest(InnReachTransaction transaction, String reasonDetails) {
-    cancelRequest(transaction, INN_REACH_CANCELLATION_REASON_ID, reasonDetails);
+    cancelRequest(transaction.getTrackingId(), transaction.getHold().getFolioRequestId(),
+      INN_REACH_CANCELLATION_REASON_ID, reasonDetails);
   }
 
   @Override
-  public void cancelRequest(InnReachTransaction transaction, UUID reasonId, String reasonDetails) {
-    log.info("Canceling item request for transaction {}", transaction);
+  public void cancelRequest(String trackingId, UUID requestId, String reason) {
+    cancelRequest(trackingId, requestId, INN_REACH_CANCELLATION_REASON_ID, reason);
+  }
 
-    var requestId = transaction.getHold().getFolioRequestId();
+  @Override
+  public void cancelRequest(String trackingId, UUID requestId, UUID reasonId, String reasonDetails) {
     if (requestId == null) {
-      log.warn("FOLIO requestId is not set for transaction with trackingId: {}", transaction.getTrackingId());
+      log.warn("FOLIO requestId is not set for transaction with trackingId: {}", trackingId);
       return;
     }
 
