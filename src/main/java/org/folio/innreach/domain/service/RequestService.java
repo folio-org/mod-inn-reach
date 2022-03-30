@@ -25,7 +25,9 @@ public interface RequestService {
 
   void cancelRequest(InnReachTransaction transaction, String reason);
 
-  void cancelRequest(InnReachTransaction transaction, UUID reasonId, String reason);
+  void cancelRequest(String trackingId, UUID requestId, String reason);
+
+  void cancelRequest(String trackingId, UUID requestId, UUID reasonId, String reason);
 
   void createRecallRequest(InnReachTransaction transaction, UUID userId);
 

@@ -16,6 +16,11 @@ public class InnReachTransactionUtils {
     Assert.isTrue(ArrayUtils.contains(expectedStates, actualState), "Unexpected transaction state: " + actualState);
   }
 
+  public static void verifyStateNot(InnReachTransaction transaction, InnReachTransaction.TransactionState... expectedStates) {
+    var actualState = transaction.getState();
+    Assert.isTrue(!ArrayUtils.contains(expectedStates, actualState), "Unexpected transaction state: " + actualState);
+  }
+
   public static void clearPatronAndItemInfo(TransactionHold hold) {
     hold.setPatronId(null);
     hold.setPatronName(null);

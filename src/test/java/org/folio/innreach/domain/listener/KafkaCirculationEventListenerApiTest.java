@@ -1,10 +1,12 @@
 package org.folio.innreach.domain.listener;
 
 import static org.awaitility.Awaitility.await;
+import static org.folio.innreach.fixture.InventoryFixture.createInventoryItemDTO;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -18,9 +20,9 @@ import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionSt
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.CANCEL_REQUEST;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.CLAIMS_RETURNED;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.FINAL_CHECKIN;
+import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.LOCAL_CHECKOUT;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.ITEM_IN_TRANSIT;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.ITEM_SHIPPED;
-import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.LOCAL_CHECKOUT;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.RECALL;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.RETURN_UNCIRCULATED;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.TRANSFER;
@@ -39,6 +41,8 @@ import java.util.function.Consumer;
 
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.producer.ProducerRecord;
+import org.folio.innreach.client.InventoryClient;
+import org.folio.innreach.domain.service.ContributionActionService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
@@ -60,7 +64,6 @@ import org.folio.innreach.domain.event.DomainEvent;
 import org.folio.innreach.domain.event.DomainEventType;
 import org.folio.innreach.domain.event.EntityChangedData;
 import org.folio.innreach.domain.listener.base.BaseKafkaApiTest;
-import org.folio.innreach.domain.service.ItemService;
 import org.folio.innreach.domain.service.impl.BatchDomainEventProcessor;
 import org.folio.innreach.dto.CheckInDTO;
 import org.folio.innreach.dto.Instance;
@@ -113,7 +116,10 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
   private InnReachExternalService innReachExternalService;
 
   @MockBean
-  private ItemService itemService;
+  private ContributionActionService contributionActionService;
+
+  @MockBean
+  private InventoryClient inventoryClient;
 
   @MockBean
   private CirculationClient circulationClient;
@@ -212,7 +218,7 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
     storageLoanDTO.setItemId(PRE_POPULATED_LOCAL_ITEM_ID);
     storageLoanDTO.setUserId(PRE_POPULATED_LOCAL_PATRON_ID);
 
-    when(itemService.find(PRE_POPULATED_LOCAL_ITEM_ID)).thenReturn(Optional.of(item));
+    when(inventoryClient.findItem(PRE_POPULATED_LOCAL_ITEM_ID)).thenReturn(Optional.of(item));
     listener.handleLoanEvents(asSingleConsumerRecord(CIRC_LOAN_TOPIC, PRE_POPULATED_LOCAL_LOAN_ID, event));
 
     verify(eventProcessor).process(anyList(), any(Consumer.class));
@@ -338,7 +344,7 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
     item.setBarcode(barcode);
     var event = createRequestDomainEvent(DomainEventType.UPDATED);
 
-    when(itemService.find(any())).thenReturn(Optional.of(item));
+    when(inventoryClient.findItem(any())).thenReturn(Optional.of(item));
 
     listener.handleRequestEvents(asSingleConsumerRecord(CIRC_REQUEST_TOPIC, REQUEST_ID, event));
 
@@ -390,7 +396,7 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
     verify(eventProcessor).process(anyList(), any(Consumer.class));
 
     verify(transactionRepository, times(1)).fetchActiveByRequestId(any());
-    verify(itemService, times(0)).find(any());
+    verify(inventoryClient, times(0)).findItem(any());
     verify(innReachExternalService, times(0)).postInnReachApi(any(), any(), any());
   }
 
@@ -419,7 +425,8 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
     verify(eventProcessor).process(anyList(), any(Consumer.class));
     verify(instanceStorageClient, times(1)).getInstanceById(any());
     verify(innReachExternalService, times(1)).postInnReachApi(any(), any(), eq(payload));
-    Mockito.verifyNoMoreInteractions(itemService);
+    verify(innReachExternalService, times(1)).postInnReachApi(any(), any(), any());
+    Mockito.verifyNoMoreInteractions(inventoryClient);
 
     var updatedTransaction = transactionRepository.fetchOneById(PRE_POPULATED_ITEM_TRANSACTION_ID).orElse(null);
     assertEquals(CANCEL_REQUEST, updatedTransaction.getState());
@@ -437,14 +444,21 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
     var request = event.getData().getNewEntity();
     request.setId(PRE_POPULATED_PATRON_TRANSACTION_REQUEST_ID);
     request.setStatus(CLOSED_CANCELLED);
+    var inventoryItemDTO = createInventoryItemDTO();
+    inventoryItemDTO.setId(ITEM_ID);
+
+    when(inventoryClient.findItem(ITEM_ID)).thenReturn(Optional.of(inventoryItemDTO));
 
     listener.handleRequestEvents(asSingleConsumerRecord(CIRC_REQUEST_TOPIC, PRE_POPULATED_PATRON_TRANSACTION_REQUEST_ID, event));
 
     verify(eventProcessor).process(anyList(), any(Consumer.class));
     verify(innReachExternalService, times(1)).postInnReachApi(any(), any());
+    verify(inventoryClient, times(1)).findItem(any());
+    verify(inventoryClient).updateItem(eq(ITEM_ID), argThat(i -> i.getBarcode() == null));
 
     var updatedTransaction = transactionRepository.fetchOneById(PRE_POPULATED_PATRON_TRANSACTION_ID).orElse(null);
     assertEquals(BORROWING_SITE_CANCEL, updatedTransaction.getState());
+    assertPatronAndItemInfoCleared(updatedTransaction.getHold());
   }
 
   @Test

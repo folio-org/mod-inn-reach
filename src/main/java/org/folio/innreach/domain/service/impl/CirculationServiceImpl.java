@@ -30,6 +30,7 @@ import static org.folio.innreach.util.DateHelper.toEpochSec;
 import static org.folio.innreach.util.InnReachTransactionUtils.clearCentralPatronInfo;
 import static org.folio.innreach.util.InnReachTransactionUtils.clearPatronAndItemInfo;
 import static org.folio.innreach.util.InnReachTransactionUtils.verifyState;
+import static org.folio.innreach.util.InnReachTransactionUtils.verifyStateNot;
 
 import java.util.Date;
 import java.util.HashMap;
@@ -211,11 +212,15 @@ public class CirculationServiceImpl implements CirculationService {
     transaction.setState(CANCEL_REQUEST);
 
     var itemId = transaction.getHold().getFolioItemId();
-
-    requestService.cancelRequest(transaction, cancelRequest.getReason());
+    var requestId = transaction.getHold().getFolioRequestId();
 
     removeItemTransactionInfo(itemId)
       .ifPresent(this::removeHoldingsTransactionInfo);
+    clearPatronAndItemInfo(transaction.getHold());
+
+    saveAndPersist(transaction);
+
+    requestService.cancelRequest(trackingId, requestId, cancelRequest.getReason());
 
     log.info("Item request successfully cancelled");
 
@@ -407,7 +412,7 @@ public class CirculationServiceImpl implements CirculationService {
   public InnReachResponseDTO finalCheckIn(String trackingId, String centralCode, BaseCircRequestDTO finalCheckIn) {
     var transaction = getTransaction(trackingId, centralCode);
 
-    verifyState(transaction, ITEM_IN_TRANSIT, RETURN_UNCIRCULATED);
+    verifyStateNot(transaction, PATRON_HOLD, TRANSFER);
 
     transaction.setState(FINAL_CHECKIN);
 
@@ -605,5 +610,4 @@ public class CirculationServiceImpl implements CirculationService {
     return localAgencyRepository.fetchOneByCode(code)
       .orElseThrow(() -> new EntityNotFoundException("Local agency with code: " + code + " not found."));
   }
-
 }
