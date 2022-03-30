@@ -29,8 +29,8 @@ import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionTy
 import static org.folio.innreach.util.DateHelper.toEpochSec;
 import static org.folio.innreach.util.InnReachTransactionUtils.clearCentralPatronInfo;
 import static org.folio.innreach.util.InnReachTransactionUtils.clearPatronAndItemInfo;
-import static org.folio.innreach.util.InnReachTransactionUtils.verifyRestrictedState;
 import static org.folio.innreach.util.InnReachTransactionUtils.verifyState;
+import static org.folio.innreach.util.InnReachTransactionUtils.verifyStateNot;
 
 import java.util.Date;
 import java.util.HashMap;
@@ -408,7 +408,7 @@ public class CirculationServiceImpl implements CirculationService {
   public InnReachResponseDTO finalCheckIn(String trackingId, String centralCode, BaseCircRequestDTO finalCheckIn) {
     var transaction = getTransaction(trackingId, centralCode);
 
-    verifyRestrictedState(transaction, PATRON_HOLD, TRANSFER);
+    verifyStateNot(transaction, PATRON_HOLD, TRANSFER);
 
     transaction.setState(FINAL_CHECKIN);
 

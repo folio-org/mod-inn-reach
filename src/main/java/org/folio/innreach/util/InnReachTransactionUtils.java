@@ -16,7 +16,7 @@ public class InnReachTransactionUtils {
     Assert.isTrue(ArrayUtils.contains(expectedStates, actualState), "Unexpected transaction state: " + actualState);
   }
 
-  public static void verifyRestrictedState(InnReachTransaction transaction, InnReachTransaction.TransactionState... expectedStates) {
+  public static void verifyStateNot(InnReachTransaction transaction, InnReachTransaction.TransactionState... expectedStates) {
     var actualState = transaction.getState();
     Assert.isTrue(!ArrayUtils.contains(expectedStates, actualState), "Unexpected transaction state: " + actualState);
   }
