@@ -1021,11 +1021,11 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
   })
-  void checkTransactionIsNotInStatePatronHoldOrTransfer(InnReachTransaction.TransactionState testEnums) {
+  void checkTransactionIsNotInStatePatronHoldOrTransfer(InnReachTransaction.TransactionState state) {
     var transactionHoldDTO = createTransactionHoldDTO();
     var transactionBefore = fetchPrePopulatedTransaction();
 
-    transactionBefore.setState(testEnums);
+    transactionBefore.setState(state);
     repository.save(transactionBefore);
 
     var responseEntity = testRestTemplate.exchange(
@@ -1058,11 +1058,11 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
   })
-  void checkTransactionIsInStatePatronHoldOrTransfer(InnReachTransaction.TransactionState testEnums) {
+  void checkTransactionIsInStatePatronHoldOrTransfer(InnReachTransaction.TransactionState state) {
     var transactionHoldDTO = createTransactionHoldDTO();
     var transactionBefore = fetchPrePopulatedTransaction();
 
-    transactionBefore.setState(testEnums);
+    transactionBefore.setState(state);
     repository.save(transactionBefore);
 
     var responseEntity = testRestTemplate.exchange(
@@ -1073,7 +1073,7 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     var transaction = fetchPrePopulatedTransaction();
 
     assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
-    assertEquals(testEnums, transaction.getState());
+    assertEquals(state, transaction.getState());
   }
 
   @Test
