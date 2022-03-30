@@ -411,6 +411,8 @@ public class CirculationServiceImpl implements CirculationService {
 
     transaction.setState(FINAL_CHECKIN);
 
+    saveAndPersist(transaction);
+
     removeItemTransactionInfo(transaction.getHold().getFolioItemId())
       .ifPresent(this::removeHoldingsTransactionInfo);
     clearPatronAndItemInfo(transaction.getHold());
