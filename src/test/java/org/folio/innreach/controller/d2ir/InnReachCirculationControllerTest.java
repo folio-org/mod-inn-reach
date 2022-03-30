@@ -1016,12 +1016,12 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
   }
 
   @ParameterizedTest
-  @EnumSource(names = {"ITEM_IN_TRANSIT", "RETURN_UNCIRCULATED"})
+  @EnumSource(names = {"ITEM_IN_TRANSIT", "RETURN_UNCIRCULATED", "ITEM_RECEIVED", "ITEM_SHIPPED"})
   @Sql(scripts = {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
   })
-  void checkTransactionIsInStateItemInTransitOrReturnUncirculated(InnReachTransaction.TransactionState testEnums) {
+  void checkTransactionIsNotInStatePatronHoldOrTransfer(InnReachTransaction.TransactionState testEnums) {
     var transactionHoldDTO = createTransactionHoldDTO();
     var transactionBefore = fetchPrePopulatedTransaction();
 
@@ -1052,13 +1052,18 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     assertNull(hold.getFolioItemBarcode());
   }
 
-  @Test
+  @ParameterizedTest
+  @EnumSource(names = {"PATRON_HOLD", "TRANSFER"})
   @Sql(scripts = {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
   })
-  void checkTransactionIsNotInStateItemInTransitOrReturnUncirculated() {
+  void checkTransactionIsInStatePatronHoldOrTransfer(InnReachTransaction.TransactionState testEnums) {
     var transactionHoldDTO = createTransactionHoldDTO();
+    var transactionBefore = fetchPrePopulatedTransaction();
+
+    transactionBefore.setState(testEnums);
+    repository.save(transactionBefore);
 
     var responseEntity = testRestTemplate.exchange(
       "/inn-reach/d2ir/circ/finalcheckin/{trackingId}/{centralCode}", HttpMethod.PUT,
@@ -1068,7 +1073,7 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     var transaction = fetchPrePopulatedTransaction();
 
     assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
-    assertEquals(PATRON_HOLD, transaction.getState());
+    assertEquals(testEnums, transaction.getState());
   }
 
   @Test
