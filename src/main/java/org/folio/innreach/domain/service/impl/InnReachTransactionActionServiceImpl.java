@@ -324,13 +324,11 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
 
       hold.setDueDateTime(null);
 
+      clearCentralPatronInfo(transaction.getHold());
+      
       transaction.setState(FINAL_CHECKIN);
 
-      transaction = saveInNewDbTransaction(transaction);
-
       notifier.reportFinalCheckIn(transaction);
-
-      clearCentralPatronInfo(hold);
     } else if (transaction.getType() == PATRON) {
       log.info("Updating patron transaction {} on loan closure {}", transaction.getId(), loan.getId());
 
