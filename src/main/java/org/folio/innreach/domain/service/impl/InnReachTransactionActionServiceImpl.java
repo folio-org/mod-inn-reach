@@ -36,8 +36,6 @@ import java.util.UUID;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
-import org.apache.commons.lang3.ArrayUtils;
-import org.folio.innreach.util.InnReachTransactionUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
@@ -66,6 +64,7 @@ import org.folio.innreach.dto.TransactionCheckOutResponseDTO;
 import org.folio.innreach.mapper.InnReachTransactionMapper;
 import org.folio.innreach.repository.InnReachTransactionRepository;
 import org.folio.innreach.util.DateHelper;
+import org.folio.innreach.util.InnReachTransactionUtils;
 
 @Log4j2
 @Transactional
@@ -276,6 +275,8 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
       if (loanService.isOpen(loan)) {
         log.info("Checking-in item for transaction associated with an open loan");
         loanService.checkInItem(transaction, servicePointId);
+      } else {
+        updatePatronTransactionOnLoanClosure(transaction, loanId);
       }
     } else {
       var request = requestService.findRequest(requestId);
@@ -342,26 +343,33 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
   }
 
   private void updateTransactionOnLoanClosure(StorageLoanDTO loan, InnReachTransaction transaction) {
-    var hold = transaction.getHold();
     if (transaction.getType() == ITEM) {
-      log.info("Updating item transaction {} on loan closure {}", transaction.getId(), loan.getId());
-
-      hold.setDueDateTime(null);
-
-      clearCentralPatronInfo(transaction.getHold());
-
-      transaction.setState(FINAL_CHECKIN);
-
-      notifier.reportFinalCheckIn(transaction);
+      updateItemTransactionOnLoanClosure(transaction, loan.getId());
     } else if (transaction.getType() == PATRON) {
-      log.info("Updating patron transaction {} on loan closure {}", transaction.getId(), loan.getId());
-
-      hold.setDueDateTime(null);
-
-      transaction.setState(ITEM_IN_TRANSIT);
-
-      notifier.reportItemInTransit(transaction);
+      updatePatronTransactionOnLoanClosure(transaction, loan.getId());
     }
+  }
+
+  private void updateItemTransactionOnLoanClosure(InnReachTransaction transaction, UUID loanId) {
+    log.info("Updating item transaction {} on loan closure {}", transaction.getId(), loanId);
+
+    transaction.getHold().setDueDateTime(null);
+
+    clearCentralPatronInfo(transaction.getHold());
+
+    transaction.setState(FINAL_CHECKIN);
+
+    notifier.reportFinalCheckIn(transaction);
+  }
+
+  private void updatePatronTransactionOnLoanClosure(InnReachTransaction transaction, UUID loanId) {
+    log.info("Updating patron transaction {} on loan closure {}", transaction.getId(), loanId);
+
+    transaction.getHold().setDueDateTime(null);
+
+    transaction.setState(ITEM_IN_TRANSIT);
+
+    notifier.reportItemInTransit(transaction);
   }
 
   private void updateTransactionOnLoanRecallRequested(StorageLoanDTO loan, InnReachTransaction transaction) {
