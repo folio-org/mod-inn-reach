@@ -51,7 +51,7 @@ paths:
         '500':
           $ref: "api-common.yaml#/components/responses/trait_response_500"
   /d2ir/getbibrecord/{bibId}/{centralCode}:
-    get:
+    post:
       operationId: getBibRecord
       description: Handles D2IR request from central server for an already-contributed Bib record.
       tags:
