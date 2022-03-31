@@ -486,6 +486,21 @@
           "methods": ["PUT"],
           "pathPattern": "/inn-reach/transactions/{transactionId}",
           "permissionsRequired": ["inn-reach.inn-reach-transaction.item.put"]
+        },
+        {
+          "methods": ["GET"],
+          "pathPattern": "/inn-reach/central-servers/{centralServerId}/visible-patron-field-configuration",
+          "permissionsRequired": ["inn-reach.central-servers.visible-patron-field-configuration.item.get"]
+        },
+        {
+          "methods": ["POST"],
+          "pathPattern": "/inn-reach/central-servers/{centralServerId}/visible-patron-field-configuration",
+          "permissionsRequired": ["inn-reach.central-servers.visible-patron-field-configuration.item.post"]
+        },
+        {
+          "methods": ["PUT"],
+          "pathPattern": "/inn-reach/central-servers/{centralServerId}/visible-patron-field-configuration",
+          "permissionsRequired": ["inn-reach.central-servers.visible-patron-field-configuration.item.put"]
         }
       ]
     },
@@ -1053,6 +1068,31 @@
       ]
     },
     {
+      "permissionName" : "inn-reach.central-servers.visible-patron-field-configuration.item.get",
+      "displayName" : "get visible patron field configuration",
+      "description" : "Get Visible Patron Field Configuration"
+    },
+    {
+      "permissionName" : "inn-reach.central-servers.visible-patron-field-configuration.item.post",
+      "displayName" : "create visible patron field configuration",
+      "description" : "Add Visible Patron Field Configuration"
+    },
+    {
+      "permissionName" : "inn-reach.central-servers.visible-patron-field-configuration.item.put",
+      "displayName" : "update visible patron field configuration",
+      "description" : "Update Visible Patron Field Configuration"
+    },
+    {
+      "permissionName" : "inn-reach.central-servers.visible-patron-field-configuration.all",
+      "displayName" : "inn reach API module - all permissions of visible patron field configuration",
+      "description" : "All permissions for Visible Patron Field Configuration",
+      "subPermissions" : [
+        "inn-reach.central-servers.visible-patron-field-configuration.item.get",
+        "inn-reach.central-servers.visible-patron-field-configuration.item.post",
+        "inn-reach.central-servers.visible-patron-field-configuration.item.put"
+      ]
+    },
+    {
       "permissionName" : "inn-reach.all",
       "displayName" : "inn reach API module - all permissions",
       "description" : "All permissions for inn reach",
@@ -1079,7 +1119,8 @@
         "inn-reach.central-server.sys-configuration.all",
         "inn-reach.inn-reach-transactions.all",
         "inn-reach.d2ir.circulation.all",
-        "inn-reach.recall-user.all"
+        "inn-reach.recall-user.all",
+        "inn-reach.central-servers.visible-patron-fields-configuration.all"
       ]
     }
   ],

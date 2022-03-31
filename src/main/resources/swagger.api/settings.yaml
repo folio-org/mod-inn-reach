@@ -1019,6 +1019,70 @@ paths:
         required: true
       parameters:
         - $ref: 'api-common.yaml#/components/parameters/centralServerId'
+  /central-servers/{centralServerId}/visible-patron-field-configuration:
+    get:
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/visiblePatronFieldConfigurationDTO"
+        '404':
+          $ref: "api-common.yaml#/components/responses/trait_response_404"
+        '500':
+          $ref: "api-common.yaml#/components/responses/trait_response_500"
+      description: Get Visible Patron Field Configuration by Central Server id
+      operationId: getConfigurationByCentralServerId
+      tags:
+        - visible-patron-field-configuration
+      parameters:
+        - $ref: 'api-common.yaml#/components/parameters/centralServerId'
+    put:
+      responses:
+        '204':
+          description: No content
+        '400':
+          $ref: "api-common.yaml#/components/responses/trait_response_validation_400"
+        '404':
+          $ref: "api-common.yaml#/components/responses/trait_response_404"
+        '500':
+          $ref: "api-common.yaml#/components/responses/trait_response_500"
+      description: Update Visible Patron Field Configuration
+      operationId: updateConfiguration
+      tags:
+        - visible-patron-field-configuration
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/visiblePatronFieldConfigurationDTO"
+      parameters:
+        - $ref: 'api-common.yaml#/components/parameters/centralServerId'
+    post:
+      description: Add new Visible Patron Field Configuration associated with the central server
+      operationId: createConfiguration
+      tags:
+        - visible-patron-field-configuration
+      responses:
+        '201':
+          description: Visible Patron Field Configuration created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/visiblePatronFieldConfigurationDTO"
+        '400':
+          $ref: "api-common.yaml#/components/responses/trait_response_validation_400"
+        '500':
+          $ref: "api-common.yaml#/components/responses/trait_response_500"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/visiblePatronFieldConfigurationDTO"
+        required: true
+      parameters:
+        - $ref: 'api-common.yaml#/components/parameters/centralServerId'
 components:
   schemas:
     centralServerDTO:
@@ -1063,6 +1127,8 @@ components:
       $ref: schemas/centralPatronTypeMappingsDTO.json
     innReachRecallUserDTO:
       $ref: schemas/innReachRecallUserDTO.json
+    visiblePatronFieldConfigurationDTO:
+      $ref: schemas/visiblePatronFieldConfigurationDTO.json
   parameters:
     libraryId:
       name: libraryId
