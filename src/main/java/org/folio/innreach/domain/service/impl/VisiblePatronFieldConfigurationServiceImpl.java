@@ -48,15 +48,24 @@ public class VisiblePatronFieldConfigurationServiceImpl implements VisiblePatron
 
   @Override
   public VisiblePatronFieldConfigurationDTO update(UUID centralServerId, VisiblePatronFieldConfigurationDTO dto) {
-    var mapping = repository.findOneByCentralServerId(centralServerId).orElseThrow(
+    var config = repository.findOneByCentralServerId(centralServerId).orElseThrow(
       () -> new EntityNotFoundException(TEXT_CONFIGURATION_NOT_FOUND + centralServerId));
 
+    if(fieldConfigurationIsEmpty(dto)){
+      repository.delete(config);
+      return null;
+    }
+
     var updated = mapper.toEntity(dto);
-    copyData(updated, mapping);
+    copyData(updated, config);
 
-    repository.save(mapping);
+    repository.save(config);
 
-    return mapper.toDTO(mapping);
+    return mapper.toDTO(config);
+  }
+
+  private boolean fieldConfigurationIsEmpty(VisiblePatronFieldConfigurationDTO dto) {
+    return dto.getFields().isEmpty() && dto.getUserCustomFields().isEmpty();
   }
 
   private void copyData(VisiblePatronFieldConfiguration from, VisiblePatronFieldConfiguration to) {

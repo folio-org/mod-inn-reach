@@ -116,8 +116,7 @@ public class PatronInfoServiceImpl implements PatronInfoService {
   }
 
   private User findPatronUser(String visiblePatronId, String patronName, VisiblePatronFieldConfiguration fieldConfig) {
-    var useFieldConfig = fieldConfigurationIsNullOrEmpty(fieldConfig);
-    var user = useFieldConfig ? userService.getUserByBarcode(visiblePatronId).orElse(null) :
+    var user = fieldConfig == null ? userService.getUserByBarcode(visiblePatronId).orElse(null) :
       userService.getUserByQuery(constructPublicIdQuery(fieldConfig, visiblePatronId)).orElse(null);
 
     Assert.isTrue(user != null, "Patron is not found by visiblePatronId: " + visiblePatronId);
@@ -125,10 +124,6 @@ public class PatronInfoServiceImpl implements PatronInfoService {
     Assert.isTrue(matchName(user, patronName), "Patron is not found by name: " + patronName);
 
     return user;
-  }
-
-  private boolean fieldConfigurationIsNullOrEmpty(VisiblePatronFieldConfiguration fieldConfig){
-    return fieldConfig == null || (fieldConfig.getFields().isEmpty() && fieldConfig.getUserCustomFields().isEmpty());
   }
 
   private String constructPublicIdQuery(VisiblePatronFieldConfiguration fieldConfig, String visiblePatronId) {

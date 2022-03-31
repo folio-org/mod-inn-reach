@@ -486,6 +486,21 @@
           "methods": ["PUT"],
           "pathPattern": "/inn-reach/transactions/{transactionId}",
           "permissionsRequired": ["inn-reach.inn-reach-transaction.item.put"]
+        },
+        {
+          "methods": ["GET"],
+          "pathPattern": "/inn-reach/central-servers/{centralServerId}/visible-patron-field-configuration",
+          "permissionsRequired": ["inn-reach.central-servers.visible-patron-field-configuration.item.get"]
+        },
+        {
+          "methods": ["POST"],
+          "pathPattern": "/inn-reach/central-servers/{centralServerId}/visible-patron-field-configuration",
+          "permissionsRequired": ["inn-reach.central-servers.visible-patron-field-configuration.item.post"]
+        },
+        {
+          "methods": ["PUT"],
+          "pathPattern": "/inn-reach/central-servers/{centralServerId}/visible-patron-field-configuration",
+          "permissionsRequired": ["inn-reach.central-servers.visible-patron-field-configuration.item.put"]
         }
       ]
     },
