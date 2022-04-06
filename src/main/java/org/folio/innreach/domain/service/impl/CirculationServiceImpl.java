@@ -222,10 +222,10 @@ public class CirculationServiceImpl implements CirculationService {
     removeItemTransactionInfo(itemId)
       .ifPresent(this::removeHoldingsTransactionInfo);
 
-    clearPatronAndItemInfo(transaction.getHold());
-
-    eventPublisher.publishEvent(new CancelRequestEvent(trackingId, requestId,
+    eventPublisher.publishEvent(CancelRequestEvent.of(transaction,
       INN_REACH_CANCELLATION_REASON_ID, cancelRequest.getReason()));
+
+    clearPatronAndItemInfo(transaction.getHold());
 
     log.info("Item request successfully cancelled");
 
@@ -445,16 +445,6 @@ public class CirculationServiceImpl implements CirculationService {
     transaction.setType(InnReachTransaction.TransactionType.ITEM);
     transaction.setState(InnReachTransaction.TransactionState.ITEM_HOLD);
     return transaction;
-  }
-
-  /**
-   * Executes save operation in a new DB transaction without waiting for existing transaction to be completed
-   *
-   * @param transaction INN-Reach transaction to be saved
-   * @return the saved entity
-   */
-  private InnReachTransaction saveAndPersist(InnReachTransaction transaction) {
-    return transactionTemplate.execute(status -> transactionRepository.save(transaction));
   }
 
   private void initiateTransactionHold(String trackingId, String centralCode,
