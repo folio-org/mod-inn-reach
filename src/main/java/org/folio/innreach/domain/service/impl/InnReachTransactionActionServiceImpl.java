@@ -36,6 +36,7 @@ import java.util.UUID;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
@@ -48,6 +49,7 @@ import org.folio.innreach.domain.dto.folio.inventory.InventoryItemStatus;
 import org.folio.innreach.domain.entity.InnReachTransaction;
 import org.folio.innreach.domain.entity.TransactionItemHold;
 import org.folio.innreach.domain.entity.TransactionPatronHold;
+import org.folio.innreach.domain.event.CancelRequestEvent;
 import org.folio.innreach.domain.exception.EntityNotFoundException;
 import org.folio.innreach.domain.service.InnReachTransactionActionService;
 import org.folio.innreach.domain.service.ItemService;
@@ -81,6 +83,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
   private final InstanceStorageClient instanceStorageClient;
   private final InnReachTransactionActionNotifier notifier;
   private final TransactionTemplate transactionTemplate;
+  private final ApplicationEventPublisher eventPublisher;
 
   @Override
   public PatronHoldCheckInResponseDTO checkInPatronHoldItem(UUID transactionId, UUID servicePointId) {
@@ -453,21 +456,16 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
 
   private void cancelPatronHoldWithOpenRequest(CancelPatronHoldDTO cancelRequest,
                                                InnReachTransaction transaction) {
+    var trackingId = transaction.getTrackingId();
+    var requestId = transaction.getHold().getFolioRequestId();
     if (transaction.getState() != ITEM_SHIPPED) {
       transaction.setState(BORROWING_SITE_CANCEL);
-
-      transaction = saveInNewDbTransaction(transaction);
-
-      Assert.notNull(transaction, "Transaction is null.");
-
-      requestService.cancelRequest(transaction.getTrackingId(), transaction.getHold().getFolioRequestId(), cancelRequest.getCancellationReasonId(),
-        cancelRequest.getCancellationAdditionalInformation());
-
       notifier.reportCancelItemHold(transaction);
-    } else {
-      requestService.cancelRequest(transaction.getTrackingId(), transaction.getHold().getFolioRequestId(), cancelRequest.getCancellationReasonId(),
-        cancelRequest.getCancellationAdditionalInformation());
     }
+
+    eventPublisher.publishEvent(new CancelRequestEvent(trackingId, requestId,
+      cancelRequest.getCancellationReasonId(),
+      cancelRequest.getCancellationAdditionalInformation()));
   }
 
   private void cancelPatronHoldWithClosedRequest(InnReachTransaction transaction) {
@@ -518,10 +516,6 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
   private InventoryItemDTO fetchItemById(UUID itemId) {
     return itemService.find(itemId)
       .orElseThrow(() -> new IllegalArgumentException("Item is not found by id: " + itemId));
-  }
-
-  private InnReachTransaction saveInNewDbTransaction(InnReachTransaction transaction) {
-    return transactionTemplate.execute(status -> transactionRepository.save(transaction));
   }
 
 }
