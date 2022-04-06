@@ -11,7 +11,6 @@ import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -30,7 +29,6 @@ import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionSt
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.ITEM_IN_TRANSIT;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.ITEM_RECEIVED;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.ITEM_SHIPPED;
-import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.PATRON_HOLD;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.RECALL;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.RECEIVE_UNANNOUNCED;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.RETURN_UNCIRCULATED;
@@ -339,12 +337,9 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     assertNotNull(responseEntityBody);
     assertEquals("ok", responseEntityBody.getStatus());
 
-    var inOrder = inOrder(transactionRepository, requestService);
-
-    inOrder.verify(transactionRepository).save(
-      argThat(t -> t.getState() == BORROWING_SITE_CANCEL && isCentralPatronInfoCleared(t))
-    );
-    inOrder.verify(requestService).cancelRequest(any(), eq("Request cancelled at borrowing site"));
+    verify(requestService).cancelRequest(anyString(), any(UUID.class), any(UUID.class), eq("Request cancelled at borrowing site"));
+    var transactionUpdated = fetchTransactionByTrackingId(PRE_POPULATED_TRACKING2_ID);
+    assertEquals(BORROWING_SITE_CANCEL, transactionUpdated.getState());
   }
 
   @Test
@@ -700,7 +695,7 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     assertNotNull(responseEntityBody);
     assertEquals("ok", responseEntityBody.getStatus());
 
-    verify(requestService).createRecallRequest(any(), any());
+    verify(requestService).createRecallRequest(any(), any(), any(), any());
     var transactionUpdated = repository.findByTrackingIdAndCentralServerCode(PRE_POPULATED_TRACKING1_ID,
       PRE_POPULATED_CENTRAL_CODE).get();
     assertEquals(RECALL, transactionUpdated.getState());
@@ -747,7 +742,7 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     assertNotNull(responseEntityBody);
     assertEquals("ok", responseEntityBody.getStatus());
 
-    verify(requestService).cancelRequest(any(), eq("Item has been recalled."));
+    verify(requestService).cancelRequest(anyString(), any(UUID.class), any(UUID.class), eq("Item has been recalled."));
     var transactionUpdated = repository.findByTrackingIdAndCentralServerCode(PRE_POPULATED_TRACKING1_ID,
       PRE_POPULATED_CENTRAL_CODE).get();
     assertEquals(RECALL, transactionUpdated.getState());
@@ -767,7 +762,7 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     when(userService.getUserById(PRE_POPULATED_PATRON_ID)).thenReturn(Optional.of(user));
     when(circulationClient.sendRequest(requestDtoCaptor.capture())).thenReturn(new RequestDTO());
     when(circulationClient.findRequest(any())).thenReturn(Optional.of(requestDTO));
-    doThrow(new RuntimeException("Test exception.")).when(requestService).cancelRequest(any(), any());
+    doThrow(new IllegalArgumentException("Test exception.")).when(requestService).findRequest(any(UUID.class));
 
     var recallDTO = createRecallDTO();
 
@@ -1126,7 +1121,7 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     "classpath:db/patron-type-mapping/pre-populate-patron-type-mapping.sql",
   })
   void processCancelRequest() {
-    doNothing().when(requestService).cancelRequest(any(), anyString());
+    doNothing().when(requestService).cancelRequest(anyString(), any(UUID.class), any(UUID.class), anyString());
     when(userService.getUserById(any(UUID.class))).thenReturn(Optional.of(populateUser()));
 
     var cancelRequestDTO = createCancelRequestDTO();
@@ -1136,7 +1131,7 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
       new HttpEntity<>(cancelRequestDTO, headers), InnReachResponseDTO.class,
       PRE_POPULATED_TRACKING1_ID, PRE_POPULATED_CENTRAL_CODE);
 
-    verify(requestService).cancelRequest(anyString(), any(UUID.class), anyString());
+    verify(requestService).cancelRequest(anyString(), any(UUID.class), any(UUID.class), anyString());
 
     var transactionAfter = fetchPrePopulatedTransaction();
 

@@ -23,13 +23,9 @@ public interface RequestService {
 
   void moveItemRequest(InnReachTransaction transaction, Holding holding, InventoryItemDTO item);
 
-  void cancelRequest(InnReachTransaction transaction, String reason);
-
-  void cancelRequest(String trackingId, UUID requestId, String reason);
-
   void cancelRequest(String trackingId, UUID requestId, UUID reasonId, String reason);
 
-  void createRecallRequest(InnReachTransaction transaction, UUID userId);
+  void createRecallRequest(UUID recallUserId, UUID itemId, UUID instanceId, UUID holdingId);
 
   RequestDTO findRequest(UUID requestId);
 

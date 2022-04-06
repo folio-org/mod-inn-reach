@@ -245,7 +245,7 @@ class CirculationApiTest extends BaseApiControllerTest {
         .headers(getOkapiHeaders()))
       .andExpect(status().isOk());
 
-    verify(requestService).cancelRequest(anyString(), any(UUID.class), eq("Test reason"));
+    verify(requestService).cancelRequest(anyString(), any(UUID.class), any(UUID.class), eq("Test reason"));
     verify(circulationClient).updateRequest(any(), any());
   }
 

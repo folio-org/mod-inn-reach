@@ -88,7 +88,7 @@ public class RequestServiceImpl implements RequestService {
   private static final Set<InventoryItemStatus> noOpenRequestsAvailableStatuses = Set.of(
     IN_TRANSIT, IN_PROCESS, ON_ORDER);
 
-  private static final UUID INN_REACH_CANCELLATION_REASON_ID = UUID.fromString("941c7055-04f8-4db3-82cb-f63965c1506f");
+  public static final UUID INN_REACH_CANCELLATION_REASON_ID = UUID.fromString("941c7055-04f8-4db3-82cb-f63965c1506f");
 
   private final InnReachTransactionRepository transactionRepository;
   private final CentralPatronTypeMappingRepository centralPatronTypeMappingRepository;
@@ -198,26 +198,16 @@ public class RequestServiceImpl implements RequestService {
   }
 
   @Override
-  public void cancelRequest(InnReachTransaction transaction, String reasonDetails) {
-    cancelRequest(transaction.getTrackingId(), transaction.getHold().getFolioRequestId(),
-      INN_REACH_CANCELLATION_REASON_ID, reasonDetails);
-  }
-
-  @Override
-  public void cancelRequest(String trackingId, UUID requestId, String reason) {
-    cancelRequest(trackingId, requestId, INN_REACH_CANCELLATION_REASON_ID, reason);
-  }
-
-  @Override
   public void cancelRequest(String trackingId, UUID requestId, UUID reasonId, String reasonDetails) {
+    log.info("Canceling item request for transaction with trackingId {}", trackingId);
     if (requestId == null) {
       log.warn("FOLIO requestId is not set for transaction with trackingId: {}", trackingId);
       return;
     }
 
     circulationClient.findRequest(requestId)
-        .ifPresentOrElse(r -> cancelRequest(r, reasonId, reasonDetails),
-            () -> log.warn("No request found with id {}", requestId));
+      .ifPresentOrElse(r -> cancelRequest(r, reasonId, reasonDetails),
+        () -> log.warn("No request found with id {}", requestId));
   }
 
   private void createOwningSiteItemRequest(InnReachTransaction transaction, User patron, UUID servicePointId) {
@@ -244,16 +234,16 @@ public class RequestServiceImpl implements RequestService {
   }
 
   @Override
-  public void createRecallRequest(InnReachTransaction transaction, UUID recallUserId) {
+  public void createRecallRequest(UUID recallUserId, UUID itemId, UUID instanceId, UUID holdingId) {
     var pickupServicePoint = getDefaultServicePointIdForPatron(recallUserId);
 
     var request = RequestDTO.builder()
-      .itemId(transaction.getHold().getFolioItemId())
+      .itemId(itemId)
       .requesterId(recallUserId)
       .requestType(RECALL.getName())
       .requestLevel(RequestDTO.RequestLevel.ITEM.getName())
-      .instanceId(transaction.getHold().getFolioInstanceId())
-      .holdingsRecordId(transaction.getHold().getFolioHoldingId())
+      .instanceId(instanceId)
+      .holdingsRecordId(holdingId)
       .requestDate(OffsetDateTime.now())
       .fulfilmentPreference(HOLD_SHELF.getName())
       .pickupServicePointId(pickupServicePoint)
@@ -270,13 +260,13 @@ public class RequestServiceImpl implements RequestService {
   @Override
   public UUID getDefaultServicePointIdForPatron(UUID patronId) {
     return inventoryService.findDefaultServicePointIdForUser(patronId)
-        .orElseThrow(() -> new CirculationException("Default service point is not set for the patron: " + patronId));
+      .orElseThrow(() -> new CirculationException("Default service point is not set for the patron: " + patronId));
   }
 
   @Override
   public UUID getServicePointIdByCode(String locationCode) {
     return inventoryService.findServicePointIdByCode(locationCode)
-        .orElseThrow(() -> new CirculationException("Service point is not found by location code: " + locationCode));
+      .orElseThrow(() -> new CirculationException("Service point is not found by location code: " + locationCode));
   }
 
   @Override

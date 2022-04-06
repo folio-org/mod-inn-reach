@@ -15,7 +15,6 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
-import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -30,7 +29,6 @@ import static org.folio.innreach.domain.dto.folio.inventory.InventoryItemStatus.
 import static org.folio.innreach.domain.dto.folio.inventory.InventoryItemStatus.IN_TRANSIT;
 import static org.folio.innreach.domain.dto.folio.inventory.InventoryItemStatus.MISSING;
 import static org.folio.innreach.domain.dto.folio.inventory.InventoryItemStatus.UNAVAILABLE;
-import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.BORROWING_SITE_CANCEL;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.CANCEL_REQUEST;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.FINAL_CHECKIN;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.ITEM_RECEIVED;
@@ -1570,10 +1568,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
 
     var cancelRequestCaptor = ArgumentCaptor.forClass(RequestDTO.class);
 
-    var inOrder = inOrder(repository, circulationClient);
-
-    inOrder.verify(repository).save(argThat(t -> t.getState() == BORROWING_SITE_CANCEL));
-    inOrder.verify(circulationClient).updateRequest(eq(PRE_POPULATED_PATRON_HOLD_REQUEST_ID), cancelRequestCaptor.capture());
+    verify(circulationClient).updateRequest(eq(PRE_POPULATED_PATRON_HOLD_REQUEST_ID), cancelRequestCaptor.capture());
 
     var cancelRequest = cancelRequestCaptor.getValue();
     assertEquals(CLOSED_CANCELLED, cancelRequest.getStatus());
