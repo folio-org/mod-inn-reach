@@ -217,7 +217,6 @@ public class CirculationServiceImpl implements CirculationService {
     transaction.setState(CANCEL_REQUEST);
 
     var itemId = transaction.getHold().getFolioItemId();
-    var requestId = transaction.getHold().getFolioRequestId();
 
     removeItemTransactionInfo(itemId)
       .ifPresent(this::removeHoldingsTransactionInfo);
