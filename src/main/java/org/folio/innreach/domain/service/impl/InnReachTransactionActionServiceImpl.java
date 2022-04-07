@@ -27,7 +27,6 @@ import static org.folio.innreach.util.DateHelper.toEpochSec;
 import static org.folio.innreach.util.DateHelper.toInstantTruncatedToSec;
 import static org.folio.innreach.util.InnReachTransactionUtils.clearCentralPatronInfo;
 import static org.folio.innreach.util.InnReachTransactionUtils.clearPatronAndItemInfo;
-import static org.folio.innreach.util.InnReachTransactionUtils.verifyState;
 
 import java.time.Instant;
 import java.util.EnumSet;
@@ -68,7 +67,6 @@ import org.folio.innreach.dto.TransactionCheckOutResponseDTO;
 import org.folio.innreach.mapper.InnReachTransactionMapper;
 import org.folio.innreach.repository.InnReachTransactionRepository;
 import org.folio.innreach.util.DateHelper;
-import org.folio.innreach.util.InnReachTransactionUtils;
 
 @Log4j2
 @Transactional
@@ -492,48 +490,35 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
     updateItem(itemId);
   }
 
-  private Optional<InventoryItemDTO> updateItem(UUID itemId) {
-    return itemService.changeAndUpdate(itemId, item -> {
-      item.setBarcode(null);
-      return item;
-    });
-  private void clearPatronTransactionAndItemRecord(UUID itemId, InnReachTransaction transaction) {
-    var patronTransaction = (TransactionPatronHold) transaction.getHold();
-    InnReachTransactionUtils.clearPatronAndItemInfo(patronTransaction);
-    updateItem(itemId);
-  }
-
-  private Optional<InventoryItemDTO> updateItem(UUID itemId) {
-    return itemService.changeAndUpdate(itemId, item -> {
-      item.setBarcode(null);
-      return item;
-    });
-  }
-
-  private void verifyState(InnReachTransaction transaction, InnReachTransaction.TransactionState... states) {
-    var state = transaction.getState();
-    Assert.isTrue(ArrayUtils.contains(states, state), "Unexpected transaction state: " + state);
-  }
-
-  private InnReachTransaction fetchTransactionById(UUID transactionId) {
-    return transactionRepository.fetchOneById(transactionId)
-      .orElseThrow(() -> new EntityNotFoundException("INN-Reach transaction is not found by id: " + transactionId));
-  }
-
-  private InnReachTransaction fetchTransactionOfType(UUID transactionId, InnReachTransaction.TransactionType type) {
-    InnReachTransaction transaction = fetchTransactionById(transactionId);
-
-    if (transaction.getType() != type) {
-      throw new IllegalArgumentException(format("InnReach transaction with transaction id [%s] " +
-        "is not of [%s] type", transactionId, type));
+  private Optional<InventoryItemDTO> updateItem(UUID itemId){
+      return itemService.changeAndUpdate(itemId, item -> {
+        item.setBarcode(null);
+        return item;
+      });
     }
 
-    return transaction;
-  }
+  private void verifyState(InnReachTransaction transaction, InnReachTransaction.TransactionState...states) {
+      var state = transaction.getState();
+      Assert.isTrue(ArrayUtils.contains(states, state), "Unexpected transaction state: " + state);
+    }
+
+  private InnReachTransaction fetchTransactionById(UUID transactionId) {
+      return transactionRepository.fetchOneById(transactionId).orElseThrow(() -> new EntityNotFoundException("INN-Reach transaction is not found by id: " + transactionId));
+    }
+
+  private InnReachTransaction fetchTransactionOfType(UUID transactionId, InnReachTransaction.TransactionType type) {
+      InnReachTransaction transaction = fetchTransactionById(transactionId);
+
+      if (transaction.getType() != type) {
+        throw new IllegalArgumentException(
+          format("InnReach transaction with transaction id [%s] " + "is not of [%s] type", transactionId, type));
+      }
+
+      return transaction;
+    }
 
   private InventoryItemDTO fetchItemById(UUID itemId) {
-    return itemService.find(itemId)
-      .orElseThrow(() -> new IllegalArgumentException("Item is not found by id: " + itemId));
+      return itemService.find(itemId).orElseThrow(() -> new IllegalArgumentException("Item is not found by id: " + itemId));
+    }
   }
 
-}
