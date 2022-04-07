@@ -24,4 +24,6 @@ public interface LoanService extends BasicService<UUID, LoanDTO> {
   CheckInResponseDTO checkInItem(InnReachTransaction transaction, UUID servicePointId);
 
   void claimItemReturned(UUID loanId, Date itemClaimedReturnedDateTime);
+
+  boolean isOpen(LoanDTO loanDTO);
 }

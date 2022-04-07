@@ -1,6 +1,8 @@
 package org.folio.innreach.domain.service.impl;
 
 import static org.folio.innreach.domain.dto.folio.circulation.RequestDTO.FulfilmentPreference.HOLD_SHELF;
+import static org.folio.innreach.domain.dto.folio.circulation.RequestDTO.RequestStatus.CLOSED_CANCELLED;
+import static org.folio.innreach.domain.dto.folio.circulation.RequestDTO.RequestStatus.CLOSED_PICKUP_EXPIRED;
 import static org.folio.innreach.domain.dto.folio.circulation.RequestDTO.RequestStatus.OPEN_AWAITING_DELIVERY;
 import static org.folio.innreach.domain.dto.folio.circulation.RequestDTO.RequestStatus.OPEN_AWAITING_PICKUP;
 import static org.folio.innreach.domain.dto.folio.circulation.RequestDTO.RequestStatus.OPEN_IN_TRANSIT;
@@ -30,7 +32,6 @@ import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionSt
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
-import java.util.Date;
 import java.util.Set;
 import java.util.UUID;
 
@@ -63,11 +64,7 @@ import org.folio.innreach.domain.service.InventoryService;
 import org.folio.innreach.domain.service.ItemService;
 import org.folio.innreach.domain.service.RequestPreferenceService;
 import org.folio.innreach.domain.service.RequestService;
-import org.folio.innreach.dto.CheckInRequestDTO;
-import org.folio.innreach.dto.CheckInResponseDTO;
-import org.folio.innreach.dto.CheckOutRequestDTO;
 import org.folio.innreach.dto.Holding;
-import org.folio.innreach.dto.LoanDTO;
 import org.folio.innreach.external.service.InnReachExternalService;
 import org.folio.innreach.mapper.InnReachTransactionPickupLocationMapper;
 import org.folio.innreach.repository.CentralPatronTypeMappingRepository;
@@ -81,15 +78,17 @@ import org.folio.innreach.util.UUIDEncoder;
 public class RequestServiceImpl implements RequestService {
   private static final String OWNING_SITE_CANCELS_REQUEST_BASE_URI = "/circ/owningsitecancel/";
 
-  private static final Set<RequestStatus> openRequestStatuses = Set.of(OPEN_AWAITING_PICKUP, OPEN_AWAITING_DELIVERY,
-    OPEN_IN_TRANSIT, OPEN_NOT_YET_FILLED);
+  private static final Set<RequestStatus> openRequestStatuses = Set.of(
+    OPEN_AWAITING_PICKUP, OPEN_AWAITING_DELIVERY, OPEN_IN_TRANSIT, OPEN_NOT_YET_FILLED);
+  private static final Set<RequestStatus> canceledExpiredStatuses = Set.of(CLOSED_CANCELLED, CLOSED_PICKUP_EXPIRED);
+
   private static final Set<InventoryItemStatus> notAvailableItemStatuses = Set.of(
     LONG_MISSING, DECLARED_LOST, AGED_TO_LOST, LOST_AND_PAID, AWAITING_PICKUP, MISSING, PAGED, CLAIMED_RETURNED,
     WITHDRAWN, AWAITING_DELIVERY, IN_PROCESS_NON_REQUESTABLE, UNAVAILABLE, UNKNOWN);
   private static final Set<InventoryItemStatus> noOpenRequestsAvailableStatuses = Set.of(
     IN_TRANSIT, IN_PROCESS, ON_ORDER);
 
-  private static final UUID INN_REACH_CANCELLATION_REASON_ID = UUID.fromString("941c7055-04f8-4db3-82cb-f63965c1506f");
+  public static final UUID INN_REACH_CANCELLATION_REASON_ID = UUID.fromString("941c7055-04f8-4db3-82cb-f63965c1506f");
 
   private final InnReachTransactionRepository transactionRepository;
   private final CentralPatronTypeMappingRepository centralPatronTypeMappingRepository;
@@ -199,23 +198,16 @@ public class RequestServiceImpl implements RequestService {
   }
 
   @Override
-  public void cancelRequest(InnReachTransaction transaction, String reasonDetails) {
-    cancelRequest(transaction, INN_REACH_CANCELLATION_REASON_ID, reasonDetails);
-  }
-
-  @Override
-  public void cancelRequest(InnReachTransaction transaction, UUID reasonId, String reasonDetails) {
-    log.info("Canceling item request for transaction {}", transaction);
-
-    var requestId = transaction.getHold().getFolioRequestId();
+  public void cancelRequest(String trackingId, UUID requestId, UUID reasonId, String reasonDetails) {
+    log.info("Canceling item request for transaction with trackingId {}", trackingId);
     if (requestId == null) {
-      log.warn("FOLIO requestId is not set for transaction with trackingId: {}", transaction.getTrackingId());
+      log.warn("FOLIO requestId is not set for transaction with trackingId: {}", trackingId);
       return;
     }
 
     circulationClient.findRequest(requestId)
-        .ifPresentOrElse(r -> cancelRequest(r, reasonId, reasonDetails),
-            () -> log.warn("No request found with id {}", requestId));
+      .ifPresentOrElse(r -> cancelRequest(r, reasonId, reasonDetails),
+        () -> log.warn("No request found with id {}", requestId));
   }
 
   private void createOwningSiteItemRequest(InnReachTransaction transaction, User patron, UUID servicePointId) {
@@ -242,16 +234,16 @@ public class RequestServiceImpl implements RequestService {
   }
 
   @Override
-  public void createRecallRequest(InnReachTransaction transaction, UUID recallUserId) {
+  public void createRecallRequest(UUID recallUserId, UUID itemId, UUID instanceId, UUID holdingId) {
     var pickupServicePoint = getDefaultServicePointIdForPatron(recallUserId);
 
     var request = RequestDTO.builder()
-      .itemId(transaction.getHold().getFolioItemId())
+      .itemId(itemId)
       .requesterId(recallUserId)
       .requestType(RECALL.getName())
       .requestLevel(RequestDTO.RequestLevel.ITEM.getName())
-      .instanceId(transaction.getHold().getFolioInstanceId())
-      .holdingsRecordId(transaction.getHold().getFolioHoldingId())
+      .instanceId(instanceId)
+      .holdingsRecordId(holdingId)
       .requestDate(OffsetDateTime.now())
       .fulfilmentPreference(HOLD_SHELF.getName())
       .pickupServicePointId(pickupServicePoint)
@@ -268,18 +260,23 @@ public class RequestServiceImpl implements RequestService {
   @Override
   public UUID getDefaultServicePointIdForPatron(UUID patronId) {
     return inventoryService.findDefaultServicePointIdForUser(patronId)
-        .orElseThrow(() -> new CirculationException("Default service point is not set for the patron: " + patronId));
+      .orElseThrow(() -> new CirculationException("Default service point is not set for the patron: " + patronId));
   }
 
   @Override
   public UUID getServicePointIdByCode(String locationCode) {
     return inventoryService.findServicePointIdByCode(locationCode)
-        .orElseThrow(() -> new CirculationException("Service point is not found by location code: " + locationCode));
+      .orElseThrow(() -> new CirculationException("Service point is not found by location code: " + locationCode));
   }
 
   @Override
   public boolean isOpenRequest(RequestDTO request) {
     return openRequestStatuses.contains(request.getStatus());
+  }
+
+  @Override
+  public boolean isCanceledOrExpired(RequestDTO request) {
+    return canceledExpiredStatuses.contains(request.getStatus());
   }
 
   private void cancelRequest(RequestDTO request, UUID reasonId, String reasonDetails) {

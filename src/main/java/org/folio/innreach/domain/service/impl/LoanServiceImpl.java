@@ -26,9 +26,9 @@ import org.folio.innreach.dto.LoanDTO;
 public class LoanServiceImpl implements LoanService {
 
   private static final String DUE_DATE_CHANGED_ACTION = "dueDateChanged";
+  private static final String OPEN_STATUS = "open";
 
   private final CirculationClient circulationClient;
-
 
   @Override
   public LoanDTO create(LoanDTO loan) {
@@ -101,6 +101,11 @@ public class LoanServiceImpl implements LoanService {
       .itemClaimedReturnedDateTime(itemClaimedReturnedDate);
 
     circulationClient.claimItemReturned(loanId, request);
+  }
+
+  @Override
+  public boolean isOpen(LoanDTO loanDTO) {
+    return OPEN_STATUS.equalsIgnoreCase(loanDTO.getStatus().getName());
   }
 
 }

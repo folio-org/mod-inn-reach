@@ -6,11 +6,11 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -22,17 +22,18 @@ import static org.springframework.test.context.jdbc.SqlMergeMode.MergeMode.MERGE
 
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.BORROWER_RENEW;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.BORROWING_SITE_CANCEL;
+import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.CANCEL_REQUEST;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.CLAIMS_RETURNED;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.FINAL_CHECKIN;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.ITEM_HOLD;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.ITEM_IN_TRANSIT;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.ITEM_RECEIVED;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.ITEM_SHIPPED;
-import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.PATRON_HOLD;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.RECALL;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.RECEIVE_UNANNOUNCED;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.RETURN_UNCIRCULATED;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.TRANSFER;
+import static org.folio.innreach.fixture.CirculationFixture.createCancelRequestDTO;
 import static org.folio.innreach.fixture.CirculationFixture.createClaimsItemReturnedDTO;
 import static org.folio.innreach.fixture.CirculationFixture.createItemShippedDTO;
 import static org.folio.innreach.fixture.CirculationFixture.createRecallDTO;
@@ -108,6 +109,7 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
   private static final String CANCEL_ITEM_HOLD_PATH = "/inn-reach/d2ir/circ/cancelitemhold/{trackingId}/{centralCode}";
   private static final String ITEM_RECEIVED_PATH = "/inn-reach/d2ir/circ/itemreceived/{trackingId}/{centralCode}";
   private static final String RECALL_REQUEST_PATH = "/inn-reach/d2ir/circ/recall/{trackingId}/{centralCode}";
+  private static final String CANCEL_REQUEST_PATH = "/inn-reach/d2ir/circ/cancelrequest/{trackingId}/{centralCode}";
 
   private static final String PATRON_HOLD_OPERATION = "patronhold";
   private static final String ITEM_SHIPPED_OPERATION = "itemshipped";
@@ -335,12 +337,9 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     assertNotNull(responseEntityBody);
     assertEquals("ok", responseEntityBody.getStatus());
 
-    var inOrder = inOrder(transactionRepository, requestService);
-
-    inOrder.verify(transactionRepository).save(
-      argThat(t -> t.getState() == BORROWING_SITE_CANCEL && isCentralPatronInfoCleared(t))
-    );
-    inOrder.verify(requestService).cancelRequest(any(), eq("Request cancelled at borrowing site"));
+    verify(requestService).cancelRequest(anyString(), any(UUID.class), any(UUID.class), eq("Request cancelled at borrowing site"));
+    var transactionUpdated = fetchTransactionByTrackingId(PRE_POPULATED_TRACKING2_ID);
+    assertEquals(BORROWING_SITE_CANCEL, transactionUpdated.getState());
   }
 
   @Test
@@ -696,7 +695,7 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     assertNotNull(responseEntityBody);
     assertEquals("ok", responseEntityBody.getStatus());
 
-    verify(requestService).createRecallRequest(any(), any());
+    verify(requestService).createRecallRequest(any(), any(), any(), any());
     var transactionUpdated = repository.findByTrackingIdAndCentralServerCode(PRE_POPULATED_TRACKING1_ID,
       PRE_POPULATED_CENTRAL_CODE).get();
     assertEquals(RECALL, transactionUpdated.getState());
@@ -743,7 +742,7 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     assertNotNull(responseEntityBody);
     assertEquals("ok", responseEntityBody.getStatus());
 
-    verify(requestService).cancelRequest(any(), eq("Item has been recalled."));
+    verify(requestService).cancelRequest(anyString(), any(UUID.class), any(UUID.class), eq("Item has been recalled."));
     var transactionUpdated = repository.findByTrackingIdAndCentralServerCode(PRE_POPULATED_TRACKING1_ID,
       PRE_POPULATED_CENTRAL_CODE).get();
     assertEquals(RECALL, transactionUpdated.getState());
@@ -763,7 +762,7 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     when(userService.getUserById(PRE_POPULATED_PATRON_ID)).thenReturn(Optional.of(user));
     when(circulationClient.sendRequest(requestDtoCaptor.capture())).thenReturn(new RequestDTO());
     when(circulationClient.findRequest(any())).thenReturn(Optional.of(requestDTO));
-    doThrow(new RuntimeException("Test exception.")).when(requestService).cancelRequest(any(), any());
+    doThrow(new IllegalArgumentException("Test exception.")).when(requestService).findRequest(any(UUID.class));
 
     var recallDTO = createRecallDTO();
 
@@ -1016,16 +1015,16 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
   }
 
   @ParameterizedTest
-  @EnumSource(names = {"ITEM_IN_TRANSIT", "RETURN_UNCIRCULATED"})
+  @EnumSource(names = {"ITEM_IN_TRANSIT", "RETURN_UNCIRCULATED", "ITEM_RECEIVED", "ITEM_SHIPPED"})
   @Sql(scripts = {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
   })
-  void checkTransactionIsInStateItemInTransitOrReturnUncirculated(InnReachTransaction.TransactionState testEnums) {
+  void checkTransactionIsNotInStatePatronHoldOrTransfer(InnReachTransaction.TransactionState state) {
     var transactionHoldDTO = createTransactionHoldDTO();
     var transactionBefore = fetchPrePopulatedTransaction();
 
-    transactionBefore.setState(testEnums);
+    transactionBefore.setState(state);
     repository.save(transactionBefore);
 
     var responseEntity = testRestTemplate.exchange(
@@ -1037,28 +1036,21 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
 
     assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
     assertEquals(FINAL_CHECKIN, transactionAfter.getState());
-    assertPatronHoldFieldsAreNull((TransactionPatronHold)transactionAfter.getHold());
+    assertPatronHoldFieldsAreNull((TransactionPatronHold) transactionAfter.getHold());
   }
 
-  private void assertPatronHoldFieldsAreNull(TransactionPatronHold hold) {
-    assertNull(hold.getPatronId());
-    assertNull(hold.getPatronName());
-    assertNull(hold.getFolioPatronId());
-    assertNull(hold.getFolioPatronBarcode());
-    assertNull(hold.getFolioItemId());
-    assertNull(hold.getFolioHoldingId());
-    assertNull(hold.getFolioInstanceId());
-    assertNull(hold.getFolioLoanId());
-    assertNull(hold.getFolioItemBarcode());
-  }
-
-  @Test
+  @ParameterizedTest
+  @EnumSource(names = {"PATRON_HOLD", "TRANSFER"})
   @Sql(scripts = {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
   })
-  void checkTransactionIsNotInStateItemInTransitOrReturnUncirculated() {
+  void checkTransactionIsInStatePatronHoldOrTransfer(InnReachTransaction.TransactionState state) {
     var transactionHoldDTO = createTransactionHoldDTO();
+    var transactionBefore = fetchPrePopulatedTransaction();
+
+    transactionBefore.setState(state);
+    repository.save(transactionBefore);
 
     var responseEntity = testRestTemplate.exchange(
       "/inn-reach/d2ir/circ/finalcheckin/{trackingId}/{centralCode}", HttpMethod.PUT,
@@ -1068,7 +1060,7 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     var transaction = fetchPrePopulatedTransaction();
 
     assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
-    assertEquals(PATRON_HOLD, transaction.getState());
+    assertEquals(state, transaction.getState());
   }
 
   @Test
@@ -1120,6 +1112,44 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     assertNull(updatedTransaction.getHold().getPatronName());
 
     verify(circulationClient).claimItemReturned(any(), argThat(req -> req.getItemClaimedReturnedDateTime() != null));
+  }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql",
+    "classpath:db/patron-type-mapping/pre-populate-patron-type-mapping.sql",
+  })
+  void processCancelRequest() {
+    doNothing().when(requestService).cancelRequest(anyString(), any(UUID.class), any(UUID.class), anyString());
+    when(userService.getUserById(any(UUID.class))).thenReturn(Optional.of(populateUser()));
+
+    var cancelRequestDTO = createCancelRequestDTO();
+
+    var responseEntity = testRestTemplate.exchange(
+      CANCEL_REQUEST_PATH, HttpMethod.PUT,
+      new HttpEntity<>(cancelRequestDTO, headers), InnReachResponseDTO.class,
+      PRE_POPULATED_TRACKING1_ID, PRE_POPULATED_CENTRAL_CODE);
+
+    verify(requestService).cancelRequest(anyString(), any(UUID.class), any(UUID.class), anyString());
+
+    var transactionAfter = fetchPrePopulatedTransaction();
+
+    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+    assertEquals(CANCEL_REQUEST, transactionAfter.getState());
+    assertPatronHoldFieldsAreNull((TransactionPatronHold) transactionAfter.getHold());
+  }
+
+  private void assertPatronHoldFieldsAreNull(TransactionPatronHold hold) {
+    assertNull(hold.getPatronId());
+    assertNull(hold.getPatronName());
+    assertNull(hold.getFolioPatronId());
+    assertNull(hold.getFolioPatronBarcode());
+    assertNull(hold.getFolioItemId());
+    assertNull(hold.getFolioHoldingId());
+    assertNull(hold.getFolioInstanceId());
+    assertNull(hold.getFolioLoanId());
+    assertNull(hold.getFolioItemBarcode());
   }
 
   private User populateUser() {

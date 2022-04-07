@@ -26,10 +26,12 @@ import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionSt
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionType.ITEM;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionType.LOCAL;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionType.PATRON;
+import static org.folio.innreach.domain.service.impl.RequestServiceImpl.INN_REACH_CANCELLATION_REASON_ID;
 import static org.folio.innreach.util.DateHelper.toEpochSec;
 import static org.folio.innreach.util.InnReachTransactionUtils.clearCentralPatronInfo;
 import static org.folio.innreach.util.InnReachTransactionUtils.clearPatronAndItemInfo;
 import static org.folio.innreach.util.InnReachTransactionUtils.verifyState;
+import static org.folio.innreach.util.InnReachTransactionUtils.verifyStateNot;
 
 import java.util.Date;
 import java.util.HashMap;
@@ -44,6 +46,7 @@ import javax.persistence.EntityExistsException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.BeanUtils;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
@@ -58,6 +61,8 @@ import org.folio.innreach.domain.entity.InnReachTransaction.TransactionState;
 import org.folio.innreach.domain.entity.InnReachTransaction.TransactionType;
 import org.folio.innreach.domain.entity.LocalAgency;
 import org.folio.innreach.domain.entity.TransactionHold;
+import org.folio.innreach.domain.event.CancelRequestEvent;
+import org.folio.innreach.domain.event.RecallRequestEvent;
 import org.folio.innreach.domain.exception.CirculationException;
 import org.folio.innreach.domain.exception.EntityNotFoundException;
 import org.folio.innreach.domain.service.CentralServerService;
@@ -124,6 +129,7 @@ public class CirculationServiceImpl implements CirculationService {
   private final LocalAgencyRepository localAgencyRepository;
   private final PatronInfoService patronInfoService;
   private final TransactionTemplate transactionTemplate;
+  private final ApplicationEventPublisher eventPublisher;
 
   @Override
   public InnReachResponseDTO createInnReachTransactionItemHold(String trackingId, String centralCode, TransactionHoldDTO dto) {
@@ -212,10 +218,13 @@ public class CirculationServiceImpl implements CirculationService {
 
     var itemId = transaction.getHold().getFolioItemId();
 
-    requestService.cancelRequest(transaction, cancelRequest.getReason());
-
     removeItemTransactionInfo(itemId)
       .ifPresent(this::removeHoldingsTransactionInfo);
+
+    eventPublisher.publishEvent(CancelRequestEvent.of(transaction,
+      INN_REACH_CANCELLATION_REASON_ID, cancelRequest.getReason()));
+
+    clearPatronAndItemInfo(transaction.getHold());
 
     log.info("Item request successfully cancelled");
 
@@ -241,20 +250,18 @@ public class CirculationServiceImpl implements CirculationService {
     log.info("Cancelling Item Hold transaction: {}", trackingId);
 
     var transaction = getTransactionOfType(trackingId, centralCode, ITEM);
+    var requestId = transaction.getHold().getFolioRequestId();
 
     if (transaction.getHold().getFolioLoanId() != null) {
       throw new IllegalArgumentException("Requested item is already checked out.");
     }
 
-    // the state should be updated before cancelRequest called as the transaction should be in a proper state when
-    // kafka event for a request update is consumed after the cancellation
     transaction.setState(BORROWING_SITE_CANCEL);
 
     clearCentralPatronInfo(transaction.getHold());
 
-    transaction = saveAndPersist(transaction);
-
-    requestService.cancelRequest(transaction, "Request cancelled at borrowing site");
+    eventPublisher.publishEvent(new CancelRequestEvent(trackingId, requestId,
+      INN_REACH_CANCELLATION_REASON_ID, "Request cancelled at borrowing site"));
 
     return success();
   }
@@ -329,27 +336,21 @@ public class CirculationServiceImpl implements CirculationService {
   public InnReachResponseDTO recall(String trackingId, String centralCode, RecallDTO recall) {
     var transaction = getTransactionOfType(trackingId, centralCode, PATRON);
     patronInfoService.populateTransactionPatronInfo(transaction.getHold(), centralCode);
+
     var requestId = transaction.getHold().getFolioRequestId();
     var request = requestService.findRequest(requestId);
     var requestStatus = request.getStatus();
 
-    if (requestStatus == OPEN_AWAITING_PICKUP || requestStatus == OPEN_IN_TRANSIT) {
-      try {
-        requestService.cancelRequest(transaction, "Item has been recalled.");
-      } catch (Exception e) {
-        throw new CirculationException("Unable to create a cancel request on the item: " + e.getMessage(), e);
-      }
-    } else {
-      try {
-        var recallUser = getRecallUserForCentralServer(centralCode);
-        requestService.createRecallRequest(transaction, recallUser.getUserId());
-      } catch (Exception e) {
-        throw new CirculationException("Unable to create a recall request on the item: " + e.getMessage(), e);
-      }
-    }
-
     transaction.getHold().setDueDateTime(recall.getDueDateTime());
     transaction.setState(RECALL);
+
+    if (requestStatus == OPEN_AWAITING_PICKUP || requestStatus == OPEN_IN_TRANSIT) {
+      eventPublisher.publishEvent(CancelRequestEvent.of(transaction,
+        INN_REACH_CANCELLATION_REASON_ID, "Item has been recalled."));
+    } else {
+      var recallUser = getRecallUserForCentralServer(centralCode);
+      eventPublisher.publishEvent(RecallRequestEvent.of(transaction.getHold(), recallUser));
+    }
 
     return success();
   }
@@ -407,7 +408,7 @@ public class CirculationServiceImpl implements CirculationService {
   public InnReachResponseDTO finalCheckIn(String trackingId, String centralCode, BaseCircRequestDTO finalCheckIn) {
     var transaction = getTransaction(trackingId, centralCode);
 
-    verifyState(transaction, ITEM_IN_TRANSIT, RETURN_UNCIRCULATED);
+    verifyStateNot(transaction, PATRON_HOLD, TRANSFER);
 
     transaction.setState(FINAL_CHECKIN);
 
@@ -443,16 +444,6 @@ public class CirculationServiceImpl implements CirculationService {
     transaction.setType(InnReachTransaction.TransactionType.ITEM);
     transaction.setState(InnReachTransaction.TransactionState.ITEM_HOLD);
     return transaction;
-  }
-
-  /**
-   * Executes save operation in a new DB transaction without waiting for existing transaction to be completed
-   *
-   * @param transaction INN-Reach transaction to be saved
-   * @return the saved entity
-   */
-  private InnReachTransaction saveAndPersist(InnReachTransaction transaction) {
-    return transactionTemplate.execute(status -> transactionRepository.save(transaction));
   }
 
   private void initiateTransactionHold(String trackingId, String centralCode,
@@ -605,5 +596,4 @@ public class CirculationServiceImpl implements CirculationService {
     return localAgencyRepository.fetchOneByCode(code)
       .orElseThrow(() -> new EntityNotFoundException("Local agency with code: " + code + " not found."));
   }
-
 }

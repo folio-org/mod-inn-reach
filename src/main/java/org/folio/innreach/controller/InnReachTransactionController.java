@@ -42,6 +42,13 @@ public class InnReachTransactionController implements InnReachTransactionApi {
   }
 
   @Override
+  @PostMapping("/{id}/patronhold/return-item/{servicePointId}")
+  public ResponseEntity<Void> returnPatronHoldItem(@PathVariable UUID id, @PathVariable UUID servicePointId) {
+    transactionActionService.returnPatronHoldItem(id, servicePointId);
+    return ResponseEntity.noContent().build();
+  }
+
+  @Override
   @PostMapping("/{id}/receive-item/{servicePointId}")
   public ResponseEntity<PatronHoldCheckInResponseDTO> checkInPatronHoldItem(@PathVariable UUID id,
                                                                             @PathVariable UUID servicePointId) {
