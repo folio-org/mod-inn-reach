@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.event.TransactionalEventListener;
 
 import org.folio.innreach.domain.event.CancelRequestEvent;
+import org.folio.innreach.domain.event.MoveRequestEvent;
 import org.folio.innreach.domain.event.RecallRequestEvent;
 import org.folio.innreach.domain.service.RequestService;
 
@@ -32,6 +33,14 @@ public class ApplicationEventListener {
     var holdingId = event.getHoldingId();
 
     requestService.createRecallRequest(recallUserId, itemId, instanceId, holdingId);
+  }
+
+  @TransactionalEventListener
+  public void handleMoveRequestEvent(MoveRequestEvent event) {
+    var requestId = event.getRequestId();
+    var newItem = event.getNewItem();
+
+    requestService.moveItemRequest(requestId, newItem);
   }
 
 }
