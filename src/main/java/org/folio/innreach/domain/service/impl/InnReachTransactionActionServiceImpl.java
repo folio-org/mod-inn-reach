@@ -303,8 +303,6 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
 
     requestService.validateItemAvailability(item);
 
-    transaction.setState(TRANSFER);
-
     eventPublisher.publishEvent(MoveRequestEvent.of(transaction, item));
   }
 
