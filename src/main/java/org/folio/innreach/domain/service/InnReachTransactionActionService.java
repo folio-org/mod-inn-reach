@@ -3,7 +3,7 @@ package org.folio.innreach.domain.service;
 import java.util.UUID;
 
 import org.folio.innreach.domain.dto.folio.circulation.RequestDTO;
-import org.folio.innreach.dto.CancelPatronHoldDTO;
+import org.folio.innreach.dto.CancelTransactionHoldDTO;
 import org.folio.innreach.dto.CheckInDTO;
 import org.folio.innreach.dto.InnReachTransactionDTO;
 import org.folio.innreach.dto.PatronHoldCheckInResponseDTO;
@@ -28,7 +28,9 @@ public interface InnReachTransactionActionService {
 
   void handleCheckInCreation(CheckInDTO checkIn);
 
-  InnReachTransactionDTO cancelPatronHold(UUID transactionId, CancelPatronHoldDTO cancelRequest);
+  InnReachTransactionDTO cancelPatronHold(UUID transactionId, CancelTransactionHoldDTO cancelRequest);
+
+  InnReachTransactionDTO cancelItemHold(UUID transactionId, CancelTransactionHoldDTO cancelRequest);
 
   void returnPatronHoldItem(UUID transactionId, UUID servicePointId);
 }

@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import org.folio.innreach.domain.service.InnReachTransactionActionService;
 import org.folio.innreach.domain.service.InnReachTransactionService;
-import org.folio.innreach.dto.CancelPatronHoldDTO;
+import org.folio.innreach.dto.CancelTransactionHoldDTO;
 import org.folio.innreach.dto.InnReachTransactionDTO;
 import org.folio.innreach.dto.InnReachTransactionFilterParametersDTO;
 import org.folio.innreach.dto.InnReachTransactionsDTO;
@@ -84,9 +84,18 @@ public class InnReachTransactionController implements InnReachTransactionApi {
   @Override
   @PostMapping("/{id}/patronhold/cancel")
   public ResponseEntity<InnReachTransactionDTO> cancelPatronHoldTransaction(@PathVariable UUID id,
-      CancelPatronHoldDTO cancelRequest) {
+      CancelTransactionHoldDTO cancelRequest) {
 
     var response = transactionActionService.cancelPatronHold(id, cancelRequest);
+    return ResponseEntity.ok(response);
+  }
+
+  @Override
+  @PostMapping("/{id}/itemhold/cancel")
+  public ResponseEntity<InnReachTransactionDTO> cancelItemHoldTransaction(@PathVariable UUID id,
+      CancelTransactionHoldDTO cancelRequest) {
+
+    var response = transactionActionService.cancelItemHold(id, cancelRequest);
     return ResponseEntity.ok(response);
   }
 

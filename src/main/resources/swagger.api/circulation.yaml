@@ -247,7 +247,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/cancelPatronHoldDTO"
+              $ref: "#/components/schemas/cancelTransactionHoldDTO"
       responses:
         '200':
           description: "OK"
@@ -277,6 +277,30 @@ paths:
       parameters:
         - $ref: 'api-common.yaml#/components/parameters/id'
         - $ref: 'circulation.yaml#/components/parameters/servicePointId'
+  /transactions/{id}/itemhold/cancel:
+    post:
+      operationId: cancelItemHoldTransaction
+      description: Cancel item hold transaction with the reason provided
+      tags:
+        - inn-reach-transaction
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/cancelTransactionHoldDTO"
+      responses:
+        '200':
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/innReachTransactionDTO"
+        '404':
+          $ref: "api-common.yaml#/components/responses/trait_response_404"
+        '500':
+          $ref: "api-common.yaml#/components/responses/trait_response_500"
+      parameters:
+        - $ref: 'api-common.yaml#/components/parameters/id'
   /d2ir/circ/verifypatron:
     post:
       operationId: verifyPatron
@@ -818,8 +842,8 @@ components:
       $ref: schemas/d2ir/claimsItemReturnedDTO.json
     claimItemReturnedRequestDTO:
       $ref: schemas/circulation/claimItemReturnedRequestDTO.json
-    cancelPatronHoldDTO:
-      $ref: schemas/cancelPatronHoldDTO.json
+    cancelTransactionHoldDTO:
+      $ref: schemas/cancelTransactionHoldDTO.json
     holdingSourceDTO:
       $ref: schemas/inventorystorage/holdingSourceDTO.json
   parameters:

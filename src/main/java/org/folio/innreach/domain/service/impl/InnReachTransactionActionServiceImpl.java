@@ -36,6 +36,7 @@ import java.util.UUID;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -56,7 +57,7 @@ import org.folio.innreach.domain.service.ItemService;
 import org.folio.innreach.domain.service.LoanService;
 import org.folio.innreach.domain.service.PatronHoldService;
 import org.folio.innreach.domain.service.RequestService;
-import org.folio.innreach.dto.CancelPatronHoldDTO;
+import org.folio.innreach.dto.CancelTransactionHoldDTO;
 import org.folio.innreach.dto.CheckInDTO;
 import org.folio.innreach.dto.InnReachTransactionDTO;
 import org.folio.innreach.dto.LoanStatus;
@@ -248,7 +249,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
   }
 
   @Override
-  public InnReachTransactionDTO cancelPatronHold(UUID transactionId, CancelPatronHoldDTO cancelRequest) {
+  public InnReachTransactionDTO cancelPatronHold(UUID transactionId, CancelTransactionHoldDTO cancelRequest) {
     var transaction = fetchTransactionOfType(transactionId, PATRON);
 
     var requestId = transaction.getHold().getFolioRequestId();
@@ -259,6 +260,21 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
     } else if (request.getStatus() == CLOSED_CANCELLED) {
       cancelPatronHoldWithClosedRequest(transaction);
     }
+
+    return transactionMapper.toDTO(transaction);
+  }
+
+  @Override
+  public InnReachTransactionDTO cancelItemHold(UUID transactionId, CancelTransactionHoldDTO cancelRequest) {
+    var transaction = fetchTransactionOfType(transactionId, ITEM);
+
+    verifyState(transaction, ITEM_HOLD);
+
+    transaction.setState(CANCEL_REQUEST);
+
+    eventPublisher.publishEvent(CancelRequestEvent.of(transaction,
+        cancelRequest.getCancellationReasonId(),
+        cancelRequest.getCancellationAdditionalInformation()));
 
     return transactionMapper.toDTO(transaction);
   }
@@ -454,7 +470,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
     }
   }
 
-  private void cancelPatronHoldWithOpenRequest(CancelPatronHoldDTO cancelRequest,
+  private void cancelPatronHoldWithOpenRequest(CancelTransactionHoldDTO cancelRequest,
                                                InnReachTransaction transaction) {
     var trackingId = transaction.getTrackingId();
     var requestId = transaction.getHold().getFolioRequestId();

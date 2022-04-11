@@ -96,7 +96,7 @@ import org.folio.innreach.domain.entity.TransactionItemHold;
 import org.folio.innreach.domain.entity.base.AuditableUser;
 import org.folio.innreach.domain.service.RequestService;
 import org.folio.innreach.domain.service.impl.InnReachTransactionActionNotifier;
-import org.folio.innreach.dto.CancelPatronHoldDTO;
+import org.folio.innreach.dto.CancelTransactionHoldDTO;
 import org.folio.innreach.dto.CheckInRequestDTO;
 import org.folio.innreach.dto.CheckInResponseDTO;
 import org.folio.innreach.dto.CheckInResponseDTOItem;
@@ -1653,8 +1653,8 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
       .thenReturn(Optional.of(itemDTO));
   }
 
-  private CancelPatronHoldDTO createCancelPatronHold() {
-    return new CancelPatronHoldDTO()
+  private CancelTransactionHoldDTO createCancelPatronHold() {
+    return new CancelTransactionHoldDTO()
       .cancellationReasonId(randomUUID())
       .cancellationAdditionalInformation(RandomStringUtils.randomAlphabetic(255));
   }
