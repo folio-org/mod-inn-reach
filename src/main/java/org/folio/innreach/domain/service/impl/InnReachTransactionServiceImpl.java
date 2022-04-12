@@ -64,7 +64,7 @@ public class InnReachTransactionServiceImpl implements InnReachTransactionServic
       .orElseThrow(() -> new EntityNotFoundException(String.format("InnReach transaction with id [%s] not found!", transactionId)));
     if (transaction.getState() == ITEM_SHIPPED || transaction.getState() == ITEM_RECEIVED || transaction.getState() == RECEIVE_UNANNOUNCED) {
       transaction.setState(RECALL);
-      log.info("Get innReach transaction {} with {} status", transaction.getId(), transaction.getState());
+      log.info("Get innReach transaction with id {} and {} status", transaction.getId(), transaction.getState());
       var loan = loanService.getById(transaction.getHold().getFolioLoanId());
       var loanDueDate = loan.getDueDate().toInstant().truncatedTo(ChronoUnit.SECONDS);
       var loanIntegerDueDate = (int) (loanDueDate.getEpochSecond());
