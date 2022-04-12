@@ -40,7 +40,6 @@ import lombok.extern.log4j.Log4j2;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.util.Assert;
 
 import org.folio.innreach.client.InstanceStorageClient;
@@ -83,7 +82,6 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
   private final ItemService itemService;
   private final InstanceStorageClient instanceStorageClient;
   private final InnReachTransactionActionNotifier notifier;
-  private final TransactionTemplate transactionTemplate;
   private final ApplicationEventPublisher eventPublisher;
 
   @Override
