@@ -2,7 +2,6 @@ package org.folio.innreach.controller;
 
 import static java.util.UUID.randomUUID;
 import static org.awaitility.Awaitility.await;
-import static org.folio.innreach.domain.dto.folio.circulation.RequestDTO.RequestStatus.OPEN_NOT_YET_FILLED;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -26,6 +25,7 @@ import static org.springframework.test.context.jdbc.SqlMergeMode.MergeMode.MERGE
 
 import static org.folio.innreach.domain.dto.folio.circulation.RequestDTO.RequestStatus.CLOSED_CANCELLED;
 import static org.folio.innreach.domain.dto.folio.circulation.RequestDTO.RequestStatus.OPEN_AWAITING_PICKUP;
+import static org.folio.innreach.domain.dto.folio.circulation.RequestDTO.RequestStatus.OPEN_NOT_YET_FILLED;
 import static org.folio.innreach.domain.dto.folio.inventory.InventoryItemStatus.AVAILABLE;
 import static org.folio.innreach.domain.dto.folio.inventory.InventoryItemStatus.IN_PROCESS;
 import static org.folio.innreach.domain.dto.folio.inventory.InventoryItemStatus.IN_TRANSIT;
@@ -83,7 +83,6 @@ import org.folio.innreach.client.CirculationClient;
 import org.folio.innreach.client.HoldingsStorageClient;
 import org.folio.innreach.client.InventoryClient;
 import org.folio.innreach.client.RequestPreferenceStorageClient;
-import org.folio.innreach.client.ServicePointsUsersClient;
 import org.folio.innreach.client.UsersClient;
 import org.folio.innreach.controller.base.BaseControllerTest;
 import org.folio.innreach.domain.dto.OwningSiteCancelsRequestDTO;
@@ -94,7 +93,6 @@ import org.folio.innreach.domain.dto.folio.inventory.InventoryItemDTO;
 import org.folio.innreach.domain.dto.folio.inventory.InventoryItemStatus;
 import org.folio.innreach.domain.dto.folio.requestpreference.RequestPreferenceDTO;
 import org.folio.innreach.domain.entity.InnReachTransaction;
-import org.folio.innreach.domain.entity.TransactionItemHold;
 import org.folio.innreach.domain.entity.base.AuditableUser;
 import org.folio.innreach.domain.service.RequestService;
 import org.folio.innreach.domain.service.impl.InnReachTransactionActionNotifier;
@@ -167,7 +165,6 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   private static final String PRE_POPULATED_CENTRAL_PATRON_ID2 = "u6ct3wssbnhxvip3sobwmxvhoa";
   private static final UUID PRE_POPULATED_PATRON_HOLD_REQUEST_ID = UUID.fromString("ea11eba7-3c0f-4d15-9cca-c8608cd6bc8a");
   private static final UUID PRE_POPULATED_PATRON_HOLD_ITEM_ID = UUID.fromString("9a326225-6530-41cc-9399-a61987bfab3c");
-  private static final UUID PRE_POPULATED_ITEM_HOLD_REQUEST_ID = UUID.fromString("26278b3a-de32-4deb-b81b-896637b3dbeb");
   private static final UUID FOLIO_CHECKOUT_ID = UUID.randomUUID();
 
   private static final AuditableUser PRE_POPULATED_USER = AuditableUser.SYSTEM;
@@ -188,8 +185,6 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   @MockBean
   private CirculationClient circulationClient;
   @MockBean
-  private ServicePointsUsersClient servicePointsUsersClient;
-  @MockBean
   private UsersClient usersClient;
   @MockBean
   private InnReachClient innReachClient;
@@ -202,7 +197,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   @SpyBean
   private InnReachTransactionActionNotifier actionNotifier;
 
-  private static HttpHeaders headers = circHeaders();
+  private static final HttpHeaders headers = circHeaders();
 
   InventoryItemDTO mockInventoryClient() {
     var inventoryItemDTO = createInventoryItemDTO();
@@ -656,7 +651,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     assertEquals(transactionPickupLocationMapper.fromString(itemHoldDTO.getPickupLocation()).getDisplayName(),
       transaction.get().getHold().getPickupLocation().getDisplayName());
     assertEquals(itemHoldDTO.getTransactionTime(), transaction.get().getHold().getTransactionTime());
-    assertEquals(itemHoldDTO.getPatronName(), ((TransactionItemHold) transaction.get().getHold()).getPatronName());
+    assertEquals(itemHoldDTO.getPatronName(), transaction.get().getHold().getPatronName());
 
     assertEquals(inventoryItemDTO.getId(), transaction.get().getHold().getFolioItemId());
     assertEquals(inventoryItemDTO.getTitle(), transaction.get().getHold().getTitle());
