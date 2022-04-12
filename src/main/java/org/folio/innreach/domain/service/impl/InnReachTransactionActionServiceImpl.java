@@ -271,8 +271,6 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
 
     verifyState(transaction, ITEM_HOLD);
 
-    transaction.setState(CANCEL_REQUEST);
-
     eventPublisher.publishEvent(CancelRequestEvent.of(transaction,
         cancelRequest.getCancellationReasonId(),
         cancelRequest.getCancellationAdditionalInformation()));

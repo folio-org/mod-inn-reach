@@ -1699,7 +1699,6 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     var updatedTransaction = responseEntity.getBody();
 
     assertNotNull(updatedTransaction);
-    assertEquals(TransactionStateEnum.CANCEL_REQUEST, updatedTransaction.getState());
 
     var cancelRequestCaptor = ArgumentCaptor.forClass(RequestDTO.class);
     verify(circulationClient).updateRequest(eq(PRE_POPULATED_ITEM_HOLD_REQUEST_ID), cancelRequestCaptor.capture());
@@ -1716,7 +1715,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
       "classpath:db/central-server/pre-populate-central-server.sql",
       "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql",
   })
-  void cancelItemHold_if_requestIsNotFound() {
+  void cancelItemHoldNotPerformed_if_requestIsNotFound() {
     when(circulationClient.findRequest(PRE_POPULATED_ITEM_HOLD_REQUEST_ID))
         .thenReturn(Optional.empty());
 
@@ -1729,7 +1728,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     var updatedTransaction = responseEntity.getBody();
 
     assertNotNull(updatedTransaction);
-    assertEquals(TransactionStateEnum.CANCEL_REQUEST, updatedTransaction.getState());
+    assertEquals(TransactionStateEnum.ITEM_HOLD, updatedTransaction.getState());
 
     verify(circulationClient, never()).updateRequest(eq(PRE_POPULATED_ITEM_HOLD_REQUEST_ID), any());
   }
