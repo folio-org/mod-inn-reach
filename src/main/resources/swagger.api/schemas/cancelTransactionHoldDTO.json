@@ -1,5 +1,5 @@
 {
-  "description": "Patron hold transaction cancellation request",
+  "description": "Transaction hold cancellation request",
   "type": "object",
   "properties": {
     "cancellationReasonId": {
