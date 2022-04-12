@@ -197,6 +197,22 @@ paths:
         - $ref: 'api-common.yaml#/components/parameters/id'
         - $ref: 'circulation.yaml#/components/parameters/servicePointId'
         - $ref: 'circulation.yaml#/components/parameters/itemBarcode'
+  /transactions/{id}/itemhold/transfer-item/{itemBarcode}:
+    post:
+      operationId: transferItemHold
+      description: Transfer item hold to another item
+      tags:
+        - inn-reach-transaction
+      responses:
+        '204':
+          description: No content
+        '404':
+          $ref: "api-common.yaml#/components/responses/trait_response_404"
+        '500':
+          $ref: "api-common.yaml#/components/responses/trait_response_500"
+      parameters:
+        - $ref: 'api-common.yaml#/components/parameters/id'
+        - $ref: 'circulation.yaml#/components/parameters/itemBarcode'
   /transactions/{id}/patronhold/check-out-item/{servicePointId}:
     post:
       operationId: checkOutPatronHoldItem

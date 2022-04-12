@@ -4,7 +4,6 @@ import java.util.UUID;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
-
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -45,6 +44,13 @@ public class InnReachTransactionController implements InnReachTransactionApi {
   @PostMapping("/{id}/patronhold/return-item/{servicePointId}")
   public ResponseEntity<Void> returnPatronHoldItem(@PathVariable UUID id, @PathVariable UUID servicePointId) {
     transactionActionService.returnPatronHoldItem(id, servicePointId);
+    return ResponseEntity.noContent().build();
+  }
+
+  @Override
+  @PostMapping("/{id}/itemhold/transfer-item/{itemBarcode}")
+  public ResponseEntity<Void> transferItemHold(@PathVariable UUID id, @PathVariable String itemBarcode) {
+    transactionActionService.transferItemHold(id, itemBarcode);
     return ResponseEntity.noContent().build();
   }
 

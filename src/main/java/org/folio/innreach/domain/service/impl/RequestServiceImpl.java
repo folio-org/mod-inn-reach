@@ -147,8 +147,6 @@ public class RequestServiceImpl implements RequestService {
     log.info("Creating item request for transaction {}", transaction);
     var hold = transaction.getHold();
 
-    validateItemAvailability(item);
-
     //getting required data for a request
     var comment = createPatronComment(hold);
 
@@ -176,25 +174,19 @@ public class RequestServiceImpl implements RequestService {
   }
 
   @Override
-  public void moveItemRequest(InnReachTransaction transaction, Holding holding, InventoryItemDTO item) {
-    log.info("Moving item request for transaction {}", transaction);
+  public RequestDTO moveItemRequest(UUID requestId, InventoryItemDTO newItem) {
+    var newItemId = newItem.getId();
 
-    var hold = transaction.getHold();
-    var requestId = hold.getFolioRequestId();
-    Assert.isTrue(requestId != null, "requestId is not set for transaction with trackingId: " + transaction.getTrackingId());
+    log.info("Moving request {} to a new item {}", requestId, newItemId);
 
-    validateItemAvailability(item);
+    Assert.isTrue(requestId != null, "requestId can't be null");
 
     var payload = MoveRequestDTO.builder()
       .requestType(PAGE.getName())
-      .destinationItemId(item.getId())
+      .destinationItemId(newItemId)
       .build();
 
-    var movedRequest = circulationClient.moveRequest(requestId, payload);
-
-    updateTransaction(transaction, item, holding, movedRequest, null);
-
-    log.info("Item request successfully moved");
+    return circulationClient.moveRequest(requestId, payload);
   }
 
   @Override
@@ -215,6 +207,8 @@ public class RequestServiceImpl implements RequestService {
     var item = itemService.getItemByHrId(hold.getItemId());
     var requestType = item.getStatus() == AVAILABLE ? PAGE : HOLD;
     var holding = holdingsService.find(item.getHoldingsRecordId()).orElse(null);
+
+    validateItemAvailability(item);
 
     createItemRequest(transaction, holding, item, patron, servicePointId, requestType);
   }
@@ -279,6 +273,14 @@ public class RequestServiceImpl implements RequestService {
     return canceledExpiredStatuses.contains(request.getStatus());
   }
 
+  @Override
+  public void validateItemAvailability(InventoryItemDTO item) {
+    var requests = circulationClient.queryRequestsByItemId(item.getId());
+    if (!isItemRequestable(item, requests)) {
+      throw new ItemNotRequestableException("Item is not requestable: " + item.getId());
+    }
+  }
+
   private void cancelRequest(RequestDTO request, UUID reasonId, String reasonDetails) {
     request.setStatus(RequestStatus.CLOSED_CANCELLED);
     request.setCancellationReasonId(reasonId);
@@ -287,13 +289,6 @@ public class RequestServiceImpl implements RequestService {
     circulationClient.updateRequest(request.getId(), request);
 
     log.info("Item request successfully cancelled");
-  }
-
-  private void validateItemAvailability(InventoryItemDTO item) {
-    var requests = circulationClient.queryRequestsByItemId(item.getId());
-    if (!isItemRequestable(item, requests)) {
-      throw new ItemNotRequestableException("Item is not requestable: " + item.getId());
-    }
   }
 
   private void updateTransaction(InnReachTransaction transaction, InventoryItemDTO item,

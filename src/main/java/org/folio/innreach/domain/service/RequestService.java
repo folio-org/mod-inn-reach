@@ -21,7 +21,7 @@ public interface RequestService {
   void createItemRequest(InnReachTransaction transaction, Holding holding, InventoryItemDTO item,
                          User patron, UUID servicePointId, RequestType requestType);
 
-  void moveItemRequest(InnReachTransaction transaction, Holding holding, InventoryItemDTO item);
+  RequestDTO moveItemRequest(UUID requestId, InventoryItemDTO newItem);
 
   void cancelRequest(String trackingId, UUID requestId, UUID reasonId, String reason);
 
@@ -36,4 +36,6 @@ public interface RequestService {
   boolean isOpenRequest(RequestDTO request);
 
   boolean isCanceledOrExpired(RequestDTO request);
+
+  void validateItemAvailability(InventoryItemDTO item);
 }

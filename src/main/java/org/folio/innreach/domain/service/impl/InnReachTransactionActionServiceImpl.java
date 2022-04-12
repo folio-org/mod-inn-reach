@@ -50,7 +50,9 @@ import org.folio.innreach.domain.entity.InnReachTransaction;
 import org.folio.innreach.domain.entity.TransactionItemHold;
 import org.folio.innreach.domain.entity.TransactionPatronHold;
 import org.folio.innreach.domain.event.CancelRequestEvent;
+import org.folio.innreach.domain.event.MoveRequestEvent;
 import org.folio.innreach.domain.exception.EntityNotFoundException;
+import org.folio.innreach.domain.service.HoldingsService;
 import org.folio.innreach.domain.service.InnReachTransactionActionService;
 import org.folio.innreach.domain.service.ItemService;
 import org.folio.innreach.domain.service.LoanService;
@@ -80,6 +82,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
   private final LoanService loanService;
   private final PatronHoldService patronHoldService;
   private final ItemService itemService;
+  private final HoldingsService holdingsService;
   private final InstanceStorageClient instanceStorageClient;
   private final InnReachTransactionActionNotifier notifier;
   private final TransactionTemplate transactionTemplate;
@@ -290,6 +293,19 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
     }
   }
 
+  @Override
+  public void transferItemHold(UUID transactionId, String itemBarcode) {
+    var transaction = fetchTransactionOfType(transactionId, ITEM);
+
+    verifyState(transaction, ITEM_HOLD);
+
+    var item = fetchItemByBarcode(itemBarcode);
+
+    requestService.validateItemAvailability(item);
+
+    eventPublisher.publishEvent(MoveRequestEvent.of(transaction, item));
+  }
+
   private void associateNewLoanWithPatronTransaction(StorageLoanDTO loan, InnReachTransaction transaction) {
     log.info("Associating a new loan {} with patron transaction {}", loan.getId(), transaction.getId());
     var hold = transaction.getHold();
@@ -416,31 +432,35 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
       .barcodeAugmented(!shippedItemBarcode.equals(folioItemBarcode));
   }
 
-  private void updateItemTransactionOnRequestChange(RequestDTO requestDTO, InnReachTransaction transaction) {
-    var requestId = requestDTO.getId();
-    var itemId = requestDTO.getItemId();
+  private void updateItemTransactionOnRequestChange(RequestDTO request, InnReachTransaction transaction) {
+    var requestId = request.getId();
+    var itemId = request.getItemId();
     var hold = transaction.getHold();
-    if (requestDTO.getStatus() == CLOSED_CANCELLED) {
-      log.info("Updating item hold transaction {} on cancellation of a request {}", transaction.getId(), requestDTO.getId());
+    if (request.getStatus() == CLOSED_CANCELLED) {
+      log.info("Updating item hold transaction {} on cancellation of a request {}", transaction.getId(), request.getId());
 
       transaction.setState(CANCEL_REQUEST);
 
-      var instance = instanceStorageClient.getInstanceById(requestDTO.getInstanceId());
+      var instance = instanceStorageClient.getInstanceById(request.getInstanceId());
       notifier.reportOwningSiteCancel(transaction, instance.getHrid(), hold.getPatronName());
 
       clearCentralPatronInfo(transaction.getHold());
-    } else if (!itemId.equals(hold.getFolioItemId())) {
-      log.info("Updating transaction {} on moving a request {} from one item to another", transaction.getId(), requestId);
+    } else {
+      var transactionItemId = hold.getFolioItemId();
+      if (!itemId.equals(transactionItemId)) {
+        log.info("Updating item hold transaction {} on moving a request {} from item {} to {}",
+          transaction.getId(), requestId, transactionItemId, itemId);
 
-      var item = fetchItemById(requestDTO.getItemId());
+        var item = fetchItemById(request.getItemId());
 
-      hold.setFolioItemId(itemId);
-      hold.setFolioInstanceId(requestDTO.getInstanceId());
-      hold.setFolioHoldingId(requestDTO.getHoldingsRecordId());
-      hold.setFolioItemBarcode(item.getBarcode());
-      transaction.setState(TRANSFER);
+        hold.setFolioItemId(itemId);
+        hold.setFolioInstanceId(request.getInstanceId());
+        hold.setFolioHoldingId(request.getHoldingsRecordId());
+        hold.setFolioItemBarcode(item.getBarcode());
+        transaction.setState(TRANSFER);
 
-      notifier.reportTransferRequest(transaction, item.getHrid());
+        notifier.reportTransferRequest(transaction, item.getHrid());
+      }
     }
   }
 
@@ -518,4 +538,8 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
       .orElseThrow(() -> new IllegalArgumentException("Item is not found by id: " + itemId));
   }
 
+  private InventoryItemDTO fetchItemByBarcode(String itemBarcode) {
+    return itemService.findItemByBarcode(itemBarcode)
+      .orElseThrow(() -> new IllegalArgumentException("Item is not found by barcode: " + itemBarcode));
+  }
 }
