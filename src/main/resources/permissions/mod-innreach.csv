@@ -12,3 +12,5 @@ source-storage.records.get
 circulation.requests.item.get
 circulation.requests.collection.get
 circulation.loans.collection.get
+inventory.items.item.put
+inventory-storage.holdings.item.put
