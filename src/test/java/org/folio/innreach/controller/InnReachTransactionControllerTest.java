@@ -30,6 +30,7 @@ import static org.folio.innreach.domain.dto.folio.inventory.InventoryItemStatus.
 import static org.folio.innreach.domain.dto.folio.inventory.InventoryItemStatus.IN_TRANSIT;
 import static org.folio.innreach.domain.dto.folio.inventory.InventoryItemStatus.MISSING;
 import static org.folio.innreach.domain.dto.folio.inventory.InventoryItemStatus.UNAVAILABLE;
+import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.RECALL;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.CANCEL_REQUEST;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.FINAL_CHECKIN;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.ITEM_RECEIVED;
@@ -50,6 +51,7 @@ import static org.folio.innreach.fixture.UserFixture.createUser;
 import static org.folio.innreach.util.DateHelper.toEpochSec;
 
 import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -153,12 +155,14 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   public static final String TRANSACTION_WITH_ITEM_HOLD_ID = "ab2393a1-acc4-4849-82ac-8cc0c37339e1";
   public static final String TRANSACTION_WITH_LOCAL_HOLD_ID = "79b0a1fb-55be-4e55-9d84-01303aaec1ce";
   public static final String TRANSACTION_WITH_PATRON_HOLD_ID = "0aab1720-14b4-4210-9a19-0d0bf1cd64d3";
+  public static final String TRANSACTION_WITH_ITEM_RECEIVED = "aa5daccd-8788-4bb7-8f9a-6ae0b21bd18d";
 
   private static final UUID PRE_POPULATED_PATRON_HOLD_TRANSACTION_ID = UUID.fromString("0aab1720-14b4-4210-9a19-0d0bf1cd64d3");
   private static final UUID PRE_POPULATED_ITEM_HOLD_TRANSACTION_ID = UUID.fromString("ab2393a1-acc4-4849-82ac-8cc0c37339e1");
   private static final UUID PRE_POPULATED_ITEM_HOLD_REQUEST_ID = UUID.fromString("26278b3a-de32-4deb-b81b-896637b3dbeb");
   private static final UUID PRE_POPULATED_TRANSACTION_ID3 = UUID.fromString("79b0a1fb-55be-4e55-9d84-01303aaec1ce");
   private static final UUID PRE_POPULATED_ITEM_SHIPPED_TRANSACTION_ID = UUID.fromString("7106c3ac-890a-4126-bf9b-a10b67555b6e");
+  private static final UUID PRE_POPULATED_ITEM_FOLIO_LOAN_ID = UUID.fromString("3c9f9745-e26b-4173-aa47-bedbcbdc6d31");
   private static final String PRE_POPULATED_PATRON_HOLD_ITEM_BARCODE = "1111111";
   private static final String PRE_POPULATED_ITEM_HOLD_ITEM_BARCODE = "DEF-def-5678";
   private static final String PRE_POPULATED_CENTRAL_PATRON_ID2 = "u6ct3wssbnhxvip3sobwmxvhoa";
@@ -895,6 +899,31 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     assertNotNull(responseBody.getHold().getAuthor());
     assertNotNull(responseBody.getHold().getCallNumber());
     assertNotNull(responseBody.getHold().getShippedItemBarcode());
+  }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql",
+  })
+  void returnInnReachTransactionWithItemReceived_when_transactionExists() {
+    Date currentDate = new Date();
+    LoanDTO loanDTO = new LoanDTO();
+    loanDTO.setDueDate(currentDate);
+    Integer intCurrentDate = (int)  currentDate.toInstant().truncatedTo(ChronoUnit.SECONDS).getEpochSecond();
+
+    when(innReachClient.postInnReachApi(any(), anyString(), anyString(), anyString(), any())).thenReturn("test");
+    when(circulationClient.findLoan(PRE_POPULATED_ITEM_FOLIO_LOAN_ID)).thenReturn(Optional.of(loanDTO));
+
+    var responseEntity = testRestTemplate.getForEntity("/inn-reach/transactions/{transactionId}", InnReachTransactionDTO.class,
+      TRANSACTION_WITH_ITEM_RECEIVED);
+
+    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+
+    var responseBody = responseEntity.getBody();
+
+    assertEquals(RECALL.toString(), responseBody.getState().toString());
+    assertEquals(intCurrentDate, responseBody.getHold().getDueDateTime());
   }
 
   @Test

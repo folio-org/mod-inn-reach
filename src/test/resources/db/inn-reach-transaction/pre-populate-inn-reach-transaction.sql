@@ -20,13 +20,19 @@ folio_item_barcode, folio_patron_barcode, folio_instance_id, folio_holding_id, c
 'vd76hs7wqjez3cj3i77z56zyam', 'qwe12', 'asd78', 'item3', 3, null, 'TITLE1',
 'a8ffe3cb-f682-499d-893b-47ff9efb3803', 'c633da85-8112-4453-af9c-c250e417179d', '1640091001',
  '4106d147-9085-4dfa-a59f-b8d50d551a48', '7b43b4bc-3a57-4506-815a-78b01c38a2a1', 'GHI-ghi-9012', '000003',
- '709c1075-0378-48af-a682-b4e7ac170424', '709c1075-0378-48af-a682-b4e7ac170425', 0, 'patronName3');
+ '709c1075-0378-48af-a682-b4e7ac170424', '709c1075-0378-48af-a682-b4e7ac170425', 0, 'patronName3'),
+('c18ad51a-6757-4e02-b2cd-dda691033099', extract(epoch from current_timestamp), 'f66fa565-f94e-4984-9642-87196009feb4',
+ 'fd76hs7wqjez3cj3i77z56zyam', 'nwe14', 'bsd79', 'item4', 4, null, 'TITLE4',
+ '2f14a0b1-2660-4e1c-923c-dec8b989207a', 'bea8b22f-c9a9-4303-b318-dcd9439d8c3c', '1640091807',
+  '18a4fbb1-16c2-45f3-94e0-d0f427393f35', '3c9f9745-e26b-4173-aa47-bedbcbdc6d31', 'MHI-ghi-9014', '000004',
+  '006d8c3a-9926-47dc-b271-7d66b2e4ffa1', 'c01d704f-2d8a-46a6-821a-1a873124dc15', 4, 'patronName4');
 
 INSERT INTO transaction_patron_hold (id, author, call_number, shipped_item_barcode) VALUES
 ('76834d5a-08e8-45ea-84ca-4d9b10aa340c', 'author1', '0123456789', 'ABC-abc-1234');
 
 INSERT INTO transaction_item_hold (id) VALUES
-('891bfff3-ba79-4beb-8c25-f714f14c6a31');
+('891bfff3-ba79-4beb-8c25-f714f14c6a31'),
+('c18ad51a-6757-4e02-b2cd-dda691033099');
 
 INSERT INTO transaction_local_hold (id, patron_home_library, patron_phone, author, call_number) VALUES
 ('709c1075-0378-48af-a682-b4e7ac170423', 'patronHomeLibrary1', null, 'author1', '0123456789');
@@ -34,4 +40,5 @@ INSERT INTO transaction_local_hold (id, patron_home_library, patron_phone, autho
 INSERT INTO inn_reach_transaction (id, tracking_id, central_server_code, state, type, transaction_hold_id) VALUES
 ('0aab1720-14b4-4210-9a19-0d0bf1cd64d3', 'tracking1', 'd2ir', 1, 1, '76834d5a-08e8-45ea-84ca-4d9b10aa340c'),
 ('ab2393a1-acc4-4849-82ac-8cc0c37339e1', 'tracking2', 'd2ir', 0, 0, '891bfff3-ba79-4beb-8c25-f714f14c6a31'),
-('79b0a1fb-55be-4e55-9d84-01303aaec1ce', 'tracking3', 'd2ir', 2, 2, '709c1075-0378-48af-a682-b4e7ac170423');
+('79b0a1fb-55be-4e55-9d84-01303aaec1ce', 'tracking3', 'd2ir', 2, 2, '709c1075-0378-48af-a682-b4e7ac170423'),
+('aa5daccd-8788-4bb7-8f9a-6ae0b21bd18d', 'tracking4', 'd2ir', 9, 0, 'c18ad51a-6757-4e02-b2cd-dda691033099');
