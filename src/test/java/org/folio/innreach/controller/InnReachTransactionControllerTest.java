@@ -24,6 +24,7 @@ import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TES
 import static org.springframework.test.context.jdbc.SqlMergeMode.MergeMode.MERGE;
 
 import static org.folio.innreach.domain.dto.folio.circulation.RequestDTO.RequestStatus.CLOSED_CANCELLED;
+import static org.folio.innreach.domain.dto.folio.circulation.RequestDTO.RequestStatus.OPEN_NOT_YET_FILLED;
 import static org.folio.innreach.domain.dto.folio.inventory.InventoryItemStatus.AVAILABLE;
 import static org.folio.innreach.domain.dto.folio.inventory.InventoryItemStatus.IN_PROCESS;
 import static org.folio.innreach.domain.dto.folio.inventory.InventoryItemStatus.IN_TRANSIT;
@@ -101,6 +102,7 @@ import org.folio.innreach.dto.CheckInRequestDTO;
 import org.folio.innreach.dto.CheckInResponseDTO;
 import org.folio.innreach.dto.CheckInResponseDTOItem;
 import org.folio.innreach.dto.CheckOutRequestDTO;
+import org.folio.innreach.dto.Error;
 import org.folio.innreach.dto.InnReachResponseDTO;
 import org.folio.innreach.dto.InnReachTransactionDTO;
 import org.folio.innreach.dto.InnReachTransactionsDTO;
@@ -134,6 +136,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   private static final String PATRON_HOLD_CHECK_OUT_ENDPOINT = "/inn-reach/transactions/{id}/patronhold/check-out-item/{servicePointId}";
   private static final String UPDATE_TRANSACTION_ENDPOINT = "/inn-reach/transactions/{transactionId}";
   private static final String PATRON_HOLD_CANCEL_ENDPOINT = "/inn-reach/transactions/{id}/patronhold/cancel";
+  private static final String ITEM_HOLD_CANCEL_ENDPOINT = "/inn-reach/transactions/{id}/itemhold/cancel";
   private static final String PATRON_HOLD_RETURN_ITEM_ENDPOINT = "/inn-reach/transactions/{id}/patronhold/return-item/{servicePointId}";
 
   private static final String TRACKING_ID = "trackingid1";
@@ -161,6 +164,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   private static final String PRE_POPULATED_CENTRAL_PATRON_ID2 = "u6ct3wssbnhxvip3sobwmxvhoa";
   private static final UUID PRE_POPULATED_PATRON_HOLD_REQUEST_ID = UUID.fromString("ea11eba7-3c0f-4d15-9cca-c8608cd6bc8a");
   private static final UUID PRE_POPULATED_PATRON_HOLD_ITEM_ID = UUID.fromString("9a326225-6530-41cc-9399-a61987bfab3c");
+  private static final UUID PRE_POPULATED_ITEM_HOLD_REQUEST_ID = UUID.fromString("26278b3a-de32-4deb-b81b-896637b3dbeb");
   private static final UUID FOLIO_CHECKOUT_ID = UUID.randomUUID();
 
   private static final AuditableUser PRE_POPULATED_USER = AuditableUser.SYSTEM;
@@ -1517,10 +1521,10 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql",
   })
   void cancelPatronHold_when_ItemShipped_and_RequestIsOpen(RequestDTO.RequestStatus status) {
-    mockFindRequest(status);
+    mockFindRequest(PRE_POPULATED_PATRON_HOLD_REQUEST_ID, status);
 
     modifyTransactionState(PRE_POPULATED_PATRON_HOLD_TRANSACTION_ID, ITEM_SHIPPED);
-    var cancelPatronHold = createCancelPatronHold();
+    var cancelPatronHold = createCancelTransactionHold();
 
     var responseEntity = testRestTemplate.postForEntity(
       PATRON_HOLD_CANCEL_ENDPOINT, cancelPatronHold, InnReachTransactionDTO.class,
@@ -1551,10 +1555,10 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql",
   })
   void cancelPatronHold_when_ItemIsNotShipped_and_RequestIsOpen(RequestDTO.RequestStatus status) {
-    mockFindRequest(status);
+    mockFindRequest(PRE_POPULATED_PATRON_HOLD_REQUEST_ID, status);
 
     modifyTransactionState(PRE_POPULATED_PATRON_HOLD_TRANSACTION_ID, InnReachTransaction.TransactionState.PATRON_HOLD);
-    var cancelPatronHold = createCancelPatronHold();
+    var cancelPatronHold = createCancelTransactionHold();
 
     var responseEntity = testRestTemplate.postForEntity(
       PATRON_HOLD_CANCEL_ENDPOINT, cancelPatronHold, InnReachTransactionDTO.class,
@@ -1587,10 +1591,10 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql",
   })
   void cancelPatronHold_when_TransactionIsOnHoldOrTransfer_and_RequestIsClosed(InnReachTransaction.TransactionState state) {
-    mockFindRequest(CLOSED_CANCELLED);
+    mockFindRequest(PRE_POPULATED_PATRON_HOLD_REQUEST_ID, CLOSED_CANCELLED);
 
     modifyTransactionState(PRE_POPULATED_PATRON_HOLD_TRANSACTION_ID, state);
-    var cancelPatronHold = createCancelPatronHold();
+    var cancelPatronHold = createCancelTransactionHold();
 
     var responseEntity = testRestTemplate.postForEntity(
       PATRON_HOLD_CANCEL_ENDPOINT, cancelPatronHold, InnReachTransactionDTO.class,
@@ -1614,12 +1618,12 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql",
   })
   void cancelPatronHold_when_ItemIsNotAwaitingPickup_and_RequestIsClosed(InnReachTransaction.TransactionState state) {
-    mockFindRequest(CLOSED_CANCELLED);
+    mockFindRequest(PRE_POPULATED_PATRON_HOLD_REQUEST_ID, CLOSED_CANCELLED);
     mockFindItem(IN_PROCESS);
 
     modifyTransactionState(PRE_POPULATED_PATRON_HOLD_TRANSACTION_ID, state);
 
-    var cancelPatronHold = createCancelPatronHold();
+    var cancelPatronHold = createCancelTransactionHold();
     var responseEntity = testRestTemplate.postForEntity(
       PATRON_HOLD_CANCEL_ENDPOINT, cancelPatronHold, InnReachTransactionDTO.class,
       PRE_POPULATED_PATRON_HOLD_TRANSACTION_ID);
@@ -1635,12 +1639,86 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     verify(innReachClient).postInnReachApi(any(), anyString(), anyString(), anyString());
   }
 
-  private void mockFindRequest(RequestDTO.RequestStatus status) {
+  @Test
+  @Sql(scripts = {
+      "classpath:db/central-server/pre-populate-central-server.sql",
+      "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql",
+  })
+  void cancelItemHold_if_stateIsItemHold() {
+    mockFindRequest(PRE_POPULATED_ITEM_HOLD_REQUEST_ID, OPEN_NOT_YET_FILLED);
+
+    var cancelHold = createCancelTransactionHold();
+    var responseEntity = testRestTemplate.postForEntity(
+        ITEM_HOLD_CANCEL_ENDPOINT, cancelHold, InnReachTransactionDTO.class,
+        PRE_POPULATED_ITEM_HOLD_TRANSACTION_ID);
+
+    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+    var updatedTransaction = responseEntity.getBody();
+
+    assertNotNull(updatedTransaction);
+    assertEquals(TransactionStateEnum.CANCEL_REQUEST, updatedTransaction.getState());
+
+    var cancelRequestCaptor = ArgumentCaptor.forClass(RequestDTO.class);
+    verify(circulationClient).updateRequest(eq(PRE_POPULATED_ITEM_HOLD_REQUEST_ID), cancelRequestCaptor.capture());
+
+    var cancelRequest = cancelRequestCaptor.getValue();
+    assertEquals(CLOSED_CANCELLED, cancelRequest.getStatus());
+    assertEquals(cancelHold.getCancellationReasonId(), cancelRequest.getCancellationReasonId());
+    assertEquals(cancelHold.getCancellationAdditionalInformation(),
+        cancelRequest.getCancellationAdditionalInformation());
+  }
+
+  @Test
+  @Sql(scripts = {
+      "classpath:db/central-server/pre-populate-central-server.sql",
+      "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql",
+  })
+  void cancelItemHold_if_requestIsNotFound() {
+    when(circulationClient.findRequest(PRE_POPULATED_ITEM_HOLD_REQUEST_ID))
+        .thenReturn(Optional.empty());
+
+    var cancelHold = createCancelTransactionHold();
+    var responseEntity = testRestTemplate.postForEntity(
+        ITEM_HOLD_CANCEL_ENDPOINT, cancelHold, InnReachTransactionDTO.class,
+        PRE_POPULATED_ITEM_HOLD_TRANSACTION_ID);
+
+    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+    var updatedTransaction = responseEntity.getBody();
+
+    assertNotNull(updatedTransaction);
+    assertEquals(TransactionStateEnum.CANCEL_REQUEST, updatedTransaction.getState());
+
+    verify(circulationClient, never()).updateRequest(eq(PRE_POPULATED_ITEM_HOLD_REQUEST_ID), any());
+  }
+
+  @ParameterizedTest
+  @EnumSource(names = {"PATRON_HOLD", "LOCAL_HOLD", "BORROWER_RENEW", "BORROWING_SITE_CANCEL", "ITEM_IN_TRANSIT",
+      "RECEIVE_UNANNOUNCED", "RETURN_UNCIRCULATED", "CLAIMS_RETURNED", "ITEM_RECEIVED", "ITEM_SHIPPED", "LOCAL_CHECKOUT",
+      "CANCEL_REQUEST", "FINAL_CHECKIN", "RECALL", "TRANSFER", "OWNER_RENEW"})
+  @Sql(scripts = {
+      "classpath:db/central-server/pre-populate-central-server.sql",
+      "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql",
+  })
+  void returnHttp400_when_CancelItemHold_if_StateIsNotItemHold(InnReachTransaction.TransactionState state) {
+    modifyTransactionState(PRE_POPULATED_ITEM_HOLD_TRANSACTION_ID, state);
+
+    var cancelHold = createCancelTransactionHold();
+    var responseEntity = testRestTemplate.postForEntity(
+        ITEM_HOLD_CANCEL_ENDPOINT, cancelHold, Error.class,
+        PRE_POPULATED_ITEM_HOLD_TRANSACTION_ID);
+
+    assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
+
+    assertNotNull(responseEntity.getBody());
+    assertTrue(responseEntity.getBody().getMessage().contains("Unexpected transaction state"));
+  }
+
+  private void mockFindRequest(UUID requestId, RequestDTO.RequestStatus status) {
     var requestDTO = createRequestDTO();
-    requestDTO.setId(PRE_POPULATED_PATRON_HOLD_REQUEST_ID);
+    requestDTO.setId(requestId);
     requestDTO.setStatus(status);
 
-    when(circulationClient.findRequest(PRE_POPULATED_PATRON_HOLD_REQUEST_ID))
+    when(circulationClient.findRequest(requestId))
       .thenReturn(Optional.of(requestDTO));
   }
 
@@ -1653,7 +1731,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
       .thenReturn(Optional.of(itemDTO));
   }
 
-  private CancelTransactionHoldDTO createCancelPatronHold() {
+  private CancelTransactionHoldDTO createCancelTransactionHold() {
     return new CancelTransactionHoldDTO()
       .cancellationReasonId(randomUUID())
       .cancellationAdditionalInformation(RandomStringUtils.randomAlphabetic(255));
