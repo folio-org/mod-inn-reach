@@ -98,11 +98,11 @@ public class InnReachTransactionController implements InnReachTransactionApi {
 
   @Override
   @PostMapping("/{id}/itemhold/cancel")
-  public ResponseEntity<InnReachTransactionDTO> cancelItemHoldTransaction(@PathVariable UUID id,
+  public ResponseEntity<Void> cancelItemHoldTransaction(@PathVariable UUID id,
       CancelTransactionHoldDTO cancelRequest) {
 
-    var response = transactionActionService.cancelItemHold(id, cancelRequest);
-    return ResponseEntity.ok(response);
+    transactionActionService.cancelItemHold(id, cancelRequest);
+    return ResponseEntity.noContent().build();
   }
 
   @Override

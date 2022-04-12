@@ -266,7 +266,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
   }
 
   @Override
-  public InnReachTransactionDTO cancelItemHold(UUID transactionId, CancelTransactionHoldDTO cancelRequest) {
+  public void cancelItemHold(UUID transactionId, CancelTransactionHoldDTO cancelRequest) {
     var transaction = fetchTransactionOfType(transactionId, ITEM);
 
     verifyState(transaction, ITEM_HOLD);
@@ -274,8 +274,6 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
     eventPublisher.publishEvent(CancelRequestEvent.of(transaction,
         cancelRequest.getCancellationReasonId(),
         cancelRequest.getCancellationAdditionalInformation()));
-
-    return transactionMapper.toDTO(transaction);
   }
 
   @Override

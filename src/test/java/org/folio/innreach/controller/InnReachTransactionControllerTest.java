@@ -1695,10 +1695,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
         ITEM_HOLD_CANCEL_ENDPOINT, cancelHold, InnReachTransactionDTO.class,
         PRE_POPULATED_ITEM_HOLD_TRANSACTION_ID);
 
-    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
-    var updatedTransaction = responseEntity.getBody();
-
-    assertNotNull(updatedTransaction);
+    assertEquals(HttpStatus.NO_CONTENT, responseEntity.getStatusCode());
 
     var cancelRequestCaptor = ArgumentCaptor.forClass(RequestDTO.class);
     verify(circulationClient).updateRequest(eq(PRE_POPULATED_ITEM_HOLD_REQUEST_ID), cancelRequestCaptor.capture());
@@ -1724,11 +1721,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
         ITEM_HOLD_CANCEL_ENDPOINT, cancelHold, InnReachTransactionDTO.class,
         PRE_POPULATED_ITEM_HOLD_TRANSACTION_ID);
 
-    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
-    var updatedTransaction = responseEntity.getBody();
-
-    assertNotNull(updatedTransaction);
-    assertEquals(TransactionStateEnum.ITEM_HOLD, updatedTransaction.getState());
+    assertEquals(HttpStatus.NO_CONTENT, responseEntity.getStatusCode());
 
     verify(circulationClient, never()).updateRequest(eq(PRE_POPULATED_ITEM_HOLD_REQUEST_ID), any());
   }
