@@ -2,6 +2,7 @@ package org.folio.innreach.controller;
 
 import static java.util.UUID.randomUUID;
 import static org.awaitility.Awaitility.await;
+import static org.folio.innreach.domain.dto.folio.circulation.RequestDTO.RequestStatus.OPEN_NOT_YET_FILLED;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -24,7 +25,7 @@ import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TES
 import static org.springframework.test.context.jdbc.SqlMergeMode.MergeMode.MERGE;
 
 import static org.folio.innreach.domain.dto.folio.circulation.RequestDTO.RequestStatus.CLOSED_CANCELLED;
-import static org.folio.innreach.domain.dto.folio.circulation.RequestDTO.RequestStatus.OPEN_NOT_YET_FILLED;
+import static org.folio.innreach.domain.dto.folio.circulation.RequestDTO.RequestStatus.OPEN_AWAITING_PICKUP;
 import static org.folio.innreach.domain.dto.folio.inventory.InventoryItemStatus.AVAILABLE;
 import static org.folio.innreach.domain.dto.folio.inventory.InventoryItemStatus.IN_PROCESS;
 import static org.folio.innreach.domain.dto.folio.inventory.InventoryItemStatus.IN_TRANSIT;
@@ -138,6 +139,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   private static final String PATRON_HOLD_CANCEL_ENDPOINT = "/inn-reach/transactions/{id}/patronhold/cancel";
   private static final String ITEM_HOLD_CANCEL_ENDPOINT = "/inn-reach/transactions/{id}/itemhold/cancel";
   private static final String PATRON_HOLD_RETURN_ITEM_ENDPOINT = "/inn-reach/transactions/{id}/patronhold/return-item/{servicePointId}";
+  private static final String ITEM_HOLD_TRANSFER_ITEM_ENDPOINT = "/inn-reach/transactions/{id}/itemhold/transfer-item/{itemBarcode}";
 
   private static final String TRACKING_ID = "trackingid1";
   private static final String PRE_POPULATED_TRACKING_ID = "tracking1";
@@ -157,6 +159,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
 
   private static final UUID PRE_POPULATED_PATRON_HOLD_TRANSACTION_ID = UUID.fromString("0aab1720-14b4-4210-9a19-0d0bf1cd64d3");
   private static final UUID PRE_POPULATED_ITEM_HOLD_TRANSACTION_ID = UUID.fromString("ab2393a1-acc4-4849-82ac-8cc0c37339e1");
+  private static final UUID PRE_POPULATED_ITEM_HOLD_REQUEST_ID = UUID.fromString("26278b3a-de32-4deb-b81b-896637b3dbeb");
   private static final UUID PRE_POPULATED_TRANSACTION_ID3 = UUID.fromString("79b0a1fb-55be-4e55-9d84-01303aaec1ce");
   private static final UUID PRE_POPULATED_ITEM_SHIPPED_TRANSACTION_ID = UUID.fromString("7106c3ac-890a-4126-bf9b-a10b67555b6e");
   private static final String PRE_POPULATED_PATRON_HOLD_ITEM_BARCODE = "1111111";
@@ -1637,6 +1640,51 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     verify(circulationClient, never()).updateRequest(eq(PRE_POPULATED_PATRON_HOLD_REQUEST_ID), any());
     verify(actionNotifier).reportReturnUncirculated(any());
     verify(innReachClient).postInnReachApi(any(), anyString(), anyString(), anyString());
+  }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql",
+  })
+  void transferItemHoldItem() {
+    var item = createInventoryItemDTO();
+
+    when(inventoryClient.getItemByBarcode(any())).thenReturn(ResultList.asSinglePage(item));
+
+    var responseEntity = testRestTemplate.postForEntity(
+      ITEM_HOLD_TRANSFER_ITEM_ENDPOINT, null, Void.class,
+      PRE_POPULATED_ITEM_HOLD_TRANSACTION_ID, "newItemBarcode"
+    );
+
+    assertEquals(HttpStatus.NO_CONTENT, responseEntity.getStatusCode());
+
+    verify(circulationClient).moveRequest(eq(PRE_POPULATED_ITEM_HOLD_REQUEST_ID), any());
+  }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql",
+  })
+  void transferItemHoldItem_itemIsNotAvailable() {
+    var item = createInventoryItemDTO();
+    item.setStatus(UNAVAILABLE);
+
+    var request = createRequestDTO();
+    request.setStatus(OPEN_AWAITING_PICKUP);
+
+    when(inventoryClient.getItemByBarcode(any())).thenReturn(ResultList.asSinglePage(item));
+    when(circulationClient.queryRequestsByItemId(any())).thenReturn(ResultList.asSinglePage(request));
+
+    var responseEntity = testRestTemplate.postForEntity(
+      ITEM_HOLD_TRANSFER_ITEM_ENDPOINT, null, Void.class,
+      PRE_POPULATED_ITEM_HOLD_TRANSACTION_ID, "newItemBarcode"
+    );
+
+    assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
+
+    verify(circulationClient, never()).moveRequest(any(), any());
   }
 
   @Test

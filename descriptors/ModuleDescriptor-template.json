@@ -483,6 +483,16 @@
           ]
         },
         {
+          "methods": ["POST"],
+          "pathPattern": "/inn-reach/transactions/{id}/itemhold/transfer-item/{itemBarcode}",
+          "permissionsRequired": ["inn-reach.d2ir.inn-reach-transaction.item.post"],
+          "modulePermissions": [
+            "circulation.requests.collection.get",
+            "circulation.requests.item.move.post",
+            "inventory.items.collection.get"
+          ]
+        },
+        {
           "methods": ["GET"],
           "pathPattern": "/inn-reach/central-servers/{centralServerId}/marc-record-transformation/{inventoryInstanceId}",
           "permissionsRequired": ["inn-reach.marc-record-transformation.item.get"],

@@ -36,6 +36,7 @@ import org.folio.innreach.domain.service.UserService;
 import org.folio.innreach.dto.CentralServerDTO;
 import org.folio.innreach.dto.Holding;
 import org.folio.innreach.dto.HoldingSourceDTO;
+import org.folio.innreach.repository.InnReachTransactionRepository;
 import org.folio.innreach.util.UUIDEncoder;
 
 @Log4j2
@@ -57,6 +58,7 @@ public class PatronHoldServiceImpl implements PatronHoldService {
   private final ItemService itemService;
   private final HoldingsService holdingsService;
   private final UserService userService;
+  private final InnReachTransactionRepository repository;
 
   @Async
   @Override
@@ -98,7 +100,14 @@ public class PatronHoldServiceImpl implements PatronHoldService {
     holding = createHolding(instance, holding);
     item = createItem(holding, item);
 
-    requestService.moveItemRequest(transaction, holding, item);
+    var request = requestService.moveItemRequest(hold.getFolioRequestId(), item);
+
+    hold.setFolioItemId(request.getItemId());
+    hold.setFolioInstanceId(request.getInstanceId());
+    hold.setFolioHoldingId(request.getHoldingsRecordId());
+    hold.setFolioItemBarcode(item.getBarcode());
+
+    repository.save(transaction);
   }
 
   @Override

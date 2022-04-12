@@ -35,7 +35,6 @@ import org.springframework.test.context.jdbc.SqlMergeMode;
 import org.folio.innreach.client.CirculationClient;
 import org.folio.innreach.controller.base.BaseApiControllerTest;
 import org.folio.innreach.domain.dto.folio.circulation.RequestDTO;
-import org.folio.innreach.domain.entity.InnReachTransaction;
 import org.folio.innreach.domain.service.HoldingsService;
 import org.folio.innreach.domain.service.RequestService;
 import org.folio.innreach.mapper.InnReachTransactionPickupLocationMapper;
@@ -68,6 +67,7 @@ class CirculationApiTest extends BaseApiControllerTest {
   public static final String QUERY_SERVICE_POINTS_BY_CODE_ULR_TEMPLATE = "/service-points?query=code==%s";
   public static final String QUERY_HOLDING_SOURCE_BY_NAME_URL_TEMPLATE = "/holdings-sources?query=name==%s&limit=1";
   public static final String USER_BY_ID_URL_TEMPLATE = "/users/%s";
+  private static final String HOLDING_URL = "/holdings-storage/holdings/%s";
 
   private static final String INSTANCE_TYPE_NAME_URLENCODED = "INN-Reach%20temporary%20record";
   private static final String INSTANCE_CONTRIBUTOR_NAME_URLENCODED = "INN-Reach%20author";
@@ -80,27 +80,26 @@ class CirculationApiTest extends BaseApiControllerTest {
   private static final String PRE_POPULATED_TRACKING_ID = "tracking1";
   private static final String PRE_POPULATED_CENTRAL_CODE = "d2ir";
   private static final String PRE_POPULATED_CENTRAL_AGENCY_CODE = "5east";
+  private static final String PRE_POPULATED_INSTANCE_ID = "b81bcffd-9dd9-4e17-b6fd-eeecf790aad5";
+  private static final String PRE_POPULATED_LOCAL_AGENCY_CODE1 = "q1w2e";
+  private static final String PRE_POPULATED_LOCAL_AGENCY_CODE2 = "w2e3r";
+  private static final String PRE_POPULATED_PATRON_ID = "ifkkmbcnljgy5elaav74pnxgxa";
   private static final int PRE_POPULATED_CENTRAL_ITEM_TYPE = 1;
   private static final UUID PRE_POPULATED_REQUEST_ID = UUID.fromString("ea11eba7-3c0f-4d15-9cca-c8608cd6bc8a");
   private static final UUID PRE_POPULATED_ITEM_ID = UUID.fromString("9a326225-6530-41cc-9399-a61987bfab3c");
 
-  private static final UUID NEW_REQUEST_ID = UUID.fromString("89105c06-dbdb-4aa0-9695-d4d19c733270");
-  private static final String ITEM_HRID = "itnewtrackingid5east";
-  private static final String HOLDING_ID = "16f40c4e-235d-4912-a683-2ad919cc8b07";
   private static final UUID FOLIO_PATRON_ID = UUID.fromString("ea11eba7-3c0f-4d15-9cca-c8608cd6bc8a");
+  private static final UUID NEW_HOLDING_ID = UUID.fromString("16f40c4e-235d-4912-a683-2ad919cc8b07");
+  private static final UUID UPDATED_REQUEST_ITEM_ID = UUID.fromString("195efae1-588f-47bd-a181-13a2eb437701");
+  private static final UUID UPDATED_REQUEST_INSTANCE_ID = UUID.fromString("86c722c3-2f5e-42e1-bd0e-7ffbbd3b4972");
+  private static final UUID UPDATED_REQUEST_HOLDING_ID = UUID.fromString("e63273e7-48f5-4c43-ab4e-1751ecacaa21");
+
+  private static final String ITEM_HRID = "itnewtrackingid5east";
+  private static final String SERVICE_POINT_ID = "a197450b-6103-4206-8125-1a1cacc66edc";
+  private static final String PAGE_REQUEST_TYPE = "Page";
+  private static final String FOLIO_HOLDING_SOURCE = "FOLIO";
 
   private static final Duration ASYNC_AWAIT_TIMEOUT = Duration.ofSeconds(15);
-  private static final String ITEM_ID = "9a326225-6530-41cc-9399-a61987bfab3c";
-  private static final String SERVICE_POINT_ID = "a197450b-6103-4206-8125-1a1cacc66edc";
-  private static final String PAGE = "Page";
-  private static final String HOLDINGS_RECORD_ID = "16f40c4e-235d-4912-a683-2ad919cc8b07";
-  private static final String PRE_POPULATED_INSTANCE_ID = "b81bcffd-9dd9-4e17-b6fd-eeecf790aad5";
-  private static final String FOLIO_HOLDING_SOURCE = "FOLIO";
-  private static final String HOLDING_URL = "/holdings-storage/holdings/%s";
-
-  private static final String PRE_POPULATED_LOCAL_AGENCY_CODE1 = "q1w2e";
-  private static final String PRE_POPULATED_LOCAL_AGENCY_CODE2 = "w2e3r";
-  private static final String PRE_POPULATED_PATRON_ID = "ifkkmbcnljgy5elaav74pnxgxa";
 
   @SpyBean
   private InnReachTransactionRepository repository;
@@ -156,10 +155,18 @@ class CirculationApiTest extends BaseApiControllerTest {
       .andExpect(status().isOk());
 
     await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() ->
-      verify(repository).save(
-        argThat((InnReachTransaction t) -> NEW_REQUEST_ID.equals(t.getHold().getFolioRequestId()))));
+      verify(repository).save(argThat(t -> UPDATED_REQUEST_ITEM_ID.equals(t.getHold().getFolioItemId())))
+    );
 
     verify(holdingsService).create(argThat(holding -> holding.getSourceId() != null));
+    verify(circulationClient).moveRequest(eq(PRE_POPULATED_REQUEST_ID), any());
+
+    var updatedTransaction = repository.fetchOneByTrackingId(PRE_POPULATED_TRACKING_ID).orElseThrow();
+    var updatedHold = updatedTransaction.getHold();
+
+    assertEquals(PRE_POPULATED_REQUEST_ID, updatedHold.getFolioRequestId());
+    assertEquals(UPDATED_REQUEST_HOLDING_ID, updatedHold.getFolioHoldingId());
+    assertEquals(UPDATED_REQUEST_INSTANCE_ID, updatedHold.getFolioInstanceId());
   }
 
   @Test
@@ -234,8 +241,8 @@ class CirculationApiTest extends BaseApiControllerTest {
     stubGet(format(USER_BY_ID_URL_TEMPLATE, patronId), "users/user.json");
     stubGet(format("%s/%s", ITEMS_URL, PRE_POPULATED_ITEM_ID), "inventory/item-response.json");
     stubPut(format("%s/%s", ITEMS_URL, PRE_POPULATED_ITEM_ID));
-    stubGet(format("%s/%s", HOLDINGS_URL, HOLDING_ID), "inventory-storage/holding-response.json");
-    stubPut(format("%s/%s", HOLDINGS_URL, HOLDING_ID));
+    stubGet(format("%s/%s", HOLDINGS_URL, NEW_HOLDING_ID), "inventory-storage/holding-response.json");
+    stubPut(format("%s/%s", HOLDINGS_URL, NEW_HOLDING_ID));
     stubGet(format("%s/%s", REQUESTS_URL, PRE_POPULATED_REQUEST_ID), "circulation/item-request-response.json");
     stubPut(format("%s/%s", REQUESTS_URL, PRE_POPULATED_REQUEST_ID));
 
@@ -268,8 +275,8 @@ class CirculationApiTest extends BaseApiControllerTest {
 
     stubGet(format("%s/%s", ITEMS_URL, PRE_POPULATED_ITEM_ID), "inventory/item-response.json");
     stubPut(format("%s/%s", ITEMS_URL, PRE_POPULATED_ITEM_ID));
-    stubGet(format("%s/%s", HOLDINGS_URL, HOLDING_ID), "inventory-storage/holding-response.json");
-    stubPut(format("%s/%s", HOLDINGS_URL, HOLDING_ID));
+    stubGet(format("%s/%s", HOLDINGS_URL, NEW_HOLDING_ID), "inventory-storage/holding-response.json");
+    stubPut(format("%s/%s", HOLDINGS_URL, NEW_HOLDING_ID));
     stubGet(format("%s/%s", REQUESTS_URL, PRE_POPULATED_REQUEST_ID), "circulation/item-request-response.json");
     stubPut(format("%s/%s", REQUESTS_URL, PRE_POPULATED_REQUEST_ID));
 
@@ -305,7 +312,7 @@ class CirculationApiTest extends BaseApiControllerTest {
     stubPost(REQUESTS_URL, "circulation/item-request-response.json");
     stubGet(format(QUERY_INVENTORY_ITEM_BY_HRID_URL_TEMPLATE, ITEM_HRID), "inventory/query-items-response.json");
     stubGet(format(QUERY_REQUEST_BY_ITEM_ID_URL_TEMPLATE, PRE_POPULATED_ITEM_ID), "circulation/empty-requests-response.json");
-    stubGet(format(HOLDING_URL, HOLDINGS_RECORD_ID), "inventory-storage/holding-response.json");
+    stubGet(format(HOLDING_URL, NEW_HOLDING_ID), "inventory-storage/holding-response.json");
 
     mockMvc.perform(put(CIRCULATION_ENDPOINT, LOCAL_HOLD_OPERATION, "newtrackingid", PRE_POPULATED_CENTRAL_CODE)
         .content(jsonHelper.toJson(transactionHoldDTO))
@@ -318,10 +325,10 @@ class CirculationApiTest extends BaseApiControllerTest {
 
     var requestDTO = requestDtoCaptor.getValue();
     assertEquals(PRE_POPULATED_INSTANCE_ID, requestDTO.getInstanceId().toString());
-    assertEquals(ITEM_ID, requestDTO.getItemId().toString());
-    assertEquals(HOLDINGS_RECORD_ID, requestDTO.getHoldingsRecordId().toString());
+    assertEquals(PRE_POPULATED_ITEM_ID, requestDTO.getItemId());
+    assertEquals(NEW_HOLDING_ID, requestDTO.getHoldingsRecordId());
     assertEquals(RequestDTO.RequestLevel.ITEM.getName(), requestDTO.getRequestLevel());
-    assertEquals(PAGE, requestDTO.getRequestType());
+    assertEquals(PAGE_REQUEST_TYPE, requestDTO.getRequestType());
     assertEquals(FOLIO_PATRON_ID, requestDTO.getRequesterId());
     assertEquals(SERVICE_POINT_ID, requestDTO.getPickupServicePointId().toString());
   }

@@ -1,6 +1,6 @@
 package org.folio.innreach.domain.exception;
 
-public class ItemNotRequestableException extends RuntimeException {
+public class ItemNotRequestableException extends CirculationException {
   public ItemNotRequestableException(String message) {
     super(message);
   }

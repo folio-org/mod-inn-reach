@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import org.folio.innreach.domain.exception.CirculationException;
 import org.folio.innreach.domain.exception.EntityNotFoundException;
 import org.folio.innreach.dto.Error;
 import org.folio.innreach.dto.ValidationErrorDTO;
@@ -33,9 +34,9 @@ public class ExceptionHandlerController {
     return createError(HttpStatus.NOT_FOUND, e.getMessage());
   }
 
-  @ExceptionHandler(IllegalArgumentException.class)
+  @ExceptionHandler({IllegalArgumentException.class, InnReachException.class, CirculationException.class})
   @ResponseStatus(HttpStatus.BAD_REQUEST)
-  public Error handleIllegalArgumentException(IllegalArgumentException e) {
+  public Error handleBadRequestException(Exception e) {
     return createError(HttpStatus.BAD_REQUEST, e.getMessage());
   }
 
@@ -62,12 +63,6 @@ public class ExceptionHandlerController {
     }
 
     return errors;
-  }
-
-  @ExceptionHandler(InnReachException.class)
-  @ResponseStatus(HttpStatus.BAD_REQUEST)
-  public Error handleInnReachException(InnReachException e) {
-    return createError(HttpStatus.BAD_REQUEST, e.getMessage());
   }
 
   @ExceptionHandler(DataIntegrityViolationException.class)
