@@ -904,7 +904,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   @Test
   @Sql(scripts = {
     "classpath:db/central-server/pre-populate-central-server.sql",
-    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-separate-inn-reach-transaction.sql",
   })
   void returnInnReachTransactionWithItemReceived_when_transactionExists() {
     Date currentDate = new Date();
