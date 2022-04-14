@@ -186,7 +186,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
     var loanAction = loan.getAction();
     var loanStatus = ofNullable(loan.getStatus()).map(LoanStatus::getName).orElse(null);
 
-    if (isLoanActionAndLoanStatusApproachForFinalCheckin(loanAction, loanStatus)) {
+    if (isLoanCheckedIn(loanAction, loanStatus)) {
       updateTransactionOnLoanClosure(loan, transaction);
     } else if ("renewed".equalsIgnoreCase(loanAction)) {
       updateTransactionOnLoanRenewal(loan, transaction);
@@ -314,7 +314,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
     var loanAction = loan.getAction();
     var loanStatus = ofNullable(loan.getStatus()).map(LoanStatus::getName).orElse(null);
 
-    if (isLoanActionAndLoanStatusApproachForFinalCheckin(loanAction, loanStatus)) {
+    if (isLoanCheckedIn(loanAction, loanStatus)) {
       updateItemTransactionOnLoanClosure(transaction, loan.getId());
     } else {
       loanService.checkInItem(transaction, servicePointId);
@@ -578,7 +578,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
       .orElseThrow(() -> new IllegalArgumentException("Item is not found by barcode: " + itemBarcode));
   }
 
-  private boolean isLoanActionAndLoanStatusApproachForFinalCheckin(String loanAction, String loanStatus) {
+  private boolean isLoanCheckedIn(String loanAction, String loanStatus) {
     return "checkedin".equalsIgnoreCase(loanAction) && "closed".equalsIgnoreCase(loanStatus);
   }
 }

@@ -1818,7 +1818,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql",
   })
-  void testItemHoldFinalCheckInWhenLoanActionAndLoanStatusAreValid(InnReachTransaction.TransactionState state) {
+  void testItemHoldFinalCheckInWhenLoanIsClosed(InnReachTransaction.TransactionState state) {
     var loanStatus = new LoanStatus()
       .name("closed");
     var loan = new LoanDTO()
@@ -1849,7 +1849,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql",
   })
-  void testItemHoldFinalCheckInWhenLoanActionAndLoanStatusAreNotValid(InnReachTransaction.TransactionState state) {
+  void testItemHoldFinalCheckInWhenLoanIsOpen(InnReachTransaction.TransactionState state) {
 
     modifyTransactionState(PRE_POPULATED_ITEM_HOLD_TRANSACTION_ID, state);
 
