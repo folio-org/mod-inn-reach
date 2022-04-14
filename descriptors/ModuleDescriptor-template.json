@@ -540,6 +540,14 @@
           "methods": ["PUT"],
           "pathPattern": "/inn-reach/central-servers/{centralServerId}/visible-patron-field-configuration",
           "permissionsRequired": ["inn-reach.central-servers.visible-patron-field-configuration.item.put"]
+        },
+        {
+          "methods": ["POST"],
+          "pathPattern": "/inn-reach/transactions/{id}/localhold/transfer-item/{itemBarcode}",
+          "permissionsRequired": [
+            "inventory.items.collection.get",
+            "inventory-storage.holdings.item.get"
+          ]
         }
       ]
     },

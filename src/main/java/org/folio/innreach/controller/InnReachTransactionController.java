@@ -98,7 +98,7 @@ public class InnReachTransactionController implements InnReachTransactionApi {
   @Override
   @PostMapping("/{id}/patronhold/cancel")
   public ResponseEntity<InnReachTransactionDTO> cancelPatronHoldTransaction(@PathVariable UUID id,
-      CancelTransactionHoldDTO cancelRequest) {
+                                                                            CancelTransactionHoldDTO cancelRequest) {
 
     var response = transactionActionService.cancelPatronHold(id, cancelRequest);
     return ResponseEntity.ok(response);
@@ -107,10 +107,18 @@ public class InnReachTransactionController implements InnReachTransactionApi {
   @Override
   @PostMapping("/{id}/itemhold/cancel")
   public ResponseEntity<Void> cancelItemHoldTransaction(@PathVariable UUID id,
-      CancelTransactionHoldDTO cancelRequest) {
+                                                        CancelTransactionHoldDTO cancelRequest) {
 
     transactionActionService.cancelItemHold(id, cancelRequest);
     return ResponseEntity.noContent().build();
+  }
+
+  @Override
+  @PostMapping("/{id}/localhold/transfer-item/{itemBarcode}")
+  public ResponseEntity<InnReachTransactionDTO> transferLocalHold(@PathVariable UUID id,
+                                                                  @PathVariable String itemBarcode) {
+    var response = transactionActionService.transferLocalHold(id, itemBarcode);
+    return ResponseEntity.ok(response);
   }
 
   @Override

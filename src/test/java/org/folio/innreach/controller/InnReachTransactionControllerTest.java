@@ -45,6 +45,7 @@ import static org.folio.innreach.dto.TransactionTypeEnum.LOCAL;
 import static org.folio.innreach.dto.TransactionTypeEnum.PATRON;
 import static org.folio.innreach.fixture.InnReachTransactionFixture.assertPatronAndItemInfoCleared;
 import static org.folio.innreach.fixture.InnReachTransactionFixture.createInnReachTransaction;
+import static org.folio.innreach.fixture.InventoryFixture.createInventoryHoldingDTO;
 import static org.folio.innreach.fixture.InventoryFixture.createInventoryItemDTO;
 import static org.folio.innreach.fixture.RequestFixture.createRequestDTO;
 import static org.folio.innreach.fixture.TestUtil.circHeaders;
@@ -145,6 +146,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   private static final String PATRON_HOLD_RETURN_ITEM_ENDPOINT = "/inn-reach/transactions/{id}/patronhold/return-item/{servicePointId}";
   private static final String ITEM_HOLD_TRANSFER_ITEM_ENDPOINT = "/inn-reach/transactions/{id}/itemhold/transfer-item/{itemId}";
   private static final String ITEM_HOLD_FINAL_CHECK_IN_ENDPOINT = "/inn-reach/transactions/{id}/itemhold/finalcheckin/{servicePointId}";
+  private static final String LOCAL_HOLD_TRANSFER_ITEM_ENDPOINT = "/inn-reach/transactions/{id}/localhold/transfer-item/{itemBarcode}";
 
   private static final String TRACKING_ID = "trackingid1";
   private static final String PRE_POPULATED_TRACKING_ID = "tracking1";
@@ -1898,6 +1900,50 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     assertEquals(HttpStatus.NO_CONTENT, responseEntity.getStatusCode());
 
     verify(circulationClient).checkInByBarcode(any());
+  }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql",
+  })
+  void transferLocalHoldItem(){
+    var holding = createInventoryHoldingDTO();
+    var item = createInventoryItemDTO();
+    item.setHoldingsRecordId(holding.getId());
+
+    when(inventoryClient.getItemByBarcode(item.getBarcode())).thenReturn(ResultList.asSinglePage(item));
+    when(holdingsStorageClient.findHolding(holding.getId())).thenReturn(Optional.of(holding));
+
+    var responseEntity = testRestTemplate.postForEntity(
+      LOCAL_HOLD_TRANSFER_ITEM_ENDPOINT, null, InnReachTransactionDTO.class,
+      PRE_POPULATED_LOCAL_HOLD_TRANSACTION_ID, item.getBarcode()
+    );
+
+    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+    assertNotNull(responseEntity.getBody());
+
+    var transaction = responseEntity.getBody();
+    assertEquals(TransactionStateEnum.TRANSFER, transaction.getState());
+    assertEquals(item.getId(), transaction.getHold().getFolioItemId());
+    assertEquals(item.getHoldingsRecordId(), transaction.getHold().getFolioHoldingId());
+    assertEquals(holding.getInstanceId(), transaction.getHold().getFolioInstanceId());
+  }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql",
+  })
+  void return400_when_transferLocalHoldItem_and_transactionIsNotOfLocalHold(){
+    var item = createInventoryItemDTO();
+
+    var responseEntity = testRestTemplate.postForEntity(
+      LOCAL_HOLD_TRANSFER_ITEM_ENDPOINT, null, InnReachTransactionDTO.class,
+      PRE_POPULATED_ITEM_HOLD_TRANSACTION_ID, item.getBarcode()
+    );
+
+    assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
   }
 
   private void mockFindRequest(UUID requestId, RequestDTO.RequestStatus status) {
