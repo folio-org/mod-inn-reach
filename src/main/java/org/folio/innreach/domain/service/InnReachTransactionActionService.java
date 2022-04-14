@@ -38,5 +38,5 @@ public interface InnReachTransactionActionService {
 
   void transferItemHold(UUID transactionId, String itemBarcode);
 
-  void finalCheckinItemHold(UUID transactionId, UUID servicePointId);
+  void finalCheckInItemHold(UUID transactionId, UUID servicePointId);
 }

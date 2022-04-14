@@ -43,7 +43,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
 
-import org.folio.innreach.client.CirculationClient;
 import org.folio.innreach.client.InstanceStorageClient;
 import org.folio.innreach.domain.dto.folio.circulation.RequestDTO;
 import org.folio.innreach.domain.dto.folio.inventory.InventoryItemDTO;
@@ -86,7 +85,6 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
   private final InstanceStorageClient instanceStorageClient;
   private final InnReachTransactionActionNotifier notifier;
   private final ApplicationEventPublisher eventPublisher;
-  private final CirculationClient circulationClient;
 
   @Override
   public PatronHoldCheckInResponseDTO checkInPatronHoldItem(UUID transactionId, UUID servicePointId) {
@@ -307,7 +305,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
   }
 
   @Override
-  public void finalCheckinItemHold(UUID transactionId, UUID servicePointId) {
+  public void finalCheckInItemHold(UUID transactionId, UUID servicePointId) {
     var transaction = fetchTransactionById(transactionId);
 
     verifyState(transaction, ITEM_RECEIVED, RECEIVE_UNANNOUNCED);

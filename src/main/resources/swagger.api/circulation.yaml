@@ -199,7 +199,7 @@ paths:
         - $ref: 'circulation.yaml#/components/parameters/itemBarcode'
   /transactions/{id}/itemhold/finalcheckin/{servicePointId}:
     post:
-      operationId: finalcheckinItemHold
+      operationId: finalCheckInItemHold
       description: Final check-in of an item loaned through INN-Reach
       tags:
         - inn-reach-transaction

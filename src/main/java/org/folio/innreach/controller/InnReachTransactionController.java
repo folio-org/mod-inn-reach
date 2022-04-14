@@ -131,8 +131,8 @@ public class InnReachTransactionController implements InnReachTransactionApi {
 
   @Override
   @PostMapping("/{id}/itemhold/finalcheckin/{servicePointId}")
-  public ResponseEntity<Void> finalcheckinItemHold(@PathVariable UUID id, @PathVariable UUID servicePointId) {
-    transactionActionService.finalcheckinItemHold(id, servicePointId);
+  public ResponseEntity<Void> finalCheckInItemHold(@PathVariable UUID id, @PathVariable UUID servicePointId) {
+    transactionActionService.finalCheckInItemHold(id, servicePointId);
     return ResponseEntity.noContent().build();
   }
 }
