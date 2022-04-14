@@ -1,6 +1,7 @@
 package org.folio.innreach.fixture;
 
 import static org.jeasy.random.FieldPredicates.named;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import static org.folio.innreach.fixture.TestUtil.randomInteger;
 
@@ -72,6 +73,19 @@ public class InnReachTransactionFixture {
     transaction.setType(type);
     transaction.setHold(createTransactionHold(transaction.getType()));
     return transaction;
+  }
+
+  public static void assertPatronAndItemInfoCleared(TransactionHold hold) {
+    assertNull(hold.getPatronId());
+    assertNull(hold.getPatronName());
+    assertNull(hold.getFolioPatronId());
+    assertNull(hold.getFolioPatronBarcode());
+    assertNull(hold.getFolioItemId());
+    assertNull(hold.getFolioHoldingId());
+    assertNull(hold.getFolioInstanceId());
+    assertNull(hold.getFolioRequestId());
+    assertNull(hold.getFolioLoanId());
+    assertNull(hold.getFolioItemBarcode());
   }
 
   private static TransactionHold createTransactionHold(TransactionType type) {

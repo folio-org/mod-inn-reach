@@ -35,6 +35,7 @@ import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionSt
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.FINAL_CHECKIN;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.ITEM_RECEIVED;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.ITEM_SHIPPED;
+import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.LOCAL_HOLD;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.RECEIVE_UNANNOUNCED;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.RETURN_UNCIRCULATED;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.TRANSFER;
@@ -42,6 +43,7 @@ import static org.folio.innreach.dto.TransactionStateEnum.PATRON_HOLD;
 import static org.folio.innreach.dto.TransactionTypeEnum.ITEM;
 import static org.folio.innreach.dto.TransactionTypeEnum.LOCAL;
 import static org.folio.innreach.dto.TransactionTypeEnum.PATRON;
+import static org.folio.innreach.fixture.InnReachTransactionFixture.assertPatronAndItemInfoCleared;
 import static org.folio.innreach.fixture.InnReachTransactionFixture.createInnReachTransaction;
 import static org.folio.innreach.fixture.InventoryFixture.createInventoryItemDTO;
 import static org.folio.innreach.fixture.RequestFixture.createRequestDTO;
@@ -59,12 +61,15 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.stubbing.Answer;
@@ -133,6 +138,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   private static final String PATRON_HOLD_CHECK_IN_UNSHIPPED_ENDPOINT = "/inn-reach/transactions/{id}/receive-unshipped-item/{servicePointId}/{itemBarcode}";
   private static final String ITEM_HOLD_CHECK_OUT_ENDPOINT = "/inn-reach/transactions/{itemBarcode}/check-out-item/{servicePointId}";
   private static final String PATRON_HOLD_CHECK_OUT_ENDPOINT = "/inn-reach/transactions/{id}/patronhold/check-out-item/{servicePointId}";
+  private static final String LOCAL_HOLD_CHECK_OUT_ENDPOINT = "/inn-reach/transactions/{id}/localhold/check-out-item/{servicePointId}";
   private static final String UPDATE_TRANSACTION_ENDPOINT = "/inn-reach/transactions/{transactionId}";
   private static final String PATRON_HOLD_CANCEL_ENDPOINT = "/inn-reach/transactions/{id}/patronhold/cancel";
   private static final String ITEM_HOLD_CANCEL_ENDPOINT = "/inn-reach/transactions/{id}/itemhold/cancel";
@@ -151,10 +157,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   private static final String NEW_ITEM_AND_AGENCY_CODE = "a0aa0";
   private static final String NEW_TEST_PARAMETER_VALUE = "abc";
 
-  public static final String TRANSACTION_WITH_ITEM_HOLD_ID = "ab2393a1-acc4-4849-82ac-8cc0c37339e1";
-  public static final String TRANSACTION_WITH_LOCAL_HOLD_ID = "79b0a1fb-55be-4e55-9d84-01303aaec1ce";
-  public static final String TRANSACTION_WITH_PATRON_HOLD_ID = "0aab1720-14b4-4210-9a19-0d0bf1cd64d3";
-
+  private static final UUID PRE_POPULATED_LOCAL_HOLD_TRANSACTION_ID = UUID.fromString("79b0a1fb-55be-4e55-9d84-01303aaec1ce");
   private static final UUID PRE_POPULATED_PATRON_HOLD_TRANSACTION_ID = UUID.fromString("0aab1720-14b4-4210-9a19-0d0bf1cd64d3");
   private static final UUID PRE_POPULATED_ITEM_HOLD_TRANSACTION_ID = UUID.fromString("ab2393a1-acc4-4849-82ac-8cc0c37339e1");
   private static final UUID PRE_POPULATED_ITEM_HOLD_REQUEST_ID = UUID.fromString("26278b3a-de32-4deb-b81b-896637b3dbeb");
@@ -286,7 +289,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
 
     var transactionIds = responseEntity.getBody().getTransactions().stream()
       .map(InnReachTransactionDTO::getId).collect(Collectors.toList());
-    assertTrue(transactionIds.contains(UUID.fromString(TRANSACTION_WITH_PATRON_HOLD_ID)));
+    assertTrue(transactionIds.contains(PRE_POPULATED_PATRON_HOLD_TRANSACTION_ID));
 
     assertEquals(1, responseEntity.getBody().getTransactions().size());
     var transaction = responseEntity.getBody().getTransactions().stream()
@@ -338,8 +341,8 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
 
     var transactionIds = responseEntity.getBody().getTransactions().stream()
       .map(InnReachTransactionDTO::getId).collect(Collectors.toList());
-    assertTrue(transactionIds.containsAll(List.of(UUID.fromString(TRANSACTION_WITH_ITEM_HOLD_ID),
-      UUID.fromString(TRANSACTION_WITH_LOCAL_HOLD_ID))));
+    assertTrue(transactionIds.containsAll(
+      List.of(PRE_POPULATED_ITEM_HOLD_TRANSACTION_ID, PRE_POPULATED_LOCAL_HOLD_TRANSACTION_ID)));
 
     assertEquals(2, responseEntity.getBody().getTransactions().size());
     var holdDTOs = responseEntity.getBody().getTransactions().stream()
@@ -363,8 +366,8 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
 
     var transactionIds = responseEntity.getBody().getTransactions().stream()
       .map(InnReachTransactionDTO::getId).collect(Collectors.toList());
-    assertTrue(transactionIds.containsAll(List.of(UUID.fromString(TRANSACTION_WITH_ITEM_HOLD_ID),
-      UUID.fromString(TRANSACTION_WITH_LOCAL_HOLD_ID))));
+    assertTrue(transactionIds.containsAll(
+      List.of(PRE_POPULATED_ITEM_HOLD_TRANSACTION_ID, PRE_POPULATED_LOCAL_HOLD_TRANSACTION_ID)));
 
     assertEquals(2, responseEntity.getBody().getTransactions().size());
     var centralPatronTypes = responseEntity.getBody().getTransactions().stream()
@@ -883,7 +886,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   })
   void returnInnReachTransactionWithPatronHold_when_transactionExists() {
     var responseEntity = testRestTemplate.getForEntity("/inn-reach/transactions/{transactionId}",
-      InnReachTransactionDTO.class, TRANSACTION_WITH_PATRON_HOLD_ID);
+      InnReachTransactionDTO.class, PRE_POPULATED_PATRON_HOLD_TRANSACTION_ID);
 
     assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
 
@@ -903,7 +906,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   })
   void returnInnReachTransactionWithItemHold_when_transactionExists() {
     var responseEntity = testRestTemplate.getForEntity("/inn-reach/transactions/{transactionId}",
-      InnReachTransactionDTO.class, TRANSACTION_WITH_ITEM_HOLD_ID);
+      InnReachTransactionDTO.class, PRE_POPULATED_ITEM_HOLD_TRANSACTION_ID);
 
     assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
 
@@ -921,7 +924,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   })
   void returnInnReachTransactionWithLocalHold_when_transactionExists() {
     var responseEntity = testRestTemplate.getForEntity("/inn-reach/transactions/{transactionId}",
-      InnReachTransactionDTO.class, TRANSACTION_WITH_LOCAL_HOLD_ID);
+      InnReachTransactionDTO.class, PRE_POPULATED_LOCAL_HOLD_TRANSACTION_ID);
 
     assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
 
@@ -1228,7 +1231,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql",
   })
-  void testCheckOutPatronHoldItem(InnReachTransaction.TransactionState state) {
+  void testCheckOutPatronHoldItem_linkExistingLoan(InnReachTransaction.TransactionState state) {
     var loanDueDate = new Date();
     var checkOutResponse = new LoanDTO()
       .id(FOLIO_CHECKOUT_ID)
@@ -1258,41 +1261,73 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     assertEquals(FOLIO_CHECKOUT_ID, updatedHold.getFolioLoanId());
   }
 
-  @ParameterizedTest
-  @EnumSource(names = {"ITEM_RECEIVED", "RECEIVE_UNANNOUNCED"})
+  @Test
   @Sql(scripts = {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql",
   })
-  void testCheckOutPatronHoldItem_createNewLoan(InnReachTransaction.TransactionState state) {
+  void testCheckOutLocalHoldItem_linkExistingLoan() {
     var loanDueDate = new Date();
     var checkOutResponse = new LoanDTO()
       .id(FOLIO_CHECKOUT_ID)
       .dueDate(loanDueDate);
 
-    modifyTransactionState(PRE_POPULATED_PATRON_HOLD_TRANSACTION_ID, state);
+    when(circulationClient.queryLoansByItemId(any())).thenReturn(ResultList.asSinglePage(checkOutResponse));
+    when(inventoryClient.findItem(any())).thenReturn(Optional.of(createInventoryItemDTO()));
+
+    var responseEntity = testRestTemplate.postForEntity(
+      LOCAL_HOLD_CHECK_OUT_ENDPOINT, null, TransactionCheckOutResponseDTO.class,
+      PRE_POPULATED_LOCAL_HOLD_TRANSACTION_ID, UUID.randomUUID()
+    );
+
+    verify(actionNotifier).reportCheckOut(any(), any(), any());
+
+    var response = responseEntity.getBody();
+    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+    assertNotNull(response);
+    assertNotNull(response.getFolioCheckOut());
+
+    var updatedTransaction = fetchTransaction(PRE_POPULATED_LOCAL_HOLD_TRANSACTION_ID);
+    var updatedHold = updatedTransaction.getHold();
+
+    assertPatronAndItemInfoCleared(updatedHold);
+  }
+
+  @ParameterizedTest
+  @MethodSource("checkOutItemTestArguments")
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql",
+  })
+  void testCheckOutItem_createNewLoan(String checkOutEndpointPath, UUID transactionId, InnReachTransaction.TransactionState state) {
+    var loanDueDate = new Date();
+    var checkOutResponse = new LoanDTO()
+      .id(FOLIO_CHECKOUT_ID)
+      .dueDate(loanDueDate);
+
+    modifyTransactionState(transactionId, state);
 
     when(circulationClient.queryLoansByItemId(any())).thenReturn(ResultList.empty());
     when(circulationClient.checkOutByBarcode(any(CheckOutRequestDTO.class))).thenReturn(checkOutResponse);
 
     var responseEntity = testRestTemplate.postForEntity(
-      PATRON_HOLD_CHECK_OUT_ENDPOINT, null, TransactionCheckOutResponseDTO.class,
-      PRE_POPULATED_PATRON_HOLD_TRANSACTION_ID, UUID.randomUUID()
+      checkOutEndpointPath, null, TransactionCheckOutResponseDTO.class,
+      transactionId, UUID.randomUUID()
     );
 
     var response = responseEntity.getBody();
     assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
     assertNotNull(response);
 
+    verify(circulationClient).checkOutByBarcode(any());
+
     var updatedTransaction = response.getTransaction();
-    var updatedHold = updatedTransaction.getHold();
-    assertEquals(PRE_POPULATED_PATRON_HOLD_TRANSACTION_ID, updatedTransaction.getId());
+
+    assertEquals(transactionId, updatedTransaction.getId());
 
     var loan = response.getFolioCheckOut();
     assertNotNull(loan);
     assertEquals(FOLIO_CHECKOUT_ID, loan.getId());
-    assertEquals(toEpochSec(loanDueDate), updatedHold.getDueDateTime());
-    assertEquals(FOLIO_CHECKOUT_ID, updatedHold.getFolioLoanId());
   }
 
   @ParameterizedTest
@@ -1644,6 +1679,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   })
   void transferItemHoldItem() {
     var item = createInventoryItemDTO();
+    item.setStatus(AVAILABLE);
 
     when(inventoryClient.getItemByBarcode(any())).thenReturn(ResultList.asSinglePage(item));
 
@@ -1684,8 +1720,8 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
 
   @Test
   @Sql(scripts = {
-      "classpath:db/central-server/pre-populate-central-server.sql",
-      "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql",
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql",
   })
   void cancelItemHold_if_stateIsItemHold() {
     mockFindRequest(PRE_POPULATED_ITEM_HOLD_REQUEST_ID, OPEN_NOT_YET_FILLED);
@@ -1772,6 +1808,10 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
       .cancellationAdditionalInformation(RandomStringUtils.randomAlphabetic(255));
   }
 
+  private InnReachTransaction fetchTransaction(UUID transactionId) {
+    return repository.fetchOneById(transactionId).orElseThrow();
+  }
+
   private void modifyFolioItemBarcode(UUID transactionId, String newBarcode) {
     modifyTransaction(transactionId, t -> t.getHold().setFolioItemBarcode(newBarcode));
   }
@@ -1790,6 +1830,14 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     var request = new RequestDTO();
     request.setStatus(CLOSED_CANCELLED);
     return request;
+  }
+
+  private static Stream<Arguments> checkOutItemTestArguments() {
+    return Stream.of(
+      Arguments.of(PATRON_HOLD_CHECK_OUT_ENDPOINT, PRE_POPULATED_PATRON_HOLD_TRANSACTION_ID, ITEM_RECEIVED),
+      Arguments.of(PATRON_HOLD_CHECK_OUT_ENDPOINT, PRE_POPULATED_PATRON_HOLD_TRANSACTION_ID, RECEIVE_UNANNOUNCED),
+      Arguments.of(LOCAL_HOLD_CHECK_OUT_ENDPOINT, PRE_POPULATED_LOCAL_HOLD_TRANSACTION_ID, LOCAL_HOLD)
+    );
   }
 
 }
