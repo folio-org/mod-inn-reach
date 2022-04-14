@@ -14,6 +14,7 @@ import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionSt
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.ITEM_RECEIVED;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.ITEM_SHIPPED;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.LOCAL_CHECKOUT;
+import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.LOCAL_HOLD;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.PATRON_HOLD;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.RECALL;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.RECEIVE_UNANNOUNCED;
@@ -30,13 +31,13 @@ import static org.folio.innreach.util.InnReachTransactionUtils.clearPatronAndIte
 import static org.folio.innreach.util.InnReachTransactionUtils.verifyState;
 
 import java.time.Instant;
+import java.util.Date;
 import java.util.EnumSet;
 import java.util.Optional;
 import java.util.UUID;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
-
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -52,7 +53,6 @@ import org.folio.innreach.domain.entity.TransactionPatronHold;
 import org.folio.innreach.domain.event.CancelRequestEvent;
 import org.folio.innreach.domain.event.MoveRequestEvent;
 import org.folio.innreach.domain.exception.EntityNotFoundException;
-import org.folio.innreach.domain.service.HoldingsService;
 import org.folio.innreach.domain.service.InnReachTransactionActionService;
 import org.folio.innreach.domain.service.ItemService;
 import org.folio.innreach.domain.service.LoanService;
@@ -82,7 +82,6 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
   private final LoanService loanService;
   private final PatronHoldService patronHoldService;
   private final ItemService itemService;
-  private final HoldingsService holdingsService;
   private final InstanceStorageClient instanceStorageClient;
   private final InnReachTransactionActionNotifier notifier;
   private final ApplicationEventPublisher eventPublisher;
@@ -152,22 +151,20 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
 
   @Override
   public TransactionCheckOutResponseDTO checkOutPatronHoldItem(UUID transactionId, UUID servicePointId) {
-    var transaction = fetchTransactionById(transactionId);
-    var hold = transaction.getHold();
-    var folioItemId = hold.getFolioItemId();
+    var transaction = fetchTransactionOfType(transactionId, PATRON);
 
     verifyState(transaction, ITEM_RECEIVED, RECEIVE_UNANNOUNCED);
-    Assert.isTrue(hold.getFolioItemId() != null, "folioItemId is not set");
 
-    var loan = loanService.findByItemId(folioItemId)
-      .orElse(loanService.checkOutItem(transaction, servicePointId));
+    return checkOutItem(transaction, servicePointId);
+  }
 
-    hold.setFolioLoanId(loan.getId());
-    hold.setDueDateTime(toEpochSec(loan.getDueDate()));
+  @Override
+  public TransactionCheckOutResponseDTO checkOutLocalHoldItem(UUID transactionId, UUID servicePointId) {
+    var transaction = fetchTransactionOfType(transactionId, LOCAL);
 
-    return new TransactionCheckOutResponseDTO()
-      .folioCheckOut(loan)
-      .transaction(transactionMapper.toDTO(transaction));
+    verifyState(transaction, LOCAL_HOLD);
+
+    return checkOutItem(transaction, servicePointId);
   }
 
   @Override
@@ -175,17 +172,8 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
     var itemId = loan.getItemId();
     var patronId = loan.getUserId();
 
-    var transaction = transactionRepository.fetchActiveByFolioItemIdAndPatronId(itemId, patronId).orElse(null);
-    if (transaction == null) {
-      return;
-    }
-
-    if (transaction.getType() == PATRON) {
-      associateNewLoanWithPatronTransaction(loan, transaction);
-    } else if (transaction.getType() == LOCAL) {
-      associateNewLoanWithLocalTransaction(loan, transaction);
-    }
-
+    transactionRepository.fetchActiveByFolioItemIdAndPatronId(itemId, patronId)
+      .ifPresent(transaction -> associateLoanWithTransaction(loan.getId(), loan.getDueDate(), itemId, transaction));
   }
 
   @Override
@@ -272,8 +260,8 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
     verifyState(transaction, ITEM_HOLD);
 
     eventPublisher.publishEvent(CancelRequestEvent.of(transaction,
-        cancelRequest.getCancellationReasonId(),
-        cancelRequest.getCancellationAdditionalInformation()));
+      cancelRequest.getCancellationReasonId(),
+      cancelRequest.getCancellationAdditionalInformation()));
   }
 
   @Override
@@ -316,24 +304,44 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
     eventPublisher.publishEvent(MoveRequestEvent.of(transaction, item));
   }
 
-  private void associateNewLoanWithPatronTransaction(StorageLoanDTO loan, InnReachTransaction transaction) {
-    log.info("Associating a new loan {} with patron transaction {}", loan.getId(), transaction.getId());
-    var hold = transaction.getHold();
-    hold.setFolioLoanId(loan.getId());
-    hold.setDueDateTime(toEpochSec(loan.getDueDate()));
+  private void associateLoanWithTransaction(UUID loanId, Date loanDueDate, UUID itemId, InnReachTransaction transaction) {
+    if (transaction.getType() == PATRON) {
+      log.info("Associating a new loan {} with patron transaction {}", loanId, transaction.getId());
+      var hold = transaction.getHold();
+
+      hold.setFolioLoanId(loanId);
+      hold.setDueDateTime(toEpochSec(loanDueDate));
+    } else if (transaction.getType() == LOCAL) {
+      log.info("Associating a new loan {} with local transaction {}", loanId, transaction.getId());
+
+      var hold = transaction.getHold();
+      hold.setFolioLoanId(loanId);
+
+      transaction.setState(LOCAL_CHECKOUT);
+
+      var inventoryItemDTO = fetchItemById(itemId);
+      notifier.reportCheckOut(transaction, inventoryItemDTO.getHrid(), inventoryItemDTO.getBarcode());
+
+      clearPatronAndItemInfo(hold);
+    }
   }
 
-  private void associateNewLoanWithLocalTransaction(StorageLoanDTO loan, InnReachTransaction transaction) {
-    log.info("Associating a new loan {} with local transaction {}", loan.getId(), transaction.getId());
-
+  private TransactionCheckOutResponseDTO checkOutItem(InnReachTransaction transaction, UUID servicePointId) {
     var hold = transaction.getHold();
-    hold.setFolioLoanId(loan.getId());
-    transaction.setState(LOCAL_CHECKOUT);
+    var folioItemId = hold.getFolioItemId();
 
-    var inventoryItemDTO = fetchItemById(loan.getItemId());
-    notifier.reportCheckOut(transaction, inventoryItemDTO.getHrid(), inventoryItemDTO.getBarcode());
+    Assert.isTrue(hold.getFolioItemId() != null, "folioItemId is not set");
 
-    clearPatronAndItemInfo(hold);
+    var loan = loanService.findByItemId(folioItemId).orElse(null);
+    if (loan != null) {
+      associateLoanWithTransaction(loan.getId(), loan.getDueDate(), folioItemId, transaction);
+    } else {
+      loan = loanService.checkOutItem(transaction, servicePointId);
+    }
+
+    return new TransactionCheckOutResponseDTO()
+      .folioCheckOut(loan)
+      .transaction(transactionMapper.toDTO(transaction));
   }
 
   private void updateTransactionOnLoanClaimedReturned(StorageLoanDTO loan, InnReachTransaction transaction) {
