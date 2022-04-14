@@ -450,7 +450,7 @@
           "permissionsRequired": ["inn-reach.d2ir.inn-reach-transaction.item.post"],
           "modulePermissions": [
             "circulation.check-out-by-barcode.post",
-            "circulation.loans.item.get"
+            "circulation.loans.collection.get"
           ]
         },
         {
@@ -459,7 +459,8 @@
           "permissionsRequired": ["inn-reach.d2ir.inn-reach-transaction.item.post"],
           "modulePermissions": [
             "circulation.check-out-by-barcode.post",
-            "circulation.loans.item.get"
+            "circulation.loans.collection.get",
+            "inventory.items.item.get"
           ]
         },
         {
