@@ -306,7 +306,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
 
   @Override
   public void finalCheckInItemHold(UUID transactionId, UUID servicePointId) {
-    var transaction = fetchTransactionById(transactionId);
+    var transaction = fetchTransactionOfType(transactionId, ITEM);
 
     verifyState(transaction, ITEM_RECEIVED, RECEIVE_UNANNOUNCED);
 

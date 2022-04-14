@@ -99,7 +99,6 @@ import org.folio.innreach.domain.dto.folio.inventory.InventoryItemStatus;
 import org.folio.innreach.domain.dto.folio.requestpreference.RequestPreferenceDTO;
 import org.folio.innreach.domain.entity.InnReachTransaction;
 import org.folio.innreach.domain.entity.base.AuditableUser;
-import org.folio.innreach.domain.service.LoanService;
 import org.folio.innreach.domain.service.RequestService;
 import org.folio.innreach.domain.service.impl.InnReachTransactionActionNotifier;
 import org.folio.innreach.dto.CancelTransactionHoldDTO;
@@ -119,7 +118,6 @@ import org.folio.innreach.dto.TransactionCheckOutResponseDTO;
 import org.folio.innreach.dto.TransactionHoldDTO;
 import org.folio.innreach.dto.TransactionStateEnum;
 import org.folio.innreach.external.client.feign.InnReachClient;
-import org.folio.innreach.external.service.InnReachExternalService;
 import org.folio.innreach.mapper.InnReachTransactionMapper;
 import org.folio.innreach.mapper.InnReachTransactionPickupLocationMapper;
 import org.folio.innreach.repository.InnReachTransactionRepository;
@@ -202,10 +200,6 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   private RequestService requestService;
   @SpyBean
   private InnReachTransactionActionNotifier actionNotifier;
-  @SpyBean
-  private InnReachExternalService innReachExternalService;
-  @SpyBean
-  private LoanService loanService;
 
   private static final HttpHeaders headers = circHeaders();
 
@@ -1840,7 +1834,6 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     assertEquals(FINAL_CHECKIN, transaction.get().getState());
 
     verify(actionNotifier).reportFinalCheckIn(any());
-    verify(innReachExternalService).postInnReachApi(anyString(), anyString());
   }
 
   @ParameterizedTest
@@ -1862,7 +1855,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
 
     assertEquals(HttpStatus.NO_CONTENT, responseEntity.getStatusCode());
 
-    verify(loanService).checkInItem(any(), any());
+    verify(circulationClient).checkInByBarcode(any());
   }
 
   private void mockFindRequest(UUID requestId, RequestDTO.RequestStatus status) {
