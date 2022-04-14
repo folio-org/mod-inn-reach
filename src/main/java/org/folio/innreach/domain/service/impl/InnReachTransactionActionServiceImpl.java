@@ -30,6 +30,7 @@ import static org.folio.innreach.util.InnReachTransactionUtils.clearPatronAndIte
 import static org.folio.innreach.util.InnReachTransactionUtils.verifyState;
 
 import java.time.Instant;
+import java.util.Date;
 import java.util.EnumSet;
 import java.util.Optional;
 import java.util.UUID;
@@ -42,6 +43,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
 
+import org.folio.innreach.client.CirculationClient;
 import org.folio.innreach.client.InstanceStorageClient;
 import org.folio.innreach.domain.dto.folio.circulation.RequestDTO;
 import org.folio.innreach.domain.dto.folio.inventory.InventoryItemDTO;
@@ -60,6 +62,7 @@ import org.folio.innreach.domain.service.PatronHoldService;
 import org.folio.innreach.domain.service.RequestService;
 import org.folio.innreach.dto.CancelTransactionHoldDTO;
 import org.folio.innreach.dto.CheckInDTO;
+import org.folio.innreach.dto.CheckInRequestDTO;
 import org.folio.innreach.dto.InnReachTransactionDTO;
 import org.folio.innreach.dto.LoanStatus;
 import org.folio.innreach.dto.PatronHoldCheckInResponseDTO;
@@ -86,6 +89,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
   private final InstanceStorageClient instanceStorageClient;
   private final InnReachTransactionActionNotifier notifier;
   private final ApplicationEventPublisher eventPublisher;
+  private final CirculationClient circulationClient;
 
   @Override
   public PatronHoldCheckInResponseDTO checkInPatronHoldItem(UUID transactionId, UUID servicePointId) {
@@ -314,6 +318,33 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
     requestService.validateItemAvailability(item);
 
     eventPublisher.publishEvent(MoveRequestEvent.of(transaction, item));
+  }
+
+  @Override
+  public void finalcheckinItemHold(UUID transactionId, UUID servicePointId) {
+    var transaction = fetchTransactionById(transactionId);
+
+    verifyState(transaction, ITEM_RECEIVED, RECEIVE_UNANNOUNCED);
+
+    var loan = loanService.getById(transaction.getHold().getFolioLoanId());
+
+    if (loan.getAction().equalsIgnoreCase("checkedin") && loan.getStatus().getName().equals("closed")) {
+      var hold = transaction.getHold();
+      hold.setPatronId(null);
+      hold.setPatronName(null);
+      hold.setDueDateTime(null);
+      transaction.setHold(hold);
+      transaction.setState(FINAL_CHECKIN);
+      transactionRepository.save(transaction);
+
+      notifier.reportFinalCheckIn(transaction);
+    } else {
+      var request = new CheckInRequestDTO();
+      request.setItemBarcode(transaction.getHold().getFolioItemBarcode());
+      request.setServicePointId(servicePointId);
+      request.setCheckInDate(new Date());
+      circulationClient.checkInByBarcode(request);
+    }
   }
 
   private void associateNewLoanWithPatronTransaction(StorageLoanDTO loan, InnReachTransaction transaction) {

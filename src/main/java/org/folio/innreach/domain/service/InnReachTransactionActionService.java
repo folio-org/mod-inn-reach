@@ -35,4 +35,6 @@ public interface InnReachTransactionActionService {
   void returnPatronHoldItem(UUID transactionId, UUID servicePointId);
 
   void transferItemHold(UUID transactionId, String itemBarcode);
+
+  void finalcheckinItemHold(UUID transactionId, UUID servicePointId);
 }
