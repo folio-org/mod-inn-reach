@@ -450,7 +450,17 @@
           "permissionsRequired": ["inn-reach.d2ir.inn-reach-transaction.item.post"],
           "modulePermissions": [
             "circulation.check-out-by-barcode.post",
-            "circulation.loans.item.get"
+            "circulation.loans.collection.get"
+          ]
+        },
+        {
+          "methods": ["POST"],
+          "pathPattern": "/inn-reach/transactions/{id}/localhold/check-out-item/{servicePointId}",
+          "permissionsRequired": ["inn-reach.d2ir.inn-reach-transaction.item.post"],
+          "modulePermissions": [
+            "circulation.check-out-by-barcode.post",
+            "circulation.loans.collection.get",
+            "inventory.items.item.get"
           ]
         },
         {

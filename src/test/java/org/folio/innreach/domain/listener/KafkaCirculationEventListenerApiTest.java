@@ -1,7 +1,6 @@
 package org.folio.innreach.domain.listener;
 
 import static org.awaitility.Awaitility.await;
-import static org.folio.innreach.fixture.InventoryFixture.createInventoryItemDTO;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
@@ -20,13 +19,15 @@ import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionSt
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.CANCEL_REQUEST;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.CLAIMS_RETURNED;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.FINAL_CHECKIN;
-import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.LOCAL_CHECKOUT;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.ITEM_IN_TRANSIT;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.ITEM_SHIPPED;
+import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.LOCAL_CHECKOUT;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.RECALL;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.RETURN_UNCIRCULATED;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.TRANSFER;
 import static org.folio.innreach.dto.ItemStatus.NameEnum.AWAITING_PICKUP;
+import static org.folio.innreach.fixture.InnReachTransactionFixture.assertPatronAndItemInfoCleared;
+import static org.folio.innreach.fixture.InventoryFixture.createInventoryItemDTO;
 import static org.folio.innreach.util.DateHelper.toEpochSec;
 
 import java.time.Duration;
@@ -41,8 +42,6 @@ import java.util.function.Consumer;
 
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.producer.ProducerRecord;
-import org.folio.innreach.client.InventoryClient;
-import org.folio.innreach.domain.service.ContributionActionService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
@@ -55,15 +54,16 @@ import org.springframework.test.context.jdbc.SqlMergeMode;
 
 import org.folio.innreach.client.CirculationClient;
 import org.folio.innreach.client.InstanceStorageClient;
+import org.folio.innreach.client.InventoryClient;
 import org.folio.innreach.domain.dto.folio.circulation.RequestDTO;
 import org.folio.innreach.domain.dto.folio.inventory.InventoryItemDTO;
 import org.folio.innreach.domain.entity.InnReachTransaction;
-import org.folio.innreach.domain.entity.TransactionHold;
 import org.folio.innreach.domain.entity.TransactionItemHold;
 import org.folio.innreach.domain.event.DomainEvent;
 import org.folio.innreach.domain.event.DomainEventType;
 import org.folio.innreach.domain.event.EntityChangedData;
 import org.folio.innreach.domain.listener.base.BaseKafkaApiTest;
+import org.folio.innreach.domain.service.ContributionActionService;
 import org.folio.innreach.domain.service.impl.BatchDomainEventProcessor;
 import org.folio.innreach.dto.CheckInDTO;
 import org.folio.innreach.dto.Instance;
@@ -576,19 +576,6 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
       .type(eventType)
       .data(new EntityChangedData<>(null, checkIn))
       .build();
-  }
-
-  private static void assertPatronAndItemInfoCleared(TransactionHold itemHold) {
-    assertNull(itemHold.getPatronId());
-    assertNull(itemHold.getPatronName());
-    assertNull(itemHold.getFolioPatronId());
-    assertNull(itemHold.getFolioPatronBarcode());
-    assertNull(itemHold.getFolioItemId());
-    assertNull(itemHold.getFolioHoldingId());
-    assertNull(itemHold.getFolioInstanceId());
-    assertNull(itemHold.getFolioRequestId());
-    assertNull(itemHold.getFolioLoanId());
-    assertNull(itemHold.getFolioItemBarcode());
   }
 
 }

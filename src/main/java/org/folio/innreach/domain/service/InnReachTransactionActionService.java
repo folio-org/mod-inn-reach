@@ -20,6 +20,8 @@ public interface InnReachTransactionActionService {
 
   TransactionCheckOutResponseDTO checkOutPatronHoldItem(UUID transactionId, UUID servicePointId);
 
+  TransactionCheckOutResponseDTO checkOutLocalHoldItem(UUID transactionId, UUID servicePointId);
+
   void associateNewLoanWithTransaction(StorageLoanDTO loan);
 
   void handleLoanUpdate(StorageLoanDTO loan);
@@ -36,5 +38,5 @@ public interface InnReachTransactionActionService {
 
   void transferItemHold(UUID transactionId, String itemBarcode);
 
-  void finalcheckinItemHold(UUID transactionId, UUID servicePointId);
+  void finalCheckinItemHold(UUID transactionId, UUID servicePointId);
 }
