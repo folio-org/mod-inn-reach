@@ -30,7 +30,6 @@ import static org.folio.innreach.util.InnReachTransactionUtils.clearPatronAndIte
 import static org.folio.innreach.util.InnReachTransactionUtils.verifyState;
 
 import java.time.Instant;
-import java.util.Date;
 import java.util.EnumSet;
 import java.util.Optional;
 import java.util.UUID;
@@ -62,7 +61,6 @@ import org.folio.innreach.domain.service.PatronHoldService;
 import org.folio.innreach.domain.service.RequestService;
 import org.folio.innreach.dto.CancelTransactionHoldDTO;
 import org.folio.innreach.dto.CheckInDTO;
-import org.folio.innreach.dto.CheckInRequestDTO;
 import org.folio.innreach.dto.InnReachTransactionDTO;
 import org.folio.innreach.dto.LoanStatus;
 import org.folio.innreach.dto.PatronHoldCheckInResponseDTO;
@@ -202,7 +200,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
     var loanAction = loan.getAction();
     var loanStatus = ofNullable(loan.getStatus()).map(LoanStatus::getName).orElse(null);
 
-    if ("checkedin".equalsIgnoreCase(loanAction) && "Closed".equalsIgnoreCase(loanStatus)) {
+    if (checkLoanActionAndStatus(loanAction, loanStatus)) {
       updateTransactionOnLoanClosure(loan, transaction);
     } else if ("renewed".equalsIgnoreCase(loanAction)) {
       updateTransactionOnLoanRenewal(loan, transaction);
@@ -327,23 +325,13 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
     verifyState(transaction, ITEM_RECEIVED, RECEIVE_UNANNOUNCED);
 
     var loan = loanService.getById(transaction.getHold().getFolioLoanId());
+    var loanAction = loan.getAction();
+    var loanStatus = ofNullable(loan.getStatus()).map(LoanStatus::getName).orElse(null);
 
-    if (loan.getAction().equalsIgnoreCase("checkedin") && loan.getStatus().getName().equals("closed")) {
-      var hold = transaction.getHold();
-      hold.setPatronId(null);
-      hold.setPatronName(null);
-      hold.setDueDateTime(null);
-      transaction.setHold(hold);
-      transaction.setState(FINAL_CHECKIN);
-      transactionRepository.save(transaction);
-
-      notifier.reportFinalCheckIn(transaction);
+    if (checkLoanActionAndStatus(loanAction, loanStatus)) {
+      updateItemTransactionOnLoanClosure(transaction, loan.getId());
     } else {
-      var request = new CheckInRequestDTO();
-      request.setItemBarcode(transaction.getHold().getFolioItemBarcode());
-      request.setServicePointId(servicePointId);
-      request.setCheckInDate(new Date());
-      circulationClient.checkInByBarcode(request);
+      loanService.checkInItem(transaction, servicePointId);
     }
   }
 
@@ -582,5 +570,9 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
   private InventoryItemDTO fetchItemByBarcode(String itemBarcode) {
     return itemService.findItemByBarcode(itemBarcode)
       .orElseThrow(() -> new IllegalArgumentException("Item is not found by barcode: " + itemBarcode));
+  }
+
+  private boolean checkLoanActionAndStatus(String loanAction, String loanStatus) {
+    return "checkedin".equalsIgnoreCase(loanAction) && "closed".equalsIgnoreCase(loanStatus);
   }
 }

@@ -487,7 +487,6 @@
           "pathPattern": "/inn-reach/transactions/{id}/itemhold/finalcheckin/{servicePointId}",
           "permissionsRequired": ["inn-reach.d2ir.inn-reach-transaction.item.post"],
           "modulePermissions": [
-            "circulation.requests.item.get",
             "circulation.loans.item.get",
             "circulation.check-in-by-barcode.post"
           ]
