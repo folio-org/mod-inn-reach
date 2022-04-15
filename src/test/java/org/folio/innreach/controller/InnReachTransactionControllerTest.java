@@ -2,6 +2,7 @@ package org.folio.innreach.controller;
 
 import static java.util.UUID.randomUUID;
 import static org.awaitility.Awaitility.await;
+import static org.folio.innreach.domain.dto.folio.circulation.RequestDTO.RequestStatus.CLOSED_FILLER;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -53,6 +54,7 @@ import static org.folio.innreach.util.DateHelper.toEpochSec;
 
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -63,6 +65,7 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.RandomStringUtils;
+import org.folio.innreach.domain.service.InnReachRecallUserService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -138,6 +141,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   private static final String UPDATE_TRANSACTION_ENDPOINT = "/inn-reach/transactions/{transactionId}";
   private static final String PATRON_HOLD_CANCEL_ENDPOINT = "/inn-reach/transactions/{id}/patronhold/cancel";
   private static final String ITEM_HOLD_CANCEL_ENDPOINT = "/inn-reach/transactions/{id}/itemhold/cancel";
+  private static final String ITEM_HOLD_RECALL_ENDPOINT = "/inn-reach/transactions/{id}/itemhold/recall";
   private static final String PATRON_HOLD_RETURN_ITEM_ENDPOINT = "/inn-reach/transactions/{id}/patronhold/return-item/{servicePointId}";
   private static final String ITEM_HOLD_TRANSFER_ITEM_ENDPOINT = "/inn-reach/transactions/{id}/itemhold/transfer-item/{itemBarcode}";
 
@@ -158,12 +162,14 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   public static final String TRANSACTION_WITH_PATRON_HOLD_ID = "0aab1720-14b4-4210-9a19-0d0bf1cd64d3";
   public static final String TRANSACTION_WITH_ITEM_RECEIVED = "aa5daccd-8788-4bb7-8f9a-6ae0b21bd18d";
 
+  private static final UUID PRE_POPULATE_CENTRAL_SERVER_ID = UUID.fromString("cfae4887-f8fb-4e4c-a5cc-34f74e353cf8");
   private static final UUID PRE_POPULATED_PATRON_HOLD_TRANSACTION_ID = UUID.fromString("0aab1720-14b4-4210-9a19-0d0bf1cd64d3");
   private static final UUID PRE_POPULATED_ITEM_HOLD_TRANSACTION_ID = UUID.fromString("ab2393a1-acc4-4849-82ac-8cc0c37339e1");
   private static final UUID PRE_POPULATED_ITEM_HOLD_REQUEST_ID = UUID.fromString("26278b3a-de32-4deb-b81b-896637b3dbeb");
+  private static final UUID PRE_POPULATED_ITEM_ID = UUID.fromString("bea8b22f-c9a9-4303-b318-dcd9439d8c3c");
+  private static final UUID PRE_POPULATED_LOAN_ID = UUID.fromString("3c9f9745-e26b-4173-aa47-bedbcbdc6d31");
   private static final UUID PRE_POPULATED_TRANSACTION_ID3 = UUID.fromString("79b0a1fb-55be-4e55-9d84-01303aaec1ce");
   private static final UUID PRE_POPULATED_ITEM_SHIPPED_TRANSACTION_ID = UUID.fromString("7106c3ac-890a-4126-bf9b-a10b67555b6e");
-  private static final UUID PRE_POPULATED_ITEM_FOLIO_LOAN_ID = UUID.fromString("3c9f9745-e26b-4173-aa47-bedbcbdc6d31");
   private static final String PRE_POPULATED_PATRON_HOLD_ITEM_BARCODE = "1111111";
   private static final String PRE_POPULATED_ITEM_HOLD_ITEM_BARCODE = "DEF-def-5678";
   private static final String PRE_POPULATED_CENTRAL_PATRON_ID2 = "u6ct3wssbnhxvip3sobwmxvhoa";
@@ -200,6 +206,8 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   private RequestService requestService;
   @SpyBean
   private InnReachTransactionActionNotifier actionNotifier;
+  @SpyBean
+  private InnReachRecallUserService recallUserService;
 
   private static final HttpHeaders headers = circHeaders();
 
@@ -898,31 +906,6 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     assertNotNull(responseBody.getHold().getAuthor());
     assertNotNull(responseBody.getHold().getCallNumber());
     assertNotNull(responseBody.getHold().getShippedItemBarcode());
-  }
-
-  @Test
-  @Sql(scripts = {
-    "classpath:db/central-server/pre-populate-central-server.sql",
-    "classpath:db/inn-reach-transaction/pre-populate-separate-inn-reach-transaction.sql",
-  })
-  void returnInnReachTransactionWithItemReceived_when_transactionExists() {
-    Date currentDate = new Date();
-    LoanDTO loanDTO = new LoanDTO();
-    loanDTO.setDueDate(currentDate);
-    Integer intCurrentDate = (int)  currentDate.toInstant().truncatedTo(ChronoUnit.SECONDS).getEpochSecond();
-
-    when(innReachClient.postInnReachApi(any(), anyString(), anyString(), anyString(), any())).thenReturn("test");
-    when(circulationClient.findLoan(PRE_POPULATED_ITEM_FOLIO_LOAN_ID)).thenReturn(Optional.of(loanDTO));
-
-    var responseEntity = testRestTemplate.getForEntity("/inn-reach/transactions/{transactionId}", InnReachTransactionDTO.class,
-      TRANSACTION_WITH_ITEM_RECEIVED);
-
-    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
-
-    var responseBody = responseEntity.getBody();
-
-    assertEquals(RECALL.toString(), responseBody.getState().toString());
-    assertEquals(intCurrentDate, responseBody.getHold().getDueDateTime());
   }
 
   @Test
@@ -1777,6 +1760,50 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     assertTrue(responseEntity.getBody().getMessage().contains("Unexpected transaction state"));
   }
 
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-separate-inn-reach-transaction.sql",
+  })
+  void recallItemHoldWhenRequestStatusOpenNotYetFilled() {
+    var loan = new LoanDTO();
+    var currentDate = new Date();
+    loan.setDueDate(currentDate);
+    var intCurrentDate = (int) currentDate.toInstant().truncatedTo(ChronoUnit.SECONDS).getEpochSecond();
+    when(circulationClient.queryRequestsByItemId(PRE_POPULATED_ITEM_ID)).thenReturn(getOpenRequests());
+    when(circulationClient.findLoan(PRE_POPULATED_LOAN_ID)).thenReturn(Optional.of(loan));
+    when(innReachClient.postInnReachApi(any(), anyString(), anyString(), anyString(), any())).thenReturn("test");
+
+    var responseEntity = testRestTemplate.postForEntity(
+      ITEM_HOLD_RECALL_ENDPOINT, null, Void.class, TRANSACTION_WITH_ITEM_RECEIVED);
+
+    var transaction = repository.fetchOneById(UUID.fromString(TRANSACTION_WITH_ITEM_RECEIVED)).get();
+
+    assertEquals(HttpStatus.NO_CONTENT, responseEntity.getStatusCode());
+    assertEquals(RECALL, transaction.getState());
+    assertEquals(intCurrentDate, transaction.getHold().getDueDateTime());
+  }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-separate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-separate-inn-reach-transaction.sql",
+  })
+  void recallItemHoldWhenRequestStatusNotOpen() {
+    when(circulationClient.queryRequestsByItemId(PRE_POPULATED_ITEM_ID)).thenReturn(getNotOpenRequests());
+
+    var responseEntity = testRestTemplate.postForEntity(
+      ITEM_HOLD_RECALL_ENDPOINT, null, Void.class, TRANSACTION_WITH_ITEM_RECEIVED);
+
+    assertEquals(HttpStatus.NO_CONTENT, responseEntity.getStatusCode());
+
+    var centralServerIdCaptor = ArgumentCaptor.forClass(UUID.class);
+    verify(recallUserService).getInnReachRecallUser(centralServerIdCaptor.capture());
+    var centralServerId = centralServerIdCaptor.getValue();
+
+    assertEquals(PRE_POPULATE_CENTRAL_SERVER_ID, centralServerId);
+  }
+
   private void mockFindRequest(UUID requestId, RequestDTO.RequestStatus status) {
     var requestDTO = createRequestDTO();
     requestDTO.setId(requestId);
@@ -1821,4 +1848,23 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     return request;
   }
 
+  private ResultList<RequestDTO> getOpenRequests() {
+    ResultList<RequestDTO> resultList = new ResultList<>();
+    RequestDTO request = new RequestDTO();
+    request.setStatus(OPEN_NOT_YET_FILLED);
+    List<RequestDTO> list = new ArrayList<>();
+    list.add(request);
+    resultList.setResult(list);
+    return resultList;
+  }
+
+  private ResultList<RequestDTO> getNotOpenRequests() {
+    ResultList<RequestDTO> resultList = new ResultList<>();
+    RequestDTO request = new RequestDTO();
+    request.setStatus(CLOSED_FILLER);
+    List<RequestDTO> list = new ArrayList<>();
+    list.add(request);
+    resultList.setResult(list);
+    return resultList;
+  }
 }

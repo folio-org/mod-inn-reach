@@ -106,6 +106,14 @@ public class InnReachTransactionController implements InnReachTransactionApi {
   }
 
   @Override
+  @PostMapping("/{id}/itemhold/recall")
+  public ResponseEntity<Void> recallItemHoldTransaction(@PathVariable UUID id) {
+
+    transactionActionService.recallItemHold(id);
+    return ResponseEntity.noContent().build();
+  }
+
+  @Override
   @GetMapping
   public ResponseEntity<InnReachTransactionsDTO> getAllTransactions(Integer offset,
                                                                     Integer limit,

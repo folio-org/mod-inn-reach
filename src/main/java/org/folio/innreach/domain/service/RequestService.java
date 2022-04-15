@@ -1,5 +1,6 @@
 package org.folio.innreach.domain.service;
 
+import java.util.List;
 import java.util.UUID;
 
 import org.springframework.scheduling.annotation.Async;
@@ -38,4 +39,6 @@ public interface RequestService {
   boolean isCanceledOrExpired(RequestDTO request);
 
   void validateItemAvailability(InventoryItemDTO item);
+
+  List<RequestDTO> getRequestsByItemId(UUID itemId);
 }

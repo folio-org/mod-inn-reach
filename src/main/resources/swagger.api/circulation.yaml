@@ -293,6 +293,21 @@ paths:
       parameters:
         - $ref: 'api-common.yaml#/components/parameters/id'
         - $ref: 'circulation.yaml#/components/parameters/servicePointId'
+  /transactions/{id}/itemhold/recall:
+    post:
+      operationId: recallItemHoldTransaction
+      description: Recall item hold transaction
+      tags:
+        - inn-reach-transaction
+      responses:
+        '204':
+          description: No content
+        '404':
+          $ref: "api-common.yaml#/components/responses/trait_response_404"
+        '500':
+          $ref: "api-common.yaml#/components/responses/trait_response_500"
+      parameters:
+        - $ref: 'api-common.yaml#/components/parameters/id'
   /transactions/{id}/itemhold/cancel:
     post:
       operationId: cancelItemHoldTransaction

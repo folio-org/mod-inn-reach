@@ -60,18 +60,9 @@ public class InnReachTransactionServiceImpl implements InnReachTransactionServic
 
   @Override
   public InnReachTransactionDTO getInnReachTransaction(UUID transactionId) {
-    var transaction = repository.fetchOneById(transactionId)
+    return repository.fetchOneById(transactionId)
+      .map(transactionMapper::toDTO)
       .orElseThrow(() -> new EntityNotFoundException(String.format("InnReach transaction with id [%s] not found!", transactionId)));
-    if (transaction.getState() == ITEM_SHIPPED || transaction.getState() == ITEM_RECEIVED || transaction.getState() == RECEIVE_UNANNOUNCED) {
-      transaction.setState(RECALL);
-      log.info("Get innReach transaction with id {} and {} status", transaction.getId(), transaction.getState());
-      var loan = loanService.getById(transaction.getHold().getFolioLoanId());
-      var loanDueDate = loan.getDueDate().toInstant().truncatedTo(ChronoUnit.SECONDS);
-      var loanIntegerDueDate = (int) (loanDueDate.getEpochSecond());
-      transaction.getHold().setDueDateTime(loanIntegerDueDate);
-      notifier.reportRecallRequested(transaction, loanDueDate);
-    }
-    return transactionMapper.toDTO(transaction);
   }
 
   @Override
