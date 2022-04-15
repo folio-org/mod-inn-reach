@@ -543,10 +543,11 @@
         },
         {
           "methods": ["POST"],
-          "pathPattern": "/inn-reach/transactions/{id}/localhold/transfer-item/{itemBarcode}",
+          "pathPattern": "/inn-reach/transactions/{id}/localhold/transfer-item/{itemId}",
           "permissionsRequired": [
-            "inventory.items.collection.get",
-            "inventory-storage.holdings.item.get"
+            "inventory.items.item.get",
+            "circulation.requests.item.get",
+            "circulation.requests.item.move.post"
           ]
         }
       ]

@@ -805,7 +805,7 @@ paths:
       parameters:
         - $ref: '#/components/parameters/trackingId'
         - $ref: '#/components/parameters/centralCode'
-  /transactions/{id}/localhold/transfer-item/{itemBarcode}:
+  /transactions/{id}/localhold/transfer-item/{itemId}:
     post:
       operationId: transferLocalHold
       description: Transfer local hold to another item
@@ -824,7 +824,7 @@ paths:
           $ref: "api-common.yaml#/components/responses/trait_response_500"
       parameters:
         - $ref: 'api-common.yaml#/components/parameters/id'
-        - $ref: 'circulation.yaml#/components/parameters/itemBarcode'
+        - $ref: 'circulation.yaml#/components/parameters/itemId'
 components:
   schemas:
     code:
@@ -942,13 +942,6 @@ components:
       schema:
         type: string
         format: uuid
-    itemId:
-      name: itemId
-      in: path
-      required: true
-      schema:
-        type: string
-        format: uuid
     itemBarcode:
       name: itemBarcode
       description: Barcode of the item
@@ -980,3 +973,10 @@ components:
       description: Query parameters to filter transactions.
       schema:
         $ref: "#/components/schemas/innReachTransactionFilterParametersDTO"
+    itemId:
+      name: itemId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid

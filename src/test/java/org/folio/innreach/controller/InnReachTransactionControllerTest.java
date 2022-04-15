@@ -172,6 +172,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   private static final UUID PRE_POPULATED_PATRON_HOLD_REQUEST_ID = UUID.fromString("ea11eba7-3c0f-4d15-9cca-c8608cd6bc8a");
   private static final UUID PRE_POPULATED_PATRON_HOLD_ITEM_ID = UUID.fromString("9a326225-6530-41cc-9399-a61987bfab3c");
   private static final UUID FOLIO_CHECKOUT_ID = UUID.randomUUID();
+  private static final UUID PRE_POPULATED_LOCAL_HOLD_REQUEST_ID = UUID.fromString("4106d147-9085-4dfa-a59f-b8d50d551a48");
 
   private static final AuditableUser PRE_POPULATED_USER = AuditableUser.SYSTEM;
 
@@ -1773,8 +1774,8 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
 
     var cancelHold = createCancelTransactionHold();
     var responseEntity = testRestTemplate.postForEntity(
-        ITEM_HOLD_CANCEL_ENDPOINT, cancelHold, InnReachTransactionDTO.class,
-        PRE_POPULATED_ITEM_HOLD_TRANSACTION_ID);
+      ITEM_HOLD_CANCEL_ENDPOINT, cancelHold, InnReachTransactionDTO.class,
+      PRE_POPULATED_ITEM_HOLD_TRANSACTION_ID);
 
     assertEquals(HttpStatus.NO_CONTENT, responseEntity.getStatusCode());
 
@@ -1785,22 +1786,22 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     assertEquals(CLOSED_CANCELLED, cancelRequest.getStatus());
     assertEquals(cancelHold.getCancellationReasonId(), cancelRequest.getCancellationReasonId());
     assertEquals(cancelHold.getCancellationAdditionalInformation(),
-        cancelRequest.getCancellationAdditionalInformation());
+      cancelRequest.getCancellationAdditionalInformation());
   }
 
   @Test
   @Sql(scripts = {
-      "classpath:db/central-server/pre-populate-central-server.sql",
-      "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql",
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql",
   })
   void cancelItemHoldNotPerformed_if_requestIsNotFound() {
     when(circulationClient.findRequest(PRE_POPULATED_ITEM_HOLD_REQUEST_ID))
-        .thenReturn(Optional.empty());
+      .thenReturn(Optional.empty());
 
     var cancelHold = createCancelTransactionHold();
     var responseEntity = testRestTemplate.postForEntity(
-        ITEM_HOLD_CANCEL_ENDPOINT, cancelHold, InnReachTransactionDTO.class,
-        PRE_POPULATED_ITEM_HOLD_TRANSACTION_ID);
+      ITEM_HOLD_CANCEL_ENDPOINT, cancelHold, InnReachTransactionDTO.class,
+      PRE_POPULATED_ITEM_HOLD_TRANSACTION_ID);
 
     assertEquals(HttpStatus.NO_CONTENT, responseEntity.getStatusCode());
 
@@ -1809,19 +1810,19 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
 
   @ParameterizedTest
   @EnumSource(names = {"PATRON_HOLD", "LOCAL_HOLD", "BORROWER_RENEW", "BORROWING_SITE_CANCEL", "ITEM_IN_TRANSIT",
-      "RECEIVE_UNANNOUNCED", "RETURN_UNCIRCULATED", "CLAIMS_RETURNED", "ITEM_RECEIVED", "ITEM_SHIPPED", "LOCAL_CHECKOUT",
-      "CANCEL_REQUEST", "FINAL_CHECKIN", "RECALL", "TRANSFER", "OWNER_RENEW"})
+    "RECEIVE_UNANNOUNCED", "RETURN_UNCIRCULATED", "CLAIMS_RETURNED", "ITEM_RECEIVED", "ITEM_SHIPPED", "LOCAL_CHECKOUT",
+    "CANCEL_REQUEST", "FINAL_CHECKIN", "RECALL", "TRANSFER", "OWNER_RENEW"})
   @Sql(scripts = {
-      "classpath:db/central-server/pre-populate-central-server.sql",
-      "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql",
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql",
   })
   void returnHttp400_when_CancelItemHold_if_StateIsNotItemHold(InnReachTransaction.TransactionState state) {
     modifyTransactionState(PRE_POPULATED_ITEM_HOLD_TRANSACTION_ID, state);
 
     var cancelHold = createCancelTransactionHold();
     var responseEntity = testRestTemplate.postForEntity(
-        ITEM_HOLD_CANCEL_ENDPOINT, cancelHold, Error.class,
-        PRE_POPULATED_ITEM_HOLD_TRANSACTION_ID);
+      ITEM_HOLD_CANCEL_ENDPOINT, cancelHold, Error.class,
+      PRE_POPULATED_ITEM_HOLD_TRANSACTION_ID);
 
     assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
 
@@ -1830,7 +1831,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   }
 
   @ParameterizedTest
-  @EnumSource(names = {"PATRON_HOLD", "LOCAL_HOLD", "ITEM_HOLD","BORROWER_RENEW", "BORROWING_SITE_CANCEL", "ITEM_IN_TRANSIT",
+  @EnumSource(names = {"PATRON_HOLD", "LOCAL_HOLD", "ITEM_HOLD", "BORROWER_RENEW", "BORROWING_SITE_CANCEL", "ITEM_IN_TRANSIT",
     "RETURN_UNCIRCULATED", "CLAIMS_RETURNED", "ITEM_SHIPPED", "LOCAL_CHECKOUT",
     "CANCEL_REQUEST", "FINAL_CHECKIN", "RECALL", "TRANSFER", "OWNER_RENEW"})
   @Sql(scripts = {
@@ -1907,18 +1908,25 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql",
   })
-  void transferLocalHoldItem(){
+  void transferLocalHoldItem() {
     var holding = createInventoryHoldingDTO();
     var item = createInventoryItemDTO();
+    var request = createRequestDTO();
     item.setHoldingsRecordId(holding.getId());
+    request.setId(PRE_POPULATED_LOCAL_HOLD_REQUEST_ID);
+    request.setHoldingsRecordId(holding.getId());
+    request.setInstanceId(holding.getInstanceId());
 
-    when(inventoryClient.getItemByBarcode(item.getBarcode())).thenReturn(ResultList.asSinglePage(item));
-    when(holdingsStorageClient.findHolding(holding.getId())).thenReturn(Optional.of(holding));
+    when(inventoryClient.findItem(item.getId())).thenReturn(Optional.of(item));
+    when(circulationClient.findRequest(request.getId())).thenReturn(Optional.of(request));
+    when(circulationClient.moveRequest(eq(request.getId()), any())).thenReturn(request);
 
     var responseEntity = testRestTemplate.postForEntity(
       LOCAL_HOLD_TRANSFER_ITEM_ENDPOINT, null, InnReachTransactionDTO.class,
-      PRE_POPULATED_LOCAL_HOLD_TRANSACTION_ID, item.getBarcode()
+      PRE_POPULATED_LOCAL_HOLD_TRANSACTION_ID, item.getId()
     );
+
+    verify(requestService).moveItemRequest(request.getId(), item);
 
     assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
     assertNotNull(responseEntity.getBody());
@@ -1935,12 +1943,12 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql",
   })
-  void return400_when_transferLocalHoldItem_and_transactionIsNotOfLocalHold(){
+  void return400_when_transferLocalHoldItem_and_transactionIsNotOfLocalHold() {
     var item = createInventoryItemDTO();
 
     var responseEntity = testRestTemplate.postForEntity(
       LOCAL_HOLD_TRANSFER_ITEM_ENDPOINT, null, InnReachTransactionDTO.class,
-      PRE_POPULATED_ITEM_HOLD_TRANSACTION_ID, item.getBarcode()
+      PRE_POPULATED_ITEM_HOLD_TRANSACTION_ID, item.getId()
     );
 
     assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());

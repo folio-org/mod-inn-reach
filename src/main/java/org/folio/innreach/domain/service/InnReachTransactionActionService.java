@@ -39,6 +39,7 @@ public interface InnReachTransactionActionService {
   void transferItemHold(UUID transactionId, UUID itemId);
 
   void finalCheckInItemHold(UUID transactionId, UUID servicePointId);
-  InnReachTransactionDTO transferLocalHold(UUID transactionId, String itemBarcode);
+
+  InnReachTransactionDTO transferLocalHold(UUID transactionId, UUID itemId);
 
 }

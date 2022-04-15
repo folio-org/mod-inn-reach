@@ -53,7 +53,6 @@ import org.folio.innreach.domain.entity.TransactionPatronHold;
 import org.folio.innreach.domain.event.CancelRequestEvent;
 import org.folio.innreach.domain.event.MoveRequestEvent;
 import org.folio.innreach.domain.exception.EntityNotFoundException;
-import org.folio.innreach.domain.service.HoldingsService;
 import org.folio.innreach.domain.service.InnReachTransactionActionService;
 import org.folio.innreach.domain.service.ItemService;
 import org.folio.innreach.domain.service.LoanService;
@@ -61,7 +60,6 @@ import org.folio.innreach.domain.service.PatronHoldService;
 import org.folio.innreach.domain.service.RequestService;
 import org.folio.innreach.dto.CancelTransactionHoldDTO;
 import org.folio.innreach.dto.CheckInDTO;
-import org.folio.innreach.dto.Holding;
 import org.folio.innreach.dto.InnReachTransactionDTO;
 import org.folio.innreach.dto.LoanStatus;
 import org.folio.innreach.dto.PatronHoldCheckInResponseDTO;
@@ -84,7 +82,6 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
   private final LoanService loanService;
   private final PatronHoldService patronHoldService;
   private final ItemService itemService;
-  private final HoldingsService holdingsService;
   private final InstanceStorageClient instanceStorageClient;
   private final InnReachTransactionActionNotifier notifier;
   private final ApplicationEventPublisher eventPublisher;
@@ -330,19 +327,24 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
   }
 
   @Override
-  public InnReachTransactionDTO transferLocalHold(UUID transactionId, String itemBarcode) {
+  public InnReachTransactionDTO transferLocalHold(UUID transactionId, UUID itemId) {
     var transaction = fetchTransactionOfType(transactionId, LOCAL);
     var hold = transaction.getHold();
-    var item = fetchItemByBarcode(itemBarcode);
+    var item = fetchItemById(itemId);
 
     transaction.setState(TRANSFER);
     hold.setFolioItemId(item.getId());
 
-    var holdingId = item.getHoldingsRecordId();
-    if (!hold.getFolioHoldingId().equals(holdingId)) {
-      transaction.getHold().setFolioHoldingId(holdingId);
-      var holding = fetchHoldingById(holdingId);
-      transaction.getHold().setFolioInstanceId(holding.getInstanceId());
+    var requestId = hold.getFolioRequestId();
+    var request = requestService.findRequest(requestId);
+    if (!itemId.equals(request.getItemId())) {
+      request = requestService.moveItemRequest(requestId, item);
+    }
+
+    var holdingId = request.getHoldingsRecordId();
+    if (!holdingId.equals(hold.getFolioHoldingId())) {
+      hold.setFolioHoldingId(holdingId);
+      hold.setFolioInstanceId(request.getInstanceId());
     }
 
     return transactionMapper.toDTO(transaction);
@@ -608,10 +610,5 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
 
   private boolean isLoanCheckedIn(String loanAction, String loanStatus) {
     return "checkedin".equalsIgnoreCase(loanAction) && "closed".equalsIgnoreCase(loanStatus);
-  }
-
-  private Holding fetchHoldingById(UUID id) {
-    return holdingsService.find(id)
-      .orElseThrow(() -> new EntityNotFoundException("Holding is not found by id: " + id));
   }
 }

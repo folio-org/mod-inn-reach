@@ -113,11 +113,12 @@ public class InnReachTransactionController implements InnReachTransactionApi {
     return ResponseEntity.noContent().build();
   }
 
+
   @Override
-  @PostMapping("/{id}/localhold/transfer-item/{itemBarcode}")
+  @PostMapping("/{id}/localhold/transfer-item/{itemId}")
   public ResponseEntity<InnReachTransactionDTO> transferLocalHold(@PathVariable UUID id,
-                                                                  @PathVariable String itemBarcode) {
-    var response = transactionActionService.transferLocalHold(id, itemBarcode);
+                                                                  @PathVariable UUID itemId) {
+    var response = transactionActionService.transferLocalHold(id, itemId);
     return ResponseEntity.ok(response);
   }
 
