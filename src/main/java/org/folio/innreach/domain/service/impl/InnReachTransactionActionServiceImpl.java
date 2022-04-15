@@ -186,7 +186,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
     var loanAction = loan.getAction();
     var loanStatus = ofNullable(loan.getStatus()).map(LoanStatus::getName).orElse(null);
 
-    if ("checkedin".equalsIgnoreCase(loanAction) && "Closed".equalsIgnoreCase(loanStatus)) {
+    if (isLoanCheckedIn(loanAction, loanStatus)) {
       updateTransactionOnLoanClosure(loan, transaction);
     } else if ("renewed".equalsIgnoreCase(loanAction)) {
       updateTransactionOnLoanRenewal(loan, transaction);
@@ -302,6 +302,23 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
     requestService.validateItemAvailability(item);
 
     eventPublisher.publishEvent(MoveRequestEvent.of(transaction, item));
+  }
+
+  @Override
+  public void finalCheckInItemHold(UUID transactionId, UUID servicePointId) {
+    var transaction = fetchTransactionOfType(transactionId, ITEM);
+
+    verifyState(transaction, ITEM_RECEIVED, RECEIVE_UNANNOUNCED);
+
+    var loan = loanService.getById(transaction.getHold().getFolioLoanId());
+    var loanAction = loan.getAction();
+    var loanStatus = ofNullable(loan.getStatus()).map(LoanStatus::getName).orElse(null);
+
+    if (isLoanCheckedIn(loanAction, loanStatus)) {
+      updateItemTransactionOnLoanClosure(transaction, loan.getId());
+    } else {
+      loanService.checkInItem(transaction, servicePointId);
+    }
   }
 
   private void associateLoanWithTransaction(UUID loanId, Date loanDueDate, UUID itemId, InnReachTransaction transaction) {
@@ -559,5 +576,9 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
   private InventoryItemDTO fetchItemByBarcode(String itemBarcode) {
     return itemService.findItemByBarcode(itemBarcode)
       .orElseThrow(() -> new IllegalArgumentException("Item is not found by barcode: " + itemBarcode));
+  }
+
+  private boolean isLoanCheckedIn(String loanAction, String loanStatus) {
+    return "checkedin".equalsIgnoreCase(loanAction) && "closed".equalsIgnoreCase(loanStatus);
   }
 }

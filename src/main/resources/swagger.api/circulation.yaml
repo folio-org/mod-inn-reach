@@ -197,6 +197,22 @@ paths:
         - $ref: 'api-common.yaml#/components/parameters/id'
         - $ref: 'circulation.yaml#/components/parameters/servicePointId'
         - $ref: 'circulation.yaml#/components/parameters/itemBarcode'
+  /transactions/{id}/itemhold/finalcheckin/{servicePointId}:
+    post:
+      operationId: finalCheckInItemHold
+      description: Final check-in of an item loaned through INN-Reach
+      tags:
+        - inn-reach-transaction
+      responses:
+        '204':
+          description: No content
+        '404':
+          $ref: "api-common.yaml#/components/responses/trait_response_404"
+        '500':
+          $ref: "api-common.yaml#/components/responses/trait_response_500"
+      parameters:
+        - $ref: 'api-common.yaml#/components/parameters/id'
+        - $ref: 'circulation.yaml#/components/parameters/servicePointId'
   /transactions/{id}/itemhold/transfer-item/{itemBarcode}:
     post:
       operationId: transferItemHold

@@ -144,6 +144,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   private static final String ITEM_HOLD_CANCEL_ENDPOINT = "/inn-reach/transactions/{id}/itemhold/cancel";
   private static final String PATRON_HOLD_RETURN_ITEM_ENDPOINT = "/inn-reach/transactions/{id}/patronhold/return-item/{servicePointId}";
   private static final String ITEM_HOLD_TRANSFER_ITEM_ENDPOINT = "/inn-reach/transactions/{id}/itemhold/transfer-item/{itemBarcode}";
+  private static final String ITEM_HOLD_FINAL_CHECK_IN_ENDPOINT = "/inn-reach/transactions/{id}/itemhold/finalcheckin/{servicePointId}";
 
   private static final String TRACKING_ID = "trackingid1";
   private static final String PRE_POPULATED_TRACKING_ID = "tracking1";
@@ -1782,6 +1783,79 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
 
     assertNotNull(responseEntity.getBody());
     assertTrue(responseEntity.getBody().getMessage().contains("Unexpected transaction state"));
+  }
+
+  @ParameterizedTest
+  @EnumSource(names = {"PATRON_HOLD", "LOCAL_HOLD", "ITEM_HOLD","BORROWER_RENEW", "BORROWING_SITE_CANCEL", "ITEM_IN_TRANSIT",
+    "RETURN_UNCIRCULATED", "CLAIMS_RETURNED", "ITEM_SHIPPED", "LOCAL_CHECKOUT",
+    "CANCEL_REQUEST", "FINAL_CHECKIN", "RECALL", "TRANSFER", "OWNER_RENEW"})
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql",
+  })
+  void returnHttp400WhenFinalCheckInItemHoldStateIsNotItemReceivedOrReceiveUnannounced(InnReachTransaction.TransactionState state) {
+    modifyTransactionState(PRE_POPULATED_ITEM_HOLD_TRANSACTION_ID, state);
+
+    var responseEntity = testRestTemplate.postForEntity(
+      ITEM_HOLD_FINAL_CHECK_IN_ENDPOINT, null, Error.class,
+      PRE_POPULATED_ITEM_HOLD_TRANSACTION_ID, UUID.randomUUID());
+
+    assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
+
+    assertNotNull(responseEntity.getBody());
+    assertTrue(responseEntity.getBody().getMessage().contains("Unexpected transaction state"));
+  }
+
+  @ParameterizedTest
+  @EnumSource(names = {"ITEM_RECEIVED", "RECEIVE_UNANNOUNCED"})
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql",
+  })
+  void testItemHoldFinalCheckInWhenLoanIsClosed(InnReachTransaction.TransactionState state) {
+    var loanStatus = new LoanStatus()
+      .name("closed");
+    var loan = new LoanDTO()
+      .action("checkedin")
+      .status(loanStatus);
+
+    modifyTransactionState(PRE_POPULATED_ITEM_HOLD_TRANSACTION_ID, state);
+
+    when(circulationClient.findLoan(any())).thenReturn(Optional.ofNullable(loan));
+
+    var responseEntity = testRestTemplate.postForEntity(
+      ITEM_HOLD_FINAL_CHECK_IN_ENDPOINT, null, void.class,
+      PRE_POPULATED_ITEM_HOLD_TRANSACTION_ID, UUID.randomUUID()
+    );
+
+    assertEquals(HttpStatus.NO_CONTENT, responseEntity.getStatusCode());
+
+    var transaction = repository.fetchOneById(PRE_POPULATED_ITEM_HOLD_TRANSACTION_ID);
+    assertEquals(FINAL_CHECKIN, transaction.get().getState());
+
+    verify(actionNotifier).reportFinalCheckIn(any());
+  }
+
+  @ParameterizedTest
+  @EnumSource(names = {"ITEM_RECEIVED", "RECEIVE_UNANNOUNCED"})
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql",
+  })
+  void testItemHoldFinalCheckInWhenLoanIsOpen(InnReachTransaction.TransactionState state) {
+
+    modifyTransactionState(PRE_POPULATED_ITEM_HOLD_TRANSACTION_ID, state);
+
+    when(circulationClient.findLoan(any())).thenReturn(Optional.of(new LoanDTO()));
+
+    var responseEntity = testRestTemplate.postForEntity(
+      ITEM_HOLD_FINAL_CHECK_IN_ENDPOINT, null, void.class,
+      PRE_POPULATED_ITEM_HOLD_TRANSACTION_ID, UUID.randomUUID()
+    );
+
+    assertEquals(HttpStatus.NO_CONTENT, responseEntity.getStatusCode());
+
+    verify(circulationClient).checkInByBarcode(any());
   }
 
   private void mockFindRequest(UUID requestId, RequestDTO.RequestStatus status) {
