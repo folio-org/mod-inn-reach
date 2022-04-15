@@ -48,9 +48,9 @@ public class InnReachTransactionController implements InnReachTransactionApi {
   }
 
   @Override
-  @PostMapping("/{id}/itemhold/transfer-item/{itemBarcode}")
-  public ResponseEntity<Void> transferItemHold(@PathVariable UUID id, @PathVariable String itemBarcode) {
-    transactionActionService.transferItemHold(id, itemBarcode);
+  @PostMapping("/{id}/itemhold/transfer-item/{itemId}")
+  public ResponseEntity<Void> transferItemHold(@PathVariable UUID id, @PathVariable UUID itemId) {
+    transactionActionService.transferItemHold(id, itemId);
     return ResponseEntity.noContent().build();
   }
 

@@ -143,7 +143,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   private static final String PATRON_HOLD_CANCEL_ENDPOINT = "/inn-reach/transactions/{id}/patronhold/cancel";
   private static final String ITEM_HOLD_CANCEL_ENDPOINT = "/inn-reach/transactions/{id}/itemhold/cancel";
   private static final String PATRON_HOLD_RETURN_ITEM_ENDPOINT = "/inn-reach/transactions/{id}/patronhold/return-item/{servicePointId}";
-  private static final String ITEM_HOLD_TRANSFER_ITEM_ENDPOINT = "/inn-reach/transactions/{id}/itemhold/transfer-item/{itemBarcode}";
+  private static final String ITEM_HOLD_TRANSFER_ITEM_ENDPOINT = "/inn-reach/transactions/{id}/itemhold/transfer-item/{itemId}";
   private static final String ITEM_HOLD_FINAL_CHECK_IN_ENDPOINT = "/inn-reach/transactions/{id}/itemhold/finalcheckin/{servicePointId}";
 
   private static final String TRACKING_ID = "trackingid1";
@@ -1678,15 +1678,20 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql",
   })
-  void transferItemHoldItem() {
+  void transferItemHoldItem_moveRequest() {
     var item = createInventoryItemDTO();
     item.setStatus(AVAILABLE);
+    var itemId = item.getId();
 
-    when(inventoryClient.getItemByBarcode(any())).thenReturn(ResultList.asSinglePage(item));
+    var request = createRequestDTO();
+    request.setStatus(OPEN_AWAITING_PICKUP);
+
+    when(inventoryClient.findItem(any())).thenReturn(Optional.of(item));
+    when(circulationClient.findRequest(any())).thenReturn(Optional.of(request));
 
     var responseEntity = testRestTemplate.postForEntity(
       ITEM_HOLD_TRANSFER_ITEM_ENDPOINT, null, Void.class,
-      PRE_POPULATED_ITEM_HOLD_TRANSACTION_ID, "newItemBarcode"
+      PRE_POPULATED_ITEM_HOLD_TRANSACTION_ID, itemId
     );
 
     assertEquals(HttpStatus.NO_CONTENT, responseEntity.getStatusCode());
@@ -1699,19 +1704,56 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql",
   })
-  void transferItemHoldItem_itemIsNotAvailable() {
+  void transferItemHoldItem_linkMovedRequest() {
+    var item = createInventoryItemDTO();
+    item.setStatus(AVAILABLE);
+    var itemId = item.getId();
+
+    var request = createRequestDTO();
+    request.setStatus(OPEN_AWAITING_PICKUP);
+    request.setItemId(itemId);
+
+    when(inventoryClient.findItem(any())).thenReturn(Optional.of(item));
+    when(circulationClient.findRequest(any())).thenReturn(Optional.of(request));
+
+    var responseEntity = testRestTemplate.postForEntity(
+      ITEM_HOLD_TRANSFER_ITEM_ENDPOINT, null, Void.class,
+      PRE_POPULATED_ITEM_HOLD_TRANSACTION_ID, itemId
+    );
+
+    assertEquals(HttpStatus.NO_CONTENT, responseEntity.getStatusCode());
+
+    verify(actionNotifier).reportTransferRequest(any(), eq(item.getHrid()));
+    verify(circulationClient, never()).moveRequest(any(), any());
+
+    var updatedTransaction = fetchTransaction(PRE_POPULATED_ITEM_HOLD_TRANSACTION_ID);
+    var updatedHold = updatedTransaction.getHold();
+    assertEquals(TRANSFER, updatedTransaction.getState());
+    assertEquals(itemId, updatedHold.getFolioItemId());
+    assertEquals(item.getBarcode(), updatedHold.getFolioItemBarcode());
+    assertEquals(request.getInstanceId(), updatedHold.getFolioInstanceId());
+    assertEquals(request.getHoldingsRecordId(), updatedHold.getFolioHoldingId());
+  }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql",
+  })
+  void transferItemHoldItem_moveRequestWithNotAvailableItem() {
     var item = createInventoryItemDTO();
     item.setStatus(UNAVAILABLE);
 
     var request = createRequestDTO();
     request.setStatus(OPEN_AWAITING_PICKUP);
 
-    when(inventoryClient.getItemByBarcode(any())).thenReturn(ResultList.asSinglePage(item));
+    when(inventoryClient.findItem(any())).thenReturn(Optional.of(item));
+    when(circulationClient.findRequest(any())).thenReturn(Optional.of(request));
     when(circulationClient.queryRequestsByItemId(any())).thenReturn(ResultList.asSinglePage(request));
 
     var responseEntity = testRestTemplate.postForEntity(
       ITEM_HOLD_TRANSFER_ITEM_ENDPOINT, null, Void.class,
-      PRE_POPULATED_ITEM_HOLD_TRANSACTION_ID, "newItemBarcode"
+      PRE_POPULATED_ITEM_HOLD_TRANSACTION_ID, UUID.randomUUID()
     );
 
     assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());

@@ -213,7 +213,7 @@ paths:
       parameters:
         - $ref: 'api-common.yaml#/components/parameters/id'
         - $ref: 'circulation.yaml#/components/parameters/servicePointId'
-  /transactions/{id}/itemhold/transfer-item/{itemBarcode}:
+  /transactions/{id}/itemhold/transfer-item/{itemId}:
     post:
       operationId: transferItemHold
       description: Transfer item hold to another item
@@ -228,7 +228,7 @@ paths:
           $ref: "api-common.yaml#/components/responses/trait_response_500"
       parameters:
         - $ref: 'api-common.yaml#/components/parameters/id'
-        - $ref: 'circulation.yaml#/components/parameters/itemBarcode'
+        - $ref: 'circulation.yaml#/components/parameters/itemId'
   /transactions/{id}/patronhold/check-out-item/{servicePointId}:
     post:
       operationId: checkOutPatronHoldItem
@@ -917,6 +917,13 @@ components:
         type: string
     servicePointId:
       name: servicePointId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    itemId:
+      name: itemId
       in: path
       required: true
       schema:

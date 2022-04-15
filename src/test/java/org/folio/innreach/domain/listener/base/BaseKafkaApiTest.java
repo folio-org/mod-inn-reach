@@ -1,7 +1,16 @@
 package org.folio.innreach.domain.listener.base;
 
-import static org.folio.innreach.domain.listener.base.BaseKafkaApiTest.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
+
+import static org.folio.innreach.domain.listener.base.BaseKafkaApiTest.CIRC_CHECKIN_TOPIC;
 import static org.folio.innreach.domain.listener.base.BaseKafkaApiTest.CIRC_LOAN_TOPIC;
+import static org.folio.innreach.domain.listener.base.BaseKafkaApiTest.CIRC_REQUEST_TOPIC;
+import static org.folio.innreach.domain.listener.base.BaseKafkaApiTest.INVENTORY_HOLDING_TOPIC;
+import static org.folio.innreach.domain.listener.base.BaseKafkaApiTest.INVENTORY_INSTANCE_TOPIC;
+import static org.folio.innreach.domain.listener.base.BaseKafkaApiTest.INVENTORY_ITEM_TOPIC;
+import static org.folio.innreach.domain.listener.base.BaseKafkaApiTest.TestTenantController;
+import static org.folio.innreach.domain.listener.base.BaseKafkaApiTest.TestTenantScopedExecutionService;
 
 import java.util.List;
 import java.util.UUID;
@@ -12,10 +21,12 @@ import javax.validation.Valid;
 import lombok.SneakyThrows;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
@@ -36,6 +47,8 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import org.folio.innreach.ModInnReachApplication;
 import org.folio.innreach.domain.event.DomainEvent;
 import org.folio.innreach.domain.service.impl.TenantScopedExecutionService;
+import org.folio.innreach.external.client.feign.InnReachAuthClient;
+import org.folio.innreach.external.dto.AccessTokenDTO;
 import org.folio.spring.liquibase.FolioLiquibaseConfiguration;
 import org.folio.tenant.domain.dto.TenantAttributes;
 import org.folio.tenant.rest.resource.TenantApi;
@@ -61,11 +74,19 @@ public class BaseKafkaApiTest {
   @Autowired
   protected EmbeddedKafkaBroker embeddedKafkaBroker;
 
+  @MockBean
+  protected InnReachAuthClient innReachAuthClient;
+
   protected KafkaTemplate<String, DomainEvent> kafkaTemplate;
 
   @BeforeAll
   public void setUp() {
     kafkaTemplate = buildKafkaTemplate();
+  }
+
+  @BeforeEach
+  public void setUpMocks() {
+    when(innReachAuthClient.getAccessToken(any(), any())).thenReturn(ResponseEntity.ok(new AccessTokenDTO()));
   }
 
   protected static <T> List<ConsumerRecord<String, DomainEvent<T>>> asSingleConsumerRecord(String topic, UUID entityId, DomainEvent<T> event) {
