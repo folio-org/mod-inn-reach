@@ -65,7 +65,11 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.RandomStringUtils;
+import org.folio.innreach.domain.service.CentralServerService;
 import org.folio.innreach.domain.service.InnReachRecallUserService;
+import org.folio.innreach.mapper.CentralServerMapper;
+import org.folio.innreach.mapper.InnReachRecallUserMapper;
+import org.folio.innreach.repository.CentralServerRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -160,16 +164,17 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   public static final String TRANSACTION_WITH_ITEM_HOLD_ID = "ab2393a1-acc4-4849-82ac-8cc0c37339e1";
   public static final String TRANSACTION_WITH_LOCAL_HOLD_ID = "79b0a1fb-55be-4e55-9d84-01303aaec1ce";
   public static final String TRANSACTION_WITH_PATRON_HOLD_ID = "0aab1720-14b4-4210-9a19-0d0bf1cd64d3";
-  public static final String TRANSACTION_WITH_ITEM_RECEIVED = "aa5daccd-8788-4bb7-8f9a-6ae0b21bd18d";
 
-  private static final UUID PRE_POPULATE_CENTRAL_SERVER_ID = UUID.fromString("cfae4887-f8fb-4e4c-a5cc-34f74e353cf8");
   private static final UUID PRE_POPULATED_PATRON_HOLD_TRANSACTION_ID = UUID.fromString("0aab1720-14b4-4210-9a19-0d0bf1cd64d3");
   private static final UUID PRE_POPULATED_ITEM_HOLD_TRANSACTION_ID = UUID.fromString("ab2393a1-acc4-4849-82ac-8cc0c37339e1");
   private static final UUID PRE_POPULATED_ITEM_HOLD_REQUEST_ID = UUID.fromString("26278b3a-de32-4deb-b81b-896637b3dbeb");
+  private static final UUID PRE_POPULATED_FOLIO_LOAN_ID = UUID.fromString("06e820e3-71a0-455e-8c73-3963aea677d4");
+  private static final UUID PRE_POPULATED_FOLIO_ITEM_ID = UUID.fromString("4def31b0-2b60-4531-ad44-7eab60fa5428");
+  private static final UUID PRE_POPULATE_CENTRAL_SERVER_ID = UUID.fromString("cfae4887-f8fb-4e4c-a5cc-34f74e353cf8");
   private static final UUID PRE_POPULATED_ITEM_ID = UUID.fromString("bea8b22f-c9a9-4303-b318-dcd9439d8c3c");
-  private static final UUID PRE_POPULATED_LOAN_ID = UUID.fromString("3c9f9745-e26b-4173-aa47-bedbcbdc6d31");
   private static final UUID PRE_POPULATED_TRANSACTION_ID3 = UUID.fromString("79b0a1fb-55be-4e55-9d84-01303aaec1ce");
   private static final UUID PRE_POPULATED_ITEM_SHIPPED_TRANSACTION_ID = UUID.fromString("7106c3ac-890a-4126-bf9b-a10b67555b6e");
+  private static final String TRANSACTION_WITH_ITEM_RECEIVED = "aa5daccd-8788-4bb7-8f9a-6ae0b21bd18d";
   private static final String PRE_POPULATED_PATRON_HOLD_ITEM_BARCODE = "1111111";
   private static final String PRE_POPULATED_ITEM_HOLD_ITEM_BARCODE = "DEF-def-5678";
   private static final String PRE_POPULATED_CENTRAL_PATRON_ID2 = "u6ct3wssbnhxvip3sobwmxvhoa";
@@ -189,6 +194,14 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   private InnReachTransactionPickupLocationMapper transactionPickupLocationMapper;
   @Autowired
   private InnReachTransactionMapper innReachTransactionMapper;
+  @Autowired
+  private CentralServerMapper centralServerMapper;
+  @Autowired
+  private InnReachRecallUserMapper recallUserMapper;
+  @Autowired
+  private CentralServerRepository centralServerRepository;
+  @Autowired
+  private CentralServerService centralServerService;
 
   @MockBean
   private InventoryClient inventoryClient;
@@ -1762,32 +1775,38 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
 
   @Test
   @Sql(scripts = {
-    "classpath:db/central-server/pre-populate-central-server.sql",
-    "classpath:db/inn-reach-transaction/pre-populate-separate-inn-reach-transaction.sql",
+    "classpath:db/inn-reach-recall-user/pre-populate-inn-reach-recall-user.sql",
+    "classpath:db/central-server/pre-populate-central-server-with-recall-user.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
   })
   void recallItemHoldWhenRequestStatusOpenNotYetFilled() {
+    var transaction = repository.fetchOneById(UUID.fromString(TRANSACTION_WITH_ITEM_HOLD_ID)).get();
+    transaction.setState(ITEM_RECEIVED);
+    repository.save(transaction);
+
     var loan = new LoanDTO();
     var currentDate = new Date();
     loan.setDueDate(currentDate);
     var intCurrentDate = (int) currentDate.toInstant().truncatedTo(ChronoUnit.SECONDS).getEpochSecond();
-    when(circulationClient.queryRequestsByItemId(PRE_POPULATED_ITEM_ID)).thenReturn(getOpenRequests());
-    when(circulationClient.findLoan(PRE_POPULATED_LOAN_ID)).thenReturn(Optional.of(loan));
-    when(innReachClient.postInnReachApi(any(), anyString(), anyString(), anyString(), any())).thenReturn("test");
+
+    when(circulationClient.queryRequestsByItemId(PRE_POPULATED_FOLIO_ITEM_ID)).thenReturn(getOpenRequests());
+    when(circulationClient.findLoan(PRE_POPULATED_FOLIO_LOAN_ID)).thenReturn(Optional.of(loan));
+    when(innReachClient.postInnReachApi(any(), anyString(), anyString(), anyString(), any())).thenReturn("response");
 
     var responseEntity = testRestTemplate.postForEntity(
-      ITEM_HOLD_RECALL_ENDPOINT, null, Void.class, TRANSACTION_WITH_ITEM_RECEIVED);
+      ITEM_HOLD_RECALL_ENDPOINT, null, Void.class, TRANSACTION_WITH_ITEM_HOLD_ID);
 
-    var transaction = repository.fetchOneById(UUID.fromString(TRANSACTION_WITH_ITEM_RECEIVED)).get();
+    var transactionAfterRecall = repository.fetchOneById(UUID.fromString(TRANSACTION_WITH_ITEM_HOLD_ID)).get();
 
     assertEquals(HttpStatus.NO_CONTENT, responseEntity.getStatusCode());
-    assertEquals(RECALL, transaction.getState());
-    assertEquals(intCurrentDate, transaction.getHold().getDueDateTime());
+    assertEquals(RECALL, transactionAfterRecall.getState());
+    assertEquals(intCurrentDate, transactionAfterRecall.getHold().getDueDateTime());
   }
 
   @Test
   @Sql(scripts = {
-    "classpath:db/central-server/pre-populate-separate-central-server.sql",
-    "classpath:db/inn-reach-transaction/pre-populate-separate-inn-reach-transaction.sql",
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-separate-inn-reach-transaction.sql"
   })
   void recallItemHoldWhenRequestStatusNotOpen() {
     when(circulationClient.queryRequestsByItemId(PRE_POPULATED_ITEM_ID)).thenReturn(getNotOpenRequests());
@@ -1797,11 +1816,11 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
 
     assertEquals(HttpStatus.NO_CONTENT, responseEntity.getStatusCode());
 
-    var centralServerIdCaptor = ArgumentCaptor.forClass(UUID.class);
-    verify(recallUserService).getInnReachRecallUser(centralServerIdCaptor.capture());
-    var centralServerId = centralServerIdCaptor.getValue();
+    var centralServerCodeCaptor = ArgumentCaptor.forClass(String.class);
+    verify(recallUserService).getRecallUserForCentralServer(centralServerCodeCaptor.capture());
+    var centralServerCode = centralServerCodeCaptor.getValue();
 
-    assertEquals(PRE_POPULATE_CENTRAL_SERVER_ID, centralServerId);
+    assertEquals("d5ir", centralServerCode);
   }
 
   private void mockFindRequest(UUID requestId, RequestDTO.RequestStatus status) {
@@ -1852,6 +1871,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     ResultList<RequestDTO> resultList = new ResultList<>();
     RequestDTO request = new RequestDTO();
     request.setStatus(OPEN_NOT_YET_FILLED);
+    request.setRequestType(RequestDTO.RequestType.RECALL.toString());
     List<RequestDTO> list = new ArrayList<>();
     list.add(request);
     resultList.setResult(list);

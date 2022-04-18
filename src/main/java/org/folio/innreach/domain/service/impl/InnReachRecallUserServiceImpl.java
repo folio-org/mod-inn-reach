@@ -3,6 +3,7 @@ package org.folio.innreach.domain.service.impl;
 import java.util.UUID;
 
 import lombok.RequiredArgsConstructor;
+import org.folio.innreach.domain.entity.InnReachRecallUser;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,6 +22,7 @@ public class InnReachRecallUserServiceImpl implements InnReachRecallUserService 
   private final CentralServerRepository centralServerRepository;
   private final InnReachRecallUserRepository recallUserRepository;
   private final InnReachRecallUserMapper recallUserMapper;
+  private final CentralServerRepository centralserverRepository;
 
   @Override
   @Transactional
@@ -52,6 +54,13 @@ public class InnReachRecallUserServiceImpl implements InnReachRecallUserService 
     innReachRecallUser.setUserId(innReachRecallUserDTO.getUserId());
 
     return recallUserMapper.toDto(centralServer.getInnReachRecallUser());
+  }
+
+  @Override
+  public InnReachRecallUser getRecallUserForCentralServer(String centralCode) {
+    return centralserverRepository.fetchOneByCentralCode(centralCode)
+      .map(CentralServer::getInnReachRecallUser)
+      .orElseThrow(() -> new EntityNotFoundException("Recall user is not set for central server with code = " + centralCode));
   }
 
   private CentralServer fetchCentralServerWithRecallUser(UUID centralServerId) {

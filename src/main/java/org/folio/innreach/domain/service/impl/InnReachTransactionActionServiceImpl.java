@@ -4,9 +4,6 @@ import static java.lang.String.format;
 import static java.util.Optional.ofNullable;
 
 import static org.folio.innreach.domain.dto.folio.circulation.RequestDTO.RequestStatus.CLOSED_CANCELLED;
-import static org.folio.innreach.domain.dto.folio.circulation.RequestDTO.RequestStatus.OPEN_AWAITING_DELIVERY;
-import static org.folio.innreach.domain.dto.folio.circulation.RequestDTO.RequestStatus.OPEN_AWAITING_PICKUP;
-import static org.folio.innreach.domain.dto.folio.circulation.RequestDTO.RequestStatus.OPEN_IN_TRANSIT;
 import static org.folio.innreach.domain.dto.folio.circulation.RequestDTO.RequestStatus.OPEN_NOT_YET_FILLED;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.BORROWER_RENEW;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.BORROWING_SITE_CANCEL;
@@ -43,10 +40,9 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 
+import org.folio.innreach.domain.dto.folio.circulation.RequestDTO.RequestType;
 import org.folio.innreach.domain.event.RecallRequestEvent;
-import org.folio.innreach.domain.service.CentralServerService;
 import org.folio.innreach.domain.service.InnReachRecallUserService;
-import org.folio.innreach.mapper.InnReachRecallUserMapper;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -87,12 +83,10 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
 
   private final InnReachTransactionRepository transactionRepository;
   private final InnReachTransactionMapper transactionMapper;
-  private final InnReachRecallUserMapper recallUserMapper;
   private final RequestService requestService;
   private final LoanService loanService;
   private final PatronHoldService patronHoldService;
   private final ItemService itemService;
-  private final CentralServerService centralServerService;
   private final InnReachRecallUserService recallUserService;
   private final InstanceStorageClient instanceStorageClient;
   private final InnReachTransactionActionNotifier notifier;
@@ -282,7 +276,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
 
     verifyState(transaction, ITEM_SHIPPED, ITEM_RECEIVED, RECEIVE_UNANNOUNCED);
 
-    var folioItemId= transaction.getHold().getFolioItemId();
+    var folioItemId = transaction.getHold().getFolioItemId();
     recallItem(transaction, folioItemId);
 
   }
@@ -341,21 +335,29 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
   private void recallItem(InnReachTransaction transaction, UUID itemId) {
     List<RequestDTO> requestList = requestService.getRequestsByItemId(itemId);
     for (RequestDTO request : requestList) {
-      if (request.getStatus() == OPEN_NOT_YET_FILLED) {
-        transaction.setState(RECALL);
-        var loan = loanService.getById(transaction.getHold().getFolioLoanId());
-        var loanDueDate = loan.getDueDate().toInstant().truncatedTo(ChronoUnit.SECONDS);
-        var loanIntegerDueDate = (int) (loanDueDate.getEpochSecond());
-        transaction.getHold().setDueDateTime(loanIntegerDueDate);
-        notifier.reportRecallRequested(transaction, loanDueDate);
-      } else if (request.getStatus() != OPEN_NOT_YET_FILLED || request.getStatus() != OPEN_AWAITING_PICKUP
-        || request.getStatus() != OPEN_IN_TRANSIT || request.getStatus() != OPEN_AWAITING_DELIVERY) {
-        var centralServerId = centralServerService.getCentralServerIdByCentralCode(transaction.getCentralServerCode());
-        var recallUserDTO = recallUserService.getInnReachRecallUser(centralServerId);
-        var recallUser = recallUserMapper.toEntity(recallUserDTO);
+      if (request.getStatus() == OPEN_NOT_YET_FILLED && request.getRequestType() == RequestType.RECALL.toString()) {
+
+        updateTransactionOnLoanRecallRequested(transaction);
+
+      } else {
+
+        var recallUser = recallUserService.getRecallUserForCentralServer(transaction.getCentralServerCode());
         eventPublisher.publishEvent(RecallRequestEvent.of(transaction.getHold(), recallUser));
+
       }
     }
+  }
+
+  private void updateTransactionOnLoanRecallRequested(InnReachTransaction transaction) {
+
+    transaction.setState(RECALL);
+
+    var loan = loanService.getById(transaction.getHold().getFolioLoanId());
+    var loanDueDate = loan.getDueDate().toInstant().truncatedTo(ChronoUnit.SECONDS);
+    var loanIntegerDueDate = (int) (loanDueDate.getEpochSecond());
+    transaction.getHold().setDueDateTime(loanIntegerDueDate);
+
+    notifier.reportRecallRequested(transaction, loanDueDate);
   }
 
   private void associateNewLoanWithPatronTransaction(StorageLoanDTO loan, InnReachTransaction transaction) {

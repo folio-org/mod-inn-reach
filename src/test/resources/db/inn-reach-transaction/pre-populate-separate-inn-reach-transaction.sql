@@ -1,3 +1,9 @@
+INSERT INTO inn_reach_recall_user (id, user_id) VALUES ('1c0f40a9-a140-4ab8-9cdd-c52ecae7415b', 'f75ffab1-2e2f-43be-b159-3031e2cfc458');
+
+INSERT INTO central_server(id, name, description, local_server_code, central_server_code, central_server_address, loan_type_id,
+ inn_reach_recall_user_id) VALUES ('cfae4887-f8fb-4e4c-a5cc-34f74e353cf8', 'other', 'other description', 'def12', 'd5ir',
+ 'https://rssandbox-api.iii.com', 'be248906-34e7-4b6e-a09b-a2d31025ae09', '1c0f40a9-a140-4ab8-9cdd-c52ecae7415b');
+
 INSERT INTO transaction_pickup_location (id, pickup_loc_code, display_name, print_name, delivery_stop) VALUES
  ('f66fa565-f94e-4984-9642-87196009feb4', 'pickupLocCode3', 'displayName3', 'printName3', 'deliveryStop3');
 

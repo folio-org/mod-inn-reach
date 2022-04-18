@@ -35,8 +35,6 @@ import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionSt
 @Service
 public class InnReachTransactionServiceImpl implements InnReachTransactionService {
 
-  private final LoanService loanService;
-
   private final InnReachTransactionRepository repository;
   private final TransactionHoldRepository holdRepository;
 
@@ -44,7 +42,6 @@ public class InnReachTransactionServiceImpl implements InnReachTransactionServic
   private final InnReachTransactionFilterParametersMapper parametersMapper;
 
   private final InnReachTransactionSpecification specification;
-  private final InnReachTransactionActionNotifier notifier;
 
   private static final String[] TRANSACTION_HOLD_IGNORE_PROPS_ON_COPY = {
     "pickupLocation", "id", "createdBy", "updatedBy", "createdDate", "updatedDate"
