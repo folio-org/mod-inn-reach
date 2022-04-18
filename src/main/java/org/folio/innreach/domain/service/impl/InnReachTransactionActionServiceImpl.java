@@ -348,7 +348,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
       if (request.getStatus() == OPEN_NOT_YET_FILLED && request.getRequestType() == RequestDTO.RequestType.RECALL.getName()) {
 
         updateTransactionOnLoanRecallRequested(transaction);
-        //return;
+        return;
 
       } else {
 
@@ -367,10 +367,8 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
     var loanDueDate = loan.getDueDate().toInstant().truncatedTo(ChronoUnit.SECONDS);
     var loanIntegerDueDate = (int) (loanDueDate.getEpochSecond());
     transaction.getHold().setDueDateTime(loanIntegerDueDate);
-    System.out.println("before notifier");
 
     notifier.reportRecallRequested(transaction, loanDueDate);
-    System.out.println("after notifier");
   }
 
   private void associateLoanWithTransaction(UUID loanId, Date loanDueDate, UUID itemId, InnReachTransaction transaction) {

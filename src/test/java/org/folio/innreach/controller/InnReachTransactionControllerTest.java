@@ -2,6 +2,7 @@ package org.folio.innreach.controller;
 
 import static java.util.UUID.randomUUID;
 import static org.awaitility.Awaitility.await;
+import static org.folio.innreach.domain.dto.folio.circulation.RequestDTO.RequestStatus.CLOSED_FILLER;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -66,6 +67,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.RandomStringUtils;
+import org.folio.innreach.domain.service.InnReachRecallUserService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -165,12 +167,14 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   private static final UUID PRE_POPULATED_FOLIO_ITEM_ID = UUID.fromString("4def31b0-2b60-4531-ad44-7eab60fa5428");
   private static final UUID PRE_POPULATED_FOLIO_LOAN_ID = UUID.fromString("06e820e3-71a0-455e-8c73-3963aea677d4");
 
+  private static final UUID PRE_POPULATED_ITEM_ID = UUID.fromString("4def31b0-2b60-4531-ad44-7eab60fa5428");
   private static final UUID PRE_POPULATED_LOCAL_HOLD_TRANSACTION_ID = UUID.fromString("79b0a1fb-55be-4e55-9d84-01303aaec1ce");
   private static final UUID PRE_POPULATED_PATRON_HOLD_TRANSACTION_ID = UUID.fromString("0aab1720-14b4-4210-9a19-0d0bf1cd64d3");
   private static final UUID PRE_POPULATED_ITEM_HOLD_TRANSACTION_ID = UUID.fromString("ab2393a1-acc4-4849-82ac-8cc0c37339e1");
   private static final UUID PRE_POPULATED_ITEM_HOLD_REQUEST_ID = UUID.fromString("26278b3a-de32-4deb-b81b-896637b3dbeb");
   private static final UUID PRE_POPULATED_TRANSACTION_ID3 = UUID.fromString("79b0a1fb-55be-4e55-9d84-01303aaec1ce");
   private static final UUID PRE_POPULATED_ITEM_SHIPPED_TRANSACTION_ID = UUID.fromString("7106c3ac-890a-4126-bf9b-a10b67555b6e");
+  private static final String ITEM_HOLD_ID = "2d219267-4e51-4843-b2c6-d9c44d313739";
   private static final String PRE_POPULATED_PATRON_HOLD_ITEM_BARCODE = "1111111";
   private static final String PRE_POPULATED_ITEM_HOLD_ITEM_BARCODE = "DEF-def-5678";
   private static final String PRE_POPULATED_CENTRAL_PATRON_ID2 = "u6ct3wssbnhxvip3sobwmxvhoa";
@@ -207,6 +211,8 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   private RequestService requestService;
   @SpyBean
   private InnReachTransactionActionNotifier actionNotifier;
+  @SpyBean
+  private InnReachRecallUserService recallUserService;
 
   private static final HttpHeaders headers = circHeaders();
 
@@ -1937,6 +1943,30 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     assertEquals(intCurrentDate, transactionAfterRecall.getHold().getDueDateTime());
   }
 
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-separate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-another-inn-reach-transaction.sql"
+  })
+  void recallItemHoldWhenRequestStatusNotOpen() {
+    var transaction = repository.fetchOneById(UUID.fromString(ITEM_HOLD_ID)).get();
+    transaction.setState(ITEM_RECEIVED);
+    repository.save(transaction);
+
+    when(circulationClient.queryRequestsByItemId(PRE_POPULATED_ITEM_ID)).thenReturn(getNotOpenRequests());
+
+    var responseEntity = testRestTemplate.postForEntity(
+      ITEM_HOLD_RECALL_ENDPOINT, null, Void.class, ITEM_HOLD_ID);
+
+    assertEquals(HttpStatus.NO_CONTENT, responseEntity.getStatusCode());
+
+    var centralServerCodeCaptor = ArgumentCaptor.forClass(String.class);
+    verify(recallUserService).getRecallUserForCentralServer(centralServerCodeCaptor.capture());
+    var centralServerCode = centralServerCodeCaptor.getValue();
+
+    assertEquals("d2ir1", centralServerCode);
+  }
+
   private void mockFindRequest(UUID requestId, RequestDTO.RequestStatus status) {
     var requestDTO = createRequestDTO();
     requestDTO.setId(requestId);
@@ -1998,6 +2028,16 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     RequestDTO request = new RequestDTO();
     request.setStatus(OPEN_NOT_YET_FILLED);
     request.setRequestType(RequestDTO.RequestType.RECALL.getName());
+    List<RequestDTO> list = new ArrayList<>();
+    list.add(request);
+    resultList.setResult(list);
+    return resultList;
+  }
+
+  private ResultList<RequestDTO> getNotOpenRequests() {
+    ResultList<RequestDTO> resultList = new ResultList<>();
+    RequestDTO request = new RequestDTO();
+    request.setStatus(CLOSED_FILLER);
     List<RequestDTO> list = new ArrayList<>();
     list.add(request);
     resultList.setResult(list);
