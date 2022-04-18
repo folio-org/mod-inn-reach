@@ -292,16 +292,21 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
   }
 
   @Override
-  public void transferItemHold(UUID transactionId, String itemBarcode) {
+  public void transferItemHold(UUID transactionId, UUID itemId) {
     var transaction = fetchTransactionOfType(transactionId, ITEM);
 
     verifyState(transaction, ITEM_HOLD);
 
-    var item = fetchItemByBarcode(itemBarcode);
+    var item = fetchItemById(itemId);
+    var request = requestService.findRequest(transaction.getHold().getFolioRequestId());
 
-    requestService.validateItemAvailability(item);
+    if (itemId.equals(request.getItemId())) {
+      updateItemTransactionOnMovedRequest(request, item, transaction);
+    } else {
+      requestService.validateItemAvailability(item);
 
-    eventPublisher.publishEvent(MoveRequestEvent.of(transaction, item));
+      eventPublisher.publishEvent(MoveRequestEvent.of(transaction, item));
+    }
   }
 
   @Override
@@ -488,15 +493,21 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
 
         var item = fetchItemById(request.getItemId());
 
-        hold.setFolioItemId(itemId);
-        hold.setFolioInstanceId(request.getInstanceId());
-        hold.setFolioHoldingId(request.getHoldingsRecordId());
-        hold.setFolioItemBarcode(item.getBarcode());
-        transaction.setState(TRANSFER);
-
-        notifier.reportTransferRequest(transaction, item.getHrid());
+        updateItemTransactionOnMovedRequest(request, item, transaction);
       }
     }
+  }
+
+  private void updateItemTransactionOnMovedRequest(RequestDTO request, InventoryItemDTO item, InnReachTransaction transaction) {
+    var hold = transaction.getHold();
+    hold.setFolioItemId(item.getId());
+    hold.setFolioInstanceId(request.getInstanceId());
+    hold.setFolioHoldingId(request.getHoldingsRecordId());
+    hold.setFolioItemBarcode(item.getBarcode());
+
+    transaction.setState(TRANSFER);
+
+    notifier.reportTransferRequest(transaction, item.getHrid());
   }
 
   private void updatePatronTransactionOnRequestChange(RequestDTO requestDTO, InnReachTransaction transaction) {
@@ -571,11 +582,6 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
   private InventoryItemDTO fetchItemById(UUID itemId) {
     return itemService.find(itemId)
       .orElseThrow(() -> new IllegalArgumentException("Item is not found by id: " + itemId));
-  }
-
-  private InventoryItemDTO fetchItemByBarcode(String itemBarcode) {
-    return itemService.findItemByBarcode(itemBarcode)
-      .orElseThrow(() -> new IllegalArgumentException("Item is not found by barcode: " + itemBarcode));
   }
 
   private boolean isLoanCheckedIn(String loanAction, String loanStatus) {

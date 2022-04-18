@@ -339,9 +339,8 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
     "classpath:db/inn-reach-transaction/pre-populate-another-inn-reach-transaction.sql",
   })
   void shouldUpdateItemTransactionOnRequestMoving() {
-    var barcode = "4820049490886";
-    var item = new InventoryItemDTO();
-    item.setBarcode(barcode);
+    var item = createInventoryItemDTO();
+    item.setId(ITEM_ID);
     var event = createRequestDomainEvent(DomainEventType.UPDATED);
 
     when(inventoryClient.findItem(any())).thenReturn(Optional.of(item));
@@ -357,7 +356,7 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
     assertEquals(ITEM_ID, updatedHold.getFolioItemId());
     assertEquals(INSTANCE_ID, updatedHold.getFolioInstanceId());
     assertEquals(HOLDING_ID, updatedHold.getFolioHoldingId());
-    assertEquals(barcode, updatedHold.getFolioItemBarcode());
+    assertEquals(item.getBarcode(), updatedHold.getFolioItemBarcode());
     assertEquals(TRANSFER, updatedTransaction.getState());
   }
 
