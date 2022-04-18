@@ -53,6 +53,8 @@ import static org.folio.innreach.fixture.UserFixture.createUser;
 import static org.folio.innreach.util.DateHelper.toEpochSec;
 
 import java.time.Duration;
+import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -142,6 +144,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   private static final String UPDATE_TRANSACTION_ENDPOINT = "/inn-reach/transactions/{transactionId}";
   private static final String PATRON_HOLD_CANCEL_ENDPOINT = "/inn-reach/transactions/{id}/patronhold/cancel";
   private static final String ITEM_HOLD_CANCEL_ENDPOINT = "/inn-reach/transactions/{id}/itemhold/cancel";
+  private static final String ITEM_HOLD_RECALL_ENDPOINT = "/inn-reach/transactions/{id}/itemhold/recall";
   private static final String PATRON_HOLD_RETURN_ITEM_ENDPOINT = "/inn-reach/transactions/{id}/patronhold/return-item/{servicePointId}";
   private static final String ITEM_HOLD_TRANSFER_ITEM_ENDPOINT = "/inn-reach/transactions/{id}/itemhold/transfer-item/{itemId}";
   private static final String ITEM_HOLD_FINAL_CHECK_IN_ENDPOINT = "/inn-reach/transactions/{id}/itemhold/finalcheckin/{servicePointId}";
@@ -157,6 +160,10 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   private static final String NEW_CENTRAL_SERVER_CODE = "a0aa";
   private static final String NEW_ITEM_AND_AGENCY_CODE = "a0aa0";
   private static final String NEW_TEST_PARAMETER_VALUE = "abc";
+
+  public static final String TRANSACTION_WITH_ITEM_HOLD_ID = "ab2393a1-acc4-4849-82ac-8cc0c37339e1";
+  private static final UUID PRE_POPULATED_FOLIO_ITEM_ID = UUID.fromString("4def31b0-2b60-4531-ad44-7eab60fa5428");
+  private static final UUID PRE_POPULATED_FOLIO_LOAN_ID = UUID.fromString("06e820e3-71a0-455e-8c73-3963aea677d4");
 
   private static final UUID PRE_POPULATED_LOCAL_HOLD_TRANSACTION_ID = UUID.fromString("79b0a1fb-55be-4e55-9d84-01303aaec1ce");
   private static final UUID PRE_POPULATED_PATRON_HOLD_TRANSACTION_ID = UUID.fromString("0aab1720-14b4-4210-9a19-0d0bf1cd64d3");
@@ -1900,6 +1907,36 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     verify(circulationClient).checkInByBarcode(any());
   }
 
+  @Test
+  @Sql(scripts = {
+    "classpath:db/inn-reach-recall-user/pre-populate-inn-reach-recall-user.sql",
+    "classpath:db/central-server/pre-populate-central-server-with-recall-user.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
+  })
+  void recallItemHoldWhenRequestStatusOpenNotYetFilled() {
+    var transaction = repository.fetchOneById(UUID.fromString(TRANSACTION_WITH_ITEM_HOLD_ID)).get();
+    transaction.setState(ITEM_RECEIVED);
+    repository.save(transaction);
+
+    var loan = new LoanDTO();
+    var currentDate = new Date();
+    loan.setDueDate(currentDate);
+    var intCurrentDate = (int) currentDate.toInstant().truncatedTo(ChronoUnit.SECONDS).getEpochSecond();
+
+    when(circulationClient.queryRequestsByItemId(PRE_POPULATED_FOLIO_ITEM_ID)).thenReturn(getOpenRequests());
+    when(circulationClient.findLoan(PRE_POPULATED_FOLIO_LOAN_ID)).thenReturn(Optional.of(loan));
+    when(innReachClient.postInnReachApi(any(), anyString(), anyString(), anyString(), any())).thenReturn("response");
+
+    var responseEntity = testRestTemplate.postForEntity(
+      ITEM_HOLD_RECALL_ENDPOINT, null, Void.class, TRANSACTION_WITH_ITEM_HOLD_ID);
+
+    var transactionAfterRecall = repository.fetchOneById(UUID.fromString(TRANSACTION_WITH_ITEM_HOLD_ID)).get();
+
+    assertEquals(HttpStatus.NO_CONTENT, responseEntity.getStatusCode());
+    assertEquals(InnReachTransaction.TransactionState.RECALL, transactionAfterRecall.getState());
+    assertEquals(intCurrentDate, transactionAfterRecall.getHold().getDueDateTime());
+  }
+
   private void mockFindRequest(UUID requestId, RequestDTO.RequestStatus status) {
     var requestDTO = createRequestDTO();
     requestDTO.setId(requestId);
@@ -1956,4 +1993,14 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     );
   }
 
+  private ResultList<RequestDTO> getOpenRequests() {
+    ResultList<RequestDTO> resultList = new ResultList<>();
+    RequestDTO request = new RequestDTO();
+    request.setStatus(OPEN_NOT_YET_FILLED);
+    request.setRequestType(RequestDTO.RequestType.RECALL.getName());
+    List<RequestDTO> list = new ArrayList<>();
+    list.add(request);
+    resultList.setResult(list);
+    return resultList;
+  }
 }

@@ -4,6 +4,7 @@ import static java.lang.String.format;
 import static java.util.Optional.ofNullable;
 
 import static org.folio.innreach.domain.dto.folio.circulation.RequestDTO.RequestStatus.CLOSED_CANCELLED;
+import static org.folio.innreach.domain.dto.folio.circulation.RequestDTO.RequestStatus.OPEN_NOT_YET_FILLED;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.BORROWER_RENEW;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.BORROWING_SITE_CANCEL;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.CANCEL_REQUEST;
@@ -31,13 +32,17 @@ import static org.folio.innreach.util.InnReachTransactionUtils.clearPatronAndIte
 import static org.folio.innreach.util.InnReachTransactionUtils.verifyState;
 
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.EnumSet;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.folio.innreach.domain.event.RecallRequestEvent;
+import org.folio.innreach.domain.service.InnReachRecallUserService;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -85,6 +90,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
   private final InstanceStorageClient instanceStorageClient;
   private final InnReachTransactionActionNotifier notifier;
   private final ApplicationEventPublisher eventPublisher;
+  private final InnReachRecallUserService recallUserService;
 
   @Override
   public PatronHoldCheckInResponseDTO checkInPatronHoldItem(UUID transactionId, UUID servicePointId) {
@@ -254,6 +260,16 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
   }
 
   @Override
+  public void recallItemHold(UUID transactionId) {
+    var transaction = fetchTransactionOfType(transactionId, ITEM);
+
+    verifyState(transaction, ITEM_SHIPPED, ITEM_RECEIVED, RECEIVE_UNANNOUNCED);
+    var folioItemId = transaction.getHold().getFolioItemId();
+    recallItem(transaction, folioItemId);
+
+  }
+
+  @Override
   public void cancelItemHold(UUID transactionId, CancelTransactionHoldDTO cancelRequest) {
     var transaction = fetchTransactionOfType(transactionId, ITEM);
 
@@ -324,6 +340,37 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
     } else {
       loanService.checkInItem(transaction, servicePointId);
     }
+  }
+
+  private void recallItem(InnReachTransaction transaction, UUID itemId) {
+    List<RequestDTO> requestList = requestService.getRequestsByItemId(itemId);
+    for (RequestDTO request : requestList) {
+      if (request.getStatus() == OPEN_NOT_YET_FILLED && request.getRequestType() == RequestDTO.RequestType.RECALL.getName()) {
+
+        updateTransactionOnLoanRecallRequested(transaction);
+        //return;
+
+      } else {
+
+        var recallUser = recallUserService.getRecallUserForCentralServer(transaction.getCentralServerCode());
+        eventPublisher.publishEvent(RecallRequestEvent.of(transaction.getHold(), recallUser));
+
+      }
+    }
+  }
+
+  private void updateTransactionOnLoanRecallRequested(InnReachTransaction transaction) {
+
+    transaction.setState(RECALL);
+
+    var loan = loanService.getById(transaction.getHold().getFolioLoanId());
+    var loanDueDate = loan.getDueDate().toInstant().truncatedTo(ChronoUnit.SECONDS);
+    var loanIntegerDueDate = (int) (loanDueDate.getEpochSecond());
+    transaction.getHold().setDueDateTime(loanIntegerDueDate);
+    System.out.println("before notifier");
+
+    notifier.reportRecallRequested(transaction, loanDueDate);
+    System.out.println("after notifier");
   }
 
   private void associateLoanWithTransaction(UUID loanId, Date loanDueDate, UUID itemId, InnReachTransaction transaction) {
