@@ -345,7 +345,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
   private void recallItem(InnReachTransaction transaction, UUID itemId) {
     List<RequestDTO> requestList = requestService.getRequestsByItemId(itemId);
     for (RequestDTO request : requestList) {
-      if (request.getStatus() == OPEN_NOT_YET_FILLED && request.getRequestType() == RequestDTO.RequestType.RECALL.getName()) {
+      if (request.getStatus() == OPEN_NOT_YET_FILLED && request.getRequestType().equals(RequestDTO.RequestType.RECALL.getName()) ) {
 
         updateTransactionOnLoanRecallRequested(transaction);
         return;
