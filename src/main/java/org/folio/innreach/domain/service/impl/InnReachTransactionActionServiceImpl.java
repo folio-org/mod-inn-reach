@@ -127,7 +127,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
   @Override
   public TransactionCheckOutResponseDTO checkOutItemHoldItem(String itemBarcode, UUID servicePointId) {
     var transaction = transactionRepository.fetchOneByFolioItemBarcodeAndStates(itemBarcode,
-        EnumSet.of(ITEM_HOLD, TRANSFER))
+      EnumSet.of(ITEM_HOLD, TRANSFER))
       .orElseThrow(() -> new EntityNotFoundException("INN-Reach transaction is not found by itemBarcode: " + itemBarcode));
 
     var hold = (TransactionItemHold) transaction.getHold();
@@ -324,6 +324,30 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
     } else {
       loanService.checkInItem(transaction, servicePointId);
     }
+  }
+
+  @Override
+  public InnReachTransactionDTO transferLocalHold(UUID transactionId, UUID itemId) {
+    var transaction = fetchTransactionOfType(transactionId, LOCAL);
+    var hold = transaction.getHold();
+    var item = fetchItemById(itemId);
+
+    transaction.setState(TRANSFER);
+    hold.setFolioItemId(item.getId());
+
+    var requestId = hold.getFolioRequestId();
+    var request = requestService.findRequest(requestId);
+    if (!itemId.equals(request.getItemId())) {
+      request = requestService.moveItemRequest(requestId, item);
+    }
+
+    var holdingId = request.getHoldingsRecordId();
+    if (!holdingId.equals(hold.getFolioHoldingId())) {
+      hold.setFolioHoldingId(holdingId);
+      hold.setFolioInstanceId(request.getInstanceId());
+    }
+
+    return transactionMapper.toDTO(transaction);
   }
 
   private void associateLoanWithTransaction(UUID loanId, Date loanDueDate, UUID itemId, InnReachTransaction transaction) {
