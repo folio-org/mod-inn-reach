@@ -370,7 +370,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
   private void recallItem(InnReachTransaction transaction, UUID itemId) {
     List<RequestDTO> requestList = requestService.getRequestsByItemId(itemId);
     var optRecallRequest = requestList.stream().filter(request -> request.getStatus() == OPEN_NOT_YET_FILLED &&
-      request.getRequestType() == RequestDTO.RequestType.RECALL.getName())
+      request.getRequestType().equals(RequestDTO.RequestType.RECALL.getName()))
       .findAny();
     if (optRecallRequest.isPresent()) {
       var loan = loanService.getById(transaction.getHold().getFolioLoanId());
