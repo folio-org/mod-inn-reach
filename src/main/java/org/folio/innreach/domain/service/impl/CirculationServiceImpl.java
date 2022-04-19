@@ -486,7 +486,8 @@ public class CirculationServiceImpl implements CirculationService {
     return loanService.renew(RenewByIdDTO.of(hold.getFolioItemId(), hold.getFolioPatronId()));
   }
 
-  private InnReachRecallUser getRecallUserForCentralServer(String centralCode) {
+  @Override
+  public InnReachRecallUser getRecallUserForCentralServer(String centralCode) {
     return centralserverRepository.fetchOneByCentralCode(centralCode)
       .map(CentralServer::getInnReachRecallUser)
       .orElseThrow(() -> new EntityNotFoundException("Recall user is not set for central server with code = " + centralCode));

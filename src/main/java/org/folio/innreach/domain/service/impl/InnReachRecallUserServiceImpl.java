@@ -3,7 +3,6 @@ package org.folio.innreach.domain.service.impl;
 import java.util.UUID;
 
 import lombok.RequiredArgsConstructor;
-import org.folio.innreach.domain.entity.InnReachRecallUser;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -61,10 +60,4 @@ public class InnReachRecallUserServiceImpl implements InnReachRecallUserService 
       .orElseThrow(() -> new EntityNotFoundException("Central server with id " + centralServerId + " not found"));
   }
 
-  @Override
-  public InnReachRecallUser getRecallUserForCentralServer(String centralCode) {
-    return centralServerRepository.fetchOneByCentralCode(centralCode)
-      .map(CentralServer::getInnReachRecallUser)
-      .orElseThrow(() -> new EntityNotFoundException("Recall user is not set for central server with code = " + centralCode));
-  }
 }

@@ -68,7 +68,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.RandomStringUtils;
-import org.folio.innreach.domain.service.InnReachRecallUserService;
+import org.folio.innreach.domain.service.CirculationService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -216,7 +216,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   @SpyBean
   private InnReachTransactionActionNotifier actionNotifier;
   @SpyBean
-  private InnReachRecallUserService recallUserService;
+  private CirculationService circulationService;
 
   private static final HttpHeaders headers = circHeaders();
 
@@ -2019,36 +2019,12 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     assertEquals(HttpStatus.NO_CONTENT, responseEntity.getStatusCode());
 
     var centralServerCodeCaptor = ArgumentCaptor.forClass(String.class);
-    verify(recallUserService).getRecallUserForCentralServer(centralServerCodeCaptor.capture());
+    verify(circulationService).getRecallUserForCentralServer(centralServerCodeCaptor.capture());
 
     var centralServerCode = centralServerCodeCaptor.getValue();
 
     assertEquals("d2ir", centralServerCode);
   }
-
-  /*@Test
-  @Sql(scripts = {
-    "classpath:db/central-server/pre-populate-separate-central-server.sql",
-    "classpath:db/inn-reach-transaction/pre-populate-another-inn-reach-transaction.sql"
-  })
-  void recallItemHoldWhenRequestStatusNotOpen() {
-    var transaction = repository.fetchOneById(UUID.fromString(ITEM_HOLD_ID)).get();
-    transaction.setState(ITEM_RECEIVED);
-    repository.save(transaction);
-
-    when(circulationClient.queryRequestsByItemId(PRE_POPULATED_ITEM_ID)).thenReturn(getNotOpenRequests());
-
-    var responseEntity = testRestTemplate.postForEntity(
-      ITEM_HOLD_RECALL_ENDPOINT, null, Void.class, ITEM_HOLD_ID);
-
-    assertEquals(HttpStatus.NO_CONTENT, responseEntity.getStatusCode());
-
-    var centralServerCodeCaptor = ArgumentCaptor.forClass(String.class);
-    verify(recallUserService).getRecallUserForCentralServer(centralServerCodeCaptor.capture());
-    var centralServerCode = centralServerCodeCaptor.getValue();
-
-    assertEquals("d2ir1", centralServerCode);
-  }*/
 
 
   private void mockFindRequest(UUID requestId, RequestDTO.RequestStatus status) {
