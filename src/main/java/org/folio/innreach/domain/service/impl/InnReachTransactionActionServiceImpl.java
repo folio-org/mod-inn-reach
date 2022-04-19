@@ -199,7 +199,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
     } else if ("claimedReturned".equalsIgnoreCase(loanAction)) {
       updateTransactionOnLoanClaimedReturned(loan, transaction);
     } else if ("recallrequested".equalsIgnoreCase(loanAction)) {
-      updateTransactionOnLoanRecallRequested(loan, transaction);
+      updateTransactionOnLoanRecallRequested(loan.getId(), loan.getDueDate(), transaction);
     }
   }
 
@@ -344,31 +344,25 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
 
   private void recallItem(InnReachTransaction transaction, UUID itemId) {
     List<RequestDTO> requestList = requestService.getRequestsByItemId(itemId);
-    for (RequestDTO request : requestList) {
-      if (request.getStatus() == OPEN_NOT_YET_FILLED && request.getRequestType().equals(RequestDTO.RequestType.RECALL.getName()) ) {
+    var optRecallRequest = requestList.stream().filter(request -> request.getStatus() == OPEN_NOT_YET_FILLED &&
+      request.getRequestType() == RequestDTO.RequestType.RECALL.getName())
+      .findAny();
+    if (optRecallRequest.isPresent()) {
+      var loan = loanService.getById(transaction.getHold().getFolioLoanId());
+      var loanDueDate = loan.getDueDate().toInstant().truncatedTo(ChronoUnit.SECONDS);
+      var loanIntegerDueDate = (int) (loanDueDate.getEpochSecond());
+      transaction.getHold().setDueDateTime(loanIntegerDueDate);
 
-        updateTransactionOnLoanRecallRequested(transaction);
-        return;
+      updateTransactionOnLoanRecallRequested(loan.getId(), loan.getDueDate(), transaction);
+      return;
 
-      } else {
+    } else {
 
-        var recallUser = recallUserService.getRecallUserForCentralServer(transaction.getCentralServerCode());
-        eventPublisher.publishEvent(RecallRequestEvent.of(transaction.getHold(), recallUser));
+      var recallUser = recallUserService.getRecallUserForCentralServer(transaction.getCentralServerCode());
+      eventPublisher.publishEvent(RecallRequestEvent.of(transaction.getHold(), recallUser));
+      return;
 
-      }
     }
-  }
-
-  private void updateTransactionOnLoanRecallRequested(InnReachTransaction transaction) {
-
-    transaction.setState(RECALL);
-
-    var loan = loanService.getById(transaction.getHold().getFolioLoanId());
-    var loanDueDate = loan.getDueDate().toInstant().truncatedTo(ChronoUnit.SECONDS);
-    var loanIntegerDueDate = (int) (loanDueDate.getEpochSecond());
-    transaction.getHold().setDueDateTime(loanIntegerDueDate);
-
-    notifier.reportRecallRequested(transaction, loanDueDate);
   }
 
   private void associateLoanWithTransaction(UUID loanId, Date loanDueDate, UUID itemId, InnReachTransaction transaction) {
@@ -476,17 +470,17 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
     notifier.reportItemInTransit(transaction);
   }
 
-  private void updateTransactionOnLoanRecallRequested(StorageLoanDTO loan, InnReachTransaction transaction) {
+  private void updateTransactionOnLoanRecallRequested(UUID loanId, Date loanDueDate, InnReachTransaction transaction) {
     if (transaction.getType() != ITEM) {
       return;
     }
 
-    log.info("Updating item transaction {} on recall requested within the loan {}", transaction.getId(), loan.getId());
+    log.info("Updating item transaction {} on recall requested within the loan {}", transaction.getId(), loanId);
 
     transaction.setState(RECALL);
 
-    var loanDueDate = toInstantTruncatedToSec(loan.getDueDate());
-    notifier.reportRecallRequested(transaction, loanDueDate);
+    var instantLoanDueDate = toInstantTruncatedToSec(loanDueDate);
+    notifier.reportRecallRequested(transaction, instantLoanDueDate);
   }
 
   private void handleItemWithCanceledRequest(InnReachTransaction transaction) {

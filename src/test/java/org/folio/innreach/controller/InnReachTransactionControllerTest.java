@@ -130,7 +130,8 @@ import org.folio.innreach.repository.InnReachTransactionRepository;
   scripts = {"classpath:db/inn-reach-transaction/clear-inn-reach-transaction-tables.sql",
     "classpath:db/central-server/clear-central-server-tables.sql",
     "classpath:db/mtype-mapping/clear-material-type-mapping-table.sql",
-    "classpath:db/central-patron-type-mapping/clear-central-patron-type-mapping-table.sql"
+    "classpath:db/central-patron-type-mapping/clear-central-patron-type-mapping-table.sql",
+    "classpath:db/inn-reach-recall-user/clear-inn-reach-recall-user.sql"
   },
   executionPhase = AFTER_TEST_METHOD
 )
@@ -1943,7 +1944,35 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     assertEquals(intCurrentDate, transactionAfterRecall.getHold().getDueDateTime());
   }
 
+
   @Test
+  @Sql(scripts = {
+    "classpath:db/inn-reach-recall-user/pre-populate-inn-reach-recall-user.sql",
+    "classpath:db/central-server/pre-populate-central-server-with-recall-user.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql",
+  })
+  void recallItemHoldWhenRequestStatusNotOpen() {
+
+    var transaction = repository.fetchOneById(UUID.fromString(TRANSACTION_WITH_ITEM_HOLD_ID)).get();
+    transaction.setState(ITEM_RECEIVED);
+    repository.save(transaction);
+
+    when(circulationClient.queryRequestsByItemId(PRE_POPULATED_FOLIO_ITEM_ID)).thenReturn(getNotOpenRequests());
+
+    var responseEntity = testRestTemplate.postForEntity(
+      ITEM_HOLD_RECALL_ENDPOINT, null, Void.class, UUID.fromString(TRANSACTION_WITH_ITEM_HOLD_ID));
+
+    assertEquals(HttpStatus.NO_CONTENT, responseEntity.getStatusCode());
+
+    var centralServerCodeCaptor = ArgumentCaptor.forClass(String.class);
+    verify(recallUserService).getRecallUserForCentralServer(centralServerCodeCaptor.capture());
+
+    var centralServerCode = centralServerCodeCaptor.getValue();
+
+    assertEquals("d2ir", centralServerCode);
+  }
+
+  /*@Test
   @Sql(scripts = {
     "classpath:db/central-server/pre-populate-separate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-another-inn-reach-transaction.sql"
@@ -1965,7 +1994,8 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     var centralServerCode = centralServerCodeCaptor.getValue();
 
     assertEquals("d2ir1", centralServerCode);
-  }
+  }*/
+
 
   private void mockFindRequest(UUID requestId, RequestDTO.RequestStatus status) {
     var requestDTO = createRequestDTO();
