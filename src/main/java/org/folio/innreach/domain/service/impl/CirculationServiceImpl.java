@@ -484,13 +484,6 @@ public class CirculationServiceImpl implements CirculationService {
     return loanService.renew(RenewByIdDTO.of(hold.getFolioItemId(), hold.getFolioPatronId()));
   }
 
-//  @Override
-//  public InnReachRecallUser getRecallUserForCentralServer(String centralCode) {
-//    return centralserverRepository.fetchOneByCentralCode(centralCode)
-//      .map(CentralServer::getInnReachRecallUser)
-//      .orElseThrow(() -> new EntityNotFoundException("Recall user is not set for central server with code = " + centralCode));
-//  }
-
   private void recallRequestToCentralSever(InnReachTransaction transaction, Date existingDueDate) {
     var trackingId = transaction.getTrackingId();
     var centralCode = transaction.getCentralServerCode();
