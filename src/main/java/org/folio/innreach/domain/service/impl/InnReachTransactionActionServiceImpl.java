@@ -48,8 +48,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
 
-import org.folio.innreach.client.InstanceStorageClient;
 import org.folio.innreach.domain.dto.folio.circulation.RequestDTO;
+import org.folio.innreach.domain.dto.folio.inventory.InventoryInstanceDTO;
 import org.folio.innreach.domain.dto.folio.inventory.InventoryItemDTO;
 import org.folio.innreach.domain.dto.folio.inventory.InventoryItemStatus;
 import org.folio.innreach.domain.entity.InnReachTransaction;
@@ -59,6 +59,7 @@ import org.folio.innreach.domain.event.CancelRequestEvent;
 import org.folio.innreach.domain.event.MoveRequestEvent;
 import org.folio.innreach.domain.exception.EntityNotFoundException;
 import org.folio.innreach.domain.service.InnReachTransactionActionService;
+import org.folio.innreach.domain.service.InstanceService;
 import org.folio.innreach.domain.service.ItemService;
 import org.folio.innreach.domain.service.LoanService;
 import org.folio.innreach.domain.service.PatronHoldService;
@@ -87,7 +88,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
   private final LoanService loanService;
   private final PatronHoldService patronHoldService;
   private final ItemService itemService;
-  private final InstanceStorageClient instanceStorageClient;
+  private final InstanceService instanceService;
   private final InnReachTransactionActionNotifier notifier;
   private final ApplicationEventPublisher eventPublisher;
   private final InnReachRecallUserService recallUserService;
@@ -278,6 +279,27 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
     eventPublisher.publishEvent(CancelRequestEvent.of(transaction,
       cancelRequest.getCancellationReasonId(),
       cancelRequest.getCancellationAdditionalInformation()));
+  }
+
+  @Override
+  public InnReachTransactionDTO cancelLocalHold(UUID transactionId, CancelTransactionHoldDTO cancelRequest) {
+    var transaction = fetchTransactionOfType(transactionId, LOCAL);
+
+    verifyState(transaction, LOCAL_HOLD);
+
+    transaction.setState(CANCEL_REQUEST);
+
+    var requestId = transaction.getHold().getFolioRequestId();
+    var request = requestService.findRequest(requestId);
+    if (requestService.isOpenRequest(request)) {
+      requestService.cancelRequest(transaction.getTrackingId(), requestId,
+        cancelRequest.getCancellationReasonId(), cancelRequest.getCancellationAdditionalInformation());
+    }
+
+    var instance = fetchInstanceById(request.getInstanceId());
+    notifier.reportOwningSiteCancel(transaction, instance.getHrid(), transaction.getHold().getPatronName());
+
+    return transactionMapper.toDTO(transaction);
   }
 
   @Override
@@ -548,7 +570,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
 
       transaction.setState(CANCEL_REQUEST);
 
-      var instance = instanceStorageClient.getInstanceById(request.getInstanceId());
+      var instance = fetchInstanceById(request.getInstanceId());
       notifier.reportOwningSiteCancel(transaction, instance.getHrid(), hold.getPatronName());
 
       clearCentralPatronInfo(transaction.getHold());
@@ -649,6 +671,11 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
   private InventoryItemDTO fetchItemById(UUID itemId) {
     return itemService.find(itemId)
       .orElseThrow(() -> new IllegalArgumentException("Item is not found by id: " + itemId));
+  }
+
+  private InventoryInstanceDTO fetchInstanceById(UUID instanceId) {
+    return instanceService.find(instanceId)
+      .orElseThrow(() -> new IllegalArgumentException("Instance is not found by id: " + instanceId));
   }
 
   private boolean isLoanCheckedIn(String loanAction, String loanStatus) {

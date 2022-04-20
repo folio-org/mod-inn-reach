@@ -131,6 +131,14 @@ public class InnReachTransactionController implements InnReachTransactionApi {
   }
 
   @Override
+  @PostMapping("/{id}/localhold/cancel")
+  public ResponseEntity<InnReachTransactionDTO> cancelLocalHoldTransaction(@PathVariable UUID id,
+                                                         CancelTransactionHoldDTO cancelRequest) {
+    var response = transactionActionService.cancelLocalHold(id, cancelRequest);
+    return ResponseEntity.ok(response);
+  }
+
+  @Override
   @GetMapping
   public ResponseEntity<InnReachTransactionsDTO> getAllTransactions(Integer offset,
                                                                     Integer limit,

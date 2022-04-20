@@ -25,6 +25,7 @@ import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TES
 import static org.springframework.test.context.jdbc.SqlMergeMode.MergeMode.MERGE;
 
 import static org.folio.innreach.domain.dto.folio.circulation.RequestDTO.RequestStatus.CLOSED_CANCELLED;
+import static org.folio.innreach.domain.dto.folio.circulation.RequestDTO.RequestStatus.OPEN_AWAITING_DELIVERY;
 import static org.folio.innreach.domain.dto.folio.circulation.RequestDTO.RequestStatus.OPEN_AWAITING_PICKUP;
 import static org.folio.innreach.domain.dto.folio.circulation.RequestDTO.RequestStatus.OPEN_NOT_YET_FILLED;
 import static org.folio.innreach.domain.dto.folio.inventory.InventoryItemStatus.AVAILABLE;
@@ -47,6 +48,7 @@ import static org.folio.innreach.dto.TransactionTypeEnum.PATRON;
 import static org.folio.innreach.fixture.InnReachTransactionFixture.assertPatronAndItemInfoCleared;
 import static org.folio.innreach.fixture.InnReachTransactionFixture.createInnReachTransaction;
 import static org.folio.innreach.fixture.InventoryFixture.createInventoryHoldingDTO;
+import static org.folio.innreach.fixture.InventoryFixture.createInventoryInstance;
 import static org.folio.innreach.fixture.InventoryFixture.createInventoryItemDTO;
 import static org.folio.innreach.fixture.RequestFixture.createRequestDTO;
 import static org.folio.innreach.fixture.TestUtil.circHeaders;
@@ -150,6 +152,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   private static final String LOCAL_HOLD_CHECK_OUT_ENDPOINT = "/inn-reach/transactions/{id}/localhold/check-out-item/{servicePointId}";
   private static final String UPDATE_TRANSACTION_ENDPOINT = "/inn-reach/transactions/{transactionId}";
   private static final String PATRON_HOLD_CANCEL_ENDPOINT = "/inn-reach/transactions/{id}/patronhold/cancel";
+  private static final String LOCAL_HOLD_CANCEL_ENDPOINT = "/inn-reach/transactions/{id}/localhold/cancel";
   private static final String ITEM_HOLD_CANCEL_ENDPOINT = "/inn-reach/transactions/{id}/itemhold/cancel";
   private static final String ITEM_HOLD_RECALL_ENDPOINT = "/inn-reach/transactions/{id}/itemhold/recall";
   private static final String PATRON_HOLD_RETURN_ITEM_ENDPOINT = "/inn-reach/transactions/{id}/patronhold/return-item/{servicePointId}";
@@ -1692,6 +1695,66 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     verify(circulationClient, never()).updateRequest(eq(PRE_POPULATED_PATRON_HOLD_REQUEST_ID), any());
     verify(actionNotifier).reportReturnUncirculated(any());
     verify(innReachClient).postInnReachApi(any(), anyString(), anyString(), anyString());
+  }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql",
+  })
+  void cancelLocalHold_openRequest() {
+    var cancelTransaction = createCancelTransactionHold();
+
+    when(inventoryClient.findInstance(any())).thenReturn(Optional.of(createInventoryInstance()));
+    mockFindRequest(PRE_POPULATED_LOCAL_HOLD_REQUEST_ID, OPEN_AWAITING_DELIVERY);
+
+    var responseEntity = testRestTemplate.postForEntity(
+      LOCAL_HOLD_CANCEL_ENDPOINT, cancelTransaction, InnReachTransactionDTO.class,
+      PRE_POPULATED_LOCAL_HOLD_TRANSACTION_ID);
+
+    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+    var updatedTransaction = responseEntity.getBody();
+
+    assertNotNull(updatedTransaction);
+    assertEquals(TransactionStateEnum.CANCEL_REQUEST, updatedTransaction.getState());
+
+    var cancelRequestCaptor = ArgumentCaptor.forClass(RequestDTO.class);
+
+    verify(circulationClient).updateRequest(eq(PRE_POPULATED_LOCAL_HOLD_REQUEST_ID), cancelRequestCaptor.capture());
+
+    var cancelRequest = cancelRequestCaptor.getValue();
+    assertEquals(CLOSED_CANCELLED, cancelRequest.getStatus());
+    assertEquals(cancelRequest.getCancellationReasonId(), cancelRequest.getCancellationReasonId());
+    assertEquals(cancelRequest.getCancellationAdditionalInformation(),
+      cancelRequest.getCancellationAdditionalInformation());
+
+    verify(actionNotifier).reportOwningSiteCancel(any(), any(), any());
+  }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql",
+  })
+  void cancelLocalHold_closedRequest() {
+    var cancelTransaction = createCancelTransactionHold();
+
+    when(inventoryClient.findInstance(any())).thenReturn(Optional.of(createInventoryInstance()));
+    mockFindRequest(PRE_POPULATED_LOCAL_HOLD_REQUEST_ID, CLOSED_CANCELLED);
+
+    var responseEntity = testRestTemplate.postForEntity(
+      LOCAL_HOLD_CANCEL_ENDPOINT, cancelTransaction, InnReachTransactionDTO.class,
+      PRE_POPULATED_LOCAL_HOLD_TRANSACTION_ID);
+
+    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+    var updatedTransaction = responseEntity.getBody();
+
+    assertNotNull(updatedTransaction);
+    assertEquals(TransactionStateEnum.CANCEL_REQUEST, updatedTransaction.getState());
+
+    verify(circulationClient, never()).updateRequest(any(), any());
+
+    verify(actionNotifier).reportOwningSiteCancel(any(), any(), any());
   }
 
   @Test
