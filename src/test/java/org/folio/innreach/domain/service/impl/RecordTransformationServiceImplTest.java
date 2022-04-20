@@ -60,7 +60,7 @@ class RecordTransformationServiceImplTest {
   private static final String CENTRAL_AGENCY_CODE = "fl2g2";
   private static final UUID INN_REACH_LOCATION_ID = UUID.fromString("5d78803e-ca04-4b4a-aeae-2c63b924518a");
   private static final Integer CENTRAL_ITEM_TYPE = 211;
-  private static final String LOCAL_SERVER_CODE = "fli01";
+  private static final String LOCAL_SERVER_CODE = "test1";
   private static final String ITEM_CALL_NUMBER = "TEST.42";
   private static final Date LOAN_DUE_DATE = new Date();
 

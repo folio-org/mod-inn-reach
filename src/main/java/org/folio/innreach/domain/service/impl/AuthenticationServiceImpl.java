@@ -2,6 +2,7 @@ package org.folio.innreach.domain.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -31,5 +32,9 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
   private boolean doSecretsMatch(String rawSecret, String encodedSecret) {
     return passwordEncoder.matches(rawSecret, encodedSecret);
+  }
+
+  public static void main(String[] args) {
+    System.out.println(new BCryptPasswordEncoder().encode("668a9d83-74b2-402d-8472-c424ff1c0320"));
   }
 }
