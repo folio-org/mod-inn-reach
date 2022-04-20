@@ -42,7 +42,6 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.folio.innreach.domain.event.RecallRequestEvent;
-import org.folio.innreach.domain.service.CirculationService;
 import org.folio.innreach.domain.service.InnReachRecallUserService;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
@@ -91,7 +90,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
   private final InstanceStorageClient instanceStorageClient;
   private final InnReachTransactionActionNotifier notifier;
   private final ApplicationEventPublisher eventPublisher;
-  private final CirculationService circulationService;;
+  private final InnReachRecallUserService recallUserService;
 
   @Override
   public PatronHoldCheckInResponseDTO checkInPatronHoldItem(UUID transactionId, UUID servicePointId) {
@@ -382,8 +381,8 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
       return;
 
     } else {
-      var recallUser = circulationService.getRecallUserForCentralServer(transaction.getCentralServerCode());
-      //var recallUser = recallUserService.getRecallUserForCentralServer(transaction.getCentralServerCode());
+
+      var recallUser = recallUserService.getRecallUserForCentralServer(transaction.getCentralServerCode());
       eventPublisher.publishEvent(RecallRequestEvent.of(transaction.getHold(), recallUser));
       return;
 

@@ -68,7 +68,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.RandomStringUtils;
-import org.folio.innreach.domain.service.CirculationService;
+import org.folio.innreach.domain.service.InnReachRecallUserService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -170,14 +170,12 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   private static final UUID PRE_POPULATED_FOLIO_ITEM_ID = UUID.fromString("4def31b0-2b60-4531-ad44-7eab60fa5428");
   private static final UUID PRE_POPULATED_FOLIO_LOAN_ID = UUID.fromString("06e820e3-71a0-455e-8c73-3963aea677d4");
 
-  private static final UUID PRE_POPULATED_ITEM_ID = UUID.fromString("4def31b0-2b60-4531-ad44-7eab60fa5428");
   private static final UUID PRE_POPULATED_LOCAL_HOLD_TRANSACTION_ID = UUID.fromString("79b0a1fb-55be-4e55-9d84-01303aaec1ce");
   private static final UUID PRE_POPULATED_PATRON_HOLD_TRANSACTION_ID = UUID.fromString("0aab1720-14b4-4210-9a19-0d0bf1cd64d3");
   private static final UUID PRE_POPULATED_ITEM_HOLD_TRANSACTION_ID = UUID.fromString("ab2393a1-acc4-4849-82ac-8cc0c37339e1");
   private static final UUID PRE_POPULATED_ITEM_HOLD_REQUEST_ID = UUID.fromString("26278b3a-de32-4deb-b81b-896637b3dbeb");
   private static final UUID PRE_POPULATED_TRANSACTION_ID3 = UUID.fromString("79b0a1fb-55be-4e55-9d84-01303aaec1ce");
   private static final UUID PRE_POPULATED_ITEM_SHIPPED_TRANSACTION_ID = UUID.fromString("7106c3ac-890a-4126-bf9b-a10b67555b6e");
-  private static final String ITEM_HOLD_ID = "2d219267-4e51-4843-b2c6-d9c44d313739";
   private static final String PRE_POPULATED_PATRON_HOLD_ITEM_BARCODE = "1111111";
   private static final String PRE_POPULATED_ITEM_HOLD_ITEM_BARCODE = "DEF-def-5678";
   private static final String PRE_POPULATED_CENTRAL_PATRON_ID2 = "u6ct3wssbnhxvip3sobwmxvhoa";
@@ -216,7 +214,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   @SpyBean
   private InnReachTransactionActionNotifier actionNotifier;
   @SpyBean
-  private CirculationService circulationService;
+  private InnReachRecallUserService recallUserService;
 
   private static final HttpHeaders headers = circHeaders();
 
@@ -2019,7 +2017,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     assertEquals(HttpStatus.NO_CONTENT, responseEntity.getStatusCode());
 
     var centralServerCodeCaptor = ArgumentCaptor.forClass(String.class);
-    verify(circulationService).getRecallUserForCentralServer(centralServerCodeCaptor.capture());
+    verify(recallUserService).getRecallUserForCentralServer(centralServerCodeCaptor.capture());
 
     var centralServerCode = centralServerCodeCaptor.getValue();
 

@@ -13,4 +13,5 @@ public interface InnReachRecallUserService {
 
   InnReachRecallUserDTO updateInnReachRecallUser(UUID centralServerId, InnReachRecallUserDTO innReachRecallUserDTO);
 
+  InnReachRecallUser getRecallUserForCentralServer(String centralCode);
 }
