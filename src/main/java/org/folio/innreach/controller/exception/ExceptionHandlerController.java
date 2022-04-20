@@ -37,6 +37,8 @@ public class ExceptionHandlerController {
   @ExceptionHandler({IllegalArgumentException.class, InnReachException.class, CirculationException.class})
   @ResponseStatus(HttpStatus.BAD_REQUEST)
   public Error handleBadRequestException(Exception e) {
+    log.error("Unexpected exception: " + e.getMessage(), e);
+
     return createError(HttpStatus.BAD_REQUEST, e.getMessage());
   }
 

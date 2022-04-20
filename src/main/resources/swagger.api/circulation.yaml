@@ -349,6 +349,30 @@ paths:
           $ref: "api-common.yaml#/components/responses/trait_response_500"
       parameters:
         - $ref: 'api-common.yaml#/components/parameters/id'
+  /transactions/{id}/localhold/cancel:
+    post:
+      operationId: cancelLocalHoldTransaction
+      description: Cancel local hold transaction with the reason provided
+      tags:
+        - inn-reach-transaction
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/cancelTransactionHoldDTO"
+      responses:
+        '200':
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/innReachTransactionDTO"
+        '404':
+          $ref: "api-common.yaml#/components/responses/trait_response_404"
+        '500':
+          $ref: "api-common.yaml#/components/responses/trait_response_500"
+      parameters:
+        - $ref: 'api-common.yaml#/components/parameters/id'
   /d2ir/circ/verifypatron:
     post:
       operationId: verifyPatron

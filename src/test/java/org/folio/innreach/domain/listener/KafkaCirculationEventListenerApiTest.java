@@ -27,6 +27,7 @@ import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionSt
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.TRANSFER;
 import static org.folio.innreach.dto.ItemStatus.NameEnum.AWAITING_PICKUP;
 import static org.folio.innreach.fixture.InnReachTransactionFixture.assertPatronAndItemInfoCleared;
+import static org.folio.innreach.fixture.InventoryFixture.createInventoryInstance;
 import static org.folio.innreach.fixture.InventoryFixture.createInventoryItemDTO;
 import static org.folio.innreach.util.DateHelper.toEpochSec;
 
@@ -53,7 +54,6 @@ import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlMergeMode;
 
 import org.folio.innreach.client.CirculationClient;
-import org.folio.innreach.client.InstanceStorageClient;
 import org.folio.innreach.client.InventoryClient;
 import org.folio.innreach.domain.dto.folio.circulation.RequestDTO;
 import org.folio.innreach.domain.dto.folio.inventory.InventoryItemDTO;
@@ -123,9 +123,6 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
 
   @MockBean
   private CirculationClient circulationClient;
-
-  @MockBean
-  private InstanceStorageClient instanceStorageClient;
 
   @Test
   void shouldReceiveLoanEvent() {
@@ -407,7 +404,7 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
   void shouldUpdateTransactionWithItemHoldWhenCancelRequest() {
     var event = createRequestDomainEvent(DomainEventType.UPDATED);
     var request = event.getData().getNewEntity();
-    var instance = new Instance();
+    var instance = createInventoryInstance();
     request.setId(REQUEST_ID);
     request.setInstanceId(INSTANCE_ID);
     request.setStatus(CLOSED_CANCELLED);
@@ -417,12 +414,12 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
     payload.put("reasonCode", 7);
     payload.put("patronName", TEST_PATRON_NAME);
 
-    when(instanceStorageClient.getInstanceById(request.getInstanceId())).thenReturn(instance);
+    when(inventoryClient.findInstance(request.getInstanceId())).thenReturn(Optional.of(instance));
 
     listener.handleRequestEvents(asSingleConsumerRecord(CIRC_REQUEST_TOPIC, REQUEST_ID, event));
 
     verify(eventProcessor).process(anyList(), any(Consumer.class));
-    verify(instanceStorageClient, times(1)).getInstanceById(any());
+    verify(inventoryClient, times(1)).findInstance(any());
     verify(innReachExternalService, times(1)).postInnReachApi(any(), any(), eq(payload));
     verify(innReachExternalService, times(1)).postInnReachApi(any(), any(), any());
     Mockito.verifyNoMoreInteractions(inventoryClient);
