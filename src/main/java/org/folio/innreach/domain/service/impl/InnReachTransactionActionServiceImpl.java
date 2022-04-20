@@ -295,7 +295,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
   public void transferItemHold(UUID transactionId, UUID itemId) {
     var transaction = fetchTransactionOfType(transactionId, ITEM);
 
-    verifyState(transaction, ITEM_HOLD);
+    verifyState(transaction, ITEM_HOLD, TRANSFER);
 
     var item = fetchItemById(itemId);
     var request = requestService.findRequest(transaction.getHold().getFolioRequestId());
