@@ -484,6 +484,16 @@
         },
         {
           "methods": ["POST"],
+          "pathPattern": "/inn-reach/transactions/{id}/localhold/cancel",
+          "permissionsRequired": ["inn-reach.d2ir.inn-reach-transaction.item.post"],
+          "modulePermissions": [
+            "circulation.requests.item.get",
+            "circulation.requests.item.put",
+            "inventory.instances.item.get"
+          ]
+        },
+        {
+          "methods": ["POST"],
           "pathPattern": "/inn-reach/transactions/{id}/patronhold/return-item/{servicePointId}",
           "permissionsRequired": ["inn-reach.d2ir.inn-reach-transaction.item.post"],
           "modulePermissions": [

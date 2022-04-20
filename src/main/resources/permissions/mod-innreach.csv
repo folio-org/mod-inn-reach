@@ -7,6 +7,7 @@ inventory-storage.holdings.item.get
 inventory-storage.locations.collection.get
 inventory-storage.material-types.collection.get
 inventory.items.item.get
+inventory.instances.item.get
 users.collection.get
 source-storage.records.get
 circulation.requests.item.get
