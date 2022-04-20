@@ -55,7 +55,6 @@ import static org.folio.innreach.fixture.UserFixture.createUser;
 import static org.folio.innreach.util.DateHelper.toEpochSec;
 
 import java.time.Duration;
-import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -68,7 +67,10 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.RandomStringUtils;
+import org.folio.innreach.domain.event.RecallRequestEvent;
+import org.folio.innreach.domain.listener.KafkaCirculationEventListener;
 import org.folio.innreach.domain.service.InnReachRecallUserService;
+import org.folio.innreach.util.DateHelper;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -82,6 +84,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -166,7 +169,6 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   private static final String NEW_ITEM_AND_AGENCY_CODE = "a0aa0";
   private static final String NEW_TEST_PARAMETER_VALUE = "abc";
 
-  public static final String TRANSACTION_WITH_ITEM_HOLD_ID = "ab2393a1-acc4-4849-82ac-8cc0c37339e1";
   private static final UUID PRE_POPULATED_FOLIO_ITEM_ID = UUID.fromString("4def31b0-2b60-4531-ad44-7eab60fa5428");
   private static final UUID PRE_POPULATED_FOLIO_LOAN_ID = UUID.fromString("06e820e3-71a0-455e-8c73-3963aea677d4");
 
@@ -209,12 +211,16 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   private HoldingsStorageClient holdingsStorageClient;
   @MockBean
   private RequestPreferenceStorageClient requestPreferenceClient;
+  @MockBean
+  private ApplicationEventPublisher eventPublisher;
   @SpyBean
   private RequestService requestService;
   @SpyBean
   private InnReachTransactionActionNotifier actionNotifier;
   @SpyBean
   private InnReachRecallUserService recallUserService;
+  @SpyBean
+  private KafkaCirculationEventListener listener;
 
   private static final HttpHeaders headers = circHeaders();
 
@@ -1973,29 +1979,29 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
   })
   void recallItemHoldWhenRequestStatusOpenNotYetFilled() {
-    var transaction = repository.fetchOneById(UUID.fromString(TRANSACTION_WITH_ITEM_HOLD_ID)).get();
+    var transaction = repository.fetchOneById(PRE_POPULATED_ITEM_HOLD_TRANSACTION_ID).get();
+    modifyTransactionState(PRE_POPULATED_ITEM_HOLD_TRANSACTION_ID, ITEM_RECEIVED);
     transaction.setState(ITEM_RECEIVED);
     repository.save(transaction);
 
     var loan = new LoanDTO();
     var currentDate = new Date();
     loan.setDueDate(currentDate);
-    var intCurrentDate = (int) currentDate.toInstant().truncatedTo(ChronoUnit.SECONDS).getEpochSecond();
+    var intCurrentDate = DateHelper.toEpochSec(currentDate);
 
     when(circulationClient.queryRequestsByItemId(PRE_POPULATED_FOLIO_ITEM_ID)).thenReturn(getOpenRequests());
     when(circulationClient.findLoan(PRE_POPULATED_FOLIO_LOAN_ID)).thenReturn(Optional.of(loan));
     when(innReachClient.postInnReachApi(any(), anyString(), anyString(), anyString(), any())).thenReturn("response");
 
     var responseEntity = testRestTemplate.postForEntity(
-      ITEM_HOLD_RECALL_ENDPOINT, null, Void.class, TRANSACTION_WITH_ITEM_HOLD_ID);
+      ITEM_HOLD_RECALL_ENDPOINT, null, Void.class, PRE_POPULATED_ITEM_HOLD_TRANSACTION_ID);
 
-    var transactionAfterRecall = repository.fetchOneById(UUID.fromString(TRANSACTION_WITH_ITEM_HOLD_ID)).get();
+    var transactionAfterRecall = repository.fetchOneById(PRE_POPULATED_ITEM_HOLD_TRANSACTION_ID).get();
 
     assertEquals(HttpStatus.NO_CONTENT, responseEntity.getStatusCode());
     assertEquals(InnReachTransaction.TransactionState.RECALL, transactionAfterRecall.getState());
     assertEquals(intCurrentDate, transactionAfterRecall.getHold().getDueDateTime());
   }
-
 
   @Test
   @Sql(scripts = {
@@ -2005,14 +2011,14 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   })
   void recallItemHoldWhenRequestStatusNotOpen() {
 
-    var transaction = repository.fetchOneById(UUID.fromString(TRANSACTION_WITH_ITEM_HOLD_ID)).get();
+    var transaction = repository.fetchOneById(PRE_POPULATED_ITEM_HOLD_TRANSACTION_ID).get();
     transaction.setState(ITEM_RECEIVED);
     repository.save(transaction);
 
     when(circulationClient.queryRequestsByItemId(PRE_POPULATED_FOLIO_ITEM_ID)).thenReturn(getNotOpenRequests());
 
     var responseEntity = testRestTemplate.postForEntity(
-      ITEM_HOLD_RECALL_ENDPOINT, null, Void.class, UUID.fromString(TRANSACTION_WITH_ITEM_HOLD_ID));
+      ITEM_HOLD_RECALL_ENDPOINT, null, Void.class, PRE_POPULATED_ITEM_HOLD_TRANSACTION_ID);
 
     assertEquals(HttpStatus.NO_CONTENT, responseEntity.getStatusCode());
 
@@ -2022,6 +2028,9 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     var centralServerCode = centralServerCodeCaptor.getValue();
 
     assertEquals("d2ir", centralServerCode);
+
+    verify(eventPublisher)
+      .publishEvent(any(RecallRequestEvent.class));
   }
 
 

@@ -368,25 +368,29 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
 
   private void recallItem(InnReachTransaction transaction, UUID itemId) {
     List<RequestDTO> requestList = requestService.getRequestsByItemId(itemId);
-    var optRecallRequest = requestList.stream().filter(request -> request.getStatus() == OPEN_NOT_YET_FILLED &&
-      request.getRequestType().equals(RequestDTO.RequestType.RECALL.getName()))
-      .findAny();
-    if (optRecallRequest.isPresent()) {
+    boolean hasOpenRecallRequest = requestList.stream()
+      .anyMatch(request -> isOpenRecallRequest(request));
+    if (hasOpenRecallRequest) {
       var loan = loanService.getById(transaction.getHold().getFolioLoanId());
       var loanDueDate = loan.getDueDate().toInstant().truncatedTo(ChronoUnit.SECONDS);
       var loanIntegerDueDate = (int) (loanDueDate.getEpochSecond());
       transaction.getHold().setDueDateTime(loanIntegerDueDate);
 
       updateTransactionOnLoanRecallRequested(loan.getId(), loan.getDueDate(), transaction);
-      return;
 
     } else {
 
       var recallUser = recallUserService.getRecallUserForCentralServer(transaction.getCentralServerCode());
       eventPublisher.publishEvent(RecallRequestEvent.of(transaction.getHold(), recallUser));
-      return;
-
     }
+  }
+
+  private boolean isOpenRecallRequest(RequestDTO request) {
+    if (request.getStatus() == OPEN_NOT_YET_FILLED &&
+      request.getRequestType().equals(RequestDTO.RequestType.RECALL.getName())) {
+      return true;
+    }
+    return false;
   }
 
   private void associateLoanWithTransaction(UUID loanId, Date loanDueDate, UUID itemId, InnReachTransaction transaction) {
