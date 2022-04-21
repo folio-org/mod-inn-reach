@@ -404,6 +404,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
 
       var recallUser = recallUserService.getRecallUserForCentralServer(transaction.getCentralServerCode());
       eventPublisher.publishEvent(RecallRequestEvent.of(transaction.getHold(), recallUser));
+
     }
   }
 
