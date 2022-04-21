@@ -71,7 +71,6 @@ import java.util.stream.Stream;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.folio.innreach.client.ServicePointsUsersClient;
 import org.folio.innreach.domain.dto.folio.inventorystorage.ServicePointUserDTO;
-import org.folio.innreach.domain.service.InnReachRecallUserService;
 import org.folio.innreach.util.DateHelper;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
