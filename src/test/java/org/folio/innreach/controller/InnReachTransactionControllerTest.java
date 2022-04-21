@@ -69,8 +69,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.RandomStringUtils;
-import org.folio.innreach.domain.event.RecallRequestEvent;
-import org.folio.innreach.domain.listener.KafkaCirculationEventListener;
 import org.folio.innreach.domain.service.InnReachRecallUserService;
 import org.folio.innreach.util.DateHelper;
 import org.junit.jupiter.api.Test;
@@ -86,7 +84,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.boot.test.web.client.TestRestTemplate;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -214,16 +211,12 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   private HoldingsStorageClient holdingsStorageClient;
   @MockBean
   private RequestPreferenceStorageClient requestPreferenceClient;
-  @MockBean
-  private ApplicationEventPublisher eventPublisher;
   @SpyBean
   private RequestService requestService;
   @SpyBean
   private InnReachTransactionActionNotifier actionNotifier;
   @SpyBean
   private InnReachRecallUserService recallUserService;
-  @SpyBean
-  private KafkaCirculationEventListener listener;
 
   private static final HttpHeaders headers = circHeaders();
 
@@ -2042,10 +2035,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
   })
   void recallItemHoldWhenRequestStatusOpenNotYetFilled() {
-    var transaction = repository.fetchOneById(PRE_POPULATED_ITEM_HOLD_TRANSACTION_ID).get();
     modifyTransactionState(PRE_POPULATED_ITEM_HOLD_TRANSACTION_ID, ITEM_RECEIVED);
-    transaction.setState(ITEM_RECEIVED);
-    repository.save(transaction);
 
     var loan = new LoanDTO();
     var currentDate = new Date();
@@ -2073,10 +2063,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql",
   })
   void recallItemHoldWhenRequestStatusNotOpen() {
-
-    var transaction = repository.fetchOneById(PRE_POPULATED_ITEM_HOLD_TRANSACTION_ID).get();
-    transaction.setState(ITEM_RECEIVED);
-    repository.save(transaction);
+    modifyTransactionState(PRE_POPULATED_ITEM_HOLD_TRANSACTION_ID, ITEM_RECEIVED);
 
     when(circulationClient.queryRequestsByItemId(PRE_POPULATED_FOLIO_ITEM_ID)).thenReturn(getNotOpenRequests());
 
@@ -2084,16 +2071,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
       ITEM_HOLD_RECALL_ENDPOINT, null, Void.class, PRE_POPULATED_ITEM_HOLD_TRANSACTION_ID);
 
     assertEquals(HttpStatus.NO_CONTENT, responseEntity.getStatusCode());
-
-    var centralServerCodeCaptor = ArgumentCaptor.forClass(String.class);
-    verify(recallUserService).getRecallUserForCentralServer(centralServerCodeCaptor.capture());
-
-    var centralServerCode = centralServerCodeCaptor.getValue();
-
-    assertEquals("d2ir", centralServerCode);
-
-    verify(eventPublisher)
-      .publishEvent(any(RecallRequestEvent.class));
+    verify(circulationClient).queryRequestsByItemId(any());
   }
 
 
