@@ -69,6 +69,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.RandomStringUtils;
+import org.folio.innreach.client.ServicePointsUsersClient;
+import org.folio.innreach.domain.dto.folio.inventorystorage.ServicePointUserDTO;
 import org.folio.innreach.domain.service.InnReachRecallUserService;
 import org.folio.innreach.util.DateHelper;
 import org.junit.jupiter.api.Test;
@@ -171,6 +173,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
 
   private static final UUID PRE_POPULATED_FOLIO_ITEM_ID = UUID.fromString("4def31b0-2b60-4531-ad44-7eab60fa5428");
   private static final UUID PRE_POPULATED_FOLIO_LOAN_ID = UUID.fromString("06e820e3-71a0-455e-8c73-3963aea677d4");
+  private static final UUID PRE_POPULATE_USER_ID = UUID.fromString("f75ffab1-2e2f-43be-b159-3031e2cfc458");
 
   private static final UUID PRE_POPULATED_LOCAL_HOLD_TRANSACTION_ID = UUID.fromString("79b0a1fb-55be-4e55-9d84-01303aaec1ce");
   private static final UUID PRE_POPULATED_PATRON_HOLD_TRANSACTION_ID = UUID.fromString("0aab1720-14b4-4210-9a19-0d0bf1cd64d3");
@@ -211,6 +214,8 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   private HoldingsStorageClient holdingsStorageClient;
   @MockBean
   private RequestPreferenceStorageClient requestPreferenceClient;
+  @MockBean
+  private ServicePointsUsersClient servicePointsUsersClient;
   @SpyBean
   private RequestService requestService;
   @SpyBean
@@ -2066,14 +2071,16 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     modifyTransactionState(PRE_POPULATED_ITEM_HOLD_TRANSACTION_ID, ITEM_RECEIVED);
 
     when(circulationClient.queryRequestsByItemId(PRE_POPULATED_FOLIO_ITEM_ID)).thenReturn(getNotOpenRequests());
+    when(servicePointsUsersClient.findServicePointsUsers(PRE_POPULATE_USER_ID)).thenReturn(getServicePointUsers());
 
     var responseEntity = testRestTemplate.postForEntity(
       ITEM_HOLD_RECALL_ENDPOINT, null, Void.class, PRE_POPULATED_ITEM_HOLD_TRANSACTION_ID);
 
     assertEquals(HttpStatus.NO_CONTENT, responseEntity.getStatusCode());
+    verify(servicePointsUsersClient).findServicePointsUsers(any());
     verify(circulationClient).queryRequestsByItemId(any());
+    verify(circulationClient).sendRequest(any());
   }
-
 
   private void mockFindRequest(UUID requestId, RequestDTO.RequestStatus status) {
     var requestDTO = createRequestDTO();
@@ -2148,6 +2155,17 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     request.setStatus(CLOSED_FILLER);
     List<RequestDTO> list = new ArrayList<>();
     list.add(request);
+    resultList.setResult(list);
+    return resultList;
+  }
+
+  private ResultList<ServicePointUserDTO> getServicePointUsers() {
+    ResultList<ServicePointUserDTO> resultList = new ResultList<>();
+    ServicePointUserDTO servicePointUser = new ServicePointUserDTO();
+    servicePointUser.setDefaultServicePointId(UUID.fromString("56f48d94-96e6-4eae-970b-b0e346ec02f0"));
+    servicePointUser.setUserId(UUID.fromString("ef58f191-ec62-44bb-a571-d59c536bcf4a"));
+    List<ServicePointUserDTO> list = new ArrayList<>();
+    list.add(servicePointUser);
     resultList.setResult(list);
     return resultList;
   }
