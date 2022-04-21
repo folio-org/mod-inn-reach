@@ -267,7 +267,6 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
     verifyState(transaction, ITEM_SHIPPED, ITEM_RECEIVED, RECEIVE_UNANNOUNCED);
     var folioItemId = transaction.getHold().getFolioItemId();
     recallItem(transaction, folioItemId);
-
   }
 
   @Override
@@ -391,7 +390,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
   private void recallItem(InnReachTransaction transaction, UUID itemId) {
     List<RequestDTO> requestList = requestService.getRequestsByItemId(itemId);
     boolean hasOpenRecallRequest = requestList.stream()
-      .anyMatch(request -> isOpenRecallRequest(request));
+      .anyMatch(this::isOpenRecallRequest);
     if (hasOpenRecallRequest) {
       var loan = loanService.getById(transaction.getHold().getFolioLoanId());
       var loanDueDate = loan.getDueDate().toInstant().truncatedTo(ChronoUnit.SECONDS);
@@ -399,20 +398,15 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
       transaction.getHold().setDueDateTime(loanIntegerDueDate);
 
       updateTransactionOnLoanRecallRequested(loan.getId(), loan.getDueDate(), transaction);
-
     } else {
-
       var recallUser = recallUserService.getRecallUserForCentralServer(transaction.getCentralServerCode());
       eventPublisher.publishEvent(RecallRequestEvent.of(transaction.getHold(), recallUser));
     }
   }
 
   private boolean isOpenRecallRequest(RequestDTO request) {
-    if (request.getStatus() == OPEN_NOT_YET_FILLED &&
-      request.getRequestType().equals(RequestDTO.RequestType.RECALL.getName())) {
-      return true;
-    }
-    return false;
+    return request.getStatus() == OPEN_NOT_YET_FILLED &&
+      request.getRequestType().equals(RequestDTO.RequestType.RECALL.getName());
   }
 
   private void associateLoanWithTransaction(UUID loanId, Date loanDueDate, UUID itemId, InnReachTransaction transaction) {

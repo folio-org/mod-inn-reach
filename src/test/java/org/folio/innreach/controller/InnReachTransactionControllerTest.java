@@ -174,6 +174,8 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   private static final UUID PRE_POPULATED_FOLIO_ITEM_ID = UUID.fromString("4def31b0-2b60-4531-ad44-7eab60fa5428");
   private static final UUID PRE_POPULATED_FOLIO_LOAN_ID = UUID.fromString("06e820e3-71a0-455e-8c73-3963aea677d4");
   private static final UUID PRE_POPULATE_USER_ID = UUID.fromString("f75ffab1-2e2f-43be-b159-3031e2cfc458");
+  private final static UUID PRE_POPULATED_DEFAULT_SERVICE_POINT_ID = UUID.fromString("56f48d94-96e6-4eae-970b-b0e346ec02f0");
+  private final static UUID PRE_POPULATED_USER_ID = UUID.fromString("ef58f191-ec62-44bb-a571-d59c536bcf4a");
 
   private static final UUID PRE_POPULATED_LOCAL_HOLD_TRANSACTION_ID = UUID.fromString("79b0a1fb-55be-4e55-9d84-01303aaec1ce");
   private static final UUID PRE_POPULATED_PATRON_HOLD_TRANSACTION_ID = UUID.fromString("0aab1720-14b4-4210-9a19-0d0bf1cd64d3");
@@ -220,8 +222,6 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   private RequestService requestService;
   @SpyBean
   private InnReachTransactionActionNotifier actionNotifier;
-  @SpyBean
-  private InnReachRecallUserService recallUserService;
 
   private static final HttpHeaders headers = circHeaders();
 
@@ -2162,8 +2162,8 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   private ResultList<ServicePointUserDTO> getServicePointUsers() {
     ResultList<ServicePointUserDTO> resultList = new ResultList<>();
     ServicePointUserDTO servicePointUser = new ServicePointUserDTO();
-    servicePointUser.setDefaultServicePointId(UUID.fromString("56f48d94-96e6-4eae-970b-b0e346ec02f0"));
-    servicePointUser.setUserId(UUID.fromString("ef58f191-ec62-44bb-a571-d59c536bcf4a"));
+    servicePointUser.setDefaultServicePointId(PRE_POPULATED_DEFAULT_SERVICE_POINT_ID);
+    servicePointUser.setUserId(PRE_POPULATED_USER_ID);
     List<ServicePointUserDTO> list = new ArrayList<>();
     list.add(servicePointUser);
     resultList.setResult(list);
