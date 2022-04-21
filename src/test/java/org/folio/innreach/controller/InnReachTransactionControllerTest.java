@@ -2,6 +2,7 @@ package org.folio.innreach.controller;
 
 import static java.util.UUID.randomUUID;
 import static org.awaitility.Awaitility.await;
+import static org.folio.innreach.domain.dto.folio.circulation.RequestDTO.RequestStatus.CLOSED_FILLER;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -56,6 +57,7 @@ import static org.folio.innreach.fixture.UserFixture.createUser;
 import static org.folio.innreach.util.DateHelper.toEpochSec;
 
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -67,6 +69,9 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.RandomStringUtils;
+import org.folio.innreach.client.ServicePointsUsersClient;
+import org.folio.innreach.domain.dto.folio.inventorystorage.ServicePointUserDTO;
+import org.folio.innreach.util.DateHelper;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -129,7 +134,8 @@ import org.folio.innreach.repository.InnReachTransactionRepository;
   scripts = {"classpath:db/inn-reach-transaction/clear-inn-reach-transaction-tables.sql",
     "classpath:db/central-server/clear-central-server-tables.sql",
     "classpath:db/mtype-mapping/clear-material-type-mapping-table.sql",
-    "classpath:db/central-patron-type-mapping/clear-central-patron-type-mapping-table.sql"
+    "classpath:db/central-patron-type-mapping/clear-central-patron-type-mapping-table.sql",
+    "classpath:db/inn-reach-recall-user/clear-inn-reach-recall-user.sql"
   },
   executionPhase = AFTER_TEST_METHOD
 )
@@ -146,6 +152,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   private static final String PATRON_HOLD_CANCEL_ENDPOINT = "/inn-reach/transactions/{id}/patronhold/cancel";
   private static final String LOCAL_HOLD_CANCEL_ENDPOINT = "/inn-reach/transactions/{id}/localhold/cancel";
   private static final String ITEM_HOLD_CANCEL_ENDPOINT = "/inn-reach/transactions/{id}/itemhold/cancel";
+  private static final String ITEM_HOLD_RECALL_ENDPOINT = "/inn-reach/transactions/{id}/itemhold/recall";
   private static final String PATRON_HOLD_RETURN_ITEM_ENDPOINT = "/inn-reach/transactions/{id}/patronhold/return-item/{servicePointId}";
   private static final String ITEM_HOLD_TRANSFER_ITEM_ENDPOINT = "/inn-reach/transactions/{id}/itemhold/transfer-item/{itemId}";
   private static final String ITEM_HOLD_FINAL_CHECK_IN_ENDPOINT = "/inn-reach/transactions/{id}/itemhold/finalcheckin/{servicePointId}";
@@ -162,6 +169,12 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   private static final String NEW_CENTRAL_SERVER_CODE = "a0aa";
   private static final String NEW_ITEM_AND_AGENCY_CODE = "a0aa0";
   private static final String NEW_TEST_PARAMETER_VALUE = "abc";
+
+  private static final UUID PRE_POPULATED_FOLIO_ITEM_ID = UUID.fromString("4def31b0-2b60-4531-ad44-7eab60fa5428");
+  private static final UUID PRE_POPULATED_FOLIO_LOAN_ID = UUID.fromString("06e820e3-71a0-455e-8c73-3963aea677d4");
+  private static final UUID PRE_POPULATE_USER_ID = UUID.fromString("f75ffab1-2e2f-43be-b159-3031e2cfc458");
+  private final static UUID PRE_POPULATED_DEFAULT_SERVICE_POINT_ID = UUID.fromString("56f48d94-96e6-4eae-970b-b0e346ec02f0");
+  private final static UUID PRE_POPULATED_USER_ID = UUID.fromString("ef58f191-ec62-44bb-a571-d59c536bcf4a");
 
   private static final UUID PRE_POPULATED_LOCAL_HOLD_TRANSACTION_ID = UUID.fromString("79b0a1fb-55be-4e55-9d84-01303aaec1ce");
   private static final UUID PRE_POPULATED_PATRON_HOLD_TRANSACTION_ID = UUID.fromString("0aab1720-14b4-4210-9a19-0d0bf1cd64d3");
@@ -202,6 +215,8 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   private HoldingsStorageClient holdingsStorageClient;
   @MockBean
   private RequestPreferenceStorageClient requestPreferenceClient;
+  @MockBean
+  private ServicePointsUsersClient servicePointsUsersClient;
   @SpyBean
   private RequestService requestService;
   @SpyBean
@@ -2017,6 +2032,55 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
   }
 
+  @Test
+  @Sql(scripts = {
+    "classpath:db/inn-reach-recall-user/pre-populate-inn-reach-recall-user.sql",
+    "classpath:db/central-server/pre-populate-central-server-with-recall-user.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
+  })
+  void recallItemHoldWhenRequestStatusOpenNotYetFilled() {
+    modifyTransactionState(PRE_POPULATED_ITEM_HOLD_TRANSACTION_ID, ITEM_RECEIVED);
+
+    var loan = new LoanDTO();
+    var currentDate = new Date();
+    loan.setDueDate(currentDate);
+    var intCurrentDate = DateHelper.toEpochSec(currentDate);
+
+    when(circulationClient.queryRequestsByItemId(PRE_POPULATED_FOLIO_ITEM_ID)).thenReturn(getOpenRequests());
+    when(circulationClient.findLoan(PRE_POPULATED_FOLIO_LOAN_ID)).thenReturn(Optional.of(loan));
+    when(innReachClient.postInnReachApi(any(), anyString(), anyString(), anyString(), any())).thenReturn("response");
+
+    var responseEntity = testRestTemplate.postForEntity(
+      ITEM_HOLD_RECALL_ENDPOINT, null, Void.class, PRE_POPULATED_ITEM_HOLD_TRANSACTION_ID);
+
+    var transactionAfterRecall = repository.fetchOneById(PRE_POPULATED_ITEM_HOLD_TRANSACTION_ID).get();
+
+    assertEquals(HttpStatus.NO_CONTENT, responseEntity.getStatusCode());
+    assertEquals(InnReachTransaction.TransactionState.RECALL, transactionAfterRecall.getState());
+    assertEquals(intCurrentDate, transactionAfterRecall.getHold().getDueDateTime());
+  }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:db/inn-reach-recall-user/pre-populate-inn-reach-recall-user.sql",
+    "classpath:db/central-server/pre-populate-central-server-with-recall-user.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql",
+  })
+  void recallItemHoldWhenRequestStatusNotOpen() {
+    modifyTransactionState(PRE_POPULATED_ITEM_HOLD_TRANSACTION_ID, ITEM_RECEIVED);
+
+    when(circulationClient.queryRequestsByItemId(PRE_POPULATED_FOLIO_ITEM_ID)).thenReturn(getNotOpenRequests());
+    when(servicePointsUsersClient.findServicePointsUsers(PRE_POPULATE_USER_ID)).thenReturn(getServicePointUsers());
+
+    var responseEntity = testRestTemplate.postForEntity(
+      ITEM_HOLD_RECALL_ENDPOINT, null, Void.class, PRE_POPULATED_ITEM_HOLD_TRANSACTION_ID);
+
+    assertEquals(HttpStatus.NO_CONTENT, responseEntity.getStatusCode());
+    verify(servicePointsUsersClient).findServicePointsUsers(any());
+    verify(circulationClient).queryRequestsByItemId(any());
+    verify(circulationClient).sendRequest(any());
+  }
+
   private void mockFindRequest(UUID requestId, RequestDTO.RequestStatus status) {
     var requestDTO = createRequestDTO();
     requestDTO.setId(requestId);
@@ -2073,4 +2137,27 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     );
   }
 
+  private ResultList<RequestDTO> getOpenRequests() {
+    var request = new RequestDTO();
+    request.setStatus(OPEN_NOT_YET_FILLED);
+    request.setRequestType(RequestDTO.RequestType.RECALL.getName());
+    return ResultList.asSinglePage(request);
+  }
+
+  private ResultList<RequestDTO> getNotOpenRequests() {
+    var request = new RequestDTO();
+    request.setStatus(CLOSED_FILLER);
+    return ResultList.asSinglePage(request);
+  }
+
+  private ResultList<ServicePointUserDTO> getServicePointUsers() {
+    ResultList<ServicePointUserDTO> resultList = new ResultList<>();
+    ServicePointUserDTO servicePointUser = new ServicePointUserDTO();
+    servicePointUser.setDefaultServicePointId(PRE_POPULATED_DEFAULT_SERVICE_POINT_ID);
+    servicePointUser.setUserId(PRE_POPULATED_USER_ID);
+    List<ServicePointUserDTO> list = new ArrayList<>();
+    list.add(servicePointUser);
+    resultList.setResult(list);
+    return resultList;
+  }
 }
