@@ -32,7 +32,6 @@ import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionSt
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
-import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
@@ -283,8 +282,8 @@ public class RequestServiceImpl implements RequestService {
   }
 
   @Override
-  public List<RequestDTO> getRequestsByItemId(UUID itemId) {
-    return circulationClient.queryRequestsByItemId(itemId).getResult();
+  public ResultList<RequestDTO> getRequestsByItemId(UUID itemId) {
+    return circulationClient.queryRequestsByItemId(itemId);
   }
 
   private void cancelRequest(RequestDTO request, UUID reasonId, String reasonDetails) {

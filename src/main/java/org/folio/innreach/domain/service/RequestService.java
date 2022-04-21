@@ -1,8 +1,8 @@
 package org.folio.innreach.domain.service;
 
-import java.util.List;
 import java.util.UUID;
 
+import org.folio.innreach.domain.dto.folio.ResultList;
 import org.springframework.scheduling.annotation.Async;
 
 import org.folio.innreach.domain.dto.folio.User;
@@ -40,5 +40,5 @@ public interface RequestService {
 
   void validateItemAvailability(InventoryItemDTO item);
 
-  List<RequestDTO> getRequestsByItemId(UUID itemId);
+  ResultList<RequestDTO> getRequestsByItemId(UUID itemId);
 }

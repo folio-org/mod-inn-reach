@@ -2138,24 +2138,16 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   }
 
   private ResultList<RequestDTO> getOpenRequests() {
-    ResultList<RequestDTO> resultList = new ResultList<>();
-    RequestDTO request = new RequestDTO();
+    var request = new RequestDTO();
     request.setStatus(OPEN_NOT_YET_FILLED);
     request.setRequestType(RequestDTO.RequestType.RECALL.getName());
-    List<RequestDTO> list = new ArrayList<>();
-    list.add(request);
-    resultList.setResult(list);
-    return resultList;
+    return ResultList.asSinglePage(request);
   }
 
   private ResultList<RequestDTO> getNotOpenRequests() {
-    ResultList<RequestDTO> resultList = new ResultList<>();
-    RequestDTO request = new RequestDTO();
+    var request = new RequestDTO();
     request.setStatus(CLOSED_FILLER);
-    List<RequestDTO> list = new ArrayList<>();
-    list.add(request);
-    resultList.setResult(list);
-    return resultList;
+    return ResultList.asSinglePage(request);
   }
 
   private ResultList<ServicePointUserDTO> getServicePointUsers() {

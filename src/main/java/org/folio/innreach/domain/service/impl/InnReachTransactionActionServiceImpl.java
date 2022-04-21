@@ -388,7 +388,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
   }
 
   private void recallItem(InnReachTransaction transaction, UUID itemId) {
-    List<RequestDTO> requestList = requestService.getRequestsByItemId(itemId);
+    List<RequestDTO> requestList = requestService.getRequestsByItemId(itemId).getResult();
     boolean hasOpenRecallRequest = requestList.stream()
       .anyMatch(this::isOpenRecallRequest);
     if (hasOpenRecallRequest) {
