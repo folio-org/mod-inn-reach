@@ -498,7 +498,10 @@
           "permissionsRequired": ["inn-reach.d2ir.inn-reach-transaction.item.post"],
           "modulePermissions": [
             "circulation.requests.item.get",
-            "circulation.requests.item.post"
+            "circulation.requests.item.post",
+            "inventory-storage.service-points-users.collection.get",
+            "circulation.requests.collection.get",
+            "circulation.loans.item.get"
           ]
         },
         {
