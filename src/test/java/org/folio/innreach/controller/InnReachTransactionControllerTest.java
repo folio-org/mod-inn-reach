@@ -1765,12 +1765,13 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     verify(circulationClient).moveRequest(eq(PRE_POPULATED_ITEM_HOLD_REQUEST_ID), any());
   }
 
-  @Test
+  @ParameterizedTest
+  @EnumSource(names = {"ITEM_HOLD", "TRANSFER"})
   @Sql(scripts = {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql",
   })
-  void transferItemHoldItem_linkMovedRequest() {
+  void transferItemHoldItem_linkMovedRequest(InnReachTransaction.TransactionState state) {
     var item = createInventoryItemDTO();
     item.setStatus(AVAILABLE);
     var itemId = item.getId();
@@ -1778,6 +1779,8 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     var request = createRequestDTO();
     request.setStatus(OPEN_AWAITING_PICKUP);
     request.setItemId(itemId);
+
+    modifyTransactionState(PRE_POPULATED_ITEM_HOLD_TRANSACTION_ID, state);
 
     when(inventoryClient.findItem(any())).thenReturn(Optional.of(item));
     when(circulationClient.findRequest(any())).thenReturn(Optional.of(request));
