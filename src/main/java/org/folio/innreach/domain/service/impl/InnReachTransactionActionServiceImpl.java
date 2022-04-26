@@ -371,6 +371,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
 
     transaction.setState(TRANSFER);
     hold.setFolioItemId(item.getId());
+    hold.setItemId(item.getHrid());
 
     var requestId = hold.getFolioRequestId();
     var request = requestService.findRequest(requestId);
@@ -584,6 +585,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
   private void updateItemTransactionOnMovedRequest(RequestDTO request, InventoryItemDTO item, InnReachTransaction transaction) {
     var hold = transaction.getHold();
     hold.setFolioItemId(item.getId());
+    hold.setItemId(item.getHrid());
     hold.setFolioInstanceId(request.getInstanceId());
     hold.setFolioHoldingId(request.getHoldingsRecordId());
     hold.setFolioItemBarcode(item.getBarcode());

@@ -1811,6 +1811,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     var updatedHold = updatedTransaction.getHold();
     assertEquals(TRANSFER, updatedTransaction.getState());
     assertEquals(itemId, updatedHold.getFolioItemId());
+    assertEquals(item.getHrid(), updatedHold.getItemId());
     assertEquals(item.getBarcode(), updatedHold.getFolioItemBarcode());
     assertEquals(request.getInstanceId(), updatedHold.getFolioInstanceId());
     assertEquals(request.getHoldingsRecordId(), updatedHold.getFolioHoldingId());
@@ -2012,6 +2013,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     var transaction = responseEntity.getBody();
     assertEquals(TransactionStateEnum.TRANSFER, transaction.getState());
     assertEquals(item.getId(), transaction.getHold().getFolioItemId());
+    assertEquals(item.getHrid(), transaction.getHold().getItemId());
     assertEquals(item.getHoldingsRecordId(), transaction.getHold().getFolioHoldingId());
     assertEquals(holding.getInstanceId(), transaction.getHold().getFolioInstanceId());
   }
