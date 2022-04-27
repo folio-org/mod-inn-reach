@@ -169,7 +169,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
   public TransactionCheckOutResponseDTO checkOutLocalHoldItem(UUID transactionId, UUID servicePointId) {
     var transaction = fetchTransactionOfType(transactionId, LOCAL);
 
-    verifyState(transaction, LOCAL_HOLD);
+    verifyState(transaction, LOCAL_HOLD, TRANSFER);
 
     return checkOutItem(transaction, servicePointId);
   }
@@ -332,7 +332,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
   public void transferItemHold(UUID transactionId, UUID itemId) {
     var transaction = fetchTransactionOfType(transactionId, ITEM);
 
-    verifyState(transaction, ITEM_HOLD);
+    verifyState(transaction, ITEM_HOLD, TRANSFER);
 
     var item = fetchItemById(itemId);
     var request = requestService.findRequest(transaction.getHold().getFolioRequestId());
