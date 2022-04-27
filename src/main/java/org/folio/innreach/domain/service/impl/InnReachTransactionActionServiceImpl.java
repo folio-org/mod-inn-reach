@@ -169,7 +169,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
   public TransactionCheckOutResponseDTO checkOutLocalHoldItem(UUID transactionId, UUID servicePointId) {
     var transaction = fetchTransactionOfType(transactionId, LOCAL);
 
-    verifyState(transaction, LOCAL_HOLD);
+    verifyState(transaction, LOCAL_HOLD, TRANSFER);
 
     return checkOutItem(transaction, servicePointId);
   }
