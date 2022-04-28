@@ -3,7 +3,6 @@ package org.folio.innreach.controller;
 import static java.util.UUID.randomUUID;
 import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
 import static org.awaitility.Awaitility.await;
-import static org.folio.innreach.domain.dto.folio.circulation.RequestDTO.RequestStatus.CLOSED_FILLER;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -26,6 +25,7 @@ import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TES
 import static org.springframework.test.context.jdbc.SqlMergeMode.MergeMode.MERGE;
 
 import static org.folio.innreach.domain.dto.folio.circulation.RequestDTO.RequestStatus.CLOSED_CANCELLED;
+import static org.folio.innreach.domain.dto.folio.circulation.RequestDTO.RequestStatus.CLOSED_FILLER;
 import static org.folio.innreach.domain.dto.folio.circulation.RequestDTO.RequestStatus.OPEN_AWAITING_DELIVERY;
 import static org.folio.innreach.domain.dto.folio.circulation.RequestDTO.RequestStatus.OPEN_AWAITING_PICKUP;
 import static org.folio.innreach.domain.dto.folio.circulation.RequestDTO.RequestStatus.OPEN_NOT_YET_FILLED;
@@ -100,6 +100,7 @@ import org.folio.innreach.client.CirculationClient;
 import org.folio.innreach.client.HoldingsStorageClient;
 import org.folio.innreach.client.InventoryClient;
 import org.folio.innreach.client.RequestPreferenceStorageClient;
+import org.folio.innreach.client.ServicePointsUsersClient;
 import org.folio.innreach.client.UsersClient;
 import org.folio.innreach.controller.base.BaseControllerTest;
 import org.folio.innreach.domain.dto.OwningSiteCancelsRequestDTO;
@@ -108,8 +109,10 @@ import org.folio.innreach.domain.dto.folio.User;
 import org.folio.innreach.domain.dto.folio.circulation.RequestDTO;
 import org.folio.innreach.domain.dto.folio.inventory.InventoryItemDTO;
 import org.folio.innreach.domain.dto.folio.inventory.InventoryItemStatus;
+import org.folio.innreach.domain.dto.folio.inventorystorage.ServicePointUserDTO;
 import org.folio.innreach.domain.dto.folio.requestpreference.RequestPreferenceDTO;
 import org.folio.innreach.domain.entity.InnReachTransaction;
+import org.folio.innreach.domain.entity.InnReachTransaction.TransactionState;
 import org.folio.innreach.domain.entity.base.AuditableUser;
 import org.folio.innreach.domain.service.RequestService;
 import org.folio.innreach.domain.service.impl.InnReachTransactionActionNotifier;
@@ -133,6 +136,7 @@ import org.folio.innreach.external.client.feign.InnReachClient;
 import org.folio.innreach.mapper.InnReachTransactionMapper;
 import org.folio.innreach.mapper.InnReachTransactionPickupLocationMapper;
 import org.folio.innreach.repository.InnReachTransactionRepository;
+import org.folio.innreach.util.DateHelper;
 
 @Sql(
   scripts = {"classpath:db/inn-reach-transaction/clear-inn-reach-transaction-tables.sql",
@@ -1914,13 +1918,20 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
 
   @ParameterizedTest
   @EnumSource(names = {"PATRON_HOLD", "LOCAL_HOLD", "ITEM_HOLD", "BORROWER_RENEW", "BORROWING_SITE_CANCEL",
-    "RETURN_UNCIRCULATED", "CLAIMS_RETURNED", "ITEM_SHIPPED", "LOCAL_CHECKOUT",
+    "RETURN_UNCIRCULATED", "CLAIMS_RETURNED", "LOCAL_CHECKOUT",
     "CANCEL_REQUEST", "FINAL_CHECKIN", "RECALL", "TRANSFER", "OWNER_RENEW"})
   @Sql(scripts = {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql",
   })
-  void returnHttp400WhenFinalCheckInItemHoldStateIsNotItemReceivedOrReceiveUnannounced(TransactionState state) {
+  void returnHttp400WhenFinalCheckInItemHoldStateIsNotItemReceivedOrReceiveUnannouncedOrItemShipped(InnReachTransaction.TransactionState state) {
+    var loanStatus = new LoanStatus()
+      .name("closed");
+    var loan = new LoanDTO()
+      .action("checkedin")
+      .status(loanStatus);
+    when(circulationClient.findLoan(any())).thenReturn(Optional.ofNullable(loan));
+
     modifyTransactionState(PRE_POPULATED_ITEM_HOLD_TRANSACTION_ID, state);
 
     var responseEntity = testRestTemplate.postForEntity(
@@ -1934,7 +1945,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   }
 
   @ParameterizedTest
-  @EnumSource(names = {"ITEM_RECEIVED", "RECEIVE_UNANNOUNCED", "ITEM_IN_TRANSIT"})
+  @EnumSource(names = {"ITEM_RECEIVED", "RECEIVE_UNANNOUNCED", "ITEM_SHIPPED", "ITEM_IN_TRANSIT"})
   @Sql(scripts = {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql",
