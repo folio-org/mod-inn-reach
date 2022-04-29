@@ -1,6 +1,7 @@
 package org.folio.innreach.controller;
 
 import static java.util.UUID.randomUUID;
+import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
 import static org.awaitility.Awaitility.await;
 import static org.folio.innreach.domain.dto.folio.circulation.RequestDTO.RequestStatus.CLOSED_FILLER;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -73,6 +74,8 @@ import org.folio.innreach.client.ServicePointsUsersClient;
 import org.folio.innreach.domain.dto.folio.inventorystorage.ServicePointUserDTO;
 import org.folio.innreach.domain.entity.InnReachTransaction.TransactionState;
 import org.folio.innreach.util.DateHelper;
+
+import org.apache.commons.lang3.StringUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -629,6 +632,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   void return200HttpCode_and_sendRequest_whenItemHoldTransactionCreated() {
     var inventoryItemDTO = mockInventoryClient();
     inventoryItemDTO.setStatus(IN_TRANSIT);
+    inventoryItemDTO.setTitle(randomAlphanumeric(500));
     var requestDTO = createRequestDTO();
     requestDTO.setItemId(inventoryItemDTO.getId());
     when(circulationClient.queryRequestsByItemId(inventoryItemDTO.getId())).thenReturn(ResultList.of(1,
@@ -679,7 +683,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     assertEquals(itemHoldDTO.getPatronName(), transaction.get().getHold().getPatronName());
 
     assertEquals(inventoryItemDTO.getId(), transaction.get().getHold().getFolioItemId());
-    assertEquals(inventoryItemDTO.getTitle(), transaction.get().getHold().getTitle());
+    assertEquals(StringUtils.truncate(inventoryItemDTO.getTitle(), 255), transaction.get().getHold().getTitle());
     assertNotNull(transaction.get().getHold().getFolioRequestId());
     assertEquals(user.getId(), transaction.get().getHold().getFolioPatronId());
   }
