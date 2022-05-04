@@ -1853,13 +1853,16 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     verify(circulationClient, never()).moveRequest(any(), any());
   }
 
-  @Test
+  @ParameterizedTest
+  @EnumSource(names = {"ITEM_HOLD", "TRANSFER"})
   @Sql(scripts = {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql",
   })
-  void cancelItemHold_if_stateIsItemHold() {
+  void cancelItemHold_if_stateIsItemHoldOrTransfer(InnReachTransaction.TransactionState state) {
     mockFindRequest(PRE_POPULATED_ITEM_HOLD_REQUEST_ID, OPEN_NOT_YET_FILLED);
+
+    modifyTransactionState(PRE_POPULATED_ITEM_HOLD_TRANSACTION_ID, state);
 
     var cancelHold = createCancelTransactionHold();
     var responseEntity = testRestTemplate.postForEntity(
@@ -1900,7 +1903,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   @ParameterizedTest
   @EnumSource(names = {"PATRON_HOLD", "LOCAL_HOLD", "BORROWER_RENEW", "BORROWING_SITE_CANCEL", "ITEM_IN_TRANSIT",
     "RECEIVE_UNANNOUNCED", "RETURN_UNCIRCULATED", "CLAIMS_RETURNED", "ITEM_RECEIVED", "ITEM_SHIPPED", "LOCAL_CHECKOUT",
-    "CANCEL_REQUEST", "FINAL_CHECKIN", "RECALL", "TRANSFER", "OWNER_RENEW"})
+    "CANCEL_REQUEST", "FINAL_CHECKIN", "RECALL", "OWNER_RENEW"})
   @Sql(scripts = {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql",

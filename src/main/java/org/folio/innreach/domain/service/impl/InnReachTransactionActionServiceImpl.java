@@ -273,7 +273,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
   public void cancelItemHold(UUID transactionId, CancelTransactionHoldDTO cancelRequest) {
     var transaction = fetchTransactionOfType(transactionId, ITEM);
 
-    verifyState(transaction, ITEM_HOLD);
+    verifyState(transaction, ITEM_HOLD, TRANSFER);
 
     eventPublisher.publishEvent(CancelRequestEvent.of(transaction,
       cancelRequest.getCancellationReasonId(),
