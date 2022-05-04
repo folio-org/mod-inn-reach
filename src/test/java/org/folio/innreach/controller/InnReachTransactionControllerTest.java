@@ -1258,10 +1258,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql",
   })
   void testCheckOutPatronHoldItem_linkExistingLoan(TransactionState state) {
-    var loanDueDate = new Date();
-    var checkOutResponse = new LoanDTO()
-      .id(FOLIO_CHECKOUT_ID)
-      .dueDate(loanDueDate);
+    var checkOutResponse = createOpenLoan();
 
     modifyTransactionState(PRE_POPULATED_PATRON_HOLD_TRANSACTION_ID, state);
 
@@ -1283,7 +1280,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     var loan = response.getFolioCheckOut();
     assertNotNull(loan);
     assertEquals(FOLIO_CHECKOUT_ID, loan.getId());
-    assertEquals(toEpochSec(loanDueDate), updatedHold.getDueDateTime());
+    assertEquals(toEpochSec(checkOutResponse.getDueDate()), updatedHold.getDueDateTime());
     assertEquals(FOLIO_CHECKOUT_ID, updatedHold.getFolioLoanId());
   }
 
@@ -1294,10 +1291,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql",
   })
   void testCheckOutLocalHoldItem_linkExistingLoan(TransactionState state) {
-    var loanDueDate = new Date();
-    var checkOutResponse = new LoanDTO()
-      .id(FOLIO_CHECKOUT_ID)
-      .dueDate(loanDueDate);
+    var checkOutResponse = createOpenLoan();
 
     modifyTransactionState(PRE_POPULATED_LOCAL_HOLD_TRANSACTION_ID, state);
 
@@ -1329,10 +1323,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql",
   })
   void testCheckOutItem_createNewLoan(String checkOutEndpointPath, UUID transactionId, TransactionState state) {
-    var loanDueDate = new Date();
-    var checkOutResponse = new LoanDTO()
-      .id(FOLIO_CHECKOUT_ID)
-      .dueDate(loanDueDate);
+    var checkOutResponse = createOpenLoan();
 
     modifyTransactionState(transactionId, state);
 
@@ -2163,6 +2154,13 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     var request = new RequestDTO();
     request.setStatus(CLOSED_FILLER);
     return ResultList.asSinglePage(request);
+  }
+
+  private LoanDTO createOpenLoan() {
+    return new LoanDTO()
+      .status(new LoanStatus().name("Open"))
+      .id(FOLIO_CHECKOUT_ID)
+      .dueDate(new Date());
   }
 
   private ResultList<ServicePointUserDTO> getServicePointUsers() {
