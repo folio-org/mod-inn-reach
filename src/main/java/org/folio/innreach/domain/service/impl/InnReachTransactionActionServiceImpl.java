@@ -439,7 +439,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
     Assert.isTrue(hold.getFolioItemId() != null, "folioItemId is not set");
 
     var loan = loanService.findByItemId(folioItemId).orElse(null);
-    if (loan != null) {
+    if (loan != null && loanService.isOpen(loan)) {
       associateLoanWithTransaction(loan.getId(), loan.getDueDate(), folioItemId, transaction);
     } else {
       loan = loanService.checkOutItem(transaction, servicePointId);
