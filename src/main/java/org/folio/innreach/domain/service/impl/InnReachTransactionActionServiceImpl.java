@@ -350,7 +350,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
   public void finalCheckInItemHold(UUID transactionId, UUID servicePointId) {
     var transaction = fetchTransactionOfType(transactionId, ITEM);
 
-    verifyState(transaction, ITEM_RECEIVED, RECEIVE_UNANNOUNCED);
+    verifyState(transaction, ITEM_RECEIVED, RECEIVE_UNANNOUNCED, ITEM_IN_TRANSIT);
 
     var loan = loanService.getById(transaction.getHold().getFolioLoanId());
     var loanAction = loan.getAction();
