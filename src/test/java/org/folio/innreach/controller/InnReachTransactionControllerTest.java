@@ -1877,8 +1877,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     var cancelRequest = cancelRequestCaptor.getValue();
     assertEquals(CLOSED_CANCELLED, cancelRequest.getStatus());
     assertEquals(cancelHold.getCancellationReasonId(), cancelRequest.getCancellationReasonId());
-    assertEquals(cancelHold.getCancellationAdditionalInformation(),
-      cancelRequest.getCancellationAdditionalInformation());
+    assertEquals(cancelHold.getCancellationAdditionalInformation(), cancelRequest.getCancellationAdditionalInformation());
   }
 
   @Test
