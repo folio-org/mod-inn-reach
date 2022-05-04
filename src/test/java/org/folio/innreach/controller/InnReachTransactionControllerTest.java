@@ -1907,7 +1907,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql",
   })
-  void returnHttp400_when_CancelItemHold_if_StateIsNotItemHold(TransactionState state) {
+  void returnHttp400_when_CancelItemHold_if_StateIsNotItemHoldAndTransfer(TransactionState state) {
     modifyTransactionState(PRE_POPULATED_ITEM_HOLD_TRANSACTION_ID, state);
 
     var cancelHold = createCancelTransactionHold();
