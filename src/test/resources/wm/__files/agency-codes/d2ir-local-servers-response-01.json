@@ -128,7 +128,7 @@
         }
       ],
       "description": "FOLIO 1",
-      "localCode": "fli01"
+      "localCode": "test1"
     },
     {
       "agencyList":
@@ -143,7 +143,7 @@
         }
       ],
       "description": "FOLIO 2",
-      "localCode": "fli02"
+      "localCode": "test2"
     }
   ]
 }
