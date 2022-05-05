@@ -1924,7 +1924,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql",
   })
-  void returnHttp400WhenFinalCheckInItemHoldStateIsNotItemReceivedOrReceiveUnannouncedOrItemShipped(InnReachTransaction.TransactionState state) {
+  void testFinalCheckInItemHold_invalidStatus(InnReachTransaction.TransactionState state) {
     var loanStatus = new LoanStatus()
       .name("closed");
     var loan = new LoanDTO()
