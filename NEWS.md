@@ -1,3 +1,95 @@
+## v1.1.0 2022-04-28
+
+Release primarily addresses Circulation flow and bug fixes. 
+
+### Stories
+
+* [MODINREACH-267](https://issues.folio.org/browse/MODINREACH-267) - INN-Reach Transaction Detail View Action Menu (Local hold) - Transfer hold to another item
+* [MODINREACH-265](https://issues.folio.org/browse/MODINREACH-265) - INN-Reach Transaction Detail View Action Menu (Item hold) - Final check-in
+* [MODINREACH-262](https://issues.folio.org/browse/MODINREACH-262) - INN-Reach Transaction Detail View Action Menu (Item hold) - Transfer hold to another item
+* [MODINREACH-264](https://issues.folio.org/browse/MODINREACH-264) - INN-Reach Transaction Detail View Action Menu (Item hold) - Cancel hold
+* [MODINREACH-246](https://issues.folio.org/browse/MODINREACH-246) - INN-Reach Circulation Flow Terminating Transaction Handling: Cancel Item Hold (Borrowing Site)
+* [MODINREACH-269](https://issues.folio.org/browse/MODINREACH-269) - "Visible-patron-field-configuration" permissions don't work
+* [MODINREACH-261](https://issues.folio.org/browse/MODINREACH-261) - Ensure that INN-Reach transaction state is persisted before Kafka events are consumed
+* [MODINREACH-128](https://issues.folio.org/browse/MODINREACH-128) - FOLIO INN-Reach Integration
+* [MODINREACH-239](https://issues.folio.org/browse/MODINREACH-239) - INN-Reach Staff Interface: INN-Reach Transaction Detail View Action Menu (Patron hold) - Return Item API
+* [MODINREACH-247](https://issues.folio.org/browse/MODINREACH-247) - INN-Reach Circulation Flow Terminating Transaction Handling: Cancel Request (Borrowing Site)
+* [MODINREACH-260](https://issues.folio.org/browse/MODINREACH-260) - Final Check In Fails at Borrowing Site if Transaction State is ITEM_RECEIVED
+* [MODINREACH-259](https://issues.folio.org/browse/MODINREACH-259) - INN-Reach Settings: Create CRUD REST API Endpoints for Visible Patron Field Configuration
+* [MODINREACH-251](https://issues.folio.org/browse/MODINREACH-251) - INN-Reach Circulation Flow Terminating Transaction Handling: Claims Returned (Borrowing Site)
+* [MODINREACH-250](https://issues.folio.org/browse/MODINREACH-250) - INN-Reach Circulation Flow Terminating Transaction Handling: Patron Claims Returned (Owning Site)
+* [MODINREACH-249](https://issues.folio.org/browse/MODINREACH-249) - INN-Reach Circulation Flow Terminating Transaction Handling: Local Checkout (Local Hold)
+* [MODINREACH-248](https://issues.folio.org/browse/MODINREACH-248) - INN-Reach Circulation Flow Terminating Transaction Handling: Cancel Request (Owning Site)
+* [MODINREACH-244](https://issues.folio.org/browse/MODINREACH-244) - INN-Reach Circulation Flow Terminating Transaction Handling: Final Item Check-in (Borrowing Site)
+* [MODINREACH-177](https://issues.folio.org/browse/MODINREACH-177) - INN-Reach Record Contribution: Ignore Items and Bibs from Locations Not Associated with INN-Reach Local Agency Libraries
+* [MODINREACH-158](https://issues.folio.org/browse/MODINREACH-158) - INN-Reach Circulation Flow Action: INN-Reach Transaction Detail View Action (Patron hold) - Cancel hold
+* [MODINREACH-245](https://issues.folio.org/browse/MODINREACH-245) - INN-Reach Circulation Flow Terminating Transaction Handling: Cancel Item Hold (Owning Site)
+* [MODINREACH-257](https://issues.folio.org/browse/MODINREACH-257) - Owning Site Sending Unnecessary Cancel Request Call to Central Server after Borrowing Site Cancel Request Received
+* [MODINREACH-258](https://issues.folio.org/browse/MODINREACH-258) - SPIKE: Determine Why Instances are Being Contributed multiple times in a row following come circulation actions
+* [MODINREACH-213](https://issues.folio.org/browse/MODINREACH-213) - Make User Field Used to Match "visiblePatronId" from D2IR Patron Verification Endpoint Payload Configurable
+* [MODINREACH-241](https://issues.folio.org/browse/MODINREACH-241) - Update D2IR Local Endpoint (Circulation): Report Item Received to Owning Site for Item Hold to Support ITEM_HOLD and TRANSFERRED Transaction States
+* [MODINREACH-256](https://issues.folio.org/browse/MODINREACH-256) - Update creation of holdings for INN-Reach Patron Hold items to include holdings source (FOLIO)
+* [MODINREACH-236](https://issues.folio.org/browse/MODINREACH-236) - INN-Reach Circulation Flow Action: INN-Reach Transaction Detail View Action (Patron hold) - Check out to requesting patron
+* [MODINREACH-149](https://issues.folio.org/browse/MODINREACH-149) - When Saving a Central Server Configuration, Validate That Libraries Are Only Assigned to a Single Agency Code
+* [MODINREACH-217](https://issues.folio.org/browse/MODINREACH-217) - INN-Reach Transactions: Make transactions filterable by date comparison on metadata object dates and loanDueDate
+* [MODINREACH-253](https://issues.folio.org/browse/MODINREACH-253) - INN-Reach Locations List Not Being Contributed Correctly
+* [MODINREACH-252](https://issues.folio.org/browse/MODINREACH-252) - INN-Reach location should be optional for Location mapping
+* [MODINREACH-161](https://issues.folio.org/browse/MODINREACH-161) - Inn-Reach Contribution Flow: support Cancelation API endpoint
+* [MODINREACH-216](https://issues.folio.org/browse/MODINREACH-216) - Add Patron Name and Patron Type (INN-Reach) to Patron Hold Transaction Record
+* [MODINREACH-238](https://issues.folio.org/browse/MODINREACH-238) - Update Receive Un-shipped Item API to Handle Receiving an Un-shipped Item with a Cancelled FOLIO Request
+* [MODINREACH-240](https://issues.folio.org/browse/MODINREACH-240) - ASCII Newline Characters In Call Number Fields of Contributed Items Causing Errors on Central Server
+* [MODINREACH-227](https://issues.folio.org/browse/MODINREACH-227) - Create API endpoint (GET) for location mappings
+* [MODINREACH-233](https://issues.folio.org/browse/MODINREACH-233) - Update Receive Shipped Item API to Handle Receiving a Shipped Item with a Cancelled FOLIO Request
+* [MODINREACH-6](https://issues.folio.org/browse/MODINREACH-6) - Record Contribution, Ongoing: Trigger contribution or update of Bibs and Items to INN-Reach central Server
+* [MODINREACH-7](https://issues.folio.org/browse/MODINREACH-7) - Record Contribution, Ongoing: Trigger de-contribution of Bibs and Items from INN-Reach central Server
+* [MODINREACH-231](https://issues.folio.org/browse/MODINREACH-231) - Checkout to Borrowing Site API Is Not Limiting Transaction Lookup by both item barcode and transaction state
+* [MODINREACH-235](https://issues.folio.org/browse/MODINREACH-235) - Institutional Request Pickup Location Using Service Point Preference Default, not Request Preference Default Pickup Location
+* [MODINREACH-234](https://issues.folio.org/browse/MODINREACH-234) - Local Hold Creation Failing When Item and Patron Agencies Do Not Match but Are On the Same Local Server
+* [MODINREACH-162](https://issues.folio.org/browse/MODINREACH-162) - INN-Reach Circulation Flow: React to Loan Record Changes for INN-Reach Transactions - Local Hold: Check Out to Local Patron
+* [MODINREACH-229](https://issues.folio.org/browse/MODINREACH-229) - Unable to Create Requests for Patron or Local Hold Transactions
+* [MODINREACH-230](https://issues.folio.org/browse/MODINREACH-230) - Change Patron ID Handling for Verify Patron and Other D2IR APIs
+* [MODINREACH-225](https://issues.folio.org/browse/MODINREACH-225) - INN-Reach Circulation Flow: Modify Reaction to Change in Request Record for INN-Reach Transaction: Cancel Request (Patron Hold)
+* [MODINREACH-122](https://issues.folio.org/browse/MODINREACH-122) - INN-Reach Circulation Flow: React to Change in Request Record for INN-Reach Transaction: Transfer (Move) Request (Item Hold)
+* [MODINREACH-165](https://issues.folio.org/browse/MODINREACH-165) - INN-Reach Circulation Flow: React to Loan Record Changes for INN-Reach Transactions - Patron Hold: Claim Returned
+* [MODINREACH-176](https://issues.folio.org/browse/MODINREACH-176) - INN-Reach Circulation Flow: React to Changed Loan Record for INN-Reach Transaction: Item Recalled (Item Hold)
+* [MODINREACH-226](https://issues.folio.org/browse/MODINREACH-226) - Enable logging of all responses and requests from the central server
+* [MODINREACH-175](https://issues.folio.org/browse/MODINREACH-175) - INN-Reach Circulation Flow: React to Check-ins for INN-Reach Transactions - Patron Hold: Return Item Uncirculated
+* [MODINREACH-173](https://issues.folio.org/browse/MODINREACH-173) - INN-Reach Circulation Flow: React to Change in Request Record for INN-Reach Transaction: Cancel Request (Item Hold)
+* [MODINREACH-174](https://issues.folio.org/browse/MODINREACH-174) - INN-Reach Circulation Flow: React to Change in Request Record for INN-Reach Transaction: Cancel Request (Patron Hold)
+* [MODINREACH-223](https://issues.folio.org/browse/MODINREACH-223) - Fix Initial record contribution fields mapping
+* [MODINREACH-222](https://issues.folio.org/browse/MODINREACH-222) - Fix Initial record contribution - loading of source records
+* [MODINREACH-218](https://issues.folio.org/browse/MODINREACH-218) - Transaction get request returns empty collection if offset >1
+* [MODINREACH-169](https://issues.folio.org/browse/MODINREACH-169) - INN-Reach Circulation Flow: React to Loan Record Changes for INN-Reach Transactions - Item Hold: Final Check-in
+* [MODINREACH-221](https://issues.folio.org/browse/MODINREACH-221) - Fix Initial record contribution event consuming
+* [MODINREACH-220](https://issues.folio.org/browse/MODINREACH-220) - Remove "X-Request-Creation-Time" from all outgoing D2IR API requests
+* [MODINREACH-219](https://issues.folio.org/browse/MODINREACH-219) - Remove "X-Request-Creation-Time" from list of required headers for 3rd-party D2IR API requests
+* [MODINREACH-164](https://issues.folio.org/browse/MODINREACH-164) - INN-Reach Circulation Flow: React to Loan Record Changes for INN-Reach Transactions - Patron Hold: Return Item
+* [MODINREACH-163](https://issues.folio.org/browse/MODINREACH-163) - INN-Reach Circulation Flow: React to Loan Record Changes for INN-Reach Transactions - Patron Hold: Borrower Renew Loan
+* [MODINREACH-172](https://issues.folio.org/browse/MODINREACH-172) - D2IR Local Endpoint (Circulation): Claims Returned (Owning Site)
+* [MODINREACH-159](https://issues.folio.org/browse/MODINREACH-159) - INN-Reach Circulation Flow: React to Loan Record Changes for INN-Reach Transactions - Patron Hold: Check Out to Patron
+* [MODINREACH-214](https://issues.folio.org/browse/MODINREACH-214) - Owning Site Unable to Process Unshipped Item Message
+* [MODINREACH-212](https://issues.folio.org/browse/MODINREACH-212) - Support circulation interface v13
+* [MODINREACH-157](https://issues.folio.org/browse/MODINREACH-157) - INN-Reach Circulation Flow Action: Receive Un-shipped/Unannounced Item
+* [MODINREACH-211](https://issues.folio.org/browse/MODINREACH-211) - Unable to Create Patron Hold Transactions
+* [MODINREACH-206](https://issues.folio.org/browse/MODINREACH-206) - INN-Reach Item Hold Transactions Missing "title" Attribute
+* [MODINREACH-184](https://issues.folio.org/browse/MODINREACH-184) - Add API to Update an INN-Reach Transaction Record
+* [MODINREACH-56](https://issues.folio.org/browse/MODINREACH-56) - Spike: Record Contribution: Process contribution or update Jobs of Bibs to an INN-Reach central Server
+* [MODINREACH-160](https://issues.folio.org/browse/MODINREACH-160) - Define missing internal permissions (modulePermissions) for API endpoints
+* [MODINREACH-210](https://issues.folio.org/browse/MODINREACH-210) - Cannot create user due to lack of permissions
+* [MODINREACH-199](https://issues.folio.org/browse/MODINREACH-199) - Include all Required Header Values on D2IR API Calls
+* [MODINREACH-207](https://issues.folio.org/browse/MODINREACH-207) - Add new authorization header to D2IR API calls
+* [MODINREACH-104](https://issues.folio.org/browse/MODINREACH-104) - D2IR Local Endpoint (Circulation): Owner Renew Item (Borrowing Site)
+* [MODINREACH-201](https://issues.folio.org/browse/MODINREACH-201) - Adapt mod-inn-reach to the request schema changes
+* [MODINREACH-102](https://issues.folio.org/browse/MODINREACH-102) - D2IR Local Endpoint (Circulation): Final Item Check-in (Borrowing Site)
+* [MODINREACH-152](https://issues.folio.org/browse/MODINREACH-152) - Initial record contribution: Add modulePermissions required for calling other FOLIO modules
+* [MODINREACH-205](https://issues.folio.org/browse/MODINREACH-205) - D2IR Local Endpoint (Circulation): Fix JSON Body for Borrower Renew Message for Item Hold (Owning Site)
+* [MODINREACH-194](https://issues.folio.org/browse/MODINREACH-194) - D2IR Local Endpoint (Circulation): Check Out Unshipped Item to Borrowing Site When Unshipped Item Received Reported Received to Owning Site for Item Hold
+* [MODINREACH-100](https://issues.folio.org/browse/MODINREACH-100) - D2IR Local Endpoint (Circulation): Borrower Renew Message for Item Hold (Owning Site)
+* [MODINREACH-93](https://issues.folio.org/browse/MODINREACH-93) - D2IR Local Endpoint (Circulation): Create INN-Reach Local Hold - Create FOLIO Request
+* [MODINREACH-89](https://issues.folio.org/browse/MODINREACH-89) - D2IR Local Endpoint (Circulation): Create INN-Reach Local Hold - Create Transaction
+* [MODINREACH-182](https://issues.folio.org/browse/MODINREACH-182) - Enable INN-Reach Transaction Query by shippedItemBarcode and Transaction state
+* [MODINREACH-99](https://issues.folio.org/browse/MODINREACH-99) - D2IR Local Endpoint (Circulation): Recall Item Message for Patron Hold
+
 ## v1.0.2 2021-12-15
 
 Resolve Log4Shell security issue ([CVE-2021-44228](https://nvd.nist.gov/vuln/detail/CVE-2021-44228) and [CVE-2021-45046](https://nvd.nist.gov/vuln/detail/CVE-2021-45046))

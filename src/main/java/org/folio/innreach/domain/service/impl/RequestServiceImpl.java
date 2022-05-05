@@ -281,6 +281,11 @@ public class RequestServiceImpl implements RequestService {
     }
   }
 
+  @Override
+  public ResultList<RequestDTO> getRequestsByItemId(UUID itemId) {
+    return circulationClient.queryRequestsByItemId(itemId);
+  }
+
   private void cancelRequest(RequestDTO request, UUID reasonId, String reasonDetails) {
     request.setStatus(RequestStatus.CLOSED_CANCELLED);
     request.setCancellationReasonId(reasonId);

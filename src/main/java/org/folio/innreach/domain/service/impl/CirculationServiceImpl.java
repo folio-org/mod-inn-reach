@@ -4,6 +4,7 @@ import static java.lang.String.format;
 import static java.time.Instant.ofEpochSecond;
 import static java.util.Objects.nonNull;
 import static org.apache.commons.lang3.StringUtils.capitalize;
+import static org.apache.commons.lang3.StringUtils.truncate;
 
 import static org.folio.innreach.domain.dto.folio.circulation.RequestDTO.RequestStatus.OPEN_AWAITING_PICKUP;
 import static org.folio.innreach.domain.dto.folio.circulation.RequestDTO.RequestStatus.OPEN_IN_TRANSIT;
@@ -45,6 +46,7 @@ import javax.persistence.EntityExistsException;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.folio.innreach.domain.service.InnReachRecallUserService;
 import org.springframework.beans.BeanUtils;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
@@ -54,8 +56,6 @@ import org.springframework.util.Assert;
 
 import org.folio.innreach.domain.dto.folio.circulation.RenewByIdDTO;
 import org.folio.innreach.domain.dto.folio.inventory.InventoryItemDTO;
-import org.folio.innreach.domain.entity.CentralServer;
-import org.folio.innreach.domain.entity.InnReachRecallUser;
 import org.folio.innreach.domain.entity.InnReachTransaction;
 import org.folio.innreach.domain.entity.InnReachTransaction.TransactionState;
 import org.folio.innreach.domain.entity.InnReachTransaction.TransactionType;
@@ -92,7 +92,6 @@ import org.folio.innreach.dto.TransferRequestDTO;
 import org.folio.innreach.external.service.InnReachExternalService;
 import org.folio.innreach.mapper.InnReachTransactionHoldMapper;
 import org.folio.innreach.mapper.InnReachTransactionPickupLocationMapper;
-import org.folio.innreach.repository.CentralServerRepository;
 import org.folio.innreach.repository.InnReachTransactionRepository;
 import org.folio.innreach.repository.LocalAgencyRepository;
 
@@ -115,7 +114,7 @@ public class CirculationServiceImpl implements CirculationService {
   private static final String D2IR_ITEM_RECALL_OPERATION = "recall";
 
   private final InnReachTransactionRepository transactionRepository;
-  private final CentralServerRepository centralserverRepository;
+  private final InnReachRecallUserService recallUserService;
   private final InnReachTransactionHoldMapper transactionHoldMapper;
   private final InnReachTransactionPickupLocationMapper pickupLocationMapper;
   private final PatronHoldService patronHoldService;
@@ -146,7 +145,7 @@ public class CirculationServiceImpl implements CirculationService {
       var materialTypeId = item.getMaterialType().getId();
       var materialType = materialService.findByCentralServerAndMaterialType(centralServerId, materialTypeId);
       itemHold.setCentralItemType(materialType.getCentralItemType());
-      itemHold.setTitle(item.getTitle());
+      itemHold.setTitle(truncate(item.getTitle(), 255));
       transaction.setHold(itemHold);
       transactionRepository.save(transaction);
     } catch (Exception e) {
@@ -348,7 +347,7 @@ public class CirculationServiceImpl implements CirculationService {
       eventPublisher.publishEvent(CancelRequestEvent.of(transaction,
         INN_REACH_CANCELLATION_REASON_ID, "Item has been recalled."));
     } else {
-      var recallUser = getRecallUserForCentralServer(centralCode);
+      var recallUser =  recallUserService.getRecallUserForCentralServer(centralCode);
       eventPublisher.publishEvent(RecallRequestEvent.of(transaction.getHold(), recallUser));
     }
 
@@ -484,12 +483,6 @@ public class CirculationServiceImpl implements CirculationService {
 
   private LoanDTO renewLoan(TransactionHold hold) {
     return loanService.renew(RenewByIdDTO.of(hold.getFolioItemId(), hold.getFolioPatronId()));
-  }
-
-  private InnReachRecallUser getRecallUserForCentralServer(String centralCode) {
-    return centralserverRepository.fetchOneByCentralCode(centralCode)
-      .map(CentralServer::getInnReachRecallUser)
-      .orElseThrow(() -> new EntityNotFoundException("Recall user is not set for central server with code = " + centralCode));
   }
 
   private void recallRequestToCentralSever(InnReachTransaction transaction, Date existingDueDate) {
