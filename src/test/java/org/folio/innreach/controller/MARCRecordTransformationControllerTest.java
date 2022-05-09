@@ -75,9 +75,9 @@ class MARCRecordTransformationControllerTest extends BaseControllerTest {
   @Test
   @Sql(scripts = {
     "classpath:db/central-server/pre-populate-central-server.sql",
-    "classpath:db/marc-transform-opt-set/pre-populate-marc-transform-opt-set.sql"
+    "classpath:db/marc-transform-opt-set/pre-populate-marc-transform-opt-set-inactive.sql"
   })
-  void shouldReturn() {
+  void returnTransformedMARCRecord_inactiveConfig() {
     when(instanceStorageClient.getInstanceById(any()))
       .thenReturn(deserializeFromJsonFile("/inventory-storage/american-bar-association.json", Instance.class));
 
