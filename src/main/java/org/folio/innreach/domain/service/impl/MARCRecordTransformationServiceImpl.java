@@ -105,29 +105,27 @@ public class MARCRecordTransformationServiceImpl implements MARCRecordTransforma
       transformationConfig = createEmptyMARCTransformationConfig();
     }
 
-    if (!TRUE.equals(transformationConfig.getConfigIsActive())) {
-      throw new IllegalStateException(
-        String.format("MARC transformation settings for CentralServer Id [%s] is not active", centralServerId)
-      );
-    }
-
     return transformationConfig;
   }
 
-  private Optional<IdentifierWithConfigDTO> findValidIdentifier(MARCTransformationOptionsSettingsDTO marcTransformationSettings,
+  private Optional<IdentifierWithConfigDTO> findValidIdentifier(MARCTransformationOptionsSettingsDTO settings,
                                                                 Instance inventoryInstance) {
+    if (!TRUE.equals(settings.getConfigIsActive())) {
+      return Optional.empty();
+    }
+
     return inventoryInstance.getIdentifiers()
       .stream()
-      .map(identifier -> findFirstValidIdentifierWithConfig(marcTransformationSettings, identifier))
+      .map(identifier -> findFirstValidIdentifierWithConfig(settings, identifier))
       .filter(Objects::nonNull)
       .findFirst();
   }
 
-  private IdentifierWithConfigDTO findFirstValidIdentifierWithConfig(MARCTransformationOptionsSettingsDTO marcTransformationSettings,
+  private IdentifierWithConfigDTO findFirstValidIdentifierWithConfig(MARCTransformationOptionsSettingsDTO settings,
                                                                      InstanceIdentifiers identifier) {
-    return marcTransformationSettings.getModifiedFieldsForContributedRecords()
+    return settings.getModifiedFieldsForContributedRecords()
       .stream()
-      .filter(fieldConfig -> fieldConfig.getResourceIdentifierTypeId().equals(identifier.getIdentifierTypeId()))
+      .filter(fieldConfig -> Objects.equals(fieldConfig.getResourceIdentifierTypeId(), identifier.getIdentifierTypeId()))
       .filter(fieldConfig -> !identifierValueStartsWithIgnorePrefix(fieldConfig, identifier))
       .map(fieldConfig -> new IdentifierWithConfigDTO(identifier, fieldConfig))
       .findFirst()
@@ -141,8 +139,8 @@ public class MARCRecordTransformationServiceImpl implements MARCRecordTransforma
       .anyMatch(ignorePrefix -> identifier.getValue().startsWith(ignorePrefix));
   }
 
-  private String stripIdentifierValueAlphaPrefix(FieldConfigurationDTO fieldConfiguration,
-                                                 InstanceIdentifiers identifier) {
+  private String stripAlphaPrefix(FieldConfigurationDTO fieldConfiguration,
+                                  InstanceIdentifiers identifier) {
     if (fieldConfiguration.getStripPrefix()) {
       return identifier.getValue().replaceAll(NOT_NUMBERS_REGEXP, "");
     }
@@ -163,9 +161,11 @@ public class MARCRecordTransformationServiceImpl implements MARCRecordTransforma
 
   private void updateRecord001MARCField(ParsedRecordDTO parsedRecord, IdentifierWithConfigDTO identifierWithConfig) {
     parsedRecord.getFields().forEach(recordField -> {
-      if (recordField.getCode().equals(MARC_FIELD_CODE_001)) {
-        recordField.setValue(stripIdentifierValueAlphaPrefix(identifierWithConfig.getFieldConfigurationDTO(),
-          identifierWithConfig.getIdentifierDTO()));
+      if (MARC_FIELD_CODE_001.equals(recordField.getCode())) {
+        var fieldConfig = identifierWithConfig.getFieldConfigurationDTO();
+        var identifier = identifierWithConfig.getIdentifierDTO();
+
+        recordField.setValue(stripAlphaPrefix(fieldConfig, identifier));
       }
     });
   }

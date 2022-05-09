@@ -75,6 +75,31 @@ class MARCRecordTransformationControllerTest extends BaseControllerTest {
   @Test
   @Sql(scripts = {
     "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/marc-transform-opt-set/pre-populate-marc-transform-opt-set-inactive.sql"
+  })
+  void returnTransformedMARCRecord_inactiveConfig() {
+    when(instanceStorageClient.getInstanceById(any()))
+      .thenReturn(deserializeFromJsonFile("/inventory-storage/american-bar-association.json", Instance.class));
+
+    when(sourceRecordStorageClient.getRecordByInstanceId(any()))
+      .thenReturn(deserializeFromJsonFile("/source-record-storage/source-record-storage-example.json", SourceRecordDTO.class));
+
+    var responseEntity = testRestTemplate.getForEntity(
+      "/inn-reach/central-servers/{centralServerId}/marc-record-transformation/{inventoryInstanceId}",
+      TransformedMARCRecordDTO.class, PRE_POPULATED_CENTRAL_SERVER_ID, UUID.randomUUID());
+
+    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+
+    var body = responseEntity.getBody();
+
+    assertNotNull(body);
+    assertNotNull(body.getContent());
+    assertNotNull(body.getBase64rawContent());
+  }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/marc-transform-opt-set/pre-populate-marc-transform-opt-set.sql"
   })
   void shouldReturn() {
