@@ -316,6 +316,7 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
     loan.setId(folioLoanId);
     loan.setAction("checkedin");
     loan.setStatus(new LoanStatus().name("Closed"));
+    modifyTransactionState(transactionId, ITEM_SHIPPED);
 
     listener.handleLoanEvents(asSingleConsumerRecord(CIRC_LOAN_TOPIC, folioLoanId, event));
 
@@ -489,7 +490,6 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
   @ParameterizedTest
   @EnumSource(names = {"CLOSED_PICKUP_EXPIRED", "CLOSED_CANCELLED"})
   void shouldUpdatePatronTransactionOnCheckinCreation(RequestDTO.RequestStatus requestStatus) {
-    var checkInId = CHECKIN_ID;
     var event = createCheckInDomainEvent(DomainEventType.CREATED);
     event.getData().getNewEntity().setItemId(PRE_POPULATED_PATRON_TRANSACTION_ITEM_ID);
     var request = new RequestDTO();
@@ -498,7 +498,7 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
 
     when(circulationClient.findRequest(any())).thenReturn(Optional.of(request));
 
-    listener.handleCheckInEvents(asSingleConsumerRecord(CIRC_LOAN_TOPIC, checkInId, event));
+    listener.handleCheckInEvents(asSingleConsumerRecord(CIRC_LOAN_TOPIC, CHECKIN_ID, event));
 
     verify(eventProcessor).process(anyList(), any(Consumer.class));
     verify(innReachExternalService).postInnReachApi(any(), any());
@@ -574,4 +574,9 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
       .build();
   }
 
+  private void modifyTransactionState(UUID transactionId, InnReachTransaction.TransactionState state){
+    var transaction = transactionRepository.fetchOneById(transactionId).get();
+    transaction.setState(state);
+    transactionRepository.save(transaction);
+  }
 }
