@@ -2009,6 +2009,8 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     );
 
     verify(requestService).moveItemRequest(request.getId(), item);
+    verify(actionNotifier).reportTransferRequest(any(), any());
+    verify(innReachClient).postInnReachApi(any(), anyString(), anyString(), anyString(), any());
 
     assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
     assertNotNull(responseEntity.getBody());

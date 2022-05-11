@@ -377,6 +377,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
     var request = requestService.findRequest(requestId);
     if (!itemId.equals(request.getItemId())) {
       request = requestService.moveItemRequest(requestId, item);
+      notifier.reportTransferRequest(transaction, item.getHrid());
     }
 
     var holdingId = request.getHoldingsRecordId();
