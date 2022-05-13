@@ -27,6 +27,7 @@ import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionSt
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.TRANSFER;
 import static org.folio.innreach.dto.ItemStatus.NameEnum.AWAITING_PICKUP;
 import static org.folio.innreach.fixture.InnReachTransactionFixture.assertPatronAndItemInfoCleared;
+import static org.folio.innreach.fixture.InventoryFixture.createInventoryHoldingDTO;
 import static org.folio.innreach.fixture.InventoryFixture.createInventoryInstance;
 import static org.folio.innreach.fixture.InventoryFixture.createInventoryItemDTO;
 import static org.folio.innreach.util.DateHelper.toEpochSec;
@@ -43,6 +44,7 @@ import java.util.function.Consumer;
 
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.producer.ProducerRecord;
+import org.folio.innreach.domain.service.RequestService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
@@ -66,7 +68,6 @@ import org.folio.innreach.domain.listener.base.BaseKafkaApiTest;
 import org.folio.innreach.domain.service.ContributionActionService;
 import org.folio.innreach.domain.service.impl.BatchDomainEventProcessor;
 import org.folio.innreach.dto.CheckInDTO;
-import org.folio.innreach.dto.Instance;
 import org.folio.innreach.dto.LoanStatus;
 import org.folio.innreach.dto.StorageLoanDTO;
 import org.folio.innreach.external.service.InnReachExternalService;
@@ -97,6 +98,8 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
   private static final UUID PRE_POPULATED_ITEM_TRANSACTION_ID = UUID.fromString("ab2393a1-acc4-4849-82ac-8cc0c37339e1");
   private static final UUID PRE_POPULATED_ITEM_TRANSACTION_LOAN_ID = UUID.fromString("06e820e3-71a0-455e-8c73-3963aea677d4");
   private static final UUID PRE_POPULATED_LOCAL_TRANSACTION_ID = UUID.fromString("79b0a1fb-55be-4e55-9d84-01303aaec1ce");
+  private static final UUID PRE_POPULATED_LOCAL_TRANSACTION_REQUEST_ID = UUID.fromString("4106d147-9085-4dfa-a59f-b8d50d551a48");
+  private static final UUID PRE_POPULATED_REQUEST_ITEM_ID = UUID.fromString("b6809be0-8b9b-4407-85a9-ffa4e95a64c9");
   private static final String TEST_TENANT_ID = "testing";
   private static final String TEST_PATRON_NAME = "patronName2";
   private static final Duration ASYNC_AWAIT_TIMEOUT = Duration.ofSeconds(15);
@@ -123,6 +126,9 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
 
   @MockBean
   private CirculationClient circulationClient;
+
+  @SpyBean
+  private RequestService requestService;
 
   @Test
   void shouldReceiveLoanEvent() {
@@ -481,6 +487,37 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
 
     var updatedTransaction = transactionRepository.fetchOneById(PRE_POPULATED_PATRON_TRANSACTION_ID).orElse(null);
     assertEquals(state, updatedTransaction.getState());
+  }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
+  })
+  void shouldUpdateTransactionWithLocalHoldToTransferState() {
+    var holding = createInventoryHoldingDTO();
+    var item = createInventoryItemDTO();
+    var event = createRequestDomainEvent(DomainEventType.UPDATED);
+    var request = event.getData().getNewEntity();
+
+    item.setHoldingsRecordId(holding.getId());
+    request.setId(PRE_POPULATED_LOCAL_TRANSACTION_REQUEST_ID);
+    request.setItemId(PRE_POPULATED_REQUEST_ITEM_ID);
+    request.setHoldingsRecordId(holding.getId());
+    request.setInstanceId(holding.getInstanceId());
+
+    when(inventoryClient.findItem(any())).thenReturn(Optional.of(item));
+    when(circulationClient.moveRequest(eq(request.getId()), any())).thenReturn(request);
+
+    listener.handleRequestEvents(asSingleConsumerRecord(CIRC_REQUEST_TOPIC, PRE_POPULATED_LOCAL_TRANSACTION_REQUEST_ID, event));
+
+    var transaction = transactionRepository.fetchOneById(PRE_POPULATED_LOCAL_TRANSACTION_ID).get();
+    assertEquals(TRANSFER, transaction.getState());
+    assertEquals(item.getId(), transaction.getHold().getFolioItemId());
+    assertEquals(item.getHrid(), transaction.getHold().getItemId());
+    assertEquals(item.getHoldingsRecordId(), transaction.getHold().getFolioHoldingId());
+    assertEquals(holding.getInstanceId(), transaction.getHold().getFolioInstanceId());
+    verify(requestService).moveItemRequest(request.getId(), item);
   }
 
   @Sql(scripts = {
