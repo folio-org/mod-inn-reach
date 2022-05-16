@@ -374,8 +374,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
     var item = fetchItemById(itemId);
     var request = requestService.findRequest(transaction.getHold().getFolioRequestId());
 
-    if (!itemId.equals(request.getItemId())) {
-      request = requestService.moveItemRequest(request.getId(), item);
+    if (itemId.equals(request.getItemId())) {
       updateTransactionOnMovedRequest(request, item, transaction);
     } else {
       requestService.validateItemAvailability(item);
