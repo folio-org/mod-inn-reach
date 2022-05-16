@@ -2008,6 +2008,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
 
     when(inventoryClient.findItem(item.getId())).thenReturn(Optional.of(item));
     when(circulationClient.findRequest(request.getId())).thenReturn(Optional.of(request));
+    when(circulationClient.moveRequest(eq(request.getId()), any())).thenReturn(request);
 
     var responseEntity = testRestTemplate.postForEntity(
       LOCAL_HOLD_TRANSFER_ITEM_ENDPOINT, null, InnReachTransactionDTO.class,
@@ -2018,6 +2019,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     assertNotNull(responseEntity.getBody());
 
     var transaction = responseEntity.getBody();
+    verify(requestService).moveItemRequest(request.getId(), item);
     assertEquals(TransactionStateEnum.TRANSFER, transaction.getState());
     assertEquals(item.getId(), transaction.getHold().getFolioItemId());
     assertEquals(item.getHrid(), transaction.getHold().getItemId());
