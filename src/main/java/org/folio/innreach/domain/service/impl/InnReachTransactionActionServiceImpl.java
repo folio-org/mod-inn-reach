@@ -369,23 +369,17 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
   public InnReachTransactionDTO transferLocalHold(UUID transactionId, UUID itemId) {
     var transaction = fetchTransactionOfType(transactionId, LOCAL);
 
-    var hold = transaction.getHold();
+    verifyState(transaction, LOCAL_HOLD, TRANSFER);
+
     var item = fetchItemById(itemId);
-    var requestId = hold.getFolioRequestId();
-    var request = requestService.findRequest(requestId);
+    var request = requestService.findRequest(transaction.getHold().getFolioRequestId());
 
     if (!itemId.equals(request.getItemId())) {
-      request = requestService.moveItemRequest(requestId, item);
-    }
-
-    var holdingId = request.getHoldingsRecordId();
-    if (!holdingId.equals(hold.getFolioHoldingId())) {
       updateTransactionOnMovedRequest(request, item, transaction);
     } else {
-      transaction.setState(TRANSFER);
-      hold.setFolioItemId(item.getId());
-      hold.setItemId(item.getHrid());
-      hold.setFolioItemBarcode(item.getBarcode());
+      requestService.validateItemAvailability(item);
+
+      eventPublisher.publishEvent(MoveRequestEvent.of(transaction, item));
     }
 
     return transactionMapper.toDTO(transaction);
