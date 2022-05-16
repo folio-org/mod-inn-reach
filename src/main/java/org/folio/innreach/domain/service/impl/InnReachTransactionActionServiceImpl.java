@@ -371,6 +371,10 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
     var hold = transaction.getHold();
     var item = fetchItemById(itemId);
 
+    transaction.setState(TRANSFER);
+    hold.setFolioItemId(item.getId());
+    hold.setItemId(item.getHrid());
+
     var requestId = hold.getFolioRequestId();
     var request = requestService.findRequest(requestId);
 
@@ -378,7 +382,11 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
       request = requestService.moveItemRequest(requestId, item);
     }
 
-    updateLocalTransactionToTransfer(request, transaction, item);
+    var holdingId = request.getHoldingsRecordId();
+    if (!holdingId.equals(hold.getFolioHoldingId())) {
+      hold.setFolioHoldingId(holdingId);
+      hold.setFolioInstanceId(request.getInstanceId());
+    }
 
     return transactionMapper.toDTO(transaction);
   }
@@ -635,28 +643,28 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
   private void updateLocalTransactionOnRequestChange(RequestDTO request, InnReachTransaction transaction) {
     var hold = transaction.getHold();
     var transactionItemId = hold.getFolioItemId();
+    var itemId = request.getItemId();
     var requestId = hold.getFolioRequestId();
-    if (!transactionItemId.equals(request.getItemId())) {
-      var itemId = request.getItemId();
-      var item = fetchItemById(itemId);
-      log.info("Updating local hold transaction {} on moving of a request {}, transaction.getId(), request.getId()");
 
-      request = requestService.moveItemRequest(requestId, item);
-      updateLocalTransactionToTransfer(request, transaction, item);
+    if (!transactionItemId.equals(request.getItemId())) {
+      log.info("Updating local hold transaction {} on moving a request {} from item {} to {}",
+        transaction.getId(), requestId, transactionItemId, itemId);
+
+      var item = fetchItemById(request.getItemId());
+
+      updateLocalTransactionOnMovedRequest(request, item, transaction);
     }
   }
 
-  private void updateLocalTransactionToTransfer(RequestDTO request, InnReachTransaction transaction, InventoryItemDTO item) {
+  private void updateLocalTransactionOnMovedRequest(RequestDTO request, InventoryItemDTO item, InnReachTransaction transaction) {
     var hold = transaction.getHold();
-    transaction.setState(TRANSFER);
     hold.setFolioItemId(item.getId());
     hold.setItemId(item.getHrid());
+    hold.setFolioInstanceId(request.getInstanceId());
+    hold.setFolioHoldingId(request.getHoldingsRecordId());
+    hold.setFolioItemBarcode(item.getBarcode());
 
-    var holdingId = request.getHoldingsRecordId();
-    if (!holdingId.equals(hold.getFolioHoldingId())) {
-      hold.setFolioHoldingId(holdingId);
-      hold.setFolioInstanceId(request.getInstanceId());
-    }
+    transaction.setState(TRANSFER);
   }
 
   private void clearPatronTransactionAndItemRecord(UUID itemId, InnReachTransaction transaction) {

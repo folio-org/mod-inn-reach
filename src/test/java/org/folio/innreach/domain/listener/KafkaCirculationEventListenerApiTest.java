@@ -507,7 +507,6 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
     request.setInstanceId(holding.getInstanceId());
 
     when(inventoryClient.findItem(any())).thenReturn(Optional.of(item));
-    when(circulationClient.moveRequest(eq(request.getId()), any())).thenReturn(request);
 
     listener.handleRequestEvents(asSingleConsumerRecord(CIRC_REQUEST_TOPIC, PRE_POPULATED_LOCAL_TRANSACTION_REQUEST_ID, event));
 
@@ -517,7 +516,6 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
     assertEquals(item.getHrid(), transaction.getHold().getItemId());
     assertEquals(item.getHoldingsRecordId(), transaction.getHold().getFolioHoldingId());
     assertEquals(holding.getInstanceId(), transaction.getHold().getFolioInstanceId());
-    verify(requestService).moveItemRequest(request.getId(), item);
   }
 
   @Sql(scripts = {
