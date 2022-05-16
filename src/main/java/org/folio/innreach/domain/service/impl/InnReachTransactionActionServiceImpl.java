@@ -368,13 +368,9 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
   @Override
   public InnReachTransactionDTO transferLocalHold(UUID transactionId, UUID itemId) {
     var transaction = fetchTransactionOfType(transactionId, LOCAL);
+
     var hold = transaction.getHold();
     var item = fetchItemById(itemId);
-
-    transaction.setState(TRANSFER);
-    hold.setFolioItemId(item.getId());
-    hold.setItemId(item.getHrid());
-
     var requestId = hold.getFolioRequestId();
     var request = requestService.findRequest(requestId);
 
@@ -384,8 +380,12 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
 
     var holdingId = request.getHoldingsRecordId();
     if (!holdingId.equals(hold.getFolioHoldingId())) {
-      hold.setFolioHoldingId(holdingId);
-      hold.setFolioInstanceId(request.getInstanceId());
+      updateTransactionOnMovedRequest(request, item, transaction);
+    } else {
+      transaction.setState(TRANSFER);
+      hold.setFolioItemId(item.getId());
+      hold.setItemId(item.getHrid());
+      hold.setFolioItemBarcode(item.getBarcode());
     }
 
     return transactionMapper.toDTO(transaction);
@@ -588,14 +588,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
   }
 
   private void updateItemTransactionOnMovedRequest(RequestDTO request, InventoryItemDTO item, InnReachTransaction transaction) {
-    var hold = transaction.getHold();
-    hold.setFolioItemId(item.getId());
-    hold.setItemId(item.getHrid());
-    hold.setFolioInstanceId(request.getInstanceId());
-    hold.setFolioHoldingId(request.getHoldingsRecordId());
-    hold.setFolioItemBarcode(item.getBarcode());
-
-    transaction.setState(TRANSFER);
+    updateTransactionOnMovedRequest(request, item, transaction);
 
     notifier.reportTransferRequest(transaction, item.getHrid());
   }
@@ -652,11 +645,11 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
 
       var item = fetchItemById(request.getItemId());
 
-      updateLocalTransactionOnMovedRequest(request, item, transaction);
+      updateTransactionOnMovedRequest(request, item, transaction);
     }
   }
 
-  private void updateLocalTransactionOnMovedRequest(RequestDTO request, InventoryItemDTO item, InnReachTransaction transaction) {
+  private void updateTransactionOnMovedRequest(RequestDTO request, InventoryItemDTO item, InnReachTransaction transaction) {
     var hold = transaction.getHold();
     hold.setFolioItemId(item.getId());
     hold.setItemId(item.getHrid());
