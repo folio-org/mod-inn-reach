@@ -2050,7 +2050,6 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
 
     when(inventoryClient.findItem(itemId)).thenReturn(Optional.of(item));
     when(circulationClient.findRequest(request.getId())).thenReturn(Optional.of(request));
-    when(circulationClient.queryRequestsByItemId(item.getId())).thenReturn((getOpenRequests()));
 
     var responseEntity = testRestTemplate.postForEntity(
       LOCAL_HOLD_TRANSFER_ITEM_ENDPOINT, null, InnReachTransactionDTO.class,

@@ -44,7 +44,6 @@ import java.util.function.Consumer;
 
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.producer.ProducerRecord;
-import org.folio.innreach.domain.service.RequestService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
@@ -126,9 +125,6 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
 
   @MockBean
   private CirculationClient circulationClient;
-
-  @SpyBean
-  private RequestService requestService;
 
   @Test
   void shouldReceiveLoanEvent() {

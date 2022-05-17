@@ -633,7 +633,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
     var itemId = request.getItemId();
     var requestId = hold.getFolioRequestId();
 
-    if (!transactionItemId.equals(request.getItemId())) {
+    if (!transactionItemId.equals(itemId)) {
       log.info("Updating local hold transaction {} on moving a request {} from item {} to {}",
         transaction.getId(), requestId, transactionItemId, itemId);
 
