@@ -100,7 +100,6 @@ import org.folio.innreach.client.CirculationClient;
 import org.folio.innreach.client.HoldingsStorageClient;
 import org.folio.innreach.client.InventoryClient;
 import org.folio.innreach.client.RequestPreferenceStorageClient;
-import org.folio.innreach.client.ServicePointsUsersClient;
 import org.folio.innreach.client.UsersClient;
 import org.folio.innreach.controller.base.BaseControllerTest;
 import org.folio.innreach.domain.dto.OwningSiteCancelsRequestDTO;
@@ -109,10 +108,8 @@ import org.folio.innreach.domain.dto.folio.User;
 import org.folio.innreach.domain.dto.folio.circulation.RequestDTO;
 import org.folio.innreach.domain.dto.folio.inventory.InventoryItemDTO;
 import org.folio.innreach.domain.dto.folio.inventory.InventoryItemStatus;
-import org.folio.innreach.domain.dto.folio.inventorystorage.ServicePointUserDTO;
 import org.folio.innreach.domain.dto.folio.requestpreference.RequestPreferenceDTO;
 import org.folio.innreach.domain.entity.InnReachTransaction;
-import org.folio.innreach.domain.entity.InnReachTransaction.TransactionState;
 import org.folio.innreach.domain.entity.base.AuditableUser;
 import org.folio.innreach.domain.service.RequestService;
 import org.folio.innreach.domain.service.impl.InnReachTransactionActionNotifier;
@@ -136,7 +133,6 @@ import org.folio.innreach.external.client.feign.InnReachClient;
 import org.folio.innreach.mapper.InnReachTransactionMapper;
 import org.folio.innreach.mapper.InnReachTransactionPickupLocationMapper;
 import org.folio.innreach.repository.InnReachTransactionRepository;
-import org.folio.innreach.util.DateHelper;
 
 @Sql(
   scripts = {"classpath:db/inn-reach-transaction/clear-inn-reach-transaction-tables.sql",
@@ -2001,35 +1997,68 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql",
   })
-  void transferLocalHoldItem() {
-    var holding = createInventoryHoldingDTO();
+  void transferLocalHoldItemLinkMovedRequest() {
     var item = createInventoryItemDTO();
-    var request = createRequestDTO();
+    var holding = createInventoryHoldingDTO();
+    item.setStatus(AVAILABLE);
     item.setHoldingsRecordId(holding.getId());
+    item.setBarcode(PRE_POPULATED_USER_BARCODE);
+    var itemId = item.getId();
+    var request = createRequestDTO();
     request.setId(PRE_POPULATED_LOCAL_HOLD_REQUEST_ID);
+    request.setStatus(OPEN_AWAITING_PICKUP);
     request.setHoldingsRecordId(holding.getId());
+    request.setItemId(itemId);
     request.setInstanceId(holding.getInstanceId());
 
-    when(inventoryClient.findItem(item.getId())).thenReturn(Optional.of(item));
+    modifyTransactionState(PRE_POPULATED_LOCAL_HOLD_TRANSACTION_ID, LOCAL_HOLD);
+
+    when(inventoryClient.findItem(itemId)).thenReturn(Optional.of(item));
     when(circulationClient.findRequest(request.getId())).thenReturn(Optional.of(request));
-    when(circulationClient.moveRequest(eq(request.getId()), any())).thenReturn(request);
 
     var responseEntity = testRestTemplate.postForEntity(
       LOCAL_HOLD_TRANSFER_ITEM_ENDPOINT, null, InnReachTransactionDTO.class,
-      PRE_POPULATED_LOCAL_HOLD_TRANSACTION_ID, item.getId()
+      PRE_POPULATED_LOCAL_HOLD_TRANSACTION_ID, itemId
     );
-
-    verify(requestService).moveItemRequest(request.getId(), item);
 
     assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
     assertNotNull(responseEntity.getBody());
 
-    var transaction = responseEntity.getBody();
-    assertEquals(TransactionStateEnum.TRANSFER, transaction.getState());
-    assertEquals(item.getId(), transaction.getHold().getFolioItemId());
-    assertEquals(item.getHrid(), transaction.getHold().getItemId());
-    assertEquals(item.getHoldingsRecordId(), transaction.getHold().getFolioHoldingId());
-    assertEquals(holding.getInstanceId(), transaction.getHold().getFolioInstanceId());
+    var updatedTransaction = fetchTransaction(PRE_POPULATED_LOCAL_HOLD_TRANSACTION_ID);
+    var updatedHold = updatedTransaction.getHold();
+    assertEquals(TRANSFER, updatedTransaction.getState());
+    assertEquals(item.getId(), updatedHold.getFolioItemId());
+    assertEquals(item.getHrid(), updatedHold.getItemId());
+    assertEquals(item.getHoldingsRecordId(), updatedHold.getFolioHoldingId());
+    assertEquals(item.getBarcode(), updatedHold.getFolioItemBarcode());
+    assertEquals(holding.getInstanceId(), updatedHold.getFolioInstanceId());
+  }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql",
+  })
+  void transferLocalHoldItemMovedRequest() {
+    var item = createInventoryItemDTO();
+    item.setStatus(AVAILABLE);
+    var itemId = item.getId();
+    var request = createRequestDTO();
+    request.setId(PRE_POPULATED_LOCAL_HOLD_REQUEST_ID);
+
+    modifyTransactionState(PRE_POPULATED_LOCAL_HOLD_TRANSACTION_ID, LOCAL_HOLD);
+
+    when(inventoryClient.findItem(itemId)).thenReturn(Optional.of(item));
+    when(circulationClient.findRequest(request.getId())).thenReturn(Optional.of(request));
+
+    var responseEntity = testRestTemplate.postForEntity(
+      LOCAL_HOLD_TRANSFER_ITEM_ENDPOINT, null, InnReachTransactionDTO.class,
+      PRE_POPULATED_LOCAL_HOLD_TRANSACTION_ID, itemId
+    );
+
+    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+
+    verify(circulationClient).moveRequest(eq(PRE_POPULATED_LOCAL_HOLD_REQUEST_ID), any());
   }
 
   @Test

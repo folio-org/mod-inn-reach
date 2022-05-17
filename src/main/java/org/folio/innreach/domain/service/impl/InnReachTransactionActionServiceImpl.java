@@ -215,6 +215,8 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
       updateItemTransactionOnRequestChange(requestDTO, transaction);
     } else if (transaction.getType() == PATRON) {
       updatePatronTransactionOnRequestChange(requestDTO, transaction);
+    } else if (transaction.getType() == LOCAL) {
+      updateLocalTransactionOnRequestChange(requestDTO, transaction);
     }
   }
 
@@ -366,23 +368,18 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
   @Override
   public InnReachTransactionDTO transferLocalHold(UUID transactionId, UUID itemId) {
     var transaction = fetchTransactionOfType(transactionId, LOCAL);
-    var hold = transaction.getHold();
+
+    verifyState(transaction, LOCAL_HOLD, TRANSFER);
+
     var item = fetchItemById(itemId);
+    var request = requestService.findRequest(transaction.getHold().getFolioRequestId());
 
-    transaction.setState(TRANSFER);
-    hold.setFolioItemId(item.getId());
-    hold.setItemId(item.getHrid());
+    if (itemId.equals(request.getItemId())) {
+      updateTransactionOnMovedRequest(request, item, transaction);
+    } else {
+      requestService.validateItemAvailability(item);
 
-    var requestId = hold.getFolioRequestId();
-    var request = requestService.findRequest(requestId);
-    if (!itemId.equals(request.getItemId())) {
-      request = requestService.moveItemRequest(requestId, item);
-    }
-
-    var holdingId = request.getHoldingsRecordId();
-    if (!holdingId.equals(hold.getFolioHoldingId())) {
-      hold.setFolioHoldingId(holdingId);
-      hold.setFolioInstanceId(request.getInstanceId());
+      eventPublisher.publishEvent(MoveRequestEvent.of(transaction, item));
     }
 
     return transactionMapper.toDTO(transaction);
@@ -585,14 +582,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
   }
 
   private void updateItemTransactionOnMovedRequest(RequestDTO request, InventoryItemDTO item, InnReachTransaction transaction) {
-    var hold = transaction.getHold();
-    hold.setFolioItemId(item.getId());
-    hold.setItemId(item.getHrid());
-    hold.setFolioInstanceId(request.getInstanceId());
-    hold.setFolioHoldingId(request.getHoldingsRecordId());
-    hold.setFolioItemBarcode(item.getBarcode());
-
-    transaction.setState(TRANSFER);
+    updateTransactionOnMovedRequest(request, item, transaction);
 
     notifier.reportTransferRequest(transaction, item.getHrid());
   }
@@ -635,6 +625,33 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
         notifier.reportReturnUncirculated(transaction);
       }
     }
+  }
+
+  private void updateLocalTransactionOnRequestChange(RequestDTO request, InnReachTransaction transaction) {
+    var hold = transaction.getHold();
+    var transactionItemId = hold.getFolioItemId();
+    var itemId = request.getItemId();
+    var requestId = hold.getFolioRequestId();
+
+    if (!transactionItemId.equals(itemId)) {
+      log.info("Updating local hold transaction {} on moving a request {} from item {} to {}",
+        transaction.getId(), requestId, transactionItemId, itemId);
+
+      var item = fetchItemById(request.getItemId());
+
+      updateTransactionOnMovedRequest(request, item, transaction);
+    }
+  }
+
+  private void updateTransactionOnMovedRequest(RequestDTO request, InventoryItemDTO item, InnReachTransaction transaction) {
+    var hold = transaction.getHold();
+    hold.setFolioItemId(item.getId());
+    hold.setItemId(item.getHrid());
+    hold.setFolioInstanceId(request.getInstanceId());
+    hold.setFolioHoldingId(request.getHoldingsRecordId());
+    hold.setFolioItemBarcode(item.getBarcode());
+
+    transaction.setState(TRANSFER);
   }
 
   private void clearPatronTransactionAndItemRecord(UUID itemId, InnReachTransaction transaction) {
