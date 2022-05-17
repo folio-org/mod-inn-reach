@@ -98,7 +98,6 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
   private static final UUID PRE_POPULATED_ITEM_TRANSACTION_LOAN_ID = UUID.fromString("06e820e3-71a0-455e-8c73-3963aea677d4");
   private static final UUID PRE_POPULATED_LOCAL_TRANSACTION_ID = UUID.fromString("79b0a1fb-55be-4e55-9d84-01303aaec1ce");
   private static final UUID PRE_POPULATED_LOCAL_TRANSACTION_REQUEST_ID = UUID.fromString("4106d147-9085-4dfa-a59f-b8d50d551a48");
-  private static final UUID PRE_POPULATED_REQUEST_ITEM_ID = UUID.fromString("b6809be0-8b9b-4407-85a9-ffa4e95a64c9");
   private static final String TEST_TENANT_ID = "testing";
   private static final String TEST_PATRON_NAME = "patronName2";
   private static final Duration ASYNC_AWAIT_TIMEOUT = Duration.ofSeconds(15);
@@ -498,7 +497,6 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
 
     item.setHoldingsRecordId(holding.getId());
     request.setId(PRE_POPULATED_LOCAL_TRANSACTION_REQUEST_ID);
-    request.setItemId(PRE_POPULATED_REQUEST_ITEM_ID);
     request.setHoldingsRecordId(holding.getId());
     request.setInstanceId(holding.getInstanceId());
 
