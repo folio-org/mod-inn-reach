@@ -14,6 +14,7 @@ import org.springframework.stereotype.Component;
 
 import org.folio.innreach.domain.event.DomainEvent;
 import org.folio.innreach.domain.service.ContributionActionService;
+import org.folio.innreach.domain.service.InnReachTransactionActionService;
 import org.folio.innreach.domain.service.impl.BatchDomainEventProcessor;
 import org.folio.innreach.dto.Holding;
 import org.folio.innreach.dto.Instance;
@@ -27,6 +28,7 @@ public class KafkaInventoryEventListener {
 
   private final BatchDomainEventProcessor eventProcessor;
   private final ContributionActionService contributionActionService;
+  private final InnReachTransactionActionService transactionActionService;
 
   @KafkaListener(
     containerFactory = KAFKA_CONTAINER_FACTORY,
@@ -48,6 +50,7 @@ public class KafkaInventoryEventListener {
           break;
         case UPDATED:
           contributionActionService.handleItemUpdate(newEntity, oldEntity);
+          transactionActionService.handleItemUpdate(newEntity, oldEntity);
           break;
         case DELETED:
           contributionActionService.handleItemDelete(oldEntity);
