@@ -1,7 +1,60 @@
 {
   "id": "@artifactId@-@version@",
   "name": "INN Reach API module",
-  "requires": [],
+  "requires": [
+    {
+      "id": "login",
+      "version": "7.1"
+    },
+    {
+      "id": "instance-iteration",
+      "version": "0.1"
+    },
+    {
+      "id": "permissions",
+      "version": "5.3"
+    },
+    {
+      "id": "users",
+      "version": "15.3"
+    },
+    {
+      "id": "inventory",
+      "version": "11.1"
+    },
+    {
+      "id": "service-points-users",
+      "version": "1.0"
+    },
+    {
+      "id": "inventory-view",
+      "version": "1.0"
+    },
+    {
+      "id": "material-types",
+      "version": "2.2"
+    },
+    {
+      "id": "automated-patron-blocks",
+      "version": "0.1"
+    },
+    {
+      "id": "patron",
+      "version": "4.3"
+    },
+    {
+      "id": "circulation",
+      "version": "12.0 13.0"
+    },
+    {
+      "id": "source-storage-records",
+      "version": "3.1"
+    },
+    {
+      "id": "feesfines",
+      "version": "17.1"
+    }
+  ],
   "provides": [
     {
       "id": "inn-reach",
