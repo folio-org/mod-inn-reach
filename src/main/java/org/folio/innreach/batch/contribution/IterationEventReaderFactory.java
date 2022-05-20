@@ -1,6 +1,6 @@
 package org.folio.innreach.batch.contribution;
 
-import static java.util.List.of;
+import static org.apache.kafka.clients.consumer.ConsumerConfig.GROUP_ID_CONFIG;
 
 import java.time.Duration;
 import java.util.HashMap;
@@ -10,7 +10,6 @@ import java.util.function.Consumer;
 
 import lombok.RequiredArgsConstructor;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
-import org.apache.kafka.common.TopicPartition;
 import org.springframework.boot.autoconfigure.kafka.KafkaProperties;
 import org.springframework.stereotype.Component;
 
@@ -40,13 +39,13 @@ public class IterationEventReaderFactory {
   public KafkaItemReader<String, InstanceIterationEvent> createReader(String tenantId) {
     Properties props = new Properties();
     props.putAll(kafkaProperties.buildConsumerProperties());
+    props.put(GROUP_ID_CONFIG, jobProperties.getReaderGroupId());
 
     var topic = String.format("%s.%s.%s",
       folioEnv.getEnvironment(), tenantId, jobProperties.getReaderTopic());
 
-    var reader = new KafkaItemReader<String, InstanceIterationEvent>(props, of(new TopicPartition(topic, 0)));
+    var reader = new KafkaItemReader<String, InstanceIterationEvent>(props, topic);
     reader.setPollTimeout(Duration.ofSeconds(jobProperties.getReaderPollTimeoutSec()));
-    reader.setPartitionOffsets(new HashMap<>());
     reader.setRecordProcessor(CONSUMER_REC_PROCESSOR);
     return reader;
   }

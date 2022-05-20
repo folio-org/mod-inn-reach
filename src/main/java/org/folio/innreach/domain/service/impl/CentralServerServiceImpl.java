@@ -1,18 +1,19 @@
 package org.folio.innreach.domain.service.impl;
 
+import static org.folio.innreach.util.ListUtils.mapItems;
+
 import java.util.ArrayList;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
-import org.folio.innreach.domain.dto.CentralServerConnectionDetailsDTO;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.Assert;
 
+import org.folio.innreach.domain.dto.CentralServerConnectionDetailsDTO;
 import org.folio.innreach.domain.entity.CentralServer;
 import org.folio.innreach.domain.entity.CentralServerCredentials;
 import org.folio.innreach.domain.entity.LocalAgency;
@@ -24,6 +25,8 @@ import org.folio.innreach.dto.CentralServersDTO;
 import org.folio.innreach.external.service.InnReachAuthExternalService;
 import org.folio.innreach.mapper.CentralServerMapper;
 import org.folio.innreach.repository.CentralServerRepository;
+import org.folio.innreach.repository.LocalAgencyRepository;
+import org.folio.spring.data.OffsetRequest;
 
 @RequiredArgsConstructor
 @Log4j2
@@ -34,6 +37,7 @@ public class CentralServerServiceImpl implements CentralServerService {
   private final CentralServerMapper centralServerMapper;
   private final InnReachAuthExternalService innReachAuthExternalService;
   private final PasswordEncoder passwordEncoder;
+  private final LocalAgencyRepository localAgencyRepository;
 
   @Override
   @Transactional
@@ -50,6 +54,9 @@ public class CentralServerServiceImpl implements CentralServerService {
     }
 
     var createdCentralServer = centralServerRepository.save(centralServer);
+
+    Assert.isTrue(localAgencyRepository.findLibraryIdsAssignedToMultipleAgencies(createdCentralServer.getId()).isEmpty(),
+      "FOLIO library may only be associated with one agency per central server");
 
     return centralServerMapper.mapToCentralServerDTO(createdCentralServer);
   }
@@ -89,6 +96,12 @@ public class CentralServerServiceImpl implements CentralServerService {
     return centralServerMapper.mapToCentralServerDTO(centralServer);
   }
 
+  @Override
+  public UUID getCentralServerIdByCentralCode(String code) {
+    return centralServerRepository.getIdByCentralCode(code)
+      .orElseThrow(() -> new EntityNotFoundException("Central server with code: " + code + " not found"));
+  }
+
   private CentralServer fetchOne(UUID centralServerId) {
     return centralServerRepository.fetchOne(centralServerId)
       .orElseThrow(() -> new EntityNotFoundException("Central server with ID: " + centralServerId + " not found"));
@@ -97,12 +110,10 @@ public class CentralServerServiceImpl implements CentralServerService {
   @Override
   @Transactional(readOnly = true)
   public CentralServersDTO getAllCentralServers(int offset, int limit) {
-    Page<UUID> ids = centralServerRepository.getIds(PageRequest.of(offset, limit));
+    Page<UUID> ids = centralServerRepository.getIds(new OffsetRequest(offset, limit));
 
-    var centralServerDTOS = centralServerRepository.fetchAllById(ids.getContent())
-      .stream()
-      .map(centralServerMapper::mapToCentralServerDTO)
-      .collect(Collectors.toList());
+    var centralServerDTOS = mapItems(centralServerRepository.fetchAllById(ids.getContent()),
+      centralServerMapper::mapToCentralServerDTO);
 
     return new CentralServersDTO()
       .centralServers(centralServerDTOS)
@@ -127,6 +138,9 @@ public class CentralServerServiceImpl implements CentralServerService {
     updateLocalAgencies(centralServer, updatedCentralServer);
 
     centralServerRepository.save(centralServer);
+
+    Assert.isTrue(localAgencyRepository.findLibraryIdsAssignedToMultipleAgencies(centralServer.getId()).isEmpty(),
+      "FOLIO library may only be associated with one agency per central server");
 
     return centralServerMapper.mapToCentralServerDTO(centralServer);
   }
@@ -164,7 +178,7 @@ public class CentralServerServiceImpl implements CentralServerService {
   }
 
   private boolean existingCredentialsShouldBeUpdated(LocalServerCredentials localServerCredentials,
-      LocalServerCredentials updatedLocalServerCredentials) {
+                                                     LocalServerCredentials updatedLocalServerCredentials) {
     // LocalServerCredentials need to be re-hashed and re-salted only if they have been updated
     return !localServerCredentials.getLocalServerSecret().equals(updatedLocalServerCredentials.getLocalServerSecret());
   }
@@ -205,5 +219,11 @@ public class CentralServerServiceImpl implements CentralServerService {
   public CentralServerConnectionDetailsDTO getCentralServerConnectionDetails(UUID centralServerId) {
     return centralServerRepository.fetchConnectionDetails(centralServerId)
       .orElseThrow(() -> new EntityNotFoundException("Central server with ID: " + centralServerId + " not found"));
+  }
+
+  @Override
+  public CentralServerConnectionDetailsDTO getConnectionDetailsByCode(String centralCode) {
+    return centralServerRepository.fetchConnectionDetailsByCentralCode(centralCode)
+      .orElseThrow(() -> new EntityNotFoundException("Central server with code: " + centralCode + " not found"));
   }
 }

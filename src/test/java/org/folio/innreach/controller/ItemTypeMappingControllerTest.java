@@ -16,6 +16,7 @@ import static org.springframework.test.context.jdbc.SqlMergeMode.MergeMode.MERGE
 
 import static org.folio.innreach.fixture.TestUtil.deserializeFromJsonFile;
 import static org.folio.innreach.fixture.TestUtil.randomIntegerExcept;
+import static org.folio.innreach.util.ListUtils.mapItems;
 
 import java.util.List;
 import java.util.Objects;
@@ -112,8 +113,8 @@ class ItemTypeMappingControllerTest extends BaseControllerTest {
     var expected = existing.getItemTypeMappings();
 
     assertEquals(expected.size(), updated.size());
-    assertEquals(expected.stream().map(ItemTypeMappingDTO::getCentralItemType).collect(Collectors.toList()),
-      updated.stream().map(ItemTypeMappingDTO::getCentralItemType).collect(Collectors.toList()));
+    assertEquals(mapItems(expected, ItemTypeMappingDTO::getCentralItemType),
+      mapItems(updated, ItemTypeMappingDTO::getCentralItemType));
   }
 
   @Test

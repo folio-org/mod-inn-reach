@@ -1,0 +1,56 @@
+{
+  "id": "b81bcffd-9dd9-4e17-b6fd-eeecf790aad5",
+  "_version": 1,
+  "hrid": "intracking1d2ir",
+  "source": "INN-Reach",
+  "title": "Water resources of East Feliciana Parish, Louisiana",
+  "indexTitle": "Water resources of East Feliciana Parish, Louisiana",
+  "alternativeTitles": [],
+  "editions": [],
+  "series": [],
+  "identifiers": [
+    {
+      "value": "intracking1d2ir",
+      "identifierTypeId": "7e591197-f335-4afb-bc6d-a6d76ca3bace"
+    }
+  ],
+  "contributors": [
+    {
+      "name": "John, Doe",
+      "contributorNameTypeId": "b637d244-7c9d-4f2e-82e1-85add5f11a4c",
+      "primary": true
+    }
+  ],
+  "subjects": [],
+  "classifications": [],
+  "publication": [],
+  "publicationFrequency": [],
+  "publicationRange": [],
+  "electronicAccess": [],
+  "instanceTypeId": "30fffe0e-e985-4144-b2e2-1e8179bdb41f",
+  "instanceFormatIds": [],
+  "instanceFormats": [],
+  "physicalDescriptions": [],
+  "languages": [
+    "und"
+  ],
+  "notes": [],
+  "modeOfIssuanceId": "9d18a02f-5897-4c31-9106-c9abb5c7ae8b",
+  "previouslyHeld": false,
+  "discoverySuppress": false,
+  "statisticalCodeIds": [
+    "b5968c9e-cddc-4576-99e3-8e60aed8b0dd"
+  ],
+  "statusUpdatedDate": "2021-09-30T08:29:26.150+0000",
+  "tags": {
+    "tagList": []
+  },
+  "metadata": {
+    "createdDate": "2021-09-30T08:29:25.749+00:00",
+    "createdByUserId": "e2f5ebb7-9285-58f8-bc1e-608ac2080861",
+    "updatedDate": "2021-10-06T13:26:40.627+00:00",
+    "updatedByUserId": "e2f5ebb7-9285-58f8-bc1e-608ac2080861"
+  },
+  "holdingsRecords2": [],
+  "natureOfContentTermIds": []
+}

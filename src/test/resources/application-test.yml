@@ -15,6 +15,13 @@ spring:
     cache-names: system-user-cache
     caffeine:
       spec: maximumSize=500,expireAfterAccess=3600s
+  kafka:
+    bootstrap-servers: ${spring.embedded.kafka.brokers}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+    consumer:
+      auto-offset-reset: earliest
 folio:
   tenant:
     validation:
@@ -27,6 +34,7 @@ logging:
     org.springframework.web: debug
     org.springframework.transaction.interceptor: trace
     org.folio.innreach.external: debug
+    org.folio.innreach.client.customization: debug
 inn-reach:
   jwt-access-token:
     cache:
@@ -37,12 +45,4 @@ system-user:
   password: Mod-innreach-1-0-0
   lastname: System
   permissionsFilePath: permissions/test-permissions.csv
-batch:
-  jobs:
-    contribution:
-      chunk-size: 1
-      retry-attempts: 3
-      retry-interval-ms: 20000
-      reader-topic: folio.diku.inventory.instance-contribution
-      reader-poll-timeout-sec: 300
 okapi.url: ${OKAPI_URL:http://localhost:8080}

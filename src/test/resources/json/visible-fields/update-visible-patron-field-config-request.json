@@ -1,0 +1,8 @@
+{
+  "fields" : [
+    "BARCODE", "USER_CUSTOM_FIELDS"
+  ],
+  "userCustomFields" : [
+    "filed2", "field3"
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "message": "Cannot update record 0b96a642-5e7f-452d-9cae-9cee66c9a892 because it has been changed (optimistic locking): Stored _version is 2, _version of request is 1",
+  "severity": "ERROR",
+  "code": "23F09",
+  "where": "PL/pgSQL function item_set_ol_version() line 8 at RAISE",
+  "file": "pl_exec.c",
+  "line": "3841",
+  "routine": "exec_stmt_raise",
+  "schema": "diku_mod_inventory_storage",
+  "table": "item"
+}

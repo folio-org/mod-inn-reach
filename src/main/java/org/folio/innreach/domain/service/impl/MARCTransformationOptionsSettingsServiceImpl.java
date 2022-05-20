@@ -1,25 +1,27 @@
 package org.folio.innreach.domain.service.impl;
 
-import lombok.RequiredArgsConstructor;
-import org.folio.innreach.domain.entity.FieldConfiguration;
-import org.folio.innreach.domain.entity.MARCTransformationOptionsSettings;
-import org.folio.innreach.domain.exception.EntityNotFoundException;
-import org.folio.innreach.domain.service.MARCTransformationOptionsSettingsService;
-import org.folio.innreach.dto.MARCTransformationOptionsSettingsListDTO;
-import org.folio.innreach.dto.MARCTransformationOptionsSettingsDTO;
-import org.folio.innreach.mapper.MARCTransformationOptionsSettingsMapper;
-import org.folio.innreach.repository.MARCTransformationOptionsSettingsRepository;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import static org.folio.innreach.domain.service.impl.ServiceUtils.centralServerRef;
 
-import javax.persistence.EntityExistsException;
 import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import static org.folio.innreach.domain.service.impl.ServiceUtils.centralServerRef;
+import javax.persistence.EntityExistsException;
+
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import org.folio.innreach.domain.entity.FieldConfiguration;
+import org.folio.innreach.domain.entity.MARCTransformationOptionsSettings;
+import org.folio.innreach.domain.exception.EntityNotFoundException;
+import org.folio.innreach.domain.service.MARCTransformationOptionsSettingsService;
+import org.folio.innreach.dto.MARCTransformationOptionsSettingsDTO;
+import org.folio.innreach.dto.MARCTransformationOptionsSettingsListDTO;
+import org.folio.innreach.mapper.MARCTransformationOptionsSettingsMapper;
+import org.folio.innreach.repository.MARCTransformationOptionsSettingsRepository;
+import org.folio.spring.data.OffsetRequest;
 
 @RequiredArgsConstructor
 @Service
@@ -87,7 +89,7 @@ public class MARCTransformationOptionsSettingsServiceImpl implements MARCTransfo
   }
 
   private List<MARCTransformationOptionsSettingsDTO> collectMARCTransformOptSet(Integer offset, Integer limit) {
-    return repository.findAll(PageRequest.of(offset, limit))
+    return repository.findAll(new OffsetRequest(offset, limit))
       .stream()
       .map(mapper::toDto)
       .collect(Collectors.toList());

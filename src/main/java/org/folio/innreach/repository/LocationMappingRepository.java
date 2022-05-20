@@ -11,4 +11,5 @@ import org.folio.innreach.domain.entity.LocationMapping;
 @Repository
 public interface LocationMappingRepository extends JpaRepository<LocationMapping, UUID> {
   List<LocationMapping> findByCentralServerIdAndLibraryId(UUID centralServerId, UUID libraryId);
+  List<LocationMapping> findByCentralServerId(UUID centralServerId);
 }

@@ -3,39 +3,59 @@ package org.folio.innreach.domain.service.impl;
 import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
+import static org.folio.innreach.fixture.ContributionFixture.createContributionCriteria;
 import static org.folio.innreach.fixture.ContributionFixture.createItem;
 import static org.folio.innreach.fixture.ItemContributionOptionsConfigurationFixture.createItmContribOptConfDTO;
 
 import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
+import org.folio.innreach.dto.CentralServerDTO;
+import org.folio.innreach.dto.LocalAgencyDTO;
+import org.folio.innreach.fixture.CentralServerFixture;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import org.folio.innreach.client.CirculationClient;
 import org.folio.innreach.client.InventoryClient;
 import org.folio.innreach.client.MaterialTypesClient;
-import org.folio.innreach.client.RequestStorageClient;
 import org.folio.innreach.domain.dto.folio.ContributionItemCirculationStatus;
-import org.folio.innreach.domain.dto.folio.requeststorage.RequestsDTO;
+import org.folio.innreach.domain.dto.folio.ResultList;
+import org.folio.innreach.domain.dto.folio.circulation.RequestDTO;
 import org.folio.innreach.domain.service.CentralServerService;
 import org.folio.innreach.domain.service.ContributionCriteriaConfigurationService;
+import org.folio.innreach.domain.service.HoldingsService;
 import org.folio.innreach.domain.service.InnReachLocationService;
 import org.folio.innreach.domain.service.ItemContributionOptionsConfigurationService;
 import org.folio.innreach.domain.service.LibraryMappingService;
 import org.folio.innreach.domain.service.MaterialTypeMappingService;
 import org.folio.innreach.dto.ContributionCriteriaDTO;
+import org.folio.innreach.dto.Instance;
+import org.folio.innreach.dto.Item;
 import org.folio.innreach.dto.ItemStatus;
 import org.folio.innreach.external.service.InnReachLocationExternalService;
 
 class ContributionValidationServiceImplTest {
+
+  private static final ContributionCriteriaDTO CRITERIA = createContributionCriteria();
+  private static final UUID DO_NOT_CONTRIBUTE_CODE_ID = CRITERIA.getDoNotContributeId();
+  private static final String ELIGIBLE_SOURCE = "MARC";
+  private static final String INELIGIBLE_SOURCE = "FOLIO";
+  private static final UUID LOCATION_ID = UUID.fromString("6802c458-b19e-476f-9187-e8ab7417ecd4");
+  private static final UUID LIBRARY_ID = UUID.fromString("97858fdf-1e48-4eff-abb3-82421c530368");
 
   @Mock
   private MaterialTypesClient materialTypesClient;
@@ -56,7 +76,11 @@ class ContributionValidationServiceImplTest {
   @Mock
   private InventoryClient inventoryClient;
   @Mock
-  private RequestStorageClient requestStorageClient;
+  private CirculationClient circulationClient;
+  @Mock
+  private HoldingsService holdingsService;
+  @Mock
+  private FolioLocationService folioLocationService;
 
   @InjectMocks
   private ContributionValidationServiceImpl service;
@@ -85,7 +109,7 @@ class ContributionValidationServiceImplTest {
     var item = createItem();
     item.setStatus(new ItemStatus().name(ItemStatus.NameEnum.IN_TRANSIT));
 
-    when(requestStorageClient.findRequests(any())).thenReturn(new RequestsDTO(0));
+    when(circulationClient.queryRequestsByItemId(any())).thenReturn(ResultList.of(0, Collections.emptyList()));
 
     var itemCirculationStatus = service.getItemCirculationStatus(UUID.randomUUID(), item);
 
@@ -99,7 +123,7 @@ class ContributionValidationServiceImplTest {
     var item = createItem();
     item.setStatus(new ItemStatus().name(ItemStatus.NameEnum.IN_TRANSIT));
 
-    when(requestStorageClient.findRequests(any())).thenReturn(new RequestsDTO(1));
+    when(circulationClient.queryRequestsByItemId(any())).thenReturn(ResultList.of(1, List.of(new RequestDTO())));
 
     var itemCirculationStatus = service.getItemCirculationStatus(UUID.randomUUID(), item);
 
@@ -177,7 +201,7 @@ class ContributionValidationServiceImplTest {
 
     var item = createItem();
     item.setStatus(new ItemStatus().name(ItemStatus.NameEnum.AVAILABLE));
-    item.setPermanentLocationId(nonLendableLocations.get(0));
+    item.setEffectiveLocationId(nonLendableLocations.get(0));
 
     when(itemContributionOptionsConfigurationService.getItmContribOptConf(any())).thenReturn(itmContribOptConfDTO);
 
@@ -265,4 +289,111 @@ class ContributionValidationServiceImplTest {
       .hasMessageContaining("Multiple statistical codes defined");
   }
 
+  @Test
+  void testEligibleInstance_noStatisticalCodes() {
+    when(contributionConfigService.getCriteria(any())).thenReturn(CRITERIA);
+    when(holdingsService.find(any())).thenReturn(Optional.empty());
+    when(folioLocationService.getLocationLibraryMappings()).thenReturn(Map.of(LOCATION_ID, LIBRARY_ID));
+    when(centralServerService.getCentralServer(any())).thenReturn(createCentralServerWithLibraryId());
+
+    var instance = new Instance();
+    instance.setSource(ELIGIBLE_SOURCE);
+    instance.setItems(List.of(new Item().effectiveLocationId(LOCATION_ID)));
+
+    var result = service.isEligibleForContribution(UUID.randomUUID(), instance);
+
+    assertTrue(result);
+  }
+
+  @Test
+  void testEligibleInstance_statisticalCodeAllowed() {
+    var allowedStatisticalCodeId = UUID.randomUUID();
+    var statisticalCodes = List.of(allowedStatisticalCodeId);
+
+    var instance = new Instance();
+    instance.setStatisticalCodeIds(statisticalCodes);
+    instance.setSource(ELIGIBLE_SOURCE);
+    instance.setItems(List.of(new Item().statisticalCodeIds(statisticalCodes).effectiveLocationId(LOCATION_ID)));
+
+    when(contributionConfigService.getCriteria(any())).thenReturn(CRITERIA);
+    when(holdingsService.find(any())).thenReturn(Optional.empty());
+    when(folioLocationService.getLocationLibraryMappings()).thenReturn(Map.of(LOCATION_ID, LIBRARY_ID));
+    when(centralServerService.getCentralServer(any())).thenReturn(createCentralServerWithLibraryId());
+
+    var isEligible = service.isEligibleForContribution(UUID.randomUUID(), instance);
+
+    assertTrue(isEligible);
+  }
+
+  @Test
+  void testNotEligibleInstanceWhenItemsLocationNotAssociatedWithInnreachLibrary() {
+    when(contributionConfigService.getCriteria(any())).thenReturn(CRITERIA);
+    when(holdingsService.find(any())).thenReturn(Optional.empty());
+    when(folioLocationService.getLocationLibraryMappings()).thenReturn(Map.of(UUID.randomUUID(), UUID.randomUUID()));
+    when(centralServerService.getCentralServer(any())).thenReturn(CentralServerFixture.createCentralServerDTO());
+
+    var instance = new Instance();
+    instance.setSource(ELIGIBLE_SOURCE);
+    instance.setItems(List.of(new Item().effectiveLocationId(UUID.randomUUID())));
+
+    var result = service.isEligibleForContribution(UUID.randomUUID(), instance);
+
+    assertFalse(result);
+  }
+
+  @Test
+  void testIneligibleInstance_statisticalCodeExcluded() {
+    var statisticalCodes = List.of(DO_NOT_CONTRIBUTE_CODE_ID);
+
+    var instance = new Instance();
+    instance.setStatisticalCodeIds(statisticalCodes);
+    instance.setSource(ELIGIBLE_SOURCE);
+    instance.setItems(List.of(new Item().statisticalCodeIds(statisticalCodes)));
+
+    when(contributionConfigService.getCriteria(any())).thenReturn(CRITERIA);
+
+    var isEligible = service.isEligibleForContribution(UUID.randomUUID(), instance);
+
+    assertFalse(isEligible);
+  }
+
+  @Test
+  void testIneligibleInstance_noEligibleItems() {
+    var instance = new Instance().source(ELIGIBLE_SOURCE);
+    instance.setItems(List.of(new Item().statisticalCodeIds(List.of(DO_NOT_CONTRIBUTE_CODE_ID))));
+
+    when(contributionConfigService.getCriteria(any())).thenReturn(CRITERIA);
+    when(holdingsService.find(any())).thenReturn(Optional.empty());
+
+    var isEligible = service.isEligibleForContribution(UUID.randomUUID(), instance);
+
+    assertFalse(isEligible);
+  }
+
+  @Test
+  void testIneligibleInstance_noItems() {
+    var instance = new Instance().source(ELIGIBLE_SOURCE);
+
+    when(contributionConfigService.getCriteria(any())).thenReturn(CRITERIA);
+
+    var isEligible = service.isEligibleForContribution(UUID.randomUUID(), instance);
+
+    assertFalse(isEligible);
+  }
+
+  @Test
+  void testIneligibleInstance_unsupportedSource() {
+    var instance = new Instance().source(INELIGIBLE_SOURCE);
+
+    when(contributionConfigService.getCriteria(any())).thenReturn(CRITERIA);
+
+    var isEligible = service.isEligibleForContribution(UUID.randomUUID(), instance);
+
+    assertFalse(isEligible);
+  }
+
+  private CentralServerDTO createCentralServerWithLibraryId() {
+    return CentralServerFixture.createCentralServerDTO()
+      .localAgencies(List.of(new LocalAgencyDTO().folioLibraryIds(List.of(LIBRARY_ID))));
+  }
 }

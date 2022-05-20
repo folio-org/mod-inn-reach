@@ -2,10 +2,6 @@
   "description": "Authentication request",
   "type": "object",
   "properties": {
-    "localServerCode": {
-      "description": "key",
-      "type": "string"
-    },
     "key": {
       "description": "key",
       "type": "string",
@@ -19,7 +15,6 @@
   },
   "additionalProperties": false,
   "required": [
-    "localServerCode",
     "key",
     "secret"
   ]

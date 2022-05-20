@@ -8,6 +8,14 @@
       "type": "string",
       "format": "UUID"
     },
+    "_version": {
+      "type": "integer",
+      "description": "Record version for optimistic locking"
+    },
+    "title": {
+      "type": "string",
+      "description": "The primary title (or label) associated with the resource"
+    },
     "hrid": {
       "type": "string",
       "description": "The human readable ID, also called eye readable ID. A system-assigned sequential ID which maps to the Instance ID"
@@ -49,6 +57,48 @@
         ]
       }
     },
+    "contributors": {
+      "type": "array",
+      "description": "List of contributors",
+      "minItems": 0,
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Personal name, corporate name, meeting name"
+          },
+          "contributorTypeId": {
+            "type": "string",
+            "format": "UUID",
+            "description": "ID for the contributor type term defined as a referencetable in settings"
+          },
+          "contributorTypeText": {
+            "type": "string",
+            "description": "Free text element for adding contributor type terms other that defined by the MARC code list for relators"
+          },
+          "contributorNameTypeId": {
+            "type": "string",
+            "format": "UUID",
+            "description": "Contributor type terms defined by the MARC code list for relators"
+          },
+          "primary": {
+            "type": "boolean",
+            "description": "Whether this is the primary contributor"
+          }
+        },
+        "additionalProperties": false,
+        "required": [
+          "name",
+          "contributorNameTypeId"
+        ]
+      }
+    },
+    "instanceTypeId": {
+      "type": "string",
+      "format": "UUID",
+      "description": "UUID of the unique term for the resource type whether it's from the RDA content term list of locally defined"
+    },
     "staffSuppress": {
       "type": "boolean",
       "description": "Records the fact that the record should not be displayed for others than catalogers"
@@ -64,7 +114,7 @@
         "$ref": "item.json"
       }
     },
-    "holdings": {
+    "holdingsRecords": {
       "type": "array",
       "description": "List of holding items",
       "items": {

@@ -11,7 +11,6 @@ import java.util.function.Consumer;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Example;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,6 +22,7 @@ import org.folio.innreach.dto.MaterialTypeMappingDTO;
 import org.folio.innreach.dto.MaterialTypeMappingsDTO;
 import org.folio.innreach.mapper.MaterialTypeMappingMapper;
 import org.folio.innreach.repository.MaterialTypeMappingRepository;
+import org.folio.spring.data.OffsetRequest;
 
 @RequiredArgsConstructor
 @Service
@@ -38,7 +38,7 @@ public class MaterialTypeMappingServiceImpl implements MaterialTypeMappingServic
   public MaterialTypeMappingsDTO getAllMappings(UUID centralServerId, int offset, int limit) {
     var example = mappingExampleWithServerId(centralServerId);
 
-    Page<MaterialTypeMapping> mappings = repository.findAll(example, PageRequest.of(offset, limit));
+    Page<MaterialTypeMapping> mappings = repository.findAll(example, new OffsetRequest(offset, limit));
 
     return mapper.toDTOCollection(mappings);
   }
@@ -95,6 +95,16 @@ public class MaterialTypeMappingServiceImpl implements MaterialTypeMappingServic
   @Override
   public long countByTypeIds(UUID centralServerId, List<UUID> typeIds) {
     return repository.countByCentralServerIdAndMaterialTypeIdIn(centralServerId, typeIds);
+  }
+
+  @Override
+  public MaterialTypeMappingDTO findByCentralServerAndMaterialType(UUID centralServerId, UUID materialTypeId){
+    var materialType = repository.findOneByCentralServerIdAndMaterialTypeId(
+      centralServerId, materialTypeId).orElseThrow(
+      () -> new EntityNotFoundException("Material type mapping for central server id = " + centralServerId
+        + " and material type id = " + materialTypeId + " not found")
+    );
+    return mapper.toDTO(materialType);
   }
 
   private MaterialTypeMapping findMapping(UUID centralServerId, UUID id) {

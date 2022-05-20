@@ -4,7 +4,6 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 
-import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.PrimaryKeyJoinColumn;
 import javax.persistence.Table;
@@ -17,9 +16,4 @@ import javax.persistence.Table;
 @ToString
 public class TransactionItemHold extends TransactionHold {
 
-  @Column(name = "central_patron_type")
-  private Integer centralPatronType;
-
-  @Column(name = "patron_name")
-  private String patronName;
 }

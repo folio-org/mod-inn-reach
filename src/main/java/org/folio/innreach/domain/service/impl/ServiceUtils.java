@@ -75,9 +75,11 @@ class ServiceUtils {
         },
         toDelete::add);
 
-    repository.deleteInBatch(toDelete);
+    repository.flush();
 
-    return repository.saveAll(toSave);
+    repository.deleteAllInBatch(toDelete);
+
+    return repository.saveAllAndFlush(toSave);
   }
 
   static <E extends Comparable<E>> void merge(Collection<E> incoming, Collection<E> stored,

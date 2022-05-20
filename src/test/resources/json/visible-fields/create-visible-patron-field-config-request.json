@@ -1,0 +1,8 @@
+{
+  "fields" : [
+    "FOLIO_RECORD_NUMBER", "USERNAME", "USER_CUSTOM_FIELDS"
+  ],
+  "userCustomFields" : [
+    "filed1", "field2"
+  ]
+}

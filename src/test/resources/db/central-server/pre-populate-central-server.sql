@@ -1,14 +1,14 @@
-INSERT INTO central_server(id, name, description, local_server_code, central_server_code, central_server_address, loan_type_id)
-VALUES ('edab6baf-c696-42b1-89bb-1bbb8759b0d2', 'name', 'description', 'fli01', 'd2ir',
-        'https://rssandbox-api.iii.com', '6dae9cd4-ae7c-11eb-8529-0242ac130003');
+INSERT INTO central_server(id, name, description, local_server_code, central_server_code, central_server_address, loan_type_id, inn_reach_recall_user_id)
+VALUES ('edab6baf-c696-42b1-89bb-1bbb8759b0d2', 'name', 'description', 'test1', 'd2ir',
+        'https://centralserver', '6dae9cd4-ae7c-11eb-8529-0242ac130003', null);
 
 INSERT INTO central_server_credentials(central_server_id, central_server_key, central_server_secret)
-VALUES ('edab6baf-c696-42b1-89bb-1bbb8759b0d2', 'b55f2568-e03a-4cc2-8f30-5fb69aa14f5f',
-        '0c3ae7f3-4e70-4d5d-b94d-5a6605166494');
+VALUES ('edab6baf-c696-42b1-89bb-1bbb8759b0d2', '0550d8a5-73c6-466c-96ab-e5c65959e0f4',
+        '668a9d83-74b2-402d-8472-c424ff1c0320');
 
 INSERT INTO local_server_credentials(central_server_id, local_server_key, local_server_secret)
-VALUES ('edab6baf-c696-42b1-89bb-1bbb8759b0d2', 'b55f2568-e03a-4cc2-8f30-5fb69aa14f5f',
-        '$2a$10$bJY.mnChIj0DCF0345nB/.FflxflGhPDaa6I5OvHhhJci5TRRf3Be');
+VALUES ('edab6baf-c696-42b1-89bb-1bbb8759b0d2', '0550d8a5-73c6-466c-96ab-e5c65959e0f4',
+        '$2a$10$e5GgJPr5xsT48irZBZzJwON8pBJ7rCdH5Wk/PhP1cqmEpR7H8JBqa');
 
 INSERT INTO local_agency(id, code, central_server_id)
 VALUES ('556a5930-0639-4caa-a66b-f7c99c39972a', 'q1w2e', 'edab6baf-c696-42b1-89bb-1bbb8759b0d2'),

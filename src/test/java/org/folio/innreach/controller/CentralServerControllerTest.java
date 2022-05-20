@@ -149,7 +149,7 @@ class CentralServerControllerTest extends BaseControllerTest {
   @Test
   @Sql(scripts = {
     "classpath:db/central-server/pre-populate-central-server.sql"
-    })
+  })
   void return204HttpCode_when_deleteCentralServer() {
     var responseEntity = testRestTemplate.exchange(
       "/inn-reach/central-servers/{centralServerId}", HttpMethod.DELETE, HttpEntity.EMPTY,
@@ -177,6 +177,30 @@ class CentralServerControllerTest extends BaseControllerTest {
       "/inn-reach/central-servers", centralServerRequestDTO, CentralServerDTO.class);
 
     assertEquals(HttpStatus.CONFLICT, responseEntity.getStatusCode());
+  }
+
+  @Test
+  void return400HttpCode_when_createCentralServerWithDuplicateFolioLibraries() {
+    var centralServerRequestDTO = deserializeFromJsonFile(
+      "/central-server/create-central-server-invalid-libraries-request.json", CentralServerDTO.class);
+
+    var responseEntity = testRestTemplate.postForEntity(
+      "/inn-reach/central-servers", centralServerRequestDTO, CentralServerDTO.class);
+
+    assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
+  }
+
+  @Test
+  @Sql(scripts = "classpath:db/central-server/pre-populate-central-server.sql")
+  void return400HttpCode_when_updateCentralServerWithDuplicateFolioLibraries() {
+    var centralServerRequestDTO = deserializeFromJsonFile(
+      "/central-server/update-central-server-invalid-libraries-request.json", CentralServerDTO.class);
+
+    var responseEntity = testRestTemplate.exchange(
+      "/inn-reach/central-servers/{centralServerId}", HttpMethod.PUT, new HttpEntity<>(centralServerRequestDTO),
+      CentralServerDTO.class, PRE_POPULATED_CENTRAL_SERVER_ID);
+
+    assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
   }
 
 }

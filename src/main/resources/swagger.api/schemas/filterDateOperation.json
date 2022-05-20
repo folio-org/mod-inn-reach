@@ -1,0 +1,23 @@
+{
+  "description": "Comparison operation applied to date filter parameters",
+  "type": "string",
+  "enum": [
+    "less",
+    "lessOrEqual",
+    "equal",
+    "notEqual",
+    "greater",
+    "greaterOrEqual",
+    "between"
+  ],
+  "x-enum-varnames": [
+    "less",
+    "lessOrEqual",
+    "equal",
+    "notEqual",
+    "greater",
+    "greaterOrEqual",
+    "between"
+  ],
+  "additionalProperties": false
+}

@@ -8,6 +8,10 @@
       "format": "UUID",
       "description": "Unique ID of the item record"
     },
+    "_version": {
+      "type": "integer",
+      "description": "Record version for optimistic locking"
+    },
     "hrid": {
       "type": "string",
       "description": "The human readable ID, also called eye readable ID. A system-assigned sequential alternate ID"
@@ -39,10 +43,10 @@
       },
       "uniqueItems": true
     },
-    "permanentLocationId": {
+    "effectiveLocationId": {
       "type": "string",
       "format": "UUID",
-      "description": "The permanent shelving location in which an item resides."
+      "description": "Read only current home location for the item."
     },
     "effectiveCallNumberComponents": {
       "type": "object",
@@ -115,20 +119,9 @@
       "format": "UUID",
       "description": "Temporary loan type, is the temporary loan type for a given item."
     },
-    "instanceHrid": {
+    "barcode": {
       "type": "string",
-      "description": "The human readable instanceID, also called eye readable ID. A system-assigned sequential alternate ID",
-      "hidden": true
-    },
-    "holdingStatisticalCodeIds": {
-      "type": "array",
-      "description": "List of statistical code of the holdings record the item is a member of",
-      "items": {
-        "type": "string",
-        "format": "UUID"
-      },
-      "uniqueItems": true,
-      "hidden": true
+      "description": "Unique inventory control number for physical resources, used largely for circulation purposes"
     }
   }
 }

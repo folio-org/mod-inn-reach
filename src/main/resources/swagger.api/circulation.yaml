@@ -1,0 +1,1021 @@
+openapi: 3.0.0
+info:
+  title: INN-Reach Circulation API
+  version: v1
+servers:
+  - url: /inn-reach/
+paths:
+  /central-servers/agencies:
+    get:
+      operationId: getCentralServerAgencies
+      description: Get a combined list of agencies available from all configured central servers
+      tags:
+        - central-server-configuration
+      responses:
+        '200':
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/centralServerAgenciesDTO"
+        '500':
+          $ref: "api-common.yaml#/components/responses/trait_response_500"
+  /central-servers/item-types:
+    get:
+      operationId: getCentralServerItemTypes
+      description: Get a combined list of item types available from all configured central servers
+      tags:
+        - central-server-configuration
+      responses:
+        '200':
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/centralServerItemTypesDTO"
+        '500':
+          $ref: "api-common.yaml#/components/responses/trait_response_500"
+  /central-servers/patron-types:
+    get:
+      operationId: getCentralServerPatronTypes
+      description: Get a combined list of patron types available from all configured central servers
+      tags:
+        - central-server-configuration
+      responses:
+        '200':
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/centralServerPatronTypesDTO"
+        '500':
+          $ref: "api-common.yaml#/components/responses/trait_response_500"
+  /d2ir/getbibrecord/{bibId}/{centralCode}:
+    post:
+      operationId: getBibRecord
+      description: Handles D2IR request from central server for an already-contributed Bib record.
+      tags:
+        - bib-info-d2ir
+      responses:
+        '200':
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/bibInfoResponseDTO"
+        '500':
+          $ref: "api-common.yaml#/components/responses/trait_response_500"
+      parameters:
+        - $ref: '#/components/parameters/bibId'
+        - $ref: '#/components/parameters/centralCode'
+  /d2ir/circ/itemhold/{trackingId}/{centralCode}:
+    post:
+      operationId: createInnReachTransactionItemHold
+      description: Originates an item hold at the owning site
+      tags:
+        - inn-reach-circulation
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/transactionHoldDTO"
+      responses:
+        '200':
+          description: Transaction record is created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/innReachResponseDTO"
+        '400':
+          description: An error occurred during creation of transaction record
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/innReachResponseDTO"
+        '500':
+          $ref: "api-common.yaml#/components/responses/trait_response_500"
+      parameters:
+        - $ref: '#/components/parameters/trackingId'
+        - $ref: '#/components/parameters/centralCode'
+  /transactions:
+    get:
+      description: Get a list of transactions for the given central server
+      operationId: getAllTransactions
+      tags:
+        - inn-reach-transaction
+      responses:
+        '200':
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/innReachTransactionsDTO"
+        '400':
+          $ref: "api-common.yaml#/components/responses/trait_response_malformed_query_400"
+        '500':
+          $ref: "api-common.yaml#/components/responses/trait_response_500"
+      parameters:
+        - $ref: "api-common.yaml#/components/parameters/trait_pageable_offset"
+        - $ref: "api-common.yaml#/components/parameters/trait_pageable_limit"
+        - $ref: "#/components/parameters/transaction_filter_parameters"
+  /transactions/{id}:
+    get:
+      operationId: getInnReachTransaction
+      description: get inn-reach transaction by id
+      tags:
+        - inn-reach-transaction
+      responses:
+        '200':
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/innReachTransactionDTO"
+        '404':
+          $ref: "api-common.yaml#/components/responses/trait_response_404"
+        '500':
+          $ref: "api-common.yaml#/components/responses/trait_response_500"
+      parameters:
+        - $ref: 'api-common.yaml#/components/parameters/id'
+    put:
+      operationId: updateInnReachTransaction
+      description: update inn-reach transaction by id
+      tags:
+        - inn-reach-transaction
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/innReachTransactionDTO"
+      responses:
+        '204':
+          description: No content
+        '404':
+          $ref: "api-common.yaml#/components/responses/trait_response_404"
+        '500':
+          $ref: "api-common.yaml#/components/responses/trait_response_500"
+      parameters:
+        - $ref: 'api-common.yaml#/components/parameters/id'
+  /transactions/{id}/receive-item/{servicePointId}:
+    post:
+      operationId: checkInPatronHoldItem
+      description: receive item for patron hold transaction
+      tags:
+        - inn-reach-transaction
+      responses:
+        '200':
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/patronHoldCheckInResponseDTO"
+        '404':
+          $ref: "api-common.yaml#/components/responses/trait_response_404"
+        '500':
+          $ref: "api-common.yaml#/components/responses/trait_response_500"
+      parameters:
+        - $ref: 'api-common.yaml#/components/parameters/id'
+        - $ref: 'circulation.yaml#/components/parameters/servicePointId'
+  /transactions/{id}/receive-unshipped-item/{servicePointId}/{itemBarcode}:
+    post:
+      operationId: checkInPatronHoldUnshippedItem
+      description: receive un-shipped/unannounced item for patron hold transaction
+      tags:
+        - inn-reach-transaction
+      responses:
+        '200':
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/patronHoldCheckInResponseDTO"
+        '404':
+          $ref: "api-common.yaml#/components/responses/trait_response_404"
+        '500':
+          $ref: "api-common.yaml#/components/responses/trait_response_500"
+      parameters:
+        - $ref: 'api-common.yaml#/components/parameters/id'
+        - $ref: 'circulation.yaml#/components/parameters/servicePointId'
+        - $ref: 'circulation.yaml#/components/parameters/itemBarcode'
+  /transactions/{id}/itemhold/finalcheckin/{servicePointId}:
+    post:
+      operationId: finalCheckInItemHold
+      description: Final check-in of an item loaned through INN-Reach
+      tags:
+        - inn-reach-transaction
+      responses:
+        '204':
+          description: No content
+        '404':
+          $ref: "api-common.yaml#/components/responses/trait_response_404"
+        '500':
+          $ref: "api-common.yaml#/components/responses/trait_response_500"
+      parameters:
+        - $ref: 'api-common.yaml#/components/parameters/id'
+        - $ref: 'circulation.yaml#/components/parameters/servicePointId'
+  /transactions/{id}/itemhold/transfer-item/{itemId}:
+    post:
+      operationId: transferItemHold
+      description: Transfer item hold to another item
+      tags:
+        - inn-reach-transaction
+      responses:
+        '204':
+          description: No content
+        '404':
+          $ref: "api-common.yaml#/components/responses/trait_response_404"
+        '500':
+          $ref: "api-common.yaml#/components/responses/trait_response_500"
+      parameters:
+        - $ref: 'api-common.yaml#/components/parameters/id'
+        - $ref: 'circulation.yaml#/components/parameters/itemId'
+  /transactions/{id}/patronhold/check-out-item/{servicePointId}:
+    post:
+      operationId: checkOutPatronHoldItem
+      description: Checks out to requesting patron
+      tags:
+        - inn-reach-transaction
+      responses:
+        '200':
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/transactionCheckOutResponseDTO"
+        '404':
+          $ref: "api-common.yaml#/components/responses/trait_response_404"
+        '500':
+          $ref: "api-common.yaml#/components/responses/trait_response_500"
+      parameters:
+        - $ref: 'api-common.yaml#/components/parameters/id'
+        - $ref: 'circulation.yaml#/components/parameters/servicePointId'
+  /transactions/{id}/localhold/check-out-item/{servicePointId}:
+    post:
+      operationId: checkOutLocalHoldItem
+      description: Checks out Local Hold item to requesting patron
+      tags:
+        - inn-reach-transaction
+      responses:
+        '200':
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/transactionCheckOutResponseDTO"
+        '404':
+          $ref: "api-common.yaml#/components/responses/trait_response_404"
+        '500':
+          $ref: "api-common.yaml#/components/responses/trait_response_500"
+      parameters:
+        - $ref: 'api-common.yaml#/components/parameters/id'
+        - $ref: 'circulation.yaml#/components/parameters/servicePointId'
+  /transactions/{itemBarcode}/check-out-item/{servicePointId}:
+    put:
+      operationId: checkOutItemHoldItem
+      description: checks out an item from the owning site to the borrowing site for an Item Hold transaction
+      tags:
+        - inn-reach-transaction
+      responses:
+        '200':
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/transactionCheckOutResponseDTO"
+        '404':
+          $ref: "api-common.yaml#/components/responses/trait_response_404"
+        '500':
+          $ref: "api-common.yaml#/components/responses/trait_response_500"
+      parameters:
+        - $ref: 'circulation.yaml#/components/parameters/itemBarcode'
+        - $ref: 'circulation.yaml#/components/parameters/servicePointId'
+  /transactions/{id}/patronhold/cancel:
+    post:
+      operationId: cancelPatronHoldTransaction
+      description: Cancel patron hold transaction with the reason provided
+      tags:
+        - inn-reach-transaction
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/cancelTransactionHoldDTO"
+      responses:
+        '200':
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/innReachTransactionDTO"
+        '404':
+          $ref: "api-common.yaml#/components/responses/trait_response_404"
+        '500':
+          $ref: "api-common.yaml#/components/responses/trait_response_500"
+      parameters:
+        - $ref: 'api-common.yaml#/components/parameters/id'
+  /transactions/{id}/itemhold/recall:
+    post:
+      operationId: recallItemHoldTransaction
+      description: Recall item hold transaction
+      tags:
+        - inn-reach-transaction
+      responses:
+        '204':
+          description: No content
+        '404':
+          $ref: "api-common.yaml#/components/responses/trait_response_404"
+        '500':
+          $ref: "api-common.yaml#/components/responses/trait_response_500"
+      parameters:
+        - $ref: 'api-common.yaml#/components/parameters/id'
+  /transactions/{id}/patronhold/return-item/{servicePointId}:
+    post:
+      operationId: returnPatronHoldItem
+      description: Returns Patron Hold item
+      tags:
+        - inn-reach-transaction
+      responses:
+        '204':
+          description: No content
+        '404':
+          $ref: "api-common.yaml#/components/responses/trait_response_404"
+        '500':
+          $ref: "api-common.yaml#/components/responses/trait_response_500"
+      parameters:
+        - $ref: 'api-common.yaml#/components/parameters/id'
+        - $ref: 'circulation.yaml#/components/parameters/servicePointId'
+  /transactions/{id}/itemhold/cancel:
+    post:
+      operationId: cancelItemHoldTransaction
+      description: Cancel item hold transaction with the reason provided
+      tags:
+        - inn-reach-transaction
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/cancelTransactionHoldDTO"
+      responses:
+        '204':
+          description: No content
+        '404':
+          $ref: "api-common.yaml#/components/responses/trait_response_404"
+        '500':
+          $ref: "api-common.yaml#/components/responses/trait_response_500"
+      parameters:
+        - $ref: 'api-common.yaml#/components/parameters/id'
+  /transactions/{id}/localhold/cancel:
+    post:
+      operationId: cancelLocalHoldTransaction
+      description: Cancel local hold transaction with the reason provided
+      tags:
+        - inn-reach-transaction
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/cancelTransactionHoldDTO"
+      responses:
+        '200':
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/innReachTransactionDTO"
+        '404':
+          $ref: "api-common.yaml#/components/responses/trait_response_404"
+        '500':
+          $ref: "api-common.yaml#/components/responses/trait_response_500"
+      parameters:
+        - $ref: 'api-common.yaml#/components/parameters/id'
+  /d2ir/circ/verifypatron:
+    post:
+      operationId: verifyPatron
+      description: Handles D2IR request from central server for patron verification.
+      tags:
+        - verify-patron-d2ir
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/patronInfoRequestDTO"
+      responses:
+        '200':
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/patronInfoResponseDTO"
+        '500':
+          $ref: "api-common.yaml#/components/responses/trait_response_500"
+      parameters:
+        - $ref: '#/components/parameters/localCodeHeader'
+        - $ref: '#/components/parameters/centralCodeHeader'
+  /d2ir/circ/patronhold/{trackingId}/{centralCode}:
+    post:
+      operationId: patronHold
+      description: Originate a patron hold
+      tags:
+        - inn-reach-circulation
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/patronHoldDTO"
+      responses:
+        '200':
+          description: Patron hold request complete
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/innReachResponseDTO"
+        '400':
+          description: An error occurred during processing the request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/innReachResponseDTO"
+        '500':
+          $ref: "api-common.yaml#/components/responses/trait_response_500"
+      parameters:
+        - $ref: '#/components/parameters/trackingId'
+        - $ref: '#/components/parameters/centralCode'
+  /d2ir/circ/itemshipped/{trackingId}/{centralCode}:
+    put:
+      operationId: itemShipped
+      description: Process shipped item
+      tags:
+        - inn-reach-circulation
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/itemShippedDTO"
+      responses:
+        '200':
+          description: Item shipped request complete
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/innReachResponseDTO"
+        '400':
+          description: An error occurred during processing the request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/innReachResponseDTO"
+        '500':
+          $ref: "api-common.yaml#/components/responses/trait_response_500"
+      parameters:
+        - $ref: '#/components/parameters/trackingId'
+        - $ref: '#/components/parameters/centralCode'
+  /d2ir/circ/cancelrequest/{trackingId}/{centralCode}:
+    put:
+      operationId: cancelPatronHold
+      description: Cancel Patron Hold transaction
+      tags:
+        - inn-reach-circulation
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/cancelRequestDTO"
+      responses:
+        '200':
+          description: Cancellation request complete
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/innReachResponseDTO"
+        '400':
+          description: An error occurred during processing the request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/innReachResponseDTO"
+        '500':
+          $ref: "api-common.yaml#/components/responses/trait_response_500"
+      parameters:
+        - $ref: '#/components/parameters/trackingId'
+        - $ref: '#/components/parameters/centralCode'
+  /d2ir/circ/transferrequest/{trackingId}/{centralCode}:
+    put:
+      operationId: transferRequest
+      description: Put transfer request
+      tags:
+        - inn-reach-circulation
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/transferRequestDTO"
+      responses:
+        '200':
+          description: Transfer request complete
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/innReachResponseDTO"
+        '400':
+          description: An error occurred during processing the request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/innReachResponseDTO"
+        '500':
+          $ref: "api-common.yaml#/components/responses/trait_response_500"
+      parameters:
+        - $ref: '#/components/parameters/trackingId'
+        - $ref: '#/components/parameters/centralCode'
+  /d2ir/circ/cancelitemhold/{trackingId}/{centralCode}:
+    put:
+      operationId: cancelItemHold
+      description: Cancel an item request
+      tags:
+        - inn-reach-circulation
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/baseCircRequestDTO"
+      responses:
+        '200':
+          description: Cancel request complete
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/innReachResponseDTO"
+        '400':
+          description: An error occurred during processing the request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/innReachResponseDTO"
+        '500':
+          $ref: "api-common.yaml#/components/responses/trait_response_500"
+      parameters:
+        - $ref: '#/components/parameters/trackingId'
+        - $ref: '#/components/parameters/centralCode'
+  /d2ir/circ/receiveunshipped/{trackingId}/{centralCode}:
+    put:
+      operationId: receiveUnshipped
+      description: Report unshipped item received to owning site for item hold
+      tags:
+        - inn-reach-circulation
+      requestBody:
+        content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/baseCircRequestDTO"
+      responses:
+        '200':
+          description: report unshipped item complete
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/innReachResponseDTO"
+        '400':
+          description: An error occurred during processing the request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/innReachResponseDTO"
+      parameters:
+        - $ref: '#/components/parameters/trackingId'
+        - $ref: '#/components/parameters/centralCode'
+  /d2ir/circ/intransit/{trackingId}/{centralCode}:
+    put:
+      operationId: itemInTransit
+      description: Receives message from central server to owning site indicating that a loaned item is being returned after being loaned to the borrowing patron.
+      tags:
+        - inn-reach-circulation
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/baseCircRequestDTO"
+      responses:
+        '200':
+          description: Item in transit message processing complete
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/innReachResponseDTO"
+        '400':
+          description: An error occurred during processing the request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/innReachResponseDTO"
+        '500':
+          $ref: "api-common.yaml#/components/responses/trait_response_500"
+      parameters:
+        - $ref: '#/components/parameters/trackingId'
+        - $ref: '#/components/parameters/centralCode'
+  /d2ir/circ/returnuncirculated/{trackingId}/{centralCode}:
+    put:
+      operationId: returnUncirculated
+      description: Return uncirculated message for item hold
+      tags:
+        - inn-reach-circulation
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/returnUncirculatedDTO"
+      responses:
+        '200':
+          description: Return uncirculated message for item hold request complete
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/innReachResponseDTO"
+        '400':
+          description: An error occurred during processing the request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/innReachResponseDTO"
+        '500':
+          $ref: "api-common.yaml#/components/responses/trait_response_500"
+      parameters:
+        - $ref: '#/components/parameters/trackingId'
+        - $ref: '#/components/parameters/centralCode'
+  /d2ir/circ/localhold/{trackingId}/{centralCode}:
+    put:
+      operationId: createLocalHold
+      description: Create Local Hold - Central server to owning site when a local patron of that site requests an item through central.
+      tags:
+        - inn-reach-circulation
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/localHoldDTO"
+      responses:
+        '200':
+          description: Local hold request complete
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/innReachResponseDTO"
+        '400':
+          description: An error occurred during processing the request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/innReachResponseDTO"
+        '500':
+          $ref: "api-common.yaml#/components/responses/trait_response_500"
+      parameters:
+        - $ref: '#/components/parameters/trackingId'
+        - $ref: '#/components/parameters/centralCode'
+  /d2ir/circ/itemreceived/{trackingId}/{centralCode}:
+    put:
+      operationId: itemReceived
+      description: Shipped item has been received
+      tags:
+        - inn-reach-circulation
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/itemReceivedDTO"
+      responses:
+        '200':
+          description: Item received request complete
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/innReachResponseDTO"
+        '400':
+          description: An error occurred during processing the request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/innReachResponseDTO"
+        '500':
+          $ref: "api-common.yaml#/components/responses/trait_response_500"
+      parameters:
+        - $ref: '#/components/parameters/trackingId'
+        - $ref: '#/components/parameters/centralCode'
+  /d2ir/circ/recall/{trackingId}/{centralCode}:
+    put:
+      operationId: recall
+      description: Item has been recalled
+      tags:
+        - inn-reach-circulation
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/recallDTO"
+      responses:
+        '200':
+          description: Recall request complete
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/innReachResponseDTO"
+        '400':
+          description: An error occurred during processing the request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/innReachResponseDTO"
+        '500':
+          $ref: "api-common.yaml#/components/responses/trait_response_500"
+      parameters:
+        - $ref: '#/components/parameters/trackingId'
+        - $ref: '#/components/parameters/centralCode'
+  /d2ir/circ/borrowerrenew/{trackingId}/{centralCode}:
+    put:
+      operationId: borrowerRenew
+      description: Borrower Renew Message for Item Hold
+      tags:
+        - inn-reach-circulation
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/renewLoanDTO"
+      responses:
+        '200':
+          description: Set transaction state BORROWER_RENEW
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/innReachResponseDTO"
+        '400':
+          description: An error occurred during processing the request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/innReachResponseDTO"
+        '500':
+          $ref: "api-common.yaml#/components/responses/trait_response_500"
+      parameters:
+        - $ref: '#/components/parameters/trackingId'
+        - $ref: '#/components/parameters/centralCode'
+  /d2ir/circ/finalcheckin/{trackingId}/{centralCode}:
+    put:
+      operationId: finalCheckIn
+      description: Indicating that a returned item has been received by its owning site. This is a terminating transaction.
+      tags:
+        - inn-reach-circulation
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/baseCircRequestDTO"
+      responses:
+        '200':
+          description: Set transaction state to FINAL_CHECKIN
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/innReachResponseDTO"
+        '400':
+          description: An error occurred during processing the request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/innReachResponseDTO"
+        '500':
+          $ref: "api-common.yaml#/components/responses/trait_response_500"
+      parameters:
+        - $ref: '#/components/parameters/trackingId'
+        - $ref: '#/components/parameters/centralCode'
+  /d2ir/circ/ownerrenew/{trackingId}/{centralCode}:
+    put:
+      operationId: ownerRenew
+      description: Owner Renew loan
+      tags:
+        - inn-reach-circulation
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/renewLoanDTO"
+      responses:
+        '200':
+          description: Loan renew request complete
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/innReachResponseDTO"
+        '400':
+          description: An error occurred during processing the request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/innReachResponseDTO"
+        '500':
+          $ref: "api-common.yaml#/components/responses/trait_response_500"
+      parameters:
+        - $ref: '#/components/parameters/trackingId'
+        - $ref: '#/components/parameters/centralCode'
+  /d2ir/circ/claimsreturned/{trackingId}/{centralCode}:
+    put:
+      operationId: claimsReturned
+      description: Borrower claims item returned
+      tags:
+        - inn-reach-circulation
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/claimsItemReturnedDTO"
+      responses:
+        '200':
+          description: Loan renew request complete
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/innReachResponseDTO"
+        '400':
+          description: An error occurred during processing the request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/innReachResponseDTO"
+        '500':
+          $ref: "api-common.yaml#/components/responses/trait_response_500"
+      parameters:
+        - $ref: '#/components/parameters/trackingId'
+        - $ref: '#/components/parameters/centralCode'
+  /transactions/{id}/localhold/transfer-item/{itemId}:
+    post:
+      operationId: transferLocalHold
+      description: Transfer local hold to another item
+      tags:
+        - inn-reach-transaction
+      responses:
+        '200':
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/innReachTransactionDTO"
+        '404':
+          $ref: "api-common.yaml#/components/responses/trait_response_404"
+        '500':
+          $ref: "api-common.yaml#/components/responses/trait_response_500"
+      parameters:
+        - $ref: 'api-common.yaml#/components/parameters/id'
+        - $ref: 'circulation.yaml#/components/parameters/itemId'
+components:
+  schemas:
+    code:
+      type: string
+      pattern: '[a-z,0-9]{3,5}'
+    centralServerAgenciesDTO:
+      description: Agency collection from all configured central servers
+      type: object
+      properties:
+        totalRecords:
+          type: integer
+        centralServerAgencies:
+          description: List of agencies per central server
+          type: array
+          items:
+            $ref: schemas/agenciesPerCentralServerDTO.json
+      required:
+        - centralServerAgencies
+      additionalProperties: false
+    localServerAgenciesDTO:
+      $ref: schemas/d2ir/localServerAgenciesDTO.json
+    centralServerItemTypesDTO:
+      $ref: schemas/centralServerItemTypesDTO.json
+    centralItemTypesDTO:
+      $ref: schemas/d2ir/centralItemTypesDTO.json
+    centralServerPatronTypesDTO:
+      $ref: schemas/centralServerPatronTypesDTO.json
+    centralPatronTypesDTO:
+      $ref: schemas/d2ir/centralPatronTypesDTO.json
+    bibInfoResponseDTO:
+      $ref: schemas/d2ir/bibInfoResponseDTO.json
+    innReachResponseDTO:
+      $ref: schemas/d2ir/innReachResponseDTO.json
+    patronInfoResponseDTO:
+      $ref: schemas/d2ir/patronInfoResponseDTO.json
+    patronInfoRequestDTO:
+      $ref: schemas/d2ir/patronInfoRequestDTO.json
+    innReachTransactionDTO:
+      $ref: schemas/innReachTransactionDTO.json
+    transactionHoldDTO:
+      $ref: schemas/transactionHoldDTO.json
+    patronHoldDTO:
+      $ref: schemas/d2ir/patronHoldDTO.json
+    localHoldDTO:
+      $ref: schemas/d2ir/localHoldDTO.json
+    itemShippedDTO:
+      $ref: schemas/d2ir/itemShippedDTO.json
+    cancelRequestDTO:
+      $ref: schemas/d2ir/cancelRequestDTO.json
+    transferRequestDTO:
+      $ref: schemas/d2ir/transferRequestDTO.json
+    innReachTransactionsDTO:
+      $ref: schemas/innReachTransactionsDTO.json
+    innReachTransactionFilterParametersDTO:
+      $ref: schemas/innReachTransactionFilterParametersDTO.json
+    checkInRequestDTO:
+      $ref: schemas/circulation/checkInRequestDTO.json
+    checkInResponseDTO:
+      $ref: schemas/circulation/checkInResponseDTO.json
+    checkInDTO:
+      $ref: schemas/circulationstorage/checkInDTO.json
+    baseCircRequestDTO:
+      $ref: schemas/d2ir/baseCircRequestDTO.json
+    checkOutRequestDTO:
+      $ref: schemas/circulation/checkOutRequestDTO.json
+    loanDTO:
+      $ref: schemas/circulation/loanDTO.json
+    storageLoanDTO:
+      $ref: schemas/circulationstorage/loanDTO.json
+    patronHoldCheckInResponseDTO:
+      $ref: schemas/patronHoldCheckInResponseDTO.json
+    transactionCheckOutResponseDTO:
+      $ref: schemas/transactionCheckOutResponseDTO.json
+    returnUncirculatedDTO:
+      $ref: schemas/d2ir/returnUncirculatedDTO.json
+    itemReceivedDTO:
+      $ref: schemas/d2ir/itemReceivedDTO.json
+    recallDTO:
+      $ref: schemas/d2ir/recallDTO.json
+    renewLoanDTO:
+      $ref: schemas/d2ir/renewLoanDTO.json
+    claimsItemReturnedDTO:
+      $ref: schemas/d2ir/claimsItemReturnedDTO.json
+    claimItemReturnedRequestDTO:
+      $ref: schemas/circulation/claimItemReturnedRequestDTO.json
+    cancelTransactionHoldDTO:
+      $ref: schemas/cancelTransactionHoldDTO.json
+    holdingSourceDTO:
+      $ref: schemas/inventorystorage/holdingSourceDTO.json
+  parameters:
+    bibId:
+      name: bibId
+      description: 32-character, alphanumeric id corresponding to a FOLIO instance record HRID
+      in: path
+      required: true
+      schema:
+        type: string
+    centralCode:
+      name: centralCode
+      description: Unique code that identifies the central server (match against value stored in Central Server settings, used to determine contribution status)
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/code'
+    trackingId:
+      name: trackingId
+      in: path
+      required: true
+      schema:
+        type: string
+    servicePointId:
+      name: servicePointId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    itemBarcode:
+      name: itemBarcode
+      description: Barcode of the item
+      in: path
+      required: true
+      schema:
+        type: string
+    circulationOperationName:
+      name: circulationOperationName
+      in: path
+      required: true
+      schema:
+        type: string
+    localCodeHeader:
+      name: X-To-Code
+      in: header
+      required: true
+      schema:
+        $ref: '#/components/schemas/code'
+    centralCodeHeader:
+      name: X-From-Code
+      in: header
+      required: true
+      schema:
+        $ref: '#/components/schemas/code'
+    transaction_filter_parameters:
+      name: parameters
+      in: query
+      description: Query parameters to filter transactions.
+      schema:
+        $ref: "#/components/schemas/innReachTransactionFilterParametersDTO"
+    itemId:
+      name: itemId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid

@@ -15,6 +15,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
 import static org.springframework.http.HttpStatus.CONFLICT;
+import static org.springframework.http.HttpStatus.NO_CONTENT;
 import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TEST_METHOD;
 import static org.springframework.test.context.jdbc.SqlMergeMode.MergeMode.MERGE;
 
@@ -28,6 +29,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -107,6 +109,29 @@ class LocationMappingControllerTest extends BaseControllerTest {
 
     assertEquals(dbMappings.size(), response.getTotalRecords());
     assertThat(mappings, containsInAnyOrder(mapper.toDTOs(dbMappings).toArray()));
+  }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-location/pre-populate-inn-reach-location-code.sql",
+    "classpath:db/inn-reach-location/pre-populate-another-inn-reach-location-code.sql",
+    "classpath:db/loc-mapping/pre-populate-location-mapping.sql",
+    "classpath:db/loc-mapping/pre-populate-another-location-mapping.sql"
+  })
+  void shouldGetAllExistingMappingsForAllLibraries() {
+    var responseEntity = testRestTemplate.getForEntity(
+      baseMappingURLForAllLibraries(PRE_POPULATED_CENTRAL_SERVER_ID), List.class);
+
+    assertTrue(responseEntity.getStatusCode().is2xxSuccessful());
+    assertTrue(responseEntity.hasBody());
+
+    var response = responseEntity.getBody();
+    assertNotNull(response);
+
+    List<LocationMapping> dbMappings = repository.findByCentralServerId(UUID.fromString(PRE_POPULATED_CENTRAL_SERVER_ID));
+
+    assertEquals(dbMappings.size(), response.size());
   }
 
   @Test
@@ -214,19 +239,27 @@ class LocationMappingControllerTest extends BaseControllerTest {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-location/pre-populate-inn-reach-location-code.sql"
   })
-  void return400WhenCreatingNewMappingsAndInnReachLocationIdIsNull() {
+  void shouldCreateNewMappingsWhenInnReachLocationIdIsNull() {
     var newMappings = deserializeFromJsonFile("/location-mapping/create-location-mappings-request.json",
       LocationMappingsDTO.class);
     newMappings.getLocationMappings().get(0).setInnReachLocationId(null);
 
     var responseEntity = testRestTemplate.exchange(baseMappingURL(), HttpMethod.PUT, new HttpEntity<>(newMappings),
-      ValidationErrorsDTO.class);
+      Void.class);
 
-    assertEquals(BAD_REQUEST, responseEntity.getStatusCode());
+    assertEquals(NO_CONTENT, responseEntity.getStatusCode());
+    assertFalse(responseEntity.hasBody());
 
-    assertNotNull(responseEntity.getBody());
-    assertThat(responseEntity.getBody().getValidationErrors(),
-      contains(createValidationError("locationMappings[0].innReachLocationId", "must not be null")));
+    var created = mapper.toDTOs(repository.findByCentralServerIdAndLibraryId(
+      UUID.fromString(PRE_POPULATED_CENTRAL_SERVER_ID), UUID.fromString(PRE_POPULATED_LIBRARY_ID)));
+    var expected = newMappings.getLocationMappings().stream()
+      .filter(mapping -> mapping.getInnReachLocationId() != null)
+      .collect(Collectors.toList());
+
+    assertEquals(expected.size(), created.size());
+    assertThat(created, containsInAnyOrder(
+      samePropertyValuesAs(expected.get(0), "id", "metadata")
+    ));
   }
 
   @Test
@@ -351,6 +384,10 @@ class LocationMappingControllerTest extends BaseControllerTest {
 
   private static String baseMappingURL() {
     return baseMappingURL(PRE_POPULATED_CENTRAL_SERVER_ID, PRE_POPULATED_LIBRARY_ID);
+  }
+
+  private static String baseMappingURLForAllLibraries(String serverId) {
+    return "/inn-reach/central-servers/" + serverId + "/libraries/locations/location-mappings";
   }
 
   private static String baseMappingURL(String serverId, String libraryId) {

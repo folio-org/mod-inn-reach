@@ -1,0 +1,13 @@
+{
+  "status": "failed",
+  "reason": "Invalid request",
+  "errors":
+  [
+    {
+      "type":"HeaderError",
+      "name":"X-To-Code",
+      "rejectedValue":"d2ir",
+      "reason":"Invalid Header Value"
+    }
+  ]
+}

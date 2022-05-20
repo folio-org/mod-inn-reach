@@ -12,11 +12,11 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
-import org.folio.innreach.config.FolioFeignClientConfig;
+import org.folio.innreach.client.config.FolioFeignClientConfig;
 import org.folio.innreach.domain.dto.folio.ResultList;
 import org.folio.innreach.domain.dto.folio.User;
 
-@FeignClient(name = "users", configuration = FolioFeignClientConfig.class)
+@FeignClient(name = "users", configuration = FolioFeignClientConfig.class, decode404 = true)
 public interface UsersClient {
 
   @GetMapping(value = "/{id}")

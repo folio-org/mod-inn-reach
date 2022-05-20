@@ -3,14 +3,17 @@ package org.folio.innreach.domain.dto.folio.inventory;
 import java.util.Arrays;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
 @Getter
 @RequiredArgsConstructor
+@JsonFormat(shape = JsonFormat.Shape.OBJECT)
 public enum InventoryItemStatus {
 
   AVAILABLE("Available"),
+  RECENTLY_RETURNED("Recently Returned"),
   IN_TRANSIT("In transit"),
   CHECKED_OUT("Checked out"),
   PAGED("Paged"),
@@ -22,6 +25,7 @@ public enum InventoryItemStatus {
   AWAITING_DELIVERY("Awaiting delivery"),
   MISSING("Missing"),
   ON_ORDER("On order"),
+  ORDER_CLOSED("Order closed"),
   IN_PROCESS("In process"),
   CLAIMED_RETURNED("Claimed returned"),
   LOST_AND_PAID("Lost and paid"),
@@ -29,7 +33,9 @@ public enum InventoryItemStatus {
   IN_PROCESS_NON_REQUESTABLE("In process (non-requestable)"),
   UNAVAILABLE("Unavailable"),
   UNKNOWN("Unknown"),
-  RESTRICTED("Restricted");
+  RESTRICTED("Restricted"),
+  RETRIEVING_FROM_ASR("Retrieving from ASR"),
+  MISSING_FROM_ASR("Missing from ASR");
 
   private final String name;
 

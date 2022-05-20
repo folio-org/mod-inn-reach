@@ -1,0 +1,14 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title": "Visible Patron Field enum",
+  "description": "Visible Patron Field enum",
+  "type": "string",
+  "additionalProperties": false,
+  "enum" : [
+    "BARCODE",
+    "EXTERNAL_SYSTEM_ID",
+    "FOLIO_RECORD_NUMBER",
+    "USERNAME",
+    "USER_CUSTOM_FIELDS"
+  ]
+}
