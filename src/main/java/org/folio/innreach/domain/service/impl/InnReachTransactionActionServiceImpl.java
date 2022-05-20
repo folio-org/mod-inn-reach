@@ -36,13 +36,12 @@ import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
-import org.folio.innreach.domain.event.RecallRequestEvent;
-import org.folio.innreach.domain.service.InnReachRecallUserService;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -57,7 +56,9 @@ import org.folio.innreach.domain.entity.TransactionItemHold;
 import org.folio.innreach.domain.entity.TransactionPatronHold;
 import org.folio.innreach.domain.event.CancelRequestEvent;
 import org.folio.innreach.domain.event.MoveRequestEvent;
+import org.folio.innreach.domain.event.RecallRequestEvent;
 import org.folio.innreach.domain.exception.EntityNotFoundException;
+import org.folio.innreach.domain.service.InnReachRecallUserService;
 import org.folio.innreach.domain.service.InnReachTransactionActionService;
 import org.folio.innreach.domain.service.InstanceService;
 import org.folio.innreach.domain.service.ItemService;
@@ -67,6 +68,7 @@ import org.folio.innreach.domain.service.RequestService;
 import org.folio.innreach.dto.CancelTransactionHoldDTO;
 import org.folio.innreach.dto.CheckInDTO;
 import org.folio.innreach.dto.InnReachTransactionDTO;
+import org.folio.innreach.dto.Item;
 import org.folio.innreach.dto.LoanStatus;
 import org.folio.innreach.dto.PatronHoldCheckInResponseDTO;
 import org.folio.innreach.dto.StorageLoanDTO;
@@ -243,6 +245,20 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
 
         notifier.reportReturnUncirculated(transaction);
       }
+    }
+  }
+
+  @Override
+  public void handleItemUpdate(Item updatedItem, Item oldItem) {
+    var itemId = updatedItem.getId();
+    var updatedItemBarcode = updatedItem.getBarcode();
+
+    if (!Objects.equals(updatedItemBarcode, oldItem.getBarcode())) {
+      transactionRepository.fetchActiveByFolioItemId(itemId)
+        .ifPresent(t -> {
+          log.info("Item {} barcode changed to {}, updating transaction {}", itemId, updatedItemBarcode, t.getId());
+          t.getHold().setFolioItemBarcode(updatedItemBarcode);
+        });
     }
   }
 
