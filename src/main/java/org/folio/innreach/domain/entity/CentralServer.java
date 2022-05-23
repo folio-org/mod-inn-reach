@@ -176,6 +176,14 @@ public class CentralServer extends Auditable implements Identifiable<UUID> {
   )
   private List<LocalAgency> localAgencies = new ArrayList<>();
 
+  @OneToOne(
+    cascade = CascadeType.ALL,
+    fetch = FetchType.LAZY,
+    mappedBy = "centralServer",
+    orphanRemoval = true
+  )
+  private CentralServerSettings centralServerSettings;
+
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "inn_reach_recall_user_id")
   private InnReachRecallUser innReachRecallUser;

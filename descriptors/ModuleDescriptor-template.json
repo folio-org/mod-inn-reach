@@ -81,6 +81,21 @@
           "permissionsRequired": ["inn-reach.central-servers.item.put"]
         },
         {
+          "methods": ["GET"],
+          "pathPattern": "/inn-reach/central-servers/settings{centralServerId}",
+          "permissionsRequired": ["inn-reach.central-servers.item.get"]
+        },
+        {
+          "methods": ["PUT"],
+          "pathPattern": "/inn-reach/central-servers/settings",
+          "permissionsRequired": ["inn-reach.central-servers.item.put"]
+        },
+        {
+          "methods": ["POST"],
+          "pathPattern": "/inn-reach/central-servers/settings",
+          "permissionsRequired": ["inn-reach.central-servers.item.post"]
+        },
+        {
           "methods": ["DELETE"],
           "pathPattern": "/inn-reach/central-servers/{centralServerId}",
           "permissionsRequired": ["inn-reach.central-servers.item.delete"]

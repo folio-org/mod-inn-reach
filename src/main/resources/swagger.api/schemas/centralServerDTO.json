@@ -57,6 +57,10 @@
       "description": "Local server secret",
       "type": "string"
     },
+    "checkPickupLocation": {
+      "description": "Check which pickup location to choose",
+      "type": "boolean"
+    },
     "metadata": {
       "description": "Entity metadata",
       "type": "object",

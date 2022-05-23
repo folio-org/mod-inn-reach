@@ -16,6 +16,7 @@ public interface CentralServerMapper {
   @Mapping(target = "centralServerCredentials.centralServerKey", source = "centralServerKey")
   @Mapping(target = "centralServerCredentials.centralServerSecret", source = "centralServerSecret")
   @Mapping(target = "localServerCredentials", expression = "java(mapToLocalServerCredentials(centralServerDTO))")
+  @Mapping(target = "centralServerSettings.check", source = "checkPickupLocation")
   CentralServer mapToCentralServer(CentralServerDTO centralServerDTO);
 
   default LocalServerCredentials mapToLocalServerCredentials(CentralServerDTO centralServerDTO) {
@@ -35,6 +36,7 @@ public interface CentralServerMapper {
   @Mapping(target = "centralServerSecret", source = "centralServerCredentials.centralServerSecret")
   @Mapping(target = "localServerKey", source = "localServerCredentials.localServerKey")
   @Mapping(target = "localServerSecret", source = "localServerCredentials.localServerSecret")
+  @Mapping(target = "checkPickupLocation", source = "centralServerSettings.check")
   @AuditableMapping
   CentralServerDTO mapToCentralServerDTO(CentralServer centralServer);
 

@@ -1,0 +1,20 @@
+{
+  "description": "Central server configuration",
+  "type": "object",
+  "properties": {
+    "centralServerId": {
+      "description": "Central server id",
+      "type": "string",
+      "format": "UUID"
+    },
+    "checkPickupLocation": {
+      "description": "Check for pickup location",
+      "type": "boolean"
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "centralServerId",
+    "checkPickupLocation"
+  ]
+}
