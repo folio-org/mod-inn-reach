@@ -8,8 +8,4 @@
     <sqlFile path="sql/2022-05-23-01__create-central-server-settings.sql" relativeToChangelogFile="true"/>
   </changeSet>
 
-  <changeSet id="2022-05-23-02__alter-central-server-settings.sql" author="s1mpleGit">
-    <sqlFile path="sql/2022-05-23-02__alter-central-server-settings.sql" relativeToChangelogFile="true"/>
-  </changeSet>
-
 </databaseChangeLog>
