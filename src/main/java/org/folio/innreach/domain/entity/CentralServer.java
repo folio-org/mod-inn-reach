@@ -177,7 +177,7 @@ public class CentralServer extends Auditable implements Identifiable<UUID> {
   private List<LocalAgency> localAgencies = new ArrayList<>();
 
   @OneToOne(
-    cascade = CascadeType.REMOVE,
+    cascade = CascadeType.ALL,
     fetch = FetchType.LAZY,
     mappedBy = "centralServer",
     orphanRemoval = true
