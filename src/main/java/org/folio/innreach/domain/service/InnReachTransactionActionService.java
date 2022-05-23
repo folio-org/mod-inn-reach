@@ -6,6 +6,7 @@ import org.folio.innreach.domain.dto.folio.circulation.RequestDTO;
 import org.folio.innreach.dto.CancelTransactionHoldDTO;
 import org.folio.innreach.dto.CheckInDTO;
 import org.folio.innreach.dto.InnReachTransactionDTO;
+import org.folio.innreach.dto.Item;
 import org.folio.innreach.dto.PatronHoldCheckInResponseDTO;
 import org.folio.innreach.dto.StorageLoanDTO;
 import org.folio.innreach.dto.TransactionCheckOutResponseDTO;
@@ -29,6 +30,8 @@ public interface InnReachTransactionActionService {
   void handleRequestUpdate(RequestDTO requestDTO);
 
   void handleCheckInCreation(CheckInDTO checkIn);
+
+  void handleItemUpdate(Item updatedItem, Item oldItem);
 
   InnReachTransactionDTO cancelPatronHold(UUID transactionId, CancelTransactionHoldDTO cancelRequest);
 
