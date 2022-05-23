@@ -46,6 +46,6 @@ public class CentralServerSettings implements Identifiable<UUID> {
 
   @OneToOne(fetch = FetchType.LAZY, optional = false)
   @MapsId
-  @JoinColumn(name = "central_server_id", unique = true, nullable = false)
+  @JoinColumn(name = "central_server_id", unique = true)
   private CentralServer centralServer;
 }

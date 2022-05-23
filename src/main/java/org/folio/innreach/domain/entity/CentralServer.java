@@ -215,4 +215,9 @@ public class CentralServer extends Auditable implements Identifiable<UUID> {
     }
     this.localAgencies.remove(localAgency);
   }
+
+  public void setCentralServerSettings(CentralServerSettings centralServerSettings) {
+    centralServerSettings.setCentralServer(this);
+    this.centralServerSettings = centralServerSettings;
+  }
 }
