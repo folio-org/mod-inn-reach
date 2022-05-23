@@ -1,11 +1,12 @@
 package org.folio.innreach.domain.service.impl;
 
+import static org.folio.innreach.util.ListUtils.mapItems;
+
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,6 +17,7 @@ import org.folio.innreach.dto.InnReachLocationDTO;
 import org.folio.innreach.dto.InnReachLocationsDTO;
 import org.folio.innreach.mapper.InnReachLocationMapper;
 import org.folio.innreach.repository.InnReachLocationRepository;
+import org.folio.spring.data.OffsetRequest;
 
 @RequiredArgsConstructor
 @Service
@@ -45,10 +47,8 @@ public class InnReachLocationServiceImpl implements InnReachLocationService {
   @Override
   @Transactional(readOnly = true)
   public InnReachLocationsDTO getInnReachLocations(Iterable<UUID> innReachLocationIds) {
-    var locations = innReachLocationRepository.findAllById(innReachLocationIds)
-      .stream()
-      .map(innReachLocationMapper::mapToInnReachLocationDTO)
-      .collect(Collectors.toList());
+    var locations = mapItems(innReachLocationRepository.findAllById(innReachLocationIds),
+        innReachLocationMapper::mapToInnReachLocationDTO);
 
     var locationsDTO = new InnReachLocationsDTO();
     locationsDTO.setLocations(locations);
@@ -70,7 +70,7 @@ public class InnReachLocationServiceImpl implements InnReachLocationService {
   }
 
   private List<InnReachLocationDTO> collectInnReachLocations(Integer offset, Integer limit){
-    return innReachLocationRepository.findAll(PageRequest.of(offset, limit))
+    return innReachLocationRepository.findAll(new OffsetRequest(offset, limit))
       .stream()
       .map(innReachLocationMapper::mapToInnReachLocationDTO)
       .collect(Collectors.toList());

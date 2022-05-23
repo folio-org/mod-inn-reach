@@ -1,0 +1,48 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "description": "D2IR Patron info",
+  "type": "object",
+  "properties": {
+    "patronId": {
+      "type": "string",
+      "description": "32-character, alphanumeric id corresponding to a FOLIO user.id (UUID with no hyphens)",
+      "maxLength": 32
+    },
+    "patronAgencyCode": {
+      "type": "string",
+      "description": "5 character lowercase alphanumeric"
+    },
+    "centralPatronType": {
+      "type": "integer",
+      "description": "0-255"
+    },
+    "patronExpireDate": {
+      "type": "integer",
+      "format": "int64",
+      "description": "Epoch UNIX time stamp"
+    },
+    "localLoans": {
+      "type": "integer",
+      "description": "Number of local (within library) loans"
+    },
+    "nonLocalLoans": {
+      "type": "integer",
+      "description": "Number of non-local (INN-Reach, ILL, etc.) loans"
+    },
+    "patronName": {
+      "type": "string",
+      "description": "Maximum 128 characters",
+      "maxLength": 128
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "patronId",
+    "patronAgencyCode",
+    "centralPatronType",
+    "patronExpireDate",
+    "localLoans",
+    "nonLocalLoans",
+    "patronName"
+  ]
+}

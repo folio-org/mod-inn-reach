@@ -4,13 +4,13 @@ import static org.folio.innreach.domain.service.impl.ServiceUtils.centralServerR
 import static org.folio.innreach.domain.service.impl.ServiceUtils.initId;
 import static org.folio.innreach.domain.service.impl.ServiceUtils.mergeAndSave;
 
+import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Consumer;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Example;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,6 +20,7 @@ import org.folio.innreach.domain.service.PatronTypeMappingService;
 import org.folio.innreach.dto.PatronTypeMappingsDTO;
 import org.folio.innreach.mapper.PatronTypeMappingMapper;
 import org.folio.innreach.repository.PatronTypeMappingRepository;
+import org.folio.spring.data.OffsetRequest;
 
 @RequiredArgsConstructor
 @Service
@@ -33,7 +34,7 @@ public class PatronTypeMappingServiceImpl implements PatronTypeMappingService {
   public PatronTypeMappingsDTO getAllMappings(UUID centralServerId, int offset, int limit) {
     var example = mappingExampleWithServerId(centralServerId);
 
-    Page<PatronTypeMapping> mappings = repository.findAll(example, PageRequest.of(offset, limit));
+    Page<PatronTypeMapping> mappings = repository.findAll(example, new OffsetRequest(offset, limit));
 
     return mapper.toDTOCollection(mappings);
   }
@@ -49,6 +50,12 @@ public class PatronTypeMappingServiceImpl implements PatronTypeMappingService {
     var saved = mergeAndSave(incoming, stored, repository, this::copyData);
 
     return mapper.toDTOCollection(saved);
+  }
+
+  @Override
+  public Optional<Integer> getCentralPatronType(UUID centralServerId, UUID patronGroupId) {
+    return repository.findOneByCentralServerIdAndPatronGroupId(centralServerId, patronGroupId)
+      .map(PatronTypeMapping::getPatronType);
   }
 
   private static Example<PatronTypeMapping> mappingExampleWithServerId(UUID centralServerId) {

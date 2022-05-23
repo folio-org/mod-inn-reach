@@ -1,0 +1,11 @@
+{
+  "transactionTime" : 1632039760,
+  "pickupLocation" : "Pickup Loc Code 1:Display Name 1:Print Name 1:Delivery stop 1:Invalid value:Invalid value",
+  "patronId" : "patronid1",
+  "patronAgencyCode" : "qwe12",
+  "itemAgencyCode" : "zxc34",
+  "itemId" : "item1",
+  "centralItemType" : 1,
+  "centralPatronType" : 1,
+  "patronName" : "Patron Name"
+}

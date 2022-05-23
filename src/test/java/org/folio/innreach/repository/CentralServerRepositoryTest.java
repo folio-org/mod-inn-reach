@@ -1,5 +1,7 @@
 package org.folio.innreach.repository;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.core.StringContains.containsString;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -21,7 +23,8 @@ import org.folio.innreach.fixture.LocalServerCredentialsFixture;
 class CentralServerRepositoryTest extends BaseRepositoryTest {
 
   private static final String PRE_POPULATED_CENTRAL_SERVER_ID = "edab6baf-c696-42b1-89bb-1bbb8759b0d2";
-  private static final String PRE_POPULATED_CENTRAL_SERVER_CODE = "fli01";
+  private static final String PRE_POPULATED_LOCAL_SERVER_CODE = "test1";
+  private static final String PRE_POPULATED_CENTRAL_SERVER_CODE = "d2ir";
 
   @Autowired
   private CentralServerRepository centralServerRepository;
@@ -64,11 +67,25 @@ class CentralServerRepositoryTest extends BaseRepositoryTest {
   }
 
   @Test
-  void throwException_when_suchCentralServerAlreadyExists() {
+  void throwException_when_localServerCodeIsNotUnique() {
     var centralServer = CentralServerFixture.createCentralServer();
-    centralServer.setLocalServerCode(PRE_POPULATED_CENTRAL_SERVER_CODE);
+    centralServer.setLocalServerCode(PRE_POPULATED_LOCAL_SERVER_CODE);
 
-    assertThrows(DataIntegrityViolationException.class, () -> centralServerRepository.saveAndFlush(centralServer));
+    var ex = assertThrows(DataIntegrityViolationException.class,
+        () -> centralServerRepository.saveAndFlush(centralServer));
+
+    assertThat(ex.getMessage(), containsString("constraint [central_server_local_server_code_key]"));
+  }
+
+  @Test
+  void throwException_when_centralServerCodeIsNotUnique() {
+    var centralServer = CentralServerFixture.createCentralServer();
+    centralServer.setCentralServerCode(PRE_POPULATED_CENTRAL_SERVER_CODE);
+
+    var ex = assertThrows(DataIntegrityViolationException.class,
+        () -> centralServerRepository.saveAndFlush(centralServer));
+
+    assertThat(ex.getMessage(), containsString("constraint [unq_central_server_cs_code]"));
   }
 
 }

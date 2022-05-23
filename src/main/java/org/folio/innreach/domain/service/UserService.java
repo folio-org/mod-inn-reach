@@ -11,6 +11,9 @@ public interface UserService {
 
   Optional<User> getUserByName(String name);
 
+  Optional<User> getUserByBarcode(String userPublicId);
+
   User saveUser(User user);
 
+  Optional<User> getUserByQuery(String query);
 }

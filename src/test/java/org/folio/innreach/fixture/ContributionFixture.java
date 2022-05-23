@@ -7,12 +7,12 @@ import static org.jeasy.random.FieldPredicates.named;
 
 import static org.folio.innreach.domain.entity.Contribution.Status.IN_PROGRESS;
 import static org.folio.innreach.fixture.TestUtil.deserializeFromJsonFile;
+import static org.folio.innreach.util.ListUtils.mapItems;
 
 import java.time.OffsetDateTime;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 import lombok.experimental.UtilityClass;
 import org.jeasy.random.EasyRandom;
@@ -25,7 +25,9 @@ import org.folio.innreach.domain.dto.folio.inventorystorage.JobResponse;
 import org.folio.innreach.domain.dto.folio.inventorystorage.MaterialTypeDTO;
 import org.folio.innreach.domain.entity.CentralServer;
 import org.folio.innreach.domain.entity.Contribution;
+import org.folio.innreach.domain.entity.ContributionCriteriaConfiguration;
 import org.folio.innreach.domain.entity.base.AuditableUser;
+import org.folio.innreach.dto.ContributionCriteriaDTO;
 import org.folio.innreach.dto.Holding;
 import org.folio.innreach.dto.Instance;
 import org.folio.innreach.dto.Item;
@@ -88,6 +90,10 @@ public class ContributionFixture {
     return contributionRandom.nextObject(ContributionJobContext.class);
   }
 
+  public static ContributionCriteriaDTO createContributionCriteria() {
+    return contributionRandom.nextObject(ContributionCriteriaDTO.class);
+  }
+
   public static InventoryViewClient.InstanceView createInstanceView() {
     var instanceView = new InventoryViewClient.InstanceView();
     instanceView.setInstance(createInstance());
@@ -97,12 +103,16 @@ public class ContributionFixture {
   }
 
   public static Instance createInstance() {
+    var item = createItem();
+    var holding = createHolding();
+    holding.setHoldingsItems(singletonList(item));
+
     var instance = new Instance();
     instance.setId(UUID.randomUUID());
     instance.setSource("MARC");
     instance.setHrid("test");
-    instance.setItems(singletonList(createItem()));
-    instance.setHoldings(singletonList(createHolding()));
+    instance.setItems(singletonList(item));
+    instance.setHoldingsRecords(singletonList(holding));
     return instance;
   }
 
@@ -110,21 +120,17 @@ public class ContributionFixture {
     return instanceRandom.nextObject(Item.class);
   }
 
-  private static Holding createHolding() {
+  public static Holding createHolding() {
     return instanceRandom.nextObject(Holding.class);
   }
 
   public static List<InnReachLocationDTO> createIrLocations() {
-    return Arrays.asList(IR_LOCATION_CODE, IR_LOCATION2_CODE, IR_LOCATION3_CODE).stream()
-      .map(c -> new InnReachLocationDTO(c, null))
-      .collect(Collectors.toList());
+    return mapItems(Arrays.asList(IR_LOCATION_CODE, IR_LOCATION2_CODE, IR_LOCATION3_CODE), c -> new InnReachLocationDTO(c, null));
   }
 
   public static ResultList<MaterialTypeDTO> createMaterialTypes() {
-    List<MaterialTypeDTO> results = Arrays.asList(PRE_POPULATED_TYPE_ID, PRE_POPULATED_TYPE2_ID, PRE_POPULATED_TYPE3_ID)
-      .stream()
-      .map(ContributionFixture::createMaterialType)
-      .collect(Collectors.toList());
+    List<MaterialTypeDTO> results = mapItems(Arrays.asList(PRE_POPULATED_TYPE_ID, PRE_POPULATED_TYPE2_ID, PRE_POPULATED_TYPE3_ID),
+        ContributionFixture::createMaterialType);
 
     return ResultList.of(results.size(), results);
   }

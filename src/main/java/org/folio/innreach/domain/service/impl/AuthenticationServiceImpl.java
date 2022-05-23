@@ -20,9 +20,9 @@ public class AuthenticationServiceImpl implements AuthenticationService {
   @Override
   public void authenticate(AuthenticationRequest authenticationRequest) {
     var localServerCredentials = localServerCredentialsRepository
-      .findByLocalServerCodeAndKey(authenticationRequest.getLocalServerCode(), authenticationRequest.getKey().toString())
+      .findByLocalServerKey(authenticationRequest.getKey().toString())
       .orElseThrow(() -> new LocalServerCredentialsNotFoundException(
-        "Can't find credentials for Central Server with code: " + authenticationRequest.getLocalServerCode()));
+        "Can't find credentials for Local Server with key: " + authenticationRequest.getKey()));
 
     if (!doSecretsMatch(authenticationRequest.getSecret().toString(), localServerCredentials.getLocalServerSecret())) {
       throw new BadCredentialsException("Invalid Credentials");

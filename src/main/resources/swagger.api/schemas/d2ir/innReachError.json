@@ -22,7 +22,6 @@
       "description": "Error type"
     },
     "rejectedValue": {
-      "type": "string",
       "description": "Rejected value"
     },
     "name": {

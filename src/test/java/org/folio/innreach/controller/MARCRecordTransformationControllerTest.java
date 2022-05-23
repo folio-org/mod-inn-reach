@@ -19,7 +19,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlMergeMode;
 
-import org.folio.innreach.client.InventoryClient;
+import org.folio.innreach.client.InstanceStorageClient;
 import org.folio.innreach.client.SourceRecordStorageClient;
 import org.folio.innreach.controller.base.BaseControllerTest;
 import org.folio.innreach.domain.dto.folio.sourcerecord.SourceRecordDTO;
@@ -42,7 +42,7 @@ class MARCRecordTransformationControllerTest extends BaseControllerTest {
   private TestRestTemplate testRestTemplate;
 
   @MockBean
-  private InventoryClient inventoryClient;
+  private InstanceStorageClient instanceStorageClient;
 
   @MockBean
   private SourceRecordStorageClient sourceRecordStorageClient;
@@ -53,10 +53,10 @@ class MARCRecordTransformationControllerTest extends BaseControllerTest {
     "classpath:db/marc-transform-opt-set/pre-populate-marc-transform-opt-set.sql"
   })
   void returnTransformedMARCRecord() {
-    when(inventoryClient.getInstanceById(any()))
+    when(instanceStorageClient.getInstanceById(any()))
       .thenReturn(deserializeFromJsonFile("/inventory-storage/american-bar-association.json", Instance.class));
 
-    when(sourceRecordStorageClient.getRecordById(any()))
+    when(sourceRecordStorageClient.getRecordByInstanceId(any()))
       .thenReturn(deserializeFromJsonFile("/source-record-storage/source-record-storage-example.json", SourceRecordDTO.class));
 
     var responseEntity = testRestTemplate.getForEntity(
@@ -75,13 +75,13 @@ class MARCRecordTransformationControllerTest extends BaseControllerTest {
   @Test
   @Sql(scripts = {
     "classpath:db/central-server/pre-populate-central-server.sql",
-    "classpath:db/marc-transform-opt-set/pre-populate-marc-transform-opt-set.sql"
+    "classpath:db/marc-transform-opt-set/pre-populate-marc-transform-opt-set-inactive.sql"
   })
-  void shouldReturn() {
-    when(inventoryClient.getInstanceById(any()))
+  void returnTransformedMARCRecord_inactiveConfig() {
+    when(instanceStorageClient.getInstanceById(any()))
       .thenReturn(deserializeFromJsonFile("/inventory-storage/american-bar-association.json", Instance.class));
 
-    when(sourceRecordStorageClient.getRecordById(any()))
+    when(sourceRecordStorageClient.getRecordByInstanceId(any()))
       .thenReturn(deserializeFromJsonFile("/source-record-storage/source-record-storage-example.json", SourceRecordDTO.class));
 
     var responseEntity = testRestTemplate.getForEntity(

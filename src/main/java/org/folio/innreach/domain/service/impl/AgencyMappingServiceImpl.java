@@ -1,25 +1,30 @@
 package org.folio.innreach.domain.service.impl;
 
-import lombok.RequiredArgsConstructor;
-import org.folio.innreach.domain.entity.AgencyLocationAcMapping;
-import org.folio.innreach.domain.entity.AgencyLocationLscMapping;
-import org.folio.innreach.domain.entity.AgencyLocationMapping;
-import org.folio.innreach.domain.exception.EntityNotFoundException;
-import org.folio.innreach.domain.service.AgencyMappingService;
-import org.folio.innreach.dto.AgencyLocationMappingDTO;
-import org.folio.innreach.mapper.AgencyLocationMappingMapper;
-import org.folio.innreach.repository.AgencyLocationMappingRepository;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import static org.folio.innreach.domain.service.impl.ServiceUtils.merge;
 
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
 
-import static org.folio.innreach.domain.service.impl.ServiceUtils.merge;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import org.folio.innreach.domain.entity.AgencyLocationAcMapping;
+import org.folio.innreach.domain.entity.AgencyLocationLscMapping;
+import org.folio.innreach.domain.entity.AgencyLocationMapping;
+import org.folio.innreach.domain.exception.EntityNotFoundException;
+import org.folio.innreach.domain.service.AgencyMappingService;
+import org.folio.innreach.domain.service.CentralServerConfigurationService;
+import org.folio.innreach.dto.AgencyLocationAcMappingDTO;
+import org.folio.innreach.dto.AgencyLocationLscMappingDTO;
+import org.folio.innreach.dto.AgencyLocationMappingDTO;
+import org.folio.innreach.dto.LocalServer;
+import org.folio.innreach.mapper.AgencyLocationMappingMapper;
+import org.folio.innreach.repository.AgencyLocationMappingRepository;
 
 @RequiredArgsConstructor
 @Service
@@ -30,11 +35,9 @@ public class AgencyMappingServiceImpl implements AgencyMappingService {
   private static final Comparator<AgencyLocationLscMapping> LSC_COMPARATOR = Comparator.comparing(AgencyLocationLscMapping::getLocalServerCode);
   private static final Comparator<AgencyLocationAcMapping> AC_COMPARATOR = Comparator.comparing(AgencyLocationAcMapping::getAgencyCode);
 
-  @Autowired
-  private AgencyLocationMappingRepository repository;
-
-  @Autowired
-  private AgencyLocationMappingMapper mapper;
+  private final AgencyLocationMappingRepository repository;
+  private final AgencyLocationMappingMapper mapper;
+  private final CentralServerConfigurationService configurationService;
 
   @Override
   public AgencyLocationMappingDTO getMapping(UUID centralServerId) {
@@ -54,6 +57,50 @@ public class AgencyMappingServiceImpl implements AgencyMappingService {
     repository.saveAndFlush(updated);
 
     return mapper.toDTO(updated);
+  }
+
+  @Override
+  public UUID getLocationIdByAgencyCode(UUID centralServerId, String agencyCode) {
+    var mapping = getMapping(centralServerId);
+
+    return getLocationIdByAgencyCode(mapping, agencyCode)
+      .or(() -> getLocationIdByLocalServer(mapping, agencyCode, centralServerId))
+      .orElse(mapping.getLocationId());
+  }
+
+  private LocalServer getLocalServerByAgencyCode(UUID centralServerId, String agencyCode) {
+    var localServers = configurationService.getLocalServers(centralServerId);
+
+    for (var localServer : localServers) {
+      var agencies = localServer.getAgencyList();
+      var agency = agencies.stream().filter(a -> agencyCode.equals(a.getAgencyCode())).findFirst();
+
+      if (agency.isPresent()) {
+        return localServer;
+      }
+    }
+
+    throw new IllegalArgumentException("Central agency for code " + agencyCode + " is not found");
+  }
+
+  private Optional<UUID> getLocationIdByLocalServer(AgencyLocationMappingDTO mapping, String agencyCode, UUID centralServerId) {
+    var localServer = getLocalServerByAgencyCode(centralServerId, agencyCode);
+    var localCode = localServer.getLocalCode();
+
+    return mapping.getLocalServers()
+      .stream()
+      .filter(m -> localCode.equals(m.getLocalCode()))
+      .map(AgencyLocationLscMappingDTO::getLocationId)
+      .findFirst();
+  }
+
+  private Optional<UUID> getLocationIdByAgencyCode(AgencyLocationMappingDTO mapping, String agencyCode) {
+    return mapping.getLocalServers().stream()
+      .map(AgencyLocationLscMappingDTO::getAgencyCodeMappings)
+      .flatMap(Collection::stream)
+      .filter(m -> agencyCode.equals(m.getAgencyCode()))
+      .map(AgencyLocationAcMappingDTO::getLocationId)
+      .findFirst();
   }
 
   private Optional<AgencyLocationMapping> fetchOne(UUID centralServerId) {

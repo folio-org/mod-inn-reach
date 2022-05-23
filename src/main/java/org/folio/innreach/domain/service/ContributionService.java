@@ -12,13 +12,17 @@ public interface ContributionService {
 
   ContributionsDTO getHistory(UUID centralServerId, int offset, int limit);
 
-  void updateContributionStats(UUID centralServerId, ContributionDTO contribution);
+  void updateContributionStats(UUID contributionId, ContributionDTO contribution);
 
   void startInitialContribution(UUID centralServerId);
 
-  ContributionDTO completeContribution(UUID centralServerId);
+  ContributionDTO createOngoingContribution(UUID centralServerId);
+
+  ContributionDTO completeContribution(UUID contributionId);
 
   void cancelAll();
+
+  void cancelCurrent(UUID centralServerId);
 
   void logContributionError(UUID contributionId, ContributionErrorDTO error);
 

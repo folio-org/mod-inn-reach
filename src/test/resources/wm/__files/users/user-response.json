@@ -1,0 +1,30 @@
+{
+  "username": "testuser",
+  "id": "ea11eba7-3c0f-4d15-9cca-c8608cd6bc8a",
+  "barcode": "43534145",
+  "active": true,
+  "patronGroup": "7106c3ac-890a-4126-bf9b-a10b67555b6e",
+  "departments": [],
+  "proxyFor": [],
+  "personal": {
+    "lastName": "Doe",
+    "firstName": "John",
+    "email": "john_doe@folio.org",
+    "addresses": [],
+    "preferredContactTypeId": "002"
+  },
+  "expirationDate": "2022-08-27T00:00:00.000+00:00",
+  "createdDate": "2021-10-14T13:38:34.045+00:00",
+  "updatedDate": "2021-10-14T13:38:34.045+00:00",
+  "metadata": {
+    "createdDate": "2021-08-27T13:28:55.256+00:00",
+    "createdByUserId": "e2f5ebb7-9285-58f8-bc1e-608ac2080861",
+    "updatedDate": "2021-10-14T13:38:33.844+00:00",
+    "updatedByUserId": "e2f5ebb7-9285-58f8-bc1e-608ac2080861"
+  },
+  "customFields": {
+    "homeLibrary": "opt_6",
+    "citylibrary": "opt_1",
+    "homelibrary": "opt_2"
+  }
+}

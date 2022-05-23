@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -34,6 +35,13 @@ public class ContributionController implements ContributionsApi {
   }
 
   @Override
+  @DeleteMapping("/current")
+  public ResponseEntity<Void> cancelCurrentContributionByServerId(@PathVariable("centralServerId") UUID centralServerId) {
+    service.cancelCurrent(centralServerId);
+    return ResponseEntity.noContent().build();
+  }
+
+  @Override
   @GetMapping("/history")
   public ResponseEntity<ContributionsDTO> getContributionHistoryByServerId(@PathVariable("centralServerId") UUID centralServerId,
                                                                            Integer offset, Integer limit) {
@@ -42,7 +50,7 @@ public class ContributionController implements ContributionsApi {
   }
 
   @Override
-  @PostMapping()
+  @PostMapping
   public ResponseEntity<Void> startInitialContribution(@PathVariable UUID centralServerId) {
     service.startInitialContribution(centralServerId);
     return ResponseEntity.status(HttpStatus.CREATED).build();

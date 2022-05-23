@@ -20,7 +20,7 @@ spring:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQL10Dialect
         format_sql: true
-    show-sql: true
+    show-sql: false
   liquibase:
     enabled: true
     change-log: classpath:db/changelog/changelog-master.xml
@@ -97,6 +97,8 @@ system-user:
   password: ${SYSTEM_USER_PASSWORD:Mod-innreach-1-0-0}
   lastname: System
   permissionsFilePath: permissions/mod-innreach.csv
+test-tenant:
+  tenantname: test_inn_reach_integration
 ###################################################
 # Caffeine cache configuration
 ###################################################
@@ -107,13 +109,77 @@ coffee-boots:
       system-user-cache: maximumSize=5
       users-by-id: maximumSize=100,expireAfterAccess=3h
       users-by-name: maximumSize=10,expireAfterAccess=3h
+      location-libraries: maximumSize=2000,expireAfterWrite=5m
 batch:
   jobs:
     contribution:
       chunk-size: 100
       retry-attempts: 3
-      retry-interval-ms: 20000
+      retry-interval-ms: 10000
       reader-topic: inventory.instance-contribution
-      reader-poll-timeout-sec: 300
-okapi.url: ${OKAPI_URL:http://localhost}
+      reader-group-id: ${ENV:folio}-mod-innreach-contribution-events-group
+      reader-poll-timeout-sec: 30
+reference-data:
+  loader:
+    retry-attempts: 10
+    retry-interval-ms: 20000
+retryable-update:
+  on-conflict:
+    retry-attempts: 2
+    retry-interval-ms: 0
+okapi.url: ${OKAPI_URL:http://okapi:9130}
 environment: ${ENV:folio}
+kafka:
+  listener:
+    loan:
+      id: ${environment}-mod-inn-reach-circ-loans
+      group-id: ${spring.kafka.consumer.group-id}
+      topic-pattern: (${environment}\.)(.*\.)circulation\.loan
+      concurrency: ${KAFKA_EVENTS_CONCURRENCY:2}
+      data-type: org.folio.innreach.dto.StorageLoanDTO
+    request:
+      id: ${environment}-mod-inn-reach-circ-requests
+      group-id: ${spring.kafka.consumer.group-id}
+      topic-pattern: (${environment}\.)(.*\.)circulation\.request
+      concurrency: ${KAFKA_EVENTS_CONCURRENCY:2}
+      data-type: org.folio.innreach.domain.dto.folio.circulation.RequestDTO
+    check-in:
+      id: ${environment}-mod-inn-reach-circ-checkins
+      group-id: ${spring.kafka.consumer.group-id}
+      topic-pattern: (${environment}\.)(.*\.)circulation\.check-in
+      concurrency: ${KAFKA_EVENTS_CONCURRENCY:2}
+      data-type: org.folio.innreach.dto.CheckInDTO
+    item:
+      id: ${environment}-mod-inn-reach-inventory-item-events
+      group-id: ${spring.kafka.consumer.group-id}
+      topic-pattern: (${environment}\.)(.*\.)inventory\.item
+      concurrency: ${KAFKA_EVENTS_CONCURRENCY:2}
+      data-type: org.folio.innreach.dto.Item
+    instance:
+      id: ${environment}-mod-inn-reach-inventory-instance-events
+      group-id: ${spring.kafka.consumer.group-id}
+      topic-pattern: (${environment}\.)(.*\.)inventory\.instance
+      concurrency: ${KAFKA_EVENTS_CONCURRENCY:2}
+      data-type: org.folio.innreach.dto.Instance
+    holding:
+      id: ${environment}-mod-inn-reach-inventory-holding-events
+      group-id: ${spring.kafka.consumer.group-id}
+      topic-pattern: (${environment}\.)(.*\.)inventory\.holdings-record
+      concurrency: ${KAFKA_EVENTS_CONCURRENCY:2}
+      data-type: org.folio.innreach.dto.Holding
+logging:
+  level:
+    org.zalando.logbook: TRACE
+    org.folio.innreach.external.client.feign: DEBUG
+http-logging.d2ir.enabled: ${LOG_D2IR_HTTP:false}
+logbook:
+  include:
+    - /inn-reach/d2ir/**
+  filter.enabled: ${http-logging.d2ir.enabled}
+  secure-filter.enabled: ${http-logging.d2ir.enabled}
+  format.style: http
+  obfuscate:
+    headers:
+      - Authorization
+      - X-d2ir-authorization
+      - X-okapi-token

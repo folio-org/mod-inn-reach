@@ -1,12 +1,15 @@
 package org.folio.innreach.domain.service.impl;
 
+import static java.util.Collections.emptyList;
 import static org.apache.commons.collections4.ListUtils.emptyIfNull;
 
+import static org.folio.innreach.domain.service.impl.MARCRecordTransformationServiceImpl.isMARCRecord;
 import static org.folio.innreach.dto.ItemStatus.NameEnum.AVAILABLE;
 import static org.folio.innreach.dto.ItemStatus.NameEnum.CHECKED_OUT;
 import static org.folio.innreach.dto.ItemStatus.NameEnum.IN_TRANSIT;
 import static org.folio.innreach.dto.MappingValidationStatusDTO.INVALID;
 import static org.folio.innreach.dto.MappingValidationStatusDTO.VALID;
+import static org.folio.innreach.util.ListUtils.mapItems;
 
 import java.util.List;
 import java.util.Objects;
@@ -16,22 +19,26 @@ import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.collections4.CollectionUtils;
+import org.folio.innreach.dto.LocalAgencyDTO;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 
+import org.folio.innreach.client.CirculationClient;
 import org.folio.innreach.client.MaterialTypesClient;
-import org.folio.innreach.client.RequestStorageClient;
 import org.folio.innreach.domain.dto.folio.ContributionItemCirculationStatus;
 import org.folio.innreach.domain.dto.folio.inventorystorage.MaterialTypeDTO;
 import org.folio.innreach.domain.service.CentralServerService;
 import org.folio.innreach.domain.service.ContributionCriteriaConfigurationService;
 import org.folio.innreach.domain.service.ContributionValidationService;
+import org.folio.innreach.domain.service.HoldingsService;
 import org.folio.innreach.domain.service.InnReachLocationService;
 import org.folio.innreach.domain.service.ItemContributionOptionsConfigurationService;
 import org.folio.innreach.domain.service.LibraryMappingService;
 import org.folio.innreach.domain.service.MaterialTypeMappingService;
 import org.folio.innreach.dto.ContributionCriteriaDTO;
+import org.folio.innreach.dto.Holding;
 import org.folio.innreach.dto.InnReachLocationDTO;
+import org.folio.innreach.dto.Instance;
 import org.folio.innreach.dto.Item;
 import org.folio.innreach.dto.ItemContributionOptionsConfigurationDTO;
 import org.folio.innreach.dto.LibraryMappingDTO;
@@ -45,19 +52,78 @@ public class ContributionValidationServiceImpl implements ContributionValidation
 
   private static final String MATERIAL_TYPES_CQL = "cql.allRecords=1";
   private static final int LIMIT = 2000;
+  public static final Character DO_NOT_CONTRIBUTE_CODE = Character.valueOf('n');
 
   private final MaterialTypesClient materialTypesClient;
   private final MaterialTypeMappingService typeMappingService;
 
+  private final HoldingsService holdingsService;
   private final LibraryMappingService libraryMappingService;
   private final CentralServerService centralServerService;
   private final ContributionCriteriaConfigurationService contributionConfigService;
   private final InnReachLocationService innReachLocationService;
   private final InnReachLocationExternalService innReachLocationExternalService;
+  private final FolioLocationService folioLocationService;
 
   private final ItemContributionOptionsConfigurationService itemContributionOptionsConfigurationService;
 
-  private final RequestStorageClient requestStorageClient;
+  private final CirculationClient circulationClient;
+
+  @Override
+  public boolean isEligibleForContribution(UUID centralServerId, Instance instance) {
+    if (!isMARCRecord(instance)) {
+      log.info("Source {} is not supported", instance.getSource());
+      return false;
+    }
+
+    if (isExcludedStatisticalCode(centralServerId, instance.getStatisticalCodeIds())) {
+      log.info("Instance has 'do not contribute' suppression status");
+      return false;
+    }
+
+    var contributionItemsCount = emptyIfNull(instance.getItems()).stream()
+      .filter(i -> isEligibleForContribution(centralServerId, i))
+      .count();
+
+    if (contributionItemsCount == 0) {
+      log.info("Instance has no items eligible for contribution");
+      return false;
+    }
+
+    return true;
+  }
+
+  @Override
+  public boolean isEligibleForContribution(UUID centralServerId, Item item) {
+    var statisticalCodeIds = item.getStatisticalCodeIds();
+    var holdingStatisticalCodeIds = fetchHoldingStatisticalCodes(item);
+
+    if (isExcludedStatisticalCode(centralServerId, statisticalCodeIds) ||
+      isExcludedStatisticalCode(centralServerId, holdingStatisticalCodeIds)) {
+      log.info("Item has 'do not contribute' suppression status");
+      return false;
+    }
+
+    if (!isItemHasAssociatedLibrary(centralServerId, item)) {
+      log.info("Item's location is not associated with INN-Reach local agencies");
+      return false;
+    }
+
+    return true;
+  }
+
+  private boolean isExcludedStatisticalCode(UUID centralServerId, List<UUID> statisticalCodeIds) {
+    if (CollectionUtils.isEmpty(statisticalCodeIds)) {
+      return false;
+    } else if (statisticalCodeIds.size() > 1) {
+      log.info("More than one statistical code defined");
+      return true;
+    }
+
+    var suppressionCode = getSuppressionStatus(centralServerId, statisticalCodeIds);
+
+    return DO_NOT_CONTRIBUTE_CODE.equals(suppressionCode);
+  }
 
   @Override
   public ContributionItemCirculationStatus getItemCirculationStatus(UUID centralServerId, Item item) {
@@ -81,12 +147,17 @@ public class ContributionValidationServiceImpl implements ContributionValidation
 
   @Override
   public Character getSuppressionStatus(UUID centralServerId, List<UUID> statisticalCodeIds) {
-    var config = getContributionConfigService(centralServerId);
-    if (config == null || CollectionUtils.isEmpty(statisticalCodeIds)) {
+    if (CollectionUtils.isEmpty(statisticalCodeIds)) {
       return null;
     }
 
     Assert.isTrue(statisticalCodeIds.size() == 1, "Multiple statistical codes defined");
+
+    var config = getContributionConfigService(centralServerId);
+    if (config == null) {
+      log.warn("Contribution criteria is not set, skipping suppression status check");
+      return null;
+    }
 
     var statisticalCodeId = statisticalCodeIds.get(0);
 
@@ -139,6 +210,12 @@ public class ContributionValidationServiceImpl implements ContributionValidation
     }
   }
 
+  private List<UUID> fetchHoldingStatisticalCodes(Item item) {
+    return holdingsService.find(item.getHoldingsRecordId())
+      .map(Holding::getStatisticalCodeIds)
+      .orElse(emptyList());
+  }
+
   private boolean isItemNonLendable(Item inventoryItem,
                                     ItemContributionOptionsConfigurationDTO itemContributionConfig) {
     return isItemNonLendableByLoanTypes(inventoryItem, itemContributionConfig) ||
@@ -156,7 +233,7 @@ public class ContributionValidationServiceImpl implements ContributionValidation
   private boolean isItemNonLendableByLocations(Item inventoryItem,
                                                ItemContributionOptionsConfigurationDTO itemContributionConfig) {
     var nonLendableLocations = emptyIfNull(itemContributionConfig.getNonLendableLocations());
-    return nonLendableLocations.contains(inventoryItem.getPermanentLocationId());
+    return nonLendableLocations.contains(inventoryItem.getEffectiveLocationId());
   }
 
   private boolean isItemNonLendableByMaterialTypes(Item inventoryItem,
@@ -177,23 +254,18 @@ public class ContributionValidationServiceImpl implements ContributionValidation
   }
 
   private boolean isItemRequested(Item inventoryItem) {
-    var itemRequests = requestStorageClient.findRequests(inventoryItem.getId());
+    var itemRequests = circulationClient.queryRequestsByItemId(inventoryItem.getId());
     return itemRequests.getTotalRecords() != 0;
   }
 
   private List<UUID> getMaterialTypeIds() {
-    return materialTypesClient.getMaterialTypes(MATERIAL_TYPES_CQL, LIMIT).getResult()
-      .stream()
-      .map(MaterialTypeDTO::getId)
-      .collect(Collectors.toList());
+    return mapItems(materialTypesClient.getMaterialTypes(MATERIAL_TYPES_CQL, LIMIT).getResult(), MaterialTypeDTO::getId);
   }
 
   private MappingValidationStatusDTO validateLibraryMappings(UUID centralServerId, List<LibraryMappingDTO> libraryMappings) {
     List<UUID> centralServerFolioLibraryIds = getFolioLibraryIds(centralServerId);
 
-    var mappedLibraryIds = libraryMappings.stream()
-      .map(LibraryMappingDTO::getLibraryId)
-      .collect(Collectors.toList());
+    var mappedLibraryIds = mapItems(libraryMappings, LibraryMappingDTO::getLibraryId);
 
     return mappedLibraryIds.containsAll(centralServerFolioLibraryIds) ? VALID : INVALID;
   }
@@ -209,10 +281,8 @@ public class ContributionValidationServiceImpl implements ContributionValidation
   private List<String> getAllInnReachLocationCodes(UUID centralServerId) {
     var centralServerConnectionDetails = centralServerService.getCentralServerConnectionDetails(centralServerId);
 
-    return innReachLocationExternalService.getAllLocations(centralServerConnectionDetails)
-      .stream()
-      .map(org.folio.innreach.external.dto.InnReachLocationDTO::getCode)
-      .collect(Collectors.toList());
+    return mapItems(innReachLocationExternalService.getAllLocations(centralServerConnectionDetails),
+      org.folio.innreach.external.dto.InnReachLocationDTO::getCode);
   }
 
   private List<UUID> getFolioLibraryIds(UUID centralServerId) {
@@ -228,12 +298,9 @@ public class ContributionValidationServiceImpl implements ContributionValidation
   }
 
   private List<String> getMappedInnReachLocationCodes(List<LibraryMappingDTO> libraryMappings) {
-    var ids = libraryMappings.stream().map(LibraryMappingDTO::getInnReachLocationId).collect(Collectors.toList());
+    var ids = mapItems(libraryMappings, LibraryMappingDTO::getInnReachLocationId);
 
-    return innReachLocationService.getInnReachLocations(ids).getLocations()
-      .stream()
-      .map(InnReachLocationDTO::getCode)
-      .collect(Collectors.toList());
+    return mapItems(innReachLocationService.getInnReachLocations(ids).getLocations(), InnReachLocationDTO::getCode);
   }
 
   private ContributionCriteriaDTO getContributionConfigService(UUID centralServerId) {
@@ -245,6 +312,14 @@ public class ContributionValidationServiceImpl implements ContributionValidation
       return null;
     }
     return config;
+  }
+
+  private boolean isItemHasAssociatedLibrary(UUID centralServerId, Item item) {
+    var localAgencyLibraryIds = getFolioLibraryIds(centralServerId);
+    var locationLibraryMappings = folioLocationService.getLocationLibraryMappings();
+    var itemLibraryId = locationLibraryMappings.get(item.getEffectiveLocationId());
+
+    return localAgencyLibraryIds.contains(itemLibraryId);
   }
 
 }

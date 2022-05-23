@@ -1,0 +1,177 @@
+{
+  "description": "INN-Reach Transaction sorting parameters",
+  "type": "object",
+  "properties": {
+    "type": {
+      "description": "List of INN-Reach Transaction types",
+      "type": "array",
+      "items": {
+        "$ref": "transactionTypeEnum.json"
+      }
+    },
+    "state": {
+      "description": "List of INN-Reach Transaction states",
+      "type": "array",
+      "items": {
+        "$ref": "transactionStateEnum.json"
+      }
+    },
+    "centralServerCode": {
+      "description": "List of central server codes",
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "patronAgencyCode": {
+      "description": "List of patron agency codes",
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "itemAgencyCode": {
+      "description": "List of item agency codes",
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "itemBarcode": {
+      "description": "List of item barcodes",
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "centralPatronType": {
+      "description": "List of patron types",
+      "type": "array",
+      "items": {
+        "type": "integer"
+      }
+    },
+    "centralItemType": {
+      "description": "List of central item types",
+      "type": "array",
+      "items": {
+        "type": "integer"
+      }
+    },
+    "query": {
+      "type": "string",
+      "description": "Provides ability to perform a keyword-style lookup based on the information associated with the transaction"
+    },
+    "createdDate": {
+      "description": "Create date to which related comparison operation is applied. In case of 'between' operation there can be two values provided",
+      "type": "array",
+      "maxItems": 2,
+      "items": {
+        "type": "string",
+        "format": "date-time"
+      }
+    },
+    "createdDateOp": {
+      "description": "Comparison operation applied to create date",
+      "type": "string",
+      "$ref" : "filterDateOperation.json"
+    },
+    "updatedDate": {
+      "description": "Update date to which related comparison operation is applied. In case of 'between' operation there can be two values provided",
+      "type": "array",
+      "maxItems": 2,
+      "items": {
+        "type": "string",
+        "format": "date-time"
+      }
+    },
+    "updatedDateOp": {
+      "description": "Comparison operation applied to update date",
+      "type": "string",
+      "$ref" : "filterDateOperation.json"
+    },
+    "holdCreatedDate": {
+      "description": "Create date of hold entity to which related comparison operation is applied. In case of 'between' operation there can be two values provided",
+      "type": "array",
+      "maxItems": 2,
+      "items": {
+        "type": "string",
+        "format": "date-time"
+      }
+    },
+    "holdCreatedDateOp": {
+      "description": "Comparison operation applied to create date of hold entity",
+      "type": "string",
+      "$ref" : "filterDateOperation.json"
+    },
+    "holdUpdatedDate": {
+      "description": "Update date of hold entity to which related comparison operation is applied. In case of 'between' operation there can be two values provided",
+      "type": "array",
+      "maxItems": 2,
+      "items": {
+        "type": "string",
+        "format": "date-time"
+      }
+    },
+    "holdUpdatedDateOp": {
+      "description": "Comparison operation applied to update date of hold entity",
+      "type": "string",
+      "$ref" : "filterDateOperation.json"
+    },
+    "dueDate": {
+      "description": "Due date of hold entity to which related comparison operation is applied. In case of 'between' operation there can be two values provided",
+      "type": "array",
+      "maxItems": 2,
+      "items": {
+        "type": "string",
+        "format": "date-time"
+      }
+    },
+    "dueDateOp": {
+      "description": "Comparison operation applied to due date of hold entity",
+      "type": "string",
+      "$ref" : "filterDateOperation.json"
+    },
+    "sortBy": {
+      "description": "Sorting parameter",
+      "type": "string",
+      "enum": [
+        "transactionTime",
+        "createdDate",
+        "updatedDate",
+        "type",
+        "state",
+        "itemAgencyCode",
+        "patronAgencyCode",
+        "centralPatronType",
+        "centralItemType"
+      ],
+      "x-enum-varnames": [
+        "transactionTime",
+        "createdDate",
+        "updatedDate",
+        "type",
+        "state",
+        "itemAgencyCode",
+        "patronAgencyCode",
+        "centralPatronType",
+        "centralItemType"
+      ]
+    },
+    "sortOrder": {
+      "description": "Sorting order parameter",
+      "type": "string",
+      "enum": [
+        "asc",
+        "desc"
+      ],
+      "x-enum-varnames": [
+        "asc",
+        "desc"
+      ],
+      "default": "asc"
+    }
+  },
+  "additionalProperties": false,
+  "required": []
+}

@@ -4,7 +4,7 @@
   "patronId" : "patronid1",
   "patronAgencyCode" : "qwe12",
   "itemAgencyCode" : "zxc34",
-  "itemId" : "itemid1",
+  "itemId" : "item1",
   "centralItemType" : 1,
   "centralPatronType" : 1,
   "patronName" : "Patron Name"

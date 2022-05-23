@@ -8,15 +8,13 @@ import static org.folio.innreach.domain.entity.Contribution.Status.COMPLETE;
 import static org.folio.innreach.domain.service.impl.ServiceUtils.centralServerRef;
 import static org.folio.innreach.dto.MappingValidationStatusDTO.VALID;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
-import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanFactory;
-import org.springframework.beans.factory.BeanFactoryAware;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
@@ -35,25 +33,22 @@ import org.folio.innreach.mapper.ContributionMapper;
 import org.folio.innreach.repository.ContributionErrorRepository;
 import org.folio.innreach.repository.ContributionRepository;
 import org.folio.spring.FolioExecutionContext;
+import org.folio.spring.data.OffsetRequest;
 
 @Log4j2
-@AllArgsConstructor
+@RequiredArgsConstructor
 @Service
-public class ContributionServiceImpl implements ContributionService, BeanFactoryAware {
+public class ContributionServiceImpl implements ContributionService {
 
   private final ContributionRepository repository;
   private final ContributionErrorRepository errorRepository;
   private final ContributionMapper mapper;
   private final ContributionValidationService validationService;
   private final FolioExecutionContext folioContext;
-  private final InstanceStorageClient client;
+  private final InstanceStorageClient instanceStorageClient;
+  private final BeanFactory beanFactory;
 
-  private BeanFactory beanFactory;
-
-  @Override
-  public void setBeanFactory(BeanFactory beanFactory) throws BeansException {
-    this.beanFactory = beanFactory;
-  }
+  private ContributionJobRunner jobRunner;
 
   @Override
   public ContributionDTO getCurrent(UUID centralServerId) {
@@ -69,8 +64,8 @@ public class ContributionServiceImpl implements ContributionService, BeanFactory
 
   @Transactional
   @Override
-  public ContributionDTO completeContribution(UUID centralServerId) {
-    var entity = findCurrent(centralServerId);
+  public ContributionDTO completeContribution(UUID contributionId) {
+    var entity = fetchById(contributionId);
 
     entity.setStatus(COMPLETE);
 
@@ -85,14 +80,14 @@ public class ContributionServiceImpl implements ContributionService, BeanFactory
 
   @Override
   public ContributionsDTO getHistory(UUID centralServerId, int offset, int limit) {
-    var page = repository.fetchHistoryByCentralServerId(centralServerId, PageRequest.of(offset, limit));
+    var page = repository.fetchHistoryByCentralServerId(centralServerId, new OffsetRequest(offset, limit));
     return mapper.toDTOCollection(page);
   }
 
   @Transactional
   @Override
-  public void updateContributionStats(UUID centralServerId, ContributionDTO contribution) {
-    var entity = findCurrent(centralServerId);
+  public void updateContributionStats(UUID contributionId, ContributionDTO contribution) {
+    var entity = fetchById(contributionId);
 
     Long total = defaultIfNull(contribution.getRecordsTotal(), entity.getRecordsTotal());
     Long processed = defaultIfNull(contribution.getRecordsProcessed(), entity.getRecordsProcessed());
@@ -105,8 +100,6 @@ public class ContributionServiceImpl implements ContributionService, BeanFactory
     entity.setRecordsContributed(contributed);
     entity.setRecordsUpdated(updated);
     entity.setRecordsDecontributed(decontributed);
-
-    repository.save(entity);
   }
 
   @Override
@@ -130,9 +123,17 @@ public class ContributionServiceImpl implements ContributionService, BeanFactory
 
     repository.save(contribution);
 
-    runContributionJob(centralServerId, contribution);
+    runInitialContributionJob(centralServerId, contribution);
 
     log.info("Initial contribution process started");
+  }
+
+  @Override
+  public ContributionDTO createOngoingContribution(UUID centralServerId) {
+    var contribution = createEmptyContribution(centralServerId);
+    contribution.setOngoing(true);
+
+    return mapper.toDTO(repository.save(contribution));
   }
 
   @Transactional
@@ -147,15 +148,35 @@ public class ContributionServiceImpl implements ContributionService, BeanFactory
     errorRepository.save(error);
   }
 
-  private void runContributionJob(UUID centralServerId, Contribution contribution) {
-    var jobRunner = beanFactory.getBean(ContributionJobRunner.class);
+  @Transactional
+  @Override
+  public void cancelCurrent(UUID centralServerId) {
+    repository.fetchCurrentByCentralServerId(centralServerId).ifPresent(contribution -> {
+      log.info("Cancelling initial contribution for central server {}", centralServerId);
 
-    jobRunner.runAsync(centralServerId, folioContext.getTenantId(), contribution.getId(), contribution.getJobId());
+      cancelInstanceIteration(contribution);
+
+      getJobRunner().cancelInitialContribution(contribution.getId());
+
+      contribution.setStatus(CANCELLED);
+    });
   }
 
-  private Contribution findCurrent(UUID centralServerId) {
-    return repository.fetchCurrentByCentralServerId(centralServerId)
-      .orElseThrow(() -> new IllegalArgumentException("Initial contribution is not found for central server = " + centralServerId));
+  private void runInitialContributionJob(UUID centralServerId, Contribution contribution) {
+    getJobRunner().runInitialContributionAsync(centralServerId, folioContext.getTenantId(), contribution.getId(), contribution.getJobId());
+  }
+
+  private ContributionJobRunner getJobRunner() {
+    if (jobRunner == null) {
+      jobRunner = beanFactory.getBean(ContributionJobRunner.class);
+    }
+
+    return jobRunner;
+  }
+
+  private Contribution fetchById(UUID contributionId) {
+    return repository.findById(contributionId)
+      .orElseThrow(() -> new IllegalArgumentException("Contribution is not found by id: " + contributionId));
   }
 
   private List<Contribution> findAllInProgress() {
@@ -165,10 +186,19 @@ public class ContributionServiceImpl implements ContributionService, BeanFactory
   private JobResponse triggerInstanceIteration() {
     var request = createInstanceIterationRequest();
 
-    var iterationJob = client.startInitialContribution(request);
+    var iterationJob = instanceStorageClient.startInstanceIteration(request);
     Assert.isTrue(iterationJob.getStatus() == IN_PROGRESS, "Unexpected iteration job status received: " + iterationJob.getStatus());
 
     return iterationJob;
+  }
+
+  private void cancelInstanceIteration(Contribution contribution) {
+    var iterationJobId = contribution.getJobId();
+    try {
+      instanceStorageClient.cancelInstanceIteration(iterationJobId);
+    } catch (Exception e) {
+      log.warn("Unable to cancel instance iteration job {}", iterationJobId, e);
+    }
   }
 
   private void validateContribution(UUID centralServerId) {

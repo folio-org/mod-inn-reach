@@ -40,22 +40,22 @@ class AuthenticationServiceImplTest {
 
   @Test
   void throwException_when_credentialsByServerCodeAndKeyNotFound() {
-    when(localServerCredentialsRepository.findByLocalServerCodeAndKey(any(), any())).thenReturn(Optional.empty());
+    when(localServerCredentialsRepository.findByLocalServerKey(any())).thenReturn(Optional.empty());
 
     var authenticationRequest = createAuthenticationRequest();
 
     var credentialsNotFoundException = assertThrows(LocalServerCredentialsNotFoundException.class,
         () -> authenticationService.authenticate(authenticationRequest));
 
-    assertEquals("Can't find credentials for Central Server with code: " + authenticationRequest.getLocalServerCode(),
+    assertEquals("Can't find credentials for Local Server with key: " + authenticationRequest.getKey(),
         credentialsNotFoundException.getMessage());
 
-    verify(localServerCredentialsRepository).findByLocalServerCodeAndKey(any(), any());
+    verify(localServerCredentialsRepository).findByLocalServerKey(any());
   }
 
   @Test
   void throwException_when_credentialsAreNotValid() {
-    when(localServerCredentialsRepository.findByLocalServerCodeAndKey(any(), any())).thenReturn(Optional.of(
+    when(localServerCredentialsRepository.findByLocalServerKey(any())).thenReturn(Optional.of(
         createLocalServerCredentials()));
 
     when(passwordEncoder.matches(any(), any())).thenReturn(false);
@@ -67,13 +67,13 @@ class AuthenticationServiceImplTest {
 
     assertEquals("Invalid Credentials", badCredentialsException.getMessage());
 
-    verify(localServerCredentialsRepository).findByLocalServerCodeAndKey(any(), any());
+    verify(localServerCredentialsRepository).findByLocalServerKey(any());
     verify(passwordEncoder).matches(any(), any());
   }
 
   @Test
   void successfullyAuthenticate_when_credentialsAreValid() {
-    when(localServerCredentialsRepository.findByLocalServerCodeAndKey(any(), any())).thenReturn(Optional.of(
+    when(localServerCredentialsRepository.findByLocalServerKey(any())).thenReturn(Optional.of(
         createLocalServerCredentials()));
 
     when(passwordEncoder.matches(any(), any())).thenReturn(true);
@@ -82,7 +82,7 @@ class AuthenticationServiceImplTest {
 
     authenticationService.authenticate(authenticationRequest);
 
-    verify(localServerCredentialsRepository).findByLocalServerCodeAndKey(any(), any());
+    verify(localServerCredentialsRepository).findByLocalServerKey(any());
     verify(passwordEncoder).matches(any(), any());
   }
 

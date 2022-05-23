@@ -1,7 +1,7 @@
 package org.folio.innreach.domain.entity;
 
-import static org.folio.innreach.domain.entity.LocalServerCredentials.FIND_BY_LOCAL_SERVER_CODE_AND_KEY_QUERY;
-import static org.folio.innreach.domain.entity.LocalServerCredentials.FIND_BY_LOCAL_SERVER_CODE_AND_KEY_QUERY_NAME;
+import static org.folio.innreach.domain.entity.LocalServerCredentials.FIND_BY_LOCAL_SERVER_KEY_QUERY;
+import static org.folio.innreach.domain.entity.LocalServerCredentials.FIND_BY_LOCAL_SERVER_KEY_QUERY_NAME;
 
 import java.util.UUID;
 
@@ -34,14 +34,14 @@ import org.folio.innreach.domain.entity.base.Identifiable;
 @Entity
 @Table(name = "local_server_credentials")
 @NamedQuery(
-  name = FIND_BY_LOCAL_SERVER_CODE_AND_KEY_QUERY_NAME,
-  query = FIND_BY_LOCAL_SERVER_CODE_AND_KEY_QUERY
+  name = FIND_BY_LOCAL_SERVER_KEY_QUERY_NAME,
+  query = FIND_BY_LOCAL_SERVER_KEY_QUERY
 )
 public class LocalServerCredentials implements Identifiable<UUID> {
 
-  public static final String FIND_BY_LOCAL_SERVER_CODE_AND_KEY_QUERY_NAME = "LocalServerCredentials.findByLocalServerCodeAndKey";
-  public static final String FIND_BY_LOCAL_SERVER_CODE_AND_KEY_QUERY = "SELECT lsc FROM LocalServerCredentials AS lsc " +
-    "WHERE lsc.centralServer.localServerCode = :localServerCode AND lsc.localServerKey = :localServerKey";
+  public static final String FIND_BY_LOCAL_SERVER_KEY_QUERY_NAME = "LocalServerCredentials.findByLocalServerKey";
+  public static final String FIND_BY_LOCAL_SERVER_KEY_QUERY = "SELECT lsc FROM LocalServerCredentials AS lsc " +
+    "WHERE lsc.localServerKey = :localServerKey";
 
   @Id
   private UUID id;

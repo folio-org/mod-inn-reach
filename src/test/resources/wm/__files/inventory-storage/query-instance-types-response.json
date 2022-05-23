@@ -1,0 +1,17 @@
+{
+  "instanceTypes": [
+    {
+      "id": "3115fc44-70f6-4ee6-b9a8-cc6bafa113b0",
+      "name": "INN-Reach temporary record",
+      "code": "inr",
+      "source": "inn-reach",
+      "metadata": {
+        "createdDate": "2021-10-27T09:46:47.568+00:00",
+        "createdByUserId": "e2f5ebb7-9285-58f8-bc1e-608ac2080861",
+        "updatedDate": "2021-10-27T09:46:47.568+00:00",
+        "updatedByUserId": "e2f5ebb7-9285-58f8-bc1e-608ac2080861"
+      }
+    }
+  ],
+  "totalRecords": 1
+}

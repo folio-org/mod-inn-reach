@@ -1,0 +1,20 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "description": "Item type details",
+  "type": "object",
+  "properties": {
+    "centralItemType": {
+      "description": "Item type",
+      "type": "integer"
+    },
+    "description": {
+      "description": "Item type description",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "centralItemType",
+    "description"
+  ]
+}

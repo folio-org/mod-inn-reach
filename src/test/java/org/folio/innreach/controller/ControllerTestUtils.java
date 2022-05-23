@@ -1,6 +1,6 @@
 package org.folio.innreach.controller;
 
-import static java.util.stream.Collectors.toList;
+import static org.folio.innreach.util.ListUtils.mapItems;
 
 import java.util.List;
 
@@ -13,9 +13,7 @@ import org.folio.innreach.dto.ValidationErrorsDTO;
 public class ControllerTestUtils {
 
   static List<String> collectFieldNames(ValidationErrorsDTO errors) {
-    return errors.getValidationErrors().stream()
-        .map(ValidationErrorDTO::getFieldName)
-        .collect(toList());
+    return mapItems(errors.getValidationErrors(), ValidationErrorDTO::getFieldName);
   }
 
   static ValidationErrorDTO createValidationError(String field, String message) {

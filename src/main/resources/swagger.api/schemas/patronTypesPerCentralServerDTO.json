@@ -1,0 +1,31 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "description": "Central server patron types",
+  "type": "object",
+  "properties": {
+    "centralServerId": {
+      "description": "Central server id",
+      "type": "string",
+      "format": "uuid"
+    },
+    "centralServerCode": {
+      "description": "Central server code",
+      "type": "string",
+      "maxLength": 5
+    },
+    "patronTypes": {
+      "description": "List of patron types for this central server",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "$ref": "d2ir/patronType.json"
+      }
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "centralServerId",
+    "centralServerCode",
+    "patronTypes"
+  ]
+}

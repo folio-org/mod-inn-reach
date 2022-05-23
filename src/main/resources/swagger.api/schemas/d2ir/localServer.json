@@ -1,0 +1,30 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "description": "Local server with agencies",
+  "type": "object",
+  "properties": {
+    "localCode": {
+      "description": "Local server code",
+      "type": "string",
+      "maxLength": 5
+    },
+    "description": {
+      "description": "Local server description",
+      "type": "string",
+      "maxLength": 128
+    },
+    "agencyList": {
+      "description": "Local server agencies",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "$ref": "agency.json"
+      }
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "localCode",
+    "description"
+  ]
+}

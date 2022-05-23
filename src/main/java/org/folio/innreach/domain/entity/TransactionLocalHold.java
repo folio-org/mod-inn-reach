@@ -1,5 +1,6 @@
 package org.folio.innreach.domain.entity;
 
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -23,18 +24,19 @@ public class TransactionLocalHold extends TransactionHold {
   @Column(name = "patron_phone")
   private String patronPhone;
 
-  @Column(name = "title")
-  private String title;
-
+  @Getter(AccessLevel.NONE) @Setter(AccessLevel.NONE)
   @Column(name = "author")
-  private String author;
+  private String authorLocal;
 
   @Column(name = "callNumber")
   private String callNumber;
 
-  @Column(name = "central_patron_type")
-  private Integer centralPatronType;
+  public String getAuthor() {
+    return authorLocal;
+  }
 
-  @Column(name = "patron_name")
-  private String patronName;
+  public void setAuthor(String author) {
+    this.authorLocal = author;
+  }
+
 }
