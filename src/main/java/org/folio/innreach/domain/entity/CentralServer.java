@@ -180,8 +180,7 @@ public class CentralServer extends Auditable implements Identifiable<UUID> {
     cascade = CascadeType.ALL,
     fetch = FetchType.LAZY,
     mappedBy = "centralServer",
-    orphanRemoval = true,
-    optional = false
+    orphanRemoval = true
   )
   private CentralServerSettings centralServerSettings;
 

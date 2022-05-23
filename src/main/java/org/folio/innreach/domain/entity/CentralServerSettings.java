@@ -24,7 +24,7 @@ import static org.folio.innreach.domain.entity.CentralServerSettings.FIND_BY_CEN
 
 @Getter
 @Setter
-@EqualsAndHashCode(of = {"check", "id"})
+@EqualsAndHashCode(of = {"check"})
 @ToString(exclude = "centralServer")
 @Entity
 @Table(name = "central_server_settings")
@@ -46,6 +46,6 @@ public class CentralServerSettings implements Identifiable<UUID> {
 
   @OneToOne(fetch = FetchType.LAZY, optional = false)
   @MapsId
-  @JoinColumn(name = "central_server_id")
+  @JoinColumn(name = "central_server_id", unique = true, nullable = false)
   private CentralServer centralServer;
 }
