@@ -19,3 +19,6 @@ VALUES ('556a5930-0639-4caa-a66b-f7c99c39972a', '7c244444-ae7c-11eb-8529-0242ac1
        ('556a5930-0639-4caa-a66b-f7c99c39972a', '7f58859e-ae7c-11eb-8529-0242ac130004'),
        ('cc4aa062-f612-45d7-a1b4-ebba951a54fc', '71fb3252-ae7c-11eb-8529-0242ac130004'),
        ('cc4aa062-f612-45d7-a1b4-ebba951a54fc', '761451d4-ae7c-11eb-8529-0242ac130004');
+
+INSERT INTO central_server_settings(central_server_id, check_pickup_location)
+VALUES ('edab6baf-c696-42b1-89bb-1bbb8759b0d2', true);
