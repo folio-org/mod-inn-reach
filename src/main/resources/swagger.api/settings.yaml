@@ -102,70 +102,6 @@ paths:
       operationId: deleteCentralServer
       parameters:
         - $ref: 'api-common.yaml#/components/parameters/id'
-  /central-servers/settings/{centralServerId}:
-    get:
-      tags:
-        - central-server settings
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/centralServerSettingsDTO"
-        '404':
-          $ref: "api-common.yaml#/components/responses/trait_response_404"
-        '500':
-          $ref: "api-common.yaml#/components/responses/trait_response_500"
-      description: Get central server settings by central server id
-      operationId: getCentralServerSettingsByCentralServerId
-      parameters:
-        - $ref: 'api-common.yaml#/components/parameters/centralServerId'
-  /central-servers/settings:
-    put:
-      tags:
-        - central-server settings
-      responses:
-        '204':
-          description: No content
-        '400':
-          $ref: "api-common.yaml#/components/responses/trait_response_validation_400"
-        '404':
-          $ref: "api-common.yaml#/components/responses/trait_response_404"
-        '500':
-          $ref: "api-common.yaml#/components/responses/trait_response_500"
-      description: Update central server settings by central server id
-      operationId: updateCentralServerSettingsByCentralServerId
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/centralServerSettingsDTO"
-        required: true
-    post:
-      tags:
-        - central-server settings
-      responses:
-        '201':
-          description: Central-server settings created
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/centralServerSettingsDTO"
-        '400':
-          $ref: "api-common.yaml#/components/responses/trait_response_validation_400"
-        '409':
-          $ref: "api-common.yaml#/components/responses/trait_response_409"
-        '500':
-          $ref: "api-common.yaml#/components/responses/trait_response_500"
-      description: Create central server settings
-      operationId: createCentralServerSettings
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/centralServerSettingsDTO"
-        required: true
   /central-servers/{centralServerId}/material-type-mappings:
     get:
       description: Get a list of material type mappings for the given central server
@@ -1153,8 +1089,6 @@ components:
       $ref: schemas/centralServerDTO.json
     centralServersDTO:
       $ref: schemas/centralServersDTO.json
-    centralServerSettingsDTO:
-      $ref: schemas/centralServerSettingsDTO.json
     innReachLocationDTO:
       $ref: schemas/innReachLocationDTO.json
     innReachLocationsDTO:
