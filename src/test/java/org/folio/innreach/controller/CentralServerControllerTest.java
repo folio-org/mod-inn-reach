@@ -113,6 +113,7 @@ class CentralServerControllerTest extends BaseControllerTest {
     var centralServer = responseEntity.getBody();
 
     assertNotNull(centralServer);
+    Assertions.assertFalse(centralServer.getCheckPickupLocation());
   }
 
   @Test
