@@ -10,6 +10,7 @@ import static org.springframework.test.context.jdbc.SqlMergeMode.MergeMode.MERGE
 import static org.folio.innreach.fixture.TestUtil.deserializeFromJsonFile;
 import static org.folio.innreach.fixture.TestUtil.randomUUIDString;
 
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.web.client.TestRestTemplate;
@@ -50,6 +51,7 @@ class CentralServerControllerTest extends BaseControllerTest {
     var createdCentralServer = responseEntity.getBody();
 
     assertNotNull(createdCentralServer);
+    Assertions.assertFalse(createdCentralServer.getCheckPickupLocation());
   }
 
   @Test
@@ -126,6 +128,7 @@ class CentralServerControllerTest extends BaseControllerTest {
   void return200HttpCode_when_updateCentralServer() {
     var centralServerRequestDTO = deserializeFromJsonFile(
       "/central-server/update-central-server-request.json", CentralServerDTO.class);
+    centralServerRequestDTO.setCheckPickupLocation(true);
 
     var responseEntity = testRestTemplate.exchange(
       "/inn-reach/central-servers/{centralServerId}", HttpMethod.PUT, new HttpEntity<>(centralServerRequestDTO),
@@ -203,4 +206,21 @@ class CentralServerControllerTest extends BaseControllerTest {
     assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
   }
 
+  @Test
+  void return200HttpCode_and_createdCentralServerEntity_when_createCentralServerWithPickupLocationCheckTrue() {
+    var centralServerRequestDTO = deserializeFromJsonFile(
+      "/central-server/create-central-server-request.json", CentralServerDTO.class);
+    centralServerRequestDTO.setCheckPickupLocation(true);
+
+    var responseEntity = testRestTemplate.postForEntity(
+      "/inn-reach/central-servers", centralServerRequestDTO, CentralServerDTO.class);
+
+    assertTrue(responseEntity.getStatusCode().is2xxSuccessful());
+    assertTrue(responseEntity.hasBody());
+
+    var createdCentralServer = responseEntity.getBody();
+
+    assertNotNull(createdCentralServer);
+    assertTrue(createdCentralServer.getCheckPickupLocation());
+  }
 }
