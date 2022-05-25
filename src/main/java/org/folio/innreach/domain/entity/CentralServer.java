@@ -139,6 +139,9 @@ public class CentralServer extends Auditable implements Identifiable<UUID> {
   private String name;
   private String description;
 
+  @Column(name = "check_pickup_location")
+  private boolean checkPickupLocation;
+
   @Column(name = "local_server_code")
   private String localServerCode;
 
@@ -176,14 +179,6 @@ public class CentralServer extends Auditable implements Identifiable<UUID> {
   )
   private List<LocalAgency> localAgencies = new ArrayList<>();
 
-  @OneToOne(
-    cascade = CascadeType.ALL,
-    fetch = FetchType.LAZY,
-    mappedBy = "centralServer",
-    orphanRemoval = true
-  )
-  private CentralServerSettings centralServerSettings;
-
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "inn_reach_recall_user_id")
   private InnReachRecallUser innReachRecallUser;
@@ -216,8 +211,4 @@ public class CentralServer extends Auditable implements Identifiable<UUID> {
     this.localAgencies.remove(localAgency);
   }
 
-  public void setCentralServerSettings(CentralServerSettings centralServerSettings) {
-    centralServerSettings.setCentralServer(this);
-    this.centralServerSettings = centralServerSettings;
-  }
 }
