@@ -70,6 +70,7 @@ class CentralServerControllerTest extends BaseControllerTest {
     assertNotNull(createdCentralServer);
     assertNull(createdCentralServer.getLocalServerKey());
     assertNull(createdCentralServer.getLocalServerSecret());
+    Assertions.assertFalse(createdCentralServer.getCheckPickupLocation());
   }
 
   @Test
@@ -113,7 +114,7 @@ class CentralServerControllerTest extends BaseControllerTest {
     var centralServer = responseEntity.getBody();
 
     assertNotNull(centralServer);
-    assertTrue(centralServer.getCheckPickupLocation());
+    Assertions.assertFalse(centralServer.getCheckPickupLocation());
   }
 
   @Test
