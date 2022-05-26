@@ -132,11 +132,22 @@ class CentralServerControllerTest extends BaseControllerTest {
       "/central-server/update-central-server-request.json", CentralServerDTO.class);
     centralServerRequestDTO.setCheckPickupLocation(true);
 
-    var responseEntity = testRestTemplate.exchange(
+    var responseEntityPut = testRestTemplate.exchange(
       "/inn-reach/central-servers/{centralServerId}", HttpMethod.PUT, new HttpEntity<>(centralServerRequestDTO),
       CentralServerDTO.class, PRE_POPULATED_CENTRAL_SERVER_ID);
 
-    assertTrue(responseEntity.getStatusCode().is2xxSuccessful());
+    assertTrue(responseEntityPut.getStatusCode().is2xxSuccessful());
+
+    var responseEntityGet = testRestTemplate.getForEntity(
+      "/inn-reach/central-servers/{centralServerId}", CentralServerDTO.class, PRE_POPULATED_CENTRAL_SERVER_ID);
+
+    assertTrue(responseEntityGet.getStatusCode().is2xxSuccessful());
+    assertTrue(responseEntityGet.hasBody());
+
+    var centralServer = responseEntityGet.getBody();
+
+    assertNotNull(centralServer);
+    assertTrue(centralServer.getCheckPickupLocation());
   }
 
   @Test
