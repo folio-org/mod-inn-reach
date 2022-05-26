@@ -90,6 +90,11 @@ Release primarily addresses Circulation flow and bug fixes.
 * [MODINREACH-182](https://issues.folio.org/browse/MODINREACH-182) - Enable INN-Reach Transaction Query by shippedItemBarcode and Transaction state
 * [MODINREACH-99](https://issues.folio.org/browse/MODINREACH-99) - D2IR Local Endpoint (Circulation): Recall Item Message for Patron Hold
 
+## v1.0.3 2022-05-20
+
+### Bugs
+* [MODINREACH-286](https://issues.folio.org/browse/MODINREACH-286) - Invalid mod-inn-reach-1.0.2 module descriptor
+
 ## v1.0.2 2021-12-15
 
 Resolve Log4Shell security issue ([CVE-2021-44228](https://nvd.nist.gov/vuln/detail/CVE-2021-44228) and [CVE-2021-45046](https://nvd.nist.gov/vuln/detail/CVE-2021-45046))

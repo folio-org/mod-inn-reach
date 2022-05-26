@@ -139,6 +139,9 @@ public class CentralServer extends Auditable implements Identifiable<UUID> {
   private String name;
   private String description;
 
+  @Column(name = "check_pickup_location")
+  private boolean checkPickupLocation;
+
   @Column(name = "local_server_code")
   private String localServerCode;
 
