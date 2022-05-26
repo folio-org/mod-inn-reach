@@ -152,6 +152,7 @@ public class CentralServerServiceImpl implements CentralServerService {
     centralServer.setCentralServerCode(updatedCentralServer.getCentralServerCode());
     centralServer.setCentralServerAddress(updatedCentralServer.getCentralServerAddress());
     centralServer.setLoanTypeId(updatedCentralServer.getLoanTypeId());
+    centralServer.setCheckPickupLocation(updatedCentralServer.isCheckPickupLocation());
   }
 
   private void updateCentralServerCredentials(CentralServer centralServer, CentralServerCredentials updatedCentralServerCredentials) {
