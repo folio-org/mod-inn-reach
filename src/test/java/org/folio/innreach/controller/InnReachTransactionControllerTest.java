@@ -70,9 +70,10 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.RandomStringUtils;
-import org.folio.innreach.client.ServicePointsUsersClient;
 import org.folio.innreach.domain.dto.folio.inventorystorage.ServicePointUserDTO;
 import org.folio.innreach.domain.entity.InnReachTransaction.TransactionState;
+import org.folio.innreach.domain.service.CentralServerService;
+import org.folio.innreach.domain.service.InventoryService;
 import org.folio.innreach.util.DateHelper;
 
 import org.apache.commons.lang3.StringUtils;
@@ -96,6 +97,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlMergeMode;
 
+import org.folio.innreach.client.ServicePointsUsersClient;
+import org.folio.innreach.client.ServicePointsClient;
 import org.folio.innreach.client.CirculationClient;
 import org.folio.innreach.client.HoldingsStorageClient;
 import org.folio.innreach.client.InventoryClient;
@@ -173,6 +176,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   private static final String NEW_CENTRAL_SERVER_CODE = "a0aa";
   private static final String NEW_ITEM_AND_AGENCY_CODE = "a0aa0";
   private static final String NEW_TEST_PARAMETER_VALUE = "abc";
+  private static final String PRE_POPULATED_PICK_LOCATION_CODE = "Pickup Loc Code 1";
 
   private static final UUID PRE_POPULATED_FOLIO_ITEM_ID = UUID.fromString("4def31b0-2b60-4531-ad44-7eab60fa5428");
   private static final UUID PRE_POPULATED_FOLIO_LOAN_ID = UUID.fromString("06e820e3-71a0-455e-8c73-3963aea677d4");
@@ -196,6 +200,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   private static final AuditableUser PRE_POPULATED_USER = AuditableUser.SYSTEM;
 
   private static final Duration ASYNC_AWAIT_TIMEOUT = Duration.ofSeconds(15);
+  private static final Duration ASYNC_AWAIT_TIMEOUT_ONE_SECOND = Duration.ofSeconds(1);
 
   @Autowired
   private TestRestTemplate testRestTemplate;
@@ -205,6 +210,10 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   private InnReachTransactionPickupLocationMapper transactionPickupLocationMapper;
   @Autowired
   private InnReachTransactionMapper innReachTransactionMapper;
+  @Autowired
+  private CentralServerService centralServerService;
+  @Autowired
+  private InventoryService inventoryService;
 
   @MockBean
   private InventoryClient inventoryClient;
@@ -218,6 +227,8 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   private HoldingsStorageClient holdingsStorageClient;
   @MockBean
   private RequestPreferenceStorageClient requestPreferenceClient;
+  @MockBean
+  private ServicePointsClient servicePointsClient;
   @MockBean
   private ServicePointsUsersClient servicePointsUsersClient;
   @SpyBean
@@ -686,6 +697,64 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     assertEquals(StringUtils.truncate(inventoryItemDTO.getTitle(), 255), transaction.get().getHold().getTitle());
     assertNotNull(transaction.get().getHold().getFolioRequestId());
     assertEquals(user.getId(), transaction.get().getHold().getFolioPatronId());
+  }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/mtype-mapping/pre-populate-material-type-mapping.sql",
+    "classpath:db/central-patron-type-mapping/pre-populate-central-patron_type-mapping-table.sql"
+  })
+  void return200HttpCode_and_sendRequest_whenItemHoldTransactionCreated_chosenPickLocationFromTransaction() {
+    var inventoryItemDTO = mockInventoryClient();
+    inventoryItemDTO.setStatus(IN_TRANSIT);
+    inventoryItemDTO.setTitle(randomAlphanumeric(500));
+    var requestDTO = createRequestDTO();
+    requestDTO.setItemId(inventoryItemDTO.getId());
+    modifyCentralServer(UUID.fromString(PRE_POPULATED_CENTRAL_SERVER_ID));
+    var servicePoint = new ServicePointsClient.ServicePoint();
+    servicePoint.setId(UUID.fromString(PRE_POPULATED_CENTRAL_SERVER_ID));
+
+    when(circulationClient.queryRequestsByItemId(inventoryItemDTO.getId())).thenReturn(ResultList.of(1,
+      List.of(requestDTO)));
+    var user = mockUserClient();
+    var requestPreference = new RequestPreferenceDTO(user.getId(), randomUUID());
+    when(requestPreferenceClient.getUserRequestPreference(user.getId())).thenReturn(ResultList.of(1,
+      List.of(requestPreference)));
+    when(circulationClient.sendRequest(any(RequestDTO.class))).then((Answer<RequestDTO>) invocationOnMock -> {
+      var sentRequest = (RequestDTO) invocationOnMock.getArgument(0);
+      sentRequest.setId(randomUUID());
+      return sentRequest;
+    });
+    when(servicePointsClient.queryServicePointByCode(PRE_POPULATED_PICK_LOCATION_CODE))
+      .thenReturn(ResultList.of(1, List.of(servicePoint)));
+
+    var itemHoldDTO = deserializeFromJsonFile(
+      "/inn-reach-transaction/create-item-hold-request.json", TransactionHoldDTO.class);
+    itemHoldDTO.setCentralPatronType(PRE_POPULATED_CENTRAL_PATRON_TYPE);
+    itemHoldDTO.setItemId(inventoryItemDTO.getHrid());
+
+
+    var responseEntity = testRestTemplate.postForEntity(
+      "/inn-reach/d2ir/circ/itemhold/{trackingId}/{centralCode}", new HttpEntity<>(itemHoldDTO, headers), InnReachResponseDTO.class, TRACKING_ID,
+      PRE_POPULATED_CENTRAL_SERVER_CODE);
+
+    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+    assertTrue(responseEntity.hasBody());
+    assertEquals("ok", responseEntity.getBody().getStatus());
+
+    await().atMost(ASYNC_AWAIT_TIMEOUT_ONE_SECOND).untilAsserted(() ->
+      verify(repository, atLeastOnce()).save(
+        argThat((InnReachTransaction t) -> t.getHold().getFolioRequestId() != null)));
+
+    var transaction = repository.fetchOneByTrackingId(TRACKING_ID);
+    var centralServerDTO = centralServerService.getCentralServer(UUID.fromString(PRE_POPULATED_CENTRAL_SERVER_ID));
+    var servicePointIdExpected = inventoryService.findServicePointIdByCode(transaction.get().getHold().getPickupLocation().getPickupLocCode()).orElse(null);
+
+    assertTrue(transaction.isPresent());
+    verify(servicePointsClient, times(2)).queryServicePointByCode(transaction.get().getHold().getPickupLocation().getPickupLocCode());
+    assertEquals(true, centralServerDTO.getCheckPickupLocation());
+    assertEquals(UUID.fromString(PRE_POPULATED_CENTRAL_SERVER_ID), servicePointIdExpected);
   }
 
   @Test
@@ -2212,5 +2281,11 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     list.add(servicePointUser);
     resultList.setResult(list);
     return resultList;
+  }
+
+  public void modifyCentralServer(UUID centralServerId) {
+    var centralServerDTO = centralServerService.getCentralServer(centralServerId);
+    centralServerDTO.setCheckPickupLocation(true);
+    centralServerService.updateCentralServer(centralServerId, centralServerDTO);
   }
 }

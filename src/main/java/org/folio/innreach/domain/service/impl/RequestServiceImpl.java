@@ -37,6 +37,7 @@ import java.util.UUID;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.folio.innreach.domain.entity.*;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
@@ -52,10 +53,6 @@ import org.folio.innreach.domain.dto.folio.circulation.RequestDTO.RequestStatus;
 import org.folio.innreach.domain.dto.folio.circulation.RequestDTO.RequestType;
 import org.folio.innreach.domain.dto.folio.inventory.InventoryItemDTO;
 import org.folio.innreach.domain.dto.folio.inventory.InventoryItemStatus;
-import org.folio.innreach.domain.entity.CentralPatronTypeMapping;
-import org.folio.innreach.domain.entity.InnReachTransaction;
-import org.folio.innreach.domain.entity.TransactionHold;
-import org.folio.innreach.domain.entity.TransactionLocalHold;
 import org.folio.innreach.domain.exception.CirculationException;
 import org.folio.innreach.domain.exception.EntityNotFoundException;
 import org.folio.innreach.domain.exception.ItemNotRequestableException;
@@ -116,7 +113,7 @@ public class RequestServiceImpl implements RequestService {
       var patronType = hold.getCentralPatronType();
       var patronBarcode = getUserBarcode(centralServerId, patronType);
       var patron = getUserByBarcode(patronBarcode);
-      var servicePointId = getUserRequestPreferenceDefaultServicePoint(patron.getId());
+      var servicePointId = getItemHoldServicePointId(transaction, hold, patron);
 
       createOwningSiteItemRequest(transaction, patron, servicePointId);
     } catch (Exception e) {
@@ -332,6 +329,23 @@ public class RequestServiceImpl implements RequestService {
     return centralServerRepository.fetchOneByCentralCode(centralServerCode)
       .orElseThrow(() -> new EntityNotFoundException("Central server not found for central code = " + centralServerCode)
       ).getId();
+  }
+
+  private CentralServer getCentralServerByCode(String centralServerCode) {
+    return centralServerRepository.fetchOneByCentralCode(centralServerCode)
+      .orElseThrow(() -> new EntityNotFoundException("Central server not found for central code = "
+        + centralServerCode));
+  }
+
+  private UUID getItemHoldServicePointId(InnReachTransaction transaction, TransactionHold hold, User patron) {
+    UUID servicePointId = null;
+    var centralServer = getCentralServerByCode(transaction.getCentralServerCode());
+    if (centralServer.isCheckPickupLocation()) {
+      var pickupLocationCode = transaction.getHold().getPickupLocation().getPickupLocCode();
+      servicePointId = inventoryService.findServicePointIdByCode(pickupLocationCode).orElse(null);
+    }
+
+    return servicePointId != null ? servicePointId : getUserRequestPreferenceDefaultServicePoint(patron.getId());
   }
 
   private String queryByBarcode(String patronBarcode) {
