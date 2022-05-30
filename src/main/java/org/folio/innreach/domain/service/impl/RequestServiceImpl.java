@@ -37,7 +37,6 @@ import java.util.UUID;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
-import org.folio.innreach.domain.entity.CentralServer;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
@@ -65,6 +64,7 @@ import org.folio.innreach.domain.service.InventoryService;
 import org.folio.innreach.domain.service.ItemService;
 import org.folio.innreach.domain.service.RequestPreferenceService;
 import org.folio.innreach.domain.service.RequestService;
+import org.folio.innreach.domain.service.CentralServerService;
 import org.folio.innreach.dto.Holding;
 import org.folio.innreach.external.service.InnReachExternalService;
 import org.folio.innreach.mapper.InnReachTransactionPickupLocationMapper;
@@ -105,6 +105,7 @@ public class RequestServiceImpl implements RequestService {
   private final HoldingsService holdingsService;
 
   private final RequestPreferenceService requestPreferenceService;
+  private final CentralServerService centralServerService;
 
   @Async
   @Override
@@ -117,7 +118,7 @@ public class RequestServiceImpl implements RequestService {
       var patronType = hold.getCentralPatronType();
       var patronBarcode = getUserBarcode(centralServerId, patronType);
       var patron = getUserByBarcode(patronBarcode);
-      var servicePointId = getItemHoldServicePointId(transaction, hold, patron);
+      var servicePointId = getItemHoldServicePointId(transaction, patron);
 
       createOwningSiteItemRequest(transaction, patron, servicePointId);
     } catch (Exception e) {
@@ -168,7 +169,7 @@ public class RequestServiceImpl implements RequestService {
       .fulfilmentPreference(HOLD_SHELF.getName())
       .build();
     var createdRequest = circulationClient.sendRequest(newRequest);
-
+    log.info("createdRequest {}", createdRequest.toString());
     updateTransaction(transaction, item, holding, createdRequest, patron);
 
     log.info("Item request successfully created.");
@@ -335,16 +336,10 @@ public class RequestServiceImpl implements RequestService {
       ).getId();
   }
 
-  private CentralServer getCentralServerByCode(String centralServerCode) {
-    return centralServerRepository.fetchOneByCentralCode(centralServerCode)
-      .orElseThrow(() -> new EntityNotFoundException("Central server not found for central code = "
-        + centralServerCode));
-  }
-
-  private UUID getItemHoldServicePointId(InnReachTransaction transaction, TransactionHold hold, User patron) {
+  private UUID getItemHoldServicePointId(InnReachTransaction transaction, User patron) {
     UUID servicePointId = null;
-    var centralServer = getCentralServerByCode(transaction.getCentralServerCode());
-    if (centralServer.isCheckPickupLocation()) {
+    var centralServer = centralServerService.getCentralServerByCentralCode(transaction.getCentralServerCode());
+    if (centralServer.getCheckPickupLocation()) {
       var pickupLocationCode = transaction.getHold().getPickupLocation().getPickupLocCode();
       servicePointId = inventoryService.findServicePointIdByCode(pickupLocationCode).orElse(null);
     }

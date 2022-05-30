@@ -74,6 +74,7 @@ import org.folio.innreach.domain.dto.folio.inventorystorage.ServicePointUserDTO;
 import org.folio.innreach.domain.entity.InnReachTransaction.TransactionState;
 import org.folio.innreach.domain.service.CentralServerService;
 import org.folio.innreach.domain.service.InventoryService;
+import org.folio.innreach.domain.service.RequestPreferenceService;
 import org.folio.innreach.util.DateHelper;
 
 import org.apache.commons.lang3.StringUtils;
@@ -200,7 +201,6 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   private static final AuditableUser PRE_POPULATED_USER = AuditableUser.SYSTEM;
 
   private static final Duration ASYNC_AWAIT_TIMEOUT = Duration.ofSeconds(15);
-  private static final Duration ASYNC_AWAIT_TIMEOUT_ONE_SECOND = Duration.ofSeconds(1);
 
   @Autowired
   private TestRestTemplate testRestTemplate;
@@ -214,6 +214,8 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   private CentralServerService centralServerService;
   @Autowired
   private InventoryService inventoryService;
+  @Autowired
+  private RequestPreferenceService requestPreferenceService;
 
   @MockBean
   private InventoryClient inventoryClient;
@@ -743,18 +745,82 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     assertTrue(responseEntity.hasBody());
     assertEquals("ok", responseEntity.getBody().getStatus());
 
-    await().atMost(ASYNC_AWAIT_TIMEOUT_ONE_SECOND).untilAsserted(() ->
+    await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() ->
       verify(repository, atLeastOnce()).save(
         argThat((InnReachTransaction t) -> t.getHold().getFolioRequestId() != null)));
 
     var transaction = repository.fetchOneByTrackingId(TRACKING_ID);
-    var centralServerDTO = centralServerService.getCentralServer(UUID.fromString(PRE_POPULATED_CENTRAL_SERVER_ID));
-    var servicePointIdExpected = inventoryService.findServicePointIdByCode(transaction.get().getHold().getPickupLocation().getPickupLocCode()).orElse(null);
+    var newRequestCaptor = ArgumentCaptor.forClass(RequestDTO.class);
 
-    assertTrue(transaction.isPresent());
+    verify(circulationClient).sendRequest(newRequestCaptor.capture());
+
+    var newRequest = newRequestCaptor.getValue();
+
+    verify(servicePointsClient).queryServicePointByCode(transaction.get().getHold().getPickupLocation().getPickupLocCode());
+    assertEquals(servicePoint.getId(), newRequest.getPickupServicePointId());
+  }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/mtype-mapping/pre-populate-material-type-mapping.sql",
+    "classpath:db/central-patron-type-mapping/pre-populate-central-patron_type-mapping-table.sql"
+  })
+  void return200HttpCode_and_sendRequest_whenItemHoldTransactionCreated_servicePointNotFoundByCode() {
+    var inventoryItemDTO = mockInventoryClient();
+    inventoryItemDTO.setStatus(IN_TRANSIT);
+    inventoryItemDTO.setTitle(randomAlphanumeric(500));
+    var requestDTO = createRequestDTO();
+    requestDTO.setItemId(inventoryItemDTO.getId());
+    modifyCentralServer(UUID.fromString(PRE_POPULATED_CENTRAL_SERVER_ID));
+    var servicePoint = new ServicePointsClient.ServicePoint();
+    servicePoint.setId(UUID.fromString(PRE_POPULATED_CENTRAL_SERVER_ID));
+    var user = mockUserClient();
+    var requestPreference = new RequestPreferenceDTO(user.getId(), PRE_POPULATED_DEFAULT_SERVICE_POINT_ID);
+
+    when(circulationClient.queryRequestsByItemId(inventoryItemDTO.getId())).thenReturn(ResultList.of(1,
+      List.of(requestDTO)));
+    when(requestPreferenceClient.getUserRequestPreference(user.getId())).thenReturn(ResultList.of(1,
+      List.of(requestPreference)));
+    when(circulationClient.sendRequest(any(RequestDTO.class))).then((Answer<RequestDTO>) invocationOnMock -> {
+      var sentRequest = (RequestDTO) invocationOnMock.getArgument(0);
+      sentRequest.setId(randomUUID());
+      return sentRequest;
+    });
+    when(servicePointsClient.queryServicePointByCode(PRE_POPULATED_PICK_LOCATION_CODE))
+      .thenReturn(ResultList.of(1, null));
+    when(usersClient.query(PRE_POPULATED_USER_BARCODE)).thenReturn(ResultList.of(1, List.of(user)));
+
+    var itemHoldDTO = deserializeFromJsonFile(
+      "/inn-reach-transaction/create-item-hold-request.json", TransactionHoldDTO.class);
+    itemHoldDTO.setCentralPatronType(PRE_POPULATED_CENTRAL_PATRON_TYPE);
+    itemHoldDTO.setItemId(inventoryItemDTO.getHrid());
+
+    var responseEntity = testRestTemplate.postForEntity(
+      "/inn-reach/d2ir/circ/itemhold/{trackingId}/{centralCode}", new HttpEntity<>(itemHoldDTO, headers), InnReachResponseDTO.class, TRACKING_ID,
+      PRE_POPULATED_CENTRAL_SERVER_CODE);
+
+    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+    assertTrue(responseEntity.hasBody());
+    assertEquals("ok", responseEntity.getBody().getStatus());
+
+    await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() ->
+      verify(repository, atLeastOnce()).save(
+        argThat((InnReachTransaction t) -> t.getHold().getFolioRequestId() != null)));
+
+    var transaction = repository.fetchOneByTrackingId(TRACKING_ID);
+    var servicePointIdFromTransaction = inventoryService.findServicePointIdByCode(transaction.get().getHold().getPickupLocation().getPickupLocCode()).orElse(null);
+
     verify(servicePointsClient, times(2)).queryServicePointByCode(transaction.get().getHold().getPickupLocation().getPickupLocCode());
-    assertEquals(true, centralServerDTO.getCheckPickupLocation());
-    assertEquals(UUID.fromString(PRE_POPULATED_CENTRAL_SERVER_ID), servicePointIdExpected);
+    assertEquals(null, servicePointIdFromTransaction);
+
+    var newRequestCaptor = ArgumentCaptor.forClass(RequestDTO.class);
+
+    verify(circulationClient).sendRequest(newRequestCaptor.capture());
+
+    var newRequest = newRequestCaptor.getValue();
+
+    assertEquals(PRE_POPULATED_DEFAULT_SERVICE_POINT_ID, newRequest.getPickupServicePointId());
   }
 
   @Test
