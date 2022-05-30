@@ -34,6 +34,7 @@ public class CentralServerFixture {
     centralServer.setLocalServerCredentials(createLocalServerCredentials());
     centralServer.setCreatedDate(OffsetDateTime.now());
     centralServer.setCreatedBy(AuditableUser.SYSTEM);
+    centralServer.setCheckPickupLocation(false);
 
     return centralServer;
   }
