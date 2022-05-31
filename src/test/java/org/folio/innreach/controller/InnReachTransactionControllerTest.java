@@ -717,16 +717,12 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     var servicePoint = new ServicePointsClient.ServicePoint();
     servicePoint.setId(UUID.fromString(PRE_POPULATED_CENTRAL_SERVER_ID));
 
-    when(circulationClient.queryRequestsByItemId(inventoryItemDTO.getId())).thenReturn(ResultList.of(1,
-      List.of(requestDTO)));
+    when(circulationClient.queryRequestsByItemId(inventoryItemDTO.getId())).thenReturn(ResultList.asSinglePage(requestDTO));
     var user = mockUserClient();
     var requestPreference = new RequestPreferenceDTO(user.getId(), randomUUID());
-    when(requestPreferenceClient.getUserRequestPreference(user.getId())).thenReturn(ResultList.of(1,
-      List.of(requestPreference)));
+    when(requestPreferenceClient.getUserRequestPreference(user.getId())).thenReturn(ResultList.asSinglePage(requestPreference));
     when(circulationClient.sendRequest(any(RequestDTO.class))).then((Answer<RequestDTO>) invocationOnMock -> {
-      var sentRequest = (RequestDTO) invocationOnMock.getArgument(0);
-      sentRequest.setId(randomUUID());
-      return sentRequest;
+      return new RequestDTO();
     });
     when(servicePointsClient.queryServicePointByCode(PRE_POPULATED_PICK_LOCATION_CODE))
       .thenReturn(ResultList.of(1, List.of(servicePoint)));
@@ -756,7 +752,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
 
     var newRequest = newRequestCaptor.getValue();
 
-    verify(servicePointsClient).queryServicePointByCode(transaction.get().getHold().getPickupLocation().getPickupLocCode());
+    verify(servicePointsClient).queryServicePointByCode(PRE_POPULATED_PICK_LOCATION_CODE);
     assertEquals(servicePoint.getId(), newRequest.getPickupServicePointId());
   }
 
