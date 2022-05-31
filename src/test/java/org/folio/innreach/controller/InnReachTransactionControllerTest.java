@@ -725,7 +725,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
       return new RequestDTO();
     });
     when(servicePointsClient.queryServicePointByCode(PRE_POPULATED_PICK_LOCATION_CODE))
-      .thenReturn(ResultList.of(1, List.of(servicePoint)));
+      .thenReturn(ResultList.asSinglePage(servicePoint));
 
     var itemHoldDTO = deserializeFromJsonFile(
       "/inn-reach-transaction/create-item-hold-request.json", TransactionHoldDTO.class);
@@ -745,7 +745,6 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
       verify(repository, atLeastOnce()).save(
         argThat((InnReachTransaction t) -> t.getHold().getFolioRequestId() != null)));
 
-    var transaction = repository.fetchOneByTrackingId(TRACKING_ID);
     var newRequestCaptor = ArgumentCaptor.forClass(RequestDTO.class);
 
     verify(circulationClient).sendRequest(newRequestCaptor.capture());
@@ -774,10 +773,9 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     var user = mockUserClient();
     var requestPreference = new RequestPreferenceDTO(user.getId(), PRE_POPULATED_DEFAULT_SERVICE_POINT_ID);
 
-    when(circulationClient.queryRequestsByItemId(inventoryItemDTO.getId())).thenReturn(ResultList.of(1,
-      List.of(requestDTO)));
-    when(requestPreferenceClient.getUserRequestPreference(user.getId())).thenReturn(ResultList.of(1,
-      List.of(requestPreference)));
+    when(circulationClient.queryRequestsByItemId(inventoryItemDTO.getId())).thenReturn(ResultList.asSinglePage(requestDTO));
+    when(requestPreferenceClient.getUserRequestPreference(user.getId())).thenReturn(
+      ResultList.asSinglePage(requestPreference));
     when(circulationClient.sendRequest(any(RequestDTO.class))).then((Answer<RequestDTO>) invocationOnMock -> {
       var sentRequest = (RequestDTO) invocationOnMock.getArgument(0);
       sentRequest.setId(randomUUID());
@@ -785,7 +783,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     });
     when(servicePointsClient.queryServicePointByCode(PRE_POPULATED_PICK_LOCATION_CODE))
       .thenReturn(ResultList.of(1, null));
-    when(usersClient.query(PRE_POPULATED_USER_BARCODE)).thenReturn(ResultList.of(1, List.of(user)));
+    when(usersClient.query(PRE_POPULATED_USER_BARCODE)).thenReturn(ResultList.asSinglePage(user));
 
     var itemHoldDTO = deserializeFromJsonFile(
       "/inn-reach-transaction/create-item-hold-request.json", TransactionHoldDTO.class);
