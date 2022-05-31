@@ -716,10 +716,10 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     modifyCentralServer(UUID.fromString(PRE_POPULATED_CENTRAL_SERVER_ID));
     var servicePoint = new ServicePointsClient.ServicePoint();
     servicePoint.setId(UUID.fromString(PRE_POPULATED_CENTRAL_SERVER_ID));
-
-    when(circulationClient.queryRequestsByItemId(inventoryItemDTO.getId())).thenReturn(ResultList.asSinglePage(requestDTO));
     var user = mockUserClient();
     var requestPreference = new RequestPreferenceDTO(user.getId(), randomUUID());
+
+    when(circulationClient.queryRequestsByItemId(inventoryItemDTO.getId())).thenReturn(ResultList.asSinglePage(requestDTO));
     when(requestPreferenceClient.getUserRequestPreference(user.getId())).thenReturn(ResultList.asSinglePage(requestPreference));
     when(circulationClient.sendRequest(any(RequestDTO.class))).then((Answer<RequestDTO>) invocationOnMock -> {
       return new RequestDTO();
