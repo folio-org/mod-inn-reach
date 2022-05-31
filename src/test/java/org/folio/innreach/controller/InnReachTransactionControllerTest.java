@@ -804,10 +804,9 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
       verify(repository, atLeastOnce()).save(
         argThat((InnReachTransaction t) -> t.getHold().getFolioRequestId() != null)));
 
-    var transaction = repository.fetchOneByTrackingId(TRACKING_ID);
-    var servicePointIdFromTransaction = inventoryService.findServicePointIdByCode(transaction.get().getHold().getPickupLocation().getPickupLocCode()).orElse(null);
+    var servicePointIdFromTransaction = inventoryService.findServicePointIdByCode(PRE_POPULATED_PICK_LOCATION_CODE).orElse(null);
 
-    verify(servicePointsClient, times(2)).queryServicePointByCode(transaction.get().getHold().getPickupLocation().getPickupLocCode());
+    verify(servicePointsClient, times(2)).queryServicePointByCode(PRE_POPULATED_PICK_LOCATION_CODE);
     assertEquals(null, servicePointIdFromTransaction);
 
     var newRequestCaptor = ArgumentCaptor.forClass(RequestDTO.class);
