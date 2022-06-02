@@ -27,6 +27,7 @@ import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionSt
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.RETURN_UNCIRCULATED;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.TRANSFER;
 import static org.folio.innreach.dto.ItemStatus.NameEnum.AWAITING_PICKUP;
+import static org.folio.innreach.dto.ItemStatus.NameEnum.CHECKED_OUT;
 import static org.folio.innreach.dto.ItemStatus.NameEnum.IN_TRANSIT;
 import static org.folio.innreach.dto.ItemStatus.NameEnum.PAGED;
 import static org.folio.innreach.fixture.InnReachTransactionFixture.assertPatronAndItemInfoCleared;
@@ -615,9 +616,11 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
       Arguments.of(CLOSED_CANCELLED, AWAITING_PICKUP),
       Arguments.of(CLOSED_CANCELLED, PAGED),
       Arguments.of(CLOSED_CANCELLED, IN_TRANSIT),
+      Arguments.of(CLOSED_CANCELLED, CHECKED_OUT),
       Arguments.of(CLOSED_PICKUP_EXPIRED, AWAITING_PICKUP),
       Arguments.of(CLOSED_PICKUP_EXPIRED, PAGED),
-      Arguments.of(CLOSED_PICKUP_EXPIRED, IN_TRANSIT)
+      Arguments.of(CLOSED_PICKUP_EXPIRED, IN_TRANSIT),
+      Arguments.of(CLOSED_PICKUP_EXPIRED, CHECKED_OUT)
     );
   }
 

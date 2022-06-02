@@ -25,6 +25,7 @@ import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionTy
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionType.LOCAL;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionType.PATRON;
 import static org.folio.innreach.dto.ItemStatus.NameEnum.AWAITING_PICKUP;
+import static org.folio.innreach.dto.ItemStatus.NameEnum.CHECKED_OUT;
 import static org.folio.innreach.dto.ItemStatus.NameEnum.IN_TRANSIT;
 import static org.folio.innreach.dto.ItemStatus.NameEnum.PAGED;
 import static org.folio.innreach.util.DateHelper.toEpochSec;
@@ -99,7 +100,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
   private final InnReachRecallUserService recallUserService;
 
   private static final String[] UNCIRCULATED_ITEM_STATUSES = {
-    AWAITING_PICKUP.getValue(), PAGED.getValue(), IN_TRANSIT.getValue()
+    AWAITING_PICKUP.getValue(), PAGED.getValue(), IN_TRANSIT.getValue(), CHECKED_OUT.getValue()
   };
 
   @Override
