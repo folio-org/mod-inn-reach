@@ -25,6 +25,9 @@ import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionTy
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionType.LOCAL;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionType.PATRON;
 import static org.folio.innreach.dto.ItemStatus.NameEnum.AWAITING_PICKUP;
+import static org.folio.innreach.dto.ItemStatus.NameEnum.CHECKED_OUT;
+import static org.folio.innreach.dto.ItemStatus.NameEnum.IN_TRANSIT;
+import static org.folio.innreach.dto.ItemStatus.NameEnum.PAGED;
 import static org.folio.innreach.util.DateHelper.toEpochSec;
 import static org.folio.innreach.util.DateHelper.toInstantTruncatedToSec;
 import static org.folio.innreach.util.InnReachTransactionUtils.clearCentralPatronInfo;
@@ -42,6 +45,7 @@ import java.util.UUID;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -94,6 +98,10 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
   private final InnReachTransactionActionNotifier notifier;
   private final ApplicationEventPublisher eventPublisher;
   private final InnReachRecallUserService recallUserService;
+
+  private static final String[] UNCIRCULATED_ITEM_STATUSES = {
+    AWAITING_PICKUP.getValue(), PAGED.getValue(), IN_TRANSIT.getValue(), CHECKED_OUT.getValue()
+  };
 
   @Override
   public PatronHoldCheckInResponseDTO checkInPatronHoldItem(UUID transactionId, UUID servicePointId) {
@@ -227,7 +235,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
     var itemId = checkIn.getItemId();
     var itemStatusPriorToCheckIn = checkIn.getItemStatusPriorToCheckIn();
 
-    if (AWAITING_PICKUP.getValue().equalsIgnoreCase(itemStatusPriorToCheckIn)) {
+    if (StringUtils.equalsAnyIgnoreCase(itemStatusPriorToCheckIn, UNCIRCULATED_ITEM_STATUSES)) {
       var transaction = transactionRepository.fetchActiveByFolioItemId(itemId).orElse(null);
 
       if (transaction == null || transaction.getType() != PATRON) {
@@ -238,7 +246,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
       var request = requestService.findRequest(requestId);
 
       if (requestService.isCanceledOrExpired(request)) {
-        log.info("Updating transaction {} on the hold shelf clearance for uncirculated items, check-in {}",
+        log.info("Updating transaction {} on the hold shelf clearance for uncirculated item, check-in {}",
           transaction.getId(), checkIn.getId());
 
         transaction.setState(RETURN_UNCIRCULATED);
