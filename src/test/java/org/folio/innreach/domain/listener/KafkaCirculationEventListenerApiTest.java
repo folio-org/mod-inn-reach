@@ -15,6 +15,7 @@ import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TES
 import static org.springframework.test.context.jdbc.SqlMergeMode.MergeMode.MERGE;
 
 import static org.folio.innreach.domain.dto.folio.circulation.RequestDTO.RequestStatus.CLOSED_CANCELLED;
+import static org.folio.innreach.domain.dto.folio.circulation.RequestDTO.RequestStatus.CLOSED_PICKUP_EXPIRED;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.BORROWING_SITE_CANCEL;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.CANCEL_REQUEST;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.CLAIMS_RETURNED;
@@ -26,6 +27,9 @@ import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionSt
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.RETURN_UNCIRCULATED;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.TRANSFER;
 import static org.folio.innreach.dto.ItemStatus.NameEnum.AWAITING_PICKUP;
+import static org.folio.innreach.dto.ItemStatus.NameEnum.CHECKED_OUT;
+import static org.folio.innreach.dto.ItemStatus.NameEnum.IN_TRANSIT;
+import static org.folio.innreach.dto.ItemStatus.NameEnum.PAGED;
 import static org.folio.innreach.fixture.InnReachTransactionFixture.assertPatronAndItemInfoCleared;
 import static org.folio.innreach.fixture.InventoryFixture.createInventoryHoldingDTO;
 import static org.folio.innreach.fixture.InventoryFixture.createInventoryInstance;
@@ -41,12 +45,14 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Consumer;
+import java.util.stream.Stream;
 
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -57,6 +63,7 @@ import org.springframework.test.context.jdbc.SqlMergeMode;
 import org.folio.innreach.client.CirculationClient;
 import org.folio.innreach.client.InventoryClient;
 import org.folio.innreach.domain.dto.folio.circulation.RequestDTO;
+import org.folio.innreach.domain.dto.folio.circulation.RequestDTO.RequestStatus;
 import org.folio.innreach.domain.dto.folio.inventory.InventoryItemDTO;
 import org.folio.innreach.domain.entity.InnReachTransaction;
 import org.folio.innreach.domain.entity.TransactionItemHold;
@@ -67,6 +74,7 @@ import org.folio.innreach.domain.listener.base.BaseKafkaApiTest;
 import org.folio.innreach.domain.service.ContributionActionService;
 import org.folio.innreach.domain.service.impl.BatchDomainEventProcessor;
 import org.folio.innreach.dto.CheckInDTO;
+import org.folio.innreach.dto.ItemStatus;
 import org.folio.innreach.dto.LoanStatus;
 import org.folio.innreach.dto.StorageLoanDTO;
 import org.folio.innreach.external.service.InnReachExternalService;
@@ -165,7 +173,7 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
 
   @Test
   void shouldReceiveCheckInEvent() {
-    var event = createCheckInDomainEvent(DomainEventType.CREATED);
+    var event = createCheckInDomainEvent(DomainEventType.CREATED, AWAITING_PICKUP);
 
     kafkaTemplate.send(new ProducerRecord(CIRC_CHECKIN_TOPIC, CHECKIN_ID.toString(), event));
 
@@ -517,9 +525,9 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
   })
   @ParameterizedTest
-  @EnumSource(names = {"CLOSED_PICKUP_EXPIRED", "CLOSED_CANCELLED"})
-  void shouldUpdatePatronTransactionOnCheckinCreation(RequestDTO.RequestStatus requestStatus) {
-    var event = createCheckInDomainEvent(DomainEventType.CREATED);
+  @MethodSource("uncirculatedRequestAndItemStatuses")
+  void shouldUpdatePatronTransactionOnCheckinCreation(RequestStatus requestStatus, ItemStatus.NameEnum itemStatus) {
+    var event = createCheckInDomainEvent(DomainEventType.CREATED, itemStatus);
     event.getData().getNewEntity().setItemId(PRE_POPULATED_PATRON_TRANSACTION_ITEM_ID);
     var request = new RequestDTO();
     request.setId(PRE_POPULATED_PATRON_TRANSACTION_REQUEST_ID);
@@ -527,7 +535,7 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
 
     when(circulationClient.findRequest(any())).thenReturn(Optional.of(request));
 
-    listener.handleCheckInEvents(asSingleConsumerRecord(CIRC_LOAN_TOPIC, CHECKIN_ID, event));
+    listener.handleCheckInEvents(asSingleConsumerRecord(CIRC_CHECKIN_TOPIC, CHECKIN_ID, event));
 
     verify(eventProcessor).process(anyList(), any(Consumer.class));
     verify(innReachExternalService).postInnReachApi(any(), any());
@@ -590,9 +598,9 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
       .build();
   }
 
-  private static DomainEvent<CheckInDTO> createCheckInDomainEvent(DomainEventType eventType) {
+  private static DomainEvent<CheckInDTO> createCheckInDomainEvent(DomainEventType eventType, ItemStatus.NameEnum itemStatusPriorToCheckIn) {
     var checkIn = new CheckInDTO()
-      .itemStatusPriorToCheckIn(AWAITING_PICKUP.getValue())
+      .itemStatusPriorToCheckIn(itemStatusPriorToCheckIn.getValue())
       .itemId(CHECKIN_ID);
 
     return DomainEvent.<CheckInDTO>builder()
@@ -603,7 +611,20 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
       .build();
   }
 
-  private void modifyTransactionState(UUID transactionId, InnReachTransaction.TransactionState state){
+  private static Stream<Arguments> uncirculatedRequestAndItemStatuses() {
+    return Stream.of(
+      Arguments.of(CLOSED_CANCELLED, AWAITING_PICKUP),
+      Arguments.of(CLOSED_CANCELLED, PAGED),
+      Arguments.of(CLOSED_CANCELLED, IN_TRANSIT),
+      Arguments.of(CLOSED_CANCELLED, CHECKED_OUT),
+      Arguments.of(CLOSED_PICKUP_EXPIRED, AWAITING_PICKUP),
+      Arguments.of(CLOSED_PICKUP_EXPIRED, PAGED),
+      Arguments.of(CLOSED_PICKUP_EXPIRED, IN_TRANSIT),
+      Arguments.of(CLOSED_PICKUP_EXPIRED, CHECKED_OUT)
+    );
+  }
+
+  private void modifyTransactionState(UUID transactionId, InnReachTransaction.TransactionState state) {
     var transaction = transactionRepository.fetchOneById(transactionId).get();
     transaction.setState(state);
     transactionRepository.save(transaction);
