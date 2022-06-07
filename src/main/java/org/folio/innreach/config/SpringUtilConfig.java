@@ -46,7 +46,7 @@ public class SpringUtilConfig {
     String[] patterns = null;
       Optional<PathPatternsRequestCondition> requestCondition = Optional.of(info.getPathPatternsCondition());
     if (requestCondition.isPresent()) {
-      patterns = info.getPathPatternsCondition().getPatternValues().toArray(String[]::new);
+      patterns = requestCondition.get().getPatternValues().toArray(String[]::new);
     }
     return info.mutate().options(new RequestMappingInfo.BuilderConfiguration()).paths(patterns).build();
   }
