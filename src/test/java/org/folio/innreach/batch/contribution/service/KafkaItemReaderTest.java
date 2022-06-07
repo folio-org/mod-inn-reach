@@ -28,7 +28,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import org.folio.innreach.batch.KafkaItemReader;
 import org.folio.innreach.domain.dto.folio.inventorystorage.InstanceIterationEvent;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.kafka.support.serializer.JsonDeserializer;
 
 @ExtendWith(MockitoExtension.class)
@@ -36,8 +35,7 @@ class KafkaItemReaderTest {
 
   @Mock(answer = Answers.RETURNS_DEEP_STUBS)
   private KafkaConsumer<String, InstanceIterationEvent> kafkaConsumer;
-  @Autowired
-  private ObjectMapper mapper;
+  private ObjectMapper mapper = new ObjectMapper();
   JsonDeserializer<InstanceIterationEvent> deserializer = new JsonDeserializer<>(mapper);
 
   @Mock
