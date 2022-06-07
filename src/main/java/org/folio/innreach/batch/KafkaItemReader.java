@@ -13,6 +13,7 @@ import lombok.Setter;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.TopicPartition;
+import org.apache.kafka.common.serialization.Deserializer;
 
 /**
  * <p>
@@ -32,6 +33,8 @@ public class KafkaItemReader<K, V> implements AutoCloseable {
 
   private final Properties consumerProperties;
   private final String topic;
+  private final Deserializer<K> keyDeserializer;
+  private final Deserializer<V> valueDeserializer;
   private final Map<TopicPartition, Long> partitionOffsets = new HashMap<>();
 
   private KafkaConsumer<K, V> kafkaConsumer;
@@ -41,7 +44,7 @@ public class KafkaItemReader<K, V> implements AutoCloseable {
 
   public void open() {
     if (kafkaConsumer == null) {
-      kafkaConsumer = new KafkaConsumer<>(consumerProperties);
+      kafkaConsumer = new KafkaConsumer<>(consumerProperties, keyDeserializer, valueDeserializer);
     }
 
     kafkaConsumer.subscribe(List.of(topic));

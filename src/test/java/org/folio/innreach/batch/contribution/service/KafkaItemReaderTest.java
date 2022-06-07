@@ -14,8 +14,10 @@ import java.util.List;
 import java.util.Properties;
 import java.util.UUID;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
+import org.apache.kafka.common.serialization.StringDeserializer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -26,18 +28,24 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import org.folio.innreach.batch.KafkaItemReader;
 import org.folio.innreach.domain.dto.folio.inventorystorage.InstanceIterationEvent;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.kafka.support.serializer.JsonDeserializer;
 
 @ExtendWith(MockitoExtension.class)
 class KafkaItemReaderTest {
 
   @Mock(answer = Answers.RETURNS_DEEP_STUBS)
   private KafkaConsumer<String, InstanceIterationEvent> kafkaConsumer;
+  @Autowired
+  private ObjectMapper mapper;
+  JsonDeserializer<InstanceIterationEvent> deserializer = new JsonDeserializer<>(mapper);
 
   @Mock
   private Iterator<ConsumerRecord<String, InstanceIterationEvent>> consumerRecords;
 
   @InjectMocks
-  private KafkaItemReader<String, InstanceIterationEvent> reader = new KafkaItemReader<>(new Properties(), "topic");
+  private KafkaItemReader<String, InstanceIterationEvent> reader = new KafkaItemReader<>
+    (new Properties(), "topic", new StringDeserializer(), deserializer);
 
   @BeforeEach
   void setUp() {

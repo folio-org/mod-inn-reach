@@ -6,9 +6,9 @@ spring:
   datasource:
     # to boot up application despite of any DB connection issues
     continue-on-error: true
-    username: ${DB_USERNAME:postgres}
-    password: ${DB_PASSWORD:postgres}
-    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_DATABASE:db}
+    username: ${DB_USERNAME:folio_admin}
+    password: ${DB_PASSWORD:folio_admin}
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_DATABASE:okapi_modules}
   jpa:
     database-platform: org.hibernate.dialect.PostgreSQL10Dialect
     hibernate:
@@ -38,19 +38,6 @@ spring:
     consumer:
       max-poll-records: 50
       group-id: ${ENV:folio}-mod-innreach-events-group
-      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
-      properties:
-        spring:
-          json:
-            trusted:
-              packages: '*'
-            use:
-              type:
-                headers: false
-            value:
-              default:
-                type: org.folio.innreach.domain.dto.folio.inventorystorage.InstanceIterationEvent
     security:
       protocol: ${KAFKA_SECURITY_PROTOCOL:PLAINTEXT}
     ssl:

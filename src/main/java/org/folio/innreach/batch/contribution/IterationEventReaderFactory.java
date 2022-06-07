@@ -3,14 +3,16 @@ package org.folio.innreach.batch.contribution;
 import static org.apache.kafka.clients.consumer.ConsumerConfig.GROUP_ID_CONFIG;
 
 import java.time.Duration;
-import java.util.HashMap;
 import java.util.Properties;
 import java.util.UUID;
 import java.util.function.Consumer;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.apache.kafka.common.serialization.StringDeserializer;
 import org.springframework.boot.autoconfigure.kafka.KafkaProperties;
+import org.springframework.kafka.support.serializer.JsonDeserializer;
 import org.springframework.stereotype.Component;
 
 import org.folio.innreach.batch.KafkaItemReader;
@@ -35,16 +37,18 @@ public class IterationEventReaderFactory {
   private final KafkaProperties kafkaProperties;
   private final FolioEnvironment folioEnv;
   private final ContributionJobProperties jobProperties;
+  private final ObjectMapper mapper;
 
   public KafkaItemReader<String, InstanceIterationEvent> createReader(String tenantId) {
     Properties props = new Properties();
     props.putAll(kafkaProperties.buildConsumerProperties());
     props.put(GROUP_ID_CONFIG, jobProperties.getReaderGroupId());
+    JsonDeserializer<InstanceIterationEvent> deserializer = new JsonDeserializer<>(mapper);
 
     var topic = String.format("%s.%s.%s",
       folioEnv.getEnvironment(), tenantId, jobProperties.getReaderTopic());
 
-    var reader = new KafkaItemReader<String, InstanceIterationEvent>(props, topic);
+    var reader = new KafkaItemReader<String, InstanceIterationEvent>(props, topic, new StringDeserializer(), deserializer);
     reader.setPollTimeout(Duration.ofSeconds(jobProperties.getReaderPollTimeoutSec()));
     reader.setRecordProcessor(CONSUMER_REC_PROCESSOR);
     return reader;
