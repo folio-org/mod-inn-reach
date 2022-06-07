@@ -5,6 +5,7 @@ import org.springframework.beans.factory.InitializingBean;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.web.servlet.mvc.condition.PathPatternsRequestCondition;
 import org.springframework.web.servlet.mvc.method.RequestMappingInfo;
 import org.springframework.web.servlet.mvc.method.RequestMappingInfoHandlerMapping;
 import springfox.documentation.spi.service.RequestHandlerProvider;
@@ -42,7 +43,11 @@ public class SpringUtilConfig {
 
   RequestMappingInfo tweakInfo(RequestMappingInfo info) {
     if (info.getPathPatternsCondition() == null) return info;
-    String[] patterns = info.getPathPatternsCondition().getPatternValues().toArray(String[]::new);
+    String[] patterns = null;
+      Optional<PathPatternsRequestCondition> requestCondition = Optional.of(info.getPathPatternsCondition());
+    if (requestCondition.isPresent()) {
+      patterns = info.getPathPatternsCondition().getPatternValues().toArray(String[]::new);
+    }
     return info.mutate().options(new RequestMappingInfo.BuilderConfiguration()).paths(patterns).build();
   }
 
