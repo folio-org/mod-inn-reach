@@ -9,6 +9,9 @@ spring:
     username: ${DB_USERNAME:postgres}
     password: ${DB_PASSWORD:postgres}
     url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_DATABASE:db}
+  mvc:
+    pathmatch:
+      matching-strategy: ant_path_matcher
   jpa:
     database-platform: org.hibernate.dialect.PostgreSQL10Dialect
     hibernate:

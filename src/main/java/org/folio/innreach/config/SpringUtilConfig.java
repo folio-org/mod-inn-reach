@@ -1,54 +1,40 @@
 package org.folio.innreach.config;
 
-
-import org.springframework.beans.factory.InitializingBean;
-
+import org.springframework.boot.actuate.autoconfigure.endpoint.web.CorsEndpointProperties;
+import org.springframework.boot.actuate.autoconfigure.endpoint.web.WebEndpointProperties;
+import org.springframework.boot.actuate.autoconfigure.web.server.ManagementPortType;
+import org.springframework.boot.actuate.endpoint.ExposableEndpoint;
+import org.springframework.boot.actuate.endpoint.web.*;
+import org.springframework.boot.actuate.endpoint.web.annotation.ControllerEndpointsSupplier;
+import org.springframework.boot.actuate.endpoint.web.annotation.ServletEndpointsSupplier;
+import org.springframework.boot.actuate.endpoint.web.servlet.WebMvcEndpointHandlerMapping;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.web.servlet.mvc.condition.PathPatternsRequestCondition;
-import org.springframework.web.servlet.mvc.method.RequestMappingInfo;
-import org.springframework.web.servlet.mvc.method.RequestMappingInfoHandlerMapping;
-import springfox.documentation.spi.service.RequestHandlerProvider;
-import springfox.documentation.spring.web.WebMvcRequestHandler;
-import springfox.documentation.spring.web.paths.Paths;
-import springfox.documentation.spring.web.plugins.DocumentationPluginsBootstrapper;
-import springfox.documentation.spring.web.plugins.WebMvcRequestHandlerProvider;
-import springfox.documentation.spring.web.readers.operation.HandlerMethodResolver;
+import org.springframework.core.env.Environment;
+import org.springframework.util.StringUtils;
 
-import javax.servlet.ServletContext;
-import java.util.*;
-
-import static java.util.stream.Collectors.toList;
-import static springfox.documentation.spi.service.contexts.Orderings.byPatternsCondition;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 @Configuration
 public class SpringUtilConfig {
 
   @Bean
-  public InitializingBean removeSpringfoxHandlerProvider(DocumentationPluginsBootstrapper bootstrapper) {
-    return () -> bootstrapper.getHandlerProviders().removeIf(WebMvcRequestHandlerProvider.class::isInstance);
+  public WebMvcEndpointHandlerMapping webEndpointServletHandlerMapping(WebEndpointsSupplier webEndpointsSupplier, ServletEndpointsSupplier servletEndpointsSupplier, ControllerEndpointsSupplier controllerEndpointsSupplier, EndpointMediaTypes endpointMediaTypes, CorsEndpointProperties corsProperties, WebEndpointProperties webEndpointProperties, Environment environment) {
+    List<ExposableEndpoint<?>> allEndpoints = new ArrayList();
+    Collection<ExposableWebEndpoint> webEndpoints = webEndpointsSupplier.getEndpoints();
+    allEndpoints.addAll(webEndpoints);
+    allEndpoints.addAll(servletEndpointsSupplier.getEndpoints());
+    allEndpoints.addAll(controllerEndpointsSupplier.getEndpoints());
+    String basePath = webEndpointProperties.getBasePath();
+    EndpointMapping endpointMapping = new EndpointMapping(basePath);
+    boolean shouldRegisterLinksMapping = this.shouldRegisterLinksMapping(webEndpointProperties, environment, basePath);
+    return new WebMvcEndpointHandlerMapping(endpointMapping, webEndpoints, endpointMediaTypes, corsProperties.toCorsConfiguration(), new EndpointLinksResolver(allEndpoints, basePath), shouldRegisterLinksMapping, null);
   }
 
-  @Bean
-  public RequestHandlerProvider customRequestHandlerProvider(Optional<ServletContext> servletContext, HandlerMethodResolver methodResolver, List<RequestMappingInfoHandlerMapping> handlerMappings) {
-    String contextPath = servletContext.map(ServletContext::getContextPath).orElse(Paths.ROOT);
-    return () -> handlerMappings.stream()
-      .filter(mapping -> !mapping.getClass().getSimpleName().equals("IntegrationRequestMappingHandlerMapping"))
-      .map(mapping -> mapping.getHandlerMethods().entrySet())
-      .flatMap(Set::stream)
-      .map(entry -> new WebMvcRequestHandler(contextPath, methodResolver, tweakInfo(entry.getKey()), entry.getValue()))
-      .sorted(byPatternsCondition())
-      .collect(toList());
-  }
-
-  RequestMappingInfo tweakInfo(RequestMappingInfo info) {
-    if (info.getPathPatternsCondition() == null) return info;
-    String[] patterns = null;
-      Optional<PathPatternsRequestCondition> requestCondition = Optional.of(info.getPathPatternsCondition());
-    if (requestCondition.isPresent()) {
-      patterns = requestCondition.get().getPatternValues().toArray(String[]::new);
-    }
-    return info.mutate().options(new RequestMappingInfo.BuilderConfiguration()).paths(patterns).build();
+  private boolean shouldRegisterLinksMapping(WebEndpointProperties webEndpointProperties, Environment environment, String basePath) {
+    return webEndpointProperties.getDiscovery().isEnabled() && (StringUtils.hasText(basePath) || ManagementPortType.get(environment).equals(ManagementPortType.DIFFERENT));
   }
 
 }
