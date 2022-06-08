@@ -1,8 +1,8 @@
 package org.folio.innreach.domain.service.impl;
 
-import static org.folio.innreach.domain.service.impl.ServiceUtils.centralServerRef;
-
+import java.util.Optional;
 import java.util.UUID;
+import java.util.function.Function;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -28,35 +28,49 @@ public class PagingSlipTemplateServiceImpl implements PagingSlipTemplateService 
   }
 
   @Override
-  public PagingSlipTemplateDTO create(UUID centralServerId, PagingSlipTemplateDTO dto) {
-    var entity = mapper.toEntity(dto);
-    entity.setCentralServer(centralServerRef(centralServerId));
-
-    var saved = repository.save(entity);
-
-    return mapper.toDTO(saved);
-  }
-
-  @Override
   public PagingSlipTemplateDTO update(UUID centralServerId, PagingSlipTemplateDTO dto) {
-    var template = findTemplate(centralServerId);
+    if (isNullOrEmpty(dto)) {
+      return delete(centralServerId);
+    }
 
-    template.setDescription(dto.getDescription());
-    template.setTemplate(dto.getTemplate());
+    var incoming = mapper.toEntityWithRefs(dto, centralServerId);
 
-    repository.save(template);
+    var updated = fetchOne(centralServerId)
+      .map(mergeFunc(incoming))
+      .orElse(incoming);
 
-    return mapper.toDTO(template);
+    repository.saveAndFlush(updated);
+
+    return mapper.toDTO(updated);
   }
 
-  @Override
-  public void delete(UUID centralServerId) {
+  private Optional<PagingSlipTemplate> fetchOne(UUID centralServerId) {
+    return repository.fetchOneByCentralServerId(centralServerId);
+  }
+
+  private Function<PagingSlipTemplate, PagingSlipTemplate> mergeFunc(PagingSlipTemplate incoming) {
+    return existing -> {
+      existing.setDescription(incoming.getDescription());
+      existing.setTemplate(incoming.getTemplate());
+
+      return existing;
+    };
+  }
+
+  private PagingSlipTemplateDTO delete(UUID centralServerId) {
     var template = findTemplate(centralServerId);
     repository.delete(template);
+    return mapper.toDTO(template);
   }
 
   private PagingSlipTemplate findTemplate(UUID centralServerId) {
     return repository.fetchOneByCentralServerId(centralServerId)
       .orElseThrow(() -> new EntityNotFoundException("Paging Slip Template not found: centralServerId = " + centralServerId));
+  }
+
+  private boolean isNullOrEmpty(PagingSlipTemplateDTO dto) {
+    return dto == null ||
+      ((dto.getDescription() == null || dto.getDescription().isEmpty()) &&
+        (dto.getTemplate() == null || dto.getTemplate().isEmpty()));
   }
 }

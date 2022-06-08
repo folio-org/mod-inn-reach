@@ -571,6 +571,16 @@
             "circulation.requests.item.get",
             "circulation.requests.item.move.post"
           ]
+        },
+        {
+          "methods": ["GET"],
+          "pathPattern": "/inn-reach/central-servers/{centralServerId}/paging-slip-template",
+          "permissionsRequired": ["inn-reach.central-servers.paging-slip-template.item.get"]
+        },
+        {
+          "methods": ["PUT"],
+          "pathPattern": "/inn-reach/central-servers/{centralServerId}/paging-slip-template",
+          "permissionsRequired": ["inn-reach.central-servers.paging-slip-template.item.put"]
         }
       ]
     },
@@ -1163,6 +1173,15 @@
       ]
     },
     {
+      "permissionName" : "inn-reach.central-servers.paging-slip-template.all",
+      "displayName" : "inn reach API module - all permissions of paging slip template",
+      "description" : "All permissions for Paging Slip Template",
+      "subPermissions" : [
+        "inn-reach.central-servers.paging-slip-template.item.get",
+        "inn-reach.central-servers.paging-slip-template.item.put"
+      ]
+    },
+    {
       "permissionName" : "inn-reach.all",
       "displayName" : "inn reach API module - all permissions",
       "description" : "All permissions for inn reach",
@@ -1190,7 +1209,8 @@
         "inn-reach.inn-reach-transactions.all",
         "inn-reach.d2ir.circulation.all",
         "inn-reach.recall-user.all",
-        "inn-reach.central-servers.visible-patron-field-configuration.all"
+        "inn-reach.central-servers.visible-patron-field-configuration.all",
+        "inn-reach.central-servers.paging-slip-template.all"
       ]
     }
   ],

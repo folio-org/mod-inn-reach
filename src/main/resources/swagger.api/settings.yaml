@@ -1123,44 +1123,6 @@ paths:
               $ref: "#/components/schemas/pagingSlipTemplateDTO"
       parameters:
         - $ref: 'api-common.yaml#/components/parameters/centralServerId'
-    post:
-      description: Add new Paging Slip Template associated with the central server
-      operationId: createPagingSlipTemplate
-      tags:
-        - paging-slip-template
-      responses:
-        '201':
-          description: Paging Slip Template created
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/pagingSlipTemplateDTO"
-        '400':
-          $ref: "api-common.yaml#/components/responses/trait_response_validation_400"
-        '500':
-          $ref: "api-common.yaml#/components/responses/trait_response_500"
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/pagingSlipTemplateDTO"
-        required: true
-      parameters:
-        - $ref: 'api-common.yaml#/components/parameters/centralServerId'
-    delete:
-      tags:
-        - paging-slip-template
-      responses:
-        '204':
-          description: No content
-        '404':
-          $ref: "api-common.yaml#/components/responses/trait_response_404"
-        '500':
-          $ref: "api-common.yaml#/components/responses/trait_response_500"
-      description: Delete Paging Slip Template
-      operationId: deletePagingSlipTemplate
-      parameters:
-        - $ref: 'api-common.yaml#/components/parameters/centralServerId'
 components:
   schemas:
     centralServerDTO:

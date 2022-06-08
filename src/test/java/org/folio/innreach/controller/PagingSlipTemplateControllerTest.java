@@ -1,12 +1,9 @@
 package org.folio.innreach.controller;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.containsString;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.springframework.http.HttpStatus.CONFLICT;
 import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TEST_METHOD;
 import static org.springframework.test.context.jdbc.SqlMergeMode.MergeMode.MERGE;
 
@@ -75,12 +72,11 @@ class PagingSlipTemplateControllerTest extends BaseControllerTest {
     var templateDTO = deserializeFromJsonFile(
       "/paging-slip-template/create-paging-slip-template-request.json", PagingSlipTemplateDTO.class);
 
-    var responseEntity = testRestTemplate.postForEntity(
-      "/inn-reach/central-servers/{centralServerId}/paging-slip-template",
-      templateDTO, PagingSlipTemplateDTO.class, PRE_POPULATED_CENTRAL_SERVER_ID);
+    var responseEntity = testRestTemplate.exchange(
+      "/inn-reach/central-servers/{centralServerId}/paging-slip-template", HttpMethod.PUT,
+      new HttpEntity<>(templateDTO), PagingSlipTemplateDTO.class, PRE_POPULATED_CENTRAL_SERVER_ID);
 
-    assertEquals(HttpStatus.CREATED, responseEntity.getStatusCode());
-    assertTrue(responseEntity.hasBody());
+    assertEquals(HttpStatus.NO_CONTENT, responseEntity.getStatusCode());
 
     var created = repository.fetchOneByCentralServerId(UUID.fromString(PRE_POPULATED_CENTRAL_SERVER_ID));
 
@@ -123,7 +119,7 @@ class PagingSlipTemplateControllerTest extends BaseControllerTest {
   })
   void shouldDeleteExistingTemplate() {
     var responseEntity = testRestTemplate.exchange("/inn-reach/central-servers/{centralServerId}/paging-slip-template",
-      HttpMethod.DELETE, HttpEntity.EMPTY, PagingSlipTemplateDTO.class, PRE_POPULATED_CENTRAL_SERVER_ID);
+      HttpMethod.PUT, HttpEntity.EMPTY, PagingSlipTemplateDTO.class, PRE_POPULATED_CENTRAL_SERVER_ID);
 
     assertEquals(HttpStatus.NO_CONTENT, responseEntity.getStatusCode());
 
@@ -131,39 +127,6 @@ class PagingSlipTemplateControllerTest extends BaseControllerTest {
       UUID.fromString(PRE_POPULATED_CENTRAL_SERVER_ID));
 
     assertFalse(deleted.isPresent());
-  }
-
-  @Test
-  @Sql(scripts = {
-    "classpath:db/central-server/pre-populate-central-server.sql",
-    "classpath:db/paging-slip-template/pre-populate-paging-slip-template.sql"
-  })
-  void return409WhenCreatingTemplateAndServerAlreadyHasOne() {
-    var newTemplate = deserializeFromJsonFile("/paging-slip-template/create-paging-slip-template-request.json",
-     PagingSlipTemplateDTO.class);
-
-    var responseEntity = testRestTemplate.postForEntity(
-      "/inn-reach/central-servers/{centralServerId}/paging-slip-template", newTemplate,
-      Error.class, PRE_POPULATED_CENTRAL_SERVER_ID);
-
-    assertEquals(CONFLICT, responseEntity.getStatusCode());
-    assertNotNull(responseEntity.getBody());
-    assertThat(responseEntity.getBody().getMessage(), containsString("constraint [paging_slip_template_central_server_id_key]"));
-  }
-
-  @Test
-  @Sql(scripts = {
-    "classpath:db/central-server/pre-populate-central-server.sql"
-  })
-  void return409WhenCreatingTemplateWithInvalidData() {
-    var newTemplate = deserializeFromJsonFile("/paging-slip-template/create-paging-slip-template-invalid-request.json",
-      PagingSlipTemplateDTO.class);
-
-    var responseEntity = testRestTemplate.postForEntity(
-      "/inn-reach/central-servers/{centralServerId}/paging-slip-template", newTemplate,
-      Error.class, PRE_POPULATED_CENTRAL_SERVER_ID);
-
-    assertEquals(CONFLICT, responseEntity.getStatusCode());
   }
 
   @Test
