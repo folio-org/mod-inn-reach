@@ -58,6 +58,12 @@ class KafkaItemReaderTest {
   }
 
   @Test
+  void shouldOpenWithEmptyKafkaConsumer() {
+    kafkaConsumer = null;
+    reader.open();
+  }
+
+  @Test
   void shouldRead() {
     var instanceId = UUID.randomUUID();
     var jobId = UUID.randomUUID();
