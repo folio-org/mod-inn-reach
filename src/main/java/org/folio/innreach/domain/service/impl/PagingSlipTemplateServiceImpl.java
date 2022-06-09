@@ -1,10 +1,13 @@
 package org.folio.innreach.domain.service.impl;
 
+import static org.apache.commons.lang3.StringUtils.isBlank;
+
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Function;
 
 import lombok.RequiredArgsConstructor;
+
 import org.springframework.stereotype.Service;
 
 import org.folio.innreach.domain.entity.PagingSlipTemplate;
@@ -70,7 +73,6 @@ public class PagingSlipTemplateServiceImpl implements PagingSlipTemplateService 
 
   private boolean isNullOrEmpty(PagingSlipTemplateDTO dto) {
     return dto == null ||
-      ((dto.getDescription() == null || dto.getDescription().isEmpty()) &&
-        (dto.getTemplate() == null || dto.getTemplate().isEmpty()));
+        (isBlank(dto.getDescription()) && isBlank(dto.getTemplate()));
   }
 }
