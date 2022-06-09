@@ -3,11 +3,10 @@ package org.folio.innreach.batch.contribution.service;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 import static org.folio.innreach.batch.contribution.IterationEventReaderFactory.CONSUMER_REC_PROCESSOR;
 import static org.folio.innreach.batch.contribution.IterationEventReaderFactory.ITERATION_JOB_ID_HEADER;
+import static org.mockito.Mockito.*;
 
 import java.util.Iterator;
 import java.util.List;
@@ -55,12 +54,6 @@ class KafkaItemReaderTest {
     reader.open();
 
     verify(kafkaConsumer).subscribe(any(List.class));
-  }
-
-  @Test
-  void shouldOpenWithEmptyKafkaConsumer() {
-    kafkaConsumer = null;
-    reader.open();
   }
 
   @Test
