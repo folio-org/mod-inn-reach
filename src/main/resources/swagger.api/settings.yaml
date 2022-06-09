@@ -1083,6 +1083,46 @@ paths:
         required: true
       parameters:
         - $ref: 'api-common.yaml#/components/parameters/centralServerId'
+  /central-servers/{centralServerId}/paging-slip-template:
+    get:
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/pagingSlipTemplateDTO"
+        '404':
+          $ref: "api-common.yaml#/components/responses/trait_response_404"
+        '500':
+          $ref: "api-common.yaml#/components/responses/trait_response_500"
+      description: Get Paging Slip Template
+      operationId: getPagingSlipTemplate
+      tags:
+        - paging-slip-template
+      parameters:
+        - $ref: 'api-common.yaml#/components/parameters/centralServerId'
+    put:
+      responses:
+        '204':
+          description: No content
+        '400':
+          $ref: "api-common.yaml#/components/responses/trait_response_validation_400"
+        '404':
+          $ref: "api-common.yaml#/components/responses/trait_response_404"
+        '500':
+          $ref: "api-common.yaml#/components/responses/trait_response_500"
+      description: Update Paging Slip Template
+      operationId: updatePagingSlipTemplate
+      tags:
+        - paging-slip-template
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/pagingSlipTemplateDTO"
+      parameters:
+        - $ref: 'api-common.yaml#/components/parameters/centralServerId'
 components:
   schemas:
     centralServerDTO:
@@ -1129,6 +1169,8 @@ components:
       $ref: schemas/innReachRecallUserDTO.json
     visiblePatronFieldConfigurationDTO:
       $ref: schemas/visiblePatronFieldConfigurationDTO.json
+    pagingSlipTemplateDTO:
+      $ref: schemas/pagingSlipTemplateDTO.json
   parameters:
     libraryId:
       name: libraryId
