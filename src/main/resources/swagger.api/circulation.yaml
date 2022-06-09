@@ -864,6 +864,25 @@ paths:
       parameters:
         - $ref: 'api-common.yaml#/components/parameters/id'
         - $ref: 'circulation.yaml#/components/parameters/itemId'
+  /paging-slips/{servicePointId}:
+    get:
+      description: Get a list of available tokens for INN-Reach paging slips
+      operationId: getPagingSlips
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/pagingSlipsDTO"
+        '404':
+          $ref: "api-common.yaml#/components/responses/trait_response_404"
+        '500':
+          $ref: "api-common.yaml#/components/responses/trait_response_500"
+      tags:
+        - paging-slip
+      parameters:
+        - $ref: 'circulation.yaml#/components/parameters/servicePointId'
 components:
   schemas:
     code:
@@ -953,6 +972,8 @@ components:
       $ref: schemas/cancelTransactionHoldDTO.json
     holdingSourceDTO:
       $ref: schemas/inventorystorage/holdingSourceDTO.json
+    pagingSlipsDTO:
+      $ref: schemas/pagingSlipsDTO.json
   parameters:
     bibId:
       name: bibId

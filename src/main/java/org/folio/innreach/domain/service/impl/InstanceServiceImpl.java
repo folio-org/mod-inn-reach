@@ -1,8 +1,11 @@
 package org.folio.innreach.domain.service.impl;
 
+import static org.folio.innreach.util.CqlHelper.matchAny;
 import static org.folio.innreach.util.ListUtils.getFirstItem;
 
+import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 import lombok.RequiredArgsConstructor;
@@ -21,19 +24,24 @@ public class InstanceServiceImpl implements InstanceService {
   @Override
   public InventoryInstanceDTO queryInstanceByHrid(String instanceHrid) {
     return getFirstItem(inventoryClient.queryInstanceByHrid(instanceHrid))
-        .orElseThrow(() -> new IllegalArgumentException("No instance found by hrid " + instanceHrid));
+      .orElseThrow(() -> new IllegalArgumentException("No instance found by hrid " + instanceHrid));
   }
 
   @Override
   public InventoryInstanceDTO create(InventoryInstanceDTO instance) {
     inventoryClient.createInstance(instance);
     return getFirstItem(inventoryClient.queryInstanceByHrid(instance.getHrid()))
-        .orElseThrow(() -> new IllegalArgumentException("Can't create instance with hrid: " + instance.getHrid()));
+      .orElseThrow(() -> new IllegalArgumentException("Can't create instance with hrid: " + instance.getHrid()));
   }
 
   @Override
   public Optional<InventoryInstanceDTO> find(UUID uuid) {
     return inventoryClient.findInstance(uuid);
+  }
+
+  @Override
+  public List<InventoryInstanceDTO> findInstancesByIds(Set<UUID> instanceIds, int limit) {
+    return inventoryClient.queryInstancesByIds(matchAny(instanceIds), limit).getResult();
   }
 
   @Override

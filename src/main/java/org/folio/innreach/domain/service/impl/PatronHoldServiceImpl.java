@@ -17,7 +17,7 @@ import org.folio.innreach.domain.dto.folio.inventory.InventoryInstanceDTO;
 import org.folio.innreach.domain.dto.folio.inventory.InventoryInstanceDTO.ContributorDTO;
 import org.folio.innreach.domain.dto.folio.inventory.InventoryItemDTO;
 import org.folio.innreach.domain.dto.folio.inventory.InventoryItemDTO.MaterialType;
-import org.folio.innreach.domain.dto.folio.inventory.InventoryItemDTO.PermanentLoanType;
+import org.folio.innreach.domain.dto.folio.inventory.InventoryItemDTO.LoanType;
 import org.folio.innreach.domain.dto.folio.inventory.InventoryItemStatus;
 import org.folio.innreach.domain.entity.InnReachTransaction;
 import org.folio.innreach.domain.entity.TransactionHold;
@@ -217,7 +217,7 @@ public class PatronHoldServiceImpl implements PatronHoldService {
       .hrid(itemHrid)
       .discoverySuppress(true)
       .materialType(new MaterialType(materialTypeId, null))
-      .permanentLoanType(new PermanentLoanType(centralServer.getLoanTypeId(), null))
+      .permanentLoanType(new LoanType(centralServer.getLoanTypeId(), null))
       .status(InventoryItemStatus.AVAILABLE)
       .build();
   }
@@ -231,7 +231,7 @@ public class PatronHoldServiceImpl implements PatronHoldService {
   private ContributorDTO getInstanceContributor() {
     var author = inventoryService.queryContributorTypeByName(INN_REACH_AUTHOR);
 
-    return new ContributorDTO(author.getId(), author.getName());
+    return new ContributorDTO(author.getId(), author.getName(), false);
   }
 
   private UUID getHoldingSourceId() {

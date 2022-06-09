@@ -1,10 +1,11 @@
 package org.folio.innreach.domain.service;
 
+import java.util.Set;
 import java.util.UUID;
 
-import org.folio.innreach.domain.dto.folio.ResultList;
 import org.springframework.scheduling.annotation.Async;
 
+import org.folio.innreach.domain.dto.folio.ResultList;
 import org.folio.innreach.domain.dto.folio.User;
 import org.folio.innreach.domain.dto.folio.circulation.RequestDTO;
 import org.folio.innreach.domain.dto.folio.circulation.RequestDTO.RequestType;
@@ -41,4 +42,6 @@ public interface RequestService {
   void validateItemAvailability(InventoryItemDTO item);
 
   ResultList<RequestDTO> getRequestsByItemId(UUID itemId);
+
+  ResultList<RequestDTO> findNotFilledRequestsByIds(Set<UUID> requestIds, int limit);
 }
