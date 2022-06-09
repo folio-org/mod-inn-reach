@@ -43,7 +43,7 @@ public class IterationEventReaderFactory {
     Properties props = new Properties();
     props.putAll(kafkaProperties.buildConsumerProperties());
     props.put(GROUP_ID_CONFIG, jobProperties.getReaderGroupId());
-    JsonDeserializer<InstanceIterationEvent> deserializer = new JsonDeserializer<>(mapper);
+    JsonDeserializer<InstanceIterationEvent> deserializer = new JsonDeserializer<>(InstanceIterationEvent.class, mapper);
 
     var topic = String.format("%s.%s.%s",
       folioEnv.getEnvironment(), tenantId, jobProperties.getReaderTopic());
