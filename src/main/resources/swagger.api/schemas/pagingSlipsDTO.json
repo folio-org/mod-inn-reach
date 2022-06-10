@@ -107,6 +107,7 @@
           },
           "slip": {
             "type": "object",
+            "description": "Slip info",
             "properties": {
               "name": {
                 "description": "Slip name",

@@ -211,24 +211,24 @@ public class PagingSlipServiceImpl implements PagingSlipService {
   private String getPatronTypeDescription(Map<String, List<PatronType>> patronTypes, String centralServerCode, Integer centralPatronType) {
     return patronTypes.get(centralServerCode).stream()
       .filter(patronType -> patronType.getCentralPatronType().equals(centralPatronType))
-      .findFirst()
       .map(PatronType::getDescription)
+      .findFirst()
       .orElse(null);
   }
 
   private String getAgencyDescription(Map<String, List<Agency>> centralAgencies, String centralServerCode, String agencyCode) {
     return centralAgencies.get(centralServerCode).stream()
       .filter(agency -> agency.getAgencyCode().equals(agencyCode))
-      .findFirst()
       .map(Agency::getDescription)
+      .findFirst()
       .orElse(null);
   }
 
   private String getPrimaryContributorName(InventoryInstanceDTO instance) {
     return instance.getContributors().stream()
       .filter(InventoryInstanceDTO.ContributorDTO::getPrimary)
-      .findFirst()
       .map(InventoryInstanceDTO.ContributorDTO::getName)
+      .findFirst()
       .orElse(null);
   }
 
