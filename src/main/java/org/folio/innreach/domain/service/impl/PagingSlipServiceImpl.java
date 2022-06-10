@@ -208,6 +208,7 @@ public class PagingSlipServiceImpl implements PagingSlipService {
       .collect(Collectors.toSet());
   }
 
+  @SuppressWarnings("squid:S2637")
   private String getPatronTypeDescription(Map<String, List<PatronType>> patronTypes, String centralServerCode, Integer centralPatronType) {
     return patronTypes.get(centralServerCode).stream()
       .filter(patronType -> patronType.getCentralPatronType().equals(centralPatronType))
@@ -216,6 +217,7 @@ public class PagingSlipServiceImpl implements PagingSlipService {
       .orElse(null);
   }
 
+  @SuppressWarnings("squid:S2637")
   private String getAgencyDescription(Map<String, List<Agency>> centralAgencies, String centralServerCode, String agencyCode) {
     return centralAgencies.get(centralServerCode).stream()
       .filter(agency -> agency.getAgencyCode().equals(agencyCode))

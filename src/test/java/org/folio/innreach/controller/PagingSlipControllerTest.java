@@ -120,22 +120,17 @@ class PagingSlipControllerTest extends BaseControllerTest {
       "/inn-reach/paging-slips/{servicePointId}", PagingSlipsDTO.class, UUID.randomUUID()
     );
 
-    assertNotNull(responseEntity);
     assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
 
     var pagingSlips = responseEntity.getBody();
-    assertNotNull(pagingSlips);
     assertEquals(1, pagingSlips.getTotalRecords());
 
     var pagingSlip = pagingSlips.getPagingSlips().get(0);
-    assertNotNull(pagingSlip);
 
     var slip = pagingSlip.getSlip();
-    assertNotNull(slip);
     assertEquals("INN-Reach Paging Slip - " + PRE_POPULATED_CENTRAL_SERVER_NAME, slip.getName());
 
     var itemSlip = pagingSlip.getItem();
-    assertNotNull(itemSlip);
     assertEquals(item.getEffectiveLocation().getName(), itemSlip.getEffectiveLocationFolioName());
     assertEquals(item.getTitle(), itemSlip.getTitle());
     assertEquals(item.getBarcode(), itemSlip.getBarcode());

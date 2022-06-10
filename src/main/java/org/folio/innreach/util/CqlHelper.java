@@ -5,6 +5,9 @@ import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import lombok.experimental.UtilityClass;
+
+@UtilityClass
 public class CqlHelper {
 
   public static String matchAny(Collection<UUID> values) {
