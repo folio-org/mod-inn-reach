@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import org.folio.innreach.client.config.FolioFeignClientConfig;
 import org.folio.innreach.domain.dto.folio.ResultList;
@@ -26,6 +27,9 @@ public interface CirculationClient {
 
   @GetMapping("/requests?query=(itemId=={itemId})")
   ResultList<RequestDTO> queryRequestsByItemId(@PathVariable("itemId") UUID itemId);
+
+  @GetMapping("/requests?query=id=({requestIds}) and status==\"Open - Not yet filled\"")
+  ResultList<RequestDTO> queryNotFilledRequestsByIds(@PathVariable("requestIds") String requestIds, @RequestParam("limit") int limit);
 
   @GetMapping("/requests/{requestId}")
   Optional<RequestDTO> findRequest(@PathVariable("requestId") UUID requestId);
