@@ -28,6 +28,7 @@ import static org.folio.innreach.domain.dto.folio.inventory.InventoryItemStatus.
 import static org.folio.innreach.domain.dto.folio.inventory.InventoryItemStatus.UNKNOWN;
 import static org.folio.innreach.domain.dto.folio.inventory.InventoryItemStatus.WITHDRAWN;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.CANCEL_REQUEST;
+import static org.folio.innreach.util.CqlHelper.matchAny;
 
 import java.time.Instant;
 import java.time.OffsetDateTime;
@@ -286,6 +287,11 @@ public class RequestServiceImpl implements RequestService {
   @Override
   public ResultList<RequestDTO> getRequestsByItemId(UUID itemId) {
     return circulationClient.queryRequestsByItemId(itemId);
+  }
+
+  @Override
+  public ResultList<RequestDTO> findNotFilledRequestsByIds(Set<UUID> requestIds, int limit) {
+    return circulationClient.queryNotFilledRequestsByIds(matchAny(requestIds), limit);
   }
 
   private void cancelRequest(RequestDTO request, UUID reasonId, String reasonDetails) {

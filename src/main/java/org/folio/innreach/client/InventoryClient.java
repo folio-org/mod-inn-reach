@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import org.folio.innreach.client.config.InventoryFeignClientConfig;
 import org.folio.innreach.domain.dto.folio.ResultList;
@@ -41,5 +42,13 @@ public interface InventoryClient {
 
   @GetMapping("/items?query=barcode=={barcode}")
   ResultList<InventoryItemDTO> getItemByBarcode(@PathVariable("barcode") String barcode);
+
+  @GetMapping("/items?query=id=({itemIds}) and effectiveLocationId=({locationIds})")
+  ResultList<InventoryItemDTO> queryItemsByIdsAndLocations(@PathVariable("itemIds") String itemIdKey,
+                                                           @PathVariable("locationIds") String locationIdKey,
+                                                           @RequestParam("limit") int limit);
+
+  @GetMapping("/instances?query=id=({instanceIds})")
+  ResultList<InventoryInstanceDTO> queryInstancesByIds(@PathVariable("instanceIds") String instanceIdKey, @RequestParam("limit") int limit);
 
 }

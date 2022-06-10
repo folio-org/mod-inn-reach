@@ -1,0 +1,11 @@
+{
+  "status": "ok",
+  "reason": "success",
+  "errors": [],
+  "patronTypeList": [
+    {
+      "centralPatronType": 1,
+      "description": "Patron"
+    }
+  ]
+}
