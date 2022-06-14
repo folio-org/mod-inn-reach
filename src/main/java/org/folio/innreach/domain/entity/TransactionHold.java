@@ -65,6 +65,9 @@ public abstract class TransactionHold extends Auditable implements Identifiable<
   @Column(name = "title")
   private String title;
 
+  @Column(name = "author")
+  private String author;
+
   @Column(name = "folio_patron_id")
   protected UUID folioPatronId;
 

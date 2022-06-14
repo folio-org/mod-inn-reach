@@ -146,6 +146,7 @@ public class CirculationServiceImpl implements CirculationService {
       var materialType = materialService.findByCentralServerAndMaterialType(centralServerId, materialTypeId);
       itemHold.setCentralItemType(materialType.getCentralItemType());
       itemHold.setTitle(truncate(item.getTitle(), 255));
+      itemHold.setAuthor(truncate(item.getAuthor(), 255));
       transaction.setHold(itemHold);
       transactionRepository.save(transaction);
     } catch (Exception e) {

@@ -82,17 +82,13 @@ public class InnReachTransactionSpecification {
       var lowerCaseKeyword = keyword.toLowerCase();
 
       var hold = transaction.join("hold");
-      var localHold = cb.treat(hold, TransactionLocalHold.class);
-      var patronHold = cb.treat(hold, TransactionPatronHold.class);
 
       var itemIdMatch = cb.equal(hold.get("itemId"), keyword);
       var patronIdMatch = cb.equal(hold.get("patronId"), keyword);
       var trackingIdMatch = cb.equal(transaction.get("trackingId"), keyword);
       var patronBarcodeMatch = cb.equal(hold.get("folioPatronBarcode"), keyword);
       var itemBarcodeMatch = cb.equal(hold.get("folioItemBarcode"), keyword);
-      var itemAuthorLike = cb.or(
-        cb.like(cb.lower(localHold.get("authorLocal")), "%" + lowerCaseKeyword + "%"),
-        cb.like(cb.lower(patronHold.get("authorPatron")), "%" + lowerCaseKeyword + "%"));
+      var itemAuthorLike = cb.like(cb.lower(hold.get("author")), "%" + lowerCaseKeyword + "%");
       var itemTitleLike = cb.like(cb.lower(hold.get("title")), "%" + lowerCaseKeyword + "%");
 
       return cb.or(itemIdMatch, patronIdMatch, trackingIdMatch, patronBarcodeMatch, itemBarcodeMatch, itemAuthorLike, itemTitleLike);
