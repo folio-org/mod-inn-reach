@@ -1069,6 +1069,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     assertNotNull(responseBody);
     assertNotNull(responseBody.getHold().getCentralPatronType());
     assertNotNull(responseBody.getHold().getPatronName());
+    assertNotNull(responseBody.getHold().getAuthor());
   }
 
   @Test

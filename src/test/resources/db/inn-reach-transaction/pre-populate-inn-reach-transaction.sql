@@ -25,8 +25,8 @@ folio_item_barcode, folio_patron_barcode, folio_instance_id, folio_holding_id, c
 INSERT INTO transaction_patron_hold (id, author, call_number, shipped_item_barcode) VALUES
 ('76834d5a-08e8-45ea-84ca-4d9b10aa340c', 'author1', '0123456789', 'ABC-abc-1234');
 
-INSERT INTO transaction_item_hold (id) VALUES
-('891bfff3-ba79-4beb-8c25-f714f14c6a31');
+INSERT INTO transaction_item_hold (id, author) VALUES
+('891bfff3-ba79-4beb-8c25-f714f14c6a31', 'author1');
 
 INSERT INTO transaction_local_hold (id, patron_home_library, patron_phone, author, call_number) VALUES
 ('709c1075-0378-48af-a682-b4e7ac170423', 'patronHomeLibrary1', null, 'author1', '0123456789');
