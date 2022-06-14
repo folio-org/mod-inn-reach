@@ -4,7 +4,7 @@
   <parent>
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-parent</artifactId>
-    <version>2.5.3</version>
+    <version>2.7.0</version>
     <relativePath />
   </parent>
   <groupId>org.folio</groupId>
@@ -21,27 +21,33 @@
   </licenses>
 
   <properties>
+    <!-- runtime dependencies -->
+    <folio-spring-base.version>4.1.0</folio-spring-base.version>
+    <spring-cloud-starter-openfeign.version>3.1.2</spring-cloud-starter-openfeign.version>
+    <commons-collections4.version>4.4</commons-collections4.version>
+    <mapstruct.version>1.4.2.Final</mapstruct.version>
+    <marc4j.version>2.9.2</marc4j.version>
+    <coffee-boots.version>3.0.0</coffee-boots.version>
+    <logbook.version>2.14.0</logbook.version>
+    <springfox-boot-starter.version>3.0.0</springfox-boot-starter.version>
+
+    <!-- test dependencies -->
+    <testcontainers.version>1.17.2</testcontainers.version>
+    <wiremock.version>2.33.2</wiremock.version>
+    <awaitility.version>4.2.0</awaitility.version>
+    <junit-extensions.version>2.5.0</junit-extensions.version>
+    <easy-random.version>5.0.0</easy-random.version>
+
+    <!-- plugins -->
+    <openapi-generator.version>4.3.1</openapi-generator.version>
+
+    <!-- other properties -->
     <java.version>11</java.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-    <folio-spring-base.version>1.0.5</folio-spring-base.version>
-    <openapi-generator.version>4.3.1</openapi-generator.version>
     <openapi.settings.file>${project.basedir}/src/main/resources/swagger.api/settings.yaml</openapi.settings.file>
     <openapi.contribution.file>${project.basedir}/src/main/resources/swagger.api/contribution.yaml</openapi.contribution.file>
     <openapi.circulation.file>${project.basedir}/src/main/resources/swagger.api/circulation.yaml</openapi.circulation.file>
-    <mapstruct.version>1.4.2.Final</mapstruct.version>
-    <commons-collections4.version>4.4</commons-collections4.version>
-    <testcontainers.version>1.16.2</testcontainers.version>
-    <easy-random-core.version>5.0.0</easy-random-core.version>
-    <marc4j.version>2.9.2</marc4j.version>
-    <coffee-boots.version>2.2.0</coffee-boots.version>
-    <spring-kafka.version>2.7.6</spring-kafka.version>
-    <spring-feign.version>3.0.5</spring-feign.version>
-    <wiremock.version>2.31.0</wiremock.version>
-    <awaitility.version>4.1.1</awaitility.version>
-    <junit-extensions.version>2.5.0</junit-extensions.version>
-    <log4j2.version>2.16.0</log4j2.version>
-    <logbook.version>2.14.0</logbook.version>
     <argLine />
     <sonar.exclusions>
       src/main/java/org/folio/innreach/controller/TenantController.java,
@@ -110,12 +116,17 @@
     <dependency>
       <groupId>org.springframework.kafka</groupId>
       <artifactId>spring-kafka</artifactId>
-      <version>${spring-kafka.version}</version>
     </dependency>
     <dependency>
       <groupId>org.springframework.cloud</groupId>
       <artifactId>spring-cloud-starter-openfeign</artifactId>
-      <version>${spring-feign.version}</version>
+      <version>${spring-cloud-starter-openfeign.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>io.springfox</groupId>
+      <artifactId>springfox-boot-starter</artifactId>
+      <version>${springfox-boot-starter.version}</version>
     </dependency>
 
     <dependency>
@@ -208,13 +219,12 @@
     <dependency>
       <groupId>org.springframework.kafka</groupId>
       <artifactId>spring-kafka-test</artifactId>
-      <version>${spring-kafka.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.jeasy</groupId>
       <artifactId>easy-random-core</artifactId>
-      <version>${easy-random-core.version}</version>
+      <version>${easy-random.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -303,7 +313,7 @@
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>build-helper-maven-plugin</artifactId>
-        <version>3.2.0</version>
+        <version>3.3.0</version>
         <executions>
           <execution>
             <phase>generate-sources</phase>
@@ -414,7 +424,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
-        <version>3.0.0-M5</version>
+        <version>3.0.0-M7</version>
         <configuration>
           <useSystemClassLoader>false</useSystemClassLoader>
           <argLine>@{argLine} -Dfile.encoding=UTF-8</argLine>
@@ -424,13 +434,34 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-release-plugin</artifactId>
-        <version>3.0.0-M1</version>
+        <version>3.0.0-M6</version>
         <configuration>
           <preparationGoals>clean verify</preparationGoals>
           <tagNameFormat>v@{project.version}</tagNameFormat>
           <pushChanges>false</pushChanges>
           <localCheckout>true</localCheckout>
         </configuration>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-enforcer-plugin</artifactId>
+        <version>3.1.0</version>
+        <executions>
+          <execution>
+            <id>enforce-maven</id>
+            <goals>
+              <goal>enforce</goal>
+            </goals>
+            <configuration>
+              <rules>
+                <requireMavenVersion>
+                  <version>3.1.1</version>
+                </requireMavenVersion>
+              </rules>
+            </configuration>
+          </execution>
+        </executions>
       </plugin>
 
     </plugins>
