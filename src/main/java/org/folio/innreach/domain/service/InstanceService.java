@@ -11,4 +11,6 @@ public interface InstanceService extends BasicService<UUID, InventoryInstanceDTO
   InventoryInstanceDTO queryInstanceByHrid(String instanceHrid);
 
   List<InventoryInstanceDTO> findInstancesByIds(Set<UUID> instanceIds, int limit);
+
+  String getAuthor(InventoryInstanceDTO instance);
 }

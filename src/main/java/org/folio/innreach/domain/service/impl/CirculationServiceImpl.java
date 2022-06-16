@@ -46,6 +46,27 @@ import javax.persistence.EntityExistsException;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.springframework.beans.BeanUtils;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
+import org.springframework.util.Assert;
+
+import org.folio.innreach.domain.dto.folio.circulation.RenewByIdDTO;
+import org.folio.innreach.domain.dto.folio.inventory.InventoryItemDTO;
+import org.folio.innreach.domain.entity.InnReachTransaction;
+import org.folio.innreach.domain.entity.InnReachTransaction.TransactionState;
+import org.folio.innreach.domain.entity.InnReachTransaction.TransactionType;
+import org.folio.innreach.domain.entity.LocalAgency;
+import org.folio.innreach.domain.entity.TransactionHold;
+import org.folio.innreach.domain.event.CancelRequestEvent;
+import org.folio.innreach.domain.event.RecallRequestEvent;
+import org.folio.innreach.domain.exception.CirculationException;
+import org.folio.innreach.domain.exception.EntityNotFoundException;
+import org.folio.innreach.domain.service.CentralServerService;
+import org.folio.innreach.domain.service.CirculationService;
+import org.folio.innreach.domain.service.HoldingsService;
 import org.folio.innreach.domain.service.InnReachRecallUserService;
 import org.springframework.beans.BeanUtils;
 import org.springframework.context.ApplicationEventPublisher;
@@ -146,7 +167,6 @@ public class CirculationServiceImpl implements CirculationService {
       var materialType = materialService.findByCentralServerAndMaterialType(centralServerId, materialTypeId);
       itemHold.setCentralItemType(materialType.getCentralItemType());
       itemHold.setTitle(truncate(item.getTitle(), 255));
-      itemHold.setAuthor(truncate(item.getAuthor(), 255));
       transaction.setHold(itemHold);
       transactionRepository.save(transaction);
     } catch (Exception e) {

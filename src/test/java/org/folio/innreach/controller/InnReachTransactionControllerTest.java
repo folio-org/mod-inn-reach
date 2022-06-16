@@ -646,7 +646,6 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     var inventoryItemDTO = mockInventoryClient();
     inventoryItemDTO.setStatus(IN_TRANSIT);
     inventoryItemDTO.setTitle(randomAlphanumeric(500));
-    inventoryItemDTO.setAuthor("author1");
     var requestDTO = createRequestDTO();
     requestDTO.setItemId(inventoryItemDTO.getId());
     when(circulationClient.queryRequestsByItemId(inventoryItemDTO.getId())).thenReturn(ResultList.of(1,
@@ -698,7 +697,6 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
 
     assertEquals(inventoryItemDTO.getId(), transaction.get().getHold().getFolioItemId());
     assertEquals(StringUtils.truncate(inventoryItemDTO.getTitle(), 255), transaction.get().getHold().getTitle());
-    assertEquals(inventoryItemDTO.getAuthor(), transaction.get().getHold().getAuthor());
     assertNotNull(transaction.get().getHold().getFolioRequestId());
     assertEquals(user.getId(), transaction.get().getHold().getFolioPatronId());
   }

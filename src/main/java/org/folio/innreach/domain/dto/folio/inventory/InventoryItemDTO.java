@@ -30,7 +30,6 @@ public class InventoryItemDTO {
   private Boolean discoverySuppress;
   private String title;
   private String effectiveShelvingOrder;
-  private String author;
 
   @Data
   public static class MaterialType {
