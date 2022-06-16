@@ -71,11 +71,6 @@ public class FolioExecutionContextBuilder {
         }
 
         @Override
-        public String getUserName() {
-          return username;
-        }
-
-        @Override
         public Map<String, Collection<String>> getAllHeaders() {
           return allHeaders;
         }
