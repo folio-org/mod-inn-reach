@@ -22,11 +22,9 @@ public class AuditorAwareImpl implements AuditorAware<AuditableUser> {
 
   @Override
   public Optional<AuditableUser> getCurrentAuditor() {
-    log.debug("Detecting current auditor by: userId = {}, userName = {}", execContext.getUserId(),
-        execContext.getUserName());
+    log.debug("Detecting current auditor by: userId = {}", execContext.getUserId());
 
-    var user = userService.getUserById(execContext.getUserId())
-        .or(() -> userService.getUserByName(execContext.getUserName()));
+    var user = userService.getUserById(execContext.getUserId());
 
     Optional<AuditableUser> auditor = user.map(toAuditor()).or(useSystem());
 
@@ -48,8 +46,8 @@ public class AuditorAwareImpl implements AuditorAware<AuditableUser> {
 
   private Supplier<Optional<? extends AuditableUser>> useSystem() {
     return () -> {
-      log.warn("Current auditor cannot be determined from execution context by: userId = {}, userName = {}. " +
-          "Using SYSTEM user as auditor", execContext.getUserId(), execContext.getUserName());
+      log.warn("Current auditor cannot be determined from execution context by: userId = {}. " +
+          "Using SYSTEM user as auditor", execContext.getUserId());
 
       return Optional.of(AuditableUser.SYSTEM);
     };
