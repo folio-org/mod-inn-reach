@@ -66,6 +66,7 @@ import org.folio.innreach.domain.service.ItemService;
 import org.folio.innreach.domain.service.RequestPreferenceService;
 import org.folio.innreach.domain.service.RequestService;
 import org.folio.innreach.domain.service.CentralServerService;
+import org.folio.innreach.domain.service.InstanceService;
 import org.folio.innreach.dto.Holding;
 import org.folio.innreach.external.service.InnReachExternalService;
 import org.folio.innreach.mapper.InnReachTransactionPickupLocationMapper;
@@ -107,6 +108,7 @@ public class RequestServiceImpl implements RequestService {
 
   private final RequestPreferenceService requestPreferenceService;
   private final CentralServerService centralServerService;
+  private final InstanceService instanceService;
 
   @Async
   @Override
@@ -311,6 +313,9 @@ public class RequestServiceImpl implements RequestService {
     hold.setFolioItemId(item.getId());
     hold.setFolioItemBarcode(item.getBarcode());
     if (holding != null) {
+      var instance = instanceService.find(holding.getInstanceId());
+      var author = instanceService.getAuthor(instance.get());
+      hold.setAuthor(author);
       hold.setFolioHoldingId(holding.getId());
       hold.setFolioInstanceId(holding.getInstanceId());
     }
