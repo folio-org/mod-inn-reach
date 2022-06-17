@@ -8,8 +8,8 @@ import lombok.Getter;
 @Getter
 @Builder(toBuilder = true)
 public class SystemUser {
-  private final UUID id;
-  private final String username;
+  private final UUID userId;
+  private final String userName;
   private final String token;
   private final String okapiUrl;
   private final String tenantId;

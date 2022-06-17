@@ -36,20 +36,20 @@ public class SystemUserService {
     log.info("Attempting to issue token for system user [tenantId={}]", tenantId);
     var systemUser = SystemUser.builder()
       .tenantId(tenantId)
-      .username(systemUserConf.getUsername())
+      .userName(systemUserConf.getUsername())
       .okapiUrl(okapiUrl)
       .build();
 
     var token = authService.loginSystemUser(systemUser);
     log.info("Token for system user has been issued [tenantId={}]", tenantId);
 
-    var userId = userService.getUserByName(systemUser.getUsername())
-        .orElseThrow(() -> new IllegalArgumentException("System user is not found: name = " + systemUser.getUsername()))
+    var userId = userService.getUserByName(systemUser.getUserName())
+        .orElseThrow(() -> new IllegalArgumentException("System user is not found: name = " + systemUser.getUserName()))
         .getId();
 
     return systemUser.toBuilder()
       .token(token)
-      .id(userId)
+      .userId(userId)
       .build();
   }
 

@@ -3,6 +3,8 @@ package org.folio.innreach.domain.service.impl;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 
+import java.util.UUID;
+
 import org.junit.jupiter.api.Test;
 
 import org.folio.innreach.domain.dto.folio.SystemUser;
@@ -22,15 +24,18 @@ class FolioExecutionContextBuilderTest {
 
   @Test
   void canCreateSystemUserContext() {
+    UUID userId = UUID.randomUUID();
+
     var systemUser = SystemUser.builder()
-      .token("token").username("username")
-      .okapiUrl("okapi").tenantId("tenant")
+      .token("token").okapiUrl("okapi")
+      .userName("username").userId(userId)
+      .tenantId("tenant")
       .build();
     var context = builder.forSystemUser(systemUser);
 
     assertThat(context.getTenantId()).isEqualTo("tenant");
     assertThat(context.getToken()).isEqualTo("token");
-    assertThat(context.getUserName()).isEqualTo("username");
+    assertThat(context.getUserId()).isEqualTo(userId);
     assertThat(context.getOkapiUrl()).isEqualTo("okapi");
 
     assertThat(context.getAllHeaders()).isNotNull();

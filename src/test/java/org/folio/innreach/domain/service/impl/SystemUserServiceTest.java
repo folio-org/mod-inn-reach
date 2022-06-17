@@ -11,6 +11,9 @@ import static org.springframework.boot.test.context.SpringBootTest.WebEnvironmen
 
 import static org.folio.spring.integration.XOkapiHeaders.TENANT;
 
+import java.util.Optional;
+import java.util.UUID;
+
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -29,6 +32,8 @@ import org.springframework.test.context.TestPropertySource;
 
 import org.folio.innreach.config.props.SystemUserProperties;
 import org.folio.innreach.domain.dto.folio.SystemUser;
+import org.folio.innreach.domain.dto.folio.User;
+import org.folio.innreach.domain.service.UserService;
 import org.folio.spring.DefaultFolioExecutionContext;
 import org.folio.spring.FolioExecutionContext;
 
@@ -49,6 +54,8 @@ class SystemUserServiceTest {
 
   @MockBean
   private SystemUserAuthService authService;
+  @MockBean
+  private UserService userService;
 
 
   @BeforeEach
@@ -67,13 +74,19 @@ class SystemUserServiceTest {
   void shouldGetAndCacheSystemUser() {
     when(authService.loginSystemUser(any(SystemUser.class))).thenReturn(AUTH_TOKEN);
 
+    var user = new User();
+    user.setUsername(USERNAME);
+    user.setId(UUID.randomUUID());
+    when(userService.getUserByName(USERNAME)).thenReturn(Optional.of(user));
+
     var systemUser = systemUserService.getSystemUser(TENANT_ID);
 
     Assertions.assertThat(systemUser).isNotNull();
     Assertions.assertThat(systemUser.getToken()).isNotNull();
     assertThat(systemUser.getTenantId(), is(TENANT_ID));
     assertThat(systemUser.getToken(), is(AUTH_TOKEN));
-    assertThat(systemUser.getUsername(), is(USERNAME));
+    assertThat(systemUser.getUserName(), is(USERNAME));
+    assertThat(systemUser.getUserId(), is(user.getId()));
 
     Assertions.assertThat(cacheManager.getCache(CACHE_NAME).get(TENANT_ID, SystemUser.class))
       .isEqualTo(systemUser);

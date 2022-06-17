@@ -63,7 +63,7 @@ public class SystemUserAuthService {
     return executeTenantScoped(contextBuilder.forSystemUser(systemUser), () -> {
 
       AuthnClient.UserCredentials creds = AuthnClient.UserCredentials
-        .of(systemUser.getUsername(), folioSystemUserConf.getPassword());
+        .of(systemUser.getUserName(), folioSystemUserConf.getPassword());
 
       var response = authnClient.getApiKey(creds);
 
@@ -72,7 +72,7 @@ public class SystemUserAuthService {
       return Optional.ofNullable(tokenHeaders)
         .filter(list -> !CollectionUtils.isEmpty(list))
         .map(list -> list.get(0))
-        .orElseThrow(() -> new IllegalStateException(String.format("User [%s] cannot log in", systemUser.getUsername())));
+        .orElseThrow(() -> new IllegalStateException(String.format("User [%s] cannot log in", systemUser.getUserName())));
 
     });
   }
