@@ -313,8 +313,8 @@ public class RequestServiceImpl implements RequestService {
     hold.setFolioItemId(item.getId());
     hold.setFolioItemBarcode(item.getBarcode());
     if (holding != null) {
-      var instance = instanceService.find(holding.getInstanceId());
-      var author = instanceService.getAuthor(instance.get());
+      var instance = instanceService.find(holding.getInstanceId()).get();
+      var author = instanceService.getAuthor(instance);
       hold.setAuthor(author);
       hold.setFolioHoldingId(holding.getId());
       hold.setFolioInstanceId(holding.getInstanceId());
