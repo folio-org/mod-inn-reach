@@ -11,6 +11,7 @@ import org.folio.innreach.domain.dto.folio.SystemUser;
 import org.folio.spring.FolioModuleMetadata;
 
 class FolioExecutionContextBuilderTest {
+
   private final FolioExecutionContextBuilder builder =
     new FolioExecutionContextBuilder(mock(FolioModuleMetadata.class));
 
@@ -42,4 +43,5 @@ class FolioExecutionContextBuilderTest {
     assertThat(context.getOkapiHeaders()).isNotNull();
     assertThat(context.getFolioModuleMetadata()).isNotNull();
   }
+
 }
