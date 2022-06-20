@@ -1,5 +1,6 @@
 package org.folio.innreach.domain.service.impl;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Primary;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
@@ -13,6 +14,7 @@ import org.folio.tenant.domain.dto.TenantAttributes;
 
 @Service
 @Primary
+@Lazy
 public class CustomTenantService extends TenantService {
 
   private final SystemUserService systemUserService;
