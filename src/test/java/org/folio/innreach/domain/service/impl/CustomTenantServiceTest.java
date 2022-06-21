@@ -76,8 +76,8 @@ class CustomTenantServiceTest {
     mockTenantSchemaName();
     doThrow(new LiquibaseException("failed")).when(folioSpringLiquibase).performLiquibaseUpdate();
 
-    assertThrows(TenantUpgradeException.class,
-            () -> service.createOrUpdateTenant(new TenantAttributes()));
+    TenantAttributes attributes = new TenantAttributes();
+    assertThrows(TenantUpgradeException.class, () -> service.createOrUpdateTenant(attributes));
 
     verify(systemUserService, never()).prepareSystemUser();
     verify(contributionJobRunner, never()).cancelJobs();
