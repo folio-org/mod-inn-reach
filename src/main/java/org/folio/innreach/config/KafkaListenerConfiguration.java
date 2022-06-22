@@ -41,6 +41,8 @@ public class KafkaListenerConfiguration {
 
     JsonDeserializer<DomainEvent> deserializer = new JsonDeserializer<>(mapper);
     deserializer.setTypeResolver(typeResolver);
+    deserializer.setUseTypeHeaders(false);
+    deserializer.addTrustedPackages("*");
 
     var errorDeserializer = new ErrorHandlingDeserializer<>(deserializer);
     errorDeserializer.setFailedDeserializationFunction(

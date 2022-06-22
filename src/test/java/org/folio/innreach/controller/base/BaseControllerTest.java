@@ -5,12 +5,12 @@ import static org.mockito.Mockito.when;
 
 import javax.validation.Valid;
 
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Profile;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.web.bind.annotation.RestController;
@@ -44,8 +44,15 @@ public class BaseControllerTest {
   static class TestTenantController implements TenantApi {
 
     @Override
-    public ResponseEntity<String> postTenant(@Valid TenantAttributes tenantAttributes) {
-      return ResponseEntity.ok("OK");
+    public ResponseEntity<Void> deleteTenant(String operationId) {
+      return ResponseEntity.noContent().build();
     }
+
+    @Override
+    public ResponseEntity<Void> postTenant(@Valid TenantAttributes tenantAttributes) {
+      return ResponseEntity.status(HttpStatus.CREATED).build();
+    }
+
   }
+
 }
