@@ -39,21 +39,20 @@ public class SystemUserService {
   @Cacheable(cacheNames = "system-user-cache", sync = true)
   public SystemUser getSystemUser(String tenantId) {
     log.info("Attempting to issue token for system user [tenantId={}]", tenantId);
-    var systemUser = SystemUser.builder()
-      .tenantId(tenantId)
-      .userName(systemUserConf.getUsername())
-      .okapiUrl(okapiUrl)
-      .build();
+
+    var systemUser = new SystemUser();
+    systemUser.setTenantId(tenantId);
+    systemUser.setUserName(systemUserConf.getUsername());
+    systemUser.setOkapiUrl(okapiUrl);
 
     var token = authService.loginSystemUser(systemUser);
     log.info("Token for system user has been issued [tenantId={}]", tenantId);
+    systemUser.setToken(token);
 
     var userId = getSystemUserId(systemUser);
+    systemUser.setUserId(userId);
 
-    return systemUser.toBuilder()
-      .token(token)
-      .userId(userId)
-      .build();
+    return systemUser;
   }
 
   private UUID getSystemUserId(SystemUser systemUser) {
