@@ -1,12 +1,12 @@
 package org.folio.innreach.domain.service.impl;
 
-import static org.folio.spring.scope.FolioExecutionScopeExecutionContextManager.beginFolioExecutionContext;
-import static org.folio.spring.scope.FolioExecutionScopeExecutionContextManager.endFolioExecutionContext;
+import static org.folio.innreach.domain.service.impl.FolioExecutionContextUtils.executeWithinContext;
 
 import java.util.concurrent.Callable;
 
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
+
 import org.springframework.stereotype.Service;
 
 import org.folio.spring.FolioExecutionContext;
@@ -27,14 +27,8 @@ public class TenantScopedExecutionService {
    * @return Result of job.
    * @throws RuntimeException - Wrapped exception from the job.
    */
-  @SneakyThrows
   public <T> T executeTenantScoped(String tenantId, Callable<T> job) {
-    try {
-      beginFolioExecutionContext(folioExecutionContext(tenantId));
-      return job.call();
-    } finally {
-      endFolioExecutionContext();
-    }
+    return executeWithinContext(folioExecutionContext(tenantId), job);
   }
 
   @SneakyThrows
@@ -48,4 +42,5 @@ public class TenantScopedExecutionService {
   private FolioExecutionContext folioExecutionContext(String tenant) {
     return contextBuilder.forSystemUser(systemUserService.getSystemUser(tenant));
   }
+
 }

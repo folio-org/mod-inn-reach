@@ -1,5 +1,9 @@
 package org.folio.innreach.domain.service.impl;
 
+import static org.folio.innreach.domain.service.impl.FolioExecutionContextUtils.executeWithinContext;
+
+import java.util.UUID;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 
@@ -19,6 +23,7 @@ public class SystemUserService {
   private final SystemUserAuthService authService;
   private final UserService userService;
   private final SystemUserProperties systemUserConf;
+  private final FolioExecutionContextBuilder contextBuilder;
 
   @Value("${okapi.url}")
   private String okapiUrl;
@@ -43,14 +48,20 @@ public class SystemUserService {
     var token = authService.loginSystemUser(systemUser);
     log.info("Token for system user has been issued [tenantId={}]", tenantId);
 
-    var userId = userService.getUserByName(systemUser.getUserName())
-        .orElseThrow(() -> new IllegalArgumentException("System user is not found: name = " + systemUser.getUserName()))
-        .getId();
+    var userId = getSystemUserId(systemUser);
 
     return systemUser.toBuilder()
       .token(token)
       .userId(userId)
       .build();
+  }
+
+  private UUID getSystemUserId(SystemUser systemUser) {
+    return executeWithinContext(contextBuilder.forSystemUser(systemUser), () ->
+      userService.getUserByName(systemUser.getUserName())
+        .orElseThrow(() -> new IllegalArgumentException("System user is not found: name = " + systemUser.getUserName()))
+        .getId()
+    );
   }
 
 }
