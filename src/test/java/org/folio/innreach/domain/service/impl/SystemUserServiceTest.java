@@ -56,6 +56,8 @@ class SystemUserServiceTest {
   private SystemUserAuthService authService;
   @MockBean
   private UserService userService;
+  @MockBean
+  private FolioExecutionContextBuilder contextBuilder;
 
 
   @BeforeEach
@@ -73,6 +75,8 @@ class SystemUserServiceTest {
   @Test
   void shouldGetAndCacheSystemUser() {
     when(authService.loginSystemUser(any(SystemUser.class))).thenReturn(AUTH_TOKEN);
+
+    when(contextBuilder.forSystemUser(any(SystemUser.class))).thenReturn(new FolioExecutionContext() {});
 
     var user = new User();
     user.setUsername(USERNAME);
