@@ -212,6 +212,13 @@ public class RequestServiceImpl implements RequestService {
     var item = itemService.getItemByHrId(hold.getItemId());
     var requestType = item.getStatus() == AVAILABLE ? PAGE : HOLD;
     var holding = holdingsService.find(item.getHoldingsRecordId()).orElse(null);
+    if (holding != null) {
+      var instance = instanceService.find(holding.getInstanceId()).orElse(null);
+      if (instance != null) {
+        var author = instanceService.getAuthor(instance);
+        hold.setAuthor(author);
+      }
+    }
 
     validateItemAvailability(item);
 
@@ -313,9 +320,6 @@ public class RequestServiceImpl implements RequestService {
     hold.setFolioItemId(item.getId());
     hold.setFolioItemBarcode(item.getBarcode());
     if (holding != null) {
-      var instance = instanceService.find(holding.getInstanceId()).orElse(null);
-      var author = instanceService.getAuthor(instance);
-      hold.setAuthor(author);
       hold.setFolioHoldingId(holding.getId());
       hold.setFolioInstanceId(holding.getInstanceId());
     }
