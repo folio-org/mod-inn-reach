@@ -28,6 +28,7 @@ import static org.folio.innreach.domain.dto.folio.inventory.InventoryItemStatus.
 import static org.folio.innreach.domain.dto.folio.inventory.InventoryItemStatus.UNKNOWN;
 import static org.folio.innreach.domain.dto.folio.inventory.InventoryItemStatus.WITHDRAWN;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.CANCEL_REQUEST;
+import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionType.ITEM;
 import static org.folio.innreach.util.CqlHelper.matchAny;
 
 import java.time.Instant;
@@ -212,13 +213,6 @@ public class RequestServiceImpl implements RequestService {
     var item = itemService.getItemByHrId(hold.getItemId());
     var requestType = item.getStatus() == AVAILABLE ? PAGE : HOLD;
     var holding = holdingsService.find(item.getHoldingsRecordId()).orElse(null);
-    if (holding != null) {
-      var instance = instanceService.find(holding.getInstanceId()).orElse(null);
-      if (instance != null) {
-        var author = instanceService.getAuthor(instance);
-        hold.setAuthor(author);
-      }
-    }
 
     validateItemAvailability(item);
 
@@ -322,6 +316,11 @@ public class RequestServiceImpl implements RequestService {
     if (holding != null) {
       hold.setFolioHoldingId(holding.getId());
       hold.setFolioInstanceId(holding.getInstanceId());
+      var instance = instanceService.find(holding.getInstanceId()).orElse(null);
+      if(transaction.getType() == ITEM && instance != null) {
+        var author = instanceService.getAuthor(instance);
+        hold.setAuthor(author);
+      }
     }
     if (patron != null) {
       hold.setFolioPatronId(patron.getId());
