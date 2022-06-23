@@ -40,6 +40,11 @@
                 "description": "Unique code that identifies the central server",
                 "type": "string"
               },
+              "centralServerId": {
+                "description": "UUID of the central server configuration",
+                "type": "string",
+                "format": "UUID"
+              },
               "localServerCode": {
                 "description": "Unique code that identifies the local server",
                 "type": "string"
