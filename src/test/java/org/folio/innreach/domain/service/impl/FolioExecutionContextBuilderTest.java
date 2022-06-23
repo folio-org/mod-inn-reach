@@ -27,11 +27,13 @@ class FolioExecutionContextBuilderTest {
   void canCreateSystemUserContext() {
     UUID userId = UUID.randomUUID();
 
-    var systemUser = SystemUser.builder()
-      .token("token").okapiUrl("okapi")
-      .userName("username").userId(userId)
-      .tenantId("tenant")
-      .build();
+    var systemUser = new SystemUser();
+    systemUser.setToken("token");
+    systemUser.setOkapiUrl("okapi");
+    systemUser.setUserName("username");
+    systemUser.setUserId(userId);
+    systemUser.setTenantId("tenant");
+
     var context = builder.forSystemUser(systemUser);
 
     assertThat(context.getTenantId()).isEqualTo("tenant");

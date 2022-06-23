@@ -2,19 +2,18 @@ package org.folio.innreach.domain.service.impl;
 
 import static org.springframework.util.CollectionUtils.isEmpty;
 
-import static org.folio.spring.scope.FolioExecutionScopeExecutionContextManager.beginFolioExecutionContext;
-import static org.folio.spring.scope.FolioExecutionScopeExecutionContextManager.endFolioExecutionContext;
+import static org.folio.innreach.domain.service.impl.FolioExecutionContextUtils.executeWithinContext;
 
 import java.nio.charset.StandardCharsets;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.function.Supplier;
 
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.log4j.Log4j2;
+
 import org.apache.commons.io.IOUtils;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.core.io.ClassPathResource;
@@ -27,7 +26,6 @@ import org.folio.innreach.config.props.SystemUserProperties;
 import org.folio.innreach.domain.dto.folio.SystemUser;
 import org.folio.innreach.domain.dto.folio.User;
 import org.folio.innreach.domain.service.UserService;
-import org.folio.spring.FolioExecutionContext;
 import org.folio.spring.integration.XOkapiHeaders;
 
 @Log4j2
@@ -60,7 +58,7 @@ public class SystemUserAuthService {
   }
 
   public String loginSystemUser(SystemUser systemUser) {
-    return executeTenantScoped(contextBuilder.forSystemUser(systemUser), () -> {
+    return executeWithinContext(contextBuilder.forSystemUser(systemUser), () -> {
 
       AuthnClient.UserCredentials creds = AuthnClient.UserCredentials
         .of(systemUser.getUserName(), folioSystemUserConf.getPassword());
@@ -128,15 +126,6 @@ public class SystemUserAuthService {
       .setLastName(folioSystemUserConf.getLastname());
 
     return user;
-  }
-
-  private <T> T executeTenantScoped(FolioExecutionContext context, Supplier<T> job) {
-    try {
-      beginFolioExecutionContext(context);
-      return job.get();
-    } finally {
-      endFolioExecutionContext();
-    }
   }
 
   @SneakyThrows

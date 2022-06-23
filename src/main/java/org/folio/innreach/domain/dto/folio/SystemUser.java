@@ -2,15 +2,13 @@ package org.folio.innreach.domain.dto.folio;
 
 import java.util.UUID;
 
-import lombok.Builder;
-import lombok.Getter;
+import lombok.Data;
 
-@Getter
-@Builder(toBuilder = true)
+@Data
 public class SystemUser {
-  private final UUID userId;
-  private final String userName;
-  private final String token;
-  private final String okapiUrl;
-  private final String tenantId;
+  private UUID userId;
+  private String userName;
+  private String token;
+  private String okapiUrl;
+  private String tenantId;
 }
