@@ -2,18 +2,21 @@ package org.folio.innreach.domain.service.impl;
 
 import static org.apache.commons.lang3.StringUtils.isBlank;
 
+import static org.folio.innreach.util.ListUtils.mapItems;
+
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Function;
 
 import lombok.RequiredArgsConstructor;
-
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import org.folio.innreach.domain.entity.PagingSlipTemplate;
 import org.folio.innreach.domain.exception.EntityNotFoundException;
 import org.folio.innreach.domain.service.PagingSlipTemplateService;
 import org.folio.innreach.dto.PagingSlipTemplateDTO;
+import org.folio.innreach.dto.PagingSlipTemplatesDTO;
 import org.folio.innreach.mapper.PagingSlipTemplateMapper;
 import org.folio.innreach.repository.PagingSlipTemplateRepository;
 
@@ -28,6 +31,16 @@ public class PagingSlipTemplateServiceImpl implements PagingSlipTemplateService 
   public PagingSlipTemplateDTO getByCentralServerId(UUID centralServerId) {
     var template = findTemplate(centralServerId);
     return mapper.toDTO(template);
+  }
+
+  @Transactional(readOnly = true)
+  @Override
+  public PagingSlipTemplatesDTO getAllTemplates() {
+    var templates = mapItems(repository.findAll(), mapper::toDTO);
+
+    return new PagingSlipTemplatesDTO()
+      .pagingSlipTemplates(templates)
+      .totalRecords(templates.size());
   }
 
   @Override
@@ -73,6 +86,6 @@ public class PagingSlipTemplateServiceImpl implements PagingSlipTemplateService 
 
   private boolean isNullOrEmpty(PagingSlipTemplateDTO dto) {
     return dto == null ||
-        (isBlank(dto.getDescription()) && isBlank(dto.getTemplate()));
+      (isBlank(dto.getDescription()) && isBlank(dto.getTemplate()));
   }
 }

@@ -14,24 +14,32 @@ import org.springframework.web.bind.annotation.RestController;
 
 import org.folio.innreach.domain.service.PagingSlipTemplateService;
 import org.folio.innreach.dto.PagingSlipTemplateDTO;
+import org.folio.innreach.dto.PagingSlipTemplatesDTO;
 import org.folio.innreach.rest.resource.PagingSlipTemplateApi;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/inn-reach/central-servers/{centralServerId}/paging-slip-template")
+@RequestMapping("/inn-reach/central-servers")
 public class PagingSlipTemplateController implements PagingSlipTemplateApi {
 
   private final PagingSlipTemplateService service;
 
   @Override
-  @GetMapping
+  @GetMapping("/paging-slip-template")
+  public ResponseEntity<PagingSlipTemplatesDTO> getAllPagingSlipTemplates() {
+    var templates = service.getAllTemplates();
+    return ResponseEntity.ok(templates);
+  }
+
+  @Override
+  @GetMapping("/{centralServerId}/paging-slip-template")
   public ResponseEntity<PagingSlipTemplateDTO> getPagingSlipTemplate(@PathVariable UUID centralServerId) {
     var template = service.getByCentralServerId(centralServerId);
     return ResponseEntity.ok(template);
   }
 
   @Override
-  @PutMapping
+  @PutMapping("/{centralServerId}/paging-slip-template")
   public ResponseEntity<Void> updatePagingSlipTemplate(@PathVariable UUID centralServerId,
                                                        @Valid PagingSlipTemplateDTO dto) {
     service.update(centralServerId, dto);
