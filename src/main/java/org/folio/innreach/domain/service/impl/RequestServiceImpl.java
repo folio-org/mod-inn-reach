@@ -316,15 +316,17 @@ public class RequestServiceImpl implements RequestService {
     if (holding != null) {
       hold.setFolioHoldingId(holding.getId());
       hold.setFolioInstanceId(holding.getInstanceId());
-      var instance = instanceService.find(holding.getInstanceId()).orElse(null);
-      if(transaction.getType() == ITEM && instance != null) {
-        var author = instanceService.getAuthor(instance);
-        hold.setAuthor(author);
-      }
     }
     if (patron != null) {
       hold.setFolioPatronId(patron.getId());
       hold.setFolioPatronBarcode(patron.getBarcode());
+    }
+    if(transaction.getType() == ITEM) {
+      var instance = instanceService.find(request.getInstanceId()).orElse(null);
+      if (instance != null) {
+        var author = instanceService.getAuthor(instance);
+        hold.setAuthor(author);
+      }
     }
     transactionRepository.save(transaction);
   }
