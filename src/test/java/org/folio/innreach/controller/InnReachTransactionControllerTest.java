@@ -663,6 +663,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
       "/inn-reach-transaction/create-item-hold-request.json", TransactionHoldDTO.class);
     itemHoldDTO.setCentralPatronType(PRE_POPULATED_CENTRAL_PATRON_TYPE);
     itemHoldDTO.setItemId(inventoryItemDTO.getHrid());
+    itemHoldDTO.setAuthor("author");
 
     var responseEntity = testRestTemplate.postForEntity(
       "/inn-reach/d2ir/circ/itemhold/{trackingId}/{centralCode}", new HttpEntity<>(itemHoldDTO, headers), InnReachResponseDTO.class, TRACKING_ID,
@@ -699,6 +700,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     assertEquals(StringUtils.truncate(inventoryItemDTO.getTitle(), 255), transaction.get().getHold().getTitle());
     assertNotNull(transaction.get().getHold().getFolioRequestId());
     assertEquals(user.getId(), transaction.get().getHold().getFolioPatronId());
+    assertEquals(itemHoldDTO.getAuthor(), transaction.get().getHold().getAuthor());
   }
 
   @Test
