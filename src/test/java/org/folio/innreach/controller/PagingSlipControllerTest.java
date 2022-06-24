@@ -58,6 +58,7 @@ class PagingSlipControllerTest extends BaseControllerTest {
   private static final String PRE_POPULATED_ITEM_AGENCY_CODE = "asd78";
   private static final Integer PRE_POPULATED_CENTRAL_PATRON_TYPE = 1;
   private static final String PRE_POPULATED_CENTRAL_SERVER_CODE = "d2ir";
+  private static final UUID PRE_POPULATED_CENTRAL_SERVER_ID = UUID.fromString("edab6baf-c696-42b1-89bb-1bbb8759b0d2");
   private static final String PRE_POPULATED_LOCAL_SERVER_CODE = "test1";
   private static final String PRE_POPULATED_PICKUP_LOCATION_CODE = "pickupLocCode2";
   private static final String PRE_POPULATED_PICKUP_LOCATION_NAME = "displayName2";
@@ -146,6 +147,7 @@ class PagingSlipControllerTest extends BaseControllerTest {
     assertEquals(PRE_POPULATED_CENTRAL_PATRON_TYPE, transactionSlip.getPatronTypeCode());
     assertEquals(CENTRAL_PATRON_DESCRIPTION, transactionSlip.getPatronTypeDescription());
     assertEquals(PRE_POPULATED_CENTRAL_SERVER_CODE, transactionSlip.getCentralServerCode());
+    assertEquals(PRE_POPULATED_CENTRAL_SERVER_ID, transactionSlip.getCentralServerId());
     assertEquals(PRE_POPULATED_LOCAL_SERVER_CODE, transactionSlip.getLocalServerCode());
     assertEquals(PRE_POPULATED_ITEM_AGENCY_CODE, transactionSlip.getItemAgencyCode());
     assertEquals(ITEM_AGENCY_DESCRIPTION, transactionSlip.getItemAgencyDescription());

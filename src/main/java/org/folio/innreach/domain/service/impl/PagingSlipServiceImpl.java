@@ -264,6 +264,7 @@ public class PagingSlipServiceImpl implements PagingSlipService {
       .patronTypeCode(centralPatronType)
       .patronTypeDescription(patronTypeDescription)
       .centralServerCode(centralServerCode)
+      .centralServerId(centralServer.getId())
       .localServerCode(centralServer.getLocalServerCode())
       .itemAgencyCode(itemAgencyCode)
       .itemAgencyDescription(itemAgencyDescription)
