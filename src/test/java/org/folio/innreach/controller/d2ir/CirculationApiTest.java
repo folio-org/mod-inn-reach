@@ -195,7 +195,6 @@ class CirculationApiTest extends BaseApiControllerTest {
     stubGet(format(QUERY_INSTANCE_BY_HRID_URL_TEMPLATE, "innewtrackingidd2ir"), "inventory/query-instance-response.json");
     stubGet(INNREACH_LOCALSERVERS_URL, "agency-codes/d2ir-local-servers-response-01.json");
     stubPost(INSTANCES_URL, "inventory/instance-response.json");
-    stubGet(INSTANCES_URL, "inventory/instance-response.json");
     stubGet(format(QUERY_HOLDING_SOURCE_BY_NAME_URL_TEMPLATE, FOLIO_HOLDING_SOURCE), "inventory-storage/holding-sources-response.json");
     stubPost(HOLDINGS_URL, "inventory-storage/holding-response.json");
     stubPost(ITEMS_URL, "inventory/item-response.json");
