@@ -1,35 +1,33 @@
 package org.folio.innreach.domain.service.impl;
 
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.InjectMocks;
+import org.springframework.boot.test.mock.mockito.MockBean;
 
 import java.util.ArrayList;
 
-import static org.junit.Assert.assertEquals;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
+import org.folio.innreach.client.InventoryClient;
 import org.folio.innreach.domain.dto.folio.inventory.InventoryInstanceDTO;
+import org.folio.innreach.domain.service.InstanceService;
 
-@ExtendWith(MockitoExtension.class)
-public class InstanceServiceImplTest {
+import static org.junit.Assert.assertEquals;
 
-  @Mock
-  private InstanceServiceImpl instanceService;
+class InstanceServiceImplTest {
+
+  @MockBean
+  private InventoryClient inventoryClient;
+  @InjectMocks
+  private InstanceService instanceService = new InstanceServiceImpl(inventoryClient);
 
   @Test
   void shouldReturnAuthorFromInstanceEntity() {
-    when(instanceService.getAuthor(any(InventoryInstanceDTO.class))).thenReturn("author1");
 
     var contributor1 = new InventoryInstanceDTO.ContributorDTO();
     contributor1.setName("author1");
-    contributor1.setPrimary(true);
+    contributor1.setPrimary(false);
     var contributor2 = new InventoryInstanceDTO.ContributorDTO();
     contributor2.setName("author2");
-    contributor2.setPrimary(false);
+    contributor2.setPrimary(true);
 
     var contributors = new ArrayList<InventoryInstanceDTO.ContributorDTO>();
     contributors.add(contributor1);
@@ -40,8 +38,7 @@ public class InstanceServiceImplTest {
 
     var author = instanceService.getAuthor(instance);
 
-    assertEquals(contributors.get(0).getName(), author);
+    assertEquals(contributors.get(1).getName(), author);
 
-    verify(instanceService).getAuthor(any(InventoryInstanceDTO.class));
   }
 }

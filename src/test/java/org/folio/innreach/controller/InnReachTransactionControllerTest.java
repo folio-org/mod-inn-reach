@@ -113,7 +113,6 @@ import org.folio.innreach.domain.entity.InnReachTransaction;
 import org.folio.innreach.domain.entity.base.AuditableUser;
 import org.folio.innreach.domain.entity.InnReachTransaction.TransactionState;
 import org.folio.innreach.domain.service.CentralServerService;
-import org.folio.innreach.domain.service.InstanceService;
 import org.folio.innreach.domain.service.InventoryService;
 import org.folio.innreach.domain.service.RequestPreferenceService;
 import org.folio.innreach.domain.service.RequestService;
@@ -2255,71 +2254,6 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     verify(servicePointsUsersClient).findServicePointsUsers(any());
     verify(circulationClient).queryRequestsByItemId(any());
     verify(circulationClient).sendRequest(any());
-  }
-
-  @Test
-  @Sql(scripts = {
-    "classpath:db/central-server/pre-populate-central-server.sql",
-    "classpath:db/mtype-mapping/pre-populate-material-type-mapping.sql",
-    "classpath:db/central-patron-type-mapping/pre-populate-central-patron_type-mapping-table.sql"
-  })
-  void return200HttpCode_and_sendRequest_whenItemHoldTransactionCreatedWithoutInstance() {
-    var inventoryItemDTO = mockInventoryClient();
-    inventoryItemDTO.setStatus(IN_TRANSIT);
-    inventoryItemDTO.setTitle(randomAlphanumeric(500));
-    var requestDTO = createRequestDTO();
-    requestDTO.setItemId(inventoryItemDTO.getId());
-    when(circulationClient.queryRequestsByItemId(inventoryItemDTO.getId())).thenReturn(ResultList.of(1,
-      List.of(requestDTO)));
-    var user = mockUserClient();
-    var requestPreference = new RequestPreferenceDTO(user.getId(), randomUUID());
-    when(requestPreferenceClient.getUserRequestPreference(user.getId())).thenReturn(ResultList.of(1, List.of(requestPreference)));
-    when(circulationClient.sendRequest(any(RequestDTO.class))).then((Answer<RequestDTO>) invocationOnMock -> {
-      var sentRequest = (RequestDTO) invocationOnMock.getArgument(0);
-      sentRequest.setId(randomUUID());
-      return sentRequest;
-    });
-    when(inventoryClient.findInstance(any(UUID.class))).thenReturn(null);
-
-    var itemHoldDTO = deserializeFromJsonFile(
-      "/inn-reach-transaction/create-item-hold-request.json", TransactionHoldDTO.class);
-    itemHoldDTO.setCentralPatronType(PRE_POPULATED_CENTRAL_PATRON_TYPE);
-    itemHoldDTO.setItemId(inventoryItemDTO.getHrid());
-
-    var responseEntity = testRestTemplate.postForEntity(
-      "/inn-reach/d2ir/circ/itemhold/{trackingId}/{centralCode}", new HttpEntity<>(itemHoldDTO, headers), InnReachResponseDTO.class, TRACKING_ID,
-      PRE_POPULATED_CENTRAL_SERVER_CODE);
-
-    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
-    assertTrue(responseEntity.hasBody());
-    assertEquals("ok", responseEntity.getBody().getStatus());
-
-    await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() ->
-      verify(repository, atLeastOnce()).save(
-        argThat((InnReachTransaction t) -> t.getHold().getFolioRequestId() != null)));
-
-    verify(requestService).createItemHoldRequest(TRACKING_ID, PRE_POPULATED_CENTRAL_SERVER_CODE);
-    verify(inventoryClient, times(2)).getItemsByHrId(itemHoldDTO.getItemId());
-    verify(circulationClient).queryRequestsByItemId(inventoryItemDTO.getId());
-    verify(usersClient).query(PRE_POPULATED_USER_BARCODE_QUERY);
-    verify(requestPreferenceClient).getUserRequestPreference(user.getId());
-    verify(circulationClient).sendRequest(any());
-    verify(inventoryClient).findInstance(any());
-
-    var transaction = repository.fetchOneByTrackingId(TRACKING_ID);
-
-    assertTrue(transaction.isPresent());
-    assertEquals(PRE_POPULATED_CENTRAL_SERVER_CODE, transaction.get().getCentralServerCode());
-    assertEquals(InnReachTransaction.TransactionType.ITEM, transaction.get().getType());
-    assertEquals(itemHoldDTO.getItemId(), transaction.get().getHold().getItemId());
-    assertEquals(itemHoldDTO.getItemAgencyCode(), transaction.get().getHold().getItemAgencyCode());
-    assertEquals(transactionPickupLocationMapper.fromString(itemHoldDTO.getPickupLocation()).getDisplayName(),
-      transaction.get().getHold().getPickupLocation().getDisplayName());
-    assertEquals(itemHoldDTO.getTransactionTime(), transaction.get().getHold().getTransactionTime());
-    assertEquals(itemHoldDTO.getPatronName(), transaction.get().getHold().getPatronName());
-
-    assertEquals(StringUtils.truncate(inventoryItemDTO.getTitle(), 255), transaction.get().getHold().getTitle());
-    assertNull(transaction.get().getHold().getAuthor());
   }
 
   private void mockFindRequest(UUID requestId, RequestDTO.RequestStatus status) {
