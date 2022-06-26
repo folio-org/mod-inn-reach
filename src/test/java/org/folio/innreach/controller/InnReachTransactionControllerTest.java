@@ -70,11 +70,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.RandomStringUtils;
-import org.folio.innreach.domain.dto.folio.inventorystorage.ServicePointUserDTO;
-import org.folio.innreach.domain.entity.InnReachTransaction.TransactionState;
-import org.folio.innreach.domain.service.CentralServerService;
-import org.folio.innreach.domain.service.InventoryService;
-import org.folio.innreach.domain.service.RequestPreferenceService;
 import org.folio.innreach.util.DateHelper;
 
 import org.apache.commons.lang3.StringUtils;
@@ -112,9 +107,15 @@ import org.folio.innreach.domain.dto.folio.User;
 import org.folio.innreach.domain.dto.folio.circulation.RequestDTO;
 import org.folio.innreach.domain.dto.folio.inventory.InventoryItemDTO;
 import org.folio.innreach.domain.dto.folio.inventory.InventoryItemStatus;
+import org.folio.innreach.domain.dto.folio.inventorystorage.ServicePointUserDTO;
 import org.folio.innreach.domain.dto.folio.requestpreference.RequestPreferenceDTO;
 import org.folio.innreach.domain.entity.InnReachTransaction;
 import org.folio.innreach.domain.entity.base.AuditableUser;
+import org.folio.innreach.domain.entity.InnReachTransaction.TransactionState;
+import org.folio.innreach.domain.service.CentralServerService;
+import org.folio.innreach.domain.service.InstanceService;
+import org.folio.innreach.domain.service.InventoryService;
+import org.folio.innreach.domain.service.RequestPreferenceService;
 import org.folio.innreach.domain.service.RequestService;
 import org.folio.innreach.domain.service.impl.InnReachTransactionActionNotifier;
 import org.folio.innreach.dto.CancelTransactionHoldDTO;
@@ -233,6 +234,8 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   private ServicePointsClient servicePointsClient;
   @MockBean
   private ServicePointsUsersClient servicePointsUsersClient;
+  @MockBean
+  private InstanceService instanceService;
   @SpyBean
   private RequestService requestService;
   @SpyBean
@@ -663,7 +666,6 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
       "/inn-reach-transaction/create-item-hold-request.json", TransactionHoldDTO.class);
     itemHoldDTO.setCentralPatronType(PRE_POPULATED_CENTRAL_PATRON_TYPE);
     itemHoldDTO.setItemId(inventoryItemDTO.getHrid());
-    itemHoldDTO.setAuthor("author");
 
     var responseEntity = testRestTemplate.postForEntity(
       "/inn-reach/d2ir/circ/itemhold/{trackingId}/{centralCode}", new HttpEntity<>(itemHoldDTO, headers), InnReachResponseDTO.class, TRACKING_ID,
@@ -726,6 +728,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
       sentRequest.setId(randomUUID());
       return sentRequest;
     });
+    when(instanceService.find(any(UUID.class))).thenReturn(null);
 
     var itemHoldDTO = deserializeFromJsonFile(
       "/inn-reach-transaction/create-item-hold-request.json", TransactionHoldDTO.class);
@@ -750,6 +753,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     verify(usersClient).query(PRE_POPULATED_USER_BARCODE_QUERY);
     verify(requestPreferenceClient).getUserRequestPreference(user.getId());
     verify(circulationClient).sendRequest(any());
+    verify(instanceService).find(any());
 
     var transaction = repository.fetchOneByTrackingId(TRACKING_ID);
 
