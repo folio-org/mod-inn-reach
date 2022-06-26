@@ -39,6 +39,5 @@ class InstanceServiceImplTest {
     var author = instanceService.getAuthor(instance);
 
     assertEquals(contributors.get(1).getName(), author);
-
   }
 }
