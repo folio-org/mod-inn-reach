@@ -45,6 +45,15 @@ public class InstanceServiceImpl implements InstanceService {
   }
 
   @Override
+  public String getAuthor(InventoryInstanceDTO instance) {
+    return instance.getContributors().stream()
+      .filter(InventoryInstanceDTO.ContributorDTO::getPrimary)
+      .map(InventoryInstanceDTO.ContributorDTO::getName)
+      .findFirst()
+      .orElse(null);
+  }
+
+  @Override
   public InventoryInstanceDTO update(InventoryInstanceDTO inventoryInstanceDTO) {
     throw new UnsupportedOperationException();
   }

@@ -28,6 +28,7 @@ import static org.folio.innreach.domain.dto.folio.inventory.InventoryItemStatus.
 import static org.folio.innreach.domain.dto.folio.inventory.InventoryItemStatus.UNKNOWN;
 import static org.folio.innreach.domain.dto.folio.inventory.InventoryItemStatus.WITHDRAWN;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.CANCEL_REQUEST;
+import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionType.ITEM;
 import static org.folio.innreach.util.CqlHelper.matchAny;
 
 import java.time.Instant;
@@ -66,6 +67,7 @@ import org.folio.innreach.domain.service.ItemService;
 import org.folio.innreach.domain.service.RequestPreferenceService;
 import org.folio.innreach.domain.service.RequestService;
 import org.folio.innreach.domain.service.CentralServerService;
+import org.folio.innreach.domain.service.InstanceService;
 import org.folio.innreach.dto.Holding;
 import org.folio.innreach.external.service.InnReachExternalService;
 import org.folio.innreach.mapper.InnReachTransactionPickupLocationMapper;
@@ -107,6 +109,7 @@ public class RequestServiceImpl implements RequestService {
 
   private final RequestPreferenceService requestPreferenceService;
   private final CentralServerService centralServerService;
+  private final InstanceService instanceService;
 
   @Async
   @Override
@@ -317,6 +320,13 @@ public class RequestServiceImpl implements RequestService {
     if (patron != null) {
       hold.setFolioPatronId(patron.getId());
       hold.setFolioPatronBarcode(patron.getBarcode());
+    }
+    if(transaction.getType() == ITEM) {
+      var instance = instanceService.find(request.getInstanceId()).orElse(null);
+      if (instance != null) {
+        var author = instanceService.getAuthor(instance);
+        hold.setAuthor(author);
+      }
     }
     transactionRepository.save(transaction);
   }

@@ -70,11 +70,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.RandomStringUtils;
-import org.folio.innreach.domain.dto.folio.inventorystorage.ServicePointUserDTO;
-import org.folio.innreach.domain.entity.InnReachTransaction.TransactionState;
-import org.folio.innreach.domain.service.CentralServerService;
-import org.folio.innreach.domain.service.InventoryService;
-import org.folio.innreach.domain.service.RequestPreferenceService;
 import org.folio.innreach.util.DateHelper;
 
 import org.apache.commons.lang3.StringUtils;
@@ -112,9 +107,14 @@ import org.folio.innreach.domain.dto.folio.User;
 import org.folio.innreach.domain.dto.folio.circulation.RequestDTO;
 import org.folio.innreach.domain.dto.folio.inventory.InventoryItemDTO;
 import org.folio.innreach.domain.dto.folio.inventory.InventoryItemStatus;
+import org.folio.innreach.domain.dto.folio.inventorystorage.ServicePointUserDTO;
 import org.folio.innreach.domain.dto.folio.requestpreference.RequestPreferenceDTO;
 import org.folio.innreach.domain.entity.InnReachTransaction;
+import org.folio.innreach.domain.entity.InnReachTransaction.TransactionState;
 import org.folio.innreach.domain.entity.base.AuditableUser;
+import org.folio.innreach.domain.service.CentralServerService;
+import org.folio.innreach.domain.service.InventoryService;
+import org.folio.innreach.domain.service.RequestPreferenceService;
 import org.folio.innreach.domain.service.RequestService;
 import org.folio.innreach.domain.service.impl.InnReachTransactionActionNotifier;
 import org.folio.innreach.dto.CancelTransactionHoldDTO;
@@ -699,6 +699,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     assertEquals(StringUtils.truncate(inventoryItemDTO.getTitle(), 255), transaction.get().getHold().getTitle());
     assertNotNull(transaction.get().getHold().getFolioRequestId());
     assertEquals(user.getId(), transaction.get().getHold().getFolioPatronId());
+    assertEquals(itemHoldDTO.getAuthor(), transaction.get().getHold().getAuthor());
   }
 
   @Test
@@ -1069,6 +1070,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     assertNotNull(responseBody);
     assertNotNull(responseBody.getHold().getCentralPatronType());
     assertNotNull(responseBody.getHold().getPatronName());
+    assertNotNull(responseBody.getHold().getAuthor());
   }
 
   @Test
