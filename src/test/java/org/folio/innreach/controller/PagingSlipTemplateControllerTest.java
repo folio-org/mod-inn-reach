@@ -22,6 +22,7 @@ import org.springframework.test.context.jdbc.SqlMergeMode;
 
 import org.folio.innreach.controller.base.BaseControllerTest;
 import org.folio.innreach.dto.PagingSlipTemplateDTO;
+import org.folio.innreach.dto.PagingSlipTemplatesDTO;
 import org.folio.innreach.mapper.PagingSlipTemplateMapper;
 import org.folio.innreach.repository.PagingSlipTemplateRepository;
 
@@ -34,8 +35,8 @@ import org.folio.innreach.repository.PagingSlipTemplateRepository;
 @SqlMergeMode(MERGE)
 class PagingSlipTemplateControllerTest extends BaseControllerTest {
 
-  private static final String PRE_POPULATED_CENTRAL_SERVER_ID = "edab6baf-c696-42b1-89bb-1bbb8759b0d2";
-  private static final String PRE_POPULATED_PAGING_SLIP_TEMPLATE_ID = "a731991d-310d-43c6-938a-626ff9b8d6b6";
+  private static final UUID PRE_POPULATED_CENTRAL_SERVER_ID = UUID.fromString("edab6baf-c696-42b1-89bb-1bbb8759b0d2");
+  private static final UUID PRE_POPULATED_PAGING_SLIP_TEMPLATE_ID = UUID.fromString("a731991d-310d-43c6-938a-626ff9b8d6b6");
 
   @Autowired
   private TestRestTemplate testRestTemplate;
@@ -59,9 +60,33 @@ class PagingSlipTemplateControllerTest extends BaseControllerTest {
 
     var templateDTO = responseEntity.getBody();
 
-    assertEquals(UUID.fromString(PRE_POPULATED_PAGING_SLIP_TEMPLATE_ID), templateDTO.getId());
+    assertEquals(PRE_POPULATED_PAGING_SLIP_TEMPLATE_ID, templateDTO.getId());
+    assertEquals(PRE_POPULATED_CENTRAL_SERVER_ID, templateDTO.getCentralServerId());
     assertEquals("description", templateDTO.getDescription());
     assertEquals("template", templateDTO.getTemplate());
+  }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/paging-slip-template/pre-populate-paging-slip-template.sql"
+  })
+  void shouldGetAllExistingTemplates(){
+    var responseEntity = testRestTemplate.getForEntity(
+      "/inn-reach/central-servers/paging-slip-template", PagingSlipTemplatesDTO.class);
+
+    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+    assertTrue(responseEntity.hasBody());
+
+    var templates = responseEntity.getBody();
+
+    assertEquals(1, templates.getTotalRecords());
+    var template = templates.getPagingSlipTemplates().get(0);
+
+    assertEquals(PRE_POPULATED_PAGING_SLIP_TEMPLATE_ID, template.getId());
+    assertEquals(PRE_POPULATED_CENTRAL_SERVER_ID, template.getCentralServerId());
+    assertEquals("description", template.getDescription());
+    assertEquals("template", template.getTemplate());
   }
 
   @Test
@@ -78,7 +103,7 @@ class PagingSlipTemplateControllerTest extends BaseControllerTest {
 
     assertEquals(HttpStatus.NO_CONTENT, responseEntity.getStatusCode());
 
-    var created = repository.fetchOneByCentralServerId(UUID.fromString(PRE_POPULATED_CENTRAL_SERVER_ID));
+    var created = repository.fetchOneByCentralServerId(PRE_POPULATED_CENTRAL_SERVER_ID);
 
     assertTrue(created.isPresent());
     var createdTemplate = created.get();
@@ -94,7 +119,7 @@ class PagingSlipTemplateControllerTest extends BaseControllerTest {
     "classpath:db/paging-slip-template/pre-populate-paging-slip-template.sql"
   })
   void shouldUpdateExistingTemplate() {
-    var existing = mapper.toDTO(repository.fetchOneByCentralServerId(UUID.fromString(PRE_POPULATED_CENTRAL_SERVER_ID)).get());
+    var existing = mapper.toDTO(repository.fetchOneByCentralServerId(PRE_POPULATED_CENTRAL_SERVER_ID).get());
     existing.setDescription("new description");
     existing.setTemplate("new template");
 
@@ -105,11 +130,13 @@ class PagingSlipTemplateControllerTest extends BaseControllerTest {
     assertEquals(HttpStatus.NO_CONTENT, responseEntity.getStatusCode());
     assertFalse(responseEntity.hasBody());
 
-    var updated = mapper.toDTO(repository.fetchOneByCentralServerId(
-      UUID.fromString(PRE_POPULATED_CENTRAL_SERVER_ID)).get());
+    var updated = mapper.toDTO(
+      repository.fetchOneByCentralServerId(PRE_POPULATED_CENTRAL_SERVER_ID).get()
+    );
 
     assertEquals(existing.getDescription(), updated.getDescription());
     assertEquals(existing.getTemplate(), updated.getTemplate());
+    assertEquals(PRE_POPULATED_CENTRAL_SERVER_ID, updated.getCentralServerId());
   }
 
   @Test
@@ -123,8 +150,7 @@ class PagingSlipTemplateControllerTest extends BaseControllerTest {
 
     assertEquals(HttpStatus.NO_CONTENT, responseEntity.getStatusCode());
 
-    var deleted = repository.fetchOneByCentralServerId(
-      UUID.fromString(PRE_POPULATED_CENTRAL_SERVER_ID));
+    var deleted = repository.fetchOneByCentralServerId(PRE_POPULATED_CENTRAL_SERVER_ID);
 
     assertFalse(deleted.isPresent());
   }
