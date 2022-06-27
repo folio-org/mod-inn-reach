@@ -4,6 +4,7 @@ import java.util.UUID;
 
 import org.mapstruct.InjectionStrategy;
 import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
 
 import org.folio.innreach.domain.entity.CentralServer;
 import org.folio.innreach.domain.entity.PagingSlipTemplate;
@@ -15,6 +16,7 @@ public interface PagingSlipTemplateMapper {
   PagingSlipTemplate toEntity(PagingSlipTemplateDTO dto);
 
   @AuditableMapping
+  @Mapping(target = "centralServerId", source = "entity.centralServer.id")
   PagingSlipTemplateDTO toDTO(PagingSlipTemplate entity);
 
   default PagingSlipTemplate toEntityWithRefs(PagingSlipTemplateDTO dto, UUID centralServerId) {

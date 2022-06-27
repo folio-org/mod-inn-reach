@@ -7,6 +7,11 @@
       "type": "string",
       "format": "UUID"
     },
+    "centralServerId": {
+      "description": "Central server id",
+      "type": "string",
+      "format": "UUID"
+    },
     "description": {
       "description": "Paging Slip Template description",
       "type": "string"

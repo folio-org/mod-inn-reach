@@ -1123,6 +1123,23 @@ paths:
               $ref: "#/components/schemas/pagingSlipTemplateDTO"
       parameters:
         - $ref: 'api-common.yaml#/components/parameters/centralServerId'
+  /central-servers/paging-slip-template:
+    get:
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/pagingSlipTemplatesDTO"
+        '404':
+          $ref: "api-common.yaml#/components/responses/trait_response_404"
+        '500':
+          $ref: "api-common.yaml#/components/responses/trait_response_500"
+      description: Get list of Paging Slip Templates
+      operationId: getAllPagingSlipTemplates
+      tags:
+        - paging-slip-template
 components:
   schemas:
     centralServerDTO:
@@ -1171,6 +1188,8 @@ components:
       $ref: schemas/visiblePatronFieldConfigurationDTO.json
     pagingSlipTemplateDTO:
       $ref: schemas/pagingSlipTemplateDTO.json
+    pagingSlipTemplatesDTO:
+      $ref: schemas/pagingSlipTemplatesDTO.json
   parameters:
     libraryId:
       name: libraryId
