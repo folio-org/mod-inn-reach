@@ -40,7 +40,7 @@ The module provides an access to INN-Reach.
 | KAFKA_SSL_KEYSTORE_PASSWORD   |             -             | The store password for the Kafka key store file. This is optional for client and only needed if 'ssl.keystore.location' is configured.                     |
 | KAFKA_SSL_TRUSTSTORE_LOCATION |             -             | The location of the Kafka trust store file.                                                                                                                |
 | KAFKA_SSL_TRUSTSTORE_PASSWORD |             -             | The password for the Kafka trust store file. If a password is not set, trust store file configured will still be used, but integrity checking is disabled. |
-| LOG_D2IR_HTTP                 |           false           | Enable logging of all responses and requests from the central server.                                                                                      |
+| LOG_HTTP                      |           false           | Enable logging of all requests and responses.                                                                                                              |
 
 ## Compiling
 

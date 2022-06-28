@@ -55,6 +55,13 @@ folio:
   tenant:
     validation:
       enabled: true
+  logging:
+    feign:
+      enabled: ${LOG_HTTP:false}
+      level: FULL
+    request:
+      enabled: ${LOG_HTTP:false}
+      level: FULL
 management:
   endpoints:
     web:
@@ -154,19 +161,3 @@ kafka:
       topic-pattern: (${environment}\.)(.*\.)inventory\.holdings-record
       concurrency: ${KAFKA_EVENTS_CONCURRENCY:2}
       data-type: org.folio.innreach.dto.Holding
-logging:
-  level:
-    org.zalando.logbook: TRACE
-    org.folio.innreach.external.client.feign: DEBUG
-http-logging.d2ir.enabled: ${LOG_D2IR_HTTP:false}
-logbook:
-  include:
-    - /inn-reach/d2ir/**
-  filter.enabled: ${http-logging.d2ir.enabled}
-  secure-filter.enabled: ${http-logging.d2ir.enabled}
-  format.style: http
-  obfuscate:
-    headers:
-      - Authorization
-      - X-d2ir-authorization
-      - X-okapi-token
