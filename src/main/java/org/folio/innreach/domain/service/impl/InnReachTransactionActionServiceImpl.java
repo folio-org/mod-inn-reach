@@ -260,13 +260,22 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
   public void handleItemUpdate(Item updatedItem, Item oldItem) {
     var itemId = updatedItem.getId();
     var updatedItemBarcode = updatedItem.getBarcode();
+    Optional<InnReachTransaction> transaction = transactionRepository.fetchActiveByFolioItemId(itemId);
 
     if (!Objects.equals(updatedItemBarcode, oldItem.getBarcode())) {
-      transactionRepository.fetchActiveByFolioItemId(itemId)
+      transaction
         .ifPresent(t -> {
           log.info("Item {} barcode changed to {}, updating transaction {}", itemId, updatedItemBarcode, t.getId());
           t.getHold().setFolioItemBarcode(updatedItemBarcode);
         });
+    }
+
+    if (transaction.isPresent()) {
+      var hold = transaction.get().getHold();
+      var loan = loanService.getById(hold.getFolioLoanId());
+      var loanDate = loan.getLoanDate().toInstant().truncatedTo(ChronoUnit.SECONDS);
+      var loanIntegerDate = (int) (loanDate.getEpochSecond());
+      hold.setTransactionTime(loanIntegerDate);
     }
   }
 
