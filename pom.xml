@@ -28,7 +28,6 @@
     <mapstruct.version>1.5.1.Final</mapstruct.version>
     <marc4j.version>2.9.2</marc4j.version>
     <coffee-boots.version>3.0.0</coffee-boots.version>
-    <logbook.version>2.14.0</logbook.version>
 
     <!-- test dependencies -->
     <testcontainers.version>1.17.2</testcontainers.version>
@@ -120,12 +119,6 @@
       <groupId>org.springframework.cloud</groupId>
       <artifactId>spring-cloud-starter-openfeign</artifactId>
       <version>${spring-cloud-starter-openfeign.version}</version>
-    </dependency>
-
-    <dependency>
-      <groupId>org.zalando</groupId>
-      <artifactId>logbook-spring-boot-starter</artifactId>
-      <version>${logbook.version}</version>
     </dependency>
 
     <dependency>
