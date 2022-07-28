@@ -1,3 +1,8 @@
+## v1.2.0 IN-PROGRESS
+
+* Supports users interface version 15.3 16.0 (MODINREACH-303)
+
+
 ## v1.1.0 2022-04-28
 
 Release primarily addresses Circulation flow and bug fixes. 
