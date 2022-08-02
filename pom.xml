@@ -29,7 +29,7 @@
     <openapi.input.file>${project.basedir}/src/main/resources/swagger.api/inn-reach.yaml</openapi.input.file>
     <mapstruct.version>1.4.2.Final</mapstruct.version>
     <commons-collections4.version>4.4</commons-collections4.version>
-    <testcontainers.version>1.15.1</testcontainers.version>
+    <testcontainers.version>1.17.3</testcontainers.version>
     <easy-random-core.version>5.0.0</easy-random-core.version>
     <marc4j.version>2.9.2</marc4j.version>
     <coffee-boots.version>2.2.0</coffee-boots.version>
