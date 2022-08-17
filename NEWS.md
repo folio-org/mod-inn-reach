@@ -1,6 +1,20 @@
-## v1.2.0 IN-PROGRESS
+## v2.1.0 IN-PROGRESS
 
 * Supports users interface version 15.3 16.0 (MODINREACH-303)
+
+## v2.0.0 2022-08-17
+
+### Stories
+* [MODINREACH-281](https://issues.folio.org/browse/MODINREACH-281) - Store setting to indicate whether to look up pickup locations for INN-Reach item hold requests based on transaction pickupLocation
+* [MODINREACH-282](https://issues.folio.org/browse/MODINREACH-282) - When the option is enabled in INN-Reach settings, look up pickup locations for FOLIO requests assigned to INN-Reach Item Hold transactions using the pickupLocation provided by the central server
+* [MODINREACH-285](https://issues.folio.org/browse/MODINREACH-285) - Patron Hold Transactions Not Changed to RETURN_UNCIRCULATED State When Checked in AFTER the local FOLIO Request for the Item is Cancelled BEFORE The Item is Placed on the Hold Shelf
+* [MODINREACH-287](https://issues.folio.org/browse/MODINREACH-287) - iNN-Reach Settings: Manage INN-Reach Paging Slip Template for Central Server
+* [MODINREACH-288](https://issues.folio.org/browse/MODINREACH-288) - INN-Reach Transactions List Action Menu Item: INN-Reach paging slips
+* [MODINREACH-291](https://issues.folio.org/browse/MODINREACH-291) - mod-inn-reach - folio-spring-base update - Morning Glory 2022 R2
+* [MODINREACH-292](https://issues.folio.org/browse/MODINREACH-292) - The field "Author" on the Transaction Detail View in the "Item Information" accordion is not filled
+* [MODINREACH-296](https://issues.folio.org/browse/MODINREACH-296) -  INN-Reach Transactions List Action Menu Item: INN-Reach paging slips. Add centralServerId
+* [MODINREACH-297](https://issues.folio.org/browse/MODINREACH-297) - INN-Reach Settings: INN-Reach Paging Slip Templates for all Central Servers
+* [MODINREACH-300](https://issues.folio.org/browse/MODINREACH-300) - Logging of requests/responses from the central server is not working
 
 
 ## v1.1.0 2022-04-28
