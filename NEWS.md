@@ -1,6 +1,4 @@
-## v2.0.0 2022-08-16
-
-Release primarily addresses bug fix.
+## v2.0.0 2022-08-17
 
 ### Stories
 * [MODINREACH-281](https://issues.folio.org/browse/MODINREACH-281) - Store setting to indicate whether to look up pickup locations for INN-Reach item hold requests based on transaction pickupLocation
