@@ -1,6 +1,7 @@
 ## v2.1.0 IN-PROGRESS
 
 * Supports users interface version 15.3 16.0 (MODINREACH-303)
+* Supports inventory interface version 11.1 12.0 ([MODINREACH-304](https://issues.folio.org/browse/MODINREACH-304))
 
 ## v2.0.0 2022-08-17
 
