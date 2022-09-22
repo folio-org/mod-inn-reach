@@ -86,10 +86,11 @@ public class InnReachTransactionSpecification {
       var trackingIdMatch = cb.equal(transaction.get("trackingId"), keyword);
       var patronBarcodeMatch = cb.equal(hold.get("folioPatronBarcode"), keyword);
       var itemBarcodeMatch = cb.equal(hold.get("folioItemBarcode"), keyword);
+      var patronNameLike = cb.like(cb.lower(hold.get("patronName")), "%" + lowerCaseKeyword + "%");
       var itemAuthorLike = cb.like(cb.lower(hold.get("author")), "%" + lowerCaseKeyword + "%");
       var itemTitleLike = cb.like(cb.lower(hold.get("title")), "%" + lowerCaseKeyword + "%");
 
-      return cb.or(itemIdMatch, patronIdMatch, trackingIdMatch, patronBarcodeMatch, itemBarcodeMatch, itemAuthorLike, itemTitleLike);
+      return cb.or(itemIdMatch, patronIdMatch, trackingIdMatch, patronBarcodeMatch, itemBarcodeMatch, patronNameLike, itemAuthorLike, itemTitleLike);
     };
   }
 
