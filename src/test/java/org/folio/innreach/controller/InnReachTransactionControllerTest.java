@@ -591,6 +591,25 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   @Test
   @Sql(scripts = {
     "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
+  })
+  void return200HttpCode_and_sortedTransactionList_when_getTransactionsWithPatronName() {
+    var responseEntity = testRestTemplate.getForEntity(
+      "/inn-reach/transactions?query=patronName1", InnReachTransactionsDTO.class
+    );
+
+    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+    assertNotNull(responseEntity.getBody());
+    assertEquals(1, responseEntity.getBody().getTotalRecords());
+
+    var transactions = responseEntity.getBody().getTransactions();
+    assertEquals(1, transactions.size());
+    assertEquals("patronName1", transactions.get(0).getHold().getPatronName());
+  }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql",
     "classpath:db/inn-reach-transaction/pre-populate-another-inn-reach-transaction.sql"
   })
