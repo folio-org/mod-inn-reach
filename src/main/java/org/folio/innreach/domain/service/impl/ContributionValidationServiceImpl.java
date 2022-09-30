@@ -104,6 +104,11 @@ public class ContributionValidationServiceImpl implements ContributionValidation
       return false;
     }
 
+    if (isExcludedLocation(centralServerId, item)) {
+      log.info("Item's location excluded from contribution");
+      return false;
+    }
+
     if (!isItemHasAssociatedLibrary(centralServerId, item)) {
       log.info("Item's location is not associated with INN-Reach local agencies");
       return false;
@@ -123,6 +128,15 @@ public class ContributionValidationServiceImpl implements ContributionValidation
     var suppressionCode = getSuppressionStatus(centralServerId, statisticalCodeIds);
 
     return DO_NOT_CONTRIBUTE_CODE.equals(suppressionCode);
+  }
+
+  private boolean isExcludedLocation(UUID centralServerId, Item item) {
+    List<UUID> excludedLocationIds = Objects.
+            requireNonNull(getContributionConfigService(centralServerId)).getLocationIds();
+    if (excludedLocationIds.contains(item.getEffectiveLocationId())) {
+        return true;
+    }
+    return false;
   }
 
   @Override
