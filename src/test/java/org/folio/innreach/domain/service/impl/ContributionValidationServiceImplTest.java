@@ -238,6 +238,15 @@ class ContributionValidationServiceImplTest {
   }
 
   @Test
+  void returnNullSuppressionStatusWithNoCriteriaConfiguration() {
+    when(contributionConfigService.getCriteria(any())).thenReturn(null);
+
+    var suppress = service.getSuppressionStatus(UUID.randomUUID(), singletonList(UUID.randomUUID()));
+
+    assertNull(suppress);
+  }
+
+  @Test
   void returnSuppressionStatus_y() {
     var statisticalCodeId = UUID.randomUUID();
     var config = new ContributionCriteriaDTO();
@@ -376,6 +385,22 @@ class ContributionValidationServiceImplTest {
 
   @Test
   void testIneligibleInstance_statisticalCodeExcluded() {
+    var statisticalCodes = List.of(DO_NOT_CONTRIBUTE_CODE_ID,LIBRARY_ID);
+
+    var instance = new Instance();
+    instance.setStatisticalCodeIds(statisticalCodes);
+    instance.setSource(ELIGIBLE_SOURCE);
+    instance.setItems(List.of(new Item().statisticalCodeIds(statisticalCodes)));
+
+    when(contributionConfigService.getCriteria(any())).thenReturn(CRITERIA);
+
+    var isEligible = service.isEligibleForContribution(UUID.randomUUID(), instance);
+
+    assertFalse(isEligible);
+  }
+
+  @Test
+  void testInstanceWithMoreThanOneStatisticalCodeExcluded() {
     var statisticalCodes = List.of(DO_NOT_CONTRIBUTE_CODE_ID);
 
     var instance = new Instance();
