@@ -344,7 +344,7 @@ class ContributionValidationServiceImplTest {
   }
 
   @Test
-  void testEligibleItemLocationAssociatedWithExceludedFolioLocationToDoNotContribute() {
+  void testEligibleItemLocationAssociatedWithExcludedFolioLocationToDoNotContribute() {
     when(contributionConfigService.getCriteria(any())).thenReturn(CRITERIA);
     when(holdingsService.find(any())).thenReturn(Optional.empty());
     when(folioLocationService.getLocationLibraryMappings()).thenReturn(Map.of(UUID.randomUUID(), UUID.randomUUID()));
@@ -360,7 +360,7 @@ class ContributionValidationServiceImplTest {
   }
 
   @Test
-  void testEligibleItemLocationNotAssociatedWithExceludedFolioLocationToContribute() {
+  void testEligibleItemLocationNotAssociatedWithExcludedFolioLocationToContribute() {
     when(contributionConfigService.getCriteria(any())).thenReturn(CRITERIA);
     when(holdingsService.find(any())).thenReturn(Optional.empty());
     when(folioLocationService.getLocationLibraryMappings()).thenReturn(Map.of(LOCATION_ID, LIBRARY_ID));
