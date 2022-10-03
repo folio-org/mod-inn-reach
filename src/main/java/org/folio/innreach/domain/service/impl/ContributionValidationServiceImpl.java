@@ -105,7 +105,7 @@ public class ContributionValidationServiceImpl implements ContributionValidation
     }
 
     if (isExcludedLocation(centralServerId, item)) {
-      log.info("Item's location excluded from contribution");
+      log.info("Item's location is excluded from contribution");
       return false;
     }
 
@@ -130,6 +130,7 @@ public class ContributionValidationServiceImpl implements ContributionValidation
     return DO_NOT_CONTRIBUTE_CODE.equals(suppressionCode);
   }
 
+  /*if Item's effective location is matched with Contribution Criteria's excluded locations*/
   private boolean isExcludedLocation(UUID centralServerId, Item item) {
     List<UUID> excludedLocationIds = Objects.
             requireNonNull(getContributionConfigService(centralServerId)).getLocationIds();

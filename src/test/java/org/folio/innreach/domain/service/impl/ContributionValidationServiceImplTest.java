@@ -56,6 +56,8 @@ class ContributionValidationServiceImplTest {
   private static final String INELIGIBLE_SOURCE = "FOLIO";
   private static final UUID LOCATION_ID = UUID.fromString("6802c458-b19e-476f-9187-e8ab7417ecd4");
   private static final UUID LIBRARY_ID = UUID.fromString("97858fdf-1e48-4eff-abb3-82421c530368");
+  private static final UUID ASSOCIATED_ITEM_EFFECTIVE_LOCATION_ID =
+          UUID.fromString("cbd7c258-4484-f122-9426-cb043e1ad100");
 
   @Mock
   private MaterialTypesClient materialTypesClient;
@@ -339,6 +341,37 @@ class ContributionValidationServiceImplTest {
     var result = service.isEligibleForContribution(UUID.randomUUID(), instance);
 
     assertFalse(result);
+  }
+
+  @Test
+  void testEligibleItemLocationAssociatedWithExceludedFolioLocationToDoNotContribute() {
+    when(contributionConfigService.getCriteria(any())).thenReturn(CRITERIA);
+    when(holdingsService.find(any())).thenReturn(Optional.empty());
+    when(folioLocationService.getLocationLibraryMappings()).thenReturn(Map.of(UUID.randomUUID(), UUID.randomUUID()));
+    when(centralServerService.getCentralServer(any())).thenReturn(CentralServerFixture.createCentralServerDTO());
+
+    var instance = new Instance();
+    instance.setSource(ELIGIBLE_SOURCE);
+    instance.setStatisticalCodeIds(List.of());
+    instance.setItems(List.of(new Item().effectiveLocationId(ASSOCIATED_ITEM_EFFECTIVE_LOCATION_ID)));
+
+    var result = service.isEligibleForContribution(UUID.randomUUID(), instance);
+    assertFalse(result);
+  }
+
+  @Test
+  void testEligibleItemLocationNotAssociatedWithExceludedFolioLocationToContribute() {
+    when(contributionConfigService.getCriteria(any())).thenReturn(CRITERIA);
+    when(holdingsService.find(any())).thenReturn(Optional.empty());
+    when(folioLocationService.getLocationLibraryMappings()).thenReturn(Map.of(LOCATION_ID, LIBRARY_ID));
+    when(centralServerService.getCentralServer(any())).thenReturn(createCentralServerWithLibraryId());
+
+    var instance = new Instance();
+    instance.setSource(ELIGIBLE_SOURCE);
+    instance.setItems(List.of(new Item().effectiveLocationId(LOCATION_ID)));
+
+    var result = service.isEligibleForContribution(UUID.randomUUID(), instance);
+    assertTrue(result);
   }
 
   @Test
