@@ -134,7 +134,6 @@ public class ContributionValidationServiceImpl implements ContributionValidation
   private boolean isExcludedLocation(UUID centralServerId, Item item) {
     List<UUID> excludedLocationIds = Objects.
             requireNonNull(getContributionConfigService(centralServerId)).getLocationIds();
-
     return excludedLocationIds.contains(item.getEffectiveLocationId());
   }
 
