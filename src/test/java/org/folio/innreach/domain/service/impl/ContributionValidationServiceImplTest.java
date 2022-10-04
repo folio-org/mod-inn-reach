@@ -361,7 +361,7 @@ class ContributionValidationServiceImplTest {
 
     var instance = new Instance();
     instance.setSource(ELIGIBLE_SOURCE);
-    instance.setStatisticalCodeIds(List.of());
+//    instance.setStatisticalCodeIds(List.of());
     instance.setItems(List.of(new Item().effectiveLocationId(ASSOCIATED_ITEM_EFFECTIVE_LOCATION_ID)));
 
     var result = service.isEligibleForContribution(UUID.randomUUID(), instance);
