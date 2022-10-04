@@ -85,13 +85,11 @@ public class ContributionValidationServiceImpl implements ContributionValidation
       .filter(i -> isEligibleForContribution(centralServerId, i))
       .count();
 
-    log.info("contributionItemsCount " + contributionItemsCount);
     if (contributionItemsCount == 0) {
       log.info("Instance has no items eligible for contribution");
       return false;
     }
 
-    log.info("No condition satisfied");
     return true;
   }
 
@@ -116,7 +114,6 @@ public class ContributionValidationServiceImpl implements ContributionValidation
       return false;
     }
 
-    log.info("Here----- Nothing satisfied");
     return true;
   }
 
@@ -137,8 +134,6 @@ public class ContributionValidationServiceImpl implements ContributionValidation
   private boolean isExcludedLocation(UUID centralServerId, Item item) {
     List<UUID> excludedLocationIds = Objects.
             requireNonNull(getContributionConfigService(centralServerId)).getLocationIds();
-    log.info("excludedLocationIds "+ excludedLocationIds.toString());
-    log.info("Items effective location "+ item.getEffectiveLocationId());
     return excludedLocationIds.contains(item.getEffectiveLocationId());
   }
 
