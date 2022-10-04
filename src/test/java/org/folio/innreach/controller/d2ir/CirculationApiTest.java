@@ -99,7 +99,7 @@ class CirculationApiTest extends BaseApiControllerTest {
   private static final String PAGE_REQUEST_TYPE = "Page";
   private static final String FOLIO_HOLDING_SOURCE = "FOLIO";
 
-  private static final Duration ASYNC_AWAIT_TIMEOUT = Duration.ofSeconds(15);
+  private static final Duration ASYNC_AWAIT_TIMEOUT = Duration.ofSeconds(20);
 
   @SpyBean
   private InnReachTransactionRepository repository;

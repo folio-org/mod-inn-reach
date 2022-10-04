@@ -22,6 +22,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
+import lombok.extern.log4j.Log4j2;
 import org.folio.innreach.dto.CentralServerDTO;
 import org.folio.innreach.dto.ItemContributionOptionsConfigurationDTO;
 import org.folio.innreach.dto.LocalAgencyDTO;
@@ -51,6 +52,7 @@ import org.folio.innreach.dto.Item;
 import org.folio.innreach.dto.ItemStatus;
 import org.folio.innreach.external.service.InnReachLocationExternalService;
 
+@Log4j2
 class ContributionValidationServiceImplTest {
 
   private static final ContributionCriteriaDTO CRITERIA = createContributionCriteria();
@@ -59,6 +61,8 @@ class ContributionValidationServiceImplTest {
   private static final String INELIGIBLE_SOURCE = "FOLIO";
   private static final UUID LOCATION_ID = UUID.fromString("6802c458-b19e-476f-9187-e8ab7417ecd4");
   private static final UUID LIBRARY_ID = UUID.fromString("97858fdf-1e48-4eff-abb3-82421c530368");
+  private static final UUID ASSOCIATED_ITEM_EFFECTIVE_LOCATION_ID =
+          UUID.fromString("cbd7c258-4484-f122-9426-cb043e1ad100");
 
   @Mock
   private MaterialTypesClient materialTypesClient;
@@ -243,6 +247,15 @@ class ContributionValidationServiceImplTest {
   }
 
   @Test
+  void returnNullSuppressionStatusWithNoCriteriaConfiguration() {
+    when(contributionConfigService.getCriteria(any())).thenReturn(null);
+
+    var suppress = service.getSuppressionStatus(UUID.randomUUID(), singletonList(UUID.randomUUID()));
+
+    assertNull(suppress);
+  }
+
+  @Test
   void returnSuppressionStatus_y() {
     var statisticalCodeId = UUID.randomUUID();
     var config = new ContributionCriteriaDTO();
@@ -349,7 +362,55 @@ class ContributionValidationServiceImplTest {
   }
 
   @Test
+  void testEligibleItemLocationAssociatedWithExcludedFolioLocationToDoNotContribute() {
+    CRITERIA.getLocationIds().add(ASSOCIATED_ITEM_EFFECTIVE_LOCATION_ID);
+    when(contributionConfigService.getCriteria(any())).thenReturn(CRITERIA);
+    when(holdingsService.find(any())).thenReturn(Optional.empty());
+    when(folioLocationService.getLocationLibraryMappings()).thenReturn(Map.of(ASSOCIATED_ITEM_EFFECTIVE_LOCATION_ID, LIBRARY_ID));
+    when(centralServerService.getCentralServer(any())).thenReturn(createCentralServerWithLibraryId());
+
+
+    var instance = new Instance();
+    instance.setSource(ELIGIBLE_SOURCE);
+    instance.setItems(List.of(new Item().effectiveLocationId(ASSOCIATED_ITEM_EFFECTIVE_LOCATION_ID)));
+
+    var result = service.isEligibleForContribution(UUID.randomUUID(), instance);
+    assertFalse(result);
+  }
+
+  @Test
+  void testEligibleItemLocationNotAssociatedWithExcludedFolioLocationToContribute() {
+    when(contributionConfigService.getCriteria(any())).thenReturn(CRITERIA);
+    when(holdingsService.find(any())).thenReturn(Optional.empty());
+    when(folioLocationService.getLocationLibraryMappings()).thenReturn(Map.of(LOCATION_ID, LIBRARY_ID));
+    when(centralServerService.getCentralServer(any())).thenReturn(createCentralServerWithLibraryId());
+    log.info("testEligibleItemLocationNotAssociatedWithExcludedFolioLocationToContribute");
+    var instance = new Instance();
+    instance.setSource(ELIGIBLE_SOURCE);
+    instance.setItems(List.of(new Item().effectiveLocationId(LOCATION_ID)));
+
+    var result = service.isEligibleForContribution(UUID.randomUUID(), instance);
+    assertTrue(result);
+  }
+
+  @Test
   void testIneligibleInstance_statisticalCodeExcluded() {
+    var statisticalCodes = List.of(DO_NOT_CONTRIBUTE_CODE_ID, LIBRARY_ID);
+
+    var instance = new Instance();
+    instance.setStatisticalCodeIds(statisticalCodes);
+    instance.setSource(ELIGIBLE_SOURCE);
+    instance.setItems(List.of(new Item().statisticalCodeIds(statisticalCodes)));
+
+    when(contributionConfigService.getCriteria(any())).thenReturn(CRITERIA);
+
+    var isEligible = service.isEligibleForContribution(UUID.randomUUID(), instance);
+
+    assertFalse(isEligible);
+  }
+
+  @Test
+  void testInstanceWithMoreThanOneStatisticalCodeExcluded() {
     var statisticalCodes = List.of(DO_NOT_CONTRIBUTE_CODE_ID);
 
     var instance = new Instance();
