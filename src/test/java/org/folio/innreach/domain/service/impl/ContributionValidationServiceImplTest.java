@@ -354,12 +354,15 @@ class ContributionValidationServiceImplTest {
 
   @Test
   void testEligibleItemLocationAssociatedWithExcludedFolioLocationToDoNotContribute() {
+    when(contributionConfigService.getCriteria(any())).thenReturn(CRITERIA);
+    when(holdingsService.find(any())).thenReturn(Optional.empty());
+    when(folioLocationService.getLocationLibraryMappings()).thenReturn(Map.of(ASSOCIATED_ITEM_EFFECTIVE_LOCATION_ID, LIBRARY_ID));
+    when(centralServerService.getCentralServer(any())).thenReturn(createCentralServerWithLibraryId());
+
     var instance = new Instance();
     instance.setSource(ELIGIBLE_SOURCE);
     instance.setStatisticalCodeIds(List.of());
     instance.setItems(List.of(new Item().effectiveLocationId(ASSOCIATED_ITEM_EFFECTIVE_LOCATION_ID)));
-
-    when(contributionConfigService.getCriteria(any())).thenReturn(CRITERIA);
 
     var result = service.isEligibleForContribution(UUID.randomUUID(), instance);
     assertFalse(result);
