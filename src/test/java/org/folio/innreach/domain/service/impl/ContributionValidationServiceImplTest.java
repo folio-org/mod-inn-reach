@@ -385,7 +385,7 @@ class ContributionValidationServiceImplTest {
 
   @Test
   void testIneligibleInstance_statisticalCodeExcluded() {
-    var statisticalCodes = List.of(DO_NOT_CONTRIBUTE_CODE_ID,LIBRARY_ID);
+    var statisticalCodes = List.of(DO_NOT_CONTRIBUTE_CODE_ID, LIBRARY_ID);
 
     var instance = new Instance();
     instance.setStatisticalCodeIds(statisticalCodes);
