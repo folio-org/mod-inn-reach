@@ -104,7 +104,7 @@ public class ContributionValidationServiceImpl implements ContributionValidation
       return false;
     }
 
-    if(isExcludedLocation(centralServerId, item)) {
+    if (isExcludedLocation(centralServerId, item)) {
       log.info("Item's location is excluded from contribution");
       return false;
     }
