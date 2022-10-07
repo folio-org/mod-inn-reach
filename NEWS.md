@@ -1,3 +1,9 @@
+## v1.1.1 2022-10-07
+
+### Bugfixes
+
+* [MODINREACH-306](https://issues.folio.org/browse/MODINREACH-306) - Items with effective locations in locations not to contribute (contribution criteria) being contributed
+
 ## v1.1.0 2022-04-28
 
 Release primarily addresses Circulation flow and bug fixes. 
