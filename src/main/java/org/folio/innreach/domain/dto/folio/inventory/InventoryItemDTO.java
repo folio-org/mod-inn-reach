@@ -23,11 +23,13 @@ public class InventoryItemDTO {
   private UUID holdingsRecordId;
   private InventoryItemStatus status;
   private MaterialType materialType;
-  private PermanentLoanType permanentLoanType;
-  private TemporaryLoanType temporaryLoanType;
-  private PermanentLocation permanentLocation;
+  private LoanType permanentLoanType;
+  private LoanType temporaryLoanType;
+  private Location permanentLocation;
+  private Location effectiveLocation;
   private Boolean discoverySuppress;
   private String title;
+  private String effectiveShelvingOrder;
 
   @Data
   public static class MaterialType {
@@ -36,19 +38,13 @@ public class InventoryItemDTO {
   }
 
   @Data
-  public static class PermanentLoanType {
+  public static class LoanType {
     private final UUID id;
     private final String name;
   }
 
   @Data
-  public static class TemporaryLoanType {
-    private final UUID id;
-    private final String name;
-  }
-
-  @Data
-  public static class PermanentLocation {
+  public static class Location {
     private final UUID id;
     private final String name;
   }

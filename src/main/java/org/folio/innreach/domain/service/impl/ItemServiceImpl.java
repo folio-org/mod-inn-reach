@@ -1,8 +1,11 @@
 package org.folio.innreach.domain.service.impl;
 
+import static org.folio.innreach.util.CqlHelper.matchAny;
 import static org.folio.innreach.util.ListUtils.getFirstItem;
 
+import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 import lombok.RequiredArgsConstructor;
@@ -37,12 +40,20 @@ public class ItemServiceImpl implements ItemService {
   @Override
   public InventoryItemDTO getItemByHrId(String hrid) {
     return getFirstItem(inventoryClient.getItemsByHrId(hrid))
-        .orElseThrow(() -> new IllegalArgumentException("Item with hrid = " + hrid + " not found."));
+      .orElseThrow(() -> new IllegalArgumentException("Item with hrid = " + hrid + " not found."));
   }
 
   @Override
   public Optional<InventoryItemDTO> findItemByBarcode(String barcode) {
     return findItem(barcode);
+  }
+
+  @Override
+  public List<InventoryItemDTO> findItemsByIdsAndLocations(Set<UUID> itemIds, Set<UUID> locationIds, int limit) {
+    var itemIdKey = matchAny(itemIds);
+    var locationIdKey = matchAny(locationIds);
+
+    return inventoryClient.queryItemsByIdsAndLocations(itemIdKey, locationIdKey, limit).getResult();
   }
 
   private Optional<InventoryItemDTO> findItem(String barcode) {

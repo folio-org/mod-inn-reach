@@ -19,6 +19,7 @@ import java.util.concurrent.Callable;
 import javax.validation.Valid;
 
 import lombok.SneakyThrows;
+
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -29,6 +30,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.Profile;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.kafka.core.DefaultKafkaProducerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -114,9 +116,15 @@ public class BaseKafkaApiTest {
   static class TestTenantController implements TenantApi {
 
     @Override
-    public ResponseEntity<String> postTenant(@Valid TenantAttributes tenantAttributes) {
-      return ResponseEntity.ok("OK");
+    public ResponseEntity<Void> deleteTenant(String operationId) {
+      return ResponseEntity.noContent().build();
     }
+
+    @Override
+    public ResponseEntity<Void> postTenant(@Valid TenantAttributes tenantAttributes) {
+      return ResponseEntity.status(HttpStatus.CREATED).build();
+    }
+
   }
 
   @Primary

@@ -571,12 +571,33 @@
             "circulation.requests.item.get",
             "circulation.requests.item.move.post"
           ]
+        },
+        {
+          "methods": ["GET"],
+          "pathPattern": "/inn-reach/central-servers/{centralServerId}/paging-slip-template",
+          "permissionsRequired": ["inn-reach.central-servers.paging-slip-template.item.get"]
+        },
+        {
+          "methods": ["PUT"],
+          "pathPattern": "/inn-reach/central-servers/{centralServerId}/paging-slip-template",
+          "permissionsRequired": ["inn-reach.central-servers.paging-slip-template.item.put"]
+        },
+        {
+          "methods": ["GET"],
+          "pathPattern": "/inn-reach/paging-slips/{servicePointId}",
+          "permissionsRequired": ["inn-reach.paging-slips.collection.get"],
+          "modulePermissions": [
+            "circulation.requests.collection.get",
+            "inventory.instances.collection.get",
+            "inventory.items.collection.get",
+            "inventory-storage.locations.collection.get"
+          ]
         }
       ]
     },
     {
       "id": "_tenant",
-      "version": "1.2",
+      "version": "2.0",
       "interfaceType": "system",
       "handlers": [
         {
@@ -599,8 +620,8 @@
           "permissionsRequired": []
         },
         {
-          "methods": ["DELETE"],
-          "pathPattern": "/_/tenant",
+          "methods": ["GET", "DELETE"],
+          "pathPattern": "/_/tenant/{id}",
           "permissionsRequired": []
         }
       ]
@@ -1163,6 +1184,23 @@
       ]
     },
     {
+      "permissionName" : "inn-reach.central-servers.paging-slip-template.all",
+      "displayName" : "inn reach API module - all permissions of paging slip template",
+      "description" : "All permissions for Paging Slip Template",
+      "subPermissions" : [
+        "inn-reach.central-servers.paging-slip-template.item.get",
+        "inn-reach.central-servers.paging-slip-template.item.put"
+      ]
+    },
+    {
+      "permissionName" : "inn-reach.paging-slips.all",
+      "displayName" : "inn reach API module - all permissions of paging slips",
+      "description" : "All permissions for Paging Slips",
+      "subPermissions" : [
+        "inn-reach.paging-slips.collection.get"
+      ]
+    },
+    {
       "permissionName" : "inn-reach.all",
       "displayName" : "inn reach API module - all permissions",
       "description" : "All permissions for inn reach",
@@ -1190,7 +1228,9 @@
         "inn-reach.inn-reach-transactions.all",
         "inn-reach.d2ir.circulation.all",
         "inn-reach.recall-user.all",
-        "inn-reach.central-servers.visible-patron-field-configuration.all"
+        "inn-reach.central-servers.visible-patron-field-configuration.all",
+        "inn-reach.central-servers.paging-slip-template.all",
+        "inn-reach.paging-slips.all"
       ]
     }
   ],

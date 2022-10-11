@@ -1,6 +1,5 @@
 package org.folio.innreach.domain.entity;
 
-import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -18,21 +17,9 @@ import javax.persistence.Table;
 @ToString
 public class TransactionPatronHold extends TransactionHold {
 
-  @Getter(AccessLevel.NONE) @Setter(AccessLevel.NONE)
-  @Column(name = "author")
-  private String authorPatron;
-
   @Column(name = "call_number")
   private String callNumber;
 
   @Column(name = "shipped_item_barcode")
   private String shippedItemBarcode;
-
-  public String getAuthor() {
-    return authorPatron;
-  }
-
-  public void setAuthor(String author) {
-    this.authorPatron = author;
-  }
 }

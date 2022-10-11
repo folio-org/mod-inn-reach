@@ -10,6 +10,7 @@ import static org.springframework.test.context.jdbc.SqlMergeMode.MergeMode.MERGE
 import static org.folio.innreach.fixture.TestUtil.deserializeFromJsonFile;
 import static org.folio.innreach.fixture.TestUtil.randomUUIDString;
 
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.web.client.TestRestTemplate;
@@ -50,6 +51,7 @@ class CentralServerControllerTest extends BaseControllerTest {
     var createdCentralServer = responseEntity.getBody();
 
     assertNotNull(createdCentralServer);
+    Assertions.assertFalse(createdCentralServer.getCheckPickupLocation());
   }
 
   @Test
@@ -68,6 +70,7 @@ class CentralServerControllerTest extends BaseControllerTest {
     assertNotNull(createdCentralServer);
     assertNull(createdCentralServer.getLocalServerKey());
     assertNull(createdCentralServer.getLocalServerSecret());
+    Assertions.assertFalse(createdCentralServer.getCheckPickupLocation());
   }
 
   @Test
@@ -111,6 +114,7 @@ class CentralServerControllerTest extends BaseControllerTest {
     var centralServer = responseEntity.getBody();
 
     assertNotNull(centralServer);
+    Assertions.assertFalse(centralServer.getCheckPickupLocation());
   }
 
   @Test
@@ -126,12 +130,24 @@ class CentralServerControllerTest extends BaseControllerTest {
   void return200HttpCode_when_updateCentralServer() {
     var centralServerRequestDTO = deserializeFromJsonFile(
       "/central-server/update-central-server-request.json", CentralServerDTO.class);
+    centralServerRequestDTO.setCheckPickupLocation(true);
 
-    var responseEntity = testRestTemplate.exchange(
+    var responseEntityPut = testRestTemplate.exchange(
       "/inn-reach/central-servers/{centralServerId}", HttpMethod.PUT, new HttpEntity<>(centralServerRequestDTO),
       CentralServerDTO.class, PRE_POPULATED_CENTRAL_SERVER_ID);
 
-    assertTrue(responseEntity.getStatusCode().is2xxSuccessful());
+    assertTrue(responseEntityPut.getStatusCode().is2xxSuccessful());
+
+    var responseEntityGet = testRestTemplate.getForEntity(
+      "/inn-reach/central-servers/{centralServerId}", CentralServerDTO.class, PRE_POPULATED_CENTRAL_SERVER_ID);
+
+    assertTrue(responseEntityGet.getStatusCode().is2xxSuccessful());
+    assertTrue(responseEntityGet.hasBody());
+
+    var centralServer = responseEntityGet.getBody();
+
+    assertNotNull(centralServer);
+    assertTrue(centralServer.getCheckPickupLocation());
   }
 
   @Test
@@ -203,4 +219,21 @@ class CentralServerControllerTest extends BaseControllerTest {
     assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
   }
 
+  @Test
+  void return200HttpCode_and_createdCentralServerEntity_when_createCentralServerWithPickupLocationCheckTrue() {
+    var centralServerRequestDTO = deserializeFromJsonFile(
+      "/central-server/create-central-server-request.json", CentralServerDTO.class);
+    centralServerRequestDTO.setCheckPickupLocation(true);
+
+    var responseEntity = testRestTemplate.postForEntity(
+      "/inn-reach/central-servers", centralServerRequestDTO, CentralServerDTO.class);
+
+    assertTrue(responseEntity.getStatusCode().is2xxSuccessful());
+    assertTrue(responseEntity.hasBody());
+
+    var createdCentralServer = responseEntity.getBody();
+
+    assertNotNull(createdCentralServer);
+    assertTrue(createdCentralServer.getCheckPickupLocation());
+  }
 }

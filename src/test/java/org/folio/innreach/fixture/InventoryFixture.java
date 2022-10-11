@@ -58,9 +58,9 @@ public class InventoryFixture {
       .id(UUID.randomUUID())
       .status(status)
       .materialType(new InventoryItemDTO.MaterialType(materialTypeId, "materialType"))
-      .permanentLoanType(new InventoryItemDTO.PermanentLoanType(permanentLoanTypeId, "permanentLoanType"))
-      .temporaryLoanType(new InventoryItemDTO.TemporaryLoanType(temporaryLoanTypeId, "temporaryLoanType"))
-      .permanentLocation(new InventoryItemDTO.PermanentLocation(permanentLocationId, "permanentLocation"))
+      .permanentLoanType(new InventoryItemDTO.LoanType(permanentLoanTypeId, "permanentLoanType"))
+      .temporaryLoanType(new InventoryItemDTO.LoanType(temporaryLoanTypeId, "temporaryLoanType"))
+      .permanentLocation(new InventoryItemDTO.Location(permanentLocationId, "permanentLocation"))
       .build();
   }
 

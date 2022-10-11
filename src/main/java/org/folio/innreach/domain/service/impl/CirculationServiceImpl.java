@@ -4,6 +4,7 @@ import static java.lang.String.format;
 import static java.time.Instant.ofEpochSecond;
 import static java.util.Objects.nonNull;
 import static org.apache.commons.lang3.StringUtils.capitalize;
+import static org.apache.commons.lang3.StringUtils.truncate;
 
 import static org.folio.innreach.domain.dto.folio.circulation.RequestDTO.RequestStatus.OPEN_AWAITING_PICKUP;
 import static org.folio.innreach.domain.dto.folio.circulation.RequestDTO.RequestStatus.OPEN_IN_TRANSIT;
@@ -45,7 +46,6 @@ import javax.persistence.EntityExistsException;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
-import org.folio.innreach.domain.service.InnReachRecallUserService;
 import org.springframework.beans.BeanUtils;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
@@ -67,6 +67,7 @@ import org.folio.innreach.domain.exception.EntityNotFoundException;
 import org.folio.innreach.domain.service.CentralServerService;
 import org.folio.innreach.domain.service.CirculationService;
 import org.folio.innreach.domain.service.HoldingsService;
+import org.folio.innreach.domain.service.InnReachRecallUserService;
 import org.folio.innreach.domain.service.ItemService;
 import org.folio.innreach.domain.service.LoanService;
 import org.folio.innreach.domain.service.MaterialTypeMappingService;
@@ -144,7 +145,7 @@ public class CirculationServiceImpl implements CirculationService {
       var materialTypeId = item.getMaterialType().getId();
       var materialType = materialService.findByCentralServerAndMaterialType(centralServerId, materialTypeId);
       itemHold.setCentralItemType(materialType.getCentralItemType());
-      itemHold.setTitle(item.getTitle());
+      itemHold.setTitle(truncate(item.getTitle(), 255));
       transaction.setHold(itemHold);
       transactionRepository.save(transaction);
     } catch (Exception e) {

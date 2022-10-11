@@ -45,5 +45,6 @@ public class InventoryInstanceDTO {
   public static class ContributorDTO {
     private UUID contributorNameTypeId;
     private String name;
+    private Boolean primary;
   }
 }

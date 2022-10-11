@@ -1,0 +1,31 @@
+{
+  "status": "ok",
+  "reason": "success",
+  "errors":
+  [],
+  "localServerList":
+  [
+    {
+      "agencyList":
+      [
+        {
+          "agencyCode": "qwe56",
+          "description": "Test agency 1"
+        }
+      ],
+      "description": "Test local server 1",
+      "localCode": "test1"
+    },
+    {
+      "agencyList":
+      [
+        {
+          "agencyCode": "asd78",
+          "description": "Test agency 2"
+        }
+      ],
+      "description": "Test local server 2",
+      "localCode": "test2"
+    }
+  ]
+}

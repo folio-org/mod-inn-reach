@@ -28,6 +28,8 @@ import static org.folio.innreach.domain.dto.folio.inventory.InventoryItemStatus.
 import static org.folio.innreach.domain.dto.folio.inventory.InventoryItemStatus.UNKNOWN;
 import static org.folio.innreach.domain.dto.folio.inventory.InventoryItemStatus.WITHDRAWN;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.CANCEL_REQUEST;
+import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionType.ITEM;
+import static org.folio.innreach.util.CqlHelper.matchAny;
 
 import java.time.Instant;
 import java.time.OffsetDateTime;
@@ -64,6 +66,8 @@ import org.folio.innreach.domain.service.InventoryService;
 import org.folio.innreach.domain.service.ItemService;
 import org.folio.innreach.domain.service.RequestPreferenceService;
 import org.folio.innreach.domain.service.RequestService;
+import org.folio.innreach.domain.service.CentralServerService;
+import org.folio.innreach.domain.service.InstanceService;
 import org.folio.innreach.dto.Holding;
 import org.folio.innreach.external.service.InnReachExternalService;
 import org.folio.innreach.mapper.InnReachTransactionPickupLocationMapper;
@@ -104,6 +108,8 @@ public class RequestServiceImpl implements RequestService {
   private final HoldingsService holdingsService;
 
   private final RequestPreferenceService requestPreferenceService;
+  private final CentralServerService centralServerService;
+  private final InstanceService instanceService;
 
   @Async
   @Override
@@ -116,7 +122,7 @@ public class RequestServiceImpl implements RequestService {
       var patronType = hold.getCentralPatronType();
       var patronBarcode = getUserBarcode(centralServerId, patronType);
       var patron = getUserByBarcode(patronBarcode);
-      var servicePointId = getUserRequestPreferenceDefaultServicePoint(patron.getId());
+      var servicePointId = getItemHoldServicePointId(transaction, patron);
 
       createOwningSiteItemRequest(transaction, patron, servicePointId);
     } catch (Exception e) {
@@ -167,7 +173,7 @@ public class RequestServiceImpl implements RequestService {
       .fulfilmentPreference(HOLD_SHELF.getName())
       .build();
     var createdRequest = circulationClient.sendRequest(newRequest);
-
+    log.info("createdRequest {}", createdRequest.toString());
     updateTransaction(transaction, item, holding, createdRequest, patron);
 
     log.info("Item request successfully created.");
@@ -286,6 +292,11 @@ public class RequestServiceImpl implements RequestService {
     return circulationClient.queryRequestsByItemId(itemId);
   }
 
+  @Override
+  public ResultList<RequestDTO> findNotFilledRequestsByIds(Set<UUID> requestIds, int limit) {
+    return circulationClient.queryNotFilledRequestsByIds(matchAny(requestIds), limit);
+  }
+
   private void cancelRequest(RequestDTO request, UUID reasonId, String reasonDetails) {
     request.setStatus(RequestStatus.CLOSED_CANCELLED);
     request.setCancellationReasonId(reasonId);
@@ -310,6 +321,13 @@ public class RequestServiceImpl implements RequestService {
       hold.setFolioPatronId(patron.getId());
       hold.setFolioPatronBarcode(patron.getBarcode());
     }
+    if(transaction.getType() == ITEM) {
+      var instance = instanceService.find(request.getInstanceId()).orElse(null);
+      if (instance != null) {
+        var author = instanceService.getAuthor(instance);
+        hold.setAuthor(author);
+      }
+    }
     transactionRepository.save(transaction);
   }
 
@@ -332,6 +350,17 @@ public class RequestServiceImpl implements RequestService {
     return centralServerRepository.fetchOneByCentralCode(centralServerCode)
       .orElseThrow(() -> new EntityNotFoundException("Central server not found for central code = " + centralServerCode)
       ).getId();
+  }
+
+  private UUID getItemHoldServicePointId(InnReachTransaction transaction, User patron) {
+    UUID servicePointId = null;
+    var centralServer = centralServerService.getCentralServerByCentralCode(transaction.getCentralServerCode());
+    if (centralServer.getCheckPickupLocation()) {
+      var pickupLocationCode = transaction.getHold().getPickupLocation().getPickupLocCode();
+      servicePointId = inventoryService.findServicePointIdByCode(pickupLocationCode).orElse(null);
+    }
+
+    return servicePointId != null ? servicePointId : getUserRequestPreferenceDefaultServicePoint(patron.getId());
   }
 
   private String queryByBarcode(String patronBarcode) {

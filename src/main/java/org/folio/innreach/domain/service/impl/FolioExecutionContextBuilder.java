@@ -3,6 +3,7 @@ package org.folio.innreach.domain.service.impl;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -27,8 +28,8 @@ public class FolioExecutionContextBuilder {
     return builder()
       .withTenantId(systemUser.getTenantId())
       .withOkapiUrl(systemUser.getOkapiUrl())
-      .withUsername(systemUser.getUsername())
       .withToken(systemUser.getToken())
+      .withUserId(systemUser.getUserId())
       .build();
   }
 
@@ -43,7 +44,7 @@ public class FolioExecutionContextBuilder {
     private String tenantId;
     private String okapiUrl;
     private String token;
-    private String username;
+    private UUID userId;
     private final Map<String, Collection<String>> allHeaders;
     private final Map<String, Collection<String>> okapiHeaders;
 
@@ -71,8 +72,8 @@ public class FolioExecutionContextBuilder {
         }
 
         @Override
-        public String getUserName() {
-          return username;
+        public UUID getUserId() {
+          return userId;
         }
 
         @Override
@@ -92,4 +93,5 @@ public class FolioExecutionContextBuilder {
       };
     }
   }
+
 }
