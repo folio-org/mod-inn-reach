@@ -208,7 +208,7 @@ public class BaseApiControllerTest {
   }
 
   protected static void stubDelete(String url) {
-    stubPut(url, ResponseActions.none(), MappingActions.none());
+    stubDelete(url, ResponseActions.none(), MappingActions.none());
   }
 
   protected static void stubDelete(String url,
