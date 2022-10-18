@@ -46,6 +46,7 @@ import javax.persistence.EntityExistsException;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.folio.innreach.domain.service.*;
 import org.springframework.beans.BeanUtils;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
@@ -64,16 +65,6 @@ import org.folio.innreach.domain.event.CancelRequestEvent;
 import org.folio.innreach.domain.event.RecallRequestEvent;
 import org.folio.innreach.domain.exception.CirculationException;
 import org.folio.innreach.domain.exception.EntityNotFoundException;
-import org.folio.innreach.domain.service.CentralServerService;
-import org.folio.innreach.domain.service.CirculationService;
-import org.folio.innreach.domain.service.HoldingsService;
-import org.folio.innreach.domain.service.InnReachRecallUserService;
-import org.folio.innreach.domain.service.ItemService;
-import org.folio.innreach.domain.service.LoanService;
-import org.folio.innreach.domain.service.MaterialTypeMappingService;
-import org.folio.innreach.domain.service.PatronHoldService;
-import org.folio.innreach.domain.service.PatronInfoService;
-import org.folio.innreach.domain.service.RequestService;
 import org.folio.innreach.dto.BaseCircRequestDTO;
 import org.folio.innreach.dto.CancelRequestDTO;
 import org.folio.innreach.dto.ClaimsItemReturnedDTO;
@@ -130,6 +121,7 @@ public class CirculationServiceImpl implements CirculationService {
   private final TransactionTemplate transactionTemplate;
   private final ApplicationEventPublisher eventPublisher;
 
+  private final InstanceService instanceService;
   @Override
   public InnReachResponseDTO createInnReachTransactionItemHold(String trackingId, String centralCode, TransactionHoldDTO dto) {
     try {
@@ -220,6 +212,16 @@ public class CirculationServiceImpl implements CirculationService {
     removeItemTransactionInfo(itemId)
       .ifPresent(this::removeHoldingsTransactionInfo);
 
+    var folioItemid = transaction.getHold().getFolioItemId();
+    var folioHoldingid = transaction.getHold().getFolioHoldingId();
+    var folioInstanceid = transaction.getHold().getFolioInstanceId();
+
+    log.info("folioItem->"+folioItemid);
+    log.info("folioHolding->"+folioHoldingid);
+    log.info("folioInstance->"+folioInstanceid);
+
+    deleteVirtualRecords(folioItemid, folioHoldingid, folioInstanceid);
+
     eventPublisher.publishEvent(CancelRequestEvent.of(transaction,
       INN_REACH_CANCELLATION_REASON_ID, cancelRequest.getReason()));
 
@@ -228,6 +230,12 @@ public class CirculationServiceImpl implements CirculationService {
     log.info("Item request successfully cancelled");
 
     return success();
+  }
+
+  private void deleteVirtualRecords(UUID folioItemId, UUID folioHoldingId, UUID folioInstanceId) {
+    itemService.delete(folioItemId);
+    holdingsService.delete(folioHoldingId);
+    instanceService.delete(folioInstanceId);
   }
 
   @Override

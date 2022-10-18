@@ -81,6 +81,7 @@ class CirculationApiTest extends BaseApiControllerTest {
   private static final String PRE_POPULATED_CENTRAL_CODE = "d2ir";
   private static final String PRE_POPULATED_CENTRAL_AGENCY_CODE = "5east";
   private static final String PRE_POPULATED_INSTANCE_ID = "b81bcffd-9dd9-4e17-b6fd-eeecf790aad5";
+  private static final UUID FOLIO_INSTANCE_ID = UUID.fromString("76834d5a-08e8-45ea-84ca-4d9b10aa341c");
   private static final String PRE_POPULATED_LOCAL_AGENCY_CODE1 = "q1w2e";
   private static final String PRE_POPULATED_LOCAL_AGENCY_CODE2 = "w2e3r";
   private static final String PRE_POPULATED_PATRON_ID = "ifkkmbcnljgy5elaav74pnxgxa";
@@ -90,6 +91,7 @@ class CirculationApiTest extends BaseApiControllerTest {
 
   private static final UUID FOLIO_PATRON_ID = UUID.fromString("ea11eba7-3c0f-4d15-9cca-c8608cd6bc8a");
   private static final UUID NEW_HOLDING_ID = UUID.fromString("16f40c4e-235d-4912-a683-2ad919cc8b07");
+  private static final UUID FOLIO_HOLDING_ID = UUID.fromString("76834d5a-08e8-45ea-84ca-4d9b10aa342c");
   private static final UUID UPDATED_REQUEST_ITEM_ID = UUID.fromString("195efae1-588f-47bd-a181-13a2eb437701");
   private static final UUID UPDATED_REQUEST_INSTANCE_ID = UUID.fromString("86c722c3-2f5e-42e1-bd0e-7ffbbd3b4972");
   private static final UUID UPDATED_REQUEST_HOLDING_ID = UUID.fromString("e63273e7-48f5-4c43-ab4e-1751ecacaa21");
@@ -241,10 +243,13 @@ class CirculationApiTest extends BaseApiControllerTest {
     stubGet(format(USER_BY_ID_URL_TEMPLATE, patronId), "users/user.json");
     stubGet(format("%s/%s", ITEMS_URL, PRE_POPULATED_ITEM_ID), "inventory/item-response.json");
     stubPut(format("%s/%s", ITEMS_URL, PRE_POPULATED_ITEM_ID));
+    stubDelete(format("%s/%s", ITEMS_URL, PRE_POPULATED_ITEM_ID));
     stubGet(format("%s/%s", HOLDINGS_URL, NEW_HOLDING_ID), "inventory-storage/holding-response.json");
     stubPut(format("%s/%s", HOLDINGS_URL, NEW_HOLDING_ID));
+    stubDelete(format("%s/%s", HOLDINGS_URL, FOLIO_HOLDING_ID));
     stubGet(format("%s/%s", REQUESTS_URL, PRE_POPULATED_REQUEST_ID), "circulation/item-request-response.json");
     stubPut(format("%s/%s", REQUESTS_URL, PRE_POPULATED_REQUEST_ID));
+    stubDelete(format("%s/%s", INSTANCES_URL, FOLIO_INSTANCE_ID));
 
     mockMvc.perform(put(CIRCULATION_ENDPOINT, CANCEL_REQ_OPERATION, PRE_POPULATED_TRACKING_ID, PRE_POPULATED_CENTRAL_CODE)
         .content(jsonHelper.toJson(requestPayload))

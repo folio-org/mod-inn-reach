@@ -50,6 +50,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import org.apache.commons.lang3.ObjectUtils;
+import org.folio.innreach.domain.service.*;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
@@ -75,12 +76,6 @@ import org.folio.innreach.domain.dto.folio.User;
 import org.folio.innreach.domain.dto.folio.circulation.RequestDTO;
 import org.folio.innreach.domain.entity.InnReachTransaction;
 import org.folio.innreach.domain.entity.TransactionPatronHold;
-import org.folio.innreach.domain.service.InstanceService;
-import org.folio.innreach.domain.service.InventoryService;
-import org.folio.innreach.domain.service.ItemService;
-import org.folio.innreach.domain.service.PatronHoldService;
-import org.folio.innreach.domain.service.RequestService;
-import org.folio.innreach.domain.service.UserService;
 import org.folio.innreach.dto.CheckOutRequestDTO;
 import org.folio.innreach.dto.InnReachResponseDTO;
 import org.folio.innreach.dto.LoanDTO;
@@ -162,6 +157,8 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
   private InstanceService instanceService;
   @MockBean
   private PatronHoldService patronHoldService;
+  @MockBean
+  private HoldingsService holdingsService;
 
   @Autowired
   private InnReachTransactionRepository transactionRepository;
@@ -1122,6 +1119,9 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
   })
   void processCancelRequest() {
     doNothing().when(requestService).cancelRequest(anyString(), any(UUID.class), any(UUID.class), anyString());
+    doNothing().when(itemService).delete(any(UUID.class));
+    doNothing().when(holdingsService).delete(any(UUID.class));
+    doNothing().when(instanceService).delete(any(UUID.class));
     when(userService.getUserById(any(UUID.class))).thenReturn(Optional.of(populateUser()));
 
     var cancelRequestDTO = createCancelRequestDTO();
@@ -1132,6 +1132,9 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
       PRE_POPULATED_TRACKING1_ID, PRE_POPULATED_CENTRAL_CODE);
 
     verify(requestService).cancelRequest(anyString(), any(UUID.class), any(UUID.class), anyString());
+    verify(itemService).delete(any(UUID.class));
+    verify(holdingsService).delete(any(UUID.class));
+    verify(instanceService).delete(any(UUID.class));
 
     var transactionAfter = fetchPrePopulatedTransaction();
 

@@ -4,11 +4,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.cloud.openfeign.FeignClient;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.*;
 
 import org.folio.innreach.client.config.InventoryFeignClientConfig;
 import org.folio.innreach.dto.Holding;
@@ -18,6 +14,9 @@ public interface HoldingsStorageClient {
 
   @GetMapping("/holdings/{holdingId}")
   Optional<Holding> findHolding(@PathVariable("holdingId") UUID holdingId);
+
+  @DeleteMapping("/holdings/{holdingsRecordId}")
+  void deleteHolding(@PathVariable("holdingsRecordId") UUID holdingId);
 
   @PostMapping("/holdings")
   Holding createHolding(@RequestBody Holding holding);

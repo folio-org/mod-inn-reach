@@ -207,7 +207,24 @@ public class BaseApiControllerTest {
     stubPut(url, ResponseActions.none(), MappingActions.none());
   }
 
-  protected static void stubPut(String url,
+  protected static void stubDelete(String url) {
+    stubPut(url, ResponseActions.none(), MappingActions.none());
+  }
+
+  protected static void stubDelete(String url,
+                                ResponseActions additionalResponseActions,
+                                MappingActions additionalMapping) {
+
+    ResponseDefinitionBuilder responseDefBuilder = additionalResponseActions.apply(noContent());
+
+    MappingBuilder mappingBuilder = WireMock.delete(urlEqualTo(url));
+    mappingBuilder = additionalMapping.apply(mappingBuilder);
+
+    stubFor(mappingBuilder);
+  }
+
+
+    protected static void stubPut(String url,
                                 ResponseActions additionalResponseActions,
                                 MappingActions additionalMapping) {
 

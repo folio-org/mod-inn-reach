@@ -6,6 +6,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
@@ -15,6 +16,7 @@ import org.folio.innreach.domain.service.HoldingsService;
 import org.folio.innreach.dto.Holding;
 import org.folio.innreach.dto.HoldingSourceDTO;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class HoldingsServiceImpl implements HoldingsService {
@@ -32,6 +34,14 @@ public class HoldingsServiceImpl implements HoldingsService {
   @Override
   public Optional<Holding> find(UUID holdingId) {
     return holdingsStorageClient.findHolding(holdingId);
+  }
+
+  @Override
+  public void delete(UUID holdingId) {
+      holdingsStorageClient.findHolding(holdingId)
+        .ifPresentOrElse(holding -> holdingsStorageClient.deleteHolding(holdingId)
+          ,()->log.info("Holding not found with holdingId:"+holdingId));
+      log.info("Holding deleted:"+holdingId);
   }
 
   @Override

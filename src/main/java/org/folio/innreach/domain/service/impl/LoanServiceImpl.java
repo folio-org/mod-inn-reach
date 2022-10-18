@@ -47,6 +47,11 @@ public class LoanServiceImpl implements LoanService {
   }
 
   @Override
+  public void delete(UUID key) {
+
+  }
+
+  @Override
   public Optional<LoanDTO> findByItemId(UUID itemId) {
     return getFirstItem(circulationClient.queryLoansByItemId(itemId));
   }

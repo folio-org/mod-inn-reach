@@ -30,6 +30,8 @@ import org.folio.innreach.domain.exception.ResourceVersionConflictException;
 import org.folio.innreach.dto.BaseCircRequestDTO;
 import org.folio.innreach.repository.InnReachTransactionRepository;
 
+import java.util.UUID;
+
 @Sql(
     scripts = {
       "classpath:db/central-server/pre-populate-central-server.sql",
@@ -57,6 +59,9 @@ class OptimisticLockingTest extends BaseApiControllerTest {
   private static final String PRE_POPULATED_ITEM_ID = "9a326225-6530-41cc-9399-a61987bfab3c";
   private static final String PRE_POPULATED_REQUEST_ID = "ea11eba7-3c0f-4d15-9cca-c8608cd6bc8a";
   private static final String PRE_POPULATED_HOLDING_ID = "16f40c4e-235d-4912-a683-2ad919cc8b07";
+
+  private static final UUID FOLIO_INSTANCE_ID = UUID.fromString("76834d5a-08e8-45ea-84ca-4d9b10aa341c");
+  private static final UUID FOLIO_HOLDING_ID = UUID.fromString("76834d5a-08e8-45ea-84ca-4d9b10aa342c");
   private static final TransactionState PRE_POPULATED_STATE = PATRON_HOLD;
   private static final String ITEM_RETRY_SCENARIO = "Item Retry Scenario";
   private static final String ITEM_CONFLICT_STATE = "Item Conflict";
@@ -111,9 +116,11 @@ class OptimisticLockingTest extends BaseApiControllerTest {
 
     stubGet(circRequestUrl(), "circulation/item-request-response.json");
     stubPut(circRequestUrl());
-
     stubGet(holdingsUrl(), "inventory-storage/holding-response.json");
     stubPut(holdingsUrl());
+    stubDelete(itemUrl());
+    stubDelete(format("/holdings-storage/holdings/%s", FOLIO_HOLDING_ID));
+    stubDelete(instanceUrl());
 
     stubItemRecoverableScenario();
 
@@ -156,6 +163,9 @@ class OptimisticLockingTest extends BaseApiControllerTest {
 
     stubGet(itemUrl(), "inventory/item-response.json");
     stubPut(itemUrl());
+    stubDelete(itemUrl());
+    stubDelete(format("/holdings-storage/holdings/%s", FOLIO_HOLDING_ID));
+    stubDelete(instanceUrl());
 
     stubHoldingsRecoverableScenario();
 
@@ -195,6 +205,9 @@ class OptimisticLockingTest extends BaseApiControllerTest {
 
     stubGet(circRequestUrl(), "circulation/item-request-response.json");
     stubPut(circRequestUrl());
+    stubDelete(itemUrl());
+    stubDelete(format("/holdings-storage/holdings/%s", FOLIO_HOLDING_ID));
+    stubDelete(instanceUrl());
 
     stubItemRecoverableScenario();
 
@@ -279,6 +292,10 @@ class OptimisticLockingTest extends BaseApiControllerTest {
 
   private static String holdingsUrl() {
     return format("/holdings-storage/holdings/%s", PRE_POPULATED_HOLDING_ID);
+  }
+
+  private static String instanceUrl() {
+    return format("/inventory/instances/%s", FOLIO_INSTANCE_ID);
   }
 
   private static String itemUrl() {

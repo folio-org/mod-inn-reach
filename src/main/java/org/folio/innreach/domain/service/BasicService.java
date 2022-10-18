@@ -16,6 +16,8 @@ public interface BasicService<K, R> extends UpdateTemplateWithFinder<K, R> {
 
   Optional<R> find(K key);
 
+  void delete(K key);
+
   @Retryable(value = ResourceVersionConflictException.class,
       maxAttemptsExpression = "#{${retryable-update.on-conflict.retry-attempts}}",
       backoff = @Backoff(delayExpression = "#{${retryable-update.on-conflict.retry-interval-ms}}"),
