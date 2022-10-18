@@ -40,9 +40,13 @@ public class ItemServiceImpl implements ItemService {
 
   @Override
   public void delete(UUID itemId) {
+    try {
       inventoryClient.findItem(itemId).
-        ifPresentOrElse(p-> inventoryClient.deleteItem(itemId),
-          ()-> log.info("No item found with itemId:"+itemId));
+        ifPresentOrElse(p -> inventoryClient.deleteItem(itemId),
+          () -> log.info("No item found with itemId:" + itemId));
+    }catch (Exception e){
+
+    }
   }
 
   @Override
