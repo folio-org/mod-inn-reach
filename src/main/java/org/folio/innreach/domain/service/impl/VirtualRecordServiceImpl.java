@@ -19,10 +19,10 @@ public class VirtualRecordServiceImpl implements VirtualRecordService {
   private final LoanService loanService;
   @Override
   public void deleteVirtualRecords(UUID folioItemId, UUID folioHoldingId, UUID folioInstanceId, UUID folioLoanId) {
-    log.info("Inside deleteVirtualRecords");
+    log.info("Inside deleteVirtualRecords, loanId->>"+folioLoanId);
     Optional.ofNullable(folioItemId).ifPresent(itemService::delete);
     Optional.ofNullable(folioHoldingId).ifPresent(holdingsService::delete);
     Optional.ofNullable(folioInstanceId).ifPresent(instanceService::delete);
-    //Optional.ofNullable(folioLoanId).ifPresent(loanService::delete);
+    Optional.ofNullable(folioLoanId).ifPresent(loanService::delete);
   }
 }

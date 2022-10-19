@@ -61,6 +61,7 @@ class OptimisticLockingTest extends BaseApiControllerTest {
   private static final String PRE_POPULATED_HOLDING_ID = "16f40c4e-235d-4912-a683-2ad919cc8b07";
 
   private static final UUID FOLIO_INSTANCE_ID = UUID.fromString("76834d5a-08e8-45ea-84ca-4d9b10aa341c");
+  private static final String LOAN_ID = "fd5109c7-8934-4294-9504-c1a4a4f07c96";
   private static final UUID FOLIO_HOLDING_ID = UUID.fromString("76834d5a-08e8-45ea-84ca-4d9b10aa342c");
   private static final TransactionState PRE_POPULATED_STATE = PATRON_HOLD;
   private static final String ITEM_RETRY_SCENARIO = "Item Retry Scenario";
@@ -121,6 +122,7 @@ class OptimisticLockingTest extends BaseApiControllerTest {
     stubDelete(itemUrl());
     stubDelete(format("/holdings-storage/holdings/%s", FOLIO_HOLDING_ID));
     stubDelete(instanceUrl());
+    stubDelete(loanUrl());
 
     stubItemRecoverableScenario();
 
@@ -166,6 +168,7 @@ class OptimisticLockingTest extends BaseApiControllerTest {
     stubDelete(itemUrl());
     stubDelete(format("/holdings-storage/holdings/%s", FOLIO_HOLDING_ID));
     stubDelete(instanceUrl());
+    stubDelete(loanUrl());
 
     stubHoldingsRecoverableScenario();
 
@@ -208,6 +211,7 @@ class OptimisticLockingTest extends BaseApiControllerTest {
     stubDelete(itemUrl());
     stubDelete(format("/holdings-storage/holdings/%s", FOLIO_HOLDING_ID));
     stubDelete(instanceUrl());
+    stubDelete(loanUrl());
 
     stubItemRecoverableScenario();
 
@@ -296,6 +300,10 @@ class OptimisticLockingTest extends BaseApiControllerTest {
 
   private static String instanceUrl() {
     return format("/inventory/instances/%s", FOLIO_INSTANCE_ID);
+  }
+
+  private static String loanUrl() {
+    return format("/circulation/loans/%s",LOAN_ID);
   }
 
   private static String itemUrl() {

@@ -58,6 +58,7 @@ class CirculationApiTest extends BaseApiControllerTest {
   public static final String INSTANCES_URL = "/inventory/instances";
   public static final String ITEMS_URL = "/inventory/items";
   public static final String REQUESTS_URL = "/circulation/requests";
+  public static final String LOAN_URL = "/circulation/loans/fd5109c7-8934-4294-9504-c1a4a4f07c96";
   public static final String QUERY_INSTANCE_BY_HRID_URL_TEMPLATE = "/inventory/instances?query=(hrid==%s)";
   public static final String QUERY_INVENTORY_ITEM_BY_HRID_URL_TEMPLATE = "/inventory/items?query=hrid==%s";
   public static final String QUERY_REQUEST_BY_ITEM_ID_URL_TEMPLATE = "/circulation/requests?query=(itemId==%s)";
@@ -250,6 +251,8 @@ class CirculationApiTest extends BaseApiControllerTest {
     stubGet(format("%s/%s", REQUESTS_URL, PRE_POPULATED_REQUEST_ID), "circulation/item-request-response.json");
     stubPut(format("%s/%s", REQUESTS_URL, PRE_POPULATED_REQUEST_ID));
     stubDelete(format("%s/%s", INSTANCES_URL, FOLIO_INSTANCE_ID));
+    stubGet(LOAN_URL,"circulation/loan-response.json");
+    stubDelete(LOAN_URL);
 
     mockMvc.perform(put(CIRCULATION_ENDPOINT, CANCEL_REQ_OPERATION, PRE_POPULATED_TRACKING_ID, PRE_POPULATED_CENTRAL_CODE)
         .content(jsonHelper.toJson(requestPayload))
