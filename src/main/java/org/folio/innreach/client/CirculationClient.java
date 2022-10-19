@@ -29,6 +29,9 @@ public interface CirculationClient {
   @GetMapping("/requests/{requestId}")
   Optional<RequestDTO> findRequest(@PathVariable("requestId") UUID requestId);
 
+  @DeleteMapping("/requests/{requestId}")
+  void deleteRequest(@PathVariable("requestId") UUID requestId);
+
   @PostMapping("/requests")
   RequestDTO sendRequest(@RequestBody RequestDTO requestDTO);
 
