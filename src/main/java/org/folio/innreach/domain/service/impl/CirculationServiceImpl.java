@@ -121,6 +121,8 @@ public class CirculationServiceImpl implements CirculationService {
   private final TransactionTemplate transactionTemplate;
   private final ApplicationEventPublisher eventPublisher;
 
+  private final VirtualRecordService virtualRecordService;
+
   private final InstanceService instanceService;
   @Override
   public InnReachResponseDTO createInnReachTransactionItemHold(String trackingId, String centralCode, TransactionHoldDTO dto) {
@@ -212,15 +214,16 @@ public class CirculationServiceImpl implements CirculationService {
     removeItemTransactionInfo(itemId)
       .ifPresent(this::removeHoldingsTransactionInfo);
 
-    var folioItemid = transaction.getHold().getFolioItemId();
-    var folioHoldingid = transaction.getHold().getFolioHoldingId();
-    var folioInstanceid = transaction.getHold().getFolioInstanceId();
+    var folioItemId = transaction.getHold().getFolioItemId();
+    var folioHoldingId = transaction.getHold().getFolioHoldingId();
+    var folioInstanceId = transaction.getHold().getFolioInstanceId();
+    var folioLoanId = transaction.getHold().getFolioLoanId();
 
-    log.info("folioItem->"+folioItemid);
-    log.info("folioHolding->"+folioHoldingid);
-    log.info("folioInstance->"+folioInstanceid);
+    log.info("folioItem->"+folioItemId);
+    log.info("folioHolding->"+folioHoldingId);
+    log.info("folioInstance->"+folioInstanceId);
 
-    deleteVirtualRecords(folioItemid, folioHoldingid, folioInstanceid);
+    virtualRecordService.deleteVirtualRecords(folioItemId,folioHoldingId,folioInstanceId,folioLoanId);
 
     eventPublisher.publishEvent(CancelRequestEvent.of(transaction,
       INN_REACH_CANCELLATION_REASON_ID, cancelRequest.getReason()));
@@ -230,12 +233,6 @@ public class CirculationServiceImpl implements CirculationService {
     log.info("Item request successfully cancelled");
 
     return success();
-  }
-
-  private void deleteVirtualRecords(UUID folioItemId, UUID folioHoldingId, UUID folioInstanceId) {
-    itemService.delete(folioItemId);
-    holdingsService.delete(folioHoldingId);
-    instanceService.delete(folioInstanceId);
   }
 
   @Override

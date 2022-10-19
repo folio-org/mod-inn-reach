@@ -159,6 +159,8 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
   private PatronHoldService patronHoldService;
   @MockBean
   private HoldingsService holdingsService;
+  @MockBean
+  VirtualRecordService virtualRecordService;
 
   @Autowired
   private InnReachTransactionRepository transactionRepository;
@@ -1119,9 +1121,7 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
   })
   void processCancelRequest() {
     doNothing().when(requestService).cancelRequest(anyString(), any(UUID.class), any(UUID.class), anyString());
-    doNothing().when(itemService).delete(any(UUID.class));
-    doNothing().when(holdingsService).delete(any(UUID.class));
-    doNothing().when(instanceService).delete(any(UUID.class));
+    doNothing().when(virtualRecordService).deleteVirtualRecords(any(UUID.class),any(UUID.class),any(UUID.class),any(UUID.class));
     when(userService.getUserById(any(UUID.class))).thenReturn(Optional.of(populateUser()));
 
     var cancelRequestDTO = createCancelRequestDTO();
@@ -1132,9 +1132,7 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
       PRE_POPULATED_TRACKING1_ID, PRE_POPULATED_CENTRAL_CODE);
 
     verify(requestService).cancelRequest(anyString(), any(UUID.class), any(UUID.class), anyString());
-    verify(itemService).delete(any(UUID.class));
-    verify(holdingsService).delete(any(UUID.class));
-    verify(instanceService).delete(any(UUID.class));
+    verify(virtualRecordService).deleteVirtualRecords(any(UUID.class),any(UUID.class),any(UUID.class),any(UUID.class));
 
     var transactionAfter = fetchPrePopulatedTransaction();
 

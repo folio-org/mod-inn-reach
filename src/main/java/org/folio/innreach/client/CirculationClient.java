@@ -4,12 +4,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.cloud.openfeign.FeignClient;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
 
 import org.folio.innreach.client.config.FolioFeignClientConfig;
 import org.folio.innreach.domain.dto.folio.ResultList;
@@ -54,6 +49,9 @@ public interface CirculationClient {
 
   @GetMapping("/loans/{loanId}")
   Optional<LoanDTO> findLoan(@PathVariable("loanId") UUID loanId);
+
+  @DeleteMapping("/loans/{loanId}")
+  Optional<LoanDTO> deleteLoan(@PathVariable("loanId") UUID loanId);
 
   @PostMapping("/loans")
   LoanDTO createLoan(@RequestBody LoanDTO loan);
