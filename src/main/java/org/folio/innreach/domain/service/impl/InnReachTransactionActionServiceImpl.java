@@ -46,6 +46,7 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.StringUtils;
+import org.folio.innreach.domain.service.*;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -62,13 +63,6 @@ import org.folio.innreach.domain.event.CancelRequestEvent;
 import org.folio.innreach.domain.event.MoveRequestEvent;
 import org.folio.innreach.domain.event.RecallRequestEvent;
 import org.folio.innreach.domain.exception.EntityNotFoundException;
-import org.folio.innreach.domain.service.InnReachRecallUserService;
-import org.folio.innreach.domain.service.InnReachTransactionActionService;
-import org.folio.innreach.domain.service.InstanceService;
-import org.folio.innreach.domain.service.ItemService;
-import org.folio.innreach.domain.service.LoanService;
-import org.folio.innreach.domain.service.PatronHoldService;
-import org.folio.innreach.domain.service.RequestService;
 import org.folio.innreach.dto.CancelTransactionHoldDTO;
 import org.folio.innreach.dto.CheckInDTO;
 import org.folio.innreach.dto.InnReachTransactionDTO;
@@ -98,6 +92,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
   private final InnReachTransactionActionNotifier notifier;
   private final ApplicationEventPublisher eventPublisher;
   private final InnReachRecallUserService recallUserService;
+  private final VirtualRecordService virtualRecordService;
 
   private static final String[] UNCIRCULATED_ITEM_STATUSES = {
     AWAITING_PICKUP.getValue(), PAGED.getValue(), IN_TRANSIT.getValue(), CHECKED_OUT.getValue()
@@ -272,6 +267,8 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
 
   @Override
   public InnReachTransactionDTO cancelPatronHold(UUID transactionId, CancelTransactionHoldDTO cancelRequest) {
+    log.info("Cancelling Patron Hold transaction: {}", transactionId);
+
     var transaction = fetchTransactionOfType(transactionId, PATRON);
 
     var requestId = transaction.getHold().getFolioRequestId();
@@ -283,6 +280,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
       cancelPatronHoldWithClosedRequest(transaction);
     }
 
+    log.info("Patron request successfully cancelled");
     return transactionMapper.toDTO(transaction);
   }
 
@@ -639,7 +637,18 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
     if (transaction.getState() == PATRON_HOLD || transaction.getState() == TRANSFER) {
       transaction.setState(BORROWING_SITE_CANCEL);
 
+      var folioItemId = transaction.getHold().getFolioItemId();
+      var folioHoldingId = transaction.getHold().getFolioHoldingId();
+      var folioInstanceId = transaction.getHold().getFolioInstanceId();
+      var folioLoanId = transaction.getHold().getFolioLoanId();
+
+
       notifier.reportCancelItemHold(transaction);
+
+      virtualRecordService.deleteVirtualRecords(folioItemId,folioHoldingId,folioInstanceId,folioLoanId);
+      requestService.deleteRequest(transaction.getHold().getFolioRequestId());
+      //clearPatronAndItemInfo(transaction.getHold());
+
     } else if (EnumSet.of(ITEM_SHIPPED, RECEIVE_UNANNOUNCED, ITEM_RECEIVED).contains(transaction.getState())) {
       var item = fetchItemById(transaction.getHold().getFolioItemId());
 
@@ -650,6 +659,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
       }
     }
   }
+
 
   private void updateLocalTransactionOnRequestChange(RequestDTO request, InnReachTransaction transaction) {
     var hold = transaction.getHold();
