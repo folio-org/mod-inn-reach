@@ -49,6 +49,7 @@ import lombok.extern.log4j.Log4j2;
 import org.folio.innreach.domain.service.*;
 import org.springframework.beans.BeanUtils;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
@@ -420,7 +421,38 @@ public class CirculationServiceImpl implements CirculationService {
       .ifPresent(this::removeHoldingsTransactionInfo);
     clearPatronAndItemInfo(transaction.getHold());
 
+    var folioItemId = transaction.getHold().getFolioItemId();
+    var folioHoldingId = transaction.getHold().getFolioHoldingId();
+    var folioInstanceId = transaction.getHold().getFolioInstanceId();
+    var folioLoanId = transaction.getHold().getFolioLoanId();
+
+    log.info("folioItem->"+folioItemId);
+    log.info("folioHolding->"+folioHoldingId);
+    log.info("folioInstance->"+folioInstanceId);
+
+    // checkoutTimeDuration fetch
+
+    // wait for that specific duration and call virtualRecordService.deleteVirtualRecords
+    log.info("Start time : " + new Date());
+    executeDeleteVirtualRecordsWithDelay(10000L,folioItemId,folioHoldingId,folioInstanceId,folioLoanId);
+
+    // needs to be tested for multi tenant
+
     return success();
+  }
+
+  @Async("modAsyncExecutor")
+  private void executeDeleteVirtualRecordsWithDelay(Long delayTime, UUID folioItemId,
+                                                    UUID folioHoldingId, UUID folioInstanceId, UUID folioLoanId){
+    try{
+      log.info("deleteVirtualRecords execution started");
+      Thread.sleep(delayTime);
+      virtualRecordService.deleteVirtualRecords(folioItemId,folioHoldingId,folioInstanceId,folioLoanId);
+      log.info("deleteVirtualRecords execution ended at " + new Date());
+    }catch (InterruptedException ie) {
+      ie.printStackTrace();
+      throw new CirculationException("Failed to execute deleteVirtualRecords: " + ie.getMessage(), ie);
+    }
   }
 
   @Override
