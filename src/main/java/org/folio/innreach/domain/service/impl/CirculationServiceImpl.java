@@ -210,19 +210,14 @@ public class CirculationServiceImpl implements CirculationService {
 
     transaction.setState(CANCEL_REQUEST);
 
-    var itemId = transaction.getHold().getFolioItemId();
+    var folioItemId = transaction.getHold().getFolioItemId();
 
-    removeItemTransactionInfo(itemId)
+    removeItemTransactionInfo(folioItemId)
       .ifPresent(this::removeHoldingsTransactionInfo);
 
-    var folioItemId = transaction.getHold().getFolioItemId();
     var folioHoldingId = transaction.getHold().getFolioHoldingId();
     var folioInstanceId = transaction.getHold().getFolioInstanceId();
     var folioLoanId = transaction.getHold().getFolioLoanId();
-
-    log.info("folioItem->"+folioItemId);
-    log.info("folioHolding->"+folioHoldingId);
-    log.info("folioInstance->"+folioInstanceId);
 
     virtualRecordService.deleteVirtualRecords(folioItemId,folioHoldingId,folioInstanceId,folioLoanId);
 
