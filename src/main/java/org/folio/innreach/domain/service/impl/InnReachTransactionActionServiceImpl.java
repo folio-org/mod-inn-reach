@@ -642,7 +642,6 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
       var folioInstanceId = transaction.getHold().getFolioInstanceId();
       var folioLoanId = transaction.getHold().getFolioLoanId();
 
-
       notifier.reportCancelItemHold(transaction);
 
       virtualRecordService.deleteVirtualRecords(folioItemId,folioHoldingId,folioInstanceId,folioLoanId);
