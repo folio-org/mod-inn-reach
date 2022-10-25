@@ -429,25 +429,24 @@ public class CirculationServiceImpl implements CirculationService {
 
     // wait for that specific duration and call virtualRecordService.deleteVirtualRecords
     log.info("Start time : " + new Date());
-    executeDeleteVirtualRecordsWithDelay(10000L,folioItemId,folioHoldingId,folioInstanceId,folioLoanId);
+//    executeDeleteVirtualRecordsWithDelay(10000L,folioItemId,folioHoldingId,folioInstanceId,folioLoanId);
+
+    log.info("deleteVirtualRecords execution started");
+    try {
+      log.info("deleteVirtualRecords execution started");
+      Thread.sleep(10000L);
+      virtualRecordService.deleteVirtualRecords(folioItemId,folioHoldingId,folioInstanceId,folioLoanId);
+      log.info("deleteVirtualRecords execution ended at " + new Date());
+    } catch (InterruptedException ie) {
+      ie.printStackTrace();
+      throw new CirculationException("Failed to execute deleteVirtualRecords: " + ie.getMessage(), ie);
+    }
+    virtualRecordService.deleteVirtualRecords(folioItemId,folioHoldingId,folioInstanceId,folioLoanId);
+    log.info("deleteVirtualRecords execution ended at " + new Date());
 
     // needs to be tested for multi tenant
 
     return success();
-  }
-
-  @Async("modAsyncExecutor")
-  private void executeDeleteVirtualRecordsWithDelay(Long delayTime, UUID folioItemId,
-                                                    UUID folioHoldingId, UUID folioInstanceId, UUID folioLoanId){
-    try{
-      log.info("deleteVirtualRecords execution started");
-      Thread.sleep(delayTime);
-      virtualRecordService.deleteVirtualRecords(folioItemId,folioHoldingId,folioInstanceId,folioLoanId);
-      log.info("deleteVirtualRecords execution ended at " + new Date());
-    }catch (InterruptedException ie) {
-      ie.printStackTrace();
-      throw new CirculationException("Failed to execute deleteVirtualRecords: " + ie.getMessage(), ie);
-    }
   }
 
   @Override

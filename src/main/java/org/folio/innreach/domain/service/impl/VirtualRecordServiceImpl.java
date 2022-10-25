@@ -7,6 +7,7 @@ import org.folio.innreach.domain.service.InstanceService;
 import org.folio.innreach.domain.service.ItemService;
 import org.folio.innreach.domain.service.LoanService;
 import org.folio.innreach.domain.service.VirtualRecordService;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
@@ -21,6 +22,8 @@ public class VirtualRecordServiceImpl implements VirtualRecordService {
   private final HoldingsService holdingsService;
   private final InstanceService instanceService;
   private final LoanService loanService;
+
+  @Async
   @Override
   public void deleteVirtualRecords(UUID folioItemId, UUID folioHoldingId, UUID folioInstanceId, UUID folioLoanId) {
     log.debug("deleteVirtualRecords :: parameters folioItemId:{} folioHoldingId:{} folioInstanceId:{} folioLoanId:{}",folioItemId,folioHoldingId,folioInstanceId,folioLoanId);

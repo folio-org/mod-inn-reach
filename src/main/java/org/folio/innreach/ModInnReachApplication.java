@@ -22,14 +22,4 @@ public class ModInnReachApplication {
   public static void main(String[] args) {
     SpringApplication.run(ModInnReachApplication.class, args);
   }
-
-  @Bean("modAsyncExecutor")
-  public TaskExecutor prepareScheduler() {
-    ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
-    executor.setCorePoolSize(4);
-    executor.setMaxPoolSize(100);
-    executor.setWaitForTasksToCompleteOnShutdown(true);
-    executor.setThreadNamePrefix("Async Executor -> ");
-    return executor;
-  }
 }
