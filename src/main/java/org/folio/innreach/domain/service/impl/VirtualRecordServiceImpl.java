@@ -2,6 +2,7 @@ package org.folio.innreach.domain.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.folio.innreach.domain.exception.CirculationException;
 import org.folio.innreach.domain.service.HoldingsService;
 import org.folio.innreach.domain.service.InstanceService;
 import org.folio.innreach.domain.service.ItemService;
@@ -10,6 +11,7 @@ import org.folio.innreach.domain.service.VirtualRecordService;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
+import java.util.Date;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -23,7 +25,6 @@ public class VirtualRecordServiceImpl implements VirtualRecordService {
   private final InstanceService instanceService;
   private final LoanService loanService;
 
-  @Async
   @Override
   public void deleteVirtualRecords(UUID folioItemId, UUID folioHoldingId, UUID folioInstanceId, UUID folioLoanId) {
     log.debug("deleteVirtualRecords :: parameters folioItemId:{} folioHoldingId:{} folioInstanceId:{} folioLoanId:{}",folioItemId,folioHoldingId,folioInstanceId,folioLoanId);
@@ -33,4 +34,20 @@ public class VirtualRecordServiceImpl implements VirtualRecordService {
     Optional.ofNullable(folioLoanId).ifPresent(loanService::delete);
     log.info("VirtualRecords Deleted");
   }
+
+  @Async
+  @Override
+  public void executeDeleteVirtualRecordsWithDelay(Long delayTime, UUID folioItemId,
+                                                    UUID folioHoldingId, UUID folioInstanceId, UUID folioLoanId){
+    try{
+      log.info("deleteVirtualRecords execution started" + new Date());
+      Thread.sleep(delayTime);
+      deleteVirtualRecords(folioItemId,folioHoldingId,folioInstanceId,folioLoanId);
+      log.info("deleteVirtualRecords execution ended at " + new Date());
+    }catch (InterruptedException ie) {
+      ie.printStackTrace();
+      throw new CirculationException("Failed to execute deleteVirtualRecords: " + ie.getMessage(), ie);
+    }
+  }
+
 }

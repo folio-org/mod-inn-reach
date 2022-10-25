@@ -8,6 +8,9 @@ import java.util.UUID;
 @Service
 public interface VirtualRecordService {
 
-  @Async
   void deleteVirtualRecords(UUID folioItemId,UUID folioHoldingId,UUID folioInstanceId,UUID folioLoanId);
+
+  @Async
+  void executeDeleteVirtualRecordsWithDelay(Long delayTime, UUID folioItemId,
+                                            UUID folioHoldingId, UUID folioInstanceId, UUID folioLoanId);
 }
