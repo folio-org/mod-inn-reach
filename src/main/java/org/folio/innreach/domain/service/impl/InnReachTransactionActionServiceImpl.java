@@ -30,9 +30,7 @@ import static org.folio.innreach.dto.ItemStatus.NameEnum.IN_TRANSIT;
 import static org.folio.innreach.dto.ItemStatus.NameEnum.PAGED;
 import static org.folio.innreach.util.DateHelper.toEpochSec;
 import static org.folio.innreach.util.DateHelper.toInstantTruncatedToSec;
-import static org.folio.innreach.util.InnReachTransactionUtils.clearCentralPatronInfo;
-import static org.folio.innreach.util.InnReachTransactionUtils.clearPatronAndItemInfo;
-import static org.folio.innreach.util.InnReachTransactionUtils.verifyState;
+import static org.folio.innreach.util.InnReachTransactionUtils.*;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -646,7 +644,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
 
       virtualRecordService.deleteVirtualRecords(folioItemId,folioHoldingId,folioInstanceId,folioLoanId);
       requestService.deleteRequest(transaction.getHold().getFolioRequestId());
-      //clearPatronAndItemInfo(transaction.getHold());
+      clearPatronVirtualInfo(transaction.getHold());
 
     } else if (EnumSet.of(ITEM_SHIPPED, RECEIVE_UNANNOUNCED, ITEM_RECEIVED).contains(transaction.getState())) {
       var item = fetchItemById(transaction.getHold().getFolioItemId());

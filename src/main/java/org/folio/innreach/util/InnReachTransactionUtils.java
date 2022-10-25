@@ -35,6 +35,14 @@ public class InnReachTransactionUtils {
     hold.setFolioItemBarcode(null);
   }
 
+  public static void clearPatronVirtualInfo(TransactionHold hold) {
+    hold.setFolioItemId(null);
+    hold.setFolioHoldingId(null);
+    hold.setFolioInstanceId(null);
+    hold.setFolioRequestId(null);
+    hold.setFolioLoanId(null);
+  }
+
   public static void clearCentralPatronInfo(TransactionHold hold) {
     hold.setPatronId(null);
     hold.setPatronName(null);
