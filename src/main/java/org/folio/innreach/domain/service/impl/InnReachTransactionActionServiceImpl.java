@@ -32,6 +32,7 @@ import static org.folio.innreach.util.DateHelper.toEpochSec;
 import static org.folio.innreach.util.DateHelper.toInstantTruncatedToSec;
 import static org.folio.innreach.util.InnReachTransactionUtils.*;
 
+
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
@@ -687,7 +688,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
 
   private void clearPatronTransactionAndItemRecord(UUID itemId, InnReachTransaction transaction) {
     var patronTransaction = (TransactionPatronHold) transaction.getHold();
-    InnReachTransactionUtils.clearPatronAndItemInfo(patronTransaction);
+    clearPatronAndItemInfo(patronTransaction);
     updateItem(itemId);
   }
 
