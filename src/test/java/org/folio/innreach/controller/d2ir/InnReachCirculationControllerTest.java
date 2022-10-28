@@ -50,7 +50,14 @@ import java.util.Optional;
 import java.util.UUID;
 
 import org.apache.commons.lang3.ObjectUtils;
-import org.folio.innreach.domain.service.*;
+import org.folio.innreach.domain.service.InstanceService;
+import org.folio.innreach.domain.service.InventoryService;
+import org.folio.innreach.domain.service.ItemService;
+import org.folio.innreach.domain.service.PatronHoldService;
+import org.folio.innreach.domain.service.RequestService;
+import org.folio.innreach.domain.service.UserService;
+import org.folio.innreach.domain.service.HoldingsService;
+import org.folio.innreach.domain.service.VirtualRecordService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
@@ -1121,7 +1128,7 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
   })
   void processCancelRequest() {
     doNothing().when(requestService).cancelRequest(anyString(), any(UUID.class), any(UUID.class), anyString());
-    doNothing().when(virtualRecordService).deleteVirtualRecords(any(UUID.class),any(UUID.class),any(UUID.class),any(UUID.class));
+    doNothing().when(virtualRecordService).deleteVirtualRecords(any(UUID.class), any(UUID.class), any(UUID.class), any(UUID.class));
     when(userService.getUserById(any(UUID.class))).thenReturn(Optional.of(populateUser()));
 
     var cancelRequestDTO = createCancelRequestDTO();
@@ -1132,7 +1139,7 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
       PRE_POPULATED_TRACKING1_ID, PRE_POPULATED_CENTRAL_CODE);
 
     verify(requestService).cancelRequest(anyString(), any(UUID.class), any(UUID.class), anyString());
-    verify(virtualRecordService).deleteVirtualRecords(any(UUID.class),any(UUID.class),any(UUID.class),any(UUID.class));
+    verify(virtualRecordService).deleteVirtualRecords(any(UUID.class), any(UUID.class), any(UUID.class), any(UUID.class));
 
     var transactionAfter = fetchPrePopulatedTransaction();
 

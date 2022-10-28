@@ -43,8 +43,8 @@ public class InstanceServiceImpl implements InstanceService {
   @Override
   public void delete(UUID instanceId) {
     inventoryClient.findInstance(instanceId)
-      .ifPresentOrElse(instance-> inventoryClient.deleteInstance(instanceId)
-        ,()->log.info("Instance not found with instanceId:{}",instanceId));
+      .ifPresentOrElse(instance-> inventoryClient.deleteInstance(instanceId),
+        () -> log.info("Instance not found with instanceId:{}", instanceId));
   }
 
   @Override

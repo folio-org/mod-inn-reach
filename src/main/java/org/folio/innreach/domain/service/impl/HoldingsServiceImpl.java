@@ -39,8 +39,8 @@ public class HoldingsServiceImpl implements HoldingsService {
   @Override
   public void delete(UUID holdingId) {
       holdingsStorageClient.findHolding(holdingId)
-        .ifPresentOrElse(holding -> holdingsStorageClient.deleteHolding(holdingId)
-          ,()->log.info("Holding not found with holdingId:{}",holdingId));
+        .ifPresentOrElse(holding -> holdingsStorageClient.deleteHolding(holdingId),
+          () -> log.info("Holding not found with holdingId:{}", holdingId));
   }
 
   @Override

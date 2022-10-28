@@ -260,9 +260,9 @@ public class RequestServiceImpl implements RequestService {
   @Override
   public void deleteRequest(UUID requestId) {
     circulationClient.findRequest(requestId)
-      .ifPresentOrElse(requestDTO -> circulationClient.deleteRequest(requestId)
-        ,()-> log.info("Request not present with requestid:"+requestId));
-    log.info("Request deleted with requestId:"+requestId);
+      .ifPresentOrElse(requestDTO -> circulationClient.deleteRequest(requestId),
+        () -> log.info("Request not present with requestid:{}", requestId));
+    log.info("Request deleted with requestId:{}", requestId);
   }
 
   @Override
