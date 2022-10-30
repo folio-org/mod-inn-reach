@@ -46,7 +46,17 @@ import javax.persistence.EntityExistsException;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
-import org.folio.innreach.domain.service.*;
+import org.folio.innreach.domain.service.CentralServerService;
+import org.folio.innreach.domain.service.CirculationService;
+import org.folio.innreach.domain.service.HoldingsService;
+import org.folio.innreach.domain.service.InnReachRecallUserService;
+import org.folio.innreach.domain.service.ItemService;
+import org.folio.innreach.domain.service.LoanService;
+import org.folio.innreach.domain.service.MaterialTypeMappingService;
+import org.folio.innreach.domain.service.PatronHoldService;
+import org.folio.innreach.domain.service.PatronInfoService;
+import org.folio.innreach.domain.service.RequestService;
+import org.folio.innreach.domain.service.VirtualRecordService;
 import org.springframework.beans.BeanUtils;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.scheduling.annotation.Async;
@@ -121,10 +131,8 @@ public class CirculationServiceImpl implements CirculationService {
   private final PatronInfoService patronInfoService;
   private final TransactionTemplate transactionTemplate;
   private final ApplicationEventPublisher eventPublisher;
-
   private final VirtualRecordService virtualRecordService;
 
-  private final InstanceService instanceService;
   @Override
   public InnReachResponseDTO createInnReachTransactionItemHold(String trackingId, String centralCode, TransactionHoldDTO dto) {
     try {

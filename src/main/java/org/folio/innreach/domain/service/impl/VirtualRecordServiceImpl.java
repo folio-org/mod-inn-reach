@@ -27,7 +27,8 @@ public class VirtualRecordServiceImpl implements VirtualRecordService {
 
   @Override
   public void deleteVirtualRecords(UUID folioItemId, UUID folioHoldingId, UUID folioInstanceId, UUID folioLoanId) {
-    log.debug("deleteVirtualRecords :: parameters folioItemId:{} folioHoldingId:{} folioInstanceId:{} folioLoanId:{}",folioItemId,folioHoldingId,folioInstanceId,folioLoanId);
+    log.debug("deleteVirtualRecords :: parameters folioItemId:{} folioHoldingId:{} " +
+      "folioInstanceId:{} folioLoanId:{}", folioItemId, folioHoldingId, folioInstanceId, folioLoanId);
     Optional.ofNullable(folioItemId).ifPresent(itemService::delete);
     Optional.ofNullable(folioHoldingId).ifPresent(holdingsService::delete);
     Optional.ofNullable(folioInstanceId).ifPresent(instanceService::delete);
