@@ -32,6 +32,7 @@ import static org.folio.innreach.util.DateHelper.toEpochSec;
 import static org.folio.innreach.util.DateHelper.toInstantTruncatedToSec;
 import static org.folio.innreach.util.InnReachTransactionUtils.*;
 
+
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
@@ -612,9 +613,19 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
       (transaction.getState() == PATRON_HOLD || transaction.getState() == TRANSFER)) {
       log.info("Updating patron hold transaction {} on cancellation of a request {}", transaction.getId(), requestDTO.getId());
       transaction.setState(BORROWING_SITE_CANCEL);
-      notifier.reportCancelItemHold(transaction);
+      clearVirtualItemsAndNotify(transaction);
       clearPatronTransactionAndItemRecord(requestDTO.getItemId(), transaction);
     }
+  }
+
+  private void clearVirtualItemsAndNotify(InnReachTransaction transaction) {
+    var folioItemId = transaction.getHold().getFolioItemId();
+    var folioHoldingId = transaction.getHold().getFolioHoldingId();
+    var folioInstanceId = transaction.getHold().getFolioInstanceId();
+    var folioLoanId = transaction.getHold().getFolioLoanId();
+    notifier.reportCancelItemHold(transaction);
+    virtualRecordService.deleteVirtualRecords(folioItemId,folioHoldingId,folioInstanceId,folioLoanId);
+    requestService.deleteRequest(transaction.getHold().getFolioRequestId());
   }
 
   private void cancelPatronHoldWithOpenRequest(CancelTransactionHoldDTO cancelRequest,
@@ -634,18 +645,8 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
   private void cancelPatronHoldWithClosedRequest(InnReachTransaction transaction) {
     if (transaction.getState() == PATRON_HOLD || transaction.getState() == TRANSFER) {
       transaction.setState(BORROWING_SITE_CANCEL);
-
-      var folioItemId = transaction.getHold().getFolioItemId();
-      var folioHoldingId = transaction.getHold().getFolioHoldingId();
-      var folioInstanceId = transaction.getHold().getFolioInstanceId();
-      var folioLoanId = transaction.getHold().getFolioLoanId();
-
-      notifier.reportCancelItemHold(transaction);
-
-      virtualRecordService.deleteVirtualRecords(folioItemId,folioHoldingId,folioInstanceId,folioLoanId);
-      requestService.deleteRequest(transaction.getHold().getFolioRequestId());
-      clearPatronVirtualInfo(transaction.getHold());
-
+      clearVirtualItemsAndNotify(transaction);
+      clearPatronAndItemInfo(transaction.getHold());
     } else if (EnumSet.of(ITEM_SHIPPED, RECEIVE_UNANNOUNCED, ITEM_RECEIVED).contains(transaction.getState())) {
       var item = fetchItemById(transaction.getHold().getFolioItemId());
 
@@ -687,7 +688,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
 
   private void clearPatronTransactionAndItemRecord(UUID itemId, InnReachTransaction transaction) {
     var patronTransaction = (TransactionPatronHold) transaction.getHold();
-    InnReachTransactionUtils.clearPatronAndItemInfo(patronTransaction);
+    clearPatronAndItemInfo(patronTransaction);
     updateItem(itemId);
   }
 

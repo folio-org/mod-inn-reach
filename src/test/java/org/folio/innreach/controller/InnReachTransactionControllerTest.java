@@ -1807,10 +1807,10 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
 
     assertNotNull(updatedTransaction);
     assertEquals(TransactionStateEnum.BORROWING_SITE_CANCEL, updatedTransaction.getState());
-//    assertEquals(null,updatedTransaction.getHold().getFolioHoldingId());
-//    assertEquals(null,updatedTransaction.getHold().getFolioLoanId());
-//    assertEquals(null,updatedTransaction.getHold().getFolioInstanceId());
-//    assertEquals(null,updatedTransaction.getHold().getFolioItemId());
+    assertEquals(null,updatedTransaction.getHold().getFolioHoldingId());
+    assertEquals(null,updatedTransaction.getHold().getFolioLoanId());
+    assertEquals(null,updatedTransaction.getHold().getFolioInstanceId());
+    assertEquals(null,updatedTransaction.getHold().getFolioItemId());
 
     verify(circulationClient, never()).updateRequest(eq(PRE_POPULATED_PATRON_HOLD_REQUEST_ID), any());
     verify(actionNotifier).reportCancelItemHold(any());
@@ -1838,10 +1838,10 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
 
     assertNotNull(updatedTransaction);
     assertEquals(TransactionStateEnum.BORROWING_SITE_CANCEL, updatedTransaction.getState());
-//    assertEquals(null,updatedTransaction.getHold().getFolioHoldingId());
-//    assertEquals(null,updatedTransaction.getHold().getFolioLoanId());
-//    assertEquals(null,updatedTransaction.getHold().getFolioInstanceId());
-//    assertEquals(null,updatedTransaction.getHold().getFolioItemId());
+    assertEquals(null,updatedTransaction.getHold().getFolioHoldingId());
+    assertEquals(null,updatedTransaction.getHold().getFolioLoanId());
+    assertEquals(null,updatedTransaction.getHold().getFolioInstanceId());
+    assertEquals(null,updatedTransaction.getHold().getFolioItemId());
 
     verify(circulationClient, never()).updateRequest(eq(PRE_POPULATED_PATRON_HOLD_REQUEST_ID), any());
     verify(actionNotifier).reportCancelItemHold(any());
