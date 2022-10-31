@@ -258,6 +258,14 @@ public class RequestServiceImpl implements RequestService {
   }
 
   @Override
+  public void deleteRequest(UUID requestId) {
+    circulationClient.findRequest(requestId)
+      .ifPresentOrElse(requestDTO -> circulationClient.deleteRequest(requestId),
+        () -> log.info("Request not present with requestid:{}", requestId));
+    log.info("Request deleted with requestId:{}", requestId);
+  }
+
+  @Override
   public UUID getDefaultServicePointIdForPatron(UUID patronId) {
     return inventoryService.findDefaultServicePointIdForUser(patronId)
       .orElseThrow(() -> new CirculationException("Default service point is not set for the patron: " + patronId));

@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
@@ -34,11 +35,17 @@ public interface InventoryClient {
   @PutMapping("/items/{itemId}")
   void updateItem(@PathVariable("itemId") UUID itemId, @RequestBody InventoryItemDTO item);
 
+  @DeleteMapping("/items/{itemId}")
+  void deleteItem(@PathVariable("itemId") UUID itemId);
+
   @GetMapping("/items/{itemId}")
   Optional<InventoryItemDTO> findItem(@PathVariable("itemId") UUID itemId);
 
   @GetMapping("/instances/{instanceId}")
   Optional<InventoryInstanceDTO> findInstance(@PathVariable("instanceId") UUID instanceId);
+
+  @DeleteMapping("/instances/{instanceId}")
+  void deleteInstance(@PathVariable("instanceId") UUID instanceId);
 
   @GetMapping("/items?query=barcode=={barcode}")
   ResultList<InventoryItemDTO> getItemByBarcode(@PathVariable("barcode") String barcode);

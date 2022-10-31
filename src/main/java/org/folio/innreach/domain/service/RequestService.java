@@ -31,6 +31,8 @@ public interface RequestService {
 
   RequestDTO findRequest(UUID requestId);
 
+  void deleteRequest(UUID requestId);
+
   UUID getDefaultServicePointIdForPatron(UUID patronId);
 
   UUID getServicePointIdByCode(String locationCode);

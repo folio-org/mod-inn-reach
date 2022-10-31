@@ -9,12 +9,13 @@ import java.util.Set;
 import java.util.UUID;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.stereotype.Service;
 
 import org.folio.innreach.client.InventoryClient;
 import org.folio.innreach.domain.dto.folio.inventory.InventoryInstanceDTO;
 import org.folio.innreach.domain.service.InstanceService;
-
+@Log4j2
 @Service
 @RequiredArgsConstructor
 public class InstanceServiceImpl implements InstanceService {
@@ -37,6 +38,13 @@ public class InstanceServiceImpl implements InstanceService {
   @Override
   public Optional<InventoryInstanceDTO> find(UUID uuid) {
     return inventoryClient.findInstance(uuid);
+  }
+
+  @Override
+  public void delete(UUID instanceId) {
+    inventoryClient.findInstance(instanceId)
+      .ifPresentOrElse(instance-> inventoryClient.deleteInstance(instanceId),
+        () -> log.info("Instance not found with instanceId:{}", instanceId));
   }
 
   @Override
