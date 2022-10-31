@@ -37,6 +37,7 @@ public class VirtualRecordServiceImpl implements VirtualRecordService {
   }
 
   @Override
+  @Async("asyncTaskExecutor")
   public void executeDeleteVirtualRecordsWithDelay(Long delayTime, UUID folioItemId,
                                                     UUID folioHoldingId, UUID folioInstanceId, UUID folioLoanId){
     try{
