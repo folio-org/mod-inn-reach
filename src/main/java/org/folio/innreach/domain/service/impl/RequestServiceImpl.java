@@ -261,7 +261,7 @@ public class RequestServiceImpl implements RequestService {
   public void deleteRequest(UUID requestId) {
     circulationClient.findRequest(requestId)
       .ifPresentOrElse(requestDTO -> circulationClient.deleteRequest(requestId),
-        () -> log.info("Request not present with requestid:{}", requestId));
+        () -> log.info("Request not present with requestId : {}", requestId));
     log.info("Request deleted with requestId:{}", requestId);
   }
 
