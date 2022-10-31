@@ -36,7 +36,6 @@ public class VirtualRecordServiceImpl implements VirtualRecordService {
     log.info("VirtualRecords Deleted");
   }
 
-  @Async
   @Override
   public void executeDeleteVirtualRecordsWithDelay(Long delayTime, UUID folioItemId,
                                                     UUID folioHoldingId, UUID folioInstanceId, UUID folioLoanId){

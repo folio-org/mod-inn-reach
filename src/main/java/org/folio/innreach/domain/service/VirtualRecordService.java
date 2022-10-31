@@ -10,7 +10,7 @@ public interface VirtualRecordService {
 
   void deleteVirtualRecords(UUID folioItemId,UUID folioHoldingId,UUID folioInstanceId,UUID folioLoanId);
 
-  @Async
+  @Async("asyncTaskExecutor")
   void executeDeleteVirtualRecordsWithDelay(Long delayTime, UUID folioItemId,
                                             UUID folioHoldingId, UUID folioInstanceId, UUID folioLoanId);
 }
