@@ -35,7 +35,8 @@
     <awaitility.version>4.2.0</awaitility.version>
     <junit-extensions.version>2.5.0</junit-extensions.version>
     <easy-random.version>5.0.0</easy-random.version>
-    <micrometer-core.version>1.9.4</micrometer-core.version>
+    <micrometer.version>1.9.4</micrometer.version>
+    <log4j2.version>2.19.0</log4j2.version>
 
     <!-- plugins -->
     <openapi-generator.version>4.3.1</openapi-generator.version>
@@ -239,7 +240,7 @@
     <dependency>
       <groupId>io.micrometer</groupId>
       <artifactId>micrometer-core</artifactId>
-      <version>${micrometer-core.version}</version>
+      <version>${micrometer.version}</version>
     </dependency>
   </dependencies>
 
