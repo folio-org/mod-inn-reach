@@ -7,9 +7,7 @@ import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 
-@FeignClient(name = "configurations",
-        configuration = FolioFeignClientConfig.class, decode404 = true,
-        url = "http://volaris-okapi.ci.folio.org/configurations")
+@FeignClient(name = "configurations", configuration = FolioFeignClientConfig.class, decode404 = true)
 public interface ConfigurationClient {
 
   @GetMapping("/entries?query=(module={module} and configName=other_settings)")
