@@ -45,6 +45,11 @@ public class BibItem {
   private Integer copyNumber;
 
   /**
+   * Volume is intended for monographs when a multipart monograph (optional)
+   */
+  private String volumeDesignation;
+
+  /**
    * Item effective call number, max 128 characters (not required)
    */
   private String callNumber;

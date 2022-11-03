@@ -111,6 +111,9 @@ public class RecordTransformationServiceImpl implements RecordTransformationServ
         .filter(n -> n != 0)
         .orElse(null);
 
+      var volumeDesignation = Optional.ofNullable(item.getVolume())
+        .orElse(null);
+
       var callNumber = Optional.ofNullable(item.getEffectiveCallNumberComponents())
         .map(ItemEffectiveCallNumberComponents::getCallNumber)
         .map(StringUtils::trim)
@@ -128,6 +131,7 @@ public class RecordTransformationServiceImpl implements RecordTransformationServ
         .itemCircStatus(circulationStatus.getStatus())
         .copyNumber(copyNumber)
         .callNumber(callNumber)
+        .volumeDesignation(volumeDesignation)
         .suppress(suppressionStatus)
         .centralItemType(mappings.getCentralType(item.getMaterialTypeId()))
         .locationKey(mappings.getLocationKey(folLocId, folLibId))
