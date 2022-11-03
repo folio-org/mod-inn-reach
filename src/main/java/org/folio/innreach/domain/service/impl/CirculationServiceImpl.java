@@ -1,70 +1,8 @@
 package org.folio.innreach.domain.service.impl;
 
-import static java.lang.String.format;
-import static java.time.Instant.ofEpochSecond;
-import static java.util.Objects.nonNull;
-import static org.apache.commons.lang3.StringUtils.capitalize;
-import static org.apache.commons.lang3.StringUtils.truncate;
-
-import static org.folio.innreach.domain.dto.folio.circulation.RequestDTO.RequestStatus.OPEN_AWAITING_PICKUP;
-import static org.folio.innreach.domain.dto.folio.circulation.RequestDTO.RequestStatus.OPEN_IN_TRANSIT;
-import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.BORROWER_RENEW;
-import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.BORROWING_SITE_CANCEL;
-import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.CANCEL_REQUEST;
-import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.CLAIMS_RETURNED;
-import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.FINAL_CHECKIN;
-import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.ITEM_HOLD;
-import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.ITEM_IN_TRANSIT;
-import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.ITEM_RECEIVED;
-import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.ITEM_SHIPPED;
-import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.LOCAL_HOLD;
-import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.OWNER_RENEW;
-import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.PATRON_HOLD;
-import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.RECALL;
-import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.RECEIVE_UNANNOUNCED;
-import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.RETURN_UNCIRCULATED;
-import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.TRANSFER;
-import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionType.ITEM;
-import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionType.LOCAL;
-import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionType.PATRON;
-import static org.folio.innreach.domain.service.impl.RequestServiceImpl.INN_REACH_CANCELLATION_REASON_ID;
-import static org.folio.innreach.util.DateHelper.toEpochSec;
-import static org.folio.innreach.util.InnReachTransactionUtils.clearCentralPatronInfo;
-import static org.folio.innreach.util.InnReachTransactionUtils.clearPatronAndItemInfo;
-import static org.folio.innreach.util.InnReachTransactionUtils.verifyState;
-import static org.folio.innreach.util.InnReachTransactionUtils.verifyStateNot;
-
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.UUID;
-import java.util.function.BiConsumer;
-import java.util.function.Supplier;
-
-import javax.persistence.EntityExistsException;
-
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
-import org.folio.innreach.domain.service.CentralServerService;
-import org.folio.innreach.domain.service.CirculationService;
-import org.folio.innreach.domain.service.HoldingsService;
-import org.folio.innreach.domain.service.InnReachRecallUserService;
-import org.folio.innreach.domain.service.ItemService;
-import org.folio.innreach.domain.service.LoanService;
-import org.folio.innreach.domain.service.MaterialTypeMappingService;
-import org.folio.innreach.domain.service.PatronHoldService;
-import org.folio.innreach.domain.service.PatronInfoService;
-import org.folio.innreach.domain.service.RequestService;
-import org.folio.innreach.domain.service.VirtualRecordService;
-import org.springframework.beans.BeanUtils;
-import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.scheduling.annotation.Async;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.TransactionTemplate;
-import org.springframework.util.Assert;
-
+import org.folio.innreach.client.ConfigurationClient;
 import org.folio.innreach.domain.dto.folio.circulation.RenewByIdDTO;
 import org.folio.innreach.domain.dto.folio.inventory.InventoryItemDTO;
 import org.folio.innreach.domain.entity.InnReachTransaction;
@@ -76,26 +14,42 @@ import org.folio.innreach.domain.event.CancelRequestEvent;
 import org.folio.innreach.domain.event.RecallRequestEvent;
 import org.folio.innreach.domain.exception.CirculationException;
 import org.folio.innreach.domain.exception.EntityNotFoundException;
-import org.folio.innreach.dto.BaseCircRequestDTO;
-import org.folio.innreach.dto.CancelRequestDTO;
-import org.folio.innreach.dto.ClaimsItemReturnedDTO;
-import org.folio.innreach.dto.Holding;
-import org.folio.innreach.dto.InnReachResponseDTO;
-import org.folio.innreach.dto.ItemReceivedDTO;
-import org.folio.innreach.dto.ItemShippedDTO;
-import org.folio.innreach.dto.LoanDTO;
-import org.folio.innreach.dto.LocalHoldDTO;
-import org.folio.innreach.dto.PatronHoldDTO;
-import org.folio.innreach.dto.RecallDTO;
-import org.folio.innreach.dto.RenewLoanDTO;
-import org.folio.innreach.dto.ReturnUncirculatedDTO;
-import org.folio.innreach.dto.TransactionHoldDTO;
-import org.folio.innreach.dto.TransferRequestDTO;
+import org.folio.innreach.domain.service.*;
+import org.folio.innreach.dto.*;
 import org.folio.innreach.external.service.InnReachExternalService;
 import org.folio.innreach.mapper.InnReachTransactionHoldMapper;
 import org.folio.innreach.mapper.InnReachTransactionPickupLocationMapper;
 import org.folio.innreach.repository.InnReachTransactionRepository;
 import org.folio.innreach.repository.LocalAgencyRepository;
+import org.folio.spring.FolioExecutionContext;
+import org.folio.spring.FolioModuleMetadata;
+import org.folio.spring.scope.FolioExecutionContextSetter;
+import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
+import org.springframework.util.Assert;
+
+import javax.persistence.EntityExistsException;
+import java.util.*;
+import java.util.function.BiConsumer;
+import java.util.function.Supplier;
+
+import static java.lang.String.format;
+import static java.time.Instant.ofEpochSecond;
+import static java.util.Objects.nonNull;
+import static org.apache.commons.lang3.StringUtils.capitalize;
+import static org.apache.commons.lang3.StringUtils.truncate;
+import static org.folio.innreach.domain.dto.folio.circulation.RequestDTO.RequestStatus.OPEN_AWAITING_PICKUP;
+import static org.folio.innreach.domain.dto.folio.circulation.RequestDTO.RequestStatus.OPEN_IN_TRANSIT;
+import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.*;
+import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionType.*;
+import static org.folio.innreach.domain.service.impl.RequestServiceImpl.INN_REACH_CANCELLATION_REASON_ID;
+import static org.folio.innreach.util.DateHelper.toEpochSec;
+import static org.folio.innreach.util.InnReachTransactionUtils.*;
 
 @Log4j2
 @Service
@@ -115,6 +69,9 @@ public class CirculationServiceImpl implements CirculationService {
   private static final String UNEXPECTED_TRANSACTION_STATE = "Unexpected transaction state: ";
   private static final String D2IR_ITEM_RECALL_OPERATION = "recall";
 
+  @Qualifier("modAsyncExecutor")
+  private final ThreadPoolTaskScheduler taskExecutor;
+  private final FolioExecutionContext folioExecutionContext;
   private final InnReachTransactionRepository transactionRepository;
   private final InnReachRecallUserService recallUserService;
   private final InnReachTransactionHoldMapper transactionHoldMapper;
@@ -132,6 +89,7 @@ public class CirculationServiceImpl implements CirculationService {
   private final TransactionTemplate transactionTemplate;
   private final ApplicationEventPublisher eventPublisher;
   private final VirtualRecordService virtualRecordService;
+  private final ConfigurationClient configurationClient;
 
   @Override
   public InnReachResponseDTO createInnReachTransactionItemHold(String trackingId, String centralCode, TransactionHoldDTO dto) {
@@ -434,16 +392,24 @@ public class CirculationServiceImpl implements CirculationService {
     log.info("folioInstance->"+folioInstanceId);
 
     // checkoutTimeDuration fetch
+    var configData  = configurationClient.queryRequestByModule("CHECKOUT");
 
     // wait for that specific duration and call virtualRecordService.deleteVirtualRecords
-    virtualRecordService.executeDeleteVirtualRecordsWithDelay(10000L,
-            folioItemId,folioHoldingId,folioInstanceId,folioLoanId);
-
-    log.info("deleteVirtualRecords execution ended at " + new Date());
+    log.info("deleteVirtualRecords execution Schedule time : " + new Date());
+    var task = new FolioAsyncExecutorWrapper(folioExecutionContext, () -> executeDeleteVirtualRecordsWithDelay(folioItemId, folioHoldingId, folioInstanceId, folioLoanId));
+    //TODO: the delay should be configurable through properties/env variables
+    taskExecutor.schedule(task, new Date(System.currentTimeMillis() + 10000L));
 
     // needs to be tested for multi tenant
 
     return success();
+  }
+
+  private void executeDeleteVirtualRecordsWithDelay(UUID folioItemId,
+                                                    UUID folioHoldingId, UUID folioInstanceId, UUID folioLoanId) {
+    log.info("deleteVirtualRecords execution started at " + new Date());
+    virtualRecordService.deleteVirtualRecords(folioItemId, folioHoldingId, folioInstanceId, folioLoanId);
+    log.info("deleteVirtualRecords execution ended at " + new Date());
   }
 
   @Override
@@ -616,5 +582,80 @@ public class CirculationServiceImpl implements CirculationService {
   private LocalAgency findLocalAgency(String code) {
     return localAgencyRepository.fetchOneByCode(code)
       .orElseThrow(() -> new EntityNotFoundException("Local agency with code: " + code + " not found."));
+  }
+
+  /*
+   * this must be removed when the same functionality is implemented in the folio-spring-base library
+   */
+  private static class LocalFolioExecutionContext implements FolioExecutionContext {
+    private final String tenantId;
+    private final String okapiUrl;
+    private final String token;
+    private final UUID userId;
+    private final String requestId;
+    private final Map<String, Collection<String>> allHeaders;
+    private final Map<String, Collection<String>> okapiHeaders;
+    private final FolioModuleMetadata folioModuleMetadata;
+
+    private LocalFolioExecutionContext(FolioExecutionContext sourceContext) {
+      tenantId = sourceContext.getTenantId();
+      okapiUrl = sourceContext.getOkapiUrl();
+      this.token = sourceContext.getToken();
+      this.userId = sourceContext.getUserId();
+      requestId = sourceContext.getRequestId();
+      allHeaders = sourceContext.getAllHeaders();
+      okapiHeaders = sourceContext.getOkapiHeaders();
+      folioModuleMetadata = sourceContext.getFolioModuleMetadata();
+    }
+
+
+    public String getTenantId() {
+      return tenantId;
+    }
+
+    public String getOkapiUrl() {
+      return okapiUrl;
+    }
+
+    public String getToken() {
+      return token;
+    }
+
+    public UUID getUserId() {
+      return userId;
+    }
+
+    public String getRequestId() {
+      return requestId;
+    }
+
+    public Map<String, Collection<String>> getAllHeaders() {
+      return allHeaders;
+    }
+
+    public Map<String, Collection<String>> getOkapiHeaders() {
+      return okapiHeaders;
+    }
+
+    public FolioModuleMetadata getFolioModuleMetadata() {
+      return folioModuleMetadata;
+    }
+  }
+
+  private static class FolioAsyncExecutorWrapper implements Runnable {
+    private final FolioExecutionContext localFolioExecutionContext;
+    private final Runnable task;
+
+    private FolioAsyncExecutorWrapper(FolioExecutionContext executionContext, Runnable task) {
+      this.localFolioExecutionContext = new LocalFolioExecutionContext(executionContext);
+      this.task = task;
+    }
+
+    @Override
+    public void run() {
+      try (var contextSetter = new FolioExecutionContextSetter(localFolioExecutionContext)) {
+        task.run();
+      }
+    }
   }
 }
