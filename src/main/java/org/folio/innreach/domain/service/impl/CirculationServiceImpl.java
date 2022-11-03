@@ -1,8 +1,11 @@
 package org.folio.innreach.domain.service.impl;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.folio.innreach.client.ConfigurationClient;
+import org.folio.innreach.domain.dto.folio.ConfigurationDTO;
 import org.folio.innreach.domain.dto.folio.circulation.RenewByIdDTO;
 import org.folio.innreach.domain.dto.folio.inventory.InventoryItemDTO;
 import org.folio.innreach.domain.entity.InnReachTransaction;
@@ -50,6 +53,7 @@ import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionTy
 import static org.folio.innreach.domain.service.impl.RequestServiceImpl.INN_REACH_CANCELLATION_REASON_ID;
 import static org.folio.innreach.util.DateHelper.toEpochSec;
 import static org.folio.innreach.util.InnReachTransactionUtils.*;
+import static org.folio.innreach.util.JsonHelper.getCheckOutTimeDuration;
 
 @Log4j2
 @Service
@@ -185,7 +189,7 @@ public class CirculationServiceImpl implements CirculationService {
     var folioInstanceId = transaction.getHold().getFolioInstanceId();
     var folioLoanId = transaction.getHold().getFolioLoanId();
 
-    virtualRecordService.deleteVirtualRecords(folioItemId,folioHoldingId,folioInstanceId,folioLoanId);
+     virtualRecordService.deleteVirtualRecords(folioItemId,folioHoldingId,folioInstanceId,folioLoanId);
 
     eventPublisher.publishEvent(CancelRequestEvent.of(transaction,
       INN_REACH_CANCELLATION_REASON_ID, cancelRequest.getReason()));
@@ -196,7 +200,6 @@ public class CirculationServiceImpl implements CirculationService {
 
     return success();
   }
-
   @Override
   public InnReachResponseDTO transferPatronHoldItem(String trackingId, String centralCode, TransferRequestDTO request) {
     var transaction = getTransactionOfType(trackingId, centralCode, PATRON);
@@ -392,13 +395,18 @@ public class CirculationServiceImpl implements CirculationService {
     log.info("folioInstance->"+folioInstanceId);
 
     // checkoutTimeDuration fetch
-    var configData  = configurationClient.queryRequestByModule("CHECKOUT");
+    var configDataList  = configurationClient.queryRequestByModule("CHECKOUT");
 
-    // wait for that specific duration and call virtualRecordService.deleteVirtualRecords
+    log.info("configData data {}",configDataList.getResult());
+
+    Long checkOutTimeDuration = getCheckOutTimeDuration(configDataList.getResult());
+
+    log.info("checkOutTime :{}",checkOutTimeDuration);
+
     log.info("deleteVirtualRecords execution Schedule time : " + new Date());
     var task = new FolioAsyncExecutorWrapper(folioExecutionContext, () -> executeDeleteVirtualRecordsWithDelay(folioItemId, folioHoldingId, folioInstanceId, folioLoanId));
-    //TODO: the delay should be configurable through properties/env variables
-    taskExecutor.schedule(task, new Date(System.currentTimeMillis() + 10000L));
+
+    taskExecutor.schedule(task, new Date(System.currentTimeMillis() + checkOutTimeDuration));
 
     // needs to be tested for multi tenant
 
@@ -407,9 +415,7 @@ public class CirculationServiceImpl implements CirculationService {
 
   private void executeDeleteVirtualRecordsWithDelay(UUID folioItemId,
                                                     UUID folioHoldingId, UUID folioInstanceId, UUID folioLoanId) {
-    log.info("deleteVirtualRecords execution started at " + new Date());
     virtualRecordService.deleteVirtualRecords(folioItemId, folioHoldingId, folioInstanceId, folioLoanId);
-    log.info("deleteVirtualRecords execution ended at " + new Date());
   }
 
   @Override

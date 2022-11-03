@@ -34,6 +34,7 @@ public class VirtualRecordServiceImpl implements VirtualRecordService {
     Optional.ofNullable(folioInstanceId).ifPresent(instanceService::delete);
     Optional.ofNullable(folioLoanId).ifPresent(loanService::delete);
     log.info("VirtualRecords Deleted");
+    log.info("deleteVirtualRecords execution ended at " + new Date());
   }
 
   @Override
