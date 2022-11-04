@@ -111,8 +111,7 @@ public class RecordTransformationServiceImpl implements RecordTransformationServ
         .filter(n -> n != 0)
         .orElse(null);
 
-      var volumeDesignation = Optional.ofNullable(item.getVolume())
-        .orElse(null);
+      var volumeDesignation = item.getVolume();
 
       var callNumber = Optional.ofNullable(item.getEffectiveCallNumberComponents())
         .map(ItemEffectiveCallNumberComponents::getCallNumber)

@@ -18,8 +18,6 @@ public class InventoryItemDTO {
   @JsonProperty("_version")
   private String version;
   private String hrid;
-  @JsonProperty("volumeDesignation")
-  private String volume;
   private String barcode;
   private String callNumber;
   private UUID holdingsRecordId;
