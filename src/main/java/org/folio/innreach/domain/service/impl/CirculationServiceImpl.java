@@ -1,5 +1,6 @@
 package org.folio.innreach.domain.service.impl;
 
+import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.folio.innreach.client.ConfigurationClient;
@@ -589,6 +590,7 @@ public class CirculationServiceImpl implements CirculationService {
   /*
    * this must be removed when the same functionality is implemented in the folio-spring-base library
    */
+  @Data
   private static class LocalFolioExecutionContext implements FolioExecutionContext {
     private final String tenantId;
     private final String okapiUrl;
@@ -608,39 +610,6 @@ public class CirculationServiceImpl implements CirculationService {
       allHeaders = sourceContext.getAllHeaders();
       okapiHeaders = sourceContext.getOkapiHeaders();
       folioModuleMetadata = sourceContext.getFolioModuleMetadata();
-    }
-
-
-    public String getTenantId() {
-      return tenantId;
-    }
-
-    public String getOkapiUrl() {
-      return okapiUrl;
-    }
-
-    public String getToken() {
-      return token;
-    }
-
-    public UUID getUserId() {
-      return userId;
-    }
-
-    public String getRequestId() {
-      return requestId;
-    }
-
-    public Map<String, Collection<String>> getAllHeaders() {
-      return allHeaders;
-    }
-
-    public Map<String, Collection<String>> getOkapiHeaders() {
-      return okapiHeaders;
-    }
-
-    public FolioModuleMetadata getFolioModuleMetadata() {
-      return folioModuleMetadata;
     }
   }
 
