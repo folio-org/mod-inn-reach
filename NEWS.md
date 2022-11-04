@@ -1,3 +1,8 @@
+## v2.0.1 2022-11-04
+
+### Stories
+* [MODINREACH-320](https://issues.folio.org/browse/MODINREACH-320) - Fix missing property volumeDesignation from item contribution json payload
+
 ## v2.0.0 2022-08-17
 
 ### Stories
