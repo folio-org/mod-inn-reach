@@ -12,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.folio.innreach.domain.dto.folio.configuration.ConfigurationDTO;
 import org.springframework.stereotype.Component;
+import org.springframework.util.ObjectUtils;
 
 @Log4j2
 @RequiredArgsConstructor
@@ -62,7 +63,7 @@ public class JsonHelper {
   public static Long getCheckOutTimeDuration(List<ConfigurationDTO> configData) {
     log.info("JsonHelper:getCheckOutTimeDuration started");
     long checkOutTime = 1;
-    if(!configData.isEmpty()) {
+    if(!ObjectUtils.isEmpty(configData.isEmpty())) {
       var value = configData.get(0).getValue();
       JsonObject valueObject = new Gson().fromJson(value, JsonObject.class);
       checkOutTime = valueObject.get(CHECKOUT_TIMEOUT_DURATION).getAsLong();
