@@ -187,7 +187,7 @@ public class CirculationServiceImpl implements CirculationService {
     var folioInstanceId = transaction.getHold().getFolioInstanceId();
     var folioLoanId = transaction.getHold().getFolioLoanId();
 
-     virtualRecordService.deleteVirtualRecords(folioItemId,folioHoldingId,folioInstanceId,folioLoanId);
+    virtualRecordService.deleteVirtualRecords(folioItemId,folioHoldingId,folioInstanceId,folioLoanId);
 
     eventPublisher.publishEvent(CancelRequestEvent.of(transaction,
       INN_REACH_CANCELLATION_REASON_ID, cancelRequest.getReason()));
@@ -388,29 +388,23 @@ public class CirculationServiceImpl implements CirculationService {
     var folioInstanceId = transaction.getHold().getFolioInstanceId();
     var folioLoanId = transaction.getHold().getFolioLoanId();
 
-    log.info("folioItem->"+folioItemId);
-    log.info("folioHolding->"+folioHoldingId);
-    log.info("folioInstance->"+folioInstanceId);
-
     // fetching configurations
-    var configDataList
-            = configurationService.fetchConfigurationsDetailsByModule(CHECKOUT);
+    var configDataList=
+            configurationService.fetchConfigurationsDetailsByModule(CHECKOUT);
 
-    log.info("Configuration data {}",configDataList.getResult());
+    log.info("Configuration Details : {}", configDataList.getResult());
 
     // fetching checkOutTimeDuration
     Long checkOutTimeDuration = getCheckOutTimeDuration(configDataList.getResult());
 
-    log.info("checkOutTimeDuration :{}",checkOutTimeDuration);
+    log.info("Checkout Time Duration is : {}", checkOutTimeDuration);
 
-    log.info("deleteVirtualRecords execution start time : " + new Date());
+    log.info("deleteVirtualRecords execution started at : " + new Date());
     var task = new FolioAsyncExecutorWrapper(folioExecutionContext,
             () -> executeDeleteVirtualRecordsWithDelay(folioItemId, folioHoldingId,
                     folioInstanceId, folioLoanId));
 
     taskExecutor.schedule(task, new Date(System.currentTimeMillis() + checkOutTimeDuration));
-
-    // needs to be tested for multi tenant
 
     return success();
   }

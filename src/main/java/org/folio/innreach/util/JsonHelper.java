@@ -60,15 +60,14 @@ public class JsonHelper {
 
 
   public static Long getCheckOutTimeDuration(List<ConfigurationDTO> configData) {
-
+    log.info("JsonHelper:getCheckOutTimeDuration started");
     long checkOutTime = 1;
-
     if(!configData.isEmpty()) {
       var value = configData.get(0).getValue();
       JsonObject valueObject = new Gson().fromJson(value, JsonObject.class);
-
       checkOutTime = valueObject.get(CHECKOUT_TIMEOUT_DURATION).getAsLong();
     }
+    log.info("JsonHelper:getCheckOutTimeDuration completed");
     return (checkOutTime * 60000);
   }
 
