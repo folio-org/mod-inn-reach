@@ -37,19 +37,4 @@ public class VirtualRecordServiceImpl implements VirtualRecordService {
     log.info("deleteVirtualRecords execution ended at " + new Date());
   }
 
-  @Override
-  @Async("asyncTaskExecutor")
-  public void executeDeleteVirtualRecordsWithDelay(Long delayTime, UUID folioItemId,
-                                                    UUID folioHoldingId, UUID folioInstanceId, UUID folioLoanId){
-    try{
-      log.info("deleteVirtualRecords execution started" + new Date());
-      Thread.sleep(delayTime);
-      deleteVirtualRecords(folioItemId,folioHoldingId,folioInstanceId,folioLoanId);
-      log.info("deleteVirtualRecords execution ended at " + new Date());
-    }catch (InterruptedException ie) {
-      ie.printStackTrace();
-      throw new CirculationException("Failed to execute deleteVirtualRecords: " + ie.getMessage(), ie);
-    }
-  }
-
 }

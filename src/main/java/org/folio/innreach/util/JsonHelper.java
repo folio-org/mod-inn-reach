@@ -10,7 +10,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
-import org.folio.innreach.domain.dto.folio.ConfigurationDTO;
+import org.folio.innreach.domain.dto.folio.configuration.ConfigurationDTO;
 import org.springframework.stereotype.Component;
 
 @Log4j2

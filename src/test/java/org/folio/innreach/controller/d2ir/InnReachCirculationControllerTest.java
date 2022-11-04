@@ -1,5 +1,6 @@
 package org.folio.innreach.controller.d2ir;
 
+import static org.folio.innreach.fixture.TestUtil.deserializeFromJsonFile;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -46,18 +47,14 @@ import static org.folio.innreach.fixture.TestUtil.circHeaders;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
 import org.apache.commons.lang3.ObjectUtils;
-import org.folio.innreach.domain.service.InstanceService;
-import org.folio.innreach.domain.service.InventoryService;
-import org.folio.innreach.domain.service.ItemService;
-import org.folio.innreach.domain.service.PatronHoldService;
-import org.folio.innreach.domain.service.RequestService;
-import org.folio.innreach.domain.service.UserService;
-import org.folio.innreach.domain.service.HoldingsService;
-import org.folio.innreach.domain.service.VirtualRecordService;
+import org.folio.innreach.domain.dto.folio.configuration.ConfigurationDTO;
+import org.folio.innreach.domain.dto.folio.sourcerecord.SourceRecordDTO;
+import org.folio.innreach.domain.service.*;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
@@ -168,6 +165,8 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
   private HoldingsService holdingsService;
   @MockBean
   VirtualRecordService virtualRecordService;
+  @MockBean
+  ConfigurationService configurationService;
 
   @Autowired
   private InnReachTransactionRepository transactionRepository;
@@ -1029,6 +1028,10 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
   void checkTransactionIsNotInStatePatronHoldOrTransfer(InnReachTransaction.TransactionState state) {
     var transactionHoldDTO = createTransactionHoldDTO();
     var transactionBefore = fetchPrePopulatedTransaction();
+    var configurationDto =
+            deserializeFromJsonFile("/configuration/configuration-details-example.json", ConfigurationDTO.class);
+    when(configurationService.fetchConfigurationsDetailsByModule(any())).
+            thenReturn(ResultList.asSinglePage(configurationDto));
 
     transactionBefore.setState(state);
     repository.save(transactionBefore);

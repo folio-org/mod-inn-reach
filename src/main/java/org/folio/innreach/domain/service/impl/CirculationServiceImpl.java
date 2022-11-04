@@ -1,11 +1,8 @@
 package org.folio.innreach.domain.service.impl;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonObject;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.folio.innreach.client.ConfigurationClient;
-import org.folio.innreach.domain.dto.folio.ConfigurationDTO;
 import org.folio.innreach.domain.dto.folio.circulation.RenewByIdDTO;
 import org.folio.innreach.domain.dto.folio.inventory.InventoryItemDTO;
 import org.folio.innreach.domain.entity.InnReachTransaction;
@@ -72,6 +69,7 @@ public class CirculationServiceImpl implements CirculationService {
 
   private static final String UNEXPECTED_TRANSACTION_STATE = "Unexpected transaction state: ";
   private static final String D2IR_ITEM_RECALL_OPERATION = "recall";
+  public static final String CHECKOUT = "CHECKOUT";
 
   @Qualifier("modAsyncExecutor")
   private final ThreadPoolTaskScheduler taskExecutor;
@@ -93,7 +91,7 @@ public class CirculationServiceImpl implements CirculationService {
   private final TransactionTemplate transactionTemplate;
   private final ApplicationEventPublisher eventPublisher;
   private final VirtualRecordService virtualRecordService;
-  private final ConfigurationClient configurationClient;
+  private final ConfigurationService configurationService;
 
   @Override
   public InnReachResponseDTO createInnReachTransactionItemHold(String trackingId, String centralCode, TransactionHoldDTO dto) {
@@ -394,17 +392,21 @@ public class CirculationServiceImpl implements CirculationService {
     log.info("folioHolding->"+folioHoldingId);
     log.info("folioInstance->"+folioInstanceId);
 
-    // checkoutTimeDuration fetch
-    var configDataList  = configurationClient.queryRequestByModule("CHECKOUT");
+    // fetching configurations
+    var configDataList
+            = configurationService.fetchConfigurationsDetailsByModule(CHECKOUT);
 
-    log.info("configData data {}",configDataList.getResult());
+    log.info("Configuration data {}",configDataList.getResult());
 
+    // fetching checkOutTimeDuration
     Long checkOutTimeDuration = getCheckOutTimeDuration(configDataList.getResult());
 
-    log.info("checkOutTime :{}",checkOutTimeDuration);
+    log.info("checkOutTimeDuration :{}",checkOutTimeDuration);
 
-    log.info("deleteVirtualRecords execution Schedule time : " + new Date());
-    var task = new FolioAsyncExecutorWrapper(folioExecutionContext, () -> executeDeleteVirtualRecordsWithDelay(folioItemId, folioHoldingId, folioInstanceId, folioLoanId));
+    log.info("deleteVirtualRecords execution start time : " + new Date());
+    var task = new FolioAsyncExecutorWrapper(folioExecutionContext,
+            () -> executeDeleteVirtualRecordsWithDelay(folioItemId, folioHoldingId,
+                    folioInstanceId, folioLoanId));
 
     taskExecutor.schedule(task, new Date(System.currentTimeMillis() + checkOutTimeDuration));
 

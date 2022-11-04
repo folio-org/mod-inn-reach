@@ -1,4 +1,4 @@
-package org.folio.innreach.domain.dto.folio;
+package org.folio.innreach.domain.dto.folio.configuration;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
