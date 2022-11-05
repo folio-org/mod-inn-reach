@@ -2,6 +2,7 @@ package org.folio.innreach.config;
 
 import org.folio.innreach.domain.exception.async.SpringAsyncExceptionHandler;
 import org.springframework.aop.interceptor.AsyncUncaughtExceptionHandler;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.task.SimpleAsyncTaskExecutor;
@@ -12,6 +13,9 @@ import java.util.concurrent.Executor;
 
 @Configuration
 public class SpringAsyncConfig implements AsyncConfigurer {
+
+  @Value("${spring.async.config.executor.pool-size:100}")
+  private int poolSize;
 
   /*
    * We need a SimpleAsyncTaskExecutor here because it will be used to run all @Async methods.
@@ -33,8 +37,7 @@ public class SpringAsyncConfig implements AsyncConfigurer {
   @Bean("modAsyncExecutor")
   public ThreadPoolTaskScheduler prepareScheduler() {
     ThreadPoolTaskScheduler executor = new ThreadPoolTaskScheduler();
-    //TODO: the pool size should be configurable through properties/env variables
-    executor.setPoolSize(100);
+    executor.setPoolSize(poolSize);
     executor.setWaitForTasksToCompleteOnShutdown(true);
     executor.setThreadNamePrefix("Async Executor -> ");
     return executor;
