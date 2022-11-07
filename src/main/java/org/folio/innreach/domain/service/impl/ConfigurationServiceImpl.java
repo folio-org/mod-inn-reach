@@ -20,7 +20,6 @@ public class ConfigurationServiceImpl implements ConfigurationService {
     @Override
     public ResultList<ConfigurationDTO> fetchConfigurationsDetailsByModule(String module) {
         log.debug("fetchConfigurationsDetailsByModule :: parameter  module : {}", module);
-        var  configurationList =  configurationClient.queryRequestByModule(module);
-        return configurationList;
+        return configurationClient.queryRequestByModule(module);
     }
 }
