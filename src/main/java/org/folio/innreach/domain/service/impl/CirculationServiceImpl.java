@@ -458,10 +458,8 @@ public class CirculationServiceImpl implements CirculationService {
             () -> virtualRecordService.deleteVirtualRecords(folioItemId, folioHoldingId,
                     folioInstanceId, folioLoanId));
 
-    if(taskExecutor.schedule(task, new Date(System.currentTimeMillis() + checkOutTimeDuration))
-            .isDone());
-
-    log.info("deleteVirtualRecords execution ended at " + new Date());
+    if(taskExecutor.schedule(task, new Date(System.currentTimeMillis() + checkOutTimeDuration)).isDone())
+      log.info("deleteVirtualRecords execution ended at " + new Date());
   }
 
   @Override
