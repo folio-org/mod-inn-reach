@@ -21,7 +21,6 @@ public class ConfigurationServiceImpl implements ConfigurationService {
     public ResultList<ConfigurationDTO> fetchConfigurationsDetailsByModule(String module) {
         log.debug("fetchConfigurationsDetailsByModule :: parameter  module : {}", module);
         var  configurationList =  configurationClient.queryRequestByModule(module);
-        log.info("fetchConfigurationsDetailsByModule execution ended at " + new Date());
         return configurationList;
     }
 }

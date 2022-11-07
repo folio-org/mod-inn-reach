@@ -35,7 +35,6 @@ import static org.folio.innreach.util.InnReachTransactionUtils.clearPatronAndIte
 import static org.folio.innreach.util.InnReachTransactionUtils.verifyState;
 
 
-
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;

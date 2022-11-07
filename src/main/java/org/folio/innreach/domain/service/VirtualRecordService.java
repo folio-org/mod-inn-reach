@@ -8,5 +8,4 @@ import java.util.UUID;
 public interface VirtualRecordService {
 
   void deleteVirtualRecords(UUID folioItemId,UUID folioHoldingId,UUID folioInstanceId,UUID folioLoanId);
-
 }

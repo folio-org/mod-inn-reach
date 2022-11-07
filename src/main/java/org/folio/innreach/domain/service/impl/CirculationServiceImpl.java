@@ -434,35 +434,34 @@ public class CirculationServiceImpl implements CirculationService {
       .ifPresent(this::removeHoldingsTransactionInfo);
     clearPatronAndItemInfo(transaction.getHold());
 
-    var folioItemId = transaction.getHold().getFolioItemId();
-    var folioHoldingId = transaction.getHold().getFolioHoldingId();
-    var folioInstanceId = transaction.getHold().getFolioInstanceId();
-    var folioLoanId = transaction.getHold().getFolioLoanId();
+    executeDeleteVirtualRecordsWithDelay(transaction.getHold());
 
-    // fetching configurations
+    return success();
+  }
+
+  private void executeDeleteVirtualRecordsWithDelay(TransactionHold hold) {
+
+    var folioItemId = hold.getFolioItemId();
+    var folioHoldingId = hold.getFolioHoldingId();
+    var folioInstanceId = hold.getFolioInstanceId();
+    var folioLoanId = hold.getFolioLoanId();
+
     var configDataList=
             configurationService.fetchConfigurationsDetailsByModule(CHECKOUT);
 
-    log.info("Configuration Details : {}", configDataList.getResult());
-
-    // fetching checkOutTimeDuration
     Long checkOutTimeDuration = getCheckOutTimeDuration(configDataList.getResult());
 
     log.info("Checkout Time Duration is : {}", checkOutTimeDuration);
 
     log.info("deleteVirtualRecords execution started at : " + new Date());
     var task = new FolioAsyncExecutorWrapper(folioExecutionContext,
-            () -> executeDeleteVirtualRecordsWithDelay(folioItemId, folioHoldingId,
+            () -> virtualRecordService.deleteVirtualRecords(folioItemId, folioHoldingId,
                     folioInstanceId, folioLoanId));
 
-    taskExecutor.schedule(task, new Date(System.currentTimeMillis() + checkOutTimeDuration));
+    if(taskExecutor.schedule(task, new Date(System.currentTimeMillis() + checkOutTimeDuration))
+            .isDone());
 
-    return success();
-  }
-
-  private void executeDeleteVirtualRecordsWithDelay(UUID folioItemId,
-                                                    UUID folioHoldingId, UUID folioInstanceId, UUID folioLoanId) {
-    virtualRecordService.deleteVirtualRecords(folioItemId, folioHoldingId, folioInstanceId, folioLoanId);
+    log.info("deleteVirtualRecords execution ended at " + new Date());
   }
 
   @Override

@@ -1,9 +1,5 @@
 package org.folio.innreach.util;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.List;
-
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
@@ -12,7 +8,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.folio.innreach.domain.dto.folio.configuration.ConfigurationDTO;
 import org.springframework.stereotype.Component;
-import org.springframework.util.ObjectUtils;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.List;
 
 @Log4j2
 @RequiredArgsConstructor
@@ -63,7 +62,7 @@ public class JsonHelper {
   public static Long getCheckOutTimeDuration(List<ConfigurationDTO> configData) {
     log.info("JsonHelper:getCheckOutTimeDuration started");
     long checkOutTime = 1;
-    if(!ObjectUtils.isEmpty(configData.isEmpty())) {
+    if(!configData.isEmpty()) {
       var value = configData.get(0).getValue();
       JsonObject valueObject = new Gson().fromJson(value, JsonObject.class);
       checkOutTime = valueObject.get(CHECKOUT_TIMEOUT_DURATION).getAsLong();

@@ -14,7 +14,7 @@ import java.util.concurrent.Executor;
 @Configuration
 public class SpringAsyncConfig implements AsyncConfigurer {
 
-  @Value("${spring.async.config.executor.pool-size:100}")
+  @Value("${spring.async.config.executor.pool-size}")
   private int poolSize;
 
   /*
