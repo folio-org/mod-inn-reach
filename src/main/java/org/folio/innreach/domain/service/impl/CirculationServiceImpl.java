@@ -457,6 +457,8 @@ public class CirculationServiceImpl implements CirculationService {
     var task = new FolioAsyncExecutorWrapper(folioExecutionContext,
             () -> virtualRecordService.deleteVirtualRecords(folioItemId, folioHoldingId,
                     folioInstanceId, folioLoanId));
+
+    taskExecutor.schedule(task, new Date(System.currentTimeMillis() + checkOutTimeDuration));
   }
 
   @Override
