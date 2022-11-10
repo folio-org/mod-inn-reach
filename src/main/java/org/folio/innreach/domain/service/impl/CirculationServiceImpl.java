@@ -430,11 +430,11 @@ public class CirculationServiceImpl implements CirculationService {
 
     transaction.setState(FINAL_CHECKIN);
 
+    executeDeleteVirtualRecordsWithDelay(transaction.getHold());
+
     removeItemTransactionInfo(transaction.getHold().getFolioItemId())
       .ifPresent(this::removeHoldingsTransactionInfo);
     clearPatronAndItemInfo(transaction.getHold());
-
-    executeDeleteVirtualRecordsWithDelay(transaction.getHold());
 
     return success();
   }
