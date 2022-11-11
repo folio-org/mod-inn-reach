@@ -54,7 +54,7 @@ spring:
   async:
     config:
       executor:
-        pool-size: ${SCHEDULAR_POOL_SIZE:100}
+        pool-size: ${SCHEDULER_POOL_SIZE:100}
 folio:
   tenant:
     validation:
@@ -90,6 +90,8 @@ inn-reach:
     cache:
       ttl: 500
       max-size: 100
+  checkout-time:
+    duration: ${DEFAULT_CHECKOUT_TIME_DURATION:1}
 system-user:
   username: mod-innreach
   password: ${SYSTEM_USER_PASSWORD:Mod-innreach-1-0-0}

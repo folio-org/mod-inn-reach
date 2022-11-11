@@ -1,5 +1,39 @@
 package org.folio.innreach.domain.service.impl;
 
+import static java.lang.String.format;
+import static java.time.Instant.ofEpochSecond;
+import static java.util.Objects.nonNull;
+import static org.apache.commons.lang3.StringUtils.capitalize;
+import static org.apache.commons.lang3.StringUtils.truncate;
+import static org.folio.innreach.domain.dto.folio.circulation.RequestDTO.RequestStatus.OPEN_AWAITING_PICKUP;
+import static org.folio.innreach.domain.dto.folio.circulation.RequestDTO.RequestStatus.OPEN_IN_TRANSIT;
+import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.BORROWER_RENEW;
+import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.BORROWING_SITE_CANCEL;
+import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.CANCEL_REQUEST;
+import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.CLAIMS_RETURNED;
+import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.FINAL_CHECKIN;
+import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.ITEM_HOLD;
+import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.ITEM_IN_TRANSIT;
+import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.ITEM_RECEIVED;
+import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.ITEM_SHIPPED;
+import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.LOCAL_HOLD;
+import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.OWNER_RENEW;
+import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.PATRON_HOLD;
+import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.RECALL;
+import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.RECEIVE_UNANNOUNCED;
+import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.RETURN_UNCIRCULATED;
+import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.TRANSFER;
+import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionType.ITEM;
+import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionType.LOCAL;
+import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionType.PATRON;
+import static org.folio.innreach.domain.service.impl.RequestServiceImpl.INN_REACH_CANCELLATION_REASON_ID;
+import static org.folio.innreach.util.DateHelper.toEpochSec;
+import static org.folio.innreach.util.InnReachTransactionUtils.clearCentralPatronInfo;
+import static org.folio.innreach.util.InnReachTransactionUtils.clearPatronAndItemInfo;
+import static org.folio.innreach.util.InnReachTransactionUtils.verifyState;
+import static org.folio.innreach.util.InnReachTransactionUtils.verifyStateNot;
+import static org.folio.innreach.util.JsonHelper.getCheckoutTimeDurationInMilliseconds;
+
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -68,40 +102,6 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.function.BiConsumer;
 import java.util.function.Supplier;
-
-import static java.lang.String.format;
-import static java.time.Instant.ofEpochSecond;
-import static java.util.Objects.nonNull;
-import static org.apache.commons.lang3.StringUtils.capitalize;
-import static org.apache.commons.lang3.StringUtils.truncate;
-import static org.folio.innreach.domain.dto.folio.circulation.RequestDTO.RequestStatus.OPEN_AWAITING_PICKUP;
-import static org.folio.innreach.domain.dto.folio.circulation.RequestDTO.RequestStatus.OPEN_IN_TRANSIT;
-import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.BORROWER_RENEW;
-import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.BORROWING_SITE_CANCEL;
-import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.CANCEL_REQUEST;
-import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.CLAIMS_RETURNED;
-import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.FINAL_CHECKIN;
-import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.ITEM_HOLD;
-import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.ITEM_IN_TRANSIT;
-import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.ITEM_RECEIVED;
-import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.ITEM_SHIPPED;
-import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.LOCAL_HOLD;
-import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.OWNER_RENEW;
-import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.PATRON_HOLD;
-import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.RECALL;
-import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.RECEIVE_UNANNOUNCED;
-import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.RETURN_UNCIRCULATED;
-import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.TRANSFER;
-import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionType.ITEM;
-import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionType.LOCAL;
-import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionType.PATRON;
-import static org.folio.innreach.domain.service.impl.RequestServiceImpl.INN_REACH_CANCELLATION_REASON_ID;
-import static org.folio.innreach.util.DateHelper.toEpochSec;
-import static org.folio.innreach.util.InnReachTransactionUtils.clearCentralPatronInfo;
-import static org.folio.innreach.util.InnReachTransactionUtils.clearPatronAndItemInfo;
-import static org.folio.innreach.util.InnReachTransactionUtils.verifyState;
-import static org.folio.innreach.util.InnReachTransactionUtils.verifyStateNot;
-import static org.folio.innreach.util.JsonHelper.getCheckOutTimeDuration;
 
 @Log4j2
 @Service
@@ -430,7 +430,12 @@ public class CirculationServiceImpl implements CirculationService {
 
     transaction.setState(FINAL_CHECKIN);
 
-    executeDeleteVirtualRecordsWithDelay(transaction.getHold());
+    var folioItemId = transaction.getHold().getFolioItemId();
+    var folioHoldingId = transaction.getHold().getFolioHoldingId();
+    var folioInstanceId = transaction.getHold().getFolioInstanceId();
+    var folioLoanId = transaction.getHold().getFolioLoanId();
+
+    executeDeleteVirtualRecordsWithDelay(folioItemId, folioHoldingId, folioInstanceId, folioLoanId);
 
     removeItemTransactionInfo(transaction.getHold().getFolioItemId())
       .ifPresent(this::removeHoldingsTransactionInfo);
@@ -439,21 +444,17 @@ public class CirculationServiceImpl implements CirculationService {
     return success();
   }
 
-  private void executeDeleteVirtualRecordsWithDelay(TransactionHold hold) {
-
-    var folioItemId = hold.getFolioItemId();
-    var folioHoldingId = hold.getFolioHoldingId();
-    var folioInstanceId = hold.getFolioInstanceId();
-    var folioLoanId = hold.getFolioLoanId();
+  private void executeDeleteVirtualRecordsWithDelay(UUID folioItemId, UUID folioHoldingId,
+                                                    UUID folioInstanceId,UUID folioLoanId) {
 
     var configDataList=
             configurationService.fetchConfigurationsDetailsByModule(CHECKOUT);
 
-    Long checkOutTimeDuration = getCheckOutTimeDuration(configDataList.getResult());
+    Long checkOutTimeDuration = getCheckoutTimeDurationInMilliseconds(configDataList.getResult());
 
     log.info("Checkout Time Duration is : {}", checkOutTimeDuration);
 
-    log.info("deleteVirtualRecords execution started at : " + new Date());
+    log.info("deleteVirtualRecords execution started at : {}", new Date());
     var task = new FolioAsyncExecutorWrapper(folioExecutionContext,
             () -> virtualRecordService.deleteVirtualRecords(folioItemId, folioHoldingId,
                     folioInstanceId, folioLoanId));

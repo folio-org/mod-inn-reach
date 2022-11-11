@@ -7,6 +7,7 @@ import com.google.gson.JsonObject;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.folio.innreach.domain.dto.folio.configuration.ConfigurationDTO;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
@@ -17,6 +18,9 @@ import java.util.List;
 @RequiredArgsConstructor
 @Component
 public class JsonHelper {
+
+  @Value("${inn-reach.checkout-time.duration}")
+  private static long defaultCheckoutTimeDuration;
 
   public static final String CHECKOUT_TIMEOUT_DURATION = "checkoutTimeoutDuration";
   private final ObjectMapper mapper;
@@ -59,16 +63,14 @@ public class JsonHelper {
   }
 
 
-  public static Long getCheckOutTimeDuration(List<ConfigurationDTO> configData) {
-    log.info("JsonHelper:getCheckOutTimeDuration started");
-    long checkOutTime = 1;
+  public static Long getCheckoutTimeDurationInMilliseconds(List<ConfigurationDTO> configData) {
+    long checkOutTime = defaultCheckoutTimeDuration;
     if(!configData.isEmpty()) {
       var value = configData.get(0).getValue();
       JsonObject valueObject = new Gson().fromJson(value, JsonObject.class);
       checkOutTime = valueObject.get(CHECKOUT_TIMEOUT_DURATION).getAsLong();
     }
-    log.info("JsonHelper:getCheckOutTimeDuration completed");
-    return (checkOutTime * 60000);
+    return checkOutTime * 60000;
   }
 
 }
