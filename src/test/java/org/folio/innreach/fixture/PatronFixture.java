@@ -48,6 +48,15 @@ public class PatronFixture {
     return user;
   }
 
+  public static User createUserWithoutExpirationDate() {
+    var user = new User();
+    user.setId(USER_ID);
+    user.setActive(true);
+    user.setPersonal(User.Personal.of(PATRON_FIRST_NAME, null, PATRON_LAST_NAME, null));
+    user.setCustomFields(Map.of(CUSTOM_FIELD_REF_ID, CUSTOM_FIELD_OPTION));
+    return user;
+  }
+
   public static UserCustomFieldMappingDTO createCustomFieldMapping() {
     var mapping = new UserCustomFieldMappingDTO();
     mapping.setConfiguredOptions(Map.of(CUSTOM_FIELD_OPTION, CENTRAL_AGENCY_CODE));
