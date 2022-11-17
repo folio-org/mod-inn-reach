@@ -4,8 +4,6 @@ import static java.util.Collections.singletonList;
 import static java.util.Collections.singletonMap;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -96,15 +94,6 @@ class SystemUserServiceTest {
 
     Assertions.assertThat(cacheManager.getCache(CACHE_NAME).get(TENANT_ID, SystemUser.class))
       .isEqualTo(systemUser);
-  }
-
-  @Test
-  void shouldGetSystemUserThrowsException() {
-    when(authService.loginSystemUser(any(SystemUser.class))).thenThrow(new UnsupportedOperationException(String.format("This operation not permitted for user %s", USERNAME)));
-
-    var exception = assertThrows(UnsupportedOperationException.class, ()-> systemUserService.getSystemUser(TENANT_ID));
-
-    assertEquals("This operation not permitted for user mod-innreach", exception.getMessage());
   }
 
   @EnableCaching

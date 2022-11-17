@@ -58,25 +58,21 @@ public class SystemUserAuthService {
   }
 
   public String loginSystemUser(SystemUser systemUser) {
-    try {
-      return executeWithinContext(contextBuilder.forSystemUser(systemUser), () -> {
+    return executeWithinContext(contextBuilder.forSystemUser(systemUser), () -> {
 
-        AuthnClient.UserCredentials creds = AuthnClient.UserCredentials
-          .of(systemUser.getUserName(), folioSystemUserConf.getPassword());
+      AuthnClient.UserCredentials creds = AuthnClient.UserCredentials
+        .of(systemUser.getUserName(), folioSystemUserConf.getPassword());
 
-        var response = authnClient.getApiKey(creds);
+      var response = authnClient.getApiKey(creds);
 
-        List<String> tokenHeaders = response.getHeaders().get(XOkapiHeaders.TOKEN);
+      List<String> tokenHeaders = response.getHeaders().get(XOkapiHeaders.TOKEN);
 
-        return Optional.ofNullable(tokenHeaders)
-          .filter(list -> !CollectionUtils.isEmpty(list))
-          .map(list -> list.get(0))
-          .orElseThrow(() -> new IllegalStateException(String.format("User [%s] cannot log in", systemUser.getUserName())));
+      return Optional.ofNullable(tokenHeaders)
+        .filter(list -> !CollectionUtils.isEmpty(list))
+        .map(list -> list.get(0))
+        .orElseThrow(() -> new IllegalStateException(String.format("User [%s] cannot log in", systemUser.getUserName())));
 
-      });
-    } catch(Exception ex) {
-      throw new UnsupportedOperationException(String.format("This operation not permitted for user [%s]", systemUser.getUserName()));
-    }
+    });
   }
 
   private void createFolioUser(UUID id) {
