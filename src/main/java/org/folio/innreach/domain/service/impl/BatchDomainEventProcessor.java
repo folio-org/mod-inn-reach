@@ -30,8 +30,12 @@ public class BatchDomainEventProcessor {
       var tenantId = tenantEventsEntry.getKey();
       var events = tenantEventsEntry.getValue();
 
-      executionService.runTenantScoped(tenantId,
-        () -> processTenantEvents(events, recordProcessor));
+      try {
+        executionService.runTenantScoped(tenantId,
+          () -> processTenantEvents(events, recordProcessor));
+      } catch (Exception ex) {
+        log.info("This operation not permitted for tenant {}", tenantId);
+      }
     }
   }
 
