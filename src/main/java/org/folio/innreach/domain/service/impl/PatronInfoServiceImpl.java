@@ -228,10 +228,9 @@ public class PatronInfoServiceImpl implements PatronInfoService {
       return false;
     } else if (patronNameTokens.length == 2) {
       // "First Last" or "Middle Last" format or "Last First" or "Last Middle"
-      return (equalsAny(patronNameTokens[0], personal.getFirstName(), personal.getPreferredFirstName(), personal.getMiddleName()) &&
+      return ((equalsAny(patronNameTokens[0], personal.getFirstName(), personal.getPreferredFirstName(), personal.getMiddleName()) &&
         patronNameTokens[1].equals(personal.getLastName()))
-        || (equalsAny(patronNameTokens[1], personal.getFirstName(), personal.getPreferredFirstName(), personal.getMiddleName()) &&
-            patronNameTokens[0].equals(personal.getLastName()));
+        || checkLastNameFirstName(personal, patronNameTokens));
     }
 
     // "First Middle Last" format "Last First Middle"
@@ -241,6 +240,12 @@ public class PatronInfoServiceImpl implements PatronInfoService {
       || (equalsAny(patronNameTokens[1], personal.getFirstName(), personal.getPreferredFirstName()) &&
       patronNameTokens[2].equals(personal.getMiddleName()) &&
       patronNameTokens[0].equals(personal.getLastName()));
+  }
+
+  private static boolean checkLastNameFirstName(User.Personal personal, String[] patronNameTokens) {
+    boolean checkFirstName = equalsAny(patronNameTokens[1], personal.getFirstName(), personal.getPreferredFirstName(), personal.getMiddleName());
+    boolean checkLastName = patronNameTokens[0].equals(personal.getLastName());
+    return (checkFirstName && checkLastName);
   }
 
   private static String getPatronName(User user) {
