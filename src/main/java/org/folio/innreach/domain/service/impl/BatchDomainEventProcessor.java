@@ -34,7 +34,7 @@ public class BatchDomainEventProcessor {
         executionService.runTenantScoped(tenantId,
           () -> processTenantEvents(events, recordProcessor));
       } catch (Exception ex) {
-        log.info("This operation not permitted for tenant {}", tenantId);
+        log.info("This operation is not permitted for system user [tenantId={}]", tenantId);
       }
     }
   }
