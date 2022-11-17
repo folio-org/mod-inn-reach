@@ -1,16 +1,12 @@
 package org.folio.innreach.domain.listener;
 
 import static org.awaitility.Awaitility.await;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TEST_METHOD;
 import static org.springframework.test.context.jdbc.SqlMergeMode.MergeMode.MERGE;
 
@@ -44,12 +40,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.Callable;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.folio.innreach.client.HoldingsStorageClient;
+import org.folio.innreach.domain.service.impl.TenantScopedExecutionService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -136,6 +134,9 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
 
   @MockBean
   private HoldingsStorageClient holdingsStorageClient;
+
+  @MockBean
+  private TenantScopedExecutionService executionService;
 
   @Test
   void shouldReceiveLoanEvent() {
@@ -572,6 +573,13 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
     var updatedTransaction = transactionRepository.fetchOneById(PRE_POPULATED_ITEM_TRANSACTION_ID).orElseThrow();
     assertEquals(RECALL, updatedTransaction.getState());
     assertEquals((long) toEpochSec(loan.getDueDate()), payload.get("dueDateTime"));
+  }
+
+  @Test
+  void shouldNotProcessEventIfModuleDisabled() {
+    doNothing().doThrow(new RuntimeException()).when(executionService).runTenantScoped(eq(TEST_TENANT_ID), any());
+
+    assertThrows(RuntimeException.class, ()-> eventProcessor.process(any(), any()));
   }
 
   private static DomainEvent<StorageLoanDTO> createLoanDomainEvent(DomainEventType eventType) {
