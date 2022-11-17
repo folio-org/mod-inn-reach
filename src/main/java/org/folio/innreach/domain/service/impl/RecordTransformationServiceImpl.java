@@ -104,6 +104,8 @@ public class RecordTransformationServiceImpl implements RecordTransformationServ
       var suppressionStatus = getSuppressionStatus(centralServerId, item);
       var circulationStatus = getCirculationStatus(centralServerId, item);
 
+      log.info("Item {} circulation status {}", item.getBarcode(), circulationStatus);
+
       var copyNumber = Optional.ofNullable(item.getCopyNumber())
         .map(n -> n.replaceAll(NON_DIGIT_REGEX, ""))
         .filter(NumberUtils::isCreatable)
