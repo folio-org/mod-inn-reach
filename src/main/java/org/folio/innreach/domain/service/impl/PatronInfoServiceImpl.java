@@ -227,15 +227,20 @@ public class PatronInfoServiceImpl implements PatronInfoService {
     if (patronNameTokens.length < 2) {
       return false;
     } else if (patronNameTokens.length == 2) {
-      // "First Last" or "Middle Last" format
-      return equalsAny(patronNameTokens[0], personal.getFirstName(), personal.getPreferredFirstName(), personal.getMiddleName()) &&
-        patronNameTokens[1].equals(personal.getLastName());
+      // "First Last" or "Middle Last" format or "Last First" or "Last Middle"
+      return (equalsAny(patronNameTokens[0], personal.getFirstName(), personal.getPreferredFirstName(), personal.getMiddleName()) &&
+        patronNameTokens[1].equals(personal.getLastName()))
+        || (equalsAny(patronNameTokens[1], personal.getFirstName(), personal.getPreferredFirstName(), personal.getMiddleName()) &&
+            patronNameTokens[0].equals(personal.getLastName()));
     }
 
-    // "First Middle Last" format
-    return equalsAny(patronNameTokens[0], personal.getFirstName(), personal.getPreferredFirstName()) &&
+    // "First Middle Last" format "Last First Middle"
+    return (equalsAny(patronNameTokens[0], personal.getFirstName(), personal.getPreferredFirstName()) &&
       patronNameTokens[1].equals(personal.getMiddleName()) &&
-      patronNameTokens[2].equals(personal.getLastName());
+      patronNameTokens[2].equals(personal.getLastName()))
+      || (equalsAny(patronNameTokens[1], personal.getFirstName(), personal.getPreferredFirstName()) &&
+      patronNameTokens[2].equals(personal.getMiddleName()) &&
+      patronNameTokens[0].equals(personal.getLastName()));
   }
 
   private static String getPatronName(User user) {
