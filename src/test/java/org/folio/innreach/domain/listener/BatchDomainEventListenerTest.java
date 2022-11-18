@@ -44,8 +44,7 @@ public class BatchDomainEventListenerTest extends BaseKafkaApiTest {
 
     listener.handleItemEvents(asSingleConsumerRecord(INVENTORY_ITEM_TOPIC, PRE_POPULATED_LOCAL_ITEM_ID, event));
 
-    verify(eventProcessor).process(any(), any(Consumer.class));
-    verify(logger).info("This operation is not permitted for system user [tenantId=testing]");
+    verify(executionService).runTenantScoped(eq(TEST_TENANT_ID), any(Runnable.class));
   }
 
 
