@@ -137,6 +137,10 @@ class KafkaInventoryEventListenerApiTest extends BaseKafkaApiTest {
     assertEquals(updatedItem.getBarcode(), transaction.getHold().getFolioItemBarcode());
   }
 
+  public DomainEvent<Item> getItemDomainEvent(DomainEventType eventType, UUID recordId) {
+    return createItemDomainEvent(eventType, recordId);
+  }
+
   private DomainEvent<Item> createItemDomainEvent(DomainEventType eventType, UUID recordId) {
     var oldItem = createItem().id(recordId);
     var newItem = createItem().id(recordId);
