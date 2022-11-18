@@ -1,6 +1,5 @@
 package org.folio.innreach.domain.listener;
 
-import org.apache.logging.log4j.Logger;
 import org.folio.innreach.domain.event.DomainEventType;
 import org.folio.innreach.domain.listener.base.BaseKafkaApiTest;
 import org.folio.innreach.domain.service.impl.BatchDomainEventProcessor;
@@ -10,14 +9,13 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 
 import java.util.UUID;
-import java.util.function.Consumer;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 
-public class BatchDomainEventListenerTest extends BaseKafkaApiTest {
+class BatchDomainEventListenerTest extends BaseKafkaApiTest {
   private static final String TEST_TENANT_ID = "testing";
 
   private static final UUID PRE_POPULATED_LOCAL_ITEM_ID = UUID.fromString("c633da85-8112-4453-af9c-c250e417179d");
@@ -27,9 +25,6 @@ public class BatchDomainEventListenerTest extends BaseKafkaApiTest {
 
   @MockBean
   private TenantScopedExecutionService executionService;
-
-  @MockBean
-  Logger logger;
 
   @SpyBean
   private BatchDomainEventProcessor eventProcessor;
