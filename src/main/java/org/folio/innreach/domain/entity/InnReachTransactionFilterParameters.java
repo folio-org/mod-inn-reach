@@ -19,6 +19,7 @@ public class InnReachTransactionFilterParameters {
   private List<Integer> centralItemTypes;
   private List<String> patronNames;
   private String query;
+  private boolean requestedTooLong;
   private List<OffsetDateTime> createdDates;
   private DateOperation createdDateOperation;
   private List<OffsetDateTime> updatedDates;
