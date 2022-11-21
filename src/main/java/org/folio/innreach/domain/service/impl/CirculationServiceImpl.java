@@ -444,8 +444,8 @@ public class CirculationServiceImpl implements CirculationService {
     return success();
   }
 
-  private void executeDeleteVirtualRecordsWithDelay(UUID folioItemId, UUID folioHoldingId,
-                                                    UUID folioInstanceId,UUID folioLoanId) {
+  public void executeDeleteVirtualRecordsWithDelay(UUID folioItemId, UUID folioHoldingId,
+                                                    UUID folioInstanceId, UUID folioLoanId) {
 
     var configDataList=
             configurationService.fetchConfigurationsDetailsByModule(CHECKOUT);
