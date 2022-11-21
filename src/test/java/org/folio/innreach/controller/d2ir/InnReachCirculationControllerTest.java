@@ -20,6 +20,7 @@ import org.folio.innreach.domain.service.PatronHoldService;
 import org.folio.innreach.domain.service.RequestService;
 import org.folio.innreach.domain.service.UserService;
 import org.folio.innreach.domain.service.VirtualRecordService;
+import org.folio.innreach.domain.service.impl.CirculationServiceImpl;
 import org.folio.innreach.dto.CheckOutRequestDTO;
 import org.folio.innreach.dto.InnReachResponseDTO;
 import org.folio.innreach.dto.LoanDTO;
@@ -44,12 +45,14 @@ import org.springframework.http.HttpStatus;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlMergeMode;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.Optional;
 import java.util.UUID;
 
+import static org.awaitility.Awaitility.await;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.BORROWER_RENEW;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.BORROWING_SITE_CANCEL;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.CANCEL_REQUEST;
@@ -141,8 +144,12 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
   private static final Integer PRE_POPULATED_CENTRAL_PATRON_TYPE = 1;
   private static final String CENTRAL_PATRON_NAME = "Atreides, Paul";
 
+  private static final Duration ASYNC_AWAIT_TIMEOUT = Duration.ofMillis(150L);
+
   @Autowired
   private TestRestTemplate testRestTemplate;
+  @Autowired
+  private CirculationServiceImpl circulationService;
 
   @SpyBean
   private InnReachTransactionRepository repository;
@@ -1154,6 +1161,28 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     assertEquals(CANCEL_REQUEST, transactionAfter.getState());
     assertPatronHoldFieldsAreNull((TransactionPatronHold) transactionAfter.getHold());
   }
+
+    @Test
+    void testFinalCheckInWithDeleteVirtualRecord() {
+        var transactionHold = createTransactionHoldDTO();
+        var configurationDto =
+                deserializeFromJsonFile("/configuration/configuration-details-example.json", ConfigurationDTO.class);
+        when(configurationService.fetchConfigurationsDetailsByModule(any())).
+                thenReturn(ResultList.asSinglePage(configurationDto));
+        var folioItemId = transactionHold.getFolioItemId();
+        var folioHoldingId = transactionHold.getFolioHoldingId();
+        var folioInstanceId = transactionHold.getFolioInstanceId();
+        var folioLoanId = transactionHold.getFolioLoanId();
+        System.out.println("start : " + new Date());
+        await().atLeast(ASYNC_AWAIT_TIMEOUT).
+                untilAsserted(() -> {
+                            circulationService.executeDeleteVirtualRecordsWithDelay(folioItemId, folioHoldingId,
+                                    folioInstanceId, folioLoanId);
+                            System.out.println("end : " + new Date());
+                        }
+                );
+
+    }
 
   private void assertPatronHoldFieldsAreNull(TransactionPatronHold hold) {
     assertNull(hold.getPatronId());

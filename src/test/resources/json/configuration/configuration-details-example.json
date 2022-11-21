@@ -3,7 +3,7 @@
   "module": "CHECKOUT",
   "configName": "other_settings",
   "enabled": true,
-  "value": "{\"audioAlertsEnabled\":false,\"audioTheme\":\"classic\",\"checkoutTimeout\":false,\"checkoutTimeoutDuration\":3,\"prefPatronIdentifier\":\"barcode,customFields.visiblePatronId,customFields.textArea,customFields.timSpecial\",\"useCustomFieldsAsIdentifiers\":false,\"wildcardLookupEnabled\":false}",
+  "value": "{\"audioAlertsEnabled\":false,\"audioTheme\":\"classic\",\"checkoutTimeout\":false,\"checkoutTimeoutDuration\":1,\"prefPatronIdentifier\":\"barcode,customFields.visiblePatronId,customFields.textArea,customFields.timSpecial\",\"useCustomFieldsAsIdentifiers\":false,\"wildcardLookupEnabled\":false}",
   "metadata": {
     "createdDate": "2022-01-12T13:44:08.424+00:00",
     "createdByUserId": "8e75dcb2-db5f-53a7-a09e-7084c47b7ece",
