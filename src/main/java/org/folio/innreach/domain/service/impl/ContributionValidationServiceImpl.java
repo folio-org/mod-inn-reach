@@ -259,7 +259,7 @@ public class ContributionValidationServiceImpl implements ContributionValidation
   private boolean isItemAvailableForContribution(Item inventoryItem,
                                                  ItemContributionOptionsConfigurationDTO itemContributionConfig) {
     var itemStatus = inventoryItem.getStatus();
-
+    log.info("isItemAvailableForContribution : itemStatus : {}",itemStatus );
     if (itemStatus.getName() == IN_TRANSIT && isItemRequested(inventoryItem)) {
       return false;
     }
@@ -268,7 +268,9 @@ public class ContributionValidationServiceImpl implements ContributionValidation
   }
 
   private boolean isItemRequested(Item inventoryItem) {
+    log.info("isItemRequested : {} with status : {}", inventoryItem, inventoryItem.getStatus());
     var itemRequests = circulationClient.queryRequestsByItemId(inventoryItem.getId());
+    log.info("itemRequests.getTotalRecords() : {}", itemRequests.getTotalRecords());
     return itemRequests.getTotalRecords() != 0;
   }
 
