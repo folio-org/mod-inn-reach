@@ -142,6 +142,8 @@ public class ContributionValidationServiceImpl implements ContributionValidation
     var itemContributionConfig = itemContributionOptionsConfigurationService
       .getItmContribOptConf(centralServerId);
 
+    log.info("getItemCirculationStatus: itemContributionConfig {}", itemContributionConfig);
+
     if (isItemNonLendable(item, itemContributionConfig)) {
       return ContributionItemCirculationStatus.NON_LENDABLE;
     }
@@ -261,7 +263,7 @@ public class ContributionValidationServiceImpl implements ContributionValidation
     if (itemStatus.getName() == IN_TRANSIT && isItemRequested(inventoryItem)) {
       return false;
     }
-
+    log.info("isItemAvailableForContribution : itemContributionConfig : {}",itemContributionConfig );
     return itemStatus.getName() == AVAILABLE || !itemContributionConfig.getNotAvailableItemStatuses().contains(itemStatus.getName().getValue());
   }
 
