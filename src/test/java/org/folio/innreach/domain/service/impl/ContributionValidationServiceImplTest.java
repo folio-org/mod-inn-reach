@@ -13,6 +13,7 @@ import static org.mockito.Mockito.when;
 import static org.folio.innreach.fixture.ContributionFixture.createContributionCriteria;
 import static org.folio.innreach.fixture.ContributionFixture.createItem;
 import static org.folio.innreach.fixture.ItemContributionOptionsConfigurationFixture.createItmContribOptConfDTO;
+import static org.folio.innreach.fixture.TestUtil.deserializeFromJsonFile;
 
 import java.util.Collections;
 import java.util.List;
@@ -22,6 +23,7 @@ import java.util.UUID;
 
 import lombok.extern.log4j.Log4j2;
 import org.folio.innreach.dto.CentralServerDTO;
+import org.folio.innreach.dto.ItemContributionOptionsConfigurationDTO;
 import org.folio.innreach.dto.LocalAgencyDTO;
 import org.folio.innreach.fixture.CentralServerFixture;
 import org.junit.jupiter.api.BeforeEach;
@@ -108,10 +110,18 @@ class ContributionValidationServiceImplTest {
 
   @Test
   void returnAvailableContributionStatusWhenItemStatusIsInTransitAndItemIsNotRequested() {
-    when(itemContributionOptionsConfigurationService.getItmContribOptConf(any())).thenReturn(createItmContribOptConfDTO());
+    var itemContributionConfigOptions =
+            deserializeFromJsonFile( "/item-contribution-options/item-contribution-config-options.json", ItemContributionOptionsConfigurationDTO.class);
+    when(itemContributionOptionsConfigurationService.getItmContribOptConf(any())).
+            thenReturn(itemContributionConfigOptions);
 
-    var item = createItem();
-    item.setStatus(new ItemStatus().name(ItemStatus.NameEnum.IN_TRANSIT));
+//    var item = createItem();
+    var item = deserializeFromJsonFile( "/item/item-in-transit.json", Item.class);
+//    item.setStatus(new ItemStatus().name(ItemStatus.NameEnum.IN_TRANSIT));
+    item.setPermanentLoanTypeId(UUID.fromString("2b94c631-fca9-4892-a730-03ee529ffe27"));
+    item.setTemporaryLoanTypeId(UUID.fromString("2b94c631-fca9-4892-a730-03ee529ffe27"));
+    item.setEffectiveLocationId(UUID.fromString("fcd64ce1-6995-48f0-840e-89ffa2288371"));
+    item.setMaterialTypeId(UUID.fromString("1a54b431-2e4f-452d-9cae-9cee66c9a892"));
 
     when(circulationClient.queryRequestsByItemId(any())).thenReturn(ResultList.of(0, Collections.emptyList()));
 
