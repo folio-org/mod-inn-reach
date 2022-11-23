@@ -142,7 +142,6 @@ class PatronInfoControllerTest extends BaseApiControllerTest {
     when(userCustomFieldService.getMapping(any())).thenReturn(createCustomFieldMapping());
 
     var patronInfoRequest = createPatronInfoRequestWithLastNameFirstName();
-    System.out.println("patronReq->"+ patronInfoRequest);
 
     var responseEntity = testRestTemplate.postForEntity(
       "/inn-reach/d2ir/circ/verifypatron", new HttpEntity<>(patronInfoRequest, headers), PatronInfoResponseDTO.class);
@@ -151,7 +150,6 @@ class PatronInfoControllerTest extends BaseApiControllerTest {
     assertNotNull(responseEntity.getBody());
 
     var response = responseEntity.getBody();
-    System.out.println("response->"+response.toString());
     assertTrue(response.getRequestAllowed());
     assertNotNull(response.getPatronInfo());
   }
@@ -172,7 +170,6 @@ class PatronInfoControllerTest extends BaseApiControllerTest {
     when(userCustomFieldService.getMapping(any())).thenReturn(createCustomFieldMapping());
 
     var patronInfoRequest = createPatronInfoRequestWithFirstNameMiddleNameLastName();
-    System.out.println("patronReq->"+ patronInfoRequest);
 
     var responseEntity = testRestTemplate.postForEntity(
       "/inn-reach/d2ir/circ/verifypatron", new HttpEntity<>(patronInfoRequest, headers), PatronInfoResponseDTO.class);
@@ -181,7 +178,6 @@ class PatronInfoControllerTest extends BaseApiControllerTest {
     assertNotNull(responseEntity.getBody());
 
     var response = responseEntity.getBody();
-    System.out.println("response->"+response.toString());
     assertTrue(response.getRequestAllowed());
     assertNotNull(response.getPatronInfo());
   }
@@ -202,7 +198,6 @@ class PatronInfoControllerTest extends BaseApiControllerTest {
     when(userCustomFieldService.getMapping(any())).thenReturn(createCustomFieldMapping());
 
     var patronInfoRequest = createPatronInfoRequestWithLastNameFirstNameMiddleName();
-    System.out.println("patronReq->"+ patronInfoRequest);
 
     var responseEntity = testRestTemplate.postForEntity(
       "/inn-reach/d2ir/circ/verifypatron", new HttpEntity<>(patronInfoRequest, headers), PatronInfoResponseDTO.class);
@@ -211,7 +206,6 @@ class PatronInfoControllerTest extends BaseApiControllerTest {
     assertNotNull(responseEntity.getBody());
 
     var response = responseEntity.getBody();
-    System.out.println("response->"+response.toString());
     assertTrue(response.getRequestAllowed());
     assertNotNull(response.getPatronInfo());
   }
@@ -244,6 +238,66 @@ class PatronInfoControllerTest extends BaseApiControllerTest {
     var response = responseEntity.getBody();
     assertFalse(response.getRequestAllowed());
     assertEquals(UNABLE_TO_VERIFY_PATRON,response.getReason());
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"john doe","doe john","doe john"})
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/patron-type-mapping/pre-populate-patron-type-mapping.sql",
+    "classpath:db/user-custom-field-mapping/pre-populate-user-custom-field-mapping.sql"
+  })
+  void return200HttpCode_and_patronInfoResponseWithPatronInfo_hasIgnoreCaseCorrectOrderWithOutMiddleName_when_patronFoundAndRequestAllowed(String patronName) {
+    var user = createUser();
+    user.setPatronGroupId(UUID.fromString("54e17c4c-e315-4d20-8879-efc694dea1ce"));
+    when(usersClient.query(anyString())).thenReturn(ResultList.of(1, List.of(user)));
+    when(automatedBlocksClient.getPatronBlocks(any())).thenReturn(ResultList.empty());
+    when(manualBlocksClient.getPatronBlocks(any())).thenReturn(ResultList.empty());
+    when(patronClient.getAccountDetails(any())).thenReturn(new PatronDTO());
+    when(userCustomFieldService.getMapping(any())).thenReturn(createCustomFieldMapping());
+
+    var patronInfoRequest = createPatronInfoRequest();
+    patronInfoRequest.setPatronName(patronName);
+
+    var responseEntity = testRestTemplate.postForEntity(
+      "/inn-reach/d2ir/circ/verifypatron", new HttpEntity<>(patronInfoRequest, headers), PatronInfoResponseDTO.class);
+
+    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+    assertNotNull(responseEntity.getBody());
+
+    var response = responseEntity.getBody();
+    assertTrue(response.getRequestAllowed());
+    assertNotNull(response.getPatronInfo());
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"john paul doe","doe john paul","doe John pauL"})
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/patron-type-mapping/pre-populate-patron-type-mapping.sql",
+    "classpath:db/user-custom-field-mapping/pre-populate-user-custom-field-mapping.sql"
+  })
+  void return200HttpCode_and_patronInfoResponseWithPatronInfo_hasIgnoreCaseCorrectOrderWithMiddleName_when_patronFoundAndRequestAllowed(String patronName) {
+    var user = createUserWithMiddleName();
+    user.setPatronGroupId(UUID.fromString("54e17c4c-e315-4d20-8879-efc694dea1ce"));
+    when(usersClient.query(anyString())).thenReturn(ResultList.of(1, List.of(user)));
+    when(automatedBlocksClient.getPatronBlocks(any())).thenReturn(ResultList.empty());
+    when(manualBlocksClient.getPatronBlocks(any())).thenReturn(ResultList.empty());
+    when(patronClient.getAccountDetails(any())).thenReturn(new PatronDTO());
+    when(userCustomFieldService.getMapping(any())).thenReturn(createCustomFieldMapping());
+
+    var patronInfoRequest = createPatronInfoRequest();
+    patronInfoRequest.setPatronName(patronName);
+
+    var responseEntity = testRestTemplate.postForEntity(
+      "/inn-reach/d2ir/circ/verifypatron", new HttpEntity<>(patronInfoRequest, headers), PatronInfoResponseDTO.class);
+
+    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+    assertNotNull(responseEntity.getBody());
+
+    var response = responseEntity.getBody();
+    assertTrue(response.getRequestAllowed());
+    assertNotNull(response.getPatronInfo());
   }
 
   @Test
