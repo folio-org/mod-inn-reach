@@ -26,7 +26,7 @@ import org.folio.innreach.dto.LoanDTO;
 @FeignClient(name = "circulation", configuration = FolioFeignClientConfig.class, decode404 = true)
 public interface CirculationClient {
 
-  @GetMapping("/requests?query=(itemId=={itemId}) and status==\"Open - Not yet filled\"")
+  @GetMapping("/requests?query=(itemId=={itemId})")
   ResultList<RequestDTO> queryRequestsByItemId(@PathVariable("itemId") UUID itemId);
 
   @GetMapping("/requests?query=(itemId=={itemId}) and status==(\"Open - Awaiting pickup\" or \"Open - Not yet filled\" or \"Open - In transit\" or \"Open - Awaiting delivery\" )")
