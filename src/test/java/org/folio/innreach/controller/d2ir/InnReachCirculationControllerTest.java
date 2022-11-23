@@ -144,7 +144,7 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
   private static final Integer PRE_POPULATED_CENTRAL_PATRON_TYPE = 1;
   private static final String CENTRAL_PATRON_NAME = "Atreides, Paul";
 
-  private static final Duration ASYNC_AWAIT_TIMEOUT = Duration.ofMillis(150L);
+  private static final Duration ASYNC_AWAIT_TIMEOUT = Duration.ofSeconds(15);
 
   @Autowired
   private TestRestTemplate testRestTemplate;
@@ -1162,27 +1162,35 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     assertPatronHoldFieldsAreNull((TransactionPatronHold) transactionAfter.getHold());
   }
 
-    @Test
-    void testFinalCheckInWithDeleteVirtualRecord() {
-        var transactionHold = createTransactionHoldDTO();
-        var configurationDto =
-                deserializeFromJsonFile("/configuration/configuration-details-example.json", ConfigurationDTO.class);
-        when(configurationService.fetchConfigurationsDetailsByModule(any())).
-                thenReturn(ResultList.asSinglePage(configurationDto));
-        var folioItemId = transactionHold.getFolioItemId();
-        var folioHoldingId = transactionHold.getFolioHoldingId();
-        var folioInstanceId = transactionHold.getFolioInstanceId();
-        var folioLoanId = transactionHold.getFolioLoanId();
-        System.out.println("start : " + new Date());
-        await().atLeast(ASYNC_AWAIT_TIMEOUT).
-                untilAsserted(() -> {
-                            circulationService.executeDeleteVirtualRecordsWithDelay(folioItemId, folioHoldingId,
-                                    folioInstanceId, folioLoanId);
-                            System.out.println("end : " + new Date());
-                        }
-                );
+  @ParameterizedTest
+  @EnumSource(names = {"ITEM_RECEIVED"})
+  @Sql(scripts = {
+          "classpath:db/central-server/pre-populate-central-server.sql",
+          "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
+  })
+  void testFinalCheckInWithDeleteVirtualRecord(InnReachTransaction.TransactionState state) {
+    var transactionHoldDTO = createTransactionHoldDTO();
+    var transactionBefore = fetchPrePopulatedTransaction();
+    var configurationDto =
+            deserializeFromJsonFile("/configuration/configuration-details-example.json", ConfigurationDTO.class);
+    when(configurationService.fetchConfigurationsDetailsByModule(any())).
+            thenReturn(ResultList.asSinglePage(configurationDto));
 
-    }
+    transactionBefore.setState(state);
+    repository.save(transactionBefore);
+
+    var responseEntity = testRestTemplate.exchange(
+            "/inn-reach/d2ir/circ/finalcheckin/{trackingId}/{centralCode}", HttpMethod.PUT,
+            new HttpEntity<>(transactionHoldDTO, headers), InnReachResponseDTO.class,
+            PRE_POPULATED_TRACKING1_ID, PRE_POPULATED_CENTRAL_CODE);
+
+    await().atLeast(ASYNC_AWAIT_TIMEOUT);
+    var transactionAfter = fetchPrePopulatedTransaction();
+
+    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+    assertEquals(FINAL_CHECKIN, transactionAfter.getState());
+    assertPatronHoldFieldsAreNull((TransactionPatronHold) transactionAfter.getHold());
+  }
 
   private void assertPatronHoldFieldsAreNull(TransactionPatronHold hold) {
     assertNull(hold.getPatronId());
