@@ -269,7 +269,7 @@ public class ContributionValidationServiceImpl implements ContributionValidation
 
   private boolean isItemRequested(Item inventoryItem) {
     log.info("isItemRequested : {} with status : {}", inventoryItem, inventoryItem.getStatus());
-    var itemRequests = circulationClient.queryRequestsByItemId(inventoryItem.getId());
+    var itemRequests = circulationClient.queryRequestsByItemIdAndStatus(inventoryItem.getId());
     log.info("itemRequests.getTotalRecords() : {}", itemRequests.getTotalRecords());
     return itemRequests.getTotalRecords() != 0;
   }
