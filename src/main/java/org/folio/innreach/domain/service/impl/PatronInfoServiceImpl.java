@@ -4,7 +4,7 @@ import static java.lang.Boolean.TRUE;
 import static java.util.Optional.ofNullable;
 import static org.apache.commons.collections4.ListUtils.emptyIfNull;
 import static org.apache.commons.lang3.StringUtils.defaultIfEmpty;
-import static org.apache.commons.lang3.StringUtils.equalsAny;
+import static org.apache.commons.lang3.StringUtils.equalsAnyIgnoreCase;
 import static org.apache.commons.lang3.StringUtils.isNotEmpty;
 
 import static org.folio.innreach.domain.entity.VisiblePatronFieldConfiguration.VisiblePatronField.USER_CUSTOM_FIELDS;
@@ -240,15 +240,15 @@ public class PatronInfoServiceImpl implements PatronInfoService {
   private static boolean checkFirstNameMiddleNameLastNameWithPosition(User.Personal personal, String[] patronNameTokens,
                                                                       int firstNamePosition,int middleNamePosition,int lastNamePosition) {
 
-    boolean checkFirstName = equalsAny(patronNameTokens[firstNamePosition], personal.getFirstName(), personal.getPreferredFirstName());
-    boolean checkMiddleName = patronNameTokens[middleNamePosition].equals(personal.getMiddleName());
-    boolean checkLastName = patronNameTokens[lastNamePosition].equals(personal.getLastName());
+    boolean checkFirstName = equalsAnyIgnoreCase(patronNameTokens[firstNamePosition], personal.getFirstName(), personal.getPreferredFirstName());
+    boolean checkMiddleName = patronNameTokens[middleNamePosition].equalsIgnoreCase(personal.getMiddleName());
+    boolean checkLastName = patronNameTokens[lastNamePosition].equalsIgnoreCase(personal.getLastName());
     return checkFirstName && checkMiddleName && checkLastName;
   }
 
   private static boolean checkFirstNameLastNameWithPosition(User.Personal personal, String[] patronNameTokens,int firstNamePos,int lastNamePos) {
-    boolean checkFirstName = equalsAny(patronNameTokens[firstNamePos], personal.getFirstName(), personal.getPreferredFirstName(), personal.getMiddleName());
-    boolean checkLastName = patronNameTokens[lastNamePos].equals(personal.getLastName());
+    boolean checkFirstName = equalsAnyIgnoreCase(patronNameTokens[firstNamePos], personal.getFirstName(), personal.getPreferredFirstName(), personal.getMiddleName());
+    boolean checkLastName = patronNameTokens[lastNamePos].equalsIgnoreCase(personal.getLastName());
     return (checkFirstName && checkLastName);
   }
 
