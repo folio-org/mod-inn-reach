@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.kafka.listener.ListenerExecutionFailedException;
 import org.springframework.retry.support.RetryTemplate;
 import org.springframework.stereotype.Service;
 
@@ -33,8 +34,8 @@ public class BatchDomainEventProcessor {
       try {
         executionService.runTenantScoped(tenantId,
           () -> processTenantEvents(events, recordProcessor));
-      } catch (Exception ex) {
-        log.info("This operation is not permitted for system user [tenantId={}]", tenantId);
+      } catch (ListenerExecutionFailedException ex) {
+        log.info("Consuming this event [{}] not permitted for system user [tenantId={}]", recordProcessor, tenantId);
       }
     }
   }

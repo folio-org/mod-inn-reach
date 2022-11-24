@@ -7,6 +7,7 @@ import org.folio.innreach.domain.service.impl.TenantScopedExecutionService;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.springframework.kafka.listener.ListenerExecutionFailedException;
 
 import java.util.UUID;
 
@@ -35,7 +36,7 @@ class BatchDomainEventListenerTest extends BaseKafkaApiTest {
     var event = kafkaInventory.getItemDomainEvent(DomainEventType.UPDATED, PRE_POPULATED_LOCAL_ITEM_ID);
     var updatedItem = event.getData().getNewEntity();
 
-    doThrow(new RuntimeException()).when(executionService).runTenantScoped(eq(TEST_TENANT_ID), any(Runnable.class));
+    doThrow(new ListenerExecutionFailedException("")).when(executionService).runTenantScoped(eq(TEST_TENANT_ID), any(Runnable.class));
 
     listener.handleItemEvents(asSingleConsumerRecord(INVENTORY_ITEM_TOPIC, PRE_POPULATED_LOCAL_ITEM_ID, event));
 
