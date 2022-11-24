@@ -111,13 +111,10 @@ class ContributionValidationServiceImplTest {
 
   @Test
   void returnAvailableContributionStatusWhenItemStatusIsInTransitAndItemIsNotRequested() {
-    var itemContributionConfigOptions =
-            deserializeFromJsonFile( "/item-contribution-options/item-contribution-config-options.json",
-                    ItemContributionOptionsConfigurationDTO.class);
-    when(itemContributionOptionsConfigurationService.getItmContribOptConf(any())).
-            thenReturn(itemContributionConfigOptions);
+    when(itemContributionOptionsConfigurationService.getItmContribOptConf(any())).thenReturn(createItmContribOptConfDTO());
 
-    var item = deserializeFromJsonFile( "/item/item-in-transit.json", Item.class);
+    var item = createItem();
+    item.setStatus(new ItemStatus().name(ItemStatus.NameEnum.IN_TRANSIT));
     item.setPermanentLoanTypeId(UUID.fromString("2b94c631-fca9-4892-a730-03ee529ffe27"));
     item.setTemporaryLoanTypeId(UUID.fromString("2b94c631-fca9-4892-a730-03ee529ffe27"));
     item.setEffectiveLocationId(UUID.fromString("fcd64ce1-6995-48f0-840e-89ffa2288371"));
