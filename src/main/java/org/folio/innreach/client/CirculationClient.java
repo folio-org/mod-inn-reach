@@ -29,7 +29,9 @@ public interface CirculationClient {
   @GetMapping("/requests?query=(itemId=={itemId})")
   ResultList<RequestDTO> queryRequestsByItemId(@PathVariable("itemId") UUID itemId);
 
-  @GetMapping("/requests?query=(itemId=={itemId}) and status==(\"Open - Awaiting pickup\" or \"Open - Not yet filled\" or \"Open - In transit\" or \"Open - Awaiting delivery\" )")
+  @GetMapping("/requests?query=(itemId=={itemId}) and " +
+          "status==(\"Open - Awaiting pickup\" or \"Open - Not yet filled\" or \"Open - In transit\" or \"Open - Awaiting delivery\") " +
+          "sortby requestDate desc&limit=1")
   ResultList<RequestDTO> queryRequestsByItemIdAndStatus(@PathVariable("itemId") UUID itemId);
 
 

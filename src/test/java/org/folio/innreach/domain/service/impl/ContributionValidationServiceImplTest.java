@@ -123,7 +123,7 @@ class ContributionValidationServiceImplTest {
     item.setEffectiveLocationId(UUID.fromString("fcd64ce1-6995-48f0-840e-89ffa2288371"));
     item.setMaterialTypeId(UUID.fromString("1a54b431-2e4f-452d-9cae-9cee66c9a892"));
 
-    when(circulationClient.queryRequestsByItemId(any())).thenReturn(ResultList.of(0, Collections.emptyList()));
+    when(circulationClient.queryRequestsByItemIdAndStatus(any())).thenReturn(ResultList.of(0, Collections.emptyList()));
 
     var itemCirculationStatus = service.getItemCirculationStatus(UUID.randomUUID(), item);
 
@@ -137,7 +137,7 @@ class ContributionValidationServiceImplTest {
     var item = createItem();
     item.setStatus(new ItemStatus().name(ItemStatus.NameEnum.IN_TRANSIT));
 
-    when(circulationClient.queryRequestsByItemId(any())).thenReturn(ResultList.of(1, List.of(new RequestDTO())));
+    when(circulationClient.queryRequestsByItemIdAndStatus(any())).thenReturn(ResultList.of(1, List.of(new RequestDTO())));
 
     var itemCirculationStatus = service.getItemCirculationStatus(UUID.randomUUID(), item);
 
