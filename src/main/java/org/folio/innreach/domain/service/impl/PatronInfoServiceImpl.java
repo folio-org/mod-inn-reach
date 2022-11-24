@@ -11,6 +11,8 @@ import static org.folio.innreach.domain.entity.VisiblePatronFieldConfiguration.V
 import static org.folio.innreach.external.dto.InnReachResponse.Error.ofMessage;
 
 import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
+import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -18,6 +20,7 @@ import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.collections4.CollectionUtils;
+import org.folio.innreach.util.DateHelper;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 
@@ -49,6 +52,7 @@ public class PatronInfoServiceImpl implements PatronInfoService {
 
   public static final String ERROR_REASON = "Unable to verify patron";
   public static final String QUERY_DELIMITER = "==%1$s";
+  public static final int YEAR_TO_ADD = 1;
 
   private final UserService userService;
   private final PatronTypeMappingService patronTypeMappingService;
@@ -101,7 +105,7 @@ public class PatronInfoServiceImpl implements PatronInfoService {
     var patronName = getPatronName(user);
     var totalLoans = patron.getTotalLoans();
     var innReachLoans = countInnReachLoans(patronId, patron.getLoans());
-    var expirationDate = ofNullable(user.getExpirationDate()).map(OffsetDateTime::toEpochSecond).orElse(null);
+    var expirationDate = ofNullable(user.getExpirationDate()).map(OffsetDateTime::toEpochSecond).orElseGet(this::addDefaultExpiration);
     var patronAgencyCode = getPatronAgencyCode(centralServerId, agencies, user);
 
     var patronInfo = new PatronInfo();
@@ -113,6 +117,11 @@ public class PatronInfoServiceImpl implements PatronInfoService {
     patronInfo.setPatronExpireDate(expirationDate);
     patronInfo.setPatronName(patronName);
     return patronInfo;
+  }
+
+  private Long addDefaultExpiration() {
+    Date newExpirationDate = DateHelper.addYearToDate(YEAR_TO_ADD);
+    return newExpirationDate.toInstant().atOffset(ZoneOffset.UTC).toEpochSecond();
   }
 
   private User findPatronUser(String visiblePatronId, String patronName, VisiblePatronFieldConfiguration fieldConfig) {
