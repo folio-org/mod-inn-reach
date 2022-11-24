@@ -112,7 +112,8 @@ class ContributionValidationServiceImplTest {
   @Test
   void returnAvailableContributionStatusWhenItemStatusIsInTransitAndItemIsNotRequested() {
     var itemContributionConfigOptions =
-            deserializeFromJsonFile( "/item-contribution-options/item-contribution-config-options.json", ItemContributionOptionsConfigurationDTO.class);
+            deserializeFromJsonFile( "/item-contribution-options/item-contribution-config-options.json",
+                    ItemContributionOptionsConfigurationDTO.class);
     when(itemContributionOptionsConfigurationService.getItmContribOptConf(any())).
             thenReturn(itemContributionConfigOptions);
 
