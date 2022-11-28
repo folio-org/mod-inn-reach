@@ -263,13 +263,8 @@ public class ContributionValidationServiceImpl implements ContributionValidation
   }
 
   private boolean isItemRequested(Item inventoryItem) {
-    try{
-      var itemRequests = circulationClient.queryRequestsByItemIdAndStatus(inventoryItem.getId(),1);
-      return itemRequests.getTotalRecords() != 0;
-    } catch (Exception e) {
-      log.warn("Unable to verify item is requested {}", e);
-      return false;
-    }
+    var itemRequests = circulationClient.queryRequestsByItemIdAndStatus(inventoryItem.getId(),1);
+    return itemRequests.getTotalRecords() != 0;
   }
 
   private List<UUID> getMaterialTypeIds() {
