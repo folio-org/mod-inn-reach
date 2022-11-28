@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
+import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -34,7 +35,7 @@ public class BatchDomainEventProcessor {
       try {
         executionService.runTenantScoped(tenantId,
           () -> processTenantEvents(events, recordProcessor));
-      } catch (ListenerExecutionFailedException ex) {
+      } catch (ListenerExecutionFailedException | FeignException ex) {
         log.info("Consuming this event [{}] not permitted for system user [tenantId={}]", recordProcessor, tenantId);
       }
     }
