@@ -1184,12 +1184,13 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
             new HttpEntity<>(transactionHoldDTO, headers), InnReachResponseDTO.class,
             PRE_POPULATED_TRACKING1_ID, PRE_POPULATED_CENTRAL_CODE);
 
-    await().atLeast(ASYNC_AWAIT_TIMEOUT);
     var transactionAfter = fetchPrePopulatedTransaction();
 
-    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
-    assertEquals(FINAL_CHECKIN, transactionAfter.getState());
-    assertPatronHoldFieldsAreNull((TransactionPatronHold) transactionAfter.getHold());
+    await().untilAsserted(() -> {
+          assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+          assertEquals(FINAL_CHECKIN, transactionAfter.getState());
+          assertPatronHoldFieldsAreNull((TransactionPatronHold) transactionAfter.getHold());
+    });
   }
 
   private void assertPatronHoldFieldsAreNull(TransactionPatronHold hold) {
