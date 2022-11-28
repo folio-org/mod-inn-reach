@@ -29,6 +29,7 @@ public class PatronFixture {
   private static final long expiryDateTs = System.currentTimeMillis();
   public static final String PATRON_BLOCK_DESC = "test block desc";
   public static final String PATRON_BLOCK = "test block";
+  private static final String PATRON_MIDDLE_NAME = "Paul";
 
   public static AutomatedPatronBlock createAutomatedPatronBlock() {
     return AutomatedPatronBlock.builder().blockRequests(true).message(PATRON_BLOCK).build();
@@ -53,6 +54,16 @@ public class PatronFixture {
     user.setId(USER_ID);
     user.setActive(true);
     user.setPersonal(User.Personal.of(PATRON_FIRST_NAME, null, PATRON_LAST_NAME, null));
+    user.setCustomFields(Map.of(CUSTOM_FIELD_REF_ID, CUSTOM_FIELD_OPTION));
+    return user;
+  }
+
+  public static User createUserWithMiddleName() {
+    var user = new User();
+    user.setId(USER_ID);
+    user.setActive(true);
+    user.setExpirationDate(OffsetDateTime.ofInstant(Instant.ofEpochMilli(expiryDateTs), ZoneOffset.UTC));
+    user.setPersonal(User.Personal.of(PATRON_FIRST_NAME, PATRON_MIDDLE_NAME, PATRON_LAST_NAME, null));
     user.setCustomFields(Map.of(CUSTOM_FIELD_REF_ID, CUSTOM_FIELD_OPTION));
     return user;
   }
