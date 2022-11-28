@@ -28,6 +28,12 @@ public interface CirculationClient {
   @GetMapping("/requests?query=(itemId=={itemId})")
   ResultList<RequestDTO> queryRequestsByItemId(@PathVariable("itemId") UUID itemId);
 
+  @GetMapping("/requests?query=(itemId=={itemId}) and " +
+          "status==(\"Open - Awaiting pickup\" or \"Open - Not yet filled\" or \"Open - In transit\" or \"Open - Awaiting delivery\") " +
+          "sortby requestDate desc")
+  ResultList<RequestDTO> queryRequestsByItemIdAndStatus(@PathVariable("itemId") UUID itemId,@RequestParam("limit") int limit);
+
+
   @GetMapping("/requests?query=id=({requestIds}) and status==\"Open - Not yet filled\"")
   ResultList<RequestDTO> queryNotFilledRequestsByIds(@PathVariable("requestIds") String requestIds, @RequestParam("limit") int limit);
 

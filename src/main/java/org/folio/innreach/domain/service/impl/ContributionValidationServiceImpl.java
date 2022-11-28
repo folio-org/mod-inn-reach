@@ -1,28 +1,8 @@
 package org.folio.innreach.domain.service.impl;
 
-import static java.util.Collections.emptyList;
-import static org.apache.commons.collections4.ListUtils.emptyIfNull;
-
-import static org.folio.innreach.domain.service.impl.MARCRecordTransformationServiceImpl.isMARCRecord;
-import static org.folio.innreach.dto.ItemStatus.NameEnum.AVAILABLE;
-import static org.folio.innreach.dto.ItemStatus.NameEnum.CHECKED_OUT;
-import static org.folio.innreach.dto.ItemStatus.NameEnum.IN_TRANSIT;
-import static org.folio.innreach.dto.MappingValidationStatusDTO.INVALID;
-import static org.folio.innreach.dto.MappingValidationStatusDTO.VALID;
-import static org.folio.innreach.util.ListUtils.mapItems;
-
-import java.util.List;
-import java.util.Objects;
-import java.util.UUID;
-import java.util.stream.Collectors;
-
 import lombok.AllArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.collections4.CollectionUtils;
-import org.folio.innreach.dto.LocalAgencyDTO;
-import org.springframework.stereotype.Service;
-import org.springframework.util.Assert;
-
 import org.folio.innreach.client.CirculationClient;
 import org.folio.innreach.client.MaterialTypesClient;
 import org.folio.innreach.domain.dto.folio.ContributionItemCirculationStatus;
@@ -44,6 +24,23 @@ import org.folio.innreach.dto.ItemContributionOptionsConfigurationDTO;
 import org.folio.innreach.dto.LibraryMappingDTO;
 import org.folio.innreach.dto.MappingValidationStatusDTO;
 import org.folio.innreach.external.service.InnReachLocationExternalService;
+import org.springframework.stereotype.Service;
+import org.springframework.util.Assert;
+
+import java.util.List;
+import java.util.Objects;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
+import static java.util.Collections.emptyList;
+import static org.apache.commons.collections4.ListUtils.emptyIfNull;
+import static org.folio.innreach.domain.service.impl.MARCRecordTransformationServiceImpl.isMARCRecord;
+import static org.folio.innreach.dto.ItemStatus.NameEnum.AVAILABLE;
+import static org.folio.innreach.dto.ItemStatus.NameEnum.CHECKED_OUT;
+import static org.folio.innreach.dto.ItemStatus.NameEnum.IN_TRANSIT;
+import static org.folio.innreach.dto.MappingValidationStatusDTO.INVALID;
+import static org.folio.innreach.dto.MappingValidationStatusDTO.VALID;
+import static org.folio.innreach.util.ListUtils.mapItems;
 
 @Log4j2
 @AllArgsConstructor
@@ -254,7 +251,7 @@ public class ContributionValidationServiceImpl implements ContributionValidation
   }
 
   private boolean isItemRequested(Item inventoryItem) {
-    var itemRequests = circulationClient.queryRequestsByItemId(inventoryItem.getId());
+    var itemRequests = circulationClient.queryRequestsByItemIdAndStatus(inventoryItem.getId(),1);
     return itemRequests.getTotalRecords() != 0;
   }
 

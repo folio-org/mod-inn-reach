@@ -8,11 +8,13 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.when;
 
 import static org.folio.innreach.fixture.ContributionFixture.createContributionCriteria;
 import static org.folio.innreach.fixture.ContributionFixture.createItem;
 import static org.folio.innreach.fixture.ItemContributionOptionsConfigurationFixture.createItmContribOptConfDTO;
+import static org.folio.innreach.fixture.TestUtil.deserializeFromJsonFile;
 
 import java.util.Collections;
 import java.util.List;
@@ -21,6 +23,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import org.folio.innreach.dto.CentralServerDTO;
+import org.folio.innreach.dto.ItemContributionOptionsConfigurationDTO;
 import org.folio.innreach.dto.LocalAgencyDTO;
 import org.folio.innreach.fixture.CentralServerFixture;
 import org.junit.jupiter.api.BeforeEach;
@@ -108,8 +111,12 @@ class ContributionValidationServiceImplTest {
 
     var item = createItem();
     item.setStatus(new ItemStatus().name(ItemStatus.NameEnum.IN_TRANSIT));
+    item.setPermanentLoanTypeId(UUID.fromString("2b94c631-fca9-4892-a730-03ee529ffe27"));
+    item.setTemporaryLoanTypeId(UUID.fromString("2b94c631-fca9-4892-a730-03ee529ffe27"));
+    item.setEffectiveLocationId(UUID.fromString("fcd64ce1-6995-48f0-840e-89ffa2288371"));
+    item.setMaterialTypeId(UUID.fromString("1a54b431-2e4f-452d-9cae-9cee66c9a892"));
 
-    when(circulationClient.queryRequestsByItemId(any())).thenReturn(ResultList.of(0, Collections.emptyList()));
+    when(circulationClient.queryRequestsByItemIdAndStatus(any(),anyInt())).thenReturn(ResultList.of(0, Collections.emptyList()));
 
     var itemCirculationStatus = service.getItemCirculationStatus(UUID.randomUUID(), item);
 
@@ -123,7 +130,7 @@ class ContributionValidationServiceImplTest {
     var item = createItem();
     item.setStatus(new ItemStatus().name(ItemStatus.NameEnum.IN_TRANSIT));
 
-    when(circulationClient.queryRequestsByItemId(any())).thenReturn(ResultList.of(1, List.of(new RequestDTO())));
+    when(circulationClient.queryRequestsByItemIdAndStatus(any(),anyInt())).thenReturn(ResultList.of(1, List.of(new RequestDTO())));
 
     var itemCirculationStatus = service.getItemCirculationStatus(UUID.randomUUID(), item);
 
