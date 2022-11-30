@@ -153,7 +153,7 @@ public class RecordTransformationServiceImpl implements RecordTransformationServ
   private Integer getDueDateTime(UUID itemId, ContributionItemCirculationStatus circulationStatus) {
     try {
       if (circulationStatus == ON_LOAN) {
-        return getFirstItem(circulationClient.queryLoansByItemId(itemId))
+        return getFirstItem(circulationClient.queryLoansByItemIdAndStatus(itemId, "Open"))
           .map(LoanDTO::getDueDate)
           .map(DateHelper::toEpochSec)
           .orElse(null);
