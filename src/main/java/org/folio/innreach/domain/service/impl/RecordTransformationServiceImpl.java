@@ -4,6 +4,7 @@ import static java.util.stream.Collectors.toMap;
 
 import static org.folio.innreach.domain.dto.folio.ContributionItemCirculationStatus.ON_LOAN;
 import static org.folio.innreach.util.ListUtils.getFirstItem;
+import static org.folio.innreach.util.ListUtils.getLastItem;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -153,7 +154,7 @@ public class RecordTransformationServiceImpl implements RecordTransformationServ
   private Integer getDueDateTime(UUID itemId, ContributionItemCirculationStatus circulationStatus) {
     try {
       if (circulationStatus == ON_LOAN) {
-        return getFirstItem(circulationClient.queryLoansByItemIdAndStatus(itemId, "Open"))
+        return getLastItem(circulationClient.queryLoansByItemIdAndStatus(itemId, "Open"))
           .map(LoanDTO::getDueDate)
           .map(DateHelper::toEpochSec)
           .orElse(null);
