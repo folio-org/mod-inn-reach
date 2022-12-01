@@ -58,6 +58,9 @@ public interface CirculationClient {
   @GetMapping("/loans?query=(itemId=={itemId})")
   ResultList<LoanDTO> queryLoansByItemId(@PathVariable("itemId") UUID itemId);
 
+  @GetMapping("/loans?query=(itemId=={itemId}) and status=({status})")
+  ResultList<LoanDTO> queryLoansByItemIdAndStatus(@PathVariable("itemId") UUID itemId, @PathVariable("status") String status);
+
   @GetMapping("/loans/{loanId}")
   Optional<LoanDTO> findLoan(@PathVariable("loanId") UUID loanId);
 
