@@ -62,6 +62,10 @@
       "type": "string",
       "description": "Provides ability to perform a keyword-style lookup based on the information associated with the transaction"
     },
+    "requestedTooLong": {
+      "type": "boolean",
+      "description": "An indication that the filter is applied for the Request too long report."
+    },
     "createdDate": {
       "description": "Create date to which related comparison operation is applied. In case of 'between' operation there can be two values provided",
       "type": "array",

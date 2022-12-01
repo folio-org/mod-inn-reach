@@ -1,0 +1,64 @@
+{
+  "id" : "985c909e-e934-44b7-8247-e65d30da7b64",
+  "_version" : "38",
+  "status" : {
+    "name" : "In transit",
+    "date" : "2022-11-21T09:29:33.493+00:00"
+  },
+  "administrativeNotes" : [ ],
+  "title" : "Battle ground : a novel of the Dresden files / Jim Butcher.",
+  "callNumber" : "PS3602.U85",
+  "hrid" : "it00000000024",
+  "inTransitDestinationServicePointId" : "3a40852d-49fd-4df2-a1f9-6e2641a6e91f",
+  "contributorNames" : [ {
+    "name" : "Butcher, Jim, 1971-"
+  } ],
+  "formerIds" : [ ],
+  "discoverySuppress" : null,
+  "holdingsRecordId" : "a562a769-c0f7-4cdb-a22f-8e90b97114c2",
+  "barcode" : "BATTLE1",
+  "volume" : "Volume-1",
+  "notes" : [ ],
+  "circulationNotes" : [ ],
+  "tags" : {
+    "tagList" : [ ]
+  },
+  "yearCaption" : [ ],
+  "electronicAccess" : [ ],
+  "statisticalCodeIds" : [ ],
+  "purchaseOrderLineIdentifier" : null,
+  "materialType" : {
+    "id" : "1a54b431-2e4f-452d-9cae-9cee66c9a892",
+    "name" : "book"
+  },
+  "permanentLoanType" : {
+    "id" : "2b94c631-fca9-4892-a730-03ee529ffe27",
+    "name" : "Can circulate"
+  },
+  "metadata" : {
+    "createdDate" : "2022-02-22T22:49:33.549+00:00",
+    "createdByUserId" : "8e75dcb2-db5f-53a7-a09e-7084c47b7ece",
+    "updatedDate" : "2022-11-21T09:29:33.490+00:00",
+    "updatedByUserId" : "8e75dcb2-db5f-53a7-a09e-7084c47b7ece"
+  },
+  "links" : {
+    "self" : "http://volaris-okapi.ci.folio.org/inventory/items/985c909e-e934-44b7-8247-e65d30da7b64"
+  },
+  "lastCheckIn" : {
+    "servicePointId" : "7c5abc9f-f3d7-4856-b8d7-6712462ca007",
+    "staffMemberId" : "8e75dcb2-db5f-53a7-a09e-7084c47b7ece",
+    "dateTime" : "2022-11-21T09:29:32.955Z"
+  },
+  "effectiveCallNumberComponents" : {
+    "callNumber" : "PS3602.U85",
+    "prefix" : null,
+    "suffix" : null,
+    "typeId" : null
+  },
+  "effectiveShelvingOrder" : "PS 43602 U85 VOLUME 11",
+  "isBoundWith" : false,
+  "effectiveLocation" : {
+    "id" : "fcd64ce1-6995-48f0-840e-89ffa2288371",
+    "name" : "Main Library"
+  }
+}

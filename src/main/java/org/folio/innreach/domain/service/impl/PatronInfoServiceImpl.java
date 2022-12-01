@@ -4,13 +4,15 @@ import static java.lang.Boolean.TRUE;
 import static java.util.Optional.ofNullable;
 import static org.apache.commons.collections4.ListUtils.emptyIfNull;
 import static org.apache.commons.lang3.StringUtils.defaultIfEmpty;
-import static org.apache.commons.lang3.StringUtils.equalsAny;
+import static org.apache.commons.lang3.StringUtils.equalsAnyIgnoreCase;
 import static org.apache.commons.lang3.StringUtils.isNotEmpty;
 
 import static org.folio.innreach.domain.entity.VisiblePatronFieldConfiguration.VisiblePatronField.USER_CUSTOM_FIELDS;
 import static org.folio.innreach.external.dto.InnReachResponse.Error.ofMessage;
 
 import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
+import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -18,6 +20,7 @@ import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.collections4.CollectionUtils;
+import org.folio.innreach.util.DateHelper;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 
@@ -49,6 +52,7 @@ public class PatronInfoServiceImpl implements PatronInfoService {
 
   public static final String ERROR_REASON = "Unable to verify patron";
   public static final String QUERY_DELIMITER = "==%1$s";
+  public static final int YEAR_TO_ADD = 1;
 
   private final UserService userService;
   private final PatronTypeMappingService patronTypeMappingService;
@@ -101,7 +105,7 @@ public class PatronInfoServiceImpl implements PatronInfoService {
     var patronName = getPatronName(user);
     var totalLoans = patron.getTotalLoans();
     var innReachLoans = countInnReachLoans(patronId, patron.getLoans());
-    var expirationDate = ofNullable(user.getExpirationDate()).map(OffsetDateTime::toEpochSecond).orElse(null);
+    var expirationDate = ofNullable(user.getExpirationDate()).map(OffsetDateTime::toEpochSecond).orElseGet(this::addDefaultExpiration);
     var patronAgencyCode = getPatronAgencyCode(centralServerId, agencies, user);
 
     var patronInfo = new PatronInfo();
@@ -113,6 +117,11 @@ public class PatronInfoServiceImpl implements PatronInfoService {
     patronInfo.setPatronExpireDate(expirationDate);
     patronInfo.setPatronName(patronName);
     return patronInfo;
+  }
+
+  private Long addDefaultExpiration() {
+    Date newExpirationDate = DateHelper.addYearToDate(YEAR_TO_ADD);
+    return newExpirationDate.toInstant().atOffset(ZoneOffset.UTC).toEpochSecond();
   }
 
   private User findPatronUser(String visiblePatronId, String patronName, VisiblePatronFieldConfiguration fieldConfig) {
@@ -218,15 +227,29 @@ public class PatronInfoServiceImpl implements PatronInfoService {
     if (patronNameTokens.length < 2) {
       return false;
     } else if (patronNameTokens.length == 2) {
-      // "First Last" or "Middle Last" format
-      return equalsAny(patronNameTokens[0], personal.getFirstName(), personal.getPreferredFirstName(), personal.getMiddleName()) &&
-        patronNameTokens[1].equals(personal.getLastName());
+      // "First Last" or "Middle Last" format or "Last First" or "Last Middle"
+      return checkFirstNameLastNameWithPosition(personal, patronNameTokens,0,1)
+        || checkFirstNameLastNameWithPosition(personal, patronNameTokens,1,0);
     }
 
-    // "First Middle Last" format
-    return equalsAny(patronNameTokens[0], personal.getFirstName(), personal.getPreferredFirstName()) &&
-      patronNameTokens[1].equals(personal.getMiddleName()) &&
-      patronNameTokens[2].equals(personal.getLastName());
+    // "First Middle Last" format "Last First Middle"
+    return (checkFirstNameMiddleNameLastNameWithPosition(personal, patronNameTokens,0,1,2)
+      || checkFirstNameMiddleNameLastNameWithPosition(personal, patronNameTokens,1,2,0));
+  }
+
+  private static boolean checkFirstNameMiddleNameLastNameWithPosition(User.Personal personal, String[] patronNameTokens,
+                                                                      int firstNamePosition,int middleNamePosition,int lastNamePosition) {
+
+    boolean checkFirstName = equalsAnyIgnoreCase(patronNameTokens[firstNamePosition], personal.getFirstName(), personal.getPreferredFirstName());
+    boolean checkMiddleName = patronNameTokens[middleNamePosition].equalsIgnoreCase(personal.getMiddleName());
+    boolean checkLastName = patronNameTokens[lastNamePosition].equalsIgnoreCase(personal.getLastName());
+    return checkFirstName && checkMiddleName && checkLastName;
+  }
+
+  private static boolean checkFirstNameLastNameWithPosition(User.Personal personal, String[] patronNameTokens,int firstNamePos,int lastNamePos) {
+    boolean checkFirstName = equalsAnyIgnoreCase(patronNameTokens[firstNamePos], personal.getFirstName(), personal.getPreferredFirstName(), personal.getMiddleName());
+    boolean checkLastName = patronNameTokens[lastNamePos].equalsIgnoreCase(personal.getLastName());
+    return (checkFirstName && checkLastName);
   }
 
   private static String getPatronName(User user) {
