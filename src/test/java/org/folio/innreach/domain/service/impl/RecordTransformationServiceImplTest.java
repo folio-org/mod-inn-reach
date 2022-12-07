@@ -5,6 +5,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 import static org.folio.innreach.domain.dto.folio.ContributionItemCirculationStatus.ON_LOAN;
@@ -153,7 +154,7 @@ class RecordTransformationServiceImplTest {
     when(folioLocationService.getLocationLibraryMappings()).thenReturn(Map.of(FOLIO_LOC_ID, LIBRARY_ID));
     when(validationService.getItemCirculationStatus(any(), any())).thenReturn(ON_LOAN);
     when(circulationClient.queryRequestsByItemId(any())).thenReturn(ResultList.asSinglePage(request));
-    when(circulationClient.queryLoansByItemId(any())).thenReturn(ResultList.asSinglePage(loan));
+    when(circulationClient.queryLoansByItemIdAndStatus(any(),  eq("Open"))).thenReturn(ResultList.asSinglePage(loan));
 
     var bibItems = service.getBibItems(CENTRAL_SERVER_ID, of(item), (i, e) -> {
       throw new RuntimeException(e);

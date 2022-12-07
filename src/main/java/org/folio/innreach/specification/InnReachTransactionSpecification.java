@@ -2,6 +2,8 @@ package org.folio.innreach.specification;
 
 import static org.apache.commons.collections4.CollectionUtils.isEmpty;
 
+import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.PATRON_HOLD;
+import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.TRANSFER;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionType.PATRON;
 import static org.folio.innreach.domain.entity.InnReachTransactionFilterParameters.SortOrder.DESC;
 import static org.folio.innreach.util.ListUtils.mapItems;
@@ -30,6 +32,8 @@ public class InnReachTransactionSpecification {
   private static final String CREATED_DATE_FIELD = "createdDate";
   private static final String UPDATED_DATE_FIELD = "updatedDate";
 
+  private static final String STATE = "state";
+
   public Specification<InnReachTransaction> filterByParameters(InnReachTransactionFilterParameters parameters) {
     return fetchHoldAndPickupLocation()
       .and(fieldsLookup(parameters))
@@ -39,6 +43,7 @@ public class InnReachTransactionSpecification {
 
   static Specification<InnReachTransaction> fieldsLookup(InnReachTransactionFilterParameters parameters) {
     return (transaction, cq, cb) -> {
+      var isRequestTooLongReport = parameters.isRequestedTooLong();
       var hold = transaction.join("hold");
       var patronHold = cb.treat(hold, TransactionPatronHold.class);
 
@@ -67,9 +72,23 @@ public class InnReachTransactionSpecification {
       var dueDateIs = new ConditionFactory<Integer>(cb).create(parameters.getDueDateOperation())
           .applyArguments(hold.get("dueDateTime"), dueDatesAsEpochSecs);
 
-      return cb.and(typeIs, stateIs, centralCodeIn, patronAgencyIn, itemAgencyIn, patronTypeIn, centralItemTypeIn,
+      if(!isRequestTooLongReport) {
+        return cb.and(typeIs, stateIs, centralCodeIn, patronAgencyIn, itemAgencyIn, patronTypeIn, centralItemTypeIn,
           itemBarcodeIn, patronNameIn, createdDateIs, updatedDateIs, holdCreatedDateIs, holdUpdatedDateIs, dueDateIs);
+      } else {
+        var patronStateWithOrDateCondition = createCriteriaForRequestTooLongReport(cb,transaction,createdDateIs,updatedDateIs);
+        return cb.and(typeIs, stateIs, centralCodeIn, patronAgencyIn, itemAgencyIn, patronTypeIn, centralItemTypeIn,
+          itemBarcodeIn, patronNameIn, patronStateWithOrDateCondition, holdCreatedDateIs, holdUpdatedDateIs, dueDateIs);
+      }
     };
+  }
+
+  private static Predicate createCriteriaForRequestTooLongReport(CriteriaBuilder cb, Root<InnReachTransaction> transaction, Predicate createdDateIs, Predicate updatedDateIs) {
+      var holdState = cb.equal(transaction.get(STATE), PATRON_HOLD);
+      var holdStateAndCreateDate = cb.and(holdState,createdDateIs);
+      var transferState = cb.equal(transaction.get(STATE), TRANSFER);
+      var transferStateAndUpdatedDate = cb.and(transferState, updatedDateIs);
+      return cb.or(holdStateAndCreateDate, transferStateAndUpdatedDate);
   }
 
   static Specification<InnReachTransaction> keywordLookup(String keyword) {
@@ -112,7 +131,7 @@ public class InnReachTransactionSpecification {
   static Predicate isOfState(CriteriaBuilder cb, Root<InnReachTransaction> transaction,
       InnReachTransactionFilterParameters parameters) {
     var states = parameters.getStates();
-    return isEmpty(states) ? cb.conjunction() : transaction.get("state").in(states);
+    return isEmpty(states) ? cb.conjunction() : transaction.get(STATE).in(states);
   }
 
   static Predicate centralCodeIn(CriteriaBuilder cb, Root<InnReachTransaction> transaction,

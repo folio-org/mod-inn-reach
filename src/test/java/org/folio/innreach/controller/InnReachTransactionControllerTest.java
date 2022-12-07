@@ -336,6 +336,29 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     assertEquals(PATRON_HOLD, transaction.getState());
   }
 
+
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
+  })
+  void return200HttpCode_and_sortedTransactions_when_getRequestTooLongReport() {
+    var responseEntity = testRestTemplate.getForEntity(
+      "/inn-reach/transactions?createdDate=3022-11-16T18%3A30%3A00.000Z&createdDateOp=less&limit=1000&" +
+        "offset=0&requestedTooLong=true&sortBy=transactionTime&sortOrder=asc&state=PATRON_HOLD&" +
+        "state=TRANSFER&type=PATRON&updatedDate=3022-11-16T18%3A30%3A00.000Z&updatedDateOp=less"
+      , InnReachTransactionsDTO.class
+    );
+
+    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+    assertNotNull(responseEntity.getBody());
+    assertEquals(1, responseEntity.getBody().getTotalRecords());
+
+    var transactionIds = responseEntity.getBody().getTransactions().stream()
+      .map(InnReachTransactionDTO::getId).collect(Collectors.toList());
+    assertTrue(transactionIds.contains(PRE_POPULATED_PATRON_HOLD_TRANSACTION_ID));
+  }
+
   @Test
   @Sql(scripts = {
     "classpath:db/central-server/pre-populate-central-server.sql",

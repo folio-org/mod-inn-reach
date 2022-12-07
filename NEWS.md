@@ -1,3 +1,14 @@
+## v2.0.2 2022-12-07
+
+### Stories
+* [MODINREACH-305](https://issues.folio.org/browse/MODINREACH-305) - Handing exception in the logs during multi tenant environment for disabled mod-inn-reach module
+* [MODINREACH-315](https://issues.folio.org/browse/MODINREACH-315) - Update Patron Verification API to Enhance Name Parsing
+* [MODINREACH-324](https://issues.folio.org/browse/MODINREACH-324) - Align code with D2IR API for empty expiration date field case
+* [MODINREACH-327](https://issues.folio.org/browse/MODINREACH-327) - Item's "in-transit" should be "Available" in INN-Reach if there are no open requests on the item
+* [MODINREACH-331](https://issues.folio.org/browse/MODINREACH-331) - Patron Verification API should accept the same name format it returns on a successful verification
+* [MODINREACH-333](https://issues.folio.org/browse/MODINREACH-333) - Fix "Request too long" report does not include PATRON_HOLD transactions without updatedDate
+* [MODINREACH-338](https://issues.folio.org/browse/MODINREACH-338) - Use "Open" loan to determine item due date during item record contribution
+
 ## v2.0.1 2022-11-04
 
 ### Stories

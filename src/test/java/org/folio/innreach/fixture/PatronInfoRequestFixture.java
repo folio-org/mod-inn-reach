@@ -12,4 +12,29 @@ public class PatronInfoRequestFixture {
     patronInfoRequest.setPatronAgencyCode("test1");
     return patronInfoRequest;
   }
+
+  public static PatronInfoRequestDTO createPatronInfoRequestWithLastNameFirstName() {
+    var patronInfoRequest = new PatronInfoRequestDTO();
+    patronInfoRequest.setPatronName("Doe John");
+    patronInfoRequest.setVisiblePatronId("111111");
+    patronInfoRequest.setPatronAgencyCode("test1");
+    return patronInfoRequest;
+  }
+
+  public static PatronInfoRequestDTO createPatronInfoRequestWithFirstNameMiddleNameLastName() {
+    var patronInfoRequest = new PatronInfoRequestDTO();
+    patronInfoRequest.setPatronName("John Paul Doe");
+    patronInfoRequest.setVisiblePatronId("111111");
+    patronInfoRequest.setPatronAgencyCode("test1");
+    return patronInfoRequest;
+  }
+
+  public static PatronInfoRequestDTO createPatronInfoRequestWithLastNameFirstNameMiddleName() {
+    var patronInfoRequest = new PatronInfoRequestDTO();
+    patronInfoRequest.setPatronName("Doe John Paul");
+    patronInfoRequest.setVisiblePatronId("111111");
+    patronInfoRequest.setPatronAgencyCode("test1");
+    return patronInfoRequest;
+  }
+
 }
