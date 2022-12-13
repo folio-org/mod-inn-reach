@@ -1,3 +1,8 @@
+## v2.0.3 2022-12-13
+
+### Stories
+* [MODINREACH-306](https://issues.folio.org/browse/MODINREACH-306) - Fix items with effective locations in locations not to contribute (contribution criteria) being contributed
+
 ## v2.0.2 2022-12-07
 
 ### Stories
