@@ -10,6 +10,7 @@ import java.util.UUID;
 import java.util.function.Function;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,6 +27,7 @@ import org.folio.innreach.dto.LocalServer;
 import org.folio.innreach.mapper.AgencyLocationMappingMapper;
 import org.folio.innreach.repository.AgencyLocationMappingRepository;
 
+@Log4j2
 @RequiredArgsConstructor
 @Service
 @Transactional
@@ -41,6 +43,7 @@ public class AgencyMappingServiceImpl implements AgencyMappingService {
 
   @Override
   public AgencyLocationMappingDTO getMapping(UUID centralServerId) {
+    log.debug("getMapping:: parameters centralServerId: {}", centralServerId);
     return fetchOne(centralServerId)
       .map(mapper::toDTO)
       .orElseThrow(() -> new EntityNotFoundException(String.format(NOT_FOUND_MESSAGE_FMT, centralServerId)));
@@ -48,6 +51,7 @@ public class AgencyMappingServiceImpl implements AgencyMappingService {
 
   @Override
   public AgencyLocationMappingDTO updateMapping(UUID centralServerId, AgencyLocationMappingDTO mappingDto) {
+    log.debug("updateMapping:: parameters centralServerId: {}, mappingDTO: {}", centralServerId, mappingDto);
     var incoming = mapper.toEntityWithRefs(mappingDto, centralServerId);
 
     var updated = fetchOne(centralServerId)
@@ -56,19 +60,23 @@ public class AgencyMappingServiceImpl implements AgencyMappingService {
 
     repository.saveAndFlush(updated);
 
+    log.info("updateMapping:: result: {}", mapper.toDTO(updated));
     return mapper.toDTO(updated);
   }
 
   @Override
   public UUID getLocationIdByAgencyCode(UUID centralServerId, String agencyCode) {
+    log.debug("getLocationIdByAgencyCode:: parameters centralServerId: {}, agencyCode: {}", centralServerId, agencyCode);
     var mapping = getMapping(centralServerId);
 
+    log.info("getLocationIdByAgencyCode:: Returned locationId by agency code: {}", agencyCode);
     return getLocationIdByAgencyCode(mapping, agencyCode)
       .or(() -> getLocationIdByLocalServer(mapping, agencyCode, centralServerId))
       .orElse(mapping.getLocationId());
   }
 
   private LocalServer getLocalServerByAgencyCode(UUID centralServerId, String agencyCode) {
+    log.debug("getLocalServerByAgencyCode:: parameters centralServerId: {}, agencyCode: {}", centralServerId, agencyCode);
     var localServers = configurationService.getLocalServers(centralServerId);
 
     for (var localServer : localServers) {
@@ -76,6 +84,7 @@ public class AgencyMappingServiceImpl implements AgencyMappingService {
       var agency = agencies.stream().filter(a -> agencyCode.equals(a.getAgencyCode())).findFirst();
 
       if (agency.isPresent()) {
+        log.info("getLocalServerByAgencyCode:: result: {}", localServer);
         return localServer;
       }
     }
@@ -84,6 +93,7 @@ public class AgencyMappingServiceImpl implements AgencyMappingService {
   }
 
   private Optional<UUID> getLocationIdByLocalServer(AgencyLocationMappingDTO mapping, String agencyCode, UUID centralServerId) {
+    log.debug("getLocationIdByLocalServer:: parameters mapping: {}, agencyCode: {}, centralServerId: {}", mapping, agencyCode, centralServerId);
     var localServer = getLocalServerByAgencyCode(centralServerId, agencyCode);
     var localCode = localServer.getLocalCode();
 
@@ -95,6 +105,7 @@ public class AgencyMappingServiceImpl implements AgencyMappingService {
   }
 
   private Optional<UUID> getLocationIdByAgencyCode(AgencyLocationMappingDTO mapping, String agencyCode) {
+    log.debug("getLocationIdByAgencyCode:: parameters mapping: {}, agencyCode: {}", mapping, agencyCode);
     return mapping.getLocalServers().stream()
       .map(AgencyLocationLscMappingDTO::getAgencyCodeMappings)
       .flatMap(Collection::stream)
@@ -104,10 +115,12 @@ public class AgencyMappingServiceImpl implements AgencyMappingService {
   }
 
   private Optional<AgencyLocationMapping> fetchOne(UUID centralServerId) {
+    log.debug("fetchOne:: parameters centralServerId: {}", centralServerId);
     return repository.fetchOneByCsId(centralServerId);
   }
 
   private Function<AgencyLocationMapping, AgencyLocationMapping> mergeFunc(AgencyLocationMapping incoming) {
+    log.debug("mergeFunc:: parameters incoming: {}", incoming);
     return existing -> {
       existing.setLibraryId(incoming.getLibraryId());
       existing.setLocationId(incoming.getLocationId());
@@ -120,6 +133,7 @@ public class AgencyMappingServiceImpl implements AgencyMappingService {
   }
 
   private void updateLscMapping(AgencyLocationLscMapping incoming, AgencyLocationLscMapping existing) {
+    log.debug("updateLscMapping:: parameters incoming: {}, existing: {}", incoming, existing);
     existing.setLocationId(incoming.getLocationId());
     existing.setLibraryId(incoming.getLibraryId());
 
@@ -131,6 +145,7 @@ public class AgencyMappingServiceImpl implements AgencyMappingService {
   }
 
   private void updateAcMapping(AgencyLocationAcMapping incoming, AgencyLocationAcMapping existing) {
+    log.debug("updateAcMapping:: parameters incoming: {}, existing: {}", incoming, existing);
     existing.setLocationId(incoming.getLocationId());
     existing.setLibraryId(incoming.getLibraryId());
   }

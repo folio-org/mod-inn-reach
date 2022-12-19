@@ -60,8 +60,10 @@ public class CentralServerConfigurationServiceImpl implements CentralServerConfi
 
   @Override
   public CentralServerAgenciesDTO getAllAgencies() {
+    log.debug("getAllAgencies:: Fetching agencies");
     var agencies = loadRecordsPerServer(INN_REACH_LOCAL_SERVERS_URI, LocalServerAgenciesDTO.class, this::toAgenciesOrNull);
 
+    log.info("getAllAgencies:: Agencies fetched successfully");
     return new CentralServerAgenciesDTO()
         .centralServerAgencies(agencies)
         .totalRecords(agencies.size());
@@ -69,8 +71,10 @@ public class CentralServerConfigurationServiceImpl implements CentralServerConfi
 
   @Override
   public CentralServerItemTypesDTO getAllItemTypes() {
+    log.debug("getAllItemTypes:: Fetching all item types");
     var csItemTypes = loadRecordsPerServer(INN_REACH_ITEM_TYPES_URI, CentralItemTypesDTO.class, this::toItemTypesOrNull);
 
+    log.info("getAllItemTypes:: Item types fetched successfully");
     return new CentralServerItemTypesDTO()
         .centralServerItemTypes(csItemTypes)
         .totalRecords(csItemTypes.size());
@@ -78,9 +82,11 @@ public class CentralServerConfigurationServiceImpl implements CentralServerConfi
 
   @Override
   public CentralServerPatronTypesDTO getAllPatronTypes() {
+    log.debug("getAllPatronTypes:: Fetching all patron types");
     var csPatronTypes = loadRecordsPerServer(INN_REACH_PATRON_TYPES_URI, CentralPatronTypesDTO.class,
                             this::toPatronTypesOrNull);
 
+    log.info("getAllPatronTypes:: Patron types fetched successfully");
     return new CentralServerPatronTypesDTO()
         .centralServerPatronTypes(csPatronTypes)
         .totalRecords(csPatronTypes.size());
@@ -88,6 +94,7 @@ public class CentralServerConfigurationServiceImpl implements CentralServerConfi
 
   @Override
   public List<LocalServer> getLocalServers(UUID centralServerId) {
+    log.debug("getLocalServers:: parameters centralServerId: {}", centralServerId);
     return loadRecordPerServer(INN_REACH_LOCAL_SERVERS_URI, LocalServerAgenciesDTO.class,
       resp -> emptyIfNull(resp.getRight().getLocalServerList()), centralServerId);
   }
@@ -95,6 +102,7 @@ public class CentralServerConfigurationServiceImpl implements CentralServerConfi
   private <Rec, CSResp extends InnReachResponseDTO> List<Rec> loadRecordsPerServer(String uri,
       Class<CSResp> centralServerRecordType, Function<Pair<CentralServerDTO, CSResp>, Rec> responseToRecordsMapper) {
 
+    log.debug("loadRecordsPerServer:: parameters uri: {}, centralRecordType: {}, responseToRecordsMapper: {}", uri, centralServerRecordType, responseToRecordsMapper);
     var servers = centralServerService.getAllCentralServers(0, Integer.MAX_VALUE).getCentralServers();
 
     return servers.stream()
@@ -110,6 +118,7 @@ public class CentralServerConfigurationServiceImpl implements CentralServerConfi
     Function<Pair<CentralServerDTO, CSResp>, Rec> responseToRecordsMapper,
     UUID centralServerId) {
 
+    log.debug("loadRecordPerServer:: parameters uri: {}, centralServerRecordType: {}, responseToRecordsMapper: {}, centralServerId: {}", uri, centralServerRecordType, responseToRecordsMapper, centralServerId);
     var server = centralServerService.getCentralServer(centralServerId);
 
     return Optional.of(server)
@@ -122,6 +131,7 @@ public class CentralServerConfigurationServiceImpl implements CentralServerConfi
 
   private AgenciesPerCentralServerDTO toAgenciesOrNull(
       Pair<CentralServerDTO, LocalServerAgenciesDTO> centralServerWithResponse) {
+    log.debug("toAgenciesOrNull:: parameters centralServerWithResponse: {}", centralServerWithResponse);
     var agencies = flatMapItems(centralServerWithResponse.getRight().getLocalServerList(),
                                 localServer -> toStream(localServer.getAgencyList()));
     var cs = centralServerWithResponse.getLeft();
@@ -133,6 +143,7 @@ public class CentralServerConfigurationServiceImpl implements CentralServerConfi
 
   private ItemTypesPerCentralServerDTO toItemTypesOrNull(
       Pair<CentralServerDTO, CentralItemTypesDTO> centralServerWithResponse) {
+    log.debug("toItemTypesOrNull:: parameters centralServerWithResponse: {}", centralServerWithResponse);
     var itList = emptyIfNull(centralServerWithResponse.getRight().getItemTypeList());
     var cs = centralServerWithResponse.getLeft();
 
@@ -143,6 +154,7 @@ public class CentralServerConfigurationServiceImpl implements CentralServerConfi
 
   private PatronTypesPerCentralServerDTO toPatronTypesOrNull(
       Pair<CentralServerDTO, CentralPatronTypesDTO> centralServerWithResponse) {
+    log.debug("toPatronTypesOrNull:: parameters centralServerWithResponse: {}", centralServerWithResponse);
     var ptList = emptyIfNull(centralServerWithResponse.getRight().getPatronTypeList());
     var cs = centralServerWithResponse.getLeft();
 
@@ -153,6 +165,7 @@ public class CentralServerConfigurationServiceImpl implements CentralServerConfi
 
   private <CSResp extends InnReachResponseDTO> Function<CentralServerDTO, Pair<CentralServerDTO, CSResp>> retrieveAllConfigRecords(
       String uri, Class<CSResp> recordType) {
+    log.debug("retrieveAllConfigRecords:: parameters uri: {}, recordType: {}", uri, recordType);
     return centralServer -> {
       log.info("Retrieving {} from central server: code = {}", recordType.getSimpleName(),
           centralServer.getCentralServerCode());

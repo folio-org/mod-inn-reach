@@ -135,6 +135,7 @@ public class CirculationServiceImpl implements CirculationService {
   @Override
   public InnReachResponseDTO createInnReachTransactionItemHold(String trackingId, String centralCode, TransactionHoldDTO dto) {
     try {
+      log.debug("createInnReachTransactionItemHold:: parameters trackingId: {}, centralCode: {}, dto: {}", trackingId, centralCode, dto);
       transactionRepository.fetchOneByTrackingId(trackingId).ifPresent(m -> {
         throw new EntityExistsException("INN-Reach Transaction with tracking ID = " + trackingId
           + " already exists.");
@@ -150,7 +151,9 @@ public class CirculationServiceImpl implements CirculationService {
       itemHold.setTitle(truncate(item.getTitle(), 255));
       transaction.setHold(itemHold);
       transactionRepository.save(transaction);
+      log.info("createInnReachTransactionItemHold:: result: {}", transaction);
     } catch (Exception e) {
+      log.warn("Error creating Inn-Reach Transaction with tracking id: {}", trackingId, e);
       throw new CirculationException("An error occurred during creation of INN-Reach Transaction. " + e.getMessage(), e);
     }
     return success();
@@ -158,6 +161,7 @@ public class CirculationServiceImpl implements CirculationService {
 
   @Override
   public InnReachResponseDTO initiatePatronHold(String trackingId, String centralCode, PatronHoldDTO patronHold) {
+    log.debug("initiatePatronHold:: parameters trackingId: {}, centralCode: {}, patronHold: {}", trackingId, centralCode, patronHold);
     var transactionHold = transactionHoldMapper.mapRequest(patronHold);
 
     initiateTransactionHold(trackingId, centralCode, transactionHold, PATRON,
@@ -169,11 +173,13 @@ public class CirculationServiceImpl implements CirculationService {
         }
       });
 
+    log.info("initiatePatronHold:: result {}", success());
     return success();
   }
 
   @Override
   public InnReachResponseDTO initiateLocalHold(String trackingId, String centralCode, LocalHoldDTO localHold) {
+    log.debug("initiateLocalHold:: parameters trackingId: {}, centralCode: {}, localHold: {}", trackingId, centralCode, localHold);
     var itemLocalAgency = findLocalAgency(localHold.getItemAgencyCode());
     var patronLocalAgency = findLocalAgency(localHold.getPatronAgencyCode());
 
@@ -188,11 +194,13 @@ public class CirculationServiceImpl implements CirculationService {
     initiateTransactionHold(trackingId, centralCode, transactionHold, LOCAL,
       (transaction, isExisting) -> requestService.createLocalHoldRequest(transaction));
 
+    log.info("initiateLocalHold:: result: {}", success());
     return success();
   }
 
   @Override
   public InnReachResponseDTO trackPatronHoldShippedItem(String trackingId, String centralCode, ItemShippedDTO itemShipped) {
+    log.debug("trackPatronHoldShippedItem:: parameters trackingId: {}, centralCode: {}, itemShipped: {}", trackingId, centralCode, itemShipped);
     var innReachTransaction = getTransactionOfType(trackingId, centralCode, PATRON);
     patronInfoService.populateTransactionPatronInfo(innReachTransaction.getHold(), centralCode);
 
@@ -205,12 +213,13 @@ public class CirculationServiceImpl implements CirculationService {
 
     innReachTransaction.setState(ITEM_SHIPPED);
 
+    log.info("trackPatronHoldShippedItem:: result: {}", success());
     return success();
   }
 
   @Override
   public InnReachResponseDTO cancelPatronHold(String trackingId, String centralCode, CancelRequestDTO cancelRequest) {
-    log.info("Cancelling Patron Hold transaction: {}", trackingId);
+    log.debug("cancelPatronHold:: parameters trackingId: {}, centralCode: {}, cancelRequest: {}", trackingId, centralCode, cancelRequest);
 
     var transaction = getTransactionOfType(trackingId, centralCode, PATRON);
     patronInfoService.populateTransactionPatronInfo(transaction.getHold(), centralCode);
@@ -233,13 +242,14 @@ public class CirculationServiceImpl implements CirculationService {
 
     clearPatronAndItemInfo(transaction.getHold());
 
-    log.info("Item request successfully cancelled");
+    log.info("cancelPatronHold:: result: {}", success());
 
     return success();
   }
 
   @Override
   public InnReachResponseDTO transferPatronHoldItem(String trackingId, String centralCode, TransferRequestDTO request) {
+    log.debug("transferPatronHoldItem:: parameters trackingId: {}, centralCode: {}, request: {}", trackingId, centralCode, request);
     var transaction = getTransactionOfType(trackingId, centralCode, PATRON);
     patronInfoService.populateTransactionPatronInfo(transaction.getHold(), centralCode);
 
@@ -249,12 +259,13 @@ public class CirculationServiceImpl implements CirculationService {
     transaction.getHold().setItemId(request.getNewItemId());
     transaction.setState(TRANSFER);
 
+    log.info("transferPatronHoldItem:: result: {}", success());
     return success();
   }
 
   @Override
   public InnReachResponseDTO cancelItemHold(String trackingId, String centralCode, BaseCircRequestDTO cancelItemDTO) {
-    log.info("Cancelling Item Hold transaction: {}", trackingId);
+    log.debug("cancelItemHold:: parameters trackingId: {}, centralCode: {}, cancelItemDTO: {}", trackingId, centralCode, cancelItemDTO);
 
     var transaction = getTransactionOfType(trackingId, centralCode, ITEM);
     var requestId = transaction.getHold().getFolioRequestId();
@@ -270,11 +281,13 @@ public class CirculationServiceImpl implements CirculationService {
     eventPublisher.publishEvent(new CancelRequestEvent(trackingId, requestId,
       INN_REACH_CANCELLATION_REASON_ID, "Request cancelled at borrowing site"));
 
+    log.info("cancelItemHold:: result: {}", success());
     return success();
   }
 
   @Override
   public InnReachResponseDTO itemReceived(String trackingId, String centralCode, ItemReceivedDTO itemReceivedDTO) {
+    log.debug("itemReceived:: parameters: trackingId: {}, centralCode: {}, itemReceivedDTO: {}", trackingId, centralCode, itemReceivedDTO);
     var transaction = getTransactionOfType(trackingId, centralCode, ITEM);
 
     verifyState(transaction, ITEM_SHIPPED, ITEM_HOLD, TRANSFER);
@@ -284,12 +297,14 @@ public class CirculationServiceImpl implements CirculationService {
     }
     transaction.setState(ITEM_RECEIVED);
 
+    log.info("itemReceived:: result: {}", success());
     return success();
   }
 
   @Override
   public InnReachResponseDTO receiveUnshipped(String trackingId, String centralCode,
                                               BaseCircRequestDTO receiveUnshippedRequest) {
+    log.debug("receiveUnshipped:: parameters: trackingId: {}, centralCode: {}, receiveUnshippedRequest: {}", trackingId, centralCode, receiveUnshippedRequest);
     var transaction = getTransactionOfType(trackingId, centralCode, ITEM);
 
     if (transaction.getState() == TransactionState.ITEM_SHIPPED) {
@@ -301,6 +316,7 @@ public class CirculationServiceImpl implements CirculationService {
       transaction.setState(RECEIVE_UNANNOUNCED);
     }
 
+    log.info("receiveUnshipped:: result: {}", success());
     return success();
   }
 

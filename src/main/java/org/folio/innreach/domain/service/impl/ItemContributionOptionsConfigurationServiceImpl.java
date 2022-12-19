@@ -5,6 +5,7 @@ import static org.folio.innreach.domain.service.impl.ServiceUtils.centralServerR
 import java.util.UUID;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.data.domain.Example;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,6 +17,7 @@ import org.folio.innreach.dto.ItemContributionOptionsConfigurationDTO;
 import org.folio.innreach.mapper.ItemContributionOptionsConfigurationMapper;
 import org.folio.innreach.repository.ItemContributionOptionsConfigurationRepository;
 
+@Log4j2
 @RequiredArgsConstructor
 @Service
 public class ItemContributionOptionsConfigurationServiceImpl implements ItemContributionOptionsConfigurationService {
@@ -26,26 +28,32 @@ public class ItemContributionOptionsConfigurationServiceImpl implements ItemCont
   @Override
   @Transactional(readOnly = true)
   public ItemContributionOptionsConfigurationDTO getItmContribOptConf(UUID centralServerId) {
+    log.debug("getItmContribOptConf:: parameters centralServerId: {}", centralServerId);
     var itmContribOptConf = findItmContribOptConf(centralServerId);
+    log.info("getItmContribOptConf:: result: {}", mapper.toDto(itmContribOptConf));
     return mapper.toDto(itmContribOptConf);
   }
 
   @Override
   public ItemContributionOptionsConfigurationDTO createItmContribOptConf(UUID centralServerId, ItemContributionOptionsConfigurationDTO itmContribOptConfDTO) {
+    log.debug("createItmContribOptConf:: parameters centralServerId: {}, itmContribOptConfDTO: {}", centralServerId, itmContribOptConfDTO);
     var itmContribOptConf = mapper.toEntity(itmContribOptConfDTO);
     itmContribOptConf.setCentralServer(centralServerRef(centralServerId));
     var createdItmContribOptConf = repository.save(itmContribOptConf);
+    log.info("createItmContribOptConf:: result: {}", mapper.toDto(createdItmContribOptConf));
     return mapper.toDto(createdItmContribOptConf);
   }
 
   @Override
   public ItemContributionOptionsConfigurationDTO updateItmContribOptConf(UUID centralServerId, ItemContributionOptionsConfigurationDTO itmContribOptConfDTO) {
+    log.debug("updateItmContribOptConf:: parameters centralServerId: {}, itmContribOptConfDTO: {}", centralServerId, itmContribOptConfDTO);
     var itmContribOptConf = findItmContribOptConf(centralServerId);
     var updatedItmContribOptConf = mapper.toEntity(itmContribOptConfDTO);
     updateItmContribOptConf(itmContribOptConf, updatedItmContribOptConf);
 
     repository.save(itmContribOptConf);
 
+    log.info("updateItmContribOptConf:: result: {}", mapper.toDto(itmContribOptConf));
     return mapper.toDto(itmContribOptConf);
   }
 
@@ -57,6 +65,7 @@ public class ItemContributionOptionsConfigurationServiceImpl implements ItemCont
   }
 
   private ItemContributionOptionsConfiguration findItmContribOptConf(UUID centralServerId) {
+    log.debug("findItmContribOptConf:: parameters centralServerId: {}", centralServerId);
     return repository.findOne(exampleWithServerId(centralServerId))
       .orElseThrow(() -> new EntityNotFoundException("Item Contribution Options Configuration not found: " +
         "centralServerId = " + centralServerId));
