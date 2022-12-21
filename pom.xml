@@ -4,7 +4,7 @@
   <parent>
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-parent</artifactId>
-    <version>2.7.3</version>
+    <version>2.7.6</version>
     <relativePath />
   </parent>
   <groupId>org.folio</groupId>
@@ -22,12 +22,13 @@
 
   <properties>
     <!-- runtime dependencies -->
-    <folio-spring-base.version>5.0.2</folio-spring-base.version>
-    <spring-cloud-starter-openfeign.version>3.1.2</spring-cloud-starter-openfeign.version>
+    <folio-spring-base.version>5.0.3</folio-spring-base.version>
+    <spring-cloud-starter-openfeign.version>3.1.5</spring-cloud-starter-openfeign.version>
     <commons-collections4.version>4.4</commons-collections4.version>
     <mapstruct.version>1.5.1.Final</mapstruct.version>
     <marc4j.version>2.9.2</marc4j.version>
     <coffee-boots.version>3.0.0</coffee-boots.version>
+    <snakeyaml.version>1.33</snakeyaml.version>
 
     <!-- test dependencies -->
     <testcontainers.version>1.17.2</testcontainers.version>
