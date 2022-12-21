@@ -117,6 +117,7 @@ public class PatronHoldServiceImpl implements PatronHoldService {
 
   @Override
   public void addItemBarcodeAndCallNumber(InnReachTransaction transaction, String itemBarcode, String callNumber) {
+    log.debug("addItemBarcodeAndCallNumber:: parameters transaction: {}, itemBarcode: {}, callNumber: {}", transaction, itemBarcode, callNumber);
     var hold = (TransactionPatronHold) transaction.getHold();
     var folioItemBarcode = itemBarcode;
 

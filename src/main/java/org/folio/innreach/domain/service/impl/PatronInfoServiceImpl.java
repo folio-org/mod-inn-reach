@@ -68,6 +68,7 @@ public class PatronInfoServiceImpl implements PatronInfoService {
   @Override
   public PatronInfoResponseDTO verifyPatron(String centralServerCode, String visiblePatronId,
                                             String patronAgencyCode, String patronName) {
+    log.debug("verifyPatron:: parameters centralServerCode: {}, visiblePatronId: {}, patronAgencyCode: {}, patronName: {}", centralServerCode, visiblePatronId, patronAgencyCode, patronName);
     PatronInfoResponse response;
     try {
       var centralServer = centralServerService.getCentralServerByCentralCode(centralServerCode);
@@ -85,6 +86,7 @@ public class PatronInfoServiceImpl implements PatronInfoService {
       log.warn(ERROR_REASON, e);
       response = PatronInfoResponse.error(ERROR_REASON, ofMessage(centralServerCode, e.getMessage()));
     }
+    log.info("verifyPatron:: result: {}", mapper.toDto(response));
     return mapper.toDto(response);
   }
 
@@ -99,6 +101,7 @@ public class PatronInfoServiceImpl implements PatronInfoService {
   }
 
   private PatronInfo getPatronInfo(UUID centralServerId, List<LocalAgencyDTO> agencies, User user) {
+    log.debug("getPatronInfo:: parameters centralServerId: {}, agencies: {}, user: {}", centralServerId, agencies, user);
     var centralPatronType = getCentralPatronType(centralServerId, user);
     var patronId = getPatronId(user);
     var patron = getPatron(user);
@@ -116,6 +119,7 @@ public class PatronInfoServiceImpl implements PatronInfoService {
     patronInfo.setLocalLoans(totalLoans - innReachLoans);
     patronInfo.setPatronExpireDate(expirationDate);
     patronInfo.setPatronName(patronName);
+    log.info("getPatronInfo:: result: {}", patronInfo);
     return patronInfo;
   }
 

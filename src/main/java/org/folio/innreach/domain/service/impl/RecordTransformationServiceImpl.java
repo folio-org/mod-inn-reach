@@ -73,6 +73,7 @@ public class RecordTransformationServiceImpl implements RecordTransformationServ
 
   @Override
   public BibInfo getBibInfo(UUID centralServerId, Instance instance) {
+    log.debug("getBibInfo:: parameters centralServerId: {}, instance: {}", centralServerId, instance);
     var bibId = instance.getHrid();
 
     var suppressionStatus = validationService.getSuppressionStatus(centralServerId, instance.getStatisticalCodeIds());
@@ -85,11 +86,13 @@ public class RecordTransformationServiceImpl implements RecordTransformationServ
     bibInfo.setMarc21BibFormat(MARC_BIB_FORMAT);
     bibInfo.setMarc21BibData(marc.getBase64rawContent());
     bibInfo.setItemCount(countContributionItems(centralServerId, instance.getItems()));
+    log.info("getBibInfo:: result: {}", bibInfo);
     return bibInfo;
   }
 
   @Override
   public List<BibItem> getBibItems(UUID centralServerId, List<Item> items, BiConsumer<Item, Exception> errorHandler) {
+    log.debug("getBibItems:: parameters centralServerId: {}, item: {}, errorHandler: {}", centralServerId, items, errorHandler);
     var mappings = getContributionMappings(centralServerId);
     log.info("Resolved contribution mappings: {}", mappings);
 

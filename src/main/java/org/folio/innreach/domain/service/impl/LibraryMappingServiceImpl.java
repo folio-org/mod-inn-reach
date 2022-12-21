@@ -10,6 +10,7 @@ import java.util.UUID;
 import java.util.function.Consumer;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.data.domain.Example;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
@@ -24,6 +25,7 @@ import org.folio.innreach.mapper.LibraryMappingMapper;
 import org.folio.innreach.repository.LibraryMappingRepository;
 import org.folio.spring.data.OffsetRequest;
 
+@Log4j2
 @RequiredArgsConstructor
 @Service
 @Transactional
@@ -36,15 +38,18 @@ public class LibraryMappingServiceImpl implements LibraryMappingService {
   @Override
   @Transactional(readOnly = true)
   public LibraryMappingsDTO getAllMappings(UUID centralServerId, int offset, int limit) {
+    log.debug("getAllMappings:: parameters centralServerId: {}, offset: {}, limit: {}", centralServerId, offset, limit);
     var example = mappingExampleWithServerId(centralServerId);
 
     Page<LibraryMapping> mappings = repository.findAll(example, new OffsetRequest(offset, limit, DEFAULT_SORT));
 
+    log.info("getAllMappings:: result: {}", mapper.toDTOCollection(mappings));
     return mapper.toDTOCollection(mappings);
   }
 
   @Override
   public LibraryMappingsDTO updateAllMappings(UUID centralServerId, LibraryMappingsDTO libraryMappingsDTO) {
+    log.debug("updateAllMappings:: parameters centralServerId: {}, libraryMappingsDTO: {}", centralServerId, libraryMappingsDTO);
     var stored = repository.findAll(mappingExampleWithServerId(centralServerId));
 
     var incoming = mapper.toEntities(libraryMappingsDTO.getLibraryMappings());
@@ -55,6 +60,7 @@ public class LibraryMappingServiceImpl implements LibraryMappingService {
 
     locationContributionService.contributeInnReachLocations(centralServerId);
 
+    log.info("updateAllMappings:: result: {}", mapper.toDTOCollection(saved));
     return mapper.toDTOCollection(saved);
   }
 
