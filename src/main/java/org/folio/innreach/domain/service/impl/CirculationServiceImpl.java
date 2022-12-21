@@ -335,28 +335,33 @@ public class CirculationServiceImpl implements CirculationService {
 
   @Override
   public InnReachResponseDTO itemInTransit(String trackingId, String centralCode, BaseCircRequestDTO itemInTransitRequest) {
+    log.debug("itemInTransit:: parameters trackingId: {}, centralCode: {}, itemInTransitRequest: {}", trackingId, centralCode, itemInTransitRequest);
     var transaction = getTransaction(trackingId, centralCode);
 
     verifyState(transaction, ITEM_RECEIVED, RECEIVE_UNANNOUNCED);
 
     transaction.setState(ITEM_IN_TRANSIT);
 
+    log.info("itemInTransit:: result: {}", success());
     return success();
   }
 
   @Override
   public InnReachResponseDTO returnUncirculated(String trackingId, String centralCode, ReturnUncirculatedDTO returnUncirculated) {
+    log.debug("returnUncirculated:: parameters trackingId: {}, centralCode: {}, returnUncirculated: {}", trackingId, centralCode, returnUncirculated);
     var transaction = getTransactionOfType(trackingId, centralCode, ITEM);
 
     verifyState(transaction, ITEM_RECEIVED, RECEIVE_UNANNOUNCED);
 
     transaction.setState(RETURN_UNCIRCULATED);
 
+    log.info("returnUncirculated:: result: {}", success());
     return success();
   }
 
   @Override
   public InnReachResponseDTO recall(String trackingId, String centralCode, RecallDTO recall) {
+    log.debug("recall:: parameters trackingId: {}, centralCode: {}, recall: {}", trackingId, centralCode, recall);
     var transaction = getTransactionOfType(trackingId, centralCode, PATRON);
     patronInfoService.populateTransactionPatronInfo(transaction.getHold(), centralCode);
 
@@ -375,11 +380,13 @@ public class CirculationServiceImpl implements CirculationService {
       eventPublisher.publishEvent(RecallRequestEvent.of(transaction.getHold(), recallUser));
     }
 
+    log.info("recall:: result: {}", success());
     return success();
   }
 
   @Override
   public InnReachResponseDTO borrowerRenewLoan(String trackingId, String centralCode, RenewLoanDTO renewLoan) {
+    log.debug("borrowerRenewLoan:: parameters trackingId: {}, centralCode: {}, renewLoan: {}", trackingId, centralCode, renewLoan);
     var transaction = getTransaction(trackingId, centralCode);
     var hold = transaction.getHold();
     var loan = loanService.getById(hold.getFolioLoanId());
@@ -398,6 +405,7 @@ public class CirculationServiceImpl implements CirculationService {
         recallRequestToCentralSever(transaction, existingDueDate);
       }
     } catch (Exception e) {
+      log.warn("Borrower renew loan failed for trackingId: {}", trackingId, e);
       if (existingDueDate.before(requestedDueDate)) {
         recallRequestToCentralSever(transaction, existingDueDate);
       } else {
@@ -405,11 +413,13 @@ public class CirculationServiceImpl implements CirculationService {
       }
     }
 
+    log.info("borrowerRenewLoan:: result: {}", success());
     return success();
   }
 
   @Override
   public InnReachResponseDTO ownerRenewLoan(String trackingId, String centralCode, RenewLoanDTO renewLoan) {
+    log.debug("ownerRenewLoan:: parameters trackingId: {}, centralCode: {}, renewLoan: {}", trackingId, centralCode, renewLoan);
     var transaction = getTransactionOfType(trackingId, centralCode, PATRON);
     patronInfoService.populateTransactionPatronInfo(transaction.getHold(), centralCode);
 
@@ -424,11 +434,13 @@ public class CirculationServiceImpl implements CirculationService {
     transaction.getHold().setDueDateTime(renewLoan.getDueDateTime());
     transaction.setState(OWNER_RENEW);
 
+    log.info("ownerRenewLoan:: result: {}", success());
     return success();
   }
 
   @Override
   public InnReachResponseDTO finalCheckIn(String trackingId, String centralCode, BaseCircRequestDTO finalCheckIn) {
+    log.debug("finalCheckIn:: parameters trackingId: {}, centralCode: {}, finalCheckIn: {}", trackingId, centralCode, finalCheckIn);
     var transaction = getTransaction(trackingId, centralCode);
 
     verifyStateNot(transaction, PATRON_HOLD, TRANSFER);
@@ -439,11 +451,13 @@ public class CirculationServiceImpl implements CirculationService {
       .ifPresent(this::removeHoldingsTransactionInfo);
     clearPatronAndItemInfo(transaction.getHold());
 
+    log.info("finalCheckIn:: result: {}", success());
     return success();
   }
 
   @Override
   public InnReachResponseDTO claimsReturned(String trackingId, String centralCode, ClaimsItemReturnedDTO claimsItemReturned) {
+    log.debug("claimsReturned:: parameters trackingId: {}, centralCode: {}, claimsItemReturned: {}", trackingId, centralCode, claimsItemReturned);
     var transaction = getTransaction(trackingId, centralCode);
 
     var returnedDateSec = claimsItemReturned.getClaimsReturnedDate();
@@ -457,6 +471,7 @@ public class CirculationServiceImpl implements CirculationService {
     transaction.setState(CLAIMS_RETURNED);
     clearCentralPatronInfo(transaction.getHold());
 
+    log.info("claimsReturned:: result: {}", success());
     return success();
   }
 

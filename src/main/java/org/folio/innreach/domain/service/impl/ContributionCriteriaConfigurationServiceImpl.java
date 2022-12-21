@@ -74,6 +74,7 @@ public class ContributionCriteriaConfigurationServiceImpl implements Contributio
     log.debug("deleteCriteria:: parameters centralServerId: {}", centralServerId);
     var criteria = findCriteria(centralServerId);
     repository.delete(criteria);
+    log.info("deleteCriteria:: Criteria deleted");
   }
 
   private ContributionCriteriaConfiguration findCriteria(UUID centralServerId) {

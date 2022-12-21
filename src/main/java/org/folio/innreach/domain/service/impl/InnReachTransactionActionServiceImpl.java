@@ -221,6 +221,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
       log.info("handleLoanUpdate:: loan action is recallRequested");
       updateTransactionOnLoanRecallRequested(loan.getId(), loan.getDueDate(), transaction);
     }
+    log.info("handleLoanUpdate:: Loan updated");
   }
 
   @Override
@@ -238,6 +239,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
     } else if (transaction.getType() == LOCAL) {
       updateLocalTransactionOnRequestChange(requestDTO, transaction);
     }
+    log.info("handleRequestUpdate:: Request updated");
   }
 
   @Override
@@ -265,6 +267,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
         notifier.reportReturnUncirculated(transaction);
       }
     }
+    log.info("handleCheckInCreation:: CheckInCreation completed");
   }
 
   @Override
@@ -280,6 +283,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
           t.getHold().setFolioItemBarcode(updatedItemBarcode);
         });
     }
+    log.info("handleItemUpdate:: Item updated");
   }
 
   @Override
@@ -323,6 +327,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
     eventPublisher.publishEvent(CancelRequestEvent.of(transaction,
       cancelRequest.getCancellationReasonId(),
       cancelRequest.getCancellationAdditionalInformation()));
+    log.info("cancelItemHold:: Item hold cancelled");
   }
 
   @Override
@@ -375,6 +380,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
         loanService.checkInItem(transaction, servicePointId);
       }
     }
+    log.info("returnPatronHoldItem:: Patron hold item returned");
   }
 
   @Override
@@ -394,6 +400,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
 
       eventPublisher.publishEvent(MoveRequestEvent.of(transaction, item));
     }
+    log.info("transferItemHold:: Item hold transferred");
   }
 
   @Override
@@ -412,6 +419,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
     } else {
       loanService.checkInItem(transaction, servicePointId);
     }
+    log.info("finalCheckInItemHold:: Final check in item hold completed");
   }
 
   @Override
@@ -453,6 +461,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
       var recallUser = recallUserService.getRecallUserForCentralServer(transaction.getCentralServerCode());
       eventPublisher.publishEvent(RecallRequestEvent.of(transaction.getHold(), recallUser));
     }
+    log.info("recallItem:: Item recalled");
   }
 
   private boolean isOpenRecallRequest(RequestDTO request) {

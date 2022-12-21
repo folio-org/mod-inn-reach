@@ -76,6 +76,7 @@ public class CentralServerServiceImpl implements CentralServerService {
       .secret(centralServerDTO.getCentralServerSecret())
       .build();
 
+    log.info("checkCentralServerConnection:: Access token retrieved");
     innReachAuthExternalService.getAccessToken(centralServerConnectionDetailsDTO);
   }
 
@@ -221,6 +222,7 @@ public class CentralServerServiceImpl implements CentralServerService {
       updLocalAgency.setCentralServer(centralServer);
       centralServer.getLocalAgencies().set(centralServer.getLocalAgencies().indexOf(updLocalAgency), updLocalAgency);
     }
+    log.info("updateLocalAgencies:: Local agency updated");
   }
 
   @Override
@@ -231,6 +233,7 @@ public class CentralServerServiceImpl implements CentralServerService {
       .orElseThrow(() -> new EntityNotFoundException("Central server with ID: " + centralServerId + " not found"));
 
     centralServerRepository.delete(centralServer);
+    log.info("deleteCentralServer:: Central server deleted");
   }
 
   @Override

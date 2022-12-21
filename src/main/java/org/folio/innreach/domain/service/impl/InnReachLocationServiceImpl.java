@@ -103,6 +103,7 @@ public class InnReachLocationServiceImpl implements InnReachLocationService {
     log.debug("deleteInnReachLocation:: parameters innReachLocationId: {}", innReachLocationId);
     InnReachLocation innReachLocation = findInnReachLocationById(innReachLocationId);
     innReachLocationRepository.delete(innReachLocation);
+    log.info("deleteInnReachLocation:: InnReach location deleted");
 	}
 
   private InnReachLocation findInnReachLocationById(UUID innReachLocationId) {

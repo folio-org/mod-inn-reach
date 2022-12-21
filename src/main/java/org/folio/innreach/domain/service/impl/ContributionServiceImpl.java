@@ -106,6 +106,7 @@ public class ContributionServiceImpl implements ContributionService {
     entity.setRecordsContributed(contributed);
     entity.setRecordsUpdated(updated);
     entity.setRecordsDecontributed(decontributed);
+    log.info("updateContributionStats:: Contribution stats updated");
   }
 
   @Override

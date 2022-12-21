@@ -142,10 +142,10 @@ public class AgencyMappingServiceImpl implements AgencyMappingService {
 
     merge(agencyCodeMappings, existingAgencyCodeMappings, AC_COMPARATOR,
       existing::addAgencyCodeMapping, this::updateAcMapping, existing::removeAgencyCodeMapping);
+    log.info("updateLscMapping:: Lsc mapping updated");
   }
 
   private void updateAcMapping(AgencyLocationAcMapping incoming, AgencyLocationAcMapping existing) {
-    log.debug("updateAcMapping:: parameters incoming: {}, existing: {}", incoming, existing);
     existing.setLocationId(incoming.getLocationId());
     existing.setLibraryId(incoming.getLibraryId());
   }
