@@ -31,6 +31,7 @@ public class InnReachContributionServiceImpl implements InnReachContributionServ
 
   @Override
   public InnReachResponse contributeBib(UUID centralServerId, String bibId, BibInfo bib) {
+    log.debug("contributeBib:: parameters centralServerId: {}, bibId: {}, bib: {}", centralServerId, bibId, bib);
     var connectionDetails = getConnectionDetails(centralServerId);
 
     var accessTokenDTO = innReachAuthExternalService.getAccessToken(connectionDetails);
@@ -45,6 +46,7 @@ public class InnReachContributionServiceImpl implements InnReachContributionServ
 
   @Override
   public InnReachResponse deContributeBib(UUID centralServerId, String bibId) {
+    log.debug("deContributeBib:: parameters centralServerId: {}, bibId: {}", centralServerId, bibId);
     var connectionDetails = getConnectionDetails(centralServerId);
 
     var accessTokenDTO = innReachAuthExternalService.getAccessToken(connectionDetails);
@@ -59,6 +61,7 @@ public class InnReachContributionServiceImpl implements InnReachContributionServ
 
   @Override
   public InnReachResponse deContributeBibItem(UUID centralServerId, String itemId) {
+    log.debug("deContributeBibItem:: parameters centralServerId: {}, itemId: {}", centralServerId, itemId);
     var connectionDetails = getConnectionDetails(centralServerId);
 
     var accessTokenDTO = innReachAuthExternalService.getAccessToken(connectionDetails);
@@ -73,6 +76,7 @@ public class InnReachContributionServiceImpl implements InnReachContributionServ
 
   @Override
   public InnReachResponse contributeBibItems(UUID centralServerId, String bibId, BibItemsInfo bibItems) {
+    log.debug("contributeBibItems:: parameters centralServerId: {}, bibId: {}, bibItems: {}", centralServerId, bibId, bibItems);
     var connectionDetails = getConnectionDetails(centralServerId);
 
     var accessTokenDTO = innReachAuthExternalService.getAccessToken(connectionDetails);
@@ -87,6 +91,7 @@ public class InnReachContributionServiceImpl implements InnReachContributionServ
 
   @Override
   public InnReachResponse lookUpBib(UUID centralServerId, String bibId) {
+    log.debug("lookUpBib:: parameters centralServerId: {}, bibId: {}", centralServerId, bibId);
     var connectionDetails = getConnectionDetails(centralServerId);
 
     var accessTokenDTO = innReachAuthExternalService.getAccessToken(connectionDetails);
@@ -105,6 +110,7 @@ public class InnReachContributionServiceImpl implements InnReachContributionServ
 
   @Override
   public InnReachResponse lookUpBibItem(UUID centralServerId, String bibId, String itemId) {
+    log.debug("lookUpBibItem:: parameters centralServerId: {}, bibId: {}, itemId: {}", centralServerId, bibId, itemId);
     var connectionDetails = getConnectionDetails(centralServerId);
 
     var accessTokenDTO = innReachAuthExternalService.getAccessToken(connectionDetails);
