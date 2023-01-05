@@ -49,6 +49,8 @@ public class UserServiceImpl implements UserService {
 
     var users = usersClient.query("username==" + name);
 
+    log.info("Size of system users " + users.getResult().size());
+    log.info("System users "+ users.toString());
     return ListUtils.getFirstItem(users);
   }
 

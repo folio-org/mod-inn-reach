@@ -46,8 +46,9 @@ public class SystemUserAuthService {
       .orElse(UUID.randomUUID());
 
     if (folioUser.isPresent()) {
-      log.info("Setting up existing system user");
+      log.info("Setting up existing system user " + userId.toString());
       addPermissions(userId);
+
     } else {
       log.info("No system user exist, creating...");
 
