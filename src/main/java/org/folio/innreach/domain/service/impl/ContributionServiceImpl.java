@@ -11,6 +11,7 @@ import static org.folio.innreach.dto.MappingValidationStatusDTO.VALID;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -78,7 +79,11 @@ public class ContributionServiceImpl implements ContributionService {
   @Transactional
   @Override
   public void cancelAll() {
-    findAllInProgress().forEach(c -> c.setStatus(CANCELLED));
+    //findAllInProgress().forEach(c -> c.setStatus(CANCELLED));
+    findAllInProgress().stream().map(c->{
+      c.setStatus(CANCELLED);
+      return c;
+    }).collect(Collectors.toList());
   }
 
   @Override
