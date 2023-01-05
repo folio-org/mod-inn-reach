@@ -76,14 +76,13 @@ public class ContributionServiceImpl implements ContributionService {
     return mapper.toDTO(repository.save(entity));
   }
 
-  @Transactional
+  //@Transactional
   @Override
   public void cancelAll() {
     //findAllInProgress().forEach(c -> c.setStatus(CANCELLED));
-    findAllInProgress().stream().map(c->{
-      c.setStatus(CANCELLED);
-      return c;
-    }).collect(Collectors.toList());
+    List<Contribution> contributions = findAllInProgress();
+    contributions.forEach(contribution -> contribution.setStatus(CANCELLED));
+    repository.saveAll(contributions);
   }
 
   @Override
