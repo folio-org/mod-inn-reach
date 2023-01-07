@@ -85,10 +85,13 @@ public class ContributionJobRunner {
     try (var kafkaReader = itemReaderFactory.createReader(context.getTenantId())) {
       kafkaReader.open();
 
+      // TODO Why call this using a BiConsumer. What is the benefit of that?
       run(context, (centralServerId, stats) -> {
         while (!isCanceled(contributionId)) {
           var event = readEvent(kafkaReader);
+          // TODO Why return rather than continue here? What method here does return apply to? Would it exit the while? Probably not relevant though since all messages appear to be always read based on kafka offsets.
           if (event == null) {
+            log.info("Event is null, skipping, current job is");
             return;
           }
           log.info("Processing instance iteration event = {}", event);
@@ -96,26 +99,47 @@ public class ContributionJobRunner {
           var instanceId = event.getInstanceId();
           var iterationJobId = context.getIterationJobId();
 
+          // TODO This has been the reason for some job failures, with 400k instances ~12/31 but it isn't present in _all_ job fails.
           if (isUnknownEvent(event, iterationJobId)) {
             log.info("Skipping unknown event, current job is {}", iterationJobId);
             continue;
           }
 
-          var instance = loadInstanceWithItems(instanceId);
+          // TODO Make this call the local web server used for the test. Same below.
+          var instance = simulateSynchronousHttpRequestWithSomeNullValues();
+//          Instance instance = loadInstanceWithItems(instanceId);
+
+          // TODO Simulate this in the data.
           if (instance == null) {
+            log.info("Instance is null, skipping");
             continue;
           }
 
-          if (isEligibleForContribution(centralServerId, instance)) {
-            contributeInstance(centralServerId, instance, stats);
-            contributeInstanceItems(centralServerId, instance, stats);
-          } else if (isContributed(centralServerId, instance)) {
-            deContributeInstance(centralServerId, instance, stats);
-          }
+          // TODO Make multiple HTTP calls here maybe by making a feign client to call some local http endpoint.
+          simulateSynchronousHttpRequest();
+          simulateSynchronousHttpRequest();
+          simulateSynchronousHttpRequest();
+          simulateSynchronousHttpRequest();
+//          if (isEligibleForContribution(centralServerId, instance)) {
+//            contributeInstance(centralServerId, instance, stats);
+//            contributeInstanceItems(centralServerId, instance, stats);
+//          } else if (isContributed(centralServerId, instance)) {
+//            deContributeInstance(centralServerId, instance, stats);
+//          }
         }
       });
     }
   }
+
+  private void simulateSynchronousHttpRequest() {
+    // TODO implement this using feign client.
+  }
+
+  private Instance simulateSynchronousHttpRequestWithSomeNullValues() {
+    // TODO Implement this with an occasional null value. THis could just randomly return null or perhaps leave that until problems have been eliminated.
+    return null;
+  }
+
 
   public void runInstanceContribution(UUID centralServerId, Instance instance) {
     log.info("Validating instance {} for contribution to central server {}", instance.getId(), centralServerId);

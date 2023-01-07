@@ -113,22 +113,26 @@ public class ContributionServiceImpl implements ContributionService {
   public void startInitialContribution(UUID centralServerId) {
     log.info("Starting initial contribution for central server = {}", centralServerId);
 
-    var existingContribution = repository.fetchCurrentByCentralServerId(centralServerId);
-    if (existingContribution.isPresent()) {
-      log.warn("Initial contribution is already in progress");
-      throw new IllegalArgumentException("Initial contribution is already in progress");
-    }
+//    var existingContribution = repository.fetchCurrentByCentralServerId(centralServerId);
+//    if (existingContribution.isPresent()) {
+//      log.warn("Initial contribution is already in progress");
+//      throw new IllegalArgumentException("Initial contribution is already in progress");
+//    }
 
     var contribution = createEmptyContribution(centralServerId);
 
-    log.info("Validating contribution settings");
-    validateContribution(centralServerId);
+    // TODO This bit of the code seems to be working fine. The right number of items appear to always be added to kafka and as a bonus this is very fast (~5 or 6 seconds).
+    // TODO Also note that I have verified that the code which adds these records does not kick off a background process
+    // TODO that completes at some time in the future. Rather, it blocks, and completes before proceeding.
+    // TODO See mod-inventory-storage for the implementation of this.
+//    log.info("Validating contribution settings");
+//    validateContribution(centralServerId);
 
-    log.info("Triggering inventory instance iteration");
-    var iterationJobResponse = triggerInstanceIteration();
-    contribution.setJobId(iterationJobResponse.getId());
-
-    repository.save(contribution);
+//    log.info("Triggering inventory instance iteration");
+//    var iterationJobResponse = triggerInstanceIteration();
+//    contribution.setJobId(iterationJobResponse.getId());
+//
+//    repository.save(contribution);
 
     runInitialContributionJob(centralServerId, contribution);
 
