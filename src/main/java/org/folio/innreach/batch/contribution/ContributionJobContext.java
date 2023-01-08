@@ -33,6 +33,8 @@ public class ContributionJobContext {
     private long recordsUpdated;
     private long recordsDecontributed;
 
+    private long kafkaMessagesRead;
+
     public void addRecordsContributed(int itemsCount) {
       recordsContributed += itemsCount;
     }
@@ -48,6 +50,8 @@ public class ContributionJobContext {
     public void addRecordsTotal(int itemsCount) {
       recordsTotal += itemsCount;
     }
+
+    public void addKafkaMessagesRead(int incrementBy) { kafkaMessagesRead += incrementBy; }
   }
 
 }

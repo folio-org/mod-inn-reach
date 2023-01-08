@@ -96,9 +96,11 @@ public class ContributionJobRunner {
       run(context, (centralServerId, stats) -> {
         while (!isCanceled(contributionId)) {
           var event = readEvent(kafkaReader);
+          stats.addKafkaMessagesRead(1);
+
           // TODO Why return rather than continue here? What method here does return apply to? Would it exit the while? Probably not relevant though since all messages appear to be always read based on kafka offsets.
           if (event == null) {
-            log.info("Event is null, skipping"); // NOTE This log statement is null in the deployed code.
+            log.info("Event is null, skipping"); // NOTE This log statement is not in the deployed code.
             return;
           }
           log.info("Processing instance iteration event = {}", event);
@@ -144,8 +146,7 @@ public class ContributionJobRunner {
 
   private void simulateContributionItems(Statistics s) {
     makeSimulatedRequest(s);
-    s.addRecordsTotal(1);
-    s.addRecordsContributed(10);
+    s.addRecordsTotal(10);
   }
 
   private void makeSimulatedRequest(Statistics s) {
@@ -158,13 +159,12 @@ public class ContributionJobRunner {
     } catch (Exception e) {
       log.warn("Error while simulating request: {} {}", e.getMessage(), e.getStackTrace());
     } finally {
-      // Oddly this isn't the total records processed from what I can tell. Seems to only be in finally blocks.
       s.addRecordsProcessed(1);
     }
   }
 
   private Instance simulateLoadingInstance(Statistics s) {
-    // TODO Implement this with an occasional null value. THis could just randomly return null or perhaps leave that until problems have been eliminated.
+    // TODO Implement this with an occasional null value. This could just randomly return null or perhaps leave that until problems have been eliminated.
     makeSimulatedRequest(s);
     return new Instance();
   }
@@ -423,7 +423,7 @@ public class ContributionJobRunner {
       log.warn("Failed to run contribution job for central server {}", centralServerId, e);
       throw e;
     } finally {
-      completeContribution(context);
+      completeContribution(context, stats);
       endContributionJobContext();
     }
   }
@@ -441,7 +441,7 @@ public class ContributionJobRunner {
       throw e;
     } finally {
       if (!isCanceled(contributionId)) {
-        completeContribution(context);
+        completeContribution(context, stats);
         runningInitialContributions.remove(contributionId);
       }
       endContributionJobContext();
@@ -452,10 +452,12 @@ public class ContributionJobRunner {
     return !Objects.equals(event.getJobId(), iterationJobId);
   }
 
-  private void completeContribution(ContributionJobContext context) {
+  private void completeContribution(ContributionJobContext context, Statistics stats) {
     try {
       contributionService.completeContribution(context.getContributionId());
       log.info("Completed contribution job {}", context);
+      log.info("Kafka messages read: {}", stats.getKafkaMessagesRead());
+      log.info("Records processed total: {}", stats.getRecordsTotal());
     } catch (Exception e) {
       log.warn("Failed to complete contribution job {}", context, e);
     }
