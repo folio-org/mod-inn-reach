@@ -5,6 +5,7 @@ import static java.lang.Math.max;
 import static org.folio.innreach.batch.contribution.ContributionJobContextManager.beginContributionJobContext;
 import static org.folio.innreach.batch.contribution.ContributionJobContextManager.endContributionJobContext;
 
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -40,10 +41,16 @@ import org.folio.innreach.dto.Instance;
 import org.folio.innreach.dto.Item;
 import org.folio.spring.FolioExecutionContext;
 
+// TODO remove after testing
+import org.folio.innreach.external.client.feign.TestClient;
+
 @Service
 @Log4j2
 @RequiredArgsConstructor
 public class ContributionJobRunner {
+
+  // TODO Remove after testing.
+  private final TestClient testClient;
 
   private static final String DE_CONTRIBUTE_INSTANCE_MSG = "De-contributing ineligible instance";
 
@@ -91,7 +98,7 @@ public class ContributionJobRunner {
           var event = readEvent(kafkaReader);
           // TODO Why return rather than continue here? What method here does return apply to? Would it exit the while? Probably not relevant though since all messages appear to be always read based on kafka offsets.
           if (event == null) {
-            log.info("Event is null, skipping, current job is");
+            log.info("Event is null, skipping"); // NOTE This log statement is null in the deployed code.
             return;
           }
           log.info("Processing instance iteration event = {}", event);
@@ -106,20 +113,18 @@ public class ContributionJobRunner {
           }
 
           // TODO Make this call the local web server used for the test. Same below.
-          var instance = simulateSynchronousHttpRequestWithSomeNullValues();
+         Instance instance = simulateLoadingInstance(stats);
 //          Instance instance = loadInstanceWithItems(instanceId);
 
           // TODO Simulate this in the data.
           if (instance == null) {
-            log.info("Instance is null, skipping");
+            log.info("Instance is null, skipping"); // NOTE this log statement doesn't exist in the deployed code.
             continue;
           }
 
-          // TODO Make multiple HTTP calls here maybe by making a feign client to call some local http endpoint.
-          simulateSynchronousHttpRequest();
-          simulateSynchronousHttpRequest();
-          simulateSynchronousHttpRequest();
-          simulateSynchronousHttpRequest();
+          // TODO Make multiple HTTP calls making a feign client to call some local http endpoint.
+          simulateContribution(stats);
+          simulateContributionItems(stats);
 //          if (isEligibleForContribution(centralServerId, instance)) {
 //            contributeInstance(centralServerId, instance, stats);
 //            contributeInstanceItems(centralServerId, instance, stats);
@@ -131,15 +136,38 @@ public class ContributionJobRunner {
     }
   }
 
-  private void simulateSynchronousHttpRequest() {
-    // TODO implement this using feign client.
+  // TODO Try to simulate the stats collection. Remove after testing.
+  private void simulateContribution(Statistics s) {
+    makeSimulatedRequest(s);
+    s.addRecordsTotal(1);
   }
 
-  private Instance simulateSynchronousHttpRequestWithSomeNullValues() {
+  private void simulateContributionItems(Statistics s) {
+    makeSimulatedRequest(s);
+    s.addRecordsTotal(1);
+    s.addRecordsContributed(10);
+  }
+
+  private void makeSimulatedRequest(Statistics s) {
+    // Simulate the try/catch around http client calls.
+    try {
+      String postBody = "somerandomstring"; // Should probably make this a random length.
+      URI testServer = URI.create("http://localhost:3000");
+      String res = testClient.makeTestRequest(testServer, postBody);
+      log.debug("Response from test server: {}", res);
+    } catch (Exception e) {
+      log.warn("Error while simulating request: {} {}", e.getMessage(), e.getStackTrace());
+    } finally {
+      // Oddly this isn't the total records processed from what I can tell. Seems to only be in finally blocks.
+      s.addRecordsProcessed(1);
+    }
+  }
+
+  private Instance simulateLoadingInstance(Statistics s) {
     // TODO Implement this with an occasional null value. THis could just randomly return null or perhaps leave that until problems have been eliminated.
-    return null;
+    makeSimulatedRequest(s);
+    return new Instance();
   }
-
 
   public void runInstanceContribution(UUID centralServerId, Instance instance) {
     log.info("Validating instance {} for contribution to central server {}", instance.getId(), centralServerId);
