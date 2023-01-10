@@ -10,6 +10,7 @@ import java.util.function.Consumer;
 
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
+import lombok.extern.log4j.Log4j2;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.TopicPartition;
@@ -25,6 +26,7 @@ import org.apache.kafka.common.serialization.Deserializer;
  * Since {@link KafkaConsumer} is not thread-safe, this reader is not thread-safe.
  * </p>
  */
+@Log4j2
 @Setter
 @RequiredArgsConstructor
 public class KafkaItemReader<K, V> implements AutoCloseable {
@@ -57,11 +59,13 @@ public class KafkaItemReader<K, V> implements AutoCloseable {
     }
 
     if (consumerRecords.hasNext()) {
+      log.info("hasNext is true");
       ConsumerRecord<K, V> rec = consumerRecords.next();
       recordProcessor.accept(rec);
       partitionOffsets.put(new TopicPartition(rec.topic(), rec.partition()), rec.offset());
       return rec.value();
     } else {
+      log.info("hasNext is false");
       return null;
     }
   }
