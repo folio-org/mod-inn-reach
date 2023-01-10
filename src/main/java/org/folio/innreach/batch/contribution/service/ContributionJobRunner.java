@@ -100,19 +100,19 @@ public class ContributionJobRunner {
 
           // TODO Why return rather than continue here? What method here does return apply to? Would it exit the while? Probably not relevant though since all messages appear to be always read based on kafka offsets.
           if (event == null) {
-            log.info("Event is null, skipping"); // NOTE This log statement is not in the deployed code.
-            return;
+            log.info("Event is null"); // NOTE This log statement is not in the deployed code.
+            //return;
           }
           log.info("Processing instance iteration event = {}", event);
 
-          var instanceId = event.getInstanceId();
-          var iterationJobId = context.getIterationJobId();
+          //var instanceId = event.getInstanceId();
+          //var iterationJobId = context.getIterationJobId();
 
           // TODO This has been the reason for some job failures, with 400k instances ~12/31 but it isn't present in _all_ job fails.
-          if (isUnknownEvent(event, iterationJobId)) {
-            log.info("Skipping unknown event, current job is {}", iterationJobId);
-            continue;
-          }
+//          if (isUnknownEvent(event, iterationJobId)) {
+//            log.info("Skipping unknown event, current job is {}", iterationJobId);
+//            continue;
+//          }
 
           // TODO Make this call the local web server used for the test. Same below.
          Instance instance = simulateLoadingInstance(stats);
@@ -152,10 +152,11 @@ public class ContributionJobRunner {
   private void makeSimulatedRequest(Statistics s) {
     // Simulate the try/catch around http client calls.
     try {
+      log.info("Making simulated request");
       String postBody = "somerandomstring"; // Should probably make this a random length.
-      URI testServer = URI.create("http://localhost:3000");
+      URI testServer = URI.create("http://localhost:8080");
       String res = testClient.makeTestRequest(testServer, postBody);
-      log.debug("Response from test server: {}", res);
+      log.info("Response from test server: {}", res);
     } catch (Exception e) {
       log.warn("Error while simulating request: {} {}", e.getMessage(), e.getStackTrace());
     } finally {
@@ -454,8 +455,8 @@ public class ContributionJobRunner {
 
   private void completeContribution(ContributionJobContext context, Statistics stats) {
     try {
-      contributionService.completeContribution(context.getContributionId());
-      log.info("Completed contribution job {}", context);
+      // TODO Comment this out for now because it wants to write to the db which we don't care about.
+      //contributionService.completeContribution(context.getContributionId());      log.info("Completed contribution job {}", context);
       log.info("Kafka messages read: {}", stats.getKafkaMessagesRead());
       log.info("Records processed total: {}", stats.getRecordsTotal());
     } catch (Exception e) {
