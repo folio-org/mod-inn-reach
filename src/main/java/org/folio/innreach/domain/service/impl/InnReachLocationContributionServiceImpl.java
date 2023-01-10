@@ -38,6 +38,7 @@ public class InnReachLocationContributionServiceImpl implements InnReachLocation
   @Override
   @Transactional(readOnly = true)
   public void contributeInnReachLocations(UUID centralServerId) {
+    log.debug("contributeInnReachLocations:: parameters centralServerId: {}", centralServerId);
     var mappedLocations = getCentralServerMappedLocations(centralServerId);
 
     var centralServerConnectionDetails = centralServerService.getCentralServerConnectionDetails(centralServerId);
@@ -46,6 +47,7 @@ public class InnReachLocationContributionServiceImpl implements InnReachLocation
   }
 
   private List<InnReachLocationDTO> getCentralServerMappedLocations(UUID centralServerId) {
+    log.debug("getCentralServerMappedLocations:: parameters centralServerId: {}", centralServerId);
     var locationMappings = fetchLocationMappings(centralServerId);
     var libraryMappings = fetchLibraryMappings(centralServerId);
 

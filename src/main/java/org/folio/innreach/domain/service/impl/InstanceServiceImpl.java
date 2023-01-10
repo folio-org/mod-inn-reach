@@ -24,6 +24,7 @@ public class InstanceServiceImpl implements InstanceService {
 
   @Override
   public InventoryInstanceDTO queryInstanceByHrid(String instanceHrid) {
+    log.debug("queryInstanceByHrid:: parameters instanceHrid: {}", instanceHrid);
     return getFirstItem(inventoryClient.queryInstanceByHrid(instanceHrid))
       .orElseThrow(() -> new IllegalArgumentException("No instance found by hrid " + instanceHrid));
   }
@@ -49,11 +50,13 @@ public class InstanceServiceImpl implements InstanceService {
 
   @Override
   public List<InventoryInstanceDTO> findInstancesByIds(Set<UUID> instanceIds, int limit) {
+    log.debug("findInstancesByIds:: parameters instanceIds: {}, limit: {}", instanceIds, limit);
     return inventoryClient.queryInstancesByIds(matchAny(instanceIds), limit).getResult();
   }
 
   @Override
   public String getAuthor(InventoryInstanceDTO instance) {
+    log.debug("getAuthor:: parameters instance: {}", instance);
     return instance.getContributors().stream()
       .filter(InventoryInstanceDTO.ContributorDTO::getPrimary)
       .map(InventoryInstanceDTO.ContributorDTO::getName)

@@ -32,25 +32,30 @@ public class ContributionCriteriaConfigurationServiceImpl implements Contributio
 
   @Override
   public ContributionCriteriaDTO createCriteria(UUID centralServerId, ContributionCriteriaDTO dto) {
+    log.debug("createCriteria:: parameters centralServerId: {}, dto: {}", centralServerId, dto);
     var entity = mapper.toEntity(dto);
     initId(entity);
     entity.setCentralServer(centralServerRef(centralServerId));
 
     var saved = repository.save(entity);
 
+    log.info("createCriteria:: result: {}", mapper.toDTO(saved));
     return mapper.toDTO(saved);
   }
 
   @Override
   @Transactional(readOnly = true)
   public ContributionCriteriaDTO getCriteria(UUID centralServerId) {
+    log.debug("getCriteria:: parameters centralServerId: {}", centralServerId);
     var criteria = findCriteria(centralServerId);
 
+    log.info("getCriteria:: result: {}", mapper.toDTO(criteria));
     return mapper.toDTO(criteria);
   }
 
   @Override
   public ContributionCriteriaDTO updateCriteria(UUID centralServerId, ContributionCriteriaDTO dto) {
+    log.debug("updateCriteria:: parameters centralServerId: {}, dto: {}", centralServerId, dto);
     var criteria = findCriteria(centralServerId);
 
     criteria.setContributeAsSystemOwnedCodeId(dto.getContributeAsSystemOwnedId());
@@ -60,25 +65,31 @@ public class ContributionCriteriaConfigurationServiceImpl implements Contributio
     merge(dto.getLocationIds(), criteria.getExcludedLocationIds(),
         criteria::addExcludedLocationId, nothing(), criteria::removeExcludedLocationId);
 
+    log.info("updateCriteria:: result: {}", mapper.toDTO(criteria));
     return mapper.toDTO(criteria);
   }
 
   @Override
   public void deleteCriteria(UUID centralServerId) {
+    log.debug("deleteCriteria:: parameters centralServerId: {}", centralServerId);
     var criteria = findCriteria(centralServerId);
     repository.delete(criteria);
+    log.info("deleteCriteria:: Criteria deleted");
   }
 
   private ContributionCriteriaConfiguration findCriteria(UUID centralServerId) {
+    log.debug("findCriteria:: parameters centralServerId: {}", centralServerId);
     return repository.findOne(exampleWithServerId(centralServerId))
         .orElseThrow(() -> new EntityNotFoundException("Contribution criteria not found: " +
             "centralServerId = " + centralServerId));
   }
 
   private static Example<ContributionCriteriaConfiguration> exampleWithServerId(UUID centralServerId) {
+    log.debug("exampleWithServerId:: parameters centralServerId: {}", centralServerId);
     var toFind = new ContributionCriteriaConfiguration();
     toFind.setCentralServer(centralServerRef(centralServerId));
 
+    log.info("exampleWithServerId:: result: {}", Example.of(toFind));
     return Example.of(toFind);
   }
 

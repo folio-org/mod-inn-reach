@@ -45,11 +45,13 @@ public class InnReachTransactionServiceImpl implements InnReachTransactionServic
 
   @Override
   public Integer countInnReachLoans(String patronId, List<UUID> loanIds) {
+    log.debug("countInnReachLoans:: parameters patronId: {}, loanIds: {}", patronId, loanIds);
     return holdRepository.countByPatronIdAndFolioLoanIdIn(patronId, loanIds);
   }
 
   @Override
   public InnReachTransactionDTO getInnReachTransaction(UUID transactionId) {
+    log.debug("getInnReachTransaction:: parameters transactionId: {}", transactionId);
     return repository.fetchOneById(transactionId)
       .map(transactionMapper::toDTO)
       .orElseThrow(() -> new EntityNotFoundException(String.format("InnReach transaction with id [%s] not found!", transactionId)));
@@ -59,15 +61,18 @@ public class InnReachTransactionServiceImpl implements InnReachTransactionServic
   @Transactional(readOnly = true)
   public InnReachTransactionsDTO getAllTransactions(Integer offset, Integer limit,
                                                     InnReachTransactionFilterParametersDTO parametersDTO) {
+    log.debug("getAllTransactions:: parameters offset: {}, limit: {}, parametersDTO: {}", offset, limit, parametersDTO);
     var parameters = parametersMapper.toEntity(parametersDTO);
     var pageRequest = new OffsetRequest(offset, limit, Sort.unsorted());
     var transactions = repository.findAll(specification.filterByParameters(parameters), pageRequest);
+    log.info("getAllTransactions:: result: {}", transactionMapper.toDTOCollection(transactions));
     return transactionMapper.toDTOCollection(transactions);
   }
 
   @Override
   @Transactional
   public void updateInnReachTransaction(UUID transactionId, InnReachTransactionDTO transactionDTO) {
+    log.debug("updateInnReachTransaction:: parameters transactionId: {}, transactionDTO: {}", transactionId, transactionDTO);
     var oldTransaction = repository.getById(transactionId);
     var newTransaction = transactionMapper.toEntity(transactionDTO);
 
@@ -78,6 +83,7 @@ public class InnReachTransactionServiceImpl implements InnReachTransactionServic
   }
 
   private void updateTransactionHold(TransactionHold newHold, TransactionHold oldHold) {
+    log.debug("updateTransactionHold:: parameters newHold: {}, oldHold: {}", newHold, oldHold);
     var oldPickupLocation = oldHold.getPickupLocation();
     var newPickupLocation = newHold.getPickupLocation();
 

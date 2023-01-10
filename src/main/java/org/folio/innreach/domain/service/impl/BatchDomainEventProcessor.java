@@ -27,6 +27,7 @@ public class BatchDomainEventProcessor {
   private final RetryTemplate retryTemplate;
 
   public <T> void process(List<DomainEvent<T>> batch, Consumer<DomainEvent<T>> recordProcessor) {
+    log.debug("process:: parameters batch: {}, recordProcessor: {}", batch, recordProcessor);
     var tenantEventsMap = batch.stream().collect(Collectors.groupingBy(DomainEvent::getTenant));
     for (var tenantEventsEntry : tenantEventsMap.entrySet()) {
       var tenantId = tenantEventsEntry.getKey();
@@ -36,12 +37,13 @@ public class BatchDomainEventProcessor {
         executionService.runTenantScoped(tenantId,
           () -> processTenantEvents(events, recordProcessor));
       } catch (ListenerExecutionFailedException | FeignException ex) {
-        log.info("Consuming this event [{}] not permitted for system user [tenantId={}]", recordProcessor, tenantId);
+        log.warn("Consuming this event [{}] not permitted for system user [tenantId={}]", recordProcessor, tenantId);
       }
     }
   }
 
   private <T> void processTenantEvents(List<DomainEvent<T>> events, Consumer<DomainEvent<T>> recordProcessor) {
+    log.debug("processTenantEvents:: parameters events: {}, recordProcessor: {}", events, recordProcessor);
     for (var event : events) {
       log.info("Processing event {}", event);
       try {

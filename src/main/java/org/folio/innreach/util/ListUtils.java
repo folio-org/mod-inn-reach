@@ -38,4 +38,8 @@ public class ListUtils {
     return toStream(source.getResult()).findFirst();
   }
 
+  public static <T> Optional<T> getLastItem(ResultList<T> source) {
+    return toStream(source.getResult()).reduce((first, last) -> last);
+  }
+
 }

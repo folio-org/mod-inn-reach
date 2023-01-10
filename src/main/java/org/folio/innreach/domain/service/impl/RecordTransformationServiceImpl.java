@@ -4,6 +4,7 @@ import static java.util.stream.Collectors.toMap;
 
 import static org.folio.innreach.domain.dto.folio.ContributionItemCirculationStatus.ON_LOAN;
 import static org.folio.innreach.util.ListUtils.getFirstItem;
+import static org.folio.innreach.util.ListUtils.getLastItem;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -72,6 +73,7 @@ public class RecordTransformationServiceImpl implements RecordTransformationServ
 
   @Override
   public BibInfo getBibInfo(UUID centralServerId, Instance instance) {
+    log.debug("getBibInfo:: parameters centralServerId: {}, instance: {}", centralServerId, instance);
     var bibId = instance.getHrid();
 
     var suppressionStatus = validationService.getSuppressionStatus(centralServerId, instance.getStatisticalCodeIds());
@@ -84,11 +86,13 @@ public class RecordTransformationServiceImpl implements RecordTransformationServ
     bibInfo.setMarc21BibFormat(MARC_BIB_FORMAT);
     bibInfo.setMarc21BibData(marc.getBase64rawContent());
     bibInfo.setItemCount(countContributionItems(centralServerId, instance.getItems()));
+    log.info("getBibInfo:: result: {}", bibInfo);
     return bibInfo;
   }
 
   @Override
   public List<BibItem> getBibItems(UUID centralServerId, List<Item> items, BiConsumer<Item, Exception> errorHandler) {
+    log.debug("getBibItems:: parameters centralServerId: {}, item: {}, errorHandler: {}", centralServerId, items, errorHandler);
     var mappings = getContributionMappings(centralServerId);
     log.info("Resolved contribution mappings: {}", mappings);
 
@@ -153,7 +157,7 @@ public class RecordTransformationServiceImpl implements RecordTransformationServ
   private Integer getDueDateTime(UUID itemId, ContributionItemCirculationStatus circulationStatus) {
     try {
       if (circulationStatus == ON_LOAN) {
-        return getFirstItem(circulationClient.queryLoansByItemId(itemId))
+        return getLastItem(circulationClient.queryLoansByItemIdAndStatus(itemId, "Open"))
           .map(LoanDTO::getDueDate)
           .map(DateHelper::toEpochSec)
           .orElse(null);
