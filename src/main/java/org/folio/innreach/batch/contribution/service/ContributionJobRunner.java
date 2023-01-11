@@ -105,7 +105,7 @@ public class ContributionJobRunner {
           var iterationJobId = context.getIterationJobId();
 
           if (event == null) {
-            log.info("Exiting kafka message reader for contribution {} and job {}", contributionId, iterationJobId); // NOTE This log statement is not in the deployed code.
+            log.info("Exiting kafka message reader for contribution {} and job {}", contributionId, iterationJobId);
             return;
           }
           log.info("Processing instance iteration event = {}", event);
@@ -130,7 +130,9 @@ public class ContributionJobRunner {
 
           // TODO Make multiple HTTP calls making a feign client to call some local http endpoint.
           simulateContribution(stats);
-          simulateContributionItems(stats);
+          //simulateContributionItems(stats);
+          // TODO These two values should be the same if no messages are dropped.
+          log.info("Test iterations: {} {}", stats.getRecordsTotal(), stats.getKafkaMessagesRead());
 //          if (isEligibleForContribution(centralServerId, instance)) {
 //            contributeInstance(centralServerId, instance, stats);
 //            contributeInstanceItems(centralServerId, instance, stats);
@@ -149,8 +151,9 @@ public class ContributionJobRunner {
   }
 
   private void simulateContributionItems(Statistics s) {
+    // For now just make this one.
     makeSimulatedRequest(s);
-    s.addRecordsTotal(10);
+    s.addRecordsTotal(1);
   }
 
   private void makeSimulatedRequest(Statistics s) {
@@ -460,7 +463,8 @@ public class ContributionJobRunner {
   private void completeContribution(ContributionJobContext context, Statistics stats) {
     try {
       // TODO Comment this out for now because it wants to write to the db which we don't care about.
-      //contributionService.completeContribution(context.getContributionId());      log.info("Completed contribution job {}", context);
+      //contributionService.completeContribution(context.getContributionId());
+      log.info("Completed contribution job {}", context);
       log.info("Kafka messages read: {}", stats.getKafkaMessagesRead());
       log.info("Records processed total: {}", stats.getRecordsTotal());
     } catch (Exception e) {

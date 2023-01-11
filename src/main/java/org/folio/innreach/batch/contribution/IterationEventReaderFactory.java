@@ -49,7 +49,7 @@ public class IterationEventReaderFactory {
     // TODO Comment back in after testing.
     //var topic = String.format("%s.%s.%s",
     //  folioEnv.getEnvironment(), tenantId, jobProperties.getReaderTopic());
-    var topic = "folio.contrib.tester.nineteen";
+    var topic = "folio.contrib.tester.26";
 
     var reader = new KafkaItemReader<>(props, topic, keyDeserializer(), valueDeserializer());
     reader.setPollTimeout(Duration.ofSeconds(jobProperties.getReaderPollTimeoutSec()));
