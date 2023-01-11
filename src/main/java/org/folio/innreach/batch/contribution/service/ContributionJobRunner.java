@@ -92,23 +92,27 @@ public class ContributionJobRunner {
     try (var kafkaReader = itemReaderFactory.createReader(context.getTenantId())) {
       kafkaReader.open();
 
-      // TODO Why call this using a BiConsumer. What is the benefit of that?
+      log.info("Opened kafka reader for contribution {} for tenant {}", contributionId, context.getTenantId());
+
+      // TODO Why call this using a BiConsumer. What is the benefit of that? Is this hiding an exception?
       run(context, (centralServerId, stats) -> {
         while (!isCanceled(contributionId)) {
-          var event = readEvent(kafkaReader);
+          InstanceIterationEvent event = readEvent(kafkaReader);
           stats.addKafkaMessagesRead(1);
 
-          // TODO Why return rather than continue here? What method here does return apply to? Would it exit the while? Probably not relevant though since all messages appear to be always read based on kafka offsets.
+          log.info("Event read");
+
+          var iterationJobId = context.getIterationJobId();
+
           if (event == null) {
-            log.info("Event is null"); // NOTE This log statement is not in the deployed code.
-            //return;
+            log.info("Exiting kafka message reader for contribution {} and job {}", contributionId, iterationJobId); // NOTE This log statement is not in the deployed code.
+            return;
           }
           log.info("Processing instance iteration event = {}", event);
 
-          //var instanceId = event.getInstanceId();
-          //var iterationJobId = context.getIterationJobId();
+          var instanceId = event.getInstanceId();
 
-          // TODO This has been the reason for some job failures, with 400k instances ~12/31 but it isn't present in _all_ job fails.
+           // TODO This has been the reason for some job failures, with 400k instances ~12/31 but it isn't present in _all_ job fails.
 //          if (isUnknownEvent(event, iterationJobId)) {
 //            log.info("Skipping unknown event, current job is {}", iterationJobId);
 //            continue;

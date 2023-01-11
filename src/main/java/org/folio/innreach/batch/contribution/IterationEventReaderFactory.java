@@ -46,9 +46,10 @@ public class IterationEventReaderFactory {
     props.putAll(kafkaProperties.buildConsumerProperties());
     props.put(GROUP_ID_CONFIG, jobProperties.getReaderGroupId());
 
+    // TODO Comment back in after testing.
     //var topic = String.format("%s.%s.%s",
     //  folioEnv.getEnvironment(), tenantId, jobProperties.getReaderTopic());
-    var topic = "folio.contrib.tester.fourteen";
+    var topic = "folio.contrib.tester.nineteen";
 
     var reader = new KafkaItemReader<>(props, topic, keyDeserializer(), valueDeserializer());
     reader.setPollTimeout(Duration.ofSeconds(jobProperties.getReaderPollTimeoutSec()));
@@ -70,6 +71,7 @@ public class IterationEventReaderFactory {
   }
 
   private static UUID getJobId(ConsumerRecord<String, InstanceIterationEvent> rec) {
+    // TODO Comment this back in after testing
     //return UUID.fromString(new String(rec.headers().lastHeader(ITERATION_JOB_ID_HEADER).value()));
     return UUID.fromString("fa34246b-86a6-4743-8d20-f368ef3242d7");
   }
