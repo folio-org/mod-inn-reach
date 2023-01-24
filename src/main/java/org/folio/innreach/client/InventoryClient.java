@@ -17,7 +17,7 @@ import org.folio.innreach.domain.dto.folio.ResultList;
 import org.folio.innreach.domain.dto.folio.inventory.InventoryInstanceDTO;
 import org.folio.innreach.domain.dto.folio.inventory.InventoryItemDTO;
 
-@FeignClient(name = "inventory", configuration = InventoryFeignClientConfig.class, decode404 = true)
+@FeignClient(name = "inventory", configuration = InventoryFeignClientConfig.class, dismiss404 = true)
 public interface InventoryClient {
 
   @GetMapping("/items?query=hrid=={hrId}")

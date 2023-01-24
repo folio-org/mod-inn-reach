@@ -1,10 +1,10 @@
 package org.folio.innreach.specification;
 
-import java.util.List;
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.Expression;
+import jakarta.persistence.criteria.Predicate;
 
-import javax.persistence.criteria.CriteriaBuilder;
-import javax.persistence.criteria.Expression;
-import javax.persistence.criteria.Predicate;
+import java.util.List;
 
 interface Condition<T extends Comparable<? super T>> {
 

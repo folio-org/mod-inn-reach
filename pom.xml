@@ -4,12 +4,12 @@
   <parent>
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-parent</artifactId>
-    <version>2.7.6</version>
+    <version>3.0.2</version>
     <relativePath />
   </parent>
   <groupId>org.folio</groupId>
   <artifactId>mod-inn-reach</artifactId>
-  <version>3.0.0-SNAPSHOT</version>
+  <version>4.0.0-SNAPSHOT</version>
   <name>mod-inn-reach</name>
   <description>Access to INN-Reach service</description>
 
@@ -22,25 +22,30 @@
 
   <properties>
     <!-- runtime dependencies -->
-    <folio-spring-base.version>5.0.3</folio-spring-base.version>
-    <spring-cloud-starter-openfeign.version>3.1.5</spring-cloud-starter-openfeign.version>
+    <folio-spring-base.version>6.0.0-SNAPSHOT</folio-spring-base.version>
+    <spring-cloud-starter-openfeign.version>4.0.0</spring-cloud-starter-openfeign.version>
     <commons-collections4.version>4.4</commons-collections4.version>
-    <mapstruct.version>1.5.1.Final</mapstruct.version>
+    <mapstruct.version>1.5.3.Final</mapstruct.version>
     <marc4j.version>2.9.2</marc4j.version>
     <coffee-boots.version>3.0.0</coffee-boots.version>
     <snakeyaml.version>1.33</snakeyaml.version>
 
     <!-- test dependencies -->
-    <testcontainers.version>1.17.2</testcontainers.version>
-    <wiremock.version>2.33.2</wiremock.version>
+    <testcontainers.version>1.17.6</testcontainers.version>
+    <wiremock.version>2.35.0</wiremock.version>
     <awaitility.version>4.2.0</awaitility.version>
-    <junit-extensions.version>2.5.0</junit-extensions.version>
+    <junit-extensions.version>2.6.0</junit-extensions.version>
     <easy-random.version>5.0.0</easy-random.version>
-    <micrometer.version>1.9.4</micrometer.version>
+    <micrometer.version>1.9.7</micrometer.version>
     <log4j2.version>2.19.0</log4j2.version>
 
     <!-- plugins -->
-    <openapi-generator.version>4.3.1</openapi-generator.version>
+    <openapi-generator.version>6.2.1</openapi-generator.version>
+    <copy-rename-maven-plugin.version>1.0.1</copy-rename-maven-plugin.version>
+    <build-helper-maven-plugin.version>3.3.0</build-helper-maven-plugin.version>
+    <maven-surefire-plugin.version>3.0.0-M7</maven-surefire-plugin.version>
+    <maven-release-plugin.version>3.0.0-M7</maven-release-plugin.version>
+    <maven-enforcer-plugin.version>3.1.0</maven-enforcer-plugin.version>
 
     <!-- other properties -->
     <java.version>17</java.version>
@@ -288,7 +293,7 @@
       <plugin>
         <groupId>com.coderplus.maven.plugins</groupId>
         <artifactId>copy-rename-maven-plugin</artifactId>
-        <version>1.0.1</version>
+        <version>${copy-rename-maven-plugin.version}</version>
         <executions>
           <execution>
             <id>rename-descriptor-outputs</id>
@@ -315,7 +320,7 @@
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>build-helper-maven-plugin</artifactId>
-        <version>3.3.0</version>
+        <version>${build-helper-maven-plugin.version}</version>
         <executions>
           <execution>
             <phase>generate-sources</phase>
@@ -360,6 +365,7 @@
                 <java8>true</java8>
                 <dateLibrary>java</dateLibrary>
                 <interfaceOnly>true</interfaceOnly>
+                <useSpringBoot3>true</useSpringBoot3>
                 <useTags>true</useTags>
               </configOptions>
             </configuration>
@@ -388,6 +394,7 @@
                 <java8>true</java8>
                 <dateLibrary>java</dateLibrary>
                 <interfaceOnly>true</interfaceOnly>
+                <useSpringBoot3>true</useSpringBoot3>
                 <useTags>true</useTags>
               </configOptions>
             </configuration>
@@ -416,6 +423,7 @@
                 <java8>true</java8>
                 <dateLibrary>java</dateLibrary>
                 <interfaceOnly>true</interfaceOnly>
+                <useSpringBoot3>true</useSpringBoot3>
                 <useTags>true</useTags>
               </configOptions>
             </configuration>
@@ -426,7 +434,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
-        <version>3.0.0-M7</version>
+        <version>${maven-surefire-plugin.version}</version>
         <configuration>
           <useSystemClassLoader>false</useSystemClassLoader>
           <argLine>@{argLine} -Dfile.encoding=UTF-8</argLine>
@@ -436,7 +444,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-release-plugin</artifactId>
-        <version>3.0.0-M6</version>
+        <version>${maven-release-plugin.version}</version>
         <configuration>
           <preparationGoals>clean verify</preparationGoals>
           <tagNameFormat>v@{project.version}</tagNameFormat>
@@ -448,7 +456,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-enforcer-plugin</artifactId>
-        <version>3.1.0</version>
+        <version>${maven-enforcer-plugin.version}</version>
         <executions>
           <execution>
             <id>enforce-maven</id>

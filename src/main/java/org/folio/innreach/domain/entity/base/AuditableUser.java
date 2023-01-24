@@ -1,8 +1,8 @@
 package org.folio.innreach.domain.entity.base;
 
-import java.util.UUID;
+import jakarta.persistence.Embeddable;
 
-import javax.persistence.Embeddable;
+import java.util.UUID;
 
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
