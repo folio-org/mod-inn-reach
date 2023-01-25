@@ -52,6 +52,7 @@ public class ContributionServiceImpl implements ContributionService {
 
   @Override
   public ContributionDTO getCurrent(UUID centralServerId) {
+    log.debug("getCurrent:: parameters centralServerId: {}", centralServerId);
     var contribution = repository.fetchCurrentByCentralServerId(centralServerId)
       .map(mapper::toDTO)
       .orElseGet(ContributionDTO::new);
@@ -59,12 +60,14 @@ public class ContributionServiceImpl implements ContributionService {
     contribution.setLocationsMappingStatus(validationService.getLocationMappingStatus(centralServerId));
     contribution.setItemTypeMappingStatus(validationService.getItemTypeMappingStatus(centralServerId));
 
+    log.info("getCurrent:: result: {}", contribution);
     return contribution;
   }
 
   @Transactional
   @Override
   public ContributionDTO completeContribution(UUID contributionId) {
+    log.debug("completeContribution:: parameters contributionId: {}", contributionId);
     var entity = fetchById(contributionId);
 
     entity.setStatus(COMPLETE);
@@ -80,13 +83,16 @@ public class ContributionServiceImpl implements ContributionService {
 
   @Override
   public ContributionsDTO getHistory(UUID centralServerId, int offset, int limit) {
+    log.debug("getHistory:: parameters centralServerId: {}, offset: {}, limit: {}", centralServerId, offset, limit);
     var page = repository.fetchHistoryByCentralServerId(centralServerId, new OffsetRequest(offset, limit));
+    log.info("getHistory:: result: {}", mapper.toDTOCollection(page));
     return mapper.toDTOCollection(page);
   }
 
   @Transactional
   @Override
   public void updateContributionStats(UUID contributionId, ContributionDTO contribution) {
+    log.debug("updateContributionStats:: parameters contributionId: {}, contribution: {}", contributionId, contribution);
     var entity = fetchById(contributionId);
 
     Long total = defaultIfNull(contribution.getRecordsTotal(), entity.getRecordsTotal());
@@ -100,6 +106,7 @@ public class ContributionServiceImpl implements ContributionService {
     entity.setRecordsContributed(contributed);
     entity.setRecordsUpdated(updated);
     entity.setRecordsDecontributed(decontributed);
+    log.info("updateContributionStats:: Contribution stats updated");
   }
 
   @Override
@@ -130,6 +137,7 @@ public class ContributionServiceImpl implements ContributionService {
 
   @Override
   public ContributionDTO createOngoingContribution(UUID centralServerId) {
+    log.debug("createOngoingContribution:: parameters centralServerId: {}", centralServerId);
     var contribution = createEmptyContribution(centralServerId);
     contribution.setOngoing(true);
 
@@ -139,6 +147,7 @@ public class ContributionServiceImpl implements ContributionService {
   @Transactional
   @Override
   public void logContributionError(UUID contributionId, ContributionErrorDTO errorDTO) {
+    log.debug("logContributionError:: parameters contributionId: {}, errorDTO: {}", contributionId, errorDTO);
     var contribution = new Contribution();
     contribution.setId(contributionId);
 
@@ -151,6 +160,7 @@ public class ContributionServiceImpl implements ContributionService {
   @Transactional
   @Override
   public void cancelCurrent(UUID centralServerId) {
+    log.debug("cancelCurrent:: parameters centralServerId: {}", centralServerId);
     repository.fetchCurrentByCentralServerId(centralServerId).ifPresent(contribution -> {
       log.info("Cancelling initial contribution for central server {}", centralServerId);
 
@@ -163,6 +173,7 @@ public class ContributionServiceImpl implements ContributionService {
   }
 
   private void runInitialContributionJob(UUID centralServerId, Contribution contribution) {
+    log.debug("runInitialContributionJob:: parameters centralServerId: {}, contribution: {}", centralServerId, contribution);
     getJobRunner().runInitialContributionAsync(centralServerId, folioContext.getTenantId(), contribution.getId(), contribution.getJobId());
   }
 
@@ -175,6 +186,7 @@ public class ContributionServiceImpl implements ContributionService {
   }
 
   private Contribution fetchById(UUID contributionId) {
+    log.debug("fetchById:: parameters contributionId: {}", contributionId);
     return repository.findById(contributionId)
       .orElseThrow(() -> new IllegalArgumentException("Contribution is not found by id: " + contributionId));
   }
@@ -184,15 +196,18 @@ public class ContributionServiceImpl implements ContributionService {
   }
 
   private JobResponse triggerInstanceIteration() {
+    log.debug("triggerInstanceIteration:: no parameter");
     var request = createInstanceIterationRequest();
 
     var iterationJob = instanceStorageClient.startInstanceIteration(request);
     Assert.isTrue(iterationJob.getStatus() == IN_PROGRESS, "Unexpected iteration job status received: " + iterationJob.getStatus());
 
+    log.info("triggerInstanceIteration:: result: {}", iterationJob);
     return iterationJob;
   }
 
   private void cancelInstanceIteration(Contribution contribution) {
+    log.debug("cancelInstanceIteration:: parameters contribution: {}", contribution);
     var iterationJobId = contribution.getJobId();
     try {
       instanceStorageClient.cancelInstanceIteration(iterationJobId);
@@ -202,6 +217,7 @@ public class ContributionServiceImpl implements ContributionService {
   }
 
   private void validateContribution(UUID centralServerId) {
+    log.debug("validateContribution:: parameters centralServerId: {}", centralServerId);
     var itemTypeMappingStatus = validationService.getItemTypeMappingStatus(centralServerId);
     Assert.isTrue(itemTypeMappingStatus == VALID, "Invalid item types mapping status");
 
@@ -210,12 +226,15 @@ public class ContributionServiceImpl implements ContributionService {
   }
 
   private InstanceIterationRequest createInstanceIterationRequest() {
+    log.debug("createInstanceIterationRequest:: no parameter");
     var request = new InstanceIterationRequest();
     request.setTopicName("inventory.instance-contribution");
+    log.info("createInstanceIterationRequest:: result: {}", request);
     return request;
   }
 
   private Contribution createEmptyContribution(UUID centralServerId) {
+    log.debug("createEmptyContribution:: parameters centralServerId: {}", centralServerId);
     var contribution = new Contribution();
     contribution.setStatus(Contribution.Status.IN_PROGRESS);
     contribution.setRecordsTotal(0L);
@@ -224,6 +243,7 @@ public class ContributionServiceImpl implements ContributionService {
     contribution.setRecordsUpdated(0L);
     contribution.setRecordsDecontributed(0L);
     contribution.setCentralServer(centralServerRef(centralServerId));
+    log.info("createEmptyContribution:: result: {}", contribution);
     return contribution;
   }
 

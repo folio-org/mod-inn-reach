@@ -54,6 +54,7 @@ public class UserServiceImpl implements UserService {
 
   @Override
   public Optional<User> getUserByBarcode(String userPublicId) {
+    log.debug("getUserByBarcode:: parameters userPublicId: {}", userPublicId);
     var users = usersClient.query(String.format("barcode==%1$s", userPublicId));
 
     return ListUtils.getFirstItem(users);
@@ -61,6 +62,7 @@ public class UserServiceImpl implements UserService {
 
   @Override
   public Optional<User> getUserByQuery(String query) {
+    log.debug("getUserByQuery:: parameters query: {}", query);
     var users = usersClient.query(query);
 
     return ListUtils.getFirstItem(users);
