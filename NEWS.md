@@ -1,3 +1,7 @@
+## v2.0.4 2023-02-17
+### Stories
+* [MODINREACH-349](https://issues.folio.org/browse/MODINREACH-349) - Align the module with API breaking changes
+
 ## v2.0.3 2022-12-13
 
 ### Stories
