@@ -22,6 +22,10 @@ spring:
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
     consumer:
       auto-offset-reset: earliest
+  cloud:
+    openfeign:
+      okhttp:
+        enabled: true
 folio:
   tenant:
     validation:

@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
@@ -205,7 +206,7 @@ public class RecordTransformationServiceImpl implements RecordTransformationServ
       validationService.getSuppressionStatus(centralServerId, fetchHoldingStatisticalCodes(item));
   }
 
-  private List<UUID> fetchHoldingStatisticalCodes(Item item) {
+  private Set<UUID> fetchHoldingStatisticalCodes(Item item) {
     return holdingsService.find(item.getHoldingsRecordId())
       .map(Holding::getStatisticalCodeIds)
       .orElse(null);

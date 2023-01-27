@@ -3,13 +3,10 @@ package org.folio.innreach.external.client.feign.config;
 import feign.Client;
 import feign.codec.ErrorDecoder;
 import feign.okhttp.OkHttpClient;
-import org.springframework.cloud.openfeign.clientconfig.OkHttpFeignConfiguration;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Import;
 
 import org.folio.innreach.external.client.feign.error.InnReachFeignErrorDecoder;
 
-@Import(OkHttpFeignConfiguration.class)
 public class InnReachFeignClientConfig {
 
   @Bean

@@ -10,7 +10,6 @@ spring:
     password: ${DB_PASSWORD:postgres}
     url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_DATABASE:db}
   jpa:
-    database-platform: org.hibernate.dialect.PostgreSQL10Dialect
     hibernate:
       ddl-auto: none
       naming:
@@ -18,7 +17,7 @@ spring:
         implicit-strategy: org.springframework.boot.orm.jpa.hibernate.SpringImplicitNamingStrategy
     properties:
       hibernate:
-        dialect: org.hibernate.dialect.PostgreSQL10Dialect
+        dialect: org.hibernate.dialect.PostgreSQLDialect
         format_sql: true
     show-sql: false
   liquibase:
@@ -55,6 +54,10 @@ spring:
     config:
       executor:
         pool-size: ${SCHEDULER_POOL_SIZE:100}
+  cloud:
+    openfeign:
+      okhttp:
+        enabled: true
 folio:
   tenant:
     validation:

@@ -36,8 +36,9 @@
     <awaitility.version>4.2.0</awaitility.version>
     <junit-extensions.version>2.6.0</junit-extensions.version>
     <easy-random.version>5.0.0</easy-random.version>
-    <micrometer.version>1.9.7</micrometer.version>
+    <micrometer.version>1.10.3</micrometer.version>
     <log4j2.version>2.19.0</log4j2.version>
+    <jetty.version>9.4.49.v20220914</jetty.version>
 
     <!-- plugins -->
     <openapi-generator.version>6.2.1</openapi-generator.version>
@@ -361,6 +362,7 @@
               <supportingFilesToGenerate>ApiUtil.java</supportingFilesToGenerate>
               <generateModelDocumentation>true</generateModelDocumentation>
               <skipIfSpecIsUnchanged>true</skipIfSpecIsUnchanged>
+              <inlineSchemaNameDefaults>arrayItemSuffix=</inlineSchemaNameDefaults>
               <configOptions>
                 <java8>true</java8>
                 <dateLibrary>java</dateLibrary>
@@ -390,6 +392,7 @@
               <supportingFilesToGenerate>ApiUtil.java</supportingFilesToGenerate>
               <generateModelDocumentation>true</generateModelDocumentation>
               <skipIfSpecIsUnchanged>true</skipIfSpecIsUnchanged>
+              <inlineSchemaNameDefaults>arrayItemSuffix=</inlineSchemaNameDefaults>
               <configOptions>
                 <java8>true</java8>
                 <dateLibrary>java</dateLibrary>
@@ -419,6 +422,7 @@
               <supportingFilesToGenerate>ApiUtil.java</supportingFilesToGenerate>
               <generateModelDocumentation>true</generateModelDocumentation>
               <skipIfSpecIsUnchanged>true</skipIfSpecIsUnchanged>
+              <inlineSchemaNameDefaults>arrayItemSuffix=</inlineSchemaNameDefaults>
               <configOptions>
                 <java8>true</java8>
                 <dateLibrary>java</dateLibrary>

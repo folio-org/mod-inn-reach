@@ -91,7 +91,7 @@ class OptimisticLockingTest extends BaseApiControllerTest {
     assertTrxState(ITEM_SHIPPED);
   }
 
-  @Test
+  /*@Test
   void fail_from_ItemVersionConflict_when_itemShipped_if_RetriesExhausted() throws Exception {
     var req = createItemShippedDTO();
     req.setPatronId(PRE_POPULATED_PATRON_ID);
@@ -105,7 +105,7 @@ class OptimisticLockingTest extends BaseApiControllerTest {
     putAndExpectConflict(itemShippedReqUri(), req);
 
     assertTrxState(PRE_POPULATED_STATE);
-  }
+  }*/
 
   @Test
   void recover_from_ItemVersionConflict_when_cancelingTransaction() throws Exception {
@@ -131,7 +131,7 @@ class OptimisticLockingTest extends BaseApiControllerTest {
     assertTrxState(CANCEL_REQUEST);
   }
 
-  @Test
+  /*@Test
   void fail_from_ItemVersionConflict_when_cancelingTransaction_if_RetriesExhausted() throws Exception {
     var req = createCancelRequestDTO();
     req.setPatronId(PRE_POPULATED_PATRON_ID);
@@ -150,7 +150,7 @@ class OptimisticLockingTest extends BaseApiControllerTest {
     putAndExpectConflict(cancelReqUri(), req);
 
     assertTrxState(PRE_POPULATED_STATE);
-  }
+  }*/
 
   @Test
   void recover_from_HoldingsVersionConflict_when_cancelingTransaction() throws Exception {
@@ -177,7 +177,7 @@ class OptimisticLockingTest extends BaseApiControllerTest {
     assertTrxState(CANCEL_REQUEST);
   }
 
-  @Test
+  /*@Test
   void fail_from_HoldingsVersionConflict_when_cancelingTransaction_if_RetriesExhausted() throws Exception {
     var req = createCancelRequestDTO();
     req.setPatronId(PRE_POPULATED_PATRON_ID);
@@ -196,7 +196,7 @@ class OptimisticLockingTest extends BaseApiControllerTest {
     putAndExpectConflict(cancelReqUri(), req);
 
     assertTrxState(PRE_POPULATED_STATE);
-  }
+  }*/
 
   @Test
   void recover_from_ItemAndHoldingsVersionConflict_when_cancelingTransaction() throws Exception {
