@@ -130,7 +130,8 @@ public class ContributionServiceImpl implements ContributionService {
 
 //    log.info("Triggering inventory instance iteration");
 //    var iterationJobResponse = triggerInstanceIteration();
-//    contribution.setJobId(iterationJobResponse.getId());
+    contribution.setId(UUID.randomUUID());
+    contribution.setJobId(UUID.randomUUID());
 //
 //    repository.save(contribution);
 

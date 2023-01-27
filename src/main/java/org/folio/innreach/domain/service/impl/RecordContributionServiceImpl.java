@@ -1,10 +1,12 @@
 package org.folio.innreach.domain.service.impl;
 
+import java.net.URI;
 import java.util.List;
 import java.util.UUID;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.folio.innreach.external.client.feign.TestClient;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.retry.support.RetryTemplate;
 import org.springframework.stereotype.Service;
@@ -36,15 +38,15 @@ public class RecordContributionServiceImpl implements RecordContributionService 
 
   @Override
   public void contributeInstance(UUID centralServerId, Instance instance) {
-    var bibId = instance.getHrid();
+//    var bibId = instance.getHrid();
+//
+//    log.info("Contributing bib {}", bibId);
+//
+//    var bib = recordTransformationService.getBibInfo(centralServerId, instance);
 
-    log.info("Contributing bib {}", bibId);
+    contributeAndVerifyBib(centralServerId, String.valueOf(UUID.randomUUID()), new BibInfo());
 
-    var bib = recordTransformationService.getBibInfo(centralServerId, instance);
-
-    contributeAndVerifyBib(centralServerId, bibId, bib);
-
-    log.info("Finished contribution of bib {}", bibId);
+//    log.info("Finished contribution of bib {}", bibId);
   }
 
   @Override
@@ -57,7 +59,7 @@ public class RecordContributionServiceImpl implements RecordContributionService 
   private void contributeAndVerifyBib(UUID centralServerId, String bibId, BibInfo bib) {
     log.info("Contributing bib {}", bibId);
     retryTemplate.execute(r -> contributeBib(centralServerId, bibId, bib));
-    retryTemplate.execute(r -> verifyBibContribution(centralServerId, bibId));
+//    retryTemplate.execute(r -> verifyBibContribution(centralServerId, bibId));
     log.info("Finished contribution of bib {}", bibId);
   }
 

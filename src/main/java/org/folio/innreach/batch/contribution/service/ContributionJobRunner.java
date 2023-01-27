@@ -6,6 +6,8 @@ import static org.folio.innreach.batch.contribution.ContributionJobContextManage
 import static org.folio.innreach.batch.contribution.ContributionJobContextManager.endContributionJobContext;
 
 import java.net.URI;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -19,6 +21,8 @@ import java.util.stream.StreamSupport;
 import com.google.common.collect.Iterables;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.folio.innreach.config.SchedulerConfig;
+import org.folio.innreach.external.exception.ServiceSuspendedException;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.retry.support.RetryTemplate;
 import org.springframework.scheduling.annotation.Async;
@@ -51,6 +55,8 @@ public class ContributionJobRunner {
 
   // TODO Remove after testing.
   private final TestClient testClient;
+
+  private final SchedulerConfig schedulerConfig;
 
   private static final String DE_CONTRIBUTE_INSTANCE_MSG = "De-contributing ineligible instance";
 
@@ -129,12 +135,12 @@ public class ContributionJobRunner {
           }
 
           // TODO Make multiple HTTP calls making a feign client to call some local http endpoint.
-          simulateContribution(stats);
+//          simulateContribution(stats);
           //simulateContributionItems(stats);
           // TODO These two values should be the same if no messages are dropped.
           log.info("Test iterations: {} {}", stats.getRecordsTotal(), stats.getKafkaMessagesRead());
 //          if (isEligibleForContribution(centralServerId, instance)) {
-//            contributeInstance(centralServerId, instance, stats);
+            contributeInstance(centralServerId, instance, stats);
 //            contributeInstanceItems(centralServerId, instance, stats);
 //          } else if (isContributed(centralServerId, instance)) {
 //            deContributeInstance(centralServerId, instance, stats);
@@ -147,7 +153,7 @@ public class ContributionJobRunner {
   // TODO Try to simulate the stats collection. Remove after testing.
   private void simulateContribution(Statistics s) {
     makeSimulatedRequest(s);
-    s.addRecordsTotal(1);
+//    s.addRecordsTotal(1);
   }
 
   private void simulateContributionItems(Statistics s) {
@@ -158,22 +164,28 @@ public class ContributionJobRunner {
 
   private void makeSimulatedRequest(Statistics s) {
     // Simulate the try/catch around http client calls.
-    try {
-      log.info("Making simulated request");
-      String postBody = "somerandomstring"; // Should probably make this a random length.
-      URI testServer = URI.create("http://localhost:8080");
-      String res = testClient.makeTestRequest(testServer, postBody);
-      log.info("Response from test server: {}", res);
-    } catch (Exception e) {
-      log.warn("Error while simulating request: {} {}", e.getMessage(), e.getStackTrace());
-    } finally {
-      s.addRecordsProcessed(1);
-    }
+    log.info("Making simulated request");
+    String postBody = "somerandomstring"; // Should probably make this a random length.
+    URI testServer = URI.create("http://localhost:3001");
+    String res = testClient.makeTestRequest(testServer, postBody);
+    log.info("Response from test server: {}", res);
+    s.addRecordsProcessed(1);
+//    try {
+//      log.info("Making simulated request");
+//      String postBody = "somerandomstring"; // Should probably make this a random length.
+//      URI testServer = URI.create("http://localhost:3001");
+//      String res = testClient.makeTestRequest(testServer, postBody);
+//      log.info("Response from test server: {}", res);
+//    } catch (Exception e) {
+//      log.warn("Error while simulating request: {} {}", e.getMessage(), e.getStackTrace());
+//    } finally {
+//      s.addRecordsProcessed(1);
+//    }
   }
 
   private Instance simulateLoadingInstance(Statistics s) {
     // TODO Implement this with an occasional null value. This could just randomly return null or perhaps leave that until problems have been eliminated.
-    makeSimulatedRequest(s);
+//    makeSimulatedRequest(s);
     return new Instance();
   }
 
@@ -379,12 +391,16 @@ public class ContributionJobRunner {
     try {
       stats.addRecordsTotal(1);
       recordContributionService.contributeInstance(centralServerId, instance);
+//      simulateContribution(stats);
       stats.addRecordsContributed(1);
-    } catch (Exception e) {
+    } catch (ServiceSuspendedException ex) {
+      throw new ServiceSuspendedException(ex.getMessage());
+    }
+    catch (Exception e) {
       instanceExceptionListener.logWriteError(e, instance.getId());
     } finally {
       stats.addRecordsProcessed(1);
-      updateStats(stats);
+//      updateStats(stats);
     }
   }
 
@@ -444,7 +460,16 @@ public class ContributionJobRunner {
       runningInitialContributions.add(contributionId);
       beginContributionJobContext(context);
       processor.accept(centralServerId, stats);
-    } catch (Exception e) {
+    } catch (ServiceSuspendedException ex) {
+      schedulerConfig.taskScheduler().schedule(
+        () -> {
+          contributionService.startInitialContribution(context.getCentralServerId());
+        },
+        Instant.now().plus(30, ChronoUnit.SECONDS)
+      );
+      log.info(ex.getMessage());
+    }
+    catch (Exception e) {
       log.warn("Failed to run contribution job for central server {}", centralServerId, e);
       throw e;
     } finally {

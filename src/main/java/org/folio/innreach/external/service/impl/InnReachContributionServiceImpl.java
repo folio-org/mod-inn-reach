@@ -9,6 +9,7 @@ import java.util.UUID;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.folio.innreach.external.client.feign.TestClient;
 import org.springframework.stereotype.Service;
 
 import org.folio.innreach.domain.dto.CentralServerConnectionDetailsDTO;
@@ -29,19 +30,27 @@ public class InnReachContributionServiceImpl implements InnReachContributionServ
   private final InnReachAuthExternalService innReachAuthExternalService;
   private final CentralServerService centralServerService;
 
+  private final TestClient testClient;
+
   @Override
   public InnReachResponse contributeBib(UUID centralServerId, String bibId, BibInfo bib) {
     log.debug("contributeBib:: parameters centralServerId: {}, bibId: {}, bib: {}", centralServerId, bibId, bib);
-    var connectionDetails = getConnectionDetails(centralServerId);
+//    var connectionDetails = getConnectionDetails(centralServerId);
+//
+//    var accessTokenDTO = innReachAuthExternalService.getAccessToken(connectionDetails);
+//    var connectionUrl = URI.create(connectionDetails.getConnectionUrl());
+//    var authorizationHeader = buildBearerAuthHeader(accessTokenDTO.getAccessToken());
+//    var localCode = connectionDetails.getLocalCode();
+//    var centralCode = connectionDetails.getCentralCode();
 
-    var accessTokenDTO = innReachAuthExternalService.getAccessToken(connectionDetails);
-    var connectionUrl = URI.create(connectionDetails.getConnectionUrl());
-    var authorizationHeader = buildBearerAuthHeader(accessTokenDTO.getAccessToken());
-    var localCode = connectionDetails.getLocalCode();
-    var centralCode = connectionDetails.getCentralCode();
+    String postBody = "somerandomstring"; // Should probably make this a random length.
+    URI testServer = URI.create("http://localhost:3001");
+    var response = testClient.makeTestRequest2(testServer, postBody);
 
-    return contributionClient.contributeBib(connectionUrl, authorizationHeader, localCode,
-      centralCode, bibId, bib);
+//    return contributionClient.contributeBib(connectionUrl, authorizationHeader, localCode,
+//      centralCode, bibId, bib);
+
+    return testClient.makeTestRequest2(testServer, postBody);
   }
 
   @Override
