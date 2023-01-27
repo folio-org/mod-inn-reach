@@ -1,0 +1,13 @@
+{
+  "id": "52ce1f59-a183-4b67-b054-3d6cc15be1af",
+  "module": "CHECKOUT",
+  "configName": "other_settings",
+  "enabled": true,
+  "value": "{\"audioAlertsEnabled\":false,\"audioTheme\":\"classic\",\"checkoutTimeout\":false,\"checkoutTimeoutDuration\":3,\"prefPatronIdentifier\":\"barcode,customFields.visiblePatronId,customFields.textArea,customFields.timSpecial\",\"useCustomFieldsAsIdentifiers\":false,\"wildcardLookupEnabled\":false}",
+  "metadata": {
+    "createdDate": "2022-01-12T13:44:08.424+00:00",
+    "createdByUserId": "8e75dcb2-db5f-53a7-a09e-7084c47b7ece",
+    "updatedDate": "2022-10-06T18:12:37.726+00:00",
+    "updatedByUserId": "8e75dcb2-db5f-53a7-a09e-7084c47b7ece"
+  }
+}

@@ -7,7 +7,12 @@
   "indexTitle": "Water resources of East Feliciana Parish, Louisiana",
   "alternativeTitles": [],
   "editions": [],
-  "series": [],
+  "series": [
+    {
+      "value": "Series-1",
+      "authorityId": "7e591197-f335-4afb-bc6d-a6d76ca3race"
+    }
+  ],
   "identifiers": [
     {
       "value": "intracking1d2ir",
@@ -21,7 +26,12 @@
       "primary": true
     }
   ],
-  "subjects": [],
+  "subjects": [
+    {
+      "value": "Series-1",
+      "authorityId": "7e591197-f335-4afb-bc6d-a6d76ca3race"
+    }
+  ],
   "classifications": [],
   "publication": [],
   "publicationFrequency": [],

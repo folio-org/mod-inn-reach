@@ -2,7 +2,6 @@ package org.folio.innreach.domain.service.impl;
 
 import static java.lang.String.format;
 import static java.util.Optional.ofNullable;
-
 import static org.folio.innreach.domain.dto.folio.circulation.RequestDTO.RequestStatus.CLOSED_CANCELLED;
 import static org.folio.innreach.domain.dto.folio.circulation.RequestDTO.RequestStatus.OPEN_NOT_YET_FILLED;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.BORROWER_RENEW;
@@ -34,25 +33,9 @@ import static org.folio.innreach.util.InnReachTransactionUtils.clearCentralPatro
 import static org.folio.innreach.util.InnReachTransactionUtils.clearPatronAndItemInfo;
 import static org.folio.innreach.util.InnReachTransactionUtils.verifyState;
 
-
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.Date;
-import java.util.EnumSet;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.UUID;
-
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.StringUtils;
-import org.folio.innreach.domain.service.*;
-import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.Assert;
-
 import org.folio.innreach.domain.dto.folio.circulation.RequestDTO;
 import org.folio.innreach.domain.dto.folio.inventory.InventoryInstanceDTO;
 import org.folio.innreach.domain.dto.folio.inventory.InventoryItemDTO;
@@ -64,6 +47,14 @@ import org.folio.innreach.domain.event.CancelRequestEvent;
 import org.folio.innreach.domain.event.MoveRequestEvent;
 import org.folio.innreach.domain.event.RecallRequestEvent;
 import org.folio.innreach.domain.exception.EntityNotFoundException;
+import org.folio.innreach.domain.service.InnReachRecallUserService;
+import org.folio.innreach.domain.service.InnReachTransactionActionService;
+import org.folio.innreach.domain.service.InstanceService;
+import org.folio.innreach.domain.service.ItemService;
+import org.folio.innreach.domain.service.LoanService;
+import org.folio.innreach.domain.service.PatronHoldService;
+import org.folio.innreach.domain.service.RequestService;
+import org.folio.innreach.domain.service.VirtualRecordService;
 import org.folio.innreach.dto.CancelTransactionHoldDTO;
 import org.folio.innreach.dto.CheckInDTO;
 import org.folio.innreach.dto.InnReachTransactionDTO;
@@ -75,7 +66,19 @@ import org.folio.innreach.dto.TransactionCheckOutResponseDTO;
 import org.folio.innreach.mapper.InnReachTransactionMapper;
 import org.folio.innreach.repository.InnReachTransactionRepository;
 import org.folio.innreach.util.DateHelper;
-import org.folio.innreach.util.InnReachTransactionUtils;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.Assert;
+
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.Date;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.UUID;
 
 @Log4j2
 @Transactional
