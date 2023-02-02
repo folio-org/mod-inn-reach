@@ -120,7 +120,7 @@ public class BaseApiControllerTest {
   }
 
   @AfterEach
-  void tearDown() {
+  protected void tearDown() {
     wm.resetAll();
   }
 

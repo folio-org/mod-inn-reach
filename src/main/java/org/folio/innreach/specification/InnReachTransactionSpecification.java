@@ -24,7 +24,6 @@ import org.folio.innreach.domain.entity.InnReachTransaction;
 import org.folio.innreach.domain.entity.InnReachTransactionFilterParameters;
 import org.folio.innreach.domain.entity.InnReachTransactionFilterParameters.SortBy;
 import org.folio.innreach.domain.entity.InnReachTransactionFilterParameters.SortOrder;
-import org.folio.innreach.domain.entity.TransactionPatronHold;
 
 @Component
 public class InnReachTransactionSpecification {
@@ -45,7 +44,6 @@ public class InnReachTransactionSpecification {
     return (transaction, cq, cb) -> {
       var isRequestTooLongReport = parameters.isRequestedTooLong();
       var hold = transaction.join("hold");
-      var patronHold = cb.treat(hold, TransactionPatronHold.class);
 
       var typeIs = isOfType(cb, transaction, parameters);
       var stateIs = isOfState(cb, transaction, parameters);
@@ -55,7 +53,7 @@ public class InnReachTransactionSpecification {
       var patronTypeIn = patronTypeIn(cb, hold, parameters);
       var patronNameIn = patronNameIn(cb, hold, parameters);
       var centralItemTypeIn = centralItemTypeIn(cb, hold, parameters);
-      var itemBarcodeIn = itemBarcodeIn(cb, transaction, hold, patronHold, parameters);
+      var itemBarcodeIn = itemBarcodeIn(cb, transaction, hold, parameters);
 
       var odtConditionFactory = new ConditionFactory<OffsetDateTime>(cb);
 
@@ -171,7 +169,6 @@ public class InnReachTransactionSpecification {
   static Predicate itemBarcodeIn(CriteriaBuilder cb,
                                  Root<InnReachTransaction> transaction,
                                  Join<Object, Object> hold,
-                                 Join<Object, TransactionPatronHold> patronHold,
                                  InnReachTransactionFilterParameters parameters) {
     var itemBarcodes = parameters.getItemBarcodes();
     if (isEmpty(itemBarcodes)) {
@@ -180,7 +177,7 @@ public class InnReachTransactionSpecification {
 
     var shippedItemBarcodePredicate = cb.and(
       cb.equal(transaction.get("type"), PATRON),
-      patronHold.get("shippedItemBarcode").in(itemBarcodes)
+      hold.get("shippedItemBarcode").in(itemBarcodes)
     );
 
     var folioItemBarcodePredicate = cb.and(

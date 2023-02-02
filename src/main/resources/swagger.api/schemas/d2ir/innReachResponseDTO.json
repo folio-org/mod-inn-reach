@@ -2,9 +2,7 @@
   "$schema": "http://json-schema.org/draft-04/schema#",
   "description": "D2IR response",
   "type": "object",
-  "discriminator": {
-    "propertyName": "responseType"
-  },
+  "x-implements": "org.folio.innreach.domain.dto.InnReachResponseData",
   "properties": {
     "status": {
       "description": "Status",
@@ -20,17 +18,12 @@
       "items": {
         "$ref": "innReachError.json"
       }
-    },
-    "responseType": {
-      "description": "response dto type",
-      "type": "string"
     }
   },
   "additionalProperties": false,
   "required": [
     "status",
     "reason",
-    "errors",
-    "responseType"
+    "errors"
   ]
 }

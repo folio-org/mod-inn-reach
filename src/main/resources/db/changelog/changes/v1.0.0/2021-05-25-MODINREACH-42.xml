@@ -5,14 +5,14 @@
                     http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.4.xsd">
 
   <changeSet id="2021-05-25-01__create_contribution_criteria_configuration_table" author="andrii.shapovalov">
-    <sqlFile path="sql/2021-05-25-01__create_contribution_criteria_configuration_table.sql" relativeToChangelogFile="true"/>
+    <sqlFile path="v1.0.0/sql/2021-05-25-01__create_contribution_criteria_configuration_table.sql" relativeToChangelogFile="true"/>
   </changeSet>
 
   <changeSet id="2021-05-25-02__create_contribution_criteria_excluded_location_table" author="andrii.shapovalov">
-    <sqlFile path="sql/2021-05-25-02__create_contribution_criteria_excluded_location_table.sql" relativeToChangelogFile="true"/>
+    <sqlFile path="v1.0.0/sql/2021-05-25-02__create_contribution_criteria_excluded_location_table.sql" relativeToChangelogFile="true"/>
   </changeSet>
 
   <changeSet id="2021-05-25-03__statistical_code_behavior_table" author="andrii.shapovalov">
-    <sqlFile path="sql/2021-05-25-03__create_statistical_code_behavior_table.sql" relativeToChangelogFile="true"/>
+    <sqlFile path="v1.0.0/sql/2021-05-25-03__create_statistical_code_behavior_table.sql" relativeToChangelogFile="true"/>
   </changeSet>
 </databaseChangeLog>

@@ -7,6 +7,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TEST_METHOD;
@@ -23,6 +24,7 @@ import java.time.Instant;
 import java.util.Map;
 import java.util.UUID;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
@@ -124,6 +126,12 @@ class CirculationApiTest extends BaseApiControllerTest {
 
   @Captor
   ArgumentCaptor<RequestDTO> requestDtoCaptor;
+
+  @AfterEach
+  protected void tearDown() {
+    super.tearDown();
+    reset(repository, circulationClient, requestService, holdingsService);
+  }
 
   @Test
   @Sql(scripts = {
@@ -339,6 +347,7 @@ class CirculationApiTest extends BaseApiControllerTest {
     assertEquals(PAGE_REQUEST_TYPE, requestDTO.getRequestType());
     assertEquals(FOLIO_PATRON_ID, requestDTO.getRequesterId());
     assertEquals(SERVICE_POINT_ID, requestDTO.getPickupServicePointId().toString());
+    //Mockito.reset(/*circulationClient*/);
   }
 
 }

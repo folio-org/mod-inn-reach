@@ -5,6 +5,7 @@
       "$ref": "innReachResponseDTO.json"
     }
   ],
+  "x-implements": "org.folio.innreach.domain.dto.InnReachResponseData",
   "description": "D2IR central item types response",
   "type": "object",
   "properties": {

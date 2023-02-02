@@ -5,7 +5,6 @@ spring:
     name: mod-inn-reach
   datasource:
     # to boot up application despite of any DB connection issues
-    continue-on-error: true
     username: ${DB_USERNAME:postgres}
     password: ${DB_PASSWORD:postgres}
     url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_DATABASE:db}
@@ -13,7 +12,7 @@ spring:
     hibernate:
       ddl-auto: none
       naming:
-        physical-strategy: org.springframework.boot.orm.jpa.hibernate.SpringPhysicalNamingStrategy
+        physical-strategy: org.hibernate.boot.model.naming.CamelCaseToUnderscoresNamingStrategy
         implicit-strategy: org.springframework.boot.orm.jpa.hibernate.SpringImplicitNamingStrategy
     properties:
       hibernate:
@@ -44,12 +43,6 @@ spring:
       key-store-location: ${KAFKA_SSL_KEYSTORE_LOCATION:}
       trust-store-password: ${KAFKA_SSL_TRUSTSTORE_PASSWORD:}
       trust-store-location: ${KAFKA_SSL_TRUSTSTORE_LOCATION:}
-  batch:
-    job:
-      enabled: false
-    initializer:
-      enabled: false
-    enable-auto-commit: true
   async:
     config:
       executor:
@@ -58,6 +51,9 @@ spring:
     openfeign:
       okhttp:
         enabled: true
+  sql:
+    init:
+      continue-on-error: true
 folio:
   tenant:
     validation:

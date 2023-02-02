@@ -110,7 +110,8 @@ class InnReachLocationRepositoryTest extends BaseRepositoryTest {
     newLocation.setCode(location.getCode());
 
     var ex = assertThrows(DataIntegrityViolationException.class, () -> locationRepository.saveAndFlush(newLocation));
-    assertThat(ex.getMessage(), containsString("ConstraintViolationException"));
+    assertThat(ex.getMessage(), containsString("could not execute statement; SQL [n/a];" +
+      " constraint [inn_reach_location_code_key]"));
   }
 
 }

@@ -5,45 +5,45 @@
                     http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.4.xsd">
 
   <changeSet id="2021-07-09-01__alter-local-agency-table" author="oliinyko">
-    <sqlFile path="sql/2021-07-09-01__alter-local-agency-table.sql" relativeToChangelogFile="true"/>
+    <sqlFile path="v1.0.0/sql/2021-07-09-01__alter-local-agency-table.sql" relativeToChangelogFile="true"/>
   </changeSet>
 
   <changeSet id="2021-07-09-02__alter-location-mapping-table" author="oliinyko">
-    <sqlFile path="sql/2021-07-09-02__alter-location-mapping-table.sql" relativeToChangelogFile="true"/>
+    <sqlFile path="v1.0.0/sql/2021-07-09-02__alter-location-mapping-table.sql" relativeToChangelogFile="true"/>
   </changeSet>
 
   <changeSet id="2021-07-09-03__alter-folio-library-table" author="oliinyko">
-    <sqlFile path="sql/2021-07-09-03__alter-folio-library-table.sql" relativeToChangelogFile="true"/>
+    <sqlFile path="v1.0.0/sql/2021-07-09-03__alter-folio-library-table.sql" relativeToChangelogFile="true"/>
   </changeSet>
 
   <changeSet id="2021-07-09-04__alter-central-server-credentials-table" author="oliinyko">
-    <sqlFile path="sql/2021-07-09-04__alter-central-server-credentials-table.sql" relativeToChangelogFile="true"/>
+    <sqlFile path="v1.0.0/sql/2021-07-09-04__alter-central-server-credentials-table.sql" relativeToChangelogFile="true"/>
   </changeSet>
 
   <changeSet id="2021-07-09-05__alter-library-mapping-table" author="oliinyko">
-    <sqlFile path="sql/2021-07-09-05__alter-library-mapping-table.sql" relativeToChangelogFile="true"/>
+    <sqlFile path="v1.0.0/sql/2021-07-09-05__alter-library-mapping-table.sql" relativeToChangelogFile="true"/>
   </changeSet>
 
   <changeSet id="2021-07-09-06__alter-local-server-credentials-table" author="oliinyko">
-    <sqlFile path="sql/2021-07-09-06__alter-local-server-credentials-table.sql" relativeToChangelogFile="true"/>
+    <sqlFile path="v1.0.0/sql/2021-07-09-06__alter-local-server-credentials-table.sql" relativeToChangelogFile="true"/>
   </changeSet>
 
   <changeSet id="2021-07-09-07__alter-contribution-criteria-configuration-table" author="oliinyko">
-    <sqlFile path="sql/2021-07-09-07__alter-contribution-criteria-configuration-table.sql"
+    <sqlFile path="v1.0.0/sql/2021-07-09-07__alter-contribution-criteria-configuration-table.sql"
              relativeToChangelogFile="true"/>
   </changeSet>
 
   <changeSet id="2021-07-09-08__alter-contribution-criteria-excluded-location-table" author="oliinyko">
-    <sqlFile path="sql/2021-07-09-08__alter-contribution-criteria-excluded-location-table.sql"
+    <sqlFile path="v1.0.0/sql/2021-07-09-08__alter-contribution-criteria-excluded-location-table.sql"
              relativeToChangelogFile="true"/>
   </changeSet>
 
   <changeSet id="2021-07-09-09__alter-statistical-code-behavior-table" author="oliinyko">
-    <sqlFile path="sql/2021-07-09-09__alter-statistical-code-behavior-table.sql" relativeToChangelogFile="true"/>
+    <sqlFile path="v1.0.0/sql/2021-07-09-09__alter-statistical-code-behavior-table.sql" relativeToChangelogFile="true"/>
   </changeSet>
 
   <changeSet id="2021-07-09-10__alter-material-type-mapping-table" author="oliinyko">
-    <sqlFile path="sql/2021-07-09-10__alter-material-type-mapping-table.sql" relativeToChangelogFile="true"/>
+    <sqlFile path="v1.0.0/sql/2021-07-09-10__alter-material-type-mapping-table.sql" relativeToChangelogFile="true"/>
   </changeSet>
 
 </databaseChangeLog>
