@@ -347,7 +347,6 @@ class CirculationApiTest extends BaseApiControllerTest {
     assertEquals(PAGE_REQUEST_TYPE, requestDTO.getRequestType());
     assertEquals(FOLIO_PATRON_ID, requestDTO.getRequesterId());
     assertEquals(SERVICE_POINT_ID, requestDTO.getPickupServicePointId().toString());
-    //Mockito.reset(/*circulationClient*/);
   }
 
 }
