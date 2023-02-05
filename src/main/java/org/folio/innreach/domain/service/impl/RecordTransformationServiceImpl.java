@@ -3,7 +3,6 @@ package org.folio.innreach.domain.service.impl;
 import static java.util.stream.Collectors.toMap;
 
 import static org.folio.innreach.domain.dto.folio.ContributionItemCirculationStatus.ON_LOAN;
-import static org.folio.innreach.util.ListUtils.getFirstItem;
 import static org.folio.innreach.util.ListUtils.getLastItem;
 
 import java.util.Collection;
@@ -15,7 +14,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.BiConsumer;
-import java.util.stream.Collectors;
 
 import lombok.Builder;
 import lombok.RequiredArgsConstructor;
@@ -100,7 +98,7 @@ public class RecordTransformationServiceImpl implements RecordTransformationServ
     return items.stream()
       .map(item -> convertItem(centralServerId, item, mappings, errorHandler))
       .filter(Objects::nonNull)
-      .collect(Collectors.toList());
+      .toList();
   }
 
   private BibItem convertItem(UUID centralServerId, Item item, ContributionMappings mappings, BiConsumer<Item, Exception> errorHandler) {

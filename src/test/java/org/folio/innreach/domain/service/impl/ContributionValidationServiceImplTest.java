@@ -307,7 +307,9 @@ class ContributionValidationServiceImplTest {
     for (int i = 0; i < 3; i++) {
       statisticalCodeIds.add(UUID.randomUUID());
     }
-    assertThatThrownBy(() -> service.getSuppressionStatus(UUID.randomUUID(), statisticalCodeIds))
+
+    UUID centralServerId = UUID.randomUUID();
+    assertThatThrownBy(() -> service.getSuppressionStatus(centralServerId, statisticalCodeIds))
       .isInstanceOf(IllegalArgumentException.class)
       .hasMessageContaining("Multiple statistical codes defined");
   }

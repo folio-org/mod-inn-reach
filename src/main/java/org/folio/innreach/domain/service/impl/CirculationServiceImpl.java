@@ -93,6 +93,8 @@ import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.util.Assert;
 
 import jakarta.persistence.EntityExistsException;
+
+import java.time.Instant;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
@@ -488,7 +490,7 @@ public class CirculationServiceImpl implements CirculationService {
             () -> virtualRecordService.deleteVirtualRecords(folioItemId, folioHoldingId,
                     folioInstanceId, folioLoanId));
 
-    taskExecutor.schedule(task, new Date(System.currentTimeMillis() + checkOutTimeDuration));
+    taskExecutor.schedule(task, Instant.now().plusMillis(checkOutTimeDuration));
   }
 
   @Override

@@ -12,7 +12,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -110,7 +109,7 @@ public class CentralServerConfigurationServiceImpl implements CentralServerConfi
         .filter(this::successfulResponse)
         .map(responseToRecordsMapper)
         .filter(Objects::nonNull)
-        .collect(Collectors.toList());
+        .toList();
   }
 
   private <Rec, CSResp extends InnReachResponseData> Rec loadRecordPerServer(String uri,
