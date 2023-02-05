@@ -205,14 +205,10 @@ public class InnReachTransactionSpecification {
   }
 
   private static Expression<InnReachTransaction> getField(Root<InnReachTransaction> root, SortBy sort) {
-    Expression<InnReachTransaction> expression;
-    switch (sort) {
-      case TRANSACTION_TYPE, TRANSACTION_STATUS, DATE_CREATED, DATE_MODIFIED:
-        expression = root.get(sort.getValue());
-        break;
-      default:
-        expression = root.get("hold").get(sort.getValue());
-    }
+    Expression<InnReachTransaction> expression = switch (sort) {
+      case TRANSACTION_TYPE, TRANSACTION_STATUS, DATE_CREATED, DATE_MODIFIED -> root.get(sort.getValue());
+      default -> root.get("hold").get(sort.getValue());
+    };
     return expression;
   }
 

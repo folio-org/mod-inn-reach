@@ -98,8 +98,8 @@ public class CentralServerConfigurationServiceImpl implements CentralServerConfi
       resp -> emptyIfNull(resp.getRight().getLocalServerList()), centralServerId);
   }
 
-  private <Rec, CSResp extends InnReachResponseData> List<Rec> loadRecordsPerServer(String uri,
-      Class<CSResp> centralServerRecordType, Function<Pair<CentralServerDTO, CSResp>, Rec> responseToRecordsMapper) {
+  private <T, U extends InnReachResponseData> List<T> loadRecordsPerServer(String uri,
+      Class<U> centralServerRecordType, Function<Pair<CentralServerDTO, U>, T> responseToRecordsMapper) {
 
     log.debug("loadRecordsPerServer:: parameters uri: {}, centralRecordType: {}, responseToRecordsMapper: {}", uri, centralServerRecordType, responseToRecordsMapper);
     var servers = centralServerService.getAllCentralServers(0, Integer.MAX_VALUE).getCentralServers();
@@ -112,9 +112,9 @@ public class CentralServerConfigurationServiceImpl implements CentralServerConfi
         .toList();
   }
 
-  private <Rec, CSResp extends InnReachResponseData> Rec loadRecordPerServer(String uri,
-    Class<CSResp> centralServerRecordType,
-    Function<Pair<CentralServerDTO, CSResp>, Rec> responseToRecordsMapper,
+  private <T, U extends InnReachResponseData> T loadRecordPerServer(String uri,
+    Class<U> centralServerRecordType,
+    Function<Pair<CentralServerDTO, U>, T> responseToRecordsMapper,
     UUID centralServerId) {
 
     log.debug("loadRecordPerServer:: parameters uri: {}, centralServerRecordType: {}, responseToRecordsMapper: {}, centralServerId: {}", uri, centralServerRecordType, responseToRecordsMapper, centralServerId);
@@ -162,8 +162,8 @@ public class CentralServerConfigurationServiceImpl implements CentralServerConfi
     return isNotEmpty(ptList) ? createPatronTypes(cs, ptList) : null;
   }
 
-  private <CSResp extends InnReachResponseData> Function<CentralServerDTO, Pair<CentralServerDTO, CSResp>> retrieveAllConfigRecords(
-      String uri, Class<CSResp> recordType) {
+  private <T extends InnReachResponseData> Function<CentralServerDTO, Pair<CentralServerDTO, T>> retrieveAllConfigRecords(
+      String uri, Class<T> recordType) {
     log.debug("retrieveAllConfigRecords:: parameters uri: {}, recordType: {}", uri, recordType);
     return centralServer -> {
       log.info("Retrieving {} from central server: code = {}", recordType.getSimpleName(),
@@ -182,8 +182,8 @@ public class CentralServerConfigurationServiceImpl implements CentralServerConfi
     };
   }
 
-  private <CSResp extends InnReachResponseData> boolean successfulResponse(
-      Pair<CentralServerDTO, CSResp> centralServerWithResponse) {
+  private <T extends InnReachResponseData> boolean successfulResponse(
+      Pair<CentralServerDTO, T> centralServerWithResponse) {
     var cs = centralServerWithResponse.getLeft();
     var resp = centralServerWithResponse.getRight();
 
