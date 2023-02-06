@@ -13,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.common.serialization.Deserializer;
 import org.apache.kafka.common.serialization.StringDeserializer;
+import org.folio.innreach.util.KafkaUtil;
 import org.springframework.boot.autoconfigure.kafka.KafkaProperties;
 import org.springframework.kafka.support.serializer.JsonDeserializer;
 import org.springframework.stereotype.Component;
@@ -49,7 +50,7 @@ public class IterationEventReaderFactory {
     // TODO Comment back in after testing.
     //var topic = String.format("%s.%s.%s",
     //  folioEnv.getEnvironment(), tenantId, jobProperties.getReaderTopic());
-    var topic = "folio.contrib.tester.26";
+    var topic = "folio.contrib.tester.innreach";
 
     var reader = new KafkaItemReader<>(props, topic, keyDeserializer(), valueDeserializer());
     reader.setPollTimeout(Duration.ofSeconds(jobProperties.getReaderPollTimeoutSec()));
@@ -74,6 +75,15 @@ public class IterationEventReaderFactory {
     // TODO Comment this back in after testing
     //return UUID.fromString(new String(rec.headers().lastHeader(ITERATION_JOB_ID_HEADER).value()));
     return UUID.fromString("fa34246b-86a6-4743-8d20-f368ef3242d7");
+  }
+
+  public KafkaUtil createKafkaConsumer() {
+
+    var consumerProperties = kafkaProperties.buildConsumerProperties();
+    consumerProperties.put(GROUP_ID_CONFIG, jobProperties.getReaderGroupId());
+
+    var topic = "folio.contrib.tester.innreach";
+    return new KafkaUtil(consumerProperties,topic,keyDeserializer(),valueDeserializer());
   }
 
 }

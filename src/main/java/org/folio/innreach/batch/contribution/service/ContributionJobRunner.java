@@ -19,6 +19,7 @@ import java.util.stream.StreamSupport;
 import com.google.common.collect.Iterables;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.folio.innreach.util.KafkaUtil;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.retry.support.RetryTemplate;
 import org.springframework.scheduling.annotation.Async;
@@ -71,8 +72,8 @@ public class ContributionJobRunner {
 
   private static final List<UUID> runningInitialContributions = Collections.synchronizedList(new ArrayList<>());
 
-  @Async
-  public Future<Void> runInitialContributionAsync(UUID centralServerId, String tenantId, UUID contributionId, UUID iterationJobId) {
+  //@Async
+  public void runInitialContributionAsync(UUID centralServerId, String tenantId, UUID contributionId, UUID iterationJobId) {
     var context = ContributionJobContext.builder()
       .contributionId(contributionId)
       .iterationJobId(iterationJobId)
@@ -80,9 +81,14 @@ public class ContributionJobRunner {
       .tenantId(tenantId)
       .build();
 
-    runInitialContribution(context);
+  //  runInitialContribution(context);
+    KafkaUtil tempKafkaConsumer = itemReaderFactory.createKafkaConsumer();
 
-    return new AsyncResult<>(null);
+    CustomAckMessageListener customAckMessageListener = new CustomAckMessageListener(new ContributionProcessor());
+
+    tempKafkaConsumer.startOrCreateConsumer(customAckMessageListener);
+
+    //return new AsyncResult<>(null);
   }
 
   public void runInitialContribution(ContributionJobContext context) {

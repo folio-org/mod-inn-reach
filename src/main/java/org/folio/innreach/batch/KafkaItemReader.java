@@ -15,6 +15,7 @@ import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.serialization.Deserializer;
+import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
 
 /**
  * <p>
@@ -48,6 +49,7 @@ public class KafkaItemReader<K, V> implements AutoCloseable {
   public void open() {
     if (kafkaConsumer == null) {
       kafkaConsumer = new KafkaConsumer<>(consumerProperties, keyDeserializer, valueDeserializer);
+     // new DefaultKafkaConsumerFactory<>(kafkaConsumer)
     }
 
     kafkaConsumer.subscribe(List.of(topic));
