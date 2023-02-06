@@ -1,19 +1,28 @@
 package org.folio.innreach.util;
 
-import java.io.IOException;
-import java.io.InputStream;
-
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.folio.innreach.domain.dto.folio.configuration.ConfigurationDTO;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.List;
 
 @Log4j2
 @RequiredArgsConstructor
 @Component
 public class JsonHelper {
 
+  @Value("${inn-reach.checkout-time.duration}")
+  private static long defaultCheckoutTimeDuration;
+
+  public static final String CHECKOUT_TIMEOUT_DURATION = "checkoutTimeoutDuration";
   private final ObjectMapper mapper;
 
   public static final String OBJECT_SERIALIZATION_FAILED = "Failed to serialize object to a json string";
@@ -51,6 +60,17 @@ public class JsonHelper {
       throw new IllegalStateException(OBJECT_DESERIALIZATION_FAILED + ": " + e.getMessage());
     }
     return obj;
+  }
+
+
+  public static Long getCheckoutTimeDurationInMilliseconds(List<ConfigurationDTO> configData) {
+    long checkOutTime = defaultCheckoutTimeDuration;
+    if(!configData.isEmpty()) {
+      var value = configData.get(0).getValue();
+      JsonObject valueObject = new Gson().fromJson(value, JsonObject.class);
+      checkOutTime = valueObject.get(CHECKOUT_TIMEOUT_DURATION).getAsLong();
+    }
+    return checkOutTime * 60000;
   }
 
 }
