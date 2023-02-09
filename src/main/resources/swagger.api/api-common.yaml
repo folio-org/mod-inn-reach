@@ -4,7 +4,7 @@ components:
       type: string
       format: uuid
     error:
-      $ref: schemas/error.json
+      $ref: schemas/error.json#/Error
     validationErrorsDTO:
       type: object
       properties:

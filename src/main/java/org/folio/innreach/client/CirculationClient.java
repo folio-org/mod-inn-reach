@@ -23,7 +23,7 @@ import org.folio.innreach.dto.CheckOutRequestDTO;
 import org.folio.innreach.dto.ClaimItemReturnedRequestDTO;
 import org.folio.innreach.dto.LoanDTO;
 
-@FeignClient(name = "circulation", configuration = FolioFeignClientConfig.class, decode404 = true)
+@FeignClient(name = "circulation", configuration = FolioFeignClientConfig.class, dismiss404 = true)
 public interface CirculationClient {
 
   @GetMapping("/requests?query=(itemId=={itemId})")

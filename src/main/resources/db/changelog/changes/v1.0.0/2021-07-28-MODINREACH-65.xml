@@ -5,7 +5,7 @@
                     http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.4.xsd">
 
   <changeSet id="2021-07-28-01__alter-agency-location-mapping-tables" author="maryna_steshenko">
-    <sqlFile path="sql/2021-07-28-01__alter-agency-location-mapping-tables.sql" relativeToChangelogFile="true"/>
+    <sqlFile path="v1.0.0/sql/2021-07-28-01__alter-agency-location-mapping-tables.sql" relativeToChangelogFile="true"/>
   </changeSet>
 
 </databaseChangeLog>

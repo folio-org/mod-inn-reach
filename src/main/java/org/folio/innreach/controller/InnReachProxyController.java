@@ -1,8 +1,8 @@
 package org.folio.innreach.controller;
 
-import java.util.UUID;
+import jakarta.servlet.http.HttpServletRequest;
 
-import javax.servlet.http.HttpServletRequest;
+import java.util.UUID;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.util.MimeTypeUtils;

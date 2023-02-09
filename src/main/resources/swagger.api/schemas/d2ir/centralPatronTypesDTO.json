@@ -7,6 +7,7 @@
   ],
   "description": "D2IR central patron types response",
   "type": "object",
+  "x-implements": "org.folio.innreach.domain.dto.InnReachResponseData",
   "properties": {
     "patronTypeList": {
       "description": "D2IR central patron types",

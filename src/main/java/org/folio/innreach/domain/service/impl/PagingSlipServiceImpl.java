@@ -38,9 +38,9 @@ import org.folio.innreach.dto.InnReachTransactionDTO;
 import org.folio.innreach.dto.InnReachTransactionFilterParametersDTO;
 import org.folio.innreach.dto.PagingSlip;
 import org.folio.innreach.dto.PagingSlipsDTO;
-import org.folio.innreach.dto.PagingSlipsDTOInnReachTransaction;
-import org.folio.innreach.dto.PagingSlipsDTOItem;
-import org.folio.innreach.dto.PagingSlipsDTOSlip;
+import org.folio.innreach.dto.PagingSlipInnReachTransaction;
+import org.folio.innreach.dto.PagingSlipItem;
+import org.folio.innreach.dto.PagingSlipSlip;
 import org.folio.innreach.dto.PatronType;
 import org.folio.innreach.dto.PatronTypesPerCentralServerDTO;
 import org.folio.innreach.dto.TransactionHoldDTO;
@@ -244,7 +244,7 @@ public class PagingSlipServiceImpl implements PagingSlipService {
       .innReachTransaction(createTransactionSlip(hold, centralServer, centralAgencies, patronTypes));
   }
 
-  private PagingSlipsDTOInnReachTransaction createTransactionSlip(TransactionHoldDTO hold, CentralServerDTO centralServer,
+  private PagingSlipInnReachTransaction createTransactionSlip(TransactionHoldDTO hold, CentralServerDTO centralServer,
                                                                   Map<String, List<Agency>> centralAgencies,
                                                                   Map<String, List<PatronType>> patronTypes) {
     var centralServerCode = centralServer.getCentralServerCode();
@@ -257,7 +257,7 @@ public class PagingSlipServiceImpl implements PagingSlipService {
     var patronTypeDescription = getPatronTypeDescription(patronTypes, centralServerCode, centralPatronType);
     var pickupLocation = pickupLocationMapper.fromString(hold.getPickupLocation());
 
-    return new PagingSlipsDTOInnReachTransaction()
+    return new PagingSlipInnReachTransaction()
       .patronName(hold.getPatronName())
       .patronAgencyCode(patronAgencyCode)
       .patronAgencyDescription(patronAgencyDescription)
@@ -274,11 +274,11 @@ public class PagingSlipServiceImpl implements PagingSlipService {
       .pickupLocationDeliveryStop(pickupLocation.getDeliveryStop());
   }
 
-  private PagingSlipsDTOItem createItemSlip(InventoryInstanceDTO instance, InventoryItemDTO item) {
+  private PagingSlipItem createItemSlip(InventoryInstanceDTO instance, InventoryItemDTO item) {
     var locationName = item.getEffectiveLocation().getName();
     var author = getPrimaryContributorName(instance);
 
-    return new PagingSlipsDTOItem()
+    return new PagingSlipItem()
       .effectiveLocationFolioName(locationName)
       .title(item.getTitle())
       .barcode(item.getBarcode())
@@ -288,8 +288,8 @@ public class PagingSlipServiceImpl implements PagingSlipService {
       .hrid(item.getHrid());
   }
 
-  private PagingSlipsDTOSlip createSlip(CentralServerDTO centralServer) {
-    return new PagingSlipsDTOSlip().name(SLIP_NAME_PREFIX + centralServer.getName());
+  private PagingSlipSlip createSlip(CentralServerDTO centralServer) {
+    return new PagingSlipSlip().name(SLIP_NAME_PREFIX + centralServer.getName());
   }
 
 }

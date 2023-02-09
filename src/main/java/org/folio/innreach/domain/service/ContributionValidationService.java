@@ -1,6 +1,6 @@
 package org.folio.innreach.domain.service;
 
-import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 import org.folio.innreach.domain.dto.folio.ContributionItemCirculationStatus;
@@ -16,7 +16,7 @@ public interface ContributionValidationService {
 
   ContributionItemCirculationStatus getItemCirculationStatus(UUID centralServerId, Item item);
 
-  Character getSuppressionStatus(UUID centralServerId, List<UUID> statisticalCodeIds);
+  Character getSuppressionStatus(UUID centralServerId, Set<UUID> statisticalCodeIds);
 
   MappingValidationStatusDTO getItemTypeMappingStatus(UUID centralServerId);
 

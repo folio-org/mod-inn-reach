@@ -3,30 +3,28 @@ package org.folio.innreach.domain.entity;
 import static org.folio.innreach.domain.entity.MARCTransformationOptionsSettings.FETCH_ONE_BY_CENTRAL_SERVER_ID_QUERY;
 import static org.folio.innreach.domain.entity.MARCTransformationOptionsSettings.FETCH_ONE_BY_CENTRAL_SERVER_ID_QUERY_NAME;
 
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.CollectionTable;
+import jakarta.persistence.Column;
+import jakarta.persistence.ElementCollection;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.NamedQuery;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.OneToOne;
+import jakarta.persistence.Table;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-import javax.persistence.CascadeType;
-import javax.persistence.CollectionTable;
-import javax.persistence.Column;
-import javax.persistence.ElementCollection;
-import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.NamedQuery;
-import javax.persistence.OneToMany;
-import javax.persistence.OneToOne;
-import javax.persistence.QueryHint;
-import javax.persistence.Table;
-
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.Fetch;
-import org.hibernate.annotations.QueryHints;
 
 import org.folio.innreach.domain.entity.base.Auditable;
 
@@ -36,8 +34,7 @@ import org.folio.innreach.domain.entity.base.Auditable;
 @Table(name = "marc_transformation_options_settings")
 @NamedQuery(
   name = FETCH_ONE_BY_CENTRAL_SERVER_ID_QUERY_NAME,
-  query = FETCH_ONE_BY_CENTRAL_SERVER_ID_QUERY,
-  hints = @QueryHint(name = QueryHints.PASS_DISTINCT_THROUGH, value = "false")
+  query = FETCH_ONE_BY_CENTRAL_SERVER_ID_QUERY
 )
 public class MARCTransformationOptionsSettings extends Auditable {
   public static final String FETCH_ONE_BY_CENTRAL_SERVER_ID_QUERY_NAME = "MARCTransformationOptionsSettings.fetchOne";

@@ -62,6 +62,7 @@ import org.folio.innreach.dto.Item;
 import org.folio.innreach.dto.LoanStatus;
 import org.folio.innreach.dto.PatronHoldCheckInResponseDTO;
 import org.folio.innreach.dto.StorageLoanDTO;
+import org.folio.innreach.dto.StorageLoanDTOStatus;
 import org.folio.innreach.dto.TransactionCheckOutResponseDTO;
 import org.folio.innreach.mapper.InnReachTransactionMapper;
 import org.folio.innreach.repository.InnReachTransactionRepository;
@@ -209,7 +210,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
     }
 
     var loanAction = loan.getAction();
-    var loanStatus = ofNullable(loan.getStatus()).map(LoanStatus::getName).orElse(null);
+    var loanStatus = ofNullable(loan.getStatus()).map(StorageLoanDTOStatus::getName).orElse(null);
 
     if (isLoanCheckedIn(loanAction, loanStatus)) {
       log.info("handleLoanUpdate:: isLoanCheckedIn");

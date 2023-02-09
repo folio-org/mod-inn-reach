@@ -5,7 +5,7 @@
                     http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.4.xsd">
 
   <changeSet id="2022-03-02-01__create_visible_patron_field_config_tables.sql" author="maryna_steshenko">
-    <sqlFile path="sql/2022-03-02-01__create_visible_patron_field_config_tables.sql" relativeToChangelogFile="true"/>
+    <sqlFile path="v1.1.0/sql/2022-03-02-01__create_visible_patron_field_config_tables.sql" relativeToChangelogFile="true"/>
   </changeSet>
 
 </databaseChangeLog>

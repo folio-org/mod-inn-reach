@@ -5,11 +5,11 @@
                     http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.4.xsd">
 
   <changeSet id="2021-11-17-01__create_inn_reach_recall_user_table" author="andrii.khodyka">
-    <sqlFile path="sql/2021-11-17-01__create_inn_reach_recall_user_table.sql" relativeToChangelogFile="true"/>
+    <sqlFile path="v1.1.0/sql/2021-11-17-01__create_inn_reach_recall_user_table.sql" relativeToChangelogFile="true"/>
   </changeSet>
 
   <changeSet id="2021-11-17-02__add_inn_reach_recall_user_id_to_central_server_table" author="andrii.khodyka">
-    <sqlFile path="sql/2021-11-17-02__add_inn_reach_recall_user_id_to_central_server_table.sql" relativeToChangelogFile="true"/>
+    <sqlFile path="v1.1.0/sql/2021-11-17-02__add_inn_reach_recall_user_id_to_central_server_table.sql" relativeToChangelogFile="true"/>
   </changeSet>
 
 </databaseChangeLog>

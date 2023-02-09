@@ -432,8 +432,7 @@ paths:
               schema:
                 type: array
                 items:
-                  allOf:
-                    - $ref: "#/components/schemas/locationMappingDTO"
+                  $ref: "#/components/schemas/locationMappingDTO"
         '400':
           $ref: "api-common.yaml#/components/responses/trait_response_malformed_query_400"
         '500':

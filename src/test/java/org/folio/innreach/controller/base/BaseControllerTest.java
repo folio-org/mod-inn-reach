@@ -3,7 +3,7 @@ package org.folio.innreach.controller.base;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
-import javax.validation.Valid;
+import jakarta.validation.Valid;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;

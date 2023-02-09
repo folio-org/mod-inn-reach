@@ -2,7 +2,7 @@ stages:
 - name: Build
   steps:
   - runScriptConfig:
-      image: maven:3-openjdk-11
+      image: maven:3-openjdk-17
       shellScript: mvn package -DskipTests
 - name: Build Docker with DIND
   steps:
@@ -14,7 +14,7 @@ stages:
       registry: docker.dev.folio.org
 - name: Deploy
   steps:
-  - applyAppConfig:      
+  - applyAppConfig:
       catalogTemplate: p-bxflg:volaris-helmcharts-mod-inn-reach
       version: 0.1.4
       answers:
