@@ -4,17 +4,20 @@ import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.extern.log4j.Log4j2;
 import org.apache.kafka.common.serialization.Deserializer;
-import org.folio.innreach.batch.contribution.service.IMessageProcessor;
+import org.folio.innreach.batch.contribution.listener.ContributionExceptionListener;
 import org.folio.innreach.domain.dto.folio.inventorystorage.InstanceIterationEvent;
+import org.folio.innreach.external.exception.ServiceSuspendedException;
 import org.springframework.kafka.core.ConsumerFactory;
 import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
 import org.springframework.kafka.listener.ConcurrentMessageListenerContainer;
 import org.springframework.kafka.listener.ContainerProperties;
-import org.springframework.stereotype.Service;
+import org.springframework.kafka.listener.DefaultErrorHandler;
+import org.springframework.util.backoff.BackOff;
+import org.springframework.util.backoff.FixedBackOff;
 
+import java.net.SocketTimeoutException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Properties;
 
 import static org.apache.kafka.clients.consumer.ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG;
 
@@ -31,6 +34,28 @@ public class KafkaUtil {
   private final String topic;
   private final Deserializer<String> keyDeserializer;
   private final Deserializer<InstanceIterationEvent> valueDeserializer;
+
+  private final Long interval;
+
+  private final Long maxAttempts;
+
+  private final int THREAD_SIZE = 2;
+
+  private final ContributionExceptionListener contributionExceptionListener;
+
+  public DefaultErrorHandler errorHandler() {
+
+    BackOff fixedBackOff = new FixedBackOff(interval, maxAttempts);
+    DefaultErrorHandler errorHandler = new DefaultErrorHandler((consumerRecord, exception) -> {
+      // logic to execute when all the retry attempts are exhausted
+      contributionExceptionListener.logWriteError(exception, null);
+      log.info("Exiting after retry");
+      stopConsumer(consumerRecord.topic());
+    }, fixedBackOff);
+    errorHandler.addRetryableExceptions(ServiceSuspendedException.class);
+    errorHandler.addRetryableExceptions(SocketTimeoutException.class);
+    return errorHandler;
+  }
 
   public void startOrCreateConsumer(Object messageListner) {
     log.info("startOrCreateConsumer----");
@@ -55,25 +80,26 @@ public class KafkaUtil {
 //      containerProps.setAckMode(ContainerProperties.AckMode.MANUAL_IMMEDIATE);
 //    }
 
-    containerProps.setAckMode(ContainerProperties.AckMode.MANUAL_IMMEDIATE);
+    containerProps.setAckMode(ContainerProperties.AckMode.RECORD);
 
     ConsumerFactory<String, InstanceIterationEvent> factory = new DefaultKafkaConsumerFactory<>(consumerProperties,keyDeserializer,valueDeserializer);
     log.info("after DefaultKafkaConsumerFactory----");
     container = new ConcurrentMessageListenerContainer<>(factory, containerProps);
 
     container.setupMessageListener(messageListner);
+    container.setCommonErrorHandler(errorHandler());
 
 //    if (concurrency == 0) {
 //      container.setConcurrency(1);
 //    } else {
 //      container.setConcurrency(concurrency);
 //    }
-    container.setConcurrency(2);
+    container.setConcurrency(THREAD_SIZE);
 
     container.start();
 
     consumersMap.put(topic, container);
-//
+
     log.info("created and started kafka consumer for topic {}", topic);
   }
 

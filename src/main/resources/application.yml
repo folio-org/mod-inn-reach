@@ -169,3 +169,6 @@ kafka:
       topic-pattern: (${environment}\.)(.*\.)inventory\.holdings-record
       concurrency: ${KAFKA_EVENTS_CONCURRENCY:2}
       data-type: org.folio.innreach.dto.Holding
+  backoff:
+    interval: 30000
+    max_failure: 5

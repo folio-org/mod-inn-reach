@@ -6,19 +6,18 @@ import static org.folio.innreach.batch.contribution.ContributionJobContextManage
 import static org.folio.innreach.batch.contribution.ContributionJobContextManager.endContributionJobContext;
 
 import java.net.URI;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.Future;
 import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Iterables;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.folio.innreach.external.exception.ServiceSuspendedException;
 import org.folio.innreach.util.KafkaUtil;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.retry.support.RetryTemplate;
@@ -72,7 +71,7 @@ public class ContributionJobRunner {
 
   private static final List<UUID> runningInitialContributions = Collections.synchronizedList(new ArrayList<>());
 
-  //@Async
+  @Async
   public void runInitialContributionAsync(UUID centralServerId, String tenantId, UUID contributionId, UUID iterationJobId) {
     var context = ContributionJobContext.builder()
       .contributionId(contributionId)
@@ -81,16 +80,18 @@ public class ContributionJobRunner {
       .tenantId(tenantId)
       .build();
 
-  //  runInitialContribution(context);
     KafkaUtil tempKafkaConsumer = itemReaderFactory.createKafkaConsumer();
 
-    CustomAckMessageListener customAckMessageListener = new CustomAckMessageListener(new ContributionProcessor());
+    CustomAckMessageListener customAckMessageListener = new CustomAckMessageListener(new ContributionProcessor(this), context);
 
     tempKafkaConsumer.startOrCreateConsumer(customAckMessageListener);
+
+//    runInitialContribution(context);
 
     //return new AsyncResult<>(null);
   }
 
+  @Deprecated
   public void runInitialContribution(ContributionJobContext context) {
     log.info("Starting initial contribution job {}", context);
 
@@ -135,7 +136,7 @@ public class ContributionJobRunner {
           }
 
           // TODO Make multiple HTTP calls making a feign client to call some local http endpoint.
-          simulateContribution(stats);
+          simulateContribution();
           //simulateContributionItems(stats);
           // TODO These two values should be the same if no messages are dropped.
           log.info("Test iterations: {} {}", stats.getRecordsTotal(), stats.getKafkaMessagesRead());
@@ -151,15 +152,15 @@ public class ContributionJobRunner {
   }
 
   // TODO Try to simulate the stats collection. Remove after testing.
-  private void simulateContribution(Statistics s) {
-    makeSimulatedRequest(s);
-    s.addRecordsTotal(1);
+  public void simulateContribution() {
+    makeSimulatedRequest();
+//    s.addRecordsTotal(1);
   }
 
-  private void simulateContributionItems(Statistics s) {
+  private void simulateContributionItems() {
     // For now just make this one.
-    makeSimulatedRequest(s);
-    s.addRecordsTotal(1);
+    makeSimulatedRequest();
+//    s.addRecordsTotal(1);
   }
 
   private void makeSimulatedRequest(Statistics s) {
@@ -168,7 +169,7 @@ public class ContributionJobRunner {
       log.info("Making simulated request");
       String postBody = "somerandomstring"; // Should probably make this a random length.
       URI testServer = URI.create("http://localhost:8080");
-      String res = testClient.makeTestRequest(testServer, postBody);
+      var res = testClient.makeTestRequest(testServer, postBody);
       log.info("Response from test server: {}", res);
     } catch (Exception e) {
       log.warn("Error while simulating request: {} {}", e.getMessage(), e.getStackTrace());
@@ -177,7 +178,27 @@ public class ContributionJobRunner {
     }
   }
 
-  private Instance simulateLoadingInstance(Statistics s) {
+  private void makeSimulatedRequest() {
+    // Simulate the try/catch around http client calls.
+    try {
+      log.info("Making simulated request");
+      String postBody = "somerandomstring"; // Should probably make this a random length.
+      URI testServer = URI.create("http://localhost:8080");
+      var res = testClient.makeTestRequest(testServer, postBody);
+      log.info("Response from test server: {}", res);
+      var resObject = new ObjectMapper().writeValueAsString(res.getBody());
+      if (resObject.contains("Contribution to d2irm is currently suspended")) {
+        throw new ServiceSuspendedException("Contribution to d2irm is currently suspended");
+      }
+
+    } catch (ServiceSuspendedException ex) {
+      throw new ServiceSuspendedException(ex.getMessage());
+    } catch (Exception e) {
+      log.warn("Error while simulating request: {} {}", e.getMessage(), e.getStackTrace());
+    }
+  }
+
+  public Instance simulateLoadingInstance(Statistics s) {
     // TODO Implement this with an occasional null value. This could just randomly return null or perhaps leave that until problems have been eliminated.
     makeSimulatedRequest(s);
     return new Instance();

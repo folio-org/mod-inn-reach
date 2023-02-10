@@ -4,6 +4,7 @@ package org.folio.innreach.external.client.feign;
 import java.net.URI;
 
 import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 
 import org.folio.innreach.external.client.feign.config.InnReachFeignClientConfig;
@@ -15,5 +16,5 @@ import org.springframework.web.bind.annotation.RequestBody;
 public interface TestClient {
 
   @PostMapping(value = "/test")
-  String makeTestRequest(URI localhostServerUrl, @RequestBody String anything);
+  ResponseEntity<Object> makeTestRequest(URI localhostServerUrl, @RequestBody String anything);
 }

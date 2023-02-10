@@ -13,8 +13,13 @@ import lombok.RequiredArgsConstructor;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.common.serialization.Deserializer;
 import org.apache.kafka.common.serialization.StringDeserializer;
+import org.folio.innreach.batch.contribution.listener.ContributionExceptionListener;
+import org.folio.innreach.config.RetryConfig;
 import org.folio.innreach.util.KafkaUtil;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.kafka.KafkaProperties;
+import org.springframework.kafka.listener.DefaultErrorHandler;
 import org.springframework.kafka.support.serializer.JsonDeserializer;
 import org.springframework.stereotype.Component;
 
@@ -41,6 +46,15 @@ public class IterationEventReaderFactory {
   private final FolioEnvironment folioEnv;
   private final ContributionJobProperties jobProperties;
   private final ObjectMapper mapper;
+
+  @Qualifier("retryInterval")
+  private final Long interval;
+
+  @Qualifier("retryMaxAttempts")
+  private final Long maxAttempts;
+
+  @Qualifier("itemExceptionListener")
+  private final ContributionExceptionListener contributionExceptionListener;
 
   public KafkaItemReader<String, InstanceIterationEvent> createReader(String tenantId) {
     Properties props = new Properties();
@@ -83,7 +97,7 @@ public class IterationEventReaderFactory {
     consumerProperties.put(GROUP_ID_CONFIG, jobProperties.getReaderGroupId());
 
     var topic = "folio.contrib.tester.innreach";
-    return new KafkaUtil(consumerProperties,topic,keyDeserializer(),valueDeserializer());
+    return new KafkaUtil(consumerProperties,topic,keyDeserializer(),valueDeserializer(), interval, maxAttempts, contributionExceptionListener);
   }
 
 }

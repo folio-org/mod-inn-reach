@@ -1,8 +1,8 @@
 package org.folio.innreach.batch.contribution.service;
 
 import lombok.AllArgsConstructor;
-import lombok.RequiredArgsConstructor;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.folio.innreach.batch.contribution.ContributionJobContext;
 import org.folio.innreach.domain.dto.folio.inventorystorage.InstanceIterationEvent;
 import org.springframework.kafka.listener.AcknowledgingMessageListener;
 import org.springframework.kafka.support.Acknowledgment;
@@ -11,15 +11,16 @@ import org.springframework.kafka.support.Acknowledgment;
 public class CustomAckMessageListener implements AcknowledgingMessageListener<String, InstanceIterationEvent> {
 
   IMessageProcessor iMessageProcessor;
+  ContributionJobContext context;
 
   @Override
   public void onMessage(
     ConsumerRecord<String, InstanceIterationEvent> consumerRecord, Acknowledgment acknowledgment) {
 
     // process message
-    iMessageProcessor.processMessage(consumerRecord.key(), consumerRecord.value());
+    iMessageProcessor.processMessage(consumerRecord.key(), consumerRecord.value(), context);
 
     // commit offset
-    acknowledgment.acknowledge();
+//    acknowledgment.acknowledge();
   }
 }
