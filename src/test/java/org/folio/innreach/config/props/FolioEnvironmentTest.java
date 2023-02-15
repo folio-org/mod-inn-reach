@@ -6,8 +6,8 @@ import static org.folio.innreach.config.props.FolioEnvironment.getFolioEnvName;
 import static org.folio.innreach.fixture.TestUtil.removeEnvProperty;
 import static org.folio.innreach.fixture.TestUtil.setEnvProperty;
 
-import javax.validation.ConstraintViolation;
-import javax.validation.Validation;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.Validation;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;

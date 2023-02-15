@@ -1,13 +1,13 @@
 package org.folio.innreach.domain.entity.base;
 
+import jakarta.persistence.Id;
+import jakarta.persistence.MappedSuperclass;
+import jakarta.persistence.PostLoad;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.Transient;
+
 import java.util.Objects;
 import java.util.UUID;
-
-import javax.persistence.Id;
-import javax.persistence.MappedSuperclass;
-import javax.persistence.PostLoad;
-import javax.persistence.PrePersist;
-import javax.persistence.Transient;
 
 import lombok.AccessLevel;
 import lombok.Getter;

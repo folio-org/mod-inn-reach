@@ -330,7 +330,7 @@ class OptimisticLockingTest extends BaseApiControllerTest {
     putAndExpect(uri, requestBody, Template.of("circulation/ok-response.json"));
   }
 
-  private void putAndExpectConflict(URI uri, BaseCircRequestDTO req) throws Exception {
+  private void putAndExpectConflict(URI uri, Object req) throws Exception {
     putReq(uri, req)
         .andDo(logResponse())
         .andExpect(status().isInternalServerError())

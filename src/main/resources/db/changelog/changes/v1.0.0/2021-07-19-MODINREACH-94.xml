@@ -5,7 +5,7 @@
                     http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.4.xsd">
 
   <changeSet id="2021-07-19-01__alter-central-server-table" author="andrii.khodyka">
-    <sqlFile path="sql/2021-07-19-01__alter-central-server-table.sql" relativeToChangelogFile="true"/>
+    <sqlFile path="v1.0.0/sql/2021-07-19-01__alter-central-server-table.sql" relativeToChangelogFile="true"/>
   </changeSet>
 
 </databaseChangeLog>

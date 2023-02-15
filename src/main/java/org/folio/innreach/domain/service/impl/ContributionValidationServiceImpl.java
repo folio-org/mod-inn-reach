@@ -29,10 +29,10 @@ import org.springframework.util.Assert;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
-import static java.util.Collections.emptyList;
+import static java.util.Collections.emptySet;
 import static org.apache.commons.collections4.ListUtils.emptyIfNull;
 import static org.folio.innreach.domain.service.impl.MARCRecordTransformationServiceImpl.isMARCRecord;
 import static org.folio.innreach.dto.ItemStatus.NameEnum.AVAILABLE;
@@ -116,7 +116,7 @@ public class ContributionValidationServiceImpl implements ContributionValidation
     return true;
   }
 
-  private boolean isExcludedStatisticalCode(UUID centralServerId, List<UUID> statisticalCodeIds) {
+  private boolean isExcludedStatisticalCode(UUID centralServerId, Set<UUID> statisticalCodeIds) {
     log.debug("isExcludedStatisticalCode:: parameters centralServerId: {}, statisticalCodeIds: {}", centralServerId, statisticalCodeIds);
     if (CollectionUtils.isEmpty(statisticalCodeIds)) {
       return false;
@@ -160,7 +160,7 @@ public class ContributionValidationServiceImpl implements ContributionValidation
   }
 
   @Override
-  public Character getSuppressionStatus(UUID centralServerId, List<UUID> statisticalCodeIds) {
+  public Character getSuppressionStatus(UUID centralServerId, Set<UUID> statisticalCodeIds) {
     log.debug("getSuppressionStatus:: parameters centralServerId: {}, statisticalCodeIds: {}", centralServerId, statisticalCodeIds);
     if (CollectionUtils.isEmpty(statisticalCodeIds)) {
       return null;
@@ -174,7 +174,7 @@ public class ContributionValidationServiceImpl implements ContributionValidation
       return null;
     }
 
-    var statisticalCodeId = statisticalCodeIds.get(0);
+    var statisticalCodeId = statisticalCodeIds.iterator().next();
 
     var excludedCodeId = config.getDoNotContributeId();
     if (Objects.equals(statisticalCodeId, excludedCodeId)) {
@@ -229,11 +229,11 @@ public class ContributionValidationServiceImpl implements ContributionValidation
     }
   }
 
-  private List<UUID> fetchHoldingStatisticalCodes(Item item) {
+  private Set<UUID> fetchHoldingStatisticalCodes(Item item) {
     log.debug("fetchHoldingStatisticalCodes:: parameters item: {}", item);
     return holdingsService.find(item.getHoldingsRecordId())
       .map(Holding::getStatisticalCodeIds)
-      .orElse(emptyList());
+      .orElse(emptySet());
   }
 
   private boolean isItemNonLendable(Item inventoryItem,
@@ -319,7 +319,7 @@ public class ContributionValidationServiceImpl implements ContributionValidation
       .stream()
       .flatMap(agency -> agency.getFolioLibraryIds().stream())
       .distinct()
-      .collect(Collectors.toList());
+      .toList();
   }
 
   private List<LibraryMappingDTO> getLibraryMappings(UUID centralServerId) {

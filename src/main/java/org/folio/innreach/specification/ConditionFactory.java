@@ -9,10 +9,10 @@ import static org.folio.innreach.domain.entity.InnReachTransactionFilterParamete
 import static org.folio.innreach.domain.entity.InnReachTransactionFilterParameters.DateOperation.LESS_OR_EQUAL;
 import static org.folio.innreach.domain.entity.InnReachTransactionFilterParameters.DateOperation.NOT_EQUAL;
 
+import jakarta.persistence.criteria.CriteriaBuilder;
+
 import java.util.EnumMap;
 import java.util.Map;
-
-import javax.persistence.criteria.CriteriaBuilder;
 
 import org.folio.innreach.domain.entity.InnReachTransactionFilterParameters;
 

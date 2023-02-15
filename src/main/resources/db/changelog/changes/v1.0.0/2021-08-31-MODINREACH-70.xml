@@ -5,7 +5,7 @@
                     http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.4.xsd">
 
   <changeSet id="2021-08-31-01__create-user-custom-field-mapping-table" author="maryna_steshenko">
-    <sqlFile path="sql/2021-08-31-01__create-user-custom-field-mapping-table.sql" relativeToChangelogFile="true"/>
+    <sqlFile path="v1.0.0/sql/2021-08-31-01__create-user-custom-field-mapping-table.sql" relativeToChangelogFile="true"/>
   </changeSet>
 
 </databaseChangeLog>

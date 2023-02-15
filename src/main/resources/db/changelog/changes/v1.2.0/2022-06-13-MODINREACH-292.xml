@@ -5,7 +5,7 @@
                     http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.4.xsd">
 
   <changeSet id="2022-06-13-01__alter-transaction-hold.sql" author="s1mpleGit">
-    <sqlFile path="sql/2022-06-13-01__alter-transaction-hold.sql" relativeToChangelogFile="true"/>
+    <sqlFile path="v1.2.0/sql/2022-06-13-01__alter-transaction-hold.sql" relativeToChangelogFile="true"/>
   </changeSet>
 
 </databaseChangeLog>

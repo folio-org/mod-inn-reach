@@ -1,8 +1,8 @@
 package org.folio.innreach.controller;
 
-import java.util.UUID;
+import jakarta.validation.Valid;
 
-import javax.validation.Valid;
+import java.util.UUID;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
