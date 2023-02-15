@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.folio.innreach.client.config.InventoryFeignClientConfig;
 import org.folio.innreach.dto.Holding;
 
-@FeignClient(name = "holdings-storage", configuration = InventoryFeignClientConfig.class, decode404 = true)
+@FeignClient(name = "holdings-storage", configuration = InventoryFeignClientConfig.class, dismiss404 = true)
 public interface HoldingsStorageClient {
 
   @GetMapping("/holdings/{holdingId}")

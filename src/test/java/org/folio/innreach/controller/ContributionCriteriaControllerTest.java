@@ -15,9 +15,9 @@ import static org.springframework.test.context.jdbc.SqlMergeMode.MergeMode.MERGE
 
 import static org.folio.innreach.fixture.TestUtil.deserializeFromJsonFile;
 
-import java.util.UUID;
+import jakarta.transaction.Transactional;
 
-import javax.transaction.Transactional;
+import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

@@ -3,24 +3,22 @@ package org.folio.innreach.domain.entity;
 import static org.folio.innreach.domain.entity.PagingSlipTemplate.FETCH_ONE_BY_CENTRAL_SERVER_ID_QUERY;
 import static org.folio.innreach.domain.entity.PagingSlipTemplate.FETCH_ONE_BY_CENTRAL_SERVER_ID_QUERY_NAME;
 
-import java.util.UUID;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.NamedQuery;
+import jakarta.persistence.OneToOne;
+import jakarta.persistence.Table;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.NamedQuery;
-import javax.persistence.OneToOne;
-import javax.persistence.QueryHint;
-import javax.persistence.Table;
+import java.util.UUID;
 
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
-import org.hibernate.annotations.QueryHints;
 
 import org.folio.innreach.domain.entity.base.Auditable;
 
@@ -31,8 +29,7 @@ import org.folio.innreach.domain.entity.base.Auditable;
 @Table(name = "paging_slip_template")
 @NamedQuery(
   name = FETCH_ONE_BY_CENTRAL_SERVER_ID_QUERY_NAME,
-  query = FETCH_ONE_BY_CENTRAL_SERVER_ID_QUERY,
-  hints = @QueryHint(name = QueryHints.PASS_DISTINCT_THROUGH, value = "false")
+  query = FETCH_ONE_BY_CENTRAL_SERVER_ID_QUERY
 )
 public class PagingSlipTemplate extends Auditable {
   public static final String FETCH_ONE_BY_CENTRAL_SERVER_ID_QUERY_NAME = "PagingSlipTemplate.fetchOne";

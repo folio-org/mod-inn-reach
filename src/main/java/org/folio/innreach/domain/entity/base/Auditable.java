@@ -1,13 +1,13 @@
 package org.folio.innreach.domain.entity.base;
 
-import java.time.OffsetDateTime;
+import jakarta.persistence.AttributeOverride;
+import jakarta.persistence.AttributeOverrides;
+import jakarta.persistence.Column;
+import jakarta.persistence.Embedded;
+import jakarta.persistence.EntityListeners;
+import jakarta.persistence.MappedSuperclass;
 
-import javax.persistence.AttributeOverride;
-import javax.persistence.AttributeOverrides;
-import javax.persistence.Column;
-import javax.persistence.Embedded;
-import javax.persistence.EntityListeners;
-import javax.persistence.MappedSuperclass;
+import java.time.OffsetDateTime;
 
 import lombok.Getter;
 import lombok.Setter;

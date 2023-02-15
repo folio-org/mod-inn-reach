@@ -5,23 +5,23 @@ import static org.folio.innreach.domain.entity.LocalAgency.FETCH_ONE_BY_CODE_QUE
 import static org.folio.innreach.domain.entity.LocalAgency.FIND_LIBRARIES_ASSIGNED_TO_MULTIPLE_AGENCIES_QUERY;
 import static org.folio.innreach.domain.entity.LocalAgency.FIND_LIBRARIES_ASSIGNED_TO_MULTIPLE_AGENCIES_QUERY_NAME;
 
+import jakarta.persistence.CollectionTable;
+import jakarta.persistence.Column;
+import jakarta.persistence.ElementCollection;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.NamedNativeQuery;
+import jakarta.persistence.NamedQuery;
+import jakarta.persistence.Table;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-
-import javax.persistence.CollectionTable;
-import javax.persistence.Column;
-import javax.persistence.ElementCollection;
-import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
-import javax.persistence.NamedNativeQuery;
-import javax.persistence.NamedQuery;
-import javax.persistence.Table;
 
 import lombok.EqualsAndHashCode;
 import lombok.Getter;

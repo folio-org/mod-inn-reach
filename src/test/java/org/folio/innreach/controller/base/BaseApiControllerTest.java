@@ -15,11 +15,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.folio.innreach.fixture.TestUtil.circHeaders;
 import static org.folio.innreach.fixture.TestUtil.readFile;
 
+import jakarta.validation.Valid;
+
 import java.util.Collections;
 import java.util.Map;
 import java.util.function.UnaryOperator;
-
-import javax.validation.Valid;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.MappingBuilder;
@@ -120,7 +120,7 @@ public class BaseApiControllerTest {
   }
 
   @AfterEach
-  void tearDown() {
+  protected void tearDown() {
     wm.resetAll();
   }
 

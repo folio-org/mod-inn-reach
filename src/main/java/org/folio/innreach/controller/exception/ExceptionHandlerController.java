@@ -2,10 +2,10 @@ package org.folio.innreach.controller.exception;
 
 import static org.folio.innreach.util.ListUtils.mapItems;
 
-import java.util.List;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.ConstraintViolationException;
 
-import javax.validation.ConstraintViolation;
-import javax.validation.ConstraintViolationException;
+import java.util.List;
 
 import lombok.extern.log4j.Log4j2;
 import org.springframework.dao.DataIntegrityViolationException;

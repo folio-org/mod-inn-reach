@@ -15,7 +15,6 @@ import org.mockito.Answers;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.batch.core.scope.context.ChunkContext;
 
 import org.folio.innreach.batch.contribution.ContributionJobContext;
 import org.folio.innreach.batch.contribution.ContributionJobContext.Statistics;

@@ -5,15 +5,15 @@
                     http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.4.xsd">
 
     <changeSet id="2021-07-09-11__drop_outdated_contribution_criteria_tables" author="dmtkachenko">
-        <sqlFile path="sql/2021-07-09-11__drop-outdated-contribution-criteria-tables.sql" relativeToChangelogFile="true"/>
+        <sqlFile path="v1.0.0/sql/2021-07-09-11__drop-outdated-contribution-criteria-tables.sql" relativeToChangelogFile="true"/>
     </changeSet>
 
     <changeSet id="2021-07-09-12__create_contribution_criteria_table" author="dmtkachenko">
-        <sqlFile path="sql/2021-07-09-12__create-contribution-criteria-table.sql" relativeToChangelogFile="true"/>
+        <sqlFile path="v1.0.0/sql/2021-07-09-12__create-contribution-criteria-table.sql" relativeToChangelogFile="true"/>
     </changeSet>
 
     <changeSet id="2021-07-09-13__create_contribution_criteria_excluded_location_table" author="dmtkachenko">
-        <sqlFile path="sql/2021-07-09-13__create-contribution-criteria-excluded-location-table.sql"
+        <sqlFile path="v1.0.0/sql/2021-07-09-13__create-contribution-criteria-excluded-location-table.sql"
                  relativeToChangelogFile="true"/>
     </changeSet>
 

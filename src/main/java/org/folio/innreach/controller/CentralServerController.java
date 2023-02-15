@@ -1,10 +1,10 @@
 package org.folio.innreach.controller;
 
-import java.util.UUID;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 
-import javax.validation.Valid;
-import javax.validation.constraints.Max;
-import javax.validation.constraints.Min;
+import java.util.UUID;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;

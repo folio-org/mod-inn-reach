@@ -12,7 +12,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -22,6 +21,7 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import org.folio.innreach.domain.dto.InnReachResponseData;
 import org.folio.innreach.domain.service.CentralServerConfigurationService;
 import org.folio.innreach.domain.service.CentralServerService;
 import org.folio.innreach.dto.AgenciesPerCentralServerDTO;
@@ -32,7 +32,6 @@ import org.folio.innreach.dto.CentralServerAgenciesDTO;
 import org.folio.innreach.dto.CentralServerDTO;
 import org.folio.innreach.dto.CentralServerItemTypesDTO;
 import org.folio.innreach.dto.CentralServerPatronTypesDTO;
-import org.folio.innreach.dto.InnReachResponseDTO;
 import org.folio.innreach.dto.ItemType;
 import org.folio.innreach.dto.ItemTypesPerCentralServerDTO;
 import org.folio.innreach.dto.LocalServer;
@@ -99,8 +98,8 @@ public class CentralServerConfigurationServiceImpl implements CentralServerConfi
       resp -> emptyIfNull(resp.getRight().getLocalServerList()), centralServerId);
   }
 
-  private <Rec, CSResp extends InnReachResponseDTO> List<Rec> loadRecordsPerServer(String uri,
-      Class<CSResp> centralServerRecordType, Function<Pair<CentralServerDTO, CSResp>, Rec> responseToRecordsMapper) {
+  private <T, U extends InnReachResponseData> List<T> loadRecordsPerServer(String uri,
+      Class<U> centralServerRecordType, Function<Pair<CentralServerDTO, U>, T> responseToRecordsMapper) {
 
     log.debug("loadRecordsPerServer:: parameters uri: {}, centralRecordType: {}, responseToRecordsMapper: {}", uri, centralServerRecordType, responseToRecordsMapper);
     var servers = centralServerService.getAllCentralServers(0, Integer.MAX_VALUE).getCentralServers();
@@ -110,12 +109,12 @@ public class CentralServerConfigurationServiceImpl implements CentralServerConfi
         .filter(this::successfulResponse)
         .map(responseToRecordsMapper)
         .filter(Objects::nonNull)
-        .collect(Collectors.toList());
+        .toList();
   }
 
-  private <Rec, CSResp extends InnReachResponseDTO> Rec loadRecordPerServer(String uri,
-    Class<CSResp> centralServerRecordType,
-    Function<Pair<CentralServerDTO, CSResp>, Rec> responseToRecordsMapper,
+  private <T, U extends InnReachResponseData> T loadRecordPerServer(String uri,
+    Class<U> centralServerRecordType,
+    Function<Pair<CentralServerDTO, U>, T> responseToRecordsMapper,
     UUID centralServerId) {
 
     log.debug("loadRecordPerServer:: parameters uri: {}, centralServerRecordType: {}, responseToRecordsMapper: {}, centralServerId: {}", uri, centralServerRecordType, responseToRecordsMapper, centralServerId);
@@ -163,8 +162,8 @@ public class CentralServerConfigurationServiceImpl implements CentralServerConfi
     return isNotEmpty(ptList) ? createPatronTypes(cs, ptList) : null;
   }
 
-  private <CSResp extends InnReachResponseDTO> Function<CentralServerDTO, Pair<CentralServerDTO, CSResp>> retrieveAllConfigRecords(
-      String uri, Class<CSResp> recordType) {
+  private <T extends InnReachResponseData> Function<CentralServerDTO, Pair<CentralServerDTO, T>> retrieveAllConfigRecords(
+      String uri, Class<T> recordType) {
     log.debug("retrieveAllConfigRecords:: parameters uri: {}, recordType: {}", uri, recordType);
     return centralServer -> {
       log.info("Retrieving {} from central server: code = {}", recordType.getSimpleName(),
@@ -183,8 +182,8 @@ public class CentralServerConfigurationServiceImpl implements CentralServerConfi
     };
   }
 
-  private <CSResp extends InnReachResponseDTO> boolean successfulResponse(
-      Pair<CentralServerDTO, CSResp> centralServerWithResponse) {
+  private <T extends InnReachResponseData> boolean successfulResponse(
+      Pair<CentralServerDTO, T> centralServerWithResponse) {
     var cs = centralServerWithResponse.getLeft();
     var resp = centralServerWithResponse.getRight();
 
@@ -217,7 +216,7 @@ public class CentralServerConfigurationServiceImpl implements CentralServerConfi
         .patronTypes(patronTypes);
   }
 
-  private static boolean isOk(InnReachResponseDTO innReachResponse) {
+  private static boolean isOk(InnReachResponseData innReachResponse) {
     return OK_STATUS.equals(innReachResponse.getStatus()) && CollectionUtils.isEmpty(innReachResponse.getErrors());
   }
 
