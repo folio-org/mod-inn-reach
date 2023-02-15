@@ -7,7 +7,6 @@ import static org.folio.innreach.batch.contribution.ContributionJobContextManage
 
 import java.net.URI;
 import java.util.*;
-import java.util.concurrent.Future;
 import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
@@ -21,8 +20,6 @@ import org.folio.innreach.external.exception.ServiceSuspendedException;
 import org.folio.innreach.util.KafkaUtil;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.retry.support.RetryTemplate;
-import org.springframework.scheduling.annotation.Async;
-import org.springframework.scheduling.annotation.AsyncResult;
 import org.springframework.stereotype.Service;
 
 import org.folio.innreach.batch.KafkaItemReader;
@@ -71,7 +68,6 @@ public class ContributionJobRunner {
 
   private static final List<UUID> runningInitialContributions = Collections.synchronizedList(new ArrayList<>());
 
-  @Async
   public void runInitialContributionAsync(UUID centralServerId, String tenantId, UUID contributionId, UUID iterationJobId) {
     var context = ContributionJobContext.builder()
       .contributionId(contributionId)
@@ -82,13 +78,9 @@ public class ContributionJobRunner {
 
     KafkaUtil tempKafkaConsumer = itemReaderFactory.createKafkaConsumer();
 
-    CustomAckMessageListener customAckMessageListener = new CustomAckMessageListener(new ContributionProcessor(this), context);
+    CustomAckMessageListener customAckMessageListener = new CustomAckMessageListener(new ContributionProcessor(this), context, new Statistics());
 
     tempKafkaConsumer.startOrCreateConsumer(customAckMessageListener);
-
-//    runInitialContribution(context);
-
-    //return new AsyncResult<>(null);
   }
 
   @Deprecated
@@ -120,14 +112,13 @@ public class ContributionJobRunner {
           var instanceId = event.getInstanceId();
 
            // TODO This has been the reason for some job failures, with 400k instances ~12/31 but it isn't present in _all_ job fails.
-//          if (isUnknownEvent(event, iterationJobId)) {
-//            log.info("Skipping unknown event, current job is {}", iterationJobId);
-//            continue;
-//          }
+          if (isUnknownEvent(event, iterationJobId)) {
+            log.info("Skipping unknown event, current job is {}", iterationJobId);
+            continue;
+          }
 
           // TODO Make this call the local web server used for the test. Same below.
-         Instance instance = simulateLoadingInstance(stats);
-//          Instance instance = loadInstanceWithItems(instanceId);
+          Instance instance = loadInstanceWithItems(instanceId);
 
           // TODO Simulate this in the data.
           if (instance == null) {
@@ -135,19 +126,53 @@ public class ContributionJobRunner {
             continue;
           }
 
-          // TODO Make multiple HTTP calls making a feign client to call some local http endpoint.
-          simulateContribution();
-          //simulateContributionItems(stats);
           // TODO These two values should be the same if no messages are dropped.
           log.info("Test iterations: {} {}", stats.getRecordsTotal(), stats.getKafkaMessagesRead());
-//          if (isEligibleForContribution(centralServerId, instance)) {
-//            contributeInstance(centralServerId, instance, stats);
-//            contributeInstanceItems(centralServerId, instance, stats);
-//          } else if (isContributed(centralServerId, instance)) {
-//            deContributeInstance(centralServerId, instance, stats);
-//          }
+          if (isEligibleForContribution(centralServerId, instance)) {
+            contributeInstance(centralServerId, instance, stats);
+            contributeInstanceItems(centralServerId, instance, stats);
+          } else if (isContributed(centralServerId, instance)) {
+            deContributeInstance(centralServerId, instance, stats);
+          }
         }
       });
+    }
+  }
+
+  public void runInitialContribution(ContributionJobContext context, InstanceIterationEvent event, Statistics stats) {
+    stats.addKafkaMessagesRead(1);
+
+    var contributionId = context.getContributionId();
+
+    var iterationJobId = context.getIterationJobId();
+
+    if (event == null) {
+      log.info("Exiting kafka message reader for contribution {} and job {}", contributionId, iterationJobId);
+      return;
+    }
+    log.info("Processing instance iteration event = {}", event);
+
+    var instanceId = event.getInstanceId();
+
+    if (isUnknownEvent(event, iterationJobId)) {
+      log.info("Skipping unknown event, current job is {}", iterationJobId);
+      return;
+    }
+
+    Instance instance = loadInstanceWithItems(instanceId);
+
+    if (instance == null) {
+      log.info("Instance is null, skipping");
+      return;
+    }
+
+    var centralServerId = context.getCentralServerId();
+
+    if (isEligibleForContribution(centralServerId, instance)) {
+      contributeInstance(centralServerId, instance, stats);
+      contributeInstanceItems(centralServerId, instance, stats);
+    } else if (isContributed(centralServerId, instance)) {
+      deContributeInstance(centralServerId, instance, stats);
     }
   }
 

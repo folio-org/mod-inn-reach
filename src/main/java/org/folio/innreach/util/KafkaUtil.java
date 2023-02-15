@@ -3,6 +3,7 @@ package org.folio.innreach.util;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.extern.log4j.Log4j2;
+import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.common.serialization.Deserializer;
 import org.folio.innreach.batch.contribution.listener.ContributionExceptionListener;
 import org.folio.innreach.domain.dto.folio.inventorystorage.InstanceIterationEvent;
@@ -48,8 +49,9 @@ public class KafkaUtil {
     BackOff fixedBackOff = new FixedBackOff(interval, maxAttempts);
     DefaultErrorHandler errorHandler = new DefaultErrorHandler((consumerRecord, exception) -> {
       // logic to execute when all the retry attempts are exhausted
-      contributionExceptionListener.logWriteError(exception, null);
-      log.info("Exiting after retry");
+      ConsumerRecord<String, InstanceIterationEvent> record = (ConsumerRecord<String, InstanceIterationEvent>) consumerRecord;
+      contributionExceptionListener.logWriteError(exception, record.value().getInstanceId());
+      log.info("Stopping consumer topic: {} after retry exhaustion", consumerRecord.topic());
       stopConsumer(consumerRecord.topic());
     }, fixedBackOff);
     errorHandler.addRetryableExceptions(ServiceSuspendedException.class);

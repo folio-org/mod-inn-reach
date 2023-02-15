@@ -13,12 +13,14 @@ public class CustomAckMessageListener implements AcknowledgingMessageListener<St
   IMessageProcessor iMessageProcessor;
   ContributionJobContext context;
 
+  ContributionJobContext.Statistics statistics;
+
   @Override
   public void onMessage(
     ConsumerRecord<String, InstanceIterationEvent> consumerRecord, Acknowledgment acknowledgment) {
 
     // process message
-    iMessageProcessor.processMessage(consumerRecord.key(), consumerRecord.value(), context);
+    iMessageProcessor.processMessage(consumerRecord.key(), consumerRecord.value(), context, statistics);
 
     // commit offset
 //    acknowledgment.acknowledge();
