@@ -5,6 +5,7 @@ import java.util.UUID;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.folio.innreach.external.exception.ServiceSuspendedException;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.retry.support.RetryTemplate;
 import org.springframework.stereotype.Service;
@@ -109,9 +110,19 @@ public class RecordContributionServiceImpl implements RecordContributionService 
   }
 
   private InnReachResponse contributeBib(UUID centralServerId, String bibId, BibInfo bib) {
-    var response = irContributionService.contributeBib(centralServerId, bibId, bib);
-    Assert.isTrue(response.isOk(), "Unexpected contribution response: " + response);
-    return response;
+    try {
+      var response = irContributionService.contributeBib(centralServerId, bibId, bib);
+      if (!response.getErrors().isEmpty()) {
+        var error = response.getErrors().get(0).getReason();
+        if (error.contains("Contribution to d2irm is currently suspended")) {
+          throw new ServiceSuspendedException("Contribution to d2irm is currently suspended");
+        }
+      }
+      Assert.isTrue(response.isOk(), "Unexpected contribution response: " + response);
+      return response;
+    } catch (ServiceSuspendedException ex) {
+      throw new ServiceSuspendedException(ex.getMessage());
+    }
   }
 
   private InnReachResponse verifyBibContribution(UUID centralServerId, String bibId) {
@@ -121,9 +132,19 @@ public class RecordContributionServiceImpl implements RecordContributionService 
   }
 
   private InnReachResponse contributeBibItems(String bibId, UUID centralServerId, List<BibItem> bibItems) {
-    var response = irContributionService.contributeBibItems(centralServerId, bibId, BibItemsInfo.of(bibItems));
-    Assert.isTrue(response.isOk(), "Unexpected items contribution response: " + response);
-    return response;
+    try {
+      var response = irContributionService.contributeBibItems(centralServerId, bibId, BibItemsInfo.of(bibItems));
+      if (!response.getErrors().isEmpty()) {
+        var error = response.getErrors().get(0).getReason();
+        if (error.contains("Contribution to d2irm is currently suspended")) {
+          throw new ServiceSuspendedException("Contribution to d2irm is currently suspended");
+        }
+      }
+      Assert.isTrue(response.isOk(), "Unexpected items contribution response: " + response);
+      return response;
+    } catch (ServiceSuspendedException ex) {
+      throw new ServiceSuspendedException(ex.getMessage());
+    }
   }
 
 

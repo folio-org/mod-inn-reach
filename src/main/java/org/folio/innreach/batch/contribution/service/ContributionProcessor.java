@@ -16,7 +16,7 @@ public class ContributionProcessor implements IMessageProcessor{
   public void processMessage(String key, InstanceIterationEvent event, ContributionJobContext context, ContributionJobContext.Statistics statistics) {
     System.out.println("Message is:"+ event.toString());
     log.info("Processing initial contribution job {}", context);
-    contributionJobRunner.runInitialContribution(context, event, statistics);
-//    contributionJobRunner.simulateContribution();
+//    contributionJobRunner.runInitialContribution(context, event, statistics);
+    contributionJobRunner.simulateContribution();
   }
 }

@@ -9,6 +9,7 @@ import java.util.UUID;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.folio.innreach.external.exception.ServiceSuspendedException;
 import org.springframework.stereotype.Service;
 
 import org.folio.innreach.domain.dto.CentralServerConnectionDetailsDTO;
@@ -46,32 +47,54 @@ public class InnReachContributionServiceImpl implements InnReachContributionServ
 
   @Override
   public InnReachResponse deContributeBib(UUID centralServerId, String bibId) {
-    log.debug("deContributeBib:: parameters centralServerId: {}, bibId: {}", centralServerId, bibId);
-    var connectionDetails = getConnectionDetails(centralServerId);
+    try {
+      log.debug("deContributeBib:: parameters centralServerId: {}, bibId: {}", centralServerId, bibId);
+      var connectionDetails = getConnectionDetails(centralServerId);
 
-    var accessTokenDTO = innReachAuthExternalService.getAccessToken(connectionDetails);
-    var connectionUrl = URI.create(connectionDetails.getConnectionUrl());
-    var authorizationHeader = buildBearerAuthHeader(accessTokenDTO.getAccessToken());
-    var localCode = connectionDetails.getLocalCode();
-    var centralCode = connectionDetails.getCentralCode();
+      var accessTokenDTO = innReachAuthExternalService.getAccessToken(connectionDetails);
+      var connectionUrl = URI.create(connectionDetails.getConnectionUrl());
+      var authorizationHeader = buildBearerAuthHeader(accessTokenDTO.getAccessToken());
+      var localCode = connectionDetails.getLocalCode();
+      var centralCode = connectionDetails.getCentralCode();
 
-    return contributionClient.deContributeBib(connectionUrl, authorizationHeader, localCode,
-      centralCode, bibId);
+      var response = contributionClient.deContributeBib(connectionUrl, authorizationHeader, localCode,
+        centralCode, bibId);
+      if (!response.getErrors().isEmpty()) {
+        var error = response.getErrors().get(0).getReason();
+        if (error.contains("Contribution to d2irm is currently suspended")) {
+          throw new ServiceSuspendedException("Contribution to d2irm is currently suspended");
+        }
+      }
+      return  response;
+    } catch (ServiceSuspendedException ex) {
+      throw new ServiceSuspendedException(ex.getMessage());
+    }
   }
 
   @Override
   public InnReachResponse deContributeBibItem(UUID centralServerId, String itemId) {
-    log.debug("deContributeBibItem:: parameters centralServerId: {}, itemId: {}", centralServerId, itemId);
-    var connectionDetails = getConnectionDetails(centralServerId);
+    try {
+      log.debug("deContributeBibItem:: parameters centralServerId: {}, itemId: {}", centralServerId, itemId);
+      var connectionDetails = getConnectionDetails(centralServerId);
 
-    var accessTokenDTO = innReachAuthExternalService.getAccessToken(connectionDetails);
-    var connectionUrl = URI.create(connectionDetails.getConnectionUrl());
-    var authorizationHeader = buildBearerAuthHeader(accessTokenDTO.getAccessToken());
-    var localCode = connectionDetails.getLocalCode();
-    var centralCode = connectionDetails.getCentralCode();
+      var accessTokenDTO = innReachAuthExternalService.getAccessToken(connectionDetails);
+      var connectionUrl = URI.create(connectionDetails.getConnectionUrl());
+      var authorizationHeader = buildBearerAuthHeader(accessTokenDTO.getAccessToken());
+      var localCode = connectionDetails.getLocalCode();
+      var centralCode = connectionDetails.getCentralCode();
 
-    return contributionClient.deContributeBibItem(connectionUrl, authorizationHeader, localCode,
-      centralCode, itemId);
+      var response = contributionClient.deContributeBibItem(connectionUrl, authorizationHeader, localCode,
+        centralCode, itemId);
+      if (!response.getErrors().isEmpty()) {
+        var error = response.getErrors().get(0).getReason();
+        if (error.contains("Contribution to d2irm is currently suspended")) {
+          throw new ServiceSuspendedException("Contribution to d2irm is currently suspended");
+        }
+      }
+      return response;
+    } catch (ServiceSuspendedException ex) {
+      throw new ServiceSuspendedException(ex.getMessage());
+    }
   }
 
   @Override

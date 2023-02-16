@@ -93,7 +93,6 @@ public class ContributionJobRunner {
 
       log.info("Opened kafka reader for contribution {} for tenant {}", contributionId, context.getTenantId());
 
-      // TODO Why call this using a BiConsumer. What is the benefit of that? Is this hiding an exception?
       run(context, (centralServerId, stats) -> {
         while (!isCanceled(contributionId)) {
           InstanceIterationEvent event = readEvent(kafkaReader);
@@ -111,22 +110,18 @@ public class ContributionJobRunner {
 
           var instanceId = event.getInstanceId();
 
-           // TODO This has been the reason for some job failures, with 400k instances ~12/31 but it isn't present in _all_ job fails.
           if (isUnknownEvent(event, iterationJobId)) {
             log.info("Skipping unknown event, current job is {}", iterationJobId);
             continue;
           }
 
-          // TODO Make this call the local web server used for the test. Same below.
           Instance instance = loadInstanceWithItems(instanceId);
 
-          // TODO Simulate this in the data.
           if (instance == null) {
             log.info("Instance is null, skipping"); // NOTE this log statement doesn't exist in the deployed code.
             continue;
           }
 
-          // TODO These two values should be the same if no messages are dropped.
           log.info("Test iterations: {} {}", stats.getRecordsTotal(), stats.getKafkaMessagesRead());
           if (isEligibleForContribution(centralServerId, instance)) {
             contributeInstance(centralServerId, instance, stats);
@@ -140,8 +135,6 @@ public class ContributionJobRunner {
   }
 
   public void runInitialContribution(ContributionJobContext context, InstanceIterationEvent event, Statistics stats) {
-    stats.addKafkaMessagesRead(1);
-
     var contributionId = context.getContributionId();
 
     var iterationJobId = context.getIterationJobId();
@@ -514,8 +507,7 @@ public class ContributionJobRunner {
 
   private void completeContribution(ContributionJobContext context, Statistics stats) {
     try {
-      // TODO Comment this out for now because it wants to write to the db which we don't care about.
-      //contributionService.completeContribution(context.getContributionId());
+      contributionService.completeContribution(context.getContributionId());
       log.info("Completed contribution job {}", context);
       log.info("Kafka messages read: {}", stats.getKafkaMessagesRead());
       log.info("Records processed total: {}", stats.getRecordsTotal());
