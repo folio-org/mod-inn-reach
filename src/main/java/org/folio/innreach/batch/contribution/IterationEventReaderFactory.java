@@ -87,7 +87,7 @@ public class IterationEventReaderFactory {
 //    return UUID.fromString("fa34246b-86a6-4743-8d20-f368ef3242d7");
   }
 
-  public InitialContributionJobConsumerContainer createInitialInitialContributionJobConsumerContainerContainer(String tenantId) {
+  public InitialContributionJobConsumerContainer createInitialContributionConsumerContainer(String tenantId) {
 
     var consumerProperties = kafkaProperties.buildConsumerProperties();
     consumerProperties.put(GROUP_ID_CONFIG, jobProperties.getReaderGroupId());

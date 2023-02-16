@@ -80,7 +80,7 @@ public class ContributionJobRunner {
       .tenantId(tenantId)
       .build();
 
-    InitialContributionJobConsumerContainer tempKafkaConsumer = itemReaderFactory.createInitialInitialContributionJobConsumerContainerContainer(tenantId);
+    InitialContributionJobConsumerContainer tempKafkaConsumer = itemReaderFactory.createInitialContributionConsumerContainer(tenantId);
 
     InitialContributionMessageListener initialContributionMessageListener = new InitialContributionMessageListener(new ContributionProcessor(this), context, new Statistics());
 
