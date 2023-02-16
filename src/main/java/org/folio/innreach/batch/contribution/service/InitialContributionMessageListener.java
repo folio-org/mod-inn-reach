@@ -8,7 +8,7 @@ import org.springframework.kafka.listener.AcknowledgingMessageListener;
 import org.springframework.kafka.support.Acknowledgment;
 
 @AllArgsConstructor
-public class CustomAckMessageListener implements AcknowledgingMessageListener<String, InstanceIterationEvent> {
+public class InitialContributionMessageListener implements AcknowledgingMessageListener<String, InstanceIterationEvent> {
 
   IMessageProcessor iMessageProcessor;
   ContributionJobContext context;

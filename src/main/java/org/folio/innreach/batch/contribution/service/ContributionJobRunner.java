@@ -82,9 +82,9 @@ public class ContributionJobRunner {
 
     InitialContributionJobConsumerContainer tempKafkaConsumer = itemReaderFactory.createInitialInitialContributionJobConsumerContainerContainer(tenantId);
 
-    CustomAckMessageListener customAckMessageListener = new CustomAckMessageListener(new ContributionProcessor(this), context, new Statistics());
+    InitialContributionMessageListener initialContributionMessageListener = new InitialContributionMessageListener(new ContributionProcessor(this), context, new Statistics());
 
-    tempKafkaConsumer.tryStartOrCreateConsumer(customAckMessageListener);
+    tempKafkaConsumer.tryStartOrCreateConsumer(initialContributionMessageListener);
   }
 
   public void runInitialContribution(ContributionJobContext context, InstanceIterationEvent event, Statistics stats) {
