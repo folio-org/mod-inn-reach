@@ -6,7 +6,11 @@ import static org.folio.innreach.batch.contribution.ContributionJobContextManage
 import static org.folio.innreach.batch.contribution.ContributionJobContextManager.endContributionJobContext;
 
 import java.net.URI;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
+import java.util.UUID;
 import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
@@ -17,7 +21,7 @@ import com.google.common.collect.Iterables;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.folio.innreach.external.exception.ServiceSuspendedException;
-import org.folio.innreach.util.KafkaUtil;
+import org.folio.innreach.batch.contribution.InitialContributionJobConsumerContainer;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.retry.support.RetryTemplate;
 import org.springframework.stereotype.Service;
@@ -68,7 +72,7 @@ public class ContributionJobRunner {
 
   private static final List<UUID> runningInitialContributions = Collections.synchronizedList(new ArrayList<>());
 
-  public void runInitialContributionAsync(UUID centralServerId, String tenantId, UUID contributionId, UUID iterationJobId) {
+  public void startInitialContribution(UUID centralServerId, String tenantId, UUID contributionId, UUID iterationJobId) {
     var context = ContributionJobContext.builder()
       .contributionId(contributionId)
       .iterationJobId(iterationJobId)
@@ -76,62 +80,11 @@ public class ContributionJobRunner {
       .tenantId(tenantId)
       .build();
 
-    KafkaUtil tempKafkaConsumer = itemReaderFactory.createKafkaConsumer();
+    InitialContributionJobConsumerContainer tempKafkaConsumer = itemReaderFactory.createInitialInitialContributionJobConsumerContainerContainer(tenantId);
 
     CustomAckMessageListener customAckMessageListener = new CustomAckMessageListener(new ContributionProcessor(this), context, new Statistics());
 
-    tempKafkaConsumer.startOrCreateConsumer(customAckMessageListener);
-  }
-
-  @Deprecated
-  public void runInitialContribution(ContributionJobContext context) {
-    log.info("Starting initial contribution job {}", context);
-
-    var contributionId = context.getContributionId();
-    try (var kafkaReader = itemReaderFactory.createReader(context.getTenantId())) {
-      kafkaReader.open();
-
-      log.info("Opened kafka reader for contribution {} for tenant {}", contributionId, context.getTenantId());
-
-      run(context, (centralServerId, stats) -> {
-        while (!isCanceled(contributionId)) {
-          InstanceIterationEvent event = readEvent(kafkaReader);
-          stats.addKafkaMessagesRead(1);
-
-          log.info("Event read");
-
-          var iterationJobId = context.getIterationJobId();
-
-          if (event == null) {
-            log.info("Exiting kafka message reader for contribution {} and job {}", contributionId, iterationJobId);
-            return;
-          }
-          log.info("Processing instance iteration event = {}", event);
-
-          var instanceId = event.getInstanceId();
-
-          if (isUnknownEvent(event, iterationJobId)) {
-            log.info("Skipping unknown event, current job is {}", iterationJobId);
-            continue;
-          }
-
-          Instance instance = loadInstanceWithItems(instanceId);
-
-          if (instance == null) {
-            log.info("Instance is null, skipping"); // NOTE this log statement doesn't exist in the deployed code.
-            continue;
-          }
-
-          log.info("Test iterations: {} {}", stats.getRecordsTotal(), stats.getKafkaMessagesRead());
-          if (isEligibleForContribution(centralServerId, instance)) {
-            contributeInstance(centralServerId, instance, stats);
-            contributeInstanceItems(centralServerId, instance, stats);
-          } else if (isContributed(centralServerId, instance)) {
-            deContributeInstance(centralServerId, instance, stats);
-          }
-        }
-      });
-    }
+    tempKafkaConsumer.tryStartOrCreateConsumer(customAckMessageListener);
   }
 
   public void runInitialContribution(ContributionJobContext context, InstanceIterationEvent event, Statistics stats) {
@@ -508,9 +461,6 @@ public class ContributionJobRunner {
   private void completeContribution(ContributionJobContext context, Statistics stats) {
     try {
       contributionService.completeContribution(context.getContributionId());
-      log.info("Completed contribution job {}", context);
-      log.info("Kafka messages read: {}", stats.getKafkaMessagesRead());
-      log.info("Records processed total: {}", stats.getRecordsTotal());
     } catch (Exception e) {
       log.warn("Failed to complete contribution job {}", context, e);
     }

@@ -174,7 +174,7 @@ public class ContributionServiceImpl implements ContributionService {
 
   private void runInitialContributionJob(UUID centralServerId, Contribution contribution) {
     log.debug("runInitialContributionJob:: parameters centralServerId: {}, contribution: {}", centralServerId, contribution);
-    getJobRunner().runInitialContributionAsync(centralServerId, folioContext.getTenantId(), contribution.getId(), contribution.getJobId());
+    getJobRunner().startInitialContribution(centralServerId, folioContext.getTenantId(), contribution.getId(), contribution.getJobId());
   }
 
   private ContributionJobRunner getJobRunner() {

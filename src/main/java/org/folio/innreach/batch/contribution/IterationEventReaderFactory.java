@@ -14,7 +14,6 @@ import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.common.serialization.Deserializer;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.folio.innreach.batch.contribution.listener.ContributionExceptionListener;
-import org.folio.innreach.util.KafkaUtil;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.kafka.KafkaProperties;
 import org.springframework.kafka.support.serializer.JsonDeserializer;
@@ -88,13 +87,15 @@ public class IterationEventReaderFactory {
 //    return UUID.fromString("fa34246b-86a6-4743-8d20-f368ef3242d7");
   }
 
-  public KafkaUtil createKafkaConsumer() {
+  public InitialContributionJobConsumerContainer createInitialInitialContributionJobConsumerContainerContainer(String tenantId) {
 
     var consumerProperties = kafkaProperties.buildConsumerProperties();
     consumerProperties.put(GROUP_ID_CONFIG, jobProperties.getReaderGroupId());
 
     var topic = "folio.contrib.tester.innreach";
-    return new KafkaUtil(consumerProperties,topic,keyDeserializer(),valueDeserializer(), interval, maxAttempts, contributionExceptionListener);
+//    var topic = String.format("%s.%s.%s",
+//      folioEnv.getEnvironment(), tenantId, jobProperties.getReaderTopic());
+    return new InitialContributionJobConsumerContainer(consumerProperties,topic,keyDeserializer(),valueDeserializer(), interval, maxAttempts, contributionExceptionListener);
   }
 
 }

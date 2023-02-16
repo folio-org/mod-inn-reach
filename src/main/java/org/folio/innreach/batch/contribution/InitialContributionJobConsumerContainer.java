@@ -1,4 +1,4 @@
-package org.folio.innreach.util;
+package org.folio.innreach.batch.contribution;
 
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
@@ -25,7 +25,7 @@ import static org.apache.kafka.clients.consumer.ConsumerConfig.ENABLE_AUTO_COMMI
 @Log4j2
 @Setter
 @RequiredArgsConstructor
-public class KafkaUtil {
+public class InitialContributionJobConsumerContainer {
 
   private static Map<String, ConcurrentMessageListenerContainer<String, InstanceIterationEvent>> consumersMap =
     new HashMap<>();
@@ -59,7 +59,7 @@ public class KafkaUtil {
     return errorHandler;
   }
 
-  public void startOrCreateConsumer(Object messageListner) {
+  public void tryStartOrCreateConsumer(Object messageListner) {
     log.info("startOrCreateConsumer----");
     ConcurrentMessageListenerContainer<String, InstanceIterationEvent> container = consumersMap.get(topic);
     if (container != null) {

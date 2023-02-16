@@ -61,13 +61,11 @@ public class KafkaItemReader<K, V> implements AutoCloseable {
     }
 
     if (consumerRecords.hasNext()) {
-      log.info("hasNext is true");
       ConsumerRecord<K, V> rec = consumerRecords.next();
       recordProcessor.accept(rec);
       partitionOffsets.put(new TopicPartition(rec.topic(), rec.partition()), rec.offset());
       return rec.value();
     } else {
-      log.info("hasNext is false");
       return null;
     }
   }

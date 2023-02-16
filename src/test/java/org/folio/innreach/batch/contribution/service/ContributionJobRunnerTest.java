@@ -19,10 +19,8 @@ import static org.folio.innreach.fixture.TestUtil.createNoRetryTemplate;
 
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import org.folio.innreach.util.KafkaUtil;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -90,9 +88,9 @@ class ContributionJobRunnerTest {
   @Mock
   private KafkaItemReader<String, InstanceIterationEvent> reader;
   @Mock
-  private KafkaUtil kafkaUtil;
+  private InstanceIterationEvent event;
   @Mock
-  private CustomAckMessageListener ackMessageListener;
+  private ContributionJobContext.Statistics statistics;
   @Spy
   private RetryTemplate retryTemplate = createNoRetryTemplate();
 
@@ -111,7 +109,7 @@ class ContributionJobRunnerTest {
     when(validationService.isEligibleForContribution(any(), any(Item.class))).thenReturn(true);
     when(inventoryViewService.getInstance(any())).thenReturn(createInstanceView().toInstance());
 
-    jobRunner.runInitialContribution(JOB_CONTEXT);
+    jobRunner.runInitialContribution(JOB_CONTEXT, ContributionJobRunnerTest.this.event, statistics);
 
     verify(reader, times(2)).read();
     verify(recordContributor).contributeInstance(any(), any());
@@ -130,7 +128,7 @@ class ContributionJobRunnerTest {
       .thenReturn(null);
     when(inventoryViewService.getInstance(any())).thenReturn(instance);
 
-    jobRunner.runInitialContribution(JOB_CONTEXT);
+    jobRunner.runInitialContribution(JOB_CONTEXT, ContributionJobRunnerTest.this.event, statistics);
 
     verify(reader, times(2)).read();
     verify(recordContributor).isContributed(CENTRAL_SERVER_ID, instance);
@@ -149,7 +147,7 @@ class ContributionJobRunnerTest {
     when(inventoryViewService.getInstance(any())).thenReturn(instance);
     when(recordContributor.isContributed(any(), any())).thenReturn(true);
 
-    jobRunner.runInitialContribution(JOB_CONTEXT);
+    jobRunner.runInitialContribution(JOB_CONTEXT, ContributionJobRunnerTest.this.event, statistics);
 
     verify(reader, times(2)).read();
     verify(recordContributor).deContributeInstance(CENTRAL_SERVER_ID, instance);
@@ -165,7 +163,7 @@ class ContributionJobRunnerTest {
       .thenReturn(null);
     when(inventoryViewService.getInstance(any())).thenReturn(null);
 
-    jobRunner.runInitialContribution(JOB_CONTEXT);
+    jobRunner.runInitialContribution(JOB_CONTEXT, ContributionJobRunnerTest.this.event, statistics);
 
     verify(reader, times(2)).read();
     verify(inventoryViewService).getInstance(any());
@@ -177,7 +175,7 @@ class ContributionJobRunnerTest {
     when(factory.createReader(any())).thenReturn(reader);
     when(reader.read()).thenReturn(null);
 
-    jobRunner.runInitialContribution(JOB_CONTEXT);
+    jobRunner.runInitialContribution(JOB_CONTEXT, event, statistics);
 
     verify(reader).read();
     verifyNoInteractions(recordContributor);
@@ -190,7 +188,7 @@ class ContributionJobRunnerTest {
     String exceptionMsg = "test message";
     when(reader.read()).thenThrow(new RuntimeException(exceptionMsg));
 
-    assertThatThrownBy(() -> jobRunner.runInitialContribution(JOB_CONTEXT))
+    assertThatThrownBy(() -> jobRunner.runInitialContribution(JOB_CONTEXT, event, statistics))
       .isInstanceOf(RuntimeException.class)
       .hasMessageContaining(exceptionMsg);
 
@@ -405,7 +403,7 @@ class ContributionJobRunnerTest {
       })
       .thenReturn(event);
 
-    jobRunner.runInitialContributionAsync(
+    jobRunner.startInitialContribution(
       CENTRAL_SERVER_ID, TENANT_ID, CONTRIBUTION_ID, ITERATION_JOB_ID);
 
     verify(reader, times(1)).read();
