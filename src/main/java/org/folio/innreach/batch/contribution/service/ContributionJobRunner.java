@@ -11,6 +11,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
@@ -72,13 +73,20 @@ public class ContributionJobRunner {
 
   private static final List<UUID> runningInitialContributions = Collections.synchronizedList(new ArrayList<>());
 
-  public void startInitialContribution(UUID centralServerId, String tenantId, UUID contributionId, UUID iterationJobId) {
+  Integer totalRecords;
+  private static ConcurrentHashMap<String, Integer> recordsProcessed = new ConcurrentHashMap<>();
+
+  public void startInitialContribution(UUID centralServerId, String tenantId, UUID contributionId, UUID iterationJobId, Integer numberOfRecords) {
     var context = ContributionJobContext.builder()
       .contributionId(contributionId)
       .iterationJobId(iterationJobId)
       .centralServerId(centralServerId)
       .tenantId(tenantId)
       .build();
+
+    totalRecords = numberOfRecords;
+
+    recordsProcessed.put(tenantId, 0);
 
     InitialContributionJobConsumerContainer tempKafkaConsumer = itemReaderFactory.createInitialContributionConsumerContainer(tenantId);
 
@@ -88,6 +96,8 @@ public class ContributionJobRunner {
   }
 
   public void runInitialContribution(ContributionJobContext context, InstanceIterationEvent event, Statistics stats) {
+    recordsProcessed.put(context.getTenantId(), recordsProcessed.get(context.getTenantId())+1);
+
     var contributionId = context.getContributionId();
 
     var iterationJobId = context.getIterationJobId();
@@ -120,6 +130,11 @@ public class ContributionJobRunner {
     } else if (isContributed(centralServerId, instance)) {
       deContributeInstance(centralServerId, instance, stats);
     }
+    if (Objects.equals(recordsProcessed.get(context.getTenantId()), totalRecords)) {
+      completeContribution(context, stats);
+      endContributionJobContext();
+//      InitialContributionJobConsumerContainer.stopConsumer(topic);
+    }
   }
 
   // TODO Try to simulate the stats collection. Remove after testing.
@@ -142,6 +157,9 @@ public class ContributionJobRunner {
       URI testServer = URI.create("http://localhost:8080");
       var res = testClient.makeTestRequest(testServer, postBody);
       log.info("Response from test server: {}", res);
+      if (recordsProcessed.get("testTenant") == totalRecords) {
+        InitialContributionJobConsumerContainer.stopConsumer("folio.contrib.tester.innreach");
+      }
     } catch (Exception e) {
       log.warn("Error while simulating request: {} {}", e.getMessage(), e.getStackTrace());
     } finally {
@@ -152,6 +170,7 @@ public class ContributionJobRunner {
   private void makeSimulatedRequest() {
     // Simulate the try/catch around http client calls.
     try {
+      recordsProcessed.put("testTenant", recordsProcessed.get("testTenant")+1);
       log.info("Making simulated request");
       String postBody = "somerandomstring"; // Should probably make this a random length.
       URI testServer = URI.create("http://localhost:8080");

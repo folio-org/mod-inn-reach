@@ -169,5 +169,5 @@ kafka:
       concurrency: ${KAFKA_EVENTS_CONCURRENCY:2}
       data-type: org.folio.innreach.dto.Holding
   backoff:
-    interval: 30000
-    max_failure: 5
+    interval: 3600000
+    max_failure: 12

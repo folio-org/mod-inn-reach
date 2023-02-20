@@ -404,7 +404,7 @@ class ContributionJobRunnerTest {
       .thenReturn(event);
 
     jobRunner.startInitialContribution(
-      CENTRAL_SERVER_ID, TENANT_ID, CONTRIBUTION_ID, ITERATION_JOB_ID);
+      CENTRAL_SERVER_ID, TENANT_ID, CONTRIBUTION_ID, ITERATION_JOB_ID, Integer.valueOf(100));
 
     verify(reader, times(1)).read();
     verify(contributionService, never()).completeContribution(CONTRIBUTION_ID);

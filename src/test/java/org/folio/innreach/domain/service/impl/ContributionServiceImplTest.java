@@ -81,7 +81,7 @@ class ContributionServiceImplTest {
 
     verify(storageClient).startInstanceIteration(any());
     verify(repository).save(any(Contribution.class));
-    verify(jobRunner).startInitialContribution(any(), any(), any(), any());
+    verify(jobRunner).startInitialContribution(any(), any(), any(), any(), any());
   }
 
   @Test

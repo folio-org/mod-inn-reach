@@ -126,11 +126,13 @@ public class ContributionServiceImpl implements ContributionService {
 
     log.info("Triggering inventory instance iteration");
     var iterationJobResponse = triggerInstanceIteration();
+    var numberOfRecords = iterationJobResponse.getNumberOfRecordsPublished();
+
     contribution.setJobId(iterationJobResponse.getId());
 
     repository.save(contribution);
 
-    runInitialContributionJob(centralServerId, contribution);
+    runInitialContributionJob(centralServerId, contribution, numberOfRecords);
 
     log.info("Initial contribution process started");
   }
@@ -172,9 +174,9 @@ public class ContributionServiceImpl implements ContributionService {
     });
   }
 
-  private void runInitialContributionJob(UUID centralServerId, Contribution contribution) {
+  private void runInitialContributionJob(UUID centralServerId, Contribution contribution, Integer numberOfRecords) {
     log.debug("runInitialContributionJob:: parameters centralServerId: {}, contribution: {}", centralServerId, contribution);
-    getJobRunner().startInitialContribution(centralServerId, folioContext.getTenantId(), contribution.getId(), contribution.getJobId());
+    getJobRunner().startInitialContribution(centralServerId, folioContext.getTenantId(), contribution.getId(), contribution.getJobId(), numberOfRecords);
   }
 
   private ContributionJobRunner getJobRunner() {
