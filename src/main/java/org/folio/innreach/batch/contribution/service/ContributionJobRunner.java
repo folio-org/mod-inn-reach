@@ -86,7 +86,7 @@ public class ContributionJobRunner {
 
     totalRecords = numberOfRecords;
 
-    recordsProcessed.put(tenantId, 0);
+    recordsProcessed.put("testTenant", 0);
 
     InitialContributionJobConsumerContainer tempKafkaConsumer = itemReaderFactory.createInitialContributionConsumerContainer(tenantId);
 
@@ -157,9 +157,6 @@ public class ContributionJobRunner {
       URI testServer = URI.create("http://localhost:8080");
       var res = testClient.makeTestRequest(testServer, postBody);
       log.info("Response from test server: {}", res);
-      if (recordsProcessed.get("testTenant") == totalRecords) {
-        InitialContributionJobConsumerContainer.stopConsumer("folio.contrib.tester.innreach");
-      }
     } catch (Exception e) {
       log.warn("Error while simulating request: {} {}", e.getMessage(), e.getStackTrace());
     } finally {
@@ -179,6 +176,9 @@ public class ContributionJobRunner {
       var resObject = new ObjectMapper().writeValueAsString(res.getBody());
       if (resObject.contains("Contribution to d2irm is currently suspended")) {
         throw new ServiceSuspendedException("Contribution to d2irm is currently suspended");
+      }
+      if (Objects.equals(recordsProcessed.get("testTenant"), totalRecords)) {
+        InitialContributionJobConsumerContainer.stopConsumer("folio.contrib.tester.innreach");
       }
 
     } catch (ServiceSuspendedException ex) {
