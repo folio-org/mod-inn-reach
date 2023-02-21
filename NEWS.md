@@ -1,7 +1,24 @@
-## v2.1.0 IN-PROGRESS
+## v3.0.0 2023-02-21
 
-* Supports users interface version 15.3 16.0 (MODINREACH-303)
-* Supports inventory interface version 11.1 12.0 ([MODINREACH-304](https://issues.folio.org/browse/MODINREACH-304))
+### Stories
+* [MODINREACH-228](https://issues.folio.org/browse/MODINREACH-228) - Logging improvement
+* [MODINREACH-304](https://issues.folio.org/browse/MODINREACH-304) - Support inventory 12.0 in ModuleDescriptor "requires"
+* [MODINREACH-305](https://issues.folio.org/browse/MODINREACH-305) - mod-inn-reach fails in multiple tenants environment
+* [MODINREACH-306](https://issues.folio.org/browse/MODINREACH-306) - fixed applied for Items with effective locations in
+* [MODINREACH-307](https://issues.folio.org/browse/MODINREACH-307) - keyword search by patron name added
+* [MODINREACH-315](https://issues.folio.org/browse/MODINREACH-315) - Update Patron Verification API to Enhance Name Parsing
+* [MODINREACH-316](https://issues.folio.org/browse/MODINREACH-316) - fixed applied for Items with effective locations in
+* [MODINREACH-317](https://issues.folio.org/browse/MODINREACH-317) - UXPROD-3536 - BORROWING_SITE_CANCEL - Clean up "Virtual" Items and Associated Loan, Request, and Inventory Records.
+* [MODINREACH-319](https://issues.folio.org/browse/MODINREACH-319) - Logging improvement - Configuration
+* [MODINREACH-320](https://issues.folio.org/browse/MODINREACH-320) - volumeDesignation Not Being Contributed with Items (when available)
+* [MODINREACH-324](https://issues.folio.org/browse/MODINREACH-324) - Align code with D2IR API for empty expiration date field case
+* [MODINREACH-327](https://issues.folio.org/browse/MODINREACH-327) - Item's "in-transit" should be "Available" in INN-Reach if there are no open requests on the item
+* [MODINREACH-331](https://issues.folio.org/browse/MODINREACH-331) - Patron Verification API should accept the same name format it returns on a successful verification
+* [MODINREACH-333](https://issues.folio.org/browse/MODINREACH-333) - "Request too long" report does not include PATRON_HOLD transactions without updatedDate
+* [MODINREACH-337](https://issues.folio.org/browse/MODINREACH-337) - Update the module to Spring boot v3.0.0 and identify issues
+* [MODINREACH-338](https://issues.folio.org/browse/MODINREACH-338) - Use "Open" loan to determine item due date during item record contribution
+* [MODINREACH-346](https://issues.folio.org/browse/MODINREACH-346) - Upgrade folio-spring-base, Spring, snakeyaml
+* [MODINREACH-349](https://issues.folio.org/browse/MODINREACH-349) - upgrade versions for API breaking change)
 
 ## v2.0.0 2022-08-17
 
