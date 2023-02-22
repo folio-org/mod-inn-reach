@@ -1,6 +1,7 @@
 package org.folio.innreach.batch.contribution.service;
 
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.Assertions;
 import org.mockito.Mockito;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.kafka.support.serializer.JsonSerializer;
@@ -30,6 +31,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 
 import static org.apache.kafka.clients.consumer.ConsumerConfig.GROUP_ID_CONFIG;
 
@@ -57,7 +59,7 @@ class InitialContributionJobConsumerContainerTest extends BaseKafkaApiTest{
 
 
   @Test
-  public void testStartOrCreateConsumer() {
+  public void testStartOrCreateConsumer() throws InterruptedException {
     var context = ContributionJobContext.builder()
       .contributionId(UUID.randomUUID())
       .iterationJobId(UUID.randomUUID())
@@ -73,9 +75,17 @@ class InitialContributionJobConsumerContainerTest extends BaseKafkaApiTest{
 
     this.produceEvent();
 
-   initialContributionJobConsumerContainer.tryStartOrCreateConsumer(initialContributionMessageListener);
+    initialContributionJobConsumerContainer.tryStartOrCreateConsumer(initialContributionMessageListener);
 
     Mockito.doNothing().when(contributionJobRunner).runInitialContribution(Mockito.any(),Mockito.any(),Mockito.any(),Mockito.any());
+
+    Assertions.assertNotNull(InitialContributionJobConsumerContainer.consumersMap.get(TOPIC));
+
+    Assertions.assertEquals(1,InitialContributionJobConsumerContainer.consumersMap.size());
+
+    TimeUnit.SECONDS.sleep(5);
+
+    InitialContributionJobConsumerContainer.stopConsumer(TOPIC);
 
   }
 

@@ -27,7 +27,7 @@ import static org.apache.kafka.clients.consumer.ConsumerConfig.ENABLE_AUTO_COMMI
 @RequiredArgsConstructor
 public class InitialContributionJobConsumerContainer {
 
-  private static Map<String, ConcurrentMessageListenerContainer<String, InstanceIterationEvent>> consumersMap =
+  public static Map<String, ConcurrentMessageListenerContainer<String, InstanceIterationEvent>> consumersMap =
     new HashMap<>();
 
 
