@@ -99,89 +99,66 @@ class ContributionJobRunnerTest {
   @InjectMocks
   private ContributionJobRunner jobRunner;
 
-//  @Test
-//  void shouldRunJob() {
-//    var event = InstanceIterationEvent.of(ITERATION_JOB_ID, "test", "test", UUID.randomUUID());
-//
-//    when(factory.createReader(any())).thenReturn(reader);
-//    when(reader.read())
-//      .thenReturn(event)
-//      .thenReturn(null);
-//    when(validationService.isEligibleForContribution(any(), any(Instance.class))).thenReturn(true);
-//    when(validationService.isEligibleForContribution(any(), any(Item.class))).thenReturn(true);
-//    when(inventoryViewService.getInstance(any())).thenReturn(createInstanceView().toInstance());
-//
-//    jobRunner.runInitialContribution(JOB_CONTEXT, ContributionJobRunnerTest.this.event, statistics, TOPIC);
-//
-//    verify(reader, times(2)).read();
-//    verify(recordContributor).contributeInstance(any(), any());
-//    verify(recordContributor).contributeItems(any(), any(), anyList());
-//  }
+  @Test
+  void shouldRunJob() {
+    event = InstanceIterationEvent.of(ITERATION_JOB_ID, "test", "test", UUID.randomUUID());
 
-//  @Test
-//  void shouldRunJob_noInstanceItems() {
-//    var event = InstanceIterationEvent.of(ITERATION_JOB_ID, "test", "test", UUID.randomUUID());
-//    Instance instance = createInstance();
-//    instance.setItems(null);
-//
-//    when(factory.createReader(any())).thenReturn(reader);
-//    when(reader.read())
-//      .thenReturn(event)
-//      .thenReturn(null);
-//    when(inventoryViewService.getInstance(any())).thenReturn(instance);
-//
-//    jobRunner.runInitialContribution(JOB_CONTEXT, ContributionJobRunnerTest.this.event, statistics, TOPIC);
-//
-//    verify(reader, times(2)).read();
-//    verify(recordContributor).isContributed(CENTRAL_SERVER_ID, instance);
-//  }
+    when(validationService.isEligibleForContribution(any(), any(Instance.class))).thenReturn(true);
+    when(validationService.isEligibleForContribution(any(), any(Item.class))).thenReturn(true);
+    when(inventoryViewService.getInstance(any())).thenReturn(createInstanceView().toInstance());
 
-//  @Test
-//  void shouldRunJob_deContributeIneligibleInstance() {
-//    var event = InstanceIterationEvent.of(ITERATION_JOB_ID, "test", "test", UUID.randomUUID());
-//    Instance instance = createInstance();
-//    instance.setItems(null);
-//
-//    when(factory.createReader(any())).thenReturn(reader);
-//    when(reader.read())
-//      .thenReturn(event)
-//      .thenReturn(null);
-//    when(inventoryViewService.getInstance(any())).thenReturn(instance);
-//    when(recordContributor.isContributed(any(), any())).thenReturn(true);
-//
-//    jobRunner.runInitialContribution(JOB_CONTEXT, ContributionJobRunnerTest.this.event, statistics, TOPIC);
-//
-//    verify(reader, times(2)).read();
-//    verify(recordContributor).deContributeInstance(CENTRAL_SERVER_ID, instance);
-//  }
+    jobRunner.runInitialContribution(JOB_CONTEXT, ContributionJobRunnerTest.this.event, statistics, TOPIC);
 
-//  @Test
-//  void shouldRunJob_noInstances() {
-//    var event = InstanceIterationEvent.of(ITERATION_JOB_ID, "test", "test", UUID.randomUUID());
-//
-//    when(factory.createReader(any())).thenReturn(reader);
-//    when(reader.read())
-//      .thenReturn(event)
-//      .thenReturn(null);
-//    when(inventoryViewService.getInstance(any())).thenReturn(null);
-//
-//    jobRunner.runInitialContribution(JOB_CONTEXT, ContributionJobRunnerTest.this.event, statistics, TOPIC);
-//
-//    verify(reader, times(2)).read();
-//    verify(inventoryViewService).getInstance(any());
-//    verifyNoMoreInteractions(recordContributor);
-//  }
+    verify(recordContributor).contributeInstance(any(), any());
+    verify(recordContributor).contributeItems(any(), any(), anyList());
+  }
 
-//  @Test
-//  void shouldRunJob_noEvents() {
-//    when(factory.createReader(any())).thenReturn(reader);
-//    when(reader.read()).thenReturn(null);
-//
-//    jobRunner.runInitialContribution(JOB_CONTEXT, event, statistics, TOPIC);
-//
-//    verify(reader).read();
-//    verifyNoInteractions(recordContributor);
-//  }
+  @Test
+  void shouldRunJob_noInstanceItems() {
+    event = InstanceIterationEvent.of(ITERATION_JOB_ID, "test", "test", UUID.randomUUID());
+    Instance instance = createInstance();
+    instance.setItems(null);
+
+    when(inventoryViewService.getInstance(any())).thenReturn(instance);
+
+    jobRunner.runInitialContribution(JOB_CONTEXT, ContributionJobRunnerTest.this.event, statistics, TOPIC);
+
+    verify(recordContributor).isContributed(CENTRAL_SERVER_ID, instance);
+  }
+
+  @Test
+  void shouldRunJob_deContributeIneligibleInstance() {
+    event = InstanceIterationEvent.of(ITERATION_JOB_ID, "test", "test", UUID.randomUUID());
+    Instance instance = createInstance();
+    instance.setItems(null);
+
+    when(inventoryViewService.getInstance(any())).thenReturn(instance);
+    when(recordContributor.isContributed(any(), any())).thenReturn(true);
+
+    jobRunner.runInitialContribution(JOB_CONTEXT, ContributionJobRunnerTest.this.event, statistics, TOPIC);
+
+    verify(recordContributor).deContributeInstance(CENTRAL_SERVER_ID, instance);
+  }
+
+  @Test
+  void shouldRunJob_noInstances() {
+    event = InstanceIterationEvent.of(ITERATION_JOB_ID, "test", "test", UUID.randomUUID());
+
+    when(inventoryViewService.getInstance(any())).thenReturn(null);
+
+    jobRunner.runInitialContribution(JOB_CONTEXT, ContributionJobRunnerTest.this.event, statistics, TOPIC);
+
+    verify(inventoryViewService).getInstance(any());
+    verifyNoMoreInteractions(recordContributor);
+  }
+
+  @Test
+  void shouldRunJob_noEvents() {
+
+    jobRunner.runInitialContribution(JOB_CONTEXT, event, statistics, TOPIC);
+
+    verifyNoInteractions(recordContributor);
+  }
 
   @Test
   @Disabled
