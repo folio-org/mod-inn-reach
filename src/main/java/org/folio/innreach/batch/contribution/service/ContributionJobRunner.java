@@ -96,7 +96,7 @@ public class ContributionJobRunner {
   }
 
   public void runInitialContribution(ContributionJobContext context, InstanceIterationEvent event, Statistics stats, String topic) {
-    recordsProcessed.put(context.getTenantId(), recordsProcessed.get(context.getTenantId())+1);
+    recordsProcessed.put(context.getTenantId(), recordsProcessed.get(context.getTenantId()) == null ? 1 : recordsProcessed.get(context.getTenantId())+1);
 
     var contributionId = context.getContributionId();
 
