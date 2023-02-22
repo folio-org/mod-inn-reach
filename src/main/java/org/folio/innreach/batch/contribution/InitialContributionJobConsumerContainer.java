@@ -40,7 +40,7 @@ public class InitialContributionJobConsumerContainer {
 
   private final Long maxAttempts;
 
-  private final int THREAD_SIZE = 2;
+  private static final int CONCURRENT_CONTAINER_SIZE = 2;
 
   private final ContributionExceptionListener contributionExceptionListener;
 
@@ -96,7 +96,7 @@ public class InitialContributionJobConsumerContainer {
 //    } else {
 //      container.setConcurrency(concurrency);
 //    }
-    container.setConcurrency(THREAD_SIZE);
+    container.setConcurrency(CONCURRENT_CONTAINER_SIZE);
 
     container.start();
 

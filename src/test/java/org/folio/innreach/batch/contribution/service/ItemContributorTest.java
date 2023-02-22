@@ -1,18 +1,20 @@
 package org.folio.innreach.batch.contribution.service;
 
 import static com.google.common.collect.ImmutableList.of;
+import static org.folio.innreach.external.dto.InnReachResponse.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import static org.folio.innreach.external.dto.InnReachResponse.okResponse;
 import static org.folio.innreach.fixture.ContributionFixture.createContributionJobContext;
 import static org.folio.innreach.fixture.ContributionFixture.createItem;
 import static org.folio.innreach.fixture.TestUtil.createNoRetryTemplate;
 
+import java.util.ArrayList;
 import java.util.List;
 
+import org.folio.innreach.external.dto.InnReachResponse;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -45,6 +47,9 @@ class ItemContributorTest {
   @Mock
   private ContributionExceptionListener exceptionListener;
 
+  @Mock
+  private InnReachResponse response;
+
   @InjectMocks
   private RecordContributionServiceImpl service;
 
@@ -60,8 +65,10 @@ class ItemContributorTest {
 
   @Test
   void shouldContributeItems() {
-    when(irContributionService.contributeBibItems(any(), any(), any())).thenReturn(okResponse());
+    when(irContributionService.contributeBibItems(any(), any(), any())).thenReturn(response);
     when(recordTransformationService.getBibItems(any(), any(), any())).thenReturn(List.of(new BibItem()));
+    when(response.getErrors()).thenReturn(new ArrayList<>());
+    when(response.isOk()).thenReturn(true);
 
     service.contributeItems(JOB_CONTEXT.getCentralServerId(), "test", of(createItem()));
 

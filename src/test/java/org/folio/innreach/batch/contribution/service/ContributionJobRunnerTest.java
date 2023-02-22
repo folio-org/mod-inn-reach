@@ -53,6 +53,8 @@ import org.folio.spring.FolioExecutionContext;
 class ContributionJobRunnerTest {
 
   private static final String MARC_RECORD_SOURCE = "MARC";
+
+  private static final String TOPIC = "test";
   private static final ContributionJobContext JOB_CONTEXT = createContributionJobContext();
   private static final String TENANT_ID = JOB_CONTEXT.getTenantId();
   private static final UUID CONTRIBUTION_ID = JOB_CONTEXT.getContributionId();
@@ -109,7 +111,7 @@ class ContributionJobRunnerTest {
     when(validationService.isEligibleForContribution(any(), any(Item.class))).thenReturn(true);
     when(inventoryViewService.getInstance(any())).thenReturn(createInstanceView().toInstance());
 
-    jobRunner.runInitialContribution(JOB_CONTEXT, ContributionJobRunnerTest.this.event, statistics);
+    jobRunner.runInitialContribution(JOB_CONTEXT, ContributionJobRunnerTest.this.event, statistics, TOPIC);
 
     verify(reader, times(2)).read();
     verify(recordContributor).contributeInstance(any(), any());
@@ -128,7 +130,7 @@ class ContributionJobRunnerTest {
       .thenReturn(null);
     when(inventoryViewService.getInstance(any())).thenReturn(instance);
 
-    jobRunner.runInitialContribution(JOB_CONTEXT, ContributionJobRunnerTest.this.event, statistics);
+    jobRunner.runInitialContribution(JOB_CONTEXT, ContributionJobRunnerTest.this.event, statistics, TOPIC);
 
     verify(reader, times(2)).read();
     verify(recordContributor).isContributed(CENTRAL_SERVER_ID, instance);
@@ -147,7 +149,7 @@ class ContributionJobRunnerTest {
     when(inventoryViewService.getInstance(any())).thenReturn(instance);
     when(recordContributor.isContributed(any(), any())).thenReturn(true);
 
-    jobRunner.runInitialContribution(JOB_CONTEXT, ContributionJobRunnerTest.this.event, statistics);
+    jobRunner.runInitialContribution(JOB_CONTEXT, ContributionJobRunnerTest.this.event, statistics, TOPIC);
 
     verify(reader, times(2)).read();
     verify(recordContributor).deContributeInstance(CENTRAL_SERVER_ID, instance);
@@ -163,7 +165,7 @@ class ContributionJobRunnerTest {
       .thenReturn(null);
     when(inventoryViewService.getInstance(any())).thenReturn(null);
 
-    jobRunner.runInitialContribution(JOB_CONTEXT, ContributionJobRunnerTest.this.event, statistics);
+    jobRunner.runInitialContribution(JOB_CONTEXT, ContributionJobRunnerTest.this.event, statistics, TOPIC);
 
     verify(reader, times(2)).read();
     verify(inventoryViewService).getInstance(any());
@@ -175,7 +177,7 @@ class ContributionJobRunnerTest {
     when(factory.createReader(any())).thenReturn(reader);
     when(reader.read()).thenReturn(null);
 
-    jobRunner.runInitialContribution(JOB_CONTEXT, event, statistics);
+    jobRunner.runInitialContribution(JOB_CONTEXT, event, statistics, TOPIC);
 
     verify(reader).read();
     verifyNoInteractions(recordContributor);
@@ -188,7 +190,7 @@ class ContributionJobRunnerTest {
     String exceptionMsg = "test message";
     when(reader.read()).thenThrow(new RuntimeException(exceptionMsg));
 
-    assertThatThrownBy(() -> jobRunner.runInitialContribution(JOB_CONTEXT, event, statistics))
+    assertThatThrownBy(() -> jobRunner.runInitialContribution(JOB_CONTEXT, event, statistics, TOPIC))
       .isInstanceOf(RuntimeException.class)
       .hasMessageContaining(exceptionMsg);
 

@@ -86,7 +86,7 @@ public class ContributionJobRunner {
 
     totalRecords = numberOfRecords;
 
-    recordsProcessed.put("testTenant", 0);
+    recordsProcessed.put(tenantId, 0);
 
     InitialContributionJobConsumerContainer tempKafkaConsumer = itemReaderFactory.createInitialContributionConsumerContainer(tenantId);
 
@@ -95,7 +95,7 @@ public class ContributionJobRunner {
     tempKafkaConsumer.tryStartOrCreateConsumer(initialContributionMessageListener);
   }
 
-  public void runInitialContribution(ContributionJobContext context, InstanceIterationEvent event, Statistics stats) {
+  public void runInitialContribution(ContributionJobContext context, InstanceIterationEvent event, Statistics stats, String topic) {
     recordsProcessed.put(context.getTenantId(), recordsProcessed.get(context.getTenantId())+1);
 
     var contributionId = context.getContributionId();
@@ -133,7 +133,7 @@ public class ContributionJobRunner {
     if (Objects.equals(recordsProcessed.get(context.getTenantId()), totalRecords)) {
       completeContribution(context, stats);
       endContributionJobContext();
-//      InitialContributionJobConsumerContainer.stopConsumer(topic);
+      InitialContributionJobConsumerContainer.stopConsumer(topic);
     }
   }
 

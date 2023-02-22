@@ -20,7 +20,7 @@ public class InitialContributionMessageListener implements AcknowledgingMessageL
     ConsumerRecord<String, InstanceIterationEvent> consumerRecord, Acknowledgment acknowledgment) {
 
     // process message
-    iMessageProcessor.processMessage(consumerRecord.key(), consumerRecord.value(), context, statistics);
+    iMessageProcessor.processMessage(consumerRecord.key(), consumerRecord.value(), context, statistics, consumerRecord.topic());
 
     // commit offset
 //    acknowledgment.acknowledge();

@@ -13,10 +13,10 @@ public class ContributionProcessor implements IMessageProcessor{
   private final ContributionJobRunner contributionJobRunner;
 
   @Override
-  public void processMessage(String key, InstanceIterationEvent event, ContributionJobContext context, ContributionJobContext.Statistics statistics) {
+  public void processMessage(String key, InstanceIterationEvent event, ContributionJobContext context, ContributionJobContext.Statistics statistics, String topic) {
     System.out.println("Message is:"+ event.toString());
     log.info("Processing initial contribution job {}", context);
-//    contributionJobRunner.runInitialContribution(context, event, statistics);
-    contributionJobRunner.simulateContribution();
+    contributionJobRunner.runInitialContribution(context, event, statistics, topic);
+//    contributionJobRunner.simulateContribution();
   }
 }

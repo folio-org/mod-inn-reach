@@ -10,8 +10,10 @@ import static org.folio.innreach.external.dto.InnReachResponse.ERROR_STATUS;
 import static org.folio.innreach.fixture.AccessTokenFixture.createAccessToken;
 import static org.folio.innreach.fixture.CentralServerFixture.createCentralServerConnectionDetailsDTO;
 
+import java.util.ArrayList;
 import java.util.UUID;
 
+import org.folio.innreach.external.dto.InnReachResponse;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -40,6 +42,9 @@ class InnReachContributionServiceImplTest {
 
   @Mock
   private InnReachAuthExternalService innReachAuthExternalService;
+
+  @Mock
+  private InnReachResponse response;
 
   @InjectMocks
   private InnReachContributionServiceImpl service;
@@ -89,6 +94,8 @@ class InnReachContributionServiceImplTest {
 
     when(centralServerService.getCentralServerConnectionDetails(any())).thenReturn(connectionDetails);
     when(innReachAuthExternalService.getAccessToken(any())).thenReturn(createAccessToken());
+    when(contributionClient.deContributeBib(any(), any(), any(), any(), any())).thenReturn(response);
+    when(response.getErrors()).thenReturn(new ArrayList<>());
 
     service.deContributeBib(CENTRAL_SERVER_ID, BIB_ID);
 
@@ -113,6 +120,8 @@ class InnReachContributionServiceImplTest {
 
     when(centralServerService.getCentralServerConnectionDetails(any())).thenReturn(connectionDetails);
     when(innReachAuthExternalService.getAccessToken(any())).thenReturn(createAccessToken());
+    when(contributionClient.deContributeBibItem(any(), any(), any(), any(), any())).thenReturn(response);
+    when(response.getErrors()).thenReturn(new ArrayList<>());
 
     service.deContributeBibItem(CENTRAL_SERVER_ID, ITEM_ID);
 
