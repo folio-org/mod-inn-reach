@@ -40,7 +40,7 @@ public class InitialContributionJobConsumerContainer {
 
   private final Long maxAttempts;
 
-  private static final int CONCURRENT_CONTAINER_SIZE = 2;
+  private static final int CONCURRENCY = 2;
 
   private final ContributionExceptionListener contributionExceptionListener;
 
@@ -78,9 +78,6 @@ public class InitialContributionJobConsumerContainer {
 
     containerProps.setPollTimeout(100);
     Boolean enableAutoCommit = (Boolean) consumerProperties.get(ENABLE_AUTO_COMMIT_CONFIG);
-//    if (!enableAutoCommit) {
-//      containerProps.setAckMode(ContainerProperties.AckMode.MANUAL_IMMEDIATE);
-//    }
 
     containerProps.setAckMode(ContainerProperties.AckMode.RECORD);
 
@@ -91,12 +88,7 @@ public class InitialContributionJobConsumerContainer {
     container.setupMessageListener(messageListner);
     container.setCommonErrorHandler(errorHandler());
 
-//    if (concurrency == 0) {
-//      container.setConcurrency(1);
-//    } else {
-//      container.setConcurrency(concurrency);
-//    }
-    container.setConcurrency(CONCURRENT_CONTAINER_SIZE);
+    container.setConcurrency(CONCURRENCY);
 
     container.start();
 
@@ -106,9 +98,9 @@ public class InitialContributionJobConsumerContainer {
   }
 
   public static void stopConsumer(final String topic) {
-    log.info("stopping consumer for topic {}", topic);
+    log.info("Stopping consumer for topic {}", topic);
     ConcurrentMessageListenerContainer<String, InstanceIterationEvent> container = consumersMap.get(topic);
     container.stop();
-    log.info("consumer stopped!!");
+    log.info("Consumer stopped for topic {}", topic);
   }
 }

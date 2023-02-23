@@ -88,11 +88,11 @@ public class ContributionJobRunner {
 
     recordsProcessed.put(tenantId, 0);
 
-    InitialContributionJobConsumerContainer tempKafkaConsumer = itemReaderFactory.createInitialContributionConsumerContainer(tenantId);
+    InitialContributionJobConsumerContainer container = itemReaderFactory.createInitialContributionConsumerContainer(tenantId);
 
     InitialContributionMessageListener initialContributionMessageListener = new InitialContributionMessageListener(new ContributionProcessor(this), context, new Statistics());
 
-    tempKafkaConsumer.tryStartOrCreateConsumer(initialContributionMessageListener);
+    container.tryStartOrCreateConsumer(initialContributionMessageListener);
   }
 
   public void runInitialContribution(ContributionJobContext context, InstanceIterationEvent event, Statistics stats, String topic) {
@@ -103,7 +103,7 @@ public class ContributionJobRunner {
     var iterationJobId = context.getIterationJobId();
 
     if (event == null) {
-      log.info("Exiting kafka message reader for contribution {} and job {}", contributionId, iterationJobId);
+      log.info("Cannot contribute record for null event, contribution id: {}", contributionId);
       return;
     }
     log.info("Processing instance iteration event = {}", event);
@@ -137,33 +137,6 @@ public class ContributionJobRunner {
     }
   }
 
-  // TODO Try to simulate the stats collection. Remove after testing.
-  public void simulateContribution() {
-    makeSimulatedRequest();
-//    s.addRecordsTotal(1);
-  }
-
-  private void simulateContributionItems() {
-    // For now just make this one.
-    makeSimulatedRequest();
-//    s.addRecordsTotal(1);
-  }
-
-  private void makeSimulatedRequest(Statistics s) {
-    // Simulate the try/catch around http client calls.
-    try {
-      log.info("Making simulated request");
-      String postBody = "somerandomstring"; // Should probably make this a random length.
-      URI testServer = URI.create("http://localhost:8080");
-      var res = testClient.makeTestRequest(testServer, postBody);
-      log.info("Response from test server: {}", res);
-    } catch (Exception e) {
-      log.warn("Error while simulating request: {} {}", e.getMessage(), e.getStackTrace());
-    } finally {
-      s.addRecordsProcessed(1);
-    }
-  }
-
   private void makeSimulatedRequest() {
     // Simulate the try/catch around http client calls.
     try {
@@ -186,12 +159,6 @@ public class ContributionJobRunner {
     } catch (Exception e) {
       log.warn("Error while simulating request: {} {}", e.getMessage(), e.getStackTrace());
     }
-  }
-
-  public Instance simulateLoadingInstance(Statistics s) {
-    // TODO Implement this with an occasional null value. This could just randomly return null or perhaps leave that until problems have been eliminated.
-    makeSimulatedRequest(s);
-    return new Instance();
   }
 
   public void runInstanceContribution(UUID centralServerId, Instance instance) {

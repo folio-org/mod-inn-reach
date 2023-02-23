@@ -49,7 +49,6 @@ public class KafkaItemReader<K, V> implements AutoCloseable {
   public void open() {
     if (kafkaConsumer == null) {
       kafkaConsumer = new KafkaConsumer<>(consumerProperties, keyDeserializer, valueDeserializer);
-     // new DefaultKafkaConsumerFactory<>(kafkaConsumer)
     }
 
     kafkaConsumer.subscribe(List.of(topic));

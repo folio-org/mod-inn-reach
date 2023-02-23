@@ -110,19 +110,10 @@ public class RecordContributionServiceImpl implements RecordContributionService 
   }
 
   private InnReachResponse contributeBib(UUID centralServerId, String bibId, BibInfo bib) {
-    try {
-      var response = irContributionService.contributeBib(centralServerId, bibId, bib);
-      if (!response.getErrors().isEmpty()) {
-        var error = response.getErrors().get(0).getReason();
-        if (error.contains("Contribution to d2irm is currently suspended")) {
-          throw new ServiceSuspendedException("Contribution to d2irm is currently suspended");
-        }
-      }
-      Assert.isTrue(response.isOk(), "Unexpected contribution response: " + response);
-      return response;
-    } catch (ServiceSuspendedException ex) {
-      throw new ServiceSuspendedException(ex.getMessage());
-    }
+    var response = irContributionService.contributeBib(centralServerId, bibId, bib);
+    checkServiceSuspension(response);
+    Assert.isTrue(response.isOk(), "Unexpected contribution response: " + response);
+    return response;
   }
 
   private InnReachResponse verifyBibContribution(UUID centralServerId, String bibId) {
@@ -132,20 +123,18 @@ public class RecordContributionServiceImpl implements RecordContributionService 
   }
 
   private InnReachResponse contributeBibItems(String bibId, UUID centralServerId, List<BibItem> bibItems) {
-    try {
-      var response = irContributionService.contributeBibItems(centralServerId, bibId, BibItemsInfo.of(bibItems));
-      if (!response.getErrors().isEmpty()) {
-        var error = response.getErrors().get(0).getReason();
-        if (error.contains("Contribution to d2irm is currently suspended")) {
-          throw new ServiceSuspendedException("Contribution to d2irm is currently suspended");
-        }
-      }
-      Assert.isTrue(response.isOk(), "Unexpected items contribution response: " + response);
-      return response;
-    } catch (ServiceSuspendedException ex) {
-      throw new ServiceSuspendedException(ex.getMessage());
-    }
+    var response = irContributionService.contributeBibItems(centralServerId, bibId, BibItemsInfo.of(bibItems));
+    checkServiceSuspension(response);
+    Assert.isTrue(response.isOk(), "Unexpected items contribution response: " + response);
+    return response;
   }
 
-
+  private void checkServiceSuspension(InnReachResponse response) {
+    if (!response.getErrors().isEmpty()) {
+      var error = response.getErrors().get(0).getReason();
+      if (error.contains("Contribution to d2irm is currently suspended")) {
+        throw new ServiceSuspendedException("Contribution to d2irm is currently suspended");
+      }
+    }
+  }
 }
