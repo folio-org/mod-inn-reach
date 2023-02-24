@@ -4,6 +4,9 @@ import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Assertions;
 import org.mockito.Mockito;
 import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.springframework.kafka.core.*;
+import org.springframework.kafka.listener.ConcurrentMessageListenerContainer;
+import org.springframework.kafka.listener.ContainerProperties;
 import org.springframework.kafka.support.serializer.JsonSerializer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.kafka.clients.producer.ProducerConfig;
@@ -21,18 +24,13 @@ import org.folio.innreach.domain.service.impl.ContributionServiceImpl;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.kafka.KafkaProperties;
-import org.springframework.kafka.core.DefaultKafkaProducerFactory;
-import org.springframework.kafka.core.KafkaTemplate;
-import org.springframework.kafka.core.ProducerFactory;
-import org.springframework.kafka.support.SendResult;
 import org.springframework.kafka.support.serializer.JsonDeserializer;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
 
+import static org.apache.kafka.clients.consumer.ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG;
 import static org.apache.kafka.clients.consumer.ConsumerConfig.GROUP_ID_CONFIG;
 
 class InitialContributionJobConsumerContainerTest extends BaseKafkaApiTest{
@@ -59,19 +57,10 @@ class InitialContributionJobConsumerContainerTest extends BaseKafkaApiTest{
 
 
   @Test
-  public void testStartOrCreateConsumer() throws InterruptedException {
-    var context = ContributionJobContext.builder()
-      .contributionId(UUID.randomUUID())
-      .iterationJobId(UUID.randomUUID())
-      .centralServerId(UUID.randomUUID())
-      .tenantId(TEST_TENANT)
-      .build();
-    var initialContributionJobConsumerContainer = prepare();
-    var contributionProcessor = new ContributionProcessor(contributionJobRunner);
-
-
-    InitialContributionMessageListener initialContributionMessageListener =
-      new InitialContributionMessageListener(contributionProcessor, context, new ContributionJobContext.Statistics());
+  void testStartOrCreateConsumer() throws InterruptedException {
+    var context = prepareContext();
+    var initialContributionJobConsumerContainer = prepareContributionJobConsumerContainer();
+    InitialContributionMessageListener initialContributionMessageListener = prepareInitialContributionMessageListener(context);
 
     this.produceEvent();
 
@@ -83,28 +72,83 @@ class InitialContributionJobConsumerContainerTest extends BaseKafkaApiTest{
 
     Assertions.assertEquals(1,InitialContributionJobConsumerContainer.consumersMap.size());
 
-    TimeUnit.SECONDS.sleep(5);
+  }
+
+  @Test
+  void stopConsumer() {
+    var context = prepareContext();
+
+    var initialContributionJobConsumerContainer = prepareContributionJobConsumerContainer();
+    InitialContributionMessageListener initialContributionMessageListener = prepareInitialContributionMessageListener(context);
+
+    initialContributionJobConsumerContainer.tryStartOrCreateConsumer(initialContributionMessageListener);
 
     InitialContributionJobConsumerContainer.stopConsumer(TOPIC);
-
+    Assertions.assertNotNull(InitialContributionJobConsumerContainer.consumersMap.get(TOPIC));
   }
 
   @NotNull
-  private CompletableFuture<SendResult<String, InstanceIterationEvent>> produceEvent() {
-    return new KafkaTemplate<String, InstanceIterationEvent>(producerFactory()).send(TOPIC, createInstanceIterationEvent());
+  private InitialContributionMessageListener prepareInitialContributionMessageListener(ContributionJobContext context) {
+    var contributionProcessor = new ContributionProcessor(contributionJobRunner);
+
+
+    return new InitialContributionMessageListener(contributionProcessor, context, new ContributionJobContext.Statistics());
   }
 
+  @Test
+  void testContainerIfRunning() {
 
-  public InitialContributionJobConsumerContainer prepare() {
+    var context = prepareContext();
+
+    var consumerProperties = kafkaProperties.buildConsumerProperties();
+
+    ConsumerFactory<String, InstanceIterationEvent> factory = new DefaultKafkaConsumerFactory<>(consumerProperties,keyDeserializer(),valueDeserializer());
+
+    ContainerProperties containerProps = new ContainerProperties(TOPIC);
+
+    containerProps.setPollTimeout(100);
+    Boolean enableAutoCommit = (Boolean) consumerProperties.get(ENABLE_AUTO_COMMIT_CONFIG);
+
+    containerProps.setAckMode(ContainerProperties.AckMode.RECORD);
+
+    var initialContributionJobConsumerContainer = prepareContributionJobConsumerContainer();
+    var contributionProcessor = new ContributionProcessor(contributionJobRunner);
+
+    var container = new ConcurrentMessageListenerContainer<>(factory,containerProps);
+
+    InitialContributionMessageListener initialContributionMessageListener =
+      new InitialContributionMessageListener(contributionProcessor, context, new ContributionJobContext.Statistics());
+
+    container.setupMessageListener(initialContributionMessageListener);
+
+    InitialContributionJobConsumerContainer.consumersMap.put(TOPIC,
+      container);
+
+    initialContributionJobConsumerContainer.tryStartOrCreateConsumer(initialContributionMessageListener);
+    Mockito.doNothing().when(contributionJobRunner).runInitialContribution(Mockito.any(),Mockito.any(),Mockito.any(),Mockito.any());
+    Assertions.assertNotNull(InitialContributionJobConsumerContainer.consumersMap.get(TOPIC));
+
+  }
+
+  private ContributionJobContext prepareContext() {
+    return ContributionJobContext.builder()
+      .contributionId(UUID.randomUUID())
+      .iterationJobId(UUID.randomUUID())
+      .centralServerId(UUID.randomUUID())
+      .tenantId(TEST_TENANT)
+      .build();
+  }
+
+  private void produceEvent() {
+    new KafkaTemplate<String, InstanceIterationEvent>(producerFactory()).send(TOPIC, createInstanceIterationEvent());
+  }
+
+  public InitialContributionJobConsumerContainer prepareContributionJobConsumerContainer() {
       var consumerProperties = kafkaProperties.buildConsumerProperties();
       consumerProperties.put(GROUP_ID_CONFIG, jobProperties.getReaderGroupId());
-
-
       var contributionExceptionListener = new ContributionExceptionListener(contributionService, "instanceContribution");
 
-
       return new InitialContributionJobConsumerContainer(consumerProperties,TOPIC,keyDeserializer(),valueDeserializer(), retryConfig.getInterval(), retryConfig.getMaxAttempts(), contributionExceptionListener);
-
     }
 
   private Deserializer<InstanceIterationEvent> valueDeserializer() {
