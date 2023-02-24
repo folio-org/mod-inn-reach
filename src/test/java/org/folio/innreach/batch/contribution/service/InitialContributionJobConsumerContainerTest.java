@@ -1,9 +1,10 @@
 package org.folio.innreach.batch.contribution.service;
 
+import org.folio.innreach.external.exception.ServiceSuspendedException;
 import org.jetbrains.annotations.NotNull;
-import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.*;
+import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.kafka.core.*;
 import org.springframework.kafka.listener.ConcurrentMessageListenerContainer;
 import org.springframework.kafka.listener.ContainerProperties;
@@ -21,22 +22,29 @@ import org.folio.innreach.config.props.ContributionJobProperties;
 import org.folio.innreach.domain.dto.folio.inventorystorage.InstanceIterationEvent;
 import org.folio.innreach.domain.listener.base.BaseKafkaApiTest;
 import org.folio.innreach.domain.service.impl.ContributionServiceImpl;
-import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.kafka.KafkaProperties;
 import org.springframework.kafka.support.serializer.JsonDeserializer;
 
+import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-import static org.apache.kafka.clients.consumer.ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG;
 import static org.apache.kafka.clients.consumer.ConsumerConfig.GROUP_ID_CONFIG;
+import static org.awaitility.Awaitility.await;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
 
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class InitialContributionJobConsumerContainerTest extends BaseKafkaApiTest{
 
   public static final String TOPIC = "folio.contrib.tester.innreach";
   public static final String TEST_TENANT = "testTenant";
+
+  private final Long maxInterval = 2000L;
+
+  private final Long maxAttempt = 2L;
   @Autowired
   private KafkaProperties kafkaProperties;
 
@@ -49,14 +57,39 @@ class InitialContributionJobConsumerContainerTest extends BaseKafkaApiTest{
   @Autowired
   private RetryConfig retryConfig;
 
-  @SpyBean
+  @Mock
   ContributionJobRunner contributionJobRunner;
 
   @Autowired
   ContributionServiceImpl contributionService;
 
 
+  @BeforeEach
+  void clearMap() {
+    InitialContributionJobConsumerContainer.consumersMap.clear();
+  }
+
   @Test
+  @Order(1)
+  void testStartAndStopConsumerIfServiceException() throws InterruptedException {
+    var context = prepareContext();
+    var initialContributionJobConsumerContainer = prepareContributionJobConsumerContainer();
+    InitialContributionMessageListener initialContributionMessageListener = prepareInitialContributionMessageListener(context);
+
+    this.produceEvent();
+
+    doThrow(ServiceSuspendedException.class).when(contributionJobRunner)
+      .runInitialContribution(any(), any(), any(), any());
+
+    initialContributionJobConsumerContainer.tryStartOrCreateConsumer(initialContributionMessageListener);
+
+    await().atMost(Duration.ofSeconds(15L)).until(()->!InitialContributionJobConsumerContainer.consumersMap.get(TOPIC).isRunning());
+
+
+  }
+
+  @Test
+  @Order(2)
   void testStartOrCreateConsumer() throws InterruptedException {
     var context = prepareContext();
     var initialContributionJobConsumerContainer = prepareContributionJobConsumerContainer();
@@ -66,7 +99,7 @@ class InitialContributionJobConsumerContainerTest extends BaseKafkaApiTest{
 
     initialContributionJobConsumerContainer.tryStartOrCreateConsumer(initialContributionMessageListener);
 
-    Mockito.doNothing().when(contributionJobRunner).runInitialContribution(Mockito.any(),Mockito.any(),Mockito.any(),Mockito.any());
+    Mockito.doNothing().when(contributionJobRunner).runInitialContribution(any(), any(), any(), any());
 
     Assertions.assertNotNull(InitialContributionJobConsumerContainer.consumersMap.get(TOPIC));
 
@@ -75,6 +108,7 @@ class InitialContributionJobConsumerContainerTest extends BaseKafkaApiTest{
   }
 
   @Test
+  @Order(3)
   void stopConsumer() {
     var context = prepareContext();
 
@@ -96,6 +130,7 @@ class InitialContributionJobConsumerContainerTest extends BaseKafkaApiTest{
   }
 
   @Test
+  @Order(4)
   void testContainerIfRunning() {
 
     var context = prepareContext();
@@ -107,7 +142,6 @@ class InitialContributionJobConsumerContainerTest extends BaseKafkaApiTest{
     ContainerProperties containerProps = new ContainerProperties(TOPIC);
 
     containerProps.setPollTimeout(100);
-    Boolean enableAutoCommit = (Boolean) consumerProperties.get(ENABLE_AUTO_COMMIT_CONFIG);
 
     containerProps.setAckMode(ContainerProperties.AckMode.RECORD);
 
@@ -125,7 +159,7 @@ class InitialContributionJobConsumerContainerTest extends BaseKafkaApiTest{
       container);
 
     initialContributionJobConsumerContainer.tryStartOrCreateConsumer(initialContributionMessageListener);
-    Mockito.doNothing().when(contributionJobRunner).runInitialContribution(Mockito.any(),Mockito.any(),Mockito.any(),Mockito.any());
+    Mockito.doNothing().when(contributionJobRunner).runInitialContribution(any(), any(), any(), any());
     Assertions.assertNotNull(InitialContributionJobConsumerContainer.consumersMap.get(TOPIC));
 
   }
@@ -148,7 +182,7 @@ class InitialContributionJobConsumerContainerTest extends BaseKafkaApiTest{
       consumerProperties.put(GROUP_ID_CONFIG, jobProperties.getReaderGroupId());
       var contributionExceptionListener = new ContributionExceptionListener(contributionService, "instanceContribution");
 
-      return new InitialContributionJobConsumerContainer(consumerProperties,TOPIC,keyDeserializer(),valueDeserializer(), retryConfig.getInterval(), retryConfig.getMaxAttempts(), contributionExceptionListener);
+      return new InitialContributionJobConsumerContainer(consumerProperties,TOPIC,keyDeserializer(),valueDeserializer(), maxInterval, maxAttempt, contributionExceptionListener);
     }
 
   private Deserializer<InstanceIterationEvent> valueDeserializer() {
