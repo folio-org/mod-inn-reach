@@ -137,29 +137,29 @@ public class ContributionJobRunner {
     }
   }
 
-  private void makeSimulatedRequest() {
-    // Simulate the try/catch around http client calls.
-    try {
-      recordsProcessed.put("testTenant", recordsProcessed.get("testTenant")+1);
-      log.info("Making simulated request");
-      String postBody = "somerandomstring"; // Should probably make this a random length.
-      URI testServer = URI.create("http://localhost:8080");
-      var res = testClient.makeTestRequest(testServer, postBody);
-      log.info("Response from test server: {}", res);
-      var resObject = new ObjectMapper().writeValueAsString(res.getBody());
-      if (resObject.contains("Contribution to d2irm is currently suspended")) {
-        throw new ServiceSuspendedException("Contribution to d2irm is currently suspended");
-      }
-      if (Objects.equals(recordsProcessed.get("testTenant"), totalRecords)) {
-        InitialContributionJobConsumerContainer.stopConsumer("folio.contrib.tester.innreach");
-      }
-
-    } catch (ServiceSuspendedException ex) {
-      throw new ServiceSuspendedException(ex.getMessage());
-    } catch (Exception e) {
-      log.warn("Error while simulating request: {} {}", e.getMessage(), e.getStackTrace());
-    }
-  }
+//  private void makeSimulatedRequest() {
+//    // Simulate the try/catch around http client calls.
+//    try {
+//      recordsProcessed.put("testTenant", recordsProcessed.get("testTenant")+1);
+//      log.info("Making simulated request");
+//      String postBody = "somerandomstring"; // Should probably make this a random length.
+//      URI testServer = URI.create("http://localhost:8080");
+//      var res = testClient.makeTestRequest(testServer, postBody);
+//      log.info("Response from test server: {}", res);
+//      var resObject = new ObjectMapper().writeValueAsString(res.getBody());
+//      if (resObject.contains("Contribution to d2irm is currently suspended")) {
+//        throw new ServiceSuspendedException("Contribution to d2irm is currently suspended");
+//      }
+//      if (Objects.equals(recordsProcessed.get("testTenant"), totalRecords)) {
+//        InitialContributionJobConsumerContainer.stopConsumer("folio.contrib.tester.innreach");
+//      }
+//
+//    } catch (ServiceSuspendedException ex) {
+//      throw new ServiceSuspendedException(ex.getMessage());
+//    } catch (Exception e) {
+//      log.warn("Error while simulating request: {} {}", e.getMessage(), e.getStackTrace());
+//    }
+//  }
 
   public void runInstanceContribution(UUID centralServerId, Instance instance) {
     log.info("Validating instance {} for contribution to central server {}", instance.getId(), centralServerId);
@@ -420,25 +420,25 @@ public class ContributionJobRunner {
     }
   }
 
-  private void run(ContributionJobContext context, BiConsumer<UUID, Statistics> processor) {
-    var stats = new Statistics();
-    var centralServerId = context.getCentralServerId();
-    var contributionId = context.getContributionId();
-    try {
-      runningInitialContributions.add(contributionId);
-      beginContributionJobContext(context);
-      processor.accept(centralServerId, stats);
-    } catch (Exception e) {
-      log.warn("Failed to run contribution job for central server {}", centralServerId, e);
-      throw e;
-    } finally {
-      if (!isCanceled(contributionId)) {
-        completeContribution(context, stats);
-        runningInitialContributions.remove(contributionId);
-      }
-      endContributionJobContext();
-    }
-  }
+//  private void run(ContributionJobContext context, BiConsumer<UUID, Statistics> processor) {
+//    var stats = new Statistics();
+//    var centralServerId = context.getCentralServerId();
+//    var contributionId = context.getContributionId();
+//    try {
+//      runningInitialContributions.add(contributionId);
+//      beginContributionJobContext(context);
+//      processor.accept(centralServerId, stats);
+//    } catch (Exception e) {
+//      log.warn("Failed to run contribution job for central server {}", centralServerId, e);
+//      throw e;
+//    } finally {
+//      if (!isCanceled(contributionId)) {
+//        completeContribution(context, stats);
+//        runningInitialContributions.remove(contributionId);
+//      }
+//      endContributionJobContext();
+//    }
+//  }
 
   private boolean isUnknownEvent(InstanceIterationEvent event, UUID iterationJobId) {
     return !Objects.equals(event.getJobId(), iterationJobId);
@@ -452,9 +452,9 @@ public class ContributionJobRunner {
     }
   }
 
-  private boolean isCanceled(UUID contributionId) {
-    return !runningInitialContributions.contains(contributionId);
-  }
+//  private boolean isCanceled(UUID contributionId) {
+//    return !runningInitialContributions.contains(contributionId);
+//  }
 
   private void updateStats(Statistics stats) {
     statsListener.updateStats(stats);
@@ -470,13 +470,13 @@ public class ContributionJobRunner {
     return instance;
   }
 
-  private InstanceIterationEvent readEvent(KafkaItemReader<String, InstanceIterationEvent> kafkaReader) {
-    try {
-      return retryTemplate.execute(r -> kafkaReader.read());
-    } catch (Exception e) {
-      instanceExceptionListener.logReaderError(e);
-      throw new IllegalStateException("Can't read instance iteration event: " + e.getMessage(), e);
-    }
-  }
+//  private InstanceIterationEvent readEvent(KafkaItemReader<String, InstanceIterationEvent> kafkaReader) {
+//    try {
+//      return retryTemplate.execute(r -> kafkaReader.read());
+//    } catch (Exception e) {
+//      instanceExceptionListener.logReaderError(e);
+//      throw new IllegalStateException("Can't read instance iteration event: " + e.getMessage(), e);
+//    }
+//  }
 
 }

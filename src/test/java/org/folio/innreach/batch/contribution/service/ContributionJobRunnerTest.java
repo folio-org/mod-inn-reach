@@ -1,9 +1,10 @@
 package org.folio.innreach.batch.contribution.service;
 
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -18,10 +19,9 @@ import static org.folio.innreach.fixture.ContributionFixture.createItem;
 import static org.folio.innreach.fixture.TestUtil.createNoRetryTemplate;
 
 import java.util.UUID;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
 
-import org.junit.jupiter.api.Disabled;
+import org.folio.innreach.batch.contribution.InitialContributionJobConsumerContainer;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -99,6 +99,9 @@ class ContributionJobRunnerTest {
   @InjectMocks
   private ContributionJobRunner jobRunner;
 
+  @Mock
+  private InitialContributionJobConsumerContainer initialContributionJobConsumerContainer;
+
   @Test
   void shouldRunJob() {
     event = InstanceIterationEvent.of(ITERATION_JOB_ID, "test", "test", UUID.randomUUID());
@@ -106,6 +109,8 @@ class ContributionJobRunnerTest {
     when(validationService.isEligibleForContribution(any(), any(Instance.class))).thenReturn(true);
     when(validationService.isEligibleForContribution(any(), any(Item.class))).thenReturn(true);
     when(inventoryViewService.getInstance(any())).thenReturn(createInstanceView().toInstance());
+    doThrow(new RuntimeException()).when(recordContributor).contributeInstance(any(),any());
+    doThrow(new RuntimeException()).when(recordContributor).contributeItems(any(),any(),any());
 
     jobRunner.runInitialContribution(JOB_CONTEXT, ContributionJobRunnerTest.this.event, statistics, TOPIC);
 
@@ -134,6 +139,7 @@ class ContributionJobRunnerTest {
 
     when(inventoryViewService.getInstance(any())).thenReturn(instance);
     when(recordContributor.isContributed(any(), any())).thenReturn(true);
+    doThrow(new RuntimeException()).when(recordContributor).deContributeInstance(any(),any());
 
     jobRunner.runInitialContribution(JOB_CONTEXT, ContributionJobRunnerTest.this.event, statistics, TOPIC);
 
@@ -157,22 +163,6 @@ class ContributionJobRunnerTest {
 
     jobRunner.runInitialContribution(JOB_CONTEXT, event, statistics, TOPIC);
 
-    verifyNoInteractions(recordContributor);
-  }
-
-  @Test
-  @Disabled
-  void throwsExceptionOnRead() {
-    when(factory.createReader(any())).thenReturn(reader);
-    String exceptionMsg = "test message";
-    when(reader.read()).thenThrow(new RuntimeException(exceptionMsg));
-
-    assertThatThrownBy(() -> jobRunner.runInitialContribution(JOB_CONTEXT, event, statistics, TOPIC))
-      .isInstanceOf(RuntimeException.class)
-      .hasMessageContaining(exceptionMsg);
-
-    verify(reader).read();
-    verify(contributionService).completeContribution(CONTRIBUTION_ID);
     verifyNoInteractions(recordContributor);
   }
 
@@ -370,23 +360,26 @@ class ContributionJobRunnerTest {
   }
 
   @Test
-  @Disabled
-  void shouldCancelJob_afterOneEvent() throws ExecutionException, InterruptedException, TimeoutException {
-    var event = InstanceIterationEvent.of(ITERATION_JOB_ID, "test", "test", UUID.randomUUID());
-
-    when(factory.createReader(any())).thenReturn(reader);
-    when(reader.read())
-      .thenAnswer(a -> {
-        jobRunner.cancelInitialContribution(CONTRIBUTION_ID);
-        return event;
-      })
-      .thenReturn(event);
+  void startInitialContributionTest() {
+    when(factory.createInitialContributionConsumerContainer(any())).thenReturn(initialContributionJobConsumerContainer);
+    doNothing().when(initialContributionJobConsumerContainer).tryStartOrCreateConsumer(any());
 
     jobRunner.startInitialContribution(
-      CENTRAL_SERVER_ID, TENANT_ID, CONTRIBUTION_ID, ITERATION_JOB_ID, Integer.valueOf(100));
+      CENTRAL_SERVER_ID, TENANT_ID, CONTRIBUTION_ID, ITERATION_JOB_ID, 100);
 
-    verify(reader, times(1)).read();
-    verify(contributionService, never()).completeContribution(CONTRIBUTION_ID);
+    Assertions.assertEquals(100, jobRunner.totalRecords);
+    verify(initialContributionJobConsumerContainer,times(1)).tryStartOrCreateConsumer(any());
+
+  }
+  @Test
+  public void testCancelInitialContribution(){
+    jobRunner.cancelInitialContribution(UUID.randomUUID());
+  }
+  @Test
+  void shouldRunJob_noEvent() {
+    jobRunner.runInitialContribution(JOB_CONTEXT, null, statistics, TOPIC);
+    verify(recordContributor, never()).deContributeItem(any(), any());
+    verify(recordContributor, never()).contributeInstance(any(), any());
   }
 
 }
