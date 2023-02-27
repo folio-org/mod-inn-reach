@@ -36,7 +36,6 @@ import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
 
-@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class InitialContributionJobConsumerContainerTest extends BaseKafkaApiTest{
 
   public static final String TOPIC = "folio.contrib.tester.innreach";
@@ -70,55 +69,55 @@ class InitialContributionJobConsumerContainerTest extends BaseKafkaApiTest{
   }
 
   @Test
-  @Order(1)
   void testStartAndStopConsumerIfServiceException() throws InterruptedException {
+    var topicName = getTopicName();
     var context = prepareContext();
-    var initialContributionJobConsumerContainer = prepareContributionJobConsumerContainer();
+    var initialContributionJobConsumerContainer = prepareContributionJobConsumerContainer(topicName);
     InitialContributionMessageListener initialContributionMessageListener = prepareInitialContributionMessageListener(context);
 
-    this.produceEvent();
+    this.produceEvent(topicName);
 
     doThrow(ServiceSuspendedException.class).when(contributionJobRunner)
       .runInitialContribution(any(), any(), any(), any());
 
     initialContributionJobConsumerContainer.tryStartOrCreateConsumer(initialContributionMessageListener);
 
-    await().atMost(Duration.ofSeconds(15L)).until(()->!InitialContributionJobConsumerContainer.consumersMap.get(TOPIC).isRunning());
+    await().atMost(Duration.ofSeconds(10L)).until(()->!InitialContributionJobConsumerContainer.consumersMap.get(topicName).isRunning());
 
 
   }
 
   @Test
-  @Order(2)
   void testStartOrCreateConsumer() throws InterruptedException {
+    var topicName = getTopicName();
     var context = prepareContext();
-    var initialContributionJobConsumerContainer = prepareContributionJobConsumerContainer();
+    var initialContributionJobConsumerContainer = prepareContributionJobConsumerContainer(topicName);
     InitialContributionMessageListener initialContributionMessageListener = prepareInitialContributionMessageListener(context);
 
-    this.produceEvent();
+    this.produceEvent(topicName);
 
     initialContributionJobConsumerContainer.tryStartOrCreateConsumer(initialContributionMessageListener);
 
     Mockito.doNothing().when(contributionJobRunner).runInitialContribution(any(), any(), any(), any());
 
-    Assertions.assertNotNull(InitialContributionJobConsumerContainer.consumersMap.get(TOPIC));
+    Assertions.assertNotNull(InitialContributionJobConsumerContainer.consumersMap.get(topicName));
 
     Assertions.assertEquals(1,InitialContributionJobConsumerContainer.consumersMap.size());
 
   }
 
   @Test
-  @Order(3)
   void stopConsumer() {
+    var topicName = getTopicName();
     var context = prepareContext();
 
-    var initialContributionJobConsumerContainer = prepareContributionJobConsumerContainer();
+    var initialContributionJobConsumerContainer = prepareContributionJobConsumerContainer(topicName);
     InitialContributionMessageListener initialContributionMessageListener = prepareInitialContributionMessageListener(context);
 
     initialContributionJobConsumerContainer.tryStartOrCreateConsumer(initialContributionMessageListener);
 
-    InitialContributionJobConsumerContainer.stopConsumer(TOPIC);
-    Assertions.assertNotNull(InitialContributionJobConsumerContainer.consumersMap.get(TOPIC));
+    InitialContributionJobConsumerContainer.stopConsumer(topicName);
+    Assertions.assertNotNull(InitialContributionJobConsumerContainer.consumersMap.get(topicName));
   }
 
   @NotNull
@@ -130,22 +129,21 @@ class InitialContributionJobConsumerContainerTest extends BaseKafkaApiTest{
   }
 
   @Test
-  @Order(4)
   void testContainerIfRunning() {
-
+    var topicName = getTopicName();
     var context = prepareContext();
 
     var consumerProperties = kafkaProperties.buildConsumerProperties();
 
     ConsumerFactory<String, InstanceIterationEvent> factory = new DefaultKafkaConsumerFactory<>(consumerProperties,keyDeserializer(),valueDeserializer());
 
-    ContainerProperties containerProps = new ContainerProperties(TOPIC);
+    ContainerProperties containerProps = new ContainerProperties(topicName);
 
     containerProps.setPollTimeout(100);
 
     containerProps.setAckMode(ContainerProperties.AckMode.RECORD);
 
-    var initialContributionJobConsumerContainer = prepareContributionJobConsumerContainer();
+    var initialContributionJobConsumerContainer = prepareContributionJobConsumerContainer(topicName);
     var contributionProcessor = new ContributionProcessor(contributionJobRunner);
 
     var container = new ConcurrentMessageListenerContainer<>(factory,containerProps);
@@ -155,12 +153,11 @@ class InitialContributionJobConsumerContainerTest extends BaseKafkaApiTest{
 
     container.setupMessageListener(initialContributionMessageListener);
 
-    InitialContributionJobConsumerContainer.consumersMap.put(TOPIC,
-      container);
+    InitialContributionJobConsumerContainer.consumersMap.put(topicName, container);
 
     initialContributionJobConsumerContainer.tryStartOrCreateConsumer(initialContributionMessageListener);
     Mockito.doNothing().when(contributionJobRunner).runInitialContribution(any(), any(), any(), any());
-    Assertions.assertNotNull(InitialContributionJobConsumerContainer.consumersMap.get(TOPIC));
+    Assertions.assertNotNull(InitialContributionJobConsumerContainer.consumersMap.get(topicName));
 
   }
 
@@ -173,16 +170,16 @@ class InitialContributionJobConsumerContainerTest extends BaseKafkaApiTest{
       .build();
   }
 
-  private void produceEvent() {
-    new KafkaTemplate<String, InstanceIterationEvent>(producerFactory()).send(TOPIC, createInstanceIterationEvent());
+  private void produceEvent(String tempTopic) {
+    new KafkaTemplate<String, InstanceIterationEvent>(producerFactory()).send(tempTopic, createInstanceIterationEvent());
   }
 
-  public InitialContributionJobConsumerContainer prepareContributionJobConsumerContainer() {
+  public InitialContributionJobConsumerContainer prepareContributionJobConsumerContainer(String tempTopic) {
       var consumerProperties = kafkaProperties.buildConsumerProperties();
       consumerProperties.put(GROUP_ID_CONFIG, jobProperties.getReaderGroupId());
       var contributionExceptionListener = new ContributionExceptionListener(contributionService, "instanceContribution");
 
-      return new InitialContributionJobConsumerContainer(consumerProperties,TOPIC,keyDeserializer(),valueDeserializer(), maxInterval, maxAttempt, contributionExceptionListener);
+      return new InitialContributionJobConsumerContainer(consumerProperties,tempTopic,keyDeserializer(),valueDeserializer(), maxInterval, maxAttempt, contributionExceptionListener);
     }
 
   private Deserializer<InstanceIterationEvent> valueDeserializer() {
@@ -207,6 +204,10 @@ class InitialContributionJobConsumerContainerTest extends BaseKafkaApiTest{
     props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
     props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class);
     return new DefaultKafkaProducerFactory<>(props);
+  }
+
+  public String getTopicName() {
+    return TOPIC + UUID.randomUUID();
   }
 
 }
