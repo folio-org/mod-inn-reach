@@ -1,6 +1,8 @@
 package org.folio.innreach.batch.contribution.service;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
@@ -16,6 +18,7 @@ import java.util.ArrayList;
 import java.util.UUID;
 
 import org.folio.innreach.external.dto.InnReachResponse;
+import org.junit.Assert;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -101,6 +104,27 @@ class InstanceContributorTest {
     assertThatThrownBy(() -> instanceContributor.contributeInstance(CENTRAL_SERVER_ID, instance))
       .isInstanceOf(IllegalArgumentException.class)
       .hasMessageContaining("Unexpected verification response:");
+  }
+
+  @Test
+  void testDeContributeInstance(){
+    when(irContributionService.deContributeBib(any(), any())).thenReturn(response);
+    instanceContributor.deContributeInstance(CENTRAL_SERVER_ID, createInstance());
+    verify(irContributionService).deContributeBib(any(),any());
+  }
+
+  @Test
+  void testContributeBib(){
+    InnReachResponse response = InnReachResponse.builder().errors(new ArrayList<>()).status("ok").build();
+    when(irContributionService.lookUpBib(any(), any())).thenReturn(response);
+
+    boolean resp = instanceContributor.isContributed(CENTRAL_SERVER_ID, createInstance());
+    assertTrue(resp);
+
+    response.setStatus("nok");
+    resp = instanceContributor.isContributed(CENTRAL_SERVER_ID, createInstance());
+    assertFalse(resp);
+
   }
 
 }

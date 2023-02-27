@@ -2,6 +2,9 @@ package org.folio.innreach.batch.contribution.service;
 
 import static com.google.common.collect.ImmutableList.of;
 import static org.folio.innreach.external.dto.InnReachResponse.*;
+import static org.folio.innreach.fixture.ContributionFixture.createInstance;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
@@ -12,10 +15,14 @@ import static org.folio.innreach.fixture.ContributionFixture.createItem;
 import static org.folio.innreach.fixture.TestUtil.createNoRetryTemplate;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import org.folio.innreach.external.dto.InnReachResponse;
+import org.folio.innreach.external.exception.ServiceSuspendedException;
+import org.junit.Assert;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -72,6 +79,52 @@ class ItemContributorTest {
 
     service.contributeItems(JOB_CONTEXT.getCentralServerId(), "test", of(createItem()));
 
+    verify(irContributionService).contributeBibItems(eq(JOB_CONTEXT.getCentralServerId()), any(), any());
+  }
+  @Test
+  void shouldContributeItems_throwException() {
+    InnReachResponse.Error errorResp1 = InnReachResponse.Error.builder().reason("Contribution to d2irm is not currently suspended").build();
+    InnReachResponse.Error errorResp2 = InnReachResponse.Error.builder().reason("Contribution to d2irm is currently suspended").build();
+
+    when(irContributionService.contributeBibItems(any(), any(), any())).thenReturn(response);
+    when(recordTransformationService.getBibItems(any(), any(), any())).thenReturn(List.of(new BibItem(),new BibItem()));
+    when(response.getErrors()).thenReturn(Arrays.asList(errorResp1));
+    when(response.isOk()).thenReturn(true);
+
+    service.contributeItems(JOB_CONTEXT.getCentralServerId(), "test", of(createItem()));
+    verify(irContributionService).contributeBibItems(eq(JOB_CONTEXT.getCentralServerId()), any(), any());
+
+    when(response.getErrors()).thenReturn(Arrays.asList(errorResp2));
+    Assert.assertThrows(ServiceSuspendedException.class,()->service.contributeItems(JOB_CONTEXT.getCentralServerId(), "test", of(createItem())));
+
+    when(recordTransformationService.getBibItems(any(), any(), any())).thenReturn(List.of());
+    Assert.assertThrows(IllegalArgumentException.class,()->service.contributeItems(JOB_CONTEXT.getCentralServerId(), "test", of(createItem())));
+  }
+
+  @Test
+  void testIsContributed(){
+    InnReachResponse response = InnReachResponse.builder().errors(new ArrayList<>()).status("ok").build();
+    when(irContributionService.lookUpBibItem(any(), any(), any())).thenReturn(response);
+
+    boolean resp = service.isContributed(JOB_CONTEXT.getCentralServerId(), createInstance(),createItem());
+    assertTrue(resp);
+
+    response.setStatus("nok");
+    resp = service.isContributed(JOB_CONTEXT.getCentralServerId(), createInstance(),createItem());
+    assertFalse(resp);
+  }
+
+  @Test
+  void testMoveItem(){
+    when(irContributionService.deContributeBibItem(any(), any())).thenReturn(response);
+    when(irContributionService.contributeBibItems(any(), any(), any())).thenReturn(response);
+    when(recordTransformationService.getBibItems(any(), any(), any())).thenReturn(List.of(new BibItem()));
+    when(response.getErrors()).thenReturn(new ArrayList<>());
+    when(response.isOk()).thenReturn(true);
+
+    service.moveItem(JOB_CONTEXT.getCentralServerId(), "test", createItem());
+
+    verify(irContributionService).deContributeBibItem(any(),any());
     verify(irContributionService).contributeBibItems(eq(JOB_CONTEXT.getCentralServerId()), any(), any());
   }
 

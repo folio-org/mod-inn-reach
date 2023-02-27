@@ -2,6 +2,7 @@ package org.folio.innreach.external.service.impl;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -11,9 +12,11 @@ import static org.folio.innreach.fixture.AccessTokenFixture.createAccessToken;
 import static org.folio.innreach.fixture.CentralServerFixture.createCentralServerConnectionDetailsDTO;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.UUID;
 
 import org.folio.innreach.external.dto.InnReachResponse;
+import org.folio.innreach.external.exception.ServiceSuspendedException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -103,6 +106,24 @@ class InnReachContributionServiceImplTest {
   }
 
   @Test
+  public void deContributeBib_throwError() {
+    var connectionDetails = createCentralServerConnectionDetailsDTO();
+    InnReachResponse.Error errorResp1 = InnReachResponse.Error.builder().reason("Contribution to d2irm is not currently suspended").build();
+    InnReachResponse.Error errorResp2 = InnReachResponse.Error.builder().reason("Contribution to d2irm is currently suspended").build();
+
+    when(centralServerService.getCentralServerConnectionDetails(any())).thenReturn(connectionDetails);
+    when(innReachAuthExternalService.getAccessToken(any())).thenReturn(createAccessToken());
+    when(contributionClient.deContributeBib(any(), any(), any(), any(), any())).thenReturn(response);
+    when(response.getErrors()).thenReturn(Arrays.asList(errorResp1));
+
+    service.deContributeBib(CENTRAL_SERVER_ID, BIB_ID);
+    verify(contributionClient).deContributeBib(any(), any(), any(), any(), any());
+
+    when(response.getErrors()).thenReturn(Arrays.asList(errorResp2));
+    assertThrows(ServiceSuspendedException.class,()->service.deContributeBib(CENTRAL_SERVER_ID, BIB_ID));
+  }
+
+  @Test
   void contributeBibItems() {
     var connectionDetails = createCentralServerConnectionDetailsDTO();
 
@@ -126,6 +147,24 @@ class InnReachContributionServiceImplTest {
     service.deContributeBibItem(CENTRAL_SERVER_ID, ITEM_ID);
 
     verify(contributionClient).deContributeBibItem(any(), any(), any(), any(), any());
+  }
+
+  @Test
+  void deContributeBibItem_throwError() {
+    var connectionDetails = createCentralServerConnectionDetailsDTO();
+    InnReachResponse.Error errorResp1 = InnReachResponse.Error.builder().reason("Contribution to d2irm is not currently suspended").build();
+    InnReachResponse.Error errorResp2 = InnReachResponse.Error.builder().reason("Contribution to d2irm is currently suspended").build();
+
+    when(centralServerService.getCentralServerConnectionDetails(any())).thenReturn(connectionDetails);
+    when(innReachAuthExternalService.getAccessToken(any())).thenReturn(createAccessToken());
+    when(contributionClient.deContributeBibItem(any(), any(), any(), any(), any())).thenReturn(response);
+    when(response.getErrors()).thenReturn(Arrays.asList(errorResp1));
+
+    service.deContributeBibItem(CENTRAL_SERVER_ID, ITEM_ID);
+    verify(contributionClient).deContributeBibItem(any(), any(), any(), any(), any());
+    when(response.getErrors()).thenReturn(Arrays.asList(errorResp2));
+    assertThrows(ServiceSuspendedException.class,()->service.deContributeBibItem(CENTRAL_SERVER_ID, ITEM_ID));
+
   }
 
   @Test
