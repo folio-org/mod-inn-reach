@@ -5,7 +5,6 @@ import static java.lang.Math.max;
 import static org.folio.innreach.batch.contribution.ContributionJobContextManager.beginContributionJobContext;
 import static org.folio.innreach.batch.contribution.ContributionJobContextManager.endContributionJobContext;
 
-import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -349,7 +348,11 @@ public class ContributionJobRunner {
       stats.addRecordsTotal(itemsCount);
       recordContributionService.contributeItems(centralServerId, bibId, items);
       stats.addRecordsContributed(itemsCount);
-    } catch (Exception e) {
+    }
+    catch (ServiceSuspendedException e) {
+      throw e;
+    }
+    catch (Exception e) {
       // not possible to guess what item failed when the chunk of multiple items is being contributed
       var recordId = items.size() == 1 ? items.get(0).getId() : null;
       itemExceptionListener.logWriteError(e, recordId);
@@ -364,7 +367,11 @@ public class ContributionJobRunner {
       stats.addRecordsTotal(1);
       recordContributionService.contributeInstance(centralServerId, instance);
       stats.addRecordsContributed(1);
-    } catch (Exception e) {
+    }
+    catch (ServiceSuspendedException e) {
+      throw e;
+    }
+    catch (Exception e) {
       instanceExceptionListener.logWriteError(e, instance.getId());
     } finally {
       stats.addRecordsProcessed(1);
