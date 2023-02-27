@@ -4,7 +4,6 @@ import org.folio.innreach.external.exception.ServiceSuspendedException;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.*;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.springframework.kafka.core.*;
 import org.springframework.kafka.listener.ConcurrentMessageListenerContainer;
 import org.springframework.kafka.listener.ContainerProperties;
@@ -34,6 +33,7 @@ import java.util.UUID;
 import static org.apache.kafka.clients.consumer.ConsumerConfig.GROUP_ID_CONFIG;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
 
 class InitialContributionJobConsumerContainerTest extends BaseKafkaApiTest{
@@ -62,6 +62,9 @@ class InitialContributionJobConsumerContainerTest extends BaseKafkaApiTest{
   @Autowired
   ContributionServiceImpl contributionService;
 
+  @Mock
+  ContributionExceptionListener contributionExceptionListener;
+
 
   @BeforeEach
   void clearMap() {
@@ -76,6 +79,8 @@ class InitialContributionJobConsumerContainerTest extends BaseKafkaApiTest{
     InitialContributionMessageListener initialContributionMessageListener = prepareInitialContributionMessageListener(context);
 
     this.produceEvent(topicName);
+
+    doNothing().when(contributionExceptionListener).logWriteError(any(),any());
 
     doThrow(ServiceSuspendedException.class).when(contributionJobRunner)
       .runInitialContribution(any(), any(), any(), any());
@@ -98,7 +103,7 @@ class InitialContributionJobConsumerContainerTest extends BaseKafkaApiTest{
 
     initialContributionJobConsumerContainer.tryStartOrCreateConsumer(initialContributionMessageListener);
 
-    Mockito.doNothing().when(contributionJobRunner).runInitialContribution(any(), any(), any(), any());
+    doNothing().when(contributionJobRunner).runInitialContribution(any(), any(), any(), any());
 
     Assertions.assertNotNull(InitialContributionJobConsumerContainer.consumersMap.get(topicName));
 
@@ -156,7 +161,7 @@ class InitialContributionJobConsumerContainerTest extends BaseKafkaApiTest{
     InitialContributionJobConsumerContainer.consumersMap.put(topicName, container);
 
     initialContributionJobConsumerContainer.tryStartOrCreateConsumer(initialContributionMessageListener);
-    Mockito.doNothing().when(contributionJobRunner).runInitialContribution(any(), any(), any(), any());
+    doNothing().when(contributionJobRunner).runInitialContribution(any(), any(), any(), any());
     Assertions.assertNotNull(InitialContributionJobConsumerContainer.consumersMap.get(topicName));
 
   }
@@ -177,7 +182,6 @@ class InitialContributionJobConsumerContainerTest extends BaseKafkaApiTest{
   public InitialContributionJobConsumerContainer prepareContributionJobConsumerContainer(String tempTopic) {
       var consumerProperties = kafkaProperties.buildConsumerProperties();
       consumerProperties.put(GROUP_ID_CONFIG, jobProperties.getReaderGroupId());
-      var contributionExceptionListener = new ContributionExceptionListener(contributionService, "instanceContribution");
 
       return new InitialContributionJobConsumerContainer(consumerProperties,tempTopic,keyDeserializer(),valueDeserializer(), maxInterval, maxAttempt, contributionExceptionListener);
     }
