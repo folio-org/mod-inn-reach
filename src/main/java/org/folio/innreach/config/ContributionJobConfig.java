@@ -1,5 +1,6 @@
 package org.folio.innreach.config;
 
+import org.folio.innreach.config.props.InnReachRetryPolicy;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -19,7 +20,7 @@ public class ContributionJobConfig {
   @Bean("contributionRetryTemplate")
   public RetryTemplate contributionRetryTemplate(ContributionJobProperties jobProperties) {
     return RetryTemplate.builder()
-      .maxAttempts(jobProperties.getRetryAttempts())
+      .customPolicy(new InnReachRetryPolicy(jobProperties.getRetryAttempts()))
       .exponentialBackoff(jobProperties.getRetryIntervalMs(), BACKOFF_MULTIPLIER, BACKOFF_MAX_INTERVAL)
       .build();
   }
