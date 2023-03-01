@@ -34,6 +34,8 @@ import org.folio.innreach.mapper.MappingMethods;
 import org.folio.innreach.repository.ContributionErrorRepository;
 import org.folio.innreach.repository.ContributionRepository;
 import org.folio.spring.FolioExecutionContext;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.retry.support.RetryTemplate;
 
 class ContributionServiceImplTest {
 
@@ -64,6 +66,10 @@ class ContributionServiceImplTest {
   @InjectMocks
   private ContributionServiceImpl service;
 
+  @Mock
+//  @Qualifier("contributionRetryTemplate")
+  private RetryTemplate retryTemplate;
+
   @BeforeEach
   public void beforeEachSetup() {
     MockitoAnnotations.openMocks(this);
@@ -73,6 +79,7 @@ class ContributionServiceImplTest {
   void startInitialContributionProcess() {
     when(repository.save(any(Contribution.class))).thenReturn(createContribution());
     when(storageClient.startInstanceIteration(any())).thenReturn(createJobResponse());
+    when(storageClient.getJobById(any())).thenReturn(createJobResponse());
     when(validationService.getItemTypeMappingStatus(any())).thenReturn(VALID);
     when(validationService.getLocationMappingStatus(any())).thenReturn(VALID);
     when(beanFactory.getBean(ContributionJobRunner.class)).thenReturn(jobRunner);

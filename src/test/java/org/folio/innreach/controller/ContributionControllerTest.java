@@ -23,12 +23,14 @@ import java.time.OffsetDateTime;
 import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
+import org.springframework.retry.support.RetryTemplate;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlMergeMode;
 
@@ -78,6 +80,9 @@ class ContributionControllerTest extends BaseControllerTest {
   private InnReachLocationExternalService irLocationService;
   @MockBean
   private ContributionJobRunner jobRunner;
+
+  @Mock
+  private RetryTemplate retryTemplate;
 
   @Test
   @Sql(scripts = {
@@ -262,6 +267,7 @@ class ContributionControllerTest extends BaseControllerTest {
   void return201HttpCode_whenInstanceIterationStarted() {
     var jobResponse = createJobResponse();
     when(instanceStorageClient.startInstanceIteration(any(InstanceIterationRequest.class))).thenReturn(jobResponse);
+    when(instanceStorageClient.getJobById(any())).thenReturn(jobResponse);
 
     when(materialTypesClient.getMaterialTypes(anyString(), anyInt())).thenReturn(createMaterialTypes());
     when(irLocationService.getAllLocations(any())).thenReturn(createIrLocations());
