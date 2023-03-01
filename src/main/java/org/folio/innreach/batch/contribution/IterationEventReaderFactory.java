@@ -49,6 +49,8 @@ public class IterationEventReaderFactory {
     var topic = String.format("%s.%s.%s",
       folioEnv.getEnvironment(), tenantId, jobProperties.getReaderTopic());
 
+    System.out.println("topic is=>"+topic);
+
     var reader = new KafkaItemReader<>(props, topic, keyDeserializer(), valueDeserializer());
     reader.setPollTimeout(Duration.ofSeconds(jobProperties.getReaderPollTimeoutSec()));
     reader.setRecordProcessor(CONSUMER_REC_PROCESSOR);

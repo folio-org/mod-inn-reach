@@ -198,11 +198,16 @@ public class ContributionServiceImpl implements ContributionService {
   private JobResponse triggerInstanceIteration() {
     log.debug("triggerInstanceIteration:: no parameter");
     var request = createInstanceIterationRequest();
+    log.info("request is-> EventType:{} , TopicName:{}",request.getEventType(),request.getTopicName());
 
     var iterationJob = instanceStorageClient.startInstanceIteration(request);
     Assert.isTrue(iterationJob.getStatus() == IN_PROGRESS, "Unexpected iteration job status received: " + iterationJob.getStatus());
 
     log.info("triggerInstanceIteration:: result: {}", iterationJob);
+    log.info("triggerInstanceIteration:: status: {}", iterationJob.getStatus().toString());
+    log.info("triggerInstanceIteration:: numberOfResult: {}", iterationJob.getNumberOfRecordsPublished());
+    log.info("triggerInstanceIteration:: result: {}", iterationJob.getId());
+
     return iterationJob;
   }
 
