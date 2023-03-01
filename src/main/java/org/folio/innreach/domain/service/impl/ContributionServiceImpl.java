@@ -127,15 +127,25 @@ public class ContributionServiceImpl implements ContributionService {
     log.info("Triggering inventory instance iteration");
     var iterationJobResponse = triggerInstanceIteration();
     var numberOfRecords = iterationJobResponse.getNumberOfRecordsPublished();
+    log.info("numberOfRecords from iterationJobResponse-> {}",numberOfRecords);
+//
+//    try {
+//      Thread.sleep(60000);
+//    } catch (InterruptedException e) {
+//      throw new RuntimeException(e);
+//    }
 
-    try {
-      Thread.sleep(60000);
-    } catch (InterruptedException e) {
-      throw new RuntimeException(e);
+    JobResponse responseAfterTrigger = instanceStorageClient.getJobById(iterationJobResponse.getId());
+
+    if(responseAfterTrigger!=null) {
+      log.info("status-->"+responseAfterTrigger.getStatus().toString());
+      log.info("number-->"+responseAfterTrigger.getNumberOfRecordsPublished());
+      log.info("id-->"+responseAfterTrigger.getId());
+    }
+    else {
+      log.info("responseAfterTrigger is null");
     }
 
-
-    log.info("numberOfRecords from iterationJobResponse-> {}",numberOfRecords);
 
     contribution.setJobId(iterationJobResponse.getId());
 
@@ -216,6 +226,7 @@ public class ContributionServiceImpl implements ContributionService {
     log.info("triggerInstanceIteration:: result: {}", iterationJob.toString());
     log.info("message published number->> {}",iterationJob.getNumberOfRecordsPublished());
     log.info("message published status->> {}",iterationJob.getStatus().toString());
+    log.info("message published id->> {}",iterationJob.getId());
     return iterationJob;
   }
 

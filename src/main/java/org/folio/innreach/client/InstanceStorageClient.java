@@ -22,6 +22,9 @@ public interface InstanceStorageClient {
   @GetMapping("/instances/{instanceId}")
   Instance getInstanceById(@PathVariable("instanceId") UUID instanceId);
 
+  @GetMapping("/instances/iteration/{id}")
+  JobResponse getJobById(@PathVariable("id") UUID id);
+
   @PostMapping(value = "/instances/iteration", consumes = APPLICATION_JSON_VALUE, produces = APPLICATION_JSON_VALUE)
   JobResponse startInstanceIteration(@RequestBody InstanceIterationRequest request);
 
