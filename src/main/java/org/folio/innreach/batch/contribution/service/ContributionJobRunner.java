@@ -88,7 +88,6 @@ public class ContributionJobRunner {
       run(context, (centralServerId, stats) -> {
         while (!isCanceled(contributionId)) {
           var event = readEvent(kafkaReader);
-          log.info("event is->>"+event.toString());
           if (event == null) {
             return;
           }
