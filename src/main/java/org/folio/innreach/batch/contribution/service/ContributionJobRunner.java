@@ -85,7 +85,9 @@ public class ContributionJobRunner {
 
     totalRecords = numberOfRecords;
 
-    recordsProcessed.put(tenantId, 0);
+    log.info("totalRecords in startInitialContribution->> {}",totalRecords);
+
+   // recordsProcessed.put(tenantId, 0);
 
     InitialContributionJobConsumerContainer container = itemReaderFactory.createInitialContributionConsumerContainer(tenantId);
 
@@ -96,6 +98,8 @@ public class ContributionJobRunner {
 
   public void runInitialContribution(ContributionJobContext context, InstanceIterationEvent event, Statistics stats, String topic) {
     recordsProcessed.put(context.getTenantId(), recordsProcessed.get(context.getTenantId()) == null ? 1 : recordsProcessed.get(context.getTenantId())+1);
+
+    log.info("count is->>{}",recordsProcessed.get(context.getTenantId()));
 
     var contributionId = context.getContributionId();
 

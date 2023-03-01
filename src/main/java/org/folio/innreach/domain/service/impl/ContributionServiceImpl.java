@@ -128,6 +128,8 @@ public class ContributionServiceImpl implements ContributionService {
     var iterationJobResponse = triggerInstanceIteration();
     var numberOfRecords = iterationJobResponse.getNumberOfRecordsPublished();
 
+    log.info("numberOfRecords from iterationJobResponse-> {}",numberOfRecords);
+
     contribution.setJobId(iterationJobResponse.getId());
 
     repository.save(contribution);
