@@ -206,7 +206,9 @@ public class ContributionServiceImpl implements ContributionService {
     var iterationJob = instanceStorageClient.startInstanceIteration(request);
     Assert.isTrue(iterationJob.getStatus() == IN_PROGRESS, "Unexpected iteration job status received: " + iterationJob.getStatus());
 
-    log.info("triggerInstanceIteration:: result: {}", iterationJob);
+    log.info("triggerInstanceIteration:: result: {}", iterationJob.toString());
+    log.info("message published number->> {}",iterationJob.getNumberOfRecordsPublished());
+    log.info("message published status->> {}",iterationJob.getStatus().toString());
     return iterationJob;
   }
 

@@ -101,6 +101,12 @@ public class ContributionJobRunner {
 
     log.info("count is->>{}",recordsProcessed.get(context.getTenantId()));
 
+    if (Objects.equals(recordsProcessed.get(context.getTenantId()), totalRecords)) {
+      completeContribution(context, stats);
+      endContributionJobContext();
+      InitialContributionJobConsumerContainer.stopConsumer(topic);
+    }
+
     var contributionId = context.getContributionId();
 
     var iterationJobId = context.getIterationJobId();
@@ -132,11 +138,6 @@ public class ContributionJobRunner {
       contributeInstanceItems(centralServerId, instance, stats);
     } else if (isContributed(centralServerId, instance)) {
       deContributeInstance(centralServerId, instance, stats);
-    }
-    if (Objects.equals(recordsProcessed.get(context.getTenantId()), totalRecords)) {
-      completeContribution(context, stats);
-      endContributionJobContext();
-      InitialContributionJobConsumerContainer.stopConsumer(topic);
     }
   }
 

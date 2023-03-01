@@ -60,10 +60,10 @@ folio:
       enabled: true
   logging:
     feign:
-      enabled: ${LOG_HTTP:false}
+      enabled: ${LOG_HTTP:true}
       level: FULL
     request:
-      enabled: ${LOG_HTTP:false}
+      enabled: ${LOG_HTTP:true}
       level: FULL
 management:
   endpoints:
