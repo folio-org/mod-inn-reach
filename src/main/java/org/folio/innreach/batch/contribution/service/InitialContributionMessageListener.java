@@ -34,11 +34,16 @@ public class InitialContributionMessageListener implements MessageListener<Strin
 
     System.out.println("InstanceId-->>"+instanceId);
 
+    InstanceIterationEvent instanceIterationEvent = consumerRecord.value();
+
+    instanceIterationEvent.setInstanceId(instanceId);
+    instanceIterationEvent.setJobId(jobId);
+
 
     //end
 
     // process message
-    iMessageProcessor.processMessage(consumerRecord.key(), consumerRecord.value(), context, statistics, consumerRecord.topic());
+    iMessageProcessor.processMessage(instanceIterationEvent, context, statistics, consumerRecord.topic());
 
     // commit offset
 //    acknowledgment.acknowledge();
