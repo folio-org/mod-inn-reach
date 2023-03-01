@@ -14,7 +14,10 @@ import java.util.UUID;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.folio.innreach.external.exception.InnReachException;
 import org.springframework.beans.factory.BeanFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.retry.support.RetryTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
@@ -49,6 +52,9 @@ public class ContributionServiceImpl implements ContributionService {
   private final BeanFactory beanFactory;
 
   private ContributionJobRunner jobRunner;
+
+  @Qualifier("contributionRetryTemplate")
+  private final RetryTemplate retryTemplate;
 
   @Override
   public ContributionDTO getCurrent(UUID centralServerId) {
@@ -135,16 +141,9 @@ public class ContributionServiceImpl implements ContributionService {
 //      throw new RuntimeException(e);
 //    }
 
-    JobResponse responseAfterTrigger = instanceStorageClient.getJobById(iterationJobResponse.getId());
+   // getJobResponse(iterationJobResponse.getId());
 
-    if(responseAfterTrigger!=null) {
-      log.info("status-->"+responseAfterTrigger.getStatus().toString());
-      log.info("number-->"+responseAfterTrigger.getNumberOfRecordsPublished());
-      log.info("id-->"+responseAfterTrigger.getId());
-    }
-    else {
-      log.info("responseAfterTrigger is null");
-    }
+    retryTemplate.execute(r-> getJobResponse(iterationJobResponse.getId()));
 
 
     contribution.setJobId(iterationJobResponse.getId());
@@ -154,6 +153,27 @@ public class ContributionServiceImpl implements ContributionService {
     runInitialContributionJob(centralServerId, contribution, numberOfRecords);
 
     log.info("Initial contribution process started");
+  }
+
+  private JobResponse getJobResponse(UUID id) {
+
+    JobResponse responseAfterTrigger = instanceStorageClient.getJobById(id);
+
+    if(responseAfterTrigger!=null) {
+      log.info("status-->"+responseAfterTrigger.getStatus().toString());
+      log.info("number-->"+responseAfterTrigger.getNumberOfRecordsPublished());
+      log.info("id-->"+responseAfterTrigger.getId());
+      if(responseAfterTrigger.getNumberOfRecordsPublished() == 0) {
+        throw new InnReachException("record is still not there->>"+responseAfterTrigger.getNumberOfRecordsPublished());
+      }
+    }
+    else {
+      log.info("responseAfterTrigger is null");
+      throw new InnReachException("responseAfterTrigger is null");
+    }
+
+    return responseAfterTrigger;
+
   }
 
   @Override

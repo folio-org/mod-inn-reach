@@ -20,7 +20,7 @@ public class ContributionJobConfig {
   @Bean("contributionRetryTemplate")
   public RetryTemplate contributionRetryTemplate(ContributionJobProperties jobProperties) {
     return RetryTemplate.builder()
-      .customPolicy(new InnReachRetryPolicy(jobProperties.getRetryAttempts()))
+      .customPolicy(new InnReachRetryPolicy(10))
       .exponentialBackoff(jobProperties.getRetryIntervalMs(), BACKOFF_MULTIPLIER, BACKOFF_MAX_INTERVAL)
       .build();
   }
