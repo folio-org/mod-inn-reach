@@ -137,7 +137,9 @@ public class ContributionServiceImpl implements ContributionService {
 
     JobResponse updatedJobResponse = retryTemplate.execute(r -> getJobResponse(iterationJobResponse.getId()));
 
-    log.info("numberOfRecords from updatedJobResponse-> {}",updatedJobResponse.getNumberOfRecordsPublished());
+    if(updatedJobResponse!=null) {
+      log.info("numberOfRecords from updatedJobResponse-> {}",updatedJobResponse.getNumberOfRecordsPublished());
+    }
 
     contribution.setJobId(iterationJobResponse.getId());
 
