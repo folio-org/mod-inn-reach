@@ -43,6 +43,8 @@ public class RecordContributionServiceImpl implements RecordContributionService 
 
     var bib = recordTransformationService.getBibInfo(centralServerId, instance);
 
+    log.info("after getting bibInfo in contributeInstance");
+
     contributeAndVerifyBib(centralServerId, bibId, bib);
 
     log.info("Finished contribution of bib {}", bibId);
@@ -56,7 +58,7 @@ public class RecordContributionServiceImpl implements RecordContributionService 
   }
 
   private void contributeAndVerifyBib(UUID centralServerId, String bibId, BibInfo bib) {
-    log.info("Contributing bib {}", bibId);
+    log.info("Contributing bib in contributeAndVerifyBib{}", bibId);
     retryTemplate.execute(r -> contributeBib(centralServerId, bibId, bib));
     retryTemplate.execute(r -> verifyBibContribution(centralServerId, bibId));
     log.info("Finished contribution of bib {}", bibId);
@@ -110,6 +112,7 @@ public class RecordContributionServiceImpl implements RecordContributionService 
   }
 
   private InnReachResponse contributeBib(UUID centralServerId, String bibId, BibInfo bib) {
+    log.info("Retry happening for contributeBib with bibId----"+bibId);
     var response = irContributionService.contributeBib(centralServerId, bibId, bib);
     checkServiceSuspension(response);
     Assert.isTrue(response.isOk(), "Unexpected contribution response: " + response);

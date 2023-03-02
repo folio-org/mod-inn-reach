@@ -134,17 +134,10 @@ public class ContributionServiceImpl implements ContributionService {
     var iterationJobResponse = triggerInstanceIteration();
     var numberOfRecords = iterationJobResponse.getNumberOfRecordsPublished();
     log.info("numberOfRecords from iterationJobResponse-> {}",numberOfRecords);
-//
-//    try {
-//      Thread.sleep(60000);
-//    } catch (InterruptedException e) {
-//      throw new RuntimeException(e);
-//    }
 
-   // getJobResponse(iterationJobResponse.getId());
+    JobResponse updatedJobResponse = retryTemplate.execute(r -> getJobResponse(iterationJobResponse.getId()));
 
-    retryTemplate.execute(r-> getJobResponse(iterationJobResponse.getId()));
-
+    log.info("numberOfRecords from updatedJobResponse-> {}",updatedJobResponse.getNumberOfRecordsPublished());
 
     contribution.setJobId(iterationJobResponse.getId());
 

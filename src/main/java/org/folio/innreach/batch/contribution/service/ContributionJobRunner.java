@@ -107,6 +107,9 @@ public class ContributionJobRunner {
       InitialContributionJobConsumerContainer.stopConsumer(topic);
     }
 
+    //TODO ask if in case retry in going on for longer than poll timeout
+   // InitialContributionJobConsumerContainer.consumersMap.get(topic).getContainerProperties().setPollTimeout(100);
+
     var contributionId = context.getContributionId();
 
     var iterationJobId = context.getIterationJobId();
@@ -368,6 +371,7 @@ public class ContributionJobRunner {
   }
 
   private void contributeInstance(UUID centralServerId, Instance instance, Statistics stats) {
+    log.info("contributeInstance instanceId-->{}",instance.getId());
     try {
       stats.addRecordsTotal(1);
       recordContributionService.contributeInstance(centralServerId, instance);
@@ -377,8 +381,10 @@ public class ContributionJobRunner {
       throw e;
     }
     catch (Exception e) {
+      log.info("contributeInstance exception block");
       instanceExceptionListener.logWriteError(e, instance.getId());
     } finally {
+      log.info("contributeInstance finally block");
       stats.addRecordsProcessed(1);
       updateStats(stats);
     }
