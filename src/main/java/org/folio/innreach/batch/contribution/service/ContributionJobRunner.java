@@ -83,6 +83,9 @@ public class ContributionJobRunner {
       .tenantId(tenantId)
       .build();
 
+    // added to have context set everywhere
+    beginContributionJobContext(context);
+
     totalRecords = numberOfRecords;
 
     log.info("totalRecords in startInitialContribution->> {}",totalRecords);

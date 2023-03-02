@@ -27,6 +27,7 @@ import static org.apache.kafka.clients.consumer.ConsumerConfig.ENABLE_AUTO_COMMI
 @RequiredArgsConstructor
 public class InitialContributionJobConsumerContainer {
 
+  public static final long POLL_TIMEOUT = 120000L;
   public static Map<String, ConcurrentMessageListenerContainer<String, InstanceIterationEvent>> consumersMap =
     new HashMap<>();
 
@@ -76,7 +77,8 @@ public class InitialContributionJobConsumerContainer {
 
     ContainerProperties containerProps = new ContainerProperties(topic);
 
-    containerProps.setPollTimeout(100);
+    //TODO decide poll timeout
+    containerProps.setPollTimeout(POLL_TIMEOUT);
     Boolean enableAutoCommit = (Boolean) consumerProperties.get(ENABLE_AUTO_COMMIT_CONFIG);
 
     containerProps.setAckMode(ContainerProperties.AckMode.RECORD);
