@@ -8,6 +8,8 @@ import org.apache.kafka.common.serialization.Deserializer;
 import org.folio.innreach.batch.contribution.listener.ContributionExceptionListener;
 import org.folio.innreach.domain.dto.folio.inventorystorage.InstanceIterationEvent;
 import org.folio.innreach.external.exception.ServiceSuspendedException;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.kafka.config.KafkaListenerEndpointRegistry;
 import org.springframework.kafka.core.ConsumerFactory;
 import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
 import org.springframework.kafka.listener.ConcurrentMessageListenerContainer;
@@ -19,6 +21,7 @@ import org.springframework.util.backoff.FixedBackOff;
 import java.net.SocketTimeoutException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 
 import static org.apache.kafka.clients.consumer.ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG;
 
@@ -44,6 +47,9 @@ public class InitialContributionJobConsumerContainer {
   private static final int CONCURRENCY = 2;
 
   private final ContributionExceptionListener contributionExceptionListener;
+
+  @Autowired
+  KafkaListenerEndpointRegistry kafkaListenerEndpointRegistry ;
 
   public DefaultErrorHandler errorHandler() {
     log.info("interval :{} , maxAttempts:{}",interval,maxAttempts);
@@ -83,18 +89,24 @@ public class InitialContributionJobConsumerContainer {
 
     containerProps.setAckMode(ContainerProperties.AckMode.RECORD);
 
-    ConsumerFactory<String, InstanceIterationEvent> factory = new DefaultKafkaConsumerFactory<>(consumerProperties,keyDeserializer,valueDeserializer);
+    ConsumerFactory<String, InstanceIterationEvent> factory = new DefaultKafkaConsumerFactory<>(consumerProperties,
+      keyDeserializer,valueDeserializer);
     log.info("after DefaultKafkaConsumerFactory----");
     container = new ConcurrentMessageListenerContainer<>(factory, containerProps);
+
 
     container.setupMessageListener(messageListner);
     container.setCommonErrorHandler(errorHandler());
 
     container.setConcurrency(CONCURRENCY);
 
+    container.getContainerProperties().setIdleEventInterval(600000L); // GK
+
+
     container.start();
 
     consumersMap.put(topic, container);
+
 
     log.info("created and started kafka consumer for topic {}", topic);
   }
@@ -105,4 +117,6 @@ public class InitialContributionJobConsumerContainer {
     container.stop();
     log.info("Consumer stopped for topic {}", topic);
   }
+
+
 }

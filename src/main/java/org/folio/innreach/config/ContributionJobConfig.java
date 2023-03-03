@@ -1,9 +1,12 @@
 package org.folio.innreach.config;
 
+import lombok.extern.log4j.Log4j2;
 import org.folio.innreach.config.props.InnReachRetryPolicy;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.event.EventListener;
+import org.springframework.kafka.event.ListenerContainerIdleEvent;
 import org.springframework.retry.support.RetryTemplate;
 
 import org.folio.innreach.batch.contribution.listener.ContributionExceptionListener;
@@ -11,6 +14,7 @@ import org.folio.innreach.config.props.ContributionJobProperties;
 import org.folio.innreach.domain.service.ContributionService;
 
 @Configuration
+@Log4j2
 @EnableConfigurationProperties(ContributionJobProperties.class)
 public class ContributionJobConfig {
 
@@ -35,4 +39,11 @@ public class ContributionJobConfig {
     return new ContributionExceptionListener(contributionService, "itemContribution");
   }
 
+
+  //GK
+  @EventListener
+  public void eventHandler(ListenerContainerIdleEvent event) {
+    log.info("No messages received for " + event.getIdleTime() + " milliseconds");
+
+  }
 }
