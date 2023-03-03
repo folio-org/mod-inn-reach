@@ -59,7 +59,7 @@ public class InitialContributionJobConsumerContainer {
       ConsumerRecord<String, InstanceIterationEvent> record = (ConsumerRecord<String, InstanceIterationEvent>) consumerRecord;
       contributionExceptionListener.logWriteError(exception, record.value().getInstanceId());
       log.info("Stopping consumer topic: {} after retry exhaustion", consumerRecord.topic());
-      //stopConsumer(consumerRecord.topic());
+      stopConsumer(consumerRecord.topic());
     }, fixedBackOff);
     errorHandler.addRetryableExceptions(ServiceSuspendedException.class);
     errorHandler.addRetryableExceptions(SocketTimeoutException.class);
@@ -99,9 +99,6 @@ public class InitialContributionJobConsumerContainer {
     container.setCommonErrorHandler(errorHandler());
 
     container.setConcurrency(CONCURRENCY);
-
-    container.getContainerProperties().setIdleEventInterval(600000L); // GK
-
 
     container.start();
 

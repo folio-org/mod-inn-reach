@@ -40,10 +40,4 @@ public class ContributionJobConfig {
   }
 
 
-  //GK
-  @EventListener
-  public void eventHandler(ListenerContainerIdleEvent event) {
-    log.info("No messages received for " + event.getIdleTime() + " milliseconds");
-
-  }
 }
