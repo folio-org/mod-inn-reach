@@ -27,7 +27,7 @@ import static org.apache.kafka.clients.consumer.ConsumerConfig.ENABLE_AUTO_COMMI
 @RequiredArgsConstructor
 public class InitialContributionJobConsumerContainer {
 
-  public static final long POLL_TIMEOUT = 120000L;
+  public static final long POLL_TIMEOUT = 4200000L;
   public static Map<String, ConcurrentMessageListenerContainer<String, InstanceIterationEvent>> consumersMap =
     new HashMap<>();
 
@@ -46,7 +46,7 @@ public class InitialContributionJobConsumerContainer {
   private final ContributionExceptionListener contributionExceptionListener;
 
   public DefaultErrorHandler errorHandler() {
-
+    log.info("interval :{} , maxAttempts:{}",interval,maxAttempts);
     BackOff fixedBackOff = new FixedBackOff(interval, maxAttempts);
     DefaultErrorHandler errorHandler = new DefaultErrorHandler((consumerRecord, exception) -> {
       // logic to execute when all the retry attempts are exhausted

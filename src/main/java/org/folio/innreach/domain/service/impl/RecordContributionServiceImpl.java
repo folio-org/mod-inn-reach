@@ -136,7 +136,9 @@ public class RecordContributionServiceImpl implements RecordContributionService 
   private void checkServiceSuspension(InnReachResponse response) {
     if (!response.getErrors().isEmpty()) {
       var error = response.getErrors().get(0).getReason();
+      log.info("checkServiceSuspension:: error is : {}",error);
       if (error.contains("Contribution to d2irm is currently suspended")) {
+        log.info("ServiceSuspendedException occur---");
         throw new ServiceSuspendedException("Contribution to d2irm is currently suspended");
       }
     }
