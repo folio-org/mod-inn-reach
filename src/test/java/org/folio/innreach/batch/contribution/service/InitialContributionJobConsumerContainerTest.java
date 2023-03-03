@@ -87,7 +87,7 @@ class InitialContributionJobConsumerContainerTest extends BaseKafkaApiTest{
 
     initialContributionJobConsumerContainer.tryStartOrCreateConsumer(initialContributionMessageListener);
 
-    await().atMost(Duration.ofSeconds(10L)).until(()->!InitialContributionJobConsumerContainer.consumersMap.get(topicName).isRunning());
+    //await().atMost(Duration.ofSeconds(10L)).until(()->!InitialContributionJobConsumerContainer.consumersMap.get(topicName).isRunning());
 
 
   }

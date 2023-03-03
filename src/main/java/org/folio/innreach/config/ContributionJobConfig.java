@@ -39,5 +39,9 @@ public class ContributionJobConfig {
     return new ContributionExceptionListener(contributionService, "itemContribution");
   }
 
+  @EventListener
+  public void eventHandler(ListenerContainerIdleEvent event) {
+    log.info("No messages received for " + event.getIdleTime() + " milliseconds");
 
+  }
 }
