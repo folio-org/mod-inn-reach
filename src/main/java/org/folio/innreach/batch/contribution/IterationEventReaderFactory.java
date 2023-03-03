@@ -44,7 +44,7 @@ public class IterationEventReaderFactory {
   private final ContributionJobProperties jobProperties;
   private final ObjectMapper mapper;
 
-  @Qualifier("itemExceptionListener")
+  @Qualifier("instanceExceptionListener")
   private final ContributionExceptionListener contributionExceptionListener;
 
   private final RetryConfig retryConfig;
