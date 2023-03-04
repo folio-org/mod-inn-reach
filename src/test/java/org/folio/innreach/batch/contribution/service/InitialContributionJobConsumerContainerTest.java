@@ -82,7 +82,8 @@ class InitialContributionJobConsumerContainerTest extends BaseKafkaApiTest{
     this.produceEvent(topicName);
 
     doNothing().when(contributionExceptionListener).logWriteError(any(),any());
-    doNothing().when(contributionJobRunner).stopContribution(any(),any());
+    doNothing().when(contributionJobRunner).stopContribution();
+    doNothing().when(contributionJobRunner).cancelContributionIfRetryExhausted(any());
 
     doThrow(ServiceSuspendedException.class).when(contributionJobRunner)
       .runInitialContribution(any(), any(), any(), any());
@@ -118,7 +119,8 @@ class InitialContributionJobConsumerContainerTest extends BaseKafkaApiTest{
     var topicName = getTopicName();
     var context = prepareContext();
 
-    doNothing().when(contributionJobRunner).stopContribution(any(),any());
+    doNothing().when(contributionJobRunner).stopContribution();
+    doNothing().when(contributionJobRunner).cancelContributionIfRetryExhausted(any());
 
     var initialContributionJobConsumerContainer = prepareContributionJobConsumerContainer(topicName);
     InitialContributionMessageListener initialContributionMessageListener = prepareInitialContributionMessageListener(context);
@@ -188,7 +190,7 @@ class InitialContributionJobConsumerContainerTest extends BaseKafkaApiTest{
       consumerProperties.put(GROUP_ID_CONFIG, jobProperties.getReaderGroupId());
 
       return new InitialContributionJobConsumerContainer(consumerProperties,tempTopic,keyDeserializer(),valueDeserializer(), maxInterval, maxAttempt,
-        contributionExceptionListener,new ContributionJobContext.Statistics(),contributionJobRunner,new ContributionJobContext());
+        contributionExceptionListener,contributionJobRunner,new ContributionJobContext());
     }
 
   private Deserializer<InstanceIterationEvent> valueDeserializer() {

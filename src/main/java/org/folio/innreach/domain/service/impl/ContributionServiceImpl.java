@@ -197,7 +197,7 @@ public class ContributionServiceImpl implements ContributionService {
   @Transactional
   @Override
   public void cancelCurrent(UUID centralServerId) {
-    log.debug("cancelCurrent:: parameters centralServerId: {}", centralServerId);
+    log.info("cancelCurrent:: parameters centralServerId: {}", centralServerId);
     repository.fetchCurrentByCentralServerId(centralServerId).ifPresent(contribution -> {
       log.info("Cancelling initial contribution for central server {}", centralServerId);
 
@@ -247,12 +247,12 @@ public class ContributionServiceImpl implements ContributionService {
   }
 
   private void cancelInstanceIteration(Contribution contribution) {
-    log.debug("cancelInstanceIteration:: parameters contribution: {}", contribution);
+    log.info("cancelInstanceIteration:: parameters contribution: {}", contribution);
     var iterationJobId = contribution.getJobId();
     try {
       instanceStorageClient.cancelInstanceIteration(iterationJobId);
     } catch (Exception e) {
-      log.warn("Unable to cancel instance iteration job {}", iterationJobId, e);
+      log.info("Unable to cancel instance iteration job {}", iterationJobId, e);
     }
   }
 

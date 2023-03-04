@@ -135,16 +135,22 @@ public class ContributionJobRunner {
 
     if (Objects.equals(recordsProcessed.get(context.getTenantId()), totalRecords.get(context.getTenantId()))) {
       log.info("consumer is stopping as all processed");
-      stopContribution(context, stats);
+      completeContribution(context, stats);
+      stopContribution();
       InitialContributionJobConsumerContainer.stopConsumer(topic);
     }
   }
 
-  public void stopContribution(ContributionJobContext context, Statistics stats) {
-    completeContribution(context, stats);
+  public void stopContribution() {
+    log.info("stopContribution---");
     endContributionJobContext();
     ContributionJobRunner.recordsProcessed.clear();
     totalRecords.clear();
+  }
+
+  public void cancelContributionIfRetryExhausted(UUID centralServerId) {
+    log.info("cancelContributionIfRetryExhausted");
+    contributionService.cancelCurrent(centralServerId);
   }
 
 //  private void makeSimulatedRequest() {
@@ -471,7 +477,7 @@ public class ContributionJobRunner {
     try {
       contributionService.completeContribution(context.getContributionId());
     } catch (Exception e) {
-      log.warn("Failed to complete contribution job {}", context, e);
+      log.info("Failed to complete contribution job {}", context, e);
     }
   }
 

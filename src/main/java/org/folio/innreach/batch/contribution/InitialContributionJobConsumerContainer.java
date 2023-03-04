@@ -49,8 +49,6 @@ public class InitialContributionJobConsumerContainer {
 
   private final ContributionExceptionListener contributionExceptionListener;
 
-  private final ContributionJobContext.Statistics statistics;
-
   private final ContributionJobRunner contributionJobRunner;
 
   private final ContributionJobContext context;
@@ -62,7 +60,8 @@ public class InitialContributionJobConsumerContainer {
       // logic to execute when all the retry attempts are exhausted
       ConsumerRecord<String, InstanceIterationEvent> record = (ConsumerRecord<String, InstanceIterationEvent>) consumerRecord;
       contributionExceptionListener.logWriteError(exception, record.value().getInstanceId());
-      contributionJobRunner.stopContribution(context,statistics);
+      contributionJobRunner.stopContribution();
+      contributionJobRunner.cancelContributionIfRetryExhausted(context.getCentralServerId());
       log.info("Stopping consumer topic: {} after retry exhaustion", consumerRecord.topic());
       stopConsumer(consumerRecord.topic());
     }, fixedBackOff);
