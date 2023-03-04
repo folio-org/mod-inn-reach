@@ -361,13 +361,12 @@ class ContributionJobRunnerTest {
 
   @Test
   void startInitialContributionTest() {
-    when(factory.createInitialContributionConsumerContainer(any())).thenReturn(initialContributionJobConsumerContainer);
+    when(factory.createInitialContributionConsumerContainer(any(),any(),any(),any())).thenReturn(initialContributionJobConsumerContainer);
     doNothing().when(initialContributionJobConsumerContainer).tryStartOrCreateConsumer(any());
 
     jobRunner.startInitialContribution(
       CENTRAL_SERVER_ID, TENANT_ID, CONTRIBUTION_ID, ITERATION_JOB_ID, 100);
 
-    Assertions.assertEquals(100, jobRunner.totalRecords);
     verify(initialContributionJobConsumerContainer,times(1)).tryStartOrCreateConsumer(any());
 
   }

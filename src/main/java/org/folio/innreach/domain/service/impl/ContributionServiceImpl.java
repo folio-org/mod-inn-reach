@@ -139,6 +139,7 @@ public class ContributionServiceImpl implements ContributionService {
 
     if(updatedJobResponse!=null) {
       log.info("numberOfRecords from updatedJobResponse-> {}",updatedJobResponse.getNumberOfRecordsPublished());
+      numberOfRecords = updatedJobResponse.getNumberOfRecordsPublished();
     }
 
     contribution.setJobId(iterationJobResponse.getId());

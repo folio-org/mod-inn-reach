@@ -1,5 +1,6 @@
 package org.folio.innreach.batch.contribution;
 
+import static org.apache.kafka.clients.consumer.ConsumerConfig.AUTO_OFFSET_RESET_CONFIG;
 import static org.apache.kafka.clients.consumer.ConsumerConfig.GROUP_ID_CONFIG;
 
 import java.time.Duration;
@@ -14,6 +15,7 @@ import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.common.serialization.Deserializer;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.folio.innreach.batch.contribution.listener.ContributionExceptionListener;
+import org.folio.innreach.batch.contribution.service.ContributionJobRunner;
 import org.folio.innreach.config.RetryConfig;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.kafka.KafkaProperties;
@@ -80,14 +82,16 @@ public class IterationEventReaderFactory {
     return UUID.fromString(new String(rec.headers().lastHeader(ITERATION_JOB_ID_HEADER).value()));
   }
 
-  public InitialContributionJobConsumerContainer createInitialContributionConsumerContainer(String tenantId) {
+  public InitialContributionJobConsumerContainer createInitialContributionConsumerContainer(String tenantId, ContributionJobContext.Statistics statistics, ContributionJobRunner contributionJobRunner,ContributionJobContext context) {
 
     var consumerProperties = kafkaProperties.buildConsumerProperties();
     consumerProperties.put(GROUP_ID_CONFIG, jobProperties.getReaderGroupId());
+    consumerProperties.put(AUTO_OFFSET_RESET_CONFIG,"latest");
 
     var topic = String.format("%s.%s.%s",
       folioEnv.getEnvironment(), tenantId, jobProperties.getReaderTopic());
-    return new InitialContributionJobConsumerContainer(consumerProperties,topic,keyDeserializer(),valueDeserializer(), retryConfig.getInterval(), retryConfig.getMaxAttempts(), contributionExceptionListener);
+    return new InitialContributionJobConsumerContainer(consumerProperties,topic,keyDeserializer(),valueDeserializer(),
+      retryConfig.getInterval(), retryConfig.getMaxAttempts(), contributionExceptionListener,statistics,contributionJobRunner,context);
   }
 
 }

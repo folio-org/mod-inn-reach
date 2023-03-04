@@ -6,6 +6,7 @@ import lombok.extern.log4j.Log4j2;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.common.serialization.Deserializer;
 import org.folio.innreach.batch.contribution.listener.ContributionExceptionListener;
+import org.folio.innreach.batch.contribution.service.ContributionJobRunner;
 import org.folio.innreach.domain.dto.folio.inventorystorage.InstanceIterationEvent;
 import org.folio.innreach.external.exception.ServiceSuspendedException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -48,8 +49,11 @@ public class InitialContributionJobConsumerContainer {
 
   private final ContributionExceptionListener contributionExceptionListener;
 
-  @Autowired
-  KafkaListenerEndpointRegistry kafkaListenerEndpointRegistry ;
+  private final ContributionJobContext.Statistics statistics;
+
+  private final ContributionJobRunner contributionJobRunner;
+
+  private final ContributionJobContext context;
 
   public DefaultErrorHandler errorHandler() {
     log.info("interval :{} , maxAttempts:{}",interval,maxAttempts);
@@ -58,6 +62,7 @@ public class InitialContributionJobConsumerContainer {
       // logic to execute when all the retry attempts are exhausted
       ConsumerRecord<String, InstanceIterationEvent> record = (ConsumerRecord<String, InstanceIterationEvent>) consumerRecord;
       contributionExceptionListener.logWriteError(exception, record.value().getInstanceId());
+      contributionJobRunner.stopContribution(context,statistics);
       log.info("Stopping consumer topic: {} after retry exhaustion", consumerRecord.topic());
       stopConsumer(consumerRecord.topic());
     }, fixedBackOff);
@@ -111,7 +116,10 @@ public class InitialContributionJobConsumerContainer {
   public static void stopConsumer(final String topic) {
     log.info("Stopping consumer for topic {}", topic);
     ConcurrentMessageListenerContainer<String, InstanceIterationEvent> container = consumersMap.get(topic);
-    container.stop();
+    if(container!=null)
+    {
+      container.stop();
+    }
     log.info("Consumer stopped for topic {}", topic);
   }
 
