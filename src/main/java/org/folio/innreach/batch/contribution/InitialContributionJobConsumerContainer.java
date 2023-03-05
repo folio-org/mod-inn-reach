@@ -46,11 +46,10 @@ public class InitialContributionJobConsumerContainer {
 
   private static final int CONCURRENCY = 2;
 
-  private final ContributionExceptionListener contributionExceptionListener;
+//  @Autowired
+//  KafkaListenerEndpointRegistry kafkaListenerEndpointRegistry ;
 
-  @Autowired
-  KafkaListenerEndpointRegistry kafkaListenerEndpointRegistry ;
-
+  /* Commented to try only spring retry
   public DefaultErrorHandler errorHandler() {
     log.info("interval :{} , maxAttempts:{}",interval,maxAttempts);
     BackOff fixedBackOff = new FixedBackOff(interval, maxAttempts);
@@ -65,6 +64,8 @@ public class InitialContributionJobConsumerContainer {
     errorHandler.addRetryableExceptions(SocketTimeoutException.class);
     return errorHandler;
   }
+
+   */
 
   public void tryStartOrCreateConsumer(Object messageListner) {
     log.info("startOrCreateConsumer----");
@@ -85,9 +86,9 @@ public class InitialContributionJobConsumerContainer {
 
     //TODO decide poll timeout
     containerProps.setPollTimeout(POLL_TIMEOUT);
-    Boolean enableAutoCommit = (Boolean) consumerProperties.get(ENABLE_AUTO_COMMIT_CONFIG);
+   // Boolean enableAutoCommit = (Boolean) consumerProperties.get(ENABLE_AUTO_COMMIT_CONFIG);
 
-    containerProps.setAckMode(ContainerProperties.AckMode.RECORD);
+    containerProps.setAckMode(ContainerProperties.AckMode.MANUAL_IMMEDIATE);
 
     ConsumerFactory<String, InstanceIterationEvent> factory = new DefaultKafkaConsumerFactory<>(consumerProperties,
       keyDeserializer,valueDeserializer);
@@ -96,10 +97,10 @@ public class InitialContributionJobConsumerContainer {
 
 
     container.setupMessageListener(messageListner);
-    container.setCommonErrorHandler(errorHandler());
+   // container.setCommonErrorHandler(errorHandler());
 
     container.setConcurrency(CONCURRENCY);
-    container.getContainerProperties().setIdleEventInterval(600000L);
+  //  container.getContainerProperties().setIdleEventInterval(600000L);
 
     container.start();
 
@@ -112,7 +113,9 @@ public class InitialContributionJobConsumerContainer {
   public static void stopConsumer(final String topic) {
     log.info("Stopping consumer for topic {}", topic);
     ConcurrentMessageListenerContainer<String, InstanceIterationEvent> container = consumersMap.get(topic);
-    container.stop();
+    if(container!=null) {
+      container.stop();
+    }
     log.info("Consumer stopped for topic {}", topic);
   }
 

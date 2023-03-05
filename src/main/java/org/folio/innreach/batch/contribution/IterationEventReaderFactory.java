@@ -1,7 +1,5 @@
 package org.folio.innreach.batch.contribution;
 
-import static org.apache.kafka.clients.consumer.ConsumerConfig.GROUP_ID_CONFIG;
-
 import java.time.Duration;
 import java.util.Properties;
 import java.util.UUID;
@@ -24,6 +22,8 @@ import org.folio.innreach.batch.KafkaItemReader;
 import org.folio.innreach.config.props.ContributionJobProperties;
 import org.folio.innreach.config.props.FolioEnvironment;
 import org.folio.innreach.domain.dto.folio.inventorystorage.InstanceIterationEvent;
+
+import static org.apache.kafka.clients.consumer.ConsumerConfig.*;
 
 @Component
 @RequiredArgsConstructor
@@ -84,10 +84,12 @@ public class IterationEventReaderFactory {
 
     var consumerProperties = kafkaProperties.buildConsumerProperties();
     consumerProperties.put(GROUP_ID_CONFIG, jobProperties.getReaderGroupId());
+    consumerProperties.put(ENABLE_AUTO_COMMIT_CONFIG,false);
+    consumerProperties.put(AUTO_OFFSET_RESET_CONFIG,"latest");
 
     var topic = String.format("%s.%s.%s",
       folioEnv.getEnvironment(), tenantId, jobProperties.getReaderTopic());
-    return new InitialContributionJobConsumerContainer(consumerProperties,topic,keyDeserializer(),valueDeserializer(), retryConfig.getInterval(), retryConfig.getMaxAttempts(), contributionExceptionListener);
+    return new InitialContributionJobConsumerContainer(consumerProperties,topic,keyDeserializer(),valueDeserializer(), retryConfig.getInterval(), retryConfig.getMaxAttempts());
   }
 
 }

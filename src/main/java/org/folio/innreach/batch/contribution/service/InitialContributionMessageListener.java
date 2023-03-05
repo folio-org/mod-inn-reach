@@ -1,11 +1,11 @@
 package org.folio.innreach.batch.contribution.service;
 
 import lombok.AllArgsConstructor;
+import lombok.extern.log4j.Log4j2;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.folio.innreach.batch.contribution.ContributionJobContext;
 import org.folio.innreach.domain.dto.folio.inventorystorage.InstanceIterationEvent;
 import org.springframework.kafka.listener.AcknowledgingMessageListener;
-import org.springframework.kafka.listener.MessageListener;
 import org.springframework.kafka.support.Acknowledgment;
 
 import java.util.UUID;
@@ -13,7 +13,8 @@ import java.util.UUID;
 import static org.folio.innreach.batch.contribution.IterationEventReaderFactory.ITERATION_JOB_ID_HEADER;
 
 @AllArgsConstructor
-public class InitialContributionMessageListener implements MessageListener<String, InstanceIterationEvent> {
+@Log4j2
+public class InitialContributionMessageListener implements AcknowledgingMessageListener<String, InstanceIterationEvent> {
 
   IMessageProcessor iMessageProcessor;
   ContributionJobContext context;
@@ -22,7 +23,7 @@ public class InitialContributionMessageListener implements MessageListener<Strin
 
   @Override
   public void onMessage(
-    ConsumerRecord<String, InstanceIterationEvent> consumerRecord) {
+    ConsumerRecord<String, InstanceIterationEvent> consumerRecord, Acknowledgment acknowledgment) {
 
     //to check jobId and InstanceId
 
@@ -39,13 +40,11 @@ public class InitialContributionMessageListener implements MessageListener<Strin
     instanceIterationEvent.setInstanceId(instanceId);
     instanceIterationEvent.setJobId(jobId);
 
-
-    //end
-
-    // process message
     iMessageProcessor.processMessage(instanceIterationEvent, context, statistics, consumerRecord.topic());
 
-    // commit offset
-//    acknowledgment.acknowledge();
+    if(acknowledgment!=null) {
+      log.info("Message is acknowledged for instanceId : {}",instanceId);
+      acknowledgment.acknowledge();
+    }
   }
 }

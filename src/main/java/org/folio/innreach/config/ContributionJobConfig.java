@@ -18,14 +18,25 @@ import org.folio.innreach.domain.service.ContributionService;
 @EnableConfigurationProperties(ContributionJobProperties.class)
 public class ContributionJobConfig {
 
-  private static final int BACKOFF_MAX_INTERVAL = 15000;
+  private static final long BACKOFF_MAX_INTERVAL = 15000L;
   private static final int BACKOFF_MULTIPLIER = 2;
 
+  /* Commented fue to use fixed retry without policy
   @Bean("contributionRetryTemplate")
   public RetryTemplate contributionRetryTemplate(ContributionJobProperties jobProperties) {
     return RetryTemplate.builder()
       .customPolicy(new InnReachRetryPolicy(3))
       .exponentialBackoff(jobProperties.getRetryIntervalMs(), BACKOFF_MULTIPLIER, BACKOFF_MAX_INTERVAL)
+      .build();
+  }
+
+   */
+
+  @Bean("contributionRetryTemplate")
+  public RetryTemplate contributionRetryTemplate(ContributionJobProperties jobProperties) {
+    return RetryTemplate.builder()
+      .maxAttempts(5)
+      .fixedBackoff(BACKOFF_MAX_INTERVAL)
       .build();
   }
 

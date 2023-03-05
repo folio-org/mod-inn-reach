@@ -5,11 +5,7 @@ import static java.lang.Math.max;
 import static org.folio.innreach.batch.contribution.ContributionJobContextManager.beginContributionJobContext;
 import static org.folio.innreach.batch.contribution.ContributionJobContextManager.endContributionJobContext;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
@@ -72,8 +68,8 @@ public class ContributionJobRunner {
 
   private static final List<UUID> runningInitialContributions = Collections.synchronizedList(new ArrayList<>());
 
-  Integer totalRecords;
   private static ConcurrentHashMap<String, Integer> recordsProcessed = new ConcurrentHashMap<>();
+  private static Map<String,Integer> totalRecords = new HashMap<>();
 
   public void startInitialContribution(UUID centralServerId, String tenantId, UUID contributionId, UUID iterationJobId, Integer numberOfRecords) {
     var context = ContributionJobContext.builder()
@@ -83,18 +79,17 @@ public class ContributionJobRunner {
       .tenantId(tenantId)
       .build();
 
-    // added to have context set everywhere
+    Statistics statistics = new Statistics();
     beginContributionJobContext(context);
 
-    totalRecords = numberOfRecords;
+    totalRecords.put(context.getTenantId(),numberOfRecords);
 
     log.info("totalRecords in startInitialContribution->> {}",totalRecords);
 
-   // recordsProcessed.put(tenantId, 0);
 
     InitialContributionJobConsumerContainer container = itemReaderFactory.createInitialContributionConsumerContainer(tenantId);
 
-    InitialContributionMessageListener initialContributionMessageListener = new InitialContributionMessageListener(new ContributionProcessor(this), context, new Statistics());
+    InitialContributionMessageListener initialContributionMessageListener = new InitialContributionMessageListener(new ContributionProcessor(this), context,statistics);
 
     container.tryStartOrCreateConsumer(initialContributionMessageListener);
   }
@@ -104,14 +99,8 @@ public class ContributionJobRunner {
 
     log.info("count is->>{}",recordsProcessed.get(context.getTenantId()));
 
-    if (Objects.equals(recordsProcessed.get(context.getTenantId()), totalRecords)) {
-      completeContribution(context, stats);
-      endContributionJobContext();
-      InitialContributionJobConsumerContainer.stopConsumer(topic);
-    }
-
-    //TODO ask if in case retry in going on for longer than poll timeout
-   // InitialContributionJobConsumerContainer.consumersMap.get(topic).getContainerProperties().setPollTimeout(100);
+    stats.setTopic(topic);
+    stats.setTenantId(context.getTenantId());
 
     var contributionId = context.getContributionId();
 
@@ -145,6 +134,26 @@ public class ContributionJobRunner {
     } else if (isContributed(centralServerId, instance)) {
       deContributeInstance(centralServerId, instance, stats);
     }
+
+    if (Objects.equals(recordsProcessed.get(context.getTenantId()), totalRecords.get(context.getTenantId()))) {
+      log.info("consumer is stopping as all processed");
+      completeContribution(context, stats);
+      stopContribution();
+      InitialContributionJobConsumerContainer.stopConsumer(topic);
+    }
+  }
+
+
+  public void stopContribution() {
+    log.info("stopContribution---");
+    endContributionJobContext();
+    ContributionJobRunner.recordsProcessed.clear();
+    totalRecords.clear();
+  }
+
+  public void cancelContributionIfRetryExhausted(UUID centralServerId) {
+    log.info("cancelContributionIfRetryExhausted");
+    contributionService.cancelCurrent(centralServerId);
   }
 
 //  private void makeSimulatedRequest() {
@@ -360,13 +369,14 @@ public class ContributionJobRunner {
       recordContributionService.contributeItems(centralServerId, bibId, items);
       stats.addRecordsContributed(itemsCount);
     }
-    catch (ServiceSuspendedException e) {
-      throw e;
-    }
     catch (Exception e) {
       // not possible to guess what item failed when the chunk of multiple items is being contributed
       var recordId = items.size() == 1 ? items.get(0).getId() : null;
       itemExceptionListener.logWriteError(e, recordId);
+      stopContribution();
+      cancelContributionIfRetryExhausted(centralServerId);
+      InitialContributionJobConsumerContainer.stopConsumer(stats.getTopic());
+
     } finally {
       stats.addRecordsProcessed(itemsCount);
       statsListener.updateStats(stats);
@@ -379,13 +389,15 @@ public class ContributionJobRunner {
       stats.addRecordsTotal(1);
       recordContributionService.contributeInstance(centralServerId, instance);
       stats.addRecordsContributed(1);
-    }
-    catch (ServiceSuspendedException e) {
-      throw e;
+      ContributionJobRunner.recordsProcessed.put(stats.getTenantId(), recordsProcessed.get(stats.getTenantId()) == null ? 1
+        : recordsProcessed.get(stats.getTenantId())+1);
     }
     catch (Exception e) {
       log.info("contributeInstance exception block");
       instanceExceptionListener.logWriteError(e, instance.getId());
+      stopContribution();
+      cancelContributionIfRetryExhausted(centralServerId);
+      InitialContributionJobConsumerContainer.stopConsumer(stats.getTopic());
     } finally {
       log.info("contributeInstance finally block");
       stats.addRecordsProcessed(1);

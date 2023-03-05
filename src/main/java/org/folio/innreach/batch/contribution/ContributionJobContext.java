@@ -33,6 +33,9 @@ public class ContributionJobContext {
     private long recordsUpdated;
     private long recordsDecontributed;
 
+    private String topic;
+    private String tenantId;
+
     public void addRecordsContributed(int itemsCount) {
       recordsContributed += itemsCount;
     }
