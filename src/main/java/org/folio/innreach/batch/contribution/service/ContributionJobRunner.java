@@ -376,8 +376,8 @@ public class ContributionJobRunner {
       // not possible to guess what item failed when the chunk of multiple items is being contributed
       var recordId = items.size() == 1 ? items.get(0).getId() : null;
 
+      itemExceptionListener.logWriteError(e, recordId);
       if(stats.isInitialContribution()) {
-        itemExceptionListener.logWriteError(e, recordId);
         stopContribution(stats.getTenantId());
         cancelContributionIfRetryExhausted(centralServerId);
         InitialContributionJobConsumerContainer.stopConsumer(stats.getTopic());
@@ -399,8 +399,8 @@ public class ContributionJobRunner {
     }
     catch (Exception e) {
       log.info("contributeInstance exception block");
+      instanceExceptionListener.logWriteError(e, instance.getId());
       if(stats.isInitialContribution()) {
-        instanceExceptionListener.logWriteError(e, instance.getId());
         stopContribution(stats.getTenantId());
         cancelContributionIfRetryExhausted(centralServerId);
         InitialContributionJobConsumerContainer.stopConsumer(stats.getTopic());

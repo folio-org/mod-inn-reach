@@ -1,5 +1,6 @@
 package org.folio.innreach.batch.contribution.service;
 
+import org.apache.kafka.common.protocol.Message;
 import org.folio.innreach.external.exception.ServiceSuspendedException;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.*;
@@ -7,6 +8,8 @@ import org.mockito.Mock;
 import org.springframework.kafka.core.*;
 import org.springframework.kafka.listener.ConcurrentMessageListenerContainer;
 import org.springframework.kafka.listener.ContainerProperties;
+import org.springframework.kafka.support.KafkaHeaders;
+import org.springframework.kafka.support.converter.KafkaMessageHeaders;
 import org.springframework.kafka.support.serializer.JsonSerializer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.kafka.clients.producer.ProducerConfig;
@@ -24,6 +27,7 @@ import org.folio.innreach.domain.service.impl.ContributionServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.kafka.KafkaProperties;
 import org.springframework.kafka.support.serializer.JsonDeserializer;
+import org.springframework.messaging.support.MessageBuilder;
 
 import java.time.Duration;
 import java.util.HashMap;
@@ -32,6 +36,7 @@ import java.util.UUID;
 
 import static org.apache.kafka.clients.consumer.ConsumerConfig.GROUP_ID_CONFIG;
 import static org.awaitility.Awaitility.await;
+import static org.folio.innreach.batch.contribution.IterationEventReaderFactory.ITERATION_JOB_ID_HEADER;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
@@ -176,7 +181,14 @@ class InitialContributionJobConsumerContainerTest extends BaseKafkaApiTest{
   }
 
   private void produceEvent(String tempTopic) {
-    new KafkaTemplate<String, InstanceIterationEvent>(producerFactory()).send(tempTopic, createInstanceIterationEvent());
+
+      var temp = MessageBuilder
+      .withPayload(createInstanceIterationEvent())
+      .setHeader(ITERATION_JOB_ID_HEADER, UUID.randomUUID().toString()).setHeader(KafkaHeaders.TOPIC, tempTopic)
+        .setHeader(KafkaHeaders.KEY, UUID.randomUUID().toString())
+      .build();
+
+    new KafkaTemplate<String, InstanceIterationEvent>(producerFactory()).send(temp);
   }
 
   public InitialContributionJobConsumerContainer prepareContributionJobConsumerContainer(String tempTopic) {
