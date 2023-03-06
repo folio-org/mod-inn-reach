@@ -82,7 +82,7 @@ class InitialContributionJobConsumerContainerTest extends BaseKafkaApiTest{
     this.produceEvent(topicName);
 
     doNothing().when(contributionExceptionListener).logWriteError(any(),any());
-    doNothing().when(contributionJobRunner).stopContribution();
+    doNothing().when(contributionJobRunner).stopContribution(any());
     doNothing().when(contributionJobRunner).cancelContributionIfRetryExhausted(any());
 
     doThrow(ServiceSuspendedException.class).when(contributionJobRunner)
@@ -119,7 +119,7 @@ class InitialContributionJobConsumerContainerTest extends BaseKafkaApiTest{
     var topicName = getTopicName();
     var context = prepareContext();
 
-    doNothing().when(contributionJobRunner).stopContribution();
+    doNothing().when(contributionJobRunner).stopContribution(any());
     doNothing().when(contributionJobRunner).cancelContributionIfRetryExhausted(any());
 
     var initialContributionJobConsumerContainer = prepareContributionJobConsumerContainer(topicName);

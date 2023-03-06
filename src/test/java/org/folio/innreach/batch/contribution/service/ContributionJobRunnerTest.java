@@ -361,7 +361,7 @@ class ContributionJobRunnerTest {
 
   @Test
   void startInitialContributionTest() {
-    when(factory.createInitialContributionConsumerContainer(any(),any(),any(),any())).thenReturn(initialContributionJobConsumerContainer);
+    when(factory.createInitialContributionConsumerContainer(any(),any(),any())).thenReturn(initialContributionJobConsumerContainer);
     doNothing().when(initialContributionJobConsumerContainer).tryStartOrCreateConsumer(any());
 
     jobRunner.startInitialContribution(

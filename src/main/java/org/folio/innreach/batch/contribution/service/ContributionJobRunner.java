@@ -79,6 +79,10 @@ public class ContributionJobRunner {
       .tenantId(tenantId)
       .build();
 
+    //clear maps key & value of this tenant if present before start
+    totalRecords.remove(tenantId);
+    recordsProcessed.remove(tenantId);
+
     Statistics statistics = new Statistics();
     beginContributionJobContext(context);
 
@@ -86,7 +90,7 @@ public class ContributionJobRunner {
 
     log.info("totalRecords in startInitialContribution->> {}",totalRecords);
 
-    InitialContributionJobConsumerContainer container = itemReaderFactory.createInitialContributionConsumerContainer(tenantId,statistics,this,context);
+    InitialContributionJobConsumerContainer container = itemReaderFactory.createInitialContributionConsumerContainer(tenantId,this,context);
 
     InitialContributionMessageListener initialContributionMessageListener = new InitialContributionMessageListener(new ContributionProcessor(this), context,statistics);
 
@@ -136,16 +140,16 @@ public class ContributionJobRunner {
     if (Objects.equals(recordsProcessed.get(context.getTenantId()), totalRecords.get(context.getTenantId()))) {
       log.info("consumer is stopping as all processed");
       completeContribution(context, stats);
-      stopContribution();
+      stopContribution(context.getTenantId());
       InitialContributionJobConsumerContainer.stopConsumer(topic);
     }
   }
 
-  public void stopContribution() {
+  public void stopContribution(String tenantId) {
     log.info("stopContribution---");
     endContributionJobContext();
-    ContributionJobRunner.recordsProcessed.clear();
-    totalRecords.clear();
+    totalRecords.remove(tenantId);
+    recordsProcessed.remove(tenantId);
   }
 
   public void cancelContributionIfRetryExhausted(UUID centralServerId) {

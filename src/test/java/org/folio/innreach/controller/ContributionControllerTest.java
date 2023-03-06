@@ -22,6 +22,7 @@ import static org.folio.innreach.fixture.TestUtil.deserializeFromJsonFile;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
+import org.folio.innreach.batch.contribution.IterationEventReaderFactory;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -83,6 +84,9 @@ class ContributionControllerTest extends BaseControllerTest {
 
   @Mock
   private RetryTemplate retryTemplate;
+
+  @MockBean
+  IterationEventReaderFactory iterationEventReaderFactory;
 
   @Test
   @Sql(scripts = {

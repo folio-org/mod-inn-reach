@@ -56,8 +56,7 @@ public class IterationEventReaderFactory {
     props.putAll(kafkaProperties.buildConsumerProperties());
     props.put(GROUP_ID_CONFIG, jobProperties.getReaderGroupId());
 
-    var topic = String.format("%s.%s.%s",
-      folioEnv.getEnvironment(), tenantId, jobProperties.getReaderTopic());
+    var topic = getTopicName(tenantId);
 
     var reader = new KafkaItemReader<>(props, topic, keyDeserializer(), valueDeserializer());
     reader.setPollTimeout(Duration.ofSeconds(jobProperties.getReaderPollTimeoutSec()));
@@ -82,16 +81,20 @@ public class IterationEventReaderFactory {
     return UUID.fromString(new String(rec.headers().lastHeader(ITERATION_JOB_ID_HEADER).value()));
   }
 
-  public InitialContributionJobConsumerContainer createInitialContributionConsumerContainer(String tenantId, ContributionJobContext.Statistics statistics, ContributionJobRunner contributionJobRunner,ContributionJobContext context) {
+  public InitialContributionJobConsumerContainer createInitialContributionConsumerContainer(String tenantId, ContributionJobRunner contributionJobRunner,ContributionJobContext context) {
 
     var consumerProperties = kafkaProperties.buildConsumerProperties();
     consumerProperties.put(GROUP_ID_CONFIG, jobProperties.getReaderGroupId());
     consumerProperties.put(AUTO_OFFSET_RESET_CONFIG,"latest");
 
-    var topic = String.format("%s.%s.%s",
-      folioEnv.getEnvironment(), tenantId, jobProperties.getReaderTopic());
+    var topic = getTopicName(tenantId);
     return new InitialContributionJobConsumerContainer(consumerProperties,topic,keyDeserializer(),valueDeserializer(),
       retryConfig.getInterval(), retryConfig.getMaxAttempts(), contributionExceptionListener,contributionJobRunner,context);
+  }
+
+  public String getTopicName(String tenantId) {
+    return String.format("%s.%s.%s",
+      folioEnv.getEnvironment(), tenantId, jobProperties.getReaderTopic());
   }
 
 }
