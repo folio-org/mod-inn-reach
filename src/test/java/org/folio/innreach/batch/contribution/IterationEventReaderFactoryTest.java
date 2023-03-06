@@ -6,6 +6,7 @@ import static org.mockito.Mockito.when;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import org.folio.innreach.config.RetryConfig;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -27,6 +28,10 @@ class IterationEventReaderFactoryTest {
   private ContributionJobProperties jobProperties;
   @Mock
   private ObjectMapper mapper;
+  @Mock
+  private InitialContributionJobConsumerContainer initialContributionJobConsumerContainer;
+  @Mock
+  RetryConfig retryConfig;
 
   @InjectMocks
   private IterationEventReaderFactory factory;
@@ -43,6 +48,16 @@ class IterationEventReaderFactoryTest {
     verify(folioEnv).getEnvironment();
     verify(jobProperties).getReaderTopic();
     verify(jobProperties).getReaderPollTimeoutSec();
+  }
+
+  @Test
+  void createInitialContributionConsumerContainer() {
+    var consumerContainer = factory.createInitialContributionConsumerContainer("test");
+    assertNotNull(consumerContainer);
+
+    verify(kafkaProperties).buildConsumerProperties();
+    verify(folioEnv).getEnvironment();
+    verify(jobProperties).getReaderTopic();
   }
 
 }
