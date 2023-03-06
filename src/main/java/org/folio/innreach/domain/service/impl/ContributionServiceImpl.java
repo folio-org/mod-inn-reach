@@ -8,7 +8,6 @@ import static org.folio.innreach.domain.entity.Contribution.Status.COMPLETE;
 import static org.folio.innreach.domain.service.impl.ServiceUtils.centralServerRef;
 import static org.folio.innreach.dto.MappingValidationStatusDTO.VALID;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
