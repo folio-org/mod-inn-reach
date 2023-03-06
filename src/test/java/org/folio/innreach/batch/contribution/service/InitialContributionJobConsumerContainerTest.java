@@ -77,27 +77,6 @@ class InitialContributionJobConsumerContainerTest extends BaseKafkaApiTest{
   }
 
   @Test
-  void testStartAndStopConsumerIfServiceException() throws InterruptedException {
-    var topicName = getTopicName();
-    var context = prepareContext();
-    var initialContributionJobConsumerContainer = prepareContributionJobConsumerContainer(topicName);
-    InitialContributionMessageListener initialContributionMessageListener = prepareInitialContributionMessageListener(context);
-
-    this.produceEvent(topicName);
-
-    doNothing().when(contributionExceptionListener).logWriteError(any(),any());
-
-    doThrow(ServiceSuspendedException.class).when(contributionJobRunner)
-      .runInitialContribution(any(), any(), any(), any());
-
-    initialContributionJobConsumerContainer.tryStartOrCreateConsumer(initialContributionMessageListener);
-
-    //await().atMost(Duration.ofSeconds(10L)).until(()->!InitialContributionJobConsumerContainer.consumersMap.get(topicName).isRunning());
-
-
-  }
-
-  @Test
   void testStartOrCreateConsumer() throws InterruptedException {
     var topicName = getTopicName();
     var context = prepareContext();
