@@ -31,7 +31,7 @@ import static org.apache.kafka.clients.consumer.ConsumerConfig.ENABLE_AUTO_COMMI
 @RequiredArgsConstructor
 public class InitialContributionJobConsumerContainer {
 
-  public static final long POLL_TIMEOUT = 4200000L;
+  public static final long POLL_TIMEOUT = 9000000L;
   public static Map<String, ConcurrentMessageListenerContainer<String, InstanceIterationEvent>> consumersMap =
     new HashMap<>();
 
