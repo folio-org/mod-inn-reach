@@ -53,7 +53,6 @@ public class ContributionServiceImpl implements ContributionService {
   private final InstanceStorageClient instanceStorageClient;
   private final BeanFactory beanFactory;
 
-  private final IterationEventReaderFactory iterationEventReaderFactory;
 
   private ContributionJobRunner jobRunner;
 
@@ -211,8 +210,6 @@ public class ContributionServiceImpl implements ContributionService {
 
       contribution.setStatus(CANCELLED);
     });
-
-    InitialContributionJobConsumerContainer.stopConsumer(iterationEventReaderFactory.getTopicName(folioContext.getTenantId()));
 
   }
 
