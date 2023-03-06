@@ -87,6 +87,7 @@ public class IterationEventReaderFactory {
     consumerProperties.put(ENABLE_AUTO_COMMIT_CONFIG,false);
     consumerProperties.put(AUTO_OFFSET_RESET_CONFIG,"latest");
     consumerProperties.put(MAX_POLL_INTERVAL_MS_CONFIG,25200000);
+    //consumerProperties.put(SESSION_TIMEOUT_MS_CONFIG)
 
     var topic = String.format("%s.%s.%s",
       folioEnv.getEnvironment(), tenantId, jobProperties.getReaderTopic());

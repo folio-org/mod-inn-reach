@@ -170,4 +170,4 @@ kafka:
       data-type: org.folio.innreach.dto.Holding
   backoff:
     interval: ${DEFAULT_INTERVAL:60000}
-    max_failure: ${MAX_FAILURE:360}
+    max_failure: ${MAX_FAILURE:120}
