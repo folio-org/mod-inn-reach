@@ -35,7 +35,7 @@ public class ContributionJobContext {
 
     private String topic;
     private String tenantId;
-
+    private boolean isInitialContribution;
     public void addRecordsContributed(int itemsCount) {
       recordsContributed += itemsCount;
     }

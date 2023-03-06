@@ -79,7 +79,11 @@ public class ContributionJobRunner {
       .tenantId(tenantId)
       .build();
 
+    totalRecords.remove(tenantId);
+    recordsProcessed.remove(tenantId);
+
     Statistics statistics = new Statistics();
+    statistics.setInitialContribution(true);
     beginContributionJobContext(context);
 
     totalRecords.put(context.getTenantId(),numberOfRecords);
@@ -137,17 +141,17 @@ public class ContributionJobRunner {
     if (Objects.equals(recordsProcessed.get(context.getTenantId()), totalRecords.get(context.getTenantId()))) {
       log.info("consumer is stopping as all processed");
       completeContribution(context, stats);
-      stopContribution();
+      stopContribution(context.getTenantId());
       InitialContributionJobConsumerContainer.stopConsumer(topic);
     }
   }
 
 
-  public void stopContribution() {
+  public void stopContribution(String tenantId) {
     log.info("stopContribution---");
     endContributionJobContext();
-    ContributionJobRunner.recordsProcessed.clear();
-    totalRecords.clear();
+    totalRecords.remove(tenantId);
+    recordsProcessed.remove(tenantId);
   }
 
   public void cancelContributionIfRetryExhausted(UUID centralServerId) {
@@ -371,11 +375,13 @@ public class ContributionJobRunner {
     catch (Exception e) {
       // not possible to guess what item failed when the chunk of multiple items is being contributed
       var recordId = items.size() == 1 ? items.get(0).getId() : null;
-      itemExceptionListener.logWriteError(e, recordId);
-      stopContribution();
-      cancelContributionIfRetryExhausted(centralServerId);
-      InitialContributionJobConsumerContainer.stopConsumer(stats.getTopic());
 
+      if(stats.isInitialContribution()) {
+        itemExceptionListener.logWriteError(e, recordId);
+        stopContribution(stats.getTenantId());
+        cancelContributionIfRetryExhausted(centralServerId);
+        InitialContributionJobConsumerContainer.stopConsumer(stats.getTopic());
+      }
     } finally {
       stats.addRecordsProcessed(itemsCount);
       statsListener.updateStats(stats);
@@ -393,10 +399,12 @@ public class ContributionJobRunner {
     }
     catch (Exception e) {
       log.info("contributeInstance exception block");
-      instanceExceptionListener.logWriteError(e, instance.getId());
-      stopContribution();
-      cancelContributionIfRetryExhausted(centralServerId);
-      InitialContributionJobConsumerContainer.stopConsumer(stats.getTopic());
+      if(stats.isInitialContribution()) {
+        instanceExceptionListener.logWriteError(e, instance.getId());
+        stopContribution(stats.getTenantId());
+        cancelContributionIfRetryExhausted(centralServerId);
+        InitialContributionJobConsumerContainer.stopConsumer(stats.getTopic());
+      }
     } finally {
       log.info("contributeInstance finally block");
       stats.addRecordsProcessed(1);
