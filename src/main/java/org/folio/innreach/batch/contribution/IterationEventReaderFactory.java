@@ -89,7 +89,7 @@ public class IterationEventReaderFactory {
 
     var topic = String.format("%s.%s.%s",
       folioEnv.getEnvironment(), tenantId, jobProperties.getReaderTopic());
-    return new InitialContributionJobConsumerContainer(consumerProperties,topic,keyDeserializer(),valueDeserializer(), retryConfig.getInterval(), retryConfig.getMaxAttempts());
+    return new InitialContributionJobConsumerContainer(consumerProperties,topic,keyDeserializer(),valueDeserializer());
   }
 
 }

@@ -1,5 +1,6 @@
 package org.folio.innreach.config;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
@@ -13,10 +14,13 @@ import org.folio.innreach.domain.service.ContributionService;
 @Configuration
 @Log4j2
 @EnableConfigurationProperties(ContributionJobProperties.class)
+@RequiredArgsConstructor
 public class ContributionJobConfig {
 
   private static final long BACKOFF_MAX_INTERVAL = 15000L;
   private static final int BACKOFF_MULTIPLIER = 2;
+
+  private final RetryConfig retryConfig;
 
   /* Commented fue to use fixed retry without policy
   @Bean("contributionRetryTemplate")
@@ -30,10 +34,12 @@ public class ContributionJobConfig {
    */
 
   @Bean("contributionRetryTemplate")
-  public RetryTemplate contributionRetryTemplate(ContributionJobProperties jobProperties) {
+  public RetryTemplate contributionRetryTemplate() {
+    System.out.println("maxAttempts: "+retryConfig.getMaxAttempts());
+    System.out.println("interval: "+retryConfig.getInterval());
     return RetryTemplate.builder()
-      .maxAttempts(5)
-      .fixedBackoff(BACKOFF_MAX_INTERVAL)
+      .maxAttempts(retryConfig.getMaxAttempts())
+      .fixedBackoff(retryConfig.getInterval())
       .build();
   }
 

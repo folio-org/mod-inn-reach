@@ -15,7 +15,7 @@ public class RetryConfig {
   private Long interval;
 
   @Value(value = "${kafka.backoff.max_failure}")
-  private Long maxAttempts;
+  private Integer maxAttempts;
 
   @Bean
   public RetryListener retryMonitoringListener() {

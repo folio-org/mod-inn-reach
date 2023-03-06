@@ -169,7 +169,7 @@ class InitialContributionJobConsumerContainerTest extends BaseKafkaApiTest{
       var consumerProperties = kafkaProperties.buildConsumerProperties();
       consumerProperties.put(GROUP_ID_CONFIG, jobProperties.getReaderGroupId());
 
-      return new InitialContributionJobConsumerContainer(consumerProperties,tempTopic,keyDeserializer(),valueDeserializer(), maxInterval, maxAttempt);
+      return new InitialContributionJobConsumerContainer(consumerProperties,tempTopic,keyDeserializer(),valueDeserializer());
     }
 
   private Deserializer<InstanceIterationEvent> valueDeserializer() {

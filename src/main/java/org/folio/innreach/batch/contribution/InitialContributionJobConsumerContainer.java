@@ -40,10 +40,6 @@ public class InitialContributionJobConsumerContainer {
   private final Deserializer<String> keyDeserializer;
   private final Deserializer<InstanceIterationEvent> valueDeserializer;
 
-  private final Long interval;
-
-  private final Long maxAttempts;
-
   private static final int CONCURRENCY = 2;
 
 //  @Autowired
