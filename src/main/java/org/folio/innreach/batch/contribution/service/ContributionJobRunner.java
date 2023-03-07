@@ -134,7 +134,14 @@ public class ContributionJobRunner {
       contributeInstance(centralServerId, instance, stats);
       contributeInstanceItems(centralServerId, instance, stats);
     } else if (isContributed(centralServerId, instance)) {
+      log.info("decontributing----");
       deContributeInstance(centralServerId, instance, stats);
+    }
+    else {
+      // to test if non-eligible increasing count to verify the stopping condition
+      log.info("else block---");
+      ContributionJobRunner.recordsProcessed.put(stats.getTenantId(), recordsProcessed.get(stats.getTenantId()) == null ? 1
+        : recordsProcessed.get(stats.getTenantId())+1);
     }
 
     if (Objects.equals(recordsProcessed.get(context.getTenantId()), totalRecords.get(context.getTenantId()))) {

@@ -91,8 +91,8 @@ class ContributionJobRunnerTest {
   private KafkaItemReader<String, InstanceIterationEvent> reader;
   @Mock
   private InstanceIterationEvent event;
-  @Mock
-  private ContributionJobContext.Statistics statistics;
+
+  private final ContributionJobContext.Statistics statistics = new ContributionJobContext.Statistics();
   @Spy
   private RetryTemplate retryTemplate = createNoRetryTemplate();
 
