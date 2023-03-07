@@ -87,9 +87,7 @@ public class InitialContributionJobConsumerContainer {
 
     ContainerProperties containerProps = new ContainerProperties(topic);
 
-    //TODO decide poll timeout
     containerProps.setPollTimeout(POLL_TIMEOUT);
-    Boolean enableAutoCommit = (Boolean) consumerProperties.get(ENABLE_AUTO_COMMIT_CONFIG);
 
     containerProps.setAckMode(ContainerProperties.AckMode.RECORD);
 
