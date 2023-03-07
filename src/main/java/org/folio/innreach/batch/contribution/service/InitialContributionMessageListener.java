@@ -1,18 +1,18 @@
 package org.folio.innreach.batch.contribution.service;
 
 import lombok.AllArgsConstructor;
+import lombok.extern.log4j.Log4j2;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.folio.innreach.batch.contribution.ContributionJobContext;
 import org.folio.innreach.domain.dto.folio.inventorystorage.InstanceIterationEvent;
-import org.springframework.kafka.listener.AcknowledgingMessageListener;
 import org.springframework.kafka.listener.MessageListener;
-import org.springframework.kafka.support.Acknowledgment;
 
 import java.util.UUID;
 
 import static org.folio.innreach.batch.contribution.IterationEventReaderFactory.ITERATION_JOB_ID_HEADER;
 
 @AllArgsConstructor
+@Log4j2
 public class InitialContributionMessageListener implements MessageListener<String, InstanceIterationEvent> {
 
   IMessageProcessor iMessageProcessor;
@@ -24,28 +24,21 @@ public class InitialContributionMessageListener implements MessageListener<Strin
   public void onMessage(
     ConsumerRecord<String, InstanceIterationEvent> consumerRecord) {
 
-    //to check jobId and InstanceId
 
     UUID jobId = UUID.fromString(new String(consumerRecord.headers().lastHeader(ITERATION_JOB_ID_HEADER).value()));
 
-    System.out.println("JobId-->"+jobId);
+    log.info("JobId-->:{}",jobId);
 
     UUID instanceId = UUID.fromString(consumerRecord.key());
 
-    System.out.println("InstanceId-->>"+instanceId);
+    log.info("InstanceId-->>:{}",instanceId);
 
     InstanceIterationEvent instanceIterationEvent = consumerRecord.value();
 
     instanceIterationEvent.setInstanceId(instanceId);
     instanceIterationEvent.setJobId(jobId);
 
-
-    //end
-
-    // process message
     iMessageProcessor.processMessage(instanceIterationEvent, context, statistics, consumerRecord.topic());
 
-    // commit offset
-//    acknowledgment.acknowledge();
   }
 }
