@@ -5,6 +5,7 @@ import static java.lang.Math.max;
 import static org.folio.innreach.batch.contribution.ContributionJobContextManager.beginContributionJobContext;
 import static org.folio.innreach.batch.contribution.ContributionJobContextManager.endContributionJobContext;
 
+import java.net.SocketTimeoutException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiConsumer;
@@ -19,6 +20,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.folio.innreach.external.exception.ServiceSuspendedException;
 import org.folio.innreach.batch.contribution.InitialContributionJobConsumerContainer;
+import org.folio.innreach.external.exception.SocketTimeOutExceptionWrapper;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.retry.support.RetryTemplate;
 import org.springframework.stereotype.Service;
@@ -378,8 +380,12 @@ public class ContributionJobRunner {
       recordContributionService.contributeItems(centralServerId, bibId, items);
       stats.addRecordsContributed(itemsCount);
     }
-    catch (ServiceSuspendedException e) {
+    catch (ServiceSuspendedException | FeignException e) {
       throw e;
+    }
+    catch (SocketTimeoutException socketTimeoutException) {
+      log.info("socketTimeoutException----");
+      throw new SocketTimeOutExceptionWrapper(socketTimeoutException.getMessage());
     }
     catch (Exception e) {
       // not possible to guess what item failed when the chunk of multiple items is being contributed
@@ -402,7 +408,12 @@ public class ContributionJobRunner {
     }
     catch (ServiceSuspendedException | FeignException e) {
       throw e;
-    } catch (Exception e) {
+    }
+    catch (SocketTimeoutException socketTimeoutException) {
+      log.info("socketTimeoutException----");
+      throw new SocketTimeOutExceptionWrapper(socketTimeoutException.getMessage());
+    }
+    catch (Exception e) {
       log.info("contributeInstance exception block");
       instanceExceptionListener.logWriteError(e, instance.getId());
     } finally {

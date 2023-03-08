@@ -1,5 +1,6 @@
 package org.folio.innreach.domain.service.impl;
 
+import java.net.SocketTimeoutException;
 import java.util.List;
 import java.util.UUID;
 
@@ -36,7 +37,7 @@ public class RecordContributionServiceImpl implements RecordContributionService 
   private final ContributionExceptionListener exceptionListener;
 
   @Override
-  public void contributeInstance(UUID centralServerId, Instance instance) {
+  public void contributeInstance(UUID centralServerId, Instance instance) throws SocketTimeoutException{
     var bibId = instance.getHrid();
 
     log.info("Contributing bib {}", bibId);
@@ -77,7 +78,7 @@ public class RecordContributionServiceImpl implements RecordContributionService 
   }
 
   @Override
-  public void moveItem(UUID centralServerId, String newBibId, Item item) {
+  public void moveItem(UUID centralServerId, String newBibId, Item item) throws SocketTimeoutException {
     deContributeItem(centralServerId, item);
     contributeItems(centralServerId, newBibId, List.of(item));
   }
@@ -90,7 +91,7 @@ public class RecordContributionServiceImpl implements RecordContributionService 
   }
 
   @Override
-  public int contributeItems(UUID centralServerId, String bibId, List<Item> items) {
+  public int contributeItems(UUID centralServerId, String bibId, List<Item> items) throws SocketTimeoutException {
     var bibItems = recordTransformationService.getBibItems(centralServerId, items, this::logItemTransformationError);
 
     int itemsCount = bibItems.size();

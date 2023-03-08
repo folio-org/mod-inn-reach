@@ -14,6 +14,7 @@ import static org.folio.innreach.fixture.ContributionFixture.createContributionJ
 import static org.folio.innreach.fixture.ContributionFixture.createInstance;
 import static org.folio.innreach.fixture.TestUtil.createNoRetryTemplate;
 
+import java.net.SocketTimeoutException;
 import java.util.ArrayList;
 import java.util.UUID;
 
@@ -65,7 +66,7 @@ class InstanceContributorTest {
   }
 
   @Test
-  void shouldContributeAndLookUp() {
+  void shouldContributeAndLookUp() throws SocketTimeoutException {
     when(instanceTransformationService.getBibInfo(any(), any())).thenReturn(new BibInfo());
     when(irContributionService.contributeBib(any(), any(), any())).thenReturn(response);
     when(response.isOk()).thenReturn(true);

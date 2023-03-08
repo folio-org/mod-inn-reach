@@ -10,8 +10,7 @@ import org.folio.innreach.batch.contribution.listener.ContributionExceptionListe
 import org.folio.innreach.batch.contribution.service.ContributionJobRunner;
 import org.folio.innreach.domain.dto.folio.inventorystorage.InstanceIterationEvent;
 import org.folio.innreach.external.exception.ServiceSuspendedException;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.kafka.config.KafkaListenerEndpointRegistry;
+import org.folio.innreach.external.exception.SocketTimeOutExceptionWrapper;
 import org.springframework.kafka.core.ConsumerFactory;
 import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
 import org.springframework.kafka.listener.ConcurrentMessageListenerContainer;
@@ -20,12 +19,8 @@ import org.springframework.kafka.listener.DefaultErrorHandler;
 import org.springframework.util.backoff.BackOff;
 import org.springframework.util.backoff.FixedBackOff;
 
-import java.net.SocketTimeoutException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.ExecutionException;
-
-import static org.apache.kafka.clients.consumer.ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG;
 
 @Log4j2
 @Setter
@@ -67,7 +62,7 @@ public class InitialContributionJobConsumerContainer {
       stopConsumer(consumerRecord.topic());
     }, fixedBackOff);
     errorHandler.addRetryableExceptions(ServiceSuspendedException.class);
-    errorHandler.addRetryableExceptions(SocketTimeoutException.class);
+    errorHandler.addRetryableExceptions(SocketTimeOutExceptionWrapper.class);
     errorHandler.addRetryableExceptions(FeignException.class);
     return errorHandler;
   }

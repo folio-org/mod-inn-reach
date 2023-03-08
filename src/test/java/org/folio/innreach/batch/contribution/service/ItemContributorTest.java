@@ -14,6 +14,7 @@ import static org.folio.innreach.fixture.ContributionFixture.createContributionJ
 import static org.folio.innreach.fixture.ContributionFixture.createItem;
 import static org.folio.innreach.fixture.TestUtil.createNoRetryTemplate;
 
+import java.net.SocketTimeoutException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -71,7 +72,7 @@ class ItemContributorTest {
   }
 
   @Test
-  void shouldContributeItems() {
+  void shouldContributeItems() throws SocketTimeoutException {
     when(irContributionService.contributeBibItems(any(), any(), any())).thenReturn(response);
     when(recordTransformationService.getBibItems(any(), any(), any())).thenReturn(List.of(new BibItem()));
     when(response.getErrors()).thenReturn(new ArrayList<>());
@@ -82,7 +83,7 @@ class ItemContributorTest {
     verify(irContributionService).contributeBibItems(eq(JOB_CONTEXT.getCentralServerId()), any(), any());
   }
   @Test
-  void shouldContributeItems_throwException() {
+  void shouldContributeItems_throwException() throws SocketTimeoutException {
     InnReachResponse.Error errorResp1 = InnReachResponse.Error.builder().reason("Contribution to d2irm is not currently suspended").build();
     InnReachResponse.Error errorResp2 = InnReachResponse.Error.builder().reason("Contribution to d2irm is currently suspended").build();
 
@@ -115,7 +116,7 @@ class ItemContributorTest {
   }
 
   @Test
-  void testMoveItem(){
+  void testMoveItem() throws SocketTimeoutException {
     when(irContributionService.deContributeBibItem(any(), any())).thenReturn(response);
     when(irContributionService.contributeBibItems(any(), any(), any())).thenReturn(response);
     when(recordTransformationService.getBibItems(any(), any(), any())).thenReturn(List.of(new BibItem()));

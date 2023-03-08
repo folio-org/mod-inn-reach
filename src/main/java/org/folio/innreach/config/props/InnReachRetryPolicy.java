@@ -3,6 +3,7 @@ package org.folio.innreach.config.props;
 import feign.FeignException;
 import lombok.extern.log4j.Log4j2;
 import org.folio.innreach.external.exception.ServiceSuspendedException;
+import org.folio.innreach.external.exception.SocketTimeOutExceptionWrapper;
 import org.springframework.classify.Classifier;
 import org.springframework.retry.RetryPolicy;
 import org.springframework.retry.policy.ExceptionClassifierRetryPolicy;
@@ -29,7 +30,7 @@ public class InnReachRetryPolicy extends ExceptionClassifierRetryPolicy {
           return new NeverRetryPolicy();
         }
         else if (classifiable instanceof SocketTimeoutException) {
-          log.info("classifiable is of SocketTimeoutException");
+          log.info("classifiable is of SocketTimeOutException");
           return new NeverRetryPolicy();
         }
         log.info("other exception---");

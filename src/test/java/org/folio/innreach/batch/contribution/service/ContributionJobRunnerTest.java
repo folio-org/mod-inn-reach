@@ -18,6 +18,7 @@ import static org.folio.innreach.fixture.ContributionFixture.createInstanceView;
 import static org.folio.innreach.fixture.ContributionFixture.createItem;
 import static org.folio.innreach.fixture.TestUtil.createNoRetryTemplate;
 
+import java.net.SocketTimeoutException;
 import java.util.UUID;
 
 import org.folio.innreach.batch.contribution.InitialContributionJobConsumerContainer;
@@ -103,7 +104,7 @@ class ContributionJobRunnerTest {
   private InitialContributionJobConsumerContainer initialContributionJobConsumerContainer;
 
   @Test
-  void shouldRunJob() {
+  void shouldRunJob() throws SocketTimeoutException {
     event = InstanceIterationEvent.of(ITERATION_JOB_ID, "test", "test", UUID.randomUUID());
 
     when(validationService.isEligibleForContribution(any(), any(Instance.class))).thenReturn(true);
@@ -174,7 +175,7 @@ class ContributionJobRunnerTest {
   }
 
   @Test
-  void runInstanceContribution_shouldContribute() {
+  void runInstanceContribution_shouldContribute() throws SocketTimeoutException {
     var instance = createInstance();
     var contribution = new ContributionDTO();
     contribution.setId(UUID.randomUUID());
@@ -234,7 +235,7 @@ class ContributionJobRunnerTest {
   }
 
   @Test
-  void runItemContribution() {
+  void runItemContribution() throws SocketTimeoutException {
     var item = createItem();
     var instance = new Instance().source(MARC_RECORD_SOURCE);
     instance.addItemsItem(item);
@@ -253,7 +254,7 @@ class ContributionJobRunnerTest {
   }
 
   @Test
-  void runItemContribution_shouldDeContributeIneligible() {
+  void runItemContribution_shouldDeContributeIneligible() throws SocketTimeoutException {
     var item = createItem();
     var instance = new Instance().source(MARC_RECORD_SOURCE);
     instance.addItemsItem(item);
@@ -272,7 +273,7 @@ class ContributionJobRunnerTest {
   }
 
   @Test
-  void runItemContribution_shouldSkipIneligible() {
+  void runItemContribution_shouldSkipIneligible() throws SocketTimeoutException {
     var instance = createInstance();
     var item = instance.getItems().get(0);
     var contribution = new ContributionDTO();
@@ -288,7 +289,7 @@ class ContributionJobRunnerTest {
   }
 
   @Test
-  void runItemMove() {
+  void runItemMove() throws SocketTimeoutException {
     var oldInstance = createInstance();
     var newInstance = createInstance();
     var item = newInstance.getItems().get(0);
@@ -309,7 +310,7 @@ class ContributionJobRunnerTest {
   }
 
   @Test
-  void runItemDeContribution_shouldDeContribute() {
+  void runItemDeContribution_shouldDeContribute() throws SocketTimeoutException {
     var item = createItem();
     var instance = new Instance().source(MARC_RECORD_SOURCE);
     instance.addItemsItem(item);
@@ -327,7 +328,7 @@ class ContributionJobRunnerTest {
   }
 
   @Test
-  void runItemDeContribution_shouldSkipNonContributed() {
+  void runItemDeContribution_shouldSkipNonContributed() throws SocketTimeoutException {
     var item = createItem();
     var instance = new Instance().source(MARC_RECORD_SOURCE);
     instance.addItemsItem(item);
@@ -375,7 +376,7 @@ class ContributionJobRunnerTest {
     jobRunner.cancelInitialContribution(UUID.randomUUID());
   }
   @Test
-  void shouldRunJob_noEvent() {
+  void shouldRunJob_noEvent() throws SocketTimeoutException {
     jobRunner.runInitialContribution(JOB_CONTEXT, null, statistics, TOPIC);
     verify(recordContributor, never()).deContributeItem(any(), any());
     verify(recordContributor, never()).contributeInstance(any(), any());
