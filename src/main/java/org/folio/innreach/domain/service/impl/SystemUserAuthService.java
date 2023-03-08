@@ -2,24 +2,15 @@ package org.folio.innreach.domain.service.impl;
 
 import static org.springframework.util.CollectionUtils.isEmpty;
 
-import static org.folio.innreach.domain.service.impl.FolioExecutionContextUtils.executeWithinContext;
-
 import java.nio.charset.StandardCharsets;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.log4j.Log4j2;
-
 import org.apache.commons.io.IOUtils;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
-import org.springframework.core.io.ClassPathResource;
-import org.springframework.stereotype.Service;
-import org.springframework.util.CollectionUtils;
-
 import org.folio.innreach.client.AuthnClient;
 import org.folio.innreach.client.PermissionsClient;
 import org.folio.innreach.config.props.SystemUserProperties;
@@ -27,6 +18,11 @@ import org.folio.innreach.domain.dto.folio.SystemUser;
 import org.folio.innreach.domain.dto.folio.User;
 import org.folio.innreach.domain.service.UserService;
 import org.folio.spring.integration.XOkapiHeaders;
+import org.folio.spring.scope.FolioExecutionContextSetter;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 
 @Log4j2
 @RequiredArgsConstructor
@@ -58,8 +54,7 @@ public class SystemUserAuthService {
   }
 
   public String loginSystemUser(SystemUser systemUser) {
-    return executeWithinContext(contextBuilder.forSystemUser(systemUser), () -> {
-
+    try (var context = new FolioExecutionContextSetter(contextBuilder.forSystemUser(systemUser))) {
       AuthnClient.UserCredentials creds = AuthnClient.UserCredentials
         .of(systemUser.getUserName(), folioSystemUserConf.getPassword());
 
@@ -71,8 +66,7 @@ public class SystemUserAuthService {
         .filter(list -> !CollectionUtils.isEmpty(list))
         .map(list -> list.get(0))
         .orElseThrow(() -> new IllegalStateException(String.format("User [%s] cannot log in", systemUser.getUserName())));
-
-    });
+    }
   }
 
   private void createFolioUser(UUID id) {

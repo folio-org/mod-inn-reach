@@ -1,19 +1,15 @@
 package org.folio.innreach.domain.service.impl;
 
-import static org.folio.innreach.domain.service.impl.FolioExecutionContextUtils.executeWithinContext;
-
 import java.util.UUID;
-
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
-
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.cache.annotation.Cacheable;
-import org.springframework.stereotype.Service;
-
 import org.folio.innreach.config.props.SystemUserProperties;
 import org.folio.innreach.domain.dto.folio.SystemUser;
 import org.folio.innreach.domain.service.UserService;
+import org.folio.spring.scope.FolioExecutionContextSetter;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.stereotype.Service;
 
 @Log4j2
 @Service
@@ -56,11 +52,11 @@ public class SystemUserService {
   }
 
   private UUID getSystemUserId(SystemUser systemUser) {
-    return executeWithinContext(contextBuilder.forSystemUser(systemUser), () ->
-      userService.getUserByName(systemUser.getUserName())
+    try (var context = new FolioExecutionContextSetter(contextBuilder.forSystemUser(systemUser))) {
+      return userService.getUserByName(systemUser.getUserName())
         .orElseThrow(() -> new IllegalArgumentException("System user is not found: name = " + systemUser.getUserName()))
-        .getId()
-    );
+        .getId();
+    }
   }
 
 }
