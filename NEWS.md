@@ -1,3 +1,8 @@
+## v2.0.5 2023-03-08
+### Bug
+* [MODINREACH-352](https://issues.folio.org/browse/MODINREACH-352) - mod-inn-reach failure in Nolana environments
+
+
 ## v2.0.4 2023-02-17
 ### Stories
 * [MODINREACH-349](https://issues.folio.org/browse/MODINREACH-349) - Align the module with API breaking changes
