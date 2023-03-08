@@ -1,5 +1,6 @@
 package org.folio.innreach.batch.contribution.service;
 
+import feign.FeignException;
 import org.folio.innreach.external.exception.ServiceSuspendedException;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.*;
@@ -94,6 +95,29 @@ class InitialContributionJobConsumerContainerTest extends BaseKafkaApiTest{
     initialContributionJobConsumerContainer.tryStartOrCreateConsumer(initialContributionMessageListener);
 
     await().atMost(Duration.ofSeconds(10L)).until(()->!InitialContributionJobConsumerContainer.consumersMap.get(topicName).isRunning());
+
+
+  }
+
+  @Test
+  void testStartAndStopConsumerIfFeignException() throws InterruptedException {
+    var topicName = getTopicName();
+    var context = prepareContext();
+    var initialContributionJobConsumerContainer = prepareContributionJobConsumerContainer(topicName);
+    InitialContributionMessageListener initialContributionMessageListener = prepareInitialContributionMessageListener(context);
+
+    this.produceEvent(topicName);
+
+    doNothing().when(contributionExceptionListener).logWriteError(any(),any());
+    doNothing().when(contributionJobRunner).stopContribution(any());
+    doNothing().when(contributionJobRunner).cancelContributionIfRetryExhausted(any());
+
+    doThrow(FeignException.class).when(contributionJobRunner)
+      .runInitialContribution(any(), any(), any(), any());
+
+    initialContributionJobConsumerContainer.tryStartOrCreateConsumer(initialContributionMessageListener);
+
+    await().atMost(Duration.ofSeconds(20L)).until(()->!InitialContributionJobConsumerContainer.consumersMap.get(topicName).isRunning());
 
 
   }

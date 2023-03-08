@@ -1,5 +1,6 @@
 package org.folio.innreach.batch.contribution;
 
+import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.extern.log4j.Log4j2;
@@ -67,6 +68,7 @@ public class InitialContributionJobConsumerContainer {
     }, fixedBackOff);
     errorHandler.addRetryableExceptions(ServiceSuspendedException.class);
     errorHandler.addRetryableExceptions(SocketTimeoutException.class);
+    errorHandler.addRetryableExceptions(FeignException.class);
     return errorHandler;
   }
 

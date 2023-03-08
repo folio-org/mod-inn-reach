@@ -14,6 +14,7 @@ import java.util.stream.StreamSupport;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Iterables;
 
+import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.folio.innreach.external.exception.ServiceSuspendedException;
@@ -399,10 +400,9 @@ public class ContributionJobRunner {
       ContributionJobRunner.recordsProcessed.put(stats.getTenantId(), recordsProcessed.get(stats.getTenantId()) == null ? 1
         : recordsProcessed.get(stats.getTenantId())+1);
     }
-    catch (ServiceSuspendedException e) {
+    catch (ServiceSuspendedException | FeignException e) {
       throw e;
-    }
-    catch (Exception e) {
+    } catch (Exception e) {
       log.info("contributeInstance exception block");
       instanceExceptionListener.logWriteError(e, instance.getId());
     } finally {
