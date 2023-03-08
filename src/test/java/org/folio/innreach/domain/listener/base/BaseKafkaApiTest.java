@@ -1,8 +1,5 @@
 package org.folio.innreach.domain.listener.base;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
-
 import static org.folio.innreach.domain.listener.base.BaseKafkaApiTest.CIRC_CHECKIN_TOPIC;
 import static org.folio.innreach.domain.listener.base.BaseKafkaApiTest.CIRC_LOAN_TOPIC;
 import static org.folio.innreach.domain.listener.base.BaseKafkaApiTest.CIRC_REQUEST_TOPIC;
@@ -11,16 +8,21 @@ import static org.folio.innreach.domain.listener.base.BaseKafkaApiTest.INVENTORY
 import static org.folio.innreach.domain.listener.base.BaseKafkaApiTest.INVENTORY_ITEM_TOPIC;
 import static org.folio.innreach.domain.listener.base.BaseKafkaApiTest.TestTenantController;
 import static org.folio.innreach.domain.listener.base.BaseKafkaApiTest.TestTenantScopedExecutionService;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
 
 import jakarta.validation.Valid;
-
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.Callable;
-
-import lombok.SneakyThrows;
-
 import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.folio.innreach.ModInnReachApplication;
+import org.folio.innreach.domain.event.DomainEvent;
+import org.folio.innreach.domain.service.impl.TenantScopedExecutionService;
+import org.folio.innreach.external.client.feign.InnReachAuthClient;
+import org.folio.innreach.external.dto.AccessTokenDTO;
+import org.folio.spring.liquibase.FolioLiquibaseConfiguration;
+import org.folio.tenant.domain.dto.TenantAttributes;
+import org.folio.tenant.rest.resource.TenantApi;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestInstance;
@@ -45,15 +47,6 @@ import org.springframework.web.bind.annotation.RestController;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
-
-import org.folio.innreach.ModInnReachApplication;
-import org.folio.innreach.domain.event.DomainEvent;
-import org.folio.innreach.domain.service.impl.TenantScopedExecutionService;
-import org.folio.innreach.external.client.feign.InnReachAuthClient;
-import org.folio.innreach.external.dto.AccessTokenDTO;
-import org.folio.spring.liquibase.FolioLiquibaseConfiguration;
-import org.folio.tenant.domain.dto.TenantAttributes;
-import org.folio.tenant.rest.resource.TenantApi;
 
 @ActiveProfiles("test")
 @EmbeddedKafka(topics = {CIRC_LOAN_TOPIC, CIRC_REQUEST_TOPIC, CIRC_CHECKIN_TOPIC, INVENTORY_ITEM_TOPIC, INVENTORY_HOLDING_TOPIC, INVENTORY_INSTANCE_TOPIC})
@@ -133,12 +126,6 @@ public class BaseKafkaApiTest {
   static class TestTenantScopedExecutionService extends TenantScopedExecutionService {
     public TestTenantScopedExecutionService() {
       super(null, null);
-    }
-
-    @SneakyThrows
-    @Override
-    public <T> T executeTenantScoped(String tenantId, Callable<T> job) {
-      return job.call();
     }
   }
 }
