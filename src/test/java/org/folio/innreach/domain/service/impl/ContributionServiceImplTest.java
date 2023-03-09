@@ -1,5 +1,6 @@
 package org.folio.innreach.domain.service.impl;
 
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
@@ -10,11 +11,13 @@ import static org.folio.innreach.dto.MappingValidationStatusDTO.VALID;
 import static org.folio.innreach.fixture.ContributionFixture.createContribution;
 import static org.folio.innreach.fixture.JobResponseFixture.createJobResponse;
 
+import java.util.Arrays;
 import java.util.Optional;
 import java.util.UUID;
 
 import org.folio.innreach.config.props.ContributionJobProperties;
 import org.folio.innreach.config.props.FolioEnvironment;
+import org.folio.innreach.external.exception.InnReachException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -68,7 +71,7 @@ class ContributionServiceImplTest {
   @InjectMocks
   private ContributionServiceImpl service;
 
-  @Mock
+  @Spy
 //  @Qualifier("contributionRetryTemplate")
   private RetryTemplate retryTemplate;
 
@@ -90,12 +93,23 @@ class ContributionServiceImplTest {
     when(validationService.getItemTypeMappingStatus(any())).thenReturn(VALID);
     when(validationService.getLocationMappingStatus(any())).thenReturn(VALID);
     when(beanFactory.getBean(ContributionJobRunner.class)).thenReturn(jobRunner);
-
     service.startInitialContribution(UUID.randomUUID());
 
     verify(storageClient).startInstanceIteration(any());
     verify(repository).save(any(Contribution.class));
     verify(jobRunner).startInitialContribution(any(), any(), any(), any(), any());
+
+    when(storageClient.getJobById(any())).thenReturn(null);
+    assertThatThrownBy(() -> service.startInitialContribution(UUID.randomUUID()))
+      .isInstanceOf(InnReachException.class)
+      .hasMessageContaining("responseAfterTrigger is null");
+
+    var jobResponse = createJobResponse();
+    jobResponse.setNumberOfRecordsPublished(0);
+    when(storageClient.getJobById(any())).thenReturn(jobResponse);
+    assertThatThrownBy(() -> service.startInitialContribution(UUID.randomUUID()))
+      .isInstanceOf(InnReachException.class)
+      .hasMessageContaining("record is still not there->>");
   }
 
   @Test
@@ -142,6 +156,13 @@ class ContributionServiceImplTest {
     service.logContributionError(UUID.randomUUID(), error);
 
     verify(errorRepository).save(any(ContributionError.class));
+  }
+
+  @Test
+  void cancelAllTest(){
+    when(repository.findAllByStatus(any())).thenReturn(Arrays.asList(createContribution()));
+    service.cancelAll();
+    verify(repository).findAllByStatus(any());
   }
 
 }

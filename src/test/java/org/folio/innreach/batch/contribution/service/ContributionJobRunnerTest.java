@@ -18,8 +18,10 @@ import static org.folio.innreach.fixture.ContributionFixture.createInstanceView;
 import static org.folio.innreach.fixture.ContributionFixture.createItem;
 import static org.folio.innreach.fixture.TestUtil.createNoRetryTemplate;
 
+import java.lang.reflect.Field;
 import java.net.SocketTimeoutException;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.folio.innreach.batch.contribution.InitialContributionJobConsumerContainer;
 import org.junit.jupiter.api.Assertions;
@@ -103,6 +105,9 @@ class ContributionJobRunnerTest {
   @Mock
   private InitialContributionJobConsumerContainer initialContributionJobConsumerContainer;
 
+  @Spy
+  private ConcurrentHashMap<String, Integer> recordsProcessed = new ConcurrentHashMap<>();
+
   @Test
   void shouldRunJob() throws SocketTimeoutException {
     event = InstanceIterationEvent.of(ITERATION_JOB_ID, "test", "test", UUID.randomUUID());
@@ -120,7 +125,7 @@ class ContributionJobRunnerTest {
   }
 
   @Test
-  void shouldRunJob_noInstanceItems() {
+  void shouldRunJob_noInstanceItems() throws NoSuchFieldException, IllegalAccessException {
     event = InstanceIterationEvent.of(ITERATION_JOB_ID, "test", "test", UUID.randomUUID());
     Instance instance = createInstance();
     instance.setItems(null);
@@ -130,6 +135,15 @@ class ContributionJobRunnerTest {
     jobRunner.runInitialContribution(JOB_CONTEXT, ContributionJobRunnerTest.this.event, statistics, TOPIC);
 
     verify(recordContributor).isContributed(CENTRAL_SERVER_ID, instance);
+
+    recordsProcessed.put(JOB_CONTEXT.getTenantId(),10);
+    Field field = ContributionJobRunner.class.getDeclaredField("recordsProcessed");
+    field.setAccessible(true);
+    field.set(null,recordsProcessed);
+    jobRunner.runInitialContribution(JOB_CONTEXT, ContributionJobRunnerTest.this.event, statistics, TOPIC);
+    Assertions.assertEquals(Integer.valueOf(11), recordsProcessed.get(JOB_CONTEXT.getTenantId()));
+    verify(recordContributor,times(2)).isContributed(CENTRAL_SERVER_ID, instance);
+
   }
 
   @Test
@@ -204,6 +218,18 @@ class ContributionJobRunnerTest {
     jobRunner.runInstanceContribution(CENTRAL_SERVER_ID, instance);
 
     verify(recordContributor).deContributeInstance(any(), any());
+  }
+
+  @Test
+  void testRunInstanceContribution_IneligibleInstance(){
+    var instance = createInstance();
+    var contribution = new ContributionDTO();
+    contribution.setId(UUID.randomUUID());
+
+    when(validationService.isEligibleForContribution(any(), any(Instance.class))).thenReturn(false);
+    when(recordContributor.isContributed(any(), any(Instance.class))).thenReturn(false);
+    jobRunner.runInstanceContribution(CENTRAL_SERVER_ID, instance);
+    verify(recordContributor,never()).deContributeInstance(any(), any());
   }
 
   @Test
@@ -380,6 +406,13 @@ class ContributionJobRunnerTest {
     jobRunner.runInitialContribution(JOB_CONTEXT, null, statistics, TOPIC);
     verify(recordContributor, never()).deContributeItem(any(), any());
     verify(recordContributor, never()).contributeInstance(any(), any());
+  }
+
+  @Test
+  void testCancelContributionIfRetryExhausted(){
+    UUID uuid = UUID.randomUUID();
+    jobRunner.cancelContributionIfRetryExhausted(uuid);
+    verify(contributionService).cancelCurrent(uuid);
   }
 
 }
