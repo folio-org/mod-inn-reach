@@ -14,6 +14,7 @@ import static org.mockito.Mockito.when;
 import jakarta.validation.Valid;
 import java.util.List;
 import java.util.UUID;
+import lombok.SneakyThrows;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.folio.innreach.ModInnReachApplication;
 import org.folio.innreach.domain.event.DomainEvent;
@@ -126,6 +127,11 @@ public class BaseKafkaApiTest {
   static class TestTenantScopedExecutionService extends TenantScopedExecutionService {
     public TestTenantScopedExecutionService() {
       super(null, null);
+    }
+
+    @SneakyThrows
+    public void runTenantScoped(String tenantId, Runnable job) {
+      job.run();
     }
   }
 }
