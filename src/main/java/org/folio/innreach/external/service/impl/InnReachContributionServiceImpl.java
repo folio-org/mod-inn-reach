@@ -59,8 +59,10 @@ public class InnReachContributionServiceImpl implements InnReachContributionServ
 
       var response = contributionClient.deContributeBib(connectionUrl, authorizationHeader, localCode,
         centralCode, bibId);
-      if (!response.getErrors().isEmpty()) {
-        var error = response.getErrors().get(0).getReason();
+      if (response!=null && response.getErrors()!=null && !response.getErrors().isEmpty()) {
+        InnReachResponse.Error errorResponse = response.getErrors().get(0);
+        var error = errorResponse!=null ? errorResponse.getReason() : "";
+        log.info("checkServiceSuspension:: error is : {}",error);
         if (error.contains("Contribution to d2irm is currently suspended")) {
           throw new ServiceSuspendedException("Contribution to d2irm is currently suspended");
         }

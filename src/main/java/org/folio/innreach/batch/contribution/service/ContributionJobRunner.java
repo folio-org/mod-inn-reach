@@ -428,7 +428,11 @@ public class ContributionJobRunner {
       stats.addRecordsTotal(1);
       recordContributionService.deContributeInstance(centralServerId, instance);
       stats.addRecordsDeContributed(1);
-    } catch (Exception e) {
+    }
+    catch (ServiceSuspendedException ex) {
+      throw new ServiceSuspendedException(ex.getMessage());
+    }
+    catch (Exception e) {
       instanceExceptionListener.logWriteError(e, instance.getId());
     } finally {
       stats.addRecordsProcessed(1);
