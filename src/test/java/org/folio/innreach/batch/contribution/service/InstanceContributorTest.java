@@ -18,6 +18,7 @@ import java.net.SocketTimeoutException;
 import java.util.ArrayList;
 import java.util.UUID;
 
+import io.swagger.models.auth.In;
 import org.folio.innreach.external.dto.InnReachResponse;
 import org.junit.Assert;
 import org.junit.jupiter.api.AfterEach;
@@ -69,6 +70,8 @@ class InstanceContributorTest {
   void shouldContributeAndLookUp() throws SocketTimeoutException {
     when(instanceTransformationService.getBibInfo(any(), any())).thenReturn(new BibInfo());
     when(irContributionService.contributeBib(any(), any(), any())).thenReturn(response);
+    when(irContributionService.lookUpBib(any(),any())).thenReturn(response);
+
     when(response.isOk()).thenReturn(true);
     when(irContributionService.lookUpBib(any(), any())).thenReturn(okResponse());
 

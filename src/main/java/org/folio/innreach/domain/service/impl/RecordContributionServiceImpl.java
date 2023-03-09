@@ -123,6 +123,7 @@ public class RecordContributionServiceImpl implements RecordContributionService 
   private InnReachResponse verifyBibContribution(UUID centralServerId, String bibId) {
     log.info("verifyBibContribution with bibId: {}",bibId);
     var response = irContributionService.lookUpBib(centralServerId, bibId);
+    checkServiceSuspension(response);
     Assert.isTrue(response.isOk(), "Unexpected verification response: " + response);
     return response;
   }
@@ -135,8 +136,10 @@ public class RecordContributionServiceImpl implements RecordContributionService 
   }
 
   private void checkServiceSuspension(InnReachResponse response) {
-    if (!response.getErrors().isEmpty()) {
-      var error = response.getErrors().get(0).getReason();
+    if (response!=null && response.getErrors()!=null && !response.getErrors().isEmpty()) {
+      InnReachResponse.Error errorResponse = response.getErrors().get(0);
+
+      var error = errorResponse!=null ? errorResponse.getReason() : "";
       log.info("checkServiceSuspension:: error is : {}",error);
       if (error.contains("Contribution to d2irm is currently suspended")) {
         log.info("ServiceSuspendedException occur---");
