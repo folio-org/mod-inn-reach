@@ -81,7 +81,7 @@ public class IterationEventReaderFactory {
     return UUID.fromString(new String(rec.headers().lastHeader(ITERATION_JOB_ID_HEADER).value()));
   }
 
-  public InitialContributionJobConsumerContainer createInitialContributionConsumerContainer(String tenantId, ContributionJobRunner contributionJobRunner,ContributionJobContext context) {
+  public InitialContributionJobConsumerContainer createInitialContributionConsumerContainer(String tenantId, ContributionJobRunner contributionJobRunner) {
 
     var consumerProperties = kafkaProperties.buildConsumerProperties();
     consumerProperties.put(GROUP_ID_CONFIG, jobProperties.getReaderGroupId());
@@ -89,7 +89,7 @@ public class IterationEventReaderFactory {
 
     var topic = getTopicName(tenantId);
     return new InitialContributionJobConsumerContainer(consumerProperties,topic,keyDeserializer(),valueDeserializer(),
-      retryConfig.getInterval(), retryConfig.getMaxAttempts(), contributionExceptionListener,contributionJobRunner,context);
+      retryConfig.getInterval(), retryConfig.getMaxAttempts(), contributionExceptionListener,contributionJobRunner);
   }
 
   public String getTopicName(String tenantId) {

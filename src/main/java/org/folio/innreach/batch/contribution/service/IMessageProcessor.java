@@ -5,5 +5,5 @@ import org.folio.innreach.domain.dto.folio.inventorystorage.InstanceIterationEve
 
 public interface IMessageProcessor {
 
-  public void processMessage(InstanceIterationEvent instanceIterationEvent, ContributionJobContext context, ContributionJobContext.Statistics statistics, String topic);
+  public void processMessage(InstanceIterationEvent instanceIterationEvent, ContributionJobContext.Statistics statistics, String topic);
 }

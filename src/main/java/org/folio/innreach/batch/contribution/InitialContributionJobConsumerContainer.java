@@ -22,6 +22,8 @@ import org.springframework.util.backoff.FixedBackOff;
 import java.util.HashMap;
 import java.util.Map;
 
+import static org.folio.innreach.batch.contribution.ContributionJobContextManager.getContributionJobContext;
+
 @Log4j2
 @Setter
 @RequiredArgsConstructor
@@ -47,7 +49,8 @@ public class InitialContributionJobConsumerContainer {
 
   private final ContributionJobRunner contributionJobRunner;
 
-  private final ContributionJobContext context;
+  private final ContributionJobContext context = getContributionJobContext();
+
 
   public DefaultErrorHandler errorHandler() {
     log.info("interval :{} , maxAttempts:{}",interval,maxAttempts);

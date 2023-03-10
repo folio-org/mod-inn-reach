@@ -126,7 +126,7 @@ class ContributionJobRunnerTest {
     doThrow(new RuntimeException()).when(recordContributor).contributeInstance(any(),any());
     doThrow(new RuntimeException()).when(recordContributor).contributeItems(any(),any(),any());
 
-    jobRunner.runInitialContribution(JOB_CONTEXT, ContributionJobRunnerTest.this.event, statistics, TOPIC);
+    jobRunner.runInitialContribution(ContributionJobRunnerTest.this.event, statistics, TOPIC);
 
     verify(recordContributor).contributeInstance(any(), any());
     verify(recordContributor).contributeItems(any(), any(), anyList());
@@ -140,7 +140,7 @@ class ContributionJobRunnerTest {
 
     when(inventoryViewService.getInstance(any())).thenReturn(instance);
 
-    jobRunner.runInitialContribution(JOB_CONTEXT, ContributionJobRunnerTest.this.event, statistics, TOPIC);
+    jobRunner.runInitialContribution(ContributionJobRunnerTest.this.event, statistics, TOPIC);
 
     verify(recordContributor).isContributed(CENTRAL_SERVER_ID, instance);
 
@@ -148,7 +148,7 @@ class ContributionJobRunnerTest {
     Field field = ContributionJobRunner.class.getDeclaredField("recordsProcessed");
     field.setAccessible(true);
     field.set(null,recordsProcessed);
-    jobRunner.runInitialContribution(JOB_CONTEXT, ContributionJobRunnerTest.this.event, statistics, TOPIC);
+    jobRunner.runInitialContribution(ContributionJobRunnerTest.this.event, statistics, TOPIC);
     Assertions.assertEquals(Integer.valueOf(11), recordsProcessed.get(JOB_CONTEXT.getTenantId()));
     verify(recordContributor,times(2)).isContributed(CENTRAL_SERVER_ID, instance);
 
@@ -164,7 +164,7 @@ class ContributionJobRunnerTest {
     when(recordContributor.isContributed(any(), any())).thenReturn(true);
     doThrow(new RuntimeException()).when(recordContributor).deContributeInstance(any(),any());
 
-    jobRunner.runInitialContribution(JOB_CONTEXT, ContributionJobRunnerTest.this.event, statistics, TOPIC);
+    jobRunner.runInitialContribution(ContributionJobRunnerTest.this.event, statistics, TOPIC);
 
     verify(recordContributor).deContributeInstance(CENTRAL_SERVER_ID, instance);
   }
@@ -175,7 +175,7 @@ class ContributionJobRunnerTest {
 
     when(inventoryViewService.getInstance(any())).thenReturn(null);
 
-    jobRunner.runInitialContribution(JOB_CONTEXT, ContributionJobRunnerTest.this.event, statistics, TOPIC);
+    jobRunner.runInitialContribution(ContributionJobRunnerTest.this.event, statistics, TOPIC);
 
     verify(inventoryViewService).getInstance(any());
     verifyNoMoreInteractions(recordContributor);
@@ -184,7 +184,7 @@ class ContributionJobRunnerTest {
   @Test
   void shouldRunJob_noEvents() {
 
-    jobRunner.runInitialContribution(JOB_CONTEXT, event, statistics, TOPIC);
+    jobRunner.runInitialContribution(event, statistics, TOPIC);
 
     verifyNoInteractions(recordContributor);
   }
@@ -396,7 +396,7 @@ class ContributionJobRunnerTest {
 
   @Test
   void startInitialContributionTest() {
-    when(factory.createInitialContributionConsumerContainer(any(),any(),any())).thenReturn(initialContributionJobConsumerContainer);
+    when(factory.createInitialContributionConsumerContainer(any(),any())).thenReturn(initialContributionJobConsumerContainer);
     doNothing().when(initialContributionJobConsumerContainer).tryStartOrCreateConsumer(any());
 
     jobRunner.startInitialContribution(
@@ -411,7 +411,7 @@ class ContributionJobRunnerTest {
   }
   @Test
   void shouldRunJob_noEvent() throws SocketTimeoutException {
-    jobRunner.runInitialContribution(JOB_CONTEXT, null, statistics, TOPIC);
+    jobRunner.runInitialContribution(null, statistics, TOPIC);
     verify(recordContributor, never()).deContributeItem(any(), any());
     verify(recordContributor, never()).contributeInstance(any(), any());
   }

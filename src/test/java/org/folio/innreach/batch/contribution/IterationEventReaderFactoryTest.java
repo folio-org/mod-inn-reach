@@ -53,7 +53,7 @@ class IterationEventReaderFactoryTest {
 
   @Test
   void createInitialContributionConsumerContainer() {
-    var consumerContainer = factory.createInitialContributionConsumerContainer("test",contributionJobRunner,new ContributionJobContext());
+    var consumerContainer = factory.createInitialContributionConsumerContainer("test",contributionJobRunner);
     assertNotNull(consumerContainer);
 
     verify(kafkaProperties).buildConsumerProperties();

@@ -93,27 +93,27 @@ public class ContributionJobRunner {
 
     log.info("totalRecords in startInitialContribution->> {}",totalRecords);
 
-    InitialContributionJobConsumerContainer container = itemReaderFactory.createInitialContributionConsumerContainer(tenantId,this,context);
+    InitialContributionJobConsumerContainer container = itemReaderFactory.createInitialContributionConsumerContainer(tenantId,this);
 
-    InitialContributionMessageListener initialContributionMessageListener = new InitialContributionMessageListener(new ContributionProcessor(this), context,statistics);
+    InitialContributionMessageListener initialContributionMessageListener = new InitialContributionMessageListener(new ContributionProcessor(this),statistics);
 
     container.tryStartOrCreateConsumer(initialContributionMessageListener);
   }
 
-  public void runInitialContribution(ContributionJobContext context, InstanceIterationEvent event, Statistics stats, String topic) {
+  public void runInitialContribution(InstanceIterationEvent event, Statistics stats, String topic) {
 
-    var tempContext = getContributionJobContext(); // added
-    log.info("count is->>{}",recordsProcessed.get(tempContext.getTenantId()));
+    var context = getContributionJobContext(); // added
+    log.info("count is->>{}",recordsProcessed.get(context.getTenantId()));
 
 
-    log.info("IterationJobId in runInitialContribution::",tempContext.getIterationJobId());
+    log.info("IterationJobId in runInitialContribution::{}",context.getIterationJobId());
 
     stats.setTopic(topic);
-    stats.setTenantId(tempContext.getTenantId());
+    stats.setTenantId(context.getTenantId());
 
-    var contributionId = tempContext.getContributionId();
+    var contributionId = context.getContributionId();
 
-    var iterationJobId = tempContext.getIterationJobId();
+    var iterationJobId = context.getIterationJobId();
 
     if (event == null) {
       log.info("Cannot contribute record for null event, contribution id: {}", contributionId);
@@ -147,14 +147,14 @@ public class ContributionJobRunner {
     else {
       // to test if non-eligible increasing count to verify the stopping condition
       log.info("else block---");
-      ContributionJobRunner.recordsProcessed.put(stats.getTenantId(), recordsProcessed.get(stats.getTenantId()) == null ? 1
+      ContributionJobRunner.recordsProcessed.put(context.getTenantId(), recordsProcessed.get(context.getTenantId()) == null ? 1
         : recordsProcessed.get(stats.getTenantId())+1);
     }
 
     if (Objects.equals(recordsProcessed.get(context.getTenantId()), totalRecords.get(context.getTenantId()))) {
       log.info("consumer is stopping as all processed");
-      completeContribution(tempContext, stats);
-      stopContribution(tempContext.getTenantId());
+      completeContribution(context, stats);
+      stopContribution(context.getTenantId());
       InitialContributionJobConsumerContainer.stopConsumer(topic);
     }
   }
@@ -407,8 +407,8 @@ public class ContributionJobRunner {
       stats.addRecordsTotal(1);
       recordContributionService.contributeInstance(centralServerId, instance);
       stats.addRecordsContributed(1);
-      ContributionJobRunner.recordsProcessed.put(stats.getTenantId(), recordsProcessed.get(stats.getTenantId()) == null ? 1
-        : recordsProcessed.get(stats.getTenantId())+1);
+      ContributionJobRunner.recordsProcessed.put(getContributionJobContext().getTenantId(), recordsProcessed.get(getContributionJobContext().getTenantId()) == null ? 1
+        : recordsProcessed.get(getContributionJobContext().getTenantId())+1);
     }
     catch (ServiceSuspendedException | FeignException e) {
       throw e;

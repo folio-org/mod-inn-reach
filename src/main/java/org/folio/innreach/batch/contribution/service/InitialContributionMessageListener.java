@@ -1,6 +1,7 @@
 package org.folio.innreach.batch.contribution.service;
 
 import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.folio.innreach.batch.contribution.ContributionJobContext;
@@ -11,14 +12,13 @@ import java.util.UUID;
 
 import static org.folio.innreach.batch.contribution.IterationEventReaderFactory.ITERATION_JOB_ID_HEADER;
 
-@AllArgsConstructor
+@RequiredArgsConstructor
 @Log4j2
 public class InitialContributionMessageListener implements MessageListener<String, InstanceIterationEvent> {
 
-  IMessageProcessor iMessageProcessor;
-  ContributionJobContext context;
+  private final IMessageProcessor iMessageProcessor;
 
-  ContributionJobContext.Statistics statistics;
+  private final ContributionJobContext.Statistics statistics;
 
   @Override
   public void onMessage(
@@ -38,7 +38,7 @@ public class InitialContributionMessageListener implements MessageListener<Strin
     instanceIterationEvent.setInstanceId(instanceId);
     instanceIterationEvent.setJobId(jobId);
 
-    iMessageProcessor.processMessage(instanceIterationEvent, context, statistics, consumerRecord.topic());
+    iMessageProcessor.processMessage(instanceIterationEvent,statistics, consumerRecord.topic());
 
   }
 }
