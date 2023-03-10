@@ -148,7 +148,7 @@ public class ContributionJobRunner {
       // to test if non-eligible increasing count to verify the stopping condition
       log.info("else block---");
       ContributionJobRunner.recordsProcessed.put(context.getTenantId(), recordsProcessed.get(context.getTenantId()) == null ? 1
-        : recordsProcessed.get(stats.getTenantId())+1);
+        : recordsProcessed.get(context.getTenantId())+1);
     }
 
     if (Objects.equals(recordsProcessed.get(context.getTenantId()), totalRecords.get(context.getTenantId()))) {
