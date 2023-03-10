@@ -12,10 +12,12 @@ public class ContributionJobContextManager {
     new NamedInheritableThreadLocal<>("ContributionJobContextHolder");
 
   public static void beginContributionJobContext(ContributionJobContext contributionJobContext) {
+    log.info("IterationJobId is: {}",contributionJobContext.getIterationJobId());
     contributionJobContextHolder.set(contributionJobContext);
   }
 
   public static void endContributionJobContext() {
+    log.info("endContributionJobContext called !!");
     contributionJobContextHolder.remove();
   }
 

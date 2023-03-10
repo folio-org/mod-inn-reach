@@ -1,9 +1,7 @@
 package org.folio.innreach.batch.contribution.service;
 
 import static java.lang.Math.max;
-
-import static org.folio.innreach.batch.contribution.ContributionJobContextManager.beginContributionJobContext;
-import static org.folio.innreach.batch.contribution.ContributionJobContextManager.endContributionJobContext;
+import static org.folio.innreach.batch.contribution.ContributionJobContextManager.*;
 
 import java.net.SocketTimeoutException;
 import java.util.*;
@@ -82,6 +80,8 @@ public class ContributionJobRunner {
       .tenantId(tenantId)
       .build();
 
+    log.info("IterationJobId set at startInitialContribution: {}",context.getIterationJobId());
+
     //clear maps key & value of this tenant if present before start
     totalRecords.remove(tenantId);
     recordsProcessed.remove(tenantId);
@@ -102,14 +102,18 @@ public class ContributionJobRunner {
 
   public void runInitialContribution(ContributionJobContext context, InstanceIterationEvent event, Statistics stats, String topic) {
 
-    log.info("count is->>{}",recordsProcessed.get(context.getTenantId()));
+    var tempContext = getContributionJobContext(); // added
+    log.info("count is->>{}",recordsProcessed.get(tempContext.getTenantId()));
+
+
+    log.info("IterationJobId in runInitialContribution::",tempContext.getIterationJobId());
 
     stats.setTopic(topic);
-    stats.setTenantId(context.getTenantId());
+    stats.setTenantId(tempContext.getTenantId());
 
-    var contributionId = context.getContributionId();
+    var contributionId = tempContext.getContributionId();
 
-    var iterationJobId = context.getIterationJobId();
+    var iterationJobId = tempContext.getIterationJobId();
 
     if (event == null) {
       log.info("Cannot contribute record for null event, contribution id: {}", contributionId);
@@ -149,8 +153,8 @@ public class ContributionJobRunner {
 
     if (Objects.equals(recordsProcessed.get(context.getTenantId()), totalRecords.get(context.getTenantId()))) {
       log.info("consumer is stopping as all processed");
-      completeContribution(context, stats);
-      stopContribution(context.getTenantId());
+      completeContribution(tempContext, stats);
+      stopContribution(tempContext.getTenantId());
       InitialContributionJobConsumerContainer.stopConsumer(topic);
     }
   }

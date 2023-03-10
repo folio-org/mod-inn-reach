@@ -1,5 +1,6 @@
 package org.folio.innreach.batch.contribution.service;
 
+import static org.folio.innreach.batch.contribution.ContributionJobContextManager.beginContributionJobContext;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.eq;
@@ -25,6 +26,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import org.folio.innreach.batch.contribution.InitialContributionJobConsumerContainer;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -107,6 +109,12 @@ class ContributionJobRunnerTest {
 
   @Spy
   private ConcurrentHashMap<String, Integer> recordsProcessed = new ConcurrentHashMap<>();
+
+  //added
+  @BeforeEach
+  void setContext() {
+    beginContributionJobContext(JOB_CONTEXT);
+  }
 
   @Test
   void shouldRunJob() throws SocketTimeoutException {
