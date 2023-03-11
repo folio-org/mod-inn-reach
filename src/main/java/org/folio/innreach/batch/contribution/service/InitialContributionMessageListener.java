@@ -4,7 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
-import org.folio.innreach.batch.contribution.ContributionJobContext;
+import org.folio.innreach.batch.contribution.ContributionJobContext.Statistics;
 import org.folio.innreach.domain.dto.folio.inventorystorage.InstanceIterationEvent;
 import org.springframework.kafka.listener.MessageListener;
 
@@ -18,7 +18,7 @@ public class InitialContributionMessageListener implements MessageListener<Strin
 
   private final IMessageProcessor iMessageProcessor;
 
-  private final ContributionJobContext.Statistics statistics;
+  private final Statistics statistics;
 
   @Override
   public void onMessage(
