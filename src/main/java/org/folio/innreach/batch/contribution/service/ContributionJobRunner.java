@@ -90,6 +90,8 @@ public class ContributionJobRunner {
     //clear maps key & value of this tenant if present before start
     totalRecords.remove(tenantId);
     recordsProcessed.remove(tenantId);
+    tempRecordsProcessed.remove(tenantId);
+    tempSet.clear();
 
     Statistics statistics = new Statistics();
     beginContributionJobContext(context);
@@ -178,6 +180,8 @@ public class ContributionJobRunner {
     endContributionJobContext();
     totalRecords.remove(tenantId);
     recordsProcessed.remove(tenantId);
+    tempRecordsProcessed.remove(tenantId);
+    tempSet.clear();
   }
 
   public void cancelContributionIfRetryExhausted(UUID centralServerId) {
