@@ -68,7 +68,7 @@ public class ContributionJobRunner {
   private final RetryTemplate retryTemplate;
   private final IterationEventReaderFactory itemReaderFactory;
 
-  private Statistics stats;
+  private final Statistics stats = new Statistics();
 
   private static final List<UUID> runningInitialContributions = Collections.synchronizedList(new ArrayList<>());
 
@@ -85,7 +85,7 @@ public class ContributionJobRunner {
       .build();
 
     log.info("IterationJobId set at startInitialContribution: {}",context.getIterationJobId());
-    stats = new Statistics();
+    //stats = new Statistics();
 
     //clear maps key & value of this tenant if present before start
     totalRecords.remove(tenantId);
