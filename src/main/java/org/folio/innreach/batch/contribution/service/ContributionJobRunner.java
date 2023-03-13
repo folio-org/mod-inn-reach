@@ -2,6 +2,7 @@ package org.folio.innreach.batch.contribution.service;
 
 import static java.lang.Math.max;
 import static org.folio.innreach.batch.contribution.ContributionJobContextManager.*;
+import static org.folio.innreach.batch.contribution.ContributionJobContextManager.getContributionJobContext;
 
 import java.net.SocketTimeoutException;
 import java.util.*;
@@ -72,10 +73,6 @@ public class ContributionJobRunner {
   private static Map<String,Integer> totalRecords = new HashMap<>();
   private static ConcurrentHashMap<String, Integer> recordsProcessed = new ConcurrentHashMap<>();
 
-  private static ConcurrentHashMap<String, Set<UUID>> tempRecordsProcessed = new ConcurrentHashMap<>();
-
-  private static Set<UUID> tempSet = ConcurrentHashMap.newKeySet();
-
 
   public void startInitialContribution(UUID centralServerId, String tenantId, UUID contributionId, UUID iterationJobId, Integer numberOfRecords) {
     var context = ContributionJobContext.builder()
@@ -90,8 +87,6 @@ public class ContributionJobRunner {
     //clear maps key & value of this tenant if present before start
     totalRecords.remove(tenantId);
     recordsProcessed.remove(tenantId);
-    tempRecordsProcessed.remove(tenantId);
-    tempSet.clear();
 
     Statistics statistics = new Statistics();
     beginContributionJobContext(context);
@@ -114,8 +109,6 @@ public class ContributionJobRunner {
 
 
     log.info("IterationJobId in runInitialContribution::{}",context.getIterationJobId());
-    log.info("tempRecord number->>{}",tempRecordsProcessed.get(context.getTenantId())!=null ?
-      tempRecordsProcessed.get(context.getTenantId()).size() : null);
 
     stats.setTopic(topic);
     stats.setTenantId(context.getTenantId());
@@ -158,17 +151,11 @@ public class ContributionJobRunner {
       log.info("else block---");
       ContributionJobRunner.recordsProcessed.put(context.getTenantId(), recordsProcessed.get(context.getTenantId()) == null ? 1
         : recordsProcessed.get(context.getTenantId())+1);
-     //test
-      ContributionJobRunner.tempSet.add(instanceId);
-      tempRecordsProcessed.put(context.getTenantId(),ContributionJobRunner.tempSet);
-      //end
 
     }
 
     if (Objects.equals(recordsProcessed.get(context.getTenantId()), totalRecords.get(context.getTenantId()))) {
       log.info("consumer is stopping as all processed");
-      log.info("tempRecord number->>{}",tempRecordsProcessed.get(context.getTenantId())!=null ?
-        tempRecordsProcessed.get(context.getTenantId()).size() : null);
       completeContribution(context, stats);
       stopContribution(context.getTenantId());
       InitialContributionJobConsumerContainer.stopConsumer(topic);
@@ -180,8 +167,6 @@ public class ContributionJobRunner {
     endContributionJobContext();
     totalRecords.remove(tenantId);
     recordsProcessed.remove(tenantId);
-    tempRecordsProcessed.remove(tenantId);
-    tempSet.clear();
   }
 
   public void cancelContributionIfRetryExhausted(UUID centralServerId) {
@@ -385,6 +370,8 @@ public class ContributionJobRunner {
       .filter(i -> isEligibleForContribution(centralServerId, i))
       .collect(Collectors.toList());
 
+    //TODO if item is empty should we increase count as below code wont get executed
+
     int chunkSize = max(jobProperties.getChunkSize(), 1);
 
     StreamSupport.stream(Iterables.partition(items, chunkSize).spliterator(), false)
@@ -401,6 +388,8 @@ public class ContributionJobRunner {
       stats.addRecordsTotal(itemsCount);
       recordContributionService.contributeItems(centralServerId, bibId, items);
       stats.addRecordsContributed(itemsCount);
+      ContributionJobRunner.recordsProcessed.put(getContributionJobContext().getTenantId(), recordsProcessed.get(getContributionJobContext().getTenantId()) == null ? 1
+        : recordsProcessed.get(getContributionJobContext().getTenantId())+1);
     }
     catch (ServiceSuspendedException | FeignException e) {
       throw e;
@@ -425,13 +414,6 @@ public class ContributionJobRunner {
       stats.addRecordsTotal(1);
       recordContributionService.contributeInstance(centralServerId, instance);
       stats.addRecordsContributed(1);
-      ContributionJobRunner.recordsProcessed.put(getContributionJobContext().getTenantId(), recordsProcessed.get(getContributionJobContext().getTenantId()) == null ? 1
-        : recordsProcessed.get(getContributionJobContext().getTenantId())+1);
-
-      //test
-      ContributionJobRunner.tempSet.add(instance.getId());
-      tempRecordsProcessed.put(getContributionJobContext().getTenantId(),ContributionJobRunner.tempSet);
-      //end
     }
     catch (ServiceSuspendedException | FeignException e) {
       throw e;
