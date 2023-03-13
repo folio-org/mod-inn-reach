@@ -68,6 +68,8 @@ public class ContributionJobRunner {
   private final RetryTemplate retryTemplate;
   private final IterationEventReaderFactory itemReaderFactory;
 
+  private Statistics stats;
+
   private static final List<UUID> runningInitialContributions = Collections.synchronizedList(new ArrayList<>());
 
   private static Map<String,Integer> totalRecords = new HashMap<>();
@@ -83,12 +85,13 @@ public class ContributionJobRunner {
       .build();
 
     log.info("IterationJobId set at startInitialContribution: {}",context.getIterationJobId());
+    stats = new Statistics();
 
     //clear maps key & value of this tenant if present before start
     totalRecords.remove(tenantId);
     recordsProcessed.remove(tenantId);
+    stats.clearStats();
 
-    Statistics statistics = new Statistics();
     beginContributionJobContext(context);
 
     totalRecords.put(context.getTenantId(),numberOfRecords);
@@ -97,12 +100,12 @@ public class ContributionJobRunner {
 
     InitialContributionJobConsumerContainer container = itemReaderFactory.createInitialContributionConsumerContainer(tenantId,this);
 
-    InitialContributionMessageListener initialContributionMessageListener = new InitialContributionMessageListener(new ContributionProcessor(this),statistics);
+    InitialContributionMessageListener initialContributionMessageListener = new InitialContributionMessageListener(new ContributionProcessor(this));
 
     container.tryStartOrCreateConsumer(initialContributionMessageListener);
   }
 
-  public void runInitialContribution(InstanceIterationEvent event, Statistics stats, String topic) {
+  public void runInitialContribution(InstanceIterationEvent event,String topic) {
 
     var context = getContributionJobContext(); // added
     log.info("count is->>{}",recordsProcessed.get(context.getTenantId()));

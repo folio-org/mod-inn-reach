@@ -95,7 +95,7 @@ class InitialContributionJobConsumerContainerTest extends BaseKafkaApiTest{
     doNothing().when(contributionJobRunner).cancelContributionIfRetryExhausted(any());
 
     doThrow(ServiceSuspendedException.class).when(contributionJobRunner)
-      .runInitialContribution(any(), any(), any());
+      .runInitialContribution(any(), any());
 
     initialContributionJobConsumerContainer.tryStartOrCreateConsumer(initialContributionMessageListener);
 
@@ -118,7 +118,7 @@ class InitialContributionJobConsumerContainerTest extends BaseKafkaApiTest{
     doNothing().when(contributionJobRunner).cancelContributionIfRetryExhausted(any());
 
     doThrow(FeignException.class).when(contributionJobRunner)
-      .runInitialContribution(any(), any(), any());
+      .runInitialContribution(any(), any());
 
     initialContributionJobConsumerContainer.tryStartOrCreateConsumer(initialContributionMessageListener);
 
@@ -138,7 +138,7 @@ class InitialContributionJobConsumerContainerTest extends BaseKafkaApiTest{
 
     initialContributionJobConsumerContainer.tryStartOrCreateConsumer(initialContributionMessageListener);
 
-    doNothing().when(contributionJobRunner).runInitialContribution(any(), any(), any());
+    doNothing().when(contributionJobRunner).runInitialContribution(any(), any());
 
     Assertions.assertNotNull(InitialContributionJobConsumerContainer.consumersMap.get(topicName));
 
@@ -168,7 +168,7 @@ class InitialContributionJobConsumerContainerTest extends BaseKafkaApiTest{
     var contributionProcessor = new ContributionProcessor(contributionJobRunner);
 
 
-    return new InitialContributionMessageListener(contributionProcessor, new ContributionJobContext.Statistics());
+    return new InitialContributionMessageListener(contributionProcessor);
   }
 
   @Test
@@ -192,14 +192,14 @@ class InitialContributionJobConsumerContainerTest extends BaseKafkaApiTest{
     var container = new ConcurrentMessageListenerContainer<>(factory,containerProps);
 
     InitialContributionMessageListener initialContributionMessageListener =
-      new InitialContributionMessageListener(contributionProcessor,new ContributionJobContext.Statistics());
+      new InitialContributionMessageListener(contributionProcessor);
 
     container.setupMessageListener(initialContributionMessageListener);
 
     InitialContributionJobConsumerContainer.consumersMap.put(topicName, container);
 
     initialContributionJobConsumerContainer.tryStartOrCreateConsumer(initialContributionMessageListener);
-    doNothing().when(contributionJobRunner).runInitialContribution(any(), any(), any());
+    doNothing().when(contributionJobRunner).runInitialContribution(any(), any());
     Assertions.assertNotNull(InitialContributionJobConsumerContainer.consumersMap.get(topicName));
 
   }
