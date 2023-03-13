@@ -17,6 +17,7 @@ import com.google.common.collect.Iterables;
 import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.folio.innreach.external.exception.InnReachConnectionException;
 import org.folio.innreach.external.exception.ServiceSuspendedException;
 import org.folio.innreach.batch.contribution.InitialContributionJobConsumerContainer;
 import org.folio.innreach.external.exception.SocketTimeOutExceptionWrapper;
@@ -395,7 +396,7 @@ public class ContributionJobRunner {
       ContributionJobRunner.recordsProcessed.put(getContributionJobContext().getTenantId(), recordsProcessed.get(getContributionJobContext().getTenantId()) == null ? 1
         : recordsProcessed.get(getContributionJobContext().getTenantId())+1);
     }
-    catch (ServiceSuspendedException | FeignException e) {
+    catch (ServiceSuspendedException | FeignException | InnReachConnectionException e) {
       throw e;
     }
     catch (SocketTimeoutException socketTimeoutException) {
@@ -419,7 +420,7 @@ public class ContributionJobRunner {
       recordContributionService.contributeInstance(centralServerId, instance);
       stats.addRecordsContributed(1);
     }
-    catch (ServiceSuspendedException | FeignException e) {
+    catch (ServiceSuspendedException | FeignException | InnReachConnectionException e) {
       throw e;
     }
     catch (SocketTimeoutException socketTimeoutException) {

@@ -9,6 +9,7 @@ import org.apache.kafka.common.serialization.Deserializer;
 import org.folio.innreach.batch.contribution.listener.ContributionExceptionListener;
 import org.folio.innreach.batch.contribution.service.ContributionJobRunner;
 import org.folio.innreach.domain.dto.folio.inventorystorage.InstanceIterationEvent;
+import org.folio.innreach.external.exception.InnReachConnectionException;
 import org.folio.innreach.external.exception.ServiceSuspendedException;
 import org.folio.innreach.external.exception.SocketTimeOutExceptionWrapper;
 import org.springframework.kafka.core.ConsumerFactory;
@@ -67,6 +68,7 @@ public class InitialContributionJobConsumerContainer {
     errorHandler.addRetryableExceptions(ServiceSuspendedException.class);
     errorHandler.addRetryableExceptions(SocketTimeOutExceptionWrapper.class);
     errorHandler.addRetryableExceptions(FeignException.class);
+    errorHandler.addRetryableExceptions(InnReachConnectionException.class);
     return errorHandler;
   }
 

@@ -6,6 +6,7 @@ import java.util.UUID;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.folio.innreach.external.exception.InnReachConnectionException;
 import org.folio.innreach.external.exception.ServiceSuspendedException;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.retry.support.RetryTemplate;
@@ -140,10 +141,18 @@ public class RecordContributionServiceImpl implements RecordContributionService 
       InnReachResponse.Error errorResponse = response.getErrors().get(0);
 
       var error = errorResponse!=null ? errorResponse.getReason() : "";
+      String errorMessages = "";
+
+      if(errorResponse!=null && errorResponse.getMessages()!=null && !errorResponse.getMessages().isEmpty()) {
+        errorMessages = errorResponse.getMessages().get(0);
+      }
       log.info("checkServiceSuspension:: error is : {}",error);
       if (error.contains("Contribution to d2irm is currently suspended")) {
         log.info("ServiceSuspendedException occur---");
         throw new ServiceSuspendedException("Contribution to d2irm is currently suspended");
+      }
+      if(errorMessages.contains("connections allowed from this server")) {
+        throw new InnReachConnectionException("Only 5 connections allowed from this server");
       }
     }
   }
