@@ -12,13 +12,19 @@ import java.util.UUID;
 
 import static org.folio.innreach.batch.contribution.IterationEventReaderFactory.ITERATION_JOB_ID_HEADER;
 
-@RequiredArgsConstructor
+//@RequiredArgsConstructor
 @Log4j2
 public class InitialContributionMessageListener implements MessageListener<String, InstanceIterationEvent> {
 
   private final IMessageProcessor iMessageProcessor;
 
   private final Statistics statistics;
+
+  public InitialContributionMessageListener(IMessageProcessor iMessageProcessor, Statistics statistics) {
+    this.iMessageProcessor = iMessageProcessor;
+    this.statistics = statistics;
+    this.statistics.clearStats();
+  }
 
   @Override
   public void onMessage(

@@ -52,6 +52,14 @@ public class ContributionJobContext {
     public void addRecordsTotal(int itemsCount) {
       recordsTotal += itemsCount;
     }
+
+    public void clearStats() {
+      this.recordsTotal = 0;
+      this.recordsProcessed = 0;
+      this.recordsContributed = 0;
+      this.recordsUpdated = 0;
+      this.recordsDecontributed = 0;
+    }
   }
 
 }

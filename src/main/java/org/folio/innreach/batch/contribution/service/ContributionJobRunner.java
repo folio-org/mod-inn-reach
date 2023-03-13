@@ -109,6 +109,7 @@ public class ContributionJobRunner {
 
 
     log.info("IterationJobId in runInitialContribution::{}",context.getIterationJobId());
+    log.info("stat RecordsTotal: {}",stats.getRecordsTotal());
 
     stats.setTopic(topic);
     stats.setTenantId(context.getTenantId());
