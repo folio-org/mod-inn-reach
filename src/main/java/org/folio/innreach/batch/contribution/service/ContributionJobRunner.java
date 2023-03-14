@@ -207,9 +207,9 @@ public class ContributionJobRunner {
       return;
     }
 
-    runOngoing(centralServerId, (ctx, stats) -> {
+    runOngoing(centralServerId, (ctx, statistics) -> {
       log.info("Starting ongoing instance de-contribution job {}", ctx);
-      deContributeInstance(centralServerId, deletedInstance, stats);
+      deContributeInstance(centralServerId, deletedInstance, statistics);
     });
   }
 
@@ -224,23 +224,23 @@ public class ContributionJobRunner {
       return;
     }
 
-    runOngoing(centralServerId, (ctx, stats) -> {
+    runOngoing(centralServerId, (ctx, statistics) -> {
       log.info("Starting ongoing item contribution job {}", ctx);
 
       if (isEligibleForContribution(centralServerId, instance)) {
         log.info("Re-contributing instance to update bib status");
-        contributeInstance(centralServerId, instance, stats);
+        contributeInstance(centralServerId, instance, statistics);
 
         if (eligibleItem) {
           log.info("Contributing item");
-          contributeItem(centralServerId, instance.getHrid(), item, stats);
+          contributeItem(centralServerId, instance.getHrid(), item, statistics);
         } else if (contributedItem) {
           log.info("De-contributing item");
-          deContributeItem(centralServerId, item, stats);
+          deContributeItem(centralServerId, item, statistics);
         }
       } else if (contributedItem) {
         log.info(DE_CONTRIBUTE_INSTANCE_MSG);
-        deContributeInstance(centralServerId, instance, stats);
+        deContributeInstance(centralServerId, instance, statistics);
       }
     });
   }
@@ -256,31 +256,31 @@ public class ContributionJobRunner {
       return;
     }
 
-    runOngoing(centralServerId, (ctx, stats) -> {
+    runOngoing(centralServerId, (ctx, statistics) -> {
       log.info("Starting ongoing item move job {}", ctx);
 
       // de-contribute item and update old instance
       if (contributedItem) {
         if (isEligibleForContribution(centralServerId, oldInstance)) {
           log.info("De-contributing item from old instance");
-          deContributeItem(centralServerId, item, stats);
+          deContributeItem(centralServerId, item, statistics);
 
           log.info("Re-contributing old instance to update bib status");
-          contributeInstance(centralServerId, oldInstance, stats);
+          contributeInstance(centralServerId, oldInstance, statistics);
         } else {
           log.info("De-contributing old instance");
-          deContributeInstance(centralServerId, oldInstance, stats);
+          deContributeInstance(centralServerId, oldInstance, statistics);
         }
       }
 
       // contribute item to a new instance
       if (isEligibleForContribution(centralServerId, newInstance)) {
         log.info("Re-contributing new instance to update bib status");
-        contributeInstance(centralServerId, newInstance, stats);
+        contributeInstance(centralServerId, newInstance, statistics);
 
         if (eligibleItem) {
           log.info("Contributing item to new instance");
-          contributeItem(centralServerId, newInstance.getHrid(), item, stats);
+          contributeItem(centralServerId, newInstance.getHrid(), item, statistics);
         }
       }
     });
@@ -293,18 +293,18 @@ public class ContributionJobRunner {
       return;
     }
 
-    runOngoing(centralServerId, (context, stats) -> {
+    runOngoing(centralServerId, (context, statistics) -> {
       log.info("Starting ongoing item de-contribution job {}", context);
 
       if (isEligibleForContribution(centralServerId, instance)) {
         log.info("De-contributing item");
-        deContributeItem(centralServerId, deletedItem, stats);
+        deContributeItem(centralServerId, deletedItem, statistics);
 
         log.info("Re-contributing instance to update bib status");
-        contributeInstance(centralServerId, instance, stats);
+        contributeInstance(centralServerId, instance, statistics);
       } else {
         log.info(DE_CONTRIBUTE_INSTANCE_MSG);
-        deContributeInstance(centralServerId, instance, stats);
+        deContributeInstance(centralServerId, instance, statistics);
       }
     });
   }
