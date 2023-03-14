@@ -20,12 +20,6 @@ public class InnReachFeignErrorDecoder implements ErrorDecoder {
       log.debug("Can't get InnReach access token. CentralServer authentication failed with status: {}", response.status());
       return new BadCredentialsException("Can't get InnReach access token. Key/Secret pair is not valid");
     }
-
-    if (HttpStatus.valueOf(response.status()).equals(HttpStatus.SERVICE_UNAVAILABLE)) {
-      log.debug("CentralServer is suspended for contribution");
-      return new ServiceSuspendedException("CentralServer is suspended for contribution. Try again later");
-    }
-
     var e = errorStatus(methodKey, response);
     return new InnReachException("INN-Reach call failed: " + e.getMessage());
   }

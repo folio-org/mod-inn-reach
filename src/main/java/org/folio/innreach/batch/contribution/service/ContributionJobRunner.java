@@ -153,7 +153,7 @@ public class ContributionJobRunner {
     }
     else {
       // to test if non-eligible increasing count to verify the stopping condition
-      log.info("else block---");
+      log.info("non-eligible instance---");
       ContributionJobRunner.recordsProcessed.put(context.getTenantId(), recordsProcessed.get(context.getTenantId()) == null ? 1
         : recordsProcessed.get(context.getTenantId())+1);
 
@@ -375,7 +375,11 @@ public class ContributionJobRunner {
       .filter(i -> isEligibleForContribution(centralServerId, i))
       .collect(Collectors.toList());
 
-    //TODO if item is empty should we increase count as below code wont get executed
+    if(items.isEmpty()) {
+      log.info("item is empty while contributing");
+      ContributionJobRunner.recordsProcessed.put(getContributionJobContext().getTenantId(), recordsProcessed.get(getContributionJobContext().getTenantId()) == null ? 1
+        : recordsProcessed.get(getContributionJobContext().getTenantId())+1);
+    }
 
     int chunkSize = max(jobProperties.getChunkSize(), 1);
 
@@ -407,6 +411,8 @@ public class ContributionJobRunner {
       // not possible to guess what item failed when the chunk of multiple items is being contributed
       var recordId = items.size() == 1 ? items.get(0).getId() : null;
       itemExceptionListener.logWriteError(e, recordId);
+      ContributionJobRunner.recordsProcessed.put(getContributionJobContext().getTenantId(), recordsProcessed.get(getContributionJobContext().getTenantId()) == null ? 1
+        : recordsProcessed.get(getContributionJobContext().getTenantId())+1);
     } finally {
       stats.addRecordsProcessed(itemsCount);
       statsListener.updateStats(stats);

@@ -206,6 +206,7 @@ class ContributionJobRunnerTest {
     when(validationService.isEligibleForContribution(any(), any(Item.class))).thenReturn(true);
     when(contributionService.createOngoingContribution(any())).thenReturn(contribution);
     when(recordContributor.isContributed(any(), any(Instance.class))).thenReturn(false);
+    when(folioContext.getTenantId()).thenReturn(JOB_CONTEXT.getTenantId());
 
     jobRunner.runInstanceContribution(CENTRAL_SERVER_ID, instance);
 
@@ -280,6 +281,7 @@ class ContributionJobRunnerTest {
     when(validationService.isEligibleForContribution(any(), any(Item.class))).thenReturn(true);
     when(contributionService.createOngoingContribution(any())).thenReturn(contribution);
     when(recordContributor.isContributed(any(), any(), any(Item.class))).thenReturn(true);
+    when(folioContext.getTenantId()).thenReturn(JOB_CONTEXT.getTenantId());
 
     jobRunner.runItemContribution(CENTRAL_SERVER_ID, instance, item);
 
@@ -334,6 +336,7 @@ class ContributionJobRunnerTest {
     when(validationService.isEligibleForContribution(any(), any(Item.class))).thenReturn(true);
     when(contributionService.createOngoingContribution(any())).thenReturn(contribution);
     when(recordContributor.isContributed(any(), any(), any(Item.class))).thenReturn(true);
+    when(folioContext.getTenantId()).thenReturn(JOB_CONTEXT.getTenantId());
 
     jobRunner.runItemMove(CENTRAL_SERVER_ID, oldInstance, newInstance, item);
 
