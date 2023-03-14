@@ -18,8 +18,8 @@ import org.folio.innreach.domain.service.ContributionService;
 @EnableConfigurationProperties(ContributionJobProperties.class)
 public class ContributionJobConfig {
 
-  private static final int BACKOFF_MAX_INTERVAL = 15000;
-  public static final int MAX_ATTEMPTS = 3;
+  private static final int BACKOFF_MAX_INTERVAL = 10000;
+  public static final int MAX_ATTEMPTS = 4;
 
   @Bean("contributionRetryTemplate")
   public RetryTemplate contributionRetryTemplate() {
