@@ -29,6 +29,8 @@ import org.folio.innreach.external.service.InnReachContributionService;
 @RequiredArgsConstructor
 public class RecordContributionServiceImpl implements RecordContributionService {
 
+  public static final String CONTRIBUTION_TO_D2IRM_IS_CURRENTLY_SUSPENDED = "Contribution to d2irm is currently suspended";
+  public static final String CONNECTIONS_ALLOWED_FROM_THIS_SERVER = "connections allowed from this server";
   @Qualifier("contributionRetryTemplate")
   private final RetryTemplate retryTemplate;
   private final InnReachContributionService irContributionService;
@@ -147,11 +149,11 @@ public class RecordContributionServiceImpl implements RecordContributionService 
         errorMessages = errorResponse.getMessages().get(0);
       }
       log.info("checkServiceSuspension:: error is : {}",error);
-      if (error.contains("Contribution to d2irm is currently suspended")) {
+      if (error.contains(CONTRIBUTION_TO_D2IRM_IS_CURRENTLY_SUSPENDED)) {
         log.info("ServiceSuspendedException occur---");
-        throw new ServiceSuspendedException("Contribution to d2irm is currently suspended");
+        throw new ServiceSuspendedException(CONTRIBUTION_TO_D2IRM_IS_CURRENTLY_SUSPENDED);
       }
-      if(errorMessages.contains("connections allowed from this server")) {
+      if(errorMessages.contains(CONNECTIONS_ALLOWED_FROM_THIS_SERVER)) {
         log.info("InnReachConnectionException occur---");
         throw new InnReachConnectionException("Only 5 connections allowed from this server");
       }
