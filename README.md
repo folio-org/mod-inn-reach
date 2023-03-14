@@ -41,6 +41,8 @@ The module provides an access to INN-Reach.
 | KAFKA_SSL_TRUSTSTORE_LOCATION |             -             | The location of the Kafka trust store file.                                                                                                                |
 | KAFKA_SSL_TRUSTSTORE_PASSWORD |             -             | The password for the Kafka trust store file. If a password is not set, trust store file configured will still be used, but integrity checking is disabled. |
 | LOG_HTTP                      |           false           | Enable logging of all requests and responses.                                                                                                              |
+| DEFAULT_INTERVAL              |           95000           | Default interval in ms ( preffred not to increase more than this value )                                                                                   |
+ | MAX_FAILURE                   |     360                   | Default max attempts                                                                                                                                       |
 
 ## Compiling
 
