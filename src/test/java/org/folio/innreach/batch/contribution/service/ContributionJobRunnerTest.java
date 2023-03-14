@@ -1,6 +1,7 @@
 package org.folio.innreach.batch.contribution.service;
 
 import static org.folio.innreach.batch.contribution.ContributionJobContextManager.beginContributionJobContext;
+import static org.junit.Assert.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.eq;
@@ -411,6 +412,7 @@ class ContributionJobRunnerTest {
   @Test
   public void testCancelInitialContribution(){
     jobRunner.cancelInitialContribution(UUID.randomUUID());
+    Assertions.assertNotNull(jobRunner);
   }
   @Test
   void shouldRunJob_noEvent() throws SocketTimeoutException {

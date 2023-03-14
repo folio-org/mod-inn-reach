@@ -181,20 +181,20 @@ public class ContributionJobRunner {
       return;
     }
 
-    runOngoing(centralServerId, (ctx, stats) -> {
+    runOngoing(centralServerId, (ctx, statistics) -> {
       log.info("Starting ongoing instance contribution job {}", ctx);
 
       if (eligibleInstance) {
         log.info("Contributing instance");
-        contributeInstance(centralServerId, instance, stats);
+        contributeInstance(centralServerId, instance, statistics);
 
         if (!contributedInstance) {
           log.info("Contributing items of new instance");
-          contributeInstanceItems(centralServerId, instance, stats);
+          contributeInstanceItems(centralServerId, instance, statistics);
         }
       } else if (contributedInstance) {
         log.info(DE_CONTRIBUTE_INSTANCE_MSG);
-        deContributeInstance(centralServerId, instance, stats);
+        deContributeInstance(centralServerId, instance, statistics);
       }
     });
   }
