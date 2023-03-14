@@ -11,7 +11,6 @@ import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Iterables;
 
 import feign.FeignException;
@@ -25,7 +24,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.retry.support.RetryTemplate;
 import org.springframework.stereotype.Service;
 
-import org.folio.innreach.batch.KafkaItemReader;
 import org.folio.innreach.batch.contribution.ContributionJobContext;
 import org.folio.innreach.batch.contribution.ContributionJobContext.Statistics;
 import org.folio.innreach.batch.contribution.IterationEventReaderFactory;
@@ -41,16 +39,10 @@ import org.folio.innreach.dto.Instance;
 import org.folio.innreach.dto.Item;
 import org.folio.spring.FolioExecutionContext;
 
-// TODO remove after testing
-import org.folio.innreach.external.client.feign.TestClient;
-
 @Service
 @Log4j2
 @RequiredArgsConstructor
 public class ContributionJobRunner {
-
-  // TODO Remove after testing.
-  private final TestClient testClient;
 
   private static final String DE_CONTRIBUTE_INSTANCE_MSG = "De-contributing ineligible instance";
 
@@ -86,7 +78,6 @@ public class ContributionJobRunner {
       .build();
 
     log.info("IterationJobId set at startInitialContribution: {}",context.getIterationJobId());
-    //stats = new Statistics();
 
     //clear maps key & value of this tenant if present before start
     totalRecords.remove(tenantId);
@@ -178,30 +169,6 @@ public class ContributionJobRunner {
     log.info("cancelContributionIfRetryExhausted");
     contributionService.cancelCurrent(centralServerId);
   }
-
-//  private void makeSimulatedRequest() {
-//    // Simulate the try/catch around http client calls.
-//    try {
-//      recordsProcessed.put("testTenant", recordsProcessed.get("testTenant")+1);
-//      log.info("Making simulated request");
-//      String postBody = "somerandomstring"; // Should probably make this a random length.
-//      URI testServer = URI.create("http://localhost:8080");
-//      var res = testClient.makeTestRequest(testServer, postBody);
-//      log.info("Response from test server: {}", res);
-//      var resObject = new ObjectMapper().writeValueAsString(res.getBody());
-//      if (resObject.contains("Contribution to d2irm is currently suspended")) {
-//        throw new ServiceSuspendedException("Contribution to d2irm is currently suspended");
-//      }
-//      if (Objects.equals(recordsProcessed.get("testTenant"), totalRecords)) {
-//        InitialContributionJobConsumerContainer.stopConsumer("folio.contrib.tester.innreach");
-//      }
-//
-//    } catch (ServiceSuspendedException ex) {
-//      throw new ServiceSuspendedException(ex.getMessage());
-//    } catch (Exception e) {
-//      log.warn("Error while simulating request: {} {}", e.getMessage(), e.getStackTrace());
-//    }
-//  }
 
   public void runInstanceContribution(UUID centralServerId, Instance instance) {
     log.info("Validating instance {} for contribution to central server {}", instance.getId(), centralServerId);
@@ -495,26 +462,6 @@ public class ContributionJobRunner {
     }
   }
 
-//  private void run(ContributionJobContext context, BiConsumer<UUID, Statistics> processor) {
-//    var stats = new Statistics();
-//    var centralServerId = context.getCentralServerId();
-//    var contributionId = context.getContributionId();
-//    try {
-//      runningInitialContributions.add(contributionId);
-//      beginContributionJobContext(context);
-//      processor.accept(centralServerId, stats);
-//    } catch (Exception e) {
-//      log.warn("Failed to run contribution job for central server {}", centralServerId, e);
-//      throw e;
-//    } finally {
-//      if (!isCanceled(contributionId)) {
-//        completeContribution(context, stats);
-//        runningInitialContributions.remove(contributionId);
-//      }
-//      endContributionJobContext();
-//    }
-//  }
-
   private boolean isUnknownEvent(InstanceIterationEvent event, UUID iterationJobId) {
     return !Objects.equals(event.getJobId(), iterationJobId);
   }
@@ -526,10 +473,6 @@ public class ContributionJobRunner {
       log.info("Failed to complete contribution job {}", context, e);
     }
   }
-
-//  private boolean isCanceled(UUID contributionId) {
-//    return !runningInitialContributions.contains(contributionId);
-//  }
 
   private void updateStats(Statistics stats) {
     statsListener.updateStats(stats);
@@ -544,14 +487,4 @@ public class ContributionJobRunner {
     }
     return instance;
   }
-
-//  private InstanceIterationEvent readEvent(KafkaItemReader<String, InstanceIterationEvent> kafkaReader) {
-//    try {
-//      return retryTemplate.execute(r -> kafkaReader.read());
-//    } catch (Exception e) {
-//      instanceExceptionListener.logReaderError(e);
-//      throw new IllegalStateException("Can't read instance iteration event: " + e.getMessage(), e);
-//    }
-//  }
-
 }

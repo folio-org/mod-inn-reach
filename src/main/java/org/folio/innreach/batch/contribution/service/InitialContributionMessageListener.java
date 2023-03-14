@@ -1,10 +1,8 @@
 package org.folio.innreach.batch.contribution.service;
 
-import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
-import org.folio.innreach.batch.contribution.ContributionJobContext.Statistics;
 import org.folio.innreach.domain.dto.folio.inventorystorage.InstanceIterationEvent;
 import org.springframework.kafka.listener.MessageListener;
 
