@@ -152,6 +152,7 @@ public class RecordContributionServiceImpl implements RecordContributionService 
         throw new ServiceSuspendedException("Contribution to d2irm is currently suspended");
       }
       if(errorMessages.contains("connections allowed from this server")) {
+        log.info("InnReachConnectionException occur---");
         throw new InnReachConnectionException("Only 5 connections allowed from this server");
       }
     }
