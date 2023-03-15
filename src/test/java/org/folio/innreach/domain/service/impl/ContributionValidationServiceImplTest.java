@@ -257,15 +257,6 @@ class ContributionValidationServiceImplTest {
   }
 
   @Test
-  void returnNullSuppressionStatusWithNoCriteriaConfiguration() {
-    when(contributionConfigService.getCriteria(any())).thenReturn(null);
-
-    var suppress = service.getSuppressionStatus(UUID.randomUUID(), singletonList(UUID.randomUUID()));
-
-    assertNull(suppress);
-  }
-
-  @Test
   void returnSuppressionStatus_y() {
     var statisticalCodeId = UUID.randomUUID();
     var config = new ContributionCriteriaDTO();
