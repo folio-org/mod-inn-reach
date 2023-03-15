@@ -3,6 +3,7 @@ package org.folio.innreach.domain.service.impl;
 import static java.util.stream.Collectors.toMap;
 
 import static org.folio.innreach.domain.dto.folio.ContributionItemCirculationStatus.ON_LOAN;
+import static org.folio.innreach.util.ListUtils.getFirstItem;
 import static org.folio.innreach.util.ListUtils.getLastItem;
 
 import java.util.Collection;
