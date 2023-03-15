@@ -15,7 +15,6 @@ import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.serialization.Deserializer;
-import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
 
 /**
  * <p>

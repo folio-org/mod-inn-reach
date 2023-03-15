@@ -2,6 +2,7 @@ package org.folio.innreach.external.service.impl;
 
 import static java.util.Collections.emptyList;
 
+import static org.folio.innreach.domain.service.impl.RecordContributionServiceImpl.CONTRIBUTION_TO_D2IRM_IS_CURRENTLY_SUSPENDED;
 import static org.folio.innreach.external.util.AuthUtils.buildBearerAuthHeader;
 
 import java.net.URI;
@@ -63,8 +64,8 @@ public class InnReachContributionServiceImpl implements InnReachContributionServ
         InnReachResponse.Error errorResponse = response.getErrors().get(0);
         var error = errorResponse!=null ? errorResponse.getReason() : "";
         log.info("checkServiceSuspension:: error is : {}",error);
-        if (error.contains("Contribution to d2irm is currently suspended")) {
-          throw new ServiceSuspendedException("Contribution to d2irm is currently suspended");
+        if (error.contains(CONTRIBUTION_TO_D2IRM_IS_CURRENTLY_SUSPENDED)) {
+          throw new ServiceSuspendedException(CONTRIBUTION_TO_D2IRM_IS_CURRENTLY_SUSPENDED);
         }
       }
       return  response;
@@ -89,8 +90,8 @@ public class InnReachContributionServiceImpl implements InnReachContributionServ
         centralCode, itemId);
       if (!response.getErrors().isEmpty()) {
         var error = response.getErrors().get(0).getReason();
-        if (error.contains("Contribution to d2irm is currently suspended")) {
-          throw new ServiceSuspendedException("Contribution to d2irm is currently suspended");
+        if (error.contains(CONTRIBUTION_TO_D2IRM_IS_CURRENTLY_SUSPENDED)) {
+          throw new ServiceSuspendedException(CONTRIBUTION_TO_D2IRM_IS_CURRENTLY_SUSPENDED);
         }
       }
       return response;
