@@ -88,7 +88,7 @@ public class ContributionJobRunner {
 
     totalRecords.put(context.getTenantId(),numberOfRecords);
 
-    log.info("totalRecords in startInitialContribution->> {}",totalRecords);
+    log.info("totalRecords in startInitialContribution: {}",totalRecords);
 
     InitialContributionJobConsumerContainer container = itemReaderFactory.createInitialContributionConsumerContainer(tenantId,this);
 
@@ -100,10 +100,10 @@ public class ContributionJobRunner {
   public void runInitialContribution(InstanceIterationEvent event,String topic) {
 
     var context = getContributionJobContext(); // added
-    log.info("count is->>{}",recordsProcessed.get(context.getTenantId()));
+    log.info("count is: {}",recordsProcessed.get(context.getTenantId()));
 
 
-    log.info("IterationJobId in runInitialContribution::{}",context.getIterationJobId());
+    log.info("IterationJobId in runInitialContribution: {}",context.getIterationJobId());
     log.info("stat RecordsTotal: {}",stats.getRecordsTotal());
 
     stats.setTopic(topic);
@@ -139,12 +139,12 @@ public class ContributionJobRunner {
       contributeInstance(centralServerId, instance, stats);
       contributeInstanceItems(centralServerId, instance, stats);
     } else if (isContributed(centralServerId, instance)) {
-      log.info("decontributing----");
+      log.info("deContributeInstance");
       deContributeInstance(centralServerId, instance, stats);
     }
     else {
       // to test if non-eligible increasing count to verify the stopping condition
-      log.info("non-eligible instance---");
+      log.info("non-eligible instance");
       ContributionJobRunner.recordsProcessed.put(context.getTenantId(), recordsProcessed.get(context.getTenantId()) == null ? 1
         : recordsProcessed.get(context.getTenantId())+1);
 
@@ -152,21 +152,21 @@ public class ContributionJobRunner {
 
     if (Objects.equals(recordsProcessed.get(context.getTenantId()), totalRecords.get(context.getTenantId()))) {
       log.info("consumer is stopping as all processed");
-      completeContribution(context, stats);
+      completeContribution(context);
       stopContribution(context.getTenantId());
       InitialContributionJobConsumerContainer.stopConsumer(topic);
     }
   }
 
   public void stopContribution(String tenantId) {
-    log.info("stopContribution---");
+    log.info("stopContribution called");
     endContributionJobContext();
     totalRecords.remove(tenantId);
     recordsProcessed.remove(tenantId);
   }
 
   public void cancelContributionIfRetryExhausted(UUID centralServerId) {
-    log.info("cancelContributionIfRetryExhausted");
+    log.info("cancelContributionIfRetryExhausted called");
     contributionService.cancelCurrent(centralServerId);
   }
 
@@ -371,7 +371,7 @@ public class ContributionJobRunner {
       throw e;
     }
     catch (SocketTimeoutException socketTimeoutException) {
-      log.info("socketTimeoutException----");
+      log.info("socketTimeoutException occur");
       throw new SocketTimeOutExceptionWrapper(socketTimeoutException.getMessage());
     }
     catch (Exception e) {
@@ -387,7 +387,7 @@ public class ContributionJobRunner {
   }
 
   private void contributeInstance(UUID centralServerId, Instance instance, Statistics stats) {
-    log.info("contributeInstance instanceId-->{}",instance.getId());
+    log.info("contributeInstance instanceId: {}",instance.getId());
     try {
       stats.addRecordsTotal(1);
       recordContributionService.contributeInstance(centralServerId, instance);
@@ -397,7 +397,7 @@ public class ContributionJobRunner {
       throw e;
     }
     catch (SocketTimeoutException socketTimeoutException) {
-      log.info("socketTimeoutException----");
+      log.info("socketTimeoutException occur");
       throw new SocketTimeOutExceptionWrapper(socketTimeoutException.getMessage());
     }
     catch (Exception e) {
@@ -448,16 +448,16 @@ public class ContributionJobRunner {
       .tenantId(folioContext.getTenantId())
       .build();
 
-    var stats = new Statistics();
+    var statistics = new Statistics();
     try {
       beginContributionJobContext(context);
 
-      processor.accept(context, stats);
+      processor.accept(context, statistics);
     } catch (Exception e) {
       log.warn("Failed to run contribution job for central server {}", centralServerId, e);
       throw e;
     } finally {
-      completeContribution(context, stats);
+      completeContribution(context);
       endContributionJobContext();
     }
   }
@@ -466,7 +466,7 @@ public class ContributionJobRunner {
     return !Objects.equals(event.getJobId(), iterationJobId);
   }
 
-  private void completeContribution(ContributionJobContext context, Statistics stats) {
+  private void completeContribution(ContributionJobContext context) {
     try {
       contributionService.completeContribution(context.getContributionId());
     } catch (Exception e) {

@@ -116,7 +116,7 @@ public class RecordContributionServiceImpl implements RecordContributionService 
   }
 
   private InnReachResponse contributeBib(UUID centralServerId, String bibId, BibInfo bib) {
-    log.info("Retry happening for contributeBib with bibId----"+bibId);
+    log.info("Retry happening for contributeBib with bibId: {}",bibId);
     var response = irContributionService.contributeBib(centralServerId, bibId, bib);
     checkServiceSuspension(response);
     Assert.isTrue(response.isOk(), "Unexpected contribution response: " + response);
@@ -150,11 +150,11 @@ public class RecordContributionServiceImpl implements RecordContributionService 
       }
       log.info("checkServiceSuspension:: error is : {}",error);
       if (error.contains(CONTRIBUTION_TO_D2IRM_IS_CURRENTLY_SUSPENDED)) {
-        log.info("ServiceSuspendedException occur---");
+        log.info("ServiceSuspendedException occur");
         throw new ServiceSuspendedException(CONTRIBUTION_TO_D2IRM_IS_CURRENTLY_SUSPENDED);
       }
       if(errorMessages.contains(CONNECTIONS_ALLOWED_FROM_THIS_SERVER)) {
-        log.info("InnReachConnectionException occur---");
+        log.info("InnReachConnectionException occur");
         throw new InnReachConnectionException("Only 5 connections allowed from this server");
       }
     }

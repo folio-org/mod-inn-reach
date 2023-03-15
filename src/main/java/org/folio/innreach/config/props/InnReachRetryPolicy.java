@@ -38,7 +38,7 @@ public class InnReachRetryPolicy extends ExceptionClassifierRetryPolicy {
           log.info("classifiable is of InnReachConnectionException");
           return new NeverRetryPolicy();
         }
-        log.info("other exception---");
+        log.info("other exception occurred");
         return simpleRetryPolicy;
       });
     }
