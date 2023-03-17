@@ -150,11 +150,11 @@ public class RecordContributionServiceImpl implements RecordContributionService 
       }
       log.info("checkServiceSuspension:: error is : {}",error);
       if (error.contains(CONTRIBUTION_TO_D2IRM_IS_CURRENTLY_SUSPENDED)) {
-        log.info("ServiceSuspendedException occur");
+        log.info("Contribution to d2irm is currently suspended error message occurred");
         throw new ServiceSuspendedException(CONTRIBUTION_TO_D2IRM_IS_CURRENTLY_SUSPENDED);
       }
       if(errorMessages.contains(CONNECTIONS_ALLOWED_FROM_THIS_SERVER)) {
-        log.info("InnReachConnectionException occur");
+        log.info("Allowable maximum Connection limit error message occurred");
         throw new InnReachConnectionException("Only 5 connections allowed from this server");
       }
     }
