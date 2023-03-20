@@ -143,8 +143,8 @@ public class InnReachTransactionController implements InnReachTransactionApi {
   public ResponseEntity<InnReachTransactionsDTO> getAllTransactions(Integer offset,
                                                                     Integer limit,
                                                                     InnReachTransactionFilterParametersDTO parameters) {
-    System.out.println("temp log - we should see this");
-    log.info("temp log - we should see this !!!");
+    System.out.println("temp log - we should see this!!!!");
+    log.info("temp log - we should see this !!!!");
     var transactions = transactionService.getAllTransactions(offset, limit, parameters);
     return ResponseEntity.ok(transactions);
   }
