@@ -92,8 +92,12 @@ public class ContributionServiceImpl implements ContributionService {
   @Override
   public void cancelAll() {
     List<Contribution> allInProgress = findAllInProgress();
-    allInProgress.forEach(c -> c.setStatus(CANCELLED));
+    for(Contribution c : allInProgress){
+      log.info("Inside for loop");
+      c.setStatus(CANCELLED);
+    }
     repository.saveAll(allInProgress);
+    log.info("Cancel All is done");
   }
 
   @Override
