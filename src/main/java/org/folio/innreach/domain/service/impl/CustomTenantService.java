@@ -38,7 +38,7 @@ public class CustomTenantService extends TenantService {
 
   @Override
   protected void afterTenantUpdate(TenantAttributes tenantAttributes) {
-    log.info("afterTenantUpdate:: parameters tenantAttributes: {} , context details {} ", tenantAttributes, context);
+    log.info("afterTenantUpdate:: parameters tenantAttributes: {} , context tenantId {} , testTenant Name {} ", tenantAttributes, context.getTenantId(),testTenant.getTenantName());
     log.info(!context.getTenantId().startsWith(testTenant.getTenantName()));
       systemUserService.prepareSystemUser();
       contributionJobRunner.cancelJobs();

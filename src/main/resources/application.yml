@@ -17,7 +17,7 @@ spring:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
         format_sql: true
-    show-sql: false
+    show-sql: true
   liquibase:
     enabled: true
     change-log: classpath:db/changelog/changelog-master.xml
@@ -171,3 +171,8 @@ kafka:
   backoff:
     interval: ${DEFAULT_INTERVAL:95000}
     max_failure: ${MAX_FAILURE:360}
+# logs the SQL statements
+logging:
+  level:
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type: TRACE
