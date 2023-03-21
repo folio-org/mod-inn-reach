@@ -312,6 +312,7 @@ public class ContributionJobRunner {
   public void cancelJobs() {
     log.info("Cancelling unfinished contributions...");
     contributionService.cancelAll();
+    log.info("Contribution service cancellation is done");
     runningInitialContributions.clear();
   }
 

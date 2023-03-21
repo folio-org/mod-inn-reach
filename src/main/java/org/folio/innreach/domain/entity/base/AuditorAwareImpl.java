@@ -22,13 +22,13 @@ public class AuditorAwareImpl implements AuditorAware<AuditableUser> {
 
   @Override
   public Optional<AuditableUser> getCurrentAuditor() {
-    log.debug("Detecting current auditor by: userId = {}", execContext.getUserId());
+    log.info("Detecting current auditor by: userId = {}", execContext.getUserId());
 
     var user = userService.getUserById(execContext.getUserId());
 
     Optional<AuditableUser> auditor = user.map(toAuditor()).or(useSystem());
 
-    log.debug("Auditor detected: {}", auditor.map(AuditableUser::toString).orElse("EMPTY"));
+    log.info("Auditor detected: {}", auditor.map(AuditableUser::toString).orElse("EMPTY"));
 
     return auditor;
   }

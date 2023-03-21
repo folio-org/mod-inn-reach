@@ -23,6 +23,7 @@ import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.retry.support.RetryTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
 
@@ -88,7 +89,7 @@ public class ContributionServiceImpl implements ContributionService {
     return mapper.toDTO(repository.save(entity));
   }
 
-  @Transactional
+  @Transactional(propagation = Propagation.REQUIRES_NEW)
   @Override
   public void cancelAll() {
     List<Contribution> allInProgress = findAllInProgress();

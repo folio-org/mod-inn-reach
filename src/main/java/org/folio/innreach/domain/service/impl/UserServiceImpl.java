@@ -29,7 +29,7 @@ public class UserServiceImpl implements UserService {
   @Override
   @Cacheable(cacheNames = CACHE_USERS_BY_ID, key = "@folioExecutionContext.tenantId + ': ' + #id")
   public Optional<User> getUserById(UUID id) {
-    log.debug("Getting user by id: userId = {}", id);
+    log.info("Getting user by id: userId = {}", id);
 
     if (id == null) {
       return Optional.empty();
