@@ -242,6 +242,7 @@ public class ContributionServiceImpl implements ContributionService {
   }
 
   private List<Contribution> findAllInProgress() {
+    log.info("Inside findAllInProgress {} ",repository.findAllByStatus(Contribution.Status.IN_PROGRESS));
     return repository.findAllByStatus(Contribution.Status.IN_PROGRESS);
   }
 
