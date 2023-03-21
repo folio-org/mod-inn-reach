@@ -91,7 +91,9 @@ public class ContributionServiceImpl implements ContributionService {
   @Transactional
   @Override
   public void cancelAll() {
-    findAllInProgress().forEach(c -> c.setStatus(CANCELLED));
+    List<Contribution> allInProgress = findAllInProgress();
+    allInProgress.forEach(c -> c.setStatus(CANCELLED));
+    repository.saveAll(allInProgress);
   }
 
   @Override
