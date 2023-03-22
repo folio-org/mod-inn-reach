@@ -11,6 +11,8 @@ import org.springframework.data.domain.AuditorAware;
 import org.folio.innreach.domain.dto.folio.User;
 import org.folio.innreach.domain.service.UserService;
 import org.folio.spring.FolioExecutionContext;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 @Log4j2
 @RequiredArgsConstructor
@@ -21,6 +23,7 @@ public class AuditorAwareImpl implements AuditorAware<AuditableUser> {
 
 
   @Override
+  @Transactional(propagation = Propagation.REQUIRES_NEW)
   public Optional<AuditableUser> getCurrentAuditor() {
     log.info("In FolioRequestInterceptor token" + execContext.getToken());
     log.info("In FolioRequestInterceptor tenant" + execContext.getTenantId());

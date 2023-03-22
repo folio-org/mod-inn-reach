@@ -89,7 +89,7 @@ public class ContributionServiceImpl implements ContributionService {
     return mapper.toDTO(repository.save(entity));
   }
 
-  @Transactional(propagation = Propagation.REQUIRES_NEW)
+  @Transactional
   @Override
   public void cancelAll() {
     List<Contribution> allInProgress = findAllInProgress();
