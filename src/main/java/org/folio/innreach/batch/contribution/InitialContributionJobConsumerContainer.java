@@ -34,7 +34,6 @@ public class InitialContributionJobConsumerContainer {
   public static Map<String, ConcurrentMessageListenerContainer<String, InstanceIterationEvent>> consumersMap =
     new HashMap<>();
 
-
   private final Map<String,Object> consumerProperties;
   private final String topic;
   private final Deserializer<String> keyDeserializer;
@@ -50,9 +49,8 @@ public class InitialContributionJobConsumerContainer {
 
   private final ContributionJobRunner contributionJobRunner;
 
-
   public DefaultErrorHandler errorHandler() {
-    log.info("interval :{} , maxAttempts:{}",interval,maxAttempts);
+    log.info("Initializing initial contribution container error handler: interval: {}, maxAttempts: {}", interval, maxAttempts);
     BackOff fixedBackOff = new FixedBackOff(interval, maxAttempts);
     DefaultErrorHandler errorHandler = new DefaultErrorHandler((consumerRecord, exception) -> {
       // logic to execute when all the retry attempts are exhausted
@@ -71,14 +69,14 @@ public class InitialContributionJobConsumerContainer {
   }
 
   public void tryStartOrCreateConsumer(Object messageListner) {
-    log.info("startOrCreateConsumer----");
+    log.info("Init contribution container: start called");
     ConcurrentMessageListenerContainer<String, InstanceIterationEvent> container = consumersMap.get(topic);
     if (container != null) {
-      log.info("container is not null");
+      log.info("Init contribution container: container is not null");
       if (!container.isRunning()) {
-        log.info("Consumer already created for topic {}, starting consumer!!", topic);
+        log.info("Init contribution container: consumer already created for topic {}, starting consumer!!", topic);
         container.start();
-        log.info("Consumer for topic {} started!!!!", topic);
+        log.info("Init contribution container: consumer for topic {} started!!!!", topic);
       }
       return;
     }
@@ -93,7 +91,7 @@ public class InitialContributionJobConsumerContainer {
 
     ConsumerFactory<String, InstanceIterationEvent> factory = new DefaultKafkaConsumerFactory<>(consumerProperties,
       keyDeserializer,valueDeserializer);
-    log.info("after DefaultKafkaConsumerFactory----");
+    log.info("Init contribution container: DefaultKafkaConsumerFactory created");
     container = new ConcurrentMessageListenerContainer<>(factory, containerProps);
 
 
@@ -107,21 +105,19 @@ public class InitialContributionJobConsumerContainer {
     consumersMap.put(topic, container);
 
 
-    log.info("created and started kafka consumer for topic {}", topic);
+    log.info("Init contribution container: created and started kafka consumer for topic {}", topic);
   }
 
   public static void stopConsumer(final String topic) {
-    log.info("Stopping consumer for topic {}", topic);
+    log.info("Init contribution container: stopping consumer for topic {}", topic);
     ConcurrentMessageListenerContainer<String, InstanceIterationEvent> container = consumersMap.get(topic);
     if(container!=null)
     {
       container.stop();
     }
     else
-      log.warn("container is already null and stopped");
+      log.warn("Init contribution container: container is already null and stopped");
 
-    log.info("Consumer stopped for topic {}", topic);
+    log.info("Init contribution container: consumer stopped for topic {}", topic);
   }
-
-
 }

@@ -20,14 +20,10 @@ public class InitialContributionMessageListener implements MessageListener<Strin
   public void onMessage(
     ConsumerRecord<String, InstanceIterationEvent> consumerRecord) {
 
-
     UUID jobId = UUID.fromString(new String(consumerRecord.headers().lastHeader(ITERATION_JOB_ID_HEADER).value()));
-
-    log.info("JobId-->:{}",jobId);
-
     UUID instanceId = UUID.fromString(consumerRecord.key());
 
-    log.info("InstanceId-->>:{}",instanceId);
+    log.debug("Initial contribution message listener called: JobId: {}, InstanceId: {}", jobId, instanceId);
 
     InstanceIterationEvent instanceIterationEvent = consumerRecord.value();
 
@@ -35,6 +31,5 @@ public class InitialContributionMessageListener implements MessageListener<Strin
     instanceIterationEvent.setJobId(jobId);
 
     iMessageProcessor.processMessage(instanceIterationEvent,consumerRecord.topic());
-
   }
 }
