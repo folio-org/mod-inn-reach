@@ -37,7 +37,7 @@ public class ExceptionHandlerController {
   @ExceptionHandler({IllegalArgumentException.class, InnReachException.class, CirculationException.class})
   @ResponseStatus(HttpStatus.BAD_REQUEST)
   public Error handleBadRequestException(Exception e) {
-    log.error("Unexpected exception: " + e.getMessage(), e);
+    log.error("handleBadRequestException Unexpected exception: " + e.getMessage(), e);
 
     return createError(HttpStatus.BAD_REQUEST, e.getMessage());
   }
@@ -45,6 +45,8 @@ public class ExceptionHandlerController {
   @ExceptionHandler(MethodArgumentNotValidException.class)
   @ResponseStatus(HttpStatus.BAD_REQUEST)
   public ValidationErrorsDTO handleMethodArgumentNotValidException(MethodArgumentNotValidException e) {
+    log.error("handleMethodArgumentNotValidException Unexpected exception: " + e.getMessage(), e);
+
     var validationErrorsDTO = createValidationErrors();
     validationErrorsDTO.setValidationErrors(collectValidationErrors(e));
 
@@ -76,7 +78,7 @@ public class ExceptionHandlerController {
   @ExceptionHandler(Exception.class)
   @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
   public Error handleException(Exception e) {
-    log.error("Unexpected exception: " + e.getMessage(), e);
+    log.error(" Exception handler Unexpected exception: " + e.getMessage(), e);
 
     return createError(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
   }
@@ -102,6 +104,7 @@ public class ExceptionHandlerController {
   @ExceptionHandler(AuthenticationException.class)
   @ResponseStatus(HttpStatus.UNAUTHORIZED)
   public Error handleAuthenticationException(AuthenticationException e) {
+    log.error("handleAuthenticationException Unexpected exception: " + e.getMessage(), e);
     return createError(HttpStatus.UNAUTHORIZED, e.getMessage());
   }
 
