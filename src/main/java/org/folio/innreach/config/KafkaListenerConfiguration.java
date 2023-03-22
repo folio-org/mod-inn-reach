@@ -97,7 +97,7 @@ public class KafkaListenerConfiguration {
       // logic to execute when all the retry attempts are exhausted
       ConsumerRecord<String, InstanceIterationEvent> record = (ConsumerRecord<String, InstanceIterationEvent>) consumerRecord;
       contributionExceptionListener.logWriteError(exception, record.value().getInstanceId());
-      contributionJobRunner.completeContribution(getContributionJobContext());
+      contributionJobRunner.cancelContributionIfRetryExhausted(getContributionJobContext().getCentralServerId());
       endContributionJobContext();
     }, fixedBackOff);
     errorHandler.addRetryableExceptions(ServiceSuspendedException.class);
