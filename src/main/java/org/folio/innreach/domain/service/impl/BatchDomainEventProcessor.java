@@ -9,6 +9,8 @@ import java.util.stream.Collectors;
 import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.folio.innreach.external.exception.InnReachConnectionException;
+import org.folio.innreach.external.exception.ServiceSuspendedException;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.kafka.listener.ListenerExecutionFailedException;
 import org.springframework.retry.support.RetryTemplate;
@@ -36,7 +38,12 @@ public class BatchDomainEventProcessor {
       try {
         executionService.runTenantScoped(tenantId,
           () -> processTenantEvents(events, recordProcessor));
-      } catch (ListenerExecutionFailedException | FeignException ex) {
+      }
+      catch (ServiceSuspendedException | FeignException | InnReachConnectionException e) {
+        log.info("exception thrown from process");
+        throw e;
+      }
+      catch (ListenerExecutionFailedException listenerExecutionFailedException) {
         log.warn("Consuming this event [{}] not permitted for system user [tenantId={}]", recordProcessor, tenantId);
       }
     }
