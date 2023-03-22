@@ -44,13 +44,13 @@ public class ContributionActionServiceImpl implements ContributionActionService 
   private final HoldingsService holdingsService;
   private final ContributionValidationService validationService;
 
-  @Async
+ // @Async
   @Override
   public void handleInstanceCreation(Instance newInstance) {
     handleInstanceUpdate(newInstance);
   }
 
-  @Async
+  //@Async
   @Override
   public void handleInstanceUpdate(Instance updatedInstance) {
     log.info("Handling instance creation/update {}", updatedInstance.getId());
