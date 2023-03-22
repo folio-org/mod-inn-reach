@@ -458,20 +458,33 @@ public class ContributionJobRunner {
       beginContributionJobContext(context);
 
       processor.accept(context, statistics);
-    } catch (Exception e) {
-      log.warn("Failed to run contribution job for central server {}", centralServerId, e);
-      throw e;
-    } finally {
       completeContribution(context);
       endContributionJobContext();
     }
+    catch (ServiceSuspendedException | FeignException | InnReachConnectionException e) {
+      log.info("exception thrown from runOngoing");
+      throw e;
+    }
+//    catch (SocketTimeoutException socketTimeoutException) {
+//      log.info("socketTimeoutException occur");
+//      throw new SocketTimeOutExceptionWrapper(socketTimeoutException.getMessage());
+//    }
+    catch (Exception e) {
+      log.info("contributeInstance exception block");
+      //instanceExceptionListener.logWriteError(e, instance.getId());
+   //   throw e;
+    }
+//    finally {
+//      completeContribution(context);
+//      endContributionJobContext();
+//    }
   }
 
   private boolean isUnknownEvent(InstanceIterationEvent event, UUID iterationJobId) {
     return !Objects.equals(event.getJobId(), iterationJobId);
   }
 
-  private void completeContribution(ContributionJobContext context) {
+  public void completeContribution(ContributionJobContext context) {
     try {
       contributionService.completeContribution(context.getContributionId());
     } catch (Exception e) {

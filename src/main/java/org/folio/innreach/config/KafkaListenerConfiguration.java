@@ -7,6 +7,7 @@ import lombok.extern.log4j.Log4j2;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.folio.innreach.batch.contribution.listener.ContributionExceptionListener;
+import org.folio.innreach.batch.contribution.service.ContributionJobRunner;
 import org.folio.innreach.domain.dto.folio.inventorystorage.InstanceIterationEvent;
 import org.folio.innreach.external.exception.InnReachConnectionException;
 import org.folio.innreach.external.exception.ServiceSuspendedException;
@@ -31,6 +32,7 @@ import org.folio.innreach.domain.service.impl.DomainEventTypeResolver;
 import org.springframework.util.backoff.BackOff;
 import org.springframework.util.backoff.FixedBackOff;
 
+import static org.folio.innreach.batch.contribution.ContributionJobContextManager.endContributionJobContext;
 import static org.folio.innreach.batch.contribution.ContributionJobContextManager.getContributionJobContext;
 
 @EnableKafka
@@ -49,6 +51,8 @@ public class KafkaListenerConfiguration {
   private final DomainEventTypeResolver typeResolver;
   @Qualifier("instanceExceptionListener")
   private final ContributionExceptionListener contributionExceptionListener;
+
+  private final ContributionJobRunner contributionJobRunner;
 
   @Bean(KAFKA_CONSUMER_FACTORY)
   public ConsumerFactory<String, DomainEvent> kafkaDomainEventConsumerFactory() {
@@ -93,6 +97,8 @@ public class KafkaListenerConfiguration {
       // logic to execute when all the retry attempts are exhausted
       ConsumerRecord<String, InstanceIterationEvent> record = (ConsumerRecord<String, InstanceIterationEvent>) consumerRecord;
       contributionExceptionListener.logWriteError(exception, record.value().getInstanceId());
+      contributionJobRunner.completeContribution(getContributionJobContext());
+      endContributionJobContext();
     }, fixedBackOff);
     errorHandler.addRetryableExceptions(ServiceSuspendedException.class);
     errorHandler.addRetryableExceptions(SocketTimeOutExceptionWrapper.class);
