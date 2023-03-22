@@ -62,8 +62,7 @@ class PagingSlipControllerTest extends BaseControllerTest {
   private static final String PRE_POPULATED_LOCAL_SERVER_CODE = "test1";
   private static final String PRE_POPULATED_PICKUP_LOCATION_CODE = "pickupLocCode2";
   private static final String PRE_POPULATED_PICKUP_LOCATION_NAME = "displayName2";
-  private static final String PRE_POPULATED_PICKUP_LOCATION_PRINT_NAME = "printName2";
-  private static final String PRE_POPULATED_PICKUP_LOCATION_DELIVERY_STOP = null;
+  private static final String PRE_POPULATED_PICKUP_LOCATION_DELIVERY_STOP = "deliveryStop2";
   private static final String PRE_POPULATED_CENTRAL_SERVER_NAME = "name";
   private static final String CENTRAL_PATRON_DESCRIPTION = "Patron";
   private static final String PATRON_AGENCY_DESCRIPTION = "Test agency 1";
@@ -153,7 +152,6 @@ class PagingSlipControllerTest extends BaseControllerTest {
     assertEquals(ITEM_AGENCY_DESCRIPTION, transactionSlip.getItemAgencyDescription());
     assertEquals(PRE_POPULATED_PICKUP_LOCATION_CODE, transactionSlip.getPickupLocationCode());
     assertEquals(PRE_POPULATED_PICKUP_LOCATION_NAME, transactionSlip.getPickupLocationDisplayName());
-    assertEquals(PRE_POPULATED_PICKUP_LOCATION_PRINT_NAME, transactionSlip.getPickupLocationPrintName());
     assertEquals(PRE_POPULATED_PICKUP_LOCATION_DELIVERY_STOP, transactionSlip.getPickupLocationDeliveryStop());
   }
 

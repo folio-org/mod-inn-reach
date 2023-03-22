@@ -974,7 +974,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
 
     assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
     assertEquals("failed", responseEntity.getBody().getStatus());
-    assertTrue(responseEntity.getBody().getReason().contains("Pickup location must consist of 3 or 4 strings delimited by a colon."));
+    assertTrue(responseEntity.getBody().getReason().contains("Pickup location must consist of 3 strings delimited by a colon."));
   }
 
   @Test
@@ -1709,7 +1709,6 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     pickupLocation.setDeliveryStop(NEW_TEST_PARAMETER_VALUE);
     pickupLocation.setDisplayName(NEW_TEST_PARAMETER_VALUE);
     pickupLocation.setPickupLocCode(NEW_TEST_PARAMETER_VALUE);
-    pickupLocation.setPrintName(NEW_TEST_PARAMETER_VALUE);
     hold.setItemAgencyCode(NEW_ITEM_AND_AGENCY_CODE);
     hold.setPatronAgencyCode(NEW_ITEM_AND_AGENCY_CODE);
     hold.setFolioRequestId(null);
@@ -1736,7 +1735,6 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     assertEquals(NEW_TEST_PARAMETER_VALUE, updatedTransaction.getHold().getPickupLocation().getDeliveryStop());
     assertEquals(NEW_TEST_PARAMETER_VALUE, updatedTransaction.getHold().getPickupLocation().getDisplayName());
     assertEquals(NEW_TEST_PARAMETER_VALUE, updatedTransaction.getHold().getPickupLocation().getPickupLocCode());
-    assertEquals(NEW_TEST_PARAMETER_VALUE, updatedTransaction.getHold().getPickupLocation().getPrintName());
   }
 
   @ParameterizedTest

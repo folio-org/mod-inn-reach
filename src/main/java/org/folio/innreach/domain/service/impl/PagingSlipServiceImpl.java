@@ -273,7 +273,6 @@ public class PagingSlipServiceImpl implements PagingSlipService {
       .itemAgencyDescription(itemAgencyDescription)
       .pickupLocationCode(pickupLocation.getPickupLocCode())
       .pickupLocationDisplayName(pickupLocation.getDisplayName())
-      .pickupLocationPrintName(pickupLocation.getPrintName())
       .pickupLocationDeliveryStop(pickupLocation.getDeliveryStop());
   }
 

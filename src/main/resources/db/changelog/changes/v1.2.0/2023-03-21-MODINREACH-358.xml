@@ -4,8 +4,8 @@
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
                     http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.4.xsd">
 
-    <include file="2022-06-01-MODINREACH-287.xml" relativeToChangelogFile="true"/>
-    <include file="2022-06-13-MODINREACH-292.xml" relativeToChangelogFile="true"/>
-    <include file="2023-03-21-MODINREACH-358.xml" relativeToChangelogFile="true"/>
+  <changeSet id="2023-03-21-01__alter-transaction_pickup_location.sql" author="s1mpleGit">
+    <sqlFile path="v1.2.0/sql/2023-03-21-01__alter-transaction_pickup_location.sql" relativeToChangelogFile="true"/>
+  </changeSet>
 
 </databaseChangeLog>
