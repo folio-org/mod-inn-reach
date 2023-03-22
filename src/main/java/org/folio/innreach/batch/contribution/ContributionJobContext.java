@@ -24,6 +24,7 @@ public class ContributionJobContext {
   private UUID centralServerId;
   private UUID contributionId;
   private UUID iterationJobId;
+  private boolean isInitialContribution;
 
   @Data
   public static class Statistics {
