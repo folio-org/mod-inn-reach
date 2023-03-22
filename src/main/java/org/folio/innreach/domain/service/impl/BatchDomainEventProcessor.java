@@ -54,11 +54,13 @@ public class BatchDomainEventProcessor {
     for (var event : events) {
       log.info("Processing event {}", event);
       try {
-        retryTemplate.execute(ctx -> {
           recordProcessor.accept(event);
-          return null;
-        });
-      } catch (Exception e) {
+      }
+      catch (ServiceSuspendedException | FeignException | InnReachConnectionException e) {
+        log.info("exception thrown from process");
+        throw e;
+      }
+      catch (Exception e) {
         log.warn("Failed to process event {}", event, e);
       }
     }
