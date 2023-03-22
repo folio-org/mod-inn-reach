@@ -94,9 +94,10 @@ public class KafkaListenerConfiguration {
   public DefaultErrorHandler errorHandler() {
     BackOff fixedBackOff = new FixedBackOff(15000, 4);
     DefaultErrorHandler errorHandler = new DefaultErrorHandler((consumerRecord, exception) -> {
+      log.info("inside errorHandler for Ongoing contribution");
       // logic to execute when all the retry attempts are exhausted
-      ConsumerRecord<String, InstanceIterationEvent> record = (ConsumerRecord<String, InstanceIterationEvent>) consumerRecord;
-      contributionExceptionListener.logWriteError(exception, record.value().getInstanceId());
+//      ConsumerRecord<String, InstanceIterationEvent> record = (ConsumerRecord<String, InstanceIterationEvent>) consumerRecord;
+//      contributionExceptionListener.logWriteError(exception, record.value().getInstanceId());
       contributionJobRunner.cancelContributionIfRetryExhausted(getContributionJobContext().getCentralServerId());
       endContributionJobContext();
     }, fixedBackOff);
