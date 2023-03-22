@@ -20,6 +20,8 @@ public class FolioRequestInterceptor implements RequestInterceptor {
   @Override
   @SneakyThrows
   public void apply(RequestTemplate template) {
+    System.out.println("In FolioRequestInterceptor token" + folioExecutionContext.getToken());
+    System.out.println("In FolioRequestInterceptor tenant" + folioExecutionContext.getTenantId());
     template.header(TOKEN, Collections.singletonList(folioExecutionContext.getToken()));
     template.header(TENANT, Collections.singletonList(folioExecutionContext.getTenantId()));
   }

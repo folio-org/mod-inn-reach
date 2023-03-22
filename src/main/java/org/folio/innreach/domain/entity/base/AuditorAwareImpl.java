@@ -22,12 +22,14 @@ public class AuditorAwareImpl implements AuditorAware<AuditableUser> {
 
   @Override
   public Optional<AuditableUser> getCurrentAuditor() {
+    log.info("In FolioRequestInterceptor token" + execContext.getToken());
+    log.info("In FolioRequestInterceptor tenant" + execContext.getTenantId());
     log.info("Detecting current auditor by: userId = {}", execContext.getUserId());
 
     var user = userService.getUserById(execContext.getUserId());
-
+    log.info("User value {}",user);
     Optional<AuditableUser> auditor = user.map(toAuditor()).or(useSystem());
-
+    log.info("Auditor value {}",auditor);
     log.info("Auditor detected: {}", auditor.map(AuditableUser::toString).orElse("EMPTY"));
 
     return auditor;

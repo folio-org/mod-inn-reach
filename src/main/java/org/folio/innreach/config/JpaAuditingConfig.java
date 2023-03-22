@@ -18,8 +18,13 @@ import org.folio.spring.FolioExecutionContext;
 @EnableJpaAuditing(auditorAwareRef = "auditorAware", dateTimeProviderRef = "dateTimeProvider", modifyOnCreate = false)
 public class JpaAuditingConfig {
 
+  {
+    System.out.println("Inside JpaAuditingConfig");
+  }
+
   @Bean
   public AuditorAware<AuditableUser> auditorAware(FolioExecutionContext context, UserService userService) {
+    System.out.println("Inside auditorAwareImpl Bean");
     return new AuditorAwareImpl(context, userService);
   }
 
