@@ -7,8 +7,11 @@ import java.util.List;
 import java.util.UUID;
 import java.util.function.Consumer;
 
+import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.folio.innreach.external.exception.InnReachConnectionException;
+import org.folio.innreach.external.exception.ServiceSuspendedException;
 import org.springframework.data.domain.Page;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -213,7 +216,12 @@ public class ContributionActionServiceImpl implements ContributionActionService 
         } else {
           log.warn("Central server {} contribution configuration is not valid", csId);
         }
-      } catch (Exception e) {
+      }
+      catch (ServiceSuspendedException | FeignException | InnReachConnectionException e) {
+        log.info("exception thrown from handlePerCentralServer");
+        throw e;
+      }
+      catch (Exception e) {
         log.error("Unable to handle record {} for central server {}", recordId, csId, e);
       }
     }
