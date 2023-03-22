@@ -75,6 +75,7 @@ public class ContributionJobRunner {
       .iterationJobId(iterationJobId)
       .centralServerId(centralServerId)
       .tenantId(tenantId)
+      .isInitialContribution(true)
       .build();
 
     log.info("IterationJobId set at startInitialContribution: {}",context.getIterationJobId());
@@ -344,8 +345,7 @@ public class ContributionJobRunner {
 
     if(items.isEmpty()) {
       log.info("item is empty while contributing");
-      ContributionJobRunner.recordsProcessed.put(getContributionJobContext().getTenantId(), recordsProcessed.get(getContributionJobContext().getTenantId()) == null ? 1
-        : recordsProcessed.get(getContributionJobContext().getTenantId())+1);
+      addRecordProcessed();
     }
 
     int chunkSize = max(jobProperties.getChunkSize(), 1);
@@ -364,8 +364,7 @@ public class ContributionJobRunner {
       stats.addRecordsTotal(itemsCount);
       recordContributionService.contributeItems(centralServerId, bibId, items);
       stats.addRecordsContributed(itemsCount);
-      ContributionJobRunner.recordsProcessed.put(getContributionJobContext().getTenantId(), recordsProcessed.get(getContributionJobContext().getTenantId()) == null ? 1
-        : recordsProcessed.get(getContributionJobContext().getTenantId())+1);
+      addRecordProcessed();
     }
     catch (ServiceSuspendedException | FeignException | InnReachConnectionException e) {
       throw e;
@@ -378,11 +377,17 @@ public class ContributionJobRunner {
       // not possible to guess what item failed when the chunk of multiple items is being contributed
       var recordId = items.size() == 1 ? items.get(0).getId() : null;
       itemExceptionListener.logWriteError(e, recordId);
-      ContributionJobRunner.recordsProcessed.put(getContributionJobContext().getTenantId(), recordsProcessed.get(getContributionJobContext().getTenantId()) == null ? 1
-        : recordsProcessed.get(getContributionJobContext().getTenantId())+1);
+      addRecordProcessed();
     } finally {
       stats.addRecordsProcessed(itemsCount);
       statsListener.updateStats(stats);
+    }
+  }
+
+  private void addRecordProcessed() {
+    if(getContributionJobContext().isInitialContribution()) {
+      ContributionJobRunner.recordsProcessed.put(getContributionJobContext().getTenantId(), recordsProcessed.get(getContributionJobContext().getTenantId()) == null ? 1
+        : recordsProcessed.get(getContributionJobContext().getTenantId()) + 1);
     }
   }
 
