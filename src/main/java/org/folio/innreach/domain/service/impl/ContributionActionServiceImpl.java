@@ -64,7 +64,7 @@ public class ContributionActionServiceImpl implements ContributionActionService 
     handlePerCentralServer(instance.getId(), csId -> contributionJobRunner.runInstanceContribution(csId, instance));
   }
 
-  @Async
+  //@Async
   @Override
   public void handleInstanceDelete(Instance deletedInstance) {
     log.info("Handling instance delete {}", deletedInstance.getId());
@@ -78,7 +78,7 @@ public class ContributionActionServiceImpl implements ContributionActionService 
     }
   }
 
-  @Async
+  //@Async
   @Override
   public void handleItemCreation(Item newItem) {
     log.info("Handling item creation {}", newItem.getId());
@@ -91,7 +91,7 @@ public class ContributionActionServiceImpl implements ContributionActionService 
     handlePerCentralServer(newItem.getId(), csId -> contributionJobRunner.runItemContribution(csId, instance, newItem));
   }
 
-  @Async
+ // @Async
   @Override
   public void handleItemUpdate(Item newItem, Item oldItem) {
     log.info("Handling item update {}", newItem.getId());
@@ -113,7 +113,7 @@ public class ContributionActionServiceImpl implements ContributionActionService 
     });
   }
 
-  @Async
+  //@Async
   @Override
   public void handleItemDelete(Item deletedItem) {
     log.info("Handling item delete {}", deletedItem.getId());
@@ -122,13 +122,17 @@ public class ContributionActionServiceImpl implements ContributionActionService 
     if (!isMARCRecord(instance)) {
       return;
     }
-
-    for (var csId : getCentralServerIds()) {
-      contributionJobRunner.runItemDeContribution(csId, instance, deletedItem);
+    try{
+      for (var csId : getCentralServerIds()) {
+        contributionJobRunner.runItemDeContribution(csId, instance, deletedItem);
+      }
+    } catch (ServiceSuspendedException | FeignException | InnReachConnectionException e) {
+      log.info("exception thrown from handlePerCentralServer");
+      throw e;
     }
   }
 
-  @Async
+  //@Async
   @Override
   public void handleLoanCreation(StorageLoanDTO loan) {
     log.info("Handling loan creation {}", loan.getId());
@@ -142,7 +146,7 @@ public class ContributionActionServiceImpl implements ContributionActionService 
     handlePerCentralServer(item.getId(), csId -> contributionJobRunner.runItemContribution(csId, instance, item));
   }
 
-  @Async
+  //@Async
   @Override
   public void handleLoanUpdate(StorageLoanDTO loan) {
     log.info("Handling loan update {}", loan.getId());
@@ -162,7 +166,7 @@ public class ContributionActionServiceImpl implements ContributionActionService 
     }
   }
 
-  @Async
+  //@Async
   @Override
   public void handleRequestChange(RequestDTO request) {
     log.info("Handling request {}", request.getId());
@@ -176,7 +180,7 @@ public class ContributionActionServiceImpl implements ContributionActionService 
     handlePerCentralServer(item.getId(), csId -> contributionJobRunner.runItemContribution(csId, instance, item));
   }
 
-  @Async
+  //@Async
   @Override
   public void handleHoldingUpdate(Holding holding) {
     log.info("Handling holding update {}", holding.getId());
@@ -191,7 +195,7 @@ public class ContributionActionServiceImpl implements ContributionActionService 
       items.forEach(i -> contributionJobRunner.runItemContribution(csId, instance, i)));
   }
 
-  @Async
+ // @Async
   @Override
   public void handleHoldingDelete(Holding holding) {
     log.info("Handling holding delete {}", holding.getId());
@@ -202,8 +206,14 @@ public class ContributionActionServiceImpl implements ContributionActionService 
     }
 
     var items = holding.getHoldingsItems();
-    for (var csId : getCentralServerIds()) {
-      items.forEach(item -> contributionJobRunner.runItemDeContribution(csId, instance, item));
+    try {
+      for (var csId : getCentralServerIds()) {
+        items.forEach(item -> contributionJobRunner.runItemDeContribution(csId, instance, item));
+      }
+    }
+    catch (ServiceSuspendedException | FeignException | InnReachConnectionException e) {
+      log.info("exception thrown from handlePerCentralServer");
+      throw e;
     }
   }
 

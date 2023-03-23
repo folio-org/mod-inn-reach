@@ -96,10 +96,12 @@ public class KafkaListenerConfiguration {
     DefaultErrorHandler errorHandler = new DefaultErrorHandler((consumerRecord, exception) -> {
       log.info("inside errorHandler for Ongoing contribution");
       // logic to execute when all the retry attempts are exhausted
-//      ConsumerRecord<String, InstanceIterationEvent> record = (ConsumerRecord<String, InstanceIterationEvent>) consumerRecord;
-//      contributionExceptionListener.logWriteError(exception, record.value().getInstanceId());
-      //contributionJobRunner.cancelContributionIfRetryExhausted(getContributionJobContext().getCentralServerId());
-      endContributionJobContext();
+      try {
+        endContributionJobContext();
+        contributionJobRunner.completeContribution(getContributionJobContext());
+      } catch (Exception e) {
+        log.warn("something wrong in errorHandler :{}",e.getMessage());
+      }
     }, fixedBackOff);
     errorHandler.addRetryableExceptions(ServiceSuspendedException.class);
     errorHandler.addRetryableExceptions(SocketTimeOutExceptionWrapper.class);

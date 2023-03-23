@@ -386,6 +386,7 @@ public class ContributionJobRunner {
 
   private void addRecordProcessed() {
     if(getContributionJobContext().isInitialContribution()) {
+      log.info("addRecordProcessed");
       ContributionJobRunner.recordsProcessed.put(getContributionJobContext().getTenantId(), recordsProcessed.get(getContributionJobContext().getTenantId()) == null ? 1
         : recordsProcessed.get(getContributionJobContext().getTenantId()) + 1);
     }
@@ -420,9 +421,10 @@ public class ContributionJobRunner {
       stats.addRecordsTotal(1);
       recordContributionService.deContributeInstance(centralServerId, instance);
       stats.addRecordsDeContributed(1);
+      addRecordProcessed();
     }
-    catch (ServiceSuspendedException ex) {
-      throw new ServiceSuspendedException(ex.getMessage());
+    catch (ServiceSuspendedException | FeignException | InnReachConnectionException e) {
+      throw e;
     }
     catch (Exception e) {
       instanceExceptionListener.logWriteError(e, instance.getId());
@@ -437,7 +439,12 @@ public class ContributionJobRunner {
       stats.addRecordsTotal(1);
       recordContributionService.deContributeItem(centralServerId, item);
       stats.addRecordsDeContributed(1);
-    } catch (Exception e) {
+      addRecordProcessed();
+    }
+    catch (ServiceSuspendedException | FeignException | InnReachConnectionException e) {
+      throw e;
+    }
+    catch (Exception e) {
       itemExceptionListener.logWriteError(e, item.getId());
     } finally {
       stats.addRecordsProcessed(1);
