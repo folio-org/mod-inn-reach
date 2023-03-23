@@ -78,7 +78,7 @@ public class ContributionJobRunner {
       .isInitialContribution(true)
       .build();
 
-    log.info("IterationJobId set at startInitialContribution: {}",context.getIterationJobId());
+    log.info("Starting initial contribution: iterationJobId: {}", context.getIterationJobId());
 
     //clear maps key & value of this tenant if present before start
     totalRecords.remove(tenantId);
@@ -87,9 +87,9 @@ public class ContributionJobRunner {
 
     beginContributionJobContext(context);
 
-    totalRecords.put(context.getTenantId(),numberOfRecords);
+    totalRecords.put(context.getTenantId(), numberOfRecords);
 
-    log.info("totalRecords in startInitialContribution: {}",totalRecords);
+    log.info("Starting initial contribution: totalRecords: {}", totalRecords);
 
     InitialContributionJobConsumerContainer container = itemReaderFactory.createInitialContributionConsumerContainer(tenantId,this);
 
@@ -101,11 +101,11 @@ public class ContributionJobRunner {
   public void runInitialContribution(InstanceIterationEvent event,String topic) {
 
     var context = getContributionJobContext(); // added
-    log.info("count is: {}",recordsProcessed.get(context.getTenantId()));
+    log.info("Initial: count: {}", recordsProcessed.get(context.getTenantId()));
 
 
-    log.info("IterationJobId in runInitialContribution: {}",context.getIterationJobId());
-    log.info("stat RecordsTotal: {}",stats.getRecordsTotal());
+    log.info("Initial: iterationJobId {}", context.getIterationJobId());
+    log.info("Initial: statistics recordsTotal: {}", stats.getRecordsTotal());
 
     stats.setTopic(topic);
     stats.setTenantId(context.getTenantId());
@@ -115,22 +115,22 @@ public class ContributionJobRunner {
     var iterationJobId = context.getIterationJobId();
 
     if (event == null) {
-      log.info("Cannot contribute record for null event, contribution id: {}", contributionId);
+      log.info("Initial: cannot contribute record for null event, contribution id: {}", contributionId);
       return;
     }
-    log.info("Processing instance iteration event = {}", event);
+    log.info("Initial: processing instance iteration event: {}", event);
 
     var instanceId = event.getInstanceId();
 
     if (isUnknownEvent(event, iterationJobId)) {
-      log.info("Skipping unknown event, current job is {}", iterationJobId);
+      log.info("Initial: skipping unknown event, current job is {}", iterationJobId);
       return;
     }
 
     Instance instance = loadInstanceWithItems(instanceId);
 
     if (instance == null) {
-      log.info("Instance is null, skipping");
+      log.info("Initial: instance is null, skipping");
       return;
     }
 
@@ -140,19 +140,19 @@ public class ContributionJobRunner {
       contributeInstance(centralServerId, instance, stats);
       contributeInstanceItems(centralServerId, instance, stats);
     } else if (isContributed(centralServerId, instance)) {
-      log.info("deContributeInstance");
+      log.info("Initial: deContributeInstance");
       deContributeInstance(centralServerId, instance, stats);
     }
     else {
       // to test if non-eligible increasing count to verify the stopping condition
-      log.info("non-eligible instance");
+      log.info("Initial: non-eligible instance");
       ContributionJobRunner.recordsProcessed.put(context.getTenantId(), recordsProcessed.get(context.getTenantId()) == null ? 1
         : recordsProcessed.get(context.getTenantId())+1);
 
     }
 
     if (Objects.equals(recordsProcessed.get(context.getTenantId()), totalRecords.get(context.getTenantId()))) {
-      log.info("consumer is stopping as all processed");
+      log.info("Initial: consumer is stopping as all processed");
       completeContribution(context);
       stopContribution(context.getTenantId());
       InitialContributionJobConsumerContainer.stopConsumer(topic);
@@ -172,29 +172,29 @@ public class ContributionJobRunner {
   }
 
   public void runInstanceContribution(UUID centralServerId, Instance instance) {
-    log.info("Validating instance {} for contribution to central server {}", instance.getId(), centralServerId);
+    log.info("Ongoing: validating instance {} for contribution to central server {}", instance.getId(), centralServerId);
 
     boolean eligibleInstance = isEligibleForContribution(centralServerId, instance);
     boolean contributedInstance = isContributed(centralServerId, instance);
 
     if (!eligibleInstance && !contributedInstance) {
-      log.info("Skipping ineligible and non-contributed instance");
+      log.info("Ongoing: skipping ineligible and non-contributed instance");
       return;
     }
 
     runOngoing(centralServerId, (ctx, statistics) -> {
-      log.info("Starting ongoing instance contribution job {}", ctx);
+      log.info("Ongoing: starting ongoing instance contribution job {}", ctx);
 
       if (eligibleInstance) {
-        log.info("Contributing instance");
+        log.info("Ongoing: contributing instance");
         contributeInstance(centralServerId, instance, statistics);
 
         if (!contributedInstance) {
-          log.info("Contributing items of new instance");
+          log.info("Ongoing: contributing items of new instance");
           contributeInstanceItems(centralServerId, instance, statistics);
         }
       } else if (contributedInstance) {
-        log.info(DE_CONTRIBUTE_INSTANCE_MSG);
+        log.info("Ongoing: " + DE_CONTRIBUTE_INSTANCE_MSG);
         deContributeInstance(centralServerId, instance, statistics);
       }
     });
@@ -215,13 +215,13 @@ public class ContributionJobRunner {
   }
 
   public void runItemContribution(UUID centralServerId, Instance instance, Item item) {
-    log.info("Validating item {} for contribution to central server {}", item.getId(), centralServerId);
+    log.info("Ongoing: validating item {} for contribution to central server {}", item.getId(), centralServerId);
 
     boolean eligibleItem = isEligibleForContribution(centralServerId, item);
     boolean contributedItem = isContributed(centralServerId, instance, item);
 
     if (!eligibleItem && !contributedItem) {
-      log.info("Skipping ineligible and non-contributed item");
+      log.info("Ongoing: skipping ineligible and non-contributed item");
       return;
     }
 
@@ -229,18 +229,18 @@ public class ContributionJobRunner {
       log.info("Starting ongoing item contribution job {}", ctx);
 
       if (isEligibleForContribution(centralServerId, instance)) {
-        log.info("Re-contributing instance to update bib status");
+        log.info("Ongoing: Re-contributing instance to update bib status");
         contributeInstance(centralServerId, instance, statistics);
 
         if (eligibleItem) {
-          log.info("Contributing item");
+          log.info("Ongoing: contributing item");
           contributeItem(centralServerId, instance.getHrid(), item, statistics);
         } else if (contributedItem) {
-          log.info("De-contributing item");
+          log.info("Ongoing: de-contributing item");
           deContributeItem(centralServerId, item, statistics);
         }
       } else if (contributedItem) {
-        log.info(DE_CONTRIBUTE_INSTANCE_MSG);
+        log.info("Ongoing: " + DE_CONTRIBUTE_INSTANCE_MSG);
         deContributeInstance(centralServerId, instance, statistics);
       }
     });
@@ -263,24 +263,24 @@ public class ContributionJobRunner {
       // de-contribute item and update old instance
       if (contributedItem) {
         if (isEligibleForContribution(centralServerId, oldInstance)) {
-          log.info("De-contributing item from old instance");
+          log.info("Ongoing: de-contributing item from old instance");
           deContributeItem(centralServerId, item, statistics);
 
-          log.info("Re-contributing old instance to update bib status");
+          log.info("Ongoing: re-contributing old instance to update bib status");
           contributeInstance(centralServerId, oldInstance, statistics);
         } else {
-          log.info("De-contributing old instance");
+          log.info("Ongoing: e-contributing old instance");
           deContributeInstance(centralServerId, oldInstance, statistics);
         }
       }
 
       // contribute item to a new instance
       if (isEligibleForContribution(centralServerId, newInstance)) {
-        log.info("Re-contributing new instance to update bib status");
+        log.info("Ongoing: re-contributing new instance to update bib status");
         contributeInstance(centralServerId, newInstance, statistics);
 
         if (eligibleItem) {
-          log.info("Contributing item to new instance");
+          log.info("Ongoing: Contributing item to new instance");
           contributeItem(centralServerId, newInstance.getHrid(), item, statistics);
         }
       }
@@ -298,13 +298,13 @@ public class ContributionJobRunner {
       log.info("Starting ongoing item de-contribution job {}", context);
 
       if (isEligibleForContribution(centralServerId, instance)) {
-        log.info("De-contributing item");
+        log.info("Ongoing: de-contributing item");
         deContributeItem(centralServerId, deletedItem, statistics);
 
-        log.info("Re-contributing instance to update bib status");
+        log.info("Ongoing: re-contributing instance to update bib status");
         contributeInstance(centralServerId, instance, statistics);
       } else {
-        log.info(DE_CONTRIBUTE_INSTANCE_MSG);
+        log.info("Ongoing: " + DE_CONTRIBUTE_INSTANCE_MSG);
         deContributeInstance(centralServerId, instance, statistics);
       }
     });
@@ -370,7 +370,7 @@ public class ContributionJobRunner {
       throw e;
     }
     catch (SocketTimeoutException socketTimeoutException) {
-      log.info("socketTimeoutException occur");
+      log.info("Initial: socketTimeoutException occurred while contributing items chunk");
       throw new SocketTimeOutExceptionWrapper(socketTimeoutException.getMessage());
     }
     catch (Exception e) {
@@ -392,7 +392,7 @@ public class ContributionJobRunner {
   }
 
   private void contributeInstance(UUID centralServerId, Instance instance, Statistics stats) {
-    log.info("contributeInstance instanceId: {}",instance.getId());
+    log.info("Initial: contributeInstance instanceId: {}",instance.getId());
     try {
       stats.addRecordsTotal(1);
       recordContributionService.contributeInstance(centralServerId, instance);
@@ -402,14 +402,14 @@ public class ContributionJobRunner {
       throw e;
     }
     catch (SocketTimeoutException socketTimeoutException) {
-      log.info("socketTimeoutException occur");
+      log.info("Initial: SocketTimeoutException occurred while contributing instance");
       throw new SocketTimeOutExceptionWrapper(socketTimeoutException.getMessage());
     }
     catch (Exception e) {
-      log.info("contributeInstance exception block");
+      log.info("Initial: exception caught in contributeInstance");
       instanceExceptionListener.logWriteError(e, instance.getId());
     } finally {
-      log.info("contributeInstance finally block");
+      log.info("Initial: contributeInstance finally called");
       stats.addRecordsProcessed(1);
       updateStats(stats);
     }
@@ -459,7 +459,7 @@ public class ContributionJobRunner {
 
       processor.accept(context, statistics);
     } catch (Exception e) {
-      log.warn("Failed to run contribution job for central server {}", centralServerId, e);
+      log.warn("Ongoing: Failed to run contribution job for central server: {}", centralServerId, e);
       throw e;
     } finally {
       completeContribution(context);
@@ -474,8 +474,9 @@ public class ContributionJobRunner {
   private void completeContribution(ContributionJobContext context) {
     try {
       contributionService.completeContribution(context.getContributionId());
+      log.info("Initial: completed contribution");
     } catch (Exception e) {
-      log.info("Failed to complete contribution job {}", context, e);
+      log.info("Initial: failed to complete contribution job: {}", context, e);
     }
   }
 

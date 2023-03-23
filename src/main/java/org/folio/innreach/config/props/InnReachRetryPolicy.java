@@ -23,22 +23,22 @@ public class InnReachRetryPolicy extends ExceptionClassifierRetryPolicy {
       this.setExceptionClassifier((Classifier<Throwable, RetryPolicy>) classifiable -> {
 
         if (classifiable instanceof ServiceSuspendedException) {
-            log.info("classifiable is of ServiceSuspendedException");
+            log.info("InnReachRetryPolicy: classifiable is ServiceSuspendedException");
           return new NeverRetryPolicy();
         }
         else if (classifiable instanceof FeignException) {
-          log.info("classifiable is of FeignException");
+          log.info("InnReachRetryPolicy: classifiable is of FeignException");
           return new NeverRetryPolicy();
         }
         else if (classifiable instanceof SocketTimeoutException) {
-          log.info("classifiable is of SocketTimeOutException");
+          log.info("InnReachRetryPolicy: classifiable is of SocketTimeOutException");
           return new NeverRetryPolicy();
         }
         else if (classifiable instanceof InnReachConnectionException) {
-          log.info("classifiable is of InnReachConnectionException");
+          log.info("InnReachRetryPolicy: classifiable is of InnReachConnectionException");
           return new NeverRetryPolicy();
         }
-        log.info("other exception occurred");
+        log.info("InnReachRetryPolicy: other exception occurred");
         return simpleRetryPolicy;
       });
     }
