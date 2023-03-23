@@ -42,9 +42,10 @@ public class SystemUserAuthService {
 
   public void setupSystemUser() {
     var folioUser = userService.getUserByName(folioSystemUserConf.getUsername());
+    log.info("Inside setupSystem User {}",folioUser);
     var userId = folioUser.map(User::getId)
       .orElse(UUID.randomUUID());
-
+    log.info("UserId is {} ",userId);
     if (folioUser.isPresent()) {
       log.info("Setting up existing system user");
       addPermissions(userId);
@@ -102,7 +103,8 @@ public class SystemUserAuthService {
   private void addPermissions(UUID userId) {
     var expectedPermissions = getResourceLines(folioSystemUserConf.getPermissionsFilePath());
     var assignedPermissions = permissionsClient.getUserPermissions(userId);
-
+    log.info("Expected Permissions {} ",expectedPermissions);
+    log.info("assignedPermissions Permissions {} ",assignedPermissions);
     if (isEmpty(expectedPermissions)) {
       throw new IllegalStateException("No permissions found to assign to user with id: " + userId);
     }

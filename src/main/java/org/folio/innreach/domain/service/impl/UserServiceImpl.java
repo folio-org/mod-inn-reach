@@ -41,14 +41,14 @@ public class UserServiceImpl implements UserService {
   @Override
   @Cacheable(cacheNames = CACHE_USERS_BY_NAME, key = "@folioExecutionContext.tenantId + ': ' + #name")
   public Optional<User> getUserByName(String name) {
-    log.debug("Getting user by name: userName = {}", name);
+    log.info("Getting user by name: userName = {}", name);
 
     if (StringUtils.isEmpty(name)) {
       return Optional.empty();
     }
 
     var users = usersClient.query("username==" + name);
-
+    log.info("Users Object {} ",users);
     return ListUtils.getFirstItem(users);
   }
 

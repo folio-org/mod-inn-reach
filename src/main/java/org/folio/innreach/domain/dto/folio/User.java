@@ -9,9 +9,11 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 @Data
 @JsonIgnoreProperties(ignoreUnknown = true)
+@ToString
 public class User {
 
   private UUID id;
