@@ -76,7 +76,7 @@ public class KafkaListenerConfiguration {
   @Bean(KAFKA_CONTAINER_FACTORY)
   public ConcurrentKafkaListenerContainerFactory<String, DomainEvent> kafkaDomainEventContainerFactory() {
     var factory = new ConcurrentKafkaListenerContainerFactory<String, DomainEvent>();
-    factory.setBatchListener(true);
+   // factory.setBatchListener(true);
     factory.setConsumerFactory(kafkaDomainEventConsumerFactory());
  //   factory.setBatchErrorHandler(((exception, data) -> log.error("Unable to consume event {}", data, exception)));
     factory.setCommonErrorHandler(errorHandler());

@@ -236,7 +236,7 @@ public class ContributionServiceImpl implements ContributionService {
   }
 
   private Contribution fetchById(UUID contributionId) {
-    log.debug("fetchById:: parameters contributionId: {}", contributionId);
+    log.info("fetchById:: parameters contributionId: {}", contributionId);
     return repository.findById(contributionId)
       .orElseThrow(() -> new IllegalArgumentException("Contribution is not found by id: " + contributionId));
   }
