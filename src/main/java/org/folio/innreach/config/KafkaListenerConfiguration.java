@@ -97,8 +97,8 @@ public class KafkaListenerConfiguration {
       log.info("inside errorHandler for Ongoing contribution");
       // logic to execute when all the retry attempts are exhausted
       try {
-        endContributionJobContext();
         contributionJobRunner.completeContribution(getContributionJobContext());
+        endContributionJobContext();
       } catch (Exception e) {
         log.warn("something wrong in errorHandler :{}",e.getMessage());
       }
