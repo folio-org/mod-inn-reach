@@ -92,7 +92,6 @@ public class KafkaInventoryEventListener {
     eventProcessor.process(events, event -> {
       var oldEntity = event.getData().getOldEntity();
       var newEntity = event.getData().getNewEntity();
-      try{
         switch (event.getType()) {
           case CREATED:
             contributionActionService.handleInstanceCreation(newEntity);
@@ -106,10 +105,6 @@ public class KafkaInventoryEventListener {
           default:
             log.warn(UNKNOWN_TYPE_MESSAGE, event.getType());
         }
-      } catch (ServiceSuspendedException | FeignException | InnReachConnectionException e) {
-        log.info("exception thrown from handleInstanceEvents");
-        throw e;
-      }
     });
   }
 
