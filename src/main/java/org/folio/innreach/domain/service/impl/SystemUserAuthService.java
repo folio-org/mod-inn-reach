@@ -53,7 +53,15 @@ public class SystemUserAuthService {
     if (folioUser.isPresent()) {
       log.info("Setting up existing system user");
       addPermissions(userId);
-      beginFolioExecutionContext(contextBuilder.withUserId(folioContext, userId));
+      SystemUser systemUser = new SystemUser();
+      systemUser.setUserId(userId);
+      systemUser.setUserName(folioSystemUserConf.getUsername());
+      systemUser.setOkapiUrl(folioContext.getOkapiUrl());
+      String token = loginSystemUser(systemUser);
+      systemUser.setToken(token);
+
+      beginFolioExecutionContext(contextBuilder.forSystemUser(systemUser));
+      //beginFolioExecutionContext(contextBuilder.withUserId(folioContext, userId));
     } else {
       log.info("No system user exist, creating...");
 
