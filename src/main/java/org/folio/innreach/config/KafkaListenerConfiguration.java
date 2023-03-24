@@ -9,9 +9,11 @@ import org.apache.kafka.common.serialization.StringDeserializer;
 import org.folio.innreach.batch.contribution.listener.ContributionExceptionListener;
 import org.folio.innreach.batch.contribution.service.ContributionJobRunner;
 import org.folio.innreach.domain.dto.folio.inventorystorage.InstanceIterationEvent;
+import org.folio.innreach.domain.service.impl.TenantScopedExecutionService;
 import org.folio.innreach.external.exception.InnReachConnectionException;
 import org.folio.innreach.external.exception.ServiceSuspendedException;
 import org.folio.innreach.external.exception.SocketTimeOutExceptionWrapper;
+import org.folio.spring.FolioExecutionContext;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.kafka.KafkaProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -34,6 +36,7 @@ import org.springframework.util.backoff.FixedBackOff;
 
 import static org.folio.innreach.batch.contribution.ContributionJobContextManager.endContributionJobContext;
 import static org.folio.innreach.batch.contribution.ContributionJobContextManager.getContributionJobContext;
+import static org.folio.spring.scope.FolioExecutionScopeExecutionContextManager.beginFolioExecutionContext;
 
 @EnableKafka
 @Log4j2
@@ -53,6 +56,10 @@ public class KafkaListenerConfiguration {
   private final ContributionExceptionListener contributionExceptionListener;
 
   private final ContributionJobRunner contributionJobRunner;
+
+  private final FolioExecutionContext folioExecutionContext;
+
+  private final TenantScopedExecutionService executionService;
 
   @Bean(KAFKA_CONSUMER_FACTORY)
   public ConsumerFactory<String, DomainEvent> kafkaDomainEventConsumerFactory() {
@@ -97,7 +104,12 @@ public class KafkaListenerConfiguration {
       log.info("inside errorHandler for Ongoing contribution");
       // logic to execute when all the retry attempts are exhausted
       try {
-        contributionJobRunner.completeContribution(getContributionJobContext());
+      //  beginFolioExecutionContext(folioExecutionContext);
+
+        executionService.runTenantScoped(getContributionJobContext().getTenantId(),
+          () -> contributionJobRunner.completeContribution(getContributionJobContext()));
+
+       // contributionJobRunner.completeContribution(getContributionJobContext());
         endContributionJobContext();
       } catch (Exception e) {
         log.warn("something wrong in errorHandler :{}",e.getMessage());

@@ -72,9 +72,14 @@ public class ContributionActionServiceImpl implements ContributionActionService 
     if (!isMARCRecord(deletedInstance)) {
       return;
     }
-
-    for (var csId : getCentralServerIds()) {
-      contributionJobRunner.runInstanceDeContribution(csId, deletedInstance);
+    try {
+      for (var csId : getCentralServerIds()) {
+        contributionJobRunner.runInstanceDeContribution(csId, deletedInstance);
+      }
+    }
+    catch (ServiceSuspendedException | FeignException | InnReachConnectionException e) {
+      log.info("exception thrown from handleInstanceDelete");
+      throw e;
     }
   }
 
@@ -127,7 +132,7 @@ public class ContributionActionServiceImpl implements ContributionActionService 
         contributionJobRunner.runItemDeContribution(csId, instance, deletedItem);
       }
     } catch (ServiceSuspendedException | FeignException | InnReachConnectionException e) {
-      log.info("exception thrown from handlePerCentralServer");
+      log.info("exception thrown from handleItemDelete");
       throw e;
     }
   }
@@ -212,7 +217,7 @@ public class ContributionActionServiceImpl implements ContributionActionService 
       }
     }
     catch (ServiceSuspendedException | FeignException | InnReachConnectionException e) {
-      log.info("exception thrown from handlePerCentralServer");
+      log.info("exception thrown from handleHoldingDelete");
       throw e;
     }
   }
