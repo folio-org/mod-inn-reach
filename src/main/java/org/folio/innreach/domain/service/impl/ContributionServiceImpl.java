@@ -80,7 +80,7 @@ public class ContributionServiceImpl implements ContributionService {
   @Transactional
   @Override
   public ContributionDTO completeContribution(UUID contributionId) {
-    log.debug("completeContribution:: parameters contributionId: {}", contributionId);
+    log.info("completeContribution:: parameters contributionId: {}", contributionId);
     var entity = fetchById(contributionId);
 
     entity.setStatus(COMPLETE);
@@ -183,6 +183,11 @@ public class ContributionServiceImpl implements ContributionService {
   public ContributionDTO createOngoingContribution(UUID centralServerId) {
     log.debug("createOngoingContribution:: parameters centralServerId: {}", centralServerId);
     var contribution = createEmptyContribution(centralServerId);
+    Contribution oldContribution = fetchById(contribution.getId());
+    if(oldContribution!=null) {
+      log.info("oldcontributionId :{}",contribution.getId());
+      contribution.setId(oldContribution.getId());
+    }
     contribution.setOngoing(true);
 
     return mapper.toDTO(repository.save(contribution));
