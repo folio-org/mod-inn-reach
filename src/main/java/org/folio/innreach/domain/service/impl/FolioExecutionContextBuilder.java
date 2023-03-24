@@ -9,6 +9,7 @@ import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.With;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.stereotype.Component;
 
 import org.folio.innreach.domain.dto.folio.SystemUser;
@@ -17,6 +18,7 @@ import org.folio.spring.FolioModuleMetadata;
 
 @Component
 @RequiredArgsConstructor
+@Log4j2
 public class FolioExecutionContextBuilder {
   private final FolioModuleMetadata moduleMetadata;
 
@@ -25,6 +27,7 @@ public class FolioExecutionContextBuilder {
   }
 
   public FolioExecutionContext forSystemUser(SystemUser systemUser) {
+    log.info("Inside forSystemUser {} ",systemUser);
     return builder()
       .withTenantId(systemUser.getTenantId())
       .withOkapiUrl(systemUser.getOkapiUrl())
@@ -55,6 +58,7 @@ public class FolioExecutionContextBuilder {
     }
 
     public FolioExecutionContext build() {
+      log.info("Inside build  FolioExecutionContext with user ID {} ",userId);
       return new FolioExecutionContext() {
         @Override
         public String getTenantId() {

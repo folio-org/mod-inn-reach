@@ -1,6 +1,7 @@
 package org.folio.innreach.domain.service.impl;
 
 import lombok.extern.log4j.Log4j2;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Primary;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -23,21 +24,25 @@ public class CustomTenantService extends TenantService {
   private final ContributionJobRunner contributionJobRunner;
   private final ReferenceDataLoader referenceDataLoader;
   private final TestTenant testTenant;
+  private final FolioExecutionContext folioContext;
 
 
   public CustomTenantService(JdbcTemplate jdbcTemplate, FolioExecutionContext context,
-      FolioSpringLiquibase folioSpringLiquibase, SystemUserService systemUserService,
-      ContributionJobRunner contributionJobRunner, ReferenceDataLoader referenceDataLoader, TestTenant testTenant) {
+                             FolioSpringLiquibase folioSpringLiquibase, SystemUserService systemUserService,
+                             ContributionJobRunner contributionJobRunner, ReferenceDataLoader referenceDataLoader, TestTenant testTenant, FolioExecutionContext folioContext) {
     super(jdbcTemplate, context, folioSpringLiquibase);
 
     this.systemUserService = systemUserService;
     this.contributionJobRunner = contributionJobRunner;
     this.referenceDataLoader = referenceDataLoader;
     this.testTenant = testTenant;
+    this.folioContext = folioContext;
   }
 
   @Override
   protected void afterTenantUpdate(TenantAttributes tenantAttributes) {
+    log.debug("Debug testing...");
+    log.info("FolioExecutionContext value {} , userId {} ",folioContext,folioContext.getUserId());
     log.info("afterTenantUpdate:: parameters tenantAttributes: {} , context tenantId {} , testTenant Name {} ", tenantAttributes, context.getTenantId(),testTenant.getTenantName());
     log.info(!context.getTenantId().startsWith(testTenant.getTenantName()));
       systemUserService.prepareSystemUser();
