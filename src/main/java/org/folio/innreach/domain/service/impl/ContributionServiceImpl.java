@@ -182,9 +182,11 @@ public class ContributionServiceImpl implements ContributionService {
 
   @Override
   public ContributionDTO createOngoingContribution(UUID centralServerId) {
-    log.debug("createOngoingContribution:: parameters centralServerId: {}", centralServerId);
+    log.info("createOngoingContribution:: parameters centralServerId: {}", centralServerId);
     var contribution = createEmptyContribution(centralServerId);
     Optional<Contribution> oldContribution = repository.fetchCurrentByCentralServerId(centralServerId);
+    if(oldContribution.isEmpty())
+      log.info("empty Contribution");
     if(oldContribution.isPresent()) {
       return mapper.toDTO(oldContribution.get());
     }
