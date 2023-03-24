@@ -1,5 +1,6 @@
 package org.folio.innreach.domain.service.impl;
 
+import static org.folio.spring.scope.FolioExecutionScopeExecutionContextManager.beginFolioExecutionContext;
 import static org.springframework.util.CollectionUtils.isEmpty;
 
 import static org.folio.innreach.domain.service.impl.FolioExecutionContextUtils.executeWithinContext;
@@ -52,7 +53,7 @@ public class SystemUserAuthService {
     if (folioUser.isPresent()) {
       log.info("Setting up existing system user");
       addPermissions(userId);
-      contextBuilder.withUserId(folioContext, userId);
+      beginFolioExecutionContext(contextBuilder.withUserId(folioContext, userId));
     } else {
       log.info("No system user exist, creating...");
 
