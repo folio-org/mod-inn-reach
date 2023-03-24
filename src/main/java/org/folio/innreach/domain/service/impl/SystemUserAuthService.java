@@ -15,6 +15,7 @@ import lombok.SneakyThrows;
 import lombok.extern.log4j.Log4j2;
 
 import org.apache.commons.io.IOUtils;
+import org.folio.spring.FolioExecutionContext;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
@@ -39,16 +40,19 @@ public class SystemUserAuthService {
   private final UserService userService;
   private final FolioExecutionContextBuilder contextBuilder;
   private final SystemUserProperties folioSystemUserConf;
+  private final FolioExecutionContext folioContext;
+
 
   public void setupSystemUser() {
     var folioUser = userService.getUserByName(folioSystemUserConf.getUsername());
     log.info("Inside setupSystem User {}",folioUser);
     var userId = folioUser.map(User::getId)
       .orElse(UUID.randomUUID());
-    log.info("UserId is {} ",userId);
+    log.info("UserId is {} , folioContext UserId is {} ",userId,folioContext.getUserId());
     if (folioUser.isPresent()) {
       log.info("Setting up existing system user");
       addPermissions(userId);
+      contextBuilder.withUserId(folioContext, userId);
     } else {
       log.info("No system user exist, creating...");
 

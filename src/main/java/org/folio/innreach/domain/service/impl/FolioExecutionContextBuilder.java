@@ -26,6 +26,15 @@ public class FolioExecutionContextBuilder {
     return new Builder(moduleMetadata);
   }
 
+  public FolioExecutionContext withUserId(FolioExecutionContext folioContext, UUID userID) {
+    return builder()
+      .withTenantId(folioContext.getTenantId())
+      .withOkapiUrl(folioContext.getOkapiUrl())
+      .withUserId(userID)
+      .withToken(folioContext.getToken())
+      .build();
+  }
+
   public FolioExecutionContext forSystemUser(SystemUser systemUser) {
     log.info("Inside forSystemUser {} ",systemUser);
     return builder()
