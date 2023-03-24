@@ -10,6 +10,7 @@ import static org.folio.innreach.dto.MappingValidationStatusDTO.VALID;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import lombok.RequiredArgsConstructor;
@@ -183,10 +184,10 @@ public class ContributionServiceImpl implements ContributionService {
   public ContributionDTO createOngoingContribution(UUID centralServerId) {
     log.debug("createOngoingContribution:: parameters centralServerId: {}", centralServerId);
     var contribution = createEmptyContribution(centralServerId);
-    Contribution oldContribution = fetchById(contribution.getId());
-    if(oldContribution!=null) {
-      log.info("oldcontributionId :{}",contribution.getId());
-      contribution.setId(oldContribution.getId());
+    Optional<Contribution> oldContribution = repository.findById(contribution.getId());
+    if(oldContribution.isPresent()) {
+      log.info("oldContribution ID :{}",contribution.getId());
+      contribution.setId(oldContribution.get().getId());
     }
     contribution.setOngoing(true);
 
