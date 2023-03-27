@@ -463,7 +463,7 @@ public class ContributionJobRunner {
 
     var statistics = new Statistics();
     try {
-      if(getContributionJobContext()!=null && !getContributionJobContext().getContributionId().equals(context.getContributionId())) {
+      if(getContributionJobContext()==null) {
         log.info("setting ongoing contribution context for contributionID:{}",context.getContributionId());
         beginContributionJobContext(context);
       }
@@ -480,7 +480,7 @@ public class ContributionJobRunner {
 //      throw new SocketTimeOutExceptionWrapper(socketTimeoutException.getMessage());
 //    }
     catch (Exception e) {
-      log.info("contributeInstance exception block");
+      log.info("contributeInstance exception block :{}",e.getMessage());
       //instanceExceptionListener.logWriteError(e, instance.getId());
    //   throw e;
     }
