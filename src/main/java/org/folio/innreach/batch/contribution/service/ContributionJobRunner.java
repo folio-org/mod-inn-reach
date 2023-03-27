@@ -146,6 +146,7 @@ public class ContributionJobRunner {
     else {
       // to test if non-eligible increasing count to verify the stopping condition
       log.info("non-eligible instance");
+      log.info("is Initial :{}",getContributionJobContext().isInitialContribution());
       ContributionJobRunner.recordsProcessed.put(context.getTenantId(), recordsProcessed.get(context.getTenantId()) == null ? 1
         : recordsProcessed.get(context.getTenantId())+1);
 
@@ -462,8 +463,10 @@ public class ContributionJobRunner {
 
     var statistics = new Statistics();
     try {
-      beginContributionJobContext(context);
-
+      if(getContributionJobContext()!=null && !getContributionJobContext().getContributionId().equals(context.getContributionId())) {
+        log.info("setting ongoing contribution context for contributionID:{}",context.getContributionId());
+        beginContributionJobContext(context);
+      }
       processor.accept(context, statistics);
       completeContribution(context);
       endContributionJobContext();
