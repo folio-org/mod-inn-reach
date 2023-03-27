@@ -41,13 +41,6 @@ public class KafkaInventoryEventListener {
     concurrency = "${kafka.listener.item.concurrency}")
   public void handleItemEvents(List<ConsumerRecord<String, DomainEvent<Item>>> consumerRecords) {
     log.info("Handling inventory item events from Kafka [number of events: {}]", consumerRecords.size());
-    if(!consumerRecords.isEmpty()) {
-      for (ConsumerRecord<String, DomainEvent<Item>> record : consumerRecords) {
-        log.info("record is: {}",record.value().toString());
-        log.info("new data is: {}",record.value().getData().getNewEntity());
-        log.info("old data is: {}",record.value().getData().getOldEntity());
-      }
-    }
 
     var events = getEvents(consumerRecords);
 
@@ -79,14 +72,6 @@ public class KafkaInventoryEventListener {
     concurrency = "${kafka.listener.instance.concurrency}")
   public void handleInstanceEvents(List<ConsumerRecord<String, DomainEvent<Instance>>> consumerRecords) {
     log.info("Handling inventory instance events from Kafka [number of events: {}]", consumerRecords.size());
-    if(!consumerRecords.isEmpty()) {
-      for (ConsumerRecord<String, DomainEvent<Instance>> record : consumerRecords) {
-        log.info("record is: {}",record.value().toString());
-        log.info("new data is: {}",record.value().getData().getNewEntity());
-        log.info("old data is: {}",record.value().getData().getOldEntity());
-      }
-    }
-
     var events = getEvents(consumerRecords);
 
     eventProcessor.process(events, event -> {
@@ -116,13 +101,6 @@ public class KafkaInventoryEventListener {
     concurrency = "${kafka.listener.holding.concurrency}")
   public void handleHoldingEvents(List<ConsumerRecord<String, DomainEvent<Holding>>> consumerRecords) {
     log.info("Handling inventory holding events from Kafka [number of events: {}]", consumerRecords.size());
-    if(!consumerRecords.isEmpty()) {
-      for (ConsumerRecord<String, DomainEvent<Holding>> record : consumerRecords) {
-        log.info("record is: {}",record.value().toString());
-        log.info("new data is: {}",record.value().getData().getNewEntity());
-        log.info("old data is: {}",record.value().getData().getOldEntity());
-      }
-    }
 
     var events = getEvents(consumerRecords);
 

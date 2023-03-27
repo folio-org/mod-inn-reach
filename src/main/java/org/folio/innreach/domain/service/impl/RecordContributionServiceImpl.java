@@ -55,7 +55,7 @@ public class RecordContributionServiceImpl implements RecordContributionService 
   }
 
   @Override
-  public void deContributeInstance(UUID centralServerId, Instance instance) {
+  public void deContributeInstance(UUID centralServerId, Instance instance) throws SocketTimeoutException{
     var bibId = instance.getHrid();
     log.info("De-contributing bib {}", bibId);
     irContributionService.deContributeBib(centralServerId, bibId);

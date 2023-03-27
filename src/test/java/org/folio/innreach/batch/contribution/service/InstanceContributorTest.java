@@ -111,7 +111,7 @@ class InstanceContributorTest {
   }
 
   @Test
-  void testDeContributeInstance(){
+  void testDeContributeInstance() throws SocketTimeoutException {
     when(irContributionService.deContributeBib(any(), any())).thenReturn(response);
     instanceContributor.deContributeInstance(CENTRAL_SERVER_ID, createInstance());
     verify(irContributionService).deContributeBib(any(),any());

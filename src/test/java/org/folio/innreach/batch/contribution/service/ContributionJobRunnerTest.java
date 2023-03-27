@@ -156,7 +156,7 @@ class ContributionJobRunnerTest {
   }
 
   @Test
-  void shouldRunJob_deContributeIneligibleInstance() {
+  void shouldRunJob_deContributeIneligibleInstance() throws SocketTimeoutException {
     event = InstanceIterationEvent.of(ITERATION_JOB_ID, "test", "test", UUID.randomUUID());
     Instance instance = createInstance();
     instance.setItems(null);
@@ -216,7 +216,7 @@ class ContributionJobRunnerTest {
   }
 
   @Test
-  void runInstanceContribution_shouldDeContribute() {
+  void runInstanceContribution_shouldDeContribute() throws SocketTimeoutException {
     var instance = createInstance();
     var contribution = new ContributionDTO();
     contribution.setId(UUID.randomUUID());
@@ -231,7 +231,7 @@ class ContributionJobRunnerTest {
   }
 
   @Test
-  void testRunInstanceContribution_IneligibleInstance(){
+  void testRunInstanceContribution_IneligibleInstance() throws SocketTimeoutException {
     var instance = createInstance();
     var contribution = new ContributionDTO();
     contribution.setId(UUID.randomUUID());
@@ -243,7 +243,7 @@ class ContributionJobRunnerTest {
   }
 
   @Test
-  void runInstanceDeContribution() {
+  void runInstanceDeContribution() throws SocketTimeoutException {
     var instance = createInstance();
     var contribution = new ContributionDTO();
     contribution.setId(UUID.randomUUID());
@@ -257,7 +257,7 @@ class ContributionJobRunnerTest {
   }
 
   @Test
-  void runInstanceDeContribution_shouldSkipNonContributed() {
+  void runInstanceDeContribution_shouldSkipNonContributed() throws SocketTimeoutException {
     var instance = createInstance();
     var contribution = new ContributionDTO();
     contribution.setId(UUID.randomUUID());
@@ -382,7 +382,7 @@ class ContributionJobRunnerTest {
   }
 
   @Test
-  void runItemDeContribution_shouldDeContributeInstance() {
+  void runItemDeContribution_shouldDeContributeInstance() throws SocketTimeoutException {
     var item = createItem();
     var instance = new Instance().source(MARC_RECORD_SOURCE);
     instance.addItemsItem(item);

@@ -427,6 +427,10 @@ public class ContributionJobRunner {
     catch (ServiceSuspendedException | FeignException | InnReachConnectionException e) {
       throw e;
     }
+    catch (SocketTimeoutException socketTimeoutException) {
+      log.info("socketTimeoutException occur");
+      throw new SocketTimeOutExceptionWrapper(socketTimeoutException.getMessage());
+    }
     catch (Exception e) {
       instanceExceptionListener.logWriteError(e, instance.getId());
     } finally {
@@ -471,23 +475,14 @@ public class ContributionJobRunner {
       completeContribution(context);
       endContributionJobContext();
     }
-    catch (ServiceSuspendedException | FeignException | InnReachConnectionException e) {
+    catch (ServiceSuspendedException | FeignException | InnReachConnectionException | SocketTimeOutExceptionWrapper e) {
       log.info("exception thrown from runOngoing");
       throw e;
     }
-//    catch (SocketTimeoutException socketTimeoutException) {
-//      log.info("socketTimeoutException occur");
-//      throw new SocketTimeOutExceptionWrapper(socketTimeoutException.getMessage());
-//    }
     catch (Exception e) {
       log.info("contributeInstance exception block :{}",e.getMessage());
-      //instanceExceptionListener.logWriteError(e, instance.getId());
-   //   throw e;
+      throw e;
     }
-//    finally {
-//      completeContribution(context);
-//      endContributionJobContext();
-//    }
   }
 
   private boolean isUnknownEvent(InstanceIterationEvent event, UUID iterationJobId) {

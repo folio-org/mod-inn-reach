@@ -4,17 +4,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
-import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.common.serialization.StringDeserializer;
-import org.folio.innreach.batch.contribution.listener.ContributionExceptionListener;
 import org.folio.innreach.batch.contribution.service.ContributionJobRunner;
-import org.folio.innreach.domain.dto.folio.inventorystorage.InstanceIterationEvent;
 import org.folio.innreach.domain.service.impl.TenantScopedExecutionService;
 import org.folio.innreach.external.exception.InnReachConnectionException;
 import org.folio.innreach.external.exception.ServiceSuspendedException;
 import org.folio.innreach.external.exception.SocketTimeOutExceptionWrapper;
-import org.folio.spring.FolioExecutionContext;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.kafka.KafkaProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
@@ -36,7 +31,6 @@ import org.springframework.util.backoff.FixedBackOff;
 
 import static org.folio.innreach.batch.contribution.ContributionJobContextManager.endContributionJobContext;
 import static org.folio.innreach.batch.contribution.ContributionJobContextManager.getContributionJobContext;
-import static org.folio.spring.scope.FolioExecutionScopeExecutionContextManager.beginFolioExecutionContext;
 
 @EnableKafka
 @Log4j2
@@ -52,14 +46,10 @@ public class KafkaListenerConfiguration {
   private final ObjectMapper mapper;
   private final KafkaProperties kafkaProperties;
   private final DomainEventTypeResolver typeResolver;
-  @Qualifier("instanceExceptionListener")
-  private final ContributionExceptionListener contributionExceptionListener;
-
   private final ContributionJobRunner contributionJobRunner;
-
-  private final FolioExecutionContext folioExecutionContext;
-
   private final TenantScopedExecutionService executionService;
+
+  private final RetryConfig retryConfig;
 
   @Bean(KAFKA_CONSUMER_FACTORY)
   public ConsumerFactory<String, DomainEvent> kafkaDomainEventConsumerFactory() {
@@ -99,21 +89,13 @@ public class KafkaListenerConfiguration {
   }
 
   public DefaultErrorHandler errorHandler() {
-    BackOff fixedBackOff = new FixedBackOff(15000, 4);
+    BackOff fixedBackOff = new FixedBackOff(retryConfig.getInterval(), retryConfig.getMaxAttempts());
     DefaultErrorHandler errorHandler = new DefaultErrorHandler((consumerRecord, exception) -> {
       log.info("inside errorHandler for Ongoing contribution");
       // logic to execute when all the retry attempts are exhausted
-      try {
-      //  beginFolioExecutionContext(folioExecutionContext);
-
-        executionService.runTenantScoped(getContributionJobContext().getTenantId(),
+      executionService.runTenantScoped(getContributionJobContext().getTenantId(),
           () -> contributionJobRunner.completeContribution(getContributionJobContext()));
-
-       // contributionJobRunner.completeContribution(getContributionJobContext());
-        endContributionJobContext();
-      } catch (Exception e) {
-        log.warn("something wrong in errorHandler :{}",e.getMessage());
-      }
+      endContributionJobContext();
     }, fixedBackOff);
     errorHandler.addRetryableExceptions(ServiceSuspendedException.class);
     errorHandler.addRetryableExceptions(SocketTimeOutExceptionWrapper.class);

@@ -15,7 +15,7 @@ public interface RecordContributionService {
 
   void contributeInstance(UUID centralServerId, Instance instance) throws SocketTimeoutException;
 
-  void deContributeInstance(UUID centralServerId, Instance instance);
+  void deContributeInstance(UUID centralServerId, Instance instance) throws SocketTimeoutException;
 
   int contributeItems(UUID centralServerId, String bibId, List<Item> items) throws SocketTimeoutException;
 
