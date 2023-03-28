@@ -4,6 +4,7 @@ import java.util.Optional;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.data.domain.AuditorAware;
@@ -23,9 +24,12 @@ public class AuditorAwareImpl implements AuditorAware<AuditableUser> {
   @Override
   public Optional<AuditableUser> getCurrentAuditor() {
     log.debug("Detecting current auditor by: userId = {}", execContext.getUserId());
-
-    var user = userService.getUserById(execContext.getUserId());
-
+    Optional<User> user = Optional.empty();
+    try {
+      user = userService.getUserById(execContext.getUserId());
+    } catch (FeignException ex) {
+      log.error("Feign Exception occurs while retrieving user details: {}", ex.getMessage());
+    }
     Optional<AuditableUser> auditor = user.map(toAuditor()).or(useSystem());
 
     log.debug("Auditor detected: {}", auditor.map(AuditableUser::toString).orElse("EMPTY"));
