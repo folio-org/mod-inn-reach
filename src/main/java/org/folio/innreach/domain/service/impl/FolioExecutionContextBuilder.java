@@ -52,6 +52,10 @@ public class FolioExecutionContextBuilder {
   @With
   @AllArgsConstructor(access = AccessLevel.PRIVATE)
   public static class Builder {
+
+    {
+      log.info("Inside FolioExecutionContext Builder");
+    }
     private final FolioModuleMetadata moduleMetadata;
     private String tenantId;
     private String okapiUrl;

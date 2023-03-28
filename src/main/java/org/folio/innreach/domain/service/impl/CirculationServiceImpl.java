@@ -672,6 +672,10 @@ public class CirculationServiceImpl implements CirculationService {
    */
   @Data
   private static class LocalFolioExecutionContext implements FolioExecutionContext {
+
+    {
+      System.out.println("Inside LocalFolioExecutionContext");
+    }
     private final String tenantId;
     private final String okapiUrl;
     private final String token;

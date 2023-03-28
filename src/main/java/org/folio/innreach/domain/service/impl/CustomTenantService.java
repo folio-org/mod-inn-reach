@@ -14,6 +14,8 @@ import org.folio.spring.liquibase.FolioSpringLiquibase;
 import org.folio.spring.service.TenantService;
 import org.folio.tenant.domain.dto.TenantAttributes;
 
+import javax.annotation.PostConstruct;
+
 @Log4j2
 @Service
 @Primary
@@ -39,14 +41,22 @@ public class CustomTenantService extends TenantService {
     this.folioContext = folioContext;
   }
 
+  @PostConstruct
+  void postConstruct(){
+    System.out.println("Inside postConstruct of CustomTenantService");
+    System.out.println("folioContext header value {} "+folioContext.getAllHeaders() + " userId " +folioContext.getUserId());
+  }
+
   @Override
   protected void afterTenantUpdate(TenantAttributes tenantAttributes) {
     log.debug("Debug testing...");
     log.info("FolioExecutionContext value {} , userId {} ",folioContext,folioContext.getUserId());
     log.info("afterTenantUpdate:: parameters tenantAttributes: {} , context tenantId {} , testTenant Name {} ", tenantAttributes, context.getTenantId(),testTenant.getTenantName());
     log.info(!context.getTenantId().startsWith(testTenant.getTenantName()));
+    if (!context.getTenantId().startsWith(testTenant.getTenantName())) {
       systemUserService.prepareSystemUser();
       contributionJobRunner.cancelJobs();
+    }
   }
 
   @Override
