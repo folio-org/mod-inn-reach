@@ -1,6 +1,5 @@
 package org.folio.innreach.domain.service.impl;
 
-import static org.folio.spring.scope.FolioExecutionScopeExecutionContextManager.beginFolioExecutionContext;
 import static org.springframework.util.CollectionUtils.isEmpty;
 
 import static org.folio.innreach.domain.service.impl.FolioExecutionContextUtils.executeWithinContext;
@@ -16,7 +15,6 @@ import lombok.SneakyThrows;
 import lombok.extern.log4j.Log4j2;
 
 import org.apache.commons.io.IOUtils;
-import org.folio.spring.FolioExecutionContext;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
@@ -41,27 +39,16 @@ public class SystemUserAuthService {
   private final UserService userService;
   private final FolioExecutionContextBuilder contextBuilder;
   private final SystemUserProperties folioSystemUserConf;
-  private final FolioExecutionContext folioContext;
-
 
   public void setupSystemUser() {
     var folioUser = userService.getUserByName(folioSystemUserConf.getUsername());
     log.info("Inside setupSystem User {}",folioUser);
     var userId = folioUser.map(User::getId)
       .orElse(UUID.randomUUID());
-    log.info("UserId is {} , folioContext UserId is {} ",userId,folioContext.getUserId());
+    log.info("UserId is {} ",userId);
     if (folioUser.isPresent()) {
       log.info("Setting up existing system user");
       addPermissions(userId);
-      SystemUser systemUser = new SystemUser();
-      systemUser.setUserId(userId);
-      systemUser.setUserName(folioSystemUserConf.getUsername());
-      systemUser.setOkapiUrl(folioContext.getOkapiUrl());
-      String token = loginSystemUser(systemUser);
-      systemUser.setToken(token);
-
-      beginFolioExecutionContext(contextBuilder.forSystemUser(systemUser));
-      //beginFolioExecutionContext(contextBuilder.withUserId(folioContext, userId));
     } else {
       log.info("No system user exist, creating...");
 
