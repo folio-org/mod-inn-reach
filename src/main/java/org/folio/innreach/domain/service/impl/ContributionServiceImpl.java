@@ -167,7 +167,7 @@ public class ContributionServiceImpl implements ContributionService {
       log.info("responseAfterTrigger: status: {}", responseAfterTrigger.getStatus().toString());
       log.info("responseAfterTrigger: number: {}", responseAfterTrigger.getNumberOfRecordsPublished());
       log.info("responseAfterTrigger: id: {}", responseAfterTrigger.getId());
-      if(!COMPLETED.equals(responseAfterTrigger.getStatus().toString())) {
+      if(!COMPLETED.equalsIgnoreCase(responseAfterTrigger.getStatus().toString())) {
         log.info("not completed yet");
         throw new InnReachException("record is still not there->>"+responseAfterTrigger.getNumberOfRecordsPublished());
       }

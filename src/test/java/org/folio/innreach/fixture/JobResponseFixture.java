@@ -16,4 +16,13 @@ public class JobResponseFixture {
     jobResponse.setNumberOfRecordsPublished(randomInteger(100));
     return jobResponse;
   }
+
+  public static JobResponse updateJobResponse(){
+    var jobResponse = new JobResponse();
+    jobResponse.setId(UUID.randomUUID());
+    jobResponse.setStatus(JobResponse.JobStatus.COMPLETED);
+    jobResponse.setSubmittedDate(OffsetDateTime.now());
+    jobResponse.setNumberOfRecordsPublished(randomInteger(100));
+    return jobResponse;
+  }
 }
