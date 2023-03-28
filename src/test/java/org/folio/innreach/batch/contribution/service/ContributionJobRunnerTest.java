@@ -136,6 +136,15 @@ class ContributionJobRunnerTest {
 
     verify(recordContributor).contributeInstance(any(), any());
     verify(recordContributor).contributeItems(any(), any(), anyList());
+  }
+
+  @Test
+  void testContributeItemsException() throws SocketTimeoutException {
+    event = InstanceIterationEvent.of(ITERATION_JOB_ID, "test", "test", UUID.randomUUID());
+
+    when(validationService.isEligibleForContribution(any(), any(Instance.class))).thenReturn(true);
+    when(validationService.isEligibleForContribution(any(), any(Item.class))).thenReturn(true);
+    when(inventoryViewService.getInstance(any())).thenReturn(createInstanceView().toInstance());
 
     doThrow(ServiceSuspendedException.class).when(recordContributor).contributeItems(any(),any(),any());
     assertThatThrownBy(() -> jobRunner.runInitialContribution(ContributionJobRunnerTest.this.event,TOPIC))
