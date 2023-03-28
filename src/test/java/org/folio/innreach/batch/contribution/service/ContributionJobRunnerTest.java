@@ -1,5 +1,6 @@
 package org.folio.innreach.batch.contribution.service;
 
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static org.folio.innreach.batch.contribution.ContributionJobContextManager.beginContributionJobContext;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
@@ -25,7 +26,11 @@ import java.net.SocketTimeoutException;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
+import feign.FeignException;
 import org.folio.innreach.batch.contribution.InitialContributionJobConsumerContainer;
+import org.folio.innreach.external.exception.InnReachConnectionException;
+import org.folio.innreach.external.exception.ServiceSuspendedException;
+import org.folio.innreach.external.exception.SocketTimeOutExceptionWrapper;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -131,6 +136,23 @@ class ContributionJobRunnerTest {
 
     verify(recordContributor).contributeInstance(any(), any());
     verify(recordContributor).contributeItems(any(), any(), anyList());
+
+    doThrow(ServiceSuspendedException.class).when(recordContributor).contributeItems(any(),any(),any());
+    assertThatThrownBy(() -> jobRunner.runInitialContribution(ContributionJobRunnerTest.this.event,TOPIC))
+      .isInstanceOf(ServiceSuspendedException.class);
+
+    doThrow(FeignException.class).when(recordContributor).contributeItems(any(),any(),any());
+    assertThatThrownBy(() -> jobRunner.runInitialContribution(ContributionJobRunnerTest.this.event,TOPIC))
+      .isInstanceOf(FeignException.class);
+
+    doThrow(InnReachConnectionException.class).when(recordContributor).contributeItems(any(),any(),any());
+    assertThatThrownBy(() -> jobRunner.runInitialContribution(ContributionJobRunnerTest.this.event,TOPIC))
+      .isInstanceOf(InnReachConnectionException.class);
+
+    doThrow(SocketTimeoutException.class).when(recordContributor).contributeItems(any(),any(),any());
+    assertThatThrownBy(() -> jobRunner.runInitialContribution(ContributionJobRunnerTest.this.event,TOPIC))
+      .isInstanceOf(SocketTimeOutExceptionWrapper.class);
+
   }
 
   @Test
@@ -169,6 +191,30 @@ class ContributionJobRunnerTest {
 
     verify(recordContributor).deContributeInstance(CENTRAL_SERVER_ID, instance);
   }
+
+  @Test
+  void testDeContributeIneligibleInstanceException() throws SocketTimeoutException {
+    event = InstanceIterationEvent.of(ITERATION_JOB_ID, "test", "test", UUID.randomUUID());
+    Instance instance = createInstance();
+    instance.setItems(null);
+    when(inventoryViewService.getInstance(any())).thenReturn(instance);
+    when(recordContributor.isContributed(any(), any())).thenReturn(true);
+    doThrow(ServiceSuspendedException.class).when(recordContributor).deContributeInstance(any(),any());
+    assertThatThrownBy(() -> jobRunner.runInitialContribution(ContributionJobRunnerTest.this.event,TOPIC))
+      .isInstanceOf(ServiceSuspendedException.class);
+
+    doThrow(InnReachConnectionException.class).when(recordContributor).deContributeInstance(any(),any());
+    assertThatThrownBy(() -> jobRunner.runInitialContribution(ContributionJobRunnerTest.this.event,TOPIC))
+      .isInstanceOf(InnReachConnectionException.class);
+
+    doThrow(FeignException.class).when(recordContributor).deContributeInstance(any(),any());
+    assertThatThrownBy(() -> jobRunner.runInitialContribution(ContributionJobRunnerTest.this.event,TOPIC))
+      .isInstanceOf(FeignException.class);
+
+    doThrow(SocketTimeoutException.class).when(recordContributor).deContributeInstance(any(),any());
+    assertThatThrownBy(() -> jobRunner.runInitialContribution(ContributionJobRunnerTest.this.event,TOPIC))
+      .isInstanceOf(SocketTimeOutExceptionWrapper.class);
+    }
 
   @Test
   void shouldRunJob_noInstances() {
@@ -309,6 +355,72 @@ class ContributionJobRunnerTest {
     verify(recordContributor).contributeInstance(any(), any());
   }
 
+  @Test
+  void testDeContributeIneligibleItemException() throws SocketTimeoutException {
+    var item = createItem();
+    var instance = new Instance().source(MARC_RECORD_SOURCE);
+    instance.addItemsItem(item);
+    var contribution = new ContributionDTO();
+    contribution.setId(UUID.randomUUID());
+
+    when(validationService.isEligibleForContribution(any(), any(Instance.class))).thenReturn(true);
+    when(validationService.isEligibleForContribution(any(), any(Item.class))).thenReturn(false);
+    when(contributionService.createOngoingContribution(any())).thenReturn(contribution);
+    when(recordContributor.isContributed(any(), any(), any(Item.class))).thenReturn(true);
+
+    doThrow(RuntimeException.class).when(recordContributor).deContributeItem(any(), any());
+    jobRunner.runItemContribution(CENTRAL_SERVER_ID, instance, item);
+    verify(recordContributor).deContributeItem(any(), any());
+    verify(recordContributor).contributeInstance(any(), any());
+
+    doThrow(ServiceSuspendedException.class).when(recordContributor).deContributeItem(any(), any());
+    assertThatThrownBy(() -> jobRunner.runItemContribution(CENTRAL_SERVER_ID, instance, item))
+      .isInstanceOf(ServiceSuspendedException.class);
+
+    doThrow(FeignException.class).when(recordContributor).deContributeItem(any(), any());
+    assertThatThrownBy(() -> jobRunner.runItemContribution(CENTRAL_SERVER_ID, instance, item))
+      .isInstanceOf(FeignException.class);
+
+    doThrow(InnReachConnectionException.class).when(recordContributor).deContributeItem(any(), any());
+    assertThatThrownBy(() -> jobRunner.runItemContribution(CENTRAL_SERVER_ID, instance, item))
+      .isInstanceOf(InnReachConnectionException.class);
+  }
+
+  @Test
+  void testContributionInstanceException() throws SocketTimeoutException {
+    var item = createItem();
+    var instance = new Instance().source(MARC_RECORD_SOURCE);
+    instance.addItemsItem(item);
+    var contribution = new ContributionDTO();
+    contribution.setId(UUID.randomUUID());
+
+    when(validationService.isEligibleForContribution(any(), any(Instance.class))).thenReturn(true);
+    when(validationService.isEligibleForContribution(any(), any(Item.class))).thenReturn(false);
+    when(contributionService.createOngoingContribution(any())).thenReturn(contribution);
+    when(recordContributor.isContributed(any(), any(), any(Item.class))).thenReturn(true);
+
+    doThrow(RuntimeException.class).when(recordContributor).contributeInstance(any(), any());
+    jobRunner.runItemContribution(CENTRAL_SERVER_ID, instance, item);
+    verify(recordContributor).deContributeItem(any(), any());
+    verify(recordContributor).contributeInstance(any(), any());
+
+    doThrow(ServiceSuspendedException.class).when(recordContributor).contributeInstance(any(), any());
+    assertThatThrownBy(() -> jobRunner.runItemContribution(CENTRAL_SERVER_ID, instance, item))
+      .isInstanceOf(ServiceSuspendedException.class);
+
+    doThrow(FeignException.class).when(recordContributor).contributeInstance(any(), any());
+    assertThatThrownBy(() -> jobRunner.runItemContribution(CENTRAL_SERVER_ID, instance, item))
+      .isInstanceOf(FeignException.class);
+
+    doThrow(InnReachConnectionException.class).when(recordContributor).contributeInstance(any(), any());
+    assertThatThrownBy(() -> jobRunner.runItemContribution(CENTRAL_SERVER_ID, instance, item))
+      .isInstanceOf(InnReachConnectionException.class);
+
+    doThrow(SocketTimeoutException.class).when(recordContributor).contributeInstance(any(), any());
+    assertThatThrownBy(() -> jobRunner.runItemContribution(CENTRAL_SERVER_ID, instance, item))
+      .isInstanceOf(SocketTimeOutExceptionWrapper.class);
+
+  }
   @Test
   void runItemContribution_shouldSkipIneligible() throws SocketTimeoutException {
     var instance = createInstance();
