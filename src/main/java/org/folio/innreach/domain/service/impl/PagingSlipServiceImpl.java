@@ -92,7 +92,6 @@ public class PagingSlipServiceImpl implements PagingSlipService {
 
       var hold = transaction.getHold();
       var centralServer = centralServers.get(transaction.getCentralServerCode());
-      System.out.println("transaction " + transaction.toString());
       var pagingSlip = createPagingSlip(hold, item, instance, centralServer, centralAgencies, patronTypes);
 
       pagingSlips.add(pagingSlip);
@@ -256,9 +255,6 @@ public class PagingSlipServiceImpl implements PagingSlipService {
     var itemAgencyDescription = getAgencyDescription(centralAgencies, centralServerCode, itemAgencyCode);
     var patronTypeDescription = getPatronTypeDescription(patronTypes, centralServerCode, centralPatronType);
     var pickupLocation = pickupLocationMapper.fromString(hold.getPickupLocation());
-    System.out.println("The key is ---- " + hold.getPickupLocation());
-    System.out.println("The pickupLocation is ------ " + pickupLocation.toString());
-    System.out.println("The deliver stop is ------ " + pickupLocation.getDeliveryStop());
 
     return new PagingSlipInnReachTransaction()
       .patronName(hold.getPatronName())

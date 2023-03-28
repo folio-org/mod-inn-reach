@@ -31,19 +31,11 @@ public interface InnReachTransactionPickupLocationMapper {
     pickupLocation.setDisplayName(strings[DISPLAY_NAME_POSITION]);
     pickupLocation.setDeliveryStop(strings[DELIVERY_STOP_POSITION]);
 
-//    if (strings.length > 3) {
-//      pickupLocation.setDeliveryStop(strings[DELIVERY_STOP_POSITION]);
-//    }
-
     return pickupLocation;
   }
 
   default String toString(TransactionPickupLocation value) {
     var locationTokens = Lists.newArrayList(value.getPickupLocCode(), value.getDisplayName(), value.getDeliveryStop());
-
-//    if (value.getDeliveryStop() != null) {
-//      locationTokens.add(value.getDeliveryStop());
-//    }
 
     return String.join(PICKUP_LOCATION_DELIMITER, locationTokens);
   }
