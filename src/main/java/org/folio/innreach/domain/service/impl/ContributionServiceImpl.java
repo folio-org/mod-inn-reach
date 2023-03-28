@@ -47,6 +47,7 @@ import org.folio.spring.data.OffsetRequest;
 @Service
 public class ContributionServiceImpl implements ContributionService {
 
+  public static final String COMPLETED = "COMPLETED";
   private final ContributionRepository repository;
   private final ContributionErrorRepository errorRepository;
   private final ContributionMapper mapper;
@@ -166,7 +167,8 @@ public class ContributionServiceImpl implements ContributionService {
       log.info("responseAfterTrigger: status: {}", responseAfterTrigger.getStatus().toString());
       log.info("responseAfterTrigger: number: {}", responseAfterTrigger.getNumberOfRecordsPublished());
       log.info("responseAfterTrigger: id: {}", responseAfterTrigger.getId());
-      if(responseAfterTrigger.getNumberOfRecordsPublished() == 0) {
+      if(!COMPLETED.equals(responseAfterTrigger.getStatus().toString())) {
+        log.info("not completed yet");
         throw new InnReachException("record is still not there->>"+responseAfterTrigger.getNumberOfRecordsPublished());
       }
     }
