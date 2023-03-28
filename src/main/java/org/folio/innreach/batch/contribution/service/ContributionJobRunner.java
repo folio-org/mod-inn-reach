@@ -474,9 +474,9 @@ public class ContributionJobRunner {
   private void completeContribution(ContributionJobContext context) {
     try {
       contributionService.completeContribution(context.getContributionId());
-      log.info("Initial: completed contribution");
+      log.info("completed contribution");
     } catch (Exception e) {
-      log.info("Initial: failed to complete contribution job: {}", context, e);
+      log.info("Failed to complete contribution job: {}", context, e);
     }
   }
 
