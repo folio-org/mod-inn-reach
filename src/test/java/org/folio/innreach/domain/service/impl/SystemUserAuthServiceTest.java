@@ -115,7 +115,7 @@ class SystemUserAuthServiceTest {
   }
 
   private SystemUserAuthService systemUserService(SystemUserProperties properties) {
-    return new SystemUserAuthService(permissionsClient, authnClient, userService, contextBuilder, properties,folioContext);
+    return new SystemUserAuthService(permissionsClient, authnClient, userService, contextBuilder, properties);
   }
 
   private void prepareSystemUser(SystemUserProperties properties) {
