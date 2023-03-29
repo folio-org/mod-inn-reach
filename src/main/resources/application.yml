@@ -171,3 +171,4 @@ kafka:
   backoff:
     interval: ${DEFAULT_INTERVAL:95000}
     max_failure: ${MAX_FAILURE:360}
+  custom-offset: ${DEFAULT_OFFSET:latest}
