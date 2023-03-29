@@ -16,10 +16,12 @@ import com.google.common.collect.Iterables;
 import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.folio.innreach.domain.service.impl.FolioExecutionContextBuilder;
 import org.folio.innreach.external.exception.InnReachConnectionException;
 import org.folio.innreach.external.exception.ServiceSuspendedException;
 import org.folio.innreach.batch.contribution.InitialContributionJobConsumerContainer;
 import org.folio.innreach.external.exception.SocketTimeOutExceptionWrapper;
+import org.folio.spring.DefaultFolioExecutionContext;
 import org.folio.spring.scope.FolioExecutionScopeExecutionContextManager;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.retry.support.RetryTemplate;
@@ -61,6 +63,8 @@ public class ContributionJobRunner {
   @Qualifier("contributionRetryTemplate")
   private final RetryTemplate retryTemplate;
   private final IterationEventReaderFactory itemReaderFactory;
+
+  private final FolioExecutionContextBuilder folioExecutionContextBuilder;
 
   private final Statistics stats = new Statistics();
 
@@ -312,11 +316,12 @@ public class ContributionJobRunner {
 
   public void cancelJobs() {
     log.info("Cancelling unfinished contributions...");
-    FolioExecutionContext fx = folioContext;
-    log.info("Folio context value before endFolioExecutionContext {}",fx);
+    var userId = folioContext.getUserId();
+    log.info("Folio context value before endFolioExecutionContext {}",folioContext);
+    FolioExecutionScopeExecutionContextManager.beginFolioExecutionContext(folioExecutionContextBuilder.withUserId(folioContext,null));
     contributionService.cancelAll();
-    log.info("Folio context value after endFolioExecutionContext {}",fx);
-    FolioExecutionScopeExecutionContextManager.beginFolioExecutionContext(fx);
+    FolioExecutionScopeExecutionContextManager.beginFolioExecutionContext(folioExecutionContextBuilder.withUserId(folioContext,userId));
+    log.info("Folio context value after endFolioExecutionContext {}",folioContext);
     log.info("Contribution service cancellation is done");
     runningInitialContributions.clear();
   }

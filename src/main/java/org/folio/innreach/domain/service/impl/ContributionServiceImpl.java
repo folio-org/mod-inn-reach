@@ -100,7 +100,6 @@ public class ContributionServiceImpl implements ContributionService {
     }
     repository.saveAll(allInProgress);
     log.info("Cancel All is done");
-    FolioExecutionScopeExecutionContextManager.endFolioExecutionContext();
   }
 
   @Override
