@@ -314,7 +314,6 @@ public class ContributionJobRunner {
     log.info("Cancelling unfinished contributions...");
     FolioExecutionContext fx = folioContext;
     log.info("Folio context value before endFolioExecutionContext {}",fx);
-    FolioExecutionScopeExecutionContextManager.endFolioExecutionContext();
     contributionService.cancelAll();
     log.info("Folio context value after endFolioExecutionContext {}",fx);
     FolioExecutionScopeExecutionContextManager.beginFolioExecutionContext(fx);

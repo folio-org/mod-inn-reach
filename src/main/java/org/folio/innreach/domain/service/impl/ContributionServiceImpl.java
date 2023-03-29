@@ -19,6 +19,7 @@ import org.folio.innreach.batch.contribution.IterationEventReaderFactory;
 import org.folio.innreach.config.props.ContributionJobProperties;
 import org.folio.innreach.config.props.FolioEnvironment;
 import org.folio.innreach.external.exception.InnReachException;
+import org.folio.spring.scope.FolioExecutionScopeExecutionContextManager;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.retry.support.RetryTemplate;
@@ -99,6 +100,7 @@ public class ContributionServiceImpl implements ContributionService {
     }
     repository.saveAll(allInProgress);
     log.info("Cancel All is done");
+    FolioExecutionScopeExecutionContextManager.endFolioExecutionContext();
   }
 
   @Override
