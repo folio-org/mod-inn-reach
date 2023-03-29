@@ -30,7 +30,7 @@ import static org.folio.innreach.batch.contribution.ContributionJobContextManage
 @RequiredArgsConstructor
 public class InitialContributionJobConsumerContainer {
 
-  public static final long POLL_TIMEOUT = 9000000L;
+  public static final long POLL_TIMEOUT = 300000L;
   public static Map<String, ConcurrentMessageListenerContainer<String, InstanceIterationEvent>> consumersMap =
     new HashMap<>();
 
