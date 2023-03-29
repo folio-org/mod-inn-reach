@@ -1,5 +1,6 @@
 package org.folio.innreach.controller;
 
+import static org.folio.innreach.fixture.JobResponseFixture.updateJobResponse;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.samePropertyValuesAs;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -271,7 +272,8 @@ class ContributionControllerTest extends BaseControllerTest {
   void return201HttpCode_whenInstanceIterationStarted() {
     var jobResponse = createJobResponse();
     when(instanceStorageClient.startInstanceIteration(any(InstanceIterationRequest.class))).thenReturn(jobResponse);
-    when(instanceStorageClient.getJobById(any())).thenReturn(jobResponse);
+    //update jobResponse
+    when(instanceStorageClient.getJobById(any())).thenReturn(updateJobResponse());
 
     when(materialTypesClient.getMaterialTypes(anyString(), anyInt())).thenReturn(createMaterialTypes());
     when(irLocationService.getAllLocations(any())).thenReturn(createIrLocations());
