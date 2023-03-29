@@ -21,6 +21,9 @@ import javax.annotation.PostConstruct;
 @Primary
 @Lazy
 public class CustomTenantService extends TenantService {
+  {
+    System.out.println("CustomTenantService bean is about to create....");
+  }
 
   private final SystemUserService systemUserService;
   private final ContributionJobRunner contributionJobRunner;
@@ -44,7 +47,7 @@ public class CustomTenantService extends TenantService {
   @PostConstruct
   void postConstruct(){
     System.out.println("Inside postConstruct of CustomTenantService");
-    System.out.println("folioContext header value {} "+folioContext.getAllHeaders() + " userId " +folioContext.getUserId());
+    System.out.println("folioContext header value "+folioContext.getAllHeaders() + " userId " +folioContext.getUserId());
   }
 
   @Override
