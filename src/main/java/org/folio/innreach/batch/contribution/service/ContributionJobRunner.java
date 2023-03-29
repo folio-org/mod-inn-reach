@@ -20,6 +20,7 @@ import org.folio.innreach.external.exception.InnReachConnectionException;
 import org.folio.innreach.external.exception.ServiceSuspendedException;
 import org.folio.innreach.batch.contribution.InitialContributionJobConsumerContainer;
 import org.folio.innreach.external.exception.SocketTimeOutExceptionWrapper;
+import org.folio.spring.scope.FolioExecutionScopeExecutionContextManager;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.retry.support.RetryTemplate;
 import org.springframework.stereotype.Service;
@@ -311,7 +312,12 @@ public class ContributionJobRunner {
 
   public void cancelJobs() {
     log.info("Cancelling unfinished contributions...");
+    FolioExecutionContext fx = folioContext;
+    log.info("Folio context value before endFolioExecutionContext {}",fx);
+    FolioExecutionScopeExecutionContextManager.endFolioExecutionContext();
     contributionService.cancelAll();
+    log.info("Folio context value after endFolioExecutionContext {}",fx);
+    FolioExecutionScopeExecutionContextManager.beginFolioExecutionContext(fx);
     log.info("Contribution service cancellation is done");
     runningInitialContributions.clear();
   }

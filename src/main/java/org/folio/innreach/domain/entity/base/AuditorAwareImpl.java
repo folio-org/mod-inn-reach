@@ -4,7 +4,6 @@ import java.util.Optional;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.data.domain.AuditorAware;
@@ -12,8 +11,6 @@ import org.springframework.data.domain.AuditorAware;
 import org.folio.innreach.domain.dto.folio.User;
 import org.folio.innreach.domain.service.UserService;
 import org.folio.spring.FolioExecutionContext;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
 
 @Log4j2
 @RequiredArgsConstructor
@@ -28,16 +25,10 @@ public class AuditorAwareImpl implements AuditorAware<AuditableUser> {
     log.info("In FolioRequestInterceptor token" + execContext.getToken());
     log.info("In FolioRequestInterceptor tenant" + execContext.getTenantId());
     log.info("Detecting current auditor by: userId = {}", execContext.getUserId());
-    Optional<User> user = Optional.empty();
-    try{
-      user = userService.getUserById(execContext.getUserId());
-    }catch (FeignException ex){
-      log.error("Feign exception occurs {}",ex.getMessage());
-    }
-    log.info("User value {}",user);
+    var user = userService.getUserById(execContext.getUserId());
+    log.info("user value {} ",user);
     Optional<AuditableUser> auditor = user.map(toAuditor()).or(useSystem());
     log.info("Auditor value {}",auditor);
-    log.info("Auditor detected: {}", auditor.map(AuditableUser::toString).orElse("EMPTY"));
     return auditor;
   }
 
