@@ -46,7 +46,7 @@ public class CustomTenantService extends TenantService {
 
   @PostConstruct
   void postConstruct(){
-    System.out.println("Inside postConstruct of CustomTenantService");
+    System.out.println("Inside postConstruct of CustomTenantService with folioContext {} "+folioContext);
     System.out.println("folioContext header value "+folioContext.getAllHeaders() + " userId " +folioContext.getUserId());
   }
 
