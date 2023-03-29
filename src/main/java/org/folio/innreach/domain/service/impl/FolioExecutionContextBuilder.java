@@ -33,6 +33,19 @@ public class FolioExecutionContextBuilder {
       .build();
   }
 
+  public FolioExecutionContext withUserId(FolioExecutionContext folioContext, UUID userID) {
+    return builder()
+      .withTenantId(folioContext.getTenantId())
+      .withOkapiUrl(folioContext.getOkapiUrl())
+      .withUserId(userID)
+      .withToken(folioContext.getToken())
+      .withAllHeaders(folioContext.getAllHeaders())
+      .withModuleMetadata(folioContext.getFolioModuleMetadata())
+      .withOkapiUrl(folioContext.getOkapiUrl())
+      .withRequestId(folioContext.getRequestId())
+      .build();
+  }
+
   public FolioExecutionContext dbOnlyContext(String tenantId) {
     return builder().withTenantId(tenantId).build();
   }
@@ -47,6 +60,7 @@ public class FolioExecutionContextBuilder {
     private UUID userId;
     private final Map<String, Collection<String>> allHeaders;
     private final Map<String, Collection<String>> okapiHeaders;
+    private String requestId;
 
     public Builder(FolioModuleMetadata moduleMetadata) {
       this.moduleMetadata = moduleMetadata;
@@ -89,6 +103,10 @@ public class FolioExecutionContextBuilder {
         @Override
         public FolioModuleMetadata getFolioModuleMetadata() {
           return moduleMetadata;
+        }
+        @Override
+        public String getRequestId() {
+          return requestId;
         }
       };
     }
