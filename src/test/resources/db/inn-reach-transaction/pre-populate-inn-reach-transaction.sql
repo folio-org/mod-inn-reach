@@ -1,7 +1,7 @@
-INSERT INTO transaction_pickup_location (id, pickup_loc_code, display_name, print_name, delivery_stop) VALUES
-('809adcde-3e67-4822-9916-fd653a681358', 'pickupLocCode1', 'displayName1', 'printName1', 'deliveryStop1'),
-('956214e2-6397-49ed-817b-70cc03089951', 'pickupLocCode2', 'displayName2', 'printName2', null),
-('f66fa565-f94e-4984-9642-87196009feb4', 'pickupLocCode3', 'displayName3', 'printName3', 'deliveryStop3');
+INSERT INTO transaction_pickup_location (id, pickup_loc_code, print_name, delivery_stop) VALUES
+('809adcde-3e67-4822-9916-fd653a681358', 'pickupLocCode1', 'printName1', 'deliveryStop1'),
+('956214e2-6397-49ed-817b-70cc03089951', 'pickupLocCode2', 'printName2', 'deliveryStop2'),
+('f66fa565-f94e-4984-9642-87196009feb4', 'pickupLocCode3', 'printName3', 'deliveryStop3');
 
 INSERT INTO transaction_hold (id, transaction_time, pickup_location_id, patron_id, patron_agency_code, item_agency_code, item_id,
 central_item_type, need_before, title, author, folio_patron_id, folio_item_id, due_date_time, folio_request_id, folio_loan_id,
