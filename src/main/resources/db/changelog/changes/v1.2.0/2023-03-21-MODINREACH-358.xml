@@ -5,7 +5,7 @@
                     http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.4.xsd">
 
   <changeSet id="2023-03-21-01__alter-transaction_pickup_location.sql" author="s1mpleGit">
-    <sqlFile path="v1.2.0/sql/2023-03-21-01__alter-transaction_pickup_location.sql" relativeToChangelogFile="true"/>
+    <sqlFile path="v1.2.0/sql/2023-03-21-01__alter-transaction_pickup_location_column_name.sql" relativeToChangelogFile="true"/>
   </changeSet>
 
 </databaseChangeLog>
