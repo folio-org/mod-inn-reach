@@ -262,10 +262,14 @@ public class ContributionJobRunner {
   public void cancelJobs() {
     log.info("Cancelling unfinished contributions...");
     var userId = folioContext.getUserId();
+    log.info("folioContext value1 {}" , folioContext);
     try (var context = new FolioExecutionContextSetter(folioExecutionContextBuilder.withUserId(folioContext,null))) {
       contributionService.cancelAll();
+      log.info("Cancellation is done");
     }
+    log.info("folioContext value2 {}" , folioContext);
     try (var context = new FolioExecutionContextSetter(folioExecutionContextBuilder.withUserId(folioContext,userId))) {
+      log.info("Inside 2nd try");
       runningInitialContributions.clear();
     }
   }
