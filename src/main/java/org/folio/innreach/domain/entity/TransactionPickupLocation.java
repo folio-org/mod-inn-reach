@@ -27,8 +27,8 @@ public class TransactionPickupLocation extends Auditable implements Identifiable
   @Column(name = "pickup_loc_code")
   private String pickupLocCode;
 
-  @Column(name = "display_name")
-  private String displayName;
+  @Column(name = "print_name")
+  private String printName;
 
   @Column(name = "delivery_stop")
   private String deliveryStop;
