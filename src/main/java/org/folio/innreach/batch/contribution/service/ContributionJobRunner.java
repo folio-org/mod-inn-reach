@@ -367,10 +367,11 @@ public class ContributionJobRunner {
       addRecordProcessed();
     }
     catch (ServiceSuspendedException | FeignException | InnReachConnectionException e) {
+      log.info(getContributionJobContext().isInitialContribution() ? "Initial: exception occurred:":"Ongoing: exception occurred:",e);
       throw e;
     }
     catch (SocketTimeoutException socketTimeoutException) {
-      log.info("Initial: socketTimeoutException occurred while contributing items chunk");
+      log.info(getContributionJobContext().isInitialContribution() ? "Initial: socket exception occurred:":"Ongoing: socket exception occurred:",socketTimeoutException);
       throw new SocketTimeOutExceptionWrapper(socketTimeoutException.getMessage());
     }
     catch (Exception e) {
@@ -399,10 +400,11 @@ public class ContributionJobRunner {
       stats.addRecordsContributed(1);
     }
     catch (ServiceSuspendedException | FeignException | InnReachConnectionException e) {
+      log.info(getContributionJobContext().isInitialContribution() ? "Initial: exception occurred:":"Ongoing: exception occurred:",e);
       throw e;
     }
     catch (SocketTimeoutException socketTimeoutException) {
-      log.info("Initial: SocketTimeoutException occurred while contributing instance");
+      log.info(getContributionJobContext().isInitialContribution() ? "Initial: socket exception occurred:":"Ongoing: socket exception occurred:",socketTimeoutException);
       throw new SocketTimeOutExceptionWrapper(socketTimeoutException.getMessage());
     }
     catch (Exception e) {

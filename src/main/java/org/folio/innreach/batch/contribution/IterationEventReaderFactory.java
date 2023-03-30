@@ -54,6 +54,9 @@ public class IterationEventReaderFactory {
   @Value(value = "${kafka.custom-offset}")
   private String DEFAULT_OFFSET;
 
+  @Value(value = "${kafka.listener.instance.concurrency}")
+  private int KAFKA_EVENTS_CONCURRENCY;
+
   @Qualifier("instanceExceptionListener")
   private final ContributionExceptionListener contributionExceptionListener;
 
@@ -98,7 +101,7 @@ public class IterationEventReaderFactory {
 
     var topic = getTopicName(tenantId);
     return new InitialContributionJobConsumerContainer(consumerProperties,topic,keyDeserializer(),valueDeserializer(),
-      retryConfig.getInterval(), retryConfig.getMaxAttempts(), contributionExceptionListener,contributionJobRunner);
+      retryConfig.getInterval(), retryConfig.getMaxAttempts(), KAFKA_EVENTS_CONCURRENCY,contributionExceptionListener,contributionJobRunner);
   }
 
   public String getTopicName(String tenantId) {
