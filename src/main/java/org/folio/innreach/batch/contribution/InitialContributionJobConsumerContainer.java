@@ -43,7 +43,7 @@ public class InitialContributionJobConsumerContainer {
 
   private final Long maxAttempts;
 
-  private static final int CONCURRENCY = 2;
+  private final int concurrency;
 
   private final ContributionExceptionListener contributionExceptionListener;
 
@@ -98,7 +98,8 @@ public class InitialContributionJobConsumerContainer {
     container.setupMessageListener(messageListner);
     container.setCommonErrorHandler(errorHandler());
 
-    container.setConcurrency(CONCURRENCY);
+    log.info("Concurrency is:{}",concurrency);
+    container.setConcurrency(concurrency);
 
     container.start();
 
