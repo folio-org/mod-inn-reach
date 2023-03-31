@@ -11,6 +11,7 @@ import java.util.function.Consumer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 
+import lombok.extern.log4j.Log4j2;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.common.serialization.Deserializer;
 import org.apache.kafka.common.serialization.StringDeserializer;
@@ -18,6 +19,7 @@ import org.folio.innreach.batch.contribution.listener.ContributionExceptionListe
 import org.folio.innreach.batch.contribution.service.ContributionJobRunner;
 import org.folio.innreach.config.RetryConfig;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.kafka.KafkaProperties;
 import org.springframework.kafka.support.serializer.JsonDeserializer;
 import org.springframework.stereotype.Component;
@@ -27,8 +29,11 @@ import org.folio.innreach.config.props.ContributionJobProperties;
 import org.folio.innreach.config.props.FolioEnvironment;
 import org.folio.innreach.domain.dto.folio.inventorystorage.InstanceIterationEvent;
 
+import javax.annotation.PostConstruct;
+
 @Component
 @RequiredArgsConstructor
+@Log4j2
 public class IterationEventReaderFactory {
 
   public static final String ITERATION_JOB_ID_HEADER = "iteration-job-id";
@@ -46,10 +51,17 @@ public class IterationEventReaderFactory {
   private final ContributionJobProperties jobProperties;
   private final ObjectMapper mapper;
 
+  @Value(value = "${kafka.custom-offset}")
+  private String DEFAULT_OFFSET;
+
+  @Value(value = "${kafka.listener.instance.concurrency}")
+  private int KAFKA_EVENTS_CONCURRENCY;
+
   @Qualifier("instanceExceptionListener")
   private final ContributionExceptionListener contributionExceptionListener;
 
   private final RetryConfig retryConfig;
+
 
   public KafkaItemReader<String, InstanceIterationEvent> createReader(String tenantId) {
     Properties props = new Properties();
@@ -82,14 +94,14 @@ public class IterationEventReaderFactory {
   }
 
   public InitialContributionJobConsumerContainer createInitialContributionConsumerContainer(String tenantId, ContributionJobRunner contributionJobRunner) {
-
+    log.info("Default offset is:{}",DEFAULT_OFFSET);
     var consumerProperties = kafkaProperties.buildConsumerProperties();
     consumerProperties.put(GROUP_ID_CONFIG, jobProperties.getReaderGroupId());
-    consumerProperties.put(AUTO_OFFSET_RESET_CONFIG,"latest");
+    consumerProperties.put(AUTO_OFFSET_RESET_CONFIG,DEFAULT_OFFSET);
 
     var topic = getTopicName(tenantId);
     return new InitialContributionJobConsumerContainer(consumerProperties,topic,keyDeserializer(),valueDeserializer(),
-      retryConfig.getInterval(), retryConfig.getMaxAttempts(), contributionExceptionListener,contributionJobRunner);
+      retryConfig.getInterval(), retryConfig.getMaxAttempts(), KAFKA_EVENTS_CONCURRENCY,contributionExceptionListener,contributionJobRunner);
   }
 
   public String getTopicName(String tenantId) {
