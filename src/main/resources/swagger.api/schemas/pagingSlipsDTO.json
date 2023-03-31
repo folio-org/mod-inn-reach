@@ -61,10 +61,6 @@
                 "description": "Pickup location code",
                 "type": "string"
               },
-              "pickupLocationDisplayName": {
-                "description": "Pickup location display name",
-                "type": "string"
-              },
               "pickupLocationPrintName": {
                 "description": "Pickup location print name",
                 "type": "string"

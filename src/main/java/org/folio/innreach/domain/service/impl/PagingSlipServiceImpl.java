@@ -92,7 +92,6 @@ public class PagingSlipServiceImpl implements PagingSlipService {
 
       var hold = transaction.getHold();
       var centralServer = centralServers.get(transaction.getCentralServerCode());
-
       var pagingSlip = createPagingSlip(hold, item, instance, centralServer, centralAgencies, patronTypes);
 
       pagingSlips.add(pagingSlip);
@@ -269,7 +268,6 @@ public class PagingSlipServiceImpl implements PagingSlipService {
       .itemAgencyCode(itemAgencyCode)
       .itemAgencyDescription(itemAgencyDescription)
       .pickupLocationCode(pickupLocation.getPickupLocCode())
-      .pickupLocationDisplayName(pickupLocation.getDisplayName())
       .pickupLocationPrintName(pickupLocation.getPrintName())
       .pickupLocationDeliveryStop(pickupLocation.getDeliveryStop());
   }
