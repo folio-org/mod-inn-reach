@@ -29,7 +29,7 @@ import org.folio.innreach.external.service.InnReachContributionService;
 @RequiredArgsConstructor
 public class RecordContributionServiceImpl implements RecordContributionService {
 
-  public static final String CONTRIBUTION_TO_D2IRM_IS_CURRENTLY_SUSPENDED = "Contribution to d2irm is currently suspended";
+  public static final String CONTRIBUTION_TO_D2IRM_IS_CURRENTLY_SUSPENDED = "is currently suspended";
   public static final String CONNECTIONS_ALLOWED_FROM_THIS_SERVER = "connections allowed from this server";
   @Qualifier("contributionRetryTemplate")
   private final RetryTemplate retryTemplate;
