@@ -24,12 +24,12 @@ public class InitialContributionMessageListener implements MessageListener<Strin
   public void onMessage(
     ConsumerRecord<String, InstanceIterationEvent> consumerRecord) {
 
-    log.info("Inside InitialContributionMessageListener:onMessage");
+    log.debug("Inside InitialContributionMessageListener:onMessage");
     try {
       UUID jobId = UUID.fromString(new String(consumerRecord.headers().lastHeader(ITERATION_JOB_ID_HEADER).value()));
       UUID instanceId = UUID.fromString(consumerRecord.key());
 
-      log.info("InitialContributionMessageListener :Initial contribution message listener called: JobId: {}, InstanceId: {}", jobId, instanceId);
+      log.info("InitialContributionMessageListener: Initial contribution message listener called: JobId: {}, InstanceId: {}", jobId, instanceId);
 
       InstanceIterationEvent instanceIterationEvent = consumerRecord.value();
 
@@ -42,7 +42,7 @@ public class InitialContributionMessageListener implements MessageListener<Strin
       throw e;
     }
     catch (Exception e) {
-      log.info("InitialContributionMessageListener: error happened while consuming :{}",e.getMessage());
+      log.info("InitialContributionMessageListener: error happened while consuming : {}", e.getMessage());
     }
   }
 }

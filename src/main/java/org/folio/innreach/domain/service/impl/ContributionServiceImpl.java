@@ -125,7 +125,7 @@ public class ContributionServiceImpl implements ContributionService {
 
   @Override
   public void startInitialContribution(UUID centralServerId) {
-    log.info("Starting initial contribution for central server = {}", centralServerId);
+    log.info("Starting initial contribution for central server: {}", centralServerId);
 
     var existingContribution = repository.fetchCurrentByCentralServerId(centralServerId);
     if (existingContribution.isPresent()) {
@@ -141,7 +141,7 @@ public class ContributionServiceImpl implements ContributionService {
     log.info("Triggering inventory instance iteration");
     var iterationJobResponse = triggerInstanceIteration();
     var numberOfRecords = iterationJobResponse.getNumberOfRecordsPublished();
-    log.info("numberOfRecords from iterationJobResponse-> {}",numberOfRecords);
+    log.info("numberOfRecords from iterationJobResponse: {}",numberOfRecords);
 
     JobResponse updatedJobResponse = retryTemplate.execute(r -> getJobResponse(iterationJobResponse.getId()));
 
@@ -167,18 +167,17 @@ public class ContributionServiceImpl implements ContributionService {
       log.info("responseAfterTrigger: status: {}", responseAfterTrigger.getStatus().toString());
       log.info("responseAfterTrigger: number: {}", responseAfterTrigger.getNumberOfRecordsPublished());
       log.info("responseAfterTrigger: id: {}", responseAfterTrigger.getId());
-      if(!COMPLETED.equalsIgnoreCase(responseAfterTrigger.getStatus().toString())) {
-        log.info("not completed yet");
-        throw new InnReachException("record is still not there->>"+responseAfterTrigger.getNumberOfRecordsPublished());
+      if (!COMPLETED.equalsIgnoreCase(responseAfterTrigger.getStatus().toString())) {
+        log.info("responseAfterTrigger: not completed yet");
+        throw new InnReachException("Record is still not there " + responseAfterTrigger.getNumberOfRecordsPublished());
       }
     }
     else {
-      log.info("responseAfterTrigger is null");
+      log.info("responseAfterTrigger: is null");
       throw new InnReachException("responseAfterTrigger is null");
     }
 
     return responseAfterTrigger;
-
   }
 
   @Override

@@ -29,7 +29,7 @@ import org.folio.innreach.external.service.InnReachContributionService;
 @RequiredArgsConstructor
 public class RecordContributionServiceImpl implements RecordContributionService {
 
-  public static final String CONTRIBUTION_TO_D2IRM_IS_CURRENTLY_SUSPENDED = "is currently suspended";
+  public static final String CONTRIBUTION_IS_CURRENTLY_SUSPENDED = "is currently suspended";
   public static final String CONNECTIONS_ALLOWED_FROM_THIS_SERVER = "connections allowed from this server";
   @Qualifier("contributionRetryTemplate")
   private final RetryTemplate retryTemplate;
@@ -139,21 +139,21 @@ public class RecordContributionServiceImpl implements RecordContributionService 
   }
 
   private void checkServiceSuspension(InnReachResponse response) {
-    if (response!=null && response.getErrors()!=null && !response.getErrors().isEmpty()) {
+    if (response != null && response.getErrors() != null && !response.getErrors().isEmpty()) {
       InnReachResponse.Error errorResponse = response.getErrors().get(0);
 
       var error = errorResponse!=null ? errorResponse.getReason() : "";
       String errorMessages = "";
 
-      if(errorResponse!=null && errorResponse.getMessages()!=null && !errorResponse.getMessages().isEmpty()) {
+      if (errorResponse!=null && errorResponse.getMessages()!=null && !errorResponse.getMessages().isEmpty()) {
         errorMessages = errorResponse.getMessages().get(0);
       }
       log.info("checkServiceSuspension error: {}", error);
-      if (error.contains(CONTRIBUTION_TO_D2IRM_IS_CURRENTLY_SUSPENDED)) {
+      if (error.contains(CONTRIBUTION_IS_CURRENTLY_SUSPENDED)) {
         log.info("Contribution to d2irm is currently suspended error message occurred");
-        throw new ServiceSuspendedException(CONTRIBUTION_TO_D2IRM_IS_CURRENTLY_SUSPENDED);
+        throw new ServiceSuspendedException(CONTRIBUTION_IS_CURRENTLY_SUSPENDED);
       }
-      if(errorMessages.contains(CONNECTIONS_ALLOWED_FROM_THIS_SERVER)) {
+      if (errorMessages.contains(CONNECTIONS_ALLOWED_FROM_THIS_SERVER)) {
         log.info("Allowable maximum Connection limit error message occurred");
         throw new InnReachConnectionException("Only 5 connections allowed from this server");
       }

@@ -98,20 +98,16 @@ public class ContributionJobRunner {
     container.tryStartOrCreateConsumer(initialContributionMessageListener);
   }
 
-  public void runInitialContribution(InstanceIterationEvent event,String topic) {
+  public void runInitialContribution(InstanceIterationEvent event, String topic) {
 
     var context = getContributionJobContext(); // added
-    log.info("Initial: count: {}", recordsProcessed.get(context.getTenantId()));
-
-
-    log.info("Initial: iterationJobId {}", context.getIterationJobId());
-    log.info("Initial: statistics recordsTotal: {}", stats.getRecordsTotal());
+    log.info("Initial: count: {}, iterationJobId: {}, recordsTotal: {} ",
+      recordsProcessed.get(context.getTenantId()), context.getIterationJobId(), stats.getRecordsTotal());
 
     stats.setTopic(topic);
     stats.setTenantId(context.getTenantId());
 
     var contributionId = context.getContributionId();
-
     var iterationJobId = context.getIterationJobId();
 
     if (event == null) {
@@ -343,7 +339,7 @@ public class ContributionJobRunner {
       .filter(i -> isEligibleForContribution(centralServerId, i))
       .collect(Collectors.toList());
 
-    if(items.isEmpty()) {
+    if (items.isEmpty()) {
       log.info("item is empty while contributing");
       addRecordProcessed();
     }
@@ -367,11 +363,11 @@ public class ContributionJobRunner {
       addRecordProcessed();
     }
     catch (ServiceSuspendedException | FeignException | InnReachConnectionException e) {
-      log.info(getContributionJobContext().isInitialContribution() ? "Initial: exception occurred:":"Ongoing: exception occurred:",e);
+      log.info(getContributionJobContext().isInitialContribution() ? "Initial: exception occurred:": "Ongoing: exception occurred:", e);
       throw e;
     }
     catch (SocketTimeoutException socketTimeoutException) {
-      log.info(getContributionJobContext().isInitialContribution() ? "Initial: socket exception occurred:":"Ongoing: socket exception occurred:",socketTimeoutException);
+      log.info(getContributionJobContext().isInitialContribution() ? "Initial: socket exception occurred:": "Ongoing: socket exception occurred:", socketTimeoutException);
       throw new SocketTimeOutExceptionWrapper(socketTimeoutException.getMessage());
     }
     catch (Exception e) {
@@ -386,25 +382,25 @@ public class ContributionJobRunner {
   }
 
   private void addRecordProcessed() {
-    if(getContributionJobContext().isInitialContribution()) {
+    if (getContributionJobContext().isInitialContribution()) {
       ContributionJobRunner.recordsProcessed.put(getContributionJobContext().getTenantId(), recordsProcessed.get(getContributionJobContext().getTenantId()) == null ? 1
         : recordsProcessed.get(getContributionJobContext().getTenantId()) + 1);
     }
   }
 
   private void contributeInstance(UUID centralServerId, Instance instance, Statistics stats) {
-    log.info("Initial: contributeInstance instanceId: {}",instance.getId());
+    log.info("Initial: contributeInstance instanceId: {}", instance.getId());
     try {
       stats.addRecordsTotal(1);
       recordContributionService.contributeInstance(centralServerId, instance);
       stats.addRecordsContributed(1);
     }
     catch (ServiceSuspendedException | FeignException | InnReachConnectionException e) {
-      log.info(getContributionJobContext().isInitialContribution() ? "Initial: exception occurred:":"Ongoing: exception occurred:",e);
+      log.info(getContributionJobContext().isInitialContribution() ? "Initial: exception occurred:": "Ongoing: exception occurred:", e);
       throw e;
     }
     catch (SocketTimeoutException socketTimeoutException) {
-      log.info(getContributionJobContext().isInitialContribution() ? "Initial: socket exception occurred:":"Ongoing: socket exception occurred:",socketTimeoutException);
+      log.info(getContributionJobContext().isInitialContribution() ? "Initial: socket exception occurred:": "Ongoing: socket exception occurred:", socketTimeoutException);
       throw new SocketTimeOutExceptionWrapper(socketTimeoutException.getMessage());
     }
     catch (Exception e) {
@@ -476,7 +472,7 @@ public class ContributionJobRunner {
   private void completeContribution(ContributionJobContext context) {
     try {
       contributionService.completeContribution(context.getContributionId());
-      log.info("completed contribution");
+      log.info("Completed contribution");
     } catch (Exception e) {
       log.info("Failed to complete contribution job: {}", context, e);
     }

@@ -110,7 +110,7 @@ class ContributionServiceImplTest {
     when(storageClient.getJobById(any())).thenReturn(jobResponse);
     assertThatThrownBy(() -> service.startInitialContribution(UUID.randomUUID()))
       .isInstanceOf(InnReachException.class)
-      .hasMessageContaining("record is still not there->>");
+      .hasMessageContaining("Record is still not there");
   }
 
   @Test

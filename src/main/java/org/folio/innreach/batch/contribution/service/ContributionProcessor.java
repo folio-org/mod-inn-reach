@@ -18,14 +18,14 @@ public class ContributionProcessor implements IMessageProcessor{
   @Override
   public void processMessage(InstanceIterationEvent event, String topic) {
     try {
-      log.info("processMessage : Message is: {}", event.toString());
+      log.info("processMessage: {}", event.toString());
       contributionJobRunner.runInitialContribution(event, topic);
     }
     catch (ServiceSuspendedException | FeignException | InnReachConnectionException | SocketTimeOutExceptionWrapper e) {
       throw e;
     }
     catch (Exception e) {
-      log.info("ContributionProcessor: error happened while consuming :{}",e.getMessage());
+      log.info("ContributionProcessor: error happened while consuming : {}", e.getMessage());
     }
   }
 }

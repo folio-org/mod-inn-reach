@@ -8,7 +8,7 @@ import java.util.UUID;
 import org.folio.innreach.domain.dto.folio.inventorystorage.JobResponse;
 
 public class JobResponseFixture {
-  public static JobResponse createJobResponse(){
+  public static JobResponse createJobResponse() {
     var jobResponse = new JobResponse();
     jobResponse.setId(UUID.randomUUID());
     jobResponse.setStatus(JobResponse.JobStatus.IN_PROGRESS);
@@ -17,7 +17,7 @@ public class JobResponseFixture {
     return jobResponse;
   }
 
-  public static JobResponse updateJobResponse(){
+  public static JobResponse updateJobResponse() {
     var jobResponse = new JobResponse();
     jobResponse.setId(UUID.randomUUID());
     jobResponse.setStatus(JobResponse.JobStatus.COMPLETED);
