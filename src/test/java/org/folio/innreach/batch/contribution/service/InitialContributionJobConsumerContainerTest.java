@@ -73,8 +73,6 @@ class InitialContributionJobConsumerContainerTest extends BaseKafkaApiTest{
   @Mock
   ContributionExceptionListener contributionExceptionListener;
 
-
-
   @BeforeEach
   void clearMap() {
     InitialContributionJobConsumerContainer.consumersMap.clear();
@@ -100,8 +98,6 @@ class InitialContributionJobConsumerContainerTest extends BaseKafkaApiTest{
     initialContributionJobConsumerContainer.tryStartOrCreateConsumer(initialContributionMessageListener);
 
     await().atMost(Duration.ofSeconds(10L)).until(()->!InitialContributionJobConsumerContainer.consumersMap.get(topicName).isRunning());
-
-
   }
 
   @Test
@@ -123,8 +119,6 @@ class InitialContributionJobConsumerContainerTest extends BaseKafkaApiTest{
     initialContributionJobConsumerContainer.tryStartOrCreateConsumer(initialContributionMessageListener);
 
     await().atMost(Duration.ofSeconds(20L)).until(()->!InitialContributionJobConsumerContainer.consumersMap.get(topicName).isRunning());
-
-
   }
 
   @Test
@@ -143,7 +137,6 @@ class InitialContributionJobConsumerContainerTest extends BaseKafkaApiTest{
     Assertions.assertNotNull(InitialContributionJobConsumerContainer.consumersMap.get(topicName));
 
     Assertions.assertEquals(1,InitialContributionJobConsumerContainer.consumersMap.size());
-
   }
 
   @Test
@@ -166,8 +159,6 @@ class InitialContributionJobConsumerContainerTest extends BaseKafkaApiTest{
   @NotNull
   private InitialContributionMessageListener prepareInitialContributionMessageListener(ContributionJobContext context) {
     var contributionProcessor = new ContributionProcessor(contributionJobRunner);
-
-
     return new InitialContributionMessageListener(contributionProcessor);
   }
 
@@ -201,7 +192,6 @@ class InitialContributionJobConsumerContainerTest extends BaseKafkaApiTest{
     initialContributionJobConsumerContainer.tryStartOrCreateConsumer(initialContributionMessageListener);
     doNothing().when(contributionJobRunner).runInitialContribution(any(), any());
     Assertions.assertNotNull(InitialContributionJobConsumerContainer.consumersMap.get(topicName));
-
   }
 
   private ContributionJobContext prepareContext() {
@@ -225,12 +215,12 @@ class InitialContributionJobConsumerContainerTest extends BaseKafkaApiTest{
   }
 
   public InitialContributionJobConsumerContainer prepareContributionJobConsumerContainer(String tempTopic) {
-      var consumerProperties = kafkaProperties.buildConsumerProperties();
-      consumerProperties.put(GROUP_ID_CONFIG, jobProperties.getReaderGroupId());
+    var consumerProperties = kafkaProperties.buildConsumerProperties();
+    consumerProperties.put(GROUP_ID_CONFIG, jobProperties.getReaderGroupId());
 
-      return new InitialContributionJobConsumerContainer(consumerProperties,tempTopic,keyDeserializer(),valueDeserializer(), maxInterval, maxAttempt,
-        2,contributionExceptionListener,contributionJobRunner);
-    }
+    return new InitialContributionJobConsumerContainer(consumerProperties, tempTopic, keyDeserializer(), valueDeserializer(), maxInterval, maxAttempt,
+      2, contributionExceptionListener, contributionJobRunner);
+  }
 
   private Deserializer<InstanceIterationEvent> valueDeserializer() {
     JsonDeserializer<InstanceIterationEvent> deserializer = new JsonDeserializer<>(InstanceIterationEvent.class, mapper);
@@ -245,7 +235,6 @@ class InitialContributionJobConsumerContainerTest extends BaseKafkaApiTest{
   }
 
   public InstanceIterationEvent createInstanceIterationEvent() {
-
     return InstanceIterationEvent.of(UUID.randomUUID(),"UPDATE","diku",UUID.randomUUID());
   }
 
