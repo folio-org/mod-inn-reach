@@ -94,8 +94,8 @@ class ItemContributorTest {
     response = null;
     service.contributeItems(JOB_CONTEXT.getCentralServerId(), "test", of(createItem()));
     verify(irContributionService,times(4)).contributeBibItems(eq(JOB_CONTEXT.getCentralServerId()), any(), any());
-
   }
+
   @Test
   void shouldContributeItems_throwException() throws SocketTimeoutException {
     InnReachResponse.Error errorResp1 = InnReachResponse.Error.builder().reason("Contribution to d2irm is not currently suspended").build();
@@ -148,5 +148,4 @@ class ItemContributorTest {
     verify(irContributionService).deContributeBibItem(any(),any());
     verify(irContributionService).contributeBibItems(eq(JOB_CONTEXT.getCentralServerId()), any(), any());
   }
-
 }
