@@ -29,7 +29,7 @@ import org.folio.innreach.external.service.InnReachContributionService;
 @RequiredArgsConstructor
 public class RecordContributionServiceImpl implements RecordContributionService {
 
-  public static final String CONTRIBUTION_TO_D2IRM_IS_CURRENTLY_SUSPENDED = "Contribution to d2irm is currently suspended";
+  public static final String CONTRIBUTION_TO_D2IRM_IS_CURRENTLY_SUSPENDED = "is currently suspended";
   public static final String CONNECTIONS_ALLOWED_FROM_THIS_SERVER = "connections allowed from this server";
   @Qualifier("contributionRetryTemplate")
   private final RetryTemplate retryTemplate;
@@ -43,15 +43,15 @@ public class RecordContributionServiceImpl implements RecordContributionService 
   public void contributeInstance(UUID centralServerId, Instance instance) throws SocketTimeoutException{
     var bibId = instance.getHrid();
 
-    log.info("Contributing bib {}", bibId);
+    log.info("contributeInstance: contributing bib {}", bibId);
 
     var bib = recordTransformationService.getBibInfo(centralServerId, instance);
 
-    log.info("after getting bibInfo in contributeInstance");
+    log.info("contributeInstance: got bib info for bib: {}", bibId);
 
     contributeAndVerifyBib(centralServerId, bibId, bib);
 
-    log.info("Finished contribution of bib {}", bibId);
+    log.info("contributeInstance: finished bib {}", bibId);
   }
 
   @Override
@@ -62,10 +62,10 @@ public class RecordContributionServiceImpl implements RecordContributionService 
   }
 
   private void contributeAndVerifyBib(UUID centralServerId, String bibId, BibInfo bib) {
-    log.info("Contributing bib in contributeAndVerifyBib{}", bibId);
+    log.info("contributeAndVerifyBib: bib id {}", bibId);
     retryTemplate.execute(r -> contributeBib(centralServerId, bibId, bib));
     retryTemplate.execute(r -> verifyBibContribution(centralServerId, bibId));
-    log.info("Finished contribution of bib {}", bibId);
+    log.info("contributeAndVerifyBib: finished contribution of bib {}", bibId);
   }
 
   @Override
@@ -148,7 +148,7 @@ public class RecordContributionServiceImpl implements RecordContributionService 
       if(errorResponse!=null && errorResponse.getMessages()!=null && !errorResponse.getMessages().isEmpty()) {
         errorMessages = errorResponse.getMessages().get(0);
       }
-      log.info("checkServiceSuspension:: error is : {}",error);
+      log.info("checkServiceSuspension error: {}", error);
       if (error.contains(CONTRIBUTION_TO_D2IRM_IS_CURRENTLY_SUSPENDED)) {
         log.info("Contribution to d2irm is currently suspended error message occurred");
         throw new ServiceSuspendedException(CONTRIBUTION_TO_D2IRM_IS_CURRENTLY_SUSPENDED);

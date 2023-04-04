@@ -1,6 +1,7 @@
 package org.folio.innreach.domain.service.impl;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.folio.innreach.fixture.JobResponseFixture.updateJobResponse;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
@@ -89,7 +90,7 @@ class ContributionServiceImplTest {
   void startInitialContributionProcess() {
     when(repository.save(any(Contribution.class))).thenReturn(createContribution());
     when(storageClient.startInstanceIteration(any())).thenReturn(createJobResponse());
-    when(storageClient.getJobById(any())).thenReturn(createJobResponse());
+    when(storageClient.getJobById(any())).thenReturn(updateJobResponse());
     when(validationService.getItemTypeMappingStatus(any())).thenReturn(VALID);
     when(validationService.getLocationMappingStatus(any())).thenReturn(VALID);
     when(beanFactory.getBean(ContributionJobRunner.class)).thenReturn(jobRunner);

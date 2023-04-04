@@ -48,6 +48,7 @@ import org.folio.spring.data.OffsetRequest;
 @Service
 public class ContributionServiceImpl implements ContributionService {
 
+  public static final String COMPLETED = "COMPLETED";
   private final ContributionRepository repository;
   private final ContributionErrorRepository errorRepository;
   private final ContributionMapper mapper;
@@ -163,11 +164,12 @@ public class ContributionServiceImpl implements ContributionService {
 
     JobResponse responseAfterTrigger = instanceStorageClient.getJobById(id);
 
-    if(responseAfterTrigger!=null) {
-      log.info("status-->"+responseAfterTrigger.getStatus().toString());
-      log.info("number-->"+responseAfterTrigger.getNumberOfRecordsPublished());
-      log.info("id-->"+responseAfterTrigger.getId());
-      if(responseAfterTrigger.getNumberOfRecordsPublished() == 0) {
+    if (responseAfterTrigger != null) {
+      log.info("responseAfterTrigger: status: {}", responseAfterTrigger.getStatus().toString());
+      log.info("responseAfterTrigger: number: {}", responseAfterTrigger.getNumberOfRecordsPublished());
+      log.info("responseAfterTrigger: id: {}", responseAfterTrigger.getId());
+      if(!COMPLETED.equalsIgnoreCase(responseAfterTrigger.getStatus().toString())) {
+        log.info("not completed yet");
         throw new InnReachException("record is still not there->>"+responseAfterTrigger.getNumberOfRecordsPublished());
       }
     }
@@ -258,10 +260,10 @@ public class ContributionServiceImpl implements ContributionService {
     var iterationJob = instanceStorageClient.startInstanceIteration(request);
     Assert.isTrue(iterationJob.getStatus() == IN_PROGRESS, "Unexpected iteration job status received: " + iterationJob.getStatus());
 
-    log.info("triggerInstanceIteration:: result: {}", iterationJob.toString());
-    log.info("message published number->> {}",iterationJob.getNumberOfRecordsPublished());
-    log.info("message published status->> {}",iterationJob.getStatus().toString());
-    log.info("message published id->> {}",iterationJob.getId());
+    log.info("triggerInstanceIteration: result: {}", iterationJob.toString());
+    log.info("triggerInstanceIteration: message published number: {}", iterationJob.getNumberOfRecordsPublished());
+    log.info("triggerInstanceIteration: message published status: {}", iterationJob.getStatus().toString());
+    log.info("triggerInstanceIteration: message published id: {}", iterationJob.getId());
     return iterationJob;
   }
 

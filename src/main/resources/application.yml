@@ -33,7 +33,7 @@ spring:
   kafka:
     bootstrap-servers: ${KAFKA_HOST:localhost}:${KAFKA_PORT:9092}
     consumer:
-      max-poll-records: 50
+      max-poll-records: 20
       group-id: ${ENV:folio}-mod-innreach-events-group
     security:
       protocol: ${KAFKA_SECURITY_PROTOCOL:PLAINTEXT}
@@ -171,3 +171,5 @@ kafka:
   backoff:
     interval: ${DEFAULT_INTERVAL:95000}
     max_failure: ${MAX_FAILURE:360}
+  custom-offset: ${DEFAULT_OFFSET:latest}
+  custom-concurrency: ${DEFAULT_CONCURRENCY:2}
