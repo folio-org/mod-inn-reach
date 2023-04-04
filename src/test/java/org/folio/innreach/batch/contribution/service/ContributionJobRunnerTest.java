@@ -22,6 +22,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import org.folio.innreach.domain.service.impl.FolioExecutionContextBuilder;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -92,6 +93,10 @@ class ContributionJobRunnerTest {
 
   @InjectMocks
   private ContributionJobRunner jobRunner;
+
+  @Mock
+  private FolioExecutionContextBuilder folioExecutionContextBuilder;
+
 
   @Test
   void shouldRunJob() {
@@ -194,6 +199,7 @@ class ContributionJobRunnerTest {
 
   @Test
   void shouldCancelJobs() {
+    when(folioExecutionContextBuilder.withUserId(any(), any())).thenReturn(folioContext);
     jobRunner.cancelJobs();
 
     verify(contributionService).cancelAll();

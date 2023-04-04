@@ -9,6 +9,7 @@ import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.With;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.stereotype.Component;
 
 import org.folio.innreach.domain.dto.folio.SystemUser;
@@ -17,6 +18,7 @@ import org.folio.spring.FolioModuleMetadata;
 
 @Component
 @RequiredArgsConstructor
+@Log4j2
 public class FolioExecutionContextBuilder {
   private final FolioModuleMetadata moduleMetadata;
 
@@ -30,6 +32,20 @@ public class FolioExecutionContextBuilder {
       .withOkapiUrl(systemUser.getOkapiUrl())
       .withToken(systemUser.getToken())
       .withUserId(systemUser.getUserId())
+      .build();
+  }
+
+  public FolioExecutionContext withUserId(FolioExecutionContext folioContext, UUID userID) {
+    log.debug("withUserId :: Building folioContext with userID {}", userID);
+    return builder()
+      .withTenantId(folioContext.getTenantId())
+      .withOkapiUrl(folioContext.getOkapiUrl())
+      .withUserId(userID)
+      .withToken(folioContext.getToken())
+      .withAllHeaders(folioContext.getAllHeaders())
+      .withModuleMetadata(folioContext.getFolioModuleMetadata())
+      .withOkapiUrl(folioContext.getOkapiUrl())
+      .withRequestId(folioContext.getRequestId())
       .build();
   }
 
@@ -47,6 +63,7 @@ public class FolioExecutionContextBuilder {
     private UUID userId;
     private final Map<String, Collection<String>> allHeaders;
     private final Map<String, Collection<String>> okapiHeaders;
+    private String requestId;
 
     public Builder(FolioModuleMetadata moduleMetadata) {
       this.moduleMetadata = moduleMetadata;
@@ -89,6 +106,11 @@ public class FolioExecutionContextBuilder {
         @Override
         public FolioModuleMetadata getFolioModuleMetadata() {
           return moduleMetadata;
+        }
+
+        @Override
+        public String getRequestId() {
+          return requestId;
         }
       };
     }
