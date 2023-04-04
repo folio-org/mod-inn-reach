@@ -260,12 +260,11 @@ public class ContributionJobRunner {
   }
 
   public void cancelJobs() {
-    log.info("Cancelling unfinished contributions...");
+    log.debug("cancelJobs:: Cancelling unfinished contributions");
     try (var context = new FolioExecutionContextSetter(folioExecutionContextBuilder.withUserId(folioContext,null))) {
       contributionService.cancelAll();
       runningInitialContributions.clear();
     }
-    log.info("Cancellation is done...");
   }
 
   public void cancelInitialContribution(UUID contributionId) {
