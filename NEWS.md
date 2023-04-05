@@ -1,3 +1,8 @@
+## v3.0.1 Draft
+
+### Stories
+* [MODINREACH-358](https://issues.folio.org/browse/MODINREACH-358) - No "Delivery stop" token value in INN-Reach paging slips
+
 ## v3.0.0 2023-02-21
 
 ### Stories
