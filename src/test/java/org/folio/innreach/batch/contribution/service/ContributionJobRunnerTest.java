@@ -1,9 +1,12 @@
 package org.folio.innreach.batch.contribution.service;
 
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.folio.innreach.batch.contribution.ContributionJobContextManager.beginContributionJobContext;
+import static org.junit.Assert.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -17,12 +20,15 @@ import static org.folio.innreach.fixture.ContributionFixture.createInstanceView;
 import static org.folio.innreach.fixture.ContributionFixture.createItem;
 import static org.folio.innreach.fixture.TestUtil.createNoRetryTemplate;
 
+import java.lang.reflect.Field;
+import java.net.SocketTimeoutException;
 import java.util.UUID;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.folio.innreach.domain.service.impl.FolioExecutionContextBuilder;
+import org.folio.innreach.batch.contribution.InitialContributionJobConsumerContainer;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -54,6 +60,8 @@ import org.folio.spring.FolioExecutionContext;
 class ContributionJobRunnerTest {
 
   private static final String MARC_RECORD_SOURCE = "MARC";
+
+  private static final String TOPIC = "test";
   private static final ContributionJobContext JOB_CONTEXT = createContributionJobContext();
   private static final String TENANT_ID = JOB_CONTEXT.getTenantId();
   private static final UUID CONTRIBUTION_ID = JOB_CONTEXT.getContributionId();
@@ -88,6 +96,10 @@ class ContributionJobRunnerTest {
   private IterationEventReaderFactory factory;
   @Mock
   private KafkaItemReader<String, InstanceIterationEvent> reader;
+  @Mock
+  private InstanceIterationEvent event;
+
+  private final ContributionJobContext.Statistics statistics = new ContributionJobContext.Statistics();
   @Spy
   private RetryTemplate retryTemplate = createNoRetryTemplate();
 
@@ -97,102 +109,88 @@ class ContributionJobRunnerTest {
   @Mock
   private FolioExecutionContextBuilder folioExecutionContextBuilder;
 
-  @Test
-  void shouldRunJob() {
-    var event = InstanceIterationEvent.of(ITERATION_JOB_ID, "test", "test", UUID.randomUUID());
+  @Mock
+  private InitialContributionJobConsumerContainer initialContributionJobConsumerContainer;
 
-    when(factory.createReader(any())).thenReturn(reader);
-    when(reader.read())
-      .thenReturn(event)
-      .thenReturn(null);
+  @Spy
+  private ConcurrentHashMap<String, Integer> recordsProcessed = new ConcurrentHashMap<>();
+
+  //added
+  @BeforeEach
+  void setContext() {
+    beginContributionJobContext(JOB_CONTEXT);
+  }
+
+  @Test
+  void shouldRunJob() throws SocketTimeoutException {
+    event = InstanceIterationEvent.of(ITERATION_JOB_ID, "test", "test", UUID.randomUUID());
+
     when(validationService.isEligibleForContribution(any(), any(Instance.class))).thenReturn(true);
     when(validationService.isEligibleForContribution(any(), any(Item.class))).thenReturn(true);
     when(inventoryViewService.getInstance(any())).thenReturn(createInstanceView().toInstance());
+    doThrow(new RuntimeException()).when(recordContributor).contributeInstance(any(),any());
+    doThrow(new RuntimeException()).when(recordContributor).contributeItems(any(),any(),any());
 
-    jobRunner.runInitialContribution(JOB_CONTEXT);
+    jobRunner.runInitialContribution(ContributionJobRunnerTest.this.event,TOPIC);
 
-    verify(reader, times(2)).read();
     verify(recordContributor).contributeInstance(any(), any());
     verify(recordContributor).contributeItems(any(), any(), anyList());
   }
 
   @Test
-  void shouldRunJob_noInstanceItems() {
-    var event = InstanceIterationEvent.of(ITERATION_JOB_ID, "test", "test", UUID.randomUUID());
+  void shouldRunJob_noInstanceItems() throws NoSuchFieldException, IllegalAccessException {
+    event = InstanceIterationEvent.of(ITERATION_JOB_ID, "test", "test", UUID.randomUUID());
     Instance instance = createInstance();
     instance.setItems(null);
 
-    when(factory.createReader(any())).thenReturn(reader);
-    when(reader.read())
-      .thenReturn(event)
-      .thenReturn(null);
     when(inventoryViewService.getInstance(any())).thenReturn(instance);
 
-    jobRunner.runInitialContribution(JOB_CONTEXT);
+    jobRunner.runInitialContribution(ContributionJobRunnerTest.this.event,TOPIC);
 
-    verify(reader, times(2)).read();
     verify(recordContributor).isContributed(CENTRAL_SERVER_ID, instance);
+
+    recordsProcessed.put(JOB_CONTEXT.getTenantId(),10);
+    Field field = ContributionJobRunner.class.getDeclaredField("recordsProcessed");
+    field.setAccessible(true);
+    field.set(null,recordsProcessed);
+    jobRunner.runInitialContribution(ContributionJobRunnerTest.this.event,TOPIC);
+    Assertions.assertEquals(Integer.valueOf(11), recordsProcessed.get(JOB_CONTEXT.getTenantId()));
+    verify(recordContributor,times(2)).isContributed(CENTRAL_SERVER_ID, instance);
+
   }
 
   @Test
   void shouldRunJob_deContributeIneligibleInstance() {
-    var event = InstanceIterationEvent.of(ITERATION_JOB_ID, "test", "test", UUID.randomUUID());
+    event = InstanceIterationEvent.of(ITERATION_JOB_ID, "test", "test", UUID.randomUUID());
     Instance instance = createInstance();
     instance.setItems(null);
 
-    when(factory.createReader(any())).thenReturn(reader);
-    when(reader.read())
-      .thenReturn(event)
-      .thenReturn(null);
     when(inventoryViewService.getInstance(any())).thenReturn(instance);
     when(recordContributor.isContributed(any(), any())).thenReturn(true);
+    doThrow(new RuntimeException()).when(recordContributor).deContributeInstance(any(),any());
 
-    jobRunner.runInitialContribution(JOB_CONTEXT);
+    jobRunner.runInitialContribution(ContributionJobRunnerTest.this.event,TOPIC);
 
-    verify(reader, times(2)).read();
     verify(recordContributor).deContributeInstance(CENTRAL_SERVER_ID, instance);
   }
 
   @Test
   void shouldRunJob_noInstances() {
-    var event = InstanceIterationEvent.of(ITERATION_JOB_ID, "test", "test", UUID.randomUUID());
+    event = InstanceIterationEvent.of(ITERATION_JOB_ID, "test", "test", UUID.randomUUID());
 
-    when(factory.createReader(any())).thenReturn(reader);
-    when(reader.read())
-      .thenReturn(event)
-      .thenReturn(null);
     when(inventoryViewService.getInstance(any())).thenReturn(null);
 
-    jobRunner.runInitialContribution(JOB_CONTEXT);
+    jobRunner.runInitialContribution(ContributionJobRunnerTest.this.event,TOPIC);
 
-    verify(reader, times(2)).read();
     verify(inventoryViewService).getInstance(any());
     verifyNoMoreInteractions(recordContributor);
   }
 
   @Test
   void shouldRunJob_noEvents() {
-    when(factory.createReader(any())).thenReturn(reader);
-    when(reader.read()).thenReturn(null);
 
-    jobRunner.runInitialContribution(JOB_CONTEXT);
+    jobRunner.runInitialContribution(event, TOPIC);
 
-    verify(reader).read();
-    verifyNoInteractions(recordContributor);
-  }
-
-  @Test
-  void throwsExceptionOnRead() {
-    when(factory.createReader(any())).thenReturn(reader);
-    String exceptionMsg = "test message";
-    when(reader.read()).thenThrow(new RuntimeException(exceptionMsg));
-
-    assertThatThrownBy(() -> jobRunner.runInitialContribution(JOB_CONTEXT))
-      .isInstanceOf(RuntimeException.class)
-      .hasMessageContaining(exceptionMsg);
-
-    verify(reader).read();
-    verify(contributionService).completeContribution(CONTRIBUTION_ID);
     verifyNoInteractions(recordContributor);
   }
 
@@ -204,7 +202,7 @@ class ContributionJobRunnerTest {
   }
 
   @Test
-  void runInstanceContribution_shouldContribute() {
+  void runInstanceContribution_shouldContribute() throws SocketTimeoutException {
     var instance = createInstance();
     var contribution = new ContributionDTO();
     contribution.setId(UUID.randomUUID());
@@ -213,6 +211,7 @@ class ContributionJobRunnerTest {
     when(validationService.isEligibleForContribution(any(), any(Item.class))).thenReturn(true);
     when(contributionService.createOngoingContribution(any())).thenReturn(contribution);
     when(recordContributor.isContributed(any(), any(Instance.class))).thenReturn(false);
+    when(folioContext.getTenantId()).thenReturn(JOB_CONTEXT.getTenantId());
 
     jobRunner.runInstanceContribution(CENTRAL_SERVER_ID, instance);
 
@@ -233,6 +232,18 @@ class ContributionJobRunnerTest {
     jobRunner.runInstanceContribution(CENTRAL_SERVER_ID, instance);
 
     verify(recordContributor).deContributeInstance(any(), any());
+  }
+
+  @Test
+  void testRunInstanceContribution_IneligibleInstance(){
+    var instance = createInstance();
+    var contribution = new ContributionDTO();
+    contribution.setId(UUID.randomUUID());
+
+    when(validationService.isEligibleForContribution(any(), any(Instance.class))).thenReturn(false);
+    when(recordContributor.isContributed(any(), any(Instance.class))).thenReturn(false);
+    jobRunner.runInstanceContribution(CENTRAL_SERVER_ID, instance);
+    verify(recordContributor,never()).deContributeInstance(any(), any());
   }
 
   @Test
@@ -264,7 +275,7 @@ class ContributionJobRunnerTest {
   }
 
   @Test
-  void runItemContribution() {
+  void runItemContribution() throws SocketTimeoutException {
     var item = createItem();
     var instance = new Instance().source(MARC_RECORD_SOURCE);
     instance.addItemsItem(item);
@@ -275,6 +286,7 @@ class ContributionJobRunnerTest {
     when(validationService.isEligibleForContribution(any(), any(Item.class))).thenReturn(true);
     when(contributionService.createOngoingContribution(any())).thenReturn(contribution);
     when(recordContributor.isContributed(any(), any(), any(Item.class))).thenReturn(true);
+    when(folioContext.getTenantId()).thenReturn(JOB_CONTEXT.getTenantId());
 
     jobRunner.runItemContribution(CENTRAL_SERVER_ID, instance, item);
 
@@ -283,7 +295,7 @@ class ContributionJobRunnerTest {
   }
 
   @Test
-  void runItemContribution_shouldDeContributeIneligible() {
+  void runItemContribution_shouldDeContributeIneligible() throws SocketTimeoutException {
     var item = createItem();
     var instance = new Instance().source(MARC_RECORD_SOURCE);
     instance.addItemsItem(item);
@@ -302,7 +314,7 @@ class ContributionJobRunnerTest {
   }
 
   @Test
-  void runItemContribution_shouldSkipIneligible() {
+  void runItemContribution_shouldSkipIneligible() throws SocketTimeoutException {
     var instance = createInstance();
     var item = instance.getItems().get(0);
     var contribution = new ContributionDTO();
@@ -318,7 +330,7 @@ class ContributionJobRunnerTest {
   }
 
   @Test
-  void runItemMove() {
+  void runItemMove() throws SocketTimeoutException {
     var oldInstance = createInstance();
     var newInstance = createInstance();
     var item = newInstance.getItems().get(0);
@@ -329,6 +341,7 @@ class ContributionJobRunnerTest {
     when(validationService.isEligibleForContribution(any(), any(Item.class))).thenReturn(true);
     when(contributionService.createOngoingContribution(any())).thenReturn(contribution);
     when(recordContributor.isContributed(any(), any(), any(Item.class))).thenReturn(true);
+    when(folioContext.getTenantId()).thenReturn(JOB_CONTEXT.getTenantId());
 
     jobRunner.runItemMove(CENTRAL_SERVER_ID, oldInstance, newInstance, item);
 
@@ -339,7 +352,7 @@ class ContributionJobRunnerTest {
   }
 
   @Test
-  void runItemDeContribution_shouldDeContribute() {
+  void runItemDeContribution_shouldDeContribute() throws SocketTimeoutException {
     var item = createItem();
     var instance = new Instance().source(MARC_RECORD_SOURCE);
     instance.addItemsItem(item);
@@ -357,7 +370,7 @@ class ContributionJobRunnerTest {
   }
 
   @Test
-  void runItemDeContribution_shouldSkipNonContributed() {
+  void runItemDeContribution_shouldSkipNonContributed() throws SocketTimeoutException {
     var item = createItem();
     var instance = new Instance().source(MARC_RECORD_SOURCE);
     instance.addItemsItem(item);
@@ -390,24 +403,33 @@ class ContributionJobRunnerTest {
   }
 
   @Test
-  void shouldCancelJob_afterOneEvent() throws ExecutionException, InterruptedException, TimeoutException {
-    var event = InstanceIterationEvent.of(ITERATION_JOB_ID, "test", "test", UUID.randomUUID());
+  void startInitialContributionTest() {
+    when(factory.createInitialContributionConsumerContainer(any(),any())).thenReturn(initialContributionJobConsumerContainer);
+    doNothing().when(initialContributionJobConsumerContainer).tryStartOrCreateConsumer(any());
 
-    when(factory.createReader(any())).thenReturn(reader);
-    when(reader.read())
-      .thenAnswer(a -> {
-        jobRunner.cancelInitialContribution(CONTRIBUTION_ID);
-        return event;
-      })
-      .thenReturn(event);
+    jobRunner.startInitialContribution(
+      CENTRAL_SERVER_ID, TENANT_ID, CONTRIBUTION_ID, ITERATION_JOB_ID, 100);
 
-    var future = jobRunner.runInitialContributionAsync(
-      CENTRAL_SERVER_ID, TENANT_ID, CONTRIBUTION_ID, ITERATION_JOB_ID);
+    verify(initialContributionJobConsumerContainer,times(1)).tryStartOrCreateConsumer(any());
 
-    future.get(10, TimeUnit.SECONDS);
+  }
+  @Test
+  public void testCancelInitialContribution(){
+    jobRunner.cancelInitialContribution(UUID.randomUUID());
+    Assertions.assertNotNull(jobRunner);
+  }
+  @Test
+  void shouldRunJob_noEvent() throws SocketTimeoutException {
+    jobRunner.runInitialContribution(null,TOPIC);
+    verify(recordContributor, never()).deContributeItem(any(), any());
+    verify(recordContributor, never()).contributeInstance(any(), any());
+  }
 
-    verify(reader, times(1)).read();
-    verify(contributionService, never()).completeContribution(CONTRIBUTION_ID);
+  @Test
+  void testCancelContributionIfRetryExhausted(){
+    UUID uuid = UUID.randomUUID();
+    jobRunner.cancelContributionIfRetryExhausted(uuid);
+    verify(contributionService).cancelCurrent(uuid);
   }
 
 }

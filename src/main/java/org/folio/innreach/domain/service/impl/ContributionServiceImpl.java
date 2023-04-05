@@ -14,7 +14,14 @@ import java.util.UUID;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.folio.innreach.batch.contribution.InitialContributionJobConsumerContainer;
+import org.folio.innreach.batch.contribution.IterationEventReaderFactory;
+import org.folio.innreach.config.props.ContributionJobProperties;
+import org.folio.innreach.config.props.FolioEnvironment;
+import org.folio.innreach.external.exception.InnReachException;
 import org.springframework.beans.factory.BeanFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.retry.support.RetryTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
@@ -40,6 +47,7 @@ import org.folio.spring.data.OffsetRequest;
 @Service
 public class ContributionServiceImpl implements ContributionService {
 
+  public static final String COMPLETED = "COMPLETED";
   private final ContributionRepository repository;
   private final ContributionErrorRepository errorRepository;
   private final ContributionMapper mapper;
@@ -47,8 +55,14 @@ public class ContributionServiceImpl implements ContributionService {
   private final FolioExecutionContext folioContext;
   private final InstanceStorageClient instanceStorageClient;
   private final BeanFactory beanFactory;
+  private final FolioEnvironment folioEnv;
+  private final ContributionJobProperties jobProperties;
+
 
   private ContributionJobRunner jobRunner;
+
+  @Qualifier("contributionRetryTemplate")
+  private final RetryTemplate retryTemplate;
 
   @Override
   public ContributionDTO getCurrent(UUID centralServerId) {
@@ -111,7 +125,7 @@ public class ContributionServiceImpl implements ContributionService {
 
   @Override
   public void startInitialContribution(UUID centralServerId) {
-    log.info("Starting initial contribution for central server = {}", centralServerId);
+    log.info("Starting initial contribution for central server: {}", centralServerId);
 
     var existingContribution = repository.fetchCurrentByCentralServerId(centralServerId);
     if (existingContribution.isPresent()) {
@@ -126,13 +140,44 @@ public class ContributionServiceImpl implements ContributionService {
 
     log.info("Triggering inventory instance iteration");
     var iterationJobResponse = triggerInstanceIteration();
+    var numberOfRecords = iterationJobResponse.getNumberOfRecordsPublished();
+    log.info("numberOfRecords from iterationJobResponse: {}",numberOfRecords);
+
+    JobResponse updatedJobResponse = retryTemplate.execute(r -> getJobResponse(iterationJobResponse.getId()));
+
+    if(updatedJobResponse!=null) {
+      log.info("numberOfRecords from updatedJobResponse-> {}",updatedJobResponse.getNumberOfRecordsPublished());
+      numberOfRecords = updatedJobResponse.getNumberOfRecordsPublished();
+    }
+
     contribution.setJobId(iterationJobResponse.getId());
 
     repository.save(contribution);
 
-    runInitialContributionJob(centralServerId, contribution);
+    runInitialContributionJob(centralServerId, contribution, numberOfRecords);
 
     log.info("Initial contribution process started");
+  }
+
+  private JobResponse getJobResponse(UUID id) {
+
+    JobResponse responseAfterTrigger = instanceStorageClient.getJobById(id);
+
+    if (responseAfterTrigger != null) {
+      log.info("responseAfterTrigger: status: {}", responseAfterTrigger.getStatus().toString());
+      log.info("responseAfterTrigger: number: {}", responseAfterTrigger.getNumberOfRecordsPublished());
+      log.info("responseAfterTrigger: id: {}", responseAfterTrigger.getId());
+      if (!COMPLETED.equalsIgnoreCase(responseAfterTrigger.getStatus().toString())) {
+        log.info("responseAfterTrigger: not completed yet");
+        throw new InnReachException("Record is still not there " + responseAfterTrigger.getNumberOfRecordsPublished());
+      }
+    }
+    else {
+      log.info("responseAfterTrigger: is null");
+      throw new InnReachException("responseAfterTrigger is null");
+    }
+
+    return responseAfterTrigger;
   }
 
   @Override
@@ -160,7 +205,7 @@ public class ContributionServiceImpl implements ContributionService {
   @Transactional
   @Override
   public void cancelCurrent(UUID centralServerId) {
-    log.debug("cancelCurrent:: parameters centralServerId: {}", centralServerId);
+    log.info("cancelCurrent:: parameters centralServerId: {}", centralServerId);
     repository.fetchCurrentByCentralServerId(centralServerId).ifPresent(contribution -> {
       log.info("Cancelling initial contribution for central server {}", centralServerId);
 
@@ -170,11 +215,17 @@ public class ContributionServiceImpl implements ContributionService {
 
       contribution.setStatus(CANCELLED);
     });
+
+    var topic = String.format("%s.%s.%s",
+      folioEnv.getEnvironment(), folioContext.getTenantId(), jobProperties.getReaderTopic());
+
+    InitialContributionJobConsumerContainer.stopConsumer(topic);
+
   }
 
-  private void runInitialContributionJob(UUID centralServerId, Contribution contribution) {
+  private void runInitialContributionJob(UUID centralServerId, Contribution contribution, Integer numberOfRecords) {
     log.debug("runInitialContributionJob:: parameters centralServerId: {}, contribution: {}", centralServerId, contribution);
-    getJobRunner().runInitialContributionAsync(centralServerId, folioContext.getTenantId(), contribution.getId(), contribution.getJobId());
+    getJobRunner().startInitialContribution(centralServerId, folioContext.getTenantId(), contribution.getId(), contribution.getJobId(), numberOfRecords);
   }
 
   private ContributionJobRunner getJobRunner() {
@@ -202,17 +253,20 @@ public class ContributionServiceImpl implements ContributionService {
     var iterationJob = instanceStorageClient.startInstanceIteration(request);
     Assert.isTrue(iterationJob.getStatus() == IN_PROGRESS, "Unexpected iteration job status received: " + iterationJob.getStatus());
 
-    log.info("triggerInstanceIteration:: result: {}", iterationJob);
+    log.info("triggerInstanceIteration: result: {}", iterationJob.toString());
+    log.info("triggerInstanceIteration: message published number: {}", iterationJob.getNumberOfRecordsPublished());
+    log.info("triggerInstanceIteration: message published status: {}", iterationJob.getStatus().toString());
+    log.info("triggerInstanceIteration: message published id: {}", iterationJob.getId());
     return iterationJob;
   }
 
   private void cancelInstanceIteration(Contribution contribution) {
-    log.debug("cancelInstanceIteration:: parameters contribution: {}", contribution);
+    log.info("cancelInstanceIteration:: parameters contribution: {}", contribution);
     var iterationJobId = contribution.getJobId();
     try {
       instanceStorageClient.cancelInstanceIteration(iterationJobId);
     } catch (Exception e) {
-      log.warn("Unable to cancel instance iteration job {}", iterationJobId, e);
+      log.info("Unable to cancel instance iteration job {}", iterationJobId, e);
     }
   }
 

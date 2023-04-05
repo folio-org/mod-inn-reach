@@ -1,5 +1,6 @@
 package org.folio.innreach.domain.service;
 
+import java.net.SocketTimeoutException;
 import java.util.List;
 import java.util.UUID;
 
@@ -12,13 +13,13 @@ public interface RecordContributionService {
 
   boolean isContributed(UUID centralServerId, Instance instance, Item item);
 
-  void contributeInstance(UUID centralServerId, Instance instance);
+  void contributeInstance(UUID centralServerId, Instance instance) throws SocketTimeoutException;
 
   void deContributeInstance(UUID centralServerId, Instance instance);
 
-  int contributeItems(UUID centralServerId, String bibId, List<Item> items);
+  int contributeItems(UUID centralServerId, String bibId, List<Item> items) throws SocketTimeoutException;
 
-  void moveItem(UUID centralServerId, String newBibId, Item item);
+  void moveItem(UUID centralServerId, String newBibId, Item item) throws SocketTimeoutException;
 
   void deContributeItem(UUID centralServerId, Item item);
 
