@@ -18,6 +18,8 @@ import java.util.stream.StreamSupport;
 import com.google.common.collect.Iterables;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.folio.innreach.domain.service.impl.FolioExecutionContextBuilder;
+import org.folio.spring.scope.FolioExecutionContextSetter;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.retry.support.RetryTemplate;
 import org.springframework.scheduling.annotation.Async;
@@ -63,6 +65,7 @@ public class ContributionJobRunner {
   private final IterationEventReaderFactory itemReaderFactory;
 
   private static final List<UUID> runningInitialContributions = Collections.synchronizedList(new ArrayList<>());
+  private final FolioExecutionContextBuilder folioExecutionContextBuilder;
 
   @Async
   public Future<Void> runInitialContributionAsync(UUID centralServerId, String tenantId, UUID contributionId, UUID iterationJobId) {
@@ -257,9 +260,11 @@ public class ContributionJobRunner {
   }
 
   public void cancelJobs() {
-    log.info("Cancelling unfinished contributions...");
-    contributionService.cancelAll();
-    runningInitialContributions.clear();
+    log.debug("cancelJobs:: Cancelling unfinished contributions");
+    try (var context = new FolioExecutionContextSetter(folioExecutionContextBuilder.withUserId(folioContext,null))) {
+      contributionService.cancelAll();
+      runningInitialContributions.clear();
+    }
   }
 
   public void cancelInitialContribution(UUID contributionId) {
