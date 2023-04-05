@@ -25,6 +25,7 @@ import java.net.SocketTimeoutException;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.folio.innreach.domain.service.impl.FolioExecutionContextBuilder;
 import org.folio.innreach.batch.contribution.InitialContributionJobConsumerContainer;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -104,6 +105,9 @@ class ContributionJobRunnerTest {
 
   @InjectMocks
   private ContributionJobRunner jobRunner;
+
+  @Mock
+  private FolioExecutionContextBuilder folioExecutionContextBuilder;
 
   @Mock
   private InitialContributionJobConsumerContainer initialContributionJobConsumerContainer;
@@ -192,8 +196,8 @@ class ContributionJobRunnerTest {
 
   @Test
   void shouldCancelJobs() {
+    when(folioExecutionContextBuilder.withUserId(any(), any())).thenReturn(folioContext);
     jobRunner.cancelJobs();
-
     verify(contributionService).cancelAll();
   }
 
