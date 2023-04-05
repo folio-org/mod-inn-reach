@@ -4,7 +4,8 @@ import static java.lang.Math.max;
 
 import static org.folio.innreach.batch.contribution.ContributionJobContextManager.beginContributionJobContext;
 import static org.folio.innreach.batch.contribution.ContributionJobContextManager.endContributionJobContext;
-import static org.folio.innreach.domain.service.impl.FolioExecutionContextUtils.executeWithinContext;
+import static org.folio.spring.scope.FolioExecutionScopeExecutionContextManager.beginFolioExecutionContext;
+import static org.folio.spring.scope.FolioExecutionScopeExecutionContextManager.endFolioExecutionContext;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -20,6 +21,7 @@ import com.google.common.collect.Iterables;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.folio.innreach.domain.service.impl.FolioExecutionContextBuilder;
+import org.folio.spring.scope.FolioExecutionScopeExecutionContextManager;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.retry.support.RetryTemplate;
 import org.springframework.scheduling.annotation.Async;
@@ -261,8 +263,9 @@ public class ContributionJobRunner {
 
   public void cancelJobs() {
     log.debug("cancelJobs:: Cancelling unfinished contributions");
-    executeWithinContext(folioExecutionContextBuilder.withUserId(folioContext,null),()->null);
+    beginFolioExecutionContext(folioExecutionContextBuilder.withUserId(folioContext,null));
     contributionService.cancelAll();
+    endFolioExecutionContext();
     runningInitialContributions.clear();
   }
 
