@@ -45,6 +45,7 @@ import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TES
 import static org.springframework.test.context.jdbc.SqlMergeMode.MergeMode.MERGE;
 
 import org.apache.commons.lang3.ObjectUtils;
+import org.folio.innreach.batch.contribution.IterationEventReaderFactory;
 import org.folio.innreach.client.CirculationClient;
 import org.folio.innreach.client.HridSettingsClient;
 import org.folio.innreach.client.ServicePointsUsersClient;
@@ -179,6 +180,9 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
   private InnReachTransactionRepository transactionRepository;
   @Autowired
   private InnReachTransactionHoldMapper transactionHoldMapper;
+
+  @MockBean
+  IterationEventReaderFactory iterationEventReaderFactory;
 
   private HttpHeaders headers = circHeaders();
 

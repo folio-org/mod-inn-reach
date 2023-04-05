@@ -23,7 +23,7 @@ public class InventoryViewServiceImpl implements InventoryViewService {
 
   @Override
   public Instance getInstance(UUID instanceId) {
-    log.debug("getInstance:: parameters instanceId: {}", instanceId);
+    log.info("getInstance:: parameters instanceId: {}", instanceId);
     return fetchInstance(() -> inventoryViewClient.getInstanceById(instanceId))
       .orElseThrow(() -> new IllegalArgumentException("Unable to load inventory-view by instance id: " + instanceId));
   }
