@@ -223,7 +223,7 @@ class ContributionJobRunnerTest {
     doThrow(SocketTimeoutException.class).when(recordContributor).deContributeInstance(any(),any());
     assertThatThrownBy(() -> jobRunner.runInitialContribution(ContributionJobRunnerTest.this.event,TOPIC))
       .isInstanceOf(SocketTimeOutExceptionWrapper.class);
-    }
+  }
 
   @Test
   void shouldRunJob_noInstances() {

@@ -44,11 +44,11 @@ public class ContributionActionServiceImpl implements ContributionActionService 
   private final HoldingsService holdingsService;
   private final ContributionValidationService validationService;
 
+
   @Override
   public void handleInstanceCreation(Instance newInstance) {
     handleInstanceUpdate(newInstance);
   }
-
 
   @Override
   public void handleInstanceUpdate(Instance updatedInstance) {
@@ -76,7 +76,7 @@ public class ContributionActionServiceImpl implements ContributionActionService 
         contributionJobRunner.runInstanceDeContribution(csId, deletedInstance);
       }
     }
-    catch (ServiceSuspendedException | FeignException | InnReachConnectionException | SocketTimeOutExceptionWrapper e) {
+    catch (ServiceSuspendedException | FeignException | InnReachConnectionException e) {
       log.info("exception thrown from handleInstanceDelete");
       throw e;
     }
@@ -130,7 +130,7 @@ public class ContributionActionServiceImpl implements ContributionActionService 
       for (var csId : getCentralServerIds()) {
         contributionJobRunner.runItemDeContribution(csId, instance, deletedItem);
       }
-    } catch (ServiceSuspendedException | FeignException | InnReachConnectionException | SocketTimeOutExceptionWrapper e) {
+    } catch (ServiceSuspendedException | FeignException | InnReachConnectionException e) {
       log.info("exception thrown from handleItemDelete");
       throw e;
     }
@@ -215,7 +215,7 @@ public class ContributionActionServiceImpl implements ContributionActionService 
         items.forEach(item -> contributionJobRunner.runItemDeContribution(csId, instance, item));
       }
     }
-    catch (ServiceSuspendedException | FeignException | InnReachConnectionException | SocketTimeOutExceptionWrapper e) {
+    catch (ServiceSuspendedException | FeignException | InnReachConnectionException e) {
       log.info("exception thrown from handleHoldingDelete");
       throw e;
     }

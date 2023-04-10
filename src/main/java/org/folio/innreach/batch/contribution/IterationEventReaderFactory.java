@@ -54,7 +54,7 @@ public class IterationEventReaderFactory {
   @Value(value = "${kafka.custom-offset}")
   private String DEFAULT_OFFSET;
 
-  @Value(value = "${kafka.listener.instance.concurrency}")
+  @Value(value = "${kafka.custom-concurrency}")
   private int KAFKA_EVENTS_CONCURRENCY;
 
   @Qualifier("instanceExceptionListener")

@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.folio.innreach.external.exception.InnReachConnectionException;
 import org.folio.innreach.external.exception.ServiceSuspendedException;
+import org.folio.innreach.external.exception.SocketTimeOutExceptionWrapper;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.kafka.listener.ListenerExecutionFailedException;
 import org.springframework.retry.support.RetryTemplate;
@@ -39,7 +40,7 @@ public class BatchDomainEventProcessor {
         executionService.runTenantScoped(tenantId,
           () -> processTenantEvents(events, recordProcessor));
       }
-      catch (ServiceSuspendedException | FeignException | InnReachConnectionException e) {
+      catch (ServiceSuspendedException | FeignException | InnReachConnectionException | SocketTimeOutExceptionWrapper e) {
         log.info("exception thrown from process");
         throw e;
       }

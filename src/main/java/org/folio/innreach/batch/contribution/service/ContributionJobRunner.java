@@ -78,7 +78,7 @@ public class ContributionJobRunner {
       .isInitialContribution(true)
       .build();
 
-    log.info("Starting initial contribution: iterationJobId: {}", context.getIterationJobId());
+    log.info("IterationJobId set at startInitialContribution: {}",context.getIterationJobId());
 
     //clear maps key & value of this tenant if present before start
     totalRecords.remove(tenantId);
