@@ -81,7 +81,7 @@ public class InitialContributionJobConsumerContainer {
       return;
     }
 
-    log.info("container is null");
+    log.info("Init contribution container: container is null");
 
     ContainerProperties containerProps = new ContainerProperties(topic);
 
@@ -91,20 +91,17 @@ public class InitialContributionJobConsumerContainer {
 
     ConsumerFactory<String, InstanceIterationEvent> factory = new DefaultKafkaConsumerFactory<>(consumerProperties,
       keyDeserializer,valueDeserializer);
-    log.info("Init contribution container: DefaultKafkaConsumerFactory created");
     container = new ConcurrentMessageListenerContainer<>(factory, containerProps);
-
-
     container.setupMessageListener(messageListner);
     container.setCommonErrorHandler(errorHandler());
+    log.info("Init contribution container: DefaultKafkaConsumerFactory created");
 
-    log.info("Concurrency is:{}",concurrency);
     container.setConcurrency(concurrency);
+    log.info("Init contribution container: concurrency is: {}", concurrency);
 
     container.start();
 
     consumersMap.put(topic, container);
-
 
     log.info("Init contribution container: created and started kafka consumer for topic {}", topic);
   }
@@ -112,13 +109,11 @@ public class InitialContributionJobConsumerContainer {
   public static void stopConsumer(final String topic) {
     log.info("Init contribution container: stopping consumer for topic {}", topic);
     ConcurrentMessageListenerContainer<String, InstanceIterationEvent> container = consumersMap.get(topic);
-    if(container!=null)
-    {
+    if (container!=null) {
       container.stop();
-    }
-    else
+    } else {
       log.warn("Init contribution container: container is already null and stopped");
-
+    }
     log.info("Init contribution container: consumer stopped for topic {}", topic);
   }
 }
