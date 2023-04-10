@@ -2,8 +2,7 @@ package org.folio.innreach.external.service.impl;
 
 import static java.util.Collections.emptyList;
 
-import static org.folio.innreach.domain.service.impl.RecordContributionServiceImpl.CONNECTIONS_ALLOWED_FROM_THIS_SERVER;
-import static org.folio.innreach.domain.service.impl.RecordContributionServiceImpl.CONTRIBUTION_TO_D2IRM_IS_CURRENTLY_SUSPENDED;
+import static org.folio.innreach.domain.service.impl.RecordContributionServiceImpl.*;
 import static org.folio.innreach.external.util.AuthUtils.buildBearerAuthHeader;
 
 import java.net.URI;
@@ -102,8 +101,8 @@ public class InnReachContributionServiceImpl implements InnReachContributionServ
       }
       log.info("checkServiceSuspension:: error is : {}",error);
 
-      if (error.contains(CONTRIBUTION_TO_D2IRM_IS_CURRENTLY_SUSPENDED)) {
-        throw new ServiceSuspendedException(CONTRIBUTION_TO_D2IRM_IS_CURRENTLY_SUSPENDED);
+      if (error.contains(CONTRIBUTION_IS_CURRENTLY_SUSPENDED)) {
+        throw new ServiceSuspendedException(CONTRIBUTION_IS_CURRENTLY_SUSPENDED);
       }
       if(errorMessages.contains(CONNECTIONS_ALLOWED_FROM_THIS_SERVER)) {
         log.info("Allowable maximum Connection limit error message occurred");
