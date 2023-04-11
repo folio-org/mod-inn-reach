@@ -41,7 +41,7 @@ public class BatchDomainEventProcessor {
           () -> processTenantEvents(events, recordProcessor));
       }
       catch (ServiceSuspendedException | FeignException | InnReachConnectionException | SocketTimeOutExceptionWrapper e) {
-        log.info("exception thrown from process");
+        log.info("exception thrown from process", e);
         throw e;
       }
       catch (ListenerExecutionFailedException listenerExecutionFailedException) {
@@ -58,7 +58,7 @@ public class BatchDomainEventProcessor {
           recordProcessor.accept(event);
       }
       catch (ServiceSuspendedException | FeignException | InnReachConnectionException e) {
-        log.info("exception thrown from process");
+        log.info("exception thrown from process", e);
         throw e;
       }
       catch (Exception e) {
