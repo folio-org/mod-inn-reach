@@ -116,7 +116,6 @@ class ContributionJobRunnerTest {
   @Spy
   private ConcurrentHashMap<String, Integer> recordsProcessed = new ConcurrentHashMap<>();
 
-  //added
   @BeforeEach
   void setContext() {
     beginContributionJobContext(JOB_CONTEXT);
