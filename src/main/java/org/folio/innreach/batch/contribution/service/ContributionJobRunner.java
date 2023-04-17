@@ -16,8 +16,6 @@ import com.google.common.collect.Iterables;
 import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
-import org.folio.innreach.domain.service.impl.FolioExecutionContextBuilder;
-import org.folio.spring.scope.FolioExecutionContextSetter;
 import org.folio.innreach.external.exception.InnReachConnectionException;
 import org.folio.innreach.external.exception.ServiceSuspendedException;
 import org.folio.innreach.batch.contribution.InitialContributionJobConsumerContainer;
@@ -66,7 +64,6 @@ public class ContributionJobRunner {
   private final Statistics stats = new Statistics();
 
   private static final List<UUID> runningInitialContributions = Collections.synchronizedList(new ArrayList<>());
-  private final FolioExecutionContextBuilder folioExecutionContextBuilder;
 
   private static Map<String,Integer> totalRecords = new HashMap<>();
   private static ConcurrentHashMap<String, Integer> recordsProcessed = new ConcurrentHashMap<>();
@@ -81,7 +78,7 @@ public class ContributionJobRunner {
       .isInitialContribution(true)
       .build();
 
-    log.info("Starting initial contribution: iterationJobId: {}", context.getIterationJobId());
+    log.info("IterationJobId set at startInitialContribution: {}",context.getIterationJobId());
 
     //clear maps key & value of this tenant if present before start
     totalRecords.remove(tenantId);
@@ -310,11 +307,9 @@ public class ContributionJobRunner {
   }
 
   public void cancelJobs() {
-    log.debug("cancelJobs:: Cancelling unfinished contributions");
-    try (var context = new FolioExecutionContextSetter(folioExecutionContextBuilder.withUserId(folioContext,null))) {
-      contributionService.cancelAll();
-      runningInitialContributions.clear();
-    }
+    log.info("Cancelling unfinished contributions...");
+    contributionService.cancelAll();
+    runningInitialContributions.clear();
   }
 
   public void cancelInitialContribution(UUID contributionId) {
@@ -423,9 +418,14 @@ public class ContributionJobRunner {
       stats.addRecordsTotal(1);
       recordContributionService.deContributeInstance(centralServerId, instance);
       stats.addRecordsDeContributed(1);
+      addRecordProcessed();
     }
-    catch (ServiceSuspendedException ex) {
-      throw new ServiceSuspendedException(ex.getMessage());
+    catch (ServiceSuspendedException | FeignException | InnReachConnectionException e) {
+      throw e;
+    }
+    catch (SocketTimeoutException socketTimeoutException) {
+      log.info("socketTimeoutException occur");
+      throw new SocketTimeOutExceptionWrapper(socketTimeoutException.getMessage());
     }
     catch (Exception e) {
       instanceExceptionListener.logWriteError(e, instance.getId());
@@ -440,7 +440,12 @@ public class ContributionJobRunner {
       stats.addRecordsTotal(1);
       recordContributionService.deContributeItem(centralServerId, item);
       stats.addRecordsDeContributed(1);
-    } catch (Exception e) {
+      addRecordProcessed();
+    }
+    catch (ServiceSuspendedException | FeignException | InnReachConnectionException e) {
+      throw e;
+    }
+    catch (Exception e) {
       itemExceptionListener.logWriteError(e, item.getId());
     } finally {
       stats.addRecordsProcessed(1);
@@ -458,15 +463,21 @@ public class ContributionJobRunner {
 
     var statistics = new Statistics();
     try {
-      beginContributionJobContext(context);
-
+      if(getContributionJobContext()==null) {
+        log.info("setting ongoing contribution context for contributionID:{}",context.getContributionId());
+        beginContributionJobContext(context);
+      }
       processor.accept(context, statistics);
-    } catch (Exception e) {
-      log.warn("Ongoing: Failed to run contribution job for central server: {}", centralServerId, e);
-      throw e;
-    } finally {
       completeContribution(context);
       endContributionJobContext();
+    }
+    catch (ServiceSuspendedException | FeignException | InnReachConnectionException | SocketTimeOutExceptionWrapper e) {
+      log.info("exception thrown from runOngoing");
+      throw e;
+    }
+    catch (Exception e) {
+      log.info("contributeInstance exception block :{}",e.getMessage());
+      throw e;
     }
   }
 
@@ -474,7 +485,7 @@ public class ContributionJobRunner {
     return !Objects.equals(event.getJobId(), iterationJobId);
   }
 
-  private void completeContribution(ContributionJobContext context) {
+  public void completeContribution(ContributionJobContext context) {
     try {
       contributionService.completeContribution(context.getContributionId());
       log.info("Completed contribution");

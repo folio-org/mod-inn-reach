@@ -1,6 +1,10 @@
 ## v3.0.1 Draft
 
 ### Stories
+* [MODINREACH-351](https://issues.folio.org/browse/MODINREACH-351) - Ensure that ongoing contributions can retry when central server is unavailable
+* [MODINREACH-347](https://issues.folio.org/browse/MODINREACH-347) - Record Contribution Errors Should not Cause Contribution Jobs to Halt
+
+### Stories
 * [MODINREACH-358](https://issues.folio.org/browse/MODINREACH-358) - No "Delivery stop" token value in INN-Reach paging slips
 
 ## v3.0.0 2023-02-21

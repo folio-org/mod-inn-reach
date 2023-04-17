@@ -10,6 +10,7 @@ import static org.folio.innreach.dto.MappingValidationStatusDTO.VALID;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import lombok.RequiredArgsConstructor;
@@ -81,7 +82,7 @@ public class ContributionServiceImpl implements ContributionService {
   @Transactional
   @Override
   public ContributionDTO completeContribution(UUID contributionId) {
-    log.debug("completeContribution:: parameters contributionId: {}", contributionId);
+    log.info("completeContribution:: parameters contributionId: {}", contributionId);
     var entity = fetchById(contributionId);
 
     entity.setStatus(COMPLETE);
@@ -182,8 +183,13 @@ public class ContributionServiceImpl implements ContributionService {
 
   @Override
   public ContributionDTO createOngoingContribution(UUID centralServerId) {
-    log.debug("createOngoingContribution:: parameters centralServerId: {}", centralServerId);
+    log.info("createOngoingContribution:: parameters centralServerId: {}", centralServerId);
     var contribution = createEmptyContribution(centralServerId);
+    Optional<Contribution> oldContribution = repository.fetchOngoingByCentralServerId(centralServerId);
+    if(oldContribution.isPresent()) {
+      log.info("createOngoingContribution :: old contribution");
+      return mapper.toDTO(oldContribution.get());
+    }
     contribution.setOngoing(true);
 
     return mapper.toDTO(repository.save(contribution));
@@ -237,7 +243,7 @@ public class ContributionServiceImpl implements ContributionService {
   }
 
   private Contribution fetchById(UUID contributionId) {
-    log.debug("fetchById:: parameters contributionId: {}", contributionId);
+    log.info("fetchById:: parameters contributionId: {}", contributionId);
     return repository.findById(contributionId)
       .orElseThrow(() -> new IllegalArgumentException("Contribution is not found by id: " + contributionId));
   }
