@@ -12,9 +12,8 @@ public interface InnReachTransactionPickupLocationMapper {
 
   String PICKUP_LOCATION_DELIMITER = ":";
   int PICKUP_LOCATION_CODE_POSITION = 0;
-  int DISPLAY_NAME_POSITION = 1;
-  int PRINT_NAME_POSITION = 2;
-  int DELIVERY_STOP_POSITION = 3;
+  int PRINT_NAME_POSITION = 1;
+  int DELIVERY_STOP_POSITION = 2;
 
   default TransactionPickupLocation fromString(String value) {
     if (value == null) {
@@ -23,28 +22,20 @@ public interface InnReachTransactionPickupLocationMapper {
 
     var strings = value.split(PICKUP_LOCATION_DELIMITER);
 
-    if (strings.length > 4 || strings.length < 3) {
-      throw new IllegalArgumentException("Pickup location must consist of 3 or 4 strings delimited by a colon.");
+    if (strings.length != 3) {
+      throw new IllegalArgumentException("Pickup location must consist of 3 strings delimited by a colon.");
     }
 
     var pickupLocation = new TransactionPickupLocation();
     pickupLocation.setPickupLocCode(strings[PICKUP_LOCATION_CODE_POSITION]);
-    pickupLocation.setDisplayName(strings[DISPLAY_NAME_POSITION]);
     pickupLocation.setPrintName(strings[PRINT_NAME_POSITION]);
-
-    if (strings.length > 3) {
-      pickupLocation.setDeliveryStop(strings[DELIVERY_STOP_POSITION]);
-    }
+    pickupLocation.setDeliveryStop(strings[DELIVERY_STOP_POSITION]);
 
     return pickupLocation;
   }
 
   default String toString(TransactionPickupLocation value) {
-    var locationTokens = Lists.newArrayList(value.getPickupLocCode(), value.getDisplayName(), value.getPrintName());
-
-    if (value.getDeliveryStop() != null) {
-      locationTokens.add(value.getDeliveryStop());
-    }
+    var locationTokens = Lists.newArrayList(value.getPickupLocCode(), value.getPrintName(), value.getDeliveryStop());
 
     return String.join(PICKUP_LOCATION_DELIMITER, locationTokens);
   }
