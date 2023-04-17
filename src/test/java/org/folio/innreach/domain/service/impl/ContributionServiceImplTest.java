@@ -3,6 +3,7 @@ package org.folio.innreach.domain.service.impl;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.folio.innreach.fixture.JobResponseFixture.updateJobResponse;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -40,7 +41,6 @@ import org.folio.innreach.mapper.MappingMethods;
 import org.folio.innreach.repository.ContributionErrorRepository;
 import org.folio.innreach.repository.ContributionRepository;
 import org.folio.spring.FolioExecutionContext;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.retry.support.RetryTemplate;
 
 class ContributionServiceImplTest {
@@ -126,6 +126,24 @@ class ContributionServiceImplTest {
     assertEquals(contribution.getId(), updated.getId());
     assertEquals(COMPLETE, updated.getStatus());
   }
+
+  @Test
+  void shouldCreateOngoingContribution() {
+    var contribution = createContribution();
+    var centralServerId = contribution.getCentralServer().getId();
+    when(repository.fetchOngoingByCentralServerId(centralServerId)).thenReturn(Optional.of(contribution));
+    assertNotNull(service.createOngoingContribution(centralServerId));
+  }
+
+  @Test
+  void shouldCreateNewOngoingContribution() {
+    var contribution = createContribution();
+    var centralServerId = contribution.getCentralServer().getId();
+    when(repository.fetchOngoingByCentralServerId(centralServerId)).thenReturn(Optional.empty());
+    when(repository.save(any())).thenReturn(contribution);
+    assertNotNull(service.createOngoingContribution(centralServerId));
+  }
+
 
   @Test
   void shouldUpdateContributionStats() {
