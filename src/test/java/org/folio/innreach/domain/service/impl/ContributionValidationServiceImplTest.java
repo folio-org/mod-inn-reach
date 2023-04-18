@@ -1,6 +1,5 @@
 package org.folio.innreach.domain.service.impl;
 
-import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -17,9 +16,11 @@ import static org.folio.innreach.fixture.ItemContributionOptionsConfigurationFix
 import static org.folio.innreach.fixture.TestUtil.deserializeFromJsonFile;
 
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 import lombok.extern.log4j.Log4j2;
@@ -241,7 +242,7 @@ class ContributionValidationServiceImplTest {
   void returnNullSuppressionStatus() {
     when(contributionConfigService.getCriteria(any())).thenReturn(new ContributionCriteriaDTO());
 
-    var suppress = service.getSuppressionStatus(UUID.randomUUID(), singletonList(UUID.randomUUID()));
+    var suppress = service.getSuppressionStatus(UUID.randomUUID(), Set.of(UUID.randomUUID()));
 
     assertNull(suppress);
   }
@@ -250,7 +251,7 @@ class ContributionValidationServiceImplTest {
   void returnNullSuppressionStatusWithNoCriteriaConfiguration() {
     when(contributionConfigService.getCriteria(any())).thenReturn(null);
 
-    var suppress = service.getSuppressionStatus(UUID.randomUUID(), singletonList(UUID.randomUUID()));
+    var suppress = service.getSuppressionStatus(UUID.randomUUID(), Set.of(UUID.randomUUID()));
 
     assertNull(suppress);
   }
@@ -263,7 +264,7 @@ class ContributionValidationServiceImplTest {
 
     when(contributionConfigService.getCriteria(any())).thenReturn(config);
 
-    var suppress = service.getSuppressionStatus(UUID.randomUUID(), singletonList(statisticalCodeId));
+    var suppress = service.getSuppressionStatus(UUID.randomUUID(), Set.of(statisticalCodeId));
 
     assertNotNull(suppress);
 
@@ -278,7 +279,7 @@ class ContributionValidationServiceImplTest {
 
     when(contributionConfigService.getCriteria(any())).thenReturn(config);
 
-    var suppress = service.getSuppressionStatus(UUID.randomUUID(), singletonList(statisticalCodeId));
+    var suppress = service.getSuppressionStatus(UUID.randomUUID(), Set.of(statisticalCodeId));
 
     assertNotNull(suppress);
 
@@ -293,7 +294,7 @@ class ContributionValidationServiceImplTest {
 
     when(contributionConfigService.getCriteria(any())).thenReturn(config);
 
-    var suppress = service.getSuppressionStatus(UUID.randomUUID(), singletonList(statisticalCodeId));
+    var suppress = service.getSuppressionStatus(UUID.randomUUID(), Set.of(statisticalCodeId));
 
     assertNotNull(suppress);
 
@@ -304,7 +305,13 @@ class ContributionValidationServiceImplTest {
   void throwWhenMultipleStatisticalCodes() {
     when(contributionConfigService.getCriteria(any())).thenReturn(new ContributionCriteriaDTO());
 
-    assertThatThrownBy(() -> service.getSuppressionStatus(UUID.randomUUID(), Collections.nCopies(3, UUID.randomUUID())))
+    var statisticalCodeIds = new HashSet<UUID>(3);
+    for (int i = 0; i < 3; i++) {
+      statisticalCodeIds.add(UUID.randomUUID());
+    }
+
+    UUID centralServerId = UUID.randomUUID();
+    assertThatThrownBy(() -> service.getSuppressionStatus(centralServerId, statisticalCodeIds))
       .isInstanceOf(IllegalArgumentException.class)
       .hasMessageContaining("Multiple statistical codes defined");
   }
@@ -328,7 +335,7 @@ class ContributionValidationServiceImplTest {
   @Test
   void testEligibleInstance_statisticalCodeAllowed() {
     var allowedStatisticalCodeId = UUID.randomUUID();
-    var statisticalCodes = List.of(allowedStatisticalCodeId);
+    var statisticalCodes = Set.of(allowedStatisticalCodeId);
 
     var instance = new Instance();
     instance.setStatisticalCodeIds(statisticalCodes);
@@ -395,7 +402,9 @@ class ContributionValidationServiceImplTest {
 
   @Test
   void testIneligibleInstance_statisticalCodeExcluded() {
-    var statisticalCodes = List.of(DO_NOT_CONTRIBUTE_CODE_ID, LIBRARY_ID);
+
+    var statisticalCodes = Set.of(DO_NOT_CONTRIBUTE_CODE_ID, LIBRARY_ID);
+
 
     var instance = new Instance();
     instance.setStatisticalCodeIds(statisticalCodes);
@@ -411,7 +420,9 @@ class ContributionValidationServiceImplTest {
 
   @Test
   void testInstanceWithMoreThanOneStatisticalCodeExcluded() {
-    var statisticalCodes = List.of(DO_NOT_CONTRIBUTE_CODE_ID);
+
+    var statisticalCodes = Set.of(DO_NOT_CONTRIBUTE_CODE_ID);
+
 
     var instance = new Instance();
     instance.setStatisticalCodeIds(statisticalCodes);
@@ -428,7 +439,7 @@ class ContributionValidationServiceImplTest {
   @Test
   void testIneligibleInstance_noEligibleItems() {
     var instance = new Instance().source(ELIGIBLE_SOURCE);
-    instance.setItems(List.of(new Item().statisticalCodeIds(List.of(DO_NOT_CONTRIBUTE_CODE_ID))));
+    instance.setItems(List.of(new Item().statisticalCodeIds(Set.of(DO_NOT_CONTRIBUTE_CODE_ID))));
 
     when(contributionConfigService.getCriteria(any())).thenReturn(CRITERIA);
     when(holdingsService.find(any())).thenReturn(Optional.empty());

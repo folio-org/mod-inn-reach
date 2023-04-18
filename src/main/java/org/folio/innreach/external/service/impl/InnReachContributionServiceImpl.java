@@ -2,6 +2,7 @@ package org.folio.innreach.external.service.impl;
 
 import static java.util.Collections.emptyList;
 
+import static org.folio.innreach.domain.service.impl.RecordContributionServiceImpl.*;
 import static org.folio.innreach.external.util.AuthUtils.buildBearerAuthHeader;
 
 import java.net.URI;
@@ -9,6 +10,8 @@ import java.util.UUID;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.folio.innreach.external.exception.InnReachConnectionException;
+import org.folio.innreach.external.exception.ServiceSuspendedException;
 import org.springframework.stereotype.Service;
 
 import org.folio.innreach.domain.dto.CentralServerConnectionDetailsDTO;
@@ -31,6 +34,7 @@ public class InnReachContributionServiceImpl implements InnReachContributionServ
 
   @Override
   public InnReachResponse contributeBib(UUID centralServerId, String bibId, BibInfo bib) {
+    log.debug("contributeBib:: parameters centralServerId: {}, bibId: {}, bib: {}", centralServerId, bibId, bib);
     var connectionDetails = getConnectionDetails(centralServerId);
 
     var accessTokenDTO = innReachAuthExternalService.getAccessToken(connectionDetails);
@@ -45,34 +49,71 @@ public class InnReachContributionServiceImpl implements InnReachContributionServ
 
   @Override
   public InnReachResponse deContributeBib(UUID centralServerId, String bibId) {
-    var connectionDetails = getConnectionDetails(centralServerId);
+    try {
+      log.debug("deContributeBib:: parameters centralServerId: {}, bibId: {}", centralServerId, bibId);
+      var connectionDetails = getConnectionDetails(centralServerId);
 
-    var accessTokenDTO = innReachAuthExternalService.getAccessToken(connectionDetails);
-    var connectionUrl = URI.create(connectionDetails.getConnectionUrl());
-    var authorizationHeader = buildBearerAuthHeader(accessTokenDTO.getAccessToken());
-    var localCode = connectionDetails.getLocalCode();
-    var centralCode = connectionDetails.getCentralCode();
+      var accessTokenDTO = innReachAuthExternalService.getAccessToken(connectionDetails);
+      var connectionUrl = URI.create(connectionDetails.getConnectionUrl());
+      var authorizationHeader = buildBearerAuthHeader(accessTokenDTO.getAccessToken());
+      var localCode = connectionDetails.getLocalCode();
+      var centralCode = connectionDetails.getCentralCode();
 
-    return contributionClient.deContributeBib(connectionUrl, authorizationHeader, localCode,
-      centralCode, bibId);
+      var response = contributionClient.deContributeBib(connectionUrl, authorizationHeader, localCode,
+        centralCode, bibId);
+      verifyException(response);
+      return  response;
+    } catch (ServiceSuspendedException ex) {
+      throw new ServiceSuspendedException(ex.getMessage());
+    }
   }
 
   @Override
   public InnReachResponse deContributeBibItem(UUID centralServerId, String itemId) {
-    var connectionDetails = getConnectionDetails(centralServerId);
+    try {
+      log.debug("deContributeBibItem:: parameters centralServerId: {}, itemId: {}", centralServerId, itemId);
+      var connectionDetails = getConnectionDetails(centralServerId);
 
-    var accessTokenDTO = innReachAuthExternalService.getAccessToken(connectionDetails);
-    var connectionUrl = URI.create(connectionDetails.getConnectionUrl());
-    var authorizationHeader = buildBearerAuthHeader(accessTokenDTO.getAccessToken());
-    var localCode = connectionDetails.getLocalCode();
-    var centralCode = connectionDetails.getCentralCode();
+      var accessTokenDTO = innReachAuthExternalService.getAccessToken(connectionDetails);
+      var connectionUrl = URI.create(connectionDetails.getConnectionUrl());
+      var authorizationHeader = buildBearerAuthHeader(accessTokenDTO.getAccessToken());
+      var localCode = connectionDetails.getLocalCode();
+      var centralCode = connectionDetails.getCentralCode();
 
-    return contributionClient.deContributeBibItem(connectionUrl, authorizationHeader, localCode,
-      centralCode, itemId);
+      var response = contributionClient.deContributeBibItem(connectionUrl, authorizationHeader, localCode,
+        centralCode, itemId);
+      verifyException(response);
+      return response;
+    } catch (ServiceSuspendedException ex) {
+      throw new ServiceSuspendedException(ex.getMessage());
+    }
+  }
+
+  private void verifyException(InnReachResponse response) {
+    if (response !=null && response.getErrors()!=null && !response.getErrors().isEmpty()) {
+      InnReachResponse.Error errorResponse = response.getErrors().get(0);
+
+      var error = errorResponse!=null ? errorResponse.getReason() : "";
+      String errorMessages = "";
+
+      if(errorResponse!=null && errorResponse.getMessages()!=null && !errorResponse.getMessages().isEmpty()) {
+        errorMessages = errorResponse.getMessages().get(0);
+      }
+      log.info("checkServiceSuspension:: error is : {}",error);
+
+      if (error.contains(CONTRIBUTION_IS_CURRENTLY_SUSPENDED)) {
+        throw new ServiceSuspendedException(CONTRIBUTION_IS_CURRENTLY_SUSPENDED);
+      }
+      if(errorMessages.contains(CONNECTIONS_ALLOWED_FROM_THIS_SERVER)) {
+        log.info("Allowable maximum Connection limit error message occurred");
+        throw new InnReachConnectionException("Only 5 connections allowed from this server");
+      }
+    }
   }
 
   @Override
   public InnReachResponse contributeBibItems(UUID centralServerId, String bibId, BibItemsInfo bibItems) {
+    log.debug("contributeBibItems:: parameters centralServerId: {}, bibId: {}, bibItems: {}", centralServerId, bibId, bibItems);
     var connectionDetails = getConnectionDetails(centralServerId);
 
     var accessTokenDTO = innReachAuthExternalService.getAccessToken(connectionDetails);
@@ -87,6 +128,7 @@ public class InnReachContributionServiceImpl implements InnReachContributionServ
 
   @Override
   public InnReachResponse lookUpBib(UUID centralServerId, String bibId) {
+    log.debug("lookUpBib:: parameters centralServerId: {}, bibId: {}", centralServerId, bibId);
     var connectionDetails = getConnectionDetails(centralServerId);
 
     var accessTokenDTO = innReachAuthExternalService.getAccessToken(connectionDetails);
@@ -105,6 +147,7 @@ public class InnReachContributionServiceImpl implements InnReachContributionServ
 
   @Override
   public InnReachResponse lookUpBibItem(UUID centralServerId, String bibId, String itemId) {
+    log.debug("lookUpBibItem:: parameters centralServerId: {}, bibId: {}, itemId: {}", centralServerId, bibId, itemId);
     var connectionDetails = getConnectionDetails(centralServerId);
 
     var accessTokenDTO = innReachAuthExternalService.getAccessToken(connectionDetails);

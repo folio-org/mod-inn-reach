@@ -24,6 +24,7 @@ public class InnReachAuthExternalServiceImpl implements InnReachAuthExternalServ
 
   @Override
   public AccessTokenDTO getAccessToken(CentralServerConnectionDetailsDTO connectionDetailsDTO) {
+    log.debug("getAccessToken:: parameters connectionDetailsDTO: {}", connectionDetailsDTO);
     var cachedAccessToken = accessTokenCache.getIfPresent(connectionDetailsDTO.getConnectionUrl());
 
     if (cachedAccessToken != null) {
@@ -39,6 +40,7 @@ public class InnReachAuthExternalServiceImpl implements InnReachAuthExternalServ
 
     accessTokenCache.put(connectionDetailsDTO.getConnectionUrl(), accessTokenDTO);
 
+    log.info("getAccessToken:: result: {}", accessTokenDTO);
     return accessTokenDTO;
   }
 

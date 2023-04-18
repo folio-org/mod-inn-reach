@@ -614,6 +614,25 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   @Test
   @Sql(scripts = {
     "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
+  })
+  void return200HttpCode_and_sortedTransactionList_when_getTransactionsWithPatronName() {
+    var responseEntity = testRestTemplate.getForEntity(
+      "/inn-reach/transactions?query=patronName1", InnReachTransactionsDTO.class
+    );
+
+    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+    assertNotNull(responseEntity.getBody());
+    assertEquals(1, responseEntity.getBody().getTotalRecords());
+
+    var transactions = responseEntity.getBody().getTransactions();
+    assertEquals(1, transactions.size());
+    assertEquals("patronName1", transactions.get(0).getHold().getPatronName());
+  }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql",
     "classpath:db/inn-reach-transaction/pre-populate-another-inn-reach-transaction.sql"
   })
@@ -1811,6 +1830,41 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
 
     assertNotNull(updatedTransaction);
     assertEquals(TransactionStateEnum.BORROWING_SITE_CANCEL, updatedTransaction.getState());
+    assertEquals(null,updatedTransaction.getHold().getFolioHoldingId());
+    assertEquals(null,updatedTransaction.getHold().getFolioLoanId());
+    assertEquals(null,updatedTransaction.getHold().getFolioInstanceId());
+    assertEquals(null,updatedTransaction.getHold().getFolioItemId());
+
+    verify(circulationClient, never()).updateRequest(eq(PRE_POPULATED_PATRON_HOLD_REQUEST_ID), any());
+    verify(actionNotifier).reportCancelItemHold(any());
+    verify(innReachClient).postInnReachApi(any(), anyString(), anyString(), anyString());
+  }
+
+  @ParameterizedTest
+  @EnumSource(names = {"PATRON_HOLD", "TRANSFER"})
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql",
+  })
+  void cancelPatronHold_when_TransactionIsOnHoldOrTransfer_and_RequestIsClosed_withNoVirtualRecord(TransactionState state) {
+    mockFindRequest(PRE_POPULATED_PATRON_HOLD_REQUEST_ID, CLOSED_CANCELLED);
+
+    modifyTransactionState(PRE_POPULATED_PATRON_HOLD_TRANSACTION_ID, state);
+    var cancelPatronHold = createCancelTransactionHold();
+
+    var responseEntity = testRestTemplate.postForEntity(
+      PATRON_HOLD_CANCEL_ENDPOINT, cancelPatronHold, InnReachTransactionDTO.class,
+      PRE_POPULATED_PATRON_HOLD_TRANSACTION_ID);
+
+    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+    var updatedTransaction = responseEntity.getBody();
+
+    assertNotNull(updatedTransaction);
+    assertEquals(TransactionStateEnum.BORROWING_SITE_CANCEL, updatedTransaction.getState());
+    assertEquals(null,updatedTransaction.getHold().getFolioHoldingId());
+    assertEquals(null,updatedTransaction.getHold().getFolioLoanId());
+    assertEquals(null,updatedTransaction.getHold().getFolioInstanceId());
+    assertEquals(null,updatedTransaction.getHold().getFolioItemId());
 
     verify(circulationClient, never()).updateRequest(eq(PRE_POPULATED_PATRON_HOLD_REQUEST_ID), any());
     verify(actionNotifier).reportCancelItemHold(any());

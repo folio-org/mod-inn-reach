@@ -47,6 +47,13 @@ public class LoanServiceImpl implements LoanService {
   }
 
   @Override
+  public void delete(UUID loanId) {
+    circulationClient.findLoan(loanId)
+      .ifPresentOrElse(loanDTO -> circulationClient.deleteLoan(loanId),
+        () -> log.info("Loan not found with loanId : {}", loanId));
+  }
+
+  @Override
   public Optional<LoanDTO> findByItemId(UUID itemId) {
     return getFirstItem(circulationClient.queryLoansByItemId(itemId));
   }

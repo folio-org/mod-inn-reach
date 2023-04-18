@@ -114,6 +114,7 @@ public class RequestServiceImpl implements RequestService {
   @Async
   @Override
   public void createItemHoldRequest(String trackingId, String centralCode) {
+    log.debug("createItemHoldRequest:: parameters trackingId: {}, centralCode: {}", trackingId, centralCode);
     var transaction = fetchTransaction(trackingId, centralCode);
     var hold = transaction.getHold();
     var centralPatronName = hold.getPatronName();
@@ -125,6 +126,7 @@ public class RequestServiceImpl implements RequestService {
       var servicePointId = getItemHoldServicePointId(transaction, patron);
 
       createOwningSiteItemRequest(transaction, patron, servicePointId);
+      log.info("createItemHoldRequest:: Item hold request created");
     } catch (Exception e) {
       handleOwningSiteRequestException(transaction, centralPatronName, e);
     }
@@ -133,6 +135,7 @@ public class RequestServiceImpl implements RequestService {
   @Async
   @Override
   public void createLocalHoldRequest(InnReachTransaction transaction) {
+    log.debug("createLocalHoldRequest:: parameters transaction: {}", transaction);
     var hold = (TransactionLocalHold) transaction.getHold();
     var centralPatronName = hold.getPatronName();
     try {
@@ -142,6 +145,7 @@ public class RequestServiceImpl implements RequestService {
       var servicePointId = getServicePointIdByCode(pickupLocationCode);
 
       createOwningSiteItemRequest(transaction, patron, servicePointId);
+      log.info("createLocalHoldRequest:: Local hold request created");
     } catch (Exception e) {
       handleOwningSiteRequestException(transaction, centralPatronName, e);
     }
@@ -235,6 +239,7 @@ public class RequestServiceImpl implements RequestService {
 
   @Override
   public void createRecallRequest(UUID recallUserId, UUID itemId, UUID instanceId, UUID holdingId) {
+    log.debug("createRecallRequest:: parameters recallUserId: {}, itemId: {}, instanceId: {}, holdingId: {}", recallUserId, itemId, instanceId, holdingId);
     var pickupServicePoint = getDefaultServicePointIdForPatron(recallUserId);
 
     var request = RequestDTO.builder()
@@ -249,12 +254,21 @@ public class RequestServiceImpl implements RequestService {
       .pickupServicePointId(pickupServicePoint)
       .build();
     circulationClient.sendRequest(request);
+    log.info("createRecallRequest:: Recall request created successfully");
   }
 
   @Override
   public RequestDTO findRequest(UUID requestId) {
     return circulationClient.findRequest(requestId).orElseThrow(() -> new EntityNotFoundException(
       "No request found with id = " + requestId));
+  }
+
+  @Override
+  public void deleteRequest(UUID requestId) {
+    circulationClient.findRequest(requestId)
+      .ifPresentOrElse(requestDTO -> circulationClient.deleteRequest(requestId),
+        () -> log.info("Request not present with requestId : {}", requestId));
+    log.info("Request deleted with requestId:{}", requestId);
   }
 
   @Override

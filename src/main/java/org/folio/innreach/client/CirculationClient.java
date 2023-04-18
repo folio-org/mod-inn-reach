@@ -5,11 +5,12 @@ import java.util.UUID;
 
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestBody;
 
 import org.folio.innreach.client.config.FolioFeignClientConfig;
 import org.folio.innreach.domain.dto.folio.ResultList;
@@ -22,7 +23,7 @@ import org.folio.innreach.dto.CheckOutRequestDTO;
 import org.folio.innreach.dto.ClaimItemReturnedRequestDTO;
 import org.folio.innreach.dto.LoanDTO;
 
-@FeignClient(name = "circulation", configuration = FolioFeignClientConfig.class, decode404 = true)
+@FeignClient(name = "circulation", configuration = FolioFeignClientConfig.class, dismiss404 = true)
 public interface CirculationClient {
 
   @GetMapping("/requests?query=(itemId=={itemId})")
@@ -39,6 +40,9 @@ public interface CirculationClient {
 
   @GetMapping("/requests/{requestId}")
   Optional<RequestDTO> findRequest(@PathVariable("requestId") UUID requestId);
+
+  @DeleteMapping("/requests/{requestId}")
+  void deleteRequest(@PathVariable("requestId") UUID requestId);
 
   @PostMapping("/requests")
   RequestDTO sendRequest(@RequestBody RequestDTO requestDTO);
@@ -63,6 +67,9 @@ public interface CirculationClient {
 
   @GetMapping("/loans/{loanId}")
   Optional<LoanDTO> findLoan(@PathVariable("loanId") UUID loanId);
+
+  @DeleteMapping("/loans/{loanId}")
+  Optional<LoanDTO> deleteLoan(@PathVariable("loanId") UUID loanId);
 
   @PostMapping("/loans")
   LoanDTO createLoan(@RequestBody LoanDTO loan);

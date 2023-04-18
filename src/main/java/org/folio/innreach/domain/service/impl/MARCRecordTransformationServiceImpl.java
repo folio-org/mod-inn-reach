@@ -55,6 +55,7 @@ public class MARCRecordTransformationServiceImpl implements MARCRecordTransforma
 
   @Override
   public TransformedMARCRecordDTO transformRecord(UUID centralServerId, Instance inventoryInstance) {
+    log.debug("transformRecord:: parameters centralServerId: {}, inventoryInstance: {}", centralServerId, inventoryInstance);
     if (!isMARCRecord(inventoryInstance)) {
       throw new MarcRecordTransformationException(
         String.format("Source [%s] of inventory instance with id [%s] is not MARC", inventoryInstance.getSource(), inventoryInstance.getId())
@@ -97,6 +98,7 @@ public class MARCRecordTransformationServiceImpl implements MARCRecordTransforma
   }
 
   private MARCTransformationOptionsSettingsDTO getMARCTransformationSettings(UUID centralServerId) {
+    log.debug("getMARCTransformationSettings:: parameters centralServerId: {}", centralServerId);
     MARCTransformationOptionsSettingsDTO transformationConfig;
     try {
       transformationConfig = marcTransformationSettingsService.get(centralServerId);
@@ -105,6 +107,7 @@ public class MARCRecordTransformationServiceImpl implements MARCRecordTransforma
       transformationConfig = createEmptyMARCTransformationConfig();
     }
 
+    log.info("getMARCTransformationSettings:: result: {}", transformationConfig);
     return transformationConfig;
   }
 

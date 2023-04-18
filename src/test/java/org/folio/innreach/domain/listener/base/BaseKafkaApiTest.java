@@ -12,11 +12,11 @@ import static org.folio.innreach.domain.listener.base.BaseKafkaApiTest.INVENTORY
 import static org.folio.innreach.domain.listener.base.BaseKafkaApiTest.TestTenantController;
 import static org.folio.innreach.domain.listener.base.BaseKafkaApiTest.TestTenantScopedExecutionService;
 
+import jakarta.validation.Valid;
+
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.Callable;
-
-import javax.validation.Valid;
 
 import lombok.SneakyThrows;
 

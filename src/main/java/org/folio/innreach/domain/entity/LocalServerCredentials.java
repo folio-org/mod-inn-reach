@@ -3,17 +3,17 @@ package org.folio.innreach.domain.entity;
 import static org.folio.innreach.domain.entity.LocalServerCredentials.FIND_BY_LOCAL_SERVER_KEY_QUERY;
 import static org.folio.innreach.domain.entity.LocalServerCredentials.FIND_BY_LOCAL_SERVER_KEY_QUERY_NAME;
 
-import java.util.UUID;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.MapsId;
+import jakarta.persistence.NamedQuery;
+import jakarta.persistence.OneToOne;
+import jakarta.persistence.Table;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.MapsId;
-import javax.persistence.NamedQuery;
-import javax.persistence.OneToOne;
-import javax.persistence.Table;
+import java.util.UUID;
 
 import lombok.EqualsAndHashCode;
 import lombok.Getter;

@@ -4,21 +4,18 @@ spring:
   application:
     name: mod-inn-reach
   datasource:
-    # to boot up application despite of any DB connection issues
-    continue-on-error: true
     username: ${DB_USERNAME:postgres}
     password: ${DB_PASSWORD:postgres}
     url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_DATABASE:db}
   jpa:
-    database-platform: org.hibernate.dialect.PostgreSQL10Dialect
     hibernate:
       ddl-auto: none
       naming:
-        physical-strategy: org.springframework.boot.orm.jpa.hibernate.SpringPhysicalNamingStrategy
+        physical-strategy: org.hibernate.boot.model.naming.CamelCaseToUnderscoresNamingStrategy
         implicit-strategy: org.springframework.boot.orm.jpa.hibernate.SpringImplicitNamingStrategy
     properties:
       hibernate:
-        dialect: org.hibernate.dialect.PostgreSQL10Dialect
+        dialect: org.hibernate.dialect.PostgreSQLDialect
         format_sql: true
     show-sql: false
   liquibase:
@@ -36,7 +33,7 @@ spring:
   kafka:
     bootstrap-servers: ${KAFKA_HOST:localhost}:${KAFKA_PORT:9092}
     consumer:
-      max-poll-records: 50
+      max-poll-records: 20
       group-id: ${ENV:folio}-mod-innreach-events-group
     security:
       protocol: ${KAFKA_SECURITY_PROTOCOL:PLAINTEXT}
@@ -45,29 +42,37 @@ spring:
       key-store-location: ${KAFKA_SSL_KEYSTORE_LOCATION:}
       trust-store-password: ${KAFKA_SSL_TRUSTSTORE_PASSWORD:}
       trust-store-location: ${KAFKA_SSL_TRUSTSTORE_LOCATION:}
-  batch:
-    job:
-      enabled: false
-    initializer:
-      enabled: false
-    enable-auto-commit: true
+  async:
+    config:
+      executor:
+        pool-size: ${SCHEDULER_POOL_SIZE:100}
+  cloud:
+    openfeign:
+      okhttp:
+        enabled: true
+  sql:
+    init:
+      # to boot up application despite of any DB connection issues
+      continue-on-error: true
 folio:
   tenant:
     validation:
       enabled: true
   logging:
     feign:
-      enabled: ${LOG_HTTP:false}
+      enabled: ${LOG_HTTP:true}
       level: FULL
     request:
-      enabled: ${LOG_HTTP:false}
+      enabled: ${LOG_HTTP:true}
       level: FULL
 management:
   endpoints:
     web:
       exposure:
-        include: info,health,env,httptrace
+        include: info,health,env,httptrace,loggers
       base-path: /admin
+    loggers:
+      enabled: true
   #  endpoint:
   #    health:
   #      show-details: always
@@ -86,6 +91,8 @@ inn-reach:
     cache:
       ttl: 500
       max-size: 100
+  checkout-time:
+    duration: ${DEFAULT_CHECKOUT_TIME_DURATION:1}
 system-user:
   username: mod-innreach
   password: ${SYSTEM_USER_PASSWORD:Mod-innreach-1-0-0}
@@ -161,3 +168,8 @@ kafka:
       topic-pattern: (${environment}\.)(.*\.)inventory\.holdings-record
       concurrency: ${KAFKA_EVENTS_CONCURRENCY:2}
       data-type: org.folio.innreach.dto.Holding
+  backoff:
+    interval: ${DEFAULT_INTERVAL:95000}
+    max_failure: ${MAX_FAILURE:360}
+  custom-offset: ${DEFAULT_OFFSET:latest}
+  custom-concurrency: ${DEFAULT_CONCURRENCY:2}

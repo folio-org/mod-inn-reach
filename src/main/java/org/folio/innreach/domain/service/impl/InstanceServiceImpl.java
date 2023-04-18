@@ -9,12 +9,13 @@ import java.util.Set;
 import java.util.UUID;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.stereotype.Service;
 
 import org.folio.innreach.client.InventoryClient;
 import org.folio.innreach.domain.dto.folio.inventory.InventoryInstanceDTO;
 import org.folio.innreach.domain.service.InstanceService;
-
+@Log4j2
 @Service
 @RequiredArgsConstructor
 public class InstanceServiceImpl implements InstanceService {
@@ -23,6 +24,7 @@ public class InstanceServiceImpl implements InstanceService {
 
   @Override
   public InventoryInstanceDTO queryInstanceByHrid(String instanceHrid) {
+    log.debug("queryInstanceByHrid:: parameters instanceHrid: {}", instanceHrid);
     return getFirstItem(inventoryClient.queryInstanceByHrid(instanceHrid))
       .orElseThrow(() -> new IllegalArgumentException("No instance found by hrid " + instanceHrid));
   }
@@ -40,12 +42,21 @@ public class InstanceServiceImpl implements InstanceService {
   }
 
   @Override
+  public void delete(UUID instanceId) {
+    inventoryClient.findInstance(instanceId)
+      .ifPresentOrElse(instance-> inventoryClient.deleteInstance(instanceId),
+        () -> log.info("Instance not found with instanceId:{}", instanceId));
+  }
+
+  @Override
   public List<InventoryInstanceDTO> findInstancesByIds(Set<UUID> instanceIds, int limit) {
+    log.debug("findInstancesByIds:: parameters instanceIds: {}, limit: {}", instanceIds, limit);
     return inventoryClient.queryInstancesByIds(matchAny(instanceIds), limit).getResult();
   }
 
   @Override
   public String getAuthor(InventoryInstanceDTO instance) {
+    log.debug("getAuthor:: parameters instance: {}", instance);
     return instance.getContributors().stream()
       .filter(InventoryInstanceDTO.ContributorDTO::getPrimary)
       .map(InventoryInstanceDTO.ContributorDTO::getName)

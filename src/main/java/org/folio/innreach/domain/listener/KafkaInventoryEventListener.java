@@ -6,9 +6,12 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
+import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.folio.innreach.external.exception.InnReachConnectionException;
+import org.folio.innreach.external.exception.ServiceSuspendedException;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 
@@ -69,25 +72,24 @@ public class KafkaInventoryEventListener {
     concurrency = "${kafka.listener.instance.concurrency}")
   public void handleInstanceEvents(List<ConsumerRecord<String, DomainEvent<Instance>>> consumerRecords) {
     log.info("Handling inventory instance events from Kafka [number of events: {}]", consumerRecords.size());
-
     var events = getEvents(consumerRecords);
 
     eventProcessor.process(events, event -> {
       var oldEntity = event.getData().getOldEntity();
       var newEntity = event.getData().getNewEntity();
-      switch (event.getType()) {
-        case CREATED:
-          contributionActionService.handleInstanceCreation(newEntity);
-          break;
-        case UPDATED:
-          contributionActionService.handleInstanceUpdate(newEntity);
-          break;
-        case DELETED:
-          contributionActionService.handleInstanceDelete(oldEntity);
-          break;
-        default:
-          log.warn(UNKNOWN_TYPE_MESSAGE, event.getType());
-      }
+        switch (event.getType()) {
+          case CREATED:
+            contributionActionService.handleInstanceCreation(newEntity);
+            break;
+          case UPDATED:
+            contributionActionService.handleInstanceUpdate(newEntity);
+            break;
+          case DELETED:
+            contributionActionService.handleInstanceDelete(oldEntity);
+            break;
+          default:
+            log.warn(UNKNOWN_TYPE_MESSAGE, event.getType());
+        }
     });
   }
 

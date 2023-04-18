@@ -8,6 +8,7 @@ import java.util.UUID;
 import java.util.function.Consumer;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.data.domain.Example;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
@@ -23,6 +24,7 @@ import org.folio.innreach.mapper.ItemTypeMappingMapper;
 import org.folio.innreach.repository.ItemTypeMappingRepository;
 import org.folio.spring.data.OffsetRequest;
 
+@Log4j2
 @RequiredArgsConstructor
 @Service
 @Transactional
@@ -34,15 +36,18 @@ public class ItemTypeMappingServiceImpl implements ItemTypeMappingService {
   @Override
   @Transactional(readOnly = true)
   public ItemTypeMappingsDTO getAllMappings(UUID centralServerId, Integer offset, Integer limit) {
+    log.debug("getAllMappings:: parameters centralServerId: {}, offset: {}, limit: {}", centralServerId, offset, limit);
     var example = mappingExampleWithServerId(centralServerId);
 
     Page<ItemTypeMapping> mappings = repository.findAll(example, new OffsetRequest(offset, limit));
 
+    log.info("getAllMappings:: result: {}", mapper.toDTOCollection(mappings));
     return mapper.toDTOCollection(mappings);
   }
 
   @Override
   public ItemTypeMappingDTO getMappingByCentralType(UUID centralServerId, Integer centralItemType) {
+    log.debug("getMappingByCentralType:: parameters centralServerId: {}, centralItemType: {}", centralServerId, centralItemType);
     return repository.findByCentralServerIdAndCentralItemType(centralServerId, centralItemType)
       .map(mapper::toDTO)
       .orElseThrow(() -> new EntityNotFoundException(
@@ -51,6 +56,7 @@ public class ItemTypeMappingServiceImpl implements ItemTypeMappingService {
 
   @Override
   public ItemTypeMappingsDTO updateAllMappings(UUID centralServerId, ItemTypeMappingsDTO itemTypeMappingsDTO) {
+    log.debug("updateAllMappings:: parameters centralServerId: {}, itemTypeMappingsDTO", centralServerId, itemTypeMappingsDTO);
     var stored = repository.findAll(mappingExampleWithServerId(centralServerId));
 
     var incoming = mapper.toEntities(itemTypeMappingsDTO.getItemTypeMappings());
@@ -59,6 +65,7 @@ public class ItemTypeMappingServiceImpl implements ItemTypeMappingService {
 
     var saved = mergeAndSave(incoming, stored, repository, this::copyData);
 
+    log.info("updateAllMappings:: result: {}", mapper.toDTOCollection(saved));
     return mapper.toDTOCollection(saved);
   }
 

@@ -11,6 +11,7 @@ import java.util.UUID;
 import java.util.function.Consumer;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.data.domain.Example;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
@@ -26,6 +27,7 @@ import org.folio.innreach.mapper.LocationMappingMapper;
 import org.folio.innreach.repository.LocationMappingRepository;
 import org.folio.spring.data.OffsetRequest;
 
+@Log4j2
 @RequiredArgsConstructor
 @Service
 @Transactional
@@ -38,26 +40,31 @@ public class LocationMappingServiceImpl implements LocationMappingService {
   @Override
   @Transactional(readOnly = true)
   public LocationMappingsDTO getMappingsByLibraryId(UUID centralServerId, UUID libraryId, int offset, int limit) {
+    log.debug("getMappingsByLibraryId:: parameters centralServerId: {}, libraryId: {}, offset: {}, limit: {}", centralServerId, libraryId, offset, limit);
     var example = mappingExampleWithServerIdAndLibraryId(centralServerId, libraryId);
 
     Page<LocationMapping> mappings = repository.findAll(example, new OffsetRequest(offset, limit, DEFAULT_SORT));
 
+    log.info("getMappingsByLibraryId:: result: {}", mapper.toDTOCollection(mappings));
     return mapper.toDTOCollection(mappings);
   }
 
   @Override
   @Transactional(readOnly = true)
   public List<LocationMappingDTO> getAllMappings(UUID centralServerId) {
+    log.debug("getAllMappings:: parameters centralServerId: {}", centralServerId);
     var example = mappingExampleWithServerId(centralServerId);
 
     List<LocationMapping> mappings = repository.findAll(example);
 
+    log.info("getAllMappings:: result: {}", mapper.toDTOs(mappings));
     return mapper.toDTOs(mappings);
   }
 
   @Override
   public LocationMappingsDTO updateAllMappings(UUID centralServerId, UUID libraryId,
                                                LocationMappingsDTO locationMappingsDTO) {
+    log.debug("updateAllMappings:: parameters centralServerId: {}, libraryId: {}, locationMappingsDTO: {}", centralServerId, libraryId, locationMappingsDTO);
     var stored = repository.findByCentralServerIdAndLibraryId(centralServerId, libraryId);
 
     var incoming = mapper.toEntities(locationMappingsDTO.getLocationMappings());
@@ -73,6 +80,7 @@ public class LocationMappingServiceImpl implements LocationMappingService {
 
     locationContributionService.contributeInnReachLocations(centralServerId);
 
+    log.info("updateAllMappings:: result: {}", mapper.toDTOCollection(saved));
     return mapper.toDTOCollection(saved);
   }
 

@@ -18,10 +18,11 @@ public class RequestPreferenceServiceImpl implements RequestPreferenceService {
   private final RequestPreferenceStorageClient client;
   @Override
   public RequestPreferenceDTO findUserRequestPreference(UUID userId) {
+    log.debug("findUserRequestPreference:: parameters userId: {}", userId);
     var requestPreferences = client.getUserRequestPreference(userId);
     Assert.isTrue(requestPreferences.getTotalRecords() == 1, "Could not retrieve 1 request preferences" +
       "record for userId = " + userId);
-
+    log.info("findUserRequestPreference:: result: {}", requestPreferences.getResult().get(0));
     return requestPreferences.getResult().get(0);
   }
 }

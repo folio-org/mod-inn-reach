@@ -23,17 +23,20 @@ public class InventoryViewServiceImpl implements InventoryViewService {
 
   @Override
   public Instance getInstance(UUID instanceId) {
+    log.info("getInstance:: parameters instanceId: {}", instanceId);
     return fetchInstance(() -> inventoryViewClient.getInstanceById(instanceId))
       .orElseThrow(() -> new IllegalArgumentException("Unable to load inventory-view by instance id: " + instanceId));
   }
 
   @Override
   public Instance getInstanceByHrid(String instanceHrid) {
+    log.debug("getInstanceByHrid:: parameters instanceHrid: {}", instanceHrid);
     return fetchInstance(() -> inventoryViewClient.getInstanceByHrid(instanceHrid))
       .orElseThrow(() -> new IllegalArgumentException("Unable to load inventory-view by instance hrid: " + instanceHrid));
   }
 
   private Optional<Instance> fetchInstance(Supplier<ResultList<InstanceView>> instanceViewSupplier) {
+    log.debug("fetchInstance:: parameters instanceViewSupplier: {}", instanceViewSupplier);
     return instanceViewSupplier.get()
       .getResult()
       .stream()

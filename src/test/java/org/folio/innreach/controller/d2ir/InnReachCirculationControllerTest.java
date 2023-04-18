@@ -1,25 +1,6 @@
 package org.folio.innreach.controller.d2ir;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.argThat;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.when;
-import static org.springframework.http.HttpStatus.BAD_REQUEST;
-import static org.springframework.http.HttpStatus.OK;
-import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TEST_METHOD;
-import static org.springframework.test.context.jdbc.SqlMergeMode.MergeMode.MERGE;
-
+import static org.awaitility.Awaitility.await;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.BORROWER_RENEW;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.BORROWING_SITE_CANCEL;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.CANCEL_REQUEST;
@@ -42,14 +23,56 @@ import static org.folio.innreach.fixture.InventoryFixture.createInventoryItemDTO
 import static org.folio.innreach.fixture.RequestFixture.createRequestDTO;
 import static org.folio.innreach.fixture.ServicePointUserFixture.createServicePointUserDTO;
 import static org.folio.innreach.fixture.TestUtil.circHeaders;
-
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.Date;
-import java.util.Optional;
-import java.util.UUID;
+import static org.folio.innreach.fixture.TestUtil.deserializeFromJsonFile;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
+import static org.springframework.http.HttpStatus.BAD_REQUEST;
+import static org.springframework.http.HttpStatus.OK;
+import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TEST_METHOD;
+import static org.springframework.test.context.jdbc.SqlMergeMode.MergeMode.MERGE;
 
 import org.apache.commons.lang3.ObjectUtils;
+import org.folio.innreach.batch.contribution.IterationEventReaderFactory;
+import org.folio.innreach.client.CirculationClient;
+import org.folio.innreach.client.HridSettingsClient;
+import org.folio.innreach.client.ServicePointsUsersClient;
+import org.folio.innreach.controller.base.BaseControllerTest;
+import org.folio.innreach.domain.dto.folio.ResultList;
+import org.folio.innreach.domain.dto.folio.User;
+import org.folio.innreach.domain.dto.folio.circulation.RequestDTO;
+import org.folio.innreach.domain.dto.folio.configuration.ConfigurationDTO;
+import org.folio.innreach.domain.entity.InnReachTransaction;
+import org.folio.innreach.domain.entity.TransactionPatronHold;
+import org.folio.innreach.domain.service.ConfigurationService;
+import org.folio.innreach.domain.service.HoldingsService;
+import org.folio.innreach.domain.service.InstanceService;
+import org.folio.innreach.domain.service.InventoryService;
+import org.folio.innreach.domain.service.ItemService;
+import org.folio.innreach.domain.service.PatronHoldService;
+import org.folio.innreach.domain.service.RequestService;
+import org.folio.innreach.domain.service.UserService;
+import org.folio.innreach.domain.service.VirtualRecordService;
+import org.folio.innreach.dto.CheckOutRequestDTO;
+import org.folio.innreach.dto.InnReachResponseDTO;
+import org.folio.innreach.dto.LoanDTO;
+import org.folio.innreach.dto.RenewLoanDTO;
+import org.folio.innreach.external.dto.InnReachResponse;
+import org.folio.innreach.external.service.InnReachExternalService;
+import org.folio.innreach.mapper.InnReachTransactionHoldMapper;
+import org.folio.innreach.repository.InnReachTransactionRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
@@ -66,29 +89,12 @@ import org.springframework.http.HttpStatus;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlMergeMode;
 
-import org.folio.innreach.client.CirculationClient;
-import org.folio.innreach.client.HridSettingsClient;
-import org.folio.innreach.client.ServicePointsUsersClient;
-import org.folio.innreach.controller.base.BaseControllerTest;
-import org.folio.innreach.domain.dto.folio.ResultList;
-import org.folio.innreach.domain.dto.folio.User;
-import org.folio.innreach.domain.dto.folio.circulation.RequestDTO;
-import org.folio.innreach.domain.entity.InnReachTransaction;
-import org.folio.innreach.domain.entity.TransactionPatronHold;
-import org.folio.innreach.domain.service.InstanceService;
-import org.folio.innreach.domain.service.InventoryService;
-import org.folio.innreach.domain.service.ItemService;
-import org.folio.innreach.domain.service.PatronHoldService;
-import org.folio.innreach.domain.service.RequestService;
-import org.folio.innreach.domain.service.UserService;
-import org.folio.innreach.dto.CheckOutRequestDTO;
-import org.folio.innreach.dto.InnReachResponseDTO;
-import org.folio.innreach.dto.LoanDTO;
-import org.folio.innreach.dto.RenewLoanDTO;
-import org.folio.innreach.external.dto.InnReachResponse;
-import org.folio.innreach.external.service.InnReachExternalService;
-import org.folio.innreach.mapper.InnReachTransactionHoldMapper;
-import org.folio.innreach.repository.InnReachTransactionRepository;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.Date;
+import java.util.Optional;
+import java.util.UUID;
 
 @Sql(
   scripts = {
@@ -137,6 +143,7 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
   private static final String PRE_POPULATED_ANOTHER_LOCAL_AGENCY_CODE1 = "g91ub";
   private static final Integer PRE_POPULATED_CENTRAL_PATRON_TYPE = 1;
   private static final String CENTRAL_PATRON_NAME = "Atreides, Paul";
+  private static final Duration ASYNC_AWAIT_TIMEOUT = Duration.ofSeconds(15);
 
   @Autowired
   private TestRestTemplate testRestTemplate;
@@ -162,11 +169,20 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
   private InstanceService instanceService;
   @MockBean
   private PatronHoldService patronHoldService;
+  @MockBean
+  private HoldingsService holdingsService;
+  @MockBean
+  VirtualRecordService virtualRecordService;
+  @MockBean
+  ConfigurationService configurationService;
 
   @Autowired
   private InnReachTransactionRepository transactionRepository;
   @Autowired
   private InnReachTransactionHoldMapper transactionHoldMapper;
+
+  @MockBean
+  IterationEventReaderFactory iterationEventReaderFactory;
 
   private HttpHeaders headers = circHeaders();
 
@@ -1023,6 +1039,10 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
   void checkTransactionIsNotInStatePatronHoldOrTransfer(InnReachTransaction.TransactionState state) {
     var transactionHoldDTO = createTransactionHoldDTO();
     var transactionBefore = fetchPrePopulatedTransaction();
+    var configurationDto =
+            deserializeFromJsonFile("/configuration/configuration-details-example.json", ConfigurationDTO.class);
+    when(configurationService.fetchConfigurationsDetailsByModule(any())).
+            thenReturn(ResultList.asSinglePage(configurationDto));
 
     transactionBefore.setState(state);
     repository.save(transactionBefore);
@@ -1122,6 +1142,7 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
   })
   void processCancelRequest() {
     doNothing().when(requestService).cancelRequest(anyString(), any(UUID.class), any(UUID.class), anyString());
+    doNothing().when(virtualRecordService).deleteVirtualRecords(any(UUID.class), any(UUID.class), any(UUID.class), any(UUID.class));
     when(userService.getUserById(any(UUID.class))).thenReturn(Optional.of(populateUser()));
 
     var cancelRequestDTO = createCancelRequestDTO();
@@ -1132,12 +1153,43 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
       PRE_POPULATED_TRACKING1_ID, PRE_POPULATED_CENTRAL_CODE);
 
     verify(requestService).cancelRequest(anyString(), any(UUID.class), any(UUID.class), anyString());
+    verify(virtualRecordService).deleteVirtualRecords(any(UUID.class), any(UUID.class), any(UUID.class), any(UUID.class));
 
     var transactionAfter = fetchPrePopulatedTransaction();
 
     assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
     assertEquals(CANCEL_REQUEST, transactionAfter.getState());
     assertPatronHoldFieldsAreNull((TransactionPatronHold) transactionAfter.getHold());
+  }
+
+  @ParameterizedTest
+  @EnumSource(names = {"ITEM_RECEIVED"})
+  @Sql(scripts = {
+          "classpath:db/central-server/pre-populate-central-server.sql",
+          "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
+  })
+  void testFinalCheckInWithDeleteVirtualRecord(InnReachTransaction.TransactionState state) {
+    var transactionHoldDTO = createTransactionHoldDTO();
+    var transactionBefore = fetchPrePopulatedTransaction();
+    var configurationDto =
+            deserializeFromJsonFile("/configuration/configuration-details-example.json", ConfigurationDTO.class);
+    when(configurationService.fetchConfigurationsDetailsByModule(any())).
+            thenReturn(ResultList.asSinglePage(configurationDto));
+
+    transactionBefore.setState(state);
+    repository.save(transactionBefore);
+
+    var responseEntity = testRestTemplate.exchange(
+            "/inn-reach/d2ir/circ/finalcheckin/{trackingId}/{centralCode}", HttpMethod.PUT,
+            new HttpEntity<>(transactionHoldDTO, headers), InnReachResponseDTO.class,
+            PRE_POPULATED_TRACKING1_ID, PRE_POPULATED_CENTRAL_CODE);
+
+    await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() -> {
+      var transactionAfter = fetchPrePopulatedTransaction();
+      assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+      assertEquals(FINAL_CHECKIN, transactionAfter.getState());
+      assertPatronHoldFieldsAreNull((TransactionPatronHold) transactionAfter.getHold());
+    });
   }
 
   private void assertPatronHoldFieldsAreNull(TransactionPatronHold hold) {

@@ -24,6 +24,7 @@ public class ContributionJobContext {
   private UUID centralServerId;
   private UUID contributionId;
   private UUID iterationJobId;
+  private boolean isInitialContribution;
 
   @Data
   public static class Statistics {
@@ -32,6 +33,10 @@ public class ContributionJobContext {
     private long recordsContributed;
     private long recordsUpdated;
     private long recordsDecontributed;
+
+    private String topic;
+
+    private String tenantId;
 
     public void addRecordsContributed(int itemsCount) {
       recordsContributed += itemsCount;
@@ -47,6 +52,14 @@ public class ContributionJobContext {
 
     public void addRecordsTotal(int itemsCount) {
       recordsTotal += itemsCount;
+    }
+
+    public void clearStats() {
+      this.recordsTotal = 0;
+      this.recordsProcessed = 0;
+      this.recordsContributed = 0;
+      this.recordsUpdated = 0;
+      this.recordsDecontributed = 0;
     }
   }
 

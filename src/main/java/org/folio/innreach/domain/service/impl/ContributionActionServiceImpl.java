@@ -7,10 +7,13 @@ import java.util.List;
 import java.util.UUID;
 import java.util.function.Consumer;
 
+import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.folio.innreach.external.exception.InnReachConnectionException;
+import org.folio.innreach.external.exception.ServiceSuspendedException;
+import org.folio.innreach.external.exception.SocketTimeOutExceptionWrapper;
 import org.springframework.data.domain.Page;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import org.folio.innreach.batch.contribution.service.ContributionJobRunner;
@@ -41,13 +44,12 @@ public class ContributionActionServiceImpl implements ContributionActionService 
   private final HoldingsService holdingsService;
   private final ContributionValidationService validationService;
 
-  @Async
+
   @Override
   public void handleInstanceCreation(Instance newInstance) {
     handleInstanceUpdate(newInstance);
   }
 
-  @Async
   @Override
   public void handleInstanceUpdate(Instance updatedInstance) {
     log.info("Handling instance creation/update {}", updatedInstance.getId());
@@ -61,7 +63,7 @@ public class ContributionActionServiceImpl implements ContributionActionService 
     handlePerCentralServer(instance.getId(), csId -> contributionJobRunner.runInstanceContribution(csId, instance));
   }
 
-  @Async
+
   @Override
   public void handleInstanceDelete(Instance deletedInstance) {
     log.info("Handling instance delete {}", deletedInstance.getId());
@@ -69,13 +71,18 @@ public class ContributionActionServiceImpl implements ContributionActionService 
     if (!isMARCRecord(deletedInstance)) {
       return;
     }
-
-    for (var csId : getCentralServerIds()) {
-      contributionJobRunner.runInstanceDeContribution(csId, deletedInstance);
+    try {
+      for (var csId : getCentralServerIds()) {
+        contributionJobRunner.runInstanceDeContribution(csId, deletedInstance);
+      }
+    }
+    catch (ServiceSuspendedException | FeignException | InnReachConnectionException e) {
+      log.info("exception thrown from handleInstanceDelete");
+      throw e;
     }
   }
 
-  @Async
+
   @Override
   public void handleItemCreation(Item newItem) {
     log.info("Handling item creation {}", newItem.getId());
@@ -88,7 +95,7 @@ public class ContributionActionServiceImpl implements ContributionActionService 
     handlePerCentralServer(newItem.getId(), csId -> contributionJobRunner.runItemContribution(csId, instance, newItem));
   }
 
-  @Async
+
   @Override
   public void handleItemUpdate(Item newItem, Item oldItem) {
     log.info("Handling item update {}", newItem.getId());
@@ -110,7 +117,7 @@ public class ContributionActionServiceImpl implements ContributionActionService 
     });
   }
 
-  @Async
+
   @Override
   public void handleItemDelete(Item deletedItem) {
     log.info("Handling item delete {}", deletedItem.getId());
@@ -119,13 +126,17 @@ public class ContributionActionServiceImpl implements ContributionActionService 
     if (!isMARCRecord(instance)) {
       return;
     }
-
-    for (var csId : getCentralServerIds()) {
-      contributionJobRunner.runItemDeContribution(csId, instance, deletedItem);
+    try {
+      for (var csId : getCentralServerIds()) {
+        contributionJobRunner.runItemDeContribution(csId, instance, deletedItem);
+      }
+    } catch (ServiceSuspendedException | FeignException | InnReachConnectionException e) {
+      log.info("exception thrown from handleItemDelete", e);
+      throw e;
     }
   }
 
-  @Async
+
   @Override
   public void handleLoanCreation(StorageLoanDTO loan) {
     log.info("Handling loan creation {}", loan.getId());
@@ -139,7 +150,7 @@ public class ContributionActionServiceImpl implements ContributionActionService 
     handlePerCentralServer(item.getId(), csId -> contributionJobRunner.runItemContribution(csId, instance, item));
   }
 
-  @Async
+
   @Override
   public void handleLoanUpdate(StorageLoanDTO loan) {
     log.info("Handling loan update {}", loan.getId());
@@ -159,7 +170,7 @@ public class ContributionActionServiceImpl implements ContributionActionService 
     }
   }
 
-  @Async
+
   @Override
   public void handleRequestChange(RequestDTO request) {
     log.info("Handling request {}", request.getId());
@@ -173,7 +184,7 @@ public class ContributionActionServiceImpl implements ContributionActionService 
     handlePerCentralServer(item.getId(), csId -> contributionJobRunner.runItemContribution(csId, instance, item));
   }
 
-  @Async
+
   @Override
   public void handleHoldingUpdate(Holding holding) {
     log.info("Handling holding update {}", holding.getId());
@@ -188,7 +199,7 @@ public class ContributionActionServiceImpl implements ContributionActionService 
       items.forEach(i -> contributionJobRunner.runItemContribution(csId, instance, i)));
   }
 
-  @Async
+
   @Override
   public void handleHoldingDelete(Holding holding) {
     log.info("Handling holding delete {}", holding.getId());
@@ -199,8 +210,14 @@ public class ContributionActionServiceImpl implements ContributionActionService 
     }
 
     var items = holding.getHoldingsItems();
-    for (var csId : getCentralServerIds()) {
-      items.forEach(item -> contributionJobRunner.runItemDeContribution(csId, instance, item));
+    try {
+      for (var csId : getCentralServerIds()) {
+        items.forEach(item -> contributionJobRunner.runItemDeContribution(csId, instance, item));
+      }
+    }
+    catch (ServiceSuspendedException | FeignException | InnReachConnectionException e) {
+      log.info("exception thrown from handleHoldingDelete", e);
+      throw e;
     }
   }
 
@@ -213,7 +230,12 @@ public class ContributionActionServiceImpl implements ContributionActionService 
         } else {
           log.warn("Central server {} contribution configuration is not valid", csId);
         }
-      } catch (Exception e) {
+      }
+      catch (ServiceSuspendedException | FeignException | InnReachConnectionException | SocketTimeOutExceptionWrapper e) {
+        log.info("exception thrown from handlePerCentralServer", e);
+        throw e;
+      }
+      catch (Exception e) {
         log.error("Unable to handle record {} for central server {}", recordId, csId, e);
       }
     }

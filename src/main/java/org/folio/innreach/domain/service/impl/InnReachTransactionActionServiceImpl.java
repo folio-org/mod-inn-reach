@@ -2,7 +2,6 @@ package org.folio.innreach.domain.service.impl;
 
 import static java.lang.String.format;
 import static java.util.Optional.ofNullable;
-
 import static org.folio.innreach.domain.dto.folio.circulation.RequestDTO.RequestStatus.CLOSED_CANCELLED;
 import static org.folio.innreach.domain.dto.folio.circulation.RequestDTO.RequestStatus.OPEN_NOT_YET_FILLED;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.BORROWER_RENEW;
@@ -34,23 +33,9 @@ import static org.folio.innreach.util.InnReachTransactionUtils.clearCentralPatro
 import static org.folio.innreach.util.InnReachTransactionUtils.clearPatronAndItemInfo;
 import static org.folio.innreach.util.InnReachTransactionUtils.verifyState;
 
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.Date;
-import java.util.EnumSet;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.UUID;
-
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.Assert;
-
 import org.folio.innreach.domain.dto.folio.circulation.RequestDTO;
 import org.folio.innreach.domain.dto.folio.inventory.InventoryInstanceDTO;
 import org.folio.innreach.domain.dto.folio.inventory.InventoryItemDTO;
@@ -69,6 +54,7 @@ import org.folio.innreach.domain.service.ItemService;
 import org.folio.innreach.domain.service.LoanService;
 import org.folio.innreach.domain.service.PatronHoldService;
 import org.folio.innreach.domain.service.RequestService;
+import org.folio.innreach.domain.service.VirtualRecordService;
 import org.folio.innreach.dto.CancelTransactionHoldDTO;
 import org.folio.innreach.dto.CheckInDTO;
 import org.folio.innreach.dto.InnReachTransactionDTO;
@@ -76,11 +62,24 @@ import org.folio.innreach.dto.Item;
 import org.folio.innreach.dto.LoanStatus;
 import org.folio.innreach.dto.PatronHoldCheckInResponseDTO;
 import org.folio.innreach.dto.StorageLoanDTO;
+import org.folio.innreach.dto.StorageLoanDTOStatus;
 import org.folio.innreach.dto.TransactionCheckOutResponseDTO;
 import org.folio.innreach.mapper.InnReachTransactionMapper;
 import org.folio.innreach.repository.InnReachTransactionRepository;
 import org.folio.innreach.util.DateHelper;
-import org.folio.innreach.util.InnReachTransactionUtils;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.Assert;
+
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.Date;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.UUID;
 
 @Log4j2
 @Transactional
@@ -98,6 +97,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
   private final InnReachTransactionActionNotifier notifier;
   private final ApplicationEventPublisher eventPublisher;
   private final InnReachRecallUserService recallUserService;
+  private final VirtualRecordService virtualRecordService;
 
   private static final String[] UNCIRCULATED_ITEM_STATUSES = {
     AWAITING_PICKUP.getValue(), PAGED.getValue(), IN_TRANSIT.getValue(), CHECKED_OUT.getValue()
@@ -105,6 +105,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
 
   @Override
   public PatronHoldCheckInResponseDTO checkInPatronHoldItem(UUID transactionId, UUID servicePointId) {
+    log.debug("checkInPatronHoldItem:: parameters transactionId: {}, servicePointId: {}", transactionId, servicePointId);
     var transaction = fetchTransactionById(transactionId);
 
     verifyState(transaction, ITEM_SHIPPED);
@@ -117,11 +118,13 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
 
     handleItemWithCanceledRequest(transaction);
 
+    log.info("checkInPatronHoldItem:: result: {}", response);
     return response;
   }
 
   @Override
   public PatronHoldCheckInResponseDTO checkInPatronHoldUnshippedItem(UUID transactionId, UUID servicePointId, String itemBarcode) {
+    log.debug("checkInPatronHoldUnshippedItem:: parameters transactionId: {}, servicePointId: {}", transactionId, servicePointId);
     var transaction = fetchTransactionById(transactionId);
     var folioItemBarcode = transaction.getHold().getFolioItemBarcode();
 
@@ -138,11 +141,13 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
 
     handleItemWithCanceledRequest(transaction);
 
+    log.info("checkInPatronHoldUnshippedItem:: result: {}", response);
     return response;
   }
 
   @Override
   public TransactionCheckOutResponseDTO checkOutItemHoldItem(String itemBarcode, UUID servicePointId) {
+    log.debug("checkOutItemHoldItem:: parameters itemBarcode: {}, servicePointId: {}", itemBarcode, servicePointId);
     var transaction = transactionRepository.fetchOneByFolioItemBarcodeAndStates(itemBarcode,
       EnumSet.of(ITEM_HOLD, TRANSFER))
       .orElseThrow(() -> new EntityNotFoundException("INN-Reach transaction is not found by itemBarcode: " + itemBarcode));
@@ -168,6 +173,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
 
   @Override
   public TransactionCheckOutResponseDTO checkOutPatronHoldItem(UUID transactionId, UUID servicePointId) {
+    log.debug("checkOutPatronHoldItem:: parameters transactionId: {}, servicePointId: {}", transactionId, servicePointId);
     var transaction = fetchTransactionOfType(transactionId, PATRON);
 
     verifyState(transaction, ITEM_RECEIVED, RECEIVE_UNANNOUNCED);
@@ -177,6 +183,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
 
   @Override
   public TransactionCheckOutResponseDTO checkOutLocalHoldItem(UUID transactionId, UUID servicePointId) {
+    log.debug("checkOutLocalHoldItem:: parameters transactionId: {}, servicePointId: {}", transactionId, servicePointId);
     var transaction = fetchTransactionOfType(transactionId, LOCAL);
 
     verifyState(transaction, LOCAL_HOLD, TRANSFER);
@@ -186,6 +193,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
 
   @Override
   public void associateNewLoanWithTransaction(StorageLoanDTO loan) {
+    log.debug("associateNewLoanWithTransaction:: parameters loan: {}", loan);
     var itemId = loan.getItemId();
     var patronId = loan.getUserId();
 
@@ -195,27 +203,34 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
 
   @Override
   public void handleLoanUpdate(StorageLoanDTO loan) {
+    log.debug("handleLoanUpdate:: parameters loan: {}", loan);
     var transaction = transactionRepository.fetchActiveByLoanId(loan.getId()).orElse(null);
     if (transaction == null) {
       return;
     }
 
     var loanAction = loan.getAction();
-    var loanStatus = ofNullable(loan.getStatus()).map(LoanStatus::getName).orElse(null);
+    var loanStatus = ofNullable(loan.getStatus()).map(StorageLoanDTOStatus::getName).orElse(null);
 
     if (isLoanCheckedIn(loanAction, loanStatus)) {
+      log.info("handleLoanUpdate:: isLoanCheckedIn");
       updateTransactionOnLoanClosure(loan, transaction);
     } else if ("renewed".equalsIgnoreCase(loanAction)) {
+      log.info("handleLoanUpdate:: loan action is renewed");
       updateTransactionOnLoanRenewal(loan, transaction);
     } else if ("claimedReturned".equalsIgnoreCase(loanAction)) {
+      log.info("handleLoanUpdate:: loan action is claimedReturned");
       updateTransactionOnLoanClaimedReturned(loan, transaction);
     } else if ("recallrequested".equalsIgnoreCase(loanAction)) {
+      log.info("handleLoanUpdate:: loan action is recallRequested");
       updateTransactionOnLoanRecallRequested(loan.getId(), loan.getDueDate(), transaction);
     }
+    log.info("handleLoanUpdate:: Loan updated");
   }
 
   @Override
   public void handleRequestUpdate(RequestDTO requestDTO) {
+    log.debug("handleRequestUpdate:: parameters requestDTO: {}", requestDTO);
     var transaction = transactionRepository.fetchActiveByRequestId(requestDTO.getId()).orElse(null);
     if (transaction == null) {
       return;
@@ -228,10 +243,12 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
     } else if (transaction.getType() == LOCAL) {
       updateLocalTransactionOnRequestChange(requestDTO, transaction);
     }
+    log.info("handleRequestUpdate:: Request updated");
   }
 
   @Override
   public void handleCheckInCreation(CheckInDTO checkIn) {
+    log.debug("handleCheckInCreation:: parameters checkIn: {}", checkIn);
     var itemId = checkIn.getItemId();
     var itemStatusPriorToCheckIn = checkIn.getItemStatusPriorToCheckIn();
 
@@ -254,10 +271,12 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
         notifier.reportReturnUncirculated(transaction);
       }
     }
+    log.info("handleCheckInCreation:: CheckInCreation completed");
   }
 
   @Override
   public void handleItemUpdate(Item updatedItem, Item oldItem) {
+    log.debug("handleItemUpdate:: parameters updatedItem: {}, oldItem: {}", updatedItem, oldItem);
     var itemId = updatedItem.getId();
     var updatedItemBarcode = updatedItem.getBarcode();
 
@@ -268,26 +287,33 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
           t.getHold().setFolioItemBarcode(updatedItemBarcode);
         });
     }
+    log.info("handleItemUpdate:: Item updated");
   }
 
   @Override
   public InnReachTransactionDTO cancelPatronHold(UUID transactionId, CancelTransactionHoldDTO cancelRequest) {
+    log.info("Cancelling Patron Hold transaction: {}", transactionId);
+
     var transaction = fetchTransactionOfType(transactionId, PATRON);
 
     var requestId = transaction.getHold().getFolioRequestId();
     var request = requestService.findRequest(requestId);
 
     if (requestService.isOpenRequest(request)) {
+      log.info("cancelPatronHold:: is request open");
       cancelPatronHoldWithOpenRequest(cancelRequest, transaction);
     } else if (request.getStatus() == CLOSED_CANCELLED) {
+      log.info("cancelPatronHold:: is request closed cancelled");
       cancelPatronHoldWithClosedRequest(transaction);
     }
 
+    log.info("Patron request successfully cancelled");
     return transactionMapper.toDTO(transaction);
   }
 
   @Override
   public void recallItemHold(UUID transactionId) {
+    log.debug("recallItemHold:: parameters transactionId: {}", transactionId);
     var transaction = fetchTransactionOfType(transactionId, ITEM);
 
     verifyState(transaction, ITEM_SHIPPED, ITEM_RECEIVED, RECEIVE_UNANNOUNCED);
@@ -297,6 +323,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
 
   @Override
   public void cancelItemHold(UUID transactionId, CancelTransactionHoldDTO cancelRequest) {
+    log.debug("cancelItemHold:: parameters transactionId: {}, cancelRequest: {}", transactionId, cancelRequest);
     var transaction = fetchTransactionOfType(transactionId, ITEM);
 
     verifyState(transaction, ITEM_HOLD, TRANSFER);
@@ -304,10 +331,12 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
     eventPublisher.publishEvent(CancelRequestEvent.of(transaction,
       cancelRequest.getCancellationReasonId(),
       cancelRequest.getCancellationAdditionalInformation()));
+    log.info("cancelItemHold:: Item hold cancelled");
   }
 
   @Override
   public InnReachTransactionDTO cancelLocalHold(UUID transactionId, CancelTransactionHoldDTO cancelRequest) {
+    log.debug("cancelLocalHold:: parameters transactionId: {}, cancelRequest: {}", transactionId, cancelRequest);
     var transaction = fetchTransactionOfType(transactionId, LOCAL);
 
     verifyState(transaction, LOCAL_HOLD);
@@ -317,6 +346,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
     var requestId = transaction.getHold().getFolioRequestId();
     var request = requestService.findRequest(requestId);
     if (requestService.isOpenRequest(request)) {
+      log.info("cancelLocalHold:: is request open");
       requestService.cancelRequest(transaction.getTrackingId(), requestId,
         cancelRequest.getCancellationReasonId(), cancelRequest.getCancellationAdditionalInformation());
     }
@@ -324,11 +354,13 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
     var instance = fetchInstanceById(request.getInstanceId());
     notifier.reportOwningSiteCancel(transaction, instance.getHrid(), transaction.getHold().getPatronName());
 
+    log.info("cancelLocalHold:: result: {}", transactionMapper.toDTO(transaction));
     return transactionMapper.toDTO(transaction);
   }
 
   @Override
   public void returnPatronHoldItem(UUID transactionId, UUID servicePointId) {
+    log.debug("returnPatronHoldItem:: parameters transactionId: {}, servicePointId: {}", transactionId, servicePointId);
     var transaction = fetchTransactionOfType(transactionId, PATRON);
 
     verifyState(transaction, ITEM_RECEIVED, RECEIVE_UNANNOUNCED);
@@ -352,10 +384,12 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
         loanService.checkInItem(transaction, servicePointId);
       }
     }
+    log.info("returnPatronHoldItem:: Patron hold item returned");
   }
 
   @Override
   public void transferItemHold(UUID transactionId, UUID itemId) {
+    log.debug("transferItemHold:: parameters transactionId: {}, itemId: {}", transactionId, itemId);
     var transaction = fetchTransactionOfType(transactionId, ITEM);
 
     verifyState(transaction, ITEM_HOLD, TRANSFER);
@@ -370,10 +404,12 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
 
       eventPublisher.publishEvent(MoveRequestEvent.of(transaction, item));
     }
+    log.info("transferItemHold:: Item hold transferred");
   }
 
   @Override
   public void finalCheckInItemHold(UUID transactionId, UUID servicePointId) {
+    log.info("finalCheckInItemHold:: parameters transactionId: {}, servicePointId: {}", transactionId, servicePointId);
     var transaction = fetchTransactionOfType(transactionId, ITEM);
 
     verifyState(transaction, ITEM_RECEIVED, RECEIVE_UNANNOUNCED, ITEM_SHIPPED, ITEM_IN_TRANSIT);
@@ -387,10 +423,12 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
     } else {
       loanService.checkInItem(transaction, servicePointId);
     }
+    log.info("finalCheckInItemHold:: Final check in item hold completed");
   }
 
   @Override
   public InnReachTransactionDTO transferLocalHold(UUID transactionId, UUID itemId) {
+    log.debug("transferLocalHold:: parameters transactionId: {}, itemId: {}", transactionId, itemId);
     var transaction = fetchTransactionOfType(transactionId, LOCAL);
 
     verifyState(transaction, LOCAL_HOLD, TRANSFER);
@@ -406,14 +444,17 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
       eventPublisher.publishEvent(MoveRequestEvent.of(transaction, item));
     }
 
+    log.info("transferLocalHold:: result: {}", transactionMapper.toDTO(transaction));
     return transactionMapper.toDTO(transaction);
   }
 
   private void recallItem(InnReachTransaction transaction, UUID itemId) {
+    log.debug("recallItem:: parameters transaction: {}, itemId: {}", transaction, itemId);
     List<RequestDTO> requestList = requestService.getRequestsByItemId(itemId).getResult();
     boolean hasOpenRecallRequest = requestList.stream()
       .anyMatch(this::isOpenRecallRequest);
     if (hasOpenRecallRequest) {
+      log.info("recallItem:: request is open recall request");
       var loan = loanService.getById(transaction.getHold().getFolioLoanId());
       var loanDueDate = loan.getDueDate().toInstant().truncatedTo(ChronoUnit.SECONDS);
       var loanIntegerDueDate = (int) (loanDueDate.getEpochSecond());
@@ -424,6 +465,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
       var recallUser = recallUserService.getRecallUserForCentralServer(transaction.getCentralServerCode());
       eventPublisher.publishEvent(RecallRequestEvent.of(transaction.getHold(), recallUser));
     }
+    log.info("recallItem:: Item recalled");
   }
 
   private boolean isOpenRecallRequest(RequestDTO request) {
@@ -432,6 +474,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
   }
 
   private void associateLoanWithTransaction(UUID loanId, Date loanDueDate, UUID itemId, InnReachTransaction transaction) {
+    log.debug("associateLoanWithTransaction:: parameters loanId: {}, loanDueDate: {}, itemId: {}, transaction: {}", loanId, loanDueDate, itemId, transaction);
     if (transaction.getType() == PATRON) {
       log.info("Associating a new loan {} with patron transaction {}", loanId, transaction.getId());
       var hold = transaction.getHold();
@@ -454,6 +497,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
   }
 
   private TransactionCheckOutResponseDTO checkOutItem(InnReachTransaction transaction, UUID servicePointId) {
+    log.debug("checkOutItem:: parameters transaction: {}, servicePointId: {}", transaction, servicePointId);
     var hold = transaction.getHold();
     var folioItemId = hold.getFolioItemId();
 
@@ -472,6 +516,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
   }
 
   private void updateTransactionOnLoanClaimedReturned(StorageLoanDTO loan, InnReachTransaction transaction) {
+    log.debug("updateTransactionOnLoanClaimedReturned:: parameters load: {}, transaction: {}", loan, transaction);
     if (transaction.getType() != PATRON) {
       return;
     }
@@ -488,6 +533,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
   }
 
   private void updateTransactionOnLoanRenewal(StorageLoanDTO loan, InnReachTransaction transaction) {
+    log.debug("updateTransactionOnLoanRenewal:: parameters loan: {}, transaction: {}", loan, transaction);
     if (transaction.getType() != PATRON) {
       return;
     }
@@ -507,9 +553,12 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
   }
 
   private void updateTransactionOnLoanClosure(StorageLoanDTO loan, InnReachTransaction transaction) {
+    log.debug("updateTransactionOnLoanClosure:: parameters loan: {}, transaction: {}", loan, transaction);
     if (transaction.getType() == ITEM) {
+      log.info("updateTransactionOnLoanClosure:: updating transaction for type {}", transaction.getType());
       updateItemTransactionOnLoanClosure(transaction, loan.getId());
     } else if (transaction.getType() == PATRON) {
+      log.info("updateTransactionOnLoanClosure:: updating transaction for type {}", transaction.getType());
       updatePatronTransactionOnLoanClosure(transaction, loan.getId());
     }
   }
@@ -564,6 +613,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
   }
 
   private PatronHoldCheckInResponseDTO checkInItem(InnReachTransaction transaction, UUID servicePointId) {
+    log.debug("checkInItem:: parameters transaction: {}, servicePointId: {}", transaction, servicePointId);
     var hold = (TransactionPatronHold) transaction.getHold();
     var shippedItemBarcode = hold.getShippedItemBarcode();
     var folioItemBarcode = hold.getFolioItemBarcode();
@@ -580,6 +630,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
   }
 
   private void updateItemTransactionOnRequestChange(RequestDTO request, InnReachTransaction transaction) {
+    log.debug("updateItemTransactionOnRequestChange:: parameters request: {}, transaction: {}", request, transaction);
     var requestId = request.getId();
     var itemId = request.getItemId();
     var hold = transaction.getHold();
@@ -606,23 +657,37 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
   }
 
   private void updateItemTransactionOnMovedRequest(RequestDTO request, InventoryItemDTO item, InnReachTransaction transaction) {
+    log.debug("updateItemTransactionOnMovedRequest:: parameters request: {}, item: {}, transaction: {}", request, item, transaction);
     updateTransactionOnMovedRequest(request, item, transaction);
 
     notifier.reportTransferRequest(transaction, item.getHrid());
   }
 
   private void updatePatronTransactionOnRequestChange(RequestDTO requestDTO, InnReachTransaction transaction) {
+    log.debug("updatePatronTransactionOnRequestChange:: parameters requestDTO: {}, transaction: {}", requestDTO, transaction);
     if (requestDTO.getStatus() == CLOSED_CANCELLED &&
       (transaction.getState() == PATRON_HOLD || transaction.getState() == TRANSFER)) {
       log.info("Updating patron hold transaction {} on cancellation of a request {}", transaction.getId(), requestDTO.getId());
       transaction.setState(BORROWING_SITE_CANCEL);
-      notifier.reportCancelItemHold(transaction);
+      clearVirtualItemsAndNotify(transaction);
       clearPatronTransactionAndItemRecord(requestDTO.getItemId(), transaction);
     }
   }
 
+  private void clearVirtualItemsAndNotify(InnReachTransaction transaction) {
+    log.debug("clearVirtualItemsAndNotify:: parameters transaction: {}", transaction);
+    var folioItemId = transaction.getHold().getFolioItemId();
+    var folioHoldingId = transaction.getHold().getFolioHoldingId();
+    var folioInstanceId = transaction.getHold().getFolioInstanceId();
+    var folioLoanId = transaction.getHold().getFolioLoanId();
+    notifier.reportCancelItemHold(transaction);
+    virtualRecordService.deleteVirtualRecords(folioItemId,folioHoldingId,folioInstanceId,folioLoanId);
+    requestService.deleteRequest(transaction.getHold().getFolioRequestId());
+  }
+
   private void cancelPatronHoldWithOpenRequest(CancelTransactionHoldDTO cancelRequest,
                                                InnReachTransaction transaction) {
+    log.debug("cancelPatronHoldWithOpenRequest:: parameters cancelRequest: {}, transaction: {}", cancelRequest, transaction);
     var trackingId = transaction.getTrackingId();
     var requestId = transaction.getHold().getFolioRequestId();
     if (transaction.getState() != ITEM_SHIPPED) {
@@ -636,10 +701,11 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
   }
 
   private void cancelPatronHoldWithClosedRequest(InnReachTransaction transaction) {
+    log.debug("cancelPatronHoldWithClosedRequest:: parameters transaction: {}", transaction);
     if (transaction.getState() == PATRON_HOLD || transaction.getState() == TRANSFER) {
       transaction.setState(BORROWING_SITE_CANCEL);
-
-      notifier.reportCancelItemHold(transaction);
+      clearVirtualItemsAndNotify(transaction);
+      clearPatronAndItemInfo(transaction.getHold());
     } else if (EnumSet.of(ITEM_SHIPPED, RECEIVE_UNANNOUNCED, ITEM_RECEIVED).contains(transaction.getState())) {
       var item = fetchItemById(transaction.getHold().getFolioItemId());
 
@@ -651,7 +717,9 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
     }
   }
 
+
   private void updateLocalTransactionOnRequestChange(RequestDTO request, InnReachTransaction transaction) {
+    log.debug("updateLocalTransactionOnRequestChange:: parameters request: {}, transaction: {}", request, transaction);
     var hold = transaction.getHold();
     var transactionItemId = hold.getFolioItemId();
     var itemId = request.getItemId();
@@ -668,6 +736,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
   }
 
   private void updateTransactionOnMovedRequest(RequestDTO request, InventoryItemDTO item, InnReachTransaction transaction) {
+    log.debug("updateTransactionOnMovedRequest:: parameters request: {}, item: {}, transaction: {}", request, item, transaction);
     var hold = transaction.getHold();
     hold.setFolioItemId(item.getId());
     hold.setItemId(item.getHrid());
@@ -679,8 +748,9 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
   }
 
   private void clearPatronTransactionAndItemRecord(UUID itemId, InnReachTransaction transaction) {
+    log.debug("clearPatronTransactionAndItemRecord:: parameters itemId: {}, transaction: {}", itemId, transaction);
     var patronTransaction = (TransactionPatronHold) transaction.getHold();
-    InnReachTransactionUtils.clearPatronAndItemInfo(patronTransaction);
+    clearPatronAndItemInfo(patronTransaction);
     updateItem(itemId);
   }
 

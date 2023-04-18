@@ -49,6 +49,8 @@ import java.util.stream.Stream;
 
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.producer.ProducerRecord;
+import org.folio.innreach.client.HoldingsStorageClient;
+import org.folio.innreach.dto.StorageLoanDTOStatus;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -75,7 +77,6 @@ import org.folio.innreach.domain.service.ContributionActionService;
 import org.folio.innreach.domain.service.impl.BatchDomainEventProcessor;
 import org.folio.innreach.dto.CheckInDTO;
 import org.folio.innreach.dto.ItemStatus;
-import org.folio.innreach.dto.LoanStatus;
 import org.folio.innreach.dto.StorageLoanDTO;
 import org.folio.innreach.external.service.InnReachExternalService;
 import org.folio.innreach.repository.InnReachTransactionRepository;
@@ -132,6 +133,9 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
 
   @MockBean
   private CirculationClient circulationClient;
+
+  @MockBean
+  private HoldingsStorageClient holdingsStorageClient;
 
   @Test
   void shouldReceiveLoanEvent() {
@@ -245,7 +249,7 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
     var event = createLoanDomainEvent(DomainEventType.UPDATED);
     var loan = event.getData().getNewEntity();
     loan.setId(folioLoanId);
-    loan.setStatus(new LoanStatus().name("Closed"));
+    loan.setStatus(new StorageLoanDTOStatus().name("Closed"));
     loan.setAction("checkedin");
 
     listener.handleLoanEvents(asSingleConsumerRecord(CIRC_LOAN_TOPIC, folioLoanId, event));
@@ -324,7 +328,7 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
     var loan = event.getData().getNewEntity();
     loan.setId(folioLoanId);
     loan.setAction("checkedin");
-    loan.setStatus(new LoanStatus().name("Closed"));
+    loan.setStatus(new StorageLoanDTOStatus().name("Closed"));
     modifyTransactionState(transactionId, ITEM_SHIPPED);
 
     listener.handleLoanEvents(asSingleConsumerRecord(CIRC_LOAN_TOPIC, folioLoanId, event));
@@ -451,15 +455,17 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
     request.setId(PRE_POPULATED_PATRON_TRANSACTION_REQUEST_ID);
     request.setStatus(CLOSED_CANCELLED);
     var inventoryItemDTO = createInventoryItemDTO();
+    var holdingDTO = createInventoryHoldingDTO();
     inventoryItemDTO.setId(ITEM_ID);
 
     when(inventoryClient.findItem(ITEM_ID)).thenReturn(Optional.of(inventoryItemDTO));
+    when(holdingsStorageClient.findHolding(HOLDING_ID)).thenReturn(Optional.of(holdingDTO));
 
     listener.handleRequestEvents(asSingleConsumerRecord(CIRC_REQUEST_TOPIC, PRE_POPULATED_PATRON_TRANSACTION_REQUEST_ID, event));
 
     verify(eventProcessor).process(anyList(), any(Consumer.class));
     verify(innReachExternalService, times(1)).postInnReachApi(any(), any());
-    verify(inventoryClient, times(1)).findItem(any());
+    verify(inventoryClient, times(2)).findItem(any());
     verify(inventoryClient).updateItem(eq(ITEM_ID), argThat(i -> i.getBarcode() == null));
 
     var updatedTransaction = transactionRepository.fetchOneById(PRE_POPULATED_PATRON_TRANSACTION_ID).orElse(null);

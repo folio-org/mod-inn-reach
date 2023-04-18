@@ -4,8 +4,8 @@ import static java.lang.System.getProperty;
 import static java.lang.System.getenv;
 import static org.apache.commons.lang3.StringUtils.firstNonBlank;
 
-import javax.validation.constraints.NotEmpty;
-import javax.validation.constraints.Pattern;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.Pattern;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
