@@ -7,6 +7,7 @@ import static org.folio.innreach.converter.marc.Constants.BLANK_REPLACEMENT;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.regex.Pattern;
 
 import lombok.extern.log4j.Log4j2;
@@ -102,9 +103,20 @@ public class TransformedMARCRecordConverter {
     MarcStreamWriter marcStreamWriter = null;
 
     try (var baos = new ByteArrayOutputStream()) {
-      marcStreamWriter = new MarcStreamWriter(baos);
-      marcStreamWriter.write(record);
-      return new String(Base64.encodeBase64(baos.toByteArray()));
+//      marcStreamWriter = new MarcStreamWriter(baos);
+//      marcStreamWriter.write(record);
+
+//      return java.util.Base64.getEncoder()
+//        .encodeToString(baos.toString().replaceAll("[\\u0000-\\u001f]","").getBytes(StandardCharsets.UTF_8));
+
+      //return s;
+
+      //return new String(Base64.encodeBase64(baos.toByteArray()));
+
+      return java.util.Base64.getEncoder()
+        .encodeToString(record.toString().getBytes(StandardCharsets.UTF_8));
+
+
     } catch (IOException e) {
       log.error("Can't transform MARC record content to Base64 encoded raw content", e);
     } finally {

@@ -9,6 +9,7 @@ import static org.springframework.test.context.jdbc.SqlMergeMode.MergeMode.MERGE
 
 import static org.folio.innreach.fixture.TestUtil.deserializeFromJsonFile;
 
+import java.util.Locale;
 import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
@@ -63,12 +64,15 @@ class MARCRecordTransformationControllerTest extends BaseControllerTest {
       "/inn-reach/central-servers/{centralServerId}/marc-record-transformation/{inventoryInstanceId}",
       TransformedMARCRecordDTO.class, PRE_POPULATED_CENTRAL_SERVER_ID, UUID.randomUUID());
 
+    System.out.println("data->"+responseEntity.getBody().toString());
+
     assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
 
     var body = responseEntity.getBody();
 
     assertNotNull(body);
     assertNotNull(body.getContent());
+    System.out.println("content is->"+body.getContent().toString());
     assertNotNull(body.getBase64rawContent());
   }
 
