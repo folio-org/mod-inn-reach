@@ -73,8 +73,7 @@ class MARCRecordTransformationControllerTest extends BaseControllerTest {
     assertNotNull(body);
     assertNotNull(body.getContent());
     assertNotNull(body.getBase64rawContent());
-    assertEquals(body.getContent(), new String(Base64.getDecoder().decode(body.getBase64rawContent()), StandardCharsets.UTF_8));
-
+    assertEquals(body.getContent(), StringUtils.chop(new String(Base64.getDecoder().decode(body.getBase64rawContent()), StandardCharsets.UTF_8)));
   }
 
   @Test

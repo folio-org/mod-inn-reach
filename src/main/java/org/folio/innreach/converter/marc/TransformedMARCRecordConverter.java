@@ -113,7 +113,7 @@ public class TransformedMARCRecordConverter {
       final MarcTxtWriter writer = new MarcTxtWriter(out);
       writer.write(marcRecord);
       writer.close();
-      return StringUtils.chop(out.toString());
+      return out.toString();
     }
   }
 
