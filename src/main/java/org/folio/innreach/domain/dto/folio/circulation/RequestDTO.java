@@ -28,7 +28,7 @@ public class RequestDTO {
   private UUID pickupServicePointId;
   private String patronComments;
   private OffsetDateTime requestDate;
-  private String fulfilmentPreference;
+  private String fulfillmentPreference;
   private UUID cancellationReasonId;
   private String cancellationAdditionalInformation;
 
@@ -60,7 +60,7 @@ public class RequestDTO {
 
   @Getter
   @RequiredArgsConstructor
-  public enum FulfilmentPreference {
+  public enum FulfillmentPreference {
     HOLD_SHELF("Hold Shelf"),
     DELIVERY("Delivery");
 
