@@ -81,7 +81,7 @@ public class ContributionJobRunner {
       .isInitialContribution(true)
       .build();
 
-    log.info("Starting initial contribution: iterationJobId: {}", context.getIterationJobId());
+    log.info("IterationJobId set at startInitialContribution: {}",context.getIterationJobId());
 
     //clear maps key & value of this tenant if present before start
     totalRecords.remove(tenantId);
@@ -423,9 +423,14 @@ public class ContributionJobRunner {
       stats.addRecordsTotal(1);
       recordContributionService.deContributeInstance(centralServerId, instance);
       stats.addRecordsDeContributed(1);
+      addRecordProcessed();
     }
-    catch (ServiceSuspendedException ex) {
-      throw new ServiceSuspendedException(ex.getMessage());
+    catch (ServiceSuspendedException | FeignException | InnReachConnectionException e) {
+      throw e;
+    }
+    catch (SocketTimeoutException socketTimeoutException) {
+      log.info("socketTimeoutException occur");
+      throw new SocketTimeOutExceptionWrapper(socketTimeoutException.getMessage());
     }
     catch (Exception e) {
       instanceExceptionListener.logWriteError(e, instance.getId());
@@ -440,7 +445,12 @@ public class ContributionJobRunner {
       stats.addRecordsTotal(1);
       recordContributionService.deContributeItem(centralServerId, item);
       stats.addRecordsDeContributed(1);
-    } catch (Exception e) {
+      addRecordProcessed();
+    }
+    catch (ServiceSuspendedException | FeignException | InnReachConnectionException e) {
+      throw e;
+    }
+    catch (Exception e) {
       itemExceptionListener.logWriteError(e, item.getId());
     } finally {
       stats.addRecordsProcessed(1);
@@ -458,15 +468,21 @@ public class ContributionJobRunner {
 
     var statistics = new Statistics();
     try {
-      beginContributionJobContext(context);
-
+      if(getContributionJobContext()==null) {
+        log.info("setting ongoing contribution context for contributionID:{}",context.getContributionId());
+        beginContributionJobContext(context);
+      }
       processor.accept(context, statistics);
-    } catch (Exception e) {
-      log.warn("Ongoing: Failed to run contribution job for central server: {}", centralServerId, e);
-      throw e;
-    } finally {
       completeContribution(context);
       endContributionJobContext();
+    }
+    catch (ServiceSuspendedException | FeignException | InnReachConnectionException | SocketTimeOutExceptionWrapper e) {
+      log.info("exception thrown from runOngoing");
+      throw e;
+    }
+    catch (Exception e) {
+      log.info("contributeInstance exception block :{}",e.getMessage());
+      throw e;
     }
   }
 
@@ -474,7 +490,7 @@ public class ContributionJobRunner {
     return !Objects.equals(event.getJobId(), iterationJobId);
   }
 
-  private void completeContribution(ContributionJobContext context) {
+  public void completeContribution(ContributionJobContext context) {
     try {
       contributionService.completeContribution(context.getContributionId());
       log.info("Completed contribution");

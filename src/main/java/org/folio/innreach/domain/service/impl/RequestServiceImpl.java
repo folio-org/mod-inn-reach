@@ -1,6 +1,6 @@
 package org.folio.innreach.domain.service.impl;
 
-import static org.folio.innreach.domain.dto.folio.circulation.RequestDTO.FulfilmentPreference.HOLD_SHELF;
+import static org.folio.innreach.domain.dto.folio.circulation.RequestDTO.FulfillmentPreference.HOLD_SHELF;
 import static org.folio.innreach.domain.dto.folio.circulation.RequestDTO.RequestStatus.CLOSED_CANCELLED;
 import static org.folio.innreach.domain.dto.folio.circulation.RequestDTO.RequestStatus.CLOSED_PICKUP_EXPIRED;
 import static org.folio.innreach.domain.dto.folio.circulation.RequestDTO.RequestStatus.OPEN_AWAITING_DELIVERY;
@@ -174,7 +174,7 @@ public class RequestServiceImpl implements RequestService {
       .requestExpirationDate(requestExpirationDate)
       .patronComments(comment)
       .requestDate(transaction.getCreatedDate())
-      .fulfilmentPreference(HOLD_SHELF.getName())
+      .fulfillmentPreference(HOLD_SHELF.getName())
       .build();
     var createdRequest = circulationClient.sendRequest(newRequest);
     log.info("createdRequest {}", createdRequest.toString());
@@ -250,7 +250,7 @@ public class RequestServiceImpl implements RequestService {
       .instanceId(instanceId)
       .holdingsRecordId(holdingId)
       .requestDate(OffsetDateTime.now())
-      .fulfilmentPreference(HOLD_SHELF.getName())
+      .fulfillmentPreference(HOLD_SHELF.getName())
       .pickupServicePointId(pickupServicePoint)
       .build();
     circulationClient.sendRequest(request);
