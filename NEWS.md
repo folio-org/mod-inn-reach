@@ -1,3 +1,10 @@
+## v2.0.7 2023-05-17
+### Stories
+* [MODINREACH-347](https://issues.folio.org/browse/MODINREACH-347) - Record Contribution Errors Should not Cause Contribution Jobs to Halt
+* [MODINREACH-351](https://issues.folio.org/browse/MODINREACH-351) - Ensure that ongoing contributions can retry when central server is unavailable
+### Bug
+* [MODINREACH-369](https://issues.folio.org/browse/MODINREACH-369) - INN-Reach Record Contribution: Diacritics not being preserved in contributed MARC records
+
 ## v2.0.6 2023-03-08
 ### Stories
 * [MODINREACH-352](https://issues.folio.org/browse/MODINREACH-352) - mod-inn-reach failure in Nolana environments
