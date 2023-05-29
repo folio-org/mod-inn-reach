@@ -1,3 +1,7 @@
+## v2.0.8 2023-05-29
+### Bug
+* [MODINREACH-369](https://issues.folio.org/browse/MODINREACH-369) - INN-Reach Record Contribution: Diacritics not being preserved in contributed MARC records
+
 ## v2.0.7 2023-05-17
 ### Stories
 * [MODINREACH-347](https://issues.folio.org/browse/MODINREACH-347) - Record Contribution Errors Should not Cause Contribution Jobs to Halt
