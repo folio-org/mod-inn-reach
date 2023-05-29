@@ -11,9 +11,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.regex.Pattern;
 
 import lombok.extern.log4j.Log4j2;
-import org.apache.commons.lang3.StringUtils;
 import org.codehaus.plexus.util.Base64;
-import org.marc4j.MarcTxtWriter;
+import org.marc4j.MarcStreamWriter;
 import org.marc4j.marc.Leader;
 import org.marc4j.marc.MarcFactory;
 import org.marc4j.marc.Record;
@@ -101,20 +100,19 @@ public class TransformedMARCRecordConverter {
   }
 
   private String toBase64RawContent(Record marcRecord) {
-    try{
-      return new String(Base64.encodeBase64(recordToTxtMarc(marcRecord).getBytes(StandardCharsets.UTF_8)));
-    } catch (IOException e) {
-      log.error("Can't transform MARC record content to Base64 encoded raw content", e);
-    }
-    return EMPTY;
-  }
-  private static String recordToTxtMarc(Record marcRecord) throws IOException {
-    try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
-      final MarcTxtWriter writer = new MarcTxtWriter(out);
-      writer.write(marcRecord);
-      writer.close();
-      return out.toString();
-    }
-  }
+    MarcStreamWriter marcStreamWriter = null;
 
+    try (var baos = new ByteArrayOutputStream()) {
+      marcStreamWriter = new MarcStreamWriter(baos, StandardCharsets.UTF_8.toString());
+      marcStreamWriter.write(marcRecord);
+      return new String(Base64.encodeBase64(baos.toByteArray()));
+        } catch (IOException e) {
+          log.error("Can't transform MARC record content to Base64 encoded raw content", e);
+        } finally {
+          if (marcStreamWriter != null) {
+            marcStreamWriter.close();
+          }
+        }
+        return EMPTY;
+      }
 }
