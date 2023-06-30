@@ -11,9 +11,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.regex.Pattern;
 
 import lombok.extern.log4j.Log4j2;
-import org.apache.commons.lang3.StringUtils;
 import org.codehaus.plexus.util.Base64;
-import org.marc4j.MarcTxtWriter;
+import org.marc4j.MarcStreamWriter;
 import org.marc4j.marc.Leader;
 import org.marc4j.marc.MarcFactory;
 import org.marc4j.marc.Record;
@@ -111,14 +110,6 @@ public class TransformedMARCRecordConverter {
       log.error("Can't transform MARC record content to Base64 encoded raw content", e);
     }
     return EMPTY;
-  }
-  private static String recordToTxtMarc(Record marcRecord) throws IOException {
-    try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
-      final MarcTxtWriter writer = new MarcTxtWriter(out);
-      writer.write(marcRecord);
-      writer.close();
-      return out.toString();
-    }
   }
 
 }
