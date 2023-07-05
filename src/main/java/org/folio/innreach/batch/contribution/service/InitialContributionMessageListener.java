@@ -4,7 +4,6 @@ import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
-import org.folio.innreach.batch.contribution.InitialContributionJobConsumerContainer;
 import org.folio.innreach.domain.dto.folio.inventorystorage.InstanceIterationEvent;
 import org.folio.innreach.external.exception.InnReachConnectionException;
 import org.folio.innreach.external.exception.ServiceSuspendedException;
@@ -36,7 +35,6 @@ public class InitialContributionMessageListener implements MessageListener<Strin
 
       instanceIterationEvent.setInstanceId(instanceId);
       instanceIterationEvent.setJobId(jobId);
-      InitialContributionJobConsumerContainer.stopConsumer(consumerRecord.topic());
       iMessageProcessor.processMessage(instanceIterationEvent, consumerRecord.topic());
     }
     catch (ServiceSuspendedException | FeignException | InnReachConnectionException | SocketTimeOutExceptionWrapper e) {
