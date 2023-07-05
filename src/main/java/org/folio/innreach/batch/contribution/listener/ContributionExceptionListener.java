@@ -24,7 +24,7 @@ public class ContributionExceptionListener {
 
   protected void logError(Exception e, UUID recordId, String stepStage) {
     try {
-      log.warn("Step: [{}] error on stage {} record Id {} e: ", stepName, stepStage, recordId, e);
+      log.warn("Step: [{}] error on stage {} record Id {} e: {}", stepName, stepStage, recordId, e);
       var msg = String.format("Step: [%s] error on stage %s: %s", stepName, stepStage, e.getMessage());
 
       var error = new ContributionErrorDTO();
@@ -33,7 +33,7 @@ public class ContributionExceptionListener {
 
       contributionService.logContributionError(getContributionJobContext().getContributionId(), error);
     } catch (Exception ex) {
-      log.warn("Can't persist record {} contribution error: ", recordId, ex);
+      log.warn("Can't persist record {} contribution error: {}", recordId, ex);
     }
   }
 

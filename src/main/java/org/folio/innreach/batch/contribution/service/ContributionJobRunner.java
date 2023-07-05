@@ -372,11 +372,11 @@ public class ContributionJobRunner {
       addRecordProcessed();
     }
     catch (ServiceSuspendedException | FeignException | InnReachConnectionException e) {
-      log.info(getContributionJobContext().isInitialContribution() ? "Initial: exception occurred:": "Ongoing: exception occurred:", e);
+      log.info(getContributionJobContext().isInitialContribution() ? "Initial: exception occurred: {}": "Ongoing: exception occurred: {}", e);
       throw e;
     }
     catch (SocketTimeoutException socketTimeoutException) {
-      log.info(getContributionJobContext().isInitialContribution() ? "Initial: socket exception occurred:": "Ongoing: socket exception occurred:", socketTimeoutException);
+      log.info(getContributionJobContext().isInitialContribution() ? "Initial: socket exception occurred: {}": "Ongoing: socket exception occurred: {}", socketTimeoutException);
       throw new SocketTimeOutExceptionWrapper(socketTimeoutException.getMessage());
     }
     catch (Exception e) {
@@ -408,15 +408,15 @@ public class ContributionJobRunner {
       stats.addRecordsContributed(1);
     }
     catch (ServiceSuspendedException | FeignException | InnReachConnectionException e) {
-      log.info(getContributionJobContext().isInitialContribution() ? "Initial: exception occurred:": "Ongoing: exception occurred:", e);
+      log.info(getContributionJobContext().isInitialContribution() ? "Initial: exception occurred: {}": "Ongoing: exception occurred: {}", e);
       throw e;
     }
     catch (SocketTimeoutException socketTimeoutException) {
-      log.info(getContributionJobContext().isInitialContribution() ? "Initial: socket exception occurred:": "Ongoing: socket exception occurred:", socketTimeoutException);
+      log.info(getContributionJobContext().isInitialContribution() ? "Initial: socket exception occurred: {}": "Ongoing: socket exception occurred: {}", socketTimeoutException);
       throw new SocketTimeOutExceptionWrapper(socketTimeoutException.getMessage());
     }
     catch (Exception e) {
-      log.info("Initial: exception caught in contributeInstance e:", e);
+      log.info("Initial: exception caught in contributeInstance e: {}", e);
       instanceExceptionListener.logWriteError(e, instance.getId());
     } finally {
       log.info("Initial: contributeInstance finally called");
@@ -434,11 +434,11 @@ public class ContributionJobRunner {
       addRecordProcessed();
     }
     catch (ServiceSuspendedException | FeignException | InnReachConnectionException e) {
-      log.info("Initial: deContributeInstance exception occurred e: ", e);
+      log.info("Initial: deContributeInstance exception occurred e: {}", e);
       throw e;
     }
     catch (SocketTimeoutException socketTimeoutException) {
-      log.info("socketTimeoutException occur ", socketTimeoutException);
+      log.info("socketTimeoutException occur: {}", socketTimeoutException);
       throw new SocketTimeOutExceptionWrapper(socketTimeoutException.getMessage());
     }
     catch (Exception e) {
@@ -460,7 +460,7 @@ public class ContributionJobRunner {
       addRecordProcessed();
     }
     catch (ServiceSuspendedException | FeignException | InnReachConnectionException e) {
-      log.info("Initial: deContributeItem exception occurred e: ", e);
+      log.info("Initial: deContributeItem exception occurred e: {}", e);
       throw e;
     }
     catch (Exception e) {
@@ -493,11 +493,11 @@ public class ContributionJobRunner {
       endContributionJobContext();
     }
     catch (ServiceSuspendedException | FeignException | InnReachConnectionException | SocketTimeOutExceptionWrapper e) {
-      log.info("exception thrown from runOngoing :", e);
+      log.info("exception thrown from runOngoing : {}", e);
       throw e;
     }
     catch (Exception e) {
-      log.info("contributeInstance exception block :",e);
+      log.info("contributeInstance exception block : {}", e);
       throw e;
     }
   }
@@ -528,7 +528,7 @@ public class ContributionJobRunner {
     try {
       instance = retryTemplate.execute(r -> inventoryViewService.getInstance(instanceId));
     } catch (Exception e) {
-      log.info("loadInstanceWithItems:: exception occured with instance id: {} and e: ", instanceId, e);
+      log.info("loadInstanceWithItems:: exception occurred with instance id: {} and e: {}", instanceId, e);
       instanceExceptionListener.logProcessError(e, instanceId);
     }
     log.info("loadInstanceWithItems:: loaded instance with items");
