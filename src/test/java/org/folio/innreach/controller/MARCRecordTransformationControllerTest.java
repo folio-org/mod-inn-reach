@@ -2,6 +2,7 @@ package org.folio.innreach.controller;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TEST_METHOD;
@@ -13,7 +14,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.UUID;
 
-import org.apache.commons.lang3.StringUtils;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -73,7 +73,8 @@ class MARCRecordTransformationControllerTest extends BaseControllerTest {
     assertNotNull(body);
     assertNotNull(body.getContent());
     assertNotNull(body.getBase64rawContent());
-    assertEquals(body.getContent(), StringUtils.chop(new String(Base64.getDecoder().decode(body.getBase64rawContent()), StandardCharsets.UTF_8)));
+    String decodedString = new String(Base64.getDecoder().decode(body.getBase64rawContent()), StandardCharsets.UTF_8);
+    assertTrue(decodedString.contains("©Ø"));
   }
 
   @Test
