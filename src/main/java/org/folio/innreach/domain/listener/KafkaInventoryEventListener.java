@@ -45,6 +45,10 @@ public class KafkaInventoryEventListener {
     var events = getEvents(consumerRecords);
     for(DomainEvent<Item> event : events){
       log.info("handleItemEvents:: Event type: {}, tenant: {}, timestamp: {}, data: {} ", event.getType(), event.getTenant(), event.getTimestamp(), event.getData());
+      var oldEntity = event.getData().getOldEntity();
+      var newEntity = event.getData().getNewEntity();
+      if(oldEntity!=null && newEntity!=null)
+        log.info("handleItemEvents:: Old Entity id : {}, New Entity id : {}", oldEntity.getId(), newEntity.getId());
     }
     eventProcessor.process(events, event -> {
       log.info("Event type: {}", event.getType());
@@ -78,6 +82,10 @@ public class KafkaInventoryEventListener {
     var events = getEvents(consumerRecords);
     for(DomainEvent<Instance> event : events){
       log.info("handleInstanceEvents:: Event type: {}, tenant: {}, timestamp: {}, data: {} ", event.getType(), event.getTenant(), event.getTimestamp(), event.getData());
+      var oldEntity = event.getData().getOldEntity();
+      var newEntity = event.getData().getNewEntity();
+      if(oldEntity!=null && newEntity!=null)
+        log.info("handleInstanceEvents:: Old Entity id : {}, New Entity id : {}", oldEntity.getId(), newEntity.getId());
     }
     eventProcessor.process(events, event -> {
       var oldEntity = event.getData().getOldEntity();
@@ -110,6 +118,10 @@ public class KafkaInventoryEventListener {
     var events = getEvents(consumerRecords);
     for(DomainEvent<Holding> event : events){
       log.info("handleHoldingEvents:: Event type: {}, tenant: {}, timestamp: {}, data: {} ", event.getType(), event.getTenant(), event.getTimestamp(), event.getData());
+      var oldEntity = event.getData().getOldEntity();
+      var newEntity = event.getData().getNewEntity();
+      if(oldEntity!=null && newEntity!=null)
+        log.info("handleHoldingEvents:: Old Entity id : {}, New Entity id : {}", oldEntity.getId(), newEntity.getId());
     }
     eventProcessor.process(events, event -> {
       var oldEntity = event.getData().getOldEntity();
