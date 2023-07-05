@@ -19,7 +19,9 @@ import org.folio.innreach.batch.contribution.InitialContributionJobConsumerConta
 import org.folio.innreach.batch.contribution.IterationEventReaderFactory;
 import org.folio.innreach.config.props.ContributionJobProperties;
 import org.folio.innreach.config.props.FolioEnvironment;
+import org.folio.innreach.domain.entity.JobExecution;
 import org.folio.innreach.external.exception.InnReachException;
+import org.folio.innreach.repository.JobExecutionRepository;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.retry.support.RetryTemplate;
@@ -50,6 +52,7 @@ public class ContributionServiceImpl implements ContributionService {
 
   public static final String COMPLETED = "COMPLETED";
   private final ContributionRepository repository;
+  private final JobExecutionRepository jobExecutionRepository;
   private final ContributionErrorRepository errorRepository;
   private final ContributionMapper mapper;
   private final ContributionValidationService validationService;
@@ -144,6 +147,7 @@ public class ContributionServiceImpl implements ContributionService {
     var numberOfRecords = iterationJobResponse.getNumberOfRecordsPublished();
     log.info("numberOfRecords from iterationJobResponse: {}",numberOfRecords);
 
+
     JobResponse updatedJobResponse = retryTemplate.execute(r -> getJobResponse(iterationJobResponse.getId()));
 
     if(updatedJobResponse!=null) {
@@ -151,11 +155,17 @@ public class ContributionServiceImpl implements ContributionService {
       numberOfRecords = updatedJobResponse.getNumberOfRecordsPublished();
     }
 
+    var jobExecution = new JobExecution();
+    jobExecution.setFinished(false);
+    jobExecution.setTotalRecords(numberOfRecords);
+
     contribution.setJobId(iterationJobResponse.getId());
+    jobExecution = jobExecutionRepository.save(jobExecution);
 
     repository.save(contribution);
 
-    runInitialContributionJob(centralServerId, contribution, numberOfRecords);
+
+    runInitialContributionJob(centralServerId, contribution, numberOfRecords, jobExecution);
 
     log.info("Initial contribution process started");
   }
@@ -229,9 +239,9 @@ public class ContributionServiceImpl implements ContributionService {
 
   }
 
-  private void runInitialContributionJob(UUID centralServerId, Contribution contribution, Integer numberOfRecords) {
+  private void runInitialContributionJob(UUID centralServerId, Contribution contribution, Integer numberOfRecords, JobExecution jobExecution) {
     log.debug("runInitialContributionJob:: parameters centralServerId: {}, contribution: {}", centralServerId, contribution);
-    getJobRunner().startInitialContribution(centralServerId, folioContext.getTenantId(), contribution.getId(), contribution.getJobId(), numberOfRecords);
+    getJobRunner().startInitialContribution(centralServerId, folioContext.getTenantId(), contribution.getId(), contribution.getJobId(), numberOfRecords, jobExecution);
   }
 
   private ContributionJobRunner getJobRunner() {

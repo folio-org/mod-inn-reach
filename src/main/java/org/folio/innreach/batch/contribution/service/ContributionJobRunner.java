@@ -16,10 +16,13 @@ import com.google.common.collect.Iterables;
 import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.folio.innreach.domain.entity.JobExecution;
+import org.folio.innreach.domain.entity.JobExecutionStatus;
 import org.folio.innreach.external.exception.InnReachConnectionException;
 import org.folio.innreach.external.exception.ServiceSuspendedException;
 import org.folio.innreach.batch.contribution.InitialContributionJobConsumerContainer;
 import org.folio.innreach.external.exception.SocketTimeOutExceptionWrapper;
+import org.folio.innreach.repository.JobExecutionStatusRepository;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.retry.support.RetryTemplate;
 import org.springframework.stereotype.Service;
@@ -66,10 +69,12 @@ public class ContributionJobRunner {
   private static final List<UUID> runningInitialContributions = Collections.synchronizedList(new ArrayList<>());
 
   private static Map<String,Integer> totalRecords = new HashMap<>();
+  private static Map<String, JobExecution> jobExecutions = new HashMap<>();
   private static ConcurrentHashMap<String, Integer> recordsProcessed = new ConcurrentHashMap<>();
+  private final JobExecutionStatusRepository jobExecutionStatusRepository;
 
 
-  public void startInitialContribution(UUID centralServerId, String tenantId, UUID contributionId, UUID iterationJobId, Integer numberOfRecords) {
+  public void startInitialContribution(UUID centralServerId, String tenantId, UUID contributionId, UUID iterationJobId, Integer numberOfRecords, JobExecution jobExecution) {
     var context = ContributionJobContext.builder()
       .contributionId(contributionId)
       .iterationJobId(iterationJobId)
@@ -82,12 +87,14 @@ public class ContributionJobRunner {
 
     //clear maps key & value of this tenant if present before start
     totalRecords.remove(tenantId);
+    jobExecutions.remove(tenantId);
     recordsProcessed.remove(tenantId);
     stats.clearStats();
 
     beginContributionJobContext(context);
 
     totalRecords.put(context.getTenantId(), numberOfRecords);
+    jobExecutions.put(context.getTenantId(), jobExecution);
 
     log.info("Starting initial contribution: totalRecords: {}", totalRecords);
 
@@ -131,21 +138,35 @@ public class ContributionJobRunner {
     }
 
     var centralServerId = context.getCentralServerId();
-
-    if (isEligibleForContribution(centralServerId, instance)) {
-      contributeInstance(centralServerId, instance, stats);
-      contributeInstanceItems(centralServerId, instance, stats);
-    } else if (isContributed(centralServerId, instance)) {
-      log.info("Initial: deContributeInstance");
-      deContributeInstance(centralServerId, instance, stats);
+    try{
+      JobExecutionStatus jobExecutionStatus = new JobExecutionStatus();
+      jobExecutionStatus.setJobExecution(jobExecutions.get(context.getTenantId()));
+      jobExecutionStatus.setType(event.getType());
+      jobExecutionStatus.setTenant(event.getTenant());
+      jobExecutionStatus.setInstanceId(event.getInstanceId());
+      jobExecutionStatus.setStatus(JobExecutionStatus.Status.READY);
+      log.info("saving job execution status {} ", jobExecutionStatus);
+      jobExecutionStatusRepository.save(jobExecutionStatus);
+    }catch (Exception ex) {
+      log.info("Inside exception {}", ex.getMessage());
     }
-    else {
-      // to test if non-eligible increasing count to verify the stopping condition
-      log.info("Initial: non-eligible instance");
-      ContributionJobRunner.recordsProcessed.put(context.getTenantId(), recordsProcessed.get(context.getTenantId()) == null ? 1
+    recordsProcessed.put(context.getTenantId(), recordsProcessed.get(context.getTenantId()) == null ? 1
         : recordsProcessed.get(context.getTenantId())+1);
 
-    }
+//    if (isEligibleForContribution(centralServerId, instance)) {
+//      contributeInstance(centralServerId, instance, stats);
+//      contributeInstanceItems(centralServerId, instance, stats);
+//    } else if (isContributed(centralServerId, instance)) {
+//      log.info("Initial: deContributeInstance");
+//      deContributeInstance(centralServerId, instance, stats);
+//    }
+//    else {
+//      // to test if non-eligible increasing count to verify the stopping condition
+//      log.info("Initial: non-eligible instance");
+//      ContributionJobRunner.recordsProcessed.put(context.getTenantId(), recordsProcessed.get(context.getTenantId()) == null ? 1
+//        : recordsProcessed.get(context.getTenantId())+1);
+//
+//    }
 
     if (Objects.equals(recordsProcessed.get(context.getTenantId()), totalRecords.get(context.getTenantId()))) {
       log.info("Initial: consumer is stopping as all processed");

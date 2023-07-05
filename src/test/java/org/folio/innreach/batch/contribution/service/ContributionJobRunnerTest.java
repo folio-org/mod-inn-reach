@@ -524,7 +524,7 @@ class ContributionJobRunnerTest {
     doNothing().when(initialContributionJobConsumerContainer).tryStartOrCreateConsumer(any());
 
     jobRunner.startInitialContribution(
-      CENTRAL_SERVER_ID, TENANT_ID, CONTRIBUTION_ID, ITERATION_JOB_ID, 100);
+      CENTRAL_SERVER_ID, TENANT_ID, CONTRIBUTION_ID, ITERATION_JOB_ID, 100, null);
 
     verify(initialContributionJobConsumerContainer,times(1)).tryStartOrCreateConsumer(any());
 
