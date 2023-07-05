@@ -43,8 +43,11 @@ public class KafkaInventoryEventListener {
     log.info("Handling inventory item events from Kafka [number of events: {}]", consumerRecords.size());
 
     var events = getEvents(consumerRecords);
-
+    for(DomainEvent<Item> event : events){
+      log.info("handleItemEvents:: Event type: {}, tenant: {}, timestamp: {}, data: {} ", event.getType(), event.getTenant(), event.getTimestamp(), event.getData());
+    }
     eventProcessor.process(events, event -> {
+      log.info("Event type: {}", event.getType());
       var oldEntity = event.getData().getOldEntity();
       var newEntity = event.getData().getNewEntity();
       switch (event.getType()) {
@@ -73,7 +76,9 @@ public class KafkaInventoryEventListener {
   public void handleInstanceEvents(List<ConsumerRecord<String, DomainEvent<Instance>>> consumerRecords) {
     log.info("Handling inventory instance events from Kafka [number of events: {}]", consumerRecords.size());
     var events = getEvents(consumerRecords);
-
+    for(DomainEvent<Instance> event : events){
+      log.info("handleInstanceEvents:: Event type: {}, tenant: {}, timestamp: {}, data: {} ", event.getType(), event.getTenant(), event.getTimestamp(), event.getData());
+    }
     eventProcessor.process(events, event -> {
       var oldEntity = event.getData().getOldEntity();
       var newEntity = event.getData().getNewEntity();
@@ -103,7 +108,9 @@ public class KafkaInventoryEventListener {
     log.info("Handling inventory holding events from Kafka [number of events: {}]", consumerRecords.size());
 
     var events = getEvents(consumerRecords);
-
+    for(DomainEvent<Holding> event : events){
+      log.info("handleHoldingEvents:: Event type: {}, tenant: {}, timestamp: {}, data: {} ", event.getType(), event.getTenant(), event.getTimestamp(), event.getData());
+    }
     eventProcessor.process(events, event -> {
       var oldEntity = event.getData().getOldEntity();
       var newEntity = event.getData().getNewEntity();

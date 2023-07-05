@@ -70,6 +70,7 @@ public class ContributionJobRunner {
 
 
   public void startInitialContribution(UUID centralServerId, String tenantId, UUID contributionId, UUID iterationJobId, Integer numberOfRecords) {
+    log.info("startInitialContribution:: parameters centralServerId: {}, tenantId: {}, contributionId: {}, iterationJobId: {}, numberOfRecords: {}", centralServerId, tenantId, contributionId, iterationJobId, numberOfRecords);
     var context = ContributionJobContext.builder()
       .contributionId(contributionId)
       .iterationJobId(iterationJobId)
@@ -99,7 +100,7 @@ public class ContributionJobRunner {
   }
 
   public void runInitialContribution(InstanceIterationEvent event, String topic) {
-
+    log.info("runInitialContribution:: parameters InstanceIterationEvent: {}, topic: {}", event, topic);
     var context = getContributionJobContext(); // added
     log.info("Initial: count: {}, iterationJobId: {}, recordsTotal: {} ",
       recordsProcessed.get(context.getTenantId()), context.getIterationJobId(), stats.getRecordsTotal());
@@ -133,10 +134,11 @@ public class ContributionJobRunner {
     var centralServerId = context.getCentralServerId();
 
     if (isEligibleForContribution(centralServerId, instance)) {
+      log.info("Initial: ELgible for Contribution centralServerId: {}, instanceId: {}", centralServerId, instanceId);
       contributeInstance(centralServerId, instance, stats);
       contributeInstanceItems(centralServerId, instance, stats);
     } else if (isContributed(centralServerId, instance)) {
-      log.info("Initial: deContributeInstance");
+      log.info("Initial: deContributeInstance centralServerId: {}, instanceId: {}", centralServerId, instanceId);
       deContributeInstance(centralServerId, instance, stats);
     }
     else {
@@ -156,14 +158,14 @@ public class ContributionJobRunner {
   }
 
   public void stopContribution(String tenantId) {
-    log.info("stopContribution called");
+    log.info("stopContribution:: stopContribution called, parameters tenantId: {}", tenantId);
     endContributionJobContext();
     totalRecords.remove(tenantId);
     recordsProcessed.remove(tenantId);
   }
 
   public void cancelContributionIfRetryExhausted(UUID centralServerId) {
-    log.info("cancelContributionIfRetryExhausted called");
+    log.info("cancelContributionIfRetryExhausted:: parameters centralServerId: {}", centralServerId);
     contributionService.cancelCurrent(centralServerId);
   }
 
@@ -179,7 +181,7 @@ public class ContributionJobRunner {
     }
 
     runOngoing(centralServerId, (ctx, statistics) -> {
-      log.info("Ongoing: starting ongoing instance contribution job {}", ctx);
+      log.info("Ongoing: starting ongoing instance contribution job {}, centralServerId: {}", ctx, centralServerId);
 
       if (eligibleInstance) {
         log.info("Ongoing: contributing instance");
@@ -243,7 +245,7 @@ public class ContributionJobRunner {
   }
 
   public void runItemMove(UUID centralServerId, Instance newInstance, Instance oldInstance, Item item) {
-    log.info("Validating item {} for moving to a new instance {} on central server {}", item.getId(), newInstance.getId(), centralServerId);
+    log.info("Validating item {} for moving to a new instance {} from old instance {} on central server {}", item.getId(), newInstance.getId(), oldInstance, centralServerId);
 
     boolean eligibleItem = isEligibleForContribution(centralServerId, item);
     boolean contributedItem = isContributed(centralServerId, oldInstance, item);
@@ -284,7 +286,7 @@ public class ContributionJobRunner {
   }
 
   public void runItemDeContribution(UUID centralServerId, Instance instance, Item deletedItem) {
-    log.info("Validating item {} for de-contribution from central server {}", deletedItem.getId(), centralServerId);
+    log.info("Validating item {} for de-contribution from central server {} with instance id {}", deletedItem.getId(), centralServerId, instance.getId());
     if (!isContributed(centralServerId, instance, deletedItem)) {
       log.info("Skipping non-contributed item");
       return;
@@ -318,22 +320,27 @@ public class ContributionJobRunner {
   }
 
   private boolean isEligibleForContribution(UUID centralServerId, Instance instance) {
+    log.info("isEligibleForContribution:: parameters centralServerId: {}, instance id: {}", centralServerId, instance.getId());
     return validationService.isEligibleForContribution(centralServerId, instance);
   }
 
   private boolean isContributed(UUID centralServerId, Instance instance) {
+    log.info("isContributed:: parameters centralServerId: {}, instance id: {}", centralServerId, instance.getId());
     return recordContributionService.isContributed(centralServerId, instance);
   }
 
   private boolean isEligibleForContribution(UUID centralServerId, Item item) {
+    log.info("isEligibleForContribution:: parameters centralServerId: {}, item id: {}", centralServerId, item.getId());
     return validationService.isEligibleForContribution(centralServerId, item);
   }
 
   private boolean isContributed(UUID centralServerId, Instance instance, Item item) {
+    log.info("isContributed:: parameters centralServerId: {}, instance id: {}, item id: {}", centralServerId, instance.getId(), item.getId());
     return recordContributionService.isContributed(centralServerId, instance, item);
   }
 
   private void contributeInstanceItems(UUID centralServerId, Instance instance, Statistics stats) {
+    log.info("contributeInstanceItems:: parameters centralServerId: {}, instance id: {}, stats: {}", centralServerId, instance.getId(), stats);
     var bibId = instance.getHrid();
     var items = instance.getItems().stream()
       .filter(i -> isEligibleForContribution(centralServerId, i))
@@ -351,10 +358,12 @@ public class ContributionJobRunner {
   }
 
   private void contributeItem(UUID centralServerId, String bibId, Item item, Statistics stats) {
+    log.info("contributeItem:: parameters centralServerId: {}, bibId: {}, item id: {}, stats: {}", centralServerId, bibId, item.getId(), stats);
     contributeItemsChunk(centralServerId, bibId, List.of(item), stats);
   }
 
   private void contributeItemsChunk(UUID centralServerId, String bibId, List<Item> items, Statistics stats) {
+    log.info("contributeItemsChunk:: paramerters centralServerId: {}, bibId: {}, items: {}, stats: {}", centralServerId, bibId, items, stats);
     var itemsCount = items.size();
     try {
       stats.addRecordsTotal(itemsCount);
@@ -374,14 +383,17 @@ public class ContributionJobRunner {
       // not possible to guess what item failed when the chunk of multiple items is being contributed
       var recordId = items.size() == 1 ? items.get(0).getId() : null;
       itemExceptionListener.logWriteError(e, recordId);
+      log.info("contributeItemsChunk:: recordId: {}, exception occurred: {}", recordId, e);
       addRecordProcessed();
     } finally {
+      log.info("contributeItemsChunk:: finally added processed records and updated stats");
       stats.addRecordsProcessed(itemsCount);
       statsListener.updateStats(stats);
     }
   }
 
   private void addRecordProcessed() {
+    log.info("addRecordProcessed called");
     if (getContributionJobContext().isInitialContribution()) {
       ContributionJobRunner.recordsProcessed.put(getContributionJobContext().getTenantId(), recordsProcessed.get(getContributionJobContext().getTenantId()) == null ? 1
         : recordsProcessed.get(getContributionJobContext().getTenantId()) + 1);
@@ -389,7 +401,7 @@ public class ContributionJobRunner {
   }
 
   private void contributeInstance(UUID centralServerId, Instance instance, Statistics stats) {
-    log.info("Initial: contributeInstance instanceId: {}", instance.getId());
+    log.info("Initial: contributeInstance centralServerId: {}, instanceId: {}, stats: {}", centralServerId, instance.getId(), stats);
     try {
       stats.addRecordsTotal(1);
       recordContributionService.contributeInstance(centralServerId, instance);
@@ -404,7 +416,7 @@ public class ContributionJobRunner {
       throw new SocketTimeOutExceptionWrapper(socketTimeoutException.getMessage());
     }
     catch (Exception e) {
-      log.info("Initial: exception caught in contributeInstance");
+      log.info("Initial: exception caught in contributeInstance e:", e);
       instanceExceptionListener.logWriteError(e, instance.getId());
     } finally {
       log.info("Initial: contributeInstance finally called");
@@ -414,6 +426,7 @@ public class ContributionJobRunner {
   }
 
   private void deContributeInstance(UUID centralServerId, Instance instance, Statistics stats) {
+    log.info("Initial: deContributeInstance centralServerId: {}, instanceId: {}, stats: {}", centralServerId, instance.getId(), stats);
     try {
       stats.addRecordsTotal(1);
       recordContributionService.deContributeInstance(centralServerId, instance);
@@ -421,21 +434,25 @@ public class ContributionJobRunner {
       addRecordProcessed();
     }
     catch (ServiceSuspendedException | FeignException | InnReachConnectionException e) {
+      log.info("Initial: deContributeInstance exception occurred e: ", e);
       throw e;
     }
     catch (SocketTimeoutException socketTimeoutException) {
-      log.info("socketTimeoutException occur");
+      log.info("socketTimeoutException occur ", socketTimeoutException);
       throw new SocketTimeOutExceptionWrapper(socketTimeoutException.getMessage());
     }
     catch (Exception e) {
+      log.info("Initial: deContributeInstance exception occurred e: {} for instanceId: {}", e, instance.getId());
       instanceExceptionListener.logWriteError(e, instance.getId());
     } finally {
+      log.info("Initial: deContributeInstance finally added processed records and updated stats");
       stats.addRecordsProcessed(1);
       updateStats(stats);
     }
   }
 
   private void deContributeItem(UUID centralServerId, Item item, Statistics stats) {
+    log.info("Initial: deContributeItem centralServerId: {}, item id: {}, stats: {}", centralServerId, item.getId(), stats);
     try {
       stats.addRecordsTotal(1);
       recordContributionService.deContributeItem(centralServerId, item);
@@ -443,17 +460,21 @@ public class ContributionJobRunner {
       addRecordProcessed();
     }
     catch (ServiceSuspendedException | FeignException | InnReachConnectionException e) {
+      log.info("Initial: deContributeItem exception occurred e: ", e);
       throw e;
     }
     catch (Exception e) {
+      log.info("Initial: deContributeItem exception occurred e: {} for item id: {}", e, item.getId());
       itemExceptionListener.logWriteError(e, item.getId());
     } finally {
+      log.info("Initial: deContributeItem finally added processed records and updated stats");
       stats.addRecordsProcessed(1);
       updateStats(stats);
     }
   }
 
   private void runOngoing(UUID centralServerId, BiConsumer<ContributionJobContext, Statistics> processor) {
+    log.info("Initial: runOngoing  centralServerId: {}, processor: {}", centralServerId, processor);
     var contribution = contributionService.createOngoingContribution(centralServerId);
     var context = ContributionJobContext.builder()
       .contributionId(contribution.getId())
@@ -472,20 +493,22 @@ public class ContributionJobRunner {
       endContributionJobContext();
     }
     catch (ServiceSuspendedException | FeignException | InnReachConnectionException | SocketTimeOutExceptionWrapper e) {
-      log.info("exception thrown from runOngoing");
+      log.info("exception thrown from runOngoing :", e);
       throw e;
     }
     catch (Exception e) {
-      log.info("contributeInstance exception block :{}",e.getMessage());
+      log.info("contributeInstance exception block :",e);
       throw e;
     }
   }
 
   private boolean isUnknownEvent(InstanceIterationEvent event, UUID iterationJobId) {
+    log.info("isUnknownEvent:: parameters event: {}, iterationJobId: {}", event, iterationJobId);
     return !Objects.equals(event.getJobId(), iterationJobId);
   }
 
   public void completeContribution(ContributionJobContext context) {
+    log.info("completeContribution:: parameters context: {}", context);
     try {
       contributionService.completeContribution(context.getContributionId());
       log.info("Completed contribution");
@@ -495,16 +518,20 @@ public class ContributionJobRunner {
   }
 
   private void updateStats(Statistics stats) {
+    log.info("updateStats:: updating statistics stats: {}", stats);
     statsListener.updateStats(stats);
   }
 
   private Instance loadInstanceWithItems(UUID instanceId) {
+    log.info("loadInstanceWithItems:: parameters instanceId: {}", instanceId);
     Instance instance = null;
     try {
       instance = retryTemplate.execute(r -> inventoryViewService.getInstance(instanceId));
     } catch (Exception e) {
+      log.info("loadInstanceWithItems:: exception occured with instance id: {} and e: ", instanceId, e);
       instanceExceptionListener.logProcessError(e, instanceId);
     }
+    log.info("loadInstanceWithItems:: loaded instance with items");
     return instance;
   }
 }
