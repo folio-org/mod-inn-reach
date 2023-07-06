@@ -24,7 +24,6 @@ import org.folio.innreach.external.exception.InnReachException;
 import org.folio.innreach.repository.JobExecutionRepository;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.data.domain.Example;
 import org.springframework.retry.support.RetryTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -94,21 +93,21 @@ public class ContributionServiceImpl implements ContributionService {
     return mapper.toDTO(repository.save(entity));
   }
 
-//  @Transactional
-//  @Override
-//  public void completeJobExecution(UUID jobExecutionId) {
-//    try{
-//      log.debug("completeJobExecution:: Completing job execution process {} ", jobExecutionId);
-//      jobExecutionRepository.findById(jobExecutionId)
-//        .ifPresent(jobExecution -> {
-//          jobExecution.setFinished(true);
-//          jobExecutionRepository.save(jobExecution);
-//          log.info("completeJobExecution:: job execution process completed {} ", jobExecutionId);
-//        });
-//    } catch (Exception ex){
-//      log.info("completeJobExecution:: unable to complete job execution process", ex);
-//    }
-//  }
+  @Transactional
+  @Override
+  public void completeJobExecution(UUID jobExecutionId) {
+    try{
+      log.debug("completeJobExecution:: Completing job execution process {} ", jobExecutionId);
+      jobExecutionRepository.findById(jobExecutionId)
+        .ifPresent(jobExecution -> {
+          jobExecution.setFinished(true);
+          jobExecutionRepository.save(jobExecution);
+          log.info("completeJobExecution:: job execution process completed {} ", jobExecutionId);
+        });
+    } catch (Exception ex){
+      log.info("completeJobExecution:: unable to complete job execution process", ex);
+    }
+  }
 
   @Transactional
   @Override
