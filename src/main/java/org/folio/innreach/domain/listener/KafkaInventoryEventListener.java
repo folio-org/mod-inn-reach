@@ -51,32 +51,14 @@ public class KafkaInventoryEventListener {
       var newEntity = event.getData().getNewEntity();
       log.info("handleItemEvents:: Event type: {}, tenant: {}, timestamp: {}, data: {} ", event.getType(), event.getTenant(), event.getTimestamp(), event.getData());
       if(event.getType().equals(CREATED)){
-        if(newEntity!=null && oldEntity!=null){
-          log.info("created handleItemEvents:: Old Entity: {}, New Entity: {}",  oldEntity.getId(), newEntity.getId());
-        } else {
-          if (newEntity != null)
-            log.info("created handleItemEvents:: New Entity: {}", newEntity.getId());
-          else
-            log.info("created handleItemEvents:: Old Entity: {}", oldEntity.getId());
-        }
+        if (newEntity != null)
+          log.info("created handleItemEvents:: New Entity: {}", newEntity.getId());
       } else if (event.getType().equals(UPDATED)) {
-        if(newEntity!=null && oldEntity!=null){
+        if(newEntity!=null && oldEntity!=null)
           log.info("updated handleItemEvents:: Old Entity: {}, New Entity: {}",  oldEntity.getId(), newEntity.getId());
-        } else {
-          if (newEntity != null)
-            log.info("updated handleItemEvents:: New Entity: {}", newEntity.getId());
-          else
-            log.info("updated handleItemEvents:: Old Entity: {}", oldEntity.getId());
-        }
       } else if(event.getType().equals(DELETED)){
-        if(newEntity!=null && oldEntity!=null){
-          log.info("deleted handleItemEvents:: Old Entity: {}, New Entity: {}",  oldEntity.getId(), newEntity.getId());
-        } else {
-          if (newEntity != null)
-            log.info("deleted handleItemEvents:: New Entity: {}", newEntity.getId());
-          else
-            log.info("deleted handleItemEvents:: Old Entity: {}", oldEntity.getId());
-        }
+        if(oldEntity!=null)
+          log.info("deleted handleItemEvents:: Old Entity: {}", oldEntity.getId());
       }
     }
     eventProcessor.process(events, event -> {
@@ -113,32 +95,14 @@ public class KafkaInventoryEventListener {
       var newEntity = event.getData().getNewEntity();
       log.info("handleInstanceEvents:: Event type: {}, tenant: {}, timestamp: {}, data: {} ", event.getType(), event.getTenant(), event.getTimestamp(), event.getData());
       if(event.getType().equals(CREATED)){
-        if(newEntity!=null && oldEntity!=null){
-          log.info("created handleInstanceEvents:: Old Entity: {}, New Entity: {}",  oldEntity.getId(), newEntity.getId());
-        } else {
-          if (newEntity != null)
-            log.info("created handleInstanceEvents:: New Entity: {}", newEntity.getId());
-          else
-            log.info("created handleInstanceEvents:: Old Entity: {}", oldEntity.getId());
-        }
+        if (newEntity != null)
+          log.info("created handleInstanceEvents:: New Entity: {}", newEntity.getId());
       } else if (event.getType().equals(UPDATED)) {
-        if(newEntity!=null && oldEntity!=null){
+        if(newEntity!=null && oldEntity!=null)
           log.info("updated handleInstanceEvents:: Old Entity: {}, New Entity: {}",  oldEntity.getId(), newEntity.getId());
-        } else {
-          if (newEntity != null)
-            log.info("updated handleInstanceEvents:: New Entity: {}", newEntity.getId());
-          else
-            log.info("updated handleInstanceEvents:: Old Entity: {}", oldEntity.getId());
-        }
       } else if(event.getType().equals(DELETED)){
-        if(newEntity!=null && oldEntity!=null){
-          log.info("deleted handleInstanceEvents:: Old Entity: {}, New Entity: {}",  oldEntity.getId(), newEntity.getId());
-        } else {
-          if (newEntity != null)
-            log.info("deleted handleInstanceEvents:: New Entity: {}", newEntity.getId());
-          else
-            log.info("deleted handleInstanceEvents:: Old Entity: {}", oldEntity.getId());
-        }
+        if(oldEntity!=null)
+          log.info("deleted handleInstanceEvents:: Old Entity: {}", oldEntity.getId());
       }
     }
     eventProcessor.process(events, event -> {
@@ -173,34 +137,16 @@ public class KafkaInventoryEventListener {
     for(DomainEvent<Holding> event : events){
       var oldEntity = event.getData().getOldEntity();
       var newEntity = event.getData().getNewEntity();
-      log.info("handleInstanceEvents:: Event type: {}, tenant: {}, timestamp: {}, data: {} ", event.getType(), event.getTenant(), event.getTimestamp(), event.getData());
+      log.info("handleHoldingEvents:: Event type: {}, tenant: {}, timestamp: {}, data: {} ", event.getType(), event.getTenant(), event.getTimestamp(), event.getData());
       if(event.getType().equals(CREATED)){
-        if(newEntity!=null && oldEntity!=null){
-          log.info("created handleHoldingEvents:: Old Entity: {}, New Entity: {}",  oldEntity.getId(), newEntity.getId());
-        } else {
-          if (newEntity != null)
-            log.info("created handleHoldingEvents:: New Entity: {}", newEntity.getId());
-          else
-            log.info("created handleHoldingEvents:: Old Entity: {}", oldEntity.getId());
-        }
+        if (newEntity != null)
+          log.info("created handleHoldingEvents:: New Entity: {}", newEntity.getId());
       } else if (event.getType().equals(UPDATED)) {
-        if(newEntity!=null && oldEntity!=null){
+        if(newEntity!=null && oldEntity!=null)
           log.info("updated handleHoldingEvents:: Old Entity: {}, New Entity: {}",  oldEntity.getId(), newEntity.getId());
-        } else {
-          if (newEntity != null)
-            log.info("updated handleHoldingEvents:: New Entity: {}", newEntity.getId());
-          else
-            log.info("updated handleHoldingEvents:: Old Entity: {}", oldEntity.getId());
-        }
       } else if(event.getType().equals(DELETED)){
-        if(newEntity!=null && oldEntity!=null){
-          log.info("deleted handleHoldingEvents:: Old Entity: {}, New Entity: {}",  oldEntity.getId(), newEntity.getId());
-        } else {
-          if (newEntity != null)
-            log.info("deleted handleHoldingEvents:: New Entity: {}", newEntity.getId());
-          else
-            log.info("deleted handleHoldingEvents:: Old Entity: {}", oldEntity.getId());
-        }
+        if(oldEntity!=null)
+          log.info("deleted handleHoldingEvents:: Old Entity: {}", oldEntity.getId());
       }
     }
     eventProcessor.process(events, event -> {
