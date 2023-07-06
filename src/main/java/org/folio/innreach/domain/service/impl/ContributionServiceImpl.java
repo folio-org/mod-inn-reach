@@ -94,21 +94,21 @@ public class ContributionServiceImpl implements ContributionService {
     return mapper.toDTO(repository.save(entity));
   }
 
-  @Transactional
-  @Override
-  public void completeJobExecution(UUID jobExecutionId) {
-    try{
-      log.debug("completeJobExecution:: Completing job execution process {} ", jobExecutionId);
-      jobExecutionRepository.findById(jobExecutionId)
-        .ifPresent(jobExecution -> {
-          jobExecution.setFinished(true);
-          jobExecutionRepository.save(jobExecution);
-          log.info("completeJobExecution:: job execution process completed {} ", jobExecutionId);
-        });
-    } catch (Exception ex){
-      log.info("completeJobExecution:: unable to complete job execution process", ex);
-    }
-  }
+//  @Transactional
+//  @Override
+//  public void completeJobExecution(UUID jobExecutionId) {
+//    try{
+//      log.debug("completeJobExecution:: Completing job execution process {} ", jobExecutionId);
+//      jobExecutionRepository.findById(jobExecutionId)
+//        .ifPresent(jobExecution -> {
+//          jobExecution.setFinished(true);
+//          jobExecutionRepository.save(jobExecution);
+//          log.info("completeJobExecution:: job execution process completed {} ", jobExecutionId);
+//        });
+//    } catch (Exception ex){
+//      log.info("completeJobExecution:: unable to complete job execution process", ex);
+//    }
+//  }
 
   @Transactional
   @Override

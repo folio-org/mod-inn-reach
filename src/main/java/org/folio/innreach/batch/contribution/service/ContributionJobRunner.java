@@ -170,7 +170,7 @@ public class ContributionJobRunner {
 
     if(Objects.equals(jobExecutionStatusRepository.countByJobExecutionId(jobExecutions.get(context.getTenantId()).getId()), jobExecutions.get(context.getTenantId()).getTotalRecords())) {
       log.info("Initial: consumer is stopping as all processed");
-      contributionService.completeJobExecution(jobExecutions.get(context.getTenantId()).getId());
+      //contributionService.completeJobExecution(jobExecutions.get(context.getTenantId()).getId());
       completeContribution(context);
       stopContribution(context.getTenantId());
       InitialContributionJobConsumerContainer.stopConsumer(topic);

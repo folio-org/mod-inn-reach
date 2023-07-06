@@ -26,6 +26,6 @@ public interface ContributionService {
 
   void logContributionError(UUID contributionId, ContributionErrorDTO error);
 
-  void completeJobExecution(UUID jobExecutionId);
+  //void completeJobExecution(UUID jobExecutionId);
 
 }
