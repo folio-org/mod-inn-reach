@@ -155,14 +155,13 @@ public class ContributionServiceImpl implements ContributionService {
       numberOfRecords = updatedJobResponse.getNumberOfRecordsPublished();
     }
 
+    contribution.setJobId(iterationJobResponse.getId());
+    contribution = repository.save(contribution);
+
     var jobExecution = new JobExecution();
     jobExecution.setFinished(false);
     jobExecution.setTotalRecords(numberOfRecords);
-
-    contribution.setJobId(iterationJobResponse.getId());
     jobExecution = jobExecutionRepository.save(jobExecution);
-
-    repository.save(contribution);
 
 
     runInitialContributionJob(centralServerId, contribution, numberOfRecords, jobExecution);

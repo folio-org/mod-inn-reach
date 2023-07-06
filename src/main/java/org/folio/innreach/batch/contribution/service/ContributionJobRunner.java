@@ -150,8 +150,8 @@ public class ContributionJobRunner {
     }catch (Exception ex) {
       log.info("Inside exception {}", ex.getMessage());
     }
-    recordsProcessed.put(context.getTenantId(), recordsProcessed.get(context.getTenantId()) == null ? 1
-        : recordsProcessed.get(context.getTenantId())+1);
+//    recordsProcessed.put(context.getTenantId(), recordsProcessed.get(context.getTenantId()) == null ? 1
+//        : recordsProcessed.get(context.getTenantId())+1);
 
 //    if (isEligibleForContribution(centralServerId, instance)) {
 //      contributeInstance(centralServerId, instance, stats);
@@ -167,13 +167,18 @@ public class ContributionJobRunner {
 //        : recordsProcessed.get(context.getTenantId())+1);
 //
 //    }
-
-    if (Objects.equals(recordsProcessed.get(context.getTenantId()), totalRecords.get(context.getTenantId()))) {
+    if(Objects.equals(jobExecutionStatusRepository.countByJobExecutionId(jobExecutions.get(context.getTenantId()).getId()), jobExecutions.get(context.getTenantId()).getTotalRecords())) {
       log.info("Initial: consumer is stopping as all processed");
       completeContribution(context);
       stopContribution(context.getTenantId());
       InitialContributionJobConsumerContainer.stopConsumer(topic);
     }
+//    if (Objects.equals(recordsProcessed.get(context.getTenantId()), totalRecords.get(context.getTenantId()))) {
+//      log.info("Initial: consumer is stopping as all processed");
+//      completeContribution(context);
+//      stopContribution(context.getTenantId());
+//      InitialContributionJobConsumerContainer.stopConsumer(topic);
+//    }
   }
 
   public void stopContribution(String tenantId) {

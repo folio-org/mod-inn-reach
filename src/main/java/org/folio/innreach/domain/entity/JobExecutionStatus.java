@@ -48,7 +48,10 @@ public class JobExecutionStatus extends Auditable {
     FAILED("Failed"),
     RETRY("Retry");
 
-    @Getter
-    private final String value;
+    private String name;
+
+    public String getName() {
+      return this.name;
+    }
   }
 }
