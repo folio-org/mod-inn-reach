@@ -135,12 +135,15 @@ public class KafkaInventoryEventListener {
       var oldEntity = event.getData().getOldEntity();
       var newEntity = event.getData().getNewEntity();
       log.info("handleEvents:: Event type: {}, tenant: {}, timestamp: {}, data: {} ", event.getType(), event.getTenant(), event.getTimestamp(), event.getData());
-      if (event.getType().equals(CREATED))
+      if (event.getType().equals(CREATED)) {
         log.info("created handleEvents:: New Entity: {}", newEntity);
-      else if (event.getType().equals(UPDATED))
+      }
+      else if (event.getType().equals(UPDATED)) {
         log.info("updated handleEvents:: Old Entity: {}, New Entity: {}", oldEntity, newEntity);
-      else if (event.getType().equals(DELETED))
+      }
+      else if (event.getType().equals(DELETED)) {
         log.info("deleted handleEvents:: Old Entity: {}", oldEntity);
+      }
     }
   }
 }
