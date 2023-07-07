@@ -192,7 +192,7 @@ public class ContributionJobRunner {
           contributeInstanceItems(centralServerId, instance, statistics);
         }
       } else if (contributedInstance) {
-        log.info("Ongoing: " + DE_CONTRIBUTE_INSTANCE_MSG+", instance id : {}", instance.getId());
+        log.info("Ongoing : " + DE_CONTRIBUTE_INSTANCE_MSG+", instance id : {}", instance.getId());
         deContributeInstance(centralServerId, instance, statistics);
       }
     });
@@ -238,7 +238,7 @@ public class ContributionJobRunner {
           deContributeItem(centralServerId, item, statistics);
         }
       } else if (contributedItem) {
-        log.info("Ongoing: " + DE_CONTRIBUTE_INSTANCE_MSG+", instance id : {}, item id: {}", instance.getId(), item.getId());
+        log.info(" Ongoing : " + DE_CONTRIBUTE_INSTANCE_MSG+", instance id : {}, item id: {}", instance.getId(), item.getId());
         deContributeInstance(centralServerId, instance, statistics);
       }
     });
@@ -531,7 +531,7 @@ public class ContributionJobRunner {
       log.info("loadInstanceWithItems:: exception occurred with instance id: {} and e: {}", instanceId, e);
       instanceExceptionListener.logProcessError(e, instanceId);
     }
-    log.info("loadInstanceWithItems:: loaded instance with items");
+    log.info("loadInstanceWithItems:: loaded instance with items, instance id: {}", instanceId);
     return instance;
   }
 }
