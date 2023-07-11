@@ -135,7 +135,7 @@ public class ContributionJobRunner {
     var centralServerId = context.getCentralServerId();
 
     if (isEligibleForContribution(centralServerId, instance)) {
-      log.info("Initial: ELgible for Contribution centralServerId: {}, instanceId: {}", centralServerId, instanceId);
+      log.info("Initial: Eligible for Contribution centralServerId: {}, instanceId: {}", centralServerId, instanceId);
       contributeInstance(centralServerId, instance, stats);
       contributeInstanceItems(centralServerId, instance, stats);
     } else if (isContributed(centralServerId, instance)) {
@@ -340,7 +340,7 @@ public class ContributionJobRunner {
   }
 
   private void contributeInstanceItems(UUID centralServerId, Instance instance, Statistics stats) {
-    log.info("contributeInstanceItems:: parameters centralServerId: {}, instance id: {}, stats: {}", centralServerId, instance.getId(), stats);
+    log.info("contributeInstanceItems:: parameters centralServerId: {}, instance id: {}", centralServerId, instance.getId());
     var bibId = instance.getHrid();
     var items = instance.getItems().stream()
       .filter(i -> isEligibleForContribution(centralServerId, i))
@@ -358,12 +358,12 @@ public class ContributionJobRunner {
   }
 
   private void contributeItem(UUID centralServerId, String bibId, Item item, Statistics stats) {
-    log.info("contributeItem:: parameters centralServerId: {}, bibId: {}, item id: {}, stats: {}", centralServerId, bibId, item.getId(), stats);
+    log.info("contributeItem:: parameters centralServerId: {}, bibId: {}, item id: {}", centralServerId, bibId, item.getId());
     contributeItemsChunk(centralServerId, bibId, List.of(item), stats);
   }
 
   private void contributeItemsChunk(UUID centralServerId, String bibId, List<Item> items, Statistics stats) {
-    log.info("contributeItemsChunk:: paramerters centralServerId: {}, bibId: {}, items count: {}, stats: {}", centralServerId, bibId, items.size(), stats);
+    log.info("contributeItemsChunk:: paramerters centralServerId: {}, bibId: {}, items count: {}", centralServerId, bibId, items.size());
     var itemsCount = items.size();
     try {
       stats.addRecordsTotal(itemsCount);
@@ -399,7 +399,7 @@ public class ContributionJobRunner {
   }
 
   private void contributeInstance(UUID centralServerId, Instance instance, Statistics stats) {
-    log.info("Initial: contributeInstance centralServerId: {}, instanceId: {}, stats: {}", centralServerId, instance.getId(), stats);
+    log.info("Initial: contributeInstance centralServerId: {}, instanceId: {}", centralServerId, instance.getId());
     try {
       stats.addRecordsTotal(1);
       recordContributionService.contributeInstance(centralServerId, instance);
@@ -424,7 +424,7 @@ public class ContributionJobRunner {
   }
 
   private void deContributeInstance(UUID centralServerId, Instance instance, Statistics stats) {
-    log.info("Initial: deContributeInstance centralServerId: {}, instanceId: {}, stats: {}", centralServerId, instance.getId(), stats);
+    log.info("Initial: deContributeInstance centralServerId: {}, instanceId: {}", centralServerId, instance.getId());
     try {
       stats.addRecordsTotal(1);
       recordContributionService.deContributeInstance(centralServerId, instance);
@@ -450,7 +450,7 @@ public class ContributionJobRunner {
   }
 
   private void deContributeItem(UUID centralServerId, Item item, Statistics stats) {
-    log.info("Initial: deContributeItem centralServerId: {}, item id: {}, stats: {}", centralServerId, item.getId(), stats);
+    log.info("Initial: deContributeItem centralServerId: {}, item id: {}", centralServerId, item.getId());
     try {
       stats.addRecordsTotal(1);
       recordContributionService.deContributeItem(centralServerId, item);
