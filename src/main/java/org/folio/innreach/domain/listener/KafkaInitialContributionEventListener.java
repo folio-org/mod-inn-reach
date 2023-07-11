@@ -6,6 +6,8 @@ import org.folio.innreach.domain.dto.folio.inventorystorage.InstanceIterationEve
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
+
 import static org.folio.innreach.config.KafkaListenerConfiguration.KAFKA_CONTAINER_FACTORY;
 
 @Component
@@ -22,9 +24,11 @@ public class KafkaInitialContributionEventListener {
     topicPattern = "${kafka.listener.contribution.topic-pattern}",
     concurrency = "${kafka.listener.contribution.concurrency}"
   )
-  public void processInitialContributionEvents(ConsumerRecord<String, InstanceIterationEvent> consumerRecord) {
+  public void processInitialContributionEvents(List<ConsumerRecord<String, InstanceIterationEvent>> consumerRecords) {
       log.info("Inside processInitialContributionEvents");
-      log.info("key {} ", consumerRecord.key());
-      log.info("value {} ", consumerRecord.value());
+      consumerRecords.forEach(consumerRecord -> {
+        log.info("key {} ", consumerRecord.key());
+        log.info("value {} ", consumerRecord.value());
+      });
   }
 }
