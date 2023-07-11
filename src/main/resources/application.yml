@@ -168,6 +168,12 @@ kafka:
       topic-pattern: (${environment}\.)(.*\.)inventory\.holdings-record
       concurrency: ${KAFKA_EVENTS_CONCURRENCY:2}
       data-type: org.folio.innreach.dto.Holding
+    contribution:
+      id: ${environment}-mod-inn-reach-inventory.instance-contribution
+      group-id: ${spring.kafka.consumer.group-id}
+      topic-pattern: (${environment}\.)(.*\.)inventory\.instance-contribution
+      concurrency: ${KAFKA_EVENTS_CONCURRENCY:2}
+      data-type: org.folio.innreach.domain.dto.folio.inventorystorage.InstanceIterationEvent
   backoff:
     interval: ${DEFAULT_INTERVAL:95000}
     max_failure: ${MAX_FAILURE:360}
