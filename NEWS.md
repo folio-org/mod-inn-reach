@@ -1,3 +1,7 @@
+## v2.0.9 2023-07-11
+### Task
+* [MODINREACH-378](https://issues.folio.org/browse/MODINREACH-378) - ContributionExceptionListener should log the id of the item that caused the exception
+
 ## v2.0.8 2023-05-29
 ### Bug
 * [MODINREACH-369](https://issues.folio.org/browse/MODINREACH-369) - INN-Reach Record Contribution: Diacritics not being preserved in contributed MARC records
