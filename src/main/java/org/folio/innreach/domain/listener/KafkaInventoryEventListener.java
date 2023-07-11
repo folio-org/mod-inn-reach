@@ -134,7 +134,7 @@ public class KafkaInventoryEventListener {
     for (DomainEvent<T> event : events) {
       var oldEntity = event.getData().getOldEntity();
       var newEntity = event.getData().getNewEntity();
-      log.info("handleEvents:: Event type: {}, tenant: {}, timestamp: {}, data: {} ", event.getType(), event.getTenant(), event.getTimestamp(), event.getData());
+      log.info("handleEvents:: Event type: {}, tenant: {}, timestamp: {}, data: {}", event.getType(), event.getTenant(), event.getTimestamp(), event.getData());
       if (event.getType().equals(CREATED)) {
         log.info("created handleEvents:: New Entity: {}", newEntity);
       }
