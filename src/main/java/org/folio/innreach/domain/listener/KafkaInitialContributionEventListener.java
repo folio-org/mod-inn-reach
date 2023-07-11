@@ -16,7 +16,7 @@ public class KafkaInitialContributionEventListener {
     log.info("KafkaInitialContributionEventListener bean is created");
   }
   @KafkaListener(
-    containerFactory = KAFKA_CONTAINER_FACTORY,
+    containerFactory = "kafkaInitialContributionContainer",
     id = "${kafka.listener.contribution.id}",
     groupId = "${kafka.listener.contribution.group-id}",
     topicPattern = "${kafka.listener.contribution.topic-pattern}",

@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.folio.innreach.batch.contribution.service.ContributionJobRunner;
+import org.folio.innreach.domain.dto.folio.inventorystorage.InstanceIterationEvent;
 import org.folio.innreach.domain.service.impl.TenantScopedExecutionService;
 import org.folio.innreach.external.exception.InnReachConnectionException;
 import org.folio.innreach.external.exception.ServiceSuspendedException;
@@ -80,6 +81,33 @@ public class KafkaListenerConfiguration {
     return factory;
   }
 
+  @Bean("kafkaInitialContributionConsumer")
+  public ConsumerFactory<String, InstanceIterationEvent> kafkaInitialContributionEventConsumerFactory() {
+    var consumerProperties = kafkaProperties.buildConsumerProperties();
+
+    JsonDeserializer<InstanceIterationEvent> deserializer = new JsonDeserializer<>(mapper);
+    deserializer.setTypeResolver(typeResolver);
+    deserializer.setUseTypeHeaders(false);
+    deserializer.addTrustedPackages("*");
+
+    var errorDeserializer = new ErrorHandlingDeserializer<>(deserializer);
+    errorDeserializer.setFailedDeserializationFunction(
+      info -> {
+        log.error("kafkaInitialContributionEventConsumerFactory:: Unable to deserialize value from topic: " + info.getTopic(), info.getException());
+        return null;
+      });
+
+    return new DefaultKafkaConsumerFactory<>(consumerProperties, new StringDeserializer(), errorDeserializer);
+  }
+
+  @Bean("kafkaInitialContributionContainer")
+  public ConcurrentKafkaListenerContainerFactory<String, InstanceIterationEvent> kafkaInitialContributionEventContainerFactory() {
+    var factory = new ConcurrentKafkaListenerContainerFactory<String, InstanceIterationEvent>();
+    factory.setBatchListener(true);
+    factory.setConsumerFactory(kafkaInitialContributionEventConsumerFactory());
+    factory.setCommonErrorHandler(errorHandler());
+    return factory;
+  }
   @Bean(BATCH_EVENT_PROCESSOR_RETRY_TEMPLATE)
   public RetryTemplate batchEventRetryTemplate() {
     return RetryTemplate.builder()
