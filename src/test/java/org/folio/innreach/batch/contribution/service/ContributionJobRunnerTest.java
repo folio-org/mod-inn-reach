@@ -26,6 +26,7 @@ import java.net.SocketTimeoutException;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.folio.innreach.domain.service.impl.FolioExecutionContextBuilder;
 import feign.FeignException;
 import org.folio.innreach.batch.contribution.InitialContributionJobConsumerContainer;
 import org.folio.innreach.external.exception.InnReachConnectionException;
@@ -102,6 +103,9 @@ class ContributionJobRunnerTest {
   private KafkaItemReader<String, InstanceIterationEvent> reader;
   @Mock
   private InstanceIterationEvent event;
+
+  @Mock
+  private FolioExecutionContextBuilder folioExecutionContextBuilder;
 
   private final ContributionJobContext.Statistics statistics = new ContributionJobContext.Statistics();
   @Spy
@@ -246,6 +250,7 @@ class ContributionJobRunnerTest {
 
   @Test
   void shouldCancelJobs() {
+    when(folioExecutionContextBuilder.withUserId(any(), any())).thenReturn(folioContext);
     jobRunner.cancelJobs();
 
     verify(contributionService).cancelAll();
