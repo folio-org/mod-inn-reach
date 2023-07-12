@@ -23,6 +23,10 @@ import org.folio.innreach.dto.Holding;
 import org.folio.innreach.dto.Instance;
 import org.folio.innreach.dto.Item;
 
+import static org.folio.innreach.domain.event.DomainEventType.CREATED;
+import static org.folio.innreach.domain.event.DomainEventType.DELETED;
+import static org.folio.innreach.domain.event.DomainEventType.UPDATED;
+
 @Log4j2
 @Component
 @RequiredArgsConstructor
@@ -43,7 +47,7 @@ public class KafkaInventoryEventListener {
     log.info("Handling inventory item events from Kafka [number of events: {}]", consumerRecords.size());
 
     var events = getEvents(consumerRecords);
-
+    logEvents(events);
     eventProcessor.process(events, event -> {
       var oldEntity = event.getData().getOldEntity();
       var newEntity = event.getData().getNewEntity();
@@ -73,7 +77,7 @@ public class KafkaInventoryEventListener {
   public void handleInstanceEvents(List<ConsumerRecord<String, DomainEvent<Instance>>> consumerRecords) {
     log.info("Handling inventory instance events from Kafka [number of events: {}]", consumerRecords.size());
     var events = getEvents(consumerRecords);
-
+    logEvents(events);
     eventProcessor.process(events, event -> {
       var oldEntity = event.getData().getOldEntity();
       var newEntity = event.getData().getNewEntity();
@@ -103,7 +107,7 @@ public class KafkaInventoryEventListener {
     log.info("Handling inventory holding events from Kafka [number of events: {}]", consumerRecords.size());
 
     var events = getEvents(consumerRecords);
-
+    logEvents(events);
     eventProcessor.process(events, event -> {
       var oldEntity = event.getData().getOldEntity();
       var newEntity = event.getData().getNewEntity();
@@ -125,5 +129,22 @@ public class KafkaInventoryEventListener {
       .map(ConsumerRecord::value)
       .filter(Objects::nonNull)
       .collect(Collectors.toList());
+  }
+
+  public <T> void logEvents(List<DomainEvent<T>> events) {
+    for (DomainEvent<T> event : events) {
+      var oldEntity = event.getData().getOldEntity();
+      var newEntity = event.getData().getNewEntity();
+      log.info("handleEvents:: Event type: {}, tenant: {}, timestamp: {}, data: {}", event.getType(), event.getTenant(), event.getTimestamp(), event.getData());
+      if (event.getType().equals(CREATED)) {
+        log.info("created handleEvents:: New Entity: {}", newEntity);
+      }
+      else if (event.getType().equals(UPDATED)) {
+        log.info("updated handleEvents:: Old Entity: {}, New Entity: {}", oldEntity, newEntity);
+      }
+      else if (event.getType().equals(DELETED)) {
+        log.info("deleted handleEvents:: Old Entity: {}", oldEntity);
+      }
+    }
   }
 }
