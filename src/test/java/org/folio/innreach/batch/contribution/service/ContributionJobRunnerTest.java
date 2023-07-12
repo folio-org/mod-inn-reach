@@ -90,7 +90,8 @@ class ContributionJobRunnerTest {
   private KafkaItemReader<String, InstanceIterationEvent> reader;
   @Spy
   private RetryTemplate retryTemplate = createNoRetryTemplate();
-
+  @Mock
+  private FolioExecutionContextBuilder folioExecutionContextBuilder;
   @InjectMocks
   private ContributionJobRunner jobRunner;
 
