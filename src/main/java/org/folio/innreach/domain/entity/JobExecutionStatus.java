@@ -30,14 +30,11 @@ public class JobExecutionStatus extends Auditable {
   @GeneratedValue(strategy = GenerationType.AUTO)
   private UUID id;
   private UUID instanceId;
+  private UUID jobId;
   private String type;
   private String tenant;
   @Enumerated(EnumType.STRING)
   private Status status;
-
-  @ManyToOne(fetch = FetchType.LAZY, optional = false)
-  @JoinColumn(name = "jobExecutionId", nullable = false)
-  private JobExecution jobExecution;
 
   @AllArgsConstructor
   public enum Status {
@@ -48,10 +45,7 @@ public class JobExecutionStatus extends Auditable {
     FAILED("Failed"),
     RETRY("Retry");
 
-    private String name;
-
-    public String getName() {
-      return this.name;
-    }
+    @Getter
+    private String value;
   }
 }

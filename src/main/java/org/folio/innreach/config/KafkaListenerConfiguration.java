@@ -85,7 +85,7 @@ public class KafkaListenerConfiguration {
   public ConsumerFactory<String, InstanceIterationEvent> kafkaInitialContributionEventConsumerFactory() {
     var consumerProperties = kafkaProperties.buildConsumerProperties();
 
-    JsonDeserializer<InstanceIterationEvent> deserializer = new JsonDeserializer<>(InstanceIterationEvent.class, mapper);
+    JsonDeserializer<InstanceIterationEvent> deserializer = new JsonDeserializer<>(InstanceIterationEvent.class);
     deserializer.setUseTypeHeaders(false);
     deserializer.addTrustedPackages("*");
 
