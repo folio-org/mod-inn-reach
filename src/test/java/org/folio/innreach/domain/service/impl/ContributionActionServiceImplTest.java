@@ -1,6 +1,8 @@
 package org.folio.innreach.domain.service.impl;
 
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -14,6 +16,9 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import feign.FeignException;
+import org.folio.innreach.external.exception.InnReachConnectionException;
+import org.folio.innreach.external.exception.ServiceSuspendedException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -94,10 +99,21 @@ class ContributionActionServiceImplTest {
     var instance = createInstance();
 
     when(centralServerRepository.getIds(any())).thenReturn(new PageImpl<>(List.of(CENTRAL_SERVER_ID)));
-
     service.handleInstanceDelete(instance);
 
     verify(contributionJobRunner).runInstanceDeContribution(CENTRAL_SERVER_ID, instance);
+
+    doThrow(ServiceSuspendedException.class).when(contributionJobRunner).runInstanceDeContribution(CENTRAL_SERVER_ID, instance);
+    assertThatThrownBy(() -> service.handleInstanceDelete(instance))
+      .isInstanceOf(ServiceSuspendedException.class);
+
+    doThrow(FeignException.class).when(contributionJobRunner).runInstanceDeContribution(CENTRAL_SERVER_ID, instance);
+    assertThatThrownBy(() -> service.handleInstanceDelete(instance))
+      .isInstanceOf(FeignException.class);
+
+    doThrow(InnReachConnectionException.class).when(contributionJobRunner).runInstanceDeContribution(CENTRAL_SERVER_ID, instance);
+    assertThatThrownBy(() -> service.handleInstanceDelete(instance))
+      .isInstanceOf(InnReachConnectionException.class);
   }
 
   @Test
@@ -111,10 +127,24 @@ class ContributionActionServiceImplTest {
     when(holdingsService.find(any())).thenReturn(Optional.of(holding));
     when(validationService.getItemTypeMappingStatus(any())).thenReturn(VALID);
     when(validationService.getLocationMappingStatus(any())).thenReturn(VALID);
-
     service.handleItemCreation(item);
-
     verify(contributionJobRunner).runItemContribution(CENTRAL_SERVER_ID, instance, item);
+
+    doThrow(RuntimeException.class).when(validationService).getItemTypeMappingStatus(any());
+    service.handleItemCreation(item);
+    verify(contributionJobRunner).runItemContribution(CENTRAL_SERVER_ID, instance, item);
+
+    doThrow(ServiceSuspendedException.class).when(validationService).getItemTypeMappingStatus(any());
+    assertThatThrownBy(() -> service.handleItemCreation(item))
+      .isInstanceOf(ServiceSuspendedException.class);
+
+    doThrow(FeignException.class).when(validationService).getItemTypeMappingStatus(any());
+    assertThatThrownBy(() -> service.handleItemCreation(item))
+      .isInstanceOf(FeignException.class);
+
+    doThrow(InnReachConnectionException.class).when(validationService).getItemTypeMappingStatus(any());
+    assertThatThrownBy(() -> service.handleItemCreation(item))
+      .isInstanceOf(InnReachConnectionException.class);
   }
 
   @Test
@@ -165,10 +195,20 @@ class ContributionActionServiceImplTest {
     when(centralServerRepository.getIds(any())).thenReturn(new PageImpl<>(List.of(CENTRAL_SERVER_ID)));
     when(inventoryViewService.getInstance(any())).thenReturn(instance);
     when(holdingsService.find(any())).thenReturn(Optional.of(holding));
-
     service.handleItemDelete(item);
-
     verify(contributionJobRunner).runItemDeContribution(CENTRAL_SERVER_ID, instance, item);
+
+    doThrow(ServiceSuspendedException.class).when(contributionJobRunner).runItemDeContribution(CENTRAL_SERVER_ID, instance, item);
+    assertThatThrownBy(() -> service.handleItemDelete(item))
+      .isInstanceOf(ServiceSuspendedException.class);
+
+    doThrow(FeignException.class).when(contributionJobRunner).runItemDeContribution(CENTRAL_SERVER_ID, instance, item);
+    assertThatThrownBy(() -> service.handleItemDelete(item))
+      .isInstanceOf(FeignException.class);
+
+    doThrow(InnReachConnectionException.class).when(contributionJobRunner).runItemDeContribution(CENTRAL_SERVER_ID, instance, item);
+    assertThatThrownBy(() -> service.handleItemDelete(item))
+      .isInstanceOf(InnReachConnectionException.class);
   }
 
   @Test
@@ -252,9 +292,19 @@ class ContributionActionServiceImplTest {
 
     when(centralServerRepository.getIds(any())).thenReturn(new PageImpl<>(List.of(CENTRAL_SERVER_ID)));
     when(inventoryViewService.getInstance(any())).thenReturn(instance);
-
     service.handleHoldingDelete(holding);
-
     verify(contributionJobRunner).runItemDeContribution(CENTRAL_SERVER_ID, instance, item);
+
+    doThrow(ServiceSuspendedException.class).when(contributionJobRunner).runItemDeContribution(CENTRAL_SERVER_ID, instance, item);
+    assertThatThrownBy(() -> service.handleHoldingDelete(holding))
+      .isInstanceOf(ServiceSuspendedException.class);
+
+    doThrow(FeignException.class).when(contributionJobRunner).runItemDeContribution(CENTRAL_SERVER_ID, instance, item);
+    assertThatThrownBy(() -> service.handleHoldingDelete(holding))
+      .isInstanceOf(FeignException.class);
+
+    doThrow(InnReachConnectionException.class).when(contributionJobRunner).runItemDeContribution(CENTRAL_SERVER_ID, instance, item);
+    assertThatThrownBy(() -> service.handleHoldingDelete(holding))
+      .isInstanceOf(InnReachConnectionException.class);
   }
 }

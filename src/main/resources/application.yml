@@ -33,7 +33,7 @@ spring:
   kafka:
     bootstrap-servers: ${KAFKA_HOST:localhost}:${KAFKA_PORT:9092}
     consumer:
-      max-poll-records: 50
+      max-poll-records: 20
       group-id: ${ENV:folio}-mod-innreach-events-group
     security:
       protocol: ${KAFKA_SECURITY_PROTOCOL:PLAINTEXT}
@@ -60,10 +60,10 @@ folio:
       enabled: true
   logging:
     feign:
-      enabled: ${LOG_HTTP:false}
+      enabled: ${LOG_HTTP:true}
       level: FULL
     request:
-      enabled: ${LOG_HTTP:false}
+      enabled: ${LOG_HTTP:true}
       level: FULL
 management:
   endpoints:
@@ -168,3 +168,8 @@ kafka:
       topic-pattern: (${environment}\.)(.*\.)inventory\.holdings-record
       concurrency: ${KAFKA_EVENTS_CONCURRENCY:2}
       data-type: org.folio.innreach.dto.Holding
+  backoff:
+    interval: ${DEFAULT_INTERVAL:95000}
+    max_failure: ${MAX_FAILURE:360}
+  custom-offset: ${DEFAULT_OFFSET:latest}
+  custom-concurrency: ${DEFAULT_CONCURRENCY:2}

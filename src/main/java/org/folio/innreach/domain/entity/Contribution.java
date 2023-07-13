@@ -1,11 +1,5 @@
 package org.folio.innreach.domain.entity;
 
-import static org.folio.innreach.domain.entity.Contribution.FETCH_CURRENT_QUERY;
-import static org.folio.innreach.domain.entity.Contribution.FETCH_CURRENT_QUERY_NAME;
-import static org.folio.innreach.domain.entity.Contribution.FETCH_HISTORY_COUNT_QUERY_NAME;
-import static org.folio.innreach.domain.entity.Contribution.FETCH_HISTORY_QUERY;
-import static org.folio.innreach.domain.entity.Contribution.FETCH_HISTORY_QUERY_NAME;
-
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Enumerated;
@@ -33,6 +27,8 @@ import lombok.ToString;
 import org.folio.innreach.domain.entity.base.Auditable;
 import org.folio.innreach.domain.entity.base.Identifiable;
 
+import static org.folio.innreach.domain.entity.Contribution.*;
+
 @Getter
 @Setter
 @NoArgsConstructor
@@ -47,13 +43,21 @@ import org.folio.innreach.domain.entity.base.Identifiable;
   name = FETCH_CURRENT_QUERY_NAME,
   query = FETCH_CURRENT_QUERY
 )
+@NamedQuery(
+  name = FETCH_ONGOING_QUERY_NAME,
+  query = FETCH_ONGOING_QUERY
+)
 @Table(name = "contribution")
 public class Contribution extends Auditable implements Identifiable<UUID> {
 
   private static final String FETCH_CURRENT_POSTFIX = " WHERE c.centralServer.id = :id AND c.status = 0 AND c.ongoing = FALSE";
+  private static final String FETCH_ONGOING_POSTFIX = " WHERE c.centralServer.id = :id AND c.status = 0 AND c.ongoing = TRUE";
   public static final String FETCH_CURRENT_QUERY_NAME = "Contribution.fetchCurrent";
+  public static final String FETCH_ONGOING_QUERY_NAME = "Contribution.fetchOngoing";
   public static final String FETCH_CURRENT_QUERY = "SELECT DISTINCT c FROM Contribution AS c " +
     "LEFT JOIN FETCH c.errors" + FETCH_CURRENT_POSTFIX;
+  public static final String FETCH_ONGOING_QUERY = "SELECT DISTINCT c FROM Contribution AS c " +
+    "LEFT JOIN FETCH c.errors" + FETCH_ONGOING_POSTFIX;
 
   private static final String FETCH_HISTORY_POSTFIX = " WHERE c.centralServer.id = :id AND c.status != 0 AND c.ongoing = FALSE";
   public static final String FETCH_HISTORY_QUERY_NAME = "Contribution.fetchHistory";

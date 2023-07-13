@@ -11,6 +11,7 @@ import lombok.extern.log4j.Log4j2;
 
 import org.folio.innreach.domain.service.ContributionService;
 import org.folio.innreach.dto.ContributionErrorDTO;
+import org.springframework.stereotype.Service;
 
 @Log4j2
 @RequiredArgsConstructor
@@ -23,7 +24,7 @@ public class ContributionExceptionListener {
 
   protected void logError(Exception e, UUID recordId, String stepStage) {
     try {
-      log.warn("Step: [{}] error on stage {}", stepName, stepStage, e);
+      log.warn("Step: [{}] error on stage {} record Id {} e: {}", stepName, stepStage, recordId, e);
       var msg = String.format("Step: [%s] error on stage %s: %s", stepName, stepStage, e.getMessage());
 
       var error = new ContributionErrorDTO();
@@ -32,7 +33,7 @@ public class ContributionExceptionListener {
 
       contributionService.logContributionError(getContributionJobContext().getContributionId(), error);
     } catch (Exception ex) {
-      log.warn("Can't persist record {} contribution error", recordId, ex);
+      log.warn("Step: [{}] error on stage {} record Id {} e: {}", stepName, stepStage, recordId, e);
     }
   }
 

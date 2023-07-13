@@ -5,6 +5,7 @@ import static feign.FeignException.errorStatus;
 import feign.Response;
 import feign.codec.ErrorDecoder;
 import lombok.extern.log4j.Log4j2;
+import org.folio.innreach.external.exception.ServiceSuspendedException;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.BadCredentialsException;
 
@@ -19,7 +20,6 @@ public class InnReachFeignErrorDecoder implements ErrorDecoder {
       log.debug("Can't get InnReach access token. CentralServer authentication failed with status: {}", response.status());
       return new BadCredentialsException("Can't get InnReach access token. Key/Secret pair is not valid");
     }
-
     var e = errorStatus(methodKey, response);
     return new InnReachException("INN-Reach call failed: " + e.getMessage());
   }

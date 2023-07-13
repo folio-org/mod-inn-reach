@@ -29,10 +29,12 @@ import org.springframework.util.Assert;
 
 import java.util.List;
 import java.util.Objects;
+
 import java.util.Set;
 import java.util.UUID;
 
 import static java.util.Collections.emptySet;
+
 import static org.apache.commons.collections4.ListUtils.emptyIfNull;
 import static org.folio.innreach.domain.service.impl.MARCRecordTransformationServiceImpl.isMARCRecord;
 import static org.folio.innreach.dto.ItemStatus.NameEnum.AVAILABLE;
@@ -132,7 +134,9 @@ public class ContributionValidationServiceImpl implements ContributionValidation
 
   //If item's effective location is matched with contribution criteria excluded locations
   private boolean isExcludedLocation(UUID centralServerId, Item item) {
+
     log.debug("isExcludedLocation:: parameters centralServerId: {}, item: {}", centralServerId, item);
+
     List<UUID> excludedLocationIds = Objects.
             requireNonNull(getContributionConfigService(centralServerId)).getLocationIds();
     return excludedLocationIds.contains(item.getEffectiveLocationId());
@@ -279,7 +283,9 @@ public class ContributionValidationServiceImpl implements ContributionValidation
   }
 
   private boolean isItemRequested(Item inventoryItem) {
+
     log.debug("isItemRequested:: parameters inventoryItem: {}", inventoryItem);
+
     var itemRequests = circulationClient.queryRequestsByItemIdAndStatus(inventoryItem.getId(),1);
     return itemRequests.getTotalRecords() != 0;
   }
