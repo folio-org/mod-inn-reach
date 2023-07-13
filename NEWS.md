@@ -1,3 +1,13 @@
+## v3.0.2 2023-07-13
+
+### Stories
+* [MODINREACH-351](https://issues.folio.org/browse/MODINREACH-351) - Ensure that ongoing contributions can retry when central server is unavailable
+* [MODINREACH-378](https://issues.folio.org/browse/MODINREACH-378) -ContributionExceptionListener should log the id of the item that caused the exception
+### Bugs
+* [MODINREACH-347](https://issues.folio.org/browse/MODINREACH-347) - Record Contribution Errors Should not Cause Contribution Jobs to Halt
+* [FOLSPRINGB-369](https://issues.folio.org/browse/FOLSPRINGB-369) - INN-Reach Record Contribution: Diacritics not being preserved in contributed MARC records
+* [MODINREACH-361](https://issues.folio.org/browse/MODINREACH-361) - Module Upgrade Error 'Could not commit JPA transaction
+
 ## v3.0.1 2023-03-31
 
 ### Stories
