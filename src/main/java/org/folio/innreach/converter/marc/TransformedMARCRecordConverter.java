@@ -38,31 +38,31 @@ public class TransformedMARCRecordConverter {
   private static final MarcFactory MARC_FACTORY = MarcFactory.newInstance();
 
   public TransformedMARCRecordDTO toTransformedRecord(SourceRecordDTO sourceRecord) {
-    var record = toMARCRecord(sourceRecord);
-    var base64RawContent = toBase64RawContent(record);
+    var marcRecord = toMARCRecord(sourceRecord);
+    var base64RawContent = toBase64RawContent(marcRecord);
 
     return new TransformedMARCRecordDTO()
       .id(sourceRecord.getId())
-      .content(record.toString())
+      .content(marcRecord.toString())
       .base64rawContent(base64RawContent);
   }
 
   private Record toMARCRecord(SourceRecordDTO sourceRecord) {
     var parsedRecord = sourceRecord.getParsedRecord();
 
-    var record = MARC_FACTORY.newRecord();
+    var marcRecord = MARC_FACTORY.newRecord();
     var leaderString = sourceRecord.getParsedRecord().getLeader();
 
     parsedRecord.getFields()
       .stream()
       .map(this::toVariableField)
-      .forEach(record::addVariableField);
+      .forEach(marcRecord::addVariableField);
 
     Leader leader = MARC_FACTORY.newLeader(restoreBlanks(leaderString));
-    leader.setRecordLength(calculateRecordLength(record));
-    record.setLeader(leader);
+    leader.setRecordLength(calculateRecordLength(marcRecord));
+    marcRecord.setLeader(leader);
 
-    return record;
+    return marcRecord;
   }
 
   private VariableField toVariableField(RecordFieldDTO recordField) {
@@ -82,13 +82,13 @@ public class TransformedMARCRecordConverter {
     return CONTROL_FIELD_PATTERN.matcher(recordField.getCode()).matches();
   }
 
-  private int calculateRecordLength(Record record) {
-    int addressesLength = record.getVariableFields().size() * ADDRESS_LENGTH;
-    int controlFieldsLength = record.getControlFields()
+  private int calculateRecordLength(Record marcRecord) {
+    int addressesLength = marcRecord.getVariableFields().size() * ADDRESS_LENGTH;
+    int controlFieldsLength = marcRecord.getControlFields()
       .stream()
       .mapToInt(controlField -> controlField.getData().length() + TERMINATOR_LENGTH)
       .sum();
-    int dataFieldsLength = record.getDataFields()
+    int dataFieldsLength = marcRecord.getDataFields()
       .stream()
       .mapToInt(dataField -> dataField.toString().length() - TAG_LENGTH + TERMINATOR_LENGTH)
       .sum();
