@@ -1,11 +1,9 @@
-## v3.0.1 Draft
-
-### Stories
-* [MODINREACH-351](https://issues.folio.org/browse/MODINREACH-351) - Ensure that ongoing contributions can retry when central server is unavailable
-* [MODINREACH-347](https://issues.folio.org/browse/MODINREACH-347) - Record Contribution Errors Should not Cause Contribution Jobs to Halt
+## v3.0.1 2023-03-31
 
 ### Stories
 * [MODINREACH-358](https://issues.folio.org/browse/MODINREACH-358) - No "Delivery stop" token value in INN-Reach paging slips
+* [MODINREACH-360](https://iss.folio.org/browse/MODINREACH-360) - Updated folio-spring-base.version to 6.1.0
+* [FOLSPRINGB-95](https://issues.folio.org/browse/FOLSPRINGB-95) - non-public beginFolioExecutionContext avoids wrong tenant/user
 
 ## v3.0.0 2023-02-21
 
