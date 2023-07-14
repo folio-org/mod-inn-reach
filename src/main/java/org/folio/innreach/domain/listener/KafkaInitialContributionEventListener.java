@@ -22,7 +22,6 @@ public class KafkaInitialContributionEventListener {
 
   @Autowired
   private KafkaEventProcessorService kafkaEventProcessorService;
-
   @Autowired
   private JobExecutionStatusRepository jobExecutionStatusRepository;
   @Autowired
