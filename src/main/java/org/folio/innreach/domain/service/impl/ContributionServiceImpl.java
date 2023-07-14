@@ -8,7 +8,6 @@ import static org.folio.innreach.domain.entity.Contribution.Status.COMPLETE;
 import static org.folio.innreach.domain.service.impl.ServiceUtils.centralServerRef;
 import static org.folio.innreach.dto.MappingValidationStatusDTO.VALID;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -16,12 +15,9 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.folio.innreach.batch.contribution.InitialContributionJobConsumerContainer;
-import org.folio.innreach.batch.contribution.IterationEventReaderFactory;
 import org.folio.innreach.config.props.ContributionJobProperties;
 import org.folio.innreach.config.props.FolioEnvironment;
-import org.folio.innreach.domain.entity.JobExecution;
 import org.folio.innreach.external.exception.InnReachException;
-import org.folio.innreach.repository.JobExecutionRepository;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.retry.support.RetryTemplate;
@@ -52,7 +48,6 @@ public class ContributionServiceImpl implements ContributionService {
 
   public static final String COMPLETED = "COMPLETED";
   private final ContributionRepository repository;
-  private final JobExecutionRepository jobExecutionRepository;
   private final ContributionErrorRepository errorRepository;
   private final ContributionMapper mapper;
   private final ContributionValidationService validationService;
@@ -91,22 +86,6 @@ public class ContributionServiceImpl implements ContributionService {
     entity.setStatus(COMPLETE);
 
     return mapper.toDTO(repository.save(entity));
-  }
-
-  @Transactional
-  @Override
-  public void completeJobExecution(UUID jobExecutionId) {
-    try{
-      log.debug("completeJobExecution:: Completing job execution process {} ", jobExecutionId);
-      jobExecutionRepository.findById(jobExecutionId)
-        .ifPresent(jobExecution -> {
-          jobExecution.setFinished(true);
-          jobExecutionRepository.save(jobExecution);
-          log.info("completeJobExecution:: job execution process completed {} ", jobExecutionId);
-        });
-    } catch (Exception ex){
-      log.info("completeJobExecution:: unable to complete job execution process", ex);
-    }
   }
 
   @Transactional
@@ -167,20 +146,12 @@ public class ContributionServiceImpl implements ContributionService {
     JobResponse updatedJobResponse = retryTemplate.execute(r -> getJobResponse(iterationJobResponse.getId()));
 
     if(updatedJobResponse!=null) {
-      log.info("numberOfRecords from updatedJobResponse-> {}",updatedJobResponse.getNumberOfRecordsPublished());
       numberOfRecords = updatedJobResponse.getNumberOfRecordsPublished();
+      log.info("numberOfRecords from updatedJobResponse for centralServerId {} is {}", centralServerId, numberOfRecords);
     }
-
     contribution.setJobId(iterationJobResponse.getId());
-    contribution = repository.save(contribution);
-
-    var jobExecution = new JobExecution();
-    jobExecution.setFinished(false);
-    jobExecution.setTotalRecords(numberOfRecords);
-    jobExecution = jobExecutionRepository.save(jobExecution);
-
-
-    runInitialContributionJob(centralServerId, contribution, numberOfRecords, jobExecution);
+    contribution.setRecordsTotal(numberOfRecords.longValue());
+    repository.save(contribution);
 
     log.info("Initial contribution process started");
   }
@@ -254,9 +225,9 @@ public class ContributionServiceImpl implements ContributionService {
 
   }
 
-  private void runInitialContributionJob(UUID centralServerId, Contribution contribution, Integer numberOfRecords, JobExecution jobExecution) {
+  private void runInitialContributionJob(UUID centralServerId, Contribution contribution, Integer numberOfRecords) {
     log.debug("runInitialContributionJob:: parameters centralServerId: {}, contribution: {}", centralServerId, contribution);
-    getJobRunner().startInitialContribution(centralServerId, folioContext.getTenantId(), contribution.getId(), contribution.getJobId(), numberOfRecords, jobExecution);
+    getJobRunner().startInitialContribution(centralServerId, folioContext.getTenantId(), contribution.getId(), contribution.getJobId(), numberOfRecords);
   }
 
   private ContributionJobRunner getJobRunner() {

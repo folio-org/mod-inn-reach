@@ -24,7 +24,7 @@ public class InitialContributionMessageListener implements MessageListener<Strin
   public void onMessage(
     ConsumerRecord<String, InstanceIterationEvent> consumerRecord) {
 
-    log.info("Inside InitialContributionMessageListener:onMessage");
+    log.debug("Inside InitialContributionMessageListener:onMessage");
     try {
       UUID jobId = UUID.fromString(new String(consumerRecord.headers().lastHeader(ITERATION_JOB_ID_HEADER).value()));
       UUID instanceId = UUID.fromString(consumerRecord.key());
@@ -35,6 +35,7 @@ public class InitialContributionMessageListener implements MessageListener<Strin
 
       instanceIterationEvent.setInstanceId(instanceId);
       instanceIterationEvent.setJobId(jobId);
+
       iMessageProcessor.processMessage(instanceIterationEvent, consumerRecord.topic());
     }
     catch (ServiceSuspendedException | FeignException | InnReachConnectionException | SocketTimeOutExceptionWrapper e) {
