@@ -29,8 +29,7 @@ public class KafkaInitialContributionEventListener {
     id = "${kafka.listener.contribution.id}",
     groupId = "${kafka.listener.contribution.group-id}",
     topicPattern = "${kafka.listener.contribution.topic-pattern}",
-    concurrency = "${kafka.listener.contribution.concurrency}"
-  )
+    concurrency = "${kafka.listener.contribution.concurrency}")
   public void processInitialContributionEvents(List<ConsumerRecord<String, InstanceIterationEvent>> consumerRecords) {
     log.debug("processInitialContributionEvents:: Received records of size {} ", consumerRecords.size());
     consumerRecords.forEach(consumerRecord -> {
@@ -42,10 +41,12 @@ public class KafkaInitialContributionEventListener {
     });
   }
 
-  private InstanceIterationEvent getInstanceIterationEventFromKafkaRecord(ConsumerRecord<String, InstanceIterationEvent> record) {
-    var instanceIterationEvent = record.value();
-    instanceIterationEvent.setInstanceId(UUID.fromString(record.key()));
-    instanceIterationEvent.setJobId(UUID.fromString(new String(record.headers().lastHeader(ITERATION_JOB_ID_HEADER).value())));
+  private InstanceIterationEvent getInstanceIterationEventFromKafkaRecord(
+    ConsumerRecord<String, InstanceIterationEvent> consumerRecord) {
+    var instanceIterationEvent = consumerRecord.value();
+    instanceIterationEvent.setInstanceId(UUID.fromString(consumerRecord.key()));
+    instanceIterationEvent.setJobId(UUID.fromString(
+      new String(consumerRecord.headers().lastHeader(ITERATION_JOB_ID_HEADER).value())));
     return instanceIterationEvent;
   }
 

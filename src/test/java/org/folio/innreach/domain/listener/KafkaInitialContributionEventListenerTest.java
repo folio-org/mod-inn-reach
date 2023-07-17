@@ -20,7 +20,7 @@ import static org.folio.innreach.domain.listener.KafkaInitialContributionEventLi
 import static org.junit.jupiter.api.Assertions.*;
 
 @Log4j2
-public class KafkaInitialContributionEventListenerTest extends BaseKafkaApiTest {
+class KafkaInitialContributionEventListenerTest extends BaseKafkaApiTest {
 
   @SpyBean
   private JobExecutionStatusRepository jobExecutionStatusRepository;
@@ -38,6 +38,5 @@ public class KafkaInitialContributionEventListenerTest extends BaseKafkaApiTest 
       assertEquals(jobExecutionStatus.get(0).getJobId(), jobId);
     });
   }
-
 
 }

@@ -225,11 +225,6 @@ public class ContributionServiceImpl implements ContributionService {
 
   }
 
-  private void runInitialContributionJob(UUID centralServerId, Contribution contribution, Integer numberOfRecords) {
-    log.debug("runInitialContributionJob:: parameters centralServerId: {}, contribution: {}", centralServerId, contribution);
-    getJobRunner().startInitialContribution(centralServerId, folioContext.getTenantId(), contribution.getId(), contribution.getJobId(), numberOfRecords);
-  }
-
   private ContributionJobRunner getJobRunner() {
     if (jobRunner == null) {
       jobRunner = beanFactory.getBean(ContributionJobRunner.class);
