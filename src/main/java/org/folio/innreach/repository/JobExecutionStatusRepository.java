@@ -8,5 +8,5 @@ import java.util.UUID;
 
 @Repository
 public interface JobExecutionStatusRepository extends JpaRepository<JobExecutionStatus, UUID> {
-    //long countByJobExecutionId(UUID id);
+
 }
