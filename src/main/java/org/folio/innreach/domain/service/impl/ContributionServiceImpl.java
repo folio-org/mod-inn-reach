@@ -142,7 +142,6 @@ public class ContributionServiceImpl implements ContributionService {
     var numberOfRecords = iterationJobResponse.getNumberOfRecordsPublished();
     log.info("numberOfRecords from iterationJobResponse: {}",numberOfRecords);
 
-
     JobResponse updatedJobResponse = retryTemplate.execute(r -> getJobResponse(iterationJobResponse.getId()));
 
     if(updatedJobResponse!=null) {

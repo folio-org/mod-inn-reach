@@ -17,7 +17,7 @@ import java.util.UUID;
 
 import static org.awaitility.Awaitility.await;
 import static org.folio.innreach.domain.listener.KafkaInitialContributionEventListener.ITERATION_JOB_ID_HEADER;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @Log4j2
 class KafkaInitialContributionEventListenerTest extends BaseKafkaApiTest {
