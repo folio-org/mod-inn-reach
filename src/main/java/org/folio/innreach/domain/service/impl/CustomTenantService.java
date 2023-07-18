@@ -29,7 +29,7 @@ public class CustomTenantService extends TenantService {
       FolioSpringLiquibase folioSpringLiquibase, SystemUserService systemUserService,
       ContributionJobRunner contributionJobRunner, ReferenceDataLoader referenceDataLoader, TestTenant testTenant) {
     super(jdbcTemplate, context, folioSpringLiquibase);
-
+    log.info("CustomTenantService {} ", context);
     this.systemUserService = systemUserService;
     this.contributionJobRunner = contributionJobRunner;
     this.referenceDataLoader = referenceDataLoader;
@@ -38,7 +38,7 @@ public class CustomTenantService extends TenantService {
 
   @Override
   protected void afterTenantUpdate(TenantAttributes tenantAttributes) {
-    log.debug("afterTenantUpdate:: parameters tenantAttributes: {}", tenantAttributes);
+    log.info("afterTenantUpdate:: parameters tenantAttributes: {}", tenantAttributes);
     if (!context.getTenantId().startsWith(testTenant.getTenantName())) {
       systemUserService.prepareSystemUser();
       contributionJobRunner.cancelJobs();
