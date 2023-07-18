@@ -1,6 +1,7 @@
 package org.folio.innreach.domain.service.impl;
 
 import lombok.extern.log4j.Log4j2;
+import org.folio.innreach.domain.service.TenantsHolder;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Primary;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -23,22 +24,24 @@ public class CustomTenantService extends TenantService {
   private final ContributionJobRunner contributionJobRunner;
   private final ReferenceDataLoader referenceDataLoader;
   private final TestTenant testTenant;
+  private final TenantsHolder tenants;
 
 
   public CustomTenantService(JdbcTemplate jdbcTemplate, FolioExecutionContext context,
       FolioSpringLiquibase folioSpringLiquibase, SystemUserService systemUserService,
-      ContributionJobRunner contributionJobRunner, ReferenceDataLoader referenceDataLoader, TestTenant testTenant) {
+      ContributionJobRunner contributionJobRunner, ReferenceDataLoader referenceDataLoader,
+      TestTenant testTenant, TenantsHolder tenants) {
     super(jdbcTemplate, context, folioSpringLiquibase);
-    log.info("CustomTenantService {} ", context);
     this.systemUserService = systemUserService;
     this.contributionJobRunner = contributionJobRunner;
     this.referenceDataLoader = referenceDataLoader;
     this.testTenant = testTenant;
+    this.tenants = tenants;
   }
 
   @Override
   protected void afterTenantUpdate(TenantAttributes tenantAttributes) {
-    log.info("afterTenantUpdate:: parameters tenantAttributes: {}", tenantAttributes);
+    tenants.add(context.getTenantId());
     if (!context.getTenantId().startsWith(testTenant.getTenantName())) {
       systemUserService.prepareSystemUser();
       contributionJobRunner.cancelJobs();
@@ -48,6 +51,11 @@ public class CustomTenantService extends TenantService {
   @Override
   public void loadReferenceData() {
     referenceDataLoader.loadRefData();
+  }
+
+  @Override
+  public void afterTenantDeletion(TenantAttributes tenantAttributes) {
+    tenants.remove(context.getTenantId());
   }
 
 }
