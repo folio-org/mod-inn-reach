@@ -1,7 +1,6 @@
 package org.folio.innreach.domain.service.impl;
 
 import lombok.extern.log4j.Log4j2;
-import org.folio.innreach.domain.service.TenantsHolder;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Primary;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -14,6 +13,9 @@ import org.folio.spring.liquibase.FolioSpringLiquibase;
 import org.folio.spring.service.TenantService;
 import org.folio.tenant.domain.dto.TenantAttributes;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Log4j2
 @Service
 @Primary
@@ -24,19 +26,18 @@ public class CustomTenantService extends TenantService {
   private final ContributionJobRunner contributionJobRunner;
   private final ReferenceDataLoader referenceDataLoader;
   private final TestTenant testTenant;
-  private final TenantsHolder tenants;
+  public static final List<String> tenants = new ArrayList<>();
 
 
   public CustomTenantService(JdbcTemplate jdbcTemplate, FolioExecutionContext context,
       FolioSpringLiquibase folioSpringLiquibase, SystemUserService systemUserService,
       ContributionJobRunner contributionJobRunner, ReferenceDataLoader referenceDataLoader,
-      TestTenant testTenant, TenantsHolder tenants) {
+      TestTenant testTenant) {
     super(jdbcTemplate, context, folioSpringLiquibase);
     this.systemUserService = systemUserService;
     this.contributionJobRunner = contributionJobRunner;
     this.referenceDataLoader = referenceDataLoader;
     this.testTenant = testTenant;
-    this.tenants = tenants;
   }
 
   @Override
