@@ -12,7 +12,7 @@ import java.util.UUID;
 public interface JobExecutionStatusRepository extends JpaRepository<JobExecutionStatus, UUID> {
 
   @Query(value = "update job_execution_status s " +
-    "set status = 'PROCESSING' where s.id in (select t.id from job_execution_status t " +
+    "set status = 'IN_PROGRESS' where s.id in (select t.id from job_execution_status t " +
     "inner join contribution c on c.job_id = t.job_id where c.status = 0 and " +
     "t.status not in ('IN_PROGRESS', 'PROCESSED', 'FAILED') limit 10) " +
     "returning *", nativeQuery = true)
