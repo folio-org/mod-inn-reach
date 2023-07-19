@@ -21,6 +21,7 @@ public class InitialContributionJobScheduler {
 
   @Scheduled(fixedDelay = 30000)
   public void processInitialContributionEvents() {
+    log.info("Thread Name {} ", Thread.currentThread().getName());
     log.info("processInitialContributionEvents :: tenantsList {} ", tenants);
     tenants.forEach(tenant ->
       executionService.runTenantScoped(tenant,
