@@ -40,11 +40,15 @@ public class InitialContributionJobScheduler {
 
   @PostConstruct
   public void setTenants() {
+    log.info("Username {} ", systemUserConf.getUsername());
+    log.info("Password {} ", folioSystemUserConf.getPassword());
+
     AuthnClient.UserCredentials cred = AuthnClient.UserCredentials
       .of(systemUserConf.getUsername(), folioSystemUserConf.getPassword());
 
     var response = authnClient.getApiKey(cred);
 
+    log.info("response from auth client {} ", response);
     List<String> tokenHeaders = response.getHeaders().get(XOkapiHeaders.TOKEN);
     if(tokenHeaders == null || tokenHeaders.isEmpty()){
       log.info("Unable to fetch the tenants list as the token list is empty");
