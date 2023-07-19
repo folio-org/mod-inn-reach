@@ -17,6 +17,7 @@ import lombok.extern.log4j.Log4j2;
 import org.folio.innreach.batch.contribution.InitialContributionJobConsumerContainer;
 import org.folio.innreach.config.props.ContributionJobProperties;
 import org.folio.innreach.config.props.FolioEnvironment;
+import org.folio.innreach.domain.entity.JobExecutionStatus;
 import org.folio.innreach.external.exception.InnReachException;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -222,6 +223,15 @@ public class ContributionServiceImpl implements ContributionService {
 
     InitialContributionJobConsumerContainer.stopConsumer(topic);
 
+  }
+
+  public void processInitialContributionEvents(JobExecutionStatus job) {
+    log.info("Thread Name {} ", Thread.currentThread().getName());
+    try {
+      Thread.sleep(5000);
+    } catch (InterruptedException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   private ContributionJobRunner getJobRunner() {

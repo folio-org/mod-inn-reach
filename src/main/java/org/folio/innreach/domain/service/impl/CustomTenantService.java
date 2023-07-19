@@ -13,8 +13,8 @@ import org.folio.spring.liquibase.FolioSpringLiquibase;
 import org.folio.spring.service.TenantService;
 import org.folio.tenant.domain.dto.TenantAttributes;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 @Log4j2
 @Service
@@ -26,7 +26,7 @@ public class CustomTenantService extends TenantService {
   private final ContributionJobRunner contributionJobRunner;
   private final ReferenceDataLoader referenceDataLoader;
   private final TestTenant testTenant;
-  public static final List<String> tenants = new ArrayList<>();
+  public static final Set<String> tenants = new HashSet<>();
 
 
   public CustomTenantService(JdbcTemplate jdbcTemplate, FolioExecutionContext context,
