@@ -226,7 +226,6 @@ public class ContributionServiceImpl implements ContributionService {
 
   }
 
-  @Async
   public void processInitialContributionEvents(JobExecutionStatus job) {
     log.info("Thread Name {} ", Thread.currentThread().getName());
     try {
