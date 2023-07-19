@@ -6,9 +6,11 @@ import org.folio.innreach.domain.dto.folio.Tenant;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 
-@FeignClient(name = "_/proxy/tenants", configuration = FolioFeignClientConfig.class)
+import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
+
+@FeignClient(name = "okapi", configuration = FolioFeignClientConfig.class)
 public interface OkapiClient {
-  @GetMapping
+  @GetMapping(value = "/proxy/tenants", produces = APPLICATION_JSON_VALUE)
   ResultList<Tenant> getTenantList();
 
 }
