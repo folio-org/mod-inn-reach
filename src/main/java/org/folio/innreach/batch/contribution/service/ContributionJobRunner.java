@@ -16,7 +16,11 @@ import com.google.common.collect.Iterables;
 import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.folio.innreach.domain.entity.Contribution;
+import org.folio.innreach.domain.entity.JobExecutionStatus;
 import org.folio.innreach.domain.service.impl.FolioExecutionContextBuilder;
+import org.folio.innreach.repository.ContributionRepository;
+import org.folio.innreach.repository.JobExecutionStatusRepository;
 import org.folio.spring.scope.FolioExecutionContextSetter;
 import org.folio.innreach.external.exception.InnReachConnectionException;
 import org.folio.innreach.external.exception.ServiceSuspendedException;
@@ -70,6 +74,9 @@ public class ContributionJobRunner {
 
   private static Map<String,Integer> totalRecords = new HashMap<>();
   private static ConcurrentHashMap<String, Integer> recordsProcessed = new ConcurrentHashMap<>();
+  private final JobExecutionStatusRepository jobExecutionStatusRepository;
+  private static final ConcurrentHashMap<UUID, UUID> centralServerIds = new ConcurrentHashMap<>();
+  private final ContributionRepository contributionRepository;
 
 
   public void startInitialContribution(UUID centralServerId, String tenantId, UUID contributionId, UUID iterationJobId, Integer numberOfRecords) {
@@ -160,6 +167,97 @@ public class ContributionJobRunner {
       InitialContributionJobConsumerContainer.stopConsumer(topic);
     }
   }
+
+  public void processInitialContributionEvents(JobExecutionStatus job) {
+    log.info("Processing Initial contribution events {} ", job);
+    try{
+      var instanceId = job.getInstanceId();
+      var centralServerId = centralServerIds.get(job.getJobId()) != null ? centralServerIds.get(job.getJobId())
+        : getCentralServerId(job.getJobId());
+
+      if(centralServerId == null) {
+        String error = "processInitialContributionEvents:: Unable to process instance id " + instanceId +
+            " as centralServerId is null";
+        log.warn(error);
+        throw new RuntimeException(error);
+      }
+
+      Instance instance = loadInstanceWithItems(instanceId);
+
+      if (instance == null) {
+        String error = "processInitialContributionEvents:: instance is null, skipping for instanceId " + instanceId;
+        log.warn(error);
+        throw new RuntimeException(error);
+      }
+
+      if (isEligibleForContribution(centralServerId, instance)) {
+        log.info("Initial: Eligible for Contribution centralServerId: {}, instanceId: {}", centralServerId, instanceId);
+        contributeInstanceOrItem(job, centralServerId, instance);
+      } else if (isContributed(centralServerId, instance)) {
+        log.info("Initial: deContributeInstance centralServerId: {}, instanceId: {}", centralServerId, instanceId);
+        recordContributionService.deContributeInstance(centralServerId, instance);
+      }
+      else {
+        // to test if non-eligible increasing count to verify the stopping condition
+        log.info("Initial: non-eligible instance id: {}", instanceId);
+        throw new RuntimeException("Initial: non-eligible instance id: " + instanceId);
+      }
+    } catch (ServiceSuspendedException | InnReachConnectionException ex){
+      log.warn("Service suspended exception caught", ex);
+      updateJob(job, JobExecutionStatus.Status.RETRY, job.isInstanceContributed());
+    } catch (Exception ex) {
+      log.warn("Exception caught", ex);
+      updateJob(job, JobExecutionStatus.Status.PROCESSED, job.isInstanceContributed());
+    }
+    jobExecutionStatusRepository.save(job);
+  }
+
+  private UUID getCentralServerId(UUID jobId) {
+    Contribution contribution = contributionRepository.findByJobId(jobId);
+    if(contribution != null) {
+      centralServerIds.put(jobId, contribution.getCentralServer().getId());
+      return contribution.getCentralServer().getId();
+    }
+    return null;
+  }
+
+  private void contributeInstanceOrItem(JobExecutionStatus job, UUID centralServerId, Instance instance) {
+    if(job.isInstanceContributed()){
+      log.info("contributeInstanceItems:: parameters centralServerId: {}, instance id: {}", centralServerId, instance.getId());
+      var bibId = instance.getHrid();
+      var items = instance.getItems().stream()
+        .filter(i -> isEligibleForContribution(centralServerId, i))
+        .collect(Collectors.toList());
+
+      if (items.isEmpty()) {
+        log.info("item is empty while contributing instance id: {}", instance.getId());
+        addRecordProcessed();
+      }
+
+      int chunkSize = max(jobProperties.getChunkSize(), 1);
+
+      StreamSupport.stream(Iterables.partition(items, chunkSize).spliterator(), false)
+        .forEach(itemsChunk -> {
+          try {
+            recordContributionService.contributeItems(centralServerId, bibId, items);
+          } catch (SocketTimeoutException e) {
+            throw new RuntimeException(e);
+          }
+        });
+      updateJob(job, JobExecutionStatus.Status.PROCESSED, job.isInstanceContributed());
+    } else{
+      recordContributionService.contributeInstanceWithoutRetry(centralServerId, instance);
+      updateJob(job, JobExecutionStatus.Status.READY, true);
+    }
+  }
+  private JobExecutionStatus updateJob(JobExecutionStatus job,
+                                       JobExecutionStatus.Status status, boolean isInstanceContributed) {
+    job.setStatus(status);
+    job.setInstanceContributed(isInstanceContributed);
+    job.setRetryAttempts(status == JobExecutionStatus.Status.RETRY ? job.getRetryAttempts()+1 : job.getRetryAttempts());
+    return job;
+  }
+
 
   public void stopContribution(String tenantId) {
     log.info("stopContribution:: stopContribution called, parameters tenantId: {}", tenantId);

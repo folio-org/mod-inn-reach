@@ -23,4 +23,6 @@ public interface RecordContributionService {
 
   void deContributeItem(UUID centralServerId, Item item);
 
+  void contributeInstanceWithoutRetry(UUID centralServerId, Instance instance);
+
 }

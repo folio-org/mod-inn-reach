@@ -2,6 +2,7 @@ package org.folio.innreach.Scheduler;
 
 import lombok.AllArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.folio.innreach.batch.contribution.service.ContributionJobRunner;
 import org.folio.innreach.client.AuthnClient;
 import org.folio.innreach.client.OkapiClient;
 import org.folio.innreach.config.props.SystemUserProperties;
@@ -30,8 +31,7 @@ import static org.folio.innreach.domain.service.impl.CustomTenantService.tenants
 public class InitialContributionJobScheduler {
   private TenantScopedExecutionService executionService;
   private JobExecutionStatusRepository jobExecutionStatusRepository;
-  private ContributionService contributionService;
-  private List<Tenant> tenants;
+  private ContributionJobRunner contributionJobRunner;
   private final SystemUserProperties folioSystemUserConf;
   private final AuthnClient authnClient;
   private final SystemUserProperties systemUserConf;
@@ -66,11 +66,11 @@ public class InitialContributionJobScheduler {
     log.info("Thread Name {} ", Thread.currentThread().getName());
     log.info("processInitialContributionEvents :: tenantsList {} ", tenants);
     tenants.forEach(tenant ->
-      executionService.runTenantScoped(tenant.getId(),
+      executionService.runTenantScoped(tenant,
         () -> {
           log.info("Fetching jobs for tenant {} ", tenant);
           jobExecutionStatusRepository.updateAndFetchJobExecutionRecordsByStatus()
-            .forEach(contributionService::processInitialContributionEvents);
+            .forEach(contributionJobRunner::processInitialContributionEvents);
         }
       ));
   }

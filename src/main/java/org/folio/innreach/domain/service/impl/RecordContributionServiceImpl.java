@@ -55,6 +55,16 @@ public class RecordContributionServiceImpl implements RecordContributionService 
   }
 
   @Override
+  public void contributeInstanceWithoutRetry(UUID centralServerId, Instance instance) {
+    var bibId = instance.getHrid();
+    log.info("contributeInstance: contributing bib {}", bibId);
+    var bib = recordTransformationService.getBibInfo(centralServerId, instance);
+    log.info("contributeInstance: got bib info for bib: {}", bibId);
+    InnReachResponse response = contributeBib(centralServerId, bibId, bib);
+    log.info("response after bib contribution {} ", response);
+  }
+
+  @Override
   public void deContributeInstance(UUID centralServerId, Instance instance) throws SocketTimeoutException{
     var bibId = instance.getHrid();
     log.info("De-contributing bib {}", bibId);

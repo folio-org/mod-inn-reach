@@ -27,5 +27,6 @@ public interface ContributionRepository extends JpaRepository<Contribution, UUID
   Page<Contribution> fetchHistoryByCentralServerId(UUID id, Pageable pageable);
 
   List<Contribution> findAllByStatus(Contribution.Status status);
+  Contribution findByJobId(UUID jobId);
 
 }

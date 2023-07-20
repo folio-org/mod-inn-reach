@@ -29,6 +29,8 @@ public class JobExecutionStatus extends Auditable {
   private UUID jobId;
   private String type;
   private String tenant;
+  private boolean instanceContributed;
+  private int retryAttempts;
   @Enumerated(EnumType.STRING)
   private Status status;
 
