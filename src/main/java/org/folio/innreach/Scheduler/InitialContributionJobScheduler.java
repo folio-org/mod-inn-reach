@@ -40,26 +40,26 @@ public class InitialContributionJobScheduler {
 
   @PostConstruct
   public void setTenants() {
-    log.info("Username {} ", systemUserConf.getUsername());
-    log.info("Password {} ", folioSystemUserConf.getPassword());
-
-    AuthnClient.UserCredentials cred = AuthnClient.UserCredentials
-      .of(systemUserConf.getUsername(), folioSystemUserConf.getPassword());
-
-    var response = authnClient.getApiKey(cred);
-
-    log.info("response from auth client {} ", response);
-    List<String> tokenHeaders = response.getHeaders().get(XOkapiHeaders.TOKEN);
-    if(tokenHeaders == null || tokenHeaders.isEmpty()){
-      log.info("Unable to fetch the tenants list as the token list is empty");
-      return;
-    }
-    var systemUser = new SystemUser();
-    systemUser.setToken(tokenHeaders.get(0));
-    try (var context = new FolioExecutionContextSetter(contextBuilder.forSystemUser(systemUser))) {
-      tenants = okapiClient.getTenantList().getResult();
-      log.info("After fetching tenants {} ", tenants);
-    }
+//    log.info("Username {} ", systemUserConf.getUsername());
+//    log.info("Password {} ", folioSystemUserConf.getPassword());
+//
+//    AuthnClient.UserCredentials cred = AuthnClient.UserCredentials
+//      .of(systemUserConf.getUsername(), folioSystemUserConf.getPassword());
+//
+//    var response = authnClient.getApiKey(cred);
+//
+//    log.info("response from auth client {} ", response);
+//    List<String> tokenHeaders = response.getHeaders().get(XOkapiHeaders.TOKEN);
+//    if(tokenHeaders == null || tokenHeaders.isEmpty()){
+//      log.info("Unable to fetch the tenants list as the token list is empty");
+//      return;
+//    }
+//    var systemUser = new SystemUser();
+//    systemUser.setToken(tokenHeaders.get(0));
+//    try (var context = new FolioExecutionContextSetter(contextBuilder.forSystemUser(systemUser))) {
+//      tenants = okapiClient.getTenantList().getResult();
+//      log.info("After fetching tenants {} ", tenants);
+//    }
   }
   @Scheduled(fixedDelay = 30000)
   public void processInitialContributionEvents() {
