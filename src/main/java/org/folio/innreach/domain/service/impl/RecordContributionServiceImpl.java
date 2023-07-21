@@ -151,7 +151,7 @@ public class RecordContributionServiceImpl implements RecordContributionService 
 
   private InnReachResponse verifyBibContribution(UUID centralServerId, String bibId) {
     log.info("verifyBibContribution with bibId: {}",bibId);
-    var response = irContributionService.lookUpBib(centralServerId, bibId+" ");
+    var response = irContributionService.lookUpBib(centralServerId, "in000041995");
     log.info("Response for verify BIB contribution {} ", response);
     checkServiceSuspension(response);
     Assert.isTrue(response.isOk(), "Unexpected verification response: " + response);
