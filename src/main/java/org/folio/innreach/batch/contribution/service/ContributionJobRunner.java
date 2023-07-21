@@ -258,9 +258,9 @@ public class ContributionJobRunner {
     job.setRetryAttempts(status.equals(RETRY) ? job.getRetryAttempts() + 1 : job.getRetryAttempts());
     jobExecutionStatusRepository.save(job);
     if (job.getStatus().equals(PROCESSED))
-      contributionRepository.updateStatisticsAndStatus(job.getJobId());
+      contributionRepository.updateStatisticsAndStatus(job.getJobId(), 1);
     if (job.getStatus().equals(FAILED))
-      contributionRepository.updateStatisticsAndStatus(job.getJobId());
+      contributionRepository.updateStatisticsAndStatus(job.getJobId(), 0);
   }
 
 

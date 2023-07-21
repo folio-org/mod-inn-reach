@@ -9,6 +9,7 @@ import java.util.UUID;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -30,9 +31,10 @@ public interface ContributionRepository extends JpaRepository<Contribution, UUID
   List<Contribution> findAllByStatus(Contribution.Status status);
   Contribution findByJobId(UUID jobId);
 
+  @Modifying
   @Query(value = "Update contribution c set records_total = records_total+1,records_processed = records_processed+1," +
-    "records_contributed = records_contributed + 1, status = case when (select count(*) from job_execution_status j where j.status in ('READY','RETRY','IN_PROGRESS') " +
+    "records_contributed = records_contributed + :recordsContributed, status = case when (select count(*) from job_execution_status j where j.status in ('READY','RETRY','IN_PROGRESS') " +
     "and j.job_id= :jobId ) = 0 then 1 else status end where c.job_id = :jobId " , nativeQuery = true)
-  void updateStatisticsAndStatus(@Param("jobId") UUID jobId);
+  void updateStatisticsAndStatus(@Param("jobId") UUID jobId, @Param("recordsContributed") int recordsContributed);
 
 }
