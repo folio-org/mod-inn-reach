@@ -61,6 +61,7 @@ public class RecordContributionServiceImpl implements RecordContributionService 
     var bib = recordTransformationService.getBibInfo(centralServerId, instance);
     log.info("contributeInstance: got bib info for bib: {}", bibId);
     InnReachResponse response = contributeBib(centralServerId, bibId, bib);
+    verifyBibContribution(centralServerId, bibId);
     log.info("response after bib contribution {} ", response);
   }
 
@@ -151,6 +152,7 @@ public class RecordContributionServiceImpl implements RecordContributionService 
   private InnReachResponse verifyBibContribution(UUID centralServerId, String bibId) {
     log.info("verifyBibContribution with bibId: {}",bibId);
     var response = irContributionService.lookUpBib(centralServerId, bibId);
+    log.info("Response for verify BIB contribution {} ", response);
     checkServiceSuspension(response);
     Assert.isTrue(response.isOk(), "Unexpected verification response: " + response);
     return response;
