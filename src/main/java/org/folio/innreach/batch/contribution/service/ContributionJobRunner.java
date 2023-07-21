@@ -253,8 +253,7 @@ public class ContributionJobRunner {
     }
   }
 
-  private void updateJobAndContributionStatus(JobExecutionStatus job,
-                                              Status status, boolean isInstanceContributed) {
+  private void updateJobAndContributionStatus(JobExecutionStatus job, Status status, boolean isInstanceContributed) {
     job.setStatus(status);
     job.setInstanceContributed(isInstanceContributed);
     job.setRetryAttempts(status.equals(RETRY) ? job.getRetryAttempts() + 1 : job.getRetryAttempts());
