@@ -49,6 +49,7 @@ import org.folio.innreach.dto.Instance;
 import org.folio.innreach.dto.Item;
 import org.folio.spring.FolioExecutionContext;
 import org.folio.innreach.domain.entity.JobExecutionStatus.Status;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @Log4j2
@@ -173,6 +174,7 @@ public class ContributionJobRunner {
     }
   }
 
+  @Transactional
   public void processInitialContributionEvents(JobExecutionStatus job) {
     log.info("Processing Initial contribution events {} ", job);
     try {
