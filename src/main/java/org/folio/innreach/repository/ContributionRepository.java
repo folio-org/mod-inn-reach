@@ -10,6 +10,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import org.folio.innreach.domain.entity.Contribution;
@@ -28,5 +29,10 @@ public interface ContributionRepository extends JpaRepository<Contribution, UUID
 
   List<Contribution> findAllByStatus(Contribution.Status status);
   Contribution findByJobId(UUID jobId);
+
+  @Query(value = "Update contribution c set records_total = records_total+1,records_processed = records_processed+1," +
+    "records_contributed = records_contributed + :recordsContributed, status = case when (select count(*) from job_execution_status j where j.status in ('READY')\n" +
+    "and j.job_id='02091dc7-68ba-49a8-92ab-9f3d0a5e2bb2') = 0 then 1 else 0 end where c.job_id = '02091dc7-68ba-49a8-92ab-9f3d0a5e2bb2'" , nativeQuery = true)
+  void updateStatisticsAndStatus(@Param("jobId") UUID jobId, @Param("recordsContributed") int recordsContributed);
 
 }
