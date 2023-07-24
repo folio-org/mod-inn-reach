@@ -221,12 +221,12 @@ public class ContributionJobRunner {
     var instanceId = job.getInstanceId();
     if (isEligibleForContribution(centralServerId, instance)) {
       if(job.isInstanceContributed()){
+        log.info("startContribution:: Item contribution started for centralServerId: {}, instanceId: {}", centralServerId, instanceId);
+        contributeItem(job, centralServerId, instance);
+      } else {
         log.info("startContribution:: Instance contribution started for instanceId {} ", instance.getId());
         recordContributionService.contributeInstanceWithoutRetry(centralServerId, instance);
         updateJobAndContributionStatus(job, READY, true);
-      } else {
-        log.info("startContribution:: Item contribution started for centralServerId: {}, instanceId: {}", centralServerId, instanceId);
-        contributeItem(job, centralServerId, instance);
       }
     } else if (isContributed(centralServerId, instance)) {
       log.info("startContribution:: deContributeInstance centralServerId: {}, instanceId: {}", centralServerId, instanceId);
@@ -254,7 +254,7 @@ public class ContributionJobRunner {
       int chunkSize = max(jobProperties.getChunkSize(), 1);
       StreamSupport.stream(Iterables.partition(items, chunkSize).spliterator(), false)
         .forEach(itemsChunk -> recordContributionService.contributeItemsWithoutRetry(centralServerId, bibId, items));
-      log.info("contributeInstanceOrItem:: Item contribution completed for instanceId {} ", instance.getId());
+      log.info("contributeItem:: Item contribution completed for instanceId {} ", instance.getId());
       updateJobAndContributionStatus(job, PROCESSED, job.isInstanceContributed());
   }
 

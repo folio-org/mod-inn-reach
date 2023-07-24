@@ -17,15 +17,11 @@ import lombok.extern.log4j.Log4j2;
 import org.folio.innreach.batch.contribution.InitialContributionJobConsumerContainer;
 import org.folio.innreach.config.props.ContributionJobProperties;
 import org.folio.innreach.config.props.FolioEnvironment;
-import org.folio.innreach.domain.entity.JobExecutionStatus;
-import org.folio.innreach.external.exception.InnReachConnectionException;
 import org.folio.innreach.external.exception.InnReachException;
-import org.folio.innreach.external.exception.ServiceSuspendedException;
 import org.folio.innreach.repository.JobExecutionStatusRepository;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.retry.support.RetryTemplate;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
@@ -64,7 +60,6 @@ public class ContributionServiceImpl implements ContributionService {
   private ContributionJobRunner jobRunner;
   @Qualifier("contributionRetryTemplate")
   private final RetryTemplate retryTemplate;
-  private final JobExecutionStatusRepository jobExecutionStatusRepository;
 
   @Override
   public ContributionDTO getCurrent(UUID centralServerId) {
@@ -225,42 +220,6 @@ public class ContributionServiceImpl implements ContributionService {
 
     InitialContributionJobConsumerContainer.stopConsumer(topic);
 
-  }
-
-  public void processInitialContributionEvents(JobExecutionStatus job) {
-    try{
-      contributeInstanceOrItem(job);
-      updateJobBasedOnInstanceContributed(job);
-    } catch (ServiceSuspendedException | InnReachConnectionException ex){
-      updateJob(job, JobExecutionStatus.Status.RETRY, job.isInstanceContributed());
-    } catch (Exception ex) {
-      updateJob(job, JobExecutionStatus.Status.PROCESSED, job.isInstanceContributed());
-    }
-    jobExecutionStatusRepository.save(job);
-  }
-
-  private void contributeInstanceOrItem(JobExecutionStatus job) {
-    if(job.isInstanceContributed()){
-
-    } else{
-
-    }
-  }
-  private void updateJobBasedOnInstanceContributed(JobExecutionStatus job) {
-    if(!job.isInstanceContributed()){
-      updateJob(job, JobExecutionStatus.Status.READY, true);
-    }
-    else{
-      updateJob(job, JobExecutionStatus.Status.PROCESSED, job.isInstanceContributed());
-    }
-  }
-
-  private JobExecutionStatus updateJob(JobExecutionStatus job,
-     JobExecutionStatus.Status status, boolean isInstanceContributed) {
-     job.setStatus(status);
-     job.setInstanceContributed(isInstanceContributed);
-     job.setRetryAttempts(job.getRetryAttempts()+1);
-     return job;
   }
 
   private ContributionJobRunner getJobRunner() {

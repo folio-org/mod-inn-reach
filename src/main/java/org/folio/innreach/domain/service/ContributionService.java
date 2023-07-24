@@ -2,7 +2,6 @@ package org.folio.innreach.domain.service;
 
 import java.util.UUID;
 
-import org.folio.innreach.domain.entity.JobExecutionStatus;
 import org.folio.innreach.dto.ContributionDTO;
 import org.folio.innreach.dto.ContributionErrorDTO;
 import org.folio.innreach.dto.ContributionsDTO;
@@ -26,7 +25,5 @@ public interface ContributionService {
   void cancelCurrent(UUID centralServerId);
 
   void logContributionError(UUID contributionId, ContributionErrorDTO error);
-
-  void processInitialContributionEvents(JobExecutionStatus job);
 
 }
