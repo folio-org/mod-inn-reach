@@ -23,6 +23,7 @@ import lombok.extern.log4j.Log4j2;
 import org.folio.innreach.domain.entity.Contribution;
 import org.folio.innreach.domain.entity.JobExecutionStatus;
 import org.folio.innreach.domain.service.impl.FolioExecutionContextBuilder;
+import org.folio.innreach.domain.service.impl.TenantScopedExecutionService;
 import org.folio.innreach.external.exception.RecordNotFoundException;
 import org.folio.innreach.repository.ContributionRepository;
 import org.folio.innreach.repository.JobExecutionStatusRepository;
@@ -85,7 +86,7 @@ public class ContributionJobRunner {
   private final JobExecutionStatusRepository jobExecutionStatusRepository;
   private static final ConcurrentHashMap<UUID, UUID> centralServerIds = new ConcurrentHashMap<>();
   private final ContributionRepository contributionRepository;
-
+  private final TenantScopedExecutionService executionService;
 
   public void startInitialContribution(UUID centralServerId, String tenantId, UUID contributionId, UUID iterationJobId, Integer numberOfRecords) {
     log.info("startInitialContribution:: parameters centralServerId: {}, tenantId: {}, contributionId: {}, iterationJobId: {}, numberOfRecords: {}", centralServerId, tenantId, contributionId, iterationJobId, numberOfRecords);
@@ -179,21 +180,23 @@ public class ContributionJobRunner {
   @Transactional
   @Async
   public void processInitialContributionEvents(JobExecutionStatus job) {
-    log.info("Processing Initial contribution events {} ", job);
-    try {
-      var instanceId = job.getInstanceId();
-      var centralServerId = centralServerIds.get(job.getJobId()) != null ?
-        centralServerIds.get(job.getJobId()) : getCentralServerId(job.getJobId());
-      Instance instance = inventoryViewService.getInstance(instanceId);
-      checkInstanceAndCentralServerId(centralServerId, instance, job);
-      startContribution(centralServerId, instance, job);
-    } catch (ServiceSuspendedException | InnReachConnectionException | RecordNotFoundException ex) {
-      log.warn("processInitialContributionEvents:: Retrying the contribution due to {} ", ex.getMessage());
-      updateJobAndContributionStatus(job, RETRY, job.isInstanceContributed());
-    } catch(Exception ex) {
-      log.warn("Exception caught", ex);
-      updateJobAndContributionStatus(job, FAILED, job.isInstanceContributed());
-    }
+    executionService.runTenantScoped(job.getTenant(), () -> {
+      log.info("Processing Initial contribution events {} ", job);
+      try {
+        var instanceId = job.getInstanceId();
+        var centralServerId = centralServerIds.get(job.getJobId()) != null ?
+          centralServerIds.get(job.getJobId()) : getCentralServerId(job.getJobId());
+        Instance instance = inventoryViewService.getInstance(instanceId);
+        checkInstanceAndCentralServerId(centralServerId, instance, job);
+        startContribution(centralServerId, instance, job);
+      } catch (ServiceSuspendedException | InnReachConnectionException | RecordNotFoundException ex) {
+        log.warn("processInitialContributionEvents:: Retrying the contribution due to {} ", ex.getMessage());
+        updateJobAndContributionStatus(job, RETRY, job.isInstanceContributed());
+      } catch (Exception ex) {
+        log.warn("Exception caught", ex);
+        updateJobAndContributionStatus(job, FAILED, job.isInstanceContributed());
+      }
+    });
   }
 
   private UUID getCentralServerId(UUID jobId) {
