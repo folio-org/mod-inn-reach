@@ -61,7 +61,7 @@ public class InitialContributionJobScheduler {
 //      log.info("After fetching tenants {} ", tenants);
 //    }
   }
-  @Scheduled(fixedDelay = 30000)
+  @Scheduled(fixedDelay = 3000)
   public void processInitialContributionEvents() {
     log.info("Thread Name {} ", Thread.currentThread().getName());
     log.info("processInitialContributionEvents :: tenantsList {} ", tenants);
