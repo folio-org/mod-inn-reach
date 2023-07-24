@@ -6,6 +6,7 @@ import java.util.UUID;
 
 import org.folio.innreach.dto.Instance;
 import org.folio.innreach.dto.Item;
+import org.folio.innreach.external.dto.InnReachResponse;
 
 public interface RecordContributionService {
 
@@ -26,5 +27,7 @@ public interface RecordContributionService {
   void contributeInstanceWithoutRetry(UUID centralServerId, Instance instance);
 
   void contributeItemsWithoutRetry(UUID centralServerId, String bibId, List<Item> items);
+
+  InnReachResponse verifyBibContribution(UUID centralServerId, String bibId);
 
 }

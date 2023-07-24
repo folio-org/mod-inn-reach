@@ -7,6 +7,7 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.folio.innreach.external.exception.InnReachConnectionException;
+import org.folio.innreach.external.exception.RecordNotFoundException;
 import org.folio.innreach.external.exception.ServiceSuspendedException;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.retry.support.RetryTemplate;
@@ -149,11 +150,12 @@ public class RecordContributionServiceImpl implements RecordContributionService 
     return response;
   }
 
-  private InnReachResponse verifyBibContribution(UUID centralServerId, String bibId) {
+  public InnReachResponse verifyBibContribution(UUID centralServerId, String bibId) {
     log.info("verifyBibContribution with bibId: {}",bibId);
     var response = irContributionService.lookUpBib(centralServerId, "in000041995");
     log.info("Response for verify BIB contribution {} ", response);
     checkServiceSuspension(response);
+    checkRecordNotFound(response, bibId);
     Assert.isTrue(response.isOk(), "Unexpected verification response: " + response);
     return response;
   }
@@ -183,6 +185,16 @@ public class RecordContributionServiceImpl implements RecordContributionService 
       if (errorMessages.contains(CONNECTIONS_ALLOWED_FROM_THIS_SERVER)) {
         log.info("Allowable maximum Connection limit error message occurred");
         throw new InnReachConnectionException("Only 5 connections allowed from this server");
+      }
+    }
+  }
+
+  private void checkRecordNotFound(InnReachResponse response, String bibId) {
+    if(response!=null && response.getStatus()!=null && response.getReason()!=null){
+      if(response.getStatus().equals("failed") && response.getReason().contains("Record not found")){
+        String error = "Verification of Bib is failed for the BibId " + bibId;
+        log.warn(error);
+        throw new RecordNotFoundException(error);
       }
     }
   }

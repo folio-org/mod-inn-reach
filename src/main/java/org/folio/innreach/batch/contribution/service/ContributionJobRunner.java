@@ -23,6 +23,7 @@ import lombok.extern.log4j.Log4j2;
 import org.folio.innreach.domain.entity.Contribution;
 import org.folio.innreach.domain.entity.JobExecutionStatus;
 import org.folio.innreach.domain.service.impl.FolioExecutionContextBuilder;
+import org.folio.innreach.external.exception.RecordNotFoundException;
 import org.folio.innreach.repository.ContributionRepository;
 import org.folio.innreach.repository.JobExecutionStatusRepository;
 import org.folio.spring.scope.FolioExecutionContextSetter;
@@ -184,11 +185,32 @@ public class ContributionJobRunner {
       Instance instance = inventoryViewService.getInstance(instanceId);
       checkInstanceAndCentralServerId(centralServerId, instance, job);
       startContribution(centralServerId, instance, job);
-    } catch (ServiceSuspendedException | InnReachConnectionException ex) {
-      log.warn("Service suspended exception caught", ex);
+    } catch (ServiceSuspendedException | InnReachConnectionException | RecordNotFoundException ex) {
+      log.warn("processInitialContributionEvents:: Retrying the contribution due to {} ", ex.getMessage());
       updateJobAndContributionStatus(job, RETRY, job.isInstanceContributed());
-    } catch (Exception ex) {
+    } catch(Exception ex) {
       log.warn("Exception caught", ex);
+      updateJobAndContributionStatus(job, FAILED, job.isInstanceContributed());
+    }
+  }
+
+  private UUID getCentralServerId(UUID jobId) {
+    Contribution contribution = contributionRepository.findByJobId(jobId);
+    if (contribution != null && contribution.getCentralServer() != null) {
+      centralServerIds.put(jobId, contribution.getCentralServer().getId());
+      return contribution.getCentralServer().getId();
+    }
+    return null;
+  }
+
+  private void checkInstanceAndCentralServerId(UUID centralServerId, Instance instance, JobExecutionStatus job) {
+    var instanceId = job.getInstanceId();
+    if (centralServerId == null) {
+      log.warn("checkInstanceAndCentralServerId:: Unable to process instance id {} as centralServerId is null", instanceId);
+      updateJobAndContributionStatus(job, FAILED, job.isInstanceContributed());
+    }
+    if (instance == null) {
+      log.warn("checkInstanceAndCentralServerId:: instance is null, skipping for instanceId {}", instanceId);
       updateJobAndContributionStatus(job, FAILED, job.isInstanceContributed());
     }
   }
@@ -209,31 +231,11 @@ public class ContributionJobRunner {
     }
   }
 
-  private void checkInstanceAndCentralServerId(UUID centralServerId, Instance instance, JobExecutionStatus job) {
-    var instanceId = job.getInstanceId();
-    if (centralServerId == null) {
-      log.warn("checkInstanceAndCentralServerId:: Unable to process instance id {} as centralServerId is null", instanceId);
-      updateJobAndContributionStatus(job, FAILED, job.isInstanceContributed());
-    }
-    if (instance == null) {
-      log.warn("checkInstanceAndCentralServerId:: instance is null, skipping for instanceId {}", instanceId);
-      updateJobAndContributionStatus(job, FAILED, job.isInstanceContributed());
-    }
-  }
-
-  private UUID getCentralServerId(UUID jobId) {
-    Contribution contribution = contributionRepository.findByJobId(jobId);
-    if (contribution != null) {
-      centralServerIds.put(jobId, contribution.getCentralServer().getId());
-      return contribution.getCentralServer().getId();
-    }
-    return null;
-  }
-
   private void contributeInstanceOrItem(JobExecutionStatus job, UUID centralServerId, Instance instance) {
     if (job.isInstanceContributed()) {
       log.info("contributeInstanceItems:: parameters centralServerId: {}, instance id: {}", centralServerId, instance.getId());
       var bibId = instance.getHrid();
+      recordContributionService.verifyBibContribution(centralServerId, bibId);
       var items = instance.getItems().stream()
         .filter(i -> isEligibleForContribution(centralServerId, i))
         .collect(Collectors.toList());
@@ -263,7 +265,6 @@ public class ContributionJobRunner {
     if (job.getStatus().equals(FAILED))
       contributionRepository.updateStatisticsAndStatus(job.getJobId(), 0);
   }
-
 
   public void stopContribution(String tenantId) {
     log.info("stopContribution:: stopContribution called, parameters tenantId: {}", tenantId);
