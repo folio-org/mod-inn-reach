@@ -58,12 +58,10 @@ public class RecordContributionServiceImpl implements RecordContributionService 
   @Override
   public void contributeInstanceWithoutRetry(UUID centralServerId, Instance instance) {
     var bibId = instance.getHrid();
-    log.info("contributeInstance: contributing bib {}", bibId);
+    log.info("contributeInstanceWithoutRetry: contributing bib {}", bibId);
     var bib = recordTransformationService.getBibInfo(centralServerId, instance);
-    log.info("contributeInstance: got bib info for bib: {}", bibId);
     InnReachResponse response = contributeBib(centralServerId, bibId, bib);
-    verifyBibContribution(centralServerId, bibId);
-    log.info("response after bib contribution {} ", response);
+    log.info("contributeInstanceWithoutRetry:: response after bib contribution {} ", response);
   }
 
   @Override
@@ -125,15 +123,10 @@ public class RecordContributionServiceImpl implements RecordContributionService 
   @Override
   public void contributeItemsWithoutRetry(UUID centralServerId, String bibId, List<Item> items) {
     var bibItems = recordTransformationService.getBibItems(centralServerId, items, this::logItemTransformationError);
-
     int itemsCount = bibItems.size();
-
     Assert.isTrue(itemsCount != 0, "Failed to convert items for contribution");
-
     log.info("Loaded {} items", itemsCount);
-
     contributeBibItems(bibId, centralServerId, bibItems);
-
     log.info("Finished contributing items of bib {}", bibId);
   }
 
@@ -143,7 +136,7 @@ public class RecordContributionServiceImpl implements RecordContributionService 
   }
 
   private InnReachResponse contributeBib(UUID centralServerId, String bibId, BibInfo bib) {
-    log.info("Retry happening for contributeBib with bibId: {}",bibId);
+    log.debug("contributeBib:: Retry happening for contributeBib with bibId: {}",bibId);
     var response = irContributionService.contributeBib(centralServerId, bibId, bib);
     checkServiceSuspension(response);
     Assert.isTrue(response.isOk(), "Unexpected contribution response: " + response);
@@ -152,7 +145,7 @@ public class RecordContributionServiceImpl implements RecordContributionService 
 
   public InnReachResponse verifyBibContribution(UUID centralServerId, String bibId) {
     log.info("verifyBibContribution with bibId: {}",bibId);
-    var response = irContributionService.lookUpBib(centralServerId, "in000041995");
+    var response = irContributionService.lookUpBib(centralServerId, bibId);
     log.info("Response for verify BIB contribution {} ", response);
     checkServiceSuspension(response);
     checkRecordNotFound(response, bibId);

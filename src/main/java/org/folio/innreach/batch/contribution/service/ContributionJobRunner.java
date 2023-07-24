@@ -33,6 +33,7 @@ import org.folio.innreach.batch.contribution.InitialContributionJobConsumerConta
 import org.folio.innreach.external.exception.SocketTimeOutExceptionWrapper;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.retry.support.RetryTemplate;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import org.folio.innreach.batch.contribution.ContributionJobContext;
@@ -176,6 +177,7 @@ public class ContributionJobRunner {
   }
 
   @Transactional
+  @Async
   public void processInitialContributionEvents(JobExecutionStatus job) {
     log.info("Processing Initial contribution events {} ", job);
     try {
@@ -218,8 +220,14 @@ public class ContributionJobRunner {
   private void startContribution(UUID centralServerId, Instance instance, JobExecutionStatus job) throws SocketTimeoutException {
     var instanceId = job.getInstanceId();
     if (isEligibleForContribution(centralServerId, instance)) {
-      log.info("startContribution:: Eligible for Contribution centralServerId: {}, instanceId: {}", centralServerId, instanceId);
-      contributeInstanceOrItem(job, centralServerId, instance);
+      if(job.isInstanceContributed()){
+        log.info("startContribution:: Instance contribution started for instanceId {} ", instance.getId());
+        recordContributionService.contributeInstanceWithoutRetry(centralServerId, instance);
+        updateJobAndContributionStatus(job, READY, true);
+      } else {
+        log.info("startContribution:: Item contribution started for centralServerId: {}, instanceId: {}", centralServerId, instanceId);
+        contributeItem(job, centralServerId, instance);
+      }
     } else if (isContributed(centralServerId, instance)) {
       log.info("startContribution:: deContributeInstance centralServerId: {}, instanceId: {}", centralServerId, instanceId);
       recordContributionService.deContributeInstance(centralServerId, instance);
@@ -231,10 +239,10 @@ public class ContributionJobRunner {
     }
   }
 
-  private void contributeInstanceOrItem(JobExecutionStatus job, UUID centralServerId, Instance instance) {
-    if (job.isInstanceContributed()) {
+  private void contributeItem(JobExecutionStatus job, UUID centralServerId, Instance instance) {
       log.info("contributeInstanceItems:: parameters centralServerId: {}, instance id: {}", centralServerId, instance.getId());
       var bibId = instance.getHrid();
+      // Verify the instance is contributed
       recordContributionService.verifyBibContribution(centralServerId, bibId);
       var items = instance.getItems().stream()
         .filter(i -> isEligibleForContribution(centralServerId, i))
@@ -248,11 +256,6 @@ public class ContributionJobRunner {
         .forEach(itemsChunk -> recordContributionService.contributeItemsWithoutRetry(centralServerId, bibId, items));
       log.info("contributeInstanceOrItem:: Item contribution completed for instanceId {} ", instance.getId());
       updateJobAndContributionStatus(job, PROCESSED, job.isInstanceContributed());
-    } else {
-      recordContributionService.contributeInstanceWithoutRetry(centralServerId, instance);
-      log.info("contributeInstanceOrItem:: Instance contribution completed for instanceId {} ", instance.getId());
-      updateJobAndContributionStatus(job, READY, true);
-    }
   }
 
   private void updateJobAndContributionStatus(JobExecutionStatus job, Status status, boolean isInstanceContributed) {
