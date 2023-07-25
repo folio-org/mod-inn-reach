@@ -179,3 +179,7 @@ kafka:
     max_failure: ${MAX_FAILURE:360}
   custom-offset: ${DEFAULT_OFFSET:latest}
   custom-concurrency: ${DEFAULT_CONCURRENCY:2}
+
+scheduler:
+  fixed-delay: 10000
+  initial-delay: 300000

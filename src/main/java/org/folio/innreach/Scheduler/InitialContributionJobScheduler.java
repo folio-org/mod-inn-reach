@@ -22,12 +22,13 @@ public class InitialContributionJobScheduler {
   private ContributionJobRunner contributionJobRunner;
   private List<String> tenants;
   private TenantInfoRepository tenantRepository;
+
   public void loadTenants() {
     tenants = tenantRepository.findAll().
         stream().map(TenantInfo::getTenantId).
         distinct().toList();
   }
-  @Scheduled(fixedDelay = 10000, initialDelay = 180000)
+  @Scheduled(fixedDelayString = "${scheduler.fixed-delay}", initialDelayString = "${scheduler.initial-delay}")
   public void processInitialContributionEvents() {
     if(tenants.isEmpty()){
       this.loadTenants();

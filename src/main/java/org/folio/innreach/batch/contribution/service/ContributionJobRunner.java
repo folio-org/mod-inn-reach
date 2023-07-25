@@ -194,9 +194,17 @@ public class ContributionJobRunner {
         updateJobAndContributionStatus(job, RETRY, job.isInstanceContributed());
       } catch (Exception ex) {
         log.warn("Exception caught", ex);
+        logException(job, ex);
         updateJobAndContributionStatus(job, FAILED, job.isInstanceContributed());
       }
     });
+  }
+
+  private void logException(JobExecutionStatus job, Exception ex) {
+    if(job.isInstanceContributed())
+      itemExceptionListener.logWriteError(ex, job.getInstanceId());
+    else
+      instanceExceptionListener.logWriteError(ex, job.getInstanceId());
   }
 
   private UUID getCentralServerId(UUID jobId) {
