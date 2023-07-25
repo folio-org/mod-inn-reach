@@ -47,12 +47,7 @@ public class CustomTenantService extends TenantService {
       systemUserService.prepareSystemUser();
       contributionJobRunner.cancelJobs();
     }
-    log.info("Going to insert tenant Id {} , {} ",tenantId, context.getTenantId());
-    TenantInfo tenantInfo = tenantRepository.findByTenantId(tenantId);
-    if(tenantInfo == null) {
-      tenantInfo = new TenantInfo();
-      tenantInfo.setTenantId(context.getTenantId());
-    }
+    saveTenant(tenantId);
   }
 
   @Override
@@ -64,5 +59,11 @@ public class CustomTenantService extends TenantService {
   public void afterTenantDeletion(TenantAttributes tenantAttributes) {
     tenantRepository.deleteByTenantId(context.getTenantId());
   }
-
+  private void saveTenant(String tenantId) {
+    TenantInfo tenantInfo = tenantRepository.findByTenantId(tenantId);
+    if(tenantInfo == null) {
+      tenantInfo = new TenantInfo();
+      tenantInfo.setTenantId(context.getTenantId());
+    }
+  }
 }

@@ -1,4 +1,4 @@
-create table IF NOT EXISTS tenant_info
+create table IF NOT EXISTS public.tenant_info
 (
     id UUID NOT NULL,
     tenant_id character varying NOT NULL,
