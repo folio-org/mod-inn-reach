@@ -65,7 +65,7 @@ public class CustomTenantService extends TenantService {
     log.info("saveTenant:: tenantInfo details {} ", tenantInfo);
     if(tenantInfo == null) {
       tenantInfo = new TenantInfo();
-      tenantInfo.setTenantId(context.getTenantId());
+      tenantInfo.setTenantId(tenantId);
       tenantRepository.save(tenantInfo);
     }
   }

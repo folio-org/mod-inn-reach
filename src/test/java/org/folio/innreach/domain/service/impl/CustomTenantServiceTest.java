@@ -9,6 +9,7 @@ import static org.mockito.Mockito.when;
 
 import liquibase.exception.LiquibaseException;
 
+import org.folio.innreach.repository.TenantInfoRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -44,6 +45,8 @@ class CustomTenantServiceTest {
   private FolioModuleMetadata moduleMetadata;
   @Mock
   private FolioSpringLiquibase folioSpringLiquibase;
+  @Mock
+  private TenantInfoRepository tenantRepository;
 
   @InjectMocks
   private CustomTenantService service;
