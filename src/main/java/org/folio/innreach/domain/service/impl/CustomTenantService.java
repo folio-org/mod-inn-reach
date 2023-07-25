@@ -68,6 +68,5 @@ public class CustomTenantService extends TenantService {
       tenantInfo.setTenantId(context.getTenantId());
       tenantRepository.save(tenantInfo);
     }
-    log.info(tenantRepository.findByTenantIdOptional(tenantId));
   }
 }

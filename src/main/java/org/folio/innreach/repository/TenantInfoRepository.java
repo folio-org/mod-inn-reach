@@ -9,7 +9,6 @@ import java.util.UUID;
 @Repository
 public interface TenantInfoRepository extends JpaRepository<TenantInfo, UUID> {
 
-  Optional<TenantInfo> findByTenantIdOptional(String id);
   TenantInfo findByTenantId(String id);
 
   void deleteByTenantId(String id);
