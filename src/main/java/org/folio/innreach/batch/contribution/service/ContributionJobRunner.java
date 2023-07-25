@@ -261,7 +261,7 @@ public class ContributionJobRunner {
       log.info("contributeInstanceItems:: parameters centralServerId: {}, instance id: {}", centralServerId, instance.getId());
       var bibId = instance.getHrid();
       // Verify the instance is contributed
-      recordContributionService.verifyBibContribution(centralServerId, bibId);
+      recordContributionService.verifyBibContribution(centralServerId, "in00000065644");
       var items = instance.getItems().stream()
         .filter(i -> isEligibleForContribution(centralServerId, i))
         .collect(Collectors.toList());

@@ -183,5 +183,6 @@ kafka:
 initial-contribution:
   scheduler:
     fixed-delay: 10000
-    initial-delay: 300000
-  retry-attempts : 100
+    initial-delay: 200000
+  retry-attempts: 100
+  fetch-limit: 50

@@ -7,6 +7,7 @@ import org.folio.innreach.domain.entity.TenantInfo;
 import org.folio.innreach.domain.service.impl.TenantScopedExecutionService;
 import org.folio.innreach.repository.JobExecutionStatusRepository;
 import org.folio.innreach.repository.TenantInfoRepository;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -22,6 +23,8 @@ public class InitialContributionJobScheduler {
   private ContributionJobRunner contributionJobRunner;
   private List<String> tenants;
   private TenantInfoRepository tenantRepository;
+  @Value("${initial-contribution.fetch-limit}")
+  private int limit;
 
   public void loadTenants() {
     tenants = tenantRepository.findAll().
@@ -38,7 +41,7 @@ public class InitialContributionJobScheduler {
       executionService.runTenantScoped(tenant,
         () -> {
           log.info("Fetching jobs for tenant {} ", tenant);
-          jobExecutionStatusRepository.updateAndFetchJobExecutionRecordsByStatus()
+          jobExecutionStatusRepository.updateAndFetchJobExecutionRecordsByStatus(limit)
             .forEach(contributionJobRunner::processInitialContributionEvents);
         }
       ));

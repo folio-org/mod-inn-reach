@@ -3,6 +3,7 @@ package org.folio.innreach.repository;
 import org.folio.innreach.domain.entity.JobExecutionStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -14,6 +15,6 @@ public interface JobExecutionStatusRepository extends JpaRepository<JobExecution
   @Query(value = "update job_execution_status s " +
     "set status = 'IN_PROGRESS' where s.id in (select t.id from job_execution_status t " +
     "inner join contribution c on c.job_id = t.job_id where c.status = 0 and " +
-    "t.status in ('READY', 'RETRY') limit 50) returning * ", nativeQuery = true)
-  List<JobExecutionStatus> updateAndFetchJobExecutionRecordsByStatus();
+    "t.status in ('READY', 'RETRY') limit :limit) returning * ", nativeQuery = true)
+  List<JobExecutionStatus> updateAndFetchJobExecutionRecordsByStatus(@Param("limit") int limit);
 }
