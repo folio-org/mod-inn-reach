@@ -25,6 +25,7 @@ import org.folio.innreach.domain.entity.JobExecutionStatus;
 import org.folio.innreach.domain.service.impl.FolioExecutionContextBuilder;
 import org.folio.innreach.domain.service.impl.TenantScopedExecutionService;
 import org.folio.innreach.external.exception.RecordNotFoundException;
+import org.folio.innreach.external.exception.RetryException;
 import org.folio.innreach.repository.ContributionRepository;
 import org.folio.innreach.repository.JobExecutionStatusRepository;
 import org.folio.spring.scope.FolioExecutionContextSetter;
@@ -33,6 +34,7 @@ import org.folio.innreach.external.exception.ServiceSuspendedException;
 import org.folio.innreach.batch.contribution.InitialContributionJobConsumerContainer;
 import org.folio.innreach.external.exception.SocketTimeOutExceptionWrapper;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.retry.support.RetryTemplate;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
@@ -87,6 +89,8 @@ public class ContributionJobRunner {
   private static final ConcurrentHashMap<UUID, UUID> centralServerIds = new ConcurrentHashMap<>();
   private final ContributionRepository contributionRepository;
   private final TenantScopedExecutionService executionService;
+  @Value("${initial-contribution.retry-attempts}")
+  private int maxRetryAttempts;
 
   public void startInitialContribution(UUID centralServerId, String tenantId, UUID contributionId, UUID iterationJobId, Integer numberOfRecords) {
     log.info("startInitialContribution:: parameters centralServerId: {}, tenantId: {}, contributionId: {}, iterationJobId: {}, numberOfRecords: {}", centralServerId, tenantId, contributionId, iterationJobId, numberOfRecords);
@@ -183,6 +187,9 @@ public class ContributionJobRunner {
     executionService.runTenantScoped(job.getTenant(), () -> {
       log.info("Processing Initial contribution events {} ", job);
       try {
+        if (maxRetryAttempts != 0 && job.getRetryAttempts() > maxRetryAttempts) {
+          throw new RetryException("Retry limit exhausted");
+        }
         var instanceId = job.getInstanceId();
         var centralServerId = centralServerIds.get(job.getJobId()) != null ?
           centralServerIds.get(job.getJobId()) : getCentralServerId(job.getJobId());
@@ -193,7 +200,6 @@ public class ContributionJobRunner {
         log.warn("processInitialContributionEvents:: Retrying the contribution due to {} ", ex.getMessage());
         updateJobAndContributionStatus(job, RETRY, job.isInstanceContributed());
       } catch (Exception ex) {
-        log.warn("Exception caught", ex);
         logException(job, ex);
         updateJobAndContributionStatus(job, FAILED, job.isInstanceContributed());
       }
@@ -201,10 +207,11 @@ public class ContributionJobRunner {
   }
 
   private void logException(JobExecutionStatus job, Exception ex) {
-    if(job.isInstanceContributed())
+    if(job.isInstanceContributed()) {
       itemExceptionListener.logWriteError(ex, job.getInstanceId());
-    else
+    } else {
       instanceExceptionListener.logWriteError(ex, job.getInstanceId());
+    }
   }
 
   private UUID getCentralServerId(UUID jobId) {

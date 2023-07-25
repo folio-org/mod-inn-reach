@@ -180,6 +180,8 @@ kafka:
   custom-offset: ${DEFAULT_OFFSET:latest}
   custom-concurrency: ${DEFAULT_CONCURRENCY:2}
 
-scheduler:
-  fixed-delay: 10000
-  initial-delay: 300000
+initial-contribution:
+  scheduler:
+    fixed-delay: 10000
+    initial-delay: 300000
+  retry-attempts : 100

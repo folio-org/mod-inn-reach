@@ -28,7 +28,7 @@ public class InitialContributionJobScheduler {
         stream().map(TenantInfo::getTenantId).
         distinct().toList();
   }
-  @Scheduled(fixedDelayString = "${scheduler.fixed-delay}", initialDelayString = "${scheduler.initial-delay}")
+  @Scheduled(fixedDelayString = "${initial-contribution.scheduler.fixed-delay}", initialDelayString = "${initial-contribution.scheduler.initial-delay}")
   public void processInitialContributionEvents() {
     if(tenants.isEmpty()){
       this.loadTenants();
