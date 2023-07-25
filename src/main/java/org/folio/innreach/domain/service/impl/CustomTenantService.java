@@ -60,7 +60,9 @@ public class CustomTenantService extends TenantService {
     tenantRepository.deleteByTenantId(context.getTenantId());
   }
   private void saveTenant(String tenantId) {
+    log.info("saveTenant:: tenantId {} ", tenantId);
     TenantInfo tenantInfo = tenantRepository.findByTenantId(tenantId);
+    log.info("saveTenant:: tenantInfo details {} ", tenantInfo);
     if(tenantInfo == null) {
       tenantInfo = new TenantInfo();
       tenantInfo.setTenantId(context.getTenantId());

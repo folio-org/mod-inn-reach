@@ -7,6 +7,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.ToString;
 import org.folio.innreach.domain.entity.base.Auditable;
 
 import java.util.UUID;
@@ -15,6 +16,7 @@ import java.util.UUID;
 @Setter
 @Entity
 @Table(name = "tenant_info")
+@ToString
 public class TenantInfo extends Auditable {
   @Id
   @GeneratedValue(strategy = GenerationType.AUTO)

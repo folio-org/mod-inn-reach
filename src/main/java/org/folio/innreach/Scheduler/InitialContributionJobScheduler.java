@@ -27,7 +27,7 @@ public class InitialContributionJobScheduler {
         stream().map(TenantInfo::getTenantId).
         distinct().toList();
   }
-  @Scheduled(fixedDelay = 3000, initialDelay = 36000)
+  @Scheduled(fixedDelay = 10000, initialDelay = 180000)
   public void processInitialContributionEvents() {
     if(tenants.isEmpty()){
       this.loadTenants();
