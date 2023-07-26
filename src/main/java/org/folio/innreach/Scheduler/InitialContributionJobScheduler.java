@@ -48,8 +48,8 @@ public class InitialContributionJobScheduler {
     tenants.forEach(tenant ->
       executionService.runTenantScoped(tenant,
         () -> {
-          log.info("Fetching jobs for tenant {} wit size {} ", tenant,
-            jobExecutionStatusRepository.updateAndFetchJobExecutionRecordsByStatus(limit).size());
+//          log.info("Fetching jobs for tenant {} wit size {} ", tenant,
+//            jobExecutionStatusRepository.updateAndFetchJobExecutionRecordsByStatus(limit).size());
           jobExecutionStatusRepository.updateAndFetchJobExecutionRecordsByStatus(limit)
             .forEach(contributionJobRunner::processInitialContributionEvents);
         }
