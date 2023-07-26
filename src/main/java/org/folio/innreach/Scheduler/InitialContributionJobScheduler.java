@@ -1,12 +1,12 @@
 package org.folio.innreach.Scheduler;
 
 import com.google.common.cache.Cache;
-import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.folio.innreach.batch.contribution.service.ContributionJobRunner;
 import org.folio.innreach.domain.entity.TenantInfo;
 import org.folio.innreach.domain.service.impl.TenantScopedExecutionService;
+import org.folio.innreach.repository.ContributionRepository;
 import org.folio.innreach.repository.JobExecutionStatusRepository;
 import org.folio.innreach.repository.TenantInfoRepository;
 import org.springframework.beans.factory.annotation.Value;
@@ -24,35 +24,54 @@ public class InitialContributionJobScheduler {
   private final JobExecutionStatusRepository jobExecutionStatusRepository;
   private final ContributionJobRunner contributionJobRunner;
   private final TenantInfoRepository tenantRepository;
+  private final ContributionRepository contributionRepository;
   @Value(value = "${initial-contribution.fetch-limit}")
-  private int limit;
-  private final Cache<String, List<String>>  tenantDetailsCache;
+  private int recordLimit;
+  private final Cache<String, List<String>> tenantDetailsCache;
 
-  public List<String> loadTenants() {
+  @Scheduled(fixedDelayString = "${initial-contribution.scheduler.fixed-delay}", initialDelayString = "${initial-contribution.scheduler.initial-delay}")
+  public void processInitialContributionEvents() {
+    List<String> tenants = loadTenants();
+    log.info("processInitialContributionEvents :: tenantsList {}", tenants);
+    tenants.forEach(tenant ->
+      executionService.runTenantScoped(tenant,
+        () -> {
+          try {
+            jobExecutionStatusRepository.updateAndFetchJobExecutionRecordsByStatus(recordLimit)
+              .forEach(contributionJobRunner::processInitialContributionEvents);
+          } catch (Exception ex) {
+            log.warn("Exception caught while processing Initial contribution for tenant {} {} ", tenant, ex.getMessage());
+          }
+        }
+      ));
+  }
+
+  @Scheduled(fixedDelay = 60000 * 2,
+    initialDelayString = "${initial-contribution.scheduler.initial-delay}")
+  public void updateContributionStatistics() {
+    List<String> tenants = loadTenants();
+    log.info("updateContributionStatistics :: tenantsList {}", tenants);
+    tenants.forEach(tenant ->
+      executionService.runTenantScoped(tenant,
+        () -> {
+          try {
+            contributionRepository.updateStatisticsAndStatus();
+          } catch (Exception ex) {
+            log.warn("Exception caught while updating statistics for tenant {} {} ", tenant, ex.getMessage());
+          }
+        }
+      ));
+  }
+
+  private List<String> loadTenants() {
     String tenantCacheKey = "tenantList";
     var tenantList = tenantDetailsCache.getIfPresent(tenantCacheKey);
-    log.info("tenantList {} ", tenantList);
     if (tenantList == null) {
-      log.info("tenant list is empty so loading newly");
       tenantList = tenantRepository.findAll().
         stream().map(TenantInfo::getTenantId).
         distinct().toList();
       tenantDetailsCache.put(tenantCacheKey, tenantList);
     }
     return tenantList;
-  }
-  @Scheduled(fixedDelayString = "${initial-contribution.scheduler.fixed-delay}", initialDelayString = "${initial-contribution.scheduler.initial-delay}")
-  public void processInitialContributionEvents() {
-    List<String> tenants = loadTenants();
-    log.info("processInitialContributionEvents :: tenantsList {} , fetch limit {} ", tenants, limit);
-    tenants.forEach(tenant ->
-      executionService.runTenantScoped(tenant,
-        () -> {
-//          log.info("Fetching jobs for tenant {} wit size {} ", tenant,
-//            jobExecutionStatusRepository.updateAndFetchJobExecutionRecordsByStatus(limit).size());
-          jobExecutionStatusRepository.updateAndFetchJobExecutionRecordsByStatus(limit)
-            .forEach(contributionJobRunner::processInitialContributionEvents);
-        }
-      ));
   }
 }

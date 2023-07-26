@@ -261,7 +261,7 @@ public class ContributionJobRunner {
       log.info("contributeInstanceItems:: parameters centralServerId: {}, instance id: {}", centralServerId, instance.getId());
       var bibId = instance.getHrid();
       // Verify the instance is contributed
-      recordContributionService.verifyBibContribution(centralServerId, "in00000065644");
+      //recordContributionService.verifyBibContribution(centralServerId, "in00000065644");
       var items = instance.getItems().stream()
         .filter(i -> isEligibleForContribution(centralServerId, i))
         .collect(Collectors.toList());
@@ -281,12 +281,6 @@ public class ContributionJobRunner {
     job.setInstanceContributed(isInstanceContributed);
     job.setRetryAttempts(status.equals(RETRY) ? job.getRetryAttempts() + 1 : job.getRetryAttempts());
     jobExecutionStatusRepository.save(job);
-    if (job.getStatus().equals(PROCESSED)) {
-      contributionRepository.updateStatisticsAndStatus(job.getJobId(), 1);
-    }
-    if (job.getStatus().equals(FAILED)) {
-      contributionRepository.updateStatisticsAndStatus(job.getJobId(), 0);
-    }
   }
 
   public void stopContribution(String tenantId) {

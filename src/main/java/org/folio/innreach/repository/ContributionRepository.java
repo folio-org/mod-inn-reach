@@ -11,7 +11,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import org.folio.innreach.domain.entity.Contribution;
@@ -32,10 +31,11 @@ public interface ContributionRepository extends JpaRepository<Contribution, UUID
   Contribution findByJobId(UUID jobId);
 
   @Modifying
-  @Query(value = "Update contribution c set records_processed = records_processed+1," +
-    "records_contributed = records_contributed + :recordsContributed, updated_date = current_timestamp, " +
+  @Query(value = "update contribution c set records_processed = (select count(*) from job_execution_status j " +
+    "where j.job_id = c.job_id and status in ('PROCESSED','FAILED')), " +
+    "records_contributed = (select count(*) from job_execution_status j where j.job_id = c.job_id and status in ('PROCESSED'))," +
     "status = case when (select count(*) from job_execution_status j where j.status in ('READY','RETRY','IN_PROGRESS') " +
-    "and j.job_id= :jobId ) = 0 then 1 else status end where c.job_id = :jobId " , nativeQuery = true)
-  int updateStatisticsAndStatus(@Param("jobId") UUID jobId, @Param("recordsContributed") int recordsContributed);
+    "and j.job_id= c.job_id ) = 0 then 1 else status end,updated_date = current_timestamp where c.status = 0", nativeQuery = true)
+  int updateStatisticsAndStatus();
 
 }
