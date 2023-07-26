@@ -27,11 +27,12 @@ public class InitialContributionJobScheduler {
   @Value(value = "${initial-contribution.fetch-limit}")
   private int limit;
   private final Cache<String, List<String>>  tenantDetailsCache;
+
   public List<String> loadTenants() {
     String tenantCacheKey = "tenantList";
     var tenantList = tenantDetailsCache.getIfPresent(tenantCacheKey);
     log.info("tenantList {} ", tenantList);
-    if (tenantList == null || tenantList.isEmpty()) {
+    if (tenantList == null) {
       log.info("tenant list is empty so loading newly");
       tenantList = tenantRepository.findAll().
         stream().map(TenantInfo::getTenantId).
@@ -47,7 +48,8 @@ public class InitialContributionJobScheduler {
     tenants.forEach(tenant ->
       executionService.runTenantScoped(tenant,
         () -> {
-          log.info("Fetching jobs for tenant {} ", tenant);
+          log.info("Fetching jobs for tenant {} wit size {} ", tenant,
+            jobExecutionStatusRepository.updateAndFetchJobExecutionRecordsByStatus(limit).size());
           jobExecutionStatusRepository.updateAndFetchJobExecutionRecordsByStatus(limit)
             .forEach(contributionJobRunner::processInitialContributionEvents);
         }

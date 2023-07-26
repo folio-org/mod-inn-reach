@@ -281,10 +281,12 @@ public class ContributionJobRunner {
     job.setInstanceContributed(isInstanceContributed);
     job.setRetryAttempts(status.equals(RETRY) ? job.getRetryAttempts() + 1 : job.getRetryAttempts());
     jobExecutionStatusRepository.save(job);
-    if (job.getStatus().equals(PROCESSED))
+    if (job.getStatus().equals(PROCESSED)) {
       contributionRepository.updateStatisticsAndStatus(job.getJobId(), 1);
-    if (job.getStatus().equals(FAILED))
+    }
+    if (job.getStatus().equals(FAILED)) {
       contributionRepository.updateStatisticsAndStatus(job.getJobId(), 0);
+    }
   }
 
   public void stopContribution(String tenantId) {

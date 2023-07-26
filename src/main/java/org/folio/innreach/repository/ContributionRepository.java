@@ -33,7 +33,8 @@ public interface ContributionRepository extends JpaRepository<Contribution, UUID
 
   @Modifying
   @Query(value = "Update contribution c set records_processed = records_processed+1," +
-    "records_contributed = records_contributed + :recordsContributed, status = case when (select count(*) from job_execution_status j where j.status in ('READY','RETRY','IN_PROGRESS') " +
+    "records_contributed = records_contributed + :recordsContributed, updated_date = current_timestamp, " +
+    "status = case when (select count(*) from job_execution_status j where j.status in ('READY','RETRY','IN_PROGRESS') " +
     "and j.job_id= :jobId ) = 0 then 1 else status end where c.job_id = :jobId " , nativeQuery = true)
   int updateStatisticsAndStatus(@Param("jobId") UUID jobId, @Param("recordsContributed") int recordsContributed);
 
