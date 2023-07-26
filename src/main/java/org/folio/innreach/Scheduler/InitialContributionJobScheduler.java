@@ -5,14 +5,13 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.folio.innreach.batch.contribution.service.ContributionJobRunner;
 import org.folio.innreach.domain.entity.TenantInfo;
+import org.folio.innreach.domain.service.ContributionService;
 import org.folio.innreach.domain.service.impl.TenantScopedExecutionService;
-import org.folio.innreach.repository.ContributionRepository;
 import org.folio.innreach.repository.JobExecutionStatusRepository;
 import org.folio.innreach.repository.TenantInfoRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -25,7 +24,7 @@ public class InitialContributionJobScheduler {
   private final JobExecutionStatusRepository jobExecutionStatusRepository;
   private final ContributionJobRunner contributionJobRunner;
   private final TenantInfoRepository tenantRepository;
-  private final ContributionRepository contributionRepository;
+  private final ContributionService contributionService;
   @Value(value = "${initial-contribution.fetch-limit}")
   private int recordLimit;
   private final Cache<String, List<String>> tenantDetailsCache;
@@ -56,7 +55,7 @@ public class InitialContributionJobScheduler {
       executionService.runTenantScoped(tenant,
         () -> {
           try {
-            contributionRepository.updateStatisticsAndStatus();
+            contributionService.updateInProgressContributionStatistics();
           } catch (Exception ex) {
             log.warn("Exception caught while updating statistics for tenant {} ", tenant, ex);
           }

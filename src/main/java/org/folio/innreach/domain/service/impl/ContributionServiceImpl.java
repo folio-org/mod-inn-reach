@@ -222,6 +222,12 @@ public class ContributionServiceImpl implements ContributionService {
 
   }
 
+  @Transactional
+  public void updateInProgressContributionStatistics() {
+    log.debug("Updating statistics for In progress contribution");
+    repository.updateStatisticsAndStatus();
+  }
+
   private ContributionJobRunner getJobRunner() {
     if (jobRunner == null) {
       jobRunner = beanFactory.getBean(ContributionJobRunner.class);
