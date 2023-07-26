@@ -17,7 +17,7 @@ import java.util.List;
 
 
 @Service
-@AllArgsConstructor
+@RequiredArgsConstructor
 @Log4j2
 public class InitialContributionJobScheduler {
   private final TenantScopedExecutionService executionService;
@@ -25,7 +25,7 @@ public class InitialContributionJobScheduler {
   private final ContributionJobRunner contributionJobRunner;
   private final TenantInfoRepository tenantRepository;
   @Value(value = "${initial-contribution.fetch-limit}")
-  private final int limit;
+  private int limit;
   private final Cache<String, List<String>>  tenantDetailsCache;
   public List<String> loadTenants() {
     String tenantCacheKey = "tenantList";
