@@ -47,7 +47,6 @@ public class InitialContributionJobScheduler {
       ));
   }
 
-  @Transactional
   @Scheduled(fixedDelay = 60000 * 2,
     initialDelayString = "${initial-contribution.scheduler.initial-delay}")
   public void updateContributionStatistics() {
