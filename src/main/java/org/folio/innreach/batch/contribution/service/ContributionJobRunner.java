@@ -86,7 +86,7 @@ public class ContributionJobRunner {
   private static Map<String,Integer> totalRecords = new HashMap<>();
   private static ConcurrentHashMap<String, Integer> recordsProcessed = new ConcurrentHashMap<>();
   private final JobExecutionStatusRepository jobExecutionStatusRepository;
-  private static final ConcurrentHashMap<UUID, UUID> centralServerIds = new ConcurrentHashMap<>();
+  private static final ConcurrentHashMap<UUID, Contribution> contributionRecord = new ConcurrentHashMap<>();
   private final ContributionRepository contributionRepository;
   private final TenantScopedExecutionService executionService;
   @Value("${initial-contribution.retry-attempts}")
@@ -191,8 +191,8 @@ public class ContributionJobRunner {
           throw new RetryException("Retry limit exhausted");
         }
         var instanceId = job.getInstanceId();
-        var centralServerId = centralServerIds.get(job.getJobId()) != null ?
-          centralServerIds.get(job.getJobId()) : getCentralServerId(job.getJobId());
+        var centralServerId = contributionRecord.get(job.getJobId()) != null ?
+          contributionRecord.get(job.getJobId()).getCentralServer().getId() : getCentralServerId(job.getJobId());
         Instance instance = inventoryViewService.getInstance(instanceId);
         checkInstanceAndCentralServerId(centralServerId, instance, job);
         startContribution(centralServerId, instance, job);
@@ -200,24 +200,24 @@ public class ContributionJobRunner {
         log.warn("processInitialContributionEvents:: Retrying the contribution due to {} ", ex.getMessage());
         updateJobAndContributionStatus(job, RETRY, job.isInstanceContributed());
       } catch (Exception ex) {
-        logException(job, ex);
+        logException(job, ex, contributionRecord.get(job.getJobId()).getId());
         updateJobAndContributionStatus(job, FAILED, job.isInstanceContributed());
       }
     });
   }
 
-  private void logException(JobExecutionStatus job, Exception ex) {
+  private void logException(JobExecutionStatus job, Exception ex, UUID contributionId) {
     if(job.isInstanceContributed()) {
-      itemExceptionListener.logWriteError(ex, job.getInstanceId());
+      itemExceptionListener.logError(ex, job.getInstanceId(), contributionId);
     } else {
-      instanceExceptionListener.logWriteError(ex, job.getInstanceId());
+      instanceExceptionListener.logError(ex, job.getInstanceId(), contributionId);
     }
   }
 
   private UUID getCentralServerId(UUID jobId) {
     Contribution contribution = contributionRepository.findByJobId(jobId);
     if (contribution != null && contribution.getCentralServer() != null) {
-      centralServerIds.put(jobId, contribution.getCentralServer().getId());
+      contributionRecord.put(jobId, contribution);
       return contribution.getCentralServer().getId();
     }
     return null;
