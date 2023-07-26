@@ -3,7 +3,6 @@ package org.folio.innreach.domain.service.impl;
 import lombok.extern.log4j.Log4j2;
 import org.folio.innreach.domain.entity.TenantInfo;
 import org.folio.innreach.repository.TenantInfoRepository;
-import org.folio.spring.scope.FolioExecutionContextSetter;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Primary;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -27,30 +26,26 @@ public class CustomTenantService extends TenantService {
   private final ReferenceDataLoader referenceDataLoader;
   private final TestTenant testTenant;
   private final TenantInfoRepository tenantRepository;
-  private final FolioExecutionContextBuilder folioExecutionContextBuilder;
 
 
   public CustomTenantService(JdbcTemplate jdbcTemplate, FolioExecutionContext context,
       FolioSpringLiquibase folioSpringLiquibase, SystemUserService systemUserService,
       ContributionJobRunner contributionJobRunner, ReferenceDataLoader referenceDataLoader,
-      TestTenant testTenant, TenantInfoRepository tenantRepository,
-      FolioExecutionContextBuilder folioExecutionContextBuilder) {
+      TestTenant testTenant, TenantInfoRepository tenantRepository) {
     super(jdbcTemplate, context, folioSpringLiquibase);
     this.systemUserService = systemUserService;
     this.contributionJobRunner = contributionJobRunner;
     this.referenceDataLoader = referenceDataLoader;
     this.testTenant = testTenant;
     this.tenantRepository = tenantRepository;
-    this.folioExecutionContextBuilder = folioExecutionContextBuilder;
   }
 
   @Override
   protected void afterTenantUpdate(TenantAttributes tenantAttributes) {
-    String tenantId = context.getTenantId();
     if (!context.getTenantId().startsWith(testTenant.getTenantName())) {
       systemUserService.prepareSystemUser();
+      saveTenant();
     }
-    saveTenant(tenantId);
   }
 
   @Override
@@ -60,20 +55,17 @@ public class CustomTenantService extends TenantService {
 
   @Override
   public void afterTenantDeletion(TenantAttributes tenantAttributes) {
-    String tenantId = context.getTenantId();
-    try(var ContextSetter = new FolioExecutionContextSetter(folioExecutionContextBuilder.dbOnlyContext("public"))) {
-      tenantRepository.deleteByTenantId(tenantId);
-    }
+    tenantRepository.deleteByTenantId(context.getTenantId());
   }
-  private void saveTenant(String tenantId) {
+  private void saveTenant() {
+    String tenantId = context.getTenantId();
     log.info("saveTenant:: tenantId {} ", tenantId);
-    try(var ContextSetter = new FolioExecutionContextSetter(folioExecutionContextBuilder.dbOnlyContext("public"))) {
       TenantInfo tenantInfo = tenantRepository.findByTenantId(tenantId);
       if(tenantInfo == null) {
         tenantInfo = new TenantInfo();
         tenantInfo.setTenantId(tenantId);
         tenantRepository.save(tenantInfo);
       }
-    }
+
   }
 }

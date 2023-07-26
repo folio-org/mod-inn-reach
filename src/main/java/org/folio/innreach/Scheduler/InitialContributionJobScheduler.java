@@ -12,6 +12,7 @@ import org.folio.innreach.repository.TenantInfoRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -46,6 +47,7 @@ public class InitialContributionJobScheduler {
       ));
   }
 
+  @Transactional
   @Scheduled(fixedDelay = 60000 * 2,
     initialDelayString = "${initial-contribution.scheduler.initial-delay}")
   public void updateContributionStatistics() {
@@ -57,7 +59,7 @@ public class InitialContributionJobScheduler {
           try {
             contributionRepository.updateStatisticsAndStatus();
           } catch (Exception ex) {
-            log.warn("Exception caught while updating statistics for tenant {} {} ", tenant, ex.getMessage());
+            log.warn("Exception caught while updating statistics for tenant {} ", tenant, ex);
           }
         }
       ));
