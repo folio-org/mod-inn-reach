@@ -3,10 +3,6 @@ package org.folio.innreach.batch.contribution.service;
 import static java.lang.Math.max;
 import static org.folio.innreach.batch.contribution.ContributionJobContextManager.*;
 import static org.folio.innreach.batch.contribution.ContributionJobContextManager.getContributionJobContext;
-import static org.folio.innreach.domain.entity.JobExecutionStatus.Status.FAILED;
-import static org.folio.innreach.domain.entity.JobExecutionStatus.Status.PROCESSED;
-import static org.folio.innreach.domain.entity.JobExecutionStatus.Status.READY;
-import static org.folio.innreach.domain.entity.JobExecutionStatus.Status.RETRY;
 
 import java.net.SocketTimeoutException;
 import java.util.*;
@@ -20,23 +16,14 @@ import com.google.common.collect.Iterables;
 import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
-import org.folio.innreach.domain.entity.Contribution;
-import org.folio.innreach.domain.entity.JobExecutionStatus;
 import org.folio.innreach.domain.service.impl.FolioExecutionContextBuilder;
-import org.folio.innreach.domain.service.impl.TenantScopedExecutionService;
-import org.folio.innreach.external.exception.RecordNotFoundException;
-import org.folio.innreach.external.exception.RetryException;
-import org.folio.innreach.repository.ContributionRepository;
-import org.folio.innreach.repository.JobExecutionStatusRepository;
 import org.folio.spring.scope.FolioExecutionContextSetter;
 import org.folio.innreach.external.exception.InnReachConnectionException;
 import org.folio.innreach.external.exception.ServiceSuspendedException;
 import org.folio.innreach.batch.contribution.InitialContributionJobConsumerContainer;
 import org.folio.innreach.external.exception.SocketTimeOutExceptionWrapper;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.retry.support.RetryTemplate;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import org.folio.innreach.batch.contribution.ContributionJobContext;
@@ -53,8 +40,6 @@ import org.folio.innreach.domain.service.RecordContributionService;
 import org.folio.innreach.dto.Instance;
 import org.folio.innreach.dto.Item;
 import org.folio.spring.FolioExecutionContext;
-import org.folio.innreach.domain.entity.JobExecutionStatus.Status;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @Log4j2
@@ -85,12 +70,6 @@ public class ContributionJobRunner {
 
   private static Map<String,Integer> totalRecords = new HashMap<>();
   private static ConcurrentHashMap<String, Integer> recordsProcessed = new ConcurrentHashMap<>();
-  private final JobExecutionStatusRepository jobExecutionStatusRepository;
-  private static final ConcurrentHashMap<UUID, Contribution> contributionRecord = new ConcurrentHashMap<>();
-  private final ContributionRepository contributionRepository;
-  private final TenantScopedExecutionService executionService;
-  @Value("${initial-contribution.retry-attempts}")
-  private int maxRetryAttempts;
 
   public void startInitialContribution(UUID centralServerId, String tenantId, UUID contributionId, UUID iterationJobId, Integer numberOfRecords) {
     log.info("startInitialContribution:: parameters centralServerId: {}, tenantId: {}, contributionId: {}, iterationJobId: {}, numberOfRecords: {}", centralServerId, tenantId, contributionId, iterationJobId, numberOfRecords);
@@ -179,108 +158,6 @@ public class ContributionJobRunner {
       stopContribution(context.getTenantId());
       InitialContributionJobConsumerContainer.stopConsumer(topic);
     }
-  }
-
-  @Transactional
-  @Async
-  public void processInitialContributionEvents(JobExecutionStatus job) {
-    executionService.runTenantScoped(job.getTenant(), () -> {
-      log.info("Processing Initial contribution events {} ", job);
-      try {
-        if (maxRetryAttempts != 0 && job.getRetryAttempts() > maxRetryAttempts) {
-          throw new RetryException("Retry limit exhausted");
-        }
-        var instanceId = job.getInstanceId();
-        var centralServerId = contributionRecord.get(job.getJobId()) != null ?
-          contributionRecord.get(job.getJobId()).getCentralServer().getId() : getCentralServerId(job.getJobId());
-        Instance instance = inventoryViewService.getInstance(instanceId);
-        checkInstanceAndCentralServerId(centralServerId, instance, job);
-        startContribution(centralServerId, instance, job);
-      } catch (ServiceSuspendedException | InnReachConnectionException | RecordNotFoundException ex) {
-        log.warn("processInitialContributionEvents:: Retrying the contribution due to {} ", ex.getMessage());
-        updateJobAndContributionStatus(job, RETRY, job.isInstanceContributed());
-      } catch (Exception ex) {
-        logException(job, ex, contributionRecord.get(job.getJobId()).getId());
-        updateJobAndContributionStatus(job, FAILED, job.isInstanceContributed());
-      }
-    });
-  }
-
-  private void logException(JobExecutionStatus job, Exception ex, UUID contributionId) {
-    if(job.isInstanceContributed()) {
-      itemExceptionListener.logError(ex, job.getInstanceId(), contributionId);
-    } else {
-      instanceExceptionListener.logError(ex, job.getInstanceId(), contributionId);
-    }
-  }
-
-  private UUID getCentralServerId(UUID jobId) {
-    Contribution contribution = contributionRepository.findByJobId(jobId);
-    if (contribution != null && contribution.getCentralServer() != null) {
-      contributionRecord.put(jobId, contribution);
-      return contribution.getCentralServer().getId();
-    }
-    return null;
-  }
-
-  private void checkInstanceAndCentralServerId(UUID centralServerId, Instance instance, JobExecutionStatus job) {
-    var instanceId = job.getInstanceId();
-    if (centralServerId == null) {
-      log.warn("checkInstanceAndCentralServerId:: Unable to process instance id {} as centralServerId is null", instanceId);
-      updateJobAndContributionStatus(job, FAILED, job.isInstanceContributed());
-    }
-    if (instance == null) {
-      log.warn("checkInstanceAndCentralServerId:: instance is null, skipping for instanceId {}", instanceId);
-      updateJobAndContributionStatus(job, FAILED, job.isInstanceContributed());
-    }
-  }
-
-  private void startContribution(UUID centralServerId, Instance instance, JobExecutionStatus job) throws SocketTimeoutException {
-    var instanceId = job.getInstanceId();
-    if (isEligibleForContribution(centralServerId, instance)) {
-      if(job.isInstanceContributed()){
-        log.info("startContribution:: Item contribution started for centralServerId: {}, instanceId: {}", centralServerId, instanceId);
-        contributeItem(job, centralServerId, instance);
-      } else {
-        log.info("startContribution:: Instance contribution started for instanceId {} ", instance.getId());
-        recordContributionService.contributeInstanceWithoutRetry(centralServerId, instance);
-        updateJobAndContributionStatus(job, READY, true);
-      }
-    } else if (isContributed(centralServerId, instance)) {
-      log.info("startContribution:: deContributeInstance centralServerId: {}, instanceId: {}", centralServerId, instanceId);
-      recordContributionService.deContributeInstance(centralServerId, instance);
-      updateJobAndContributionStatus(job, PROCESSED, job.isInstanceContributed());
-    } else {
-      // to test if non-eligible increasing count to verify the stopping condition
-      log.info("startContribution:: non-eligible instance id: {}", instanceId);
-      updateJobAndContributionStatus(job, FAILED, job.isInstanceContributed());
-    }
-  }
-
-  private void contributeItem(JobExecutionStatus job, UUID centralServerId, Instance instance) {
-      log.info("contributeInstanceItems:: parameters centralServerId: {}, instance id: {}", centralServerId, instance.getId());
-      var bibId = instance.getHrid();
-      // Verify the instance is contributed
-      //recordContributionService.verifyBibContribution(centralServerId, "in00000065644");
-      var items = instance.getItems().stream()
-        .filter(i -> isEligibleForContribution(centralServerId, i))
-        .collect(Collectors.toList());
-      if (items.isEmpty()) {
-        log.info("item is empty while contributing instance id: {}", instance.getId());
-        updateJobAndContributionStatus(job, PROCESSED, job.isInstanceContributed());
-      }
-      int chunkSize = max(jobProperties.getChunkSize(), 1);
-      StreamSupport.stream(Iterables.partition(items, chunkSize).spliterator(), false)
-        .forEach(itemsChunk -> recordContributionService.contributeItemsWithoutRetry(centralServerId, bibId, items));
-      log.info("contributeItem:: Item contribution completed for instanceId {} ", instance.getId());
-      updateJobAndContributionStatus(job, PROCESSED, job.isInstanceContributed());
-  }
-
-  private void updateJobAndContributionStatus(JobExecutionStatus job, Status status, boolean isInstanceContributed) {
-    job.setStatus(status);
-    job.setInstanceContributed(isInstanceContributed);
-    job.setRetryAttempts(status.equals(RETRY) ? job.getRetryAttempts() + 1 : job.getRetryAttempts());
-    jobExecutionStatusRepository.save(job);
   }
 
   public void stopContribution(String tenantId) {

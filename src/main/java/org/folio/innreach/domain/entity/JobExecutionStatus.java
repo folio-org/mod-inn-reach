@@ -39,6 +39,7 @@ public class JobExecutionStatus extends Auditable {
     READY,
     PROCESSED,
     FAILED,
-    RETRY
+    RETRY,
+    DE_CONTRIBUTED
   }
 }
