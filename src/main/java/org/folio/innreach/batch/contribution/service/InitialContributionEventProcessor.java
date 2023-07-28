@@ -1,10 +1,12 @@
 package org.folio.innreach.batch.contribution.service;
 
 import com.google.common.collect.Iterables;
+import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.folio.innreach.batch.contribution.listener.ContributionExceptionListener;
 import org.folio.innreach.dto.Instance;
+import org.folio.innreach.dto.Item;
 import org.folio.innreach.config.props.ContributionJobProperties;
 import org.folio.innreach.domain.entity.Contribution;
 import org.folio.innreach.domain.entity.JobExecutionStatus;
@@ -13,9 +15,9 @@ import org.folio.innreach.domain.service.InventoryViewService;
 import org.folio.innreach.domain.service.RecordContributionService;
 import org.folio.innreach.domain.service.impl.TenantScopedExecutionService;
 import org.folio.innreach.external.exception.InnReachConnectionException;
-import org.folio.innreach.external.exception.RecordNotFoundException;
 import org.folio.innreach.external.exception.RetryException;
 import org.folio.innreach.external.exception.ServiceSuspendedException;
+import org.folio.innreach.external.exception.SocketTimeOutExceptionWrapper;
 import org.folio.innreach.repository.ContributionRepository;
 import org.folio.innreach.repository.JobExecutionStatusRepository;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -60,11 +62,8 @@ public class InitialContributionEventProcessor {
   @Async
   public void processInitialContributionEvents(JobExecutionStatus job) {
     executionService.runTenantScoped(job.getTenant(), () -> {
-      log.info("Processing Initial contribution events {} ", job);
+      log.info("processInitialContributionEvents:: Processing Initial contribution events {} ", job);
       try {
-        if (maxRetryAttempts != 0 && job.getRetryAttempts() > maxRetryAttempts) {
-          throw new RetryException("Retry limit exhausted");
-        }
         var instanceId = job.getInstanceId();
         var centralServerId = contributionRecord.get(job.getJobId()) != null ?
           contributionRecord.get(job.getJobId()).getCentralServer().getId() : getCentralServerId(job.getJobId());
@@ -75,15 +74,26 @@ public class InitialContributionEventProcessor {
           updateJobAndContributionStatus(job, FAILED, job.isInstanceContributed());
           return;
         }
+        checkRetryLimit(job);
         startContribution(centralServerId, instance, job);
-      } catch (ServiceSuspendedException | InnReachConnectionException | RecordNotFoundException ex) {
-        log.warn("processInitialContributionEvents:: Retrying the contribution due to {} ", ex.getMessage());
+      } catch (ServiceSuspendedException | InnReachConnectionException | FeignException |
+               SocketTimeOutExceptionWrapper ex) {
+        log.warn("processInitialContributionEvents:: Retrying the contribution for instanceId {} due to {} ",
+          job.getInstanceId(), ex.getMessage());
         updateJobAndContributionStatus(job, RETRY, job.isInstanceContributed());
       } catch (Exception ex) {
+        log.warn("processInitialContributionEvents:: Exception while processing instanceId {} ", job.getInstanceId());
         logException(job, ex, contributionRecord.get(job.getJobId()).getId());
         updateJobAndContributionStatus(job, FAILED, job.isInstanceContributed());
       }
     });
+  }
+
+  private void checkRetryLimit(JobExecutionStatus job) {
+    if (maxRetryAttempts != 0 && job.getRetryAttempts() > maxRetryAttempts) {
+      log.warn("checkRetryLimit:: Retry limit exhausted for instanceId {} ", job.getInstanceId());
+      throw new RetryException("Retry limit exhausted");
+    }
   }
 
   private UUID getCentralServerId(UUID jobId) {
@@ -111,14 +121,14 @@ public class InitialContributionEventProcessor {
       recordContributionService.deContributeInstance(centralServerId, instance);
       updateJobAndContributionStatus(job, DE_CONTRIBUTED, job.isInstanceContributed());
     } else {
-      // to test if non-eligible increasing count to verify the stopping condition
+      // Update the status of non-eligible instance Id
       log.info("startContribution:: non-eligible instance id: {}", instanceId);
       updateJobAndContributionStatus(job, FAILED, job.isInstanceContributed());
     }
   }
 
-  private void contributeItem(JobExecutionStatus job, UUID centralServerId, org.folio.innreach.dto.Instance instance) {
-    log.info("contributeInstanceItems:: parameters centralServerId: {}, instance id: {}", centralServerId, instance.getId());
+  private void contributeItem(JobExecutionStatus job, UUID centralServerId, Instance instance) {
+    log.debug("contributeItem:: parameters centralServerId: {}, instance id: {}", centralServerId, instance.getId());
     var bibId = instance.getHrid();
     var items = instance.getItems().stream()
       .filter(i -> isEligibleForContribution(centralServerId, i))
@@ -141,17 +151,21 @@ public class InitialContributionEventProcessor {
     jobExecutionStatusRepository.save(job);
   }
 
-  private boolean isEligibleForContribution(UUID centralServerId, org.folio.innreach.dto.Instance instance) {
+  private boolean isEligibleForContribution(UUID centralServerId, Instance instance) {
+    log.info("isEligibleForContribution:: parameters centralServerId: {} and instance id: {}",
+      centralServerId, instance);
     return validationService.isEligibleForContribution(centralServerId, instance);
   }
 
-  private boolean isContributed(UUID centralServerId, org.folio.innreach.dto.Instance instance) {
-    log.info("isContributed:: parameters centralServerId: {}, instance id: {}", centralServerId, instance.getId());
+  private boolean isContributed(UUID centralServerId, Instance instance) {
+    log.info("isContributed:: parameters centralServerId: {}, instance id: {}",
+      centralServerId, instance.getId());
     return recordContributionService.isContributed(centralServerId, instance);
   }
 
-  private boolean isEligibleForContribution(UUID centralServerId, org.folio.innreach.dto.Item item) {
-    log.info("isEligibleForContribution:: parameters centralServerId: {}, item id: {}", centralServerId, item.getId());
+  private boolean isEligibleForContribution(UUID centralServerId, Item item) {
+    log.info("isEligibleForContribution:: parameters centralServerId: {}, item id: {}",
+      centralServerId, item.getId());
     return validationService.isEligibleForContribution(centralServerId, item);
   }
 

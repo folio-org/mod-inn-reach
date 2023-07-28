@@ -25,9 +25,12 @@ public class InitialContributionJobScheduler {
   private final TenantInfoRepository tenantRepository;
   @Value(value = "${initial-contribution.fetch-limit}")
   private int recordLimit;
+  @Value(value = "${initial-contribution.item-pause}")
+  private int itemPause;
   private final Cache<String, List<String>> tenantDetailsCache;
 
-  @Scheduled(fixedDelayString = "${initial-contribution.scheduler.fixed-delay}", initialDelayString = "${initial-contribution.scheduler.initial-delay}")
+  @Scheduled(fixedDelayString = "${initial-contribution.scheduler.fixed-delay}",
+    initialDelayString = "${initial-contribution.scheduler.initial-delay}")
   public void processInitialContributionEvents() {
     List<String> tenants = loadTenants();
     log.info("processInitialContributionEvents :: tenantsList {}", tenants);
@@ -35,7 +38,7 @@ public class InitialContributionJobScheduler {
       executionService.runTenantScoped(tenant,
         () -> {
           try {
-            jobExecutionStatusRepository.updateAndFetchJobExecutionRecordsByStatus(recordLimit)
+            jobExecutionStatusRepository.updateAndFetchJobExecutionRecordsByStatus(recordLimit, itemPause)
               .forEach(eventProcessor::processInitialContributionEvents);
           } catch (Exception ex) {
             log.warn("Exception caught while processing Initial contribution for tenant {} {} ", tenant, ex.getMessage());
@@ -44,10 +47,11 @@ public class InitialContributionJobScheduler {
       ));
   }
 
-    private List<String> loadTenants() {
+  private List<String> loadTenants() {
     String tenantCacheKey = "tenantList";
     var tenantList = tenantDetailsCache.getIfPresent(tenantCacheKey);
     if (tenantList == null) {
+      log.info("Tenant details Refreshed");
       tenantList = tenantRepository.findAll().
         stream().map(TenantInfo::getTenantId).
         distinct().toList();

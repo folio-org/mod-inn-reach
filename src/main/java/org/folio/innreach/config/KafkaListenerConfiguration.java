@@ -107,6 +107,7 @@ public class KafkaListenerConfiguration {
     factory.setCommonErrorHandler(errorHandler());
     return factory;
   }
+  
   @Bean(BATCH_EVENT_PROCESSOR_RETRY_TEMPLATE)
   public RetryTemplate batchEventRetryTemplate() {
     return RetryTemplate.builder()

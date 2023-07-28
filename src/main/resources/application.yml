@@ -186,5 +186,6 @@ initial-contribution:
     initial-delay: 200000
   retry-attempts: 10
   fetch-limit: 50
+  item-pause: 1
   tenant-cache:
-    ttl: 120
+    ttl: 3600

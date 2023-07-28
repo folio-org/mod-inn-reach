@@ -26,9 +26,9 @@ import java.net.SocketTimeoutException;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.folio.innreach.domain.service.impl.FolioExecutionContextBuilder;
 import feign.FeignException;
 import org.folio.innreach.batch.contribution.InitialContributionJobConsumerContainer;
-import org.folio.innreach.domain.service.impl.FolioExecutionContextBuilder;
 import org.folio.innreach.external.exception.InnReachConnectionException;
 import org.folio.innreach.external.exception.ServiceSuspendedException;
 import org.folio.innreach.external.exception.SocketTimeOutExceptionWrapper;
@@ -110,8 +110,10 @@ class ContributionJobRunnerTest {
 
   @InjectMocks
   private ContributionJobRunner jobRunner;
+
   @Mock
   private FolioExecutionContextBuilder folioExecutionContextBuilder;
+
   @Mock
   private InitialContributionJobConsumerContainer initialContributionJobConsumerContainer;
 
@@ -250,7 +252,6 @@ class ContributionJobRunnerTest {
   void shouldCancelJobs() {
     when(folioExecutionContextBuilder.withUserId(any(), any())).thenReturn(folioContext);
     jobRunner.cancelJobs();
-
     verify(contributionService).cancelAll();
   }
 

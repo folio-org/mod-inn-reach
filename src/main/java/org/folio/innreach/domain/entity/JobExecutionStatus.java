@@ -7,6 +7,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -21,6 +22,7 @@ import java.util.UUID;
 @Entity
 @Table(name = "job_execution_status")
 @ToString
+@EqualsAndHashCode(of = "id", callSuper = false)
 public class JobExecutionStatus extends Auditable {
   @Id
   @GeneratedValue(strategy = GenerationType.AUTO)

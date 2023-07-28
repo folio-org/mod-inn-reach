@@ -71,6 +71,7 @@ public class ContributionJobRunner {
   private static Map<String,Integer> totalRecords = new HashMap<>();
   private static ConcurrentHashMap<String, Integer> recordsProcessed = new ConcurrentHashMap<>();
 
+
   public void startInitialContribution(UUID centralServerId, String tenantId, UUID contributionId, UUID iterationJobId, Integer numberOfRecords) {
     log.info("startInitialContribution:: parameters centralServerId: {}, tenantId: {}, contributionId: {}, iterationJobId: {}, numberOfRecords: {}", centralServerId, tenantId, contributionId, iterationJobId, numberOfRecords);
     var context = ContributionJobContext.builder()

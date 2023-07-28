@@ -18,7 +18,6 @@ import org.folio.innreach.batch.contribution.InitialContributionJobConsumerConta
 import org.folio.innreach.config.props.ContributionJobProperties;
 import org.folio.innreach.config.props.FolioEnvironment;
 import org.folio.innreach.external.exception.InnReachException;
-import org.folio.innreach.repository.JobExecutionStatusRepository;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.retry.support.RetryTemplate;
@@ -220,12 +219,6 @@ public class ContributionServiceImpl implements ContributionService {
 
     InitialContributionJobConsumerContainer.stopConsumer(topic);
 
-  }
-
-  @Transactional
-  public void updateInProgressContributionStatistics() {
-    log.debug("Updating statistics for In progress contribution");
-    repository.updateStatisticsAndStatus();
   }
 
   private ContributionJobRunner getJobRunner() {
