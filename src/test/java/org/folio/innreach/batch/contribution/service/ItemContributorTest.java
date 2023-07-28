@@ -97,6 +97,19 @@ class ItemContributorTest {
   }
 
   @Test
+  void testContributeItemsWithoutRetry() {
+    when(irContributionService.contributeBibItems(any(), any(), any())).thenReturn(response);
+    when(recordTransformationService.getBibItems(any(), any(), any())).thenReturn(List.of(new BibItem()));
+    when(response.getErrors()).thenReturn(new ArrayList<>());
+    when(response.isOk()).thenReturn(true);
+
+    service.contributeItemsWithoutRetry(JOB_CONTEXT.getCentralServerId(), "test", of(createItem()));
+
+    verify(irContributionService).contributeBibItems(eq(JOB_CONTEXT.getCentralServerId()), any(), any());
+
+  }
+
+  @Test
   void shouldContributeItems_throwException() throws SocketTimeoutException {
     InnReachResponse.Error errorResp1 = InnReachResponse.Error.builder().reason("Contribution to d2irm is not currently suspended").build();
     InnReachResponse.Error errorResp2 = InnReachResponse.Error.builder().reason("Contribution to d2irm is currently suspended").build();

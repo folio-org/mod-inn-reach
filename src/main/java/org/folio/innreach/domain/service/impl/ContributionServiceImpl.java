@@ -63,6 +63,7 @@ public class ContributionServiceImpl implements ContributionService {
   @Override
   public ContributionDTO getCurrent(UUID centralServerId) {
     log.debug("getCurrent:: parameters centralServerId: {}", centralServerId);
+    repository.updateStatisticsByCentralServerId(centralServerId);
     var contribution = repository.fetchCurrentByCentralServerId(centralServerId)
       .map(mapper::toDTO)
       .orElseGet(ContributionDTO::new);

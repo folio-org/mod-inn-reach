@@ -82,6 +82,18 @@ class InstanceContributorTest {
   }
 
   @Test
+  void testContributeInstanceWithoutRetry() {
+    when(instanceTransformationService.getBibInfo(any(), any())).thenReturn(new BibInfo());
+    when(irContributionService.contributeBib(any(), any(), any())).thenReturn(response);
+    when(response.isOk()).thenReturn(true);
+
+    instanceContributor.contributeInstanceWithoutRetry(CENTRAL_SERVER_ID, createInstance());
+    verify(irContributionService).contributeBib(eq(CENTRAL_SERVER_ID), any(), any());
+    verify(instanceTransformationService).getBibInfo(eq(CENTRAL_SERVER_ID), any());
+
+  }
+
+  @Test
   void shouldFailContribution() {
     var instance = createInstance();
 
