@@ -45,8 +45,8 @@ okapi.url: ${OKAPI_URL:http://localhost:8080}
 
 initial-contribution:
   scheduler:
-    fixed-delay: 100
-    initial-delay: 200
+    fixed-delay: 30000
+    initial-delay: 1000
   retry-attempts: 10
   fetch-limit: 50
   tenant-cache:

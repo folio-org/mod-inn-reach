@@ -37,8 +37,8 @@ public interface ContributionRepository extends JpaRepository<Contribution, UUID
     "records_contributed = (select count(*) from job_execution_status j where j.job_id = c.job_id and status in ('PROCESSED'))," +
     "records_decontributed = (select count(*) from job_execution_status j where j.job_id = c.job_id and status in ('DE_CONTRIBUTED'))," +
     "status = case when (select count(*) from job_execution_status j where j.status in ('READY','RETRY','IN_PROGRESS') " +
-    "and j.job_id= c.job_id ) = 0 then 1 else status end,updated_date = current_timestamp where c.status = 0 " +
-    "and c.central_server_id = :centralServerId", nativeQuery = true)
+    "and j.job_id = c.job_id ) = 0 then 1 else status end,updated_date = current_timestamp where c.status = 0 " +
+    "and ongoing = false and c.central_server_id = :centralServerId", nativeQuery = true)
   int updateStatisticsByCentralServerId(@Param("centralServerId") UUID centralServerId);
 
 }

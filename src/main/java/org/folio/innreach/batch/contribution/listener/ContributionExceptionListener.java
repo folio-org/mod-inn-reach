@@ -45,8 +45,8 @@ public class ContributionExceptionListener {
   }
   public void logError(Exception e, UUID recordId, UUID contributionId) {
     try {
-      log.warn("Step: [{}] error on stage {} record Id {} e: {}", stepName, "write", recordId, e);
-      var msg = String.format("Step: [%s] error on stage %s: %s", stepName, "write", e.getMessage());
+      log.warn("Step: [{}] error on record Id {} e: {}", stepName, recordId, e);
+      var msg = String.format("Step: [%s] error on stage : %s", stepName, e.getMessage());
       var error = new ContributionErrorDTO();
       error.setRecordId(recordId);
       error.setMessage(msg);

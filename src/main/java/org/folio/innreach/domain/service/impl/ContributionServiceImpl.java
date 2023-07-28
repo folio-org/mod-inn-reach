@@ -60,6 +60,7 @@ public class ContributionServiceImpl implements ContributionService {
   @Qualifier("contributionRetryTemplate")
   private final RetryTemplate retryTemplate;
 
+  @Transactional
   @Override
   public ContributionDTO getCurrent(UUID centralServerId) {
     log.debug("getCurrent:: parameters centralServerId: {}", centralServerId);

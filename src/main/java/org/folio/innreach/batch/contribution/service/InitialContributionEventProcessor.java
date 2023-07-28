@@ -29,7 +29,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.net.SocketTimeoutException;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 import static java.lang.Math.max;
@@ -131,8 +130,7 @@ public class InitialContributionEventProcessor {
     log.debug("contributeItem:: parameters centralServerId: {}, instance id: {}", centralServerId, instance.getId());
     var bibId = instance.getHrid();
     var items = instance.getItems().stream()
-      .filter(i -> isEligibleForContribution(centralServerId, i))
-      .collect(Collectors.toList());
+      .filter(i -> isEligibleForContribution(centralServerId, i)).toList();
     if (items.isEmpty()) {
       log.info("item is empty while contributing instance id: {}", instance.getId());
       updateJobAndContributionStatus(job, PROCESSED, job.isInstanceContributed());

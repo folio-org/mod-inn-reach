@@ -1,0 +1,1 @@
+Delete from job_execution_status
