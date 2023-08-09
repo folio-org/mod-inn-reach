@@ -45,7 +45,8 @@ public class KafkaInventoryEventListener {
     concurrency = "${kafka.listener.item.concurrency}")
   public void handleItemEvents(List<ConsumerRecord<String, DomainEvent<Item>>> consumerRecords) {
     log.info("Handling inventory item events from Kafka [number of events: {}]", consumerRecords.size());
-
+    if(!consumerRecords.isEmpty())
+      log.info("handleItemEvents:: name of topic {} ", consumerRecords.get(0).topic());
     var events = getEvents(consumerRecords);
     logEvents(events);
     eventProcessor.process(events, event -> {
@@ -76,6 +77,8 @@ public class KafkaInventoryEventListener {
     concurrency = "${kafka.listener.instance.concurrency}")
   public void handleInstanceEvents(List<ConsumerRecord<String, DomainEvent<Instance>>> consumerRecords) {
     log.info("Handling inventory instance events from Kafka [number of events: {}]", consumerRecords.size());
+    if(!consumerRecords.isEmpty())
+      log.info("handleInstanceEvents:: name of topic {} ", consumerRecords.get(0).topic());
     var events = getEvents(consumerRecords);
     logEvents(events);
     eventProcessor.process(events, event -> {
@@ -105,7 +108,8 @@ public class KafkaInventoryEventListener {
     concurrency = "${kafka.listener.holding.concurrency}")
   public void handleHoldingEvents(List<ConsumerRecord<String, DomainEvent<Holding>>> consumerRecords) {
     log.info("Handling inventory holding events from Kafka [number of events: {}]", consumerRecords.size());
-
+    if(!consumerRecords.isEmpty())
+      log.info("handleHoldingEvents:: name of topic {} ", consumerRecords.get(0).topic());
     var events = getEvents(consumerRecords);
     logEvents(events);
     eventProcessor.process(events, event -> {
