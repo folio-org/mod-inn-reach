@@ -19,33 +19,34 @@ The module provides an access to INN-Reach.
 
 ### Environment variables:
 
-| Name                          |       Default value       | Description                                                                                                                                                       |
-|:------------------------------|:-------------------------:|:------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| JAVA_OPTIONS                  | -XX:MaxRAMPercentage=85.0 | Java options                                                                                                                                                      |
-| DB_HOST                       |         postgres          | Postgres hostname                                                                                                                                                 |
-| DB_PORT                       |           5432            | Postgres port                                                                                                                                                     |
-| DB_USERNAME                   |        folio_admin        | Postgres username                                                                                                                                                 |
-| DB_PASSWORD                   |             -             | Postgres password                                                                                                                                                 |
-| DB_DATABASE                   |       okapi_modules       | Postgres database name                                                                                                                                            |
-| DB_QUERYTIMEOUT               |           60000           | Database query timeout                                                                                                                                            |
-| DB_CHARSET                    |           UTF-8           | Database charset                                                                                                                                                  |
-| DB_MAXPOOLSIZE                |             5             | Database max pool size                                                                                                                                            |
-| OKAPI_URL                     |             -             | OKAPI URL used to login system user, required                                                                                                                     |
-| ENV                           |           folio           | Logical name of the deployment, must be set if Kafka/Elasticsearch are shared for environments, `a-z (any case)`, `0-9`, `-`, `_` symbols only allowed            |
-| SYSTEM_USER_PASSWORD          |             -             | Internal user password                                                                                                                                            |
-| KAFKA_HOST                    |           kafka           | Kafka broker hostname                                                                                                                                             |
-| KAFKA_PORT                    |           9092            | Kafka broker port                                                                                                                                                 |
-| KAFKA_SECURITY_PROTOCOL       |         PLAINTEXT         | Kafka security protocol used to communicate with brokers (SSL or PLAINTEXT)                                                                                       |
-| KAFKA_SSL_KEYSTORE_LOCATION   |             -             | The location of the Kafka key store file. This is optional for client and can be used for two-way authentication for client.                                      |
-| KAFKA_SSL_KEYSTORE_PASSWORD   |             -             | The store password for the Kafka key store file. This is optional for client and only needed if 'ssl.keystore.location' is configured.                            |
-| KAFKA_SSL_TRUSTSTORE_LOCATION |             -             | The location of the Kafka trust store file.                                                                                                                       |
-| KAFKA_SSL_TRUSTSTORE_PASSWORD |             -             | The password for the Kafka trust store file. If a password is not set, trust store file configured will still be used, but integrity checking is disabled.        |
-| LOG_HTTP                      |           false           | Enable logging of all requests and responses.                                                                                                                     |
-| DEFAULT_INTERVAL              |           95000           | Default interval in ms ( preferred not to increase more than this value )                                                                                         |
- | MAX_FAILURE                   |            360            | Default max attempts                                                                                                                                              |
-| DEFAULT_OFFSET                |          latest           | Default kafka offset                                                                                                                                              |
- | DEFAULT_CONCURRENCY           |      2                    | Default concurrency of kafka consumer                                                                                                                             |
-| INNREACH_TENANTS              |             -             | The list of Innreach tenants needs to mention with pipe symbol as delimiter. mod-innreach will only listen topics which are related to the tenants mentioned here |
+| Name                          |       Default value       | Description                                                                                                                                                                                                                   |
+|:------------------------------|:-------------------------:|:------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| JAVA_OPTIONS                  | -XX:MaxRAMPercentage=85.0 | Java options                                                                                                                                                                                                                  |
+| DB_HOST                       |         postgres          | Postgres hostname                                                                                                                                                                                                             |
+| DB_PORT                       |           5432            | Postgres port                                                                                                                                                                                                                 |
+| DB_USERNAME                   |        folio_admin        | Postgres username                                                                                                                                                                                                             |
+| DB_PASSWORD                   |             -             | Postgres password                                                                                                                                                                                                             |
+| DB_DATABASE                   |       okapi_modules       | Postgres database name                                                                                                                                                                                                        |
+| DB_QUERYTIMEOUT               |           60000           | Database query timeout                                                                                                                                                                                                        |
+| DB_CHARSET                    |           UTF-8           | Database charset                                                                                                                                                                                                              |
+| DB_MAXPOOLSIZE                |             5             | Database max pool size                                                                                                                                                                                                        |
+| OKAPI_URL                     |             -             | OKAPI URL used to login system user, required                                                                                                                                                                                 |
+| ENV                           |           folio           | Logical name of the deployment, must be set if Kafka/Elasticsearch are shared for environments, `a-z (any case)`, `0-9`, `-`, `_` symbols only allowed                                                                        |
+| SYSTEM_USER_PASSWORD          |             -             | Internal user password                                                                                                                                                                                                        |
+| KAFKA_HOST                    |           kafka           | Kafka broker hostname                                                                                                                                                                                                         |
+| KAFKA_PORT                    |           9092            | Kafka broker port                                                                                                                                                                                                             |
+| KAFKA_SECURITY_PROTOCOL       |         PLAINTEXT         | Kafka security protocol used to communicate with brokers (SSL or PLAINTEXT)                                                                                                                                                   |
+| KAFKA_SSL_KEYSTORE_LOCATION   |             -             | The location of the Kafka key store file. This is optional for client and can be used for two-way authentication for client.                                                                                                  |
+| KAFKA_SSL_KEYSTORE_PASSWORD   |             -             | The store password for the Kafka key store file. This is optional for client and only needed if 'ssl.keystore.location' is configured.                                                                                        |
+| KAFKA_SSL_TRUSTSTORE_LOCATION |             -             | The location of the Kafka trust store file.                                                                                                                                                                                   |
+| KAFKA_SSL_TRUSTSTORE_PASSWORD |             -             | The password for the Kafka trust store file. If a password is not set, trust store file configured will still be used, but integrity checking is disabled.                                                                    |
+| LOG_HTTP                      |           false           | Enable logging of all requests and responses.                                                                                                                                                                                 |
+| DEFAULT_INTERVAL              |           95000           | Default interval in ms ( preferred not to increase more than this value )                                                                                                                                                     |
+ | MAX_FAILURE                   |            360            | Default max attempts                                                                                                                                                                                                          |
+| DEFAULT_OFFSET                |          latest           | Default kafka offset                                                                                                                                                                                                          |
+ | DEFAULT_CONCURRENCY           |      2                    | Default concurrency of kafka consumer                                                                                                                                                                                         |
+| INNREACH_TENANTS              |             -             | This is a regex where list of tenants needs to be mentioned with pipe symbol as delimiter so that mod-inn-reach will listen only these tenant related topics. See here [Example value for INNREACH_TENANTS](#example-value-for-innreachtenants) |
+
 ## Compiling
 
 ```
@@ -139,6 +140,12 @@ This results in a post to the module's `_tenant` API with the following structur
 ```
 
 See the section [Install modules per tenant](https://github.com/folio-org/okapi/blob/master/doc/guide.md#install-modules-per-tenant) in the Okapi guide for more information.
+
+## Example value for INNREACH_TENANTS
+```
+For single tenant - tenant1
+For multi  tenant - tenant1|tenant2
+```
 
 ## Additional information
 
