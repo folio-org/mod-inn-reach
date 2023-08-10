@@ -153,19 +153,19 @@ kafka:
     item:
       id: ${environment}-mod-inn-reach-inventory-item-events
       group-id: ${spring.kafka.consumer.group-id}
-      topic-pattern: (${environment}\.)(.demo|diku\.)inventory\.item
+      topic-pattern: (${environment}\.)(.${tenants:*}\.)inventory\.item
       concurrency: ${KAFKA_EVENTS_CONCURRENCY:2}
       data-type: org.folio.innreach.dto.Item
     instance:
       id: ${environment}-mod-inn-reach-inventory-instance-events
       group-id: ${spring.kafka.consumer.group-id}
-      topic-pattern: (${environment}\.)(.${tenants}\.)inventory\.instance
+      topic-pattern: (${environment}\.)(.${tenants:*}\.)inventory\.instance
       concurrency: ${KAFKA_EVENTS_CONCURRENCY:2}
       data-type: org.folio.innreach.dto.Instance
     holding:
       id: ${environment}-mod-inn-reach-inventory-holding-events
       group-id: ${spring.kafka.consumer.group-id}
-      topic-pattern: (${environment}\.)(.${tenants}\.)inventory\.holdings-record
+      topic-pattern: (${environment}\.)(.${tenants:*}\.)inventory\.holdings-record
       concurrency: ${KAFKA_EVENTS_CONCURRENCY:2}
       data-type: org.folio.innreach.dto.Holding
   backoff:
