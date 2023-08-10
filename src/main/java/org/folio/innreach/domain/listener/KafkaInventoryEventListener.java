@@ -44,7 +44,7 @@ public class KafkaInventoryEventListener {
     topicPattern = "${kafka.listener.item.topic-pattern}",
     concurrency = "${kafka.listener.item.concurrency}")
   public void handleItemEvents(List<ConsumerRecord<String, DomainEvent<Item>>> consumerRecords) {
-    log.info("Handling inventory item events from Kafka [number of events: {}], topic {}", consumerRecords.size(), consumerRecords.get(0).topic());
+    log.info("Handling inventory item events from Kafka [number of events: {}]", consumerRecords.size());
 
     var events = getEvents(consumerRecords);
     logEvents(events);
@@ -75,8 +75,7 @@ public class KafkaInventoryEventListener {
     topicPattern = "${kafka.listener.instance.topic-pattern}",
     concurrency = "${kafka.listener.instance.concurrency}")
   public void handleInstanceEvents(List<ConsumerRecord<String, DomainEvent<Instance>>> consumerRecords) {
-    log.info("Handling inventory instance events from Kafka [number of events: {}], topic name {} ", consumerRecords.size(), consumerRecords.get(0).topic());
-
+    log.info("Handling inventory instance events from Kafka [number of events: {}]", consumerRecords.size());
     var events = getEvents(consumerRecords);
     logEvents(events);
     eventProcessor.process(events, event -> {
@@ -105,7 +104,7 @@ public class KafkaInventoryEventListener {
     topicPattern = "${kafka.listener.holding.topic-pattern}",
     concurrency = "${kafka.listener.holding.concurrency}")
   public void handleHoldingEvents(List<ConsumerRecord<String, DomainEvent<Holding>>> consumerRecords) {
-    log.info("Handling inventory holding events from Kafka [number of events: {}], topic {}", consumerRecords.size(), consumerRecords.get(0).topic());
+    log.info("Handling inventory holding events from Kafka [number of events: {}]", consumerRecords.size());
 
     var events = getEvents(consumerRecords);
     logEvents(events);
