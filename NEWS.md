@@ -1,3 +1,8 @@
+## v3.0.3 2023-08-14
+
+### Bugs
+* [MODINREACH-381](https://issues.folio.org/browse/MODINREACH-381) - Manual ongoing contributions fail to reach the ContributionJobRunner
+
 ## v3.0.2 2023-07-13
 
 ### Stories
