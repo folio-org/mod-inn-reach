@@ -244,6 +244,16 @@
       <groupId>com.google.code.gson</groupId>
       <artifactId>gson</artifactId>
     </dependency>
+      <dependency>
+          <groupId>io.netty</groupId>
+          <artifactId>netty-codec-http</artifactId>
+          <version>4.1.94.Final</version>
+      </dependency>
+      <dependency>
+          <groupId>org.folio</groupId>
+          <artifactId>edge-api-utils</artifactId>
+          <version>1.2.0</version>
+      </dependency>
   </dependencies>
 
   <build>

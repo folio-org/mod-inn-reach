@@ -3,6 +3,7 @@ package org.folio.innreach.domain.service.impl;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.folio.innreach.client.AuthnClient;
 import org.folio.innreach.config.props.SystemUserProperties;
 import org.folio.innreach.domain.dto.folio.SystemUser;
 import org.folio.innreach.domain.service.UserService;
@@ -20,6 +21,7 @@ public class SystemUserService {
   private final UserService userService;
   private final SystemUserProperties systemUserConf;
   private final FolioExecutionContextBuilder contextBuilder;
+  private final AuthnClient authnClient;
 
   @Value("${okapi.url}")
   private String okapiUrl;
@@ -35,16 +37,25 @@ public class SystemUserService {
   @Cacheable(cacheNames = "system-user-cache", sync = true)
   public SystemUser getSystemUser(String tenantId) {
     log.info("Attempting to issue token for system user [tenantId={}]", tenantId);
-
+//cache
     var systemUser = new SystemUser();
     systemUser.setTenantId(tenantId);
     systemUser.setUserName(systemUserConf.getUsername());
     systemUser.setOkapiUrl(okapiUrl);
 
-    var token = authService.loginSystemUser(systemUser);
-    log.info("Token for system user has been issued [tenantId={}]", tenantId);
-    systemUser.setToken(token);
-
+//    var token = authService.loginSystemUser(systemUser);
+//    log.info("Token for system user has been issued [tenantId={}]", tenantId);
+//    systemUser.setToken(token);
+//
+//    var userId = getSystemUserId(systemUser);
+//    systemUser.setUserId(userId);
+//
+//    return systemUser;
+    try (var context = new FolioExecutionContextSetter(contextBuilder.forSystemUser(systemUser))) {
+      var token = authService.authSystemUser(systemUser);
+      log.info("Token for system user has been issued [tenantId={}]", tenantId);
+      systemUser.setToken(token);
+    }
     var userId = getSystemUserId(systemUser);
     systemUser.setUserId(userId);
 
@@ -58,5 +69,4 @@ public class SystemUserService {
         .getId();
     }
   }
-
 }

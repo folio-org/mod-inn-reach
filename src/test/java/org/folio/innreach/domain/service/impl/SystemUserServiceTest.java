@@ -11,10 +11,12 @@ import static org.springframework.boot.test.context.SpringBootTest.WebEnvironmen
 
 import static org.folio.spring.integration.XOkapiHeaders.TENANT;
 
+import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
 
 import org.assertj.core.api.Assertions;
+import org.folio.innreach.domain.dto.folio.UserToken;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockitoAnnotations;
@@ -74,7 +76,7 @@ class SystemUserServiceTest {
 
   @Test
   void shouldGetAndCacheSystemUser() {
-    when(authService.loginSystemUser(any(SystemUser.class))).thenReturn(AUTH_TOKEN);
+    when(authService.authSystemUser(any(SystemUser.class))).thenReturn(new UserToken(AUTH_TOKEN, Instant.MAX));
 
     when(contextBuilder.forSystemUser(any(SystemUser.class))).thenReturn(new FolioExecutionContext() {});
 

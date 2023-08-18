@@ -1,8 +1,13 @@
 package org.folio.innreach.domain.service.impl;
 
+import static java.util.Objects.isNull;
+import static java.util.Optional.ofNullable;
+import static org.folio.innreach.util.TokenUtils.parseUserTokenFromCookies;
+import static org.springframework.http.HttpHeaders.SET_COOKIE;
 import static org.springframework.util.CollectionUtils.isEmpty;
 
 import java.nio.charset.StandardCharsets;
+import java.time.Instant;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -11,11 +16,13 @@ import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.io.IOUtils;
+import org.folio.edge.api.utils.exception.AuthorizationException;
 import org.folio.innreach.client.AuthnClient;
 import org.folio.innreach.client.PermissionsClient;
 import org.folio.innreach.config.props.SystemUserProperties;
 import org.folio.innreach.domain.dto.folio.SystemUser;
 import org.folio.innreach.domain.dto.folio.User;
+import org.folio.innreach.domain.dto.folio.UserToken;
 import org.folio.innreach.domain.service.UserService;
 import org.folio.spring.integration.XOkapiHeaders;
 import org.folio.spring.scope.FolioExecutionContextSetter;
@@ -23,6 +30,7 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
+import org.springframework.util.ObjectUtils;
 
 @Log4j2
 @RequiredArgsConstructor
@@ -55,10 +63,11 @@ public class SystemUserAuthService {
 
   public String loginSystemUser(SystemUser systemUser) {
     try (var context = new FolioExecutionContextSetter(contextBuilder.forSystemUser(systemUser))) {
-      AuthnClient.UserCredentials creds = AuthnClient.UserCredentials
+        AuthnClient.UserCredentials creds = AuthnClient.UserCredentials
         .of(systemUser.getUserName(), folioSystemUserConf.getPassword());
 
-      var response = authnClient.getApiKey(creds);
+      var response = authnClient.login(creds);
+
 
       List<String> tokenHeaders = response.getHeaders().get(XOkapiHeaders.TOKEN);
 
@@ -126,6 +135,45 @@ public class SystemUserAuthService {
   private static List<String> getResourceLines(String permissionsFilePath) {
     var resource = new ClassPathResource(permissionsFilePath);
     return IOUtils.readLines(resource.getInputStream(), StandardCharsets.UTF_8);
+  }
+
+  public UserToken authSystemUser(SystemUser user){
+    var token = getTokenWithExpiry(user);
+    if (ObjectUtils.isEmpty(token)) {
+      token  = getTokenLegacy(user);
+    }
+    return token;
+  }
+  private UserToken getTokenLegacy(SystemUser user) {
+    var response =
+            authnClient.login(AuthnClient.UserCredentials.of(user.getUserName(), folioSystemUserConf.getPassword()));
+
+    var accessToken =  ofNullable(response.getHeaders()
+            .get(XOkapiHeaders.TOKEN))
+            .orElseThrow(() -> new AuthorizationException("Cannot retrieve okapi token for tenant: " + user.getUserName()))
+            .get(0);
+
+    return UserToken.builder()
+            .accessToken(accessToken)
+            .accessTokenExpiration(Instant.MAX)
+            .build();
+  }
+
+  private UserToken getTokenWithExpiry(SystemUser user) {
+    var response =
+            authnClient.loginWithExpiry(AuthnClient.UserCredentials.of(user.getUserName(), folioSystemUserConf.getPassword()));
+
+    if (isNull(response.getBody())) {
+      throw new IllegalStateException(String.format(
+              "User [%s] cannot %s because expire times missing for status %s",
+              user.getUserName(), "login with expiry", response.getStatusCode()));
+    }
+
+    return Optional.ofNullable(response.getHeaders().get(SET_COOKIE))
+            .filter(list -> !CollectionUtils.isEmpty(list))
+            .map(cookieHeaders -> parseUserTokenFromCookies(cookieHeaders, response.getBody()))
+            .orElseThrow(() -> new IllegalStateException(String.format(
+                    "User [%s] cannot %s because of missing tokens", user.getUserName(), "login with expiry")));
   }
 
 }
