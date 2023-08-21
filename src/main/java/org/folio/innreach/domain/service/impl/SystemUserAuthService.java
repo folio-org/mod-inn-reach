@@ -1,8 +1,13 @@
 package org.folio.innreach.domain.service.impl;
 
+import static java.util.Objects.isNull;
+import static java.util.Optional.ofNullable;
+import static org.folio.innreach.util.TokenUtils.parseUserTokenFromCookies;
+import static org.springframework.http.HttpHeaders.SET_COOKIE;
 import static org.springframework.util.CollectionUtils.isEmpty;
 
 import java.nio.charset.StandardCharsets;
+import java.time.Instant;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -11,16 +16,19 @@ import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.io.IOUtils;
+import org.apache.kafka.common.errors.AuthorizationException;
 import org.folio.innreach.client.AuthnClient;
 import org.folio.innreach.client.PermissionsClient;
 import org.folio.innreach.config.props.SystemUserProperties;
 import org.folio.innreach.domain.dto.folio.SystemUser;
 import org.folio.innreach.domain.dto.folio.User;
+import org.folio.innreach.domain.dto.folio.UserToken;
 import org.folio.innreach.domain.service.UserService;
 import org.folio.spring.integration.XOkapiHeaders;
 import org.folio.spring.scope.FolioExecutionContextSetter;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
@@ -53,20 +61,55 @@ public class SystemUserAuthService {
     }
   }
 
-  public String loginSystemUser(SystemUser systemUser) {
+  public UserToken loginSystemUser(SystemUser systemUser) {
     try (var context = new FolioExecutionContextSetter(contextBuilder.forSystemUser(systemUser))) {
       AuthnClient.UserCredentials creds = AuthnClient.UserCredentials
         .of(systemUser.getUserName(), folioSystemUserConf.getPassword());
 
-      var response = authnClient.getApiKey(creds);
-
-      List<String> tokenHeaders = response.getHeaders().get(XOkapiHeaders.TOKEN);
-
-      return Optional.ofNullable(tokenHeaders)
-        .filter(list -> !CollectionUtils.isEmpty(list))
-        .map(list -> list.get(0))
-        .orElseThrow(() -> new IllegalStateException(String.format("User [%s] cannot log in", systemUser.getUserName())));
+      var token = getTokenWithExpiry(creds, systemUser.getUserName());
+      if (isNull(token)) {
+        token  = getTokenLegacy(creds, systemUser.getUserName());
+      }
+      return token;
     }
+  }
+
+  private UserToken getTokenLegacy(AuthnClient.UserCredentials credentials, String userName) {
+    var response =
+        authnClient.login(credentials);
+
+    if (!isNull(response) && response.getStatusCode() == HttpStatusCode.valueOf(404)) {
+      return null;
+    }
+    var accessToken =  ofNullable(response.getHeaders()
+        .get("x-okapi-token"))
+        .orElseThrow(() -> new AuthorizationException("Cannot retrieve okapi token for tenant: " + userName))
+        .get(0);
+
+    return UserToken.builder()
+        .accessToken(accessToken)
+        .accessTokenExpiration(Instant.MAX)
+        .build();
+  }
+
+  private UserToken getTokenWithExpiry(AuthnClient.UserCredentials credentials, String userName) {
+    var response =
+        authnClient.loginWithExpiry(credentials);
+
+    if (!isNull(response) && response.getStatusCode() == HttpStatusCode.valueOf(404)) {
+      return null;
+    }
+    if (!isNull(response) && isNull(response.getBody())) {
+      throw new IllegalStateException(String.format(
+          "User [%s] cannot %s because expire times missing for status %s",
+          userName, "login with expiry", response.getStatusCode()));
+    }
+
+    return Optional.ofNullable(response.getHeaders().get(SET_COOKIE))
+        .filter(list -> !CollectionUtils.isEmpty(list))
+        .map(cookieHeaders -> parseUserTokenFromCookies(cookieHeaders, response.getBody()))
+        .orElseThrow(() -> new IllegalStateException(String.format(
+            "User [%s] cannot %s because of missing tokens", userName, "login with expiry")));
   }
 
   private void createFolioUser(UUID id) {

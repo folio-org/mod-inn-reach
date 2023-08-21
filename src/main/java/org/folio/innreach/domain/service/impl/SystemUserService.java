@@ -1,12 +1,16 @@
 package org.folio.innreach.domain.service.impl;
 
+import java.time.Instant;
 import java.util.UUID;
+
+import com.github.benmanes.caffeine.cache.Cache;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.folio.innreach.config.props.SystemUserProperties;
 import org.folio.innreach.domain.dto.folio.SystemUser;
 import org.folio.innreach.domain.service.UserService;
 import org.folio.spring.scope.FolioExecutionContextSetter;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
@@ -20,6 +24,7 @@ public class SystemUserService {
   private final UserService userService;
   private final SystemUserProperties systemUserConf;
   private final FolioExecutionContextBuilder contextBuilder;
+  private Cache<String, SystemUser> systemUserCache;
 
   @Value("${okapi.url}")
   private String okapiUrl;
@@ -31,9 +36,32 @@ public class SystemUserService {
 
     log.info("System user has been prepared");
   }
+  @Autowired(required = false)
+  public void setSystemUserCache(Cache<String, SystemUser> systemUserCache) {
+    this.systemUserCache = systemUserCache;
+  }
 
-  @Cacheable(cacheNames = "system-user-cache", sync = true)
-  public SystemUser getSystemUser(String tenantId) {
+//  @Cacheable(cacheNames = "system-user-cache", sync = true)
+    public SystemUser getAuthedSystemUser(String tenantId) {
+      if (systemUserCache == null) {
+        return getSystemUser(tenantId);
+      }
+
+      var user = systemUserCache.get(tenantId, this::getSystemUser);
+      var userToken = user.getToken();
+      var now = Instant.now();
+      if (userToken.accessTokenExpiration().isAfter(now)) {
+        return user;
+      }
+
+      systemUserCache.invalidate(tenantId);
+      user = getSystemUser(tenantId);
+      systemUserCache.put(tenantId, user);
+
+      return user;
+    }
+
+    public SystemUser getSystemUser(String tenantId) {
     log.info("Attempting to issue token for system user [tenantId={}]", tenantId);
 
     var systemUser = new SystemUser();

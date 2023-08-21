@@ -5,18 +5,24 @@ import static java.util.Collections.singletonMap;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.NONE;
 
 import static org.folio.spring.integration.XOkapiHeaders.TENANT;
 
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Optional;
 import java.util.UUID;
 
+import com.github.benmanes.caffeine.cache.Cache;
 import org.assertj.core.api.Assertions;
+import org.folio.innreach.domain.dto.folio.UserToken;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -45,12 +51,14 @@ class SystemUserServiceTest {
   private static final String AUTH_TOKEN = "aa.bb.cc";
   private static final String USERNAME = "mod-innreach";
   private static final String CACHE_NAME = "system-user-cache";
+  private static final Instant TOKEN_EXPIRATION = Instant.now().plus(1, ChronoUnit.DAYS);
+  private static final String MOCK_TOKEN = "test_token";
 
   @Autowired
   private SystemUserService systemUserService;
 
-  @Autowired
-  private CacheManager cacheManager;
+  @Mock
+  private Cache<String, SystemUser> userCache;
 
   @MockBean
   private SystemUserAuthService authService;
@@ -59,6 +67,13 @@ class SystemUserServiceTest {
   @MockBean
   private FolioExecutionContextBuilder contextBuilder;
 
+  private SystemUser systemUserValue() {
+    SystemUser user = new SystemUser();
+    user.setUserName("username");
+    user.setOkapiUrl("http://okapi");
+    user.setTenantId(TENANT_ID);
+    return user;
+  }
 
   @BeforeEach
   void setupBeforeEach() {
@@ -68,15 +83,22 @@ class SystemUserServiceTest {
   @Test
   void shouldPrepareSystemUser() {
     systemUserService.prepareSystemUser();
-
     verify(authService).setupSystemUser();
   }
 
   @Test
   void shouldGetAndCacheSystemUser() {
-    when(authService.loginSystemUser(any(SystemUser.class))).thenReturn(AUTH_TOKEN);
+    var expectedUserToken = new UserToken(MOCK_TOKEN, TOKEN_EXPIRATION);
+    SystemUser userTmp = new SystemUser();
+    userTmp.setUserName("username");
+    userTmp.setOkapiUrl("http://okapi");
+    userTmp.setToken(expectedUserToken);
+    userTmp.setTenantId(TENANT_ID);
+    systemUserService.setSystemUserCache(userCache);
+    when(authService.loginSystemUser(any(SystemUser.class))).thenReturn(expectedUserToken);
 
     when(contextBuilder.forSystemUser(any(SystemUser.class))).thenReturn(new FolioExecutionContext() {});
+    when(userCache.get(eq(TENANT_ID), any())).thenReturn(userTmp);
 
     var user = new User();
     user.setUsername(USERNAME);
@@ -88,24 +110,18 @@ class SystemUserServiceTest {
     Assertions.assertThat(systemUser).isNotNull();
     Assertions.assertThat(systemUser.getToken()).isNotNull();
     assertThat(systemUser.getTenantId(), is(TENANT_ID));
-    assertThat(systemUser.getToken(), is(AUTH_TOKEN));
+    assertThat(systemUser.getToken(), is(expectedUserToken));
     assertThat(systemUser.getUserName(), is(USERNAME));
     assertThat(systemUser.getUserId(), is(user.getId()));
 
-    Assertions.assertThat(cacheManager.getCache(CACHE_NAME).get(TENANT_ID, SystemUser.class))
+    Assertions.assertThat(userCache.get(eq(TENANT_ID), any()))
       .isEqualTo(systemUser);
   }
 
-  @EnableCaching
   @TestConfiguration
   @TestPropertySource("classpath:application.yml")
   @EnableConfigurationProperties(SystemUserProperties.class)
   static class TestContextConfiguration {
-
-    @Bean
-    CacheManager cacheManager() {
-      return new ConcurrentMapCacheManager("system-user-cache");
-    }
 
     @Bean
     FolioExecutionContext folioExecutionContext() {

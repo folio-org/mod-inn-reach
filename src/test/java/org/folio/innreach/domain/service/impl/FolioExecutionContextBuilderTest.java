@@ -4,8 +4,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import java.time.Instant;
 import java.util.UUID;
 
+import org.folio.innreach.domain.dto.folio.UserToken;
 import org.folio.spring.FolioExecutionContext;
 import org.junit.jupiter.api.Test;
 
@@ -34,7 +36,7 @@ class FolioExecutionContextBuilderTest {
     UUID userId = UUID.randomUUID();
 
     var systemUser = new SystemUser();
-    systemUser.setToken("token");
+    systemUser.setToken(new UserToken("test_token", Instant.now()));
     systemUser.setOkapiUrl("okapi");
     systemUser.setUserName("username");
     systemUser.setUserId(userId);
@@ -43,7 +45,7 @@ class FolioExecutionContextBuilderTest {
     var context = builder.forSystemUser(systemUser);
 
     assertThat(context.getTenantId()).isEqualTo("tenant");
-    assertThat(context.getToken()).isEqualTo("token");
+    assertThat(context.getToken()).isEqualTo("test_token");
     assertThat(context.getUserId()).isEqualTo(userId);
     assertThat(context.getOkapiUrl()).isEqualTo("okapi");
 

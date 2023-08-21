@@ -176,6 +176,10 @@
       <artifactId>marc4j</artifactId>
       <version>${marc4j.version}</version>
     </dependency>
+    <dependency>
+      <groupId>io.netty</groupId>
+      <artifactId>netty-codec-http</artifactId>
+    </dependency>
 
     <!-- Test dependencies -->
     <dependency>

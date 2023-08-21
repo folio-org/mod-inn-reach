@@ -8,7 +8,7 @@ import lombok.Data;
 public class SystemUser {
   private UUID userId;
   private String userName;
-  private String token;
+  private UserToken token;
   private String okapiUrl;
   private String tenantId;
 }

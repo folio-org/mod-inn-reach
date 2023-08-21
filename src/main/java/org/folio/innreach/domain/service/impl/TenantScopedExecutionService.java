@@ -20,7 +20,7 @@ public class TenantScopedExecutionService {
   }
 
   private FolioExecutionContext folioExecutionContext(String tenant) {
-    return contextBuilder.forSystemUser(systemUserService.getSystemUser(tenant));
+    return contextBuilder.forSystemUser(systemUserService.getAuthedSystemUser(tenant));
   }
 
 }
