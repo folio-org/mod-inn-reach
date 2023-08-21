@@ -52,7 +52,9 @@ class SystemUserServiceTest {
   private static final String USERNAME = "mod-innreach";
   private static final String CACHE_NAME = "system-user-cache";
   private static final Instant TOKEN_EXPIRATION = Instant.now().plus(1, ChronoUnit.DAYS);
+  private static final Instant TOKEN_EXPIRATION1 = Instant.now().minus(1, ChronoUnit.SECONDS);
   private static final String MOCK_TOKEN = "test_token";
+
 
   @Autowired
   private SystemUserService systemUserService;
@@ -87,7 +89,7 @@ class SystemUserServiceTest {
   }
 
   @Test
-  void shouldGetAndCacheSystemUser() {
+  void shouldGetAndCacheSystemUserPositive() {
     var expectedUserToken = new UserToken(MOCK_TOKEN, TOKEN_EXPIRATION);
     systemUserService.setSystemUserCache(userCache);
     when(authService.loginSystemUser(any(SystemUser.class))).thenReturn(expectedUserToken);
@@ -117,6 +119,69 @@ class SystemUserServiceTest {
     assertThat(systemUser.getUserId(), is(user.getId()));
     verify(userCache).get(eq(TENANT_ID), any());
   }
+
+  @Test
+  void shouldGetAndCacheSystemUserNegative() {
+    var expectedUserToken = new UserToken(MOCK_TOKEN, TOKEN_EXPIRATION);
+    when(authService.loginSystemUser(any(SystemUser.class))).thenReturn(expectedUserToken);
+    when(contextBuilder.forSystemUser(any(SystemUser.class))).thenReturn(new FolioExecutionContext() {});
+
+
+    var user = new User();
+    user.setUsername(USERNAME);
+    user.setId(UUID.randomUUID());
+    when(userService.getUserByName(USERNAME)).thenReturn(Optional.of(user));
+
+    SystemUser userTmp = new SystemUser();
+    userTmp.setUserId(user.getId());
+    userTmp.setUserName(USERNAME);
+    userTmp.setOkapiUrl("http://okapi");
+    userTmp.setToken(expectedUserToken);
+    userTmp.setTenantId(TENANT_ID);
+    when(userCache.get(eq(TENANT_ID), any())).thenReturn(null);
+
+    var systemUser = systemUserService.getAuthedSystemUser(TENANT_ID);
+
+    Assertions.assertThat(systemUser).isNotNull();
+    Assertions.assertThat(systemUser.getToken()).isNotNull();
+    assertThat(systemUser.getTenantId(), is(TENANT_ID));
+    assertThat(systemUser.getToken(), is(expectedUserToken));
+    assertThat(systemUser.getUserName(), is(USERNAME));
+    assertThat(systemUser.getUserId(), is(user.getId()));
+  }
+
+  @Test
+  void shouldGetAndSystemUserTokenExpiry() {
+    var expectedUserToken = new UserToken(MOCK_TOKEN, TOKEN_EXPIRATION1);
+    systemUserService.setSystemUserCache(userCache);
+    when(authService.loginSystemUser(any(SystemUser.class))).thenReturn(expectedUserToken);
+    when(contextBuilder.forSystemUser(any(SystemUser.class))).thenReturn(new FolioExecutionContext() {});
+
+
+    var user = new User();
+    user.setUsername(USERNAME);
+    user.setId(UUID.randomUUID());
+    when(userService.getUserByName(USERNAME)).thenReturn(Optional.of(user));
+
+    SystemUser userTmp = new SystemUser();
+    userTmp.setUserId(user.getId());
+    userTmp.setUserName(USERNAME);
+    userTmp.setOkapiUrl("http://okapi");
+    userTmp.setToken(expectedUserToken);
+    userTmp.setTenantId(TENANT_ID);
+    when(userCache.get(eq(TENANT_ID), any())).thenReturn(userTmp);
+
+    var systemUser = systemUserService.getAuthedSystemUser(TENANT_ID);
+
+    Assertions.assertThat(systemUser).isNotNull();
+    Assertions.assertThat(systemUser.getToken()).isNotNull();
+    assertThat(systemUser.getTenantId(), is(TENANT_ID));
+    assertThat(systemUser.getToken(), is(expectedUserToken));
+    assertThat(systemUser.getUserName(), is(USERNAME));
+    assertThat(systemUser.getUserId(), is(user.getId()));
+    verify(userCache).get(eq(TENANT_ID), any());
+  }
+
 
   @TestConfiguration
   @TestPropertySource("classpath:application.yml")
