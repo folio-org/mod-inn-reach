@@ -89,23 +89,25 @@ class SystemUserServiceTest {
   @Test
   void shouldGetAndCacheSystemUser() {
     var expectedUserToken = new UserToken(MOCK_TOKEN, TOKEN_EXPIRATION);
-    SystemUser userTmp = new SystemUser();
-    userTmp.setUserName("username");
-    userTmp.setOkapiUrl("http://okapi");
-    userTmp.setToken(expectedUserToken);
-    userTmp.setTenantId(TENANT_ID);
     systemUserService.setSystemUserCache(userCache);
     when(authService.loginSystemUser(any(SystemUser.class))).thenReturn(expectedUserToken);
-
     when(contextBuilder.forSystemUser(any(SystemUser.class))).thenReturn(new FolioExecutionContext() {});
-    when(userCache.get(eq(TENANT_ID), any())).thenReturn(userTmp);
+
 
     var user = new User();
     user.setUsername(USERNAME);
     user.setId(UUID.randomUUID());
     when(userService.getUserByName(USERNAME)).thenReturn(Optional.of(user));
 
-    var systemUser = systemUserService.getSystemUser(TENANT_ID);
+    SystemUser userTmp = new SystemUser();
+    userTmp.setUserId(user.getId());
+    userTmp.setUserName(USERNAME);
+    userTmp.setOkapiUrl("http://okapi");
+    userTmp.setToken(expectedUserToken);
+    userTmp.setTenantId(TENANT_ID);
+    when(userCache.get(eq(TENANT_ID), any())).thenReturn(userTmp);
+
+    var systemUser = systemUserService.getAuthedSystemUser(TENANT_ID);
 
     Assertions.assertThat(systemUser).isNotNull();
     Assertions.assertThat(systemUser.getToken()).isNotNull();
@@ -113,9 +115,7 @@ class SystemUserServiceTest {
     assertThat(systemUser.getToken(), is(expectedUserToken));
     assertThat(systemUser.getUserName(), is(USERNAME));
     assertThat(systemUser.getUserId(), is(user.getId()));
-
-    Assertions.assertThat(userCache.get(eq(TENANT_ID), any()))
-      .isEqualTo(systemUser);
+    verify(userCache).get(eq(TENANT_ID), any());
   }
 
   @TestConfiguration
