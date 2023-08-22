@@ -1,6 +1,7 @@
 package org.folio.innreach.domain.service.impl;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -23,6 +24,7 @@ import org.apache.http.client.HttpClient;
 import org.folio.innreach.domain.dto.folio.SystemUser;
 import org.folio.innreach.domain.dto.folio.UserToken;
 import org.folio.spring.FolioExecutionContext;
+import org.folio.spring.integration.XOkapiHeaders;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -37,6 +39,7 @@ import org.folio.innreach.domain.dto.folio.User;
 import org.folio.innreach.domain.service.UserService;
 import org.apache.http.impl.client.HttpClients;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.MultiValueMapAdapter;
 
@@ -71,12 +74,40 @@ class SystemUserAuthServiceTest {
     when(authnClient.loginWithExpiry(AuthnClient.UserCredentials.of("username", "password"))).thenReturn(expectedResponse);
     when(contextBuilder.forSystemUser(any())).thenReturn(context);
     when(expectedResponse.getHeaders()).thenReturn(expectedHeaders);
-    SystemUser systemUser = new SystemUser();
-    systemUser.setUserName("username");
-    systemUser.setOkapiUrl("http://okapi");
-    systemUser.setTenantId("tenant1");
+    var systemUser = preparSystmUser();
     var actual = systemUserService(systemUserProperties()).loginSystemUser(systemUser);
     assertThat(actual.accessToken()).isEqualTo(expectedUserToken.accessToken());
+  }
+
+  @Test
+  void loginSystemUser_when_loginExpiry_notFound() {
+    var expectedUserToken = new UserToken(MOCK_TOKEN, Instant.MAX);
+    when(authnClient.loginWithExpiry(AuthnClient.UserCredentials.of("username", "password")))
+        .thenReturn(new ResponseEntity<>(HttpStatus.NOT_FOUND));
+    when(authnClient.login(AuthnClient.UserCredentials.of("username", "password")))
+        .thenReturn(buildClientResponse(MOCK_TOKEN));
+    when(contextBuilder.forSystemUser(any())).thenReturn(context);
+    var systemUser = preparSystmUser();
+    var systemUserService = systemUserService(systemUserProperties());
+    var actual = systemUserService.loginSystemUser(systemUser);
+    assertThat(actual).isEqualTo(expectedUserToken);
+  }
+
+  @Test
+  void loginSystemUser_negative_emptyBody() {
+    when(authnClient.loginWithExpiry(AuthnClient.UserCredentials.of("username", "password")))
+        .thenReturn(new ResponseEntity<>(org.springframework.http.HttpStatus.OK));
+    when(contextBuilder.forSystemUser(any())).thenReturn(context);
+    var systemUser = preparSystmUser();
+    var systemUserService = systemUserService(systemUserProperties());
+    assertThatThrownBy(() -> systemUserService.loginSystemUser(systemUser)).isInstanceOf(IllegalStateException.class)
+        .hasMessage("User [username] cannot login with expiry because expire times missing for status 200 OK");
+  }
+
+  private ResponseEntity<AuthnClient.LoginResponse> buildClientResponse(String token) {
+    return ResponseEntity.ok()
+        .header(XOkapiHeaders.TOKEN, token)
+        .body(new AuthnClient.LoginResponse(TOKEN_EXPIRATION.toString()));
   }
 
   @Test
@@ -146,6 +177,14 @@ class SystemUserAuthServiceTest {
       .username("username")
       .permissionsFilePath("permissions/empty-permissions.csv")
       .build();
+  }
+
+  private static SystemUser preparSystmUser() {
+    SystemUser systemUser = new SystemUser();
+    systemUser.setUserName("username");
+    systemUser.setOkapiUrl("http://okapi");
+    systemUser.setTenantId("tenant1");
+    return  systemUser;
   }
 
   private Optional<User> userExistsResponse() {
