@@ -75,14 +75,20 @@ public class SystemUserAuthService {
   }
 
   private UserToken getTokenLegacy(AuthnClient.UserCredentials credentials, String userName) {
-    var response =
-        authnClient.login(credentials);
+    var responseOptional =
+        ofNullable(authnClient.login(credentials));
 
-    if (!isNull(response) && response.getStatusCode() == HttpStatusCode.valueOf(404)) {
+    if (responseOptional.isEmpty()) {
+      throw new AuthorizationException("Unexpected response from login: " + userName);
+    }
+
+    var response = responseOptional.get();
+    if (response.getStatusCode() == HttpStatusCode.valueOf(404)) {
       return null;
     }
-    var accessToken =  ofNullable(response.getHeaders()
-        .get("x-okapi-token"))
+
+    var accessToken = ofNullable(response.getHeaders()
+        .get(XOkapiHeaders.TOKEN))
         .orElseThrow(() -> new AuthorizationException("Cannot retrieve okapi token for tenant: " + userName))
         .get(0);
 
@@ -93,19 +99,25 @@ public class SystemUserAuthService {
   }
 
   private UserToken getTokenWithExpiry(AuthnClient.UserCredentials credentials, String userName) {
-    var response =
-        authnClient.loginWithExpiry(credentials);
+    var responseOptional =
+        ofNullable(authnClient.loginWithExpiry(credentials));
 
-    if (!isNull(response) && response.getStatusCode() == HttpStatusCode.valueOf(404)) {
+    if (responseOptional.isEmpty()) {
+      throw new AuthorizationException("Unexpected response from loginWithExpiry: " + userName);
+    }
+
+    var response = responseOptional.get();
+    if (response.getStatusCode() == HttpStatusCode.valueOf(404)) {
       return null;
     }
-    if (!isNull(response) && isNull(response.getBody())) {
+
+    if (isNull(response) || isNull(response.getBody())) {
       throw new IllegalStateException(String.format(
           "User [%s] cannot %s because expire times missing for status %s",
           userName, "login with expiry", response.getStatusCode()));
     }
 
-    return Optional.ofNullable(response.getHeaders().get(SET_COOKIE))
+    return ofNullable(response.getHeaders().get(SET_COOKIE))
         .filter(list -> !CollectionUtils.isEmpty(list))
         .map(cookieHeaders -> parseUserTokenFromCookies(cookieHeaders, response.getBody()))
         .orElseThrow(() -> new IllegalStateException(String.format(
