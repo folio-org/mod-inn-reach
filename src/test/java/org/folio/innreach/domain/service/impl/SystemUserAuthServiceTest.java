@@ -67,7 +67,7 @@ class SystemUserAuthServiceTest {
 
 
   @Test
-  public void testGetTokenSuccessful() {
+  void testGetTokenSuccessful() {
     var expectedUserToken = userToken(TOKEN_EXPIRATION);
     var expectedHeaders = cookieHeaders(expectedUserToken.accessToken(), expectedUserToken.accessToken());
 
