@@ -62,7 +62,7 @@ public class SystemUserAuthService {
   }
 
   public UserToken loginSystemUser(SystemUser systemUser) {
-    log.info("loginSystemUser:: username : {}, token: {}", systemUser.getUserName(), systemUser.getToken().accessToken());
+    log.info("loginSystemUser:: username : {}", systemUser.getUserName());
     try (var context = new FolioExecutionContextSetter(contextBuilder.forSystemUser(systemUser))) {
       AuthnClient.UserCredentials creds = AuthnClient.UserCredentials
         .of(systemUser.getUserName(), folioSystemUserConf.getPassword());
