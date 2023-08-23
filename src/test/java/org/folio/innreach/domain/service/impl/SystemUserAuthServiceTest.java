@@ -2,8 +2,6 @@ package org.folio.innreach.domain.service.impl;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -21,6 +19,7 @@ import java.util.UUID;
 
 import io.netty.handler.codec.http.cookie.DefaultCookie;
 import org.apache.http.client.HttpClient;
+import org.apache.kafka.common.errors.AuthorizationException;
 import org.folio.innreach.domain.dto.folio.SystemUser;
 import org.folio.innreach.domain.dto.folio.UserToken;
 import org.folio.spring.FolioExecutionContext;
@@ -37,7 +36,6 @@ import org.folio.innreach.config.props.SystemUserProperties;
 import org.folio.innreach.domain.dto.folio.ResultList;
 import org.folio.innreach.domain.dto.folio.User;
 import org.folio.innreach.domain.service.UserService;
-import org.apache.http.impl.client.HttpClients;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -102,6 +100,17 @@ class SystemUserAuthServiceTest {
     var systemUserService = systemUserService(systemUserProperties());
     assertThatThrownBy(() -> systemUserService.loginSystemUser(systemUser)).isInstanceOf(IllegalStateException.class)
         .hasMessage("User [username] cannot login with expiry because expire times missing for status 200 OK");
+  }
+
+  @Test
+  void loginSystemUser_negative_unexpectedResponse() {
+    when(authnClient.loginWithExpiry(AuthnClient.UserCredentials.of("username", "password")))
+      .thenReturn(new ResponseEntity<>(HttpStatus.NOT_FOUND));
+    when(contextBuilder.forSystemUser(any())).thenReturn(context);
+    var systemUser = preparSystmUser();
+    var systemUserService = systemUserService(systemUserProperties());
+    assertThatThrownBy(() -> systemUserService.loginSystemUser(systemUser)).isInstanceOf(AuthorizationException.class)
+      .hasMessage("Unexpected response from login: username");
   }
 
   private ResponseEntity<AuthnClient.LoginResponse> buildClientResponse(String token) {
