@@ -16,3 +16,9 @@ circulation.requests.collection.get
 circulation.loans.collection.get
 inventory.items.item.put
 inventory-storage.holdings.item.put
+users.item.post
+login.item.post
+perms.users.get
+perms.users.item.post
+perms.users.assign.immutable
+perms.users.assign.mutable
