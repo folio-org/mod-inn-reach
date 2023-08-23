@@ -62,12 +62,14 @@ public class SystemUserAuthService {
   }
 
   public UserToken loginSystemUser(SystemUser systemUser) {
+    log.info("loginSystemUser:: username : {}, token: {}", systemUser.getUserName(), systemUser.getToken().accessToken());
     try (var context = new FolioExecutionContextSetter(contextBuilder.forSystemUser(systemUser))) {
       AuthnClient.UserCredentials creds = AuthnClient.UserCredentials
         .of(systemUser.getUserName(), folioSystemUserConf.getPassword());
-
+      log.info("loginSystemUser::creds username: {}", systemUser.getUserName());
       var token = getTokenWithExpiry(creds, systemUser.getUserName());
       if (isNull(token)) {
+        log.info("loginSystemUser::token is null");
         token  = getTokenLegacy(creds, systemUser.getUserName());
       }
       return token;
@@ -75,6 +77,7 @@ public class SystemUserAuthService {
   }
 
   private UserToken getTokenLegacy(AuthnClient.UserCredentials credentials, String userName) {
+    log.info("getTokenLegacy:: username : {}", userName);
     var responseOptional =
         ofNullable(authnClient.login(credentials));
 
@@ -84,6 +87,7 @@ public class SystemUserAuthService {
 
     var response = responseOptional.get();
     if (response.getStatusCode() == HttpStatusCode.valueOf(404)) {
+      log.info("getTokenLegacy:: response 404");
       return null;
     }
 
@@ -91,7 +95,7 @@ public class SystemUserAuthService {
         .get(XOkapiHeaders.TOKEN))
         .orElseThrow(() -> new AuthorizationException("Cannot retrieve okapi token for tenant: " + userName))
         .get(0);
-
+    log.info("getTokenLegacy:: usertoken generated ");
     return UserToken.builder()
         .accessToken(accessToken)
         .accessTokenExpiration(Instant.MAX)

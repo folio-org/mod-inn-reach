@@ -43,7 +43,9 @@ public class SystemUserService {
 
 //  @Cacheable(cacheNames = "system-user-cache", sync = true)
     public SystemUser getAuthedSystemUser(String tenantId) {
+      log.info("Attempting to issue token for system user [tenantId={}]", tenantId);
       if (systemUserCache == null) {
+        log.info("getAuthedSystemUser:: cache is null");
         return getSystemUser(tenantId);
       }
 
