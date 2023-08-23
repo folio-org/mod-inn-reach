@@ -111,7 +111,7 @@ public class SystemUserAuthService {
       return null;
     }
 
-    if (isNull(response) || isNull(response.getBody())) {
+    if (isNull(response.getBody())) {
       throw new IllegalStateException(String.format(
           "User [%s] cannot %s because expire times missing for status %s",
           userName, "login with expiry", response.getStatusCode()));
