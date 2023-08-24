@@ -120,7 +120,7 @@ public class SystemUserAuthService {
         userName, "login with expiry", response.getStatusCode()));
     }
 
-    log.info("getTokenLegacy:: usertoken generated ");
+    log.info("getTokenWithExpiry:: usertoken generated ");
     return ofNullable(response.getHeaders().get(SET_COOKIE))
       .filter(list -> !CollectionUtils.isEmpty(list))
       .map(cookieHeaders -> parseUserTokenFromCookies(cookieHeaders, response.getBody()))
