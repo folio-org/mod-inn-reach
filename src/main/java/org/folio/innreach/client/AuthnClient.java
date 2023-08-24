@@ -14,7 +14,7 @@ import org.folio.innreach.client.config.FolioFeignClientConfig;
 @FeignClient(name = "authn", configuration = FolioFeignClientConfig.class)
 public interface AuthnClient {
 
-  @PostMapping(value = "/login-with-expiry1", consumes = APPLICATION_JSON_VALUE)
+  @PostMapping(value = "/login-with-expiry", consumes = APPLICATION_JSON_VALUE)
   ResponseEntity<LoginResponse> loginWithExpiry(@RequestBody UserCredentials credentials);
 
   @PostMapping(value = "/login", consumes = APPLICATION_JSON_VALUE)
