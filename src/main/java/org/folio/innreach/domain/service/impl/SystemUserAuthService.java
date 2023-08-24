@@ -12,6 +12,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+
+import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.log4j.Log4j2;
@@ -28,6 +30,7 @@ import org.folio.spring.integration.XOkapiHeaders;
 import org.folio.spring.scope.FolioExecutionContextSetter;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
@@ -63,17 +66,23 @@ public class SystemUserAuthService {
 
   public UserToken loginSystemUser(SystemUser systemUser) {
     log.info("loginSystemUser:: username : {}", systemUser.getUserName());
+    AuthnClient.UserCredentials creds = AuthnClient.UserCredentials
+      .of(systemUser.getUserName(), folioSystemUserConf.getPassword());
     try (var context = new FolioExecutionContextSetter(contextBuilder.forSystemUser(systemUser))) {
-      AuthnClient.UserCredentials creds = AuthnClient.UserCredentials
-        .of(systemUser.getUserName(), folioSystemUserConf.getPassword());
       log.info("loginSystemUser::creds username: {}", systemUser.getUserName());
       var token =getTokenWithExpiry(creds, systemUser.getUserName());
       log.info("loginSystemUser:: token: {}", token);
-      if (token == null) {
-        log.info("loginSystemUser::token is null");
-        token  = getTokenLegacy(creds, systemUser.getUserName());
-      }
       return token;
+    }
+    catch(FeignException ex){
+      if(ex.status()==HttpStatus.NOT_FOUND.value()){
+        log.info("loginSystemUser:: not found");
+        return getTokenLegacy(creds, systemUser.getUserName());
+      }
+      else {
+        log.info("loginSystemUser:: responseOptional is null or 404 not found");
+        return null;
+      }
     }
   }
 
@@ -108,12 +117,7 @@ public class SystemUserAuthService {
     var response =
       authnClient.loginWithExpiry(credentials);
 
-    if (isNull(response) || (response.getStatusCode() == HttpStatusCode.valueOf(404))) {
-      log.info("getTokenWithExpiry:: responseOptional is null or 404 not found");
-      return null;
-    }
-
-    if (isNull(response.getBody())) {
+    if (isNull(response) || isNull(response.getBody())) {
       log.info("getTokenWithExpiry:: response get Body is : {} ", response.getBody());
       throw new IllegalStateException(String.format(
         "User [%s] cannot %s because expire times missing for status %s",
