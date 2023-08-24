@@ -180,11 +180,6 @@
       <groupId>io.netty</groupId>
       <artifactId>netty-codec-http</artifactId>
     </dependency>
-    <dependency>
-      <groupId>io.github.openfeign</groupId>
-      <artifactId>feign-core</artifactId>
-      <version>11.9.1</version>
-    </dependency>
 
     <!-- Test dependencies -->
     <dependency>
