@@ -128,18 +128,9 @@ class ContributionServiceImplTest {
   }
 
   @Test
-  void shouldCreateOngoingContribution() {
-    var contribution = createContribution();
-    var centralServerId = contribution.getCentralServer().getId();
-    when(repository.fetchOngoingByCentralServerId(centralServerId)).thenReturn(Optional.of(contribution));
-    assertNotNull(service.createOngoingContribution(centralServerId));
-  }
-
-  @Test
   void shouldCreateNewOngoingContribution() {
     var contribution = createContribution();
     var centralServerId = contribution.getCentralServer().getId();
-    when(repository.fetchOngoingByCentralServerId(centralServerId)).thenReturn(Optional.empty());
     when(repository.save(any())).thenReturn(contribution);
     assertNotNull(service.createOngoingContribution(centralServerId));
   }
