@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 
 import org.folio.innreach.client.config.FolioFeignClientConfig;
 
-@FeignClient(name = "authn", configuration = FolioFeignClientConfig.class, fallback = AuthnClientWithFallbackImpl.class)
+@FeignClient(name = "authn", configuration = FolioFeignClientConfig.class)
 public interface AuthnClient {
 
   @PostMapping(value = "/login-with-expiry", consumes = APPLICATION_JSON_VALUE)
