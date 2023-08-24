@@ -67,10 +67,10 @@ public class SystemUserAuthService {
       AuthnClient.UserCredentials creds = AuthnClient.UserCredentials
         .of(systemUser.getUserName(), folioSystemUserConf.getPassword());
       log.info("loginSystemUser::creds username: {}", systemUser.getUserName());
-      var token = getTokenWithExpiry(creds, systemUser.getUserName());
+      var token =getTokenLegacy(creds, systemUser.getUserName());
       if (isNull(token)) {
         log.info("loginSystemUser::token is null");
-        token  = getTokenLegacy(creds, systemUser.getUserName());
+        token  = getTokenWithExpiry(creds, systemUser.getUserName());
       }
       return token;
     }
