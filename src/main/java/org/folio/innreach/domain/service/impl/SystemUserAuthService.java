@@ -67,10 +67,11 @@ public class SystemUserAuthService {
       AuthnClient.UserCredentials creds = AuthnClient.UserCredentials
         .of(systemUser.getUserName(), folioSystemUserConf.getPassword());
       log.info("loginSystemUser::creds username: {}", systemUser.getUserName());
-      var token =getTokenLegacy(creds, systemUser.getUserName());
-      if (isNull(token)) {
+      var token =getTokenWithExpiry(creds, systemUser.getUserName());
+      log.info("loginSystemUser:: token: {}", token);
+      if (token == null) {
         log.info("loginSystemUser::token is null");
-        token  = getTokenWithExpiry(creds, systemUser.getUserName());
+        token  = getTokenLegacy(creds, systemUser.getUserName());
       }
       return token;
     }
@@ -103,29 +104,28 @@ public class SystemUserAuthService {
   }
 
   private UserToken getTokenWithExpiry(AuthnClient.UserCredentials credentials, String userName) {
-    var responseOptional =
-        ofNullable(authnClient.loginWithExpiry(credentials));
+    log.info("getTokenWithExpiry:: username: {} ", userName);
+    var response =
+      authnClient.loginWithExpiry(credentials);
 
-    if (responseOptional.isEmpty()) {
-      throw new AuthorizationException("Unexpected response from loginWithExpiry: " + userName);
-    }
-
-    var response = responseOptional.get();
-    if (response.getStatusCode() == HttpStatusCode.valueOf(404)) {
+    if (isNull(response) || (response.getStatusCode() == HttpStatusCode.valueOf(404))) {
+      log.info("getTokenWithExpiry:: responseOptional is null or 404 not found");
       return null;
     }
 
     if (isNull(response.getBody())) {
+      log.info("getTokenWithExpiry:: response get Body is : {} ", response.getBody());
       throw new IllegalStateException(String.format(
-          "User [%s] cannot %s because expire times missing for status %s",
-          userName, "login with expiry", response.getStatusCode()));
+        "User [%s] cannot %s because expire times missing for status %s",
+        userName, "login with expiry", response.getStatusCode()));
     }
 
+    log.info("getTokenLegacy:: usertoken generated ");
     return ofNullable(response.getHeaders().get(SET_COOKIE))
-        .filter(list -> !CollectionUtils.isEmpty(list))
-        .map(cookieHeaders -> parseUserTokenFromCookies(cookieHeaders, response.getBody()))
-        .orElseThrow(() -> new IllegalStateException(String.format(
-            "User [%s] cannot %s because of missing tokens", userName, "login with expiry")));
+      .filter(list -> !CollectionUtils.isEmpty(list))
+      .map(cookieHeaders -> parseUserTokenFromCookies(cookieHeaders, response.getBody()))
+      .orElseThrow(() -> new IllegalStateException(String.format(
+        "User [%s] cannot %s because of missing tokens", userName, "login with expiry")));
   }
 
   private void createFolioUser(UUID id) {
