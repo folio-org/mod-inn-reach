@@ -46,7 +46,9 @@ public class SystemUserService {
       log.info("Attempting to issue token for system user [tenantId={}]", tenantId);
       if (systemUserCache == null) {
         log.info("getAuthedSystemUser:: getSystemUser when cache is null");
-        return getSystemUser(tenantId);
+        var user = getSystemUser(tenantId);
+        systemUserCache.put(tenantId, user);
+        return user;
       }
 
       var user = systemUserCache.get(tenantId, this::getSystemUser);
