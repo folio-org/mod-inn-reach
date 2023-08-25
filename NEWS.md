@@ -1,3 +1,8 @@
+## v3.0.4 2023-08-25
+
+### Bugs
+* [MODINREACH-391](https://issues.folio.org/browse/MODINREACH-391) - Ongoing is failing due to Contribution table record design
+
 ## v3.0.3 2023-08-14
 
 ### Bugs
