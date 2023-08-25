@@ -45,7 +45,7 @@ public class SystemUserService {
     public SystemUser getAuthedSystemUser(String tenantId) {
       log.info("Attempting to issue token for system user [tenantId={}]", tenantId);
       if (systemUserCache == null) {
-        log.info("getAuthedSystemUser:: cache is null");
+        log.info("getAuthedSystemUser:: getSystemUser when cache is null");
         return getSystemUser(tenantId);
       }
 
@@ -57,6 +57,7 @@ public class SystemUserService {
       }
 
       systemUserCache.invalidate(tenantId);
+      log.info("getAuthedSystemUser:: getSystemUser when token is exipred");
       user = getSystemUser(tenantId);
       systemUserCache.put(tenantId, user);
 
