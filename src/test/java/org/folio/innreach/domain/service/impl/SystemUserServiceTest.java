@@ -151,7 +151,7 @@ class SystemUserServiceTest {
   }
 
   @Test
-  void shouldGetAndSystemUserTokenExpiry() {
+  void shouldGetAndSystemUserWhenTokenExpired() {
     var expectedUserToken = new UserToken(MOCK_TOKEN, TOKEN_EXPIRATION1);
     systemUserService.setSystemUserCache(userCache);
     when(authService.loginSystemUser(any(SystemUser.class))).thenReturn(expectedUserToken);

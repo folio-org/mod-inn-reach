@@ -10,7 +10,6 @@ import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 import feign.FeignException;
@@ -69,9 +68,9 @@ public class SystemUserAuthService {
     AuthnClient.UserCredentials creds = AuthnClient.UserCredentials
       .of(systemUser.getUserName(), folioSystemUserConf.getPassword());
     try (var context = new FolioExecutionContextSetter(contextBuilder.forSystemUser(systemUser))) {
-      log.info("loginSystemUser::creds username: {}", systemUser.getUserName());
       var token =getTokenWithExpiry(creds, systemUser.getUserName());
       log.info("loginSystemUser:: token: {}", token);
+      log.info("loginSystemUser:: token expiration: {}", token.accessTokenExpiration());
       return token;
     }
     catch(FeignException ex){
@@ -113,7 +112,6 @@ public class SystemUserAuthService {
   }
 
   private UserToken getTokenWithExpiry(AuthnClient.UserCredentials credentials, String userName) {
-    log.info("getTokenWithExpiry:: username: {} ", userName);
     var response =
       authnClient.loginWithExpiry(credentials);
 

@@ -12,18 +12,17 @@ import static org.mockito.Mockito.when;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
+import feign.FeignException;
+import feign.Request;
+import feign.Response;
 import io.netty.handler.codec.http.cookie.DefaultCookie;
-import org.apache.http.client.HttpClient;
-import org.apache.kafka.common.errors.AuthorizationException;
 import org.folio.innreach.domain.dto.folio.SystemUser;
 import org.folio.innreach.domain.dto.folio.UserToken;
 import org.folio.spring.FolioExecutionContext;
 import org.folio.spring.integration.XOkapiHeaders;
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -79,14 +78,26 @@ class SystemUserAuthServiceTest {
 
   @Test
   void loginSystemUser_when_loginExpiry_notFound() {
-    var expectedUserToken = new UserToken(MOCK_TOKEN, Instant.MAX);
     when(authnClient.loginWithExpiry(AuthnClient.UserCredentials.of("username", "password")))
         .thenReturn(new ResponseEntity<>(HttpStatus.NOT_FOUND));
-    when(authnClient.login(AuthnClient.UserCredentials.of("username", "password")))
-        .thenReturn(buildClientResponse(MOCK_TOKEN));
     when(contextBuilder.forSystemUser(any())).thenReturn(context);
     var systemUser = preparSystmUser();
     var systemUserService = systemUserService(systemUserProperties());
+    assertThatThrownBy(() -> systemUserService.loginSystemUser(systemUser)).isInstanceOf(IllegalStateException.class)
+      .hasMessage(String.format(
+        "User [username] cannot %s because expire times missing for status %s", "login with expiry", HttpStatus.NOT_FOUND));
+  }
+  @Test
+  void loginSystemUser_when_loginExpiry_ThrowsFeignException() {
+
+    when(authnClient.loginWithExpiry(AuthnClient.UserCredentials.of("username", "password")))
+      .thenThrow(feignException());
+    var expectedUserToken = new UserToken(MOCK_TOKEN, Instant.MAX);
+    when(authnClient.login(AuthnClient.UserCredentials.of("username", "password")))
+      .thenReturn(buildClientResponse(MOCK_TOKEN));
+    var systemUser = preparSystmUser();
+    var systemUserService = systemUserService(systemUserProperties());
+    when(contextBuilder.forSystemUser(any())).thenReturn(context);
     var actual = systemUserService.loginSystemUser(systemUser);
     assertThat(actual).isEqualTo(expectedUserToken);
   }
@@ -100,17 +111,6 @@ class SystemUserAuthServiceTest {
     var systemUserService = systemUserService(systemUserProperties());
     assertThatThrownBy(() -> systemUserService.loginSystemUser(systemUser)).isInstanceOf(IllegalStateException.class)
         .hasMessage("User [username] cannot login with expiry because expire times missing for status 200 OK");
-  }
-
-  @Test
-  void loginSystemUser_negative_unexpectedResponse() {
-    when(authnClient.loginWithExpiry(AuthnClient.UserCredentials.of("username", "password")))
-      .thenReturn(new ResponseEntity<>(HttpStatus.NOT_FOUND));
-    when(contextBuilder.forSystemUser(any())).thenReturn(context);
-    var systemUser = preparSystmUser();
-    var systemUserService = systemUserService(systemUserProperties());
-    assertThatThrownBy(() -> systemUserService.loginSystemUser(systemUser)).isInstanceOf(AuthorizationException.class)
-      .hasMessage("Unexpected response from login: username");
   }
 
   private ResponseEntity<AuthnClient.LoginResponse> buildClientResponse(String token) {
@@ -171,7 +171,24 @@ class SystemUserAuthServiceTest {
     verify(permissionsClient, times(1))
       .addPermission(any(), eq(PermissionsClient.Permission.of("inventory-storage.instance.item.post")));
   }
-
+  private static FeignException feignException() {
+    Map<String, Collection<String>> headersError = new HashMap<>();
+    byte[] bodyError = new byte[1];
+    return FeignException.errorStatus(
+      "loginwithExpiry",
+      Response.builder()
+        .status(404)
+        .reason("message error")
+        .request(Request.create(
+          Request.HttpMethod.POST,
+          "/login-with-expiry",
+          headersError,
+          null,
+          null,
+          null))
+        .body(bodyError)
+        .build());
+  }
   private SystemUserProperties systemUser() {
     return SystemUserProperties.builder()
       .password("password")

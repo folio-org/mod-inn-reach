@@ -75,7 +75,6 @@ public class SystemUserService {
     var token = authService.loginSystemUser(systemUser);
     log.info("Token for system user has been issued [tenantId={}]", tenantId);
     systemUser.setToken(token);
-
     var userId = getSystemUserId(systemUser);
     systemUser.setUserId(userId);
 
