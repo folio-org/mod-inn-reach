@@ -14,7 +14,7 @@ import org.springframework.stereotype.Service;
 @Log4j2
 @Service
 @RequiredArgsConstructor
-public class SystemUserService {
+public class SystemUserServiceInreach {
 
   private final SystemUserAuthService authService;
   private final UserService userService;

@@ -31,7 +31,7 @@ class CustomTenantServiceTest {
   private static final String TENANT_SCHEMA = "db_tenant";
 
   @Mock
-  private SystemUserService systemUserService;
+  private SystemUserServiceInreach systemUserServiceInreach;
   @Mock
   private FolioExecutionContext context;
   @Mock
@@ -56,7 +56,7 @@ class CustomTenantServiceTest {
 
     service.createOrUpdateTenant(new TenantAttributes());
 
-    verify(systemUserService).prepareSystemUser();
+    verify(systemUserServiceInreach).prepareSystemUser();
     verify(contributionJobRunner).cancelJobs();
   }
 
@@ -67,7 +67,7 @@ class CustomTenantServiceTest {
 
     service.createOrUpdateTenant(new TenantAttributes());
 
-    verify(systemUserService, never()).prepareSystemUser();
+    verify(systemUserServiceInreach, never()).prepareSystemUser();
     verify(contributionJobRunner, never()).cancelJobs();
   }
 
@@ -79,7 +79,7 @@ class CustomTenantServiceTest {
     TenantAttributes attributes = new TenantAttributes();
     assertThrows(TenantUpgradeException.class, () -> service.createOrUpdateTenant(attributes));
 
-    verify(systemUserService, never()).prepareSystemUser();
+    verify(systemUserServiceInreach, never()).prepareSystemUser();
     verify(contributionJobRunner, never()).cancelJobs();
   }
 

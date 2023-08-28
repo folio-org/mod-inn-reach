@@ -4,7 +4,6 @@ import static org.folio.spring.scope.FolioExecutionScopeExecutionContextManager.
 
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
-import org.apache.commons.codec.DecoderException;
 import org.folio.spring.FolioExecutionContext;
 import org.springframework.stereotype.Service;
 
@@ -13,7 +12,7 @@ import org.springframework.stereotype.Service;
 public class TenantScopedExecutionService {
 
   private final FolioExecutionContextBuilder contextBuilder;
-  private final SystemUserService systemUserService;
+  private final SystemUserServiceInreach systemUserServiceInreach;
 
   @SneakyThrows
   public void runTenantScoped(String tenantId, Runnable job) {
@@ -21,7 +20,7 @@ public class TenantScopedExecutionService {
   }
 
   private FolioExecutionContext folioExecutionContext(String tenant) {
-    return contextBuilder.forSystemUser(systemUserService.getSystemUser(tenant));
+    return contextBuilder.forSystemUser(systemUserServiceInreach.getSystemUser(tenant));
   }
 
 }

@@ -6,15 +6,10 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.NONE;
 
 import static org.folio.spring.integration.XOkapiHeaders.TENANT;
 
-import java.util.Optional;
-import java.util.UUID;
-
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockitoAnnotations;
@@ -31,15 +26,13 @@ import org.springframework.context.annotation.Import;
 import org.springframework.test.context.TestPropertySource;
 
 import org.folio.innreach.config.props.SystemUserProperties;
-import org.folio.innreach.domain.dto.folio.SystemUser;
-import org.folio.innreach.domain.dto.folio.User;
 import org.folio.innreach.domain.service.UserService;
 import org.folio.spring.DefaultFolioExecutionContext;
 import org.folio.spring.FolioExecutionContext;
 
-@Import(SystemUserServiceTest.TestContextConfiguration.class)
-@SpringBootTest(classes = SystemUserService.class, webEnvironment = NONE)
-class SystemUserServiceTest {
+@Import(SystemUserServiceInreachTest.TestContextConfiguration.class)
+@SpringBootTest(classes = SystemUserServiceInreach.class, webEnvironment = NONE)
+class SystemUserServiceInreachTest {
 
   private static final String TENANT_ID = "tenant1";
   private static final String AUTH_TOKEN = "aa.bb.cc";
@@ -47,7 +40,7 @@ class SystemUserServiceTest {
   private static final String CACHE_NAME = "system-user-cache";
 
   @Autowired
-  private SystemUserService systemUserService;
+  private SystemUserServiceInreach systemUserServiceInreach;
 
   @Autowired
   private CacheManager cacheManager;
@@ -70,7 +63,7 @@ class SystemUserServiceTest {
 
   @Test
   void shouldPrepareSystemUser() {
-    systemUserService.prepareSystemUser();
+    systemUserServiceInreach.prepareSystemUser();
 
     verify(authService).setupSystemUser();
   }

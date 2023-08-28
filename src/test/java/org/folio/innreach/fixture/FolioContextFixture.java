@@ -8,7 +8,7 @@ import static org.folio.spring.integration.XOkapiHeaders.TENANT;
 import org.mockito.Mockito;
 
 import org.folio.innreach.domain.service.impl.FolioExecutionContextBuilder;
-import org.folio.innreach.domain.service.impl.SystemUserService;
+import org.folio.innreach.domain.service.impl.SystemUserServiceInreach;
 import org.folio.innreach.domain.service.impl.TenantScopedExecutionService;
 import org.folio.spring.DefaultFolioExecutionContext;
 
@@ -18,10 +18,10 @@ public class FolioContextFixture {
     new DefaultFolioExecutionContext(null, singletonMap(TENANT, singletonList("test")));
 
   private static final FolioExecutionContextBuilder contextBuilder = Mockito.mock(FolioExecutionContextBuilder.class);
-  private static final SystemUserService systemUserService = Mockito.mock(SystemUserService.class);
+  private static final SystemUserServiceInreach SYSTEM_USER_SERVICE_INREACH = Mockito.mock(SystemUserServiceInreach.class);
 
   public static TenantScopedExecutionService createTenantExecutionService() {
-    return new TenantScopedExecutionService(Mockito.mock(FolioExecutionContextBuilder.class), Mockito.mock(SystemUserService.class));
+    return new TenantScopedExecutionService(Mockito.mock(FolioExecutionContextBuilder.class), Mockito.mock(SystemUserServiceInreach.class));
   }
 
 }
