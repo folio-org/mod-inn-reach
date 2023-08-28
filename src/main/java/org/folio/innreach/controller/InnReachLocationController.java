@@ -7,6 +7,7 @@ import jakarta.validation.constraints.Min;
 import java.util.UUID;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -22,6 +23,7 @@ import org.folio.innreach.dto.InnReachLocationDTO;
 import org.folio.innreach.dto.InnReachLocationsDTO;
 import org.folio.innreach.rest.resource.LocationsApi;
 
+@Slf4j
 @RequiredArgsConstructor
 @RestController
 @RequestMapping("/inn-reach/locations")
@@ -48,6 +50,7 @@ public class InnReachLocationController implements LocationsApi {
   @GetMapping
   public ResponseEntity<InnReachLocationsDTO> getLocations(@Min(0) @Max(2147483647) @Valid Integer offset,
       @Min(0) @Max(2147483647) @Valid Integer limit) {
+    log.info("##### getLocations() called #####");
     var innReachLocations = innReachLocationService.getAllInnReachLocations(offset, limit);
     return ResponseEntity.ok(innReachLocations);
   }
