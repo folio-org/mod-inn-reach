@@ -10,30 +10,38 @@ import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.With;
 import lombok.extern.log4j.Log4j2;
+import org.folio.spring.context.ExecutionContextBuilder;
 import org.springframework.stereotype.Component;
 
-import org.folio.innreach.domain.dto.folio.SystemUser;
 import org.folio.spring.FolioExecutionContext;
 import org.folio.spring.FolioModuleMetadata;
 
 @Component
-@RequiredArgsConstructor
+//@RequiredArgsConstructor
 @Log4j2
-public class FolioExecutionContextBuilder {
+public class FolioExecutionContextBuilder extends ExecutionContextBuilder {
+//  public FolioExecutionContextBuilder(FolioModuleMetadata moduleMetadata) {
+//    super(moduleMetadata);
+//  }
   private final FolioModuleMetadata moduleMetadata;
+
+  public FolioExecutionContextBuilder(FolioModuleMetadata moduleMetadata) {
+    super(moduleMetadata);
+    this.moduleMetadata = moduleMetadata;
+  }
 
   public Builder builder() {
     return new Builder(moduleMetadata);
   }
 
-  public FolioExecutionContext forSystemUser(SystemUser systemUser) {
-    return builder()
-      .withTenantId(systemUser.getTenantId())
-      .withOkapiUrl(systemUser.getOkapiUrl())
-      .withToken(systemUser.getToken())
-      .withUserId(systemUser.getUserId())
-      .build();
-  }
+//  public FolioExecutionContext forSystemUser(SystemUser systemUser) {
+//    return builder()
+//      .withTenantId(systemUser.tenantId())
+//      .withOkapiUrl(systemUser.okapiUrl())
+//      .withToken(systemUser.token().accessToken())
+//      .withUserId(systemUser.userId())
+//      .build();
+//  }
 
   public FolioExecutionContext withUserId(FolioExecutionContext folioContext, UUID userID) {
     log.debug("withUserId :: Building folioContext with userID {}", userID);
@@ -52,6 +60,8 @@ public class FolioExecutionContextBuilder {
   public FolioExecutionContext dbOnlyContext(String tenantId) {
     return builder().withTenantId(tenantId).build();
   }
+
+
 
   @With
   @AllArgsConstructor(access = AccessLevel.PRIVATE)

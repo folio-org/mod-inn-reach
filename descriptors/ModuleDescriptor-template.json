@@ -610,6 +610,7 @@
             "perms.users.item.post",
             "perms.users.get",
             "perms.users.assign.immutable",
+            "perms.users.assign.mutable",
             "inventory-storage.instance-types.collection.get",
             "inventory-storage.instance-types.item.post",
             "inventory-storage.contributor-name-types.collection.get",

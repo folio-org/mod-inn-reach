@@ -59,6 +59,9 @@ class SystemUserServiceTest {
   @MockBean
   private FolioExecutionContextBuilder contextBuilder;
 
+  @MockBean
+  private org.folio.spring.service.SystemUserService systemUserService1;
+
 
   @BeforeEach
   void setupBeforeEach() {
@@ -74,9 +77,9 @@ class SystemUserServiceTest {
 
   @Test
   void shouldGetAndCacheSystemUser() {
-    when(authService.loginSystemUser(any(SystemUser.class))).thenReturn(AUTH_TOKEN);
+//    when(authService.loginSystemUser(any(SystemUser.class))).thenReturn(AUTH_TOKEN);
 
-    when(contextBuilder.forSystemUser(any(SystemUser.class))).thenReturn(new FolioExecutionContext() {});
+//    when(contextBuilder.forSystemUser(any(SystemUser.class))).thenReturn(new FolioExecutionContext() {});
 
     var user = new User();
     user.setUsername(USERNAME);
@@ -86,11 +89,11 @@ class SystemUserServiceTest {
     var systemUser = systemUserService.getSystemUser(TENANT_ID);
 
     Assertions.assertThat(systemUser).isNotNull();
-    Assertions.assertThat(systemUser.getToken()).isNotNull();
-    assertThat(systemUser.getTenantId(), is(TENANT_ID));
-    assertThat(systemUser.getToken(), is(AUTH_TOKEN));
-    assertThat(systemUser.getUserName(), is(USERNAME));
-    assertThat(systemUser.getUserId(), is(user.getId()));
+    Assertions.assertThat(systemUser.token()).isNotNull();
+    assertThat(systemUser.tenantId(), is(TENANT_ID));
+    assertThat(systemUser.token(), is(AUTH_TOKEN));
+    assertThat(systemUser.username(), is(USERNAME));
+    assertThat(systemUser.userId(), is(user.getId()));
 
     Assertions.assertThat(cacheManager.getCache(CACHE_NAME).get(TENANT_ID, SystemUser.class))
       .isEqualTo(systemUser);

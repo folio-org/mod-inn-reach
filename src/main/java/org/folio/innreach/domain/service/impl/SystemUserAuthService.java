@@ -14,11 +14,12 @@ import org.apache.commons.io.IOUtils;
 import org.folio.innreach.client.AuthnClient;
 import org.folio.innreach.client.PermissionsClient;
 import org.folio.innreach.config.props.SystemUserProperties;
-import org.folio.innreach.domain.dto.folio.SystemUser;
+import org.folio.spring.model.SystemUser;
 import org.folio.innreach.domain.dto.folio.User;
 import org.folio.innreach.domain.service.UserService;
 import org.folio.spring.integration.XOkapiHeaders;
 import org.folio.spring.scope.FolioExecutionContextSetter;
+import org.folio.spring.service.PrepareSystemUserService;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
@@ -35,39 +36,41 @@ public class SystemUserAuthService {
   private final UserService userService;
   private final FolioExecutionContextBuilder contextBuilder;
   private final SystemUserProperties folioSystemUserConf;
+  private final PrepareSystemUserService prepareSystemUserService;
 
   public void setupSystemUser() {
-    var folioUser = userService.getUserByName(folioSystemUserConf.getUsername());
-    var userId = folioUser.map(User::getId)
-      .orElse(UUID.randomUUID());
-
-    if (folioUser.isPresent()) {
-      log.info("Setting up existing system user");
-      addPermissions(userId);
-    } else {
-      log.info("No system user exist, creating...");
-
-      createFolioUser(userId);
-      saveCredentials();
-      assignPermissions(userId);
-    }
+//    var folioUser = userService.getUserByName(folioSystemUserConf.getUsername());
+//    var userId = folioUser.map(User::getId)
+//      .orElse(UUID.randomUUID());
+//
+//    if (folioUser.isPresent()) {
+//      log.info("Setting up existing system user");
+//      addPermissions(userId);
+//    } else {
+//      log.info("No system user exist, creating...");
+//
+//      createFolioUser(userId);
+//      saveCredentials();
+//      assignPermissions(userId);
+//    }
+    prepareSystemUserService.setupSystemUser();
   }
 
-  public String loginSystemUser(SystemUser systemUser) {
-    try (var context = new FolioExecutionContextSetter(contextBuilder.forSystemUser(systemUser))) {
-      AuthnClient.UserCredentials creds = AuthnClient.UserCredentials
-        .of(systemUser.getUserName(), folioSystemUserConf.getPassword());
-
-      var response = authnClient.getApiKey(creds);
-
-      List<String> tokenHeaders = response.getHeaders().get(XOkapiHeaders.TOKEN);
-
-      return Optional.ofNullable(tokenHeaders)
-        .filter(list -> !CollectionUtils.isEmpty(list))
-        .map(list -> list.get(0))
-        .orElseThrow(() -> new IllegalStateException(String.format("User [%s] cannot log in", systemUser.getUserName())));
-    }
-  }
+//  public String loginSystemUser(SystemUser systemUser) {
+//    try (var context = new FolioExecutionContextSetter(contextBuilder.forSystemUser(systemUser))) {
+////      AuthnClient.UserCredentials creds = AuthnClient.UserCredentials
+////        .of(systemUser.username()), folioSystemUserConf.getPassword());
+//
+////      var response = authnClient.getApiKey(creds);
+//
+//      List<String> tokenHeaders = response.getHeaders().get(XOkapiHeaders.TOKEN);
+//
+//      return Optional.ofNullable(tokenHeaders)
+//        .filter(list -> !CollectionUtils.isEmpty(list))
+//        .map(list -> list.get(0))
+//        .orElseThrow(() -> new IllegalStateException(String.format("User [%s] cannot log in", systemUser.getUserName())));
+//    }
+//  }
 
   private void createFolioUser(UUID id) {
     final var user = createUserObject(id);

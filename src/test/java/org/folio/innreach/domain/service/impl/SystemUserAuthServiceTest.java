@@ -10,6 +10,7 @@ import static org.mockito.Mockito.when;
 
 import java.util.Optional;
 
+import org.folio.spring.service.PrepareSystemUserService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -32,6 +33,8 @@ class SystemUserAuthServiceTest {
   private PermissionsClient permissionsClient;
   @Mock
   private FolioExecutionContextBuilder contextBuilder;
+  @Mock
+  private PrepareSystemUserService prepareSystemUserService;
 
   @Test
   void shouldCreateSystemUserWhenNotExist() {
@@ -111,7 +114,7 @@ class SystemUserAuthServiceTest {
   }
 
   private SystemUserAuthService systemUserService(SystemUserProperties properties) {
-    return new SystemUserAuthService(permissionsClient, authnClient, userService, contextBuilder, properties);
+    return new SystemUserAuthService(permissionsClient, authnClient, userService, contextBuilder, properties, prepareSystemUserService);
   }
 
   private void prepareSystemUser(SystemUserProperties properties) {

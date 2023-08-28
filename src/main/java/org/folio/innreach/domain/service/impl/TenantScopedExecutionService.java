@@ -4,6 +4,7 @@ import static org.folio.spring.scope.FolioExecutionScopeExecutionContextManager.
 
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
+import org.apache.commons.codec.DecoderException;
 import org.folio.spring.FolioExecutionContext;
 import org.springframework.stereotype.Service;
 
