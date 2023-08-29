@@ -33,7 +33,6 @@ public class SystemUserServiceInreach {
     log.info("System user has been prepared");
   }
 
-  @Cacheable(cacheNames = "system-user-cache", sync = true)
   public SystemUser getSystemUser(String tenantId) {
 //    log.info("Attempting to issue token for system user [tenantId={}]", tenantId);
 //

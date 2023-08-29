@@ -2,6 +2,7 @@ package org.folio.innreach.config;
 
 import lombok.extern.log4j.Log4j2;
 import org.folio.innreach.config.props.InnReachRetryPolicy;
+import org.folio.spring.service.SystemUserProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -37,5 +38,8 @@ public class ContributionJobConfig {
     return new ContributionExceptionListener(contributionService, "itemContribution");
   }
 
-
+  @Bean
+  public SystemUserProperties systemUserProperties() {
+    return new SystemUserProperties("system-user","system-user","System","permissions/system-user-permissions.csv");
+  }
 }
