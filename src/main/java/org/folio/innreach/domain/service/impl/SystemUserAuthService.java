@@ -13,13 +13,13 @@ import lombok.extern.log4j.Log4j2;
 import org.apache.commons.io.IOUtils;
 import org.folio.innreach.client.AuthnClient;
 import org.folio.innreach.client.PermissionsClient;
-import org.folio.innreach.config.props.SystemUserProperties;
 import org.folio.spring.model.SystemUser;
 import org.folio.innreach.domain.dto.folio.User;
 import org.folio.innreach.domain.service.UserService;
 import org.folio.spring.integration.XOkapiHeaders;
 import org.folio.spring.scope.FolioExecutionContextSetter;
 import org.folio.spring.service.PrepareSystemUserService;
+import org.folio.spring.service.SystemUserProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
@@ -28,7 +28,6 @@ import org.springframework.util.CollectionUtils;
 @Log4j2
 @RequiredArgsConstructor
 @Service
-@EnableConfigurationProperties(SystemUserProperties.class)
 public class SystemUserAuthService {
 
   private final PermissionsClient permissionsClient;
@@ -39,7 +38,7 @@ public class SystemUserAuthService {
   private final PrepareSystemUserService prepareSystemUserService;
 
   public void setupSystemUser() {
-    var folioUser = userService.getUserByName(folioSystemUserConf.getUsername());
+    var folioUser = userService.getUserByName(folioSystemUserConf.username());
     var userId = folioUser.map(User::getId)
       .orElse(UUID.randomUUID());
     log.info("setupSystemUser:: userId : {}", userId);
@@ -78,13 +77,13 @@ public class SystemUserAuthService {
   }
 
   private void saveCredentials() {
-    authnClient.saveCredentials(AuthnClient.UserCredentials.of(folioSystemUserConf.getUsername(), folioSystemUserConf.getPassword()));
+    authnClient.saveCredentials(AuthnClient.UserCredentials.of(folioSystemUserConf.username(), folioSystemUserConf.password()));
 
-    log.info("Saved credentials for user: [{}]", folioSystemUserConf.getUsername());
+    log.info("Saved credentials for user: [{}]", folioSystemUserConf.username());
   }
 
   private void assignPermissions(UUID userId) {
-    List<String> perms = getResourceLines(folioSystemUserConf.getPermissionsFilePath());
+    List<String> perms = getResourceLines(folioSystemUserConf.permissionsFilePath());
 
     if (isEmpty(perms)) {
       throw new IllegalStateException("No permissions found to assign to user with id: " + userId);
@@ -97,7 +96,7 @@ public class SystemUserAuthService {
   }
 
   private void addPermissions(UUID userId) {
-    var expectedPermissions = getResourceLines(folioSystemUserConf.getPermissionsFilePath());
+    var expectedPermissions = getResourceLines(folioSystemUserConf.permissionsFilePath());
     var assignedPermissions = permissionsClient.getUserPermissions(userId);
 
     if (isEmpty(expectedPermissions)) {
@@ -116,11 +115,11 @@ public class SystemUserAuthService {
 
     user.setId(id);
     user.setActive(true);
-    user.setUsername(folioSystemUserConf.getUsername());
+    user.setUsername(folioSystemUserConf.username());
 
     user.setPersonal(new User.Personal());
     user.getPersonal()
-      .setLastName(folioSystemUserConf.getLastname());
+      .setLastName(folioSystemUserConf.lastname());
 
     return user;
   }
