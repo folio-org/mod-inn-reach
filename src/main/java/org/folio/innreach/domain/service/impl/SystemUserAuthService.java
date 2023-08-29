@@ -28,7 +28,6 @@ import org.springframework.util.CollectionUtils;
 @Log4j2
 @RequiredArgsConstructor
 @Service
-@EnableConfigurationProperties(SystemUserProperties.class)
 public class SystemUserAuthService {
 
   private final PermissionsClient permissionsClient;

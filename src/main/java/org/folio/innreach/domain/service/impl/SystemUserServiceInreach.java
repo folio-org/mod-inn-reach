@@ -3,7 +3,6 @@ package org.folio.innreach.domain.service.impl;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
-import org.folio.innreach.config.props.SystemUserProperties;
 import org.folio.spring.model.SystemUser;
 import org.folio.innreach.domain.service.UserService;
 import org.folio.spring.scope.FolioExecutionContextSetter;
@@ -19,7 +18,6 @@ public class SystemUserServiceInreach {
 
   private final SystemUserAuthService authService;
   private final UserService userService;
-  private final SystemUserProperties systemUserConf;
   private final FolioExecutionContextBuilder contextBuilder;
   private final org.folio.spring.service.SystemUserService folioSystemUserService;
 
