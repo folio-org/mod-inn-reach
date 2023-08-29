@@ -8,6 +8,7 @@ import org.folio.spring.model.SystemUser;
 import org.folio.innreach.domain.service.UserService;
 import org.folio.spring.scope.FolioExecutionContextSetter;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
