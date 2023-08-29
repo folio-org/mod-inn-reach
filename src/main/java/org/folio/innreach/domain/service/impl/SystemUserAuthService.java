@@ -39,20 +39,20 @@ public class SystemUserAuthService {
   private final PrepareSystemUserService prepareSystemUserService;
 
   public void setupSystemUser() {
-//    var folioUser = userService.getUserByName(folioSystemUserConf.getUsername());
-//    var userId = folioUser.map(User::getId)
-//      .orElse(UUID.randomUUID());
-//
-//    if (folioUser.isPresent()) {
-//      log.info("Setting up existing system user");
-//      addPermissions(userId);
-//    } else {
-//      log.info("No system user exist, creating...");
-//
-//      createFolioUser(userId);
-//      saveCredentials();
-//      assignPermissions(userId);
-//    }
+    var folioUser = userService.getUserByName(folioSystemUserConf.getUsername());
+    var userId = folioUser.map(User::getId)
+      .orElse(UUID.randomUUID());
+    log.info("setupSystemUser:: userId : {}", userId);
+    if (folioUser.isPresent()) {
+      log.info("Setting up existing system user");
+      addPermissions(userId);
+    } else {
+      log.info("No system user exist, creating...");
+
+      createFolioUser(userId);
+      saveCredentials();
+      assignPermissions(userId);
+    }
     prepareSystemUserService.setupSystemUser();
   }
 

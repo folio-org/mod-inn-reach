@@ -40,6 +40,6 @@ public class ContributionJobConfig {
 
   @Bean
   public SystemUserProperties systemUserProperties() {
-    return new SystemUserProperties("system-user","system-user","System","permissions/mod-innreach.csv");
+    return new SystemUserProperties("mod-innreach","system-user","System","permissions/mod-innreach.csv");
   }
 }
