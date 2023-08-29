@@ -1,8 +1,6 @@
 server:
   port: 8081
 spring:
-  main:
-    allow-bean-definition-overriding: true
   application:
     name: mod-inn-reach
   datasource:

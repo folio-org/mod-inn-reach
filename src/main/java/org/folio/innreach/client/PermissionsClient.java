@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.folio.innreach.client.config.FolioFeignClientConfig;
 import org.folio.innreach.domain.dto.folio.ResultList;
 
-@FeignClient(name = "perms/users", configuration = FolioFeignClientConfig.class)
+@FeignClient(name = "perms/users", contextId = "permissionsClient", configuration = FolioFeignClientConfig.class)
 public interface PermissionsClient {
 
   @PostMapping(consumes = APPLICATION_JSON_VALUE, produces = APPLICATION_JSON_VALUE)

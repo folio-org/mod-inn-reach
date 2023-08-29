@@ -17,7 +17,7 @@ import org.folio.innreach.client.config.FolioFeignClientConfig;
 import org.folio.innreach.domain.dto.folio.ResultList;
 import org.folio.innreach.domain.dto.folio.User;
 
-@FeignClient(name = "users", configuration = FolioFeignClientConfig.class, dismiss404 = true)
+@FeignClient(name = "users", contextId = "userClient", configuration = FolioFeignClientConfig.class, dismiss404 = true)
 public interface UsersClient {
 
   @GetMapping(value = "/{id}")
