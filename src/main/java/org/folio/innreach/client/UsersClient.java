@@ -27,7 +27,7 @@ public interface UsersClient {
   ResultList<org.folio.innreach.domain.dto.folio.User> query(@RequestParam("query") String query);
 
   @GetMapping
-  ResultList<User> query1(@RequestParam("query") String query);
+  org.folio.spring.model.ResultList<User> query1(@RequestParam("query") String query);
 
   @PostMapping(consumes = APPLICATION_JSON_VALUE)
   void saveUser(@RequestBody org.folio.innreach.domain.dto.folio.User user);
