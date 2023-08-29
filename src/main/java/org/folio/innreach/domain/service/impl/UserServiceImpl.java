@@ -21,13 +21,9 @@ import org.folio.innreach.util.ListUtils;
 @Service
 public class UserServiceImpl implements UserService {
 
-  private static final String CACHE_USERS_BY_ID = "users-by-id";
-  private static final String CACHE_USERS_BY_NAME = "users-by-name";
-
   private final UsersClient usersClient;
 
   @Override
-  @Cacheable(cacheNames = CACHE_USERS_BY_ID, key = "@folioExecutionContext.tenantId + ': ' + #id")
   public Optional<User> getUserById(UUID id) {
     log.debug("Getting user by id: userId = {}", id);
 
@@ -39,7 +35,6 @@ public class UserServiceImpl implements UserService {
   }
 
   @Override
-  @Cacheable(cacheNames = CACHE_USERS_BY_NAME, key = "@folioExecutionContext.tenantId + ': ' + #name")
   public Optional<User> getUserByName(String name) {
     log.info("Getting user by name: userName = {}", name);
 
@@ -69,11 +64,7 @@ public class UserServiceImpl implements UserService {
     return ListUtils.getFirstItem(users);
   }
 
-  @Override
-  @Caching(put = {
-    @CachePut(cacheNames = CACHE_USERS_BY_ID, key = "@folioExecutionContext.tenantId + ': ' + #result.id"),
-    @CachePut(cacheNames = CACHE_USERS_BY_NAME, key = "@folioExecutionContext.tenantId + ': ' + #result.username")
-  })
+
   public User saveUser(User user) {
     usersClient.saveUser(user);
     return user;
