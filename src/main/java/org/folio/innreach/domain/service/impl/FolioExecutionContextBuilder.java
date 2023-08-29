@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.With;
 import lombok.extern.log4j.Log4j2;
 import org.folio.spring.context.ExecutionContextBuilder;
+import org.folio.spring.model.SystemUser;
 import org.springframework.stereotype.Component;
 
 import org.folio.spring.FolioExecutionContext;
@@ -19,14 +20,13 @@ import org.folio.spring.FolioModuleMetadata;
 @Component
 //@RequiredArgsConstructor
 @Log4j2
-public class FolioExecutionContextBuilder extends ExecutionContextBuilder {
+public class FolioExecutionContextBuilder {
 //  public FolioExecutionContextBuilder(FolioModuleMetadata moduleMetadata) {
 //    super(moduleMetadata);
 //  }
   private final FolioModuleMetadata moduleMetadata;
 
   public FolioExecutionContextBuilder(FolioModuleMetadata moduleMetadata) {
-    super(moduleMetadata);
     this.moduleMetadata = moduleMetadata;
   }
 
@@ -34,14 +34,14 @@ public class FolioExecutionContextBuilder extends ExecutionContextBuilder {
     return new Builder(moduleMetadata);
   }
 
-//  public FolioExecutionContext forSystemUser(SystemUser systemUser) {
-//    return builder()
-//      .withTenantId(systemUser.tenantId())
-//      .withOkapiUrl(systemUser.okapiUrl())
-//      .withToken(systemUser.token().accessToken())
-//      .withUserId(systemUser.userId())
-//      .build();
-//  }
+  public FolioExecutionContext forSystemUser(SystemUser systemUser) {
+    return builder()
+      .withTenantId(systemUser.tenantId())
+      .withOkapiUrl(systemUser.okapiUrl())
+      .withToken(systemUser.token().accessToken())
+      .withUserId(UUID.fromString(systemUser.userId()))
+      .build();
+  }
 
   public FolioExecutionContext withUserId(FolioExecutionContext folioContext, UUID userID) {
     log.debug("withUserId :: Building folioContext with userID {}", userID);
