@@ -39,6 +39,10 @@ public class SystemUserAuthService {
   private final PrepareSystemUserService prepareSystemUserService;
 
   public void setupSystemUser() {
+    var localUser = userService.getUserByName(folioSystemUserConf.username());
+    log.info("localUser: {} ", localUser);
+    if (localUser.isPresent())
+      log.info("UserId:: {} ", localUser.get().getId());
     var folioUser = prepareSystemUserService.getFolioUser(folioSystemUserConf.username());
     log.info("folioUser:: {} ", folioUser);
     if (folioUser.isPresent())
