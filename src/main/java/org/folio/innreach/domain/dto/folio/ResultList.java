@@ -10,15 +10,60 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.extern.log4j.Log4j2;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor(staticName = "of")
-@JsonIgnoreProperties("resultInfo")
+@Log4j2
+//@JsonIgnoreProperties("resultInfo")
 public class ResultList<T> {
+//
+//  /**
+//   * Total records.
+//   */
+//  @JsonAlias("total_records")
+//  private int totalRecords = 0;
+//
+//  /**
+//   * Paged result data.
+//   */
+//  private List<T> result = Collections.emptyList();
+//
+//  // The `key` is required per contract
+//  @SuppressWarnings("unused")
+//  @JsonAnySetter
+//  public void set(String key, List<T> result) {
+//    this.result = result;
+//  }
+//
+//  /**
+//   * Creates empty result list.
+//   *
+//   * @param <R> generic type for result item.
+//   * @return empty result list.
+//   */
+//  public static <R> ResultList<R> empty() {
+//    return new ResultList<>();
+//  }
+//
+//  /**
+//   * Creates result list from given resource.
+//   *
+//   * @param <R> generic type for result item.
+//   * @return empty result list.
+//   */
+//  public static <R> ResultList<R> asSinglePage(List<R> result) {
+//    return new ResultList<>(result.size(), result);
+//  }
+//
+//  @SafeVarargs
+//  public static <R> ResultList<R> asSinglePage(R... records) {
+//    return new ResultList<>(records.length, Arrays.asList(records));
+//  }
 
   /**
-   * Total records.
+   * Page number.
    */
   @JsonAlias("total_records")
   private int totalRecords = 0;
@@ -27,13 +72,6 @@ public class ResultList<T> {
    * Paged result data.
    */
   private List<T> result = Collections.emptyList();
-
-  // The `key` is required per contract
-  @SuppressWarnings("unused")
-  @JsonAnySetter
-  public void set(String key, List<T> result) {
-    this.result = result;
-  }
 
   /**
    * Creates empty result list.
@@ -58,5 +96,13 @@ public class ResultList<T> {
   @SafeVarargs
   public static <R> ResultList<R> asSinglePage(R... records) {
     return new ResultList<>(records.length, Arrays.asList(records));
+  }
+
+  // The `key` is required per contract
+  @SuppressWarnings("unused")
+  @JsonAnySetter
+  public void set(String key, List<T> result) {
+    log.info("setup data {}, {} ", key, result);
+    this.result = result;
   }
 }
