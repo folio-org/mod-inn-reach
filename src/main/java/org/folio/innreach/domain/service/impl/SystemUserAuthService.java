@@ -13,6 +13,7 @@ import lombok.extern.log4j.Log4j2;
 import org.apache.commons.io.IOUtils;
 import org.folio.innreach.client.AuthnClient;
 import org.folio.innreach.client.PermissionsClient;
+import org.folio.spring.client.UsersClient;
 import org.folio.spring.model.SystemUser;
 import org.folio.innreach.domain.dto.folio.User;
 import org.folio.innreach.domain.service.UserService;
@@ -38,19 +39,27 @@ public class SystemUserAuthService {
   private final PrepareSystemUserService prepareSystemUserService;
 
   public void setupSystemUser() {
-    var folioUser = userService.getUserByName(folioSystemUserConf.username());
-    var userId = folioUser.map(User::getId)
-      .orElse(UUID.randomUUID());
+    var folioUser = prepareSystemUserService.getFolioUser(folioSystemUserConf.username());
+    log.info("folioUser:: {} ", folioUser);
+    if (folioUser.isPresent())
+      log.info("UserId:: {} ", folioUser.get().id());
+    var userId = folioUser.map(UsersClient.User::id)
+      .orElse(UUID.randomUUID().toString());
     log.info("setupSystemUser:: userId : {}", userId);
     if (folioUser.isPresent()) {
+      log.info("System user already exists");
+      this.addPermissions(UUID.fromString(userId));
+      log.info("permission added");
+    }
+    if (folioUser.isPresent()) {
       log.info("Setting up existing system user");
-      addPermissions(userId);
+      addPermissions(UUID.fromString(userId));
     } else {
       log.info("No system user exist, creating...");
 
-      createFolioUser(userId);
+      createFolioUser(UUID.fromString(userId));
       saveCredentials();
-      assignPermissions(userId);
+      assignPermissions(UUID.fromString(userId));
     }
     prepareSystemUserService.setupSystemUser();
   }
