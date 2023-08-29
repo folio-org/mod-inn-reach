@@ -51,12 +51,12 @@ public class SystemUserServiceInreach {
     return folioSystemUserService.getAuthedSystemUser(tenantId);
   }
 
-  private UUID getSystemUserId(SystemUser systemUser) {
-    try (var context = new FolioExecutionContextSetter(contextBuilder.forSystemUser(systemUser))) {
-      return userService.getUserByName(systemUser.username())
-        .orElseThrow(() -> new IllegalArgumentException("System user is not found: name = " + systemUser.username()))
-        .getId();
-    }
-  }
+//  private UUID getSystemUserId(SystemUser systemUser) {
+//    try (var context = new FolioExecutionContextSetter(contextBuilder.forSystemUser(systemUser))) {
+//      return userService.getUserByName(systemUser.username())
+//        .orElseThrow(() -> new IllegalArgumentException("System user is not found: name = " + systemUser.username()))
+//        .getId();
+//    }
+//  }
 
 }
