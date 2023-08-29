@@ -46,12 +46,15 @@ public class UserServiceImpl implements UserService {
     if (StringUtils.isEmpty(name)) {
       return Optional.empty();
     }
+    var users = this.usersClient.query1("username==" + name);
+    log.info("users {} ", users);
+    log.info("users.getResult {} ", users.getResult());
+    log.info("Result {} " , users != null && users.getResult() != null ? users.getResult().stream().findFirst() : Optional.empty());
 
-    var users = usersClient.query1("username==" + name);
-    if(ListUtils.getFirstItem(users).isPresent())
-      log.info("user id : {}", ListUtils.getFirstItem(users).get().id());
-    Optional<UsersClient.User> firstItem = ListUtils.getFirstItem(users);
-    return firstItem;
+    var users1 = usersClient.query1("username==" + name);
+    if(ListUtils.getFirstItem(users1).isPresent())
+      log.info("user id : {}", ListUtils.getFirstItem(users1).get().id());
+    return ListUtils.getFirstItem(users1);
   }
 
   @Override
