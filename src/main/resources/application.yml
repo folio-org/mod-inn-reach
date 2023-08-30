@@ -1,8 +1,9 @@
 server:
   port: 8081
 spring:
-  application:
+  main:
     allow-bean-definition-overriding: true
+  application:
     name: mod-inn-reach
   datasource:
     username: ${DB_USERNAME:postgres}
