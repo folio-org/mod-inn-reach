@@ -38,8 +38,4 @@ public class ContributionJobConfig {
     return new ContributionExceptionListener(contributionService, "itemContribution");
   }
 
-  @Bean
-  public SystemUserProperties systemUserProperties() {
-    return new SystemUserProperties("mod-innreach","system-user","System","permissions/mod-innreach.csv");
-  }
 }
