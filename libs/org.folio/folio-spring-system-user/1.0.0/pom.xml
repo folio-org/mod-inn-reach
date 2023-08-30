@@ -10,7 +10,7 @@
 
   <name>folio-system-user</name>
   <artifactId>folio-spring-system-user</artifactId>
-  <version>1.0.0-SNAPSHOT</version>
+  <version>1.0.0</version>
   <description/>
 
   <properties>
