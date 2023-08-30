@@ -10,10 +10,12 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.extern.log4j.Log4j2;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor(staticName = "of")
+@Log4j2
 //@JsonIgnoreProperties("resultInfo")
 public class ResultList<T> {
 
@@ -32,6 +34,7 @@ public class ResultList<T> {
   @SuppressWarnings("unused")
   @JsonAnySetter
   public void set(String key, List<T> result) {
+    log.info("Inside setter key {} , result {} ", key, result);
     this.result = result;
   }
 
