@@ -18,17 +18,10 @@ import org.folio.spring.FolioExecutionContext;
 import org.folio.spring.FolioModuleMetadata;
 
 @Component
-//@RequiredArgsConstructor
+@RequiredArgsConstructor
 @Log4j2
 public class FolioExecutionContextBuilder {
-//  public FolioExecutionContextBuilder(FolioModuleMetadata moduleMetadata) {
-//    super(moduleMetadata);
-//  }
   private final FolioModuleMetadata moduleMetadata;
-
-  public FolioExecutionContextBuilder(FolioModuleMetadata moduleMetadata) {
-    this.moduleMetadata = moduleMetadata;
-  }
 
   public Builder builder() {
     return new Builder(moduleMetadata);
@@ -60,8 +53,6 @@ public class FolioExecutionContextBuilder {
   public FolioExecutionContext dbOnlyContext(String tenantId) {
     return builder().withTenantId(tenantId).build();
   }
-
-
 
   @With
   @AllArgsConstructor(access = AccessLevel.PRIVATE)

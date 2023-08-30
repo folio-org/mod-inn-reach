@@ -39,32 +39,32 @@ public class SystemUserAuthService {
   private final PrepareSystemUserService prepareSystemUserService;
 
   public void setupSystemUser() {
-    var localUser = userService.getUserByName(folioSystemUserConf.username());
-    log.info("localUser: {} ", localUser);
-    if (localUser.isPresent())
-      log.info("UserId:: {} ", localUser.get().getId());
-    var folioUser = prepareSystemUserService.getFolioUser(folioSystemUserConf.username());
-    log.info("folioUser:: {} ", folioUser);
-    if (folioUser.isPresent())
-      log.info("UserId:: {} ", folioUser.get().id());
-    var userId = folioUser.map(UsersClient.User::id)
-      .orElse(UUID.randomUUID().toString());
-    log.info("setupSystemUser:: userId : {}", userId);
-    if (folioUser.isPresent()) {
-      log.info("System user already exists");
-      this.addPermissions(UUID.fromString(userId));
-      log.info("permission added");
-    }
-    if (folioUser.isPresent()) {
-      log.info("Setting up existing system user");
-      addPermissions(UUID.fromString(userId));
-    } else {
-      log.info("No system user exist, creating...");
-
-      createFolioUser(UUID.fromString(userId));
-      saveCredentials();
-      assignPermissions(UUID.fromString(userId));
-    }
+//    var localUser = userService.getUserByName(folioSystemUserConf.username());
+//    log.info("localUser: {} ", localUser);
+//    if (localUser.isPresent())
+//      log.info("UserId:: {} ", localUser.get().getId());
+//    var folioUser = prepareSystemUserService.getFolioUser(folioSystemUserConf.username());
+//    log.info("folioUser:: {} ", folioUser);
+//    if (folioUser.isPresent())
+//      log.info("UserId:: {} ", folioUser.get().id());
+//    var userId = folioUser.map(UsersClient.User::id)
+//      .orElse(UUID.randomUUID().toString());
+//    log.info("setupSystemUser:: userId : {}", userId);
+//    if (folioUser.isPresent()) {
+//      log.info("System user already exists");
+//      this.addPermissions(UUID.fromString(userId));
+//      log.info("permission added");
+//    }
+//    if (folioUser.isPresent()) {
+//      log.info("Setting up existing system user");
+//      addPermissions(UUID.fromString(userId));
+//    } else {
+//      log.info("No system user exist, creating...");
+//
+//      createFolioUser(UUID.fromString(userId));
+//      saveCredentials();
+//      assignPermissions(UUID.fromString(userId));
+//    }
     prepareSystemUserService.setupSystemUser();
   }
 

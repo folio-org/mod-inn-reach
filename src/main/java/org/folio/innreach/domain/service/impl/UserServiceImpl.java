@@ -36,15 +36,13 @@ public class UserServiceImpl implements UserService {
 
   @Override
   public Optional<User> getUserByName(String name) {
-    log.info("Getting user by name: userName = {}", name);
+    log.debug("Getting user by name: userName = {}", name);
 
     if (StringUtils.isEmpty(name)) {
       return Optional.empty();
     }
 
     var users = usersClient.query("username==" + name);
-    if(ListUtils.getFirstItem(users).isPresent())
-      log.info("user id : {}", ListUtils.getFirstItem(users).get().getId());
     return ListUtils.getFirstItem(users);
   }
 
