@@ -485,14 +485,14 @@
 
   <repositories>
     <repository>
-      <id>folio-nexus</id>
-      <name>FOLIO Maven Repository</name>
-      <url>https://repository.folio.org/repository/maven-folio</url>
-    </repository>
-    <repository>
       <id>in-project</id>
       <name>in-project</name>
       <url>file://${project.basedir}/libs</url>
+    </repository>
+    <repository>
+      <id>folio-nexus</id>
+      <name>FOLIO Maven Repository</name>
+      <url>https://repository.folio.org/repository/maven-folio</url>
     </repository>
   </repositories>
 
