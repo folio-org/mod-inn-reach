@@ -16,7 +16,7 @@ import lombok.extern.log4j.Log4j2;
 @NoArgsConstructor
 @AllArgsConstructor(staticName = "of")
 @Log4j2
-//@JsonIgnoreProperties("resultInfo")
+@JsonIgnoreProperties("resultInfo")
 public class ResultList<T> {
 
   /**
