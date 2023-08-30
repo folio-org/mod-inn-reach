@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 
 import org.folio.innreach.client.config.FolioFeignClientConfig;
 
-@FeignClient(name = "authn", contextId = "authnClient", configuration = FolioFeignClientConfig.class)
+@FeignClient(name = "authn", configuration = FolioFeignClientConfig.class)
 public interface AuthnClient {
 
   @PostMapping(value = "/login", consumes = APPLICATION_JSON_VALUE)

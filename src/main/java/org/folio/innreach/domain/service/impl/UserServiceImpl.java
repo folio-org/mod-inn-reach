@@ -40,22 +40,16 @@ public class UserServiceImpl implements UserService {
 
   @Override
   @Cacheable(cacheNames = CACHE_USERS_BY_NAME, key = "@folioExecutionContext.tenantId + ': ' + #name")
-  public Optional<UsersClient.User> getUserByName(String name) {
-    log.info("Getting user by name: userName = {}", name);
+  public Optional<User> getUserByName(String name) {
+    log.debug("Getting user by name: userName = {}", name);
 
     if (StringUtils.isEmpty(name)) {
       return Optional.empty();
     }
-    var users = this.usersClient.query1("username==" + name);
-    log.info("users {} ", users);
-    log.info("users.getResult {} ", users.getResult());
-    log.info("Result {} " , users != null && users.getResult() != null ? users.getResult().stream().findFirst() : Optional.empty());
-    return users != null && users.getResult() != null ? users.getResult().stream().findFirst() : Optional.empty();
 
-//    var users1 = usersClient.query1("username==" + name);
-//    if(ListUtils.getFirstItem(users1).isPresent())
-//      log.info("user id : {}", ListUtils.getFirstItem(users1).get().id());
-//    return ListUtils.getFirstItem(users1);
+    var users = usersClient.query("username==" + name);
+
+    return ListUtils.getFirstItem(users);
   }
 
   @Override

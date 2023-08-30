@@ -91,10 +91,11 @@ public class KafkaListenerConfiguration {
   public DefaultErrorHandler errorHandler() {
     BackOff fixedBackOff = new FixedBackOff(retryConfig.getInterval(), retryConfig.getMaxAttempts());
     DefaultErrorHandler errorHandler = new DefaultErrorHandler((consumerRecord, exception) -> {
-      log.info("inside errorHandler for Ongoing contribution");
+      log.info("inside errorHandler for Ongoing contribution", exception);
       // logic to execute when all the retry attempts are exhausted
-      executionService.runTenantScoped(getContributionJobContext().getTenantId(),
-          () -> contributionJobRunner.completeContribution(getContributionJobContext()));
+      //Comment this out as it is giving error
+//      executionService.runTenantScoped(getContributionJobContext().getTenantId(),
+//          () -> contributionJobRunner.completeContribution(getContributionJobContext()));
       endContributionJobContext();
     }, fixedBackOff);
     errorHandler.addRetryableExceptions(ServiceSuspendedException.class);
