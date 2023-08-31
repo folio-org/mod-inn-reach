@@ -73,6 +73,7 @@ folio:
     lastname: System
     permissionsFilePath: permissions/mod-innreach.csv
   environment: ${ENV:folio}
+  okapi-url: ${OKAPI_URL:http://okapi:9130}
 management:
   endpoints:
     web:
