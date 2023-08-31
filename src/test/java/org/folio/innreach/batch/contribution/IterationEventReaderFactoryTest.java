@@ -16,7 +16,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.boot.autoconfigure.kafka.KafkaProperties;
 
 import org.folio.innreach.config.props.ContributionJobProperties;
-import org.folio.innreach.config.props.FolioEnvironment;
+import org.folio.innreach.config.props.FolioEnvironmentInnReach;
 
 @ExtendWith(MockitoExtension.class)
 class IterationEventReaderFactoryTest {
@@ -24,7 +24,7 @@ class IterationEventReaderFactoryTest {
   @Mock
   private KafkaProperties kafkaProperties;
   @Mock
-  private FolioEnvironment folioEnv;
+  private FolioEnvironmentInnReach folioEnv;
   @Mock
   private ContributionJobProperties jobProperties;
   @Mock

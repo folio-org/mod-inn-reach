@@ -2,7 +2,7 @@ package org.folio.innreach.config.props;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import static org.folio.innreach.config.props.FolioEnvironment.getFolioEnvName;
+import static org.folio.innreach.config.props.FolioEnvironmentInnReach.getFolioEnvName;
 import static org.folio.innreach.fixture.TestUtil.removeEnvProperty;
 import static org.folio.innreach.fixture.TestUtil.setEnvProperty;
 
@@ -14,7 +14,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
-class FolioEnvironmentTest {
+class FolioEnvironmentInnReachTest {
 
   @AfterEach
   void resetEnvPropertyValue() {
@@ -49,7 +49,7 @@ class FolioEnvironmentTest {
   @ValueSource(strings = {"!", "@", "%$$#", "def qa"})
   void shouldThrowExceptionWhenEnvHasDisallowedChars(String env) {
     var validator = Validation.buildDefaultValidatorFactory().getValidator();
-    var folioEnvironment = FolioEnvironment.of(env);
+    var folioEnvironment = FolioEnvironmentInnReach.of(env);
     var validationResponse = validator.validate(folioEnvironment);
     assertThat(validationResponse).isNotEmpty()
       .map(ConstraintViolation::getMessage)

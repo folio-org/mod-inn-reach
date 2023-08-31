@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import org.folio.spring.FolioExecutionContext;
 import org.springframework.stereotype.Service;
+import org.folio.spring.service.SystemUserService;
 
 @Service
 @RequiredArgsConstructor
@@ -20,7 +21,7 @@ public class TenantScopedExecutionService {
   }
 
   private FolioExecutionContext folioExecutionContext(String tenant) {
-    return contextBuilder.forSystemUser(systemUserService.getSystemUser(tenant));
+    return contextBuilder.forSystemUser(systemUserService.getAuthedSystemUser(tenant));
   }
 
 }

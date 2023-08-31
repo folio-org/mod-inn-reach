@@ -8,7 +8,7 @@ import static org.folio.spring.integration.XOkapiHeaders.TENANT;
 import org.mockito.Mockito;
 
 import org.folio.innreach.domain.service.impl.FolioExecutionContextBuilder;
-import org.folio.innreach.domain.service.impl.SystemUserService;
+import org.folio.spring.service.SystemUserService;
 import org.folio.innreach.domain.service.impl.TenantScopedExecutionService;
 import org.folio.spring.DefaultFolioExecutionContext;
 

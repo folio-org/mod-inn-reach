@@ -18,7 +18,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import org.folio.innreach.config.props.ContributionJobProperties;
-import org.folio.innreach.config.props.FolioEnvironment;
+import org.folio.innreach.config.props.FolioEnvironmentInnReach;
 import org.folio.innreach.external.exception.InnReachException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -77,7 +77,7 @@ class ContributionServiceImplTest {
   private RetryTemplate retryTemplate;
 
   @Mock
-  private FolioEnvironment folioEnv;
+  private FolioEnvironmentInnReach folioEnv;
   @Mock
   private ContributionJobProperties jobProperties;
 

@@ -26,10 +26,8 @@ import org.springframework.stereotype.Component;
 
 import org.folio.innreach.batch.KafkaItemReader;
 import org.folio.innreach.config.props.ContributionJobProperties;
-import org.folio.innreach.config.props.FolioEnvironment;
+import org.folio.innreach.config.props.FolioEnvironmentInnReach;
 import org.folio.innreach.domain.dto.folio.inventorystorage.InstanceIterationEvent;
-
-import javax.annotation.PostConstruct;
 
 @Component
 @RequiredArgsConstructor
@@ -47,7 +45,7 @@ public class IterationEventReaderFactory {
     };
 
   private final KafkaProperties kafkaProperties;
-  private final FolioEnvironment folioEnv;
+  private final FolioEnvironmentInnReach folioEnv;
   private final ContributionJobProperties jobProperties;
   private final ObjectMapper mapper;
 

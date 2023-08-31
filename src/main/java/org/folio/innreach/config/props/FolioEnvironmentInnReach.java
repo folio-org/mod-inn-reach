@@ -20,7 +20,7 @@ import org.springframework.validation.annotation.Validated;
 @NoArgsConstructor
 @AllArgsConstructor(staticName = "of")
 @ConfigurationProperties
-public class FolioEnvironment {
+public class FolioEnvironmentInnReach {
 
   @NotEmpty
   @Pattern(regexp = "[\\w0-9\\-_]+", message = "Value must follow the pattern: '[\\w0-9\\-_]+'")
