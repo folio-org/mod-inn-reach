@@ -3,8 +3,6 @@ server:
 spring:
   application:
     name: mod-inn-reach
-  main:
-    allow-bean-definition-overriding: true
   datasource:
     username: ${DB_USERNAME:postgres}
     password: ${DB_PASSWORD:postgres}
