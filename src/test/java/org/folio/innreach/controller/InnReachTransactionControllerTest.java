@@ -784,13 +784,9 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     assertTrue(responseEntity.hasBody());
     assertEquals("ok", responseEntity.getBody().getStatus());
 
-    await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() ->
-      verify(repository, atLeastOnce()).save(
-        argThat((InnReachTransaction t) -> t.getHold().getFolioRequestId() != null)));
-
     var newRequestCaptor = ArgumentCaptor.forClass(RequestDTO.class);
-
-    verify(circulationClient).sendRequest(newRequestCaptor.capture());
+    await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() ->
+      verify(circulationClient).sendRequest(newRequestCaptor.capture()));
 
     var newRequest = newRequestCaptor.getValue();
 

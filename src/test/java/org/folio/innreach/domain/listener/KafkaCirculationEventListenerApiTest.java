@@ -405,7 +405,7 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
 
     verify(eventProcessor).process(anyList(), any(Consumer.class));
 
-    verify(transactionRepository, times(2)).fetchActiveByRequestId(any());
+    verify(transactionRepository).fetchActiveByRequestId(any());
     verify(inventoryClient, times(0)).findItem(any());
     verify(innReachExternalService, times(0)).postInnReachApi(any(), any(), any());
   }
