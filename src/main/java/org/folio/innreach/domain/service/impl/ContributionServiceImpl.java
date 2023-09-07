@@ -16,8 +16,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.folio.innreach.batch.contribution.InitialContributionJobConsumerContainer;
 import org.folio.innreach.config.props.ContributionJobProperties;
-import org.folio.innreach.config.props.FolioEnvironmentInnReach;
 import org.folio.innreach.external.exception.InnReachException;
+import org.folio.spring.config.properties.FolioEnvironment;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.retry.support.RetryTemplate;
@@ -54,7 +54,7 @@ public class ContributionServiceImpl implements ContributionService {
   private final FolioExecutionContext folioContext;
   private final InstanceStorageClient instanceStorageClient;
   private final BeanFactory beanFactory;
-  private final FolioEnvironmentInnReach folioEnv;
+  private final FolioEnvironment folioEnv;
   private final ContributionJobProperties jobProperties;
 
 

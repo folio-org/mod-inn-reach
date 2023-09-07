@@ -52,6 +52,24 @@ class FolioExecutionContextBuilderTest {
     assertThat(context.getAllHeaders()).isNotNull();
     assertThat(context.getOkapiHeaders()).isNotNull();
     assertThat(context.getFolioModuleMetadata()).isNotNull();
+
+    systemUser = SystemUser.builder()
+      .userId(userId.toString())
+      .okapiUrl("okapi")
+      .username("username")
+      .tenantId("tenant")
+      .token(null).build();
+
+    context = builder.forSystemUser(systemUser);
+
+    assertThat(context.getTenantId()).isEqualTo("tenant");
+    assertThat(context.getToken()).isNull();
+    assertThat(context.getUserId()).isEqualTo(userId);
+    assertThat(context.getOkapiUrl()).isEqualTo("okapi");
+
+    assertThat(context.getAllHeaders()).isNotNull();
+    assertThat(context.getOkapiHeaders()).isNotNull();
+    assertThat(context.getFolioModuleMetadata()).isNotNull();
   }
 
   @Test

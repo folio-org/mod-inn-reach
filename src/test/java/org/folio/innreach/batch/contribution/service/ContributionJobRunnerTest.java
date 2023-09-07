@@ -50,7 +50,6 @@ import org.folio.innreach.batch.contribution.IterationEventReaderFactory;
 import org.folio.innreach.batch.contribution.listener.ContributionExceptionListener;
 import org.folio.innreach.batch.contribution.listener.ContributionJobStatsListener;
 import org.folio.innreach.config.props.ContributionJobProperties;
-import org.folio.innreach.config.props.FolioEnvironmentInnReach;
 import org.folio.innreach.domain.dto.folio.inventorystorage.InstanceIterationEvent;
 import org.folio.innreach.domain.service.ContributionService;
 import org.folio.innreach.domain.service.ContributionValidationService;
@@ -91,8 +90,6 @@ class ContributionJobRunnerTest {
   private ContributionJobProperties jobProperties;
   @Mock
   private KafkaProperties kafkaProperties;
-  @Mock
-  private FolioEnvironmentInnReach folioEnv;
   @Mock
   private FolioExecutionContext folioContext;
   @Mock

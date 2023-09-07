@@ -30,7 +30,7 @@ public class FolioExecutionContextBuilder {
     return builder()
       .withTenantId(systemUser.tenantId())
       .withOkapiUrl(systemUser.okapiUrl())
-      .withToken(systemUser.token().accessToken())
+      .withToken(systemUser.token() == null ? null : systemUser.token().accessToken())
       .withUserId(UUID.fromString(systemUser.userId()))
       .build();
   }

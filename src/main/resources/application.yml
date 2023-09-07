@@ -3,8 +3,6 @@ server:
 spring:
   application:
     name: mod-inn-reach
-  main:
-    allow-bean-definition-overriding: true
   datasource:
     username: ${DB_USERNAME:postgres}
     password: ${DB_PASSWORD:postgres}
@@ -72,8 +70,8 @@ folio:
     password: ${SYSTEM_USER_PASSWORD:Mod-innreach-1-0-0}
     lastname: System
     permissionsFilePath: permissions/mod-innreach.csv
-  okapi.url: ${OKAPI_URL:http://okapi:9130}
   environment: ${ENV:folio}
+  okapi-url: ${OKAPI_URL:http://okapi:9130}
 management:
   endpoints:
     web:
