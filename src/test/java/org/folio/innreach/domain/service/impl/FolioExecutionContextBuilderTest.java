@@ -4,12 +4,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import java.time.Instant;
 import java.util.UUID;
 
 import org.folio.spring.FolioExecutionContext;
+import org.folio.spring.model.SystemUser;
+import org.folio.spring.model.UserToken;
 import org.junit.jupiter.api.Test;
 
-import org.folio.innreach.domain.dto.folio.SystemUser;
 import org.folio.spring.FolioModuleMetadata;
 
 
@@ -33,17 +35,35 @@ class FolioExecutionContextBuilderTest {
   void canCreateSystemUserContext() {
     UUID userId = UUID.randomUUID();
 
-    var systemUser = new SystemUser();
-    systemUser.setToken("token");
-    systemUser.setOkapiUrl("okapi");
-    systemUser.setUserName("username");
-    systemUser.setUserId(userId);
-    systemUser.setTenantId("tenant");
+    var systemUser = SystemUser.builder()
+      .userId(userId.toString())
+      .okapiUrl("okapi")
+      .username("username")
+      .tenantId("tenant")
+      .token(new UserToken("token", Instant.MAX)).build();
 
     var context = builder.forSystemUser(systemUser);
 
     assertThat(context.getTenantId()).isEqualTo("tenant");
     assertThat(context.getToken()).isEqualTo("token");
+    assertThat(context.getUserId()).isEqualTo(userId);
+    assertThat(context.getOkapiUrl()).isEqualTo("okapi");
+
+    assertThat(context.getAllHeaders()).isNotNull();
+    assertThat(context.getOkapiHeaders()).isNotNull();
+    assertThat(context.getFolioModuleMetadata()).isNotNull();
+
+    systemUser = SystemUser.builder()
+      .userId(userId.toString())
+      .okapiUrl("okapi")
+      .username("username")
+      .tenantId("tenant")
+      .token(null).build();
+
+    context = builder.forSystemUser(systemUser);
+
+    assertThat(context.getTenantId()).isEqualTo("tenant");
+    assertThat(context.getToken()).isNull();
     assertThat(context.getUserId()).isEqualTo(userId);
     assertThat(context.getOkapiUrl()).isEqualTo("okapi");
 

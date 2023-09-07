@@ -22,6 +22,7 @@ import org.folio.spring.FolioModuleMetadata;
 import org.folio.spring.exception.TenantUpgradeException;
 import org.folio.spring.liquibase.FolioSpringLiquibase;
 import org.folio.tenant.domain.dto.TenantAttributes;
+import org.folio.spring.service.PrepareSystemUserService;
 
 @ExtendWith(MockitoExtension.class)
 class CustomTenantServiceTest {
@@ -31,7 +32,7 @@ class CustomTenantServiceTest {
   private static final String TENANT_SCHEMA = "db_tenant";
 
   @Mock
-  private SystemUserService systemUserService;
+  private PrepareSystemUserService systemUserService;
   @Mock
   private FolioExecutionContext context;
   @Mock
@@ -56,7 +57,7 @@ class CustomTenantServiceTest {
 
     service.createOrUpdateTenant(new TenantAttributes());
 
-    verify(systemUserService).prepareSystemUser();
+    verify(systemUserService).setupSystemUser();
     verify(contributionJobRunner).cancelJobs();
   }
 
@@ -67,7 +68,7 @@ class CustomTenantServiceTest {
 
     service.createOrUpdateTenant(new TenantAttributes());
 
-    verify(systemUserService, never()).prepareSystemUser();
+    verify(systemUserService, never()).setupSystemUser();
     verify(contributionJobRunner, never()).cancelJobs();
   }
 
@@ -79,7 +80,7 @@ class CustomTenantServiceTest {
     TenantAttributes attributes = new TenantAttributes();
     assertThrows(TenantUpgradeException.class, () -> service.createOrUpdateTenant(attributes));
 
-    verify(systemUserService, never()).prepareSystemUser();
+    verify(systemUserService, never()).setupSystemUser();
     verify(contributionJobRunner, never()).cancelJobs();
   }
 

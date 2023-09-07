@@ -65,6 +65,13 @@ folio:
     request:
       enabled: ${LOG_HTTP:true}
       level: FULL
+  system-user:
+    username: mod-innreach
+    password: ${SYSTEM_USER_PASSWORD:Mod-innreach-1-0-0}
+    lastname: System
+    permissionsFilePath: permissions/mod-innreach.csv
+  environment: ${ENV:folio}
+  okapi-url: ${OKAPI_URL:http://okapi:9130}
 management:
   endpoints:
     web:
@@ -93,11 +100,6 @@ inn-reach:
       max-size: 100
   checkout-time:
     duration: ${DEFAULT_CHECKOUT_TIME_DURATION:1}
-system-user:
-  username: mod-innreach
-  password: ${SYSTEM_USER_PASSWORD:Mod-innreach-1-0-0}
-  lastname: System
-  permissionsFilePath: permissions/mod-innreach.csv
 test-tenant:
   tenantname: test_inn_reach_integration
 ###################################################

@@ -8,6 +8,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import org.folio.innreach.batch.contribution.service.ContributionJobRunner;
 import org.folio.innreach.config.RetryConfig;
+import org.folio.spring.config.properties.FolioEnvironment;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -16,7 +17,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.boot.autoconfigure.kafka.KafkaProperties;
 
 import org.folio.innreach.config.props.ContributionJobProperties;
-import org.folio.innreach.config.props.FolioEnvironment;
 
 @ExtendWith(MockitoExtension.class)
 class IterationEventReaderFactoryTest {

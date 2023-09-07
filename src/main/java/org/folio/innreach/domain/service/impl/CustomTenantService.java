@@ -1,6 +1,7 @@
 package org.folio.innreach.domain.service.impl;
 
 import lombok.extern.log4j.Log4j2;
+import org.folio.spring.service.PrepareSystemUserService;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Primary;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -19,14 +20,14 @@ import org.folio.tenant.domain.dto.TenantAttributes;
 @Lazy
 public class CustomTenantService extends TenantService {
 
-  private final SystemUserService systemUserService;
+  private final PrepareSystemUserService systemUserService;
   private final ContributionJobRunner contributionJobRunner;
   private final ReferenceDataLoader referenceDataLoader;
   private final TestTenant testTenant;
 
 
   public CustomTenantService(JdbcTemplate jdbcTemplate, FolioExecutionContext context,
-      FolioSpringLiquibase folioSpringLiquibase, SystemUserService systemUserService,
+      FolioSpringLiquibase folioSpringLiquibase, PrepareSystemUserService systemUserService,
       ContributionJobRunner contributionJobRunner, ReferenceDataLoader referenceDataLoader, TestTenant testTenant) {
     super(jdbcTemplate, context, folioSpringLiquibase);
 
@@ -40,7 +41,7 @@ public class CustomTenantService extends TenantService {
   protected void afterTenantUpdate(TenantAttributes tenantAttributes) {
     log.debug("afterTenantUpdate:: parameters tenantAttributes: {}", tenantAttributes);
     if (!context.getTenantId().startsWith(testTenant.getTenantName())) {
-      systemUserService.prepareSystemUser();
+      systemUserService.setupSystemUser();
       contributionJobRunner.cancelJobs();
     }
   }

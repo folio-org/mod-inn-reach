@@ -18,8 +18,8 @@ import java.util.Optional;
 import java.util.UUID;
 
 import org.folio.innreach.config.props.ContributionJobProperties;
-import org.folio.innreach.config.props.FolioEnvironment;
 import org.folio.innreach.external.exception.InnReachException;
+import org.folio.spring.config.properties.FolioEnvironment;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;

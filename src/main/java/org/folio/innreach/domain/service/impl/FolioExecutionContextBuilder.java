@@ -10,9 +10,9 @@ import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.With;
 import lombok.extern.log4j.Log4j2;
+import org.folio.spring.model.SystemUser;
 import org.springframework.stereotype.Component;
 
-import org.folio.innreach.domain.dto.folio.SystemUser;
 import org.folio.spring.FolioExecutionContext;
 import org.folio.spring.FolioModuleMetadata;
 
@@ -28,10 +28,10 @@ public class FolioExecutionContextBuilder {
 
   public FolioExecutionContext forSystemUser(SystemUser systemUser) {
     return builder()
-      .withTenantId(systemUser.getTenantId())
-      .withOkapiUrl(systemUser.getOkapiUrl())
-      .withToken(systemUser.getToken())
-      .withUserId(systemUser.getUserId())
+      .withTenantId(systemUser.tenantId())
+      .withOkapiUrl(systemUser.okapiUrl())
+      .withToken(systemUser.token() == null ? null : systemUser.token().accessToken())
+      .withUserId(UUID.fromString(systemUser.userId()))
       .build();
   }
 
