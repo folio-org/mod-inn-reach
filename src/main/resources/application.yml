@@ -186,7 +186,7 @@ initial-contribution:
   scheduler:
     fixed-delay: 10000
     initial-delay: 200000
-  retry-attempts: 10
+  retry-attempts: ${INITIAL_CONTRIBUTION_RETRIES:10}
   fetch-limit: 50
   item-pause: 1
   tenant-cache:
