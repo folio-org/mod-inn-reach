@@ -3,6 +3,7 @@ package org.folio.innreach.domain.listener;
 import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TEST_METHOD;
 import static org.springframework.test.context.jdbc.SqlMergeMode.MergeMode.MERGE;
@@ -135,6 +136,23 @@ class KafkaInventoryEventListenerApiTest extends BaseKafkaApiTest {
     var transaction = transactionRepository.fetchOneById(PRE_POPULATED_LOCAL_TRANSACTION_ID).orElseThrow();
 
     assertEquals(updatedItem.getBarcode(), transaction.getHold().getFolioItemBarcode());
+  }
+
+  @Test
+  void testKafkaListenerListeningInnReachTopics() {
+    var event1 = createItemDomainEvent(DomainEventType.DELETED, UUID.randomUUID());
+    var event2 = createItemDomainEvent(DomainEventType.DELETED, UUID.randomUUID());
+    var event3 = createItemDomainEvent(DomainEventType.DELETED, UUID.randomUUID());
+
+    //Event is published to 3 different topics but only two are listening
+
+    kafkaTemplate.send(new ProducerRecord(INVENTORY_ITEM_TOPIC, RECORD_ID.toString(), event1));
+    kafkaTemplate.send(new ProducerRecord(INVENTORY_ITEM_TOPIC1, RECORD_ID.toString(), event2));
+    kafkaTemplate.send(new ProducerRecord(INVENTORY_ITEM_TOPIC2, RECORD_ID.toString(), event3));
+
+    await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() ->
+      verify(actionService, times(2)).handleItemDelete(any()));
+
   }
 
   public DomainEvent<Item> getItemDomainEvent(DomainEventType eventType, UUID recordId) {

@@ -1,6 +1,7 @@
 package org.folio.innreach.domain.service.impl;
 
 import lombok.extern.log4j.Log4j2;
+import org.folio.spring.service.PrepareSystemUserService;
 import org.folio.innreach.domain.entity.TenantInfo;
 import org.folio.innreach.repository.TenantInfoRepository;
 import org.springframework.context.annotation.Lazy;
@@ -20,16 +21,15 @@ import org.folio.tenant.domain.dto.TenantAttributes;
 @Lazy
 public class CustomTenantService extends TenantService {
 
-  private final SystemUserService systemUserService;
+  private final PrepareSystemUserService systemUserService;
   private final ReferenceDataLoader referenceDataLoader;
   private final TestTenant testTenant;
   private final TenantInfoRepository tenantRepository;
 
 
   public CustomTenantService(JdbcTemplate jdbcTemplate, FolioExecutionContext context,
-      FolioSpringLiquibase folioSpringLiquibase, SystemUserService systemUserService,
-      ReferenceDataLoader referenceDataLoader, TestTenant testTenant,
-      TenantInfoRepository tenantRepository) {
+      FolioSpringLiquibase folioSpringLiquibase, PrepareSystemUserService systemUserService,, ReferenceDataLoader referenceDataLoader,
+                             TestTenant testTenant, TenantInfoRepository tenantRepository) {
     super(jdbcTemplate, context, folioSpringLiquibase);
     this.systemUserService = systemUserService;
     this.referenceDataLoader = referenceDataLoader;
@@ -39,8 +39,9 @@ public class CustomTenantService extends TenantService {
 
   @Override
   protected void afterTenantUpdate(TenantAttributes tenantAttributes) {
+    log.debug("afterTenantUpdate:: parameters tenantAttributes: {}", tenantAttributes);
     if (!context.getTenantId().startsWith(testTenant.getTenantName())) {
-      systemUserService.prepareSystemUser();
+      systemUserService.setupSystemUser();
       saveTenant();
     }
   }

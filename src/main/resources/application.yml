@@ -65,6 +65,13 @@ folio:
     request:
       enabled: ${LOG_HTTP:true}
       level: FULL
+  system-user:
+    username: mod-innreach
+    password: ${SYSTEM_USER_PASSWORD:Mod-innreach-1-0-0}
+    lastname: System
+    permissionsFilePath: permissions/mod-innreach.csv
+  environment: ${ENV:folio}
+  okapi-url: ${OKAPI_URL:http://okapi:9130}
 management:
   endpoints:
     web:
@@ -93,11 +100,6 @@ inn-reach:
       max-size: 100
   checkout-time:
     duration: ${DEFAULT_CHECKOUT_TIME_DURATION:1}
-system-user:
-  username: mod-innreach
-  password: ${SYSTEM_USER_PASSWORD:Mod-innreach-1-0-0}
-  lastname: System
-  permissionsFilePath: permissions/mod-innreach.csv
 test-tenant:
   tenantname: test_inn_reach_integration
 ###################################################
@@ -135,37 +137,37 @@ kafka:
     loan:
       id: ${environment}-mod-inn-reach-circ-loans
       group-id: ${spring.kafka.consumer.group-id}
-      topic-pattern: (${environment}\.)(.*\.)circulation\.loan
+      topic-pattern: (${environment}\.)((${INNREACH_TENANTS})\.)circulation\.loan
       concurrency: ${KAFKA_EVENTS_CONCURRENCY:2}
       data-type: org.folio.innreach.dto.StorageLoanDTO
     request:
       id: ${environment}-mod-inn-reach-circ-requests
       group-id: ${spring.kafka.consumer.group-id}
-      topic-pattern: (${environment}\.)(.*\.)circulation\.request
+      topic-pattern: (${environment}\.)((${INNREACH_TENANTS})\.)circulation\.request
       concurrency: ${KAFKA_EVENTS_CONCURRENCY:2}
       data-type: org.folio.innreach.domain.dto.folio.circulation.RequestDTO
     check-in:
       id: ${environment}-mod-inn-reach-circ-checkins
       group-id: ${spring.kafka.consumer.group-id}
-      topic-pattern: (${environment}\.)(.*\.)circulation\.check-in
+      topic-pattern: (${environment}\.)((${INNREACH_TENANTS})\.)circulation\.check-in
       concurrency: ${KAFKA_EVENTS_CONCURRENCY:2}
       data-type: org.folio.innreach.dto.CheckInDTO
     item:
       id: ${environment}-mod-inn-reach-inventory-item-events
       group-id: ${spring.kafka.consumer.group-id}
-      topic-pattern: (${environment}\.)(.*\.)inventory\.item
+      topic-pattern: (${environment}\.)((${INNREACH_TENANTS})\.)inventory\.item
       concurrency: ${KAFKA_EVENTS_CONCURRENCY:2}
       data-type: org.folio.innreach.dto.Item
     instance:
       id: ${environment}-mod-inn-reach-inventory-instance-events
       group-id: ${spring.kafka.consumer.group-id}
-      topic-pattern: (${environment}\.)(.*\.)inventory\.instance
+      topic-pattern: (${environment}\.)((${INNREACH_TENANTS})\.)inventory\.instance
       concurrency: ${KAFKA_EVENTS_CONCURRENCY:2}
       data-type: org.folio.innreach.dto.Instance
     holding:
       id: ${environment}-mod-inn-reach-inventory-holding-events
       group-id: ${spring.kafka.consumer.group-id}
-      topic-pattern: (${environment}\.)(.*\.)inventory\.holdings-record
+      topic-pattern: (${environment}\.)((${INNREACH_TENANTS})\.)inventory\.holdings-record
       concurrency: ${KAFKA_EVENTS_CONCURRENCY:2}
       data-type: org.folio.innreach.dto.Holding
     contribution:

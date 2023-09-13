@@ -18,6 +18,7 @@ import org.apache.kafka.common.serialization.StringDeserializer;
 import org.folio.innreach.batch.contribution.listener.ContributionExceptionListener;
 import org.folio.innreach.batch.contribution.service.ContributionJobRunner;
 import org.folio.innreach.config.RetryConfig;
+import org.folio.spring.config.properties.FolioEnvironment;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.kafka.KafkaProperties;
@@ -26,10 +27,7 @@ import org.springframework.stereotype.Component;
 
 import org.folio.innreach.batch.KafkaItemReader;
 import org.folio.innreach.config.props.ContributionJobProperties;
-import org.folio.innreach.config.props.FolioEnvironment;
 import org.folio.innreach.domain.dto.folio.inventorystorage.InstanceIterationEvent;
-
-import javax.annotation.PostConstruct;
 
 @Component
 @RequiredArgsConstructor

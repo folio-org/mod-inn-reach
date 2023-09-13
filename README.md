@@ -30,7 +30,7 @@ The module provides an access to INN-Reach.
 | DB_QUERYTIMEOUT               |           60000           | Database query timeout                                                                                                                                     |
 | DB_CHARSET                    |           UTF-8           | Database charset                                                                                                                                           |
 | DB_MAXPOOLSIZE                |             5             | Database max pool size                                                                                                                                     |
-| OKAPI_URL                     |             -             | OKAPI URL used to login system user, required                                                                                                              |
+| OKAPI_URL                     |         http://okapi:9130          | OKAPI URL used to login system user, required                                                                                                              |
 | ENV                           |           folio           | Logical name of the deployment, must be set if Kafka/Elasticsearch are shared for environments, `a-z (any case)`, `0-9`, `-`, `_` symbols only allowed     |
 | SYSTEM_USER_PASSWORD          |             -             | Internal user password                                                                                                                                     |
 | KAFKA_HOST                    |           kafka           | Kafka broker hostname                                                                                                                                      |
@@ -45,6 +45,7 @@ The module provides an access to INN-Reach.
  | MAX_FAILURE                   |            360            | Default max attempts                                                                                                                                       |
 | DEFAULT_OFFSET                |          latest           | Default kafka offset                                                                                                                                       |
  | DEFAULT_CONCURRENCY           |      2                    | Deafult concurrency of kafka consumer                                                                                                                      |
+| INNREACH_TENANTS              |             -             | This is a regex where list of tenants needs to be mentioned with pipe symbol as delimiter so that mod-inn-reach will listen only these tenant related topics. See here [Example value for INNREACH_TENANTS](#example-value-for-innreachtenants) |
 
 ## Compiling
 
@@ -139,6 +140,12 @@ This results in a post to the module's `_tenant` API with the following structur
 ```
 
 See the section [Install modules per tenant](https://github.com/folio-org/okapi/blob/master/doc/guide.md#install-modules-per-tenant) in the Okapi guide for more information.
+
+## Example value for INNREACH_TENANTS
+```
+For single tenant - tenant1
+For multi  tenant - tenant1|tenant2
+```
 
 ## Additional information
 
