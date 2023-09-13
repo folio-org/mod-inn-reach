@@ -60,7 +60,7 @@ class CustomTenantServiceTest {
 
     service.createOrUpdateTenant(new TenantAttributes());
 
-    verify(systemUserService).prepareSystemUser();
+    verify(systemUserService).setupSystemUser();
   }
 
   @Test
