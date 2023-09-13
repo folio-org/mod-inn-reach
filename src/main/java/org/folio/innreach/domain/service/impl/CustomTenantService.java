@@ -28,8 +28,8 @@ public class CustomTenantService extends TenantService {
 
 
   public CustomTenantService(JdbcTemplate jdbcTemplate, FolioExecutionContext context,
-      FolioSpringLiquibase folioSpringLiquibase, PrepareSystemUserService systemUserService,, ReferenceDataLoader referenceDataLoader,
-                             TestTenant testTenant, TenantInfoRepository tenantRepository) {
+      FolioSpringLiquibase folioSpringLiquibase, PrepareSystemUserService systemUserService,
+      ReferenceDataLoader referenceDataLoader, TestTenant testTenant, TenantInfoRepository tenantRepository) {
     super(jdbcTemplate, context, folioSpringLiquibase);
     this.systemUserService = systemUserService;
     this.referenceDataLoader = referenceDataLoader;
