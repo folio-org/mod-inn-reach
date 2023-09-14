@@ -6,6 +6,8 @@ import static org.folio.innreach.domain.listener.base.BaseKafkaApiTest.CIRC_REQU
 import static org.folio.innreach.domain.listener.base.BaseKafkaApiTest.INVENTORY_HOLDING_TOPIC;
 import static org.folio.innreach.domain.listener.base.BaseKafkaApiTest.INVENTORY_INSTANCE_TOPIC;
 import static org.folio.innreach.domain.listener.base.BaseKafkaApiTest.INVENTORY_ITEM_TOPIC;
+import static org.folio.innreach.domain.listener.base.BaseKafkaApiTest.INVENTORY_ITEM_TOPIC1;
+import static org.folio.innreach.domain.listener.base.BaseKafkaApiTest.INVENTORY_ITEM_TOPIC2;
 import static org.folio.innreach.domain.listener.base.BaseKafkaApiTest.TestTenantController;
 import static org.folio.innreach.domain.listener.base.BaseKafkaApiTest.TestTenantScopedExecutionService;
 import static org.mockito.ArgumentMatchers.any;
@@ -50,7 +52,7 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 @ActiveProfiles("test")
-@EmbeddedKafka(topics = {CIRC_LOAN_TOPIC, CIRC_REQUEST_TOPIC, CIRC_CHECKIN_TOPIC, INVENTORY_ITEM_TOPIC, INVENTORY_HOLDING_TOPIC, INVENTORY_INSTANCE_TOPIC})
+@EmbeddedKafka(topics = {CIRC_LOAN_TOPIC, CIRC_REQUEST_TOPIC, CIRC_CHECKIN_TOPIC, INVENTORY_ITEM_TOPIC, INVENTORY_HOLDING_TOPIC, INVENTORY_INSTANCE_TOPIC, INVENTORY_ITEM_TOPIC1, INVENTORY_ITEM_TOPIC2})
 @SpringBootTest(
   classes = {ModInnReachApplication.class, TestTenantController.class, TestTenantScopedExecutionService.class})
 @Testcontainers
@@ -63,6 +65,8 @@ public class BaseKafkaApiTest {
   public static final String INVENTORY_ITEM_TOPIC = "folio.testing.inventory.item";
   public static final String INVENTORY_HOLDING_TOPIC = "folio.testing.inventory.holdings-record";
   public static final String INVENTORY_INSTANCE_TOPIC = "folio.testing.inventory.instance";
+  public static final String INVENTORY_ITEM_TOPIC1 = "folio.testing1.inventory.item";
+  public static final String INVENTORY_ITEM_TOPIC2 = "folio.testing2.inventory.item";
 
   @Container
   public static PostgreSQLContainer<?> postgresqlContainer = new PostgreSQLContainer<>("postgres:11-alpine");
