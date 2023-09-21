@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.PostConstruct;
 import java.util.List;
 
 
@@ -28,6 +29,11 @@ public class InitialContributionJobScheduler {
   @Value(value = "${initial-contribution.item-pause}")
   private int itemPause;
   private final Cache<String, List<String>> tenantDetailsCache;
+
+  @PostConstruct
+  public void initialize(){
+    jobExecutionStatusRepository.updateJobExecutionRecordsByStatus();
+  }
 
   @Scheduled(fixedDelayString = "${initial-contribution.scheduler.fixed-delay}",
     initialDelayString = "${initial-contribution.scheduler.initial-delay}")
