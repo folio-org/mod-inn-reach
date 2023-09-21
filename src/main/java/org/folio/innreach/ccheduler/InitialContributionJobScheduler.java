@@ -9,6 +9,7 @@ import org.folio.innreach.domain.service.impl.TenantScopedExecutionService;
 import org.folio.innreach.repository.JobExecutionStatusRepository;
 import org.folio.innreach.repository.TenantInfoRepository;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.DependsOn;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -19,6 +20,7 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 @Log4j2
+@DependsOn("jobExecutionStatusRepository")
 public class InitialContributionJobScheduler {
   private final TenantScopedExecutionService executionService;
   private final JobExecutionStatusRepository jobExecutionStatusRepository;
