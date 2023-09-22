@@ -8,6 +8,7 @@ import org.folio.innreach.domain.entity.TenantInfo;
 import org.folio.innreach.domain.service.impl.TenantScopedExecutionService;
 import org.folio.innreach.repository.JobExecutionStatusRepository;
 import org.folio.innreach.repository.TenantInfoRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -22,7 +23,8 @@ import java.util.List;
 @Log4j2
 public class InitialContributionJobScheduler {
   private final TenantScopedExecutionService executionService;
-  private final JobExecutionStatusRepository jobExecutionStatusRepository;
+  @Autowired
+  private JobExecutionStatusRepository jobExecutionStatusRepository;
   private final InitialContributionEventProcessor eventProcessor;
   private final TenantInfoRepository tenantRepository;
   @Value(value = "${initial-contribution.fetch-limit}")
