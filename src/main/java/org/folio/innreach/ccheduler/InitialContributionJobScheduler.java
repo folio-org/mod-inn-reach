@@ -20,7 +20,7 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 @Log4j2
-@DependsOn("jobExecutionStatusRepository")
+@DependsOn({"jobExecutionStatusRepository","tenantScopedExecutionService","initialContributionEventProcessor","tenantInfoRepository", "tenantDetailsCache"})
 public class InitialContributionJobScheduler {
   private final TenantScopedExecutionService executionService;
   private final JobExecutionStatusRepository jobExecutionStatusRepository;
@@ -32,10 +32,10 @@ public class InitialContributionJobScheduler {
   private int itemPause;
   private final Cache<String, List<String>> tenantDetailsCache;
 
-//  @PostConstruct
-//  public void initialize(){
-//    jobExecutionStatusRepository.updateJobExecutionRecordsByStatus();
-//  }
+  @PostConstruct
+  public void initialize(){
+    jobExecutionStatusRepository.updateJobExecutionRecordsByStatus();
+  }
 
   @Scheduled(fixedDelayString = "${initial-contribution.scheduler.fixed-delay}",
     initialDelayString = "${initial-contribution.scheduler.initial-delay}")
