@@ -32,10 +32,10 @@ public class InitialContributionJobScheduler {
   private int itemPause;
   private final Cache<String, List<String>> tenantDetailsCache;
 
-  @PostConstruct
-  public void initialize(){
-    jobExecutionStatusRepository.updateJobExecutionRecordsByStatus();
-  }
+//  @PostConstruct
+//  public void initialize(){
+//    jobExecutionStatusRepository.updateJobExecutionRecordsByStatus();
+//  }
 
   @Scheduled(fixedDelayString = "${initial-contribution.scheduler.fixed-delay}",
     initialDelayString = "${initial-contribution.scheduler.initial-delay}")
