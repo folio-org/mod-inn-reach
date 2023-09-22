@@ -10,7 +10,6 @@ import javax.annotation.PostConstruct;
 
 @Service
 @Log4j2
-@Lazy
 public class SchedulerConfig {
   @Autowired
   private JobExecutionStatusRepository jobExecutionStatusRepository;

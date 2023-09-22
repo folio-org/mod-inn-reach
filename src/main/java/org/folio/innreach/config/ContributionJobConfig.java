@@ -28,11 +28,6 @@ public class ContributionJobConfig {
       .build();
   }
 
-  @Bean("schedulerConfig")
-  public SchedulerConfig schedulerConfig() {
-    return new SchedulerConfig();
-  }
-
   @Bean("instanceExceptionListener")
   public ContributionExceptionListener instanceListener(ContributionService contributionService) {
     return new ContributionExceptionListener(contributionService, "instanceContribution");
