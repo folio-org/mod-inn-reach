@@ -34,6 +34,7 @@ public class InitialContributionJobScheduler {
 
   @PostConstruct
   public void initialize(){
+    log.info("InitialContributionJobScheduler:: initialize");
     jobExecutionStatusRepository.updateJobExecutionRecordsByStatus();
   }
 
