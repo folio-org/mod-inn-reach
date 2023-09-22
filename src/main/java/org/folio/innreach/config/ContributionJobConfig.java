@@ -1,6 +1,7 @@
 package org.folio.innreach.config;
 
 import lombok.extern.log4j.Log4j2;
+import org.folio.innreach.ccheduler.SchedulerConfig;
 import org.folio.innreach.config.props.InnReachRetryPolicy;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
@@ -25,6 +26,11 @@ public class ContributionJobConfig {
       .customPolicy(new InnReachRetryPolicy(MAX_ATTEMPTS))
       .fixedBackoff(BACKOFF_MAX_INTERVAL)
       .build();
+  }
+
+  @Bean("schedulerConfig")
+  public SchedulerConfig schedulerConfig() {
+    return new SchedulerConfig();
   }
 
   @Bean("instanceExceptionListener")

@@ -8,13 +8,10 @@ import org.folio.innreach.domain.entity.TenantInfo;
 import org.folio.innreach.domain.service.impl.TenantScopedExecutionService;
 import org.folio.innreach.repository.JobExecutionStatusRepository;
 import org.folio.innreach.repository.TenantInfoRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.PostConstruct;
 import java.util.List;
 
 
@@ -23,7 +20,6 @@ import java.util.List;
 @Log4j2
 public class InitialContributionJobScheduler {
   private final TenantScopedExecutionService executionService;
-  @Autowired
   private JobExecutionStatusRepository jobExecutionStatusRepository;
   private final InitialContributionEventProcessor eventProcessor;
   private final TenantInfoRepository tenantRepository;
@@ -33,11 +29,6 @@ public class InitialContributionJobScheduler {
   private int itemPause;
   private final Cache<String, List<String>> tenantDetailsCache;
 
-  @PostConstruct
-  public void initialize(){
-    log.info("InitialContributionJobScheduler:: initialize");
-    jobExecutionStatusRepository.updateJobExecutionRecordsByStatus();
-  }
 
   @Scheduled(fixedDelayString = "${initial-contribution.scheduler.fixed-delay}",
     initialDelayString = "${initial-contribution.scheduler.initial-delay}")
