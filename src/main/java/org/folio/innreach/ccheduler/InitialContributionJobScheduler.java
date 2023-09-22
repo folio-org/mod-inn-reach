@@ -20,7 +20,6 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 @Log4j2
-@Lazy
 public class InitialContributionJobScheduler {
   private final TenantScopedExecutionService executionService;
   private final JobExecutionStatusRepository jobExecutionStatusRepository;
