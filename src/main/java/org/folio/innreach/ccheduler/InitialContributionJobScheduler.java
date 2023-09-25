@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.PostConstruct;
 import java.util.List;
 
 
@@ -29,6 +30,18 @@ public class InitialContributionJobScheduler {
   private int itemPause;
   private final Cache<String, List<String>> tenantDetailsCache;
 
+  @PostConstruct
+  public void postConstruct() {
+    try {
+      this.loadTenants()
+        .forEach(tenantId ->
+            executionService.runTenantScoped(tenantId,
+              jobExecutionStatusRepository::updateInProgressRecordsToReady));
+    } catch (Exception ex) {
+      log.warn("postConstruct:: Error while updating the record status from In progress to ready {}", ex.getMessage());
+    }
+  }
+
   @Scheduled(fixedDelayString = "${initial-contribution.scheduler.fixed-delay}",
     initialDelayString = "${initial-contribution.scheduler.initial-delay}")
   public void processInitialContributionEvents() {
@@ -38,8 +51,15 @@ public class InitialContributionJobScheduler {
       executionService.runTenantScoped(tenant,
         () -> {
           try {
-            jobExecutionStatusRepository.updateAndFetchJobExecutionRecordsByStatus(recordLimit, itemPause)
-              .forEach(eventProcessor::processInitialContributionEvents);
+            long inProgressCount = jobExecutionStatusRepository.getInProgressRecordsCount();
+            if(recordLimit> inProgressCount) {
+              log.info("processInitialContributionEvents:: Fetching new set of records");
+              jobExecutionStatusRepository.updateAndFetchJobExecutionRecordsByStatus(recordLimit, itemPause)
+                .forEach(eventProcessor::processInitialContributionEvents);
+            } else {
+              log.info("processInitialContributionEvents:: unable to fetch new records, " +
+                "as inProgress count {} is greater than fetchLimit {}", inProgressCount, recordLimit);
+            }
           } catch (Exception ex) {
             log.warn("Exception caught while processing Initial contribution for tenant {} {} ", tenant, ex.getMessage());
           }
