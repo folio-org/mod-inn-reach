@@ -12,7 +12,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.PostConstruct;
 import java.util.List;
 
 
@@ -30,10 +29,28 @@ public class InitialContributionJobScheduler {
   private int itemPause;
   private final Cache<String, List<String>> tenantDetailsCache;
 
-
+  private boolean flag = false;
+  public void initialize(){
+    flag = true;
+    log.info("InitialContributionJobScheduler:: initialize");
+    List<String> tenants = loadTenants();
+    log.info("processInitialContributionEvents :: tenantsList {}", tenants);
+    tenants.forEach(tenant ->
+      executionService.runTenantScoped(tenant,
+        () -> {
+          try {
+            jobExecutionStatusRepository.updateJobExecutionRecordsByStatus();
+          } catch (Exception ex) {
+            log.warn("Exception caught while processing Initial contribution for tenant {} {} ", tenant, ex.getMessage());
+          }
+        }
+      ));
+  }
   @Scheduled(fixedDelayString = "${initial-contribution.scheduler.fixed-delay}",
     initialDelayString = "${initial-contribution.scheduler.initial-delay}")
   public void processInitialContributionEvents() {
+    if(!flag)
+      initialize();
     List<String> tenants = loadTenants();
     log.info("processInitialContributionEvents :: tenantsList {}", tenants);
     tenants.forEach(tenant ->
