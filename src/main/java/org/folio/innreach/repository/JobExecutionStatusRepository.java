@@ -26,6 +26,6 @@ public interface JobExecutionStatusRepository extends JpaRepository<JobExecution
 
   @Query(value = "update job_execution_status  set status = 'READY' where id in (select j.id " +
     "from job_execution_status j inner join contribution c on j.job_id = c.job_id " +
-    "where c.status=0 and j.status = 'IN_PROGRESS')")
+    "where c.status=0 and j.status = 'IN_PROGRESS')", nativeQuery = true)
   void updateInProgressRecordsToReady();
 }
