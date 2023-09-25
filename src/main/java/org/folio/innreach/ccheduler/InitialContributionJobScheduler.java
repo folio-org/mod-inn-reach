@@ -20,7 +20,7 @@ import java.util.List;
 @Log4j2
 public class InitialContributionJobScheduler {
   private final TenantScopedExecutionService executionService;
-  private JobExecutionStatusRepository jobExecutionStatusRepository;
+  private final JobExecutionStatusRepository jobExecutionStatusRepository;
   private final InitialContributionEventProcessor eventProcessor;
   private final TenantInfoRepository tenantRepository;
   @Value(value = "${initial-contribution.fetch-limit}")
