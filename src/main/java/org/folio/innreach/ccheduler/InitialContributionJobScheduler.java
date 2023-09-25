@@ -40,7 +40,7 @@ public class InitialContributionJobScheduler {
         () -> {
           try {
             if(!flag){
-              jobExecutionStatusRepository.updateJobExecutionRecordsByStatus();
+              updateQuery();
               flag = true;
             }
             jobExecutionStatusRepository.updateAndFetchJobExecutionRecordsByStatus(recordLimit, itemPause)
@@ -50,6 +50,17 @@ public class InitialContributionJobScheduler {
           }
         }
       ));
+  }
+
+  private void updateQuery() {
+    log.info("InitialContributionJobScheduler:: updateQuery");
+    try{
+      log.info("trying updateQuery");
+      jobExecutionStatusRepository.updateJobExecutionRecordsByStatus();
+    }
+    catch (Exception ex){
+      log.warn("Exception caught for update query ", ex);
+    }
   }
 
   private List<String> loadTenants() {
