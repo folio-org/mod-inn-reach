@@ -18,7 +18,6 @@ import java.util.List;
 @RequiredArgsConstructor
 public class SchedulerConfig {
   private final TenantScopedExecutionService executionService;
-  @Autowired
   private JobExecutionStatusRepository jobExecutionStatusRepository;
   private final Cache<String, List<String>> tenantDetailsCache;
   private final TenantInfoRepository tenantRepository;

@@ -1,7 +1,6 @@
 package org.folio.innreach.config;
 
 import lombok.extern.log4j.Log4j2;
-import org.folio.innreach.ccheduler.SchedulerConfig;
 import org.folio.innreach.config.props.InnReachRetryPolicy;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
