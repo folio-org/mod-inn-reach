@@ -9,9 +9,7 @@ import java.util.UUID;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import org.folio.innreach.domain.entity.Contribution;
@@ -31,7 +29,6 @@ public interface ContributionRepository extends JpaRepository<Contribution, UUID
   List<Contribution> findAllByStatus(Contribution.Status status);
   Contribution findByJobId(UUID jobId);
 
-  @Modifying
   @Query(value = "update contribution c set records_processed = (select count(*) from job_execution_status j " +
     "where j.job_id = c.job_id and status in ('PROCESSED','FAILED', 'DE_CONTRIBUTED')), " +
     "records_contributed = (select count(*) from job_execution_status j where j.job_id = c.job_id and status in ('PROCESSED'))," +
