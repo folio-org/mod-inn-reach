@@ -16,7 +16,7 @@ public interface JobExecutionStatusRepository extends JpaRepository<JobExecution
     "set status = 'IN_PROGRESS' where s.id in (select t.id from job_execution_status t " +
     "inner join contribution c on c.job_id = t.job_id where c.status = 0 and " +
     "((t.instance_contributed = true and t.updated_date < current_timestamp - (interval '1 hour') * :itemPause) " +
-    "or t.instance_contributed = false) and "+
+    "or t.instance_contributed = false) and " +
     "t.status in ('READY', 'RETRY') limit :limit) returning * ", nativeQuery = true)
   List<JobExecutionStatus> updateAndFetchJobExecutionRecordsByStatus(@Param("limit") int limit, @Param("itemPause") int itemPause);
 

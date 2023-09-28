@@ -43,6 +43,7 @@ public class ContributionExceptionListener {
   public void logWriteError(Exception e, UUID recordId) {
     logError(e, defaultIfNull(recordId, UNKNOWN_ID), "write");
   }
+
   public void logError(Exception e, UUID recordId, UUID contributionId) {
     try {
       log.warn("Step: [{}] error on record Id {} e: {}", stepName, recordId, e);

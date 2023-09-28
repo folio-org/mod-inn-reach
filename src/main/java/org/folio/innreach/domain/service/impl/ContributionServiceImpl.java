@@ -60,11 +60,9 @@ public class ContributionServiceImpl implements ContributionService {
   @Qualifier("contributionRetryTemplate")
   private final RetryTemplate retryTemplate;
 
-  @Transactional
   @Override
   public ContributionDTO getCurrent(UUID centralServerId) {
     log.debug("getCurrent:: parameters centralServerId: {}", centralServerId);
-    repository.updateStatisticsByCentralServerId(centralServerId);
     var contribution = repository.fetchCurrentByCentralServerId(centralServerId)
       .map(mapper::toDTO)
       .orElseGet(ContributionDTO::new);
@@ -152,6 +150,14 @@ public class ContributionServiceImpl implements ContributionService {
     repository.save(contribution);
 
     log.info("Initial contribution process started");
+  }
+
+  @Override
+  @Transactional
+  public void updateStatisticsAndContributionStatus() {
+    repository.updateStatisticsByCentralServerId().ifPresent(contribution ->
+      log.info("updateStatisticsAndContributionStatus:: recordsTotal - {}, recordsProcessed - {}, recordsContributed - {}",
+        contribution.getRecordsTotal(), contribution.getRecordsProcessed(), contribution.getRecordsContributed()));
   }
 
   private JobResponse getJobResponse(UUID id) {

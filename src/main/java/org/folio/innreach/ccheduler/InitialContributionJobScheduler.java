@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.folio.innreach.batch.contribution.service.InitialContributionEventProcessor;
 import org.folio.innreach.domain.entity.TenantInfo;
+import org.folio.innreach.domain.service.ContributionService;
 import org.folio.innreach.domain.service.impl.TenantScopedExecutionService;
 import org.folio.innreach.repository.JobExecutionStatusRepository;
 import org.folio.innreach.repository.TenantInfoRepository;
@@ -20,10 +21,11 @@ import java.util.List;
 @RequiredArgsConstructor
 @Log4j2
 public class InitialContributionJobScheduler {
-  private final TenantScopedExecutionService executionService;
+  private final TenantScopedExecutionService tenantScopedExecutionService;
   private final JobExecutionStatusRepository jobExecutionStatusRepository;
   private final InitialContributionEventProcessor eventProcessor;
   private final TenantInfoRepository tenantRepository;
+  private final ContributionService contributionService;
   @Value(value = "${initial-contribution.fetch-limit}")
   private int recordLimit;
   @Value(value = "${initial-contribution.item-pause}")
@@ -35,7 +37,7 @@ public class InitialContributionJobScheduler {
     try {
       this.loadTenants()
         .forEach(tenantId ->
-            executionService.runTenantScoped(tenantId,
+          tenantScopedExecutionService.runTenantScoped(tenantId,
               jobExecutionStatusRepository::updateInProgressRecordsToReady));
     } catch (Exception ex) {
       log.warn("postConstruct:: Error while updating the record status from In progress to ready {}", ex.getMessage());
@@ -48,7 +50,7 @@ public class InitialContributionJobScheduler {
     List<String> tenants = loadTenants();
     log.info("processInitialContributionEvents :: tenantsList {}", tenants);
     tenants.forEach(tenant ->
-      executionService.runTenantScoped(tenant,
+      tenantScopedExecutionService.runTenantScoped(tenant,
         () -> {
           try {
             long inProgressCount = jobExecutionStatusRepository.getInProgressRecordsCount();
@@ -60,6 +62,7 @@ public class InitialContributionJobScheduler {
               log.info("processInitialContributionEvents:: unable to fetch new records, " +
                 "as inProgress count {} is greater than fetchLimit {}", inProgressCount, recordLimit);
             }
+            contributionService.updateStatisticsAndContributionStatus();
           } catch (Exception ex) {
             log.warn("Exception caught while processing Initial contribution for tenant {} {} ", tenant, ex.getMessage());
           }

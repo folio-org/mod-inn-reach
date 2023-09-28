@@ -58,10 +58,10 @@ public class InitialContributionEventProcessor {
   private int maxRetryAttempts;
 
   @Transactional
-  @Async
+  @Async("schedulerTaskExecutor")
   public void processInitialContributionEvents(JobExecutionStatus job) {
     executionService.runTenantScoped(job.getTenant(), () -> {
-      log.info("processInitialContributionEvents:: Processing Initial contribution events {} ", job);
+      log.info("processInitialContributionEvents:: Processing Initial contribution events {} , threadName {}", job, Thread.currentThread().getName());
       try {
         var instanceId = job.getInstanceId();
         var centralServerId = contributionRecord.get(job.getJobId()) != null ?
@@ -107,9 +107,9 @@ public class InitialContributionEventProcessor {
   private void startContribution(UUID centralServerId, Instance instance, JobExecutionStatus job) throws SocketTimeoutException {
     var instanceId = job.getInstanceId();
     if (isEligibleForContribution(centralServerId, instance)) {
-      if(job.isInstanceContributed()){
+      if (job.isInstanceContributed()) {
         log.info("startContribution:: Item contribution started for centralServerId: {}, instanceId: {}", centralServerId, instanceId);
-        contributeItem(job, centralServerId, instance);
+        contributeItems(job, centralServerId, instance);
       } else {
         log.info("startContribution:: Instance contribution started for instanceId {} ", instance.getId());
         recordContributionService.contributeInstanceWithoutRetry(centralServerId, instance);
@@ -126,7 +126,7 @@ public class InitialContributionEventProcessor {
     }
   }
 
-  private void contributeItem(JobExecutionStatus job, UUID centralServerId, Instance instance) {
+  private void contributeItems(JobExecutionStatus job, UUID centralServerId, Instance instance) {
     log.debug("contributeItem:: parameters centralServerId: {}, instance id: {}", centralServerId, instance.getId());
     var bibId = instance.getHrid();
     var items = instance.getItems().stream()

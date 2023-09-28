@@ -7,6 +7,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.task.SimpleAsyncTaskExecutor;
 import org.springframework.scheduling.annotation.AsyncConfigurer;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 
 import java.util.concurrent.Executor;
@@ -16,6 +17,9 @@ public class SpringAsyncConfig implements AsyncConfigurer {
 
   @Value("${spring.async.config.executor.pool-size}")
   private int poolSize;
+
+  @Value("${initial-contribution.async.pool-size}")
+  private int schedulerTaskPoolSize;
 
   /*
    * We need a SimpleAsyncTaskExecutor here because it will be used to run all @Async methods.
@@ -40,6 +44,17 @@ public class SpringAsyncConfig implements AsyncConfigurer {
     executor.setPoolSize(poolSize);
     executor.setWaitForTasksToCompleteOnShutdown(true);
     executor.setThreadNamePrefix("Async Executor -> ");
+    return executor;
+  }
+
+  @Bean("schedulerTaskExecutor")
+  public Executor schedulerTaskExecutor() {
+    ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+    executor.setCorePoolSize(5);
+    executor.setMaxPoolSize(schedulerTaskPoolSize);
+    executor.setQueueCapacity(50);
+    executor.setThreadNamePrefix("schedulerTaskExecutor-");
+    executor.initialize();
     return executor;
   }
 
