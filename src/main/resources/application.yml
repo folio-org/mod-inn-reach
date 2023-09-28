@@ -190,6 +190,6 @@ initial-contribution:
     initial-delay: 200000
   retry-attempts: ${INITIAL_CONTRIBUTION_RETRIES:36000}
   fetch-limit: ${INITIAL_CONTRIBUTION_FETCH_LIMIT:50}
-  item-pause: ${INITIAL_CONTRIBUTION_ITEM_PAUSE:50}
+  item-pause: ${INITIAL_CONTRIBUTION_ITEM_PAUSE:0.5}
   tenant-cache:
     ttl: 3600

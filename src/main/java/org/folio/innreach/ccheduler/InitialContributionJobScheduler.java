@@ -29,7 +29,7 @@ public class InitialContributionJobScheduler {
   @Value(value = "${initial-contribution.fetch-limit}")
   private int recordLimit;
   @Value(value = "${initial-contribution.item-pause}")
-  private int itemPause;
+  private double itemPause;
   private final Cache<String, List<String>> tenantDetailsCache;
 
   @PostConstruct
