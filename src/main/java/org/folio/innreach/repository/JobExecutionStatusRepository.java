@@ -2,9 +2,11 @@ package org.folio.innreach.repository;
 
 import org.folio.innreach.domain.entity.JobExecutionStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.UUID;
@@ -24,8 +26,10 @@ public interface JobExecutionStatusRepository extends JpaRepository<JobExecution
     "c.job_id = j.job_id where c.status = 0 and j.status='IN_PROGRESS'", nativeQuery = true)
   long getInProgressRecordsCount();
 
+  @Modifying
+  @Transactional
   @Query(value = "update job_execution_status  set status = 'READY' where id in (select j.id " +
     "from job_execution_status j inner join contribution c on j.job_id = c.job_id " +
     "where c.status=0 and j.status = 'IN_PROGRESS')", nativeQuery = true)
-  long updateInProgressRecordsToReady();
+  void updateInProgressRecordsToReady();
 }
