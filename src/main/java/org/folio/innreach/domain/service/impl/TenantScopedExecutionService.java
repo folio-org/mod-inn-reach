@@ -12,7 +12,7 @@ import org.folio.spring.service.SystemUserService;
 @RequiredArgsConstructor
 public class TenantScopedExecutionService {
 
-  private final FolioExecutionContextBuilder contextBuilder;
+  private final InnReachFolioExecutionContextBuilder contextBuilder;
   private final SystemUserService systemUserService;
 
   @SneakyThrows

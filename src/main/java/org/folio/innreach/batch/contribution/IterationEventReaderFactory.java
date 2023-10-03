@@ -19,6 +19,7 @@ import org.folio.innreach.batch.contribution.listener.ContributionExceptionListe
 import org.folio.innreach.batch.contribution.service.ContributionJobRunner;
 import org.folio.innreach.config.RetryConfig;
 import org.folio.spring.config.properties.FolioEnvironment;
+import org.folio.spring.tools.kafka.KafkaUtils;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.kafka.KafkaProperties;
@@ -102,8 +103,7 @@ public class IterationEventReaderFactory {
   }
 
   public String getTopicName(String tenantId) {
-    return String.format("%s.%s.%s",
-      folioEnv.getEnvironment(), tenantId, jobProperties.getReaderTopic());
+    return KafkaUtils.getTenantTopicName(jobProperties.getReaderTopic(), folioEnv.getEnvironment(), tenantId);
   }
 
 }
