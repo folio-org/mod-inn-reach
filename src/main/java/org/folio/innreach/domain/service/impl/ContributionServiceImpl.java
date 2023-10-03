@@ -9,7 +9,6 @@ import static org.folio.innreach.domain.service.impl.ServiceUtils.centralServerR
 import static org.folio.innreach.dto.MappingValidationStatusDTO.VALID;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 import lombok.RequiredArgsConstructor;
@@ -185,11 +184,6 @@ public class ContributionServiceImpl implements ContributionService {
   public ContributionDTO createOngoingContribution(UUID centralServerId) {
     log.info("createOngoingContribution:: parameters centralServerId: {}", centralServerId);
     var contribution = createEmptyContribution(centralServerId);
-    Optional<Contribution> oldContribution = repository.fetchOngoingByCentralServerId(centralServerId);
-    if(oldContribution.isPresent()) {
-      log.info("createOngoingContribution :: old contribution");
-      return mapper.toDTO(oldContribution.get());
-    }
     contribution.setOngoing(true);
 
     return mapper.toDTO(repository.save(contribution));

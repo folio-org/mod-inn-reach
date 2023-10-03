@@ -22,6 +22,7 @@
 
   <properties>
     <!-- runtime dependencies -->
+    <folio-service-tools.version>3.1.0-SNAPSHOT</folio-service-tools.version>
     <folio-spring-base.version>7.0.0</folio-spring-base.version>
     <folio-spring-system-user.version>7.2.0-SNAPSHOT</folio-spring-system-user.version>
     <spring-cloud-starter-openfeign.version>4.0.0</spring-cloud-starter-openfeign.version>
@@ -70,6 +71,11 @@
   </properties>
 
   <dependencies>
+    <dependency>
+      <groupId>org.folio</groupId>
+      <artifactId>folio-service-tools-spring-dev</artifactId>
+      <version>${folio-service-tools.version}</version>
+    </dependency>
     <dependency>
       <groupId>org.folio</groupId>
       <artifactId>folio-spring-base</artifactId>

@@ -20,9 +20,6 @@ public interface ContributionRepository extends JpaRepository<Contribution, UUID
   @Query(name = Contribution.FETCH_CURRENT_QUERY_NAME)
   Optional<Contribution> fetchCurrentByCentralServerId(UUID id);
 
-  @Query(name = Contribution.FETCH_ONGOING_QUERY_NAME)
-  Optional<Contribution> fetchOngoingByCentralServerId(UUID id);
-
   @Query(name = Contribution.FETCH_HISTORY_QUERY_NAME, countName = FETCH_HISTORY_COUNT_QUERY_NAME)
   Page<Contribution> fetchHistoryByCentralServerId(UUID id, Pageable pageable);
 

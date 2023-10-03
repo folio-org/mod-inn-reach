@@ -16,7 +16,7 @@ import com.google.common.collect.Iterables;
 import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
-import org.folio.innreach.domain.service.impl.FolioExecutionContextBuilder;
+import org.folio.innreach.domain.service.impl.InnReachFolioExecutionContextBuilder;
 import org.folio.spring.scope.FolioExecutionContextSetter;
 import org.folio.innreach.external.exception.InnReachConnectionException;
 import org.folio.innreach.external.exception.ServiceSuspendedException;
@@ -66,7 +66,7 @@ public class ContributionJobRunner {
   private final Statistics stats = new Statistics();
 
   private static final List<UUID> runningInitialContributions = Collections.synchronizedList(new ArrayList<>());
-  private final FolioExecutionContextBuilder folioExecutionContextBuilder;
+  private final InnReachFolioExecutionContextBuilder folioExecutionContextBuilder;
 
   private static Map<String,Integer> totalRecords = new HashMap<>();
   private static ConcurrentHashMap<String, Integer> recordsProcessed = new ConcurrentHashMap<>();
