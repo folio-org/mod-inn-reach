@@ -116,7 +116,7 @@ coffee-boots:
 batch:
   jobs:
     contribution:
-      chunk-size: 100
+      chunk-size: 50
       retry-attempts: 3
       retry-interval-ms: 10000
       reader-topic: inventory.instance-contribution
@@ -183,11 +183,13 @@ kafka:
   custom-concurrency: ${DEFAULT_CONCURRENCY:2}
 
 initial-contribution:
+  async:
+    pool-size: ${INITIAL_CONTRIBUTION_POOL_SIZE:10}
   scheduler:
     fixed-delay: 10000
     initial-delay: 200000
-  retry-attempts: ${INITIAL_CONTRIBUTION_RETRIES:10}
-  fetch-limit: 50
-  item-pause: 1
+  retry-attempts: ${INITIAL_CONTRIBUTION_RETRIES:36000}
+  fetch-limit: ${INITIAL_CONTRIBUTION_FETCH_LIMIT:50}
+  item-pause: ${INITIAL_CONTRIBUTION_ITEM_PAUSE:0.5}
   tenant-cache:
     ttl: 3600

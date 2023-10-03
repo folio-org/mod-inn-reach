@@ -57,8 +57,7 @@ import org.folio.spring.data.OffsetRequest;
     "classpath:db/mtype-mapping/clear-material-type-mapping-table.sql",
     "classpath:db/inn-reach-location/clear-inn-reach-location-tables.sql",
     "classpath:db/lib-mapping/clear-library-mapping-table.sql",
-    "classpath:db/central-server/clear-central-server-tables.sql",
-    "classpath:db/job-execution-status/clear-job-execution-status.sql"},
+    "classpath:db/central-server/clear-central-server-tables.sql"},
   executionPhase = AFTER_TEST_METHOD
 )
 @SqlMergeMode(MERGE)
@@ -96,8 +95,7 @@ class ContributionControllerTest extends BaseControllerTest {
     "classpath:db/mtype-mapping/pre-populate-material-type-mapping.sql",
     "classpath:db/inn-reach-location/pre-populate-inn-reach-location-code.sql",
     "classpath:db/lib-mapping/pre-populate-another-library-mapping.sql",
-    "classpath:db/contribution/pre-populate-contribution.sql",
-    "classpath:db/job-execution-status/pre-populate-job-execution-status.sql"
+    "classpath:db/contribution/pre-populate-contribution.sql"
   })
   void shouldGetCurrentContribution() {
     when(materialTypesClient.getMaterialTypes(anyString(), anyInt())).thenReturn(createMaterialTypes());
