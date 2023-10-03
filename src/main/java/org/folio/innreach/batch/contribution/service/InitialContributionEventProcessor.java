@@ -64,7 +64,7 @@ public class InitialContributionEventProcessor {
   @Async("schedulerTaskExecutor")
   public void processInitialContributionEvents(JobExecutionStatus job) {
     try (var context = new FolioExecutionContextSetter(folioExecutionContextBuilder.dbOnlyContext(job.getTenant()))) {
-      log.info("processInitialContributionEvents:: Processing Initial contribution events {} , threadName {}", job, Thread.currentThread().getName());
+      log.info("processInitialContributionEvents:: Processing Initial contribution events context {} , threadName {}", job, Thread.currentThread().getName());
       var instanceId = job.getInstanceId();
       var centralServerId = contributionRecord.get(job.getJobId()) != null ?
         contributionRecord.get(job.getJobId()).getCentralServer().getId() : getCentralServerId(job.getJobId());
