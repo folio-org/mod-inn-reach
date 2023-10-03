@@ -20,6 +20,7 @@ import org.folio.innreach.external.exception.ServiceSuspendedException;
 import org.folio.innreach.external.exception.SocketTimeOutExceptionWrapper;
 import org.folio.innreach.repository.ContributionRepository;
 import org.folio.innreach.repository.JobExecutionStatusRepository;
+import org.folio.spring.service.SystemUserScopedExecutionService;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
@@ -53,14 +54,14 @@ public class InitialContributionEventProcessor {
   private final JobExecutionStatusRepository jobExecutionStatusRepository;
   private static final ConcurrentHashMap<UUID, Contribution> contributionRecord = new ConcurrentHashMap<>();
   private final ContributionRepository contributionRepository;
-  private final TenantScopedExecutionService executionService;
+  private final SystemUserScopedExecutionService executionService;
   @Value("${initial-contribution.retry-attempts}")
   private int maxRetryAttempts;
 
   @Transactional
   @Async("schedulerTaskExecutor")
   public void processInitialContributionEvents(JobExecutionStatus job) {
-    executionService.runTenantScoped(job.getTenant(), () -> {
+    executionService.executeAsyncSystemUserScoped(job.getTenant(), () -> {
       log.info("processInitialContributionEvents:: Processing Initial contribution events {} , threadName {}", job, Thread.currentThread().getName());
       try {
         var instanceId = job.getInstanceId();
