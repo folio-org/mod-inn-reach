@@ -67,9 +67,8 @@ public class InitialContributionEventProcessor {
   private final FolioExecutionContext context;
 
   @Transactional
-  @Async
   public void processInitialContributionEvents(JobExecutionStatus job) {
-    try(var x = new FolioExecutionContextSetter(innReachFolioExecutionContextBuilder.forSystemUser(systemUserService.getAuthedSystemUser(job.getTenant())))) {
+    executionService.executeAsyncTenantScoped(job.getTenant(), () -> {
       log.info("processInitialContributionEvents:: Processing Initial contribution events {} , threadName {} , context {}", job, Thread.currentThread().getName(), context.getTenantId());
       try {
         var instanceId = job.getInstanceId();
@@ -94,7 +93,7 @@ public class InitialContributionEventProcessor {
         logException(job, ex, contributionRecord.get(job.getJobId()).getId());
         updateJobAndContributionStatus(job, FAILED, job.isInstanceContributed());
       }
-    }
+    });
 
   }
 
