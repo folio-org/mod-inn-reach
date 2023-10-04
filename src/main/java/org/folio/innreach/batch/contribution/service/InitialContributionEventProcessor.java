@@ -58,9 +58,7 @@ public class InitialContributionEventProcessor {
   private int maxRetryAttempts;
 
   @Transactional
-  @Async
   public void processInitialContributionEvents(JobExecutionStatus job) {
-    executionService.runTenantScoped(job.getTenant(), () -> {
       log.info("processInitialContributionEvents:: Processing Initial contribution events {} , threadName {}", job, Thread.currentThread().getName());
       try {
         var instanceId = job.getInstanceId();
@@ -85,7 +83,6 @@ public class InitialContributionEventProcessor {
         logException(job, ex, contributionRecord.get(job.getJobId()).getId());
         updateJobAndContributionStatus(job, FAILED, job.isInstanceContributed());
       }
-    });
   }
 
   private void checkRetryLimit(JobExecutionStatus job) {
