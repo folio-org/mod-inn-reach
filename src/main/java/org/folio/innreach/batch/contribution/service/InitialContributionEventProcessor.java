@@ -67,6 +67,7 @@ public class InitialContributionEventProcessor {
   private final FolioExecutionContext context;
 
   @Transactional
+  @Async
   public void processInitialContributionEvents(JobExecutionStatus job) {
     executionService.executeAsyncTenantScoped(job.getTenant(), () -> {
       log.info("processInitialContributionEvents:: Processing Initial contribution events {} , threadName {} , context {}", job, Thread.currentThread().getName(), context.getTenantId());

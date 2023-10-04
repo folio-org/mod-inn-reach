@@ -22,7 +22,6 @@ public class TenantScopedExecutionService {
     getRunnableWithFolioContext(folioExecutionContext(tenantId), job).run();
   }
 
-  @Async
   public void executeAsyncTenantScoped(String tenantId, Runnable job) {
     try (var fex = new FolioExecutionContextSetter(folioExecutionContext(tenantId))) {
       job.run();
