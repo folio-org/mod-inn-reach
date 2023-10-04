@@ -130,7 +130,7 @@ public class InitialContributionEventProcessor {
       updateJobAndContributionStatus(job, DE_CONTRIBUTED, job.isInstanceContributed());
     } else {
       // Update the status of non-eligible instance Id
-      log.info("startContribution:: non-eligible instance id: {}", instanceId);
+      log.info("startContribution:: non-eligible instance id: {}, context {}", instanceId, context.getTenantId());
       updateJobAndContributionStatus(job, FAILED, job.isInstanceContributed());
     }
   }
