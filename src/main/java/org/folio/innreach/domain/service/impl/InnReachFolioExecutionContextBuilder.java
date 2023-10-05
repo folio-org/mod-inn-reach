@@ -19,7 +19,8 @@ import org.folio.spring.FolioModuleMetadata;
 @Component
 @RequiredArgsConstructor
 @Log4j2
-public class FolioExecutionContextBuilder {
+public class InnReachFolioExecutionContextBuilder {
+  // TODO: merge this class with similar named FolioExecutionContextBuilder in folio-service-tools
   private final FolioModuleMetadata moduleMetadata;
 
   public Builder builder() {

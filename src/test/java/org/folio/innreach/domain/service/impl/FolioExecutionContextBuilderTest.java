@@ -19,8 +19,8 @@ class FolioExecutionContextBuilderTest {
 
   private final FolioExecutionContext folioExecutionContext = mock(FolioExecutionContext.class);
   private final FolioModuleMetadata folioModuleMetadata = mock(FolioModuleMetadata.class);
-  private final FolioExecutionContextBuilder builder =
-    new FolioExecutionContextBuilder(mock(FolioModuleMetadata.class));
+  private final InnReachFolioExecutionContextBuilder builder =
+    new InnReachFolioExecutionContextBuilder(mock(FolioModuleMetadata.class));
 
 
   @Test
