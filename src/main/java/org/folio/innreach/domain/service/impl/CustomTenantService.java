@@ -48,8 +48,6 @@ public class CustomTenantService extends TenantService {
 
   @Override
   public void loadReferenceData() {
-    log.info("loadReferenceData:: tenantId {}, Allheaders {} , Okapi headers {}",
-      context.getTenantId(), context.getAllHeaders(), context.getOkapiHeaders());
     referenceDataLoader.loadRefData();
   }
 
