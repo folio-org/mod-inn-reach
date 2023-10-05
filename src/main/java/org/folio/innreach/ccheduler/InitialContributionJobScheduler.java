@@ -39,6 +39,7 @@ public class InitialContributionJobScheduler {
         .forEach(tenantId ->
           tenantScopedExecutionService.runTenantScoped(tenantId,
               jobExecutionStatusRepository::updateInProgressRecordsToReady));
+      log.info("postConstruct:: Status of the records updated to Ready successfully");
     } catch (Exception ex) {
       log.warn("postConstruct:: Error while updating the record status from In progress to ready {}", ex.getMessage());
     }
@@ -54,7 +55,7 @@ public class InitialContributionJobScheduler {
         () -> {
           try {
             long inProgressCount = jobExecutionStatusRepository.getInProgressRecordsCount();
-            if(recordLimit> inProgressCount) {
+            if(recordLimit > inProgressCount) {
               log.info("processInitialContributionEvents:: Fetching new set of records");
               jobExecutionStatusRepository.updateAndFetchJobExecutionRecordsByStatus(recordLimit, itemPause)
                 .forEach(eventProcessor::processInitialContributionEvents);

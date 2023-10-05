@@ -5,7 +5,6 @@ import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.folio.innreach.batch.contribution.listener.ContributionExceptionListener;
-import org.folio.innreach.domain.service.impl.InnReachFolioExecutionContextBuilder;
 import org.folio.innreach.dto.Instance;
 import org.folio.innreach.dto.Item;
 import org.folio.innreach.config.props.ContributionJobProperties;
@@ -22,14 +21,10 @@ import org.folio.innreach.external.exception.SocketTimeOutExceptionWrapper;
 import org.folio.innreach.repository.ContributionRepository;
 import org.folio.innreach.repository.JobExecutionStatusRepository;
 import org.folio.spring.FolioExecutionContext;
-import org.folio.spring.FolioModuleMetadata;
-import org.folio.spring.scope.FolioExecutionContextSetter;
-import org.folio.spring.service.SystemUserService;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.net.SocketTimeoutException;
 import java.util.UUID;
@@ -59,8 +54,6 @@ public class InitialContributionEventProcessor {
   private static final ConcurrentHashMap<UUID, Contribution> contributionRecord = new ConcurrentHashMap<>();
   private final ContributionRepository contributionRepository;
   private final TenantScopedExecutionService executionService;
-  private final InnReachFolioExecutionContextBuilder innReachFolioExecutionContextBuilder;
-  private final SystemUserService systemUserService;
   @Value("${initial-contribution.retry-attempts}")
   private int maxRetryAttempts;
 

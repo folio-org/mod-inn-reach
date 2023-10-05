@@ -116,7 +116,7 @@ coffee-boots:
 batch:
   jobs:
     contribution:
-      chunk-size: 50
+      chunk-size: 25
       retry-attempts: 3
       retry-interval-ms: 10000
       reader-topic: inventory.instance-contribution
