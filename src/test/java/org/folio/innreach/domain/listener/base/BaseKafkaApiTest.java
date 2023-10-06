@@ -140,5 +140,10 @@ public class BaseKafkaApiTest {
     public void runTenantScoped(String tenantId, Runnable job) {
       job.run();
     }
+
+    public void executeAsyncTenantScoped(String tenantId, Runnable job) {
+      job.run();
+    }
+
   }
 }
