@@ -1,4 +1,4 @@
-package org.folio.innreach.ccheduler;
+package org.folio.innreach.scheduler;
 
 import com.google.common.cache.Cache;
 import lombok.RequiredArgsConstructor;
