@@ -6,7 +6,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import org.folio.spring.FolioExecutionContext;
 import org.folio.spring.scope.FolioExecutionContextSetter;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.folio.spring.service.SystemUserService;
 
