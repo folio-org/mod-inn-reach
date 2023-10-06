@@ -20,7 +20,6 @@ import org.folio.innreach.external.exception.ServiceSuspendedException;
 import org.folio.innreach.external.exception.SocketTimeOutExceptionWrapper;
 import org.folio.innreach.repository.ContributionRepository;
 import org.folio.innreach.repository.JobExecutionStatusRepository;
-import org.folio.spring.FolioExecutionContext;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
@@ -57,12 +56,10 @@ public class InitialContributionEventProcessor {
   @Value("${initial-contribution.retry-attempts}")
   private int maxRetryAttempts;
 
-  private final FolioExecutionContext context;
-
   @Async("schedulerTaskExecutor")
   public void processInitialContributionEvents(JobExecutionStatus job) {
     executionService.executeAsyncTenantScoped(job.getTenant(), () -> {
-      log.info("processInitialContributionEvents:: Processing Initial contribution events {} , threadName {} , context {}", job, Thread.currentThread().getName(), context.getTenantId());
+      log.info("processInitialContributionEvents:: Processing Initial contribution events {}", job);
       try {
         var instanceId = job.getInstanceId();
         var centralServerId = contributionRecord.get(job.getJobId()) != null ?
@@ -78,11 +75,11 @@ public class InitialContributionEventProcessor {
         startContribution(centralServerId, instance, job);
       } catch (ServiceSuspendedException | InnReachConnectionException | FeignException |
                SocketTimeOutExceptionWrapper ex) {
-        log.warn("processInitialContributionEvents:: Retrying the contribution for instanceId {} due to {} , context{}",
-          job.getInstanceId(), ex.getMessage(), context.getTenantId());
+        log.warn("processInitialContributionEvents:: Retrying the contribution for instanceId {} due to {}",
+          job.getInstanceId(), ex.getMessage());
         updateJobAndContributionStatus(job, RETRY, job.isInstanceContributed());
       } catch (Exception ex) {
-        log.warn("processInitialContributionEvents:: Exception while processing instanceId {} , context {} ", job.getInstanceId(), context.getTenantId());
+        log.warn("processInitialContributionEvents:: Exception while processing instanceId {}", job.getInstanceId());
         logException(job, ex, contributionRecord.get(job.getJobId()).getId());
         updateJobAndContributionStatus(job, FAILED, job.isInstanceContributed());
       }
@@ -122,8 +119,8 @@ public class InitialContributionEventProcessor {
       recordContributionService.deContributeInstance(centralServerId, instance);
       updateJobAndContributionStatus(job, DE_CONTRIBUTED, job.isInstanceContributed());
     } else {
-      // Update the status of non-eligible instance Id
-      log.info("startContribution:: non-eligible instance id: {}, context {}", instanceId, context.getTenantId());
+      // Update the status of non-eligible instance id
+      log.info("startContribution:: non-eligible instance id: {}", instanceId);
       updateJobAndContributionStatus(job, FAILED, job.isInstanceContributed());
     }
   }
@@ -139,7 +136,7 @@ public class InitialContributionEventProcessor {
     }
     int chunkSize = max(jobProperties.getChunkSize(), 1);
     StreamSupport.stream(Iterables.partition(items, chunkSize).spliterator(), false)
-      .forEach(itemsChunk -> recordContributionService.contributeItemsWithoutRetry(centralServerId, bibId, items));
+      .forEach(itemsChunk -> recordContributionService.contributeItemsWithoutRetry(centralServerId, bibId, itemsChunk));
     log.info("contributeItem:: Item contribution completed for instanceId {} ", instance.getId());
     updateJobAndContributionStatus(job, PROCESSED, job.isInstanceContributed());
   }

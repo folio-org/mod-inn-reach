@@ -50,8 +50,8 @@ public class SpringAsyncConfig implements AsyncConfigurer {
   @Bean("schedulerTaskExecutor")
   public Executor schedulerTaskExecutor() {
     ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
-    executor.setCorePoolSize(5);
-    executor.setMaxPoolSize(schedulerTaskPoolSize);
+    executor.setCorePoolSize(schedulerTaskPoolSize);
+    executor.setMaxPoolSize(schedulerTaskPoolSize + 10);
     executor.setQueueCapacity(50);
     executor.setThreadNamePrefix("schedulerTaskExecutor-");
     executor.initialize();
