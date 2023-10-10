@@ -5,7 +5,7 @@
                     http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.4.xsd">
 
   <changeSet id="2022-02-22-01__alter-contribution-table.sql" author="oliinyko">
-    <sqlFile path="v1.1.0/sql/2022-02-22-01__alter-contribution-table.sql" relativeToChangelogFile="true"/>
+    <sqlFile path="sql/2022-02-22-01__alter-contribution-table.sql" relativeToChangelogFile="true"/>
   </changeSet>
 
 </databaseChangeLog>

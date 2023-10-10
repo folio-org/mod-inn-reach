@@ -5,11 +5,11 @@
                     http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.4.xsd">
 
     <changeSet id="2021-06-30-01__alter_location_mapping_table" author="dmtkachenko">
-        <sqlFile path="v1.0.0/sql/2021-06-30-01__alter-location-mapping-table.sql" relativeToChangelogFile="true"/>
+        <sqlFile path="sql/2021-06-30-01__alter-location-mapping-table.sql" relativeToChangelogFile="true"/>
     </changeSet>
 
     <changeSet id="2021-06-30-01__alter_library_mapping_table" author="dmtkachenko">
-        <sqlFile path="v1.0.0/sql/2021-06-30-02__alter-library-mapping-table.sql" relativeToChangelogFile="true"/>
+        <sqlFile path="sql/2021-06-30-02__alter-library-mapping-table.sql" relativeToChangelogFile="true"/>
     </changeSet>
 
 </databaseChangeLog>
