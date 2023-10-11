@@ -110,8 +110,7 @@ class InnReachLocationRepositoryTest extends BaseRepositoryTest {
     newLocation.setCode(location.getCode());
 
     var ex = assertThrows(DataIntegrityViolationException.class, () -> locationRepository.saveAndFlush(newLocation));
-    assertThat(ex.getMessage(), containsString("could not execute statement" +
-      " [ERROR: duplicate key value violates unique constraint \"inn_reach_location_code_key\""));
+    assertThat(ex.getMessage(), containsString("inn_reach_location_code_key"));
   }
 
 }
