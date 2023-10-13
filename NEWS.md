@@ -1,10 +1,29 @@
-## v3.0.1 Draft
+## v3.1.0 2023-10-12
 
 ### Stories
+* [MODINREACH-402](https://issues.folio.org/browse/MODINREACH-402) - Upgrade Spring boot starter parent version
+* [MODINREACH-398](https://issues.folio.org/browse/MODINREACH-398) - Allow Tenant Collection Topics
+* [MODINREACH-325](https://issues.folio.org/browse/MODINREACH-325) - Implement refresh token rotation
+* [MODINREACH-378](https://issues.folio.org/browse/MODINREACH-378) - ContributionExceptionListener should log the id of the item that caused the exception
+* [FOLIO-1021](https://issues.folio.org/browse/FOLIO-1021) - Update copyright year
+* [FOLIO-3678](https://issues.folio.org/browse/FOLIO-3678) - Use GitHub Workflows api-lint, api-schema-lint and api-doc
+* [MODINREACH-373](https://issues.folio.org/browse/MODINREACH-373) - Migrate to folio-spring-support 
+* [MODINREACH-370](https://issues.folio.org/browse/MODINREACH-370) - Change spelling of fulfillment parameter in requests
+* [MODINREACH-364](https://issues.folio.org/browse/MODINREACH-364) - Logging improvement - check log4j configuration
 * [MODINREACH-351](https://issues.folio.org/browse/MODINREACH-351) - Ensure that ongoing contributions can retry when central server is unavailable
-* [MODINREACH-347](https://issues.folio.org/browse/MODINREACH-347) - Record Contribution Errors Should not Cause Contribution Jobs to Halt
+* [MODINREACH-360](https://issues.folio.org/browse/MODINREACH-360) - Update mod-inn-reach to folio-spring-base
+* [MODINREACH-359](https://issues.folio.org/browse/MODINREACH-359) - Update feesfines interface version
 
-### Stories
+### Bugs
+* [FAT-6991](https://issues.folio.org/browse/FAT-6991) - Updating folio-spring-base dependency version
+* [MODINREACH-391](https://issues.folio.org/browse/MODINREACH-391) - Ongoing is failing due to Contribution table record design
+* [MODINREACH-381](https://issues.folio.org/browse/MODINREACH-381) - Manual ongoing contributions fail to reach the ContributionJobRunner
+* [MODINREACH-393](https://issues.folio.org/browse/MODINREACH-393) - Spring Boot 3.0.10
+* [MODINREACH-369](https://issues.folio.org/browse/MODINREACH-369) - INN-Reach Record Contribution: Diacritics not being preserved in contributed MARC records
+* [MODINREACH-367](https://issues.folio.org/browse/MODINREACH-367) - Add compatible version of inventory , inventory-view and users
+* [MODINREACH-361](https://issues.folio.org/browse/MODINREACH-361) - Module Upgrade Error 'Could not commit JPA transaction'
+* [MODINREACH-347](https://issues.folio.org/browse/MODINREACH-347) - Record Contribution Errors Should not Cause Contribution Jobs to Halt
+* [FOLSPRINGB-95](https://issues.folio.org/browse/FOLSPRINGB-95) - non-public beginFolioExecutionContext avoids wrong tenant/user
 * [MODINREACH-358](https://issues.folio.org/browse/MODINREACH-358) - No "Delivery stop" token value in INN-Reach paging slips
 
 ## v3.0.0 2023-02-21
