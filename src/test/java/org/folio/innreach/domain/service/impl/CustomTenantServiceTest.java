@@ -9,6 +9,7 @@ import static org.mockito.Mockito.when;
 
 import liquibase.exception.LiquibaseException;
 
+import org.folio.innreach.repository.TenantInfoRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -47,6 +48,8 @@ class CustomTenantServiceTest {
 
   @InjectMocks
   private CustomTenantService service;
+  @Mock
+  private TenantInfoRepository tenantRepository;
 
 
   @Test
@@ -57,7 +60,6 @@ class CustomTenantServiceTest {
     service.createOrUpdateTenant(new TenantAttributes());
 
     verify(systemUserService).prepareSystemUser();
-    verify(contributionJobRunner).cancelJobs();
   }
 
   @Test

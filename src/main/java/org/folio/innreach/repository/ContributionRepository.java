@@ -25,4 +25,15 @@ public interface ContributionRepository extends JpaRepository<Contribution, UUID
 
   List<Contribution> findAllByStatus(Contribution.Status status);
 
+  Contribution findByJobId(UUID jobId);
+
+  @Query(value = "update contribution c set records_processed = (select count(*) from job_execution_status j " +
+    "where j.job_id = c.job_id and status in ('PROCESSED','FAILED', 'DE_CONTRIBUTED')), " +
+    "records_contributed = (select count(*) from job_execution_status j where j.job_id = c.job_id and status in ('PROCESSED'))," +
+    "records_decontributed = (select count(*) from job_execution_status j where j.job_id = c.job_id and status in ('DE_CONTRIBUTED'))," +
+    "status = case when (select count(*) from job_execution_status j where j.status in ('READY','RETRY','IN_PROGRESS') " +
+    "and j.job_id = c.job_id ) = 0 then 1 else status end,updated_date = current_timestamp where c.status = 0 " +
+    "and ongoing = false returning *", nativeQuery = true)
+  Optional<Contribution> updateStatisticsByCentralServerId();
+
 }

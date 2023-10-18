@@ -43,3 +43,11 @@ system-user:
   permissionsFilePath: permissions/test-permissions.csv
 okapi.url: ${OKAPI_URL:http://localhost:8080}
 INNREACH_TENANTS: testing|testing1
+initial-contribution:
+  scheduler:
+    fixed-delay: 30000
+    initial-delay: 1000
+  retry-attempts: 10
+  fetch-limit: 50
+  tenant-cache:
+    ttl: 120
