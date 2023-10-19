@@ -6,7 +6,7 @@ import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertThrows;
 
-public class ModInnReachApplicationTest {
+class ModInnReachApplicationTest {
 
     @Test
     void exceptionOnMissingSystemUserPassword() {
