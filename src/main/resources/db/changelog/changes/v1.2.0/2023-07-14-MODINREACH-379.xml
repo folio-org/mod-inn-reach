@@ -5,7 +5,7 @@
                     http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.4.xsd">
 
   <changeSet id="2023-07-14-01__create_job_execution_status.sql" author="s1mpleGit">
-    <sqlFile path="v1.2.0/sql/2023-07-14-01__create_job_execution_status.sql" relativeToChangelogFile="true"/>
+    <sqlFile path="sql/2023-07-14-01__create_job_execution_status.sql" relativeToChangelogFile="true"/>
   </changeSet>
 
 </databaseChangeLog>

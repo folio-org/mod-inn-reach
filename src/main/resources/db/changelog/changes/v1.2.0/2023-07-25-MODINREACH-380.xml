@@ -5,7 +5,7 @@
                     http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.4.xsd">
 
   <changeSet id="2023-07-25-01__create_tenant_info.sql" author="s1mpleGit">
-    <sqlFile path="v1.2.0/sql/2023-07-25-01__create_tenant_info.sql" relativeToChangelogFile="true"/>
+    <sqlFile path="sql/2023-07-25-01__create_tenant_info.sql" relativeToChangelogFile="true"/>
   </changeSet>
 
 </databaseChangeLog>
