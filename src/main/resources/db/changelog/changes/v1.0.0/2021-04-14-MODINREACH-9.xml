@@ -5,11 +5,11 @@
                     http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.4.xsd">
 
   <changeSet id="2021-04-14-01__create-central-server-table" author="andrii.khodyka">
-    <sqlFile path="v1.0.0/sql/2021-04-14-01__create-central-server-table.sql" relativeToChangelogFile="true"/>
+    <sqlFile path="sql/2021-04-14-01__create-central-server-table.sql" relativeToChangelogFile="true"/>
   </changeSet>
 
   <changeSet id="2021-04-14-02__create-central-server-credentials-table" author="andrii.khodyka">
-    <sqlFile path="v1.0.0/sql/2021-04-14-02__create-central-server-credentials-table.sql" relativeToChangelogFile="true"/>
+    <sqlFile path="sql/2021-04-14-02__create-central-server-credentials-table.sql" relativeToChangelogFile="true"/>
   </changeSet>
 
 </databaseChangeLog>
