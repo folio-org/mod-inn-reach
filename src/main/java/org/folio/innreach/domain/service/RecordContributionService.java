@@ -23,4 +23,8 @@ public interface RecordContributionService {
 
   void deContributeItem(UUID centralServerId, Item item);
 
+  void contributeInstanceWithoutRetry(UUID centralServerId, Instance instance);
+
+  void contributeItemsWithoutRetry(UUID centralServerId, String bibId, List<Item> items);
+
 }
