@@ -605,6 +605,7 @@
           "pathPattern": "/_/tenant",
           "modulePermissions": [
             "users.collection.get",
+            "users.item.get",
             "users.item.post",
             "login.item.post",
             "perms.users.item.post",
