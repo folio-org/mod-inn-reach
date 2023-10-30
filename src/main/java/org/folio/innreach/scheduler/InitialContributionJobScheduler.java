@@ -34,6 +34,7 @@ public class InitialContributionJobScheduler {
 
   @PostConstruct
   public void postConstruct() {
+    log.debug("postConstruct:: Updating job execution record status from In progress to Ready");
     try {
       this.loadTenants()
         .forEach(tenantId ->
