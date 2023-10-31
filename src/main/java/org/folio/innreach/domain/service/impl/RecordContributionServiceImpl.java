@@ -133,7 +133,7 @@ public class RecordContributionServiceImpl implements RecordContributionService 
   }
 
   private InnReachResponse contributeBib(UUID centralServerId, String bibId, BibInfo bib) {
-    log.info("Retry happening for contributeBib with bibId: {}",bibId);
+    log.info("contributeBib:: contributing Bib with bibId: {}",bibId);
     var response = irContributionService.contributeBib(centralServerId, bibId, bib);
     checkServiceSuspension(response);
     Assert.isTrue(response.isOk(), "Unexpected contribution response: " + response);
