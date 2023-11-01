@@ -5,6 +5,7 @@ import static org.mockito.Mockito.when;
 
 import jakarta.validation.Valid;
 
+import org.folio.innreach.domain.listener.KafkaInitialContributionEventListener;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -24,7 +25,7 @@ import org.folio.spring.liquibase.FolioLiquibaseConfiguration;
 import org.folio.tenant.domain.dto.TenantAttributes;
 import org.folio.tenant.rest.resource.TenantApi;
 
-@MockBean(classes = {KafkaCirculationEventListener.class, KafkaInventoryEventListener.class})
+@MockBean(classes = {KafkaCirculationEventListener.class, KafkaInventoryEventListener.class, KafkaInitialContributionEventListener.class})
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, classes = {ModInnReachApplication.class,
   BaseControllerTest.TestTenantController.class})
 @ActiveProfiles({"test", "testcontainers-pg"})

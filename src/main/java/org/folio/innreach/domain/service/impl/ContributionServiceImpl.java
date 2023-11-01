@@ -57,8 +57,6 @@ public class ContributionServiceImpl implements ContributionService {
   private final BeanFactory beanFactory;
   private final FolioEnvironment folioEnv;
   private final ContributionJobProperties jobProperties;
-
-
   private ContributionJobRunner jobRunner;
 
   @Qualifier("contributionRetryTemplate")
@@ -146,17 +144,23 @@ public class ContributionServiceImpl implements ContributionService {
     JobResponse updatedJobResponse = retryTemplate.execute(r -> getJobResponse(iterationJobResponse.getId()));
 
     if(updatedJobResponse!=null) {
-      log.info("numberOfRecords from updatedJobResponse-> {}",updatedJobResponse.getNumberOfRecordsPublished());
       numberOfRecords = updatedJobResponse.getNumberOfRecordsPublished();
+      log.info("numberOfRecords from updatedJobResponse for centralServerId {} is {}", centralServerId, numberOfRecords);
     }
 
     contribution.setJobId(iterationJobResponse.getId());
-
+    contribution.setRecordsTotal(numberOfRecords.longValue());
     repository.save(contribution);
 
-    runInitialContributionJob(centralServerId, contribution, numberOfRecords);
-
     log.info("Initial contribution process started");
+  }
+
+  @Override
+  @Transactional
+  public void updateStatisticsAndContributionStatus() {
+    repository.updateStatisticsByCentralServerId().ifPresent(contribution ->
+      log.info("updateStatisticsAndContributionStatus:: recordsTotal - {}, recordsProcessed - {}, recordsContributed - {}",
+        contribution.getRecordsTotal(), contribution.getRecordsProcessed(), contribution.getRecordsContributed()));
   }
 
   private JobResponse getJobResponse(UUID id) {
@@ -221,11 +225,6 @@ public class ContributionServiceImpl implements ContributionService {
 
     InitialContributionJobConsumerContainer.stopConsumer(topic);
 
-  }
-
-  private void runInitialContributionJob(UUID centralServerId, Contribution contribution, Integer numberOfRecords) {
-    log.debug("runInitialContributionJob:: parameters centralServerId: {}, contribution: {}", centralServerId, contribution);
-    getJobRunner().startInitialContribution(centralServerId, folioContext.getTenantId(), contribution.getId(), contribution.getJobId(), numberOfRecords);
   }
 
   private ContributionJobRunner getJobRunner() {

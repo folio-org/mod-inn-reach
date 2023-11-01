@@ -55,6 +55,14 @@ public class RecordContributionServiceImpl implements RecordContributionService 
   }
 
   @Override
+  public void contributeInstanceWithoutRetry(UUID centralServerId, Instance instance) {
+    var bibId = instance.getHrid();
+    log.info("contributeInstanceWithoutRetry: contributing bib {}", bibId);
+    var bib = recordTransformationService.getBibInfo(centralServerId, instance);
+    contributeBib(centralServerId, bibId, bib);
+  }
+
+  @Override
   public void deContributeInstance(UUID centralServerId, Instance instance) throws SocketTimeoutException{
     var bibId = instance.getHrid();
     log.info("De-contributing bib {}", bibId);
@@ -110,13 +118,22 @@ public class RecordContributionServiceImpl implements RecordContributionService 
     return itemsCount;
   }
 
+  @Override
+  public void contributeItemsWithoutRetry(UUID centralServerId, String bibId, List<Item> items) {
+    var bibItems = recordTransformationService.getBibItems(centralServerId, items, this::logItemTransformationError);
+    int itemsCount = bibItems.size();
+    Assert.isTrue(itemsCount != 0, "Failed to convert items for contribution");
+    log.info("Loaded {} items", itemsCount);
+    contributeBibItems(bibId, centralServerId, bibItems);
+  }
+
   private void logItemTransformationError(Item item, Exception e) {
     exceptionListener.logWriteError(
       new RuntimeException("Failed to transform inventory item to bib item: " + e.getMessage(), e), item.getId());
   }
 
   private InnReachResponse contributeBib(UUID centralServerId, String bibId, BibInfo bib) {
-    log.info("Retry happening for contributeBib with bibId: {}",bibId);
+    log.info("contributeBib:: contributing Bib with bibId: {}",bibId);
     var response = irContributionService.contributeBib(centralServerId, bibId, bib);
     checkServiceSuspension(response);
     Assert.isTrue(response.isOk(), "Unexpected contribution response: " + response);
