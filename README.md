@@ -46,6 +46,11 @@ The module provides an access to INN-Reach.
 | DEFAULT_OFFSET                |          latest           | Default kafka offset                                                                                                                                       |
  | DEFAULT_CONCURRENCY           |      2                    | Deafult concurrency of kafka consumer                                                                                                                      |
 | INNREACH_TENANTS              |             -             | This is a regex where list of tenants needs to be mentioned with pipe symbol as delimiter so that mod-inn-reach will listen only these tenant related topics. See here [Example value for INNREACH_TENANTS](#example-value-for-innreachtenants) |
+| INITIAL_CONTRIBUTION_POOL_SIZE       |             50              | Thread pool size of scheduler task executor                                                                                                                                                                                                     |
+| INITIAL_CONTRIBUTION_SCHEDULER_DELAY |            10000            | Time interval between scheduler runs of Initial Contribution. value should be given in milli seconds                                                                                                                                            |
+| INITIAL_CONTRIBUTION_RETRIES         |            3600             | Max Retry attempts. If the value is given as 0, then it will be considered as indefinite retry.                                                                                                                                                 |
+| INITIAL_CONTRIBUTION_FETCH_LIMIT     |             50              | Number of records that needs to fetch for every scheduler run.                                                                                                                                                                                  |
+| INITIAL_CONTRIBUTION_ITEM_PAUSE      |              1              | Time delay between Instance contribution and item contribution. The value should be given in hrs.                                                                                                                                               |
 
 ## Compiling
 
