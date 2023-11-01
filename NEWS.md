@@ -1,3 +1,9 @@
+## v3.0.5 2023-11-01
+
+### Stories
+* [MODINREACH-379](https://issues.folio.org/browse/MODINREACH-379) - Implement outbox population from Kafka (initial contribution enhancements)
+* [MODINREACH-380](https://issues.folio.org/browse/MODINREACH-380) - Implement processing of items in outbox (initial contribution enhancements)
+
 ## v3.0.4 2023-08-25
 
 ### Bugs
