@@ -32,6 +32,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.folio.innreach.domain.listener.KafkaInitialContributionEventListener;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
@@ -62,7 +63,7 @@ import org.folio.spring.liquibase.FolioLiquibaseConfiguration;
 import org.folio.tenant.domain.dto.TenantAttributes;
 import org.folio.tenant.rest.resource.TenantApi;
 
-@MockBean(classes = {KafkaCirculationEventListener.class, KafkaInventoryEventListener.class})
+@MockBean(classes = {KafkaCirculationEventListener.class, KafkaInventoryEventListener.class, KafkaInitialContributionEventListener.class})
 @Log4j2
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
   classes = {ModInnReachApplication.class, BaseApiControllerTest.TestTenantController.class})
