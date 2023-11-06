@@ -43,9 +43,9 @@ The module provides an access to INN-Reach.
 | KAFKA_SSL_TRUSTSTORE_PASSWORD |             -             | The password for the Kafka trust store file. If a password is not set, trust store file configured will still be used, but integrity checking is disabled. |
 | LOG_HTTP                      |           false           | Enable logging of all requests and responses.                                                                                                              |
 | DEFAULT_INTERVAL              |           95000           | Default interval in ms ( preffred not to increase more than this value )                                                                                   |
-| MAX_FAILURE                   |            360            | Default max attempts                                                                                                                                       |
+ | MAX_FAILURE                   |            360            | Default max attempts                                                                                                                                       |
 | DEFAULT_OFFSET                |          latest           | Default kafka offset                                                                                                                                       |
-| DEFAULT_CONCURRENCY           |      2                    | Deafult concurrency of kafka consumer                                                                                                                      |
+ | DEFAULT_CONCURRENCY           |      2                    | Deafult concurrency of kafka consumer                                                                                                                      |
 | INNREACH_TENANTS              |             -             | This is a regex where list of tenants needs to be mentioned with pipe symbol as delimiter so that mod-inn-reach will listen only these tenant related topics. See here [Example value for INNREACH_TENANTS](#example-value-for-innreachtenants) |
 
 ## Compiling
