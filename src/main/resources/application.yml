@@ -170,8 +170,26 @@ kafka:
       topic-pattern: (${environment}\.)((${INNREACH_TENANTS})\.)inventory\.holdings-record
       concurrency: ${KAFKA_EVENTS_CONCURRENCY:2}
       data-type: org.folio.innreach.dto.Holding
+    contribution:
+      id: ${environment}-mod-inn-reach-inventory.instance-contribution
+      group-id: ${spring.kafka.consumer.group-id}
+      topic-pattern: (${environment}\.)(.*\.)inventory\.instance-contribution
+      concurrency: ${KAFKA_EVENTS_CONCURRENCY:2}
+      data-type: org.folio.innreach.domain.dto.folio.inventorystorage.InstanceIterationEvent
   backoff:
     interval: ${DEFAULT_INTERVAL:95000}
     max_failure: ${MAX_FAILURE:360}
   custom-offset: ${DEFAULT_OFFSET:latest}
   custom-concurrency: ${DEFAULT_CONCURRENCY:2}
+
+initial-contribution:
+  async:
+    pool-size: ${INITIAL_CONTRIBUTION_POOL_SIZE:50}
+  scheduler:
+    fixed-delay: ${INITIAL_CONTRIBUTION_SCHEDULER_DELAY:10000}
+    initial-delay: 300000
+  retry-attempts: ${INITIAL_CONTRIBUTION_RETRIES:3600}
+  fetch-limit: ${INITIAL_CONTRIBUTION_FETCH_LIMIT:50}
+  item-pause: ${INITIAL_CONTRIBUTION_ITEM_PAUSE:0.5}
+  tenant-cache:
+    ttl: 3600

@@ -55,6 +55,14 @@ public class RecordContributionServiceImpl implements RecordContributionService 
   }
 
   @Override
+  public void contributeInstanceWithoutRetry(UUID centralServerId, Instance instance) {
+    var bibId = instance.getHrid();
+    log.info("contributeInstanceWithoutRetry: contributing bib {}", bibId);
+    var bib = recordTransformationService.getBibInfo(centralServerId, instance);
+    contributeBib(centralServerId, bibId, bib);
+  }
+
+  @Override
   public void deContributeInstance(UUID centralServerId, Instance instance) throws SocketTimeoutException{
     var bibId = instance.getHrid();
     log.info("De-contributing bib {}", bibId);
@@ -108,6 +116,15 @@ public class RecordContributionServiceImpl implements RecordContributionService 
     log.info("Finished contributing items of bib {}", bibId);
 
     return itemsCount;
+  }
+
+  @Override
+  public void contributeItemsWithoutRetry(UUID centralServerId, String bibId, List<Item> items) {
+    var bibItems = recordTransformationService.getBibItems(centralServerId, items, this::logItemTransformationError);
+    int itemsCount = bibItems.size();
+    Assert.isTrue(itemsCount != 0, "Failed to convert items for contribution");
+    log.info("Loaded {} items", itemsCount);
+    contributeBibItems(bibId, centralServerId, bibItems);
   }
 
   private void logItemTransformationError(Item item, Exception e) {
