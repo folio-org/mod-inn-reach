@@ -1,3 +1,7 @@
+## v3.1.1 2023-11-08
+### Story
+* [MODINREACH-403](https://issues.folio.org/browse/MODINREACH-403) - Secure setup of system users by default
+
 ## v3.1.0 2023-10-12
 
 ### Stories

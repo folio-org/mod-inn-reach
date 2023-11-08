@@ -66,8 +66,8 @@ folio:
       enabled: ${LOG_HTTP:true}
       level: FULL
   system-user:
-    username: mod-innreach
-    password: ${SYSTEM_USER_PASSWORD:Mod-innreach-1-0-0}
+    username: ${SYSTEM_USER_NAME:mod-innreach}
+    password: ${SYSTEM_USER_PASSWORD}
     lastname: System
     permissionsFilePath: permissions/mod-innreach.csv
   environment: ${ENV:folio}
