@@ -4,7 +4,7 @@
   "requires": [
     {
       "id": "login",
-      "version": "7.1"
+      "version": "7.3"
     },
     {
       "id": "instance-iteration",
@@ -12,11 +12,11 @@
     },
     {
       "id": "permissions",
-      "version": "5.3"
+      "version": "5.6"
     },
     {
       "id": "users",
-      "version": "15.3 16.0"
+      "version": "16.0"
     },
     {
       "id": "inventory",
@@ -40,11 +40,11 @@
     },
     {
       "id": "patron",
-      "version": "5.0"
+      "version": "5.1"
     },
     {
       "id": "circulation",
-      "version": "14.0"
+      "version": "14.2"
     },
     {
       "id": "source-storage-records",
@@ -52,7 +52,7 @@
     },
     {
       "id": "feesfines",
-      "version": "17.1 18.0"
+      "version": "18.0 19.0"
     }
   ],
   "provides": [
@@ -605,8 +605,10 @@
           "pathPattern": "/_/tenant",
           "modulePermissions": [
             "users.collection.get",
+            "users.item.get",
             "users.item.post",
             "login.item.post",
+            "login.item.delete",
             "perms.users.item.post",
             "perms.users.get",
             "perms.users.assign.immutable",
