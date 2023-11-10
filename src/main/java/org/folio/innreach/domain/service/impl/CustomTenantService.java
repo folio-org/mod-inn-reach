@@ -14,6 +14,7 @@ import org.folio.spring.FolioExecutionContext;
 import org.folio.spring.liquibase.FolioSpringLiquibase;
 import org.folio.spring.service.TenantService;
 import org.folio.tenant.domain.dto.TenantAttributes;
+import org.springframework.transaction.annotation.Transactional;
 
 @Log4j2
 @Service
@@ -52,6 +53,7 @@ public class CustomTenantService extends TenantService {
   }
 
   @Override
+  @Transactional
   public void afterTenantDeletion(TenantAttributes tenantAttributes) {
     tenantRepository.deleteByTenantId(context.getTenantId());
   }
