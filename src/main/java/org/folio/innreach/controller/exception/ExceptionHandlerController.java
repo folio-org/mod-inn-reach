@@ -8,6 +8,7 @@ import jakarta.validation.ConstraintViolationException;
 import java.util.List;
 
 import lombok.extern.log4j.Log4j2;
+import org.folio.innreach.external.exception.InnReachGatewayException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.AuthenticationException;
@@ -34,7 +35,7 @@ public class ExceptionHandlerController {
     return createError(HttpStatus.NOT_FOUND, e.getMessage());
   }
 
-  @ExceptionHandler({IllegalArgumentException.class, InnReachException.class, CirculationException.class})
+  @ExceptionHandler({IllegalArgumentException.class, InnReachException.class, CirculationException.class, InnReachGatewayException.class})
   @ResponseStatus(HttpStatus.BAD_REQUEST)
   public Error handleBadRequestException(Exception e) {
     log.error("Unexpected exception: " + e.getMessage(), e);
