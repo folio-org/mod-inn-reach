@@ -10,6 +10,7 @@ import org.folio.innreach.domain.service.RecordContributionService;
 import org.folio.innreach.dto.Instance;
 import org.folio.innreach.dto.Item;
 import org.folio.innreach.external.exception.InnReachConnectionException;
+import org.folio.innreach.external.exception.InnReachGatewayException;
 import org.folio.innreach.external.exception.ServiceSuspendedException;
 import org.folio.innreach.repository.CentralServerRepository;
 import org.folio.innreach.repository.ContributionErrorRepository;
@@ -324,6 +325,27 @@ class InitialContributionEventProcessorTest extends BaseControllerTest {
     await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() -> verify(jobExecutionStatusRepository, times(2)).save(job));
     var jobExecutionStatus = jobExecutionStatusRepository.findById(job.getId());
     assertEquals(JobExecutionStatus.Status.DE_CONTRIBUTED, jobExecutionStatus.get().getStatus());
+  }
+
+  @Test
+  void testGatewayException() {
+    UUID jobId = UUID.randomUUID();
+    UUID instanceId = UUID.randomUUID();
+    JobExecutionStatus job = jobExecutionStatusRepository.save(createMockJobExecution(jobId, instanceId, false));
+    contributionRepository.save(createMockContribution(jobId));
+    var instance = createMockInstance(instanceId);
+    var item = instance.getItems();
+    var effectiveLocationId = UUID.randomUUID();
+    item.get(0).setEffectiveLocationId(effectiveLocationId);
+    item.get(0).setStatisticalCodeIds(Set.of());
+    when(inventoryViewService.getInstance(instanceId)).thenReturn(instance);
+    when(validationService.isEligibleForContribution(any(), any(Instance.class))).thenReturn(true);
+    doThrow(InnReachGatewayException.class).when(recordContributionService).contributeInstanceWithoutRetry(any(), any());
+    eventProcessor.processInitialContributionEvents(job);
+
+    await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() -> verify(jobExecutionStatusRepository, times(2)).save(job));
+    var jobExecutionStatus = jobExecutionStatusRepository.findById(job.getId());
+    assertEquals(JobExecutionStatus.Status.RETRY, jobExecutionStatus.get().getStatus());
   }
 
 
