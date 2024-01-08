@@ -1,3 +1,10 @@
+## v3.0.6 2024-01-12
+
+### Stories
+* [MODINREACH-411](https://issues.folio.org/browse/MODINREACH-411) - Reduce error rate on initial contribution
+* [FAT-9221](https://issues.folio.org/browse/FAT-9221) - Fixed failed Karate scenarios.
+
+
 ## v3.0.5 2023-11-01
 
 ### Stories

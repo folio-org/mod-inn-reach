@@ -1,11 +1,18 @@
 package org.folio.innreach.batch.contribution.service;
 
-import com.google.common.collect.Iterables;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.log4j.Log4j2;
+import static java.lang.Math.max;
+import static org.folio.innreach.domain.entity.JobExecutionStatus.Status.DE_CONTRIBUTED;
+import static org.folio.innreach.domain.entity.JobExecutionStatus.Status.FAILED;
+import static org.folio.innreach.domain.entity.JobExecutionStatus.Status.PROCESSED;
+import static org.folio.innreach.domain.entity.JobExecutionStatus.Status.READY;
+import static org.folio.innreach.domain.entity.JobExecutionStatus.Status.RETRY;
+
+import java.net.SocketTimeoutException;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.StreamSupport;
+
 import org.folio.innreach.batch.contribution.listener.ContributionExceptionListener;
-import org.folio.innreach.dto.Instance;
-import org.folio.innreach.dto.Item;
 import org.folio.innreach.config.props.ContributionJobProperties;
 import org.folio.innreach.domain.entity.Contribution;
 import org.folio.innreach.domain.entity.JobExecutionStatus;
@@ -13,7 +20,10 @@ import org.folio.innreach.domain.service.ContributionValidationService;
 import org.folio.innreach.domain.service.InventoryViewService;
 import org.folio.innreach.domain.service.RecordContributionService;
 import org.folio.innreach.domain.service.impl.TenantScopedExecutionService;
+import org.folio.innreach.dto.Instance;
+import org.folio.innreach.dto.Item;
 import org.folio.innreach.external.exception.InnReachConnectionException;
+import org.folio.innreach.external.exception.InnReachGatewayException;
 import org.folio.innreach.external.exception.RetryException;
 import org.folio.innreach.external.exception.ServiceSuspendedException;
 import org.folio.innreach.external.exception.SocketTimeOutExceptionWrapper;
@@ -24,17 +34,10 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
-import java.net.SocketTimeoutException;
-import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.StreamSupport;
+import com.google.common.collect.Iterables;
 
-import static java.lang.Math.max;
-import static org.folio.innreach.domain.entity.JobExecutionStatus.Status.DE_CONTRIBUTED;
-import static org.folio.innreach.domain.entity.JobExecutionStatus.Status.FAILED;
-import static org.folio.innreach.domain.entity.JobExecutionStatus.Status.PROCESSED;
-import static org.folio.innreach.domain.entity.JobExecutionStatus.Status.READY;
-import static org.folio.innreach.domain.entity.JobExecutionStatus.Status.RETRY;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.log4j.Log4j2;
 
 @Service
 @Log4j2
@@ -73,7 +76,7 @@ public class InitialContributionEventProcessor {
         checkRetryLimit(job);
         startContribution(centralServerId, instance, job);
       } catch (ServiceSuspendedException | InnReachConnectionException |
-               SocketTimeOutExceptionWrapper ex) {
+               SocketTimeOutExceptionWrapper | InnReachGatewayException ex) {
         log.warn("processInitialContributionEvents:: Retrying the contribution for {}th time with instanceId {} due to {}",
           job.getRetryAttempts(), job.getInstanceId(), ex.getMessage());
         updateJobAndContributionStatus(job, RETRY, job.isInstanceContributed());
