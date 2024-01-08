@@ -1,7 +1,6 @@
 package org.folio.innreach.batch.contribution.service;
 
 import com.google.common.collect.Iterables;
-import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.folio.innreach.batch.contribution.listener.ContributionExceptionListener;
@@ -15,6 +14,7 @@ import org.folio.innreach.domain.service.InventoryViewService;
 import org.folio.innreach.domain.service.RecordContributionService;
 import org.folio.innreach.domain.service.impl.TenantScopedExecutionService;
 import org.folio.innreach.external.exception.InnReachConnectionException;
+import org.folio.innreach.external.exception.InnReachGatewayException;
 import org.folio.innreach.external.exception.RetryException;
 import org.folio.innreach.external.exception.ServiceSuspendedException;
 import org.folio.innreach.external.exception.SocketTimeOutExceptionWrapper;
@@ -73,10 +73,10 @@ public class InitialContributionEventProcessor {
         }
         checkRetryLimit(job);
         startContribution(centralServerId, instance, job);
-      } catch (ServiceSuspendedException | InnReachConnectionException | FeignException |
-               SocketTimeOutExceptionWrapper ex) {
-        log.warn("processInitialContributionEvents:: Retrying the contribution for instanceId {} due to {}",
-          job.getInstanceId(), ex.getMessage());
+      } catch (ServiceSuspendedException | InnReachConnectionException |
+               SocketTimeOutExceptionWrapper | InnReachGatewayException ex) {
+        log.warn("processInitialContributionEvents:: Retrying the contribution for {}th time with instanceId {} due to {}",
+          job.getRetryAttempts(), job.getInstanceId(), ex.getMessage());
         updateJobAndContributionStatus(job, RETRY, job.isInstanceContributed());
       } catch (Exception ex) {
         log.warn("processInitialContributionEvents:: Exception while processing instanceId {}", job.getInstanceId());
