@@ -52,7 +52,7 @@
     },
     {
       "id": "feesfines",
-      "version": "18.0"
+      "version": "18.0 19.0"
     }
   ],
   "provides": [
@@ -605,6 +605,7 @@
           "pathPattern": "/_/tenant",
           "modulePermissions": [
             "users.collection.get",
+            "users.item.get",
             "users.item.post",
             "login.item.post",
             "login.item.delete",
