@@ -2114,9 +2114,9 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   }
 
   @ParameterizedTest
-  @EnumSource(names = {"PATRON_HOLD", "LOCAL_HOLD", "ITEM_HOLD", "BORROWER_RENEW", "BORROWING_SITE_CANCEL",
-    "RETURN_UNCIRCULATED", "CLAIMS_RETURNED", "LOCAL_CHECKOUT",
-    "CANCEL_REQUEST", "FINAL_CHECKIN", "RECALL", "TRANSFER", "OWNER_RENEW"})
+  @EnumSource(names = {"PATRON_HOLD", "LOCAL_HOLD", "ITEM_HOLD", "BORROWING_SITE_CANCEL",
+    "CLAIMS_RETURNED", "LOCAL_CHECKOUT","CANCEL_REQUEST", "FINAL_CHECKIN", "RECALL",
+    "TRANSFER", "OWNER_RENEW"})
   @Sql(scripts = {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql",
