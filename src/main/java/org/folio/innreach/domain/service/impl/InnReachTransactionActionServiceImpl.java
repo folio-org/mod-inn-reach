@@ -412,7 +412,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
     log.info("finalCheckInItemHold:: parameters transactionId: {}, servicePointId: {}", transactionId, servicePointId);
     var transaction = fetchTransactionOfType(transactionId, ITEM);
 
-    verifyState(transaction, ITEM_RECEIVED, RECEIVE_UNANNOUNCED, ITEM_SHIPPED, ITEM_IN_TRANSIT);
+    verifyState(transaction, ITEM_RECEIVED, RECEIVE_UNANNOUNCED, ITEM_SHIPPED, ITEM_IN_TRANSIT, RETURN_UNCIRCULATED, BORROWER_RENEW);
 
     var loan = loanService.getById(transaction.getHold().getFolioLoanId());
     var loanAction = loan.getAction();
@@ -566,7 +566,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
   private void updateItemTransactionOnLoanClosure(InnReachTransaction transaction, UUID loanId) {
     log.info("Updating item transaction {} on loan closure {}", transaction.getId(), loanId);
 
-    verifyState(transaction, ITEM_RECEIVED, RECEIVE_UNANNOUNCED, ITEM_SHIPPED, ITEM_IN_TRANSIT);
+    verifyState(transaction, ITEM_RECEIVED, RECEIVE_UNANNOUNCED, ITEM_SHIPPED, ITEM_IN_TRANSIT, RETURN_UNCIRCULATED, BORROWER_RENEW);
 
     transaction.getHold().setDueDateTime(null);
 

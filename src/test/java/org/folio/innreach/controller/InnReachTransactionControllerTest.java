@@ -2142,7 +2142,8 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   }
 
   @ParameterizedTest
-  @EnumSource(names = {"ITEM_RECEIVED", "RECEIVE_UNANNOUNCED", "ITEM_SHIPPED", "ITEM_IN_TRANSIT"})
+  @EnumSource(names = {"ITEM_RECEIVED", "RECEIVE_UNANNOUNCED", "ITEM_SHIPPED", "ITEM_IN_TRANSIT",
+    "RETURN_UNCIRCULATED", "BORROWER_RENEW"})
   @Sql(scripts = {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql",
