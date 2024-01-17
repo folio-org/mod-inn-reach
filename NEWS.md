@@ -1,3 +1,9 @@
+## v3.0.7 2024-01-17
+
+### Bug
+* [MODINREACH-416](https://issues.folio.org/browse/MODINREACH-416) - FINAL_CHECKIN message not being sent when INN-Reach transaction state is "RETURN_UNCIRCULATED" or "BORROWER_RENEW"
+
+
 ## v3.0.6 2024-01-12
 
 ### Stories
