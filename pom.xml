@@ -32,8 +32,8 @@
     <coffee-boots.version>3.0.0</coffee-boots.version>
 
     <!-- test dependencies -->
-    <testcontainers.version>1.17.6</testcontainers.version>
-    <wiremock.version>2.35.0</wiremock.version>
+    <testcontainers.version>1.19.0</testcontainers.version>
+    <wiremock-standalone.version>3.0.1</wiremock-standalone.version>
     <awaitility.version>4.2.0</awaitility.version>
     <junit-extensions.version>2.6.0</junit-extensions.version>
     <easy-random.version>5.0.0</easy-random.version>
@@ -234,8 +234,8 @@
     </dependency>
     <dependency>
       <groupId>com.github.tomakehurst</groupId>
-      <artifactId>wiremock-jre8</artifactId>
-      <version>${wiremock.version}</version>
+      <artifactId>wiremock-standalone</artifactId>
+      <version>${wiremock-standalone.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
