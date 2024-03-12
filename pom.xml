@@ -30,7 +30,6 @@
     <mapstruct.version>1.5.3.Final</mapstruct.version>
     <marc4j.version>2.9.2</marc4j.version>
     <coffee-boots.version>3.0.0</coffee-boots.version>
-    <snakeyaml.version>1.33</snakeyaml.version>
 
     <!-- test dependencies -->
     <testcontainers.version>1.17.6</testcontainers.version>
@@ -220,6 +219,12 @@
       <groupId>org.springframework.kafka</groupId>
       <artifactId>spring-kafka-test</artifactId>
       <scope>test</scope>
+      <exclusions>
+        <exclusion>
+          <groupId>ch.qos.logback</groupId>
+          <artifactId>logback-classic</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
     <dependency>
       <groupId>org.jeasy</groupId>
