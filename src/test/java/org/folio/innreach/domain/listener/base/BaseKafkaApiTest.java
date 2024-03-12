@@ -52,10 +52,6 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class BaseKafkaApiTest {
 
-  {
-    System.out.println("Inside BaseKafkaApiTest");
-  }
-
   public static final String CIRC_LOAN_TOPIC = "folio.testing.circulation.loan";
   public static final String CIRC_REQUEST_TOPIC = "folio.testing.circulation.request";
   public static final String CIRC_CHECKIN_TOPIC = "folio.testing.circulation.check-in";
