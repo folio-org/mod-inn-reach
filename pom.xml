@@ -33,7 +33,7 @@
 
     <!-- test dependencies -->
     <testcontainers.version>1.19.0</testcontainers.version>
-    <wiremock-standalone.version>3.4.2</wiremock-standalone.version>
+    <wiremock-standalone.version>3.0.3</wiremock-standalone.version>
     <awaitility.version>4.2.0</awaitility.version>
     <junit-extensions.version>2.6.0</junit-extensions.version>
     <easy-random.version>5.0.0</easy-random.version>
