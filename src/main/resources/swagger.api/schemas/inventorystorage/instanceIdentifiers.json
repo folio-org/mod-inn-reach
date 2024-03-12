@@ -1,4 +1,5 @@
 {
+  "description": "An extensible set of name-value pairs of identifiers associated with the resource",
   "type": "object",
   "properties": {
     "value": {

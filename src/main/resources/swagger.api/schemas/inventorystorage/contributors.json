@@ -1,4 +1,5 @@
 {
+  "description": "contributors",
   "type": "object",
   "properties": {
     "name": {
