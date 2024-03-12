@@ -1,0 +1,19 @@
+{
+  "type": "object",
+  "properties": {
+    "value": {
+      "type": "string",
+      "description": "Resource identifier value"
+    },
+    "identifierTypeId": {
+      "description": "UUID of resource identifier type (e.g. ISBN, ISSN, LCCN, CODEN, Locally defined identifiers)",
+      "type": "string",
+      "format": "UUID"
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "value",
+    "identifierTypeId"
+  ]
+}
