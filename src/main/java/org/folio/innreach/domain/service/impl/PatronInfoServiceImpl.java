@@ -226,7 +226,7 @@ public class PatronInfoServiceImpl implements PatronInfoService {
 
   private static boolean matchName(User user, String patronName) {
     var personal = user.getPersonal();
-    String[] patronNameTokens = patronName.split("\\s");
+    String[] patronNameTokens = patronName.replace(",", "").split("\\s");
 
     if (patronNameTokens.length < 2) {
       return false;
@@ -250,8 +250,10 @@ public class PatronInfoServiceImpl implements PatronInfoService {
     return checkFirstName && checkMiddleName && checkLastName;
   }
 
-  private static boolean checkFirstNameLastNameWithPosition(User.Personal personal, String[] patronNameTokens,int firstNamePos,int lastNamePos) {
-    boolean checkFirstName = equalsAnyIgnoreCase(patronNameTokens[firstNamePos], personal.getFirstName(), personal.getPreferredFirstName(), personal.getMiddleName());
+  private static boolean checkFirstNameLastNameWithPosition(User.Personal personal,
+                                                            String[] patronNameTokens,int firstNamePos,int lastNamePos) {
+    boolean checkFirstName = equalsAnyIgnoreCase(patronNameTokens[firstNamePos],
+      personal.getFirstName(), personal.getPreferredFirstName(), personal.getMiddleName());
     boolean checkLastName = patronNameTokens[lastNamePos].equalsIgnoreCase(personal.getLastName());
     return (checkFirstName && checkLastName);
   }
