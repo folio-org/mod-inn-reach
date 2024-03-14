@@ -1,3 +1,9 @@
+## v3.0.8 2024-03-14
+
+### Bug
+* [MODINREACH-423](https://issues.folio.org/browse/MODINREACH-423) - Final check in operation is missing configuration permission
+* [MODINREACH-424](https://issues.folio.org/browse/MODINREACH-424) - Patron validation endpoint should strip commas from the patron name field
+
 ## v3.0.7 2024-01-17
 
 ### Bug

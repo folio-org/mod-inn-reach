@@ -226,7 +226,7 @@ public class PatronInfoServiceImpl implements PatronInfoService {
 
   private static boolean matchName(User user, String patronName) {
     var personal = user.getPersonal();
-    String[] patronNameTokens = patronName.split("\\s");
+    String[] patronNameTokens = patronName.replace(",", "").split("\\s");
 
     if (patronNameTokens.length < 2) {
       return false;
