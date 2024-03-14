@@ -15,8 +15,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.folio.innreach.fixture.TestUtil.circHeaders;
 import static org.folio.innreach.fixture.TestUtil.readFile;
 
-import jakarta.validation.Valid;
-
 import java.util.Collections;
 import java.util.Map;
 import java.util.function.UnaryOperator;
@@ -38,56 +36,31 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
-import org.springframework.web.bind.annotation.RestController;
 
 import org.folio.innreach.ModInnReachApplication;
 import org.folio.innreach.domain.listener.KafkaCirculationEventListener;
 import org.folio.innreach.domain.listener.KafkaInventoryEventListener;
 import org.folio.innreach.util.JsonHelper;
 import org.folio.spring.integration.XOkapiHeaders;
-import org.folio.spring.liquibase.FolioLiquibaseConfiguration;
-import org.folio.tenant.domain.dto.TenantAttributes;
-import org.folio.tenant.rest.resource.TenantApi;
 
 @MockBean(classes = {KafkaCirculationEventListener.class, KafkaInventoryEventListener.class, KafkaInitialContributionEventListener.class})
 @Log4j2
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
-  classes = {ModInnReachApplication.class, BaseApiControllerTest.TestTenantController.class})
+  classes = {ModInnReachApplication.class})
 @AutoConfigureMockMvc
 @ActiveProfiles({"test", "testcontainers-pg"})
 @ExtendWith(WatcherExtension.class)
 public class BaseApiControllerTest {
-
-  @EnableAutoConfiguration(exclude = {FolioLiquibaseConfiguration.class})
-  @RestController("folioTenantController")
-  @Profile("test")
-  static class TestTenantController implements TenantApi {
-
-    @Override
-    public ResponseEntity<Void> deleteTenant(String operationId) {
-      return ResponseEntity.noContent().build();
-    }
-
-    @Override
-    public ResponseEntity<Void> postTenant(@Valid TenantAttributes tenantAttributes) {
-      return ResponseEntity.status(HttpStatus.CREATED).build();
-    }
-
-  }
 
   protected static WireMockServer wm =
     new WireMockServer(wireMockConfig()
