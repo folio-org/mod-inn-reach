@@ -272,8 +272,9 @@ class PatronInfoControllerTest extends BaseApiControllerTest {
   }
 
   @ParameterizedTest
-  @ValueSource(strings = {"john paul doe","doe john paul","doe John pauL","doe, John pauL","doe John, pauL","doe John pauL,",
-    "doe, John, pauL", "doe John, pauL,", ",doe, John, pauL,"})
+  @ValueSource(strings = {"john paul doe","doe john paul","doe John pauL","doe, John pauL","doe John, pauL",
+    "doe John pauL,", "doe, John, pauL", "doe John, pauL,", ",doe, John, pauL,", "John, Doe "," John, Doe ",
+    "  Doe,   John    ", " John  paul  doe "})
   @Sql(scripts = {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/patron-type-mapping/pre-populate-patron-type-mapping.sql",
