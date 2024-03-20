@@ -1,3 +1,9 @@
+## v3.0.9 2024-03-20
+
+### Bug
+* [MODINREACH-424](https://issues.folio.org/browse/MODINREACH-424) - Patron validation endpoint should strip commas and leading and trailing spaces from the patron name field
+
+
 ## v3.0.8 2024-03-14
 
 ### Bug
