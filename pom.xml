@@ -9,7 +9,7 @@
   </parent>
   <groupId>org.folio</groupId>
   <artifactId>mod-inn-reach</artifactId>
-  <version>3.2.0-SNAPSHOT</version>
+  <version>3.2.1-SNAPSHOT</version>
   <name>mod-inn-reach</name>
   <description>Access to INN-Reach service</description>
 
@@ -22,7 +22,7 @@
 
   <properties>
     <!-- runtime dependencies -->
-    <folio-service-tools.version>3.1.0</folio-service-tools.version>
+    <folio-service-tools.version>4.0.0</folio-service-tools.version>
     <folio-spring.version>8.1.0</folio-spring.version>
     <spring-cloud-starter-openfeign.version>4.1.0</spring-cloud-starter-openfeign.version>
     <commons-collections4.version>4.4</commons-collections4.version>
