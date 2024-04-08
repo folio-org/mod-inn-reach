@@ -70,15 +70,16 @@ public class PagingSlipServiceImpl implements PagingSlipService {
     log.info("Preparing INN-Reach paging slip for service point {}", servicePointId);
 
     var transactions = fetchItemTransactions();
-    if (transactions.isEmpty()) {
-      return new PagingSlipsDTO();
-    }
-
+//    if (transactions.isEmpty()) {
+//      return new PagingSlipsDTO();
+//    }
+log.info("Continue here ");
     var transactionWithInventoryRecordsMap = fetchSlipItemsAndInstances(servicePointId, transactions);
-    if (transactionWithInventoryRecordsMap.isEmpty()) {
-      return new PagingSlipsDTO();
-    }
+//    if (transactionWithInventoryRecordsMap.isEmpty()) {
+//      return new PagingSlipsDTO();
+//    }
 
+    log.info("Makes sense");
     var centralAgencies = fetchCentralAgenciesPerServerCode();
     var patronTypes = fetchPatronTypesPerServerCode();
     var centralServers = fetchCentralServersPerServerCode();
@@ -106,15 +107,16 @@ public class PagingSlipServiceImpl implements PagingSlipService {
     UUID servicePointId, List<InnReachTransactionDTO> transactions) {
 
     var locationIds = fetchLocationIdsByServicePoint(servicePointId);
-    if (locationIds.isEmpty()) {
-      return Collections.emptyMap();
-    }
+//    if (locationIds.isEmpty()) {
+//      return Collections.emptyMap();
+//    }
 
     var itemIds = fetchItemIdsOfNotFilledRequests(transactions);
-    if (itemIds.isEmpty()) {
-      return Collections.emptyMap();
-    }
+//    if (itemIds.isEmpty()) {
+//      return Collections.emptyMap();
+//    }
 
+    log.info("Yes reached here too");
     var items = fetchItems(itemIds, locationIds);
     var instances = fetchInstances(transactions);
 
@@ -128,7 +130,7 @@ public class PagingSlipServiceImpl implements PagingSlipService {
         transactionWithInventoryRecords.put(transaction, Pair.of(item, instance));
       }
     }
-
+log.info("Here reached...");
     return transactionWithInventoryRecords;
   }
 
