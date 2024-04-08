@@ -252,14 +252,14 @@ log.info("Here reached...");
   private PagingSlipInnReachTransaction createTransactionSlip(TransactionHoldDTO hold, CentralServerDTO centralServer,
                                                                   Map<String, List<Agency>> centralAgencies,
                                                                   Map<String, List<PatronType>> patronTypes) {
-    var centralServerCode = centralServer.getCentralServerCode();
+    var centralServerCode = "CS1";
     var patronAgencyCode = hold.getPatronAgencyCode();
     var itemAgencyCode = hold.getItemAgencyCode();
     var centralPatronType = hold.getCentralPatronType();
 
-    var patronAgencyDescription = getAgencyDescription(centralAgencies, centralServerCode, patronAgencyCode);
-    var itemAgencyDescription = getAgencyDescription(centralAgencies, centralServerCode, itemAgencyCode);
-    var patronTypeDescription = getPatronTypeDescription(patronTypes, centralServerCode, centralPatronType);
+    var patronAgencyDescription = "Patron Agency Desc";
+    var itemAgencyDescription = "Item Agency Desc";
+    var patronTypeDescription = "Patron Type Desc";
     var pickupLocation = pickupLocationMapper.fromString(hold.getPickupLocation());
 
     return new PagingSlipInnReachTransaction()
@@ -293,7 +293,7 @@ log.info("Here reached...");
   }
 
   private PagingSlipSlip createSlip(CentralServerDTO centralServer) {
-    return new PagingSlipSlip().name(SLIP_NAME_PREFIX + centralServer.getName());
+    return new PagingSlipSlip().name(SLIP_NAME_PREFIX + "Central Server 1");
   }
 
 }
