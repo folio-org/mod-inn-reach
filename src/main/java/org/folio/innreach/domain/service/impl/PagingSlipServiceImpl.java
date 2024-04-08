@@ -5,6 +5,7 @@ import static java.util.stream.Collectors.toSet;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -107,11 +108,14 @@ log.info("Continue here ");
     UUID servicePointId, List<InnReachTransactionDTO> transactions) {
 
     var locationIds = fetchLocationIdsByServicePoint(servicePointId);
-//    if (locationIds.isEmpty()) {
-//      return Collections.emptyMap();
-//    }
+    if (locationIds.isEmpty()) {
+      log.info("Empty locations !!");
+      return Collections.emptyMap();
+    }
 
-    var itemIds = fetchItemIdsOfNotFilledRequests(transactions);
+    log.info("The location Ids are ", locationIds.stream().toList());
+    Set<UUID> itemIds = new HashSet<>();
+    itemIds.add(UUID.fromString("9572e604-afd5-42d6-9ef5-b0b0f284b114"));
 //    if (itemIds.isEmpty()) {
 //      return Collections.emptyMap();
 //    }
