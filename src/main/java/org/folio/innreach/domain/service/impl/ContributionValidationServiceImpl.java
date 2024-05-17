@@ -305,9 +305,9 @@ public class ContributionValidationServiceImpl implements ContributionValidation
 
   private MappingValidationStatusDTO validateInnReachLocations(UUID centralServerId, List<LibraryMappingDTO> libraryMappings) {
     List<String> irLocationCodes = getAllInnReachLocationCodes(centralServerId);
-
+    log.info("irLocationCodes {}", irLocationCodes);
     List<String> mappedIrLocationCodes = getMappedInnReachLocationCodes(libraryMappings);
-
+    log.info("mappedIrLocationCodes {}", mappedIrLocationCodes);
     return irLocationCodes.containsAll(mappedIrLocationCodes) ? VALID : INVALID;
   }
 
@@ -334,7 +334,7 @@ public class ContributionValidationServiceImpl implements ContributionValidation
   }
 
   private List<String> getMappedInnReachLocationCodes(List<LibraryMappingDTO> libraryMappings) {
-    log.debug("getMappedInnReachLocationCodes:: parameters libraryMappings: {}", libraryMappings);
+    log.info("getMappedInnReachLocationCodes:: parameters libraryMappings: {}", libraryMappings);
     var ids = mapItems(libraryMappings, LibraryMappingDTO::getInnReachLocationId);
 
     return mapItems(innReachLocationService.getInnReachLocations(ids).getLocations(), InnReachLocationDTO::getCode);
