@@ -297,9 +297,9 @@ public class ContributionValidationServiceImpl implements ContributionValidation
 
   private MappingValidationStatusDTO validateLibraryMappings(UUID centralServerId, List<LibraryMappingDTO> libraryMappings) {
     List<UUID> centralServerFolioLibraryIds = getFolioLibraryIds(centralServerId);
-
+    log.info("centralServerFolioLibraryIds {}", centralServerFolioLibraryIds);
     var mappedLibraryIds = mapItems(libraryMappings, LibraryMappingDTO::getLibraryId);
-
+    log.info("mappedLibraryIds {}", mappedLibraryIds);
     return mappedLibraryIds.containsAll(centralServerFolioLibraryIds) ? VALID : INVALID;
   }
 
