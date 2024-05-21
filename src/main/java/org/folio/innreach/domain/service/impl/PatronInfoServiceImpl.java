@@ -12,8 +12,10 @@ import static org.folio.innreach.external.dto.InnReachResponse.Error.ofMessage;
 
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -226,7 +228,16 @@ public class PatronInfoServiceImpl implements PatronInfoService {
 
   private static boolean matchName(User user, String patronName) {
     var personal = user.getPersonal();
-    String[] patronNameTokens = patronName.split("\\s");
+    String[] patronNameTokens = nonNullStrip(patronName).replace(",", "").split("\\s");
+
+    for (int i = 0; i < patronNameTokens.length; i++) {
+      patronNameTokens[i] = patronNameTokens[i].strip();
+    }
+
+    // Because split can return empty strings on sequences of spaces.
+    patronNameTokens = Arrays.stream(patronNameTokens)
+      .filter(str -> !str.isEmpty())
+      .toArray(String[]::new);
 
     if (patronNameTokens.length < 2) {
       return false;
@@ -241,19 +252,28 @@ public class PatronInfoServiceImpl implements PatronInfoService {
       || checkFirstNameMiddleNameLastNameWithPosition(personal, patronNameTokens,1,2,0));
   }
 
-  private static boolean checkFirstNameMiddleNameLastNameWithPosition(User.Personal personal, String[] patronNameTokens,
-                                                                      int firstNamePosition,int middleNamePosition,int lastNamePosition) {
 
-    boolean checkFirstName = equalsAnyIgnoreCase(patronNameTokens[firstNamePosition], personal.getFirstName(), personal.getPreferredFirstName());
-    boolean checkMiddleName = patronNameTokens[middleNamePosition].equalsIgnoreCase(personal.getMiddleName());
-    boolean checkLastName = patronNameTokens[lastNamePosition].equalsIgnoreCase(personal.getLastName());
+  private static boolean checkFirstNameMiddleNameLastNameWithPosition(User.Personal personal, String[] patronNameTokens,
+                                                                      int firstNamePosition, int middleNamePosition,
+                                                                      int lastNamePosition) {
+
+    boolean checkFirstName = equalsAnyIgnoreCase(patronNameTokens[firstNamePosition],
+      nonNullStrip(personal.getFirstName()), nonNullStrip(personal.getPreferredFirstName()));
+    boolean checkMiddleName = patronNameTokens[middleNamePosition].equalsIgnoreCase(nonNullStrip(personal.getMiddleName()));
+    boolean checkLastName = patronNameTokens[lastNamePosition].equalsIgnoreCase(nonNullStrip(personal.getLastName()));
     return checkFirstName && checkMiddleName && checkLastName;
   }
 
-  private static boolean checkFirstNameLastNameWithPosition(User.Personal personal, String[] patronNameTokens,int firstNamePos,int lastNamePos) {
-    boolean checkFirstName = equalsAnyIgnoreCase(patronNameTokens[firstNamePos], personal.getFirstName(), personal.getPreferredFirstName(), personal.getMiddleName());
-    boolean checkLastName = patronNameTokens[lastNamePos].equalsIgnoreCase(personal.getLastName());
+  private static boolean checkFirstNameLastNameWithPosition(User.Personal personal, String[] patronNameTokens,
+                                                            int firstNamePos, int lastNamePos) {
+    boolean checkFirstName = equalsAnyIgnoreCase(patronNameTokens[firstNamePos], nonNullStrip(personal.getFirstName()),
+      nonNullStrip(personal.getPreferredFirstName()), nonNullStrip(personal.getMiddleName()));
+    boolean checkLastName = patronNameTokens[lastNamePos].equalsIgnoreCase(nonNullStrip(personal.getLastName()));
     return (checkFirstName && checkLastName);
+  }
+
+  private static String nonNullStrip(String s) {
+    return Objects.requireNonNullElse(s, "").strip();
   }
 
   private static String getPatronName(User user) {
