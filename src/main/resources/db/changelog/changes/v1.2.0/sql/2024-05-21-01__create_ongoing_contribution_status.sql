@@ -5,6 +5,7 @@ CREATE TABLE IF NOT EXISTS ongoing_contribution_status
     new_entity jsonb,
     domain_event_type character varying NOT NULL,
     action_type character varying NOT NULL,
+    status character varying NOT NULL,
     retry_attempts integer NOT NULL DEFAULT 0,
     created_date timestamp without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_date timestamp without time zone,
