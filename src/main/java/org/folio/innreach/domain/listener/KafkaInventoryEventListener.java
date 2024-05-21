@@ -15,6 +15,8 @@ import lombok.extern.log4j.Log4j2;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.folio.innreach.external.exception.InnReachConnectionException;
 import org.folio.innreach.external.exception.ServiceSuspendedException;
+import org.folio.innreach.mapper.OngoingContributionStatusMapper;
+import org.folio.innreach.repository.OngoingContributionStatusRepository;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 
@@ -35,6 +37,8 @@ public class KafkaInventoryEventListener {
   private final BatchDomainEventProcessor eventProcessor;
   private final ContributionActionService contributionActionService;
   private final InnReachTransactionActionService transactionActionService;
+  private final OngoingContributionStatusMapper ongoingContributionStatusMapper;
+  private final OngoingContributionStatusRepository ongoingContributionStatusRepository;
 
   @KafkaListener(
     containerFactory = KAFKA_CONTAINER_FACTORY,
@@ -47,6 +51,11 @@ public class KafkaInventoryEventListener {
 
     var events = getEvents(consumerRecords);
     logEvents(events);
+    events.forEach(event -> {
+      var ongoingConStatus = ongoingContributionStatusMapper.toEntity(event);
+      log.info("ongoingConStatus {} ", ongoingConStatus);
+      ongoingContributionStatusRepository.save(ongoingConStatus);
+    });
     eventProcessor.process(events, event -> {
       var oldEntity = event.getData().getOldEntity();
       var newEntity = event.getData().getNewEntity();
