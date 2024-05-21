@@ -2,21 +2,29 @@ package org.folio.innreach.mapper;
 
 import org.folio.innreach.domain.entity.OngoingContributionStatus;
 import org.folio.innreach.domain.event.DomainEvent;
+import org.folio.innreach.util.JsonHelper;
 import org.mapstruct.InjectionStrategy;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
+import org.springframework.beans.factory.annotation.Autowired;
 
 @Mapper(componentModel = "spring", injectionStrategy = InjectionStrategy.CONSTRUCTOR, uses = MappingMethods.class)
-public interface OngoingContributionStatusMapper {
+public abstract class OngoingContributionStatusMapper {
 
-  @Mapping(target = "newEntity", source = "domainEvent.newEntity")
-  @Mapping(target = "oldEntity", source = "domainEvent.oldEntity")
-  @Mapping(target = "domainEventType", expression = "java(setDomainEventType(domainEvent))")
+  @Autowired
+  private JsonHelper jsonHelper;
+
+  @Mapping(target = "newEntity", expression = "java(setNewEntity(domainEvent))")
+  @Mapping(target = "oldEntity", expression = "java(setOldEntity(domainEvent))")
+  @Mapping(target = "domainEventType", constant = "ITEM")
   @Mapping(target = "actionType", source = "domainEvent.type")
-  <T> OngoingContributionStatus toEntity(DomainEvent<T> domainEvent);
+  public abstract OngoingContributionStatus toEntity(DomainEvent<org.folio.innreach.dto.Item> domainEvent);
 
-  default <T> String setDomainEventType(DomainEvent<T> domainEvent) {
-    return domainEvent.getClass().getSimpleName().toLowerCase();
+  public  <T> String setNewEntity(DomainEvent<T> domainEvent) {
+    return jsonHelper.toJson(domainEvent.getData().getNewEntity());
   }
 
+  public  <T> String setOldEntity(DomainEvent<T> domainEvent) {
+    return jsonHelper.toJson(domainEvent.getData().getOldEntity());
+  }
 }
