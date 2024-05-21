@@ -7,16 +7,22 @@ import static org.folio.innreach.domain.event.DomainEventType.UPDATED;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.folio.innreach.domain.service.ContributionService;
+import org.folio.innreach.domain.service.KafkaEventProcessorService;
 import org.folio.innreach.external.exception.InnReachConnectionException;
 import org.folio.innreach.external.exception.ServiceSuspendedException;
 import org.folio.innreach.mapper.OngoingContributionStatusMapper;
+import org.folio.innreach.repository.CentralServerRepository;
 import org.folio.innreach.repository.OngoingContributionStatusRepository;
+import org.folio.spring.data.OffsetRequest;
+import org.springframework.data.domain.Page;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 
@@ -39,6 +45,9 @@ public class KafkaInventoryEventListener {
   private final InnReachTransactionActionService transactionActionService;
   private final OngoingContributionStatusMapper ongoingContributionStatusMapper;
   private final OngoingContributionStatusRepository ongoingContributionStatusRepository;
+  private final KafkaEventProcessorService kafkaEventProcessorService;
+  private final ContributionService contributionService;
+  private final CentralServerRepository centralServerRepository;
 
   @KafkaListener(
     containerFactory = KAFKA_CONTAINER_FACTORY,
@@ -51,11 +60,12 @@ public class KafkaInventoryEventListener {
 
     var events = getEvents(consumerRecords);
     logEvents(events);
-    events.forEach(event -> {
-      var ongoingConStatus = ongoingContributionStatusMapper.toEntity(event);
-      log.info("ongoingConStatus {} ", ongoingConStatus);
-      ongoingContributionStatusRepository.save(ongoingConStatus);
-    });
+    kafkaEventProcessorService.process(events, tenantGroupedEvents -> getCentralServerIds().forEach(centralServerId -> {
+      var contribution = contributionService.createEmptyContribution(centralServerId);
+      contribution.setOngoing(true);
+      contribution.setOngoingContributionStatuses(ongoingContributionStatusMapper.toEntity(tenantGroupedEvents));
+      contribution.getOngoingContributionStatuses().forEach(ongoingContributionStatus -> ongoingContributionStatus.setContribution(contribution));
+    }));
     eventProcessor.process(events, event -> {
       var oldEntity = event.getData().getOldEntity();
       var newEntity = event.getData().getNewEntity();
@@ -155,4 +165,10 @@ public class KafkaInventoryEventListener {
       }
     }
   }
+
+  private List<UUID> getCentralServerIds() {
+    Page<UUID> ids = centralServerRepository.getIds(new OffsetRequest(0, 2000));
+    return ids.getContent();
+  }
+
 }

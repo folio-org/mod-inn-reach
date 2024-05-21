@@ -282,7 +282,8 @@ public class ContributionServiceImpl implements ContributionService {
     return request;
   }
 
-  private Contribution createEmptyContribution(UUID centralServerId) {
+  @Override
+  public Contribution createEmptyContribution(UUID centralServerId) {
     log.debug("createEmptyContribution:: parameters centralServerId: {}", centralServerId);
     var contribution = new Contribution();
     contribution.setStatus(Contribution.Status.IN_PROGRESS);

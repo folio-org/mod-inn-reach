@@ -89,6 +89,9 @@ public class Contribution extends Auditable implements Identifiable<UUID> {
   @Column(name = "job_id")
   private UUID jobId;
 
+  @OneToMany(mappedBy = "contribution", fetch = FetchType.LAZY)
+  private List<OngoingContributionStatus> ongoingContributionStatuses = new ArrayList<>();
+
   @AllArgsConstructor
   public enum Status {
     IN_PROGRESS("In Progress"),
