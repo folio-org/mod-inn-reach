@@ -20,6 +20,7 @@ import org.folio.innreach.external.exception.InnReachConnectionException;
 import org.folio.innreach.external.exception.ServiceSuspendedException;
 import org.folio.innreach.mapper.OngoingContributionStatusMapper;
 import org.folio.innreach.repository.CentralServerRepository;
+import org.folio.innreach.repository.ContributionRepository;
 import org.folio.innreach.repository.OngoingContributionStatusRepository;
 import org.folio.spring.data.OffsetRequest;
 import org.springframework.data.domain.Page;
@@ -48,6 +49,7 @@ public class KafkaInventoryEventListener {
   private final KafkaEventProcessorService kafkaEventProcessorService;
   private final ContributionService contributionService;
   private final CentralServerRepository centralServerRepository;
+  private final ContributionRepository contributionRepository;
 
   @KafkaListener(
     containerFactory = KAFKA_CONTAINER_FACTORY,
@@ -65,6 +67,7 @@ public class KafkaInventoryEventListener {
       contribution.setOngoing(true);
       contribution.setOngoingContributionStatuses(ongoingContributionStatusMapper.toEntity(tenantGroupedEvents));
       contribution.getOngoingContributionStatuses().forEach(ongoingContributionStatus -> ongoingContributionStatus.setContribution(contribution));
+      contributionRepository.save(contribution);
     }));
     eventProcessor.process(events, event -> {
       var oldEntity = event.getData().getOldEntity();
