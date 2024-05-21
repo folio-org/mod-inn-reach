@@ -24,7 +24,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @Entity
 @Table(name = "ongoing_contribution_status")
-@ToString
+@ToString(exclude = {"contribution"})
 @EqualsAndHashCode(of = "id", callSuper = false)
 public class OngoingContributionStatus extends Auditable {
   @Id

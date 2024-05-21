@@ -1,5 +1,6 @@
 package org.folio.innreach.domain.entity;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Enumerated;
@@ -89,7 +90,7 @@ public class Contribution extends Auditable implements Identifiable<UUID> {
   @Column(name = "job_id")
   private UUID jobId;
 
-  @OneToMany(mappedBy = "contribution", fetch = FetchType.LAZY)
+  @OneToMany(cascade = CascadeType.ALL, mappedBy = "contribution", fetch = FetchType.LAZY)
   private List<OngoingContributionStatus> ongoingContributionStatuses = new ArrayList<>();
 
   @AllArgsConstructor
