@@ -14,7 +14,5 @@ CREATE TABLE IF NOT EXISTS ongoing_contribution_status
     created_by_username character varying(255) NOT NULL DEFAULT 'SYSTEM'::character varying,
     updated_by_userid uuid,
     updated_by_username character varying(255),
-    CONSTRAINT pk_ongoing_contribution_status PRIMARY KEY (id),
-    CONSTRAINT fk_ongoing_contribution_status_central_server_id FOREIGN KEY (central_server_id)
-            REFERENCES central_server (id) ON DELETE CASCADE
+    CONSTRAINT pk_ongoing_contribution_status PRIMARY KEY (id)
 )
