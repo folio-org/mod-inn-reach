@@ -47,9 +47,7 @@ public class KafkaInventoryEventListener {
   private final OngoingContributionStatusMapper ongoingContributionStatusMapper;
   private final OngoingContributionStatusRepository ongoingContributionStatusRepository;
   private final KafkaEventProcessorService kafkaEventProcessorService;
-  private final ContributionService contributionService;
   private final CentralServerRepository centralServerRepository;
-  private final ContributionRepository contributionRepository;
 
   @KafkaListener(
     containerFactory = KAFKA_CONTAINER_FACTORY,
@@ -63,11 +61,9 @@ public class KafkaInventoryEventListener {
     var events = getEvents(consumerRecords);
     logEvents(events);
     kafkaEventProcessorService.process(events, tenantGroupedEvents -> getCentralServerIds().forEach(centralServerId -> {
-      var contribution = contributionService.createEmptyContribution(centralServerId);
-      contribution.setOngoing(true);
-      contribution.setOngoingContributionStatuses(ongoingContributionStatusMapper.toEntity(tenantGroupedEvents));
-      contribution.getOngoingContributionStatuses().forEach(ongoingContributionStatus -> ongoingContributionStatus.setContribution(contribution));
-      contributionRepository.save(contribution);
+      var ongoingContributionStatusList = ongoingContributionStatusMapper.toEntity(tenantGroupedEvents);
+      ongoingContributionStatusList.forEach(ongoingContributionStatus -> ongoingContributionStatus.setCentralServerId(centralServerId));
+      ongoingContributionStatusRepository.saveAll(ongoingContributionStatusList);
     }));
     eventProcessor.process(events, event -> {
       var oldEntity = event.getData().getOldEntity();

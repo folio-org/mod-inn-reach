@@ -2,6 +2,8 @@ package org.folio.innreach.domain.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -38,6 +40,8 @@ public class OngoingContributionStatus extends Auditable {
   private String newEntity;
   private String domainEventType;
   private String actionType;
+  private UUID centralServerId;
+  @Enumerated(EnumType.STRING)
   private JobExecutionStatus.Status status;
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "contribution_id", nullable = false, updatable = false)
