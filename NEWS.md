@@ -1,17 +1,3 @@
-## v3.2.0 2024-03-20
-
-### Stories
-* [MODINREACH-400](https://issues.folio.org/browse/MODINREACH-400) - Update 'feesfines' interface version to 19.0
-* [MODINREACH-380](https://issues.folio.org/browse/MODINREACH-380) - Implement processing of items in outbox (initial contribution enhancements)
-* [MODINREACH-404](https://issues.folio.org/browse/MODINREACH-404) - Mod-inn-reach module is failing during enabling operation
-* [MODINREACH-403](https://issues.folio.org/browse/MODINREACH-403) - Secure setup of system users by default
-* [MODINREACH-411](https://issues.folio.org/browse/MODINREACH-411) - Reduce error rate on initial contribution
-* [MODINREACH-416](https://issues.folio.org/browse/MODINREACH-416) - FINAL_CHECKIN message not being sent when INN-Reach transaction state is "RETURN_UNCIRCULATED" or "BORROWER_RENEW"
-* [MODINREACH-423](https://issues.folio.org/browse/MODINREACH-423) - Final check in operation is missing configuration permission
-* [MODINREACH-424](https://issues.folio.org/browse/MODINREACH-424) - Patron validation endpoint should strip commas and leading and trailing spaces from the patron name field
-* [MODINREACH-420](https://issues.folio.org/browse/MODINREACH-420) - Update Spring version for Quesnelia
-
-
 ## v3.1.0 2023-10-12
 
 ### Stories
