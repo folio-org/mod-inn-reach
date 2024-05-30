@@ -1,8 +1,10 @@
 package org.folio.innreach.domain.listener;
 
 import static org.awaitility.Awaitility.await;
+import static org.folio.innreach.batch.contribution.ContributionJobContextManager.endContributionJobContext;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TEST_METHOD;
@@ -18,6 +20,7 @@ import java.util.UUID;
 
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.producer.ProducerRecord;
+import org.folio.innreach.batch.contribution.service.ContributionJobRunner;
 import org.folio.innreach.domain.service.impl.BatchDomainEventProcessor;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -59,6 +62,9 @@ class KafkaInventoryEventListenerApiTest extends BaseKafkaApiTest {
 
   @SpyBean
   private BatchDomainEventProcessor eventProcessor;
+
+  @SpyBean
+  private ContributionJobRunner contributionJobRunner;
 
   @SpyBean
   private InnReachTransactionRepository transactionRepository;
@@ -165,6 +171,9 @@ class KafkaInventoryEventListenerApiTest extends BaseKafkaApiTest {
   void testKafkaListenerHandlingErrorsAfterRetryExhausted() {
     var event1 = createItemDomainEvent(DomainEventType.UPDATED, UUID.randomUUID());
     event1.setTenant("testing4");
+
+    //clearing up thread local value
+    endContributionJobContext();
 
     //Event is published to 1 Inn reach topic but exception is thrown for this tenant when tenantScoped method is used
     //Since max retry is set to 0, error will be handled by kafka error handler
