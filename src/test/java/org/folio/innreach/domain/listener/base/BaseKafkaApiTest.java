@@ -9,6 +9,7 @@ import static org.folio.innreach.domain.listener.base.BaseKafkaApiTest.INVENTORY
 import static org.folio.innreach.domain.listener.base.BaseKafkaApiTest.INVENTORY_ITEM_TOPIC;
 import static org.folio.innreach.domain.listener.base.BaseKafkaApiTest.INVENTORY_ITEM_TOPIC1;
 import static org.folio.innreach.domain.listener.base.BaseKafkaApiTest.INVENTORY_ITEM_TOPIC2;
+import static org.folio.innreach.domain.listener.base.BaseKafkaApiTest.INVENTORY_ITEM_TOPIC4;
 import static org.folio.innreach.domain.listener.base.BaseKafkaApiTest.TestTenantController;
 import static org.folio.innreach.domain.listener.base.BaseKafkaApiTest.TestTenantScopedExecutionService;
 import static org.mockito.ArgumentMatchers.any;
@@ -53,7 +54,10 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 @ActiveProfiles("test")
-@EmbeddedKafka(topics = {CIRC_LOAN_TOPIC, CIRC_REQUEST_TOPIC, INITIAL_CONTRIBUTION_TOPIC, CIRC_CHECKIN_TOPIC, INVENTORY_ITEM_TOPIC, INVENTORY_HOLDING_TOPIC, INVENTORY_INSTANCE_TOPIC, INVENTORY_ITEM_TOPIC1, INVENTORY_ITEM_TOPIC2})
+
+@EmbeddedKafka(topics = {CIRC_LOAN_TOPIC, CIRC_REQUEST_TOPIC, INITIAL_CONTRIBUTION_TOPIC, CIRC_CHECKIN_TOPIC,
+  INVENTORY_ITEM_TOPIC, INVENTORY_HOLDING_TOPIC, INVENTORY_INSTANCE_TOPIC, INVENTORY_ITEM_TOPIC1, INVENTORY_ITEM_TOPIC2, INVENTORY_ITEM_TOPIC4})
+
 @SpringBootTest(
   classes = {ModInnReachApplication.class, TestTenantController.class, TestTenantScopedExecutionService.class})
 @Testcontainers
@@ -68,6 +72,8 @@ public class BaseKafkaApiTest {
   public static final String INVENTORY_INSTANCE_TOPIC = "folio.testing.inventory.instance";
   public static final String INVENTORY_ITEM_TOPIC1 = "folio.testing1.inventory.item";
   public static final String INVENTORY_ITEM_TOPIC2 = "folio.testing2.inventory.item";
+
+  public static final String INVENTORY_ITEM_TOPIC4 = "folio.testing4.inventory.item";
   public static final String INITIAL_CONTRIBUTION_TOPIC = "folio.testing.inventory.instance-contribution";
 
 
@@ -138,6 +144,10 @@ public class BaseKafkaApiTest {
 
     @SneakyThrows
     public void runTenantScoped(String tenantId, Runnable job) {
+      // Adding this condition intentionally to simulate the error scenario which may happen when the system user is used for login
+      if(tenantId.equals("testing4")) {
+        throw new RuntimeException("testing exception");
+      }
       job.run();
     }
 
