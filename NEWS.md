@@ -1,3 +1,11 @@
+## v3.1.3 2024-05-30
+### Story
+* [MODINREACH-435](https://issues.folio.org/browse/MODINREACH-435) - GVSU is reporting that when cancelling requests for INN-Reach item holds, the OWNING_SITE_CANCELLED message is not being triggered to the central server
+* [MODINREACH-424](https://issues.folio.org/browse/MODINREACH-424) - Patron validation endpoint should strip commas and leading and trailing spaces from the patron name field
+* [MODINREACH-423](https://issues.folio.org/browse/MODINREACH-423) - Final check in operation is missing configuration permission
+* [MODINREACH-416](https://issues.folio.org/browse/MODINREACH-416) - FINAL_CHECKIN message not being sent when INN-Reach transaction state is "RETURN_UNCIRCULATED" or "BORROWER_RENEW"
+
+
 ## v3.1.2 2024-01-11
 ### Story
 * [MODINREACH-380](https://issues.folio.org/browse/MODINREACH-380) - Implement processing of items in outbox (initial contribution enhancements)
