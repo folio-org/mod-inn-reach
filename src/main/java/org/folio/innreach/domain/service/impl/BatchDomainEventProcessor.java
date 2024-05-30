@@ -13,6 +13,7 @@ import org.folio.innreach.external.exception.InnReachConnectionException;
 import org.folio.innreach.external.exception.ServiceSuspendedException;
 import org.folio.innreach.external.exception.SocketTimeOutExceptionWrapper;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.listener.ListenerExecutionFailedException;
 import org.springframework.retry.support.RetryTemplate;
 import org.springframework.stereotype.Service;
@@ -28,6 +29,8 @@ public class BatchDomainEventProcessor {
 
   @Qualifier(value = BATCH_EVENT_PROCESSOR_RETRY_TEMPLATE)
   private final RetryTemplate retryTemplate;
+  @Value("${innReachTenants}")
+  private String innReachTenants;
 
   public <T> void process(List<DomainEvent<T>> batch, Consumer<DomainEvent<T>> recordProcessor) {
     log.debug("process:: parameters batch: {}, recordProcessor: {}", batch, recordProcessor);
@@ -35,17 +38,20 @@ public class BatchDomainEventProcessor {
     for (var tenantEventsEntry : tenantEventsMap.entrySet()) {
       var tenantId = tenantEventsEntry.getKey();
       var events = tenantEventsEntry.getValue();
-
-      try {
-        executionService.runTenantScoped(tenantId,
-          () -> processTenantEvents(events, recordProcessor));
-      }
-      catch (ServiceSuspendedException | FeignException | InnReachConnectionException | SocketTimeOutExceptionWrapper e) {
-        log.info("exception thrown from process", e);
-        throw e;
-      }
-      catch (ListenerExecutionFailedException listenerExecutionFailedException) {
-        log.warn("Consuming this event [{}] not permitted for system user [tenantId={}]", recordProcessor, tenantId);
+      if (innReachTenants.contains(tenantId)) {
+        try {
+          executionService.runTenantScoped(tenantId,
+            () -> processTenantEvents(events, recordProcessor));
+        }
+        catch (ServiceSuspendedException | FeignException | InnReachConnectionException | SocketTimeOutExceptionWrapper e) {
+          log.info("exception thrown from process", e);
+          throw e;
+        }
+        catch (ListenerExecutionFailedException listenerExecutionFailedException) {
+          log.warn("Consuming this event [{}] not permitted for system user [tenantId={}]", recordProcessor, tenantId);
+        }
+      } else {
+        log.warn("Ignoring event of a unknown tenant {}, events {}", tenantId, events);
       }
     }
   }
