@@ -54,7 +54,7 @@ public class KafkaListenerConfiguration {
 
   @Bean(KAFKA_CONSUMER_FACTORY)
   public ConsumerFactory<String, DomainEvent> kafkaDomainEventConsumerFactory() {
-    var consumerProperties = kafkaProperties.buildConsumerProperties(null);
+    var consumerProperties = kafkaProperties.buildConsumerProperties();
 
     JsonDeserializer<DomainEvent> deserializer = new JsonDeserializer<>(mapper);
     deserializer.setTypeResolver(typeResolver);
@@ -84,7 +84,7 @@ public class KafkaListenerConfiguration {
   @Bean("kafkaInitialContributionConsumer")
   public ConsumerFactory<String, InstanceIterationEvent> kafkaInitialContributionEventConsumerFactory() {
 
-    var consumerProperties = kafkaProperties.buildConsumerProperties(null);
+    var consumerProperties = kafkaProperties.buildConsumerProperties();
 
     JsonDeserializer<InstanceIterationEvent> deserializer = new JsonDeserializer<>(InstanceIterationEvent.class);
     deserializer.setUseTypeHeaders(false);
