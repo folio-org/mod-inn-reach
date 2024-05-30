@@ -20,8 +20,8 @@ public abstract class OngoingContributionStatusMapper {
 
   @Mapping(target = "newEntity", expression = "java(setNewEntity(domainEvent))")
   @Mapping(target = "oldEntity", expression = "java(setOldEntity(domainEvent))")
-  @Mapping(target = "domainEventType", constant = "ITEM")
-  @Mapping(target = "actionType", source = "domainEvent.type")
+  @Mapping(target = "domainEventName", constant = "ITEM")
+  @Mapping(target = "domainEventType", source = "domainEvent.type")
   @Mapping(target = "status", constant = "READY")
   public abstract OngoingContributionStatus toEntity(DomainEvent<org.folio.innreach.dto.Item> domainEvent);
 

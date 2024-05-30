@@ -12,8 +12,8 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import lombok.ToString;
 import org.folio.innreach.domain.entity.base.Auditable;
+import org.folio.innreach.domain.event.DomainEventType;
 import org.hibernate.annotations.ColumnTransformer;
 
 import java.util.UUID;
@@ -34,10 +34,18 @@ public class OngoingContributionStatus extends Auditable {
   @ColumnTransformer(write = "?::jsonb")
   @Column(columnDefinition = "jsonb")
   private String newEntity;
-  private String domainEventType;
-  private String actionType;
-
+  @Enumerated(EnumType.STRING)
+  private EventName domainEventName;
+  @Enumerated(EnumType.STRING)
+  private DomainEventType domainEventType;
   private UUID centralServerId;
   @Enumerated(EnumType.STRING)
-  private JobExecutionStatus.Status status;
+  private ContributionStatus status;
+  private int retryAttempts;
+  private String error;
+  public enum EventName {
+    ITEM,
+    INSTANCE,
+    HOLDINGS
+  }
 }

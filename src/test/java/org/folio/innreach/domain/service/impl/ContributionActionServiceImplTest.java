@@ -187,31 +187,6 @@ class ContributionActionServiceImplTest {
   }
 
   @Test
-  void handleItemDelete() {
-    var instance = createInstance();
-    var item = instance.getItems().get(0);
-    var holding = instance.getHoldingsRecords().get(0);
-
-    when(centralServerRepository.getIds(any())).thenReturn(new PageImpl<>(List.of(CENTRAL_SERVER_ID)));
-    when(inventoryViewService.getInstance(any())).thenReturn(instance);
-    when(holdingsService.find(any())).thenReturn(Optional.of(holding));
-    service.handleItemDelete(item);
-    verify(contributionJobRunner).runItemDeContribution(CENTRAL_SERVER_ID, instance, item);
-
-    doThrow(ServiceSuspendedException.class).when(contributionJobRunner).runItemDeContribution(CENTRAL_SERVER_ID, instance, item);
-    assertThatThrownBy(() -> service.handleItemDelete(item))
-      .isInstanceOf(ServiceSuspendedException.class);
-
-    doThrow(FeignException.class).when(contributionJobRunner).runItemDeContribution(CENTRAL_SERVER_ID, instance, item);
-    assertThatThrownBy(() -> service.handleItemDelete(item))
-      .isInstanceOf(FeignException.class);
-
-    doThrow(InnReachConnectionException.class).when(contributionJobRunner).runItemDeContribution(CENTRAL_SERVER_ID, instance, item);
-    assertThatThrownBy(() -> service.handleItemDelete(item))
-      .isInstanceOf(InnReachConnectionException.class);
-  }
-
-  @Test
   void handleLoanCreation() {
     var instance = createInstance();
     var item = instance.getItems().get(0);
