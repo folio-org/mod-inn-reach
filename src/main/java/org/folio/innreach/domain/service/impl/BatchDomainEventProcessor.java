@@ -51,7 +51,7 @@ public class BatchDomainEventProcessor {
           log.warn("Consuming this event [{}] not permitted for system user [tenantId={}]", recordProcessor, tenantId);
         }
       } else {
-        log.warn("Ignoring event of a unknown tenant {}, events {}", tenantId, events);
+        log.warn("Ignoring event of unknown tenant {}", tenantId);
       }
     }
   }

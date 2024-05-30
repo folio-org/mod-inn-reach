@@ -18,6 +18,7 @@ import java.util.UUID;
 
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.producer.ProducerRecord;
+import org.folio.innreach.domain.service.impl.BatchDomainEventProcessor;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -57,6 +58,9 @@ class KafkaInventoryEventListenerApiTest extends BaseKafkaApiTest {
   private ContributionActionService actionService;
 
   @SpyBean
+  private BatchDomainEventProcessor eventProcessor;
+
+  @SpyBean
   private InnReachTransactionRepository transactionRepository;
 
   @Test
@@ -75,9 +79,9 @@ class KafkaInventoryEventListenerApiTest extends BaseKafkaApiTest {
     var records = eventsCaptor.getValue();
     assertEquals(1, records.size());
 
-    var record = records.get(0);
-    assertEquals(RECORD_ID.toString(), record.key());
-    assertEquals(event, record.value());
+    var record1 = records.get(0);
+    assertEquals(RECORD_ID.toString(), record1.key());
+    assertEquals(event, record1.value());
   }
 
   @Test
@@ -96,9 +100,9 @@ class KafkaInventoryEventListenerApiTest extends BaseKafkaApiTest {
     var records = eventsCaptor.getValue();
     assertEquals(1, records.size());
 
-    var record = records.get(0);
-    assertEquals(RECORD_ID.toString(), record.key());
-    assertEquals(event, record.value());
+    var record1 = records.get(0);
+    assertEquals(RECORD_ID.toString(), record1.key());
+    assertEquals(event, record1.value());
   }
 
   @Test
@@ -117,9 +121,9 @@ class KafkaInventoryEventListenerApiTest extends BaseKafkaApiTest {
     var records = eventsCaptor.getValue();
     assertEquals(1, records.size());
 
-    var record = records.get(0);
-    assertEquals(RECORD_ID.toString(), record.key());
-    assertEquals(event, record.value());
+    var record1 = records.get(0);
+    assertEquals(RECORD_ID.toString(), record1.key());
+    assertEquals(event, record1.value());
   }
 
   @Test
@@ -154,6 +158,22 @@ class KafkaInventoryEventListenerApiTest extends BaseKafkaApiTest {
 
     await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() ->
       verify(actionService, times(2)).handleItemDelete(any()));
+
+  }
+
+  @Test
+  void testKafkaListenerHandlingErrorsAfterRetryExhausted() {
+    var event1 = createItemDomainEvent(DomainEventType.UPDATED, UUID.randomUUID());
+    event1.setTenant("testing4");
+
+    //Event is published to 1 Inn reach topic but exception is thrown for this tenant when tenantScoped method is used
+    //Since max retry is set to 0, error will be handled by kafka error handler
+    kafkaTemplate.send(new ProducerRecord(INVENTORY_ITEM_TOPIC4, RECORD_ID.toString(), event1));
+
+    await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() ->
+      verify(eventProcessor, times(1)).process(any(), any()));
+    await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() ->
+      verify(actionService, times(0)).handleItemUpdate(any(), any()));
 
   }
 
