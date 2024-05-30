@@ -22,6 +22,7 @@ import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.folio.innreach.batch.contribution.service.ContributionJobRunner;
 import org.folio.innreach.domain.service.impl.BatchDomainEventProcessor;
+import org.folio.innreach.external.exception.InnReachException;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -174,6 +175,7 @@ class KafkaInventoryEventListenerApiTest extends BaseKafkaApiTest {
 
     //clearing up thread local value
     endContributionJobContext();
+    doThrow(new InnReachException("error test")).when(contributionJobRunner).completeContribution(any());
 
     //Event is published to 1 Inn reach topic but exception is thrown for this tenant when tenantScoped method is used
     //Since max retry is set to 0, error will be handled by kafka error handler
