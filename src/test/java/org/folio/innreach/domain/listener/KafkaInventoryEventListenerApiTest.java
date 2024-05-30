@@ -142,10 +142,12 @@ class KafkaInventoryEventListenerApiTest extends BaseKafkaApiTest {
   void testKafkaListenerListeningInnReachTopics() {
     var event1 = createItemDomainEvent(DomainEventType.DELETED, UUID.randomUUID());
     var event2 = createItemDomainEvent(DomainEventType.DELETED, UUID.randomUUID());
+    event2.setTenant("testing1");
     var event3 = createItemDomainEvent(DomainEventType.DELETED, UUID.randomUUID());
+    event3.setTenant("testing2");
 
-    //Event is published to 3 different topics but only two are listening
-
+    //Event is published to 3 different topics and all are listening but there are only 2 innreach tenants
+    //so testing2 event gets discarded
     kafkaTemplate.send(new ProducerRecord(INVENTORY_ITEM_TOPIC, RECORD_ID.toString(), event1));
     kafkaTemplate.send(new ProducerRecord(INVENTORY_ITEM_TOPIC1, RECORD_ID.toString(), event2));
     kafkaTemplate.send(new ProducerRecord(INVENTORY_ITEM_TOPIC2, RECORD_ID.toString(), event3));
