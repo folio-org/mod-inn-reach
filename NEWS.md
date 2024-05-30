@@ -1,3 +1,12 @@
+## v3.1.2 2024-01-11
+### Story
+* [MODINREACH-380](https://issues.folio.org/browse/MODINREACH-380) - Implement processing of items in outbox (initial contribution enhancements)
+* [MODINREACH-411](https://issues.folio.org/browse/MODINREACH-411) - Reduce error rate on initial contribution
+
+## v3.1.1 2023-11-08
+### Story
+* [MODINREACH-403](https://issues.folio.org/browse/MODINREACH-403) - Secure setup of system users by default
+
 ## v3.1.0 2023-10-12
 
 ### Stories

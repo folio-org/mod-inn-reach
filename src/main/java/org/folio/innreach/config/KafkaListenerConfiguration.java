@@ -83,6 +83,7 @@ public class KafkaListenerConfiguration {
 
   @Bean("kafkaInitialContributionConsumer")
   public ConsumerFactory<String, InstanceIterationEvent> kafkaInitialContributionEventConsumerFactory() {
+
     var consumerProperties = kafkaProperties.buildConsumerProperties(null);
 
     JsonDeserializer<InstanceIterationEvent> deserializer = new JsonDeserializer<>(InstanceIterationEvent.class);
@@ -107,6 +108,7 @@ public class KafkaListenerConfiguration {
     factory.setCommonErrorHandler(errorHandler());
     return factory;
   }
+
 
   @Bean(BATCH_EVENT_PROCESSOR_RETRY_TEMPLATE)
   public RetryTemplate batchEventRetryTemplate() {
