@@ -9,12 +9,10 @@ import static org.folio.innreach.domain.listener.base.BaseKafkaApiTest.INVENTORY
 import static org.folio.innreach.domain.listener.base.BaseKafkaApiTest.INVENTORY_ITEM_TOPIC;
 import static org.folio.innreach.domain.listener.base.BaseKafkaApiTest.INVENTORY_ITEM_TOPIC1;
 import static org.folio.innreach.domain.listener.base.BaseKafkaApiTest.INVENTORY_ITEM_TOPIC2;
-import static org.folio.innreach.domain.listener.base.BaseKafkaApiTest.TestTenantController;
 import static org.folio.innreach.domain.listener.base.BaseKafkaApiTest.TestTenantScopedExecutionService;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
-import jakarta.validation.Valid;
 import java.util.List;
 import java.util.UUID;
 import lombok.SneakyThrows;
@@ -24,19 +22,14 @@ import org.folio.innreach.domain.event.DomainEvent;
 import org.folio.innreach.domain.service.impl.TenantScopedExecutionService;
 import org.folio.innreach.external.client.feign.InnReachAuthClient;
 import org.folio.innreach.external.dto.AccessTokenDTO;
-import org.folio.spring.liquibase.FolioLiquibaseConfiguration;
-import org.folio.tenant.domain.dto.TenantAttributes;
-import org.folio.tenant.rest.resource.TenantApi;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.Profile;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.kafka.core.DefaultKafkaProducerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -47,7 +40,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
-import org.springframework.web.bind.annotation.RestController;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -55,7 +47,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 @ActiveProfiles("test")
 @EmbeddedKafka(topics = {CIRC_LOAN_TOPIC, CIRC_REQUEST_TOPIC, INITIAL_CONTRIBUTION_TOPIC, CIRC_CHECKIN_TOPIC, INVENTORY_ITEM_TOPIC, INVENTORY_HOLDING_TOPIC, INVENTORY_INSTANCE_TOPIC, INVENTORY_ITEM_TOPIC1, INVENTORY_ITEM_TOPIC2})
 @SpringBootTest(
-  classes = {ModInnReachApplication.class, TestTenantController.class, TestTenantScopedExecutionService.class})
+  classes = {ModInnReachApplication.class, TestTenantScopedExecutionService.class})
 @Testcontainers
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class BaseKafkaApiTest {
@@ -109,23 +101,6 @@ public class BaseKafkaApiTest {
     senderProps.put("key.serializer", "org.apache.kafka.common.serialization.StringSerializer");
     senderProps.put("value.serializer", "org.springframework.kafka.support.serializer.JsonSerializer");
     return new KafkaTemplate<>(new DefaultKafkaProducerFactory<>(senderProps));
-  }
-
-  @EnableAutoConfiguration(exclude = {FolioLiquibaseConfiguration.class})
-  @RestController("folioTenantController")
-  @Profile("test")
-  static class TestTenantController implements TenantApi {
-
-    @Override
-    public ResponseEntity<Void> deleteTenant(String operationId) {
-      return ResponseEntity.noContent().build();
-    }
-
-    @Override
-    public ResponseEntity<Void> postTenant(@Valid TenantAttributes tenantAttributes) {
-      return ResponseEntity.status(HttpStatus.CREATED).build();
-    }
-
   }
 
   @Primary
