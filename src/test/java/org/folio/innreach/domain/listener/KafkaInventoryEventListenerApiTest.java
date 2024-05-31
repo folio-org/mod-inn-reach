@@ -1,8 +1,11 @@
 package org.folio.innreach.domain.listener;
 
 import static org.awaitility.Awaitility.await;
+import static org.folio.innreach.batch.contribution.ContributionJobContextManager.endContributionJobContext;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TEST_METHOD;
 import static org.springframework.test.context.jdbc.SqlMergeMode.MergeMode.MERGE;
@@ -17,6 +20,8 @@ import java.util.UUID;
 
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.producer.ProducerRecord;
+import org.folio.innreach.batch.contribution.service.ContributionJobRunner;
+import org.folio.innreach.domain.service.impl.BatchDomainEventProcessor;
 import org.folio.innreach.repository.OngoingContributionStatusRepository;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -56,6 +61,12 @@ class KafkaInventoryEventListenerApiTest extends BaseKafkaApiTest {
 
   @MockBean
   private ContributionActionService actionService;
+
+  @SpyBean
+  private BatchDomainEventProcessor eventProcessor;
+
+  @SpyBean
+  private ContributionJobRunner contributionJobRunner;
 
   @SpyBean
   private InnReachTransactionRepository transactionRepository;
@@ -129,16 +140,38 @@ class KafkaInventoryEventListenerApiTest extends BaseKafkaApiTest {
     long initialSize = ongoingContributionRepository.count();
     var event1 = createItemDomainEvent(DomainEventType.DELETED, UUID.randomUUID());
     var event2 = createItemDomainEvent(DomainEventType.DELETED, UUID.randomUUID());
+    event2.setTenant("testing1");
     var event3 = createItemDomainEvent(DomainEventType.DELETED, UUID.randomUUID());
+    event3.setTenant("testing2");
 
-    //Event is published to 3 different topics but only two are listening
-
+    //Event is published to 3 different topics and all are listening but there are only 2 innreach tenants
+    //so testing2 event gets discarded
     kafkaTemplate.send(new ProducerRecord(INVENTORY_ITEM_TOPIC, RECORD_ID.toString(), event1));
     kafkaTemplate.send(new ProducerRecord(INVENTORY_ITEM_TOPIC1, RECORD_ID.toString(), event2));
     kafkaTemplate.send(new ProducerRecord(INVENTORY_ITEM_TOPIC2, RECORD_ID.toString(), event3));
 
     await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() ->
       assertEquals(initialSize+2, ongoingContributionRepository.count()));
+
+  }
+
+  @Test
+  void testKafkaListenerHandlingErrorsAfterRetryExhausted() {
+    var event1 = createItemDomainEvent(DomainEventType.UPDATED, UUID.randomUUID());
+    event1.setTenant("testing4");
+
+    //clearing up thread local value
+    endContributionJobContext();
+    doThrow(new InnReachException("error test")).when(contributionJobRunner).completeContribution(any());
+
+    //Event is published to 1 Inn reach topic but exception is thrown for this tenant when tenantScoped method is used
+    //Since max retry is set to 0, error will be handled by kafka error handler
+    kafkaTemplate.send(new ProducerRecord(INVENTORY_ITEM_TOPIC4, RECORD_ID.toString(), event1));
+
+    await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() ->
+      verify(eventProcessor, times(1)).process(any(), any()));
+    await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() ->
+      verify(actionService, times(0)).handleItemUpdate(any(), any()));
 
   }
 

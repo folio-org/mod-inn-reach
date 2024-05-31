@@ -54,7 +54,7 @@ public class KafkaListenerConfiguration {
 
   @Bean(KAFKA_CONSUMER_FACTORY)
   public ConsumerFactory<String, DomainEvent> kafkaDomainEventConsumerFactory() {
-    var consumerProperties = kafkaProperties.buildConsumerProperties();
+    var consumerProperties = kafkaProperties.buildConsumerProperties(null);
 
     JsonDeserializer<DomainEvent> deserializer = new JsonDeserializer<>(mapper);
     deserializer.setTypeResolver(typeResolver);
@@ -83,7 +83,7 @@ public class KafkaListenerConfiguration {
 
   @Bean("kafkaInitialContributionConsumer")
   public ConsumerFactory<String, InstanceIterationEvent> kafkaInitialContributionEventConsumerFactory() {
-    var consumerProperties = kafkaProperties.buildConsumerProperties();
+    var consumerProperties = kafkaProperties.buildConsumerProperties(null);
 
     JsonDeserializer<InstanceIterationEvent> deserializer = new JsonDeserializer<>(InstanceIterationEvent.class);
     deserializer.setUseTypeHeaders(false);
@@ -107,7 +107,7 @@ public class KafkaListenerConfiguration {
     factory.setCommonErrorHandler(errorHandler());
     return factory;
   }
-  
+
   @Bean(BATCH_EVENT_PROCESSOR_RETRY_TEMPLATE)
   public RetryTemplate batchEventRetryTemplate() {
     return RetryTemplate.builder()
@@ -121,9 +121,13 @@ public class KafkaListenerConfiguration {
     DefaultErrorHandler errorHandler = new DefaultErrorHandler((consumerRecord, exception) -> {
       log.info("inside errorHandler for Ongoing contribution");
       // logic to execute when all the retry attempts are exhausted
-      executionService.runTenantScoped(getContributionJobContext().getTenantId(),
+      try {
+        executionService.runTenantScoped(getContributionJobContext().getTenantId(),
           () -> contributionJobRunner.completeContribution(getContributionJobContext()));
-      endContributionJobContext();
+        endContributionJobContext();
+      } catch (Exception ex) {
+        log.warn("Exception while processing error handler {} ", ex.getMessage());
+      }
     }, fixedBackOff);
     errorHandler.addRetryableExceptions(ServiceSuspendedException.class);
     errorHandler.addRetryableExceptions(SocketTimeOutExceptionWrapper.class);
