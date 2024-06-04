@@ -4,7 +4,7 @@ import static org.folio.innreach.config.KafkaListenerConfiguration.KAFKA_CONTAIN
 import static org.folio.innreach.domain.event.DomainEventType.CREATED;
 import static org.folio.innreach.domain.event.DomainEventType.DELETED;
 import static org.folio.innreach.domain.event.DomainEventType.UPDATED;
-import static org.folio.innreach.util.Constants.UNKNOWN_TYPE_MESSAGE;
+import static org.folio.innreach.util.InnReachConstants.UNKNOWN_TYPE_MESSAGE;
 
 import java.util.List;
 import java.util.Objects;
@@ -53,9 +53,12 @@ public class KafkaInventoryEventListener {
     log.info("Handling inventory item events from Kafka [number of events: {}]", consumerRecords.size());
     var events = getEvents(consumerRecords);
     logEvents(events);
-    kafkaEventProcessorService.process(events, tenantGroupedEvents -> getCentralServerIds().forEach(centralServerId -> {
-      var ongoingContributionStatusList = ongoingContributionStatusMapper.toEntity(tenantGroupedEvents);
-      ongoingContributionStatusList.forEach(ongoingContributionStatus -> ongoingContributionStatus.setCentralServerId(centralServerId));
+    kafkaEventProcessorService.process(events, (tenantGroupedEvents, tenant) -> getCentralServerIds().forEach(centralServerId -> {
+      var ongoingContributionStatusList = ongoingContributionStatusMapper.convertItemListToEntities(tenantGroupedEvents);
+      ongoingContributionStatusList.forEach(ongoingContributionStatus -> {
+        ongoingContributionStatus.setCentralServerId(centralServerId);
+        ongoingContributionStatus.setTenant(tenant);
+      });
       ongoingContributionStatusRepository.saveAll(ongoingContributionStatusList);
     }));
   }
@@ -84,7 +87,7 @@ public class KafkaInventoryEventListener {
             contributionActionService.handleInstanceDelete(oldEntity);
             break;
           default:
-            log.warn(UNKNOWN_TYPE_MESSAGE, event.getType());
+            log.warn(UNKNOWN_TYPE_MESSAGE);
         }
     });
   }
@@ -111,7 +114,7 @@ public class KafkaInventoryEventListener {
           contributionActionService.handleHoldingDelete(oldEntity);
           break;
         default:
-          log.warn(UNKNOWN_TYPE_MESSAGE, event.getType());
+          log.warn(UNKNOWN_TYPE_MESSAGE);
       }
     });
   }

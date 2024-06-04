@@ -22,6 +22,7 @@ import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.folio.innreach.batch.contribution.service.ContributionJobRunner;
 import org.folio.innreach.domain.service.impl.BatchDomainEventProcessor;
+import org.folio.innreach.external.exception.InnReachException;
 import org.folio.innreach.repository.OngoingContributionStatusRepository;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -80,7 +81,6 @@ class KafkaInventoryEventListenerApiTest extends BaseKafkaApiTest {
   })
   void shouldReceiveInventoryItemEvent() {
     long initialSize = ongoingContributionRepository.count();
-    System.out.println("Initial size****" + initialSize);
     var event = createItemDomainEvent(DomainEventType.DELETED, UUID.randomUUID());
 
     kafkaTemplate.send(new ProducerRecord(INVENTORY_ITEM_TOPIC, RECORD_ID.toString(), event));
@@ -152,26 +152,6 @@ class KafkaInventoryEventListenerApiTest extends BaseKafkaApiTest {
 
     await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() ->
       assertEquals(initialSize+2, ongoingContributionRepository.count()));
-
-  }
-
-  @Test
-  void testKafkaListenerHandlingErrorsAfterRetryExhausted() {
-    var event1 = createItemDomainEvent(DomainEventType.UPDATED, UUID.randomUUID());
-    event1.setTenant("testing4");
-
-    //clearing up thread local value
-    endContributionJobContext();
-    doThrow(new InnReachException("error test")).when(contributionJobRunner).completeContribution(any());
-
-    //Event is published to 1 Inn reach topic but exception is thrown for this tenant when tenantScoped method is used
-    //Since max retry is set to 0, error will be handled by kafka error handler
-    kafkaTemplate.send(new ProducerRecord(INVENTORY_ITEM_TOPIC4, RECORD_ID.toString(), event1));
-
-    await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() ->
-      verify(eventProcessor, times(1)).process(any(), any()));
-    await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() ->
-      verify(actionService, times(0)).handleItemUpdate(any(), any()));
 
   }
 

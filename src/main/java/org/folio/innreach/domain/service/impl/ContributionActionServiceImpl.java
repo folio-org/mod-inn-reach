@@ -3,8 +3,8 @@ package org.folio.innreach.domain.service.impl;
 import static org.folio.innreach.domain.entity.ContributionStatus.FAILED;
 import static org.folio.innreach.domain.service.impl.MARCRecordTransformationServiceImpl.isMARCRecord;
 import static org.folio.innreach.dto.MappingValidationStatusDTO.VALID;
-import static org.folio.innreach.util.Constants.INVALID_CENTRAL_SERVER_ID;
-import static org.folio.innreach.util.Constants.MARC_ERROR_MSG;
+import static org.folio.innreach.util.InnReachConstants.INVALID_CENTRAL_SERVER_ID;
+import static org.folio.innreach.util.InnReachConstants.MARC_ERROR_MSG;
 
 import java.util.List;
 import java.util.UUID;

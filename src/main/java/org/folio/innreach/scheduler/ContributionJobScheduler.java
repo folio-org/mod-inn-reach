@@ -30,9 +30,9 @@ public class ContributionJobScheduler {
   private final ContributionService contributionService;
   private final OngoingContributionStatusRepository ongoingContributionStatusRepository;
   private final OngoingContributionEventProcessor ongoingContributionEventProcessor;
-  @Value(value = "${initial-contribution.fetch-limit}")
+  @Value(value = "${contribution.fetch-limit}")
   private int recordLimit;
-  @Value(value = "${initial-contribution.item-pause}")
+  @Value(value = "${contribution.item-pause}")
   private double itemPause;
   private final Cache<String, List<String>> tenantDetailsCache;
 
@@ -51,8 +51,8 @@ public class ContributionJobScheduler {
     }
   }
 
-  @Scheduled(fixedDelayString = "${initial-contribution.scheduler.fixed-delay}",
-    initialDelayString = "${initial-contribution.scheduler.initial-delay}")
+  @Scheduled(fixedDelayString = "${contribution.scheduler.fixed-delay}",
+    initialDelayString = "${contribution.scheduler.initial-delay}")
   public void processInitialContributionEvents() {
     List<String> tenants = loadTenants();
     log.info("processInitialContributionEvents :: tenantsList {}", tenants);
@@ -77,26 +77,26 @@ public class ContributionJobScheduler {
       ));
   }
 
-  @Scheduled(fixedDelayString = "${initial-contribution.scheduler.fixed-delay}",
-    initialDelayString = "${initial-contribution.scheduler.initial-delay}")
+  @Scheduled(fixedDelayString = "${contribution.scheduler.fixed-delay}",
+    initialDelayString = "${contribution.scheduler.initial-delay}")
   public void processOngoingContributionEvents() {
     List<String> tenants = loadTenants();
-    log.info("processInitialContributionEvents :: tenantsList {}", tenants);
+    log.info("processOngoingContributionEvents :: tenantsList {}", tenants);
     tenants.forEach(tenant ->
       tenantScopedExecutionService.runTenantScoped(tenant,
         () -> {
           try {
             long inProgressCount = ongoingContributionStatusRepository.getInProgressRecordsCount();
             if(recordLimit > inProgressCount) {
-              log.info("processInitialContributionEvents:: Fetching new set of records");
+              log.info("processOngoingContributionEvents:: Fetching new set of records");
               ongoingContributionStatusRepository.updateAndFetchOngoingContributionRecordsByStatus(recordLimit)
                 .forEach(ongoingContributionEventProcessor::processOngoingContribution);
             } else {
-              log.info("processInitialContributionEvents:: unable to fetch new records, " +
+              log.info("processOngoingContributionEvents:: unable to fetch new records, " +
                 "as inProgress count {} is greater than fetchLimit {}", inProgressCount, recordLimit);
             }
           } catch (Exception ex) {
-            log.warn("Exception caught while processing Initial contribution for tenant {} {} ", tenant, ex.getMessage());
+            log.warn("processOngoingContributionEvents:: Exception caught while processing ongoing contribution for tenant {} {} ", tenant, ex.getMessage());
           }
         }
       ));

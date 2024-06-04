@@ -6,8 +6,8 @@ import static org.folio.innreach.batch.contribution.ContributionJobContextManage
 import static org.folio.innreach.domain.entity.ContributionStatus.DE_CONTRIBUTED;
 import static org.folio.innreach.domain.entity.ContributionStatus.FAILED;
 import static org.folio.innreach.domain.entity.ContributionStatus.PROCESSED;
-import static org.folio.innreach.util.Constants.DE_CONTRIBUTE_INSTANCE_MSG;
-import static org.folio.innreach.util.Constants.SKIPPING_INELIGIBLE_MSG;
+import static org.folio.innreach.util.InnReachConstants.DE_CONTRIBUTE_INSTANCE_MSG;
+import static org.folio.innreach.util.InnReachConstants.SKIPPING_INELIGIBLE_MSG;
 
 import java.net.SocketTimeoutException;
 import java.util.*;

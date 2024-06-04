@@ -54,7 +54,7 @@ public class InitialContributionEventProcessor {
   private static final ConcurrentHashMap<UUID, Contribution> contributionRecord = new ConcurrentHashMap<>();
   private final ContributionRepository contributionRepository;
   private final TenantScopedExecutionService executionService;
-  @Value("${initial-contribution.retry-attempts}")
+  @Value("${contribution.retry-attempts}")
   private int maxRetryAttempts;
 
   @Async("schedulerTaskExecutor")

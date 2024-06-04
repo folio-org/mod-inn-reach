@@ -2,7 +2,6 @@ package org.folio.innreach.domain.service;
 
 import java.util.UUID;
 
-import org.folio.innreach.domain.entity.Contribution;
 import org.folio.innreach.dto.ContributionDTO;
 import org.folio.innreach.dto.ContributionErrorDTO;
 import org.folio.innreach.dto.ContributionsDTO;
@@ -28,7 +27,5 @@ public interface ContributionService {
   void logContributionError(UUID contributionId, ContributionErrorDTO error);
 
   void updateStatisticsAndContributionStatus();
-
-  Contribution createEmptyContribution(UUID centralServerId);
 
 }

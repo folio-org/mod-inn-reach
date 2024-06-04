@@ -43,6 +43,7 @@ public class OngoingContributionStatus extends Auditable {
   private ContributionStatus status;
   private int retryAttempts;
   private String error;
+  private String tenant;
   public enum EventName {
     ITEM,
     INSTANCE,

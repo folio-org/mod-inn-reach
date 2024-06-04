@@ -44,7 +44,7 @@ system-user:
 okapi.url: ${OKAPI_URL:http://localhost:8080}
 INNREACH_TENANTS: testing|testing1|testing4
 MAX_FAILURE: 0
-initial-contribution:
+contribution:
   scheduler:
     fixed-delay: 30000
     initial-delay: 1000

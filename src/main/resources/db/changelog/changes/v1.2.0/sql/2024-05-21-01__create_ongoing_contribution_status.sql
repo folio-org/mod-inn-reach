@@ -8,6 +8,7 @@ CREATE TABLE IF NOT EXISTS ongoing_contribution_status
     status character varying NOT NULL,
     central_server_id UUID NOT NULL,
     retry_attempts integer NOT NULL DEFAULT 0,
+    tenant character varying NOT NULL,
     error character varying,
     created_date timestamp without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_date timestamp without time zone,

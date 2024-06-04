@@ -5,17 +5,19 @@ import lombok.extern.log4j.Log4j2;
 import org.folio.innreach.domain.entity.OngoingContributionStatus;
 import org.folio.innreach.domain.service.ContributionActionService;
 import org.folio.innreach.domain.service.InnReachTransactionActionService;
+import org.folio.innreach.domain.service.impl.TenantScopedExecutionService;
 import org.folio.innreach.external.exception.InnReachConnectionException;
 import org.folio.innreach.external.exception.InnReachGatewayException;
 import org.folio.innreach.external.exception.ServiceSuspendedException;
 import org.folio.innreach.external.exception.SocketTimeOutExceptionWrapper;
 import org.folio.innreach.util.JsonHelper;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.folio.innreach.dto.Item;
 
 import static org.folio.innreach.domain.entity.ContributionStatus.FAILED;
 import static org.folio.innreach.domain.entity.ContributionStatus.RETRY;
-import static org.folio.innreach.util.Constants.UNKNOWN_TYPE_MESSAGE;
+import static org.folio.innreach.util.InnReachConstants.UNKNOWN_TYPE_MESSAGE;
 
 @Service
 @AllArgsConstructor
@@ -26,13 +28,21 @@ public class OngoingContributionEventProcessor {
   private final InnReachTransactionActionService transactionActionService;
   private final JsonHelper jsonHelper;
   private final OngoingContributionStatusService ongoingContributionStatusService;
+  private final TenantScopedExecutionService executionService;
 
+  @Async("schedulerTaskExecutor")
   public void processOngoingContribution(OngoingContributionStatus ongoingContributionStatus) {
     try {
-      switch (ongoingContributionStatus.getDomainEventName()) {
-        case ITEM: processItem(ongoingContributionStatus);
-        default:
-      }
+      log.info("processOngoingContribution:: Processing ongoing contribution event with id {} , tenant {}",
+        ongoingContributionStatus.getId(), ongoingContributionStatus.getTenant());
+      executionService.executeAsyncTenantScoped(ongoingContributionStatus.getTenant(),
+        () -> {
+          switch (ongoingContributionStatus.getDomainEventName()) {
+            case ITEM:
+              processItem(ongoingContributionStatus);
+            default:
+          }
+        });
     } catch (ServiceSuspendedException | InnReachConnectionException |
              SocketTimeOutExceptionWrapper | InnReachGatewayException ex) {
       ongoingContributionStatusService.updateOngoingContribution(ongoingContributionStatus, RETRY);

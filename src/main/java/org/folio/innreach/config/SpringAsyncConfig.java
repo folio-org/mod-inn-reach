@@ -18,7 +18,7 @@ public class SpringAsyncConfig implements AsyncConfigurer {
   @Value("${spring.async.config.executor.pool-size}")
   private int poolSize;
 
-  @Value("${initial-contribution.async.pool-size}")
+  @Value("${contribution.async.pool-size}")
   private int schedulerTaskPoolSize;
 
   /*
