@@ -1,6 +1,6 @@
 package org.folio.innreach.domain.service.impl;
 
-import lombok.AllArgsConstructor;
+  import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.folio.innreach.domain.event.DomainEvent;
 import org.folio.innreach.domain.service.KafkaEventProcessorService;
@@ -15,10 +15,10 @@ import java.util.stream.Collectors;
 
 @Service
 @Log4j2
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class KafkaEventProcessorServiceImpl implements KafkaEventProcessorService {
 
-  private TenantScopedExecutionService executionService;
+  private final TenantScopedExecutionService executionService;
   @Value("${innReachTenants}")
   private String innReachTenants;
 
