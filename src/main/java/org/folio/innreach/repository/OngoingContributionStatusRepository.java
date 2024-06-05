@@ -17,9 +17,9 @@ public interface OngoingContributionStatusRepository extends JpaRepository<Ongoi
   void updateInProgressToReady();
 
   @Query(value = """
-    update ongoing_contribution_status o1
-    set o1.status = 'IN_PROGRESS' where o1.id in (select o2.id from ongoing_contribution_status o2
-    where o2.status = 'READY' Order by o2.created_date
+    update ongoing_contribution_status
+    set status = 'IN_PROGRESS' where id in (select o.id from ongoing_contribution_status o
+    where o.status = 'READY' Order by o.created_date
     limit :limit) returning *
     """, nativeQuery = true)
   List<OngoingContributionStatus> updateAndFetchOngoingContributionRecordsByStatus(@Param("limit") int limit);
