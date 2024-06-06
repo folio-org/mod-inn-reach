@@ -1,6 +1,7 @@
 package org.folio.innreach.batch.contribution.service;
 
 import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.folio.innreach.domain.entity.OngoingContributionStatus;
 import org.folio.innreach.domain.service.ContributionActionService;
@@ -22,7 +23,7 @@ import static org.folio.innreach.domain.entity.ContributionStatus.RETRY;
 import static org.folio.innreach.util.InnReachConstants.UNKNOWN_TYPE_MESSAGE;
 
 @Service
-@AllArgsConstructor
+@RequiredArgsConstructor
 @Log4j2
 public class OngoingContributionEventProcessor {
 
