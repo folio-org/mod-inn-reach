@@ -60,7 +60,6 @@ public class ContributionFixture {
       .randomize(named("centralServer"), ContributionFixture::refCentralServer)
       .randomize(named("createdBy"), () -> AuditableUser.SYSTEM)
       .randomize(named("createdDate"), OffsetDateTime::now)
-      .excludeField(named("ongoingContributionStatuses"))
       .excludeField(named("id"))
       .excludeField(named("contribution"))
       .excludeField(named("updatedBy"))
