@@ -410,11 +410,12 @@ public class ContributionJobRunner {
 
         log.info("Ongoing: re-contributing instance to update bib status centralServer id: {}, item id: {}, instance id: {}", centralServerId, deletedItem.getId(), instance.getId());
         recordContributionService.contributeInstance(centralServerId, instance);
+        ongoingContributionStatusService.updateOngoingContribution(ongoingContributionStatus, PROCESSED);
       } else {
         log.info("Ongoing: " + DE_CONTRIBUTE_INSTANCE_MSG+", centralServer id: {}, item id: {}, instance id : {}", centralServerId, deletedItem.getId(), instance.getId());
         recordContributionService.deContributeInstance(centralServerId, instance);
+        ongoingContributionStatusService.updateOngoingContribution(ongoingContributionStatus, DE_CONTRIBUTED);
       }
-      ongoingContributionStatusService.updateOngoingContribution(ongoingContributionStatus, PROCESSED);
     } catch (SocketTimeoutException ex) {
       throw new SocketTimeOutExceptionWrapper(ex.getMessage());
     }
