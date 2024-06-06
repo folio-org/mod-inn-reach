@@ -13,7 +13,7 @@ import java.util.UUID;
 public interface OngoingContributionStatusRepository extends JpaRepository<OngoingContributionStatus, UUID> {
   @Modifying
   @Transactional
-  @Query(value = "update ongoing_contribution_status set status = 'READY' where status = 'IN_PROGRESS')", nativeQuery = true)
+  @Query(value = "update ongoing_contribution_status set status = 'READY' where status = 'IN_PROGRESS'", nativeQuery = true)
   void updateInProgressToReady();
 
   @Query(value = """

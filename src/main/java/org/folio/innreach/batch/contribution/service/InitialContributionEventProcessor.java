@@ -57,7 +57,7 @@ public class InitialContributionEventProcessor {
   @Value("${contribution.retry-attempts}")
   private int maxRetryAttempts;
 
-  @Async("schedulerTaskExecutor")
+  @Async("initialSchedulerTaskExecutor")
   public void processInitialContributionEvents(JobExecutionStatus job) {
     executionService.executeAsyncTenantScoped(job.getTenant(), () -> {
       log.info("processInitialContributionEvents:: Processing Initial contribution events {}", job);
