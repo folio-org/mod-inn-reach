@@ -48,7 +48,7 @@ contribution:
   scheduler:
     fixed-delay: 30000
     initial-delay: 1000
-  retry-attempts: 10
+  retry-attempts: 1
   fetch-limit: 50
   tenant-cache:
     ttl: 120

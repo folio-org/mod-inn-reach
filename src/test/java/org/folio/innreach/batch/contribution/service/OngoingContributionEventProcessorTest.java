@@ -15,6 +15,8 @@ import org.folio.innreach.dto.Item;
 import org.folio.innreach.dto.Instance;
 import org.folio.innreach.dto.Holding;
 import org.folio.innreach.dto.MappingValidationStatusDTO;
+import org.folio.innreach.external.exception.InnReachConnectionException;
+import org.folio.innreach.external.exception.ServiceSuspendedException;
 import org.folio.innreach.mapper.OngoingContributionStatusMapper;
 import org.folio.innreach.repository.OngoingContributionStatusRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -32,16 +34,20 @@ import static org.awaitility.Awaitility.await;
 import static org.folio.innreach.domain.entity.ContributionStatus.DE_CONTRIBUTED;
 import static org.folio.innreach.domain.entity.ContributionStatus.FAILED;
 import static org.folio.innreach.domain.entity.ContributionStatus.PROCESSED;
+import static org.folio.innreach.domain.entity.ContributionStatus.RETRY;
 import static org.folio.innreach.fixture.ContributionFixture.createHolding;
 import static org.folio.innreach.fixture.ContributionFixture.createInstance;
 import static org.folio.innreach.fixture.ContributionFixture.createItem;
 import static org.folio.innreach.util.InnReachConstants.INVALID_CENTRAL_SERVER_ID;
 import static org.folio.innreach.util.InnReachConstants.MARC_ERROR_MSG;
+import static org.folio.innreach.util.InnReachConstants.RETRY_LIMIT_MESSAGE;
 import static org.folio.innreach.util.InnReachConstants.SKIPPING_INELIGIBLE_MSG;
+import static org.folio.innreach.util.InnReachConstants.UNKNOWN_TYPE_MESSAGE;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -503,6 +509,61 @@ class OngoingContributionEventProcessorTest extends BaseControllerTest {
     verify(recordContributionService, never()).contributeItems(any(), any(), any());
     assertEquals(PROCESSED, ongoingContributionStatus.getStatus());
     assertNull(ongoingContributionStatus.getError());
+  }
+
+  @Test
+  void testItemUpdateEventThrowInnReachConnectionException() throws SocketTimeoutException {
+    var ongoingContributionStatus = saveOngoingContributionStatus(ongoingContributionStatusMapper
+      .convertItemToEntity(itemUpdate), CENTRAL_SERVER_ID);
+    when(holdingsService.find(itemUpdate.getData().getNewEntity().getHoldingsRecordId()))
+      .thenReturn(Optional.of(holdings));
+    var newHoldings = createHolding();
+    when(holdingsService.find(itemUpdate.getData().getOldEntity().getHoldingsRecordId()))
+      .thenReturn(Optional.of(newHoldings));
+    when(instanceStorageClient.getInstanceById(newHoldings.getInstanceId()))
+      .thenReturn(createInstance());
+    when(validationService.isEligibleForContribution(any(UUID.class), any(Item.class)))
+      .thenReturn(true);
+    when(recordContributionService.isContributed(any(UUID.class), any(Instance.class), any(Item.class)))
+      .thenReturn(true);
+    when(validationService.isEligibleForContribution(any(UUID.class), any(Instance.class)))
+      .thenReturn(false);
+    doThrow(InnReachConnectionException.class).when(recordContributionService).deContributeInstance(any(), any());
+    eventProcessor.processOngoingContribution(ongoingContributionStatus);
+    await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() ->
+      verify(ongoingContributionStatusRepository, times(2)).save(any()));
+    ongoingContributionStatus = ongoingContributionStatusRepository.findById(ongoingContributionStatus.getId()).get();
+    assertEquals(RETRY, ongoingContributionStatus.getStatus());
+    assertEquals(1, ongoingContributionStatus.getRetryAttempts());
+    assertNull(ongoingContributionStatus.getError());
+    doThrow(ServiceSuspendedException.class).when(recordContributionService).deContributeInstance(any(), any());
+    eventProcessor.processOngoingContribution(ongoingContributionStatus);
+    await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() ->
+      verify(ongoingContributionStatusRepository, times(3)).save(any()));
+    ongoingContributionStatus = ongoingContributionStatusRepository.findById(ongoingContributionStatus.getId()).get();
+    assertEquals(RETRY, ongoingContributionStatus.getStatus());
+    assertEquals(2, ongoingContributionStatus.getRetryAttempts());
+    assertNull(ongoingContributionStatus.getError());
+    eventProcessor.processOngoingContribution(ongoingContributionStatus);
+    await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() ->
+      verify(ongoingContributionStatusRepository, times(4)).save(any()));
+    ongoingContributionStatus = ongoingContributionStatusRepository.findById(ongoingContributionStatus.getId()).get();
+    assertEquals(FAILED, ongoingContributionStatus.getStatus());
+    assertEquals(RETRY_LIMIT_MESSAGE, ongoingContributionStatus.getError());
+  }
+
+  @Test
+  void testItemEventWithUnknownEventType() {
+    itemId = UUID.randomUUID();
+    itemCreate = createItemDomainEvent(itemId, DomainEventType.ALL_DELETED);
+    var ongoingContributionStatus = saveOngoingContributionStatus(ongoingContributionStatusMapper
+      .convertItemToEntity(itemCreate), UUID.randomUUID());
+    eventProcessor.processOngoingContribution(ongoingContributionStatus);
+    await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() ->
+      verify(ongoingContributionStatusRepository, times(2)).save(any()));
+    ongoingContributionStatus = ongoingContributionStatusRepository.findById(ongoingContributionStatus.getId()).get();
+    assertEquals(FAILED, ongoingContributionStatus.getStatus());
+    assertEquals(UNKNOWN_TYPE_MESSAGE, ongoingContributionStatus.getError());
   }
 
   private DomainEvent<Item> createItemDomainEvent(UUID itemId, DomainEventType eventType) {

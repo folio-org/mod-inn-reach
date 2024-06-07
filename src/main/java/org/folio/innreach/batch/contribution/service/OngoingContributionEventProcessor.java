@@ -1,6 +1,5 @@
 package org.folio.innreach.batch.contribution.service;
 
-import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.folio.innreach.domain.entity.OngoingContributionStatus;
@@ -20,6 +19,7 @@ import org.folio.innreach.dto.Item;
 
 import static org.folio.innreach.domain.entity.ContributionStatus.FAILED;
 import static org.folio.innreach.domain.entity.ContributionStatus.RETRY;
+import static org.folio.innreach.util.InnReachConstants.RETRY_LIMIT_MESSAGE;
 import static org.folio.innreach.util.InnReachConstants.UNKNOWN_TYPE_MESSAGE;
 
 @Service
@@ -75,7 +75,7 @@ public class OngoingContributionEventProcessor {
   private void checkRetryLimit(OngoingContributionStatus job) {
     if (maxRetryAttempts != 0 && job.getRetryAttempts() > maxRetryAttempts) {
       log.warn("checkRetryLimit:: Retry limit exhausted for jobId {} ", job.getId());
-      throw new RetryException("Retry limit exhausted");
+      throw new RetryException(RETRY_LIMIT_MESSAGE);
     }
   }
 

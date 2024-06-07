@@ -6,5 +6,6 @@ public class InnReachConstants {
   public static final String MARC_ERROR_MSG = "Not a MARC Instance";
   public static final String INVALID_CENTRAL_SERVER_ID = "Invalid central server id";
   public static final String UNKNOWN_TYPE_MESSAGE = "Received event of unknown type";
+  public static final String RETRY_LIMIT_MESSAGE = "Retry limit exhausted";
 
 }
