@@ -13,8 +13,12 @@ import java.util.List;
 @Mapper(componentModel = "spring", injectionStrategy = InjectionStrategy.CONSTRUCTOR, uses = MappingMethods.class)
 public abstract class OngoingContributionStatusMapper {
 
-  @Autowired
   private JsonHelper jsonHelper;
+
+  @Autowired
+  public void setJsonHelper(JsonHelper jsonHelper) {
+    this.jsonHelper = jsonHelper;
+  }
 
   public abstract List<OngoingContributionStatus> convertItemListToEntities(List<DomainEvent<org.folio.innreach.dto.Item>> domainEvent);
 

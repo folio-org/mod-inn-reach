@@ -1,11 +1,8 @@
 package org.folio.innreach.domain.listener;
 
 import static org.awaitility.Awaitility.await;
-import static org.folio.innreach.batch.contribution.ContributionJobContextManager.endContributionJobContext;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TEST_METHOD;
 import static org.springframework.test.context.jdbc.SqlMergeMode.MergeMode.MERGE;
@@ -22,7 +19,6 @@ import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.folio.innreach.batch.contribution.service.ContributionJobRunner;
 import org.folio.innreach.domain.service.impl.BatchDomainEventProcessor;
-import org.folio.innreach.external.exception.InnReachException;
 import org.folio.innreach.repository.OngoingContributionStatusRepository;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -106,9 +102,9 @@ class KafkaInventoryEventListenerApiTest extends BaseKafkaApiTest {
     var records = eventsCaptor.getValue();
     assertEquals(1, records.size());
 
-    var record = records.get(0);
-    assertEquals(RECORD_ID.toString(), record.key());
-    assertEquals(event, record.value());
+    var record1 = records.get(0);
+    assertEquals(RECORD_ID.toString(), record1.key());
+    assertEquals(event, record1.value());
   }
 
   @Test
@@ -127,9 +123,9 @@ class KafkaInventoryEventListenerApiTest extends BaseKafkaApiTest {
     var records = eventsCaptor.getValue();
     assertEquals(1, records.size());
 
-    var record = records.get(0);
-    assertEquals(RECORD_ID.toString(), record.key());
-    assertEquals(event, record.value());
+    var record1 = records.get(0);
+    assertEquals(RECORD_ID.toString(), record1.key());
+    assertEquals(event, record1.value());
   }
 
   @Test

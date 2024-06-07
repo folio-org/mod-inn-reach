@@ -20,6 +20,7 @@ import org.folio.innreach.dto.Item;
 import static org.folio.innreach.domain.entity.ContributionStatus.FAILED;
 import static org.folio.innreach.domain.entity.ContributionStatus.RETRY;
 import static org.folio.innreach.util.InnReachConstants.RETRY_LIMIT_MESSAGE;
+import static org.folio.innreach.util.InnReachConstants.UNKNOWN_EVENT_NAME_MESSAGE;
 import static org.folio.innreach.util.InnReachConstants.UNKNOWN_TYPE_MESSAGE;
 
 @Service
@@ -44,9 +45,11 @@ public class OngoingContributionEventProcessor {
         () -> {
           checkRetryLimit(ongoingContributionStatus);
           switch (ongoingContributionStatus.getDomainEventName()) {
-            case ITEM:
-              processItem(ongoingContributionStatus);
-            default:
+            case ITEM -> processItem(ongoingContributionStatus);
+            case HOLDINGS -> processHoldings(ongoingContributionStatus);
+            case INSTANCE -> processInstance(ongoingContributionStatus);
+            default ->
+              ongoingContributionStatusService.updateOngoingContribution(ongoingContributionStatus, UNKNOWN_EVENT_NAME_MESSAGE, FAILED);
           }
         });
     } catch (ServiceSuspendedException | InnReachConnectionException |
@@ -70,6 +73,14 @@ public class OngoingContributionEventProcessor {
       default ->
         ongoingContributionStatusService.updateOngoingContribution(ongoingContributionStatus, UNKNOWN_TYPE_MESSAGE, FAILED);
     }
+  }
+
+  private void processHoldings(OngoingContributionStatus ongoingContributionStatus) {
+    log.info("Not yet implemented");
+  }
+
+  private void processInstance(OngoingContributionStatus ongoingContributionStatus) {
+    log.info("Not yet implemented");
   }
 
   private void checkRetryLimit(OngoingContributionStatus job) {
