@@ -310,9 +310,6 @@ class ContributionActionServiceImplTest {
     var item = instance.getItems().get(0);
     var holding = instance.getHoldingsRecords().get(0);
     var ongoingJob = new OngoingContributionStatus();
-    var newInstance = createInstance();
-    var newHolding = newInstance.getHoldingsRecords().get(0);
-    var newItem = newInstance.getItems().get(0);
     when(holdingsService.find(item.getHoldingsRecordId())).thenReturn(Optional.of(holding));
     when(inventoryViewService.getInstance(holding.getInstanceId())).thenReturn(instance);
 
