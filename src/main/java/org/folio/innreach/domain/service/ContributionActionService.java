@@ -18,8 +18,6 @@ public interface ContributionActionService {
   void handleItemCreation(Item newItem);
   void handleItemCreation(Item newItem, OngoingContributionStatus ongoingContributionStatus);
 
-  void handleItemUpdate(Item newItem, Item oldItem);
-
   void handleItemUpdate(Item newItem, Item oldItem, OngoingContributionStatus ongoingContributionStatus);
 
   void handleItemDelete(Item deletedItem, OngoingContributionStatus ongoingContributionStatus);

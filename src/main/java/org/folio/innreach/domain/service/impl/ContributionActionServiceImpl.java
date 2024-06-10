@@ -142,27 +142,6 @@ public class ContributionActionServiceImpl implements ContributionActionService 
     }
   }
 
-  @Override
-  public void handleItemUpdate(Item newItem, Item oldItem) {
-    log.info("Handling item update {}", newItem.getId());
-
-    var instance = fetchInstanceWithItems(newItem);
-    if (!isMARCRecord(instance)) {
-      return;
-    }
-
-    var oldInstance = fetchOldInstance(newItem, oldItem, instance);
-    boolean itemMoved = !oldInstance.getId().equals(instance.getId());
-
-    handlePerCentralServer(newItem.getId(), csId -> {
-      if (itemMoved) {
-        contributionJobRunner.runItemMove(csId, instance, oldInstance, newItem);
-      } else {
-        contributionJobRunner.runItemContribution(csId, instance, newItem);
-      }
-    });
-  }
-
 
   @Override
   public void handleItemDelete(Item deletedItem, OngoingContributionStatus ongoingContributionStatus) {

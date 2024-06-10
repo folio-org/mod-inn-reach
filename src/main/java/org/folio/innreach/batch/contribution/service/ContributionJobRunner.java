@@ -285,47 +285,6 @@ public class ContributionJobRunner {
     }
   }
 
-  public void runItemMove(UUID centralServerId, Instance newInstance, Instance oldInstance, Item item) {
-    log.info("Validating item {} for moving to a new instance id : {} from old instance id : {} on central server {}", item.getId(), newInstance.getId(), oldInstance.getId(), centralServerId);
-
-    boolean eligibleItem = isEligibleForContribution(centralServerId, item);
-    boolean contributedItem = isContributed(centralServerId, oldInstance, item);
-    log.info("eligibleItem: {}, contributedItem: {}", eligibleItem, contributedItem);
-    if (!eligibleItem && !contributedItem) {
-      log.info("Skipping ineligible and non-contributed item id: {}, new instance id: {}, old instance id: {}", item.getId(), newInstance.getId(), oldInstance.getId());
-      return;
-    }
-
-    runOngoing(centralServerId, (ctx, statistics) -> {
-      log.info("Starting ongoing item move job {}, item id: {}, new instance id: {}, old instance id: {}", ctx, item.getId(), newInstance.getId(), oldInstance.getId());
-
-      // de-contribute item and update old instance
-      if (contributedItem) {
-        if (isEligibleForContribution(centralServerId, oldInstance)) {
-          log.info("Ongoing: de-contributing item : {} from old instance id : {}", item.getId(), oldInstance.getId());
-          deContributeItem(centralServerId, item, statistics);
-
-          log.info("Ongoing: re-contributing old instance id:{} to update bib status, item id; {}", oldInstance.getId(), item.getId());
-          contributeInstance(centralServerId, oldInstance, statistics);
-        } else {
-          log.info("Ongoing: e-contributing old instance id: {}, item id: {}", oldInstance.getId(), item.getId());
-          deContributeInstance(centralServerId, oldInstance, statistics);
-        }
-      }
-
-      // contribute item to a new instance
-      if (isEligibleForContribution(centralServerId, newInstance)) {
-        log.info("Ongoing: re-contributing new instance id: {} to update bib status, item id: {}", newInstance.getId(), item.getId());
-        contributeInstance(centralServerId, newInstance, statistics);
-
-        if (eligibleItem) {
-          log.info("Ongoing: Contributing item to new instance id: {}, item id: {}", newInstance.getId(), item.getId());
-          contributeItem(centralServerId, newInstance.getHrid(), item, statistics);
-        }
-      }
-    });
-  }
-
   public void runItemMove(UUID centralServerId, Instance newInstance, Instance oldInstance, Item item, OngoingContributionStatus ongoingContributionStatus) {
     try {
       log.info("Validating item {} for moving to a new instance id : {} from old instance id : {} on central server {}", item.getId(), newInstance.getId(), oldInstance.getId(), centralServerId);
@@ -605,11 +564,11 @@ public class ContributionJobRunner {
       endContributionJobContext();
     }
     catch (ServiceSuspendedException | FeignException | InnReachConnectionException | SocketTimeOutExceptionWrapper e) {
-      log.info("exception thrown from runOngoing : {}", e);
+      log.info("exception thrown from runOngoing :", e);
       throw e;
     }
     catch (Exception e) {
-      log.info("contributeInstance exception block : {}", e);
+      log.info("contributeInstance exception block :", e);
       throw e;
     }
   }

@@ -410,7 +410,7 @@ class OngoingContributionEventProcessorTest extends BaseControllerTest {
   }
 
   @Test
-  void testItemUpdateEventWithInstanceUpdateAndInEligibleItem() throws SocketTimeoutException {
+  void testItemUpdateEventWithInstanceUpdateAndInEligibleItem() {
     var ongoingContributionStatus = saveOngoingContributionStatus(ongoingContributionStatusMapper
       .convertItemToEntity(itemUpdate), CENTRAL_SERVER_ID);
     when(holdingsService.find(itemUpdate.getData().getNewEntity().getHoldingsRecordId()))

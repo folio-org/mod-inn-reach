@@ -76,11 +76,11 @@ public class OngoingContributionEventProcessor {
   }
 
   private void processHoldings(OngoingContributionStatus ongoingContributionStatus) {
-    log.info("Not yet implemented");
+    log.info("Not yet implemented {}", ongoingContributionStatus);
   }
 
   private void processInstance(OngoingContributionStatus ongoingContributionStatus) {
-    log.info("Not yet implemented");
+    log.info("Not yet implemented {}", ongoingContributionStatus);
   }
 
   private void checkRetryLimit(OngoingContributionStatus job) {
