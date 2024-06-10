@@ -568,7 +568,7 @@ class ContributionJobRunnerTest {
   }
 
   @Test
-  void testItemExceptionForOngoingJob() throws SocketTimeoutException {
+  void testItemExceptionForOngoingJob() {
     var item = createItem();
     var instance = new Instance().source(MARC_RECORD_SOURCE);
     instance.addItemsItem(item);
@@ -615,6 +615,22 @@ class ContributionJobRunnerTest {
   }
 
   @Test
+  void testSocketTimeOutExceptionForItemCreate() throws SocketTimeoutException {
+    var instance = createInstance();
+    var item = instance.getItems().get(0);
+    var ongoingJob = new OngoingContributionStatus();
+
+    when(validationService.isEligibleForContribution(any(), eq(item))).thenReturn(true);
+    when(validationService.isEligibleForContribution(any(), eq(instance))).thenReturn(true);
+    when(recordContributor.isContributed(any(), eq(instance), eq(item))).thenReturn(true);
+
+    doThrow(SocketTimeoutException.class).when(recordContributor).contributeInstance(any(), any());
+
+    assertThatThrownBy(() -> jobRunner.runItemContribution(CENTRAL_SERVER_ID, instance, item, ongoingJob))
+      .isInstanceOf(SocketTimeOutExceptionWrapper.class);
+  }
+
+  @Test
   void runItemMoveForOngoingJob() throws SocketTimeoutException {
     var oldInstance = createInstance();
     var newInstance = createInstance();
@@ -654,6 +670,23 @@ class ContributionJobRunnerTest {
     verify(recordContributor, never()).contributeItems(any(), any(), anyList());
     verify(recordContributor, never()).deContributeInstance(any(), eq(oldInstance));
     verify(ongoingContributionStatusService).updateOngoingContribution(ongoingJob, ContributionStatus.PROCESSED);
+  }
+
+  @Test
+  void testSocketTimeOutExceptionForItemUpdate() throws SocketTimeoutException {
+    var oldInstance = createInstance();
+    var newInstance = createInstance();
+    var item = newInstance.getItems().get(0);
+    var ongoingJob = new OngoingContributionStatus();
+
+    when(validationService.isEligibleForContribution(any(), eq(oldInstance))).thenReturn(false);
+    when(validationService.isEligibleForContribution(any(), any(Item.class))).thenReturn(true);
+    when(recordContributor.isContributed(any(), any(), any(Item.class))).thenReturn(true);
+
+    doThrow(SocketTimeoutException.class).when(recordContributor).deContributeInstance(any(), any());
+
+    assertThatThrownBy(() -> jobRunner.runItemMove(CENTRAL_SERVER_ID, newInstance, oldInstance, item, ongoingJob))
+      .isInstanceOf(SocketTimeOutExceptionWrapper.class);
   }
 
   @Test
@@ -723,6 +756,21 @@ class ContributionJobRunnerTest {
 
     verify(recordContributor).deContributeInstance(any(), any());
     verify(ongoingContributionStatusService).updateOngoingContribution(ongoingJob, ContributionStatus.DE_CONTRIBUTED);
+  }
+
+  @Test
+  void testSocketTimeOutExceptionForItemDelete() throws SocketTimeoutException {
+    var instance = createInstance();
+    var item = instance.getItems().get(0);
+    var ongoingJob = new OngoingContributionStatus();
+
+    when(validationService.isEligibleForContribution(any(), eq(instance))).thenReturn(false);
+    when(recordContributor.isContributed(any(), eq(instance), eq(item))).thenReturn(true);
+
+    doThrow(SocketTimeoutException.class).when(recordContributor).deContributeInstance(any(), any());
+
+    assertThatThrownBy(() -> jobRunner.runItemDeContribution(CENTRAL_SERVER_ID, instance, item, ongoingJob))
+      .isInstanceOf(SocketTimeOutExceptionWrapper.class);
   }
 
 }
