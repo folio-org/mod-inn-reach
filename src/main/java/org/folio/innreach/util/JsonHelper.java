@@ -30,6 +30,7 @@ public class JsonHelper {
 
 
   public String toJson(Object o) {
+    log.info("Object {}", o);
     String jsonString;
     try {
       jsonString = mapper.writeValueAsString(o);
@@ -37,10 +38,12 @@ public class JsonHelper {
       log.info(OBJECT_SERIALIZATION_FAILED, e);
       throw new IllegalStateException(OBJECT_SERIALIZATION_FAILED + ": " + e.getMessage());
     }
+    log.info("return jsonString {}", jsonString);
     return jsonString;
   }
 
   public <T> T fromJson(String jsonString, Class<T> valueType) {
+    log.info("fromJson jsonString {}", jsonString);
     T obj;
     try {
       obj = mapper.readValue(jsonString, valueType);
@@ -48,6 +51,7 @@ public class JsonHelper {
       log.info(OBJECT_DESERIALIZATION_FAILED, e);
       throw new IllegalStateException(OBJECT_DESERIALIZATION_FAILED + ": " + e.getMessage());
     }
+    log.info("fromJson return json {}", obj);
     return obj;
   }
 
