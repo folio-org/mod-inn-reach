@@ -16,6 +16,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.folio.innreach.batch.contribution.service.OngoingContributionStatusService;
 import org.folio.innreach.domain.entity.OngoingContributionStatus;
+import org.folio.innreach.domain.event.DomainEventType;
 import org.folio.innreach.external.exception.InnReachConnectionException;
 import org.folio.innreach.external.exception.ServiceSuspendedException;
 import org.folio.innreach.external.exception.SocketTimeOutExceptionWrapper;
@@ -235,6 +236,7 @@ public class ContributionActionServiceImpl implements ContributionActionService 
     if (checkCentralServerValid(centralServerId)) {
       items.forEach(item -> {
         var newItemJob = createNewOngoingContributionStatus(ongoingContributionStatus, item);
+        newItemJob.setDomainEventType(DomainEventType.UPDATED);
         contributionJobRunner.runItemContribution(centralServerId, instance, item, newItemJob);
       });
       ongoingContributionStatusService.updateOngoingContribution(ongoingContributionStatus, PROCESSED);
