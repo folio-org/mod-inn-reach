@@ -16,6 +16,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.folio.innreach.dto.Item;
+import org.folio.innreach.dto.Holding;
 
 import static org.folio.innreach.domain.entity.ContributionStatus.FAILED;
 import static org.folio.innreach.domain.entity.ContributionStatus.RETRY;
@@ -76,7 +77,13 @@ public class OngoingContributionEventProcessor {
   }
 
   private void processHoldings(OngoingContributionStatus ongoingContributionStatus) {
-    log.info("Not yet implemented {}", ongoingContributionStatus);
+    Holding oldEntity = jsonHelper.fromJson(ongoingContributionStatus.getOldEntity(),Holding.class);
+    Holding newEntity = jsonHelper.fromJson(ongoingContributionStatus.getOldEntity(),Holding.class);
+    switch (ongoingContributionStatus.getDomainEventType()) {
+      case UPDATED -> contributionActionService.handleHoldingUpdate(newEntity, ongoingContributionStatus);
+      case DELETED -> contributionActionService.handleHoldingDelete(oldEntity, ongoingContributionStatus);
+      default -> ongoingContributionStatusService.updateOngoingContribution(ongoingContributionStatus, UNKNOWN_TYPE_MESSAGE, FAILED);
+    }
   }
 
   private void processInstance(OngoingContributionStatus ongoingContributionStatus) {
