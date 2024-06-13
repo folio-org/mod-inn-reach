@@ -77,8 +77,8 @@ public class OngoingContributionEventProcessor {
   }
 
   private void processHoldings(OngoingContributionStatus ongoingContributionStatus) {
-    Holding oldEntity = jsonHelper.fromJson(ongoingContributionStatus.getOldEntity(),Holding.class);
-    Holding newEntity = jsonHelper.fromJson(ongoingContributionStatus.getOldEntity(),Holding.class);
+    Holding oldEntity = jsonHelper.fromJson(ongoingContributionStatus.getOldEntity(), Holding.class);
+    Holding newEntity = jsonHelper.fromJson(ongoingContributionStatus.getNewEntity(), Holding.class);
     switch (ongoingContributionStatus.getDomainEventType()) {
       case UPDATED -> contributionActionService.handleHoldingUpdate(newEntity, ongoingContributionStatus);
       case DELETED -> contributionActionService.handleHoldingDelete(oldEntity, ongoingContributionStatus);

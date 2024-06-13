@@ -10,6 +10,7 @@ CREATE TABLE IF NOT EXISTS ongoing_contribution_status
     retry_attempts integer NOT NULL DEFAULT 0,
     tenant character varying NOT NULL,
     error character varying,
+    parent_id uuid,
     created_date timestamp without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_date timestamp without time zone,
     created_by_userid uuid NOT NULL DEFAULT '00000000-0000-0000-0000-000000000000'::uuid,

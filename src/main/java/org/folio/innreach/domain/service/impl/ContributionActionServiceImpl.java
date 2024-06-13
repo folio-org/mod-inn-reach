@@ -1,6 +1,7 @@
 package org.folio.innreach.domain.service.impl;
 
 import static org.folio.innreach.domain.entity.ContributionStatus.FAILED;
+import static org.folio.innreach.domain.entity.ContributionStatus.PROCESSED;
 import static org.folio.innreach.domain.service.impl.MARCRecordTransformationServiceImpl.isMARCRecord;
 import static org.folio.innreach.dto.MappingValidationStatusDTO.VALID;
 import static org.folio.innreach.util.InnReachConstants.INVALID_CENTRAL_SERVER_ID;
@@ -18,6 +19,7 @@ import org.folio.innreach.domain.entity.OngoingContributionStatus;
 import org.folio.innreach.external.exception.InnReachConnectionException;
 import org.folio.innreach.external.exception.ServiceSuspendedException;
 import org.folio.innreach.external.exception.SocketTimeOutExceptionWrapper;
+import org.folio.innreach.util.JsonHelper;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
@@ -49,7 +51,7 @@ public class ContributionActionServiceImpl implements ContributionActionService 
   private final HoldingsService holdingsService;
   private final ContributionValidationService validationService;
   private final OngoingContributionStatusService ongoingContributionStatusService;
-
+  private final JsonHelper jsonHelper;
 
   @Override
   public void handleInstanceCreation(Instance newInstance) {
@@ -226,13 +228,29 @@ public class ContributionActionServiceImpl implements ContributionActionService 
       ongoingContributionStatusService.updateOngoingContribution(ongoingContributionStatus, MARC_ERROR_MSG, FAILED);
       return;
     }
-    var items = holding.getHoldingsItems();
+    log.info("holdingsUpdate:: holdings from instance {}", instance.getHoldingsRecords());
+    log.info("holdingsUpdate:: item from instance {}", instance.getItems());
+    var items = instance.getItems();
     var centralServerId = ongoingContributionStatus.getCentralServerId();
     if (checkCentralServerValid(centralServerId)) {
-      items.forEach(item -> contributionJobRunner.runItemContribution(centralServerId, instance, item));
+      items.forEach(item -> {
+        var newItemJob = createNewOngoingContributionStatus(ongoingContributionStatus, item);
+        contributionJobRunner.runItemContribution(centralServerId, instance, item, newItemJob);
+      });
+      ongoingContributionStatusService.updateOngoingContribution(ongoingContributionStatus, PROCESSED);
     } else {
       ongoingContributionStatusService.updateOngoingContribution(ongoingContributionStatus, INVALID_CENTRAL_SERVER_ID, FAILED);
     }
+  }
+
+  private OngoingContributionStatus createNewOngoingContributionStatus(OngoingContributionStatus holdingJob, Item item) {
+    var ongoingContribution = new OngoingContributionStatus();
+    ongoingContribution.setParentId(holdingJob.getId());
+    ongoingContribution.setTenant(holdingJob.getTenant());
+    ongoingContribution.setDomainEventName(OngoingContributionStatus.EventName.ITEM);
+    ongoingContribution.setCentralServerId(holdingJob.getCentralServerId());
+    ongoingContribution.setOldEntity(jsonHelper.toJson(item));
+    return ongoingContribution;
   }
 
 
