@@ -110,20 +110,6 @@ public class KafkaInventoryEventListener {
     }));
   }
 
-  private <T> void processEvents(Function<List<DomainEvent<T>>, List<OngoingContributionStatus>> convertDomainEventToEntities,
-                                 List<ConsumerRecord<String, DomainEvent<T>>> consumerRecords) {
-    var events = getEvents(consumerRecords);
-    logEvents(events);
-    kafkaEventProcessorService.process(events, (tenantGroupedEvents, tenant) -> getCentralServerIds().forEach(centralServerId -> {
-      var ongoingContributionStatusList = convertDomainEventToEntities.apply(tenantGroupedEvents);
-      ongoingContributionStatusList.forEach(ongoingContributionStatus -> {
-        ongoingContributionStatus.setCentralServerId(centralServerId);
-        ongoingContributionStatus.setTenant(tenant);
-      });
-      ongoingContributionStatusRepository.saveAll(ongoingContributionStatusList);
-    }));
-  }
-
   private static <T> List<DomainEvent<T>> getEvents(List<ConsumerRecord<String, DomainEvent<T>>> consumerRecords) {
     return consumerRecords.stream()
       .map(ConsumerRecord::value)
