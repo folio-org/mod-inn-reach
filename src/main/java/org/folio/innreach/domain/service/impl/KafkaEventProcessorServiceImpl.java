@@ -38,8 +38,8 @@ public class KafkaEventProcessorServiceImpl implements KafkaEventProcessorServic
     try {
       Map<String, List<DomainEvent<T>>> tenantMap = events.stream().collect(Collectors.groupingBy(DomainEvent::getTenant));
       tenantMap.forEach((tenant, eventList) -> {
-        log.info("tenant {}", tenant);
-        log.info("eventList for tenant {}", eventList);
+        log.debug("tenant {}", tenant);
+        log.debug("eventList for tenant {}", eventList);
         if (innReachTenants.contains(tenant)) {
           executionService.runTenantScoped(tenant,
             () -> eventProcessor.accept(eventList, tenant));
