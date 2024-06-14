@@ -63,6 +63,7 @@ public class OngoingContributionEventProcessor {
   private void processItem(OngoingContributionStatus ongoingContributionStatus) {
     Item oldEntity = jsonHelper.fromJson(ongoingContributionStatus.getOldEntity(), Item.class);
     Item newEntity = jsonHelper.fromJson(ongoingContributionStatus.getNewEntity(), Item.class);
+    log.info("processItem:: processing item with oldEntity {} and newEntity {}", oldEntity, newEntity);
     switch (ongoingContributionStatus.getDomainEventType()) {
       case CREATED -> contributionActionService.handleItemCreation(newEntity, ongoingContributionStatus);
       case UPDATED -> {
