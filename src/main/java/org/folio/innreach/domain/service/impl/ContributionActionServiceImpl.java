@@ -292,7 +292,7 @@ public class ContributionActionServiceImpl implements ContributionActionService 
     }
 
     var centralServerId = ongoingContributionStatus.getCentralServerId();
-    // Filter out the list of item associated with the updated holdings
+    // Filter out the list of item associated with the deleted holdings
     var items = instance.getItems()
       .stream()
       .filter(item -> item.getHoldingsRecordId().equals(holding.getId()))
