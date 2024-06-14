@@ -9,11 +9,13 @@ import static org.folio.innreach.util.InnReachConstants.UNKNOWN_TYPE_MESSAGE;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.folio.innreach.domain.entity.OngoingContributionStatus;
 import org.folio.innreach.domain.service.KafkaEventProcessorService;
 import org.folio.innreach.mapper.OngoingContributionStatusMapper;
 import org.folio.innreach.repository.CentralServerRepository;
@@ -51,16 +53,7 @@ public class KafkaInventoryEventListener {
     concurrency = "${kafka.listener.item.concurrency}")
   public void handleItemEvents(List<ConsumerRecord<String, DomainEvent<Item>>> consumerRecords) {
     log.info("Handling inventory item events from Kafka [number of events: {}]", consumerRecords.size());
-    var events = getEvents(consumerRecords);
-    logEvents(events);
-    kafkaEventProcessorService.process(events, (tenantGroupedEvents, tenant) -> getCentralServerIds().forEach(centralServerId -> {
-      var ongoingContributionStatusList = ongoingContributionStatusMapper.convertItemListToEntities(tenantGroupedEvents);
-      ongoingContributionStatusList.forEach(ongoingContributionStatus -> {
-        ongoingContributionStatus.setCentralServerId(centralServerId);
-        ongoingContributionStatus.setTenant(tenant);
-      });
-      ongoingContributionStatusRepository.saveAll(ongoingContributionStatusList);
-    }));
+    processEvents(ongoingContributionStatusMapper::convertItemListToEntities, consumerRecords);
   }
 
   @KafkaListener(
@@ -117,6 +110,20 @@ public class KafkaInventoryEventListener {
           log.warn(UNKNOWN_TYPE_MESSAGE);
       }
     });
+  }
+
+  private <T> void processEvents(Function<List<DomainEvent<T>>, List<OngoingContributionStatus>> convertDomainEventToEntities,
+                                 List<ConsumerRecord<String, DomainEvent<T>>> consumerRecords) {
+    var events = getEvents(consumerRecords);
+    logEvents(events);
+    kafkaEventProcessorService.process(events, (tenantGroupedEvents, tenant) -> getCentralServerIds().forEach(centralServerId -> {
+      var ongoingContributionStatusList = convertDomainEventToEntities.apply(tenantGroupedEvents);
+      ongoingContributionStatusList.forEach(ongoingContributionStatus -> {
+        ongoingContributionStatus.setCentralServerId(centralServerId);
+        ongoingContributionStatus.setTenant(tenant);
+      });
+      ongoingContributionStatusRepository.saveAll(ongoingContributionStatusList);
+    }));
   }
 
   private static <T> List<DomainEvent<T>> getEvents(List<ConsumerRecord<String, DomainEvent<T>>> consumerRecords) {
