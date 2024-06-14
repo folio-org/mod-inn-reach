@@ -231,7 +231,11 @@ public class ContributionActionServiceImpl implements ContributionActionService 
     }
     log.info("holdingsUpdate:: holdings from instance {}", instance.getHoldingsRecords());
     log.info("holdingsUpdate:: item from instance {}", instance.getItems());
-    var items = instance.getItems();
+    // Filter out the list of item associated with the updated holdings
+    var items = instance.getItems()
+      .stream()
+      .filter(item -> item.getHoldingsRecordId().equals(holding.getId()))
+      .toList();
     var centralServerId = ongoingContributionStatus.getCentralServerId();
     if (checkCentralServerValid(centralServerId)) {
       items.forEach(item -> {
@@ -287,9 +291,18 @@ public class ContributionActionServiceImpl implements ContributionActionService 
       return;
     }
 
-    var items = holding.getHoldingsItems();
-    items.forEach(item -> contributionJobRunner.runItemDeContribution(ongoingContributionStatus.getCentralServerId(),
-      instance, item, ongoingContributionStatus));
+    var centralServerId = ongoingContributionStatus.getCentralServerId();
+    // Filter out the list of item associated with the updated holdings
+    var items = instance.getItems()
+      .stream()
+      .filter(item -> item.getHoldingsRecordId().equals(holding.getId()))
+      .toList();
+    items.forEach(item -> {
+      var newItemJob = createNewOngoingContributionStatus(ongoingContributionStatus, item);
+      newItemJob.setDomainEventType(DomainEventType.DELETED);
+      contributionJobRunner.runItemContribution(centralServerId, instance, item, newItemJob);
+    });
+    ongoingContributionStatusService.updateOngoingContribution(ongoingContributionStatus, PROCESSED);
   }
 
   private void handlePerCentralServer(UUID recordId, Consumer<UUID> centralServerHandler) {
