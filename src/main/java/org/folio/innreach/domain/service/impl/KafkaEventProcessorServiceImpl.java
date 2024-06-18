@@ -38,17 +38,16 @@ public class KafkaEventProcessorServiceImpl implements KafkaEventProcessorServic
     try {
       Map<String, List<DomainEvent<T>>> tenantMap = events.stream().collect(Collectors.groupingBy(DomainEvent::getTenant));
       tenantMap.forEach((tenant, eventList) -> {
-        log.debug("tenant {}", tenant);
-        log.debug("eventList for tenant {}", eventList);
+        log.debug("process:: processing eventList {} for tenant {}", eventList, tenant);
         if (innReachTenants.contains(tenant)) {
           executionService.runTenantScoped(tenant,
             () -> eventProcessor.accept(eventList, tenant));
         } else {
-          log.warn("Ignoring event of unknown tenant {}", tenant);
+          log.info("process:: Ignoring event of unknown tenant {}", tenant);
         }
       });
     } catch (Exception ex) {
-      log.warn("Unable to save kafka event into outbox table ", ex);
+      log.error("process:: Unable to save kafka event {} into outbox table ", events, ex);
     }
   }
 }

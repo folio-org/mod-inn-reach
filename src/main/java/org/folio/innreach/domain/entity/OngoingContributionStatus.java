@@ -12,6 +12,7 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.ToString;
 import org.folio.innreach.domain.entity.base.Auditable;
 import org.folio.innreach.domain.event.DomainEventType;
 import org.hibernate.annotations.ColumnTransformer;
@@ -24,6 +25,7 @@ import java.util.UUID;
 @Entity
 @Table(name = "ongoing_contribution_status")
 @EqualsAndHashCode(of = "id", callSuper = false)
+@ToString
 public class OngoingContributionStatus extends Auditable {
   @Id
   @GeneratedValue(strategy = GenerationType.AUTO)
