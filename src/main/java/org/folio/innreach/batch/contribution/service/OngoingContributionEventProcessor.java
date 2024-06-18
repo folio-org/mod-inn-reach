@@ -55,8 +55,10 @@ public class OngoingContributionEventProcessor {
         });
     } catch (ServiceSuspendedException | InnReachConnectionException |
              SocketTimeOutExceptionWrapper | InnReachGatewayException ex) {
+      log.warn("processOngoingContribution:: {} occurred while processing ongoing contribution {}", ex.getClass().getSimpleName(), ongoingContributionStatus);
       ongoingContributionStatusService.updateOngoingContribution(ongoingContributionStatus, RETRY);
     } catch (Exception ex) {
+      log.error("processOngoingContribution:: Exception occurred while processing job {}", ongoingContributionStatus, ex);
       ongoingContributionStatusService.updateOngoingContribution(ongoingContributionStatus, ex.getMessage(), FAILED);
     }
   }
@@ -88,12 +90,13 @@ public class OngoingContributionEventProcessor {
   }
 
   private void processInstance(OngoingContributionStatus ongoingContributionStatus) {
-    log.info("Not yet implemented {}", ongoingContributionStatus);
+    log.info("processInstance:: Not yet implemented {}", ongoingContributionStatus);
   }
 
   private void checkRetryLimit(OngoingContributionStatus job) {
     if (maxRetryAttempts != 0 && job.getRetryAttempts() > maxRetryAttempts) {
-      log.warn("checkRetryLimit:: Retry limit exhausted for jobId {} ", job.getId());
+      log.warn("checkRetryLimit:: ongoing job id {} retry attempts {} exceeds  max retry attempts {}",
+        job.getId(), job.getRetryAttempts(), maxRetryAttempts);
       throw new RetryException(RETRY_LIMIT_MESSAGE);
     }
   }

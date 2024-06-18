@@ -109,7 +109,6 @@ class OngoingContributionEventProcessorTest extends BaseControllerTest {
     eventProcessor.processOngoingContribution(ongoingContributionStatus);
     await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() ->
         verify(ongoingContributionStatusRepository, times(2)).save(any()));
-    ongoingContributionStatus = ongoingContributionStatusRepository.findById(ongoingContributionStatus.getId()).get();
     assertEquals(FAILED, ongoingContributionStatus.getStatus());
     assertEquals(MARC_ERROR_MSG, ongoingContributionStatus.getError());
   }
@@ -122,7 +121,7 @@ class OngoingContributionEventProcessorTest extends BaseControllerTest {
       .thenReturn(Optional.of(holdings));
     eventProcessor.processOngoingContribution(ongoingContributionStatus);
     await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() ->
-        verify(ongoingContributionStatusRepository, times(2)).save(any()));    ongoingContributionStatus = ongoingContributionStatusRepository.findById(ongoingContributionStatus.getId()).get();
+        verify(ongoingContributionStatusRepository, times(2)).save(any()));
     assertEquals(FAILED, ongoingContributionStatus.getStatus());
     assertEquals(INVALID_CENTRAL_SERVER_ID, ongoingContributionStatus.getError());
   }
@@ -139,7 +138,7 @@ class OngoingContributionEventProcessorTest extends BaseControllerTest {
       .thenReturn(false);
     eventProcessor.processOngoingContribution(ongoingContributionStatus);
     await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() ->
-        verify(ongoingContributionStatusRepository, times(2)).save(any()));    ongoingContributionStatus = ongoingContributionStatusRepository.findById(ongoingContributionStatus.getId()).get();
+        verify(ongoingContributionStatusRepository, times(2)).save(any()));
     assertEquals(FAILED, ongoingContributionStatus.getStatus());
     assertEquals(SKIPPING_INELIGIBLE_MSG, ongoingContributionStatus.getError());
   }
@@ -157,7 +156,7 @@ class OngoingContributionEventProcessorTest extends BaseControllerTest {
     doNothing().when(recordContributionService).deContributeInstance(any(), any());
     eventProcessor.processOngoingContribution(ongoingContributionStatus);
     await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() ->
-        verify(ongoingContributionStatusRepository, times(2)).save(any()));    ongoingContributionStatus = ongoingContributionStatusRepository.findById(ongoingContributionStatus.getId()).get();
+        verify(ongoingContributionStatusRepository, times(2)).save(any()));
     verify(recordContributionService).deContributeInstance(any(), any());
     verify(recordContributionService, never()).contributeInstance(any(), any());
     verify(recordContributionService, never()).contributeItems(any(), any(), any());
@@ -182,7 +181,7 @@ class OngoingContributionEventProcessorTest extends BaseControllerTest {
     when(recordContributionService.contributeItems(any(), any(), any())).thenReturn(1);
     eventProcessor.processOngoingContribution(ongoingContributionStatus);
     await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() ->
-        verify(ongoingContributionStatusRepository, times(2)).save(any()));    ongoingContributionStatus = ongoingContributionStatusRepository.findById(ongoingContributionStatus.getId()).get();
+        verify(ongoingContributionStatusRepository, times(2)).save(any()));
     verify(recordContributionService, never()).deContributeInstance(any(), any());
     verify(recordContributionService).contributeInstance(any(), any());
     verify(recordContributionService).contributeItems(any(), any(), any());
@@ -207,7 +206,7 @@ class OngoingContributionEventProcessorTest extends BaseControllerTest {
     doNothing().when(recordContributionService).deContributeItem(any(), any());
     eventProcessor.processOngoingContribution(ongoingContributionStatus);
     await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() ->
-        verify(ongoingContributionStatusRepository, times(2)).save(any()));    ongoingContributionStatus = ongoingContributionStatusRepository.findById(ongoingContributionStatus.getId()).get();
+        verify(ongoingContributionStatusRepository, times(2)).save(any()));
     verify(recordContributionService, never()).deContributeInstance(any(), any());
     verify(recordContributionService).contributeInstance(any(), any());
     verify(recordContributionService, never()).contributeItems(any(), any(), any());
@@ -225,7 +224,7 @@ class OngoingContributionEventProcessorTest extends BaseControllerTest {
       .thenReturn(Optional.of(holdings));
     eventProcessor.processOngoingContribution(ongoingContributionStatus);
     await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() ->
-        verify(ongoingContributionStatusRepository, times(2)).save(any()));    ongoingContributionStatus = ongoingContributionStatusRepository.findById(ongoingContributionStatus.getId()).get();
+        verify(ongoingContributionStatusRepository, times(2)).save(any()));
     assertEquals(FAILED, ongoingContributionStatus.getStatus());
     assertEquals(MARC_ERROR_MSG, ongoingContributionStatus.getError());
   }
@@ -240,7 +239,7 @@ class OngoingContributionEventProcessorTest extends BaseControllerTest {
       .thenReturn(false);
     eventProcessor.processOngoingContribution(ongoingContributionStatus);
     await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() ->
-        verify(ongoingContributionStatusRepository, times(2)).save(any()));    ongoingContributionStatus = ongoingContributionStatusRepository.findById(ongoingContributionStatus.getId()).get();
+        verify(ongoingContributionStatusRepository, times(2)).save(any()));
     assertEquals(FAILED, ongoingContributionStatus.getStatus());
     assertEquals(SKIPPING_INELIGIBLE_MSG, ongoingContributionStatus.getError());
   }
@@ -257,7 +256,7 @@ class OngoingContributionEventProcessorTest extends BaseControllerTest {
       .thenReturn(false);
     eventProcessor.processOngoingContribution(ongoingContributionStatus);
     await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() ->
-      verify(ongoingContributionStatusRepository, times(2)).save(any()));    ongoingContributionStatus = ongoingContributionStatusRepository.findById(ongoingContributionStatus.getId()).get();
+      verify(ongoingContributionStatusRepository, times(2)).save(any()));
     verify(recordContributionService, never()).contributeInstance(any(), any());
     verify(recordContributionService, never()).contributeItems(any(), any(), any());
     verify(recordContributionService, never()).deContributeItem(any(), any());
@@ -278,7 +277,7 @@ class OngoingContributionEventProcessorTest extends BaseControllerTest {
       .thenReturn(true);
     eventProcessor.processOngoingContribution(ongoingContributionStatus);
     await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() ->
-        verify(ongoingContributionStatusRepository, times(2)).save(any()));    ongoingContributionStatus = ongoingContributionStatusRepository.findById(ongoingContributionStatus.getId()).get();
+        verify(ongoingContributionStatusRepository, times(2)).save(any()));
     verify(recordContributionService, never()).deContributeInstance(any(), any());
     verify(recordContributionService).contributeInstance(any(), any());
     verify(recordContributionService, never()).contributeItems(any(), any(), any());
@@ -297,7 +296,7 @@ class OngoingContributionEventProcessorTest extends BaseControllerTest {
       .thenReturn(Optional.of(holdings));
     eventProcessor.processOngoingContribution(ongoingContributionStatus);
     await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() ->
-      verify(ongoingContributionStatusRepository, times(2)).save(any()));    ongoingContributionStatus = ongoingContributionStatusRepository.findById(ongoingContributionStatus.getId()).get();
+      verify(ongoingContributionStatusRepository, times(2)).save(any()));
     assertEquals(FAILED, ongoingContributionStatus.getStatus());
     assertEquals(MARC_ERROR_MSG, ongoingContributionStatus.getError());
   }
@@ -311,7 +310,7 @@ class OngoingContributionEventProcessorTest extends BaseControllerTest {
       .thenReturn(Optional.of(holdings));
     eventProcessor.processOngoingContribution(ongoingContributionStatus);
     await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() ->
-      verify(ongoingContributionStatusRepository, times(2)).save(any()));    ongoingContributionStatus = ongoingContributionStatusRepository.findById(ongoingContributionStatus.getId()).get();
+      verify(ongoingContributionStatusRepository, times(2)).save(any()));
     assertEquals(FAILED, ongoingContributionStatus.getStatus());
     assertEquals(INVALID_CENTRAL_SERVER_ID, ongoingContributionStatus.getError());
   }
@@ -329,7 +328,7 @@ class OngoingContributionEventProcessorTest extends BaseControllerTest {
       .thenReturn(false);
     eventProcessor.processOngoingContribution(ongoingContributionStatus);
     await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() ->
-      verify(ongoingContributionStatusRepository, times(2)).save(any()));    ongoingContributionStatus = ongoingContributionStatusRepository.findById(ongoingContributionStatus.getId()).get();
+      verify(ongoingContributionStatusRepository, times(2)).save(any()));
     assertEquals(FAILED, ongoingContributionStatus.getStatus());
     assertEquals(SKIPPING_INELIGIBLE_MSG, ongoingContributionStatus.getError());
   }
@@ -348,7 +347,7 @@ class OngoingContributionEventProcessorTest extends BaseControllerTest {
     doNothing().when(recordContributionService).deContributeInstance(any(), any());
     eventProcessor.processOngoingContribution(ongoingContributionStatus);
     await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() ->
-      verify(ongoingContributionStatusRepository, times(2)).save(any()));    ongoingContributionStatus = ongoingContributionStatusRepository.findById(ongoingContributionStatus.getId()).get();
+      verify(ongoingContributionStatusRepository, times(2)).save(any()));
     verify(recordContributionService).deContributeInstance(any(), any());
     verify(recordContributionService, never()).contributeInstance(any(), any());
     verify(recordContributionService, never()).contributeItems(any(), any(), any());
@@ -374,7 +373,7 @@ class OngoingContributionEventProcessorTest extends BaseControllerTest {
     when(recordContributionService.contributeItems(any(), any(), any())).thenReturn(1);
     eventProcessor.processOngoingContribution(ongoingContributionStatus);
     await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() ->
-      verify(ongoingContributionStatusRepository, times(2)).save(any()));    ongoingContributionStatus = ongoingContributionStatusRepository.findById(ongoingContributionStatus.getId()).get();
+      verify(ongoingContributionStatusRepository, times(2)).save(any()));
     verify(recordContributionService, never()).deContributeInstance(any(), any());
     verify(recordContributionService).contributeInstance(any(), any());
     verify(recordContributionService).contributeItems(any(), any(), any());
@@ -400,7 +399,7 @@ class OngoingContributionEventProcessorTest extends BaseControllerTest {
     doNothing().when(recordContributionService).deContributeItem(any(), any());
     eventProcessor.processOngoingContribution(ongoingContributionStatus);
     await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() ->
-      verify(ongoingContributionStatusRepository, times(2)).save(any()));    ongoingContributionStatus = ongoingContributionStatusRepository.findById(ongoingContributionStatus.getId()).get();
+      verify(ongoingContributionStatusRepository, times(2)).save(any()));
     verify(recordContributionService, never()).deContributeInstance(any(), any());
     verify(recordContributionService).contributeInstance(any(), any());
     verify(recordContributionService, never()).contributeItems(any(), any(), any());
@@ -426,7 +425,7 @@ class OngoingContributionEventProcessorTest extends BaseControllerTest {
       .thenReturn(false);
     eventProcessor.processOngoingContribution(ongoingContributionStatus);
     await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() ->
-      verify(ongoingContributionStatusRepository, times(2)).save(any()));    ongoingContributionStatus = ongoingContributionStatusRepository.findById(ongoingContributionStatus.getId()).get();
+      verify(ongoingContributionStatusRepository, times(2)).save(any()));
     assertEquals(FAILED, ongoingContributionStatus.getStatus());
     assertEquals(SKIPPING_INELIGIBLE_MSG, ongoingContributionStatus.getError());
   }
@@ -450,7 +449,7 @@ class OngoingContributionEventProcessorTest extends BaseControllerTest {
       .thenReturn(true);
     eventProcessor.processOngoingContribution(ongoingContributionStatus);
     await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() ->
-      verify(ongoingContributionStatusRepository, times(2)).save(any()));    ongoingContributionStatus = ongoingContributionStatusRepository.findById(ongoingContributionStatus.getId()).get();
+      verify(ongoingContributionStatusRepository, times(2)).save(any()));
     verify(recordContributionService).deContributeItem(any(), any());
     verify(recordContributionService, times(2)).contributeInstance(any(), any());
     assertEquals(PROCESSED, ongoingContributionStatus.getStatus());
@@ -476,7 +475,7 @@ class OngoingContributionEventProcessorTest extends BaseControllerTest {
       .thenReturn(true);
     eventProcessor.processOngoingContribution(ongoingContributionStatus);
     await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() ->
-      verify(ongoingContributionStatusRepository, times(2)).save(any()));    ongoingContributionStatus = ongoingContributionStatusRepository.findById(ongoingContributionStatus.getId()).get();
+      verify(ongoingContributionStatusRepository, times(2)).save(any()));
     verify(recordContributionService).deContributeItem(any(), any());
     verify(recordContributionService, times(2)).contributeInstance(any(), any());
     verify(recordContributionService, times(1)).contributeItems(any(), any(), any());
@@ -503,7 +502,7 @@ class OngoingContributionEventProcessorTest extends BaseControllerTest {
       .thenReturn(false);
     eventProcessor.processOngoingContribution(ongoingContributionStatus);
     await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() ->
-      verify(ongoingContributionStatusRepository, times(2)).save(any()));    ongoingContributionStatus = ongoingContributionStatusRepository.findById(ongoingContributionStatus.getId()).get();
+      verify(ongoingContributionStatusRepository, times(2)).save(any()));
     verify(recordContributionService).deContributeInstance(any(), any());
     verify(recordContributionService, never()).contributeInstance(any(), any());
     verify(recordContributionService, never()).contributeItems(any(), any(), any());
@@ -532,7 +531,6 @@ class OngoingContributionEventProcessorTest extends BaseControllerTest {
     eventProcessor.processOngoingContribution(ongoingContributionStatus);
     await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() ->
       verify(ongoingContributionStatusRepository, times(2)).save(any()));
-    ongoingContributionStatus = ongoingContributionStatusRepository.findById(ongoingContributionStatus.getId()).get();
     assertEquals(RETRY, ongoingContributionStatus.getStatus());
     assertEquals(1, ongoingContributionStatus.getRetryAttempts());
     assertNull(ongoingContributionStatus.getError());
@@ -540,14 +538,12 @@ class OngoingContributionEventProcessorTest extends BaseControllerTest {
     eventProcessor.processOngoingContribution(ongoingContributionStatus);
     await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() ->
       verify(ongoingContributionStatusRepository, times(3)).save(any()));
-    ongoingContributionStatus = ongoingContributionStatusRepository.findById(ongoingContributionStatus.getId()).get();
     assertEquals(RETRY, ongoingContributionStatus.getStatus());
     assertEquals(2, ongoingContributionStatus.getRetryAttempts());
     assertNull(ongoingContributionStatus.getError());
     eventProcessor.processOngoingContribution(ongoingContributionStatus);
     await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() ->
       verify(ongoingContributionStatusRepository, times(4)).save(any()));
-    ongoingContributionStatus = ongoingContributionStatusRepository.findById(ongoingContributionStatus.getId()).get();
     assertEquals(FAILED, ongoingContributionStatus.getStatus());
     assertEquals(RETRY_LIMIT_MESSAGE, ongoingContributionStatus.getError());
   }
@@ -561,7 +557,6 @@ class OngoingContributionEventProcessorTest extends BaseControllerTest {
     eventProcessor.processOngoingContribution(ongoingContributionStatus);
     await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() ->
       verify(ongoingContributionStatusRepository, times(2)).save(any()));
-    ongoingContributionStatus = ongoingContributionStatusRepository.findById(ongoingContributionStatus.getId()).get();
     assertEquals(FAILED, ongoingContributionStatus.getStatus());
     assertEquals(UNKNOWN_TYPE_MESSAGE, ongoingContributionStatus.getError());
   }

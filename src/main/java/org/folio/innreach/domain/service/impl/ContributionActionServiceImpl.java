@@ -114,7 +114,7 @@ public class ContributionActionServiceImpl implements ContributionActionService 
       return;
     }
     var centralServerId = ongoingContributionStatus.getCentralServerId();
-    if(checkCentralServerValid(centralServerId)) {
+    if (checkCentralServerValid(centralServerId)) {
       contributionJobRunner.runItemContribution(centralServerId, instance, newItem, ongoingContributionStatus);
     } else {
       ongoingContributionStatusService.updateOngoingContribution(ongoingContributionStatus, INVALID_CENTRAL_SERVER_ID, FAILED);

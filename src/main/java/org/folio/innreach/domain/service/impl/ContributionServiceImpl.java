@@ -282,7 +282,7 @@ public class ContributionServiceImpl implements ContributionService {
     return request;
   }
 
-  public Contribution createEmptyContribution(UUID centralServerId) {
+  private Contribution createEmptyContribution(UUID centralServerId) {
     log.debug("createEmptyContribution:: parameters centralServerId: {}", centralServerId);
     var contribution = new Contribution();
     contribution.setStatus(Contribution.Status.IN_PROGRESS);
