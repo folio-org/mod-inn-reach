@@ -88,7 +88,7 @@ public class OngoingContributionEventProcessor {
 
   private void checkRetryLimit(OngoingContributionStatus job) {
     if (maxRetryAttempts != 0 && job.getRetryAttempts() > maxRetryAttempts) {
-      log.warn("checkRetryLimit:: ongoing id {} retry attempts {} exceeds  max retry attempts {}",
+      log.warn("checkRetryLimit:: ongoing job id {} retry attempts {} exceeds  max retry attempts {}",
         job.getId(), job.getRetryAttempts(), maxRetryAttempts);
       throw new RetryException(RETRY_LIMIT_MESSAGE);
     }
