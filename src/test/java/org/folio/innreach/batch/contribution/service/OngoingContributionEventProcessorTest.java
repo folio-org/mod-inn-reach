@@ -768,6 +768,7 @@ class OngoingContributionEventProcessorTest extends BaseControllerTest {
 
   @Test
   void testHoldingDeletionEventWithContributedItemAndInstance() throws SocketTimeoutException {
+    holdingDelete.setNewEntity(null);
     var ongoingContributionStatus = saveOngoingContributionStatus(ongoingContributionStatusMapper
       .convertHoldingToEntity(holdingDelete), UUID.randomUUID());
     holdings.setId(holdingId);
@@ -803,6 +804,7 @@ class OngoingContributionEventProcessorTest extends BaseControllerTest {
   void testHoldingEventWithUnknownEventType() {
     holdingId = UUID.randomUUID();
     holdingUpdate = createHoldingDomainEvent(holdingId, DomainEventType.CREATED);
+    holdingUpdate.setOldEntity(null);
     var ongoingContributionStatus = saveOngoingContributionStatus(ongoingContributionStatusMapper
       .convertHoldingToEntity(holdingUpdate), UUID.randomUUID());
     eventProcessor.processOngoingContribution(ongoingContributionStatus);
