@@ -91,19 +91,6 @@ public class ContributionActionServiceImpl implements ContributionActionService 
     }
   }
 
-
-  @Override
-  public void handleItemCreation(Item newItem) {
-    log.info("Handling item creation {}", newItem.getId());
-
-    var instance = fetchInstanceWithItems(newItem);
-    if (!isMARCRecord(instance)) {
-      return;
-    }
-
-    handlePerCentralServer(newItem.getId(), csId -> contributionJobRunner.runItemContribution(csId, instance, newItem));
-  }
-
   @Override
   public void handleItemCreation(Item newItem, OngoingContributionStatus ongoingContributionStatus) {
     log.info("Handling item creation {}", newItem.getId());
@@ -145,7 +132,6 @@ public class ContributionActionServiceImpl implements ContributionActionService 
     }
   }
 
-
   @Override
   public void handleItemDelete(Item deletedItem, OngoingContributionStatus ongoingContributionStatus) {
     log.info("Handling item delete {}", deletedItem.getId());
@@ -157,7 +143,6 @@ public class ContributionActionServiceImpl implements ContributionActionService 
     }
     contributionJobRunner.runItemDeContribution(ongoingContributionStatus.getCentralServerId(), instance, deletedItem, ongoingContributionStatus);
   }
-
 
   @Override
   public void handleLoanCreation(StorageLoanDTO loan) {
@@ -171,7 +156,6 @@ public class ContributionActionServiceImpl implements ContributionActionService 
 
     handlePerCentralServer(item.getId(), csId -> contributionJobRunner.runItemContribution(csId, instance, item));
   }
-
 
   @Override
   public void handleLoanUpdate(StorageLoanDTO loan) {
@@ -192,7 +176,6 @@ public class ContributionActionServiceImpl implements ContributionActionService 
     }
   }
 
-
   @Override
   public void handleRequestChange(RequestDTO request) {
     log.info("Handling request {}", request.getId());
@@ -204,21 +187,6 @@ public class ContributionActionServiceImpl implements ContributionActionService 
     }
 
     handlePerCentralServer(item.getId(), csId -> contributionJobRunner.runItemContribution(csId, instance, item));
-  }
-
-
-  @Override
-  public void handleHoldingUpdate(Holding holding) {
-    log.info("Handling holding update {}", holding.getId());
-
-    var instance = fetchInstanceWithItems(holding.getInstanceId());
-    if (!isMARCRecord(instance)) {
-      return;
-    }
-
-    var items = holding.getHoldingsItems();
-    handlePerCentralServer(holding.getId(), csId ->
-      items.forEach(i -> contributionJobRunner.runItemContribution(csId, instance, i)));
   }
 
   @Override
@@ -255,28 +223,6 @@ public class ContributionActionServiceImpl implements ContributionActionService 
     ongoingContribution.setCentralServerId(holdingJob.getCentralServerId());
     ongoingContribution.setOldEntity(jsonHelper.toJson(item));
     return ongoingContribution;
-  }
-
-
-  @Override
-  public void handleHoldingDelete(Holding holding) {
-    log.info("Handling holding delete {}", holding.getId());
-
-    var instance = fetchInstanceWithItems(holding.getInstanceId());
-    if (!isMARCRecord(instance)) {
-      return;
-    }
-
-    var items = holding.getHoldingsItems();
-    try {
-      for (var csId : getCentralServerIds()) {
-        items.forEach(item -> contributionJobRunner.runItemDeContribution(csId, instance, item));
-      }
-    }
-    catch (ServiceSuspendedException | FeignException | InnReachConnectionException e) {
-      log.info("exception thrown from handleHoldingDelete", e);
-      throw e;
-    }
   }
 
   @Override

@@ -128,37 +128,6 @@ class ContributionActionServiceImplTest {
   }
 
   @Test
-  void handleItemCreation() {
-    var instance = createInstance();
-    var item = instance.getItems().get(0);
-    var holding = instance.getHoldingsRecords().get(0);
-
-    when(centralServerRepository.getIds(any())).thenReturn(new PageImpl<>(List.of(CENTRAL_SERVER_ID)));
-    when(inventoryViewService.getInstance(any())).thenReturn(instance);
-    when(holdingsService.find(any())).thenReturn(Optional.of(holding));
-    when(validationService.getItemTypeMappingStatus(any())).thenReturn(VALID);
-    when(validationService.getLocationMappingStatus(any())).thenReturn(VALID);
-    service.handleItemCreation(item);
-    verify(contributionJobRunner).runItemContribution(CENTRAL_SERVER_ID, instance, item);
-
-    doThrow(RuntimeException.class).when(validationService).getItemTypeMappingStatus(any());
-    service.handleItemCreation(item);
-    verify(contributionJobRunner).runItemContribution(CENTRAL_SERVER_ID, instance, item);
-
-    doThrow(ServiceSuspendedException.class).when(validationService).getItemTypeMappingStatus(any());
-    assertThatThrownBy(() -> service.handleItemCreation(item))
-      .isInstanceOf(ServiceSuspendedException.class);
-
-    doThrow(FeignException.class).when(validationService).getItemTypeMappingStatus(any());
-    assertThatThrownBy(() -> service.handleItemCreation(item))
-      .isInstanceOf(FeignException.class);
-
-    doThrow(InnReachConnectionException.class).when(validationService).getItemTypeMappingStatus(any());
-    assertThatThrownBy(() -> service.handleItemCreation(item))
-      .isInstanceOf(InnReachConnectionException.class);
-  }
-
-  @Test
   void handleLoanCreation() {
     var instance = createInstance();
     var item = instance.getItems().get(0);
@@ -213,46 +182,6 @@ class ContributionActionServiceImplTest {
     service.handleRequestChange(request);
 
     verify(contributionJobRunner).runItemContribution(CENTRAL_SERVER_ID, instance, item);
-  }
-
-  @Test
-  void handleHoldingUpdate() {
-    var instance = createInstance();
-    var item = instance.getItems().get(0);
-    var holding = instance.getHoldingsRecords().get(0);
-
-    when(centralServerRepository.getIds(any())).thenReturn(new PageImpl<>(List.of(CENTRAL_SERVER_ID)));
-    when(inventoryViewService.getInstance(any())).thenReturn(instance);
-    when(validationService.getItemTypeMappingStatus(any())).thenReturn(VALID);
-    when(validationService.getLocationMappingStatus(any())).thenReturn(VALID);
-
-    service.handleHoldingUpdate(holding);
-
-    verify(contributionJobRunner).runItemContribution(CENTRAL_SERVER_ID, instance, item);
-  }
-
-  @Test
-  void handleHoldingDelete() {
-    var instance = createInstance();
-    var item = instance.getItems().get(0);
-    var holding = instance.getHoldingsRecords().get(0);
-
-    when(centralServerRepository.getIds(any())).thenReturn(new PageImpl<>(List.of(CENTRAL_SERVER_ID)));
-    when(inventoryViewService.getInstance(any())).thenReturn(instance);
-    service.handleHoldingDelete(holding);
-    verify(contributionJobRunner).runItemDeContribution(CENTRAL_SERVER_ID, instance, item);
-
-    doThrow(ServiceSuspendedException.class).when(contributionJobRunner).runItemDeContribution(CENTRAL_SERVER_ID, instance, item);
-    assertThatThrownBy(() -> service.handleHoldingDelete(holding))
-      .isInstanceOf(ServiceSuspendedException.class);
-
-    doThrow(FeignException.class).when(contributionJobRunner).runItemDeContribution(CENTRAL_SERVER_ID, instance, item);
-    assertThatThrownBy(() -> service.handleHoldingDelete(holding))
-      .isInstanceOf(FeignException.class);
-
-    doThrow(InnReachConnectionException.class).when(contributionJobRunner).runItemDeContribution(CENTRAL_SERVER_ID, instance, item);
-    assertThatThrownBy(() -> service.handleHoldingDelete(holding))
-      .isInstanceOf(InnReachConnectionException.class);
   }
 
   @Test
