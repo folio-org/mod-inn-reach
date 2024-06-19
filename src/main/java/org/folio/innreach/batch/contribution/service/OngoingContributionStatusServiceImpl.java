@@ -18,8 +18,7 @@ public class OngoingContributionStatusServiceImpl implements OngoingContribution
   @Override
   public void updateOngoingContribution(OngoingContributionStatus ongoingContributionStatus,
                                         String errorMsg, ContributionStatus status) {
-    var existingError = ongoingContributionStatus.getError();
-    ongoingContributionStatus.setError(existingError != null ? existingError + " | " + errorMsg : errorMsg);
+    ongoingContributionStatus.setError(errorMsg);
     updateStatusAndSaveOngoingJob(ongoingContributionStatus, status);
   }
 
