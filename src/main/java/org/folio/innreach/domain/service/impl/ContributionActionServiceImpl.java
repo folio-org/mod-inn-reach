@@ -298,7 +298,7 @@ public class ContributionActionServiceImpl implements ContributionActionService 
     items.forEach(item -> {
       var newItemJob = createNewOngoingContributionStatus(ongoingContributionStatus, item);
       newItemJob.setDomainEventType(DomainEventType.DELETED);
-      contributionJobRunner.runItemContribution(centralServerId, instance, item, newItemJob);
+      contributionJobRunner.runItemDeContribution(centralServerId, instance, item, newItemJob);
     });
     ongoingContributionStatusService.updateOngoingContribution(ongoingContributionStatus, PROCESSED);
   }

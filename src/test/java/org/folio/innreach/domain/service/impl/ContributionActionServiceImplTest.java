@@ -2,9 +2,11 @@ package org.folio.innreach.domain.service.impl;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.folio.innreach.domain.entity.ContributionStatus.FAILED;
+import static org.folio.innreach.domain.entity.ContributionStatus.PROCESSED;
 import static org.folio.innreach.util.InnReachConstants.INVALID_CENTRAL_SERVER_ID;
 import static org.folio.innreach.util.InnReachConstants.MARC_ERROR_MSG;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -24,6 +26,7 @@ import org.folio.innreach.batch.contribution.service.OngoingContributionStatusSe
 import org.folio.innreach.domain.entity.OngoingContributionStatus;
 import org.folio.innreach.external.exception.InnReachConnectionException;
 import org.folio.innreach.external.exception.ServiceSuspendedException;
+import org.folio.innreach.util.JsonHelper;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -63,6 +66,8 @@ class ContributionActionServiceImplTest {
   private ContributionActionServiceImpl service;
   @Mock
   private OngoingContributionStatusServiceImpl ongoingContributionStatusService;
+  @Mock
+  private JsonHelper jsonHelper;
 
   @Test
   void handleInstanceCreation() {
@@ -413,5 +418,88 @@ class ContributionActionServiceImplTest {
     verify(ongoingContributionStatusService, never()).updateOngoingContribution(any(), any());
     verify(ongoingContributionStatusService, never()).updateOngoingContribution(any(), any(), any());
     verify(contributionJobRunner).runItemDeContribution(centralServerId, instance, item, ongoingJob);
+  }
+
+  @Test
+  void handleNonMarcHoldingUpdateForOngoingJob() {
+    var instance = createInstance();
+    instance.setSource("Non Marc");
+    var holding = instance.getHoldingsRecords().get(0);
+    instance.getItems().get(0).setHoldingsRecordId(instance.getHoldingsRecords().get(0).getId());
+    var ongoingJob = new OngoingContributionStatus();
+    ongoingJob.setCentralServerId(CENTRAL_SERVER_ID);
+    when(inventoryViewService.getInstance(any())).thenReturn(instance);
+
+    service.handleHoldingUpdate(holding, ongoingJob);
+
+    verify(contributionJobRunner, never()).runItemContribution(any(), any(), any(), any());
+    verify(ongoingContributionStatusService).updateOngoingContribution(ongoingJob, MARC_ERROR_MSG, FAILED);
+  }
+
+  @Test
+  void handleInvalidCentralIdHoldingUpdateForOngoingJob() {
+    var instance = createInstance();
+    var holding = instance.getHoldingsRecords().get(0);
+    instance.getItems().get(0).setHoldingsRecordId(instance.getHoldingsRecords().get(0).getId());
+    var ongoingJob = new OngoingContributionStatus();
+    ongoingJob.setCentralServerId(CENTRAL_SERVER_ID);
+    when(inventoryViewService.getInstance(any())).thenReturn(instance);
+    when(validationService.getItemTypeMappingStatus(any())).thenReturn(INVALID);
+
+    service.handleHoldingUpdate(holding, ongoingJob);
+
+    verify(contributionJobRunner, never()).runItemContribution(any(), any(), any(), any());
+    verify(ongoingContributionStatusService).updateOngoingContribution(ongoingJob, INVALID_CENTRAL_SERVER_ID, FAILED);
+  }
+
+
+  @Test
+  void handleHoldingUpdateForOngoingJob() {
+    var instance = createInstance();
+    var item = instance.getItems().get(0);
+    var holding = instance.getHoldingsRecords().get(0);
+    instance.getItems().get(0).setHoldingsRecordId(instance.getHoldingsRecords().get(0).getId());
+    var ongoingJob = new OngoingContributionStatus();
+    ongoingJob.setCentralServerId(CENTRAL_SERVER_ID);
+    when(inventoryViewService.getInstance(any())).thenReturn(instance);
+    when(validationService.getItemTypeMappingStatus(any())).thenReturn(VALID);
+    when(validationService.getLocationMappingStatus(any())).thenReturn(VALID);
+
+    service.handleHoldingUpdate(holding, ongoingJob);
+
+    verify(contributionJobRunner).runItemContribution(eq(CENTRAL_SERVER_ID), eq(instance), eq(item), any());
+    verify(ongoingContributionStatusService).updateOngoingContribution(ongoingJob, PROCESSED);
+  }
+
+  @Test
+  void handleNonMarcHoldingDeleteForOngoingJob() {
+    var instance = createInstance();
+    instance.setSource("Non Marc");
+    var item = instance.getItems().get(0);
+    var holding = instance.getHoldingsRecords().get(0);
+    instance.getItems().get(0).setHoldingsRecordId(instance.getHoldingsRecords().get(0).getId());
+    var ongoingJob = new OngoingContributionStatus();
+    ongoingJob.setCentralServerId(CENTRAL_SERVER_ID);
+    when(inventoryViewService.getInstance(any())).thenReturn(instance);
+
+    service.handleHoldingDelete(holding, ongoingJob);
+
+    verify(contributionJobRunner, never()).runItemContribution(eq(CENTRAL_SERVER_ID), eq(instance), eq(item), any());
+    verify(ongoingContributionStatusService).updateOngoingContribution(ongoingJob, MARC_ERROR_MSG, FAILED);
+  }
+
+  @Test
+  void handleHoldingDeleteForOngoingJob() {
+    var instance = createInstance();
+    var item = instance.getItems().get(0);
+    var holding = instance.getHoldingsRecords().get(0);
+    instance.getItems().get(0).setHoldingsRecordId(instance.getHoldingsRecords().get(0).getId());
+    var ongoingJob = new OngoingContributionStatus();
+    ongoingJob.setCentralServerId(CENTRAL_SERVER_ID);
+
+    when(inventoryViewService.getInstance(any())).thenReturn(instance);
+    service.handleHoldingDelete(holding, ongoingJob);
+    verify(contributionJobRunner).runItemDeContribution(eq(CENTRAL_SERVER_ID), eq(instance), eq(item), any());
+    verify(ongoingContributionStatusService).updateOngoingContribution(ongoingJob, PROCESSED);
   }
 }
