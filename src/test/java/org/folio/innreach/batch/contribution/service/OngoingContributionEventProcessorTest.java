@@ -74,21 +74,29 @@ class OngoingContributionEventProcessorTest extends BaseControllerTest {
   @MockBean
   InstanceStorageClient instanceStorageClient;
   UUID itemId;
+  UUID holdingId;
   DomainEvent<Item> itemCreate;
   DomainEvent<Item> itemDelete;
   DomainEvent<Item> itemUpdate;
+  DomainEvent<Holding> holdingUpdate;
+  DomainEvent<Holding> holdingDelete;
   Holding holdings;
   Instance instance;
+  Item item;
   InventoryViewClient.InstanceView instanceView;
 
   @BeforeEach
   void runBefore() {
     itemId = UUID.randomUUID();
+    holdingId = UUID.randomUUID();
     itemCreate = createItemDomainEvent(itemId, DomainEventType.CREATED);
     itemDelete = createItemDomainEvent(itemId, DomainEventType.DELETED);
     itemUpdate = createItemDomainEvent(itemId, DomainEventType.UPDATED);
+    holdingUpdate = createHoldingDomainEvent(holdingId, DomainEventType.UPDATED);
+    holdingDelete = createHoldingDomainEvent(holdingId, DomainEventType.DELETED);
     holdings = createHolding();
     instance = createInstance();
+    item = createItem();
     instanceView = new InventoryViewClient.InstanceView();
     instanceView.setInstance(instance);
     when(inventoryViewClient.getInstanceById(holdings.getInstanceId()))
@@ -561,6 +569,249 @@ class OngoingContributionEventProcessorTest extends BaseControllerTest {
     assertEquals(UNKNOWN_TYPE_MESSAGE, ongoingContributionStatus.getError());
   }
 
+  @Test
+  void testHoldingUpdateEventWithNonMarcRecord() {
+    instance.setSource("Non marc");
+    var ongoingContributionStatus = saveOngoingContributionStatus(ongoingContributionStatusMapper
+      .convertHoldingToEntity(holdingUpdate), UUID.randomUUID());
+    when(inventoryViewClient.getInstanceById(holdingUpdate.getData().getNewEntity().getInstanceId()))
+      .thenReturn(ResultList.of(1, List.of(instanceView)));
+    eventProcessor.processOngoingContribution(ongoingContributionStatus);
+    await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() ->
+      verify(ongoingContributionStatusRepository, times(2)).save(any()));
+    assertEquals(FAILED, ongoingContributionStatus.getStatus());
+    assertEquals(MARC_ERROR_MSG, ongoingContributionStatus.getError());
+  }
+
+  @Test
+  void testHoldingUpdateEventWithInvalidCentralServerId() {
+    var ongoingContributionStatus = saveOngoingContributionStatus(ongoingContributionStatusMapper
+      .convertHoldingToEntity(holdingUpdate), UUID.randomUUID());
+    when(inventoryViewClient.getInstanceById(holdingUpdate.getData().getNewEntity().getInstanceId()))
+      .thenReturn(ResultList.of(1, List.of(instanceView)));
+    eventProcessor.processOngoingContribution(ongoingContributionStatus);
+    await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() ->
+      verify(ongoingContributionStatusRepository, times(2)).save(any()));
+    assertEquals(FAILED, ongoingContributionStatus.getStatus());
+    assertEquals(INVALID_CENTRAL_SERVER_ID, ongoingContributionStatus.getError());
+  }
+
+  @Test
+  void testHoldingUpdateEventWithInEligibleItem() {
+    var ongoingContributionStatus = saveOngoingContributionStatus(ongoingContributionStatusMapper
+      .convertHoldingToEntity(holdingUpdate), CENTRAL_SERVER_ID);
+    holdings.setId(holdingId);
+    instanceView.setHoldingsRecords(List.of(holdings));
+    item.setHoldingsRecordId(holdings.getId());
+    instanceView.setItems(List.of(item, createItem()));
+    when(inventoryViewClient.getInstanceById(holdingUpdate.getData().getNewEntity().getInstanceId()))
+      .thenReturn(ResultList.of(1, List.of(instanceView)));
+    when(validationService.isEligibleForContribution(any(UUID.class), any(Item.class)))
+      .thenReturn(false);
+    when(recordContributionService.isContributed(any(UUID.class), any(Instance.class), any(Item.class)))
+      .thenReturn(false);
+    eventProcessor.processOngoingContribution(ongoingContributionStatus);
+    await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() ->
+      verify(ongoingContributionStatusRepository, times(3)).save(any()));
+    assertEquals(PROCESSED, ongoingContributionStatus.getStatus());
+    assertNull(ongoingContributionStatus.getError());
+  }
+
+  @Test
+  void testHoldingUpdateEventWithInEligibleItemButAlreadyContributed() throws SocketTimeoutException {
+    var ongoingContributionStatus = saveOngoingContributionStatus(ongoingContributionStatusMapper
+      .convertHoldingToEntity(holdingUpdate), CENTRAL_SERVER_ID);
+    holdings.setId(holdingId);
+    instanceView.setHoldingsRecords(List.of(holdings));
+    item.setHoldingsRecordId(holdings.getId());
+    instanceView.setItems(List.of(item, createItem()));
+    when(inventoryViewClient.getInstanceById(holdingUpdate.getData().getNewEntity().getInstanceId()))
+      .thenReturn(ResultList.of(1, List.of(instanceView)));
+    when(validationService.isEligibleForContribution(any(UUID.class), any(Item.class)))
+      .thenReturn(false);
+    when(recordContributionService.isContributed(any(UUID.class), any(Instance.class), any(Item.class)))
+      .thenReturn(true);
+    doNothing().when(recordContributionService).deContributeInstance(any(), any());
+    eventProcessor.processOngoingContribution(ongoingContributionStatus);
+    await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() ->
+      verify(ongoingContributionStatusRepository, times(3)).save(any()));
+    verify(recordContributionService).deContributeInstance(any(), any());
+    verify(recordContributionService, never()).contributeInstance(any(), any());
+    verify(recordContributionService, never()).contributeItems(any(), any(), any());
+    verify(recordContributionService, never()).deContributeItem(any(), any());
+    assertEquals(PROCESSED, ongoingContributionStatus.getStatus());
+    assertNull(ongoingContributionStatus.getError());
+  }
+
+  @Test
+  void testHoldingUpdateEventWithEligibleInstanceAndItem() throws SocketTimeoutException {
+    var ongoingContributionStatus = saveOngoingContributionStatus(ongoingContributionStatusMapper
+      .convertHoldingToEntity(holdingUpdate), CENTRAL_SERVER_ID);
+    holdings.setId(holdingId);
+    instanceView.setHoldingsRecords(List.of(holdings));
+    var item1 = createItem();
+    item1.setHoldingsRecordId(holdings.getId());
+    item.setHoldingsRecordId(holdings.getId());
+    instanceView.setItems(List.of(item, item1));
+    when(inventoryViewClient.getInstanceById(holdingUpdate.getData().getNewEntity().getInstanceId()))
+      .thenReturn(ResultList.of(1, List.of(instanceView)));
+    when(validationService.isEligibleForContribution(any(UUID.class), any(Item.class)))
+      .thenReturn(true);
+    when(validationService.isEligibleForContribution(any(UUID.class), any(Instance.class)))
+      .thenReturn(true);
+    when(recordContributionService.isContributed(any(UUID.class), any(Instance.class), any(Item.class)))
+      .thenReturn(true);
+    doNothing().when(recordContributionService).contributeInstance(any(), any());
+    when(recordContributionService.contributeItems(any(), any(), any())).thenReturn(1);
+    eventProcessor.processOngoingContribution(ongoingContributionStatus);
+    /*
+     In this test, there are 2 items under a holding so item contribution is called twice and for every
+     method call there will be an entry added in DB to track the status of the item.
+     Once the items are processed, the status of the holding is also updated.
+     */
+    await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() ->
+      verify(ongoingContributionStatusRepository, times(4)).save(any()));
+    verify(recordContributionService, never()).deContributeInstance(any(), any());
+    verify(recordContributionService, times(2)).contributeInstance(any(), any());
+    verify(recordContributionService, times(2)).contributeItems(any(), any(), any());
+    verify(recordContributionService, never()).deContributeItem(any(), any());
+    assertEquals(PROCESSED, ongoingContributionStatus.getStatus());
+    assertNull(ongoingContributionStatus.getError());
+  }
+
+  @Test
+  void testHoldingUpdateEventWithEligibleInstanceAndInEligibleItem() throws SocketTimeoutException {
+    var ongoingContributionStatus = saveOngoingContributionStatus(ongoingContributionStatusMapper
+      .convertHoldingToEntity(holdingUpdate), CENTRAL_SERVER_ID);
+    holdings.setId(holdingId);
+    instanceView.setHoldingsRecords(List.of(holdings));
+    item.setHoldingsRecordId(holdings.getId());
+    instanceView.setItems(List.of(item, createItem()));
+    when(inventoryViewClient.getInstanceById(holdingUpdate.getData().getNewEntity().getInstanceId()))
+      .thenReturn(ResultList.of(1, List.of(instanceView)));
+    when(validationService.isEligibleForContribution(any(UUID.class), any(Item.class)))
+      .thenReturn(false);
+    when(validationService.isEligibleForContribution(any(UUID.class), any(Instance.class)))
+      .thenReturn(true);
+    when(recordContributionService.isContributed(any(UUID.class), any(Instance.class), any(Item.class)))
+      .thenReturn(true);
+    doNothing().when(recordContributionService).contributeInstance(any(), any());
+    doNothing().when(recordContributionService).deContributeItem(any(), any());
+    eventProcessor.processOngoingContribution(ongoingContributionStatus);
+    await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() ->
+      verify(ongoingContributionStatusRepository, times(3)).save(any()));
+    verify(recordContributionService, never()).deContributeInstance(any(), any());
+    verify(recordContributionService).contributeInstance(any(), any());
+    verify(recordContributionService, never()).contributeItems(any(), any(), any());
+    verify(recordContributionService).deContributeItem(any(), any());
+    assertEquals(PROCESSED, ongoingContributionStatus.getStatus());
+    assertNull(ongoingContributionStatus.getError());
+  }
+
+  @Test
+  void testHoldingDeletionEventWithNonMarcRecord() {
+    instance.setSource("Non marc");
+    var ongoingContributionStatus = saveOngoingContributionStatus(ongoingContributionStatusMapper
+      .convertHoldingToEntity(holdingDelete), UUID.randomUUID());
+    when(inventoryViewClient.getInstanceById(holdingDelete.getData().getOldEntity().getInstanceId()))
+      .thenReturn(ResultList.of(1, List.of(instanceView)));
+    eventProcessor.processOngoingContribution(ongoingContributionStatus);
+    await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() ->
+      verify(ongoingContributionStatusRepository, times(2)).save(any()));
+    assertEquals(FAILED, ongoingContributionStatus.getStatus());
+    assertEquals(MARC_ERROR_MSG, ongoingContributionStatus.getError());
+  }
+
+  @Test
+  void testHoldingDeletionEventWithNonContributedItem() {
+    var ongoingContributionStatus = saveOngoingContributionStatus(ongoingContributionStatusMapper
+      .convertHoldingToEntity(holdingDelete), UUID.randomUUID());
+    holdings.setId(holdingId);
+    instanceView.setHoldingsRecords(List.of(holdings));
+    item.setHoldingsRecordId(holdings.getId());
+    instanceView.setItems(List.of(item, createItem()));
+    when(inventoryViewClient.getInstanceById(holdingDelete.getData().getOldEntity().getInstanceId()))
+      .thenReturn(ResultList.of(1, List.of(instanceView)));
+    when(recordContributionService.isContributed(any(), any(), any()))
+      .thenReturn(false);
+    eventProcessor.processOngoingContribution(ongoingContributionStatus);
+    await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() ->
+      verify(ongoingContributionStatusRepository, times(3)).save(any()));
+    assertEquals(PROCESSED, ongoingContributionStatus.getStatus());
+    assertNull(ongoingContributionStatus.getError());
+  }
+
+  @Test
+  void testHoldingDeletionEventWithContributedItemAndInvalidInstance() throws SocketTimeoutException {
+    var ongoingContributionStatus = saveOngoingContributionStatus(ongoingContributionStatusMapper
+      .convertHoldingToEntity(holdingDelete), UUID.randomUUID());
+    holdings.setId(holdingId);
+    instanceView.setHoldingsRecords(List.of(holdings));
+    item.setHoldingsRecordId(holdings.getId());
+    instanceView.setItems(List.of(item, createItem()));
+    when(inventoryViewClient.getInstanceById(holdingDelete.getData().getOldEntity().getInstanceId()))
+      .thenReturn(ResultList.of(1, List.of(instanceView)));
+    when(recordContributionService.isContributed(any(), any(), any()))
+      .thenReturn(true);
+    when(validationService.isEligibleForContribution(any(), any(Instance.class)))
+      .thenReturn(false);
+    eventProcessor.processOngoingContribution(ongoingContributionStatus);
+    await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() ->
+      verify(ongoingContributionStatusRepository, times(3)).save(any()));
+    verify(recordContributionService, never()).contributeInstance(any(), any());
+    verify(recordContributionService, never()).contributeItems(any(), any(), any());
+    verify(recordContributionService, never()).deContributeItem(any(), any());
+    verify(recordContributionService).deContributeInstance(any(), any());
+    assertEquals(PROCESSED, ongoingContributionStatus.getStatus());
+    assertNull(ongoingContributionStatus.getError());
+  }
+
+  @Test
+  void testHoldingDeletionEventWithContributedItemAndInstance() throws SocketTimeoutException {
+    var ongoingContributionStatus = saveOngoingContributionStatus(ongoingContributionStatusMapper
+      .convertHoldingToEntity(holdingDelete), UUID.randomUUID());
+    holdings.setId(holdingId);
+    var item1 = createItem();
+    instanceView.setHoldingsRecords(List.of(holdings));
+    item.setHoldingsRecordId(holdings.getId());
+    item1.setHoldingsRecordId(holdings.getId());
+    instanceView.setItems(List.of(item, item1));
+    when(inventoryViewClient.getInstanceById(holdingDelete.getData().getOldEntity().getInstanceId()))
+      .thenReturn(ResultList.of(1, List.of(instanceView)));
+    when(recordContributionService.isContributed(any(), any(), any()))
+      .thenReturn(true);
+    when(validationService.isEligibleForContribution(any(), any(Instance.class)))
+      .thenReturn(true);
+    eventProcessor.processOngoingContribution(ongoingContributionStatus);
+    /*
+     In this test, there are 2 items under a holding so item contribution is called twice and for every
+     method call there will be an entry added in DB to track the status of the item.
+     Once the items are processed, the status of the holding is also updated.
+     */
+    await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() ->
+      verify(ongoingContributionStatusRepository, times(4)).save(any()));
+    verify(recordContributionService, never()).deContributeInstance(any(), any());
+    verify(recordContributionService, times(2)).contributeInstance(any(), any());
+    verify(recordContributionService, never()).contributeItems(any(), any(), any());
+    verify(recordContributionService, times(2)).deContributeItem(any(), any());
+    verify(recordContributionService, never()).deContributeInstance(any(), any());
+    assertEquals(PROCESSED, ongoingContributionStatus.getStatus());
+    assertNull(ongoingContributionStatus.getError());
+  }
+
+  @Test
+  void testHoldingEventWithUnknownEventType() {
+    holdingId = UUID.randomUUID();
+    holdingUpdate = createHoldingDomainEvent(holdingId, DomainEventType.CREATED);
+    var ongoingContributionStatus = saveOngoingContributionStatus(ongoingContributionStatusMapper
+      .convertHoldingToEntity(holdingUpdate), UUID.randomUUID());
+    eventProcessor.processOngoingContribution(ongoingContributionStatus);
+    await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() ->
+      verify(ongoingContributionStatusRepository, times(2)).save(any()));
+    assertEquals(FAILED, ongoingContributionStatus.getStatus());
+    assertEquals(UNKNOWN_TYPE_MESSAGE, ongoingContributionStatus.getError());
+  }
+
   private DomainEvent<Item> createItemDomainEvent(UUID itemId, DomainEventType eventType) {
     var oldItem = createItem().id(itemId);
     var newItem = createItem().id(itemId);
@@ -570,6 +821,18 @@ class OngoingContributionEventProcessorTest extends BaseControllerTest {
       .timestamp(System.currentTimeMillis())
       .type(eventType)
       .data(new EntityChangedData<>(newItem, oldItem))
+      .build();
+  }
+
+  private DomainEvent<Holding> createHoldingDomainEvent(UUID holdingId, DomainEventType eventType) {
+    var oldHolding = createHolding().id(holdingId);
+    var newHolding = createHolding().id(holdingId);
+
+    return DomainEvent.<org.folio.innreach.dto.Holding>builder()
+      .tenant(TENANT)
+      .timestamp(System.currentTimeMillis())
+      .type(eventType)
+      .data(new EntityChangedData<>(oldHolding, newHolding))
       .build();
   }
 

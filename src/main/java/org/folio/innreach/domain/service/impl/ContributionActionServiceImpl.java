@@ -229,8 +229,6 @@ public class ContributionActionServiceImpl implements ContributionActionService 
       ongoingContributionStatusService.updateOngoingContribution(ongoingContributionStatus, MARC_ERROR_MSG, FAILED);
       return;
     }
-    log.info("holdingsUpdate:: holdings from instance {}", instance.getHoldingsRecords());
-    log.info("holdingsUpdate:: item from instance {}", instance.getItems());
     // Filter out the list of item associated with the updated holdings
     var items = instance.getItems()
       .stream()
