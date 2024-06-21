@@ -3,6 +3,7 @@ package org.folio.innreach.batch.contribution.service;
 import org.folio.innreach.batch.contribution.listener.ContributionExceptionListener;
 import org.folio.innreach.controller.base.BaseControllerTest;
 import org.folio.innreach.domain.entity.Contribution;
+import org.folio.innreach.domain.entity.ContributionStatus;
 import org.folio.innreach.domain.entity.JobExecutionStatus;
 import org.folio.innreach.domain.service.ContributionValidationService;
 import org.folio.innreach.domain.service.InventoryViewService;
@@ -92,7 +93,7 @@ class InitialContributionEventProcessorTest extends BaseControllerTest {
     eventProcessor.processInitialContributionEvents(job);
     await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() -> verify(jobExecutionStatusRepository, times(2)).save(job));
     var jobExecutionStatus = jobExecutionStatusRepository.findById(job.getId()).get();
-    assertEquals(JobExecutionStatus.Status.FAILED, jobExecutionStatus.getStatus());
+    assertEquals(ContributionStatus.FAILED, jobExecutionStatus.getStatus());
     assertFalse(jobExecutionStatus.isInstanceContributed());
   }
 
@@ -107,7 +108,7 @@ class InitialContributionEventProcessorTest extends BaseControllerTest {
 
     await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() -> verify(jobExecutionStatusRepository, times(2)).save(job));
     var jobExecutionStatus = jobExecutionStatusRepository.findById(job.getId()).get();
-    assertEquals(JobExecutionStatus.Status.FAILED, jobExecutionStatus.getStatus());
+    assertEquals(ContributionStatus.FAILED, jobExecutionStatus.getStatus());
     assertFalse(jobExecutionStatus.isInstanceContributed());
   }
 
@@ -125,7 +126,7 @@ class InitialContributionEventProcessorTest extends BaseControllerTest {
 
     await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() -> verify(jobExecutionStatusRepository, times(2)).save(job));
     var jobExecutionStatus = jobExecutionStatusRepository.findById(job.getId()).get();
-    assertEquals(JobExecutionStatus.Status.FAILED, jobExecutionStatus.getStatus());
+    assertEquals(ContributionStatus.FAILED, jobExecutionStatus.getStatus());
     assertFalse(jobExecutionStatus.isInstanceContributed());
   }
 
@@ -147,7 +148,7 @@ class InitialContributionEventProcessorTest extends BaseControllerTest {
 
     await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() -> verify(jobExecutionStatusRepository, times(2)).save(job));
     var jobExecutionStatus = jobExecutionStatusRepository.findById(job.getId()).get();
-    assertEquals(JobExecutionStatus.Status.READY, jobExecutionStatus.getStatus());
+    assertEquals(ContributionStatus.READY, jobExecutionStatus.getStatus());
     assertTrue(jobExecutionStatus.isInstanceContributed());
   }
 
@@ -168,7 +169,7 @@ class InitialContributionEventProcessorTest extends BaseControllerTest {
 
     await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() -> verify(jobExecutionStatusRepository, times(2)).save(job));
     var jobExecutionStatus = jobExecutionStatusRepository.findById(job.getId());
-    assertEquals(JobExecutionStatus.Status.PROCESSED, jobExecutionStatus.get().getStatus());
+    assertEquals(ContributionStatus.PROCESSED, jobExecutionStatus.get().getStatus());
   }
 
   @Test
@@ -186,7 +187,7 @@ class InitialContributionEventProcessorTest extends BaseControllerTest {
 
     await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() -> verify(jobExecutionStatusRepository, times(2)).save(job));
     var jobExecutionStatus = jobExecutionStatusRepository.findById(job.getId()).get();
-    assertEquals(JobExecutionStatus.Status.RETRY, jobExecutionStatus.getStatus());
+    assertEquals(ContributionStatus.RETRY, jobExecutionStatus.getStatus());
     assertFalse(jobExecutionStatus.isInstanceContributed());
     assertEquals(1, jobExecutionStatus.getRetryAttempts());
 
@@ -195,7 +196,7 @@ class InitialContributionEventProcessorTest extends BaseControllerTest {
 
     await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() -> verify(jobExecutionStatusRepository, times(3)).save(job));
     jobExecutionStatus = jobExecutionStatusRepository.findById(job.getId()).get();
-    assertEquals(JobExecutionStatus.Status.RETRY, jobExecutionStatus.getStatus());
+    assertEquals(ContributionStatus.RETRY, jobExecutionStatus.getStatus());
     assertFalse(jobExecutionStatus.isInstanceContributed());
     assertEquals(2, jobExecutionStatus.getRetryAttempts());
   }
@@ -217,7 +218,7 @@ class InitialContributionEventProcessorTest extends BaseControllerTest {
 
     await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() -> verify(jobExecutionStatusRepository, times(2)).save(job));
     var jobExecutionStatus = jobExecutionStatusRepository.findById(job.getId()).get();
-    assertEquals(JobExecutionStatus.Status.RETRY, jobExecutionStatus.getStatus());
+    assertEquals(ContributionStatus.RETRY, jobExecutionStatus.getStatus());
     assertTrue(jobExecutionStatus.isInstanceContributed());
     assertEquals(1, jobExecutionStatus.getRetryAttempts());
 
@@ -226,7 +227,7 @@ class InitialContributionEventProcessorTest extends BaseControllerTest {
 
     await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() -> verify(jobExecutionStatusRepository, times(3)).save(job));
     jobExecutionStatus = jobExecutionStatusRepository.findById(job.getId()).get();
-    assertEquals(JobExecutionStatus.Status.RETRY, jobExecutionStatus.getStatus());
+    assertEquals(ContributionStatus.RETRY, jobExecutionStatus.getStatus());
     assertTrue(jobExecutionStatus.isInstanceContributed());
     assertEquals(2, jobExecutionStatus.getRetryAttempts());
   }
@@ -248,7 +249,7 @@ class InitialContributionEventProcessorTest extends BaseControllerTest {
       verify(jobExecutionStatusRepository, times(2)).save(job1);
     });
     var jobExecutionStatus = jobExecutionStatusRepository.findById(job1.getId()).get();
-    assertEquals(JobExecutionStatus.Status.FAILED, jobExecutionStatus.getStatus());
+    assertEquals(ContributionStatus.FAILED, jobExecutionStatus.getStatus());
     assertEquals(11, jobExecutionStatus.getRetryAttempts());
     assertEquals(1, contributionErrorRepository.findAll().stream().filter(err -> err.getRecordId().equals(instanceId1))
       .count());
@@ -269,7 +270,7 @@ class InitialContributionEventProcessorTest extends BaseControllerTest {
       verify(itemExceptionListener, times(1)).logError(any(), any(), any());
     });
     jobExecutionStatus = jobExecutionStatusRepository.findById(job2.getId()).get();
-    assertEquals(JobExecutionStatus.Status.FAILED, jobExecutionStatus.getStatus());
+    assertEquals(ContributionStatus.FAILED, jobExecutionStatus.getStatus());
     assertEquals(11, jobExecutionStatus.getRetryAttempts());
     assertEquals(1, contributionErrorRepository.findAll().stream().filter(err -> err.getRecordId().equals(instanceId2))
       .count());
@@ -293,7 +294,7 @@ class InitialContributionEventProcessorTest extends BaseControllerTest {
 
     await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() -> verify(jobExecutionStatusRepository, times(2)).save(job));
     var jobExecutionStatus = jobExecutionStatusRepository.findById(job.getId());
-    assertEquals(JobExecutionStatus.Status.READY, jobExecutionStatus.get().getStatus());
+    assertEquals(ContributionStatus.READY, jobExecutionStatus.get().getStatus());
     assertTrue(jobExecutionStatus.get().isInstanceContributed());
 
     when(validationService.isEligibleForContribution(CENTRAL_SERVER_ID, instance.getItems().get(0))).thenReturn(true);
@@ -302,7 +303,7 @@ class InitialContributionEventProcessorTest extends BaseControllerTest {
 
     await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() -> verify(jobExecutionStatusRepository, times(3)).save(job));
     jobExecutionStatus = jobExecutionStatusRepository.findById(job.getId());
-    assertEquals(JobExecutionStatus.Status.PROCESSED, jobExecutionStatus.get().getStatus());
+    assertEquals(ContributionStatus.PROCESSED, jobExecutionStatus.get().getStatus());
     assertTrue(jobExecutionStatus.get().isInstanceContributed());
   }
 
@@ -325,7 +326,7 @@ class InitialContributionEventProcessorTest extends BaseControllerTest {
 
     await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() -> verify(jobExecutionStatusRepository, times(2)).save(job));
     var jobExecutionStatus = jobExecutionStatusRepository.findById(job.getId());
-    assertEquals(JobExecutionStatus.Status.DE_CONTRIBUTED, jobExecutionStatus.get().getStatus());
+    assertEquals(ContributionStatus.DE_CONTRIBUTED, jobExecutionStatus.get().getStatus());
   }
 
   @Test
@@ -346,7 +347,7 @@ class InitialContributionEventProcessorTest extends BaseControllerTest {
 
     await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() -> verify(jobExecutionStatusRepository, times(2)).save(job));
     var jobExecutionStatus = jobExecutionStatusRepository.findById(job.getId());
-    assertEquals(JobExecutionStatus.Status.RETRY, jobExecutionStatus.get().getStatus());
+    assertEquals(ContributionStatus.RETRY, jobExecutionStatus.get().getStatus());
   }
 
 
@@ -384,7 +385,7 @@ class InitialContributionEventProcessorTest extends BaseControllerTest {
   private JobExecutionStatus createMockJobExecution(UUID jobId, UUID instanceId, boolean isInstanceContributed) {
     JobExecutionStatus jobExecutionStatus = new JobExecutionStatus();
     jobExecutionStatus.setJobId(jobId);
-    jobExecutionStatus.setStatus(JobExecutionStatus.Status.IN_PROGRESS);
+    jobExecutionStatus.setStatus(ContributionStatus.IN_PROGRESS);
     jobExecutionStatus.setType("ITERATE");
     jobExecutionStatus.setTenant("test");
     jobExecutionStatus.setInstanceId(instanceId);

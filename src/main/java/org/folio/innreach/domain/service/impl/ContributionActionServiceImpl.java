@@ -1,7 +1,10 @@
 package org.folio.innreach.domain.service.impl;
 
+import static org.folio.innreach.domain.entity.ContributionStatus.FAILED;
 import static org.folio.innreach.domain.service.impl.MARCRecordTransformationServiceImpl.isMARCRecord;
 import static org.folio.innreach.dto.MappingValidationStatusDTO.VALID;
+import static org.folio.innreach.util.InnReachConstants.INVALID_CENTRAL_SERVER_ID;
+import static org.folio.innreach.util.InnReachConstants.MARC_ERROR_MSG;
 
 import java.util.List;
 import java.util.UUID;
@@ -10,6 +13,8 @@ import java.util.function.Consumer;
 import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.folio.innreach.batch.contribution.service.OngoingContributionStatusService;
+import org.folio.innreach.domain.entity.OngoingContributionStatus;
 import org.folio.innreach.external.exception.InnReachConnectionException;
 import org.folio.innreach.external.exception.ServiceSuspendedException;
 import org.folio.innreach.external.exception.SocketTimeOutExceptionWrapper;
@@ -43,6 +48,7 @@ public class ContributionActionServiceImpl implements ContributionActionService 
   private final InstanceStorageClient instanceStorageClient;
   private final HoldingsService holdingsService;
   private final ContributionValidationService validationService;
+  private final OngoingContributionStatusService ongoingContributionStatusService;
 
 
   @Override
@@ -95,45 +101,58 @@ public class ContributionActionServiceImpl implements ContributionActionService 
     handlePerCentralServer(newItem.getId(), csId -> contributionJobRunner.runItemContribution(csId, instance, newItem));
   }
 
+  @Override
+  public void handleItemCreation(Item newItem, OngoingContributionStatus ongoingContributionStatus) {
+    log.info("Handling item creation {}", newItem.getId());
+
+    var instance = fetchInstanceWithItems(newItem);
+    if (!isMARCRecord(instance)) {
+      ongoingContributionStatusService.updateOngoingContribution(ongoingContributionStatus, MARC_ERROR_MSG, FAILED);
+      return;
+    }
+    var centralServerId = ongoingContributionStatus.getCentralServerId();
+    if (checkCentralServerValid(centralServerId)) {
+      contributionJobRunner.runItemContribution(centralServerId, instance, newItem, ongoingContributionStatus);
+    } else {
+      ongoingContributionStatusService.updateOngoingContribution(ongoingContributionStatus, INVALID_CENTRAL_SERVER_ID, FAILED);
+    }
+  }
 
   @Override
-  public void handleItemUpdate(Item newItem, Item oldItem) {
+  public void handleItemUpdate(Item newItem, Item oldItem, OngoingContributionStatus ongoingContributionStatus) {
     log.info("Handling item update {}", newItem.getId());
 
     var instance = fetchInstanceWithItems(newItem);
     if (!isMARCRecord(instance)) {
+      ongoingContributionStatusService.updateOngoingContribution(ongoingContributionStatus, MARC_ERROR_MSG, FAILED);
       return;
     }
 
     var oldInstance = fetchOldInstance(newItem, oldItem, instance);
     boolean itemMoved = !oldInstance.getId().equals(instance.getId());
-
-    handlePerCentralServer(newItem.getId(), csId -> {
+    var centralServerId = ongoingContributionStatus.getCentralServerId();
+    if(checkCentralServerValid(centralServerId)) {
       if (itemMoved) {
-        contributionJobRunner.runItemMove(csId, instance, oldInstance, newItem);
+        contributionJobRunner.runItemMove(centralServerId, instance, oldInstance, newItem, ongoingContributionStatus);
       } else {
-        contributionJobRunner.runItemContribution(csId, instance, newItem);
+        contributionJobRunner.runItemContribution(centralServerId, instance, newItem, ongoingContributionStatus);
       }
-    });
+    } else {
+      ongoingContributionStatusService.updateOngoingContribution(ongoingContributionStatus, INVALID_CENTRAL_SERVER_ID, FAILED);
+    }
   }
 
 
   @Override
-  public void handleItemDelete(Item deletedItem) {
+  public void handleItemDelete(Item deletedItem, OngoingContributionStatus ongoingContributionStatus) {
     log.info("Handling item delete {}", deletedItem.getId());
 
     var instance = fetchInstanceWithItems(deletedItem);
     if (!isMARCRecord(instance)) {
+      ongoingContributionStatusService.updateOngoingContribution(ongoingContributionStatus, MARC_ERROR_MSG, FAILED);
       return;
     }
-    try {
-      for (var csId : getCentralServerIds()) {
-        contributionJobRunner.runItemDeContribution(csId, instance, deletedItem);
-      }
-    } catch (ServiceSuspendedException | FeignException | InnReachConnectionException e) {
-      log.info("exception thrown from handleItemDelete", e);
-      throw e;
-    }
+    contributionJobRunner.runItemDeContribution(ongoingContributionStatus.getCentralServerId(), instance, deletedItem, ongoingContributionStatus);
   }
 
 
@@ -239,6 +258,12 @@ public class ContributionActionServiceImpl implements ContributionActionService 
         log.error("Unable to handle record {} for central server {}", recordId, csId, e);
       }
     }
+  }
+
+  private boolean checkCentralServerValid(UUID centralServerId) {
+    return centralServerId != null
+      && validationService.getItemTypeMappingStatus(centralServerId) == VALID
+      && validationService.getLocationMappingStatus(centralServerId) == VALID;
   }
 
   private Instance fetchOldInstance(Item newItem, Item oldItem, Instance newInstance) {
