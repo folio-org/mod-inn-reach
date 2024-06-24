@@ -29,6 +29,15 @@ public abstract class OngoingContributionStatusMapper {
   @Mapping(target = "status", constant = "READY")
   public abstract OngoingContributionStatus convertItemToEntity(DomainEvent<org.folio.innreach.dto.Item> domainEvent);
 
+  public abstract List<OngoingContributionStatus> convertHoldingListToEntities(List<DomainEvent<org.folio.innreach.dto.Holding>> domainEvent);
+
+  @Mapping(target = "newEntity", expression = "java(setNewEntity(domainEvent))")
+  @Mapping(target = "oldEntity", expression = "java(setOldEntity(domainEvent))")
+  @Mapping(target = "domainEventName", constant = "HOLDINGS")
+  @Mapping(target = "domainEventType", source = "domainEvent.type")
+  @Mapping(target = "status", constant = "READY")
+  public abstract OngoingContributionStatus convertHoldingToEntity(DomainEvent<org.folio.innreach.dto.Holding> domainEvent);
+
   public  <T> String setNewEntity(DomainEvent<T> domainEvent) {
     return jsonHelper.toJson(domainEvent.getData().getNewEntity());
   }
