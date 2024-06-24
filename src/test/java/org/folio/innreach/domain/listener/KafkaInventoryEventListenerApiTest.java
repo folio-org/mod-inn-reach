@@ -87,24 +87,22 @@ class KafkaInventoryEventListenerApiTest extends BaseKafkaApiTest {
   }
 
   @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql"
+  })
   void shouldReceiveInventoryHoldingEvent() {
-    var event = createHoldingDomainEvent(DomainEventType.DELETED);
+    long initialSize = ongoingContributionRepository.count();
+    var event1 = createHoldingDomainEvent(DomainEventType.DELETED);
+    var event2 = createHoldingDomainEvent(DomainEventType.CREATED);
+    var event3 = createHoldingDomainEvent(DomainEventType.UPDATED);
 
-    kafkaTemplate.send(new ProducerRecord(INVENTORY_HOLDING_TOPIC, RECORD_ID.toString(), event));
+    kafkaTemplate.send(new ProducerRecord(INVENTORY_HOLDING_TOPIC, RECORD_ID.toString(), event1));
+    kafkaTemplate.send(new ProducerRecord(INVENTORY_HOLDING_TOPIC, RECORD_ID.toString(), event2));
+    kafkaTemplate.send(new ProducerRecord(INVENTORY_HOLDING_TOPIC, RECORD_ID.toString(), event3));
 
-    ArgumentCaptor<List<ConsumerRecord<String, DomainEvent<Holding>>>> eventsCaptor = ArgumentCaptor.forClass(List.class);
-
+    // As there is 1 central server, there will be an entry against one centralServerId
     await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() ->
-      verify(actionService).handleHoldingDelete(any()));
-
-    verify(listener).handleHoldingEvents(eventsCaptor.capture());
-
-    var records = eventsCaptor.getValue();
-    assertEquals(1, records.size());
-
-    var record1 = records.get(0);
-    assertEquals(RECORD_ID.toString(), record1.key());
-    assertEquals(event, record1.value());
+      assertEquals(initialSize+3, ongoingContributionRepository.count()));
   }
 
   @Test

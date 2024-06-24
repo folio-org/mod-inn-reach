@@ -15,7 +15,6 @@ public interface ContributionActionService {
 
   void handleInstanceDelete(Instance deletedInstance);
 
-  void handleItemCreation(Item newItem);
   void handleItemCreation(Item newItem, OngoingContributionStatus ongoingContributionStatus);
 
   void handleItemUpdate(Item newItem, Item oldItem, OngoingContributionStatus ongoingContributionStatus);
@@ -28,7 +27,7 @@ public interface ContributionActionService {
 
   void handleRequestChange(RequestDTO request);
 
-  void handleHoldingUpdate(Holding holding);
+  void handleHoldingUpdate(Holding holding, OngoingContributionStatus ongoingContributionStatus);
 
-  void handleHoldingDelete(Holding holding);
+  void handleHoldingDelete(Holding holding, OngoingContributionStatus ongoingContributionStatus);
 }

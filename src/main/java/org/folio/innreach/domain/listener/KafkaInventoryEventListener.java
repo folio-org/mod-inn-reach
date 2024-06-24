@@ -93,23 +93,7 @@ public class KafkaInventoryEventListener {
     concurrency = "${kafka.listener.holding.concurrency}")
   public void handleHoldingEvents(List<ConsumerRecord<String, DomainEvent<Holding>>> consumerRecords) {
     log.info("Handling inventory holding events from Kafka [number of events: {}]", consumerRecords.size());
-
-    var events = getEvents(consumerRecords);
-    logEvents(events);
-    eventProcessor.process(events, event -> {
-      var oldEntity = event.getData().getOldEntity();
-      var newEntity = event.getData().getNewEntity();
-      switch (event.getType()) {
-        case UPDATED:
-          contributionActionService.handleHoldingUpdate(newEntity);
-          break;
-        case DELETED:
-          contributionActionService.handleHoldingDelete(oldEntity);
-          break;
-        default:
-          log.warn(UNKNOWN_TYPE_MESSAGE);
-      }
-    });
+    processEvents(ongoingContributionStatusMapper::convertHoldingListToEntities, consumerRecords);
   }
 
   private <T> void processEvents(Function<List<DomainEvent<T>>, List<OngoingContributionStatus>> convertDomainEventToEntities,
