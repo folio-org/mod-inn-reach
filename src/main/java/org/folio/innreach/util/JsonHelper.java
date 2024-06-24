@@ -30,6 +30,8 @@ public class JsonHelper {
 
 
   public String toJson(Object o) {
+    if (o == null)
+      return null;
     String jsonString;
     try {
       jsonString = mapper.writeValueAsString(o);
@@ -41,6 +43,8 @@ public class JsonHelper {
   }
 
   public <T> T fromJson(String jsonString, Class<T> valueType) {
+    if (jsonString == null)
+      return null;
     T obj;
     try {
       obj = mapper.readValue(jsonString, valueType);
