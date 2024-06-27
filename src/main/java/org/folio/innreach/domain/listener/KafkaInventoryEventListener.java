@@ -4,7 +4,6 @@ import static org.folio.innreach.config.KafkaListenerConfiguration.KAFKA_CONTAIN
 import static org.folio.innreach.domain.event.DomainEventType.CREATED;
 import static org.folio.innreach.domain.event.DomainEventType.DELETED;
 import static org.folio.innreach.domain.event.DomainEventType.UPDATED;
-import static org.folio.innreach.util.InnReachConstants.UNKNOWN_TYPE_MESSAGE;
 
 import java.util.List;
 import java.util.Objects;
@@ -65,24 +64,7 @@ public class KafkaInventoryEventListener {
   public void handleInstanceEvents(List<ConsumerRecord<String, DomainEvent<Instance>>> consumerRecords) {
     log.info("Handling inventory instance events from Kafka [number of events: {}]", consumerRecords.size());
     var events = getEvents(consumerRecords);
-    logEvents(events);
-    eventProcessor.process(events, event -> {
-      var oldEntity = event.getData().getOldEntity();
-      var newEntity = event.getData().getNewEntity();
-        switch (event.getType()) {
-          case CREATED:
-            contributionActionService.handleInstanceCreation(newEntity);
-            break;
-          case UPDATED:
-            contributionActionService.handleInstanceUpdate(newEntity);
-            break;
-          case DELETED:
-            contributionActionService.handleInstanceDelete(oldEntity);
-            break;
-          default:
-            log.warn(UNKNOWN_TYPE_MESSAGE);
-        }
-    });
+    processEvents(ongoingContributionStatusMapper::convertInstanceListToEntities, consumerRecords);
   }
 
   @KafkaListener(

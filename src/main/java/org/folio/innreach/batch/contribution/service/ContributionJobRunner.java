@@ -207,6 +207,35 @@ public class ContributionJobRunner {
     });
   }
 
+  public void runInstanceContribution(UUID centralServerId, Instance instance, OngoingContributionStatus ongoingContributionStatus) {
+    try {
+      log.info("runInstanceContribution:: validating instance {} for contribution to central server {}", instance.getId(), centralServerId);
+      boolean eligibleInstance = isEligibleForContribution(centralServerId, instance);
+      boolean contributedInstance = isContributed(centralServerId, instance);
+      log.info("runInstanceContribution:: eligibleInstance: {}, contributedInstance: {}", eligibleInstance, contributedInstance);
+      if (!eligibleInstance && !contributedInstance) {
+        log.info("runInstanceContribution:: skipping ineligible and non-contributed instance");
+        ongoingContributionStatusService.updateOngoingContribution(ongoingContributionStatus, SKIPPING_INELIGIBLE_MSG, FAILED);
+        return;
+      }
+      if (eligibleInstance) {
+        log.info("runInstanceContribution:: contributing instance id: {}", instance.getId());
+        recordContributionService.contributeInstance(centralServerId, instance);
+        if (!contributedInstance) {
+          log.info("runInstanceContribution:: contributing items of new instance id: {}", instance.getId());
+          contributeOngoingItems(centralServerId, instance);
+        }
+        ongoingContributionStatusService.updateOngoingContribution(ongoingContributionStatus, PROCESSED);
+      } else if (contributedInstance) {
+        log.info("runInstanceContribution:: " + DE_CONTRIBUTE_INSTANCE_MSG + ", instance id : {}", instance.getId());
+        recordContributionService.deContributeInstance(centralServerId, instance);
+        ongoingContributionStatusService.updateOngoingContribution(ongoingContributionStatus, DE_CONTRIBUTED);
+      }
+    } catch (SocketTimeoutException ex) {
+      throw new SocketTimeOutExceptionWrapper(ex.getMessage());
+    }
+  }
+
   public void runInstanceDeContribution(UUID centralServerId, Instance deletedInstance) {
     log.info("Validating instance {} for de-contribution from central server {}", deletedInstance.getId(), centralServerId);
 
@@ -219,6 +248,21 @@ public class ContributionJobRunner {
       log.info("Starting ongoing instance de-contribution job {} centralServer id: {},  instance id: {}", ctx, centralServerId, deletedInstance.getId());
       deContributeInstance(centralServerId, deletedInstance, statistics);
     });
+  }
+
+  public void runInstanceDeContribution(UUID centralServerId, Instance deletedInstance, OngoingContributionStatus ongoingContributionStatus) {
+    try {
+      log.info("runInstanceDeContribution:: Validating instance {} for de-contribution from central server {}", deletedInstance.getId(), centralServerId);
+      if (!isContributed(centralServerId, deletedInstance)) {
+        log.info("runInstanceDeContribution:: Skipping non-contributed instance ,centralServer id: {}, instance id: {}", centralServerId, deletedInstance.getId());
+        ongoingContributionStatusService.updateOngoingContribution(ongoingContributionStatus, SKIPPING_INELIGIBLE_MSG, FAILED);
+        return;
+      }
+      recordContributionService.deContributeInstance(centralServerId, deletedInstance);
+      ongoingContributionStatusService.updateOngoingContribution(ongoingContributionStatus, DE_CONTRIBUTED);
+    } catch (SocketTimeoutException ex) {
+      throw new SocketTimeOutExceptionWrapper(ex.getMessage());
+    }
   }
 
   public void runItemContribution(UUID centralServerId, Instance instance, Item item) {
@@ -427,6 +471,21 @@ public class ContributionJobRunner {
 
     StreamSupport.stream(Iterables.partition(items, chunkSize).spliterator(), false)
       .forEach(itemsChunk -> contributeItemsChunk(centralServerId, bibId, itemsChunk, stats));
+  }
+
+  private void contributeOngoingItems(UUID centralServerId, Instance instance) {
+    log.debug("contributeOngoingItems:: parameters centralServerId: {}, instance id: {}", centralServerId, instance.getId());
+    var bibId = instance.getHrid();
+    var items = instance.getItems().stream()
+      .filter(i -> isEligibleForContribution(centralServerId, i)).toList();
+    if (items.isEmpty()) {
+      log.info("contributeOngoingItems:: item is empty while contributing instance id: {}", instance.getId());
+      return;
+    }
+    int chunkSize = max(jobProperties.getChunkSize(), 1);
+    StreamSupport.stream(Iterables.partition(items, chunkSize).spliterator(), false)
+      .forEach(itemsChunk -> recordContributionService.contributeItemsWithoutRetry(centralServerId, bibId, itemsChunk));
+    log.info("contributeOngoingItems:: Item contribution completed for instanceId {} ", instance.getId());
   }
 
   private void contributeItem(UUID centralServerId, String bibId, Item item, Statistics stats) {

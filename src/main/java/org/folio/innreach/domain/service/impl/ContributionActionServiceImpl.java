@@ -55,40 +55,37 @@ public class ContributionActionServiceImpl implements ContributionActionService 
   private final JsonHelper jsonHelper;
 
   @Override
-  public void handleInstanceCreation(Instance newInstance) {
-    handleInstanceUpdate(newInstance);
+  public void handleInstanceCreation(Instance newInstance, OngoingContributionStatus ongoingContributionStatus) {
+    handleInstanceUpdate(newInstance, ongoingContributionStatus);
   }
 
   @Override
-  public void handleInstanceUpdate(Instance updatedInstance) {
+  public void handleInstanceUpdate(Instance updatedInstance, OngoingContributionStatus ongoingContributionStatus) {
     log.info("Handling instance creation/update {}", updatedInstance.getId());
 
     if (!isMARCRecord(updatedInstance)) {
+      ongoingContributionStatusService.updateOngoingContribution(ongoingContributionStatus, MARC_ERROR_MSG, FAILED);
       return;
     }
 
     var instance = fetchInstanceWithItems(updatedInstance.getId());
 
-    handlePerCentralServer(instance.getId(), csId -> contributionJobRunner.runInstanceContribution(csId, instance));
+    var centralServerId = ongoingContributionStatus.getCentralServerId();
+    if (checkCentralServerValid(centralServerId)) {
+      contributionJobRunner.runInstanceContribution(centralServerId, instance, ongoingContributionStatus);
+    } else {
+      ongoingContributionStatusService.updateOngoingContribution(ongoingContributionStatus, INVALID_CENTRAL_SERVER_ID, FAILED);
+    }
   }
 
-
   @Override
-  public void handleInstanceDelete(Instance deletedInstance) {
-    log.info("Handling instance delete {}", deletedInstance.getId());
-
+  public void handleInstanceDelete(Instance deletedInstance, OngoingContributionStatus ongoingContributionStatus) {
+    log.info("handleInstanceDelete:: Handling instance delete {}", deletedInstance.getId());
     if (!isMARCRecord(deletedInstance)) {
+      ongoingContributionStatusService.updateOngoingContribution(ongoingContributionStatus, MARC_ERROR_MSG, FAILED);
       return;
     }
-    try {
-      for (var csId : getCentralServerIds()) {
-        contributionJobRunner.runInstanceDeContribution(csId, deletedInstance);
-      }
-    }
-    catch (ServiceSuspendedException | FeignException | InnReachConnectionException e) {
-      log.info("exception thrown from handleInstanceDelete");
-      throw e;
-    }
+    contributionJobRunner.runInstanceDeContribution(ongoingContributionStatus.getCentralServerId(), deletedInstance, ongoingContributionStatus);
   }
 
   @Override

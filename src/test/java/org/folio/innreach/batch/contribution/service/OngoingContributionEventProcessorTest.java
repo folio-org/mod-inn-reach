@@ -84,16 +84,23 @@ class OngoingContributionEventProcessorTest extends BaseControllerTest {
   Instance instance;
   Item item;
   InventoryViewClient.InstanceView instanceView;
-
+  UUID instanceId;
+  DomainEvent<Instance> instanceCreate;
+  DomainEvent<Instance> instanceUpdate;
+  DomainEvent<Instance> instanceDelete;
   @BeforeEach
   void runBefore() {
     itemId = UUID.randomUUID();
     holdingId = UUID.randomUUID();
+    instanceId = UUID.randomUUID();
     itemCreate = createItemDomainEvent(itemId, DomainEventType.CREATED);
     itemDelete = createItemDomainEvent(itemId, DomainEventType.DELETED);
     itemUpdate = createItemDomainEvent(itemId, DomainEventType.UPDATED);
     holdingUpdate = createHoldingDomainEvent(holdingId, DomainEventType.UPDATED);
     holdingDelete = createHoldingDomainEvent(holdingId, DomainEventType.DELETED);
+    instanceCreate = createInstanceDomainEvent(instanceId, DomainEventType.CREATED);
+    instanceUpdate = createInstanceDomainEvent(instanceId, DomainEventType.UPDATED);
+    instanceDelete = createInstanceDomainEvent(instanceId, DomainEventType.DELETED);
     holdings = createHolding();
     instance = createInstance();
     item = createItem();
@@ -814,6 +821,32 @@ class OngoingContributionEventProcessorTest extends BaseControllerTest {
     assertEquals(UNKNOWN_TYPE_MESSAGE, ongoingContributionStatus.getError());
   }
 
+  @Test
+  void testInstanceCreationEventWithNonMarcRecord() {
+    instance.setSource("Non marc");
+    var ongoingContributionStatus = saveOngoingContributionStatus(ongoingContributionStatusMapper
+      .convertInstanceToEntity(instanceCreate), UUID.randomUUID());
+    eventProcessor.processOngoingContribution(ongoingContributionStatus);
+    await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() ->
+      verify(ongoingContributionStatusRepository, times(2)).save(any()));
+    assertEquals(FAILED, ongoingContributionStatus.getStatus());
+    assertEquals(MARC_ERROR_MSG, ongoingContributionStatus.getError());
+  }
+
+//  @Test
+//  void testInstanceCreationEventWithInvalidCentralServerId() {
+//    var ongoingContributionStatus = saveOngoingContributionStatus(ongoingContributionStatusMapper
+//      .convertItemToEntity(itemCreate), UUID.randomUUID());
+//    when(holdingsService.find(itemCreate.getData().getNewEntity().getHoldingsRecordId()))
+//      .thenReturn(Optional.of(holdings));
+//    eventProcessor.processOngoingContribution(ongoingContributionStatus);
+//    await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() ->
+//      verify(ongoingContributionStatusRepository, times(2)).save(any()));
+//    assertEquals(FAILED, ongoingContributionStatus.getStatus());
+//    assertEquals(INVALID_CENTRAL_SERVER_ID, ongoingContributionStatus.getError());
+//  }
+
+
   private DomainEvent<Item> createItemDomainEvent(UUID itemId, DomainEventType eventType) {
     var oldItem = createItem().id(itemId);
     var newItem = createItem().id(itemId);
@@ -835,6 +868,18 @@ class OngoingContributionEventProcessorTest extends BaseControllerTest {
       .timestamp(System.currentTimeMillis())
       .type(eventType)
       .data(new EntityChangedData<>(oldHolding, newHolding))
+      .build();
+  }
+
+  private DomainEvent<Instance> createInstanceDomainEvent(UUID instanceId, DomainEventType eventType) {
+    var oldInstance = createInstance().id(instanceId);
+    var newInstance = createInstance().id(instanceId);
+
+    return DomainEvent.<Instance>builder()
+      .tenant(TENANT)
+      .timestamp(System.currentTimeMillis())
+      .type(eventType)
+      .data(new EntityChangedData<>(oldInstance, newInstance))
       .build();
   }
 

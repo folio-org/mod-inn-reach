@@ -15,8 +15,9 @@ import org.folio.innreach.util.JsonHelper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-import org.folio.innreach.dto.Item;
 import org.folio.innreach.dto.Holding;
+import org.folio.innreach.dto.Instance;
+import org.folio.innreach.dto.Item;
 
 import static org.folio.innreach.domain.entity.ContributionStatus.FAILED;
 import static org.folio.innreach.domain.entity.ContributionStatus.RETRY;
@@ -90,7 +91,14 @@ public class OngoingContributionEventProcessor {
   }
 
   private void processInstance(OngoingContributionStatus ongoingContributionStatus) {
-    log.info("processInstance:: Not yet implemented {}", ongoingContributionStatus);
+    Instance oldEntity = jsonHelper.fromJson(ongoingContributionStatus.getOldEntity(), Instance.class);
+    Instance newEntity = jsonHelper.fromJson(ongoingContributionStatus.getNewEntity(), Instance.class);
+    switch (ongoingContributionStatus.getDomainEventType()) {
+      case CREATED -> contributionActionService.handleInstanceCreation(newEntity, ongoingContributionStatus);
+      case UPDATED -> contributionActionService.handleInstanceUpdate(newEntity, ongoingContributionStatus);
+      case DELETED -> contributionActionService.handleInstanceDelete(oldEntity, ongoingContributionStatus);
+      default -> ongoingContributionStatusService.updateOngoingContribution(ongoingContributionStatus, UNKNOWN_TYPE_MESSAGE, FAILED);
+    }
   }
 
   private void checkRetryLimit(OngoingContributionStatus job) {
