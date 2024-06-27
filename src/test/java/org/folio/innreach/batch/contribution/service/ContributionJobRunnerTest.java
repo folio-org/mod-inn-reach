@@ -103,7 +103,6 @@ class ContributionJobRunnerTest {
   @Mock
   private InstanceIterationEvent event;
 
-  private final ContributionJobContext.Statistics statistics = new ContributionJobContext.Statistics();
   @Spy
   private RetryTemplate retryTemplate = createNoRetryTemplate();
 

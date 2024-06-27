@@ -63,7 +63,6 @@ public class KafkaInventoryEventListener {
     concurrency = "${kafka.listener.instance.concurrency}")
   public void handleInstanceEvents(List<ConsumerRecord<String, DomainEvent<Instance>>> consumerRecords) {
     log.info("Handling inventory instance events from Kafka [number of events: {}]", consumerRecords.size());
-    var events = getEvents(consumerRecords);
     processEvents(ongoingContributionStatusMapper::convertInstanceListToEntities, consumerRecords);
   }
 

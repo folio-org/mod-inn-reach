@@ -45,20 +45,6 @@ class KafkaInventoryEventListenerApiTest extends BaseKafkaApiTest {
   private static final String TEST_TENANT_ID = "testing";
   private static final Duration ASYNC_AWAIT_TIMEOUT = Duration.ofSeconds(15);
 
-  @SpyBean
-  private KafkaInventoryEventListener listener;
-
-  @MockBean
-  private ContributionActionService actionService;
-
-  @SpyBean
-  private BatchDomainEventProcessor eventProcessor;
-
-  @SpyBean
-  private ContributionJobRunner contributionJobRunner;
-
-  @SpyBean
-  private InnReachTransactionRepository transactionRepository;
   @Autowired
   private OngoingContributionStatusRepository ongoingContributionRepository;
 
@@ -69,13 +55,15 @@ class KafkaInventoryEventListenerApiTest extends BaseKafkaApiTest {
   })
   void shouldReceiveInventoryItemEvent() {
     long initialSize = ongoingContributionRepository.count();
-    var event = createItemDomainEvent(DomainEventType.DELETED, UUID.randomUUID());
+    var event1 = createItemDomainEvent(DomainEventType.DELETED, UUID.randomUUID());
+    var event2 = createItemDomainEvent(DomainEventType.ALL_DELETED, UUID.randomUUID());
 
-    kafkaTemplate.send(new ProducerRecord(INVENTORY_ITEM_TOPIC, RECORD_ID.toString(), event));
+    kafkaTemplate.send(new ProducerRecord(INVENTORY_ITEM_TOPIC, RECORD_ID.toString(), event1));
+    kafkaTemplate.send(new ProducerRecord(INVENTORY_ITEM_TOPIC, RECORD_ID.toString(), event2));
 
     // As there are 2 central servers, there will be an entry against each centralServerId
     await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() ->
-      assertEquals(initialSize+2, ongoingContributionRepository.count()));
+      assertEquals(initialSize+4, ongoingContributionRepository.count()));
   }
 
   @Test
