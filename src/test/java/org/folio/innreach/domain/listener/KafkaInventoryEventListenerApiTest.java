@@ -13,13 +13,9 @@ import java.time.Duration;
 import java.util.UUID;
 
 import org.apache.kafka.clients.producer.ProducerRecord;
-import org.folio.innreach.batch.contribution.service.ContributionJobRunner;
-import org.folio.innreach.domain.service.impl.BatchDomainEventProcessor;
 import org.folio.innreach.repository.OngoingContributionStatusRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlMergeMode;
 
@@ -27,11 +23,9 @@ import org.folio.innreach.domain.event.DomainEvent;
 import org.folio.innreach.domain.event.DomainEventType;
 import org.folio.innreach.domain.event.EntityChangedData;
 import org.folio.innreach.domain.listener.base.BaseKafkaApiTest;
-import org.folio.innreach.domain.service.ContributionActionService;
 import org.folio.innreach.dto.Holding;
 import org.folio.innreach.dto.Instance;
 import org.folio.innreach.dto.Item;
-import org.folio.innreach.repository.InnReachTransactionRepository;
 
 @Sql(
   scripts = {"classpath:db/inn-reach-transaction/clear-inn-reach-transaction-tables.sql",
