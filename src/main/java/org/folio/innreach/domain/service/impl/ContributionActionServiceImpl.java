@@ -72,7 +72,7 @@ public class ContributionActionServiceImpl implements ContributionActionService 
 
     var centralServerId = ongoingContributionStatus.getCentralServerId();
     if (checkCentralServerValid(centralServerId)) {
-      contributionJobRunner.runInstanceContribution(centralServerId, instance, ongoingContributionStatus);
+      contributionJobRunner.runOngoingInstanceContribution(centralServerId, instance, ongoingContributionStatus);
     } else {
       ongoingContributionStatusService.updateOngoingContribution(ongoingContributionStatus, INVALID_CENTRAL_SERVER_ID, FAILED);
     }
@@ -85,7 +85,7 @@ public class ContributionActionServiceImpl implements ContributionActionService 
       ongoingContributionStatusService.updateOngoingContribution(ongoingContributionStatus, MARC_ERROR_MSG, FAILED);
       return;
     }
-    contributionJobRunner.runInstanceDeContribution(ongoingContributionStatus.getCentralServerId(), deletedInstance, ongoingContributionStatus);
+    contributionJobRunner.runOngoingInstanceDeContribution(ongoingContributionStatus.getCentralServerId(), deletedInstance, ongoingContributionStatus);
   }
 
   @Override

@@ -178,56 +178,27 @@ public class ContributionJobRunner {
     contributionService.cancelCurrent(centralServerId);
   }
 
-  public void runInstanceContribution(UUID centralServerId, Instance instance) {
-    log.info("Ongoing: validating instance {} for contribution to central server {}", instance.getId(), centralServerId);
-
-    boolean eligibleInstance = isEligibleForContribution(centralServerId, instance);
-    boolean contributedInstance = isContributed(centralServerId, instance);
-    log.info("Ongoing: eligibleInstance: {}, contributedInstance: {}", eligibleInstance, contributedInstance);
-    if (!eligibleInstance && !contributedInstance) {
-      log.info("Ongoing: skipping ineligible and non-contributed instance");
-      return;
-    }
-
-    runOngoing(centralServerId, (ctx, statistics) -> {
-      log.info("Ongoing: starting ongoing instance contribution job {}, centralServerId: {}", ctx, centralServerId);
-
-      if (eligibleInstance) {
-        log.info("Ongoing: contributing instance id: {}", instance.getId());
-        contributeInstance(centralServerId, instance, statistics);
-
-        if (!contributedInstance) {
-          log.info("Ongoing: contributing items of new instance id: {}", instance.getId());
-          contributeInstanceItems(centralServerId, instance, statistics);
-        }
-      } else if (contributedInstance) {
-        log.info("Ongoing: " + DE_CONTRIBUTE_INSTANCE_MSG + ", instance id : {}", instance.getId());
-        deContributeInstance(centralServerId, instance, statistics);
-      }
-    });
-  }
-
-  public void runInstanceContribution(UUID centralServerId, Instance instance, OngoingContributionStatus ongoingContributionStatus) {
+  public void runOngoingInstanceContribution(UUID centralServerId, Instance instance, OngoingContributionStatus ongoingContributionStatus) {
     try {
-      log.info("runInstanceContribution:: validating instance {} for contribution to central server {}", instance.getId(), centralServerId);
+      log.info("runOngoingInstanceContribution:: validating instance {} for contribution to central server {}", instance.getId(), centralServerId);
       boolean eligibleInstance = isEligibleForContribution(centralServerId, instance);
       boolean contributedInstance = isContributed(centralServerId, instance);
-      log.info("runInstanceContribution:: eligibleInstance: {}, contributedInstance: {}", eligibleInstance, contributedInstance);
+      log.info("runOngoingInstanceContribution:: eligibleInstance: {}, contributedInstance: {}", eligibleInstance, contributedInstance);
       if (!eligibleInstance && !contributedInstance) {
-        log.info("runInstanceContribution:: skipping ineligible and non-contributed instance");
+        log.info("runOngoingInstanceContribution:: skipping ineligible and non-contributed instance");
         ongoingContributionStatusService.updateOngoingContribution(ongoingContributionStatus, SKIPPING_INELIGIBLE_MSG, FAILED);
         return;
       }
       if (eligibleInstance) {
-        log.info("runInstanceContribution:: contributing instance id: {}", instance.getId());
+        log.info("runOngoingInstanceContribution:: contributing instance id: {}", instance.getId());
         recordContributionService.contributeInstance(centralServerId, instance);
         if (!contributedInstance) {
-          log.info("runInstanceContribution:: contributing items of new instance id: {}", instance.getId());
+          log.info("runOngoingInstanceContribution:: contributing items of new instance id: {}", instance.getId());
           contributeOngoingItems(centralServerId, instance);
         }
         ongoingContributionStatusService.updateOngoingContribution(ongoingContributionStatus, PROCESSED);
       } else if (contributedInstance) {
-        log.info("runInstanceContribution:: " + DE_CONTRIBUTE_INSTANCE_MSG + ", instance id : {}", instance.getId());
+        log.info("runOngoingInstanceContribution:: " + DE_CONTRIBUTE_INSTANCE_MSG + ", instance id : {}", instance.getId());
         recordContributionService.deContributeInstance(centralServerId, instance);
         ongoingContributionStatusService.updateOngoingContribution(ongoingContributionStatus, DE_CONTRIBUTED);
       }
@@ -236,25 +207,11 @@ public class ContributionJobRunner {
     }
   }
 
-  public void runInstanceDeContribution(UUID centralServerId, Instance deletedInstance) {
-    log.info("Validating instance {} for de-contribution from central server {}", deletedInstance.getId(), centralServerId);
-
-    if (!isContributed(centralServerId, deletedInstance)) {
-      log.info("Skipping non-contributed instance ,centralServer id: {}, instance id: {}", centralServerId, deletedInstance.getId());
-      return;
-    }
-
-    runOngoing(centralServerId, (ctx, statistics) -> {
-      log.info("Starting ongoing instance de-contribution job {} centralServer id: {},  instance id: {}", ctx, centralServerId, deletedInstance.getId());
-      deContributeInstance(centralServerId, deletedInstance, statistics);
-    });
-  }
-
-  public void runInstanceDeContribution(UUID centralServerId, Instance deletedInstance, OngoingContributionStatus ongoingContributionStatus) {
+  public void runOngoingInstanceDeContribution(UUID centralServerId, Instance deletedInstance, OngoingContributionStatus ongoingContributionStatus) {
     try {
-      log.info("runInstanceDeContribution:: Validating instance {} for de-contribution from central server {}", deletedInstance.getId(), centralServerId);
+      log.info("runOngoingInstanceDeContribution:: Validating instance {} for de-contribution from central server {}", deletedInstance.getId(), centralServerId);
       if (!isContributed(centralServerId, deletedInstance)) {
-        log.info("runInstanceDeContribution:: Skipping non-contributed instance ,centralServer id: {}, instance id: {}", centralServerId, deletedInstance.getId());
+        log.info("runOngoingInstanceDeContribution:: Skipping non-contributed instance ,centralServer id: {}, instance id: {}", centralServerId, deletedInstance.getId());
         ongoingContributionStatusService.updateOngoingContribution(ongoingContributionStatus, SKIPPING_INELIGIBLE_MSG, FAILED);
         return;
       }

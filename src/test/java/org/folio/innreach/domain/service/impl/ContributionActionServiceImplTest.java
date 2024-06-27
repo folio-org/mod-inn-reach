@@ -381,7 +381,7 @@ class ContributionActionServiceImplTest {
 
     service.handleInstanceCreation(instance, ongoingJob);
 
-    verify(contributionJobRunner).runInstanceContribution(CENTRAL_SERVER_ID, instance, ongoingJob);
+    verify(contributionJobRunner).runOngoingInstanceContribution(CENTRAL_SERVER_ID, instance, ongoingJob);
   }
 
   @Test
@@ -419,7 +419,7 @@ class ContributionActionServiceImplTest {
 
     service.handleInstanceDelete(instance, ongoingJob);
 
-    verify(contributionJobRunner).runInstanceDeContribution(CENTRAL_SERVER_ID, instance, ongoingJob);
+    verify(contributionJobRunner).runOngoingInstanceDeContribution(CENTRAL_SERVER_ID, instance, ongoingJob);
   }
 
 }
