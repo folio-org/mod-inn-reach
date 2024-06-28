@@ -970,6 +970,18 @@ class OngoingContributionEventProcessorTest extends BaseControllerTest {
   }
 
   @Test
+  void testInstanceDeleteEventForNonMarcInstance() {
+    instanceDelete.getData().getOldEntity().setSource("Non Marc");
+    var ongoingContributionStatus = saveOngoingContributionStatus(ongoingContributionStatusMapper
+      .convertInstanceToEntity(instanceDelete), CENTRAL_SERVER_ID);
+    eventProcessor.processOngoingContribution(ongoingContributionStatus);
+    await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() ->
+      verify(ongoingContributionStatusRepository, times(2)).save(any()));
+    assertEquals(FAILED, ongoingContributionStatus.getStatus());
+    assertEquals(MARC_ERROR_MSG, ongoingContributionStatus.getError());
+  }
+
+  @Test
   void testInstanceDeleteEventWithContributedInstance() throws SocketTimeoutException {
     var ongoingContributionStatus = saveOngoingContributionStatus(ongoingContributionStatusMapper
       .convertInstanceToEntity(instanceUpdate), CENTRAL_SERVER_ID);
@@ -991,9 +1003,9 @@ class OngoingContributionEventProcessorTest extends BaseControllerTest {
   @Test
   void testInstanceDeleteEventWithSocketException() throws SocketTimeoutException {
     var ongoingContributionStatus = saveOngoingContributionStatus(ongoingContributionStatusMapper
-      .convertInstanceToEntity(instanceUpdate), CENTRAL_SERVER_ID);
+      .convertInstanceToEntity(instanceDelete), CENTRAL_SERVER_ID);
     instanceView.setItems(List.of(createItem()));
-    when(inventoryViewClient.getInstanceById(instanceCreate.getData().getNewEntity().getId()))
+    when(inventoryViewClient.getInstanceById(instanceDelete.getData().getOldEntity().getId()))
       .thenReturn(ResultList.of(1, List.of(instanceView)));
     when(recordContributionService.isContributed(any(), any()))
       .thenReturn(true);
@@ -1004,6 +1016,7 @@ class OngoingContributionEventProcessorTest extends BaseControllerTest {
       verify(ongoingContributionStatusRepository, times(2)).save(any()));
     verify(recordContributionService, never()).contributeInstance(any(), any());
     verify(recordContributionService, never()).contributeItemsWithoutRetry(any(), any(), any());
+    verify(recordContributionService).deContributeInstance(any(), any());
     assertEquals(RETRY, ongoingContributionStatus.getStatus());
     assertNull(ongoingContributionStatus.getError());
   }
@@ -1011,9 +1024,9 @@ class OngoingContributionEventProcessorTest extends BaseControllerTest {
   @Test
   void testInstanceDeleteEventWithNonContributedInstance() throws SocketTimeoutException {
     var ongoingContributionStatus = saveOngoingContributionStatus(ongoingContributionStatusMapper
-      .convertInstanceToEntity(instanceUpdate), CENTRAL_SERVER_ID);
+      .convertInstanceToEntity(instanceDelete), CENTRAL_SERVER_ID);
     instanceView.setItems(List.of(createItem()));
-    when(inventoryViewClient.getInstanceById(instanceCreate.getData().getNewEntity().getId()))
+    when(inventoryViewClient.getInstanceById(instanceDelete.getData().getOldEntity().getId()))
       .thenReturn(ResultList.of(1, List.of(instanceView)));
     when(recordContributionService.isContributed(any(), any()))
       .thenReturn(false);
