@@ -7,6 +7,8 @@ import static org.folio.innreach.domain.entity.ContributionStatus.DE_CONTRIBUTED
 import static org.folio.innreach.domain.entity.ContributionStatus.FAILED;
 import static org.folio.innreach.domain.entity.ContributionStatus.PROCESSED;
 import static org.folio.innreach.util.InnReachConstants.DE_CONTRIBUTE_INSTANCE_MSG;
+import static org.folio.innreach.util.InnReachConstants.SKIPPING_INELIGIBLE_INSTANCE_ITEM_MSG;
+import static org.folio.innreach.util.InnReachConstants.SKIPPING_INELIGIBLE_INSTANCE_MSG;
 import static org.folio.innreach.util.InnReachConstants.SKIPPING_INELIGIBLE_MSG;
 
 import java.net.SocketTimeoutException;
@@ -201,6 +203,9 @@ public class ContributionJobRunner {
         log.info("runOngoingInstanceContribution:: " + DE_CONTRIBUTE_INSTANCE_MSG + ", instance id : {}", instance.getId());
         recordContributionService.deContributeInstance(centralServerId, instance);
         ongoingContributionStatusService.updateOngoingContribution(ongoingContributionStatus, DE_CONTRIBUTED);
+      } else {
+        log.info("runOngoingInstanceContribution:: " + SKIPPING_INELIGIBLE_INSTANCE_MSG + ", instance id : {}", instance.getId());
+        ongoingContributionStatusService.updateOngoingContribution(ongoingContributionStatus, SKIPPING_INELIGIBLE_INSTANCE_MSG, FAILED);
       }
     } catch (SocketTimeoutException ex) {
       throw new SocketTimeOutExceptionWrapper(ex.getMessage());
@@ -280,6 +285,9 @@ public class ContributionJobRunner {
         log.info("runItemContribution:: " + DE_CONTRIBUTE_INSTANCE_MSG + ", centralServer id: {}, instance id : {}, item id: {}", centralServerId, instance.getId(), item.getId());
         recordContributionService.deContributeInstance(centralServerId, instance);
         ongoingContributionStatusService.updateOngoingContribution(ongoingContributionStatus, DE_CONTRIBUTED);
+      } else {
+        log.info("runItemContribution:: " + SKIPPING_INELIGIBLE_INSTANCE_ITEM_MSG + " centralServer id: {}, instance id : {}, item id: {}", centralServerId, instance.getId(), item.getId());
+        ongoingContributionStatusService.updateOngoingContribution(ongoingContributionStatus, SKIPPING_INELIGIBLE_INSTANCE_ITEM_MSG, FAILED);
       }
     } catch (SocketTimeoutException ex) {
       throw new SocketTimeOutExceptionWrapper(ex.getMessage());
