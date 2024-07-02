@@ -57,7 +57,7 @@ class KafkaInventoryEventListenerApiTest extends BaseKafkaApiTest {
 
     // As there are 2 central servers, there will be an entry against each centralServerId
     await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() ->
-      assertEquals(initialSize+4, ongoingContributionRepository.count()));
+      assertEquals(initialSize + 4, ongoingContributionRepository.count()));
   }
 
   @Test
@@ -76,7 +76,7 @@ class KafkaInventoryEventListenerApiTest extends BaseKafkaApiTest {
 
     // As there is 1 central server, there will be an entry against one centralServerId
     await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() ->
-      assertEquals(initialSize+3, ongoingContributionRepository.count()));
+      assertEquals(initialSize + 3, ongoingContributionRepository.count()));
   }
 
   @Test
@@ -96,7 +96,7 @@ class KafkaInventoryEventListenerApiTest extends BaseKafkaApiTest {
 
     // As there is 2 central server, there will be 2 entry against each centralServerId
     await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() ->
-      assertEquals(initialSize+6, ongoingContributionRepository.count()));
+      assertEquals(initialSize + 6, ongoingContributionRepository.count()));
   }
 
   @Test
@@ -118,7 +118,7 @@ class KafkaInventoryEventListenerApiTest extends BaseKafkaApiTest {
     kafkaTemplate.send(new ProducerRecord(INVENTORY_ITEM_TOPIC2, RECORD_ID.toString(), event3));
 
     await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() ->
-      assertEquals(initialSize+2, ongoingContributionRepository.count()));
+      assertEquals(initialSize + 2, ongoingContributionRepository.count()));
 
   }
 

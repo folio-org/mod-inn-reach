@@ -187,7 +187,7 @@ public class ContributionJobRunner {
       boolean contributedInstance = isContributed(centralServerId, instance);
       log.info("runOngoingInstanceContribution:: eligibleInstance: {}, contributedInstance: {}", eligibleInstance, contributedInstance);
       if (!eligibleInstance && !contributedInstance) {
-        log.info("runOngoingInstanceContribution:: skipping ineligible and non-contributed instance");
+        log.info("runOngoingInstanceContribution:: skipping ineligible and non-contributed instance with centralServerId {} and instanceId {}", centralServerId, instance.getId());
         ongoingContributionStatusService.updateOngoingContribution(ongoingContributionStatus, SKIPPING_INELIGIBLE_MSG, FAILED);
         return;
       }
