@@ -9,11 +9,11 @@ import org.folio.innreach.dto.StorageLoanDTO;
 
 public interface ContributionActionService {
 
-  void handleInstanceCreation(Instance newInstance);
+  void handleInstanceCreation(Instance newInstance, OngoingContributionStatus ongoingContributionStatus);
 
-  void handleInstanceUpdate(Instance updatedInstance);
+  void handleInstanceUpdate(Instance updatedInstance, OngoingContributionStatus ongoingContributionStatus);
 
-  void handleInstanceDelete(Instance deletedInstance);
+  void handleInstanceDelete(Instance deletedInstance, OngoingContributionStatus ongoingContributionStatus);
 
   void handleItemCreation(Item newItem, OngoingContributionStatus ongoingContributionStatus);
 
