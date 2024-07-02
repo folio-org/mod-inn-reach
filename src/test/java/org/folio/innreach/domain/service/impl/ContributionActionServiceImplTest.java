@@ -1,13 +1,11 @@
 package org.folio.innreach.domain.service.impl;
 
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.folio.innreach.domain.entity.ContributionStatus.FAILED;
 import static org.folio.innreach.domain.entity.ContributionStatus.PROCESSED;
 import static org.folio.innreach.util.InnReachConstants.INVALID_CENTRAL_SERVER_ID;
 import static org.folio.innreach.util.InnReachConstants.MARC_ERROR_MSG;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -21,11 +19,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-import feign.FeignException;
 import org.folio.innreach.batch.contribution.service.OngoingContributionStatusServiceImpl;
 import org.folio.innreach.domain.entity.OngoingContributionStatus;
-import org.folio.innreach.external.exception.InnReachConnectionException;
-import org.folio.innreach.external.exception.ServiceSuspendedException;
 import org.folio.innreach.util.JsonHelper;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -68,64 +63,6 @@ class ContributionActionServiceImplTest {
   private OngoingContributionStatusServiceImpl ongoingContributionStatusService;
   @Mock
   private JsonHelper jsonHelper;
-
-  @Test
-  void handleInstanceCreation() {
-    var instance = createInstance();
-
-    when(centralServerRepository.getIds(any())).thenReturn(new PageImpl<>(List.of(CENTRAL_SERVER_ID)));
-    when(inventoryViewService.getInstance(any())).thenReturn(instance);
-    when(validationService.getItemTypeMappingStatus(any())).thenReturn(VALID);
-    when(validationService.getLocationMappingStatus(any())).thenReturn(VALID);
-
-    service.handleInstanceCreation(instance);
-
-    verify(contributionJobRunner).runInstanceContribution(CENTRAL_SERVER_ID, instance);
-  }
-
-  @Test
-  void handleInstanceCreation_skipUnsupportedSource() {
-    var instance = createInstance();
-
-    when(centralServerRepository.getIds(any())).thenReturn(new PageImpl<>(List.of(CENTRAL_SERVER_ID)));
-    when(inventoryViewService.getInstance(any())).thenReturn(instance);
-    when(validationService.getItemTypeMappingStatus(any())).thenReturn(INVALID);
-
-    service.handleInstanceCreation(instance);
-
-    verifyNoInteractions(contributionJobRunner);
-  }
-
-  @Test
-  void handleInstanceCreation_skipInvalidMappings() {
-    var instance = createInstance().source("test");
-
-    service.handleInstanceCreation(instance);
-
-    verifyNoInteractions(contributionJobRunner);
-  }
-
-  @Test
-  void handleInstanceDelete() {
-    var instance = createInstance();
-
-    when(centralServerRepository.getIds(any())).thenReturn(new PageImpl<>(List.of(CENTRAL_SERVER_ID)));
-    service.handleInstanceDelete(instance);
-
-    verify(contributionJobRunner).runInstanceDeContribution(CENTRAL_SERVER_ID, instance);
-
-    doThrow(ServiceSuspendedException.class).when(contributionJobRunner).runInstanceDeContribution(CENTRAL_SERVER_ID, instance);
-    assertThatThrownBy(() -> service.handleInstanceDelete(instance))
-      .isInstanceOf(ServiceSuspendedException.class);
-
-    doThrow(FeignException.class).when(contributionJobRunner).runInstanceDeContribution(CENTRAL_SERVER_ID, instance);
-    assertThatThrownBy(() -> service.handleInstanceDelete(instance))
-      .isInstanceOf(FeignException.class);
-
-    doThrow(InnReachConnectionException.class).when(contributionJobRunner).runInstanceDeContribution(CENTRAL_SERVER_ID, instance);
-    assertThatThrownBy(() -> service.handleInstanceDelete(instance))
-      .isInstanceOf(InnReachConnectionException.class);
-  }
 
   @Test
   void handleLoanCreation() {
@@ -431,4 +368,58 @@ class ContributionActionServiceImplTest {
     verify(contributionJobRunner).runItemDeContribution(eq(CENTRAL_SERVER_ID), eq(instance), eq(item), any());
     verify(ongoingContributionStatusService).updateOngoingContribution(ongoingJob, PROCESSED);
   }
+
+  @Test
+  void handleInstanceCreationForOngoingJob() {
+    var instance = createInstance();
+    var ongoingJob = new OngoingContributionStatus();
+    ongoingJob.setCentralServerId(CENTRAL_SERVER_ID);
+
+    when(inventoryViewService.getInstance(any())).thenReturn(instance);
+    when(validationService.getItemTypeMappingStatus(any())).thenReturn(VALID);
+    when(validationService.getLocationMappingStatus(any())).thenReturn(VALID);
+
+    service.handleInstanceCreation(instance, ongoingJob);
+
+    verify(contributionJobRunner).runOngoingInstanceContribution(CENTRAL_SERVER_ID, instance, ongoingJob);
+  }
+
+  @Test
+  void handleInstanceCreationWithInvalidCentralForOngoingJob() {
+    var instance = createInstance();
+    var ongoingJob = new OngoingContributionStatus();
+    ongoingJob.setCentralServerId(CENTRAL_SERVER_ID);
+
+    when(inventoryViewService.getInstance(any())).thenReturn(instance);
+    when(validationService.getItemTypeMappingStatus(any())).thenReturn(INVALID);
+
+    service.handleInstanceCreation(instance, ongoingJob);
+
+    verifyNoInteractions(contributionJobRunner);
+    verify(ongoingContributionStatusService).updateOngoingContribution(ongoingJob, INVALID_CENTRAL_SERVER_ID, FAILED);
+  }
+
+  @Test
+  void handleInstanceCreationWithInvalidSource() {
+    var instance = createInstance().source("test");
+    var ongoingJob = new OngoingContributionStatus();
+    ongoingJob.setCentralServerId(CENTRAL_SERVER_ID);
+
+    service.handleInstanceCreation(instance, ongoingJob);
+
+    verify(ongoingContributionStatusService).updateOngoingContribution(ongoingJob, MARC_ERROR_MSG, FAILED);
+    verifyNoInteractions(contributionJobRunner);
+  }
+
+  @Test
+  void handleInstanceDeleteForOngoingJob() {
+    var instance = createInstance();
+    var ongoingJob = new OngoingContributionStatus();
+    ongoingJob.setCentralServerId(CENTRAL_SERVER_ID);
+
+    service.handleInstanceDelete(instance, ongoingJob);
+
+    verify(contributionJobRunner).runOngoingInstanceDeContribution(CENTRAL_SERVER_ID, instance, ongoingJob);
+  }
+
 }
