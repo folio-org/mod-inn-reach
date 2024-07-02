@@ -11,5 +11,8 @@ public class InnReachConstants {
   public static final String UNKNOWN_TYPE_MESSAGE = "Received event of unknown type";
   public static final String UNKNOWN_EVENT_NAME_MESSAGE = "Received event of unknown event name";
   public static final String RETRY_LIMIT_MESSAGE = "Retry limit exhausted";
+  public static final String SKIPPING_INELIGIBLE_INSTANCE_MSG = "skipping ineligible and non-contributed instance";
+  public static final String SKIPPING_INELIGIBLE_INSTANCE_ITEM_MSG = "skipping ineligible instance with non-contributed item";
+
 
 }
