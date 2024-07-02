@@ -11,7 +11,7 @@ import java.util.concurrent.TimeUnit;
 
 @Configuration
 public class TenantDetailsCacheConfig {
-  @Value("${initial-contribution.tenant-cache.ttl}")
+  @Value("${contribution.tenant-cache.ttl}")
   private int tenantDetailsCacheTtl;
 
   @Bean("tenantDetailsCache")

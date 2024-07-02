@@ -4,6 +4,7 @@ import com.google.common.collect.Iterables;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.folio.innreach.batch.contribution.listener.ContributionExceptionListener;
+import org.folio.innreach.domain.entity.ContributionStatus;
 import org.folio.innreach.dto.Instance;
 import org.folio.innreach.dto.Item;
 import org.folio.innreach.config.props.ContributionJobProperties;
@@ -31,11 +32,11 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.StreamSupport;
 
 import static java.lang.Math.max;
-import static org.folio.innreach.domain.entity.JobExecutionStatus.Status.DE_CONTRIBUTED;
-import static org.folio.innreach.domain.entity.JobExecutionStatus.Status.FAILED;
-import static org.folio.innreach.domain.entity.JobExecutionStatus.Status.PROCESSED;
-import static org.folio.innreach.domain.entity.JobExecutionStatus.Status.READY;
-import static org.folio.innreach.domain.entity.JobExecutionStatus.Status.RETRY;
+import static org.folio.innreach.domain.entity.ContributionStatus.DE_CONTRIBUTED;
+import static org.folio.innreach.domain.entity.ContributionStatus.FAILED;
+import static org.folio.innreach.domain.entity.ContributionStatus.PROCESSED;
+import static org.folio.innreach.domain.entity.ContributionStatus.READY;
+import static org.folio.innreach.domain.entity.ContributionStatus.RETRY;
 
 @Service
 @Log4j2
@@ -53,10 +54,10 @@ public class InitialContributionEventProcessor {
   private static final ConcurrentHashMap<UUID, Contribution> contributionRecord = new ConcurrentHashMap<>();
   private final ContributionRepository contributionRepository;
   private final TenantScopedExecutionService executionService;
-  @Value("${initial-contribution.retry-attempts}")
+  @Value("${contribution.retry-attempts}")
   private int maxRetryAttempts;
 
-  @Async("schedulerTaskExecutor")
+  @Async("initialSchedulerTaskExecutor")
   public void processInitialContributionEvents(JobExecutionStatus job) {
     executionService.executeAsyncTenantScoped(job.getTenant(), () -> {
       log.info("processInitialContributionEvents:: Processing Initial contribution events {}", job);
@@ -141,7 +142,7 @@ public class InitialContributionEventProcessor {
     updateJobAndContributionStatus(job, PROCESSED, job.isInstanceContributed());
   }
 
-  private void updateJobAndContributionStatus(JobExecutionStatus job, JobExecutionStatus.Status status, boolean isInstanceContributed) {
+  private void updateJobAndContributionStatus(JobExecutionStatus job, ContributionStatus status, boolean isInstanceContributed) {
     job.setStatus(status);
     job.setInstanceContributed(isInstanceContributed);
     job.setRetryAttempts(status.equals(RETRY) ? job.getRetryAttempts() + 1 : job.getRetryAttempts());

@@ -34,14 +34,6 @@ public class JobExecutionStatus extends Auditable {
   private boolean instanceContributed;
   private int retryAttempts;
   @Enumerated(EnumType.STRING)
-  private Status status;
+  private ContributionStatus status;
 
-  public enum Status {
-    IN_PROGRESS,
-    READY,
-    PROCESSED,
-    FAILED,
-    RETRY,
-    DE_CONTRIBUTED
-  }
 }

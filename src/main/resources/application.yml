@@ -184,14 +184,14 @@ kafka:
   custom-offset: ${DEFAULT_OFFSET:latest}
   custom-concurrency: ${DEFAULT_CONCURRENCY:2}
 
-initial-contribution:
+contribution:
   async:
-    pool-size: ${INITIAL_CONTRIBUTION_POOL_SIZE:50}
+    pool-size: ${CONTRIBUTION_POOL_SIZE:50}
   scheduler:
-    fixed-delay: ${INITIAL_CONTRIBUTION_SCHEDULER_DELAY:10000}
+    fixed-delay: ${CONTRIBUTION_SCHEDULER_DELAY:10000}
     initial-delay: 300000
-  retry-attempts: ${INITIAL_CONTRIBUTION_RETRIES:3600}
-  fetch-limit: ${INITIAL_CONTRIBUTION_FETCH_LIMIT:50}
-  item-pause: ${INITIAL_CONTRIBUTION_ITEM_PAUSE:0.5}
+  retry-attempts: ${CONTRIBUTION_RETRIES:3600}
+  fetch-limit: ${CONTRIBUTION_FETCH_LIMIT:50}
+  item-pause: ${CONTRIBUTION_ITEM_PAUSE:0.5}
   tenant-cache:
     ttl: 3600
