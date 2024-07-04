@@ -240,7 +240,7 @@ class ContributionActionServiceImplTest {
     var centralServerId = UUID.randomUUID();
     ongoingJob.setCentralServerId(centralServerId);
     when(holdingsService.find(item.getHoldingsRecordId())).thenReturn(Optional.of(holding));
-    when(instanceStorageClient.getInstanceById(holding.getInstanceId())).thenReturn(instance);
+    when(inventoryViewService.getInstance(holding.getInstanceId())).thenReturn(instance);
     when(holdingsService.find(newItem.getHoldingsRecordId())).thenReturn(Optional.of(newHolding));
     when(inventoryViewService.getInstance(newHolding.getInstanceId())).thenReturn(newInstance);
     when(validationService.getItemTypeMappingStatus(centralServerId)).thenReturn(VALID);
