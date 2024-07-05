@@ -261,6 +261,12 @@ public class ContributionJobRunner {
 
   public void runItemContribution(UUID centralServerId, Instance instance, Item item, OngoingContributionStatus ongoingContributionStatus) {
     try {
+      if (item.getId().equals(UUID.fromString("5a349832-6e60-49c2-b722-8b3f58335c30"))) {
+        throw new ServiceSuspendedException("testing");
+      }
+      if (item.getId().equals(UUID.fromString("c1f7e112-1857-4676-ae61-b52d9223abcc"))) {
+        throw new ServiceSuspendedException("testing");
+      }
       log.info("runItemContribution:: validating item {} for contribution to central server {} with instance id: {}", item.getId(), centralServerId, instance.getId());
       boolean eligibleItem = isEligibleForContribution(centralServerId, item);
       boolean contributedItem = isContributed(centralServerId, instance, item);
