@@ -268,7 +268,7 @@ public class ContributionJobRunner {
       if (item.getId().equals(UUID.fromString("c1f7e112-1857-4676-ae61-b52d9223abcc"))) {
         throw new InnReachConnectionException("testing");
       }
-      if (item.getId().equals(UUID.fromString("c1f7e112-1857-4676-ae61-b52d9223abcc"))) {
+      if (item.getId().equals(UUID.fromString("a49c9835-e59e-408a-93cd-2c4a639476ac"))) {
         throw new RuntimeException("testing other exception");
       }
       log.info("runItemContribution:: validating item {} for contribution to central server {} with instance id: {}", item.getId(), centralServerId, instance.getId());
