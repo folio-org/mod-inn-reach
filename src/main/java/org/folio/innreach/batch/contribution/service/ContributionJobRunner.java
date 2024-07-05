@@ -25,7 +25,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.folio.innreach.domain.entity.OngoingContributionStatus;
 import org.folio.innreach.domain.service.impl.InnReachFolioExecutionContextBuilder;
-import org.folio.innreach.external.exception.InnReachGatewayException;
 import org.folio.spring.scope.FolioExecutionContextSetter;
 import org.folio.innreach.external.exception.InnReachConnectionException;
 import org.folio.innreach.external.exception.ServiceSuspendedException;
@@ -262,15 +261,6 @@ public class ContributionJobRunner {
 
   public void runItemContribution(UUID centralServerId, Instance instance, Item item, OngoingContributionStatus ongoingContributionStatus) {
     try {
-      if (item.getId().equals(UUID.fromString("5a349832-6e60-49c2-b722-8b3f58335c30"))) {
-        throw new InnReachGatewayException("testing");
-      }
-      if (item.getId().equals(UUID.fromString("c1f7e112-1857-4676-ae61-b52d9223abcc"))) {
-        throw new InnReachConnectionException("testing");
-      }
-      if (item.getId().equals(UUID.fromString("a49c9835-e59e-408a-93cd-2c4a639476ac"))) {
-        throw new RuntimeException("testing other exception");
-      }
       log.info("runItemContribution:: validating item {} for contribution to central server {} with instance id: {}", item.getId(), centralServerId, instance.getId());
       boolean eligibleItem = isEligibleForContribution(centralServerId, item);
       boolean contributedItem = isContributed(centralServerId, instance, item);
