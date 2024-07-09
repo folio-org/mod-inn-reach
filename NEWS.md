@@ -1,3 +1,9 @@
+## v3.1.4 2024-07-09
+### Story
+* [MODINREACH-431](https://folio-org.atlassian.net/browse/MODINREACH-431) - Implement outbox for ongoing contribution for item events.
+* [MODINREACH-432](https://folio-org.atlassian.net/browse/MODINREACH-432) - Implement outbox for ongoing contribution for holding events.
+* [MODINREACH-433](https://folio-org.atlassian.net/browse/MODINREACH-433) - Implement outbox for ongoing contribution for instance events.
+
 ## v3.1.3 2024-05-30
 ### Story
 * [MODINREACH-435](https://issues.folio.org/browse/MODINREACH-435) - GVSU is reporting that when cancelling requests for INN-Reach item holds, the OWNING_SITE_CANCELLED message is not being triggered to the central server
