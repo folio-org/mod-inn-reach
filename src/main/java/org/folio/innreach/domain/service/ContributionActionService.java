@@ -1,6 +1,7 @@
 package org.folio.innreach.domain.service;
 
 import org.folio.innreach.domain.dto.folio.circulation.RequestDTO;
+import org.folio.innreach.domain.entity.OngoingContributionStatus;
 import org.folio.innreach.dto.Holding;
 import org.folio.innreach.dto.Instance;
 import org.folio.innreach.dto.Item;
@@ -8,17 +9,17 @@ import org.folio.innreach.dto.StorageLoanDTO;
 
 public interface ContributionActionService {
 
-  void handleInstanceCreation(Instance newInstance);
+  void handleInstanceCreation(Instance newInstance, OngoingContributionStatus ongoingContributionStatus);
 
-  void handleInstanceUpdate(Instance updatedInstance);
+  void handleInstanceUpdate(Instance updatedInstance, OngoingContributionStatus ongoingContributionStatus);
 
-  void handleInstanceDelete(Instance deletedInstance);
+  void handleInstanceDelete(Instance deletedInstance, OngoingContributionStatus ongoingContributionStatus);
 
-  void handleItemCreation(Item newItem);
+  void handleItemCreation(Item newItem, OngoingContributionStatus ongoingContributionStatus);
 
-  void handleItemUpdate(Item newItem, Item oldItem);
+  void handleItemUpdate(Item newItem, Item oldItem, OngoingContributionStatus ongoingContributionStatus);
 
-  void handleItemDelete(Item deletedItem);
+  void handleItemDelete(Item deletedItem, OngoingContributionStatus ongoingContributionStatus);
 
   void handleLoanCreation(StorageLoanDTO loan);
 
@@ -26,7 +27,7 @@ public interface ContributionActionService {
 
   void handleRequestChange(RequestDTO request);
 
-  void handleHoldingUpdate(Holding holding);
+  void handleHoldingUpdate(Holding holding, OngoingContributionStatus ongoingContributionStatus);
 
-  void handleHoldingDelete(Holding holding);
+  void handleHoldingDelete(Holding holding, OngoingContributionStatus ongoingContributionStatus);
 }
