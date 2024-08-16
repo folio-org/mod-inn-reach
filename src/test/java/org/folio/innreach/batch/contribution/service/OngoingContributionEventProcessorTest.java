@@ -436,6 +436,10 @@ class OngoingContributionEventProcessorTest extends BaseControllerTest {
       .thenReturn(Optional.of(newHoldings));
     when(instanceStorageClient.getInstanceById(newHoldings.getInstanceId()))
       .thenReturn(createInstance());
+    InventoryViewClient.InstanceView instanceView1 = new InventoryViewClient.InstanceView();
+    instanceView1.setInstance(createInstance());
+    when(inventoryViewClient.getInstanceById(newHoldings.getInstanceId()))
+      .thenReturn(ResultList.of(1, List.of(instanceView1)));
     when(validationService.isEligibleForContribution(any(UUID.class), any(Item.class)))
       .thenReturn(false);
     when(recordContributionService.isContributed(any(UUID.class), any(Instance.class), any(Item.class)))
@@ -456,8 +460,10 @@ class OngoingContributionEventProcessorTest extends BaseControllerTest {
     var newHoldings = createHolding();
     when(holdingsService.find(itemUpdate.getData().getOldEntity().getHoldingsRecordId()))
       .thenReturn(Optional.of(newHoldings));
-    when(instanceStorageClient.getInstanceById(newHoldings.getInstanceId()))
-      .thenReturn(createInstance());
+    InventoryViewClient.InstanceView instanceView1 = new InventoryViewClient.InstanceView();
+    instanceView1.setInstance(createInstance());
+    when(inventoryViewClient.getInstanceById(newHoldings.getInstanceId()))
+      .thenReturn(ResultList.of(1, List.of(instanceView1)));
     when(validationService.isEligibleForContribution(any(UUID.class), any(Item.class)))
       .thenReturn(false);
     when(recordContributionService.isContributed(any(UUID.class), any(Instance.class), any(Item.class)))
@@ -482,8 +488,10 @@ class OngoingContributionEventProcessorTest extends BaseControllerTest {
     var newHoldings = createHolding();
     when(holdingsService.find(itemUpdate.getData().getOldEntity().getHoldingsRecordId()))
       .thenReturn(Optional.of(newHoldings));
-    when(instanceStorageClient.getInstanceById(newHoldings.getInstanceId()))
-      .thenReturn(createInstance());
+    InventoryViewClient.InstanceView instanceView1 = new InventoryViewClient.InstanceView();
+    instanceView1.setInstance(createInstance());
+    when(inventoryViewClient.getInstanceById(newHoldings.getInstanceId()))
+      .thenReturn(ResultList.of(1, List.of(instanceView1)));
     when(validationService.isEligibleForContribution(any(UUID.class), any(Item.class)))
       .thenReturn(true);
     when(recordContributionService.isContributed(any(UUID.class), any(Instance.class), any(Item.class)))
@@ -509,8 +517,10 @@ class OngoingContributionEventProcessorTest extends BaseControllerTest {
     var newHoldings = createHolding();
     when(holdingsService.find(itemUpdate.getData().getOldEntity().getHoldingsRecordId()))
       .thenReturn(Optional.of(newHoldings));
-    when(instanceStorageClient.getInstanceById(newHoldings.getInstanceId()))
-      .thenReturn(createInstance());
+    InventoryViewClient.InstanceView instanceView1 = new InventoryViewClient.InstanceView();
+    instanceView1.setInstance(createInstance());
+    when(inventoryViewClient.getInstanceById(newHoldings.getInstanceId()))
+      .thenReturn(ResultList.of(1, List.of(instanceView1)));
     when(validationService.isEligibleForContribution(any(UUID.class), any(Item.class)))
       .thenReturn(true);
     when(recordContributionService.isContributed(any(UUID.class), any(Instance.class), any(Item.class)))
@@ -538,6 +548,12 @@ class OngoingContributionEventProcessorTest extends BaseControllerTest {
       .thenReturn(Optional.of(newHoldings));
     when(instanceStorageClient.getInstanceById(newHoldings.getInstanceId()))
       .thenReturn(createInstance());
+    when(inventoryViewClient.getInstanceById(holdings.getInstanceId()))
+      .thenReturn(ResultList.of(1, List.of(instanceView)));
+    InventoryViewClient.InstanceView instanceView1 = new InventoryViewClient.InstanceView();
+    instanceView1.setInstance(createInstance());
+    when(inventoryViewClient.getInstanceById(newHoldings.getInstanceId()))
+      .thenReturn(ResultList.of(1, List.of(instanceView1)));
     when(validationService.isEligibleForContribution(any(UUID.class), any(Item.class)))
       .thenReturn(true);
     when(recordContributionService.isContributed(any(UUID.class), any(Instance.class), any(Item.class)))
