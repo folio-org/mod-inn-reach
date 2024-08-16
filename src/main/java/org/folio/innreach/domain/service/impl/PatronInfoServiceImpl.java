@@ -220,14 +220,10 @@ public class PatronInfoServiceImpl implements PatronInfoService {
       var libraryOptionId = user.getCustomFields().get(fieldRefId);
 //      fieldRefId - yesorno key libraryOptionId- object type  [opt_0,opt_1,opt_2]
       Assert.isTrue(libraryOptionId != null, "User home library setting is not found by refId: " + fieldRefId);
-      log.info("libraryOptionId");
-      log.info(libraryOptionId);
+      log.info("libraryOptionId" + libraryOptionId);
       log.info(libraryOptionId.getClass());
       agencyCodes.addAll(libraryOptionId);
 
-      log.info("patronAgencyMapping.getConfiguredOptions()");
-
-      log.info(agencyCodes.size() + "228");
     } catch (Exception e) {
       log.warn("Patron agency mapping for central server {} is not found", centralServerId, e);
     }
