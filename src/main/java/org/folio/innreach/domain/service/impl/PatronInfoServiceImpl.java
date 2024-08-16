@@ -70,7 +70,7 @@ public class PatronInfoServiceImpl implements PatronInfoService {
   @Override
   public PatronInfoResponseDTO verifyPatron(String centralServerCode, String visiblePatronId,
                                             String patronAgencyCode, String patronName) {
-    log.debug("verifyPatron:: parameters centralServerCode: {}, visiblePatronId: {}, patronAgencyCode: {}, patronName: {}", centralServerCode, visiblePatronId, patronAgencyCode, patronName);
+    log.info("verifyPatron:: parameters centralServerCode: {}, visiblePatronId: {}, patronAgencyCode: {}, patronName: {}", centralServerCode, visiblePatronId, patronAgencyCode, patronName);
     PatronInfoResponse response;
     try {
       var centralServer = centralServerService.getCentralServerByCentralCode(centralServerCode);
@@ -103,7 +103,7 @@ public class PatronInfoServiceImpl implements PatronInfoService {
   }
 
   private PatronInfo getPatronInfo(UUID centralServerId, List<LocalAgencyDTO> agencies, User user) {
-    log.debug("getPatronInfo:: parameters centralServerId: {}, agencies: {}, user: {}", centralServerId, agencies, user);
+    log.info("getPatronInfo:: parameters centralServerId: {}, agencies: {}, user: {}", centralServerId, agencies, user);
     var centralPatronType = getCentralPatronType(centralServerId, user);
     var patronId = getPatronId(user);
     var patron = getPatron(user);
@@ -204,21 +204,30 @@ public class PatronInfoServiceImpl implements PatronInfoService {
   }
 
   private String getPatronAgencyCode(UUID centralServerId, List<LocalAgencyDTO> agencies, User user) {
+    log.info("getPatronAgencyCode");
+    log.info(centralServerId);
+    log.info(agencies);
+    log.info(user);
     String agencyCode = null;
     try {
       var patronAgencyMapping = customFieldMappingService.getMapping(centralServerId);
-
+      log.info("patronAgencyMapping");
+      log.info(customFieldMappingService.getMapping(centralServerId));
       var fieldRefId = patronAgencyMapping.getCustomFieldId();
       var libraryOptionId = user.getCustomFields().get(fieldRefId);
       Assert.isTrue(libraryOptionId != null, "User home library setting is not found by refId: " + fieldRefId);
-
+      log.info("libraryOptionId");
+      log.info(libraryOptionId);
       agencyCode = patronAgencyMapping.getConfiguredOptions().get(libraryOptionId);
+      log.info("patronAgencyMapping.getConfiguredOptions()");
+      log.info(patronAgencyMapping.getConfiguredOptions().get(libraryOptionId));
     } catch (Exception e) {
       log.warn("Patron agency mapping for central server {} is not found", centralServerId, e);
     }
 
     // if no mapping found and only one agency code is hosted on the server, it should default to that
     if (agencyCode == null && agencies.size() == 1) {
+      log.info("inside if");
       agencyCode = agencies.get(0).getCode();
     }
 
