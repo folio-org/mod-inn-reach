@@ -213,14 +213,19 @@ public class PatronInfoServiceImpl implements PatronInfoService {
       var patronAgencyMapping = customFieldMappingService.getMapping(centralServerId);
       log.info("patronAgencyMapping");
       log.info(customFieldMappingService.getMapping(centralServerId));
+      customFieldMappingService.getMapping(centralServerId).getConfiguredOptions().keySet().forEach(s-> System.out.println(s.getClass()));
       var fieldRefId = patronAgencyMapping.getCustomFieldId();
       var libraryOptionId = user.getCustomFields().get(fieldRefId);
       Assert.isTrue(libraryOptionId != null, "User home library setting is not found by refId: " + fieldRefId);
       log.info("libraryOptionId");
       log.info(libraryOptionId);
+      log.info(libraryOptionId.getClass());
       agencyCode = patronAgencyMapping.getConfiguredOptions().get(libraryOptionId);
       log.info("patronAgencyMapping.getConfiguredOptions()");
       log.info(patronAgencyMapping.getConfiguredOptions().get(libraryOptionId));
+      String newKey = String.valueOf(libraryOptionId);
+      agencyCode = patronAgencyMapping.getConfiguredOptions().get(newKey);
+      log.info(agencyCode + "228");
     } catch (Exception e) {
       log.warn("Patron agency mapping for central server {} is not found", centralServerId, e);
     }
