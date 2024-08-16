@@ -238,7 +238,7 @@ public class PatronInfoServiceImpl implements PatronInfoService {
       agencyCodes = List.of(agencies.get(0).getCode());
     }
 
-    Assert.isTrue(agencyCodes.isEmpty(), "Patron agency code is not resolved");
+    Assert.isTrue(!agencyCodes.isEmpty(), "Patron agency code is not resolved");
 
     return agencyCodes;
   }
