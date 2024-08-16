@@ -1,6 +1,7 @@
 package org.folio.innreach.domain.dto.folio;
 
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.UUID;
 
@@ -23,7 +24,7 @@ public class User {
   private boolean active;
   private Personal personal;
   private String barcode;
-  private Map<String, Object> customFields;
+  private Map<String, ArrayList<String>> customFields;
 
   @Data
   @NoArgsConstructor

@@ -12,7 +12,9 @@ import static org.folio.innreach.external.dto.InnReachResponse.Error.ofMessage;
 
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
@@ -203,12 +205,12 @@ public class PatronInfoServiceImpl implements PatronInfoService {
       .orElseThrow(() -> new IllegalArgumentException("Patron is not found by id for creation patron hold transaction: " + patronId));
   }
 
-  private String getPatronAgencyCode(UUID centralServerId, List<LocalAgencyDTO> agencies, User user) {
+  private List<String> getPatronAgencyCode(UUID centralServerId, List<LocalAgencyDTO> agencies, User user) {
     log.info("getPatronAgencyCode");
     log.info(centralServerId);
     log.info(agencies);
     log.info(user);
-    String agencyCode = null;
+    List<String> agencyCodes = new ArrayList<>();
     try {
       var patronAgencyMapping = customFieldMappingService.getMapping(centralServerId);
       log.info("patronAgencyMapping");
@@ -216,29 +218,29 @@ public class PatronInfoServiceImpl implements PatronInfoService {
       customFieldMappingService.getMapping(centralServerId).getConfiguredOptions().keySet().forEach(s-> System.out.println(s.getClass()));
       var fieldRefId = patronAgencyMapping.getCustomFieldId();
       var libraryOptionId = user.getCustomFields().get(fieldRefId);
+//      fieldRefId - yesorno key libraryOptionId- object type  [opt_0,opt_1,opt_2]
       Assert.isTrue(libraryOptionId != null, "User home library setting is not found by refId: " + fieldRefId);
       log.info("libraryOptionId");
       log.info(libraryOptionId);
       log.info(libraryOptionId.getClass());
-      agencyCode = patronAgencyMapping.getConfiguredOptions().get(libraryOptionId);
+      agencyCodes.addAll(libraryOptionId);
+
       log.info("patronAgencyMapping.getConfiguredOptions()");
-      log.info(patronAgencyMapping.getConfiguredOptions().get(libraryOptionId));
-      String newKey = String.valueOf(libraryOptionId);
-      agencyCode = patronAgencyMapping.getConfiguredOptions().get(newKey);
-      log.info(agencyCode + "228");
+
+      log.info(agencyCodes.size() + "228");
     } catch (Exception e) {
       log.warn("Patron agency mapping for central server {} is not found", centralServerId, e);
     }
 
     // if no mapping found and only one agency code is hosted on the server, it should default to that
-    if (agencyCode == null && agencies.size() == 1) {
+    if (agencyCodes.isEmpty() && agencies.size() == 1) {
       log.info("inside if");
-      agencyCode = agencies.get(0).getCode();
+      agencyCodes = List.of(agencies.get(0).getCode());
     }
 
-    Assert.isTrue(agencyCode != null, "Patron agency code is not resolved");
+    Assert.isTrue(agencyCodes.isEmpty(), "Patron agency code is not resolved");
 
-    return agencyCode;
+    return agencyCodes;
   }
 
   private static boolean matchName(User user, String patronName) {
