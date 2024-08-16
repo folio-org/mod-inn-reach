@@ -277,7 +277,7 @@ public class ContributionActionServiceImpl implements ContributionActionService 
     var newHoldingId = newItem.getHoldingsRecordId();
     if (!oldHoldingId.equals(newHoldingId)) {
       var oldInstanceId = fetchHolding(oldHoldingId).getInstanceId();
-      return instanceStorageClient.getInstanceById(oldInstanceId);
+      return fetchInstanceWithItems(oldInstanceId);
     }
     return newInstance;
   }
