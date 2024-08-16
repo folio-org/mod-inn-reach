@@ -23,7 +23,7 @@ public class User {
   private boolean active;
   private Personal personal;
   private String barcode;
-  private Map<String, String> customFields;
+  private Map<String, Object> customFields;
 
   @Data
   @NoArgsConstructor
