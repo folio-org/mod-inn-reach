@@ -206,24 +206,19 @@ public class PatronInfoServiceImpl implements PatronInfoService {
   }
 
   private List<String> getPatronAgencyCode(UUID centralServerId, List<LocalAgencyDTO> agencies, User user) {
-    log.info("getPatronAgencyCode");
-    log.info(centralServerId);
-    log.info(agencies);
-    log.info(user);
+    log.info("getPatronAgencyCode:: parameters centralServerId: {}, agencies: {}, user: {}", centralServerId, agencies, user);
     List<String> agencyCodes = new ArrayList<>();
     try {
       var patronAgencyMapping = customFieldMappingService.getMapping(centralServerId);
-      log.info("patronAgencyMapping");
-      log.info(customFieldMappingService.getMapping(centralServerId));
+      log.info("patronAgencyMapping:" + customFieldMappingService.getMapping(centralServerId));
       customFieldMappingService.getMapping(centralServerId).getConfiguredOptions().keySet().forEach(s-> System.out.println(s.getClass()));
       var fieldRefId = patronAgencyMapping.getCustomFieldId();
       var libraryOptionId = user.getCustomFields().get(fieldRefId);
-//      fieldRefId - yesorno key libraryOptionId- object type  [opt_0,opt_1,opt_2]
       Assert.isTrue(libraryOptionId != null, "User home library setting is not found by refId: " + fieldRefId);
       log.info("libraryOptionId" + libraryOptionId);
       log.info(libraryOptionId.getClass());
       agencyCodes.addAll(libraryOptionId);
-
+      log.info(agencyCodes);
     } catch (Exception e) {
       log.warn("Patron agency mapping for central server {} is not found", centralServerId, e);
     }
