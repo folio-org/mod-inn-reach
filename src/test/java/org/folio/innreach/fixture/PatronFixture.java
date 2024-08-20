@@ -5,8 +5,10 @@ import static org.apache.commons.collections4.CollectionUtils.isNotEmpty;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import lombok.experimental.UtilityClass;
 
@@ -87,4 +89,26 @@ public class PatronFixture {
   public static String getPatronId(User user) {
     return UUIDEncoder.encode(user.getId());
   }
+
+  public static User createUserWithNonStringCustomFieldValues() {
+    var user = new User();
+    user.setId(UUID.randomUUID());
+    user.setActive(true);
+    user.setExpirationDate(OffsetDateTime.now().plusYears(1));
+    user.setPersonal(User.Personal.of(PATRON_FIRST_NAME, null, PATRON_LAST_NAME, null));
+
+    // Include a custom field with a non-string value (array)
+    Map<String, Object> customFields = new HashMap<>();
+    customFields.put(CUSTOM_FIELD_REF_ID, CUSTOM_FIELD_OPTION);
+    customFields.put("arrayField", new String[]{"value2", "value3"});
+
+    Map<String, String> CustomFieldsWithOnlyStringValues = customFields.entrySet().stream()
+      .filter(entry -> entry.getValue() instanceof String)
+      .collect(Collectors.toMap(Map.Entry::getKey, entry -> (String) entry.getValue()));
+
+    user.setCustomFields(CustomFieldsWithOnlyStringValues);
+
+    return user;
+  }
+
 }

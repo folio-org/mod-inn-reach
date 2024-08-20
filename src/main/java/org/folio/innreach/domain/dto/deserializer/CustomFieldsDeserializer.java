@@ -12,10 +12,9 @@ import java.util.Map;
 
 public class CustomFieldsDeserializer extends JsonDeserializer<Map<String, String>> {
   @Override
-  public Map<String, String> deserialize(JsonParser p, DeserializationContext ctxt)
-    throws IOException {
+  public Map<String, String> deserialize(JsonParser parser, DeserializationContext context) throws IOException {
     Map<String, String> customFields = new HashMap<>();
-    JsonNode node = p.getCodec().readTree(p);
+    JsonNode node = parser.getCodec().readTree(parser);
 
     Iterator<Map.Entry<String, JsonNode>> fields = node.fields();
     while (fields.hasNext()) {
