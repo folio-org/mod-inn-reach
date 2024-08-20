@@ -9,11 +9,8 @@
       "maxLength": 32
     },
     "patronAgencyCode": {
-      "description": "5 character lowercase alphanumeric",
-      "type": "array",
-      "items": {
-        "type": "string"
-      }
+      "type": "string",
+      "description": "5 character lowercase alphanumeric"
     },
     "centralPatronType": {
       "type": "integer",

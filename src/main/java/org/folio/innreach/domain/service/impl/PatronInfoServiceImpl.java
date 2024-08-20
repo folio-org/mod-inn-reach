@@ -12,9 +12,7 @@ import static org.folio.innreach.external.dto.InnReachResponse.Error.ofMessage;
 
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
@@ -205,33 +203,28 @@ public class PatronInfoServiceImpl implements PatronInfoService {
       .orElseThrow(() -> new IllegalArgumentException("Patron is not found by id for creation patron hold transaction: " + patronId));
   }
 
-  private List<String> getPatronAgencyCode(UUID centralServerId, List<LocalAgencyDTO> agencies, User user) {
-    log.info("getPatronAgencyCode:: parameters centralServerId: {}, agencies: {}, user: {}", centralServerId, agencies, user);
-    List<String> agencyCodes = new ArrayList<>();
+  private String getPatronAgencyCode(UUID centralServerId, List<LocalAgencyDTO> agencies, User user) {
+    String agencyCode = null;
     try {
       var patronAgencyMapping = customFieldMappingService.getMapping(centralServerId);
-      log.info("patronAgencyMapping:" + customFieldMappingService.getMapping(centralServerId));
-      customFieldMappingService.getMapping(centralServerId).getConfiguredOptions().keySet().forEach(s-> System.out.println(s.getClass()));
+
       var fieldRefId = patronAgencyMapping.getCustomFieldId();
       var libraryOptionId = user.getCustomFields().get(fieldRefId);
       Assert.isTrue(libraryOptionId != null, "User home library setting is not found by refId: " + fieldRefId);
-      log.info("libraryOptionId" + libraryOptionId);
-      log.info(libraryOptionId.getClass());
-      agencyCodes.addAll(libraryOptionId);
-      log.info(agencyCodes);
+
+      agencyCode = patronAgencyMapping.getConfiguredOptions().get(libraryOptionId);
     } catch (Exception e) {
       log.warn("Patron agency mapping for central server {} is not found", centralServerId, e);
     }
 
     // if no mapping found and only one agency code is hosted on the server, it should default to that
-    if (agencyCodes.isEmpty() && agencies.size() == 1) {
-      log.info("inside if");
-      agencyCodes = List.of(agencies.get(0).getCode());
+    if (agencyCode == null && agencies.size() == 1) {
+      agencyCode = agencies.get(0).getCode();
     }
 
-    Assert.isTrue(!agencyCodes.isEmpty(), "Patron agency code is not resolved");
+    Assert.isTrue(agencyCode != null, "Patron agency code is not resolved");
 
-    return agencyCodes;
+    return agencyCode;
   }
 
   private static boolean matchName(User user, String patronName) {
