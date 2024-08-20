@@ -70,7 +70,7 @@ public class PatronInfoServiceImpl implements PatronInfoService {
   @Override
   public PatronInfoResponseDTO verifyPatron(String centralServerCode, String visiblePatronId,
                                             String patronAgencyCode, String patronName) {
-    log.info("verifyPatron:: parameters centralServerCode: {}, visiblePatronId: {}, patronAgencyCode: {}, patronName: {}", centralServerCode, visiblePatronId, patronAgencyCode, patronName);
+    log.debug("verifyPatron:: parameters centralServerCode: {}, visiblePatronId: {}, patronAgencyCode: {}, patronName: {}", centralServerCode, visiblePatronId, patronAgencyCode, patronName);
     PatronInfoResponse response;
     try {
       var centralServer = centralServerService.getCentralServerByCentralCode(centralServerCode);
@@ -103,7 +103,7 @@ public class PatronInfoServiceImpl implements PatronInfoService {
   }
 
   private PatronInfo getPatronInfo(UUID centralServerId, List<LocalAgencyDTO> agencies, User user) {
-    log.info("getPatronInfo:: parameters centralServerId: {}, agencies: {}, user: {}", centralServerId, agencies, user);
+    log.debug("getPatronInfo:: parameters centralServerId: {}, agencies: {}, user: {}", centralServerId, agencies, user);
     var centralPatronType = getCentralPatronType(centralServerId, user);
     var patronId = getPatronId(user);
     var patron = getPatron(user);
@@ -133,6 +133,7 @@ public class PatronInfoServiceImpl implements PatronInfoService {
   private User findPatronUser(String visiblePatronId, String patronName, VisiblePatronFieldConfiguration fieldConfig) {
     var user = fieldConfig == null ? userService.getUserByBarcode(visiblePatronId).orElse(null) :
       userService.getUserByQuery(constructPublicIdQuery(fieldConfig, visiblePatronId)).orElse(null);
+
     Assert.isTrue(user != null, "Patron is not found by visiblePatronId: " + visiblePatronId);
     Assert.isTrue(user.isActive(), "Patron is not active");
     Assert.isTrue(matchName(user, patronName), "Patron is not found by name: " + patronName);

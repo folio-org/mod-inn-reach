@@ -30,7 +30,7 @@ public class PatronInfoController implements VerifyPatronD2irApi {
   public ResponseEntity<PatronInfoResponseDTO> verifyPatron(@RequestHeader(value = "x-to-code") String localCodeHeader,
                                                             @RequestHeader(value = "x-from-code") String centralCodeHeader,
                                                             @RequestBody PatronInfoRequestDTO patronInfoRequest) {
-    log.info(patronInfoRequest);
+
     var visiblePatronId = patronInfoRequest.getVisiblePatronId();
     var patronAgencyCode = patronInfoRequest.getPatronAgencyCode();
     var patronName = patronInfoRequest.getPatronName();
