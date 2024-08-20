@@ -102,11 +102,11 @@ public class PatronFixture {
     customFields.put(CUSTOM_FIELD_REF_ID, CUSTOM_FIELD_OPTION);
     customFields.put("arrayField", new String[]{"value2", "value3"});
 
-    Map<String, String> CustomFieldsWithOnlyStringValues = customFields.entrySet().stream()
+    Map<String, String> customFieldsWithOnlyStringValues = customFields.entrySet().stream()
       .filter(entry -> entry.getValue() instanceof String)
       .collect(Collectors.toMap(Map.Entry::getKey, entry -> (String) entry.getValue()));
 
-    user.setCustomFields(CustomFieldsWithOnlyStringValues);
+    user.setCustomFields(customFieldsWithOnlyStringValues);
 
     return user;
   }
