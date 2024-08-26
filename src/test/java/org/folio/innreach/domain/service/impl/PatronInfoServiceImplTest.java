@@ -3,6 +3,8 @@ package org.folio.innreach.domain.service.impl;
 import static java.util.Collections.emptyMap;
 import static java.util.Collections.singletonList;
 import static java.util.List.of;
+import static org.folio.innreach.fixture.PatronFixture.CUSTOM_FIELD_OPTION;
+import static org.folio.innreach.fixture.PatronFixture.CUSTOM_FIELD_REF_ID;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -26,6 +28,7 @@ import static org.folio.innreach.fixture.PatronFixture.createAutomatedPatronBloc
 import static org.folio.innreach.fixture.PatronFixture.createCustomFieldMapping;
 import static org.folio.innreach.fixture.PatronFixture.createManualPatronBlock;
 import static org.folio.innreach.fixture.PatronFixture.createUser;
+import static org.folio.innreach.fixture.PatronFixture.createUserWithNonStringCustomFieldValues;
 import static org.folio.innreach.fixture.PatronFixture.getErrorMsg;
 import static org.folio.innreach.fixture.PatronFixture.getPatronId;
 
@@ -496,4 +499,35 @@ class PatronInfoServiceImplTest {
       + " or customFields.field1==" + VISIBLE_PATRON_ID + " or customFields.field2==" + VISIBLE_PATRON_ID, query);
   }
 
+  @Test
+  void shouldReturnPatronInfo_IfCustomFieldsContainNonStringValues() {
+    var user = createUserWithNonStringCustomFieldValues();
+    var patronId = getPatronId(user);
+
+    when(centralServerService.getCentralServerByCentralCode(any())).thenReturn(createCentralServerDTO());
+    when(userService.getUserByBarcode(any())).thenReturn(Optional.of(user));
+    when(automatedPatronBlocksClient.getPatronBlocks(any())).thenReturn(ResultList.empty());
+    when(manualPatronBlocksClient.getPatronBlocks(any())).thenReturn(ResultList.empty());
+    when(patronClient.getAccountDetails(any())).thenReturn(PatronDTO.of(TOTAL_LOANS, singletonList(Loan.of(UUID.randomUUID()))));
+    when(transactionService.countInnReachLoans(any(), any())).thenReturn(INN_REACH_LOANS);
+    when(patronTypeMappingService.getCentralPatronType(any(), any())).thenReturn(Optional.of(CENTRAL_PATRON_TYPE));
+    when(userCustomFieldService.getMapping(any())).thenReturn(createCustomFieldMapping());
+    when(fieldService.getByCentralCode(anyString())).thenReturn(Optional.empty());
+
+    var response = service.verifyPatron(CENTRAL_CODE, VISIBLE_PATRON_ID, AGENCY_CODE, PATRON_NAME);
+
+    assertNotNull(response);
+    var patronInfo = response.getPatronInfo();
+
+    assertNotNull(patronInfo);
+    assertEquals(patronId, patronInfo.getPatronId());
+    assertEquals(FOLIO_PATRON_NAME, patronInfo.getPatronName());
+    assertEquals(CENTRAL_PATRON_TYPE, patronInfo.getCentralPatronType());
+    assertEquals(INN_REACH_LOANS, patronInfo.getNonLocalLoans());
+    assertEquals(TOTAL_LOANS - INN_REACH_LOANS, (int) patronInfo.getLocalLoans());
+    assertEquals(CENTRAL_AGENCY_CODE, patronInfo.getPatronAgencyCode());
+    assertNotNull(patronInfo.getPatronExpireDate());
+    assertEquals(CUSTOM_FIELD_OPTION, user.getCustomFields().get(CUSTOM_FIELD_REF_ID));
+    assertNull(user.getCustomFields().get("arrayField"));
+  }
 }
