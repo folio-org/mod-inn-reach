@@ -89,6 +89,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.test.context.event.annotation.BeforeTestMethod;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlMergeMode;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -419,7 +420,7 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
   })
-  void precessReportUnshippedItemReceived_whenTransactionItemShipped() {
+  void precessReportUnshippedItemReceived_whenTransactionItemShipped() { // sreeja
     var transaction = fetchTransactionByTrackingId(PRE_POPULATED_TRACKING2_ID);
     transaction.setState(ITEM_SHIPPED);
     repository.save(transaction);
@@ -542,10 +543,11 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
   }
 
   @Test
+  @Transactional
   @Sql(scripts = {
     "classpath:db/central-server/pre-populate-central-server.sql"
   })
-  void processLocalHoldCirculationRequest_createNew() {
+  void processLocalHoldCirculationRequest_createNew() { // mani
     var transactionHoldDTO = createTransactionHoldDTO();
     transactionHoldDTO.setItemAgencyCode(PRE_POPULATED_LOCAL_AGENCY_CODE1);
     transactionHoldDTO.setPatronAgencyCode(PRE_POPULATED_LOCAL_AGENCY_CODE2);
