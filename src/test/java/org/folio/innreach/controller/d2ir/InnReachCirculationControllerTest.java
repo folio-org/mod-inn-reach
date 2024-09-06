@@ -544,7 +544,6 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
   }
 
   @Test
-  @Transactional
   @Sql(scripts = {
     "classpath:db/central-server/pre-populate-central-server.sql"
   })
