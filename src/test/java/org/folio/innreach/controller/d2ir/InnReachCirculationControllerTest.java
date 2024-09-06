@@ -86,6 +86,7 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
+import org.springframework.test.context.event.annotation.BeforeTestMethod;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlMergeMode;
 
@@ -358,6 +359,7 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     assertEquals(BORROWING_SITE_CANCEL, transactionUpdated.getState());
   }
 
+//  failed test case
   @Test
   @Sql(scripts = {
     "classpath:db/central-server/pre-populate-central-server.sql",
