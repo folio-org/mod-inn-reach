@@ -359,7 +359,7 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     assertEquals(BORROWING_SITE_CANCEL, transactionUpdated.getState());
   }
 
-//  failed test case
+//  reproducing failed test case 2
   @Test
   @Sql(scripts = {
     "classpath:db/central-server/pre-populate-central-server.sql",
