@@ -421,7 +421,7 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
   })
-  void precessReportUnshippedItemReceived_whenTransactionItemShipped() { // sreeja
+  void processReportUnshippedItemReceived_whenTransactionItemShipped() { // sreeja
     var transaction = fetchTransactionByTrackingId(PRE_POPULATED_TRACKING2_ID);
     transaction.setState(ITEM_SHIPPED);
     repository.save(transaction);
