@@ -940,6 +940,7 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     assertEquals(RECALL, transactionState);
   }
 
+
   @Test
   @Sql(scripts = {
     "classpath:db/central-server/pre-populate-central-server.sql",
