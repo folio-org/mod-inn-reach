@@ -418,6 +418,8 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
 
   @Test
   @Sql(scripts = {
+    "classpath:db/central-server/clear-central-server-tables.sql",
+    "classpath:db/inn-reach-transaction/clear-inn-reach-transaction-tables.sql",
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
   })
@@ -545,6 +547,8 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
 
   @Test
   @Sql(scripts = {
+    "classpath:db/central-server/clear-central-server-tables.sql",
+    "classpath:db/inn-reach-transaction/clear-inn-reach-transaction-tables.sql",
     "classpath:db/central-server/pre-populate-central-server.sql"
   })
   void processLocalHoldCirculationRequest_createNew() { // mani
