@@ -206,6 +206,7 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     var transactionHoldDTO = createTransactionHoldDTO();
     var user = populateUser();
 
+
     when(userService.getUserById(any())).thenReturn(Optional.of(user));
 
     var responseEntity = testRestTemplate.postForEntity(
