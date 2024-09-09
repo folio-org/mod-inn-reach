@@ -88,6 +88,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.context.event.annotation.BeforeTestMethod;
 import org.springframework.test.context.jdbc.Sql;
+import org.springframework.test.context.jdbc.SqlConfig;
 import org.springframework.test.context.jdbc.SqlMergeMode;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -109,7 +110,9 @@ import java.util.UUID;
   },
   executionPhase = AFTER_TEST_METHOD
 )
+@SqlConfig(transactionMode = SqlConfig.TransactionMode.ISOLATED)
 @SqlMergeMode(MERGE)
+@Transactional
 class InnReachCirculationControllerTest extends BaseControllerTest {
 
   private static final String ITEM_IN_TRANSIT_ENDPOINT = "/inn-reach/d2ir/circ/intransit/{trackingId}/{centralCode}";
