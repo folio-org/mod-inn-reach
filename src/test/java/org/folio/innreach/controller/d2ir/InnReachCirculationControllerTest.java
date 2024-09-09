@@ -445,7 +445,6 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     assertNotEquals(RECEIVE_UNANNOUNCED, transactionUpdated.getState());
   }
 
-
   @Test
   @Sql(scripts = {
     "classpath:db/central-server/pre-populate-central-server.sql",
