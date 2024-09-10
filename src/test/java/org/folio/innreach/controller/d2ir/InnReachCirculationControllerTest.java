@@ -73,7 +73,6 @@ import org.folio.innreach.external.dto.InnReachResponse;
 import org.folio.innreach.external.service.InnReachExternalService;
 import org.folio.innreach.mapper.InnReachTransactionHoldMapper;
 import org.folio.innreach.repository.InnReachTransactionRepository;
-import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
@@ -88,6 +87,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.context.jdbc.Sql;
+import org.springframework.test.context.jdbc.SqlConfig;
 import org.springframework.test.context.jdbc.SqlMergeMode;
 
 import java.time.Duration;
@@ -544,10 +544,11 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
   }
 
   @Test
-  @Order(1)
+  //@Order(1)
   @Sql(scripts = {
     "classpath:db/central-server/pre-populate-central-server.sql"
-  })
+  },
+    config = @SqlConfig(transactionMode = SqlConfig.TransactionMode.ISOLATED))
   void processLocalHoldCirculationRequest_createNew() { // mani
     var transactionHoldDTO = createTransactionHoldDTO();
     transactionHoldDTO.setItemAgencyCode(PRE_POPULATED_LOCAL_AGENCY_CODE1);
