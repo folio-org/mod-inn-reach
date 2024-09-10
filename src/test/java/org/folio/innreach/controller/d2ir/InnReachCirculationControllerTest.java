@@ -112,7 +112,6 @@ import java.util.UUID;
   executionPhase = AFTER_TEST_METHOD
 )
 @SqlMergeMode(MERGE)
-@DirtiesContext
 class InnReachCirculationControllerTest extends BaseControllerTest {
 
   private static final String ITEM_IN_TRANSIT_ENDPOINT = "/inn-reach/d2ir/circ/intransit/{trackingId}/{centralCode}";
