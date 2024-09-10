@@ -73,6 +73,7 @@ import org.folio.innreach.external.dto.InnReachResponse;
 import org.folio.innreach.external.service.InnReachExternalService;
 import org.folio.innreach.mapper.InnReachTransactionHoldMapper;
 import org.folio.innreach.repository.InnReachTransactionRepository;
+import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
@@ -547,6 +548,7 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
   }
 
   @Test
+  @Order(1)
   @Sql(scripts = {
     "classpath:db/central-server/pre-populate-central-server.sql"
   })
