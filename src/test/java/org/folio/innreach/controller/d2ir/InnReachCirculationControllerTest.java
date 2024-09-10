@@ -212,7 +212,6 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
 
     var responseBody = responseEntity.getBody();
-
     assertNotNull(responseBody);
     assertNotNull(responseBody.getErrors());
     assertEquals(0, responseBody.getErrors().size());
@@ -226,6 +225,7 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     assertEquals(CENTRAL_PATRON_NAME, innReachTransaction.getHold().getPatronName());
     assertEquals(PRE_POPULATED_CENTRAL_PATRON_TYPE, innReachTransaction.getHold().getCentralPatronType());
   }
+
 
 
   @Test
