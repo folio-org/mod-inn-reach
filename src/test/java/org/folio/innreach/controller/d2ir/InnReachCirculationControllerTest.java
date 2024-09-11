@@ -226,7 +226,6 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     assertEquals(PRE_POPULATED_CENTRAL_PATRON_TYPE, innReachTransaction.getHold().getCentralPatronType());
   }
 
-
   @Test
   @Sql(scripts = {
     "classpath:db/central-server/pre-populate-central-server.sql",
@@ -418,7 +417,7 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
   })
-  void processReportUnshippedItemReceived_whenTransactionItemShipped() { // sreeja
+  void processReportUnshippedItemReceived_whenTransactionItemShipped() {
     var transaction = fetchTransactionByTrackingId(PRE_POPULATED_TRACKING2_ID);
     transaction.setState(ITEM_SHIPPED);
     repository.save(transaction);
@@ -439,7 +438,6 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     var transactionUpdated = fetchTransactionByTrackingId(PRE_POPULATED_TRACKING2_ID);
     assertNotEquals(RECEIVE_UNANNOUNCED, transactionUpdated.getState());
   }
-
 
   @Test
   @Sql(scripts = {
@@ -542,12 +540,11 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
   }
 
   @Test
-  //@Order(1)
   @Sql(scripts = {
     "classpath:db/central-server/pre-populate-central-server.sql"
   },
     config = @SqlConfig(transactionMode = SqlConfig.TransactionMode.ISOLATED))
-  void processLocalHoldCirculationRequest_createNew() { // mani
+  void processLocalHoldCirculationRequest_createNew() {
     var transactionHoldDTO = createTransactionHoldDTO();
     transactionHoldDTO.setItemAgencyCode(PRE_POPULATED_LOCAL_AGENCY_CODE1);
     transactionHoldDTO.setPatronAgencyCode(PRE_POPULATED_LOCAL_AGENCY_CODE2);
@@ -939,7 +936,6 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     assertEquals(OK, responseEntity.getStatusCode());
     assertEquals(RECALL, transactionState);
   }
-
 
   @Test
   @Sql(scripts = {
