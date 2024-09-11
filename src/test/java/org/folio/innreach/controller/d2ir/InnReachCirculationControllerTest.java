@@ -210,7 +210,9 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
       PATRON_HOLD_OPERATION, NEW_TRANSACTION_TRACKING_ID, PRE_POPULATED_CENTRAL_CODE);
 
     assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+
     var responseBody = responseEntity.getBody();
+
     assertNotNull(responseBody);
     assertNotNull(responseBody.getErrors());
     assertEquals(0, responseBody.getErrors().size());
