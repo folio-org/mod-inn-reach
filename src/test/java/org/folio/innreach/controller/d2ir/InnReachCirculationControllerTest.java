@@ -226,7 +226,6 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     assertEquals(PRE_POPULATED_CENTRAL_PATRON_TYPE, innReachTransaction.getHold().getCentralPatronType());
   }
 
-
   @Test
   @Sql(scripts = {
     "classpath:db/central-server/pre-populate-central-server.sql",
