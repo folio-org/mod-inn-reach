@@ -56,6 +56,7 @@ spring:
       # to boot up application despite of any DB connection issues
       continue-on-error: true
 folio:
+  isEureka: ${FOR_EUREKA:true}
   tenant:
     validation:
       enabled: true
