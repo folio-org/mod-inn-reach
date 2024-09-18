@@ -27,7 +27,7 @@ public class CustomTenantService extends TenantService {
   private final TenantInfoRepository tenantRepository;
 
   @Value("${folio.isEureka}")
-  private Boolean isEureka;
+  private Boolean isEureka = false;
 
 
   public CustomTenantService(JdbcTemplate jdbcTemplate, FolioExecutionContext context,

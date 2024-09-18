@@ -19,6 +19,7 @@ spring:
     consumer:
       auto-offset-reset: earliest
 folio:
+  isEureka: false
   tenant:
     validation:
       enabled: false
