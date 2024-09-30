@@ -44,9 +44,7 @@ public class CustomTenantService extends TenantService {
   protected void afterTenantUpdate(TenantAttributes tenantAttributes) {
     log.debug("afterTenantUpdate:: parameters tenantAttributes: {}", tenantAttributes);
     if (!context.getTenantId().startsWith(testTenant.getTenantName())) {
-      if(!isEureka) {
-        systemUserService.setupSystemUser();
-      }
+      systemUserService.setupSystemUser();
       saveTenant();
     }
   }
