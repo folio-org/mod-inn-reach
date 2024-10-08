@@ -20,7 +20,7 @@
     },
     {
       "id": "inventory",
-      "version": "13.4"
+      "version": "13.1"
     },
     {
       "id": "service-points-users",
@@ -48,7 +48,7 @@
     },
     {
       "id": "source-storage-records",
-      "version": "3.2"
+      "version": "3.3"
     },
     {
       "id": "feesfines",
