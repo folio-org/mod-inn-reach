@@ -1,3 +1,8 @@
+## v3.X.X (Unreleased)
+
+### Stories
+* [MODINREACH-453](https://folio-org.atlassian.net/browse/MODINREACH-453) - Replace source-storage.records.get permission with source-storage.records.formatted.item.get
+
 ## v3.2.0 2024-03-20
 
 ### Stories
@@ -10,7 +15,6 @@
 * [MODINREACH-423](https://issues.folio.org/browse/MODINREACH-423) - Final check in operation is missing configuration permission
 * [MODINREACH-424](https://issues.folio.org/browse/MODINREACH-424) - Patron validation endpoint should strip commas and leading and trailing spaces from the patron name field
 * [MODINREACH-420](https://issues.folio.org/browse/MODINREACH-420) - Update Spring version for Quesnelia
-* [MODINREACH-453](https://folio-org.atlassian.net/browse/MODINREACH-453) - Replace source-storage.records.get permission with source-storage.records.formatted.item.get
 
 
 ## v3.1.0 2023-10-12
