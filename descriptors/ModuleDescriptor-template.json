@@ -48,7 +48,7 @@
     },
     {
       "id": "source-storage-records",
-      "version": "3.2"
+      "version": "3.3"
     },
     {
       "id": "feesfines",
@@ -283,7 +283,7 @@
             "inventory-storage.inventory-view.instances.collection.get",
             "inventory-storage.material-types.collection.get",
             "inventory-storage.locations.collection.get",
-            "source-storage.records.get"
+            "source-storage.records.formatted.item.get"
           ]
         },
         {
@@ -347,7 +347,7 @@
           "permissionsRequired": ["inn-reach.d2ir.bib-info.item.get"],
           "modulePermissions": [
             "inventory-storage.inventory-view.instances.collection.get",
-            "source-storage.records.get"
+            "source-storage.records.formatted.item.get"
           ]
         },
         {
@@ -541,7 +541,7 @@
           "permissionsRequired": ["inn-reach.marc-record-transformation.item.get"],
           "modulePermissions": [
             "inventory-storage.instances.item.get",
-            "source-storage.records.get"
+            "source-storage.records.formatted.item.get"
           ]
         },
         {
@@ -1253,7 +1253,7 @@
         "inventory.instances.item.get",
         "users.collection.get",
         "users.item.get",
-        "source-storage.records.get",
+        "source-storage.records.formatted.item.get",
         "circulation.requests.item.get",
         "circulation.requests.collection.get",
         "circulation.loans.collection.get",
