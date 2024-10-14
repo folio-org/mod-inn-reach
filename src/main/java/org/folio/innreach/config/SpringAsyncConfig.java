@@ -18,7 +18,7 @@ public class SpringAsyncConfig implements AsyncConfigurer {
   @Value("${spring.async.config.executor.pool-size}")
   private int poolSize;
 
-  @Value("${initial-contribution.async.pool-size}")
+  @Value("${contribution.async.pool-size}")
   private int schedulerTaskPoolSize;
 
   /*
@@ -47,13 +47,24 @@ public class SpringAsyncConfig implements AsyncConfigurer {
     return executor;
   }
 
-  @Bean("schedulerTaskExecutor")
-  public Executor schedulerTaskExecutor() {
+  @Bean("initialSchedulerTaskExecutor")
+  public Executor initialSchedulerTaskExecutor() {
     ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
     executor.setCorePoolSize(schedulerTaskPoolSize);
     executor.setMaxPoolSize(schedulerTaskPoolSize + 10);
     executor.setQueueCapacity(50);
-    executor.setThreadNamePrefix("schedulerTaskExecutor-");
+    executor.setThreadNamePrefix("initialSchedulerTaskExecutor-");
+    executor.initialize();
+    return executor;
+  }
+
+  @Bean("ongoingSchedulerTaskExecutor")
+  public Executor ongoingSchedulerTaskExecutor() {
+    ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+    executor.setCorePoolSize(schedulerTaskPoolSize);
+    executor.setMaxPoolSize(schedulerTaskPoolSize + 10);
+    executor.setQueueCapacity(50);
+    executor.setThreadNamePrefix("ongoingSchedulerTaskExecutor-");
     executor.initialize();
     return executor;
   }
