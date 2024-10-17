@@ -173,7 +173,7 @@
         {
           "methods": ["GET"],
           "pathPattern": "/inn-reach/central-servers/{centralServerId}/libraries/{libraryId}/locations/location-mappings",
-          "permissionsRequired": ["inn-reach.location-mappings.collection.get"]
+          "permissionsRequired": ["inn-reach.location-mappings.libraries.collection.get"]
         },
         {
           "methods": ["GET"],
@@ -421,7 +421,7 @@
         {
           "methods": ["POST"],
           "pathPattern": "/inn-reach/transactions/{id}/receive-item/{servicePointId}",
-          "permissionsRequired": ["inn-reach.d2ir.inn-reach-transaction.item.post"],
+          "permissionsRequired": ["inn-reach.d2ir.inn-reach-transaction.item-receive.post"],
           "modulePermissions": [
             "circulation.check-in-by-barcode.post"
           ]
@@ -429,7 +429,7 @@
         {
           "methods": ["POST"],
           "pathPattern": "/inn-reach/transactions/{id}/receive-unshipped-item/{servicePointId}/{itemBarcode}",
-          "permissionsRequired": ["inn-reach.d2ir.inn-reach-transaction.item.post"],
+          "permissionsRequired": ["inn-reach.d2ir.inn-reach-transaction.receive-unshipped-item.post"],
           "modulePermissions": [
             "circulation.check-in-by-barcode.post",
             "inventory.items.collection.get",
@@ -440,7 +440,7 @@
         {
           "methods": ["POST"],
           "pathPattern": "/inn-reach/transactions/{itemBarcode}/check-out-item/{servicePointId}",
-          "permissionsRequired": ["inn-reach.d2ir.inn-reach-transaction.item.post"],
+          "permissionsRequired": ["inn-reach.d2ir.inn-reach-transaction.check-out-item.post"],
           "modulePermissions": [
             "circulation.check-out-by-barcode.post"
           ]
@@ -448,7 +448,7 @@
         {
           "methods": ["POST"],
           "pathPattern": "/inn-reach/transactions/{id}/patronhold/check-out-item/{servicePointId}",
-          "permissionsRequired": ["inn-reach.d2ir.inn-reach-transaction.item.post"],
+          "permissionsRequired": ["inn-reach.d2ir.inn-reach-transaction.patron.check-out-item.post"],
           "modulePermissions": [
             "circulation.check-out-by-barcode.post",
             "circulation.loans.collection.get"
@@ -457,7 +457,7 @@
         {
           "methods": ["POST"],
           "pathPattern": "/inn-reach/transactions/{id}/localhold/check-out-item/{servicePointId}",
-          "permissionsRequired": ["inn-reach.d2ir.inn-reach-transaction.item.post"],
+          "permissionsRequired": ["inn-reach.d2ir.inn-reach-transaction.localhold.check-out-item.post"],
           "modulePermissions": [
             "circulation.check-out-by-barcode.post",
             "circulation.loans.collection.get",
@@ -467,7 +467,7 @@
         {
           "methods": ["POST"],
           "pathPattern": "/inn-reach/transactions/{id}/patronhold/cancel",
-          "permissionsRequired": ["inn-reach.d2ir.inn-reach-transaction.item.post"],
+          "permissionsRequired": ["inn-reach.d2ir.inn-reach-transaction.patron-hold.cancel.post"],
           "modulePermissions": [
             "inventory.items.item.get",
             "circulation.requests.item.get",
@@ -477,7 +477,7 @@
         {
           "methods": ["POST"],
           "pathPattern": "/inn-reach/transactions/{id}/itemhold/cancel",
-          "permissionsRequired": ["inn-reach.d2ir.inn-reach-transaction.item.post"],
+          "permissionsRequired": ["inn-reach.d2ir.inn-reach-transaction.item-hold.cancel.post"],
           "modulePermissions": [
             "circulation.requests.item.get",
             "circulation.requests.item.put"
@@ -486,7 +486,7 @@
         {
           "methods": ["POST"],
           "pathPattern": "/inn-reach/transactions/{id}/localhold/cancel",
-          "permissionsRequired": ["inn-reach.d2ir.inn-reach-transaction.item.post"],
+          "permissionsRequired": ["inn-reach.d2ir.inn-reach-transaction.localhold.cancel.post"],
           "modulePermissions": [
             "circulation.requests.item.get",
             "circulation.requests.item.put",
@@ -496,7 +496,7 @@
         {
           "methods": ["POST"],
           "pathPattern": "/inn-reach/transactions/{id}/itemhold/recall",
-          "permissionsRequired": ["inn-reach.d2ir.inn-reach-transaction.item.post"],
+          "permissionsRequired": ["inn-reach.d2ir.inn-reach-transaction.item-hold.recall.post"],
           "modulePermissions": [
             "circulation.requests.item.get",
             "circulation.requests.item.post",
@@ -508,7 +508,7 @@
         {
           "methods": ["POST"],
           "pathPattern": "/inn-reach/transactions/{id}/patronhold/return-item/{servicePointId}",
-          "permissionsRequired": ["inn-reach.d2ir.inn-reach-transaction.item.post"],
+          "permissionsRequired": ["inn-reach.d2ir.inn-reach-transaction.patron-hold.return-item.post"],
           "modulePermissions": [
             "circulation.requests.item.get",
             "circulation.loans.item.get",
@@ -518,7 +518,7 @@
         {
           "methods": ["POST"],
           "pathPattern": "/inn-reach/transactions/{id}/itemhold/finalcheckin/{servicePointId}",
-          "permissionsRequired": ["inn-reach.d2ir.inn-reach-transaction.item.post"],
+          "permissionsRequired": ["inn-reach.d2ir.inn-reach-transaction.item-hold.final-checkin.post"],
           "modulePermissions": [
             "circulation.loans.item.get",
             "circulation.check-in-by-barcode.post"
@@ -568,6 +568,9 @@
           "methods": ["POST"],
           "pathPattern": "/inn-reach/transactions/{id}/localhold/transfer-item/{itemId}",
           "permissionsRequired": [
+            "inn-reach.transactions.transfer-item.post"
+          ],
+          "modulePermissions": [
             "inventory.items.item.get",
             "circulation.requests.item.get",
             "circulation.requests.item.move.post"
@@ -804,6 +807,11 @@
       "description" : "Get a collection of inn reach location mapping entries"
     },
     {
+      "permissionName" : "inn-reach.location-mappings.libraries.collection.get",
+      "displayName" : "GET INN-Reach Location Mappings: Libraries Collection",
+      "description" : "GET INN-Reach Location Mappings: Libraries Collection"
+    },
+    {
       "permissionName" : "inn-reach.location-mappings.collection.put",
       "displayName" : "update a collection of inn reach location mapping entries",
       "description" : "Update a collection of inn reach location mapping entries"
@@ -814,6 +822,7 @@
       "description" : "All permissions of inn reach location mappings scope",
       "subPermissions" : [
         "inn-reach.location-mappings.collection.get",
+        "inn-reach.location-mappings.libraries.collection.get",
         "inn-reach.location-mappings.collection.put"
       ]
     },
@@ -1035,6 +1044,61 @@
       "description" : "Create/update INN-Reach transaction"
     },
     {
+      "permissionName" : "inn-reach.d2ir.inn-reach-transaction.receive-unshipped-item.post",
+      "displayName" : "POST INN-Reach Transaction: Receive Unshipped Item",
+      "description" : "POST INN-Reach Transaction: Receive Unshipped Item"
+    },
+    {
+      "permissionName" : "inn-reach.d2ir.inn-reach-transaction.check-out-item.post",
+      "displayName" : "POST INN-Reach Transaction: Check-Out Item",
+      "description" : "POST INN-Reach Transaction: Check-Out Item"
+    },
+    {
+      "permissionName" : "inn-reach.d2ir.inn-reach-transaction.patron.check-out-item.post",
+      "displayName" : "POST INN-Reach Transaction: Patron Check-Out Item",
+      "description" : "POST INN-Reach Transaction: Patron Check-Out Item"
+    },
+    {
+      "permissionName" : "inn-reach.d2ir.inn-reach-transaction.localhold.check-out-item.post",
+      "displayName" : "POST INN-Reach Transaction: Local Hold Check-Out Item",
+      "description" : "POST INN-Reach Transaction: Local Hold Check-Out Item"
+    },
+    {
+      "permissionName" : "inn-reach.d2ir.inn-reach-transaction.patron-hold.cancel.post",
+      "displayName" : "POST INN-Reach Transaction: Cancel Patron Hold",
+      "description" : "POST INN-Reach Transaction: Cancel Patron Hold"
+    },
+    {
+      "permissionName" : "inn-reach.d2ir.inn-reach-transaction.item-hold.cancel.post",
+      "displayName" : "POST INN-Reach Transaction: Cancel Item Hold",
+      "description" : "POST INN-Reach Transaction: Cancel Item Hold"
+    },
+    {
+      "permissionName" : "inn-reach.d2ir.inn-reach-transaction.localhold.cancel.post",
+      "displayName" : "POST INN-Reach Transaction: Cancel Local Hold",
+      "description" : "POST INN-Reach Transaction: Cancel Local Hold"
+    },
+    {
+      "permissionName" : "inn-reach.d2ir.inn-reach-transaction.item-hold.recall.post",
+      "displayName" : "POST INN-Reach Transaction: Recall Item Hold",
+      "description" : "POST INN-Reach Transaction: Recall Item Hold"
+    },
+    {
+      "permissionName" : "inn-reach.d2ir.inn-reach-transaction.patron-hold.return-item.post",
+      "displayName" : "POST INN-Reach Transaction: Return Patron Hold Item",
+      "description" : "POST INN-Reach Transaction: Return Patron Hold Item"
+    },
+    {
+      "permissionName" : "inn-reach.d2ir.inn-reach-transaction.item-hold.final-checkin.post",
+      "displayName" : "POST INN-Reach Transaction: Final Check-In for Item Hold",
+      "description" : "POST INN-Reach Transaction: Final Check-In for Item Hold"
+    },
+    {
+      "permissionName" : "inn-reach.inn-reach-transaction.item.get",
+      "displayName" : "get INN-Reach Transaction with transaction hold by id",
+      "description" : "Get INN-Reach Transaction with transaction hold by id"
+    },
+    {
       "permissionName" : "inn-reach.inn-reach-transaction.item.get",
       "displayName" : "get INN-Reach Transaction with transaction hold by id",
       "description" : "Get INN-Reach Transaction with transaction hold by id"
@@ -1045,11 +1109,47 @@
       "description" : "Update INN-Reach Transaction"
     },
     {
+      "permissionName" : "inn-reach.d2ir.inn-reach-transaction.item-receive.post",
+      "displayName" : "POST INN-Reach Transaction: Receive Item",
+      "description" : "POST INN-Reach Transaction: Receive Item"
+    },
+    {
+      "permissionName" : "inn-reach.central-servers.paging-slip-template.item.get",
+      "displayName" : "GET INN-Reach Central Servers: Item Paging Slip Template",
+      "description" : "GET INN-Reach Central Servers: Item Paging Slip Template"
+    },
+    {
+      "permissionName" : "inn-reach.central-servers.paging-slip-template.item.get",
+      "displayName" : "PUT INN-Reach Central Servers: Update Item Paging Slip Template",
+      "description" : "PUT INN-Reach Central Servers: Update Item Paging Slip Template"
+    },
+    {
+      "permissionName" : "inn-reach.paging-slips.collection.get",
+      "displayName" : "GET INN-Reach Paging Slips Collection",
+      "description" : "GET INN-Reach Paging Slips Collection"
+    },
+    {
+      "permissionName" : "inn-reach.central-servers.paging-slip-template.item.put",
+      "displayName" : "PUT INN-Reach Central Servers: Item Paging Slip Template",
+      "description" : "PUT INN-Reach Central Servers: Item Paging Slip Template"
+    },
+    {
       "permissionName" : "inn-reach.d2ir.inn-reach-transaction.all",
       "displayName" : "inn reach API module - all permissions of inn-reach transactions",
       "description" : "All permissions of inn-reach transactions scope",
       "subPermissions" : [
         "inn-reach.d2ir.inn-reach-transaction.item.post",
+        "inn-reach.d2ir.inn-reach-transaction.item-receive.post",
+        "inn-reach.d2ir.inn-reach-transaction.receive-unshipped-item.post",
+        "inn-reach.d2ir.inn-reach-transaction.check-out-item.post",
+        "inn-reach.d2ir.inn-reach-transaction.patron.check-out-item.post",
+        "inn-reach.d2ir.inn-reach-transaction.localhold.check-out-item.post",
+        "inn-reach.d2ir.inn-reach-transaction.patron-hold.cancel.post",
+        "inn-reach.d2ir.inn-reach-transaction.item-hold.cancel.post",
+        "inn-reach.d2ir.inn-reach-transaction.localhold.cancel.post",
+        "inn-reach.d2ir.inn-reach-transaction.item-hold.recall.post",
+        "inn-reach.d2ir.inn-reach-transaction.patron-hold.return-item.post",
+        "inn-reach.d2ir.inn-reach-transaction.item-hold.final-checkin.post",
         "inn-reach.inn-reach-transaction.item.get"
       ]
     },
@@ -1115,7 +1215,8 @@
       "description" : "All permissions of inn-reach transactions scope",
       "subPermissions" : [
         "inn-reach.inn-reach-transactions.collection.get",
-        "inn-reach.inn-reach-transaction.item.put"
+        "inn-reach.inn-reach-transaction.item.put",
+        "inn-reach.transactions.transfer-item.post"
       ]
     },
     {
@@ -1173,6 +1274,11 @@
     },
     {
       "permissionName" : "inn-reach.central-servers.visible-patron-field-configuration.item.put",
+      "displayName" : "update visible patron field configuration",
+      "description" : "Update Visible Patron Field Configuration"
+    },
+    {
+      "permissionName" : "inn-reach.transactions.transfer-item.post",
       "displayName" : "update visible patron field configuration",
       "description" : "Update Visible Patron Field Configuration"
     },
