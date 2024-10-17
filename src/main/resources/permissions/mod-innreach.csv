@@ -10,7 +10,7 @@ inventory.items.item.get
 inventory.instances.item.get
 users.collection.get
 users.item.get
-source-storage.records.get
+source-storage.records.formatted.item.get
 circulation.requests.item.get
 circulation.requests.collection.get
 circulation.loans.collection.get

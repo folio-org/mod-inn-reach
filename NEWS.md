@@ -1,3 +1,8 @@
+## v3.X.X (Unreleased)
+
+### Stories
+* [MODINREACH-453](https://folio-org.atlassian.net/browse/MODINREACH-453) - Replace source-storage.records.get permission with source-storage.records.formatted.item.get
+
 ## v3.2.0 2024-03-20
 
 ### Stories
