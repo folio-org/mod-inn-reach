@@ -67,7 +67,7 @@ public class BaseKafkaApiTest {
 
 
   @Container
-  public static PostgreSQLContainer<?> postgresqlContainer = new PostgreSQLContainer<>("postgres:11-alpine");
+  public static PostgreSQLContainer<?> postgresqlContainer = new PostgreSQLContainer<>("postgres:16-alpine");
 
   @Autowired
   protected EmbeddedKafkaBroker embeddedKafkaBroker;
