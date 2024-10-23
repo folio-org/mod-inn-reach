@@ -15,6 +15,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 import lombok.SneakyThrows;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -67,7 +68,8 @@ public class BaseKafkaApiTest {
 
 
   @Container
-  public static PostgreSQLContainer<?> postgresqlContainer = new PostgreSQLContainer<>("postgres:11-alpine");
+  public static PostgreSQLContainer<?> postgresqlContainer = new PostgreSQLContainer<>(Objects
+    .toString(System.getenv("TESTCONTAINERS_POSTGRES_IMAGE"), "postgres:16-alpine"));
 
   @Autowired
   protected EmbeddedKafkaBroker embeddedKafkaBroker;
