@@ -9,7 +9,7 @@
   </parent>
   <groupId>org.folio</groupId>
   <artifactId>mod-inn-reach</artifactId>
-  <version>3.2.2-SNAPSHOT</version>
+  <version>3.3.0</version>
   <name>mod-inn-reach</name>
   <description>Access to INN-Reach service</description>
 
@@ -489,7 +489,7 @@
     <url>https://github.com/folio-org/${project.artifactId}</url>
     <connection>scm:git:git://github.com/folio-org/${project.artifactId}.git</connection>
     <developerConnection>scm:git:git@github.com:folio-org/${project.artifactId}.git</developerConnection>
-    <tag>HEAD</tag>
+    <tag>v3.3.0</tag>
   </scm>
 
   <repositories>
