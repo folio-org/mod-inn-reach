@@ -1,7 +1,22 @@
-## v3.X.X (Unreleased)
+## v3.3.0 2024-10-30
 
 ### Stories
+* [MODINREACH-431](https://folio-org.atlassian.net/browse/MODINREACH-431) - Implement outbox for ongoing contribution for item events.
+* [MODINREACH-432](https://folio-org.atlassian.net/browse/MODINREACH-432) - Implement outbox for ongoing contribution for holding events.
+* [MODINREACH-433](https://folio-org.atlassian.net/browse/MODINREACH-433) - Implement outbox for ongoing contribution for instance events.
+* [MODINREACH-436](https://folio-org.atlassian.net/browse/MODINREACH-436) - Fix intermittent test case failure.
+* [MODINREACH-441](https://folio-org.atlassian.net/browse/MODINREACH-441) - Item move and retry is not working in Ongoing contribution
+* [MODINREACH-438](https://folio-org.atlassian.net/browse/MODINREACH-438) - Upgrade patron interface version
+* [MODINREACH-443](https://folio-org.atlassian.net/browse/MODINREACH-443) - The custom field type is not catering for a list value in inn-reach code.
+* [MODINREACH-446](https://folio-org.atlassian.net/browse/MODINREACH-446) - SYSTEM_USER env var is not taking affect
+* [MODINREACH-449](https://folio-org.atlassian.net/browse/MODINREACH-449) - updating interface version of instance iteration and inventory view
 * [MODINREACH-453](https://folio-org.atlassian.net/browse/MODINREACH-453) - Replace source-storage.records.get permission with source-storage.records.formatted.item.get
+* [MODINREACH-455](https://folio-org.atlassian.net/browse/MODINREACH-455) - Update Spring support version for Ramsons
+* [MODINREACH-456](https://folio-org.atlassian.net/browse/MODINREACH-456) - Update all pom.xml dependencies for Ramsons
+* [MODROLESKC-108](https://folio-org.atlassian.net/browse/MODROLESKC-108) - add support for disabling the System user setup
+
+### Bugs
+* [MODINREACH-435](https://folio-org.atlassian.net/browse/MODINREACH-435) - GVSU is reporting that when cancelling requests for INN-Reach item holds, the OWNING_SITE_CANCELLED message is not being triggered to the central server
 
 ## v3.2.0 2024-03-20
 
