@@ -5,7 +5,9 @@ import static org.folio.spring.scope.FolioExecutionScopeExecutionContextManager.
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import org.folio.spring.FolioExecutionContext;
+import org.folio.spring.context.ExecutionContextBuilder;
 import org.folio.spring.scope.FolioExecutionContextSetter;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.folio.spring.service.SystemUserService;
 
@@ -13,8 +15,8 @@ import org.folio.spring.service.SystemUserService;
 @RequiredArgsConstructor
 public class TenantScopedExecutionService {
 
-  private final InnReachFolioExecutionContextBuilder contextBuilder;
-  private final SystemUserService systemUserService;
+  private final ExecutionContextBuilder contextBuilder;
+  private SystemUserService systemUserService;
 
   @SneakyThrows
   public void runTenantScoped(String tenantId, Runnable job) {
@@ -28,7 +30,14 @@ public class TenantScopedExecutionService {
   }
 
   private FolioExecutionContext folioExecutionContext(String tenant) {
-    return contextBuilder.forSystemUser(systemUserService.getAuthedSystemUser(tenant));
+    return systemUserService != null
+      ? contextBuilder.forSystemUser(systemUserService.getAuthedSystemUser(tenant))
+      : contextBuilder.buildContext(tenant);
+  }
+
+  @Autowired(required = false)
+  public void setSystemUserService(SystemUserService systemUserService) {
+    this.systemUserService = systemUserService;
   }
 
 }
