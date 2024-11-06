@@ -113,7 +113,7 @@ public class BaseKafkaApiTest {
   @Profile("test")
   static class TestTenantScopedExecutionService extends TenantScopedExecutionService {
     public TestTenantScopedExecutionService() {
-      super(null, null);
+      super(null);
     }
 
     @SneakyThrows
