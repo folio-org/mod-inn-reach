@@ -18,7 +18,7 @@ public class TenantScopedExecutionService {
   private final ExecutionContextBuilder contextBuilder;
   private SystemUserService systemUserService;
 
-  @Autowired
+  @Autowired(required = false)
   public void setSystemUserService(SystemUserService systemUserService) {
     this.systemUserService = systemUserService;
   }
