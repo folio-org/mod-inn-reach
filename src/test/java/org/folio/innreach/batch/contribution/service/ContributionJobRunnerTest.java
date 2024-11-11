@@ -28,7 +28,6 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import org.folio.innreach.domain.entity.ContributionStatus;
 import org.folio.innreach.domain.entity.OngoingContributionStatus;
-import org.folio.innreach.domain.service.impl.InnReachFolioExecutionContextBuilder;
 import feign.FeignException;
 import org.folio.innreach.batch.contribution.InitialContributionJobConsumerContainer;
 import org.folio.innreach.external.exception.InnReachConnectionException;
@@ -109,8 +108,6 @@ class ContributionJobRunnerTest {
   @InjectMocks
   private ContributionJobRunner jobRunner;
 
-  @Mock
-  private InnReachFolioExecutionContextBuilder folioExecutionContextBuilder;
 
   @Mock
   private InitialContributionJobConsumerContainer initialContributionJobConsumerContainer;
@@ -246,13 +243,6 @@ class ContributionJobRunnerTest {
     jobRunner.runInitialContribution(event, TOPIC);
 
     verifyNoInteractions(recordContributor);
-  }
-
-  @Test
-  void shouldCancelJobs() {
-    when(folioExecutionContextBuilder.withUserId(any(), any())).thenReturn(folioContext);
-    jobRunner.cancelJobs();
-    verify(contributionService).cancelAll();
   }
 
   @Test
