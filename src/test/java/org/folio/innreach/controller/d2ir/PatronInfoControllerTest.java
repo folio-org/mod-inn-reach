@@ -2,7 +2,7 @@ package org.folio.innreach.controller.d2ir;
 
 import static org.folio.innreach.fixture.PatronFixture.PATRON_FIRST_NAME;
 import static org.folio.innreach.fixture.PatronFixture.PATRON_LAST_NAME;
-import static org.folio.innreach.fixture.PatronFixture.createUserWithSpacesInFirstAndLastName;
+import static org.folio.innreach.fixture.PatronFixture.createUserWithTwoFirstAndTwoLastNames;
 import static org.folio.innreach.fixture.PatronFixture.createUserWithoutExpirationDate;
 import static org.folio.innreach.fixture.PatronFixture.createUser;
 import static org.folio.innreach.fixture.PatronFixture.createUserWithMiddleName;
@@ -308,15 +308,17 @@ class PatronInfoControllerTest extends BaseApiControllerTest {
   }
 
   @ParameterizedTest
-  @ValueSource(strings = {"jo hn do e","do e jo hn","jo hn do e pauL","do e Jo hn pauL","do e, Jo hn, pauL", "do e Jo hn, pauL"})
+  @ValueSource(strings = {"john jimmy doe smith","doe smith john jimmy","john jimmy doe smith pauL",
+    "doe smith john jimmy pauL","doe smith, john jimmy, pauL", "doe smith john jimmy, pauL"})
   @Sql(scripts = {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/patron-type-mapping/pre-populate-patron-type-mapping.sql",
     "classpath:db/user-custom-field-mapping/pre-populate-user-custom-field-mapping.sql"
   })
   void return200HttpCode_and_patronInfoResponseWithPatronInfo_WithSpaceInFirstAndLastName(String patronName) {
-    // This test covers "first first last last", "last last first first", "first first last last middle" "last last, first first middle"
-    var user = createUserWithSpacesInFirstAndLastName("jo hn", "do e");
+    // This test covers "first first last last", "last last first first", "first first last last middle"
+    // "last last, first first middle"
+    var user = createUserWithTwoFirstAndTwoLastNames("john jimmy", "doe smith");
     user.setPatronGroupId(UUID.fromString("54e17c4c-e315-4d20-8879-efc694dea1ce"));
     when(usersClient.query(anyString())).thenReturn(ResultList.of(1, List.of(user)));
     when(automatedBlocksClient.getPatronBlocks(any())).thenReturn(ResultList.empty());
@@ -339,15 +341,17 @@ class PatronInfoControllerTest extends BaseApiControllerTest {
   }
 
   @ParameterizedTest
-  @ValueSource(strings = {"jo hn doe","doe jo hn paul", "doe, jo hn paul", "jo hn doe pauL","doe Jo hn", "doe, Jo hn"})
+  @ValueSource(strings = {"john jimmy doe","doe john jimmy paul", "doe, john jimmy paul", "john jimmy doe pauL",
+    "doe john jimmy", "doe, john jimmy"})
   @Sql(scripts = {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/patron-type-mapping/pre-populate-patron-type-mapping.sql",
     "classpath:db/user-custom-field-mapping/pre-populate-user-custom-field-mapping.sql"
   })
   void return200HttpCode_and_patronInfoResponseWithPatronInfo_WithSpaceInFirstName(String patronName) {
-    // This test covers "first first last", "last first first middle", "last, first first middle", "first first last middle", "last first first", "last, first first"
-    var user = createUserWithSpacesInFirstAndLastName("Jo hn", PATRON_LAST_NAME);
+    // This test covers "first first last", "last first first middle", "last, first first middle",
+    // "first first last middle", "last first first", "last, first first"
+    var user = createUserWithTwoFirstAndTwoLastNames("john jimmy", PATRON_LAST_NAME);
     user.setPatronGroupId(UUID.fromString("54e17c4c-e315-4d20-8879-efc694dea1ce"));
     when(usersClient.query(anyString())).thenReturn(ResultList.of(1, List.of(user)));
     when(automatedBlocksClient.getPatronBlocks(any())).thenReturn(ResultList.empty());
@@ -370,15 +374,17 @@ class PatronInfoControllerTest extends BaseApiControllerTest {
   }
 
   @ParameterizedTest
-  @ValueSource(strings = {"do e john","john do e paul","do e john pauL", "do e, john pauL", "john do e"})
+  @ValueSource(strings = {"doe smith john","john doe smith paul","doe smith john pauL",
+    "doe smith, john pauL", "john doe smith"})
   @Sql(scripts = {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/patron-type-mapping/pre-populate-patron-type-mapping.sql",
     "classpath:db/user-custom-field-mapping/pre-populate-user-custom-field-mapping.sql"
   })
   void return200HttpCode_and_patronInfoResponseWithPatronInfo_WithSpaceInLastName(String patronName) {
-    // This test covers "last last first", "first last last middle", "last last first middle", "last last, first middle", "first last last"
-    var user = createUserWithSpacesInFirstAndLastName(PATRON_FIRST_NAME, "do e");
+    // This test covers "last last first", "first last last middle", "last last first middle",
+    // "last last, first middle", "first last last"
+    var user = createUserWithTwoFirstAndTwoLastNames(PATRON_FIRST_NAME, "doe smith");
     user.setPatronGroupId(UUID.fromString("54e17c4c-e315-4d20-8879-efc694dea1ce"));
     when(usersClient.query(anyString())).thenReturn(ResultList.of(1, List.of(user)));
     when(automatedBlocksClient.getPatronBlocks(any())).thenReturn(ResultList.empty());

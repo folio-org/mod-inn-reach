@@ -70,7 +70,7 @@ public class PatronFixture {
     return user;
   }
 
-  public static User createUserWithSpacesInFirstAndLastName(String firstName, String lastName) {
+  public static User createUserWithTwoFirstAndTwoLastNames(String firstName, String lastName) {
     var user = new User();
     user.setId(USER_ID);
     user.setActive(true);
