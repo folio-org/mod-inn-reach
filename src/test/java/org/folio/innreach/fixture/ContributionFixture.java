@@ -105,7 +105,6 @@ public class ContributionFixture {
   public static Instance createInstance() {
     var item = createItem();
     var holding = createHolding();
-    holding.setHoldingsItems(singletonList(item));
 
     var instance = new Instance();
     instance.setId(UUID.randomUUID());
