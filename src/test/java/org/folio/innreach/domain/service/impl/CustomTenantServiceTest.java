@@ -16,7 +16,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import org.folio.innreach.batch.contribution.service.ContributionJobRunner;
 import org.folio.innreach.config.props.TestTenant;
 import org.folio.spring.FolioExecutionContext;
 import org.folio.spring.FolioModuleMetadata;
@@ -36,8 +35,6 @@ class CustomTenantServiceTest {
   private PrepareSystemUserService systemUserService;
   @Mock
   private FolioExecutionContext context;
-  @Mock
-  private ContributionJobRunner contributionJobRunner;
   @Mock
   private ReferenceDataLoader referenceDataLoader;
   @Mock
@@ -71,7 +68,6 @@ class CustomTenantServiceTest {
     service.createOrUpdateTenant(new TenantAttributes());
 
     verify(systemUserService, never()).setupSystemUser();
-    verify(contributionJobRunner, never()).cancelJobs();
   }
 
   @Test
@@ -83,7 +79,6 @@ class CustomTenantServiceTest {
     assertThrows(TenantUpgradeException.class, () -> service.createOrUpdateTenant(attributes));
 
     verify(systemUserService, never()).setupSystemUser();
-    verify(contributionJobRunner, never()).cancelJobs();
   }
 
   @Test

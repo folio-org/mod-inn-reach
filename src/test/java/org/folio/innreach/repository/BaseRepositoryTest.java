@@ -18,6 +18,8 @@ import org.folio.innreach.domain.service.UserService;
 import org.folio.innreach.domain.service.impl.UserServiceImpl;
 import org.folio.spring.FolioExecutionContext;
 
+import java.util.Objects;
+
 @DataJpaTest
 @Testcontainers
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
@@ -26,7 +28,8 @@ import org.folio.spring.FolioExecutionContext;
 abstract class BaseRepositoryTest {
 
   @Container
-  static final PostgreSQLContainer postgresqlContainer = new PostgreSQLContainer("postgres:11-alpine")
+  static final PostgreSQLContainer postgresqlContainer = new PostgreSQLContainer(Objects
+    .toString(System.getenv("TESTCONTAINERS_POSTGRES_IMAGE"), "postgres:16-alpine"))
       .withDatabaseName("db")
       .withUsername("postgres")
       .withPassword("postgres");

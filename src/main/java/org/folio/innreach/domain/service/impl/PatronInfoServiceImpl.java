@@ -243,13 +243,31 @@ public class PatronInfoServiceImpl implements PatronInfoService {
       return false;
     } else if (patronNameTokens.length == 2) {
       // "First Last" or "Middle Last" format or "Last First" or "Last Middle"
-      return checkFirstNameLastNameWithPosition(personal, patronNameTokens,0,1)
-        || checkFirstNameLastNameWithPosition(personal, patronNameTokens,1,0);
+      return checkFirstNameLastNameWithPosition(personal, patronNameTokens, 0, 1)
+        || checkFirstNameLastNameWithPosition(personal, patronNameTokens, 1, 0);
+    } else if (patronNameTokens.length == 3) {
+      //  "first middle last" format or last first middle format or first first last format or last first first format or first last last or last last first"
+      return (checkFirstNameMiddleNameLastNameWithPosition(personal, patronNameTokens, 0, 1, 2)
+        || checkFirstNameMiddleNameLastNameWithPosition(personal, patronNameTokens, 1, 2, 0)
+        || checkFirstNameLastNameWithPosition(personal, new String[]{concatenateWithSpace(patronNameTokens[0], patronNameTokens[1]), patronNameTokens[2]}, 0, 1)
+        || checkFirstNameLastNameWithPosition(personal, new String[]{concatenateWithSpace(patronNameTokens[0], patronNameTokens[1]), patronNameTokens[2]}, 1, 0)
+        || checkFirstNameLastNameWithPosition(personal, new String[]{patronNameTokens[0], concatenateWithSpace(patronNameTokens[1], patronNameTokens[2])}, 0, 1)
+        || checkFirstNameLastNameWithPosition(personal, new String[]{patronNameTokens[0], concatenateWithSpace(patronNameTokens[1], patronNameTokens[2])}, 1, 0));
+    } else if (patronNameTokens.length == 4) {
+      // "first first last last" format or "last last first first" format or "first first last middle" format or "last last first middle" format
+      // or "first last last middle" format or "last first first middle" format
+      return (checkFirstNameLastNameWithPosition(personal, new String[]{patronNameTokens[0] + " " + patronNameTokens[1], patronNameTokens[2] + " " + patronNameTokens[3]}, 0, 1)
+        || checkFirstNameLastNameWithPosition(personal, new String[]{patronNameTokens[0] + " " + patronNameTokens[1], patronNameTokens[2] + " " + patronNameTokens[3]}, 1, 0)
+        || checkFirstNameMiddleNameLastNameWithPosition(personal, new String[]{concatenateWithSpace(patronNameTokens[0], patronNameTokens[1]), patronNameTokens[2], patronNameTokens[3]}, 0, 2, 1)
+        || checkFirstNameMiddleNameLastNameWithPosition(personal, new String[]{concatenateWithSpace(patronNameTokens[0], patronNameTokens[1]), patronNameTokens[2], patronNameTokens[3]}, 1, 2, 0)
+        || checkFirstNameMiddleNameLastNameWithPosition(personal, new String[]{patronNameTokens[0], concatenateWithSpace(patronNameTokens[1], patronNameTokens[2]), patronNameTokens[3]}, 0, 2, 1)
+        || checkFirstNameMiddleNameLastNameWithPosition(personal, new String[]{patronNameTokens[0], concatenateWithSpace(patronNameTokens[1], patronNameTokens[2]), patronNameTokens[3]}, 1, 2, 0));
+    } else if (patronNameTokens.length == 5) {
+      // "first first last last middle" format or "last last first first middle" format
+      return (checkFirstNameMiddleNameLastNameWithPosition(personal, new String[]{concatenateWithSpace(patronNameTokens[0], patronNameTokens[1]), concatenateWithSpace(patronNameTokens[2], patronNameTokens[3]), patronNameTokens[4]}, 0, 2, 1)
+        || checkFirstNameMiddleNameLastNameWithPosition(personal, new String[]{concatenateWithSpace(patronNameTokens[0], patronNameTokens[1]), concatenateWithSpace(patronNameTokens[2], patronNameTokens[3]), patronNameTokens[4]}, 1, 2, 0));
     }
-
-    // "First Middle Last" format "Last First Middle"
-    return (checkFirstNameMiddleNameLastNameWithPosition(personal, patronNameTokens,0,1,2)
-      || checkFirstNameMiddleNameLastNameWithPosition(personal, patronNameTokens,1,2,0));
+    return false;
   }
 
 
@@ -274,6 +292,10 @@ public class PatronInfoServiceImpl implements PatronInfoService {
 
   private static String nonNullStrip(String s) {
     return Objects.requireNonNullElse(s, "").strip();
+  }
+
+  private static String concatenateWithSpace(String s1, String s2) {
+    return s1 + " " + s2;
   }
 
   private static String getPatronName(User user) {
