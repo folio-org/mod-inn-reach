@@ -24,8 +24,6 @@ import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.folio.innreach.domain.entity.OngoingContributionStatus;
-import org.folio.innreach.domain.service.impl.InnReachFolioExecutionContextBuilder;
-import org.folio.spring.scope.FolioExecutionContextSetter;
 import org.folio.innreach.external.exception.InnReachConnectionException;
 import org.folio.innreach.external.exception.ServiceSuspendedException;
 import org.folio.innreach.batch.contribution.InitialContributionJobConsumerContainer;
@@ -72,8 +70,6 @@ public class ContributionJobRunner {
   private final Statistics stats = new Statistics();
 
   private static final List<UUID> runningInitialContributions = Collections.synchronizedList(new ArrayList<>());
-  private final InnReachFolioExecutionContextBuilder folioExecutionContextBuilder;
-
   private static Map<String,Integer> totalRecords = new HashMap<>();
   private static ConcurrentHashMap<String, Integer> recordsProcessed = new ConcurrentHashMap<>();
   private final OngoingContributionStatusService ongoingContributionStatusService;
@@ -388,13 +384,6 @@ public class ContributionJobRunner {
     }
   }
 
-  public void cancelJobs() {
-    log.debug("cancelJobs:: Cancelling unfinished contributions");
-    try (var context = new FolioExecutionContextSetter(folioExecutionContextBuilder.withUserId(folioContext,null))) {
-      contributionService.cancelAll();
-      runningInitialContributions.clear();
-    }
-  }
 
   public void cancelInitialContribution(UUID contributionId) {
     log.info("Cancelling initial contribution job {}", contributionId);
