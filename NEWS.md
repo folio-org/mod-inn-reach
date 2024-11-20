@@ -1,3 +1,13 @@
+## v3.3.1 2024-11-20
+
+### Stories
+* [MODINREACH-447](https://folio-org.atlassian.net/browse/MODINREACH-447) - Review and cleanup Module Descriptors for mod-inn-reach
+
+### Bugs
+* [MODINREACH-457](https://folio-org.atlassian.net/browse/MODINREACH-457) - mod-inn-reach constantly crashes on the Eureka platform
+* [MODINREACH-461](https://folio-org.atlassian.net/browse/MODINREACH-461) - INN-Reach Login Issue (Users with a space in their first or last name can't log in)
+* [FAT-17334](https://folio-org.atlassian.net/browse/FAT-17334) - Fixing failed Karate test case.
+
 ## v3.3.0 2024-10-30
 
 ### Stories
