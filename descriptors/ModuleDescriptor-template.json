@@ -357,7 +357,7 @@
           "modulePermissions": [
             "users.collection.get",
             "patron.account.item.get",
-            "automated-patron-blocks.collection.get",
+            "patron-blocks.automated-patron-blocks.collection.get",
             "manualblocks.collection.get"
           ]
         },
