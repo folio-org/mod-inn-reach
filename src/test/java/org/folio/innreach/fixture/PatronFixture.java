@@ -68,6 +68,16 @@ public class PatronFixture {
     return user;
   }
 
+  public static User createUserWithTwoFirstAndTwoLastNames(String firstName, String lastName) {
+    var user = new User();
+    user.setId(USER_ID);
+    user.setActive(true);
+    user.setExpirationDate(OffsetDateTime.ofInstant(Instant.ofEpochMilli(expiryDateTs), ZoneOffset.UTC));
+    user.setPersonal(User.Personal.of(firstName, PATRON_MIDDLE_NAME, lastName, null));
+    user.setCustomFields(Map.of(CUSTOM_FIELD_REF_ID, CUSTOM_FIELD_OPTION));
+    return user;
+  }
+
   public static UserCustomFieldMappingDTO createCustomFieldMapping() {
     var mapping = new UserCustomFieldMappingDTO();
     mapping.setConfiguredOptions(Map.of(CUSTOM_FIELD_OPTION, CENTRAL_AGENCY_CODE));

@@ -1,3 +1,8 @@
+## v3.2.2 2024-11-28
+
+### Bugs
+* [MODINREACH-461](https://folio-org.atlassian.net/browse/MODINREACH-461) - INN-Reach Login Issue (Users with a space in their first or last name can't log in)
+
 ## v3.2.1 2024-10-14
 
 ### Stories
