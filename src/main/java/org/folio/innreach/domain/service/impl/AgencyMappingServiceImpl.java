@@ -108,21 +108,14 @@ public class AgencyMappingServiceImpl implements AgencyMappingService {
   private Optional<UUID> getLocationIdByAgencyCode(AgencyLocationMappingDTO mapping, String agencyCode) {
     log.info("getLocationIdByAgencyCode:: Start - parameters mapping: {}, agencyCode: {}", mapping, agencyCode);
 
-    if (mapping == null || mapping.getLocalServers() == null) {
-      log.warn("getLocationIdByAgencyCode:: mapping or localServers is null. Returning Optional.empty()");
-      return Optional.empty();
-    }
-
-    log.info("getLocationIdByAgencyCode:: Found localServers. Processing mappings.");
-
     Optional<UUID> locationId = mapping.getLocalServers().stream()
       .filter(Objects::nonNull)
       .map(server -> {
-        if (server.getAgencyCodeMappings() == null) {
+        if (server.getAgencyCodeMappings() == null || server.getAgencyCodeMappings().isEmpty()) {
           log.warn("getLocationIdByAgencyCode:: agencyCodeMappings is null for server: {}. Skipping this server.", server);
           return null;
         }
-        log.debug("getLocationIdByAgencyCode:: Processing agencyCodeMappings for server: {}", server);
+        log.info("getLocationIdByAgencyCode:: Processing agencyCodeMappings for server: {}", server);
         return server.getAgencyCodeMappings();
       })
       .filter(Objects::nonNull)
