@@ -2,12 +2,7 @@ package org.folio.innreach.domain.service.impl;
 
 import static org.folio.innreach.domain.service.impl.ServiceUtils.merge;
 
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
-import java.util.Objects;
+import java.util.*;
 import java.util.function.Function;
 
 import lombok.RequiredArgsConstructor;
@@ -108,42 +103,21 @@ public class AgencyMappingServiceImpl implements AgencyMappingService {
   private Optional<UUID> getLocationIdByAgencyCode(AgencyLocationMappingDTO mapping, String agencyCode) {
     log.info("getLocationIdByAgencyCode:: Start - parameters mapping: {}, agencyCode: {}", mapping, agencyCode);
 
-    Optional<UUID> locationId = mapping.getLocalServers().stream()
-      .filter(Objects::nonNull)
-      .map(server -> {
-        if (server.getAgencyCodeMappings() == null || server.getAgencyCodeMappings().isEmpty()) {
-          log.warn("getLocationIdByAgencyCode:: agencyCodeMappings is null for server: {}. Skipping this server.", server);
-          return null;
-        }
-        log.info("getLocationIdByAgencyCode:: Processing agencyCodeMappings for server: {}", server);
-        return server.getAgencyCodeMappings();
-      })
-      .filter(Objects::nonNull)
+    return mapping.getLocalServers().stream()
+      .map(AgencyLocationLscMappingDTO::getAgencyCodeMappings)
       .flatMap(Collection::stream)
-      .filter(mappingEntry -> {
-        if (mappingEntry == null) {
-          log.warn("getLocationIdByAgencyCode:: Found null mapping entry. Skipping.");
-          return false;
-        }
-        boolean match = agencyCode != null && agencyCode.equals(mappingEntry.getAgencyCode());
-        if (match) {
-          log.info("getLocationIdByAgencyCode:: Match found for agencyCode: {} with mapping: {}", agencyCode, mappingEntry);
-        }
-        return match;
-      })
+      .filter(m -> agencyCode.equals(m.getAgencyCode()))
       .map(mappingEntry -> {
-        if (mappingEntry.getLocationId() == null) {
+        UUID locationId = mappingEntry.getLocationId();
+        if (locationId == null) {
           log.warn("getLocationIdByAgencyCode:: locationId is null in mapping: {}", mappingEntry);
-          return null;
         }
-        return mappingEntry.getLocationId();
+        return locationId;
       })
       .filter(Objects::nonNull)
       .findFirst();
-
-    log.info("getLocationIdByAgencyCode:: End - returning: {}", locationId);
-    return locationId;
   }
+
 
   private Optional<AgencyLocationMapping> fetchOne(UUID centralServerId) {
     log.debug("fetchOne:: parameters centralServerId: {}", centralServerId);
