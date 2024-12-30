@@ -7,6 +7,7 @@ import java.util.Comparator;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.Objects;
 import java.util.function.Function;
 
 import lombok.RequiredArgsConstructor;
@@ -105,13 +106,50 @@ public class AgencyMappingServiceImpl implements AgencyMappingService {
   }
 
   private Optional<UUID> getLocationIdByAgencyCode(AgencyLocationMappingDTO mapping, String agencyCode) {
-    log.debug("getLocationIdByAgencyCode:: parameters mapping: {}, agencyCode: {}", mapping, agencyCode);
-    return mapping.getLocalServers().stream()
-      .map(AgencyLocationLscMappingDTO::getAgencyCodeMappings)
+    log.info("getLocationIdByAgencyCode:: Start - parameters mapping: {}, agencyCode: {}", mapping, agencyCode);
+
+    if (mapping == null || mapping.getLocalServers() == null) {
+      log.warn("getLocationIdByAgencyCode:: mapping or localServers is null. Returning Optional.empty()");
+      return Optional.empty();
+    }
+
+    log.info("getLocationIdByAgencyCode:: Found localServers. Processing mappings.");
+
+    Optional<UUID> locationId = mapping.getLocalServers().stream()
+      .filter(Objects::nonNull)
+      .map(server -> {
+        if (server.getAgencyCodeMappings() == null) {
+          log.warn("getLocationIdByAgencyCode:: agencyCodeMappings is null for server: {}. Skipping this server.", server);
+          return null;
+        }
+        log.debug("getLocationIdByAgencyCode:: Processing agencyCodeMappings for server: {}", server);
+        return server.getAgencyCodeMappings();
+      })
+      .filter(Objects::nonNull)
       .flatMap(Collection::stream)
-      .filter(m -> agencyCode.equals(m.getAgencyCode()))
-      .map(AgencyLocationAcMappingDTO::getLocationId)
+      .filter(mappingEntry -> {
+        if (mappingEntry == null) {
+          log.warn("getLocationIdByAgencyCode:: Found null mapping entry. Skipping.");
+          return false;
+        }
+        boolean match = agencyCode != null && agencyCode.equals(mappingEntry.getAgencyCode());
+        if (match) {
+          log.info("getLocationIdByAgencyCode:: Match found for agencyCode: {} with mapping: {}", agencyCode, mappingEntry);
+        }
+        return match;
+      })
+      .map(mappingEntry -> {
+        if (mappingEntry.getLocationId() == null) {
+          log.warn("getLocationIdByAgencyCode:: locationId is null in mapping: {}", mappingEntry);
+          return null;
+        }
+        return mappingEntry.getLocationId();
+      })
+      .filter(Objects::nonNull)
       .findFirst();
+
+    log.info("getLocationIdByAgencyCode:: End - returning: {}", locationId);
+    return locationId;
   }
 
   private Optional<AgencyLocationMapping> fetchOne(UUID centralServerId) {
