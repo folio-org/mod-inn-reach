@@ -8,6 +8,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
+import java.util.Objects;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -20,7 +21,6 @@ import org.folio.innreach.domain.entity.AgencyLocationMapping;
 import org.folio.innreach.domain.exception.EntityNotFoundException;
 import org.folio.innreach.domain.service.AgencyMappingService;
 import org.folio.innreach.domain.service.CentralServerConfigurationService;
-import org.folio.innreach.dto.AgencyLocationAcMappingDTO;
 import org.folio.innreach.dto.AgencyLocationLscMappingDTO;
 import org.folio.innreach.dto.AgencyLocationMappingDTO;
 import org.folio.innreach.dto.LocalServer;
@@ -105,14 +105,23 @@ public class AgencyMappingServiceImpl implements AgencyMappingService {
   }
 
   private Optional<UUID> getLocationIdByAgencyCode(AgencyLocationMappingDTO mapping, String agencyCode) {
-    log.debug("getLocationIdByAgencyCode:: parameters mapping: {}, agencyCode: {}", mapping, agencyCode);
+    log.info("getLocationIdByAgencyCode:: Start - parameters mapping: {}, agencyCode: {}", mapping, agencyCode);
+
     return mapping.getLocalServers().stream()
       .map(AgencyLocationLscMappingDTO::getAgencyCodeMappings)
       .flatMap(Collection::stream)
       .filter(m -> agencyCode.equals(m.getAgencyCode()))
-      .map(AgencyLocationAcMappingDTO::getLocationId)
+      .map(mappingEntry -> {
+        UUID locationId = mappingEntry.getLocationId();
+        if (locationId == null) {
+          log.warn("getLocationIdByAgencyCode:: locationId is null in mapping: {}", mappingEntry);
+        }
+        return locationId;
+      })
+      .filter(Objects::nonNull)
       .findFirst();
   }
+
 
   private Optional<AgencyLocationMapping> fetchOne(UUID centralServerId) {
     log.debug("fetchOne:: parameters centralServerId: {}", centralServerId);
