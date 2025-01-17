@@ -344,9 +344,9 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   })
   void return200HttpCode_and_sortedTransactions_when_getRequestTooLongReport() {
     var responseEntity = testRestTemplate.getForEntity(
-      "/inn-reach/transactions?createdDate=3022-11-16T18%3A30%3A00.000Z&createdDateOp=less&limit=1000&" +
-        "offset=0&requestedTooLong=true&sortBy=transactionTime&sortOrder=asc&state=PATRON_HOLD&" +
-        "state=TRANSFER&type=PATRON&updatedDate=3022-11-16T18%3A30%3A00.000Z&updatedDateOp=less"
+      "/inn-reach/transactions?dueDate=2024-12-26T06%3A30%3A00.000Z&dueDateOp=less&limit=1000&offset=0" +
+        "&sortBy=transactionTime&sortOrder=asc&state=ITEM_RECEIVED&state=BORROWER_RENEW&state=OWNER_RENEW&state=ITEM_IN_TRANSIT" +
+        "&state=ITEM_SHIPPED&type=ITEM"
       , InnReachTransactionsDTO.class
     );
 
