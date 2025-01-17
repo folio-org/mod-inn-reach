@@ -17,9 +17,6 @@ public class FolioContextFixture {
   public static final DefaultFolioExecutionContext FOLIO_CONTEXT =
     new DefaultFolioExecutionContext(null, singletonMap(TENANT, singletonList("test")));
 
-  private static final InnReachFolioExecutionContextBuilder contextBuilder = Mockito.mock(InnReachFolioExecutionContextBuilder.class);
-  private static final SystemUserService systemUserService = Mockito.mock(SystemUserService.class);
-
   public static TenantScopedExecutionService createTenantExecutionService() {
     return new TenantScopedExecutionService(Mockito.mock(InnReachFolioExecutionContextBuilder.class), Mockito.mock(SystemUserService.class));
   }

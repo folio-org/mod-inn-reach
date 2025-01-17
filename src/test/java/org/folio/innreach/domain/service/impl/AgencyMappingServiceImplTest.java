@@ -1,5 +1,6 @@
 package org.folio.innreach.domain.service.impl;
 
+import static org.folio.innreach.fixture.AgencyLocationMappingFixture.deserializeMapping2;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
@@ -61,6 +62,7 @@ class AgencyMappingServiceImplTest {
     assertEquals(AGENCY_LOCATION_ID, locationId);
   }
 
+
   @Test
   void getLocationIdByAgencyCode_usingLocalCodeMapping() {
     var mappingDto = deserializeMapping();
@@ -77,6 +79,24 @@ class AgencyMappingServiceImplTest {
     assertNotNull(locationId);
     assertEquals(LOCAL_SERVER_LOCATION_ID, locationId);
   }
+
+  @Test
+  void getLocationIdByAgencyCode_usingNullLocationId() {
+    var mappingDto = deserializeMapping2();
+    var mapping = mapper.toEntity(mappingDto);
+
+    var unmappedAgency = new Agency().agencyCode(UNMAPPED_AGENCY_CODE);
+    var localServer = new LocalServer().localCode(MAPPED_LOCAL_CODE).addAgencyListItem(unmappedAgency);
+
+    when(repository.fetchOneByCsId(any())).thenReturn(Optional.of(mapping));
+    when(configurationService.getLocalServers(any())).thenReturn(List.of(localServer));
+
+    var locationId = service.getLocationIdByAgencyCode(UUID.randomUUID(), UNMAPPED_AGENCY_CODE);
+
+    assertNotNull(locationId);
+    assertEquals(LOCAL_SERVER_LOCATION_ID, locationId);
+  }
+
 
   @Test
   void getLocationIdByAgencyCode_usingDefaultMapping() {
