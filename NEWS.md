@@ -1,3 +1,8 @@
+## v3.2.3 2025-01-17
+
+### Bugs
+* [MODINREACH-468](https://folio-org.atlassian.net/browse/MODINREACH-468) - INN-reach error receiving unshipped item (NPE handling while determining the locationId)
+
 ## v3.2.2 2024-11-28
 
 ### Bugs
