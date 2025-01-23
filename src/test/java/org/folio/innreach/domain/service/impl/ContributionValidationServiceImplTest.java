@@ -30,6 +30,8 @@ import org.folio.innreach.dto.LocalAgencyDTO;
 import org.folio.innreach.fixture.CentralServerFixture;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
@@ -154,17 +156,20 @@ class ContributionValidationServiceImplTest {
     assertEquals(ContributionItemCirculationStatus.AVAILABLE, itemCirculationStatus);
   }
 
-  @Test
-  void returnNotAvailableContributionStatusWhenItemStatusIsUnavailable() {
-    when(itemContributionOptionsConfigurationService.getItmContribOptConf(any())).thenReturn(createItmContribOptConfDTO());
+  @ParameterizedTest
+  @EnumSource(value = ItemStatus.NameEnum.class, names = { "LONG_MISSING", "DECLARED_LOST", "AGED_TO_LOST", "AWAITING_PICKUP", "PAGED", "WITHDRAWN" })
+  void returnNotAvailableContributionStatusForSpecificItemStatuses(ItemStatus.NameEnum status) {
+    when(itemContributionOptionsConfigurationService.getItmContribOptConf(any()))
+      .thenReturn(createItmContribOptConfDTO());
 
     var item = createItem();
-    item.setStatus(new ItemStatus().name(ItemStatus.NameEnum.UNAVAILABLE));
+    item.setStatus(new ItemStatus().name(status));
 
     var itemCirculationStatus = service.getItemCirculationStatus(UUID.randomUUID(), item);
 
     assertEquals(ContributionItemCirculationStatus.NOT_AVAILABLE, itemCirculationStatus);
   }
+
 
   @Test
   void returnNotAvailableContributionStatusWhenItemStatusIsListedInTheNotAvailableStatuses() {
