@@ -149,7 +149,7 @@ class ContributionValidationServiceImplTest {
     when(itemContributionOptionsConfigurationService.getItmContribOptConf(any())).thenReturn(createItmContribOptConfDTO());
 
     var item = createItem();
-    item.setStatus(new ItemStatus().name(ItemStatus.NameEnum.AWAITING_PICKUP));
+    item.setStatus(new ItemStatus().name(ItemStatus.NameEnum.AWAITING_DELIVERY));
 
     var itemCirculationStatus = service.getItemCirculationStatus(UUID.randomUUID(), item);
 
