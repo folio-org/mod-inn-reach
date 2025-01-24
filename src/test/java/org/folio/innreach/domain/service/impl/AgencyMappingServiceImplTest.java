@@ -1,6 +1,8 @@
 package org.folio.innreach.domain.service.impl;
 
+import static org.folio.innreach.fixture.AgencyLocationMappingFixture.deserializeMapping;
 import static org.folio.innreach.fixture.AgencyLocationMappingFixture.deserializeMapping2;
+import static org.folio.innreach.fixture.AgencyLocationMappingFixture.deserializeMapping3;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
