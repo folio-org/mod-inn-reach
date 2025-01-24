@@ -97,10 +97,16 @@ public class AgencyMappingServiceImpl implements AgencyMappingService {
     var localServer = getLocalServerByAgencyCode(centralServerId, agencyCode);
     var localCode = localServer.getLocalCode();
 
-    return mapping.getLocalServers()
-      .stream()
-      .filter(m -> localCode.equals(m.getLocalCode()))
+    return mapping.getLocalServers().stream()
+      .filter(server -> localCode.equals(server.getLocalCode()))
       .map(AgencyLocationLscMappingDTO::getLocationId)
+      .map(locationId -> {
+        if (locationId == null) {
+          log.warn("getLocationIdByLocalServer:: locationId is null in localServer with localCode: {}", localCode);
+        }
+        return locationId;
+      })
+      .filter(Objects::nonNull)
       .findFirst();
   }
 
