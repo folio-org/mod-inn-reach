@@ -111,7 +111,7 @@ public class AgencyMappingServiceImpl implements AgencyMappingService {
   }
 
   private Optional<UUID> getLocationIdByAgencyCode(AgencyLocationMappingDTO mapping, String agencyCode) {
-    log.info("getLocationIdByAgencyCode:: Start - parameters mapping: {}, agencyCode: {}", mapping, agencyCode);
+    log.debug("getLocationIdByAgencyCode:: Start - parameters mapping: {}, agencyCode: {}", mapping, agencyCode);
 
     return mapping.getLocalServers().stream()
       .map(AgencyLocationLscMappingDTO::getAgencyCodeMappings)
