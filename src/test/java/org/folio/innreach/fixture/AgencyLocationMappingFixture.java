@@ -96,5 +96,4 @@ public class AgencyLocationMappingFixture {
     return deserializeFromJsonFile(
       "/agency-mapping/create-agency-mappings-request3.json", AgencyLocationMappingDTO.class);
   }
-
 }

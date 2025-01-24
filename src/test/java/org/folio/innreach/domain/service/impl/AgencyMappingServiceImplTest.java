@@ -1,6 +1,6 @@
 package org.folio.innreach.domain.service.impl;
 
-import static org.folio.innreach.fixture.AgencyLocationMappingFixture.*;
+import static org.folio.innreach.fixture.AgencyLocationMappingFixture.deserializeMapping2;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
@@ -111,8 +111,6 @@ class AgencyMappingServiceImplTest {
     assertNotNull(locationId);
     assertEquals(DEFAULT_LOCATION_ID, locationId);
   }
-
-
 
   @Test
   void getLocationIdByAgencyCode_usingDefaultMapping() {
