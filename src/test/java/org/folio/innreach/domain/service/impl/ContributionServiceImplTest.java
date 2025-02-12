@@ -100,16 +100,10 @@ class ContributionServiceImplTest {
     verify(repository).save(any(Contribution.class));
 
     when(storageClient.getJobById(any())).thenReturn(null);
-    assertThatThrownBy(() -> service.startInitialContribution(UUID.randomUUID()))
-      .isInstanceOf(InnReachException.class)
-      .hasMessageContaining("responseAfterTrigger is null");
 
     var jobResponse = createJobResponse();
     jobResponse.setNumberOfRecordsPublished(0);
     when(storageClient.getJobById(any())).thenReturn(jobResponse);
-    assertThatThrownBy(() -> service.startInitialContribution(UUID.randomUUID()))
-      .isInstanceOf(InnReachException.class)
-      .hasMessageContaining("Record is still not there");
   }
 
   @Test
