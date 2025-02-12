@@ -1,6 +1,5 @@
 package org.folio.innreach.domain.service.impl;
 
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.folio.innreach.fixture.JobResponseFixture.updateJobResponse;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -18,7 +17,6 @@ import java.util.Optional;
 import java.util.UUID;
 
 import org.folio.innreach.config.props.ContributionJobProperties;
-import org.folio.innreach.external.exception.InnReachException;
 import org.folio.spring.config.properties.FolioEnvironment;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
