@@ -118,6 +118,7 @@ class ContributionServiceImplTest {
 
     assertEquals(contribution.getId(), updated.getId());
     assertEquals(COMPLETE, updated.getStatus());
+
   }
 
   @Test
