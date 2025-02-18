@@ -1,3 +1,8 @@
+## v3.2.5 2025-02-18
+
+### Bugs
+* [MODINREACH-476](https://folio-org.atlassian.net/browse/MODINREACH-476) - Remove the RetryTemplate code.
+
 ## v3.2.4 2025-01-27
 
 ### Bugs
