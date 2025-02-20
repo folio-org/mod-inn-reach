@@ -1,3 +1,9 @@
+## v3.3.2 2025-02-20
+
+### Bugs
+* [MODINREACH-468](https://folio-org.atlassian.net/browse/MODINREACH-468) - INN-reach error receiving unshipped item
+* [MODINREACH-476](https://folio-org.atlassian.net/browse/MODINREACH-476) - Initial contribution job can time out for larger collections
+
 ## v3.3.1 2024-11-20
 
 ### Stories
