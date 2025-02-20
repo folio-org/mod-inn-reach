@@ -137,13 +137,6 @@ public class ContributionServiceImpl implements ContributionService {
     var iterationJobResponse = triggerInstanceIteration();
     var numberOfRecords = iterationJobResponse.getNumberOfRecordsPublished();
     log.info("numberOfRecords from iterationJobResponse: {}",numberOfRecords);
-
-    JobResponse updatedJobResponse = retryTemplate.execute(r -> getJobResponse(iterationJobResponse.getId()));
-
-    if(updatedJobResponse!=null) {
-      numberOfRecords = updatedJobResponse.getNumberOfRecordsPublished();
-      log.info("numberOfRecords from updatedJobResponse for centralServerId {} is {}", centralServerId, numberOfRecords);
-    }
     contribution.setJobId(iterationJobResponse.getId());
     contribution.setRecordsTotal(numberOfRecords.longValue());
     repository.save(contribution);
@@ -157,27 +150,6 @@ public class ContributionServiceImpl implements ContributionService {
     repository.updateStatisticsByCentralServerId().ifPresent(contribution ->
       log.info("updateStatisticsAndContributionStatus:: recordsTotal - {}, recordsProcessed - {}, recordsContributed - {}",
         contribution.getRecordsTotal(), contribution.getRecordsProcessed(), contribution.getRecordsContributed()));
-  }
-
-  private JobResponse getJobResponse(UUID id) {
-
-    JobResponse responseAfterTrigger = instanceStorageClient.getJobById(id);
-
-    if (responseAfterTrigger != null) {
-      log.info("responseAfterTrigger: status: {}", responseAfterTrigger.getStatus().toString());
-      log.info("responseAfterTrigger: number: {}", responseAfterTrigger.getNumberOfRecordsPublished());
-      log.info("responseAfterTrigger: id: {}", responseAfterTrigger.getId());
-      if (!COMPLETED.equalsIgnoreCase(responseAfterTrigger.getStatus().toString())) {
-        log.info("responseAfterTrigger: not completed yet");
-        throw new InnReachException("Record is still not there " + responseAfterTrigger.getNumberOfRecordsPublished());
-      }
-    }
-    else {
-      log.info("responseAfterTrigger: is null");
-      throw new InnReachException("responseAfterTrigger is null");
-    }
-
-    return responseAfterTrigger;
   }
 
   @Override
