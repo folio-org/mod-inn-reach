@@ -38,12 +38,12 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 
@@ -53,7 +53,6 @@ import org.folio.innreach.domain.listener.KafkaInventoryEventListener;
 import org.folio.innreach.util.JsonHelper;
 import org.folio.spring.integration.XOkapiHeaders;
 
-@MockBean(classes = {KafkaCirculationEventListener.class, KafkaInventoryEventListener.class, KafkaInitialContributionEventListener.class})
 @Log4j2
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
   classes = {ModInnReachApplication.class})
@@ -72,7 +71,14 @@ public class BaseApiControllerTest {
   protected MockMvc mockMvc;
   @Autowired
   private JsonHelper jsonHelper;
+  @MockitoBean
+  private KafkaCirculationEventListener kafkaCirculationEventListener;
 
+  @MockitoBean
+  private KafkaInventoryEventListener kafkaInventoryEventListener;
+
+  @MockitoBean
+  private KafkaInitialContributionEventListener kafkaInitialContributionEventListener;
 
   @DynamicPropertySource
   static void registerOkapiURL(DynamicPropertyRegistry registry) {

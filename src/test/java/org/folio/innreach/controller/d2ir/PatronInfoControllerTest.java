@@ -32,11 +32,11 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlMergeMode;
 
@@ -59,13 +59,13 @@ class PatronInfoControllerTest extends BaseApiControllerTest {
   public static final String UNABLE_TO_VERIFY_PATRON = "Unable to verify patron";
   @Autowired
   private TestRestTemplate testRestTemplate;
-  @MockBean
+  @MockitoBean
   private UsersClient usersClient;
-  @MockBean
+  @MockitoBean
   private AutomatedPatronBlocksClient automatedBlocksClient;
-  @MockBean
+  @MockitoBean
   private ManualPatronBlocksClient manualBlocksClient;
-  @MockBean
+  @MockitoBean
   private PatronClient patronClient;
   @Mock
   private UserCustomFieldMappingService userCustomFieldService;

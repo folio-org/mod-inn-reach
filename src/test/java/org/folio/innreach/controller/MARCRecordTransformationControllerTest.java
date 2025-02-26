@@ -16,9 +16,9 @@ import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.http.HttpStatus;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlMergeMode;
 
@@ -44,10 +44,10 @@ class MARCRecordTransformationControllerTest extends BaseControllerTest {
   @Autowired
   private TestRestTemplate testRestTemplate;
 
-  @MockBean
+  @MockitoBean
   private InstanceStorageClient instanceStorageClient;
 
-  @MockBean
+  @MockitoBean
   private SourceRecordStorageClient sourceRecordStorageClient;
 
   @Test

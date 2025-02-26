@@ -18,8 +18,8 @@ import org.folio.innreach.repository.JobExecutionStatusRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlMergeMode;
 
@@ -63,20 +63,20 @@ class InitialContributionEventProcessorTest extends BaseControllerTest {
   InitialContributionEventProcessor eventProcessor;
   @Autowired
   ContributionRepository contributionRepository;
-  @SpyBean
+  @MockitoSpyBean
   JobExecutionStatusRepository jobExecutionStatusRepository;
   @Autowired
   CentralServerRepository centralServerRepository;
-  @MockBean
+  @MockitoBean
   InventoryViewService inventoryViewService;
-  @MockBean
+  @MockitoBean
   RecordContributionService recordContributionService;
-  @MockBean
+  @MockitoBean
   ContributionValidationService validationService;
-  @SpyBean
+  @MockitoSpyBean
   @Qualifier("instanceExceptionListener")
   ContributionExceptionListener instanceExceptionListener;
-  @SpyBean
+  @MockitoSpyBean
   @Qualifier("itemExceptionListener")
   ContributionExceptionListener itemExceptionListener;
 

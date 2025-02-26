@@ -27,12 +27,12 @@ import org.folio.innreach.batch.contribution.IterationEventReaderFactory;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.retry.support.RetryTemplate;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlMergeMode;
 
@@ -67,7 +67,7 @@ class ContributionControllerTest extends BaseControllerTest {
   private static final UUID PRE_POPULATED_CONTRIBUTION_ID = UUID.fromString("ae274737-c398-4cf6-8dd3-d228e5b1f608");
   private static final UUID PRE_POPULATED_ITERATION_JOB_ID = UUID.fromString("a193f510-b178-4ce6-ab70-d8e09f646a2d");
 
-  @MockBean
+  @MockitoBean
   private InstanceStorageClient instanceStorageClient;
 
   @Autowired
@@ -76,17 +76,17 @@ class ContributionControllerTest extends BaseControllerTest {
   private ContributionRepository repository;
   @Autowired
   private ContributionMapper mapper;
-  @MockBean
+  @MockitoBean
   private MaterialTypesClient materialTypesClient;
-  @MockBean
+  @MockitoBean
   private InnReachLocationExternalService irLocationService;
-  @MockBean
+  @MockitoBean
   private ContributionJobRunner jobRunner;
 
   @Mock
   private RetryTemplate retryTemplate;
 
-  @MockBean
+  @MockitoBean
   IterationEventReaderFactory iterationEventReaderFactory;
 
   @Test

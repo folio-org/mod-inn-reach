@@ -9,11 +9,11 @@ import org.folio.innreach.domain.listener.KafkaInitialContributionEventListener;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.web.bind.annotation.RestController;
 
 import org.folio.innreach.ModInnReachApplication;
@@ -25,13 +25,21 @@ import org.folio.spring.liquibase.FolioLiquibaseConfiguration;
 import org.folio.tenant.domain.dto.TenantAttributes;
 import org.folio.tenant.rest.resource.TenantApi;
 
-@MockBean(classes = {KafkaCirculationEventListener.class, KafkaInventoryEventListener.class, KafkaInitialContributionEventListener.class})
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, classes = {ModInnReachApplication.class,
   BaseControllerTest.TestTenantController.class})
 @ActiveProfiles({"test", "testcontainers-pg"})
 public class BaseControllerTest {
 
-  @MockBean
+  @MockitoBean
+  private KafkaCirculationEventListener kafkaCirculationEventListener;
+
+  @MockitoBean
+  private KafkaInventoryEventListener kafkaInventoryEventListener;
+
+  @MockitoBean
+  private KafkaInitialContributionEventListener kafkaInitialContributionEventListener;
+
+  @MockitoBean
   protected InnReachAuthClient innReachAuthClient;
 
   @BeforeEach
