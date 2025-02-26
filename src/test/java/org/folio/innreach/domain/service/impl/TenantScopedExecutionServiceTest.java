@@ -33,14 +33,14 @@ class TenantScopedExecutionServiceTest {
     Runnable job = mock(Runnable.class);
 
     when(systemUserService.getAuthedSystemUser(tenantId)).thenReturn(SystemUser.builder().build());
-    when(contextBuilder.forSystemUser(any())).thenReturn(folioExecutionContext);
+    when(contextBuilder.forSystemUser(any(), null)).thenReturn(folioExecutionContext);
 
     tenantScopedExecutionService.setSystemUserService(systemUserService);
 
     tenantScopedExecutionService.executeAsyncTenantScoped(tenantId, job);
 
     verify(systemUserService).getAuthedSystemUser(tenantId);
-    verify(contextBuilder).forSystemUser(any());
+    verify(contextBuilder).forSystemUser(any(), null);
     verify(job).run();
   }
 
