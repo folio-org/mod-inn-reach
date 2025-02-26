@@ -57,8 +57,8 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlMergeMode;
 
@@ -113,28 +113,28 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
   private static final Date DUE_DATE = new Date();
   private static final UUID CHECKIN_ID = UUID.randomUUID();
 
-  @SpyBean
+  @MockitoSpyBean
   private KafkaCirculationEventListener listener;
 
-  @SpyBean
+  @MockitoSpyBean
   private BatchDomainEventProcessor eventProcessor;
 
-  @SpyBean
+  @MockitoSpyBean
   private InnReachTransactionRepository transactionRepository;
 
-  @MockBean
+  @MockitoBean
   private InnReachExternalService innReachExternalService;
 
-  @MockBean
+  @MockitoBean
   private ContributionActionService contributionActionService;
 
-  @MockBean
+  @MockitoBean
   private InventoryClient inventoryClient;
 
-  @MockBean
+  @MockitoBean
   private CirculationClient circulationClient;
 
-  @MockBean
+  @MockitoBean
   private HoldingsStorageClient holdingsStorageClient;
 
   @Test

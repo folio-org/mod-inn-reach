@@ -83,13 +83,13 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.stubbing.Answer;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlMergeMode;
 
@@ -204,7 +204,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
 
   @Autowired
   private TestRestTemplate testRestTemplate;
-  @SpyBean
+  @MockitoSpyBean
   private InnReachTransactionRepository repository;
   @Autowired
   private InnReachTransactionPickupLocationMapper transactionPickupLocationMapper;
@@ -217,25 +217,25 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   @Autowired
   private RequestPreferenceService requestPreferenceService;
 
-  @MockBean
+  @MockitoBean
   private InventoryClient inventoryClient;
-  @MockBean
+  @MockitoBean
   private CirculationClient circulationClient;
-  @MockBean
+  @MockitoBean
   private UsersClient usersClient;
-  @MockBean
+  @MockitoBean
   private InnReachClient innReachClient;
-  @MockBean
+  @MockitoBean
   private HoldingsStorageClient holdingsStorageClient;
-  @MockBean
+  @MockitoBean
   private RequestPreferenceStorageClient requestPreferenceClient;
-  @MockBean
+  @MockitoBean
   private ServicePointsClient servicePointsClient;
-  @MockBean
+  @MockitoBean
   private ServicePointsUsersClient servicePointsUsersClient;
-  @SpyBean
+  @MockitoSpyBean
   private RequestService requestService;
-  @SpyBean
+  @MockitoSpyBean
   private InnReachTransactionActionNotifier actionNotifier;
 
   private static final HttpHeaders headers = circHeaders();

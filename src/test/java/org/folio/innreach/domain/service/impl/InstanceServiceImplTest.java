@@ -2,19 +2,19 @@ package org.folio.innreach.domain.service.impl;
 
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
-import org.springframework.boot.test.mock.mockito.MockBean;
 
 import java.util.ArrayList;
 
 import org.folio.innreach.client.InventoryClient;
 import org.folio.innreach.domain.dto.folio.inventory.InventoryInstanceDTO;
 import org.folio.innreach.domain.service.InstanceService;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import static org.junit.Assert.assertEquals;
 
 class InstanceServiceImplTest {
 
-  @MockBean
+  @MockitoBean
   private InventoryClient inventoryClient;
   @InjectMocks
   private InstanceService instanceService = new InstanceServiceImpl(inventoryClient);

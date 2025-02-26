@@ -22,8 +22,9 @@ import org.folio.innreach.repository.OngoingContributionStatusRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
+
 import java.net.SocketTimeoutException;
 import java.time.Duration;
 import java.util.List;
@@ -59,19 +60,19 @@ class OngoingContributionEventProcessorTest extends BaseControllerTest {
   private static final String TENANT = "test_tenant";
   @Autowired
   OngoingContributionEventProcessor eventProcessor;
-  @SpyBean
+  @MockitoSpyBean
   OngoingContributionStatusRepository ongoingContributionStatusRepository;
-  @MockBean
+  @MockitoBean
   RecordContributionService recordContributionService;
-  @MockBean
+  @MockitoBean
   ContributionValidationService validationService;
   @Autowired
   OngoingContributionStatusMapper ongoingContributionStatusMapper;
-  @MockBean
+  @MockitoBean
   HoldingsService holdingsService;
-  @MockBean
+  @MockitoBean
   InventoryViewClient inventoryViewClient;
-  @MockBean
+  @MockitoBean
   InstanceStorageClient instanceStorageClient;
   UUID itemId;
   UUID holdingId;

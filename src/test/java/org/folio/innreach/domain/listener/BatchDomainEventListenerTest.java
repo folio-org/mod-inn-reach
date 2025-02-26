@@ -5,9 +5,9 @@ import org.folio.innreach.domain.listener.base.BaseKafkaApiTest;
 import org.folio.innreach.domain.service.impl.BatchDomainEventProcessor;
 import org.folio.innreach.domain.service.impl.TenantScopedExecutionService;
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.kafka.listener.ListenerExecutionFailedException;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 
 import java.util.UUID;
 
@@ -21,13 +21,13 @@ class BatchDomainEventListenerTest extends BaseKafkaApiTest {
 
   private static final UUID PRE_POPULATED_LOCAL_ITEM_ID = UUID.fromString("c633da85-8112-4453-af9c-c250e417179d");
 
-  @SpyBean
+  @MockitoSpyBean
   private KafkaInventoryEventListener listener;
 
-  @MockBean
+  @MockitoBean
   private TenantScopedExecutionService executionService;
 
-  @SpyBean
+  @MockitoSpyBean
   private BatchDomainEventProcessor eventProcessor;
 
   @Test
