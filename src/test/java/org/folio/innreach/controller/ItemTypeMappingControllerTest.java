@@ -135,7 +135,6 @@ class ItemTypeMappingControllerTest extends BaseControllerTest {
       ItemTypeMappingsDTO.class);
     em.addAll(newMappings.getItemTypeMappings());       // to insert
 
-    mappings.getItemTypeMappings().stream().peek(m -> m.setId(null)).collect(Collectors.toList());
     var responseEntity = testRestTemplate.exchange(
       "/inn-reach/central-servers/{centralServerId}/item-type-mappings", HttpMethod.PUT, new HttpEntity<>(mappings),
       Void.class, PRE_POPULATED_CENTRAL_SERVER_ID);

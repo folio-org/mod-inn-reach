@@ -2,7 +2,6 @@ package org.folio.innreach.repository;
 
 import static java.util.UUID.fromString;
 import static java.util.UUID.randomUUID;
-import static org.folio.innreach.fixture.MappingFixture.createCentralPatronTypeMapping;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.StringContains.containsString;
 import static org.junit.jupiter.api.Assertions.assertEquals;
