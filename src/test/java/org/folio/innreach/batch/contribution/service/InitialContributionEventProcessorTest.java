@@ -370,7 +370,7 @@ class InitialContributionEventProcessorTest extends BaseControllerTest {
 
   private Contribution createMockContribution(UUID jobId) {
     Contribution contribution = new Contribution();
-    contribution.setId(UUID.randomUUID());
+    contribution.setId(null);
     contribution.setCentralServer(centralServerRepository.findById(CENTRAL_SERVER_ID).get());
     contribution.setStatus(Contribution.Status.IN_PROGRESS);
     contribution.setRecordsTotal(1L);

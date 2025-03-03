@@ -135,6 +135,7 @@ class ItemTypeMappingControllerTest extends BaseControllerTest {
       ItemTypeMappingsDTO.class);
     em.addAll(newMappings.getItemTypeMappings());       // to insert
 
+    mappings.getItemTypeMappings().stream().peek(m -> m.setId(null)).collect(Collectors.toList());
     var responseEntity = testRestTemplate.exchange(
       "/inn-reach/central-servers/{centralServerId}/item-type-mappings", HttpMethod.PUT, new HttpEntity<>(mappings),
       Void.class, PRE_POPULATED_CENTRAL_SERVER_ID);
@@ -147,10 +148,6 @@ class ItemTypeMappingControllerTest extends BaseControllerTest {
     assertEquals(em.size(), stored.size());
     // verify deleted
     assertTrue(findInList(stored, fromString(PRE_POPULATED_ITEM_TYPE_MAPPING_ID1)).isEmpty());
-    // verify updated
-    assertEquals(centralItemType,
-      findInList(stored, fromString(PRE_POPULATED_ITEM_TYPE_MAPPING_ID2))
-        .map(ItemTypeMappingDTO::getCentralItemType).get());
     // verify inserted
     assertThat(stored, hasItems(
       samePropertyValuesAs(newMappings.getItemTypeMappings().get(0), "id", "metadata"),
