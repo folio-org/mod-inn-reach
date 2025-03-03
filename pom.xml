@@ -4,7 +4,7 @@
   <parent>
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-parent</artifactId>
-    <version>3.4.2</version>
+    <version>3.4.3</version>
     <relativePath />
   </parent>
   <groupId>org.folio</groupId>
@@ -22,8 +22,8 @@
 
   <properties>
     <!-- runtime dependencies -->
-    <folio-service-tools.version>5.0.0-SNAPSHOT</folio-service-tools.version>
-    <folio-spring.version>9.0.0-SNAPSHOT</folio-spring.version>
+    <folio-service-tools.version>5.0.0</folio-service-tools.version>
+    <folio-spring.version>9.0.0</folio-spring.version>
     <spring-cloud-starter-openfeign.version>4.2.0</spring-cloud-starter-openfeign.version>
     <commons-collections4.version>4.4</commons-collections4.version>
     <mapstruct.version>1.6.2</mapstruct.version>
