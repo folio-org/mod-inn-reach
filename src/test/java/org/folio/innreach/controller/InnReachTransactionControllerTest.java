@@ -241,7 +241,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
 
   RandomStringGenerator generator = new RandomStringGenerator.Builder()
     .withinRange('a', 'z')  // Define character range
-    .build();
+    .get();
 
   InventoryItemDTO mockInventoryClient() {
     var inventoryItemDTO = createInventoryItemDTO();
