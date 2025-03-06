@@ -65,6 +65,9 @@ class CentralPatronTypeMappingControllerTest extends BaseControllerTest {
     var centralPatronTypeMappingsDTO = deserializeFromJsonFile(
       "/central-patron-type-mappings/update-central-patron-type-mappings-request.json", CentralPatronTypeMappingsDTO.class);
 
+    centralPatronTypeMappingsDTO.getCentralPatronTypeMappings().get(0).setId(null);
+    centralPatronTypeMappingsDTO.getCentralPatronTypeMappings().get(1).setId(null);
+
     var responseEntity = testRestTemplate.exchange(
       "/inn-reach/central-servers/{centralServerId}/central-patron-type-mappings", HttpMethod.PUT,
       new HttpEntity<>(centralPatronTypeMappingsDTO), Void.class, PRE_POPULATED_CENTRAL_SERVER_ID);

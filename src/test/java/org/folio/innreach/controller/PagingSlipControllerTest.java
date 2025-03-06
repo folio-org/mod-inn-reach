@@ -19,9 +19,9 @@ import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.http.HttpStatus;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlMergeMode;
 
@@ -71,16 +71,16 @@ class PagingSlipControllerTest extends BaseControllerTest {
   @Autowired
   private TestRestTemplate testRestTemplate;
 
-  @MockBean
+  @MockitoBean
   private CirculationClient circulationClient;
 
-  @MockBean
+  @MockitoBean
   private InventoryClient inventoryClient;
 
-  @MockBean
+  @MockitoBean
   private LocationsClient locationsClient;
 
-  @MockBean
+  @MockitoBean
   private InnReachClient innReachClient;
 
   @Test

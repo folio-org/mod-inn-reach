@@ -9,18 +9,18 @@ import java.util.UUID;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 
 import org.folio.innreach.controller.base.BaseControllerTest;
 import org.folio.innreach.external.service.InnReachExternalService;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 class InnReachProxyControllerTest extends BaseControllerTest {
 
   @Autowired
   private TestRestTemplate testRestTemplate;
 
-  @MockBean
+  @MockitoBean
   private InnReachExternalService innReachExternalService;
 
   @ParameterizedTest

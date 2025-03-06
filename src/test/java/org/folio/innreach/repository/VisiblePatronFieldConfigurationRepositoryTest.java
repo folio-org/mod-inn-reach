@@ -71,6 +71,7 @@ class VisiblePatronFieldConfigurationRepositoryTest extends BaseRepositoryTest {
   void shouldSaveNewConfiguration() {
     var newConfig = createVisiblePatronFieldConfiguration();
     newConfig.setCentralServer(refCentralServer());
+    newConfig.setId(null);
 
     var savedConfig = repository.saveAndFlush(newConfig);
 

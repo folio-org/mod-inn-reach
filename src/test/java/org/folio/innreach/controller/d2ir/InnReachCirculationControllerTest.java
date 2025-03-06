@@ -79,13 +79,13 @@ import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlConfig;
 import org.springframework.test.context.jdbc.SqlMergeMode;
@@ -149,32 +149,32 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
   @Autowired
   private TestRestTemplate testRestTemplate;
 
-  @SpyBean
+  @MockitoSpyBean
   private InnReachTransactionRepository repository;
 
-  @MockBean
+  @MockitoBean
   private ItemService itemService;
-  @MockBean
+  @MockitoBean
   private CirculationClient circulationClient;
-  @SpyBean
+  @MockitoSpyBean
   private RequestService requestService;
-  @MockBean
+  @MockitoBean
   private ServicePointsUsersClient servicePointsUsersClient;
-  @MockBean
+  @MockitoBean
   private InnReachExternalService innReachExternalService;
-  @MockBean
+  @MockitoBean
   private UserService userService;
-  @MockBean
+  @MockitoBean
   private InventoryService inventoryService;
-  @MockBean
+  @MockitoBean
   private InstanceService instanceService;
-  @MockBean
+  @MockitoBean
   private PatronHoldService patronHoldService;
-  @MockBean
+  @MockitoBean
   private HoldingsService holdingsService;
-  @MockBean
+  @MockitoBean
   VirtualRecordService virtualRecordService;
-  @MockBean
+  @MockitoBean
   ConfigurationService configurationService;
 
   @Autowired
@@ -182,7 +182,7 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
   @Autowired
   private InnReachTransactionHoldMapper transactionHoldMapper;
 
-  @MockBean
+  @MockitoBean
   IterationEventReaderFactory iterationEventReaderFactory;
 
   private HttpHeaders headers = circHeaders();

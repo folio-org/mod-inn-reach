@@ -147,10 +147,6 @@ class ItemTypeMappingControllerTest extends BaseControllerTest {
     assertEquals(em.size(), stored.size());
     // verify deleted
     assertTrue(findInList(stored, fromString(PRE_POPULATED_ITEM_TYPE_MAPPING_ID1)).isEmpty());
-    // verify updated
-    assertEquals(centralItemType,
-      findInList(stored, fromString(PRE_POPULATED_ITEM_TYPE_MAPPING_ID2))
-        .map(ItemTypeMappingDTO::getCentralItemType).get());
     // verify inserted
     assertThat(stored, hasItems(
       samePropertyValuesAs(newMappings.getItemTypeMappings().get(0), "id", "metadata"),

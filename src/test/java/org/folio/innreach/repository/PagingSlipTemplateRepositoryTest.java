@@ -52,7 +52,7 @@ class PagingSlipTemplateRepositoryTest extends BaseRepositoryTest {
   void shouldSaveNewTemplate() {
     var newTemplate = createPagingSlipTemplate();
     newTemplate.setCentralServer(refCentralServer());
-
+    newTemplate.setId(null);
     var saved = repository.saveAndFlush(newTemplate);
 
     assertNotNull(saved);
@@ -97,6 +97,7 @@ class PagingSlipTemplateRepositoryTest extends BaseRepositoryTest {
   void throwExceptionWhenSavingWithoutTemplate() {
     var template = createPagingSlipTemplate();
     template.setTemplate(null);
+    template.setId(null);
 
     assertThrows(DataIntegrityViolationException.class, () -> repository.saveAndFlush(template));
   }
@@ -105,6 +106,7 @@ class PagingSlipTemplateRepositoryTest extends BaseRepositoryTest {
   @Sql(scripts = {"classpath:db/central-server/pre-populate-central-server.sql"})
   void throwExceptionWhenSavingWithInvalidCentralServerReference() {
     var template = createPagingSlipTemplate();
+    template.setId(null);
 
     template.setCentralServer(TestUtil.refCentralServer(randomUUID()));
 
@@ -118,6 +120,7 @@ class PagingSlipTemplateRepositoryTest extends BaseRepositoryTest {
   void throwExceptionWhenSavingTemplateForServerThatAlreadyHasOne() {
     var newTemplate = createPagingSlipTemplate();
     newTemplate.setCentralServer(refCentralServer());
+    newTemplate.setId(null);
 
     var ex = assertThrows(DataIntegrityViolationException.class, () -> repository.saveAndFlush(newTemplate));
     assertThat(ex.getMessage(), containsString("constraint [paging_slip_template_central_server_id_key]"));

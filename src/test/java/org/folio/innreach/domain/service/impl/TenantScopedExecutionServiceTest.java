@@ -11,6 +11,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -33,14 +34,14 @@ class TenantScopedExecutionServiceTest {
     Runnable job = mock(Runnable.class);
 
     when(systemUserService.getAuthedSystemUser(tenantId)).thenReturn(SystemUser.builder().build());
-    when(contextBuilder.forSystemUser(any())).thenReturn(folioExecutionContext);
+    when(contextBuilder.forSystemUser(any(), eq(null))).thenReturn(folioExecutionContext);
 
     tenantScopedExecutionService.setSystemUserService(systemUserService);
 
     tenantScopedExecutionService.executeAsyncTenantScoped(tenantId, job);
 
     verify(systemUserService).getAuthedSystemUser(tenantId);
-    verify(contextBuilder).forSystemUser(any());
+    verify(contextBuilder).forSystemUser(any(), eq(null));
     verify(job).run();
   }
 

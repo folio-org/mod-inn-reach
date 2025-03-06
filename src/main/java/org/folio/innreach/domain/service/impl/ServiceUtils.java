@@ -14,6 +14,9 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 import lombok.experimental.UtilityClass;
+import java.lang.reflect.Field;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.Id;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -60,27 +63,46 @@ class ServiceUtils {
     return nonNull(first) && nonNull(second) &&
         Objects.equals(first.getId(), second.getId());
   }
-
   static <E extends Identifiable<UUID>> List<E> mergeAndSave(List<E> incomingEntities, List<E> storedEntities,
-      JpaRepository<E, UUID> repository, BiConsumer<E, E> updateDataMethod) {
+                                                             JpaRepository<E, UUID> repository, BiConsumer<E, E> updateDataMethod) {
 
     List<E> toDelete = new ArrayList<>();
     List<E> toSave = new ArrayList<>();
 
     merge(incomingEntities, storedEntities, comparatorById(),
-        toSave::add,
-        (incoming, stored) -> {
-          updateDataMethod.accept(incoming, stored);
-          toSave.add(stored);
-        },
-        toDelete::add);
+      toSave::add,
+      (incoming, stored) -> {
+        updateDataMethod.accept(incoming, stored);
+        toSave.add(stored);
+      },
+      toDelete::add);
 
     repository.flush();
 
     repository.deleteAllInBatch(toDelete);
 
+    // Only set ID to null for new entities, not for ones already present in the database
+    toSave.forEach(e -> {
+      // Check if entity is not in storedEntities AND does not require manual ID assignment
+      if (!storedEntities.contains(e) && doesEntityUseGeneratedId(e)) {
+        e.setId(null);
+      }
+    });
+
+
     return repository.saveAllAndFlush(toSave);
   }
+
+  private static boolean doesEntityUseGeneratedId(Object entity) {
+    Class<?> clazz = entity.getClass();
+    for (Field field : clazz.getDeclaredFields()) {
+      if (field.isAnnotationPresent(Id.class)) {
+        return field.isAnnotationPresent(GeneratedValue.class);
+      }
+    }
+    return false; // Default to manual assignment if @GeneratedValue is not found
+  }
+
 
   static <E extends Comparable<E>> void merge(Collection<E> incoming, Collection<E> stored,
       Consumer<E> addMethod, BiConsumer<E, E> updateMethod, Consumer<E> deleteMethod) {

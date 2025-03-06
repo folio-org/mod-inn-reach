@@ -1,7 +1,6 @@
 package org.folio.innreach.controller;
 
 import static java.util.UUID.randomUUID;
-import static org.apache.commons.lang3.RandomStringUtils.randomAlphanumeric;
 import static org.awaitility.Awaitility.await;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
@@ -69,7 +68,7 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.text.RandomStringGenerator;
 import org.folio.innreach.util.DateHelper;
 
 import org.apache.commons.lang3.StringUtils;
@@ -83,13 +82,13 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.stubbing.Answer;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlMergeMode;
 
@@ -204,7 +203,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
 
   @Autowired
   private TestRestTemplate testRestTemplate;
-  @SpyBean
+  @MockitoSpyBean
   private InnReachTransactionRepository repository;
   @Autowired
   private InnReachTransactionPickupLocationMapper transactionPickupLocationMapper;
@@ -217,28 +216,32 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   @Autowired
   private RequestPreferenceService requestPreferenceService;
 
-  @MockBean
+  @MockitoBean
   private InventoryClient inventoryClient;
-  @MockBean
+  @MockitoBean
   private CirculationClient circulationClient;
-  @MockBean
+  @MockitoBean
   private UsersClient usersClient;
-  @MockBean
+  @MockitoBean
   private InnReachClient innReachClient;
-  @MockBean
+  @MockitoBean
   private HoldingsStorageClient holdingsStorageClient;
-  @MockBean
+  @MockitoBean
   private RequestPreferenceStorageClient requestPreferenceClient;
-  @MockBean
+  @MockitoBean
   private ServicePointsClient servicePointsClient;
-  @MockBean
+  @MockitoBean
   private ServicePointsUsersClient servicePointsUsersClient;
-  @SpyBean
+  @MockitoSpyBean
   private RequestService requestService;
-  @SpyBean
+  @MockitoSpyBean
   private InnReachTransactionActionNotifier actionNotifier;
 
   private static final HttpHeaders headers = circHeaders();
+
+  RandomStringGenerator generator = new RandomStringGenerator.Builder()
+    .withinRange('a', 'z')  // Define character range
+    .get();
 
   InventoryItemDTO mockInventoryClient() {
     var inventoryItemDTO = createInventoryItemDTO();
@@ -687,7 +690,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   void return200HttpCode_and_sendRequest_whenItemHoldTransactionCreated() {
     var inventoryItemDTO = mockInventoryClient();
     inventoryItemDTO.setStatus(IN_TRANSIT);
-    inventoryItemDTO.setTitle(randomAlphanumeric(500));
+    inventoryItemDTO.setTitle(generator.generate(500));
     var requestDTO = createRequestDTO();
     requestDTO.setItemId(inventoryItemDTO.getId());
     when(circulationClient.queryRequestsByItemId(inventoryItemDTO.getId())).thenReturn(ResultList.of(1,
@@ -753,7 +756,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   void return200HttpCode_and_sendRequest_whenItemHoldTransactionCreated_chosenPickLocationFromTransaction() {
     var inventoryItemDTO = mockInventoryClient();
     inventoryItemDTO.setStatus(IN_TRANSIT);
-    inventoryItemDTO.setTitle(randomAlphanumeric(500));
+    inventoryItemDTO.setTitle(generator.generate(500));
     var requestDTO = createRequestDTO();
     requestDTO.setItemId(inventoryItemDTO.getId());
     modifyCentralServer(UUID.fromString(PRE_POPULATED_CENTRAL_SERVER_ID));
@@ -803,7 +806,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   void return200HttpCode_and_sendRequest_whenItemHoldTransactionCreated_servicePointNotFoundByCode() {
     var inventoryItemDTO = mockInventoryClient();
     inventoryItemDTO.setStatus(IN_TRANSIT);
-    inventoryItemDTO.setTitle(randomAlphanumeric(500));
+    inventoryItemDTO.setTitle(generator.generate(500));
     var requestDTO = createRequestDTO();
     requestDTO.setItemId(inventoryItemDTO.getId());
     modifyCentralServer(UUID.fromString(PRE_POPULATED_CENTRAL_SERVER_ID));
@@ -2349,7 +2352,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   private CancelTransactionHoldDTO createCancelTransactionHold() {
     return new CancelTransactionHoldDTO()
       .cancellationReasonId(randomUUID())
-      .cancellationAdditionalInformation(RandomStringUtils.randomAlphabetic(255));
+      .cancellationAdditionalInformation(generator.generate(500));
   }
 
   private InnReachTransaction fetchTransaction(UUID transactionId) {
