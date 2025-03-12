@@ -21,17 +21,17 @@ import org.folio.tenant.domain.dto.TenantAttributes;
 @Lazy
 public class CustomTenantService extends TenantService {
 
-  private final PrepareSystemUserService systemUserService;
+  private final PrepareSystemUserService prepareSystemUserService;
   private final ReferenceDataLoader referenceDataLoader;
   private final TestTenant testTenant;
   private final TenantInfoRepository tenantRepository;
 
 
   public CustomTenantService(JdbcTemplate jdbcTemplate, FolioExecutionContext context,
-      FolioSpringLiquibase folioSpringLiquibase, PrepareSystemUserService systemUserService,
+      FolioSpringLiquibase folioSpringLiquibase, PrepareSystemUserService prepareSystemUserService,
       ReferenceDataLoader referenceDataLoader, TestTenant testTenant, TenantInfoRepository tenantRepository) {
     super(jdbcTemplate, context, folioSpringLiquibase);
-    this.systemUserService = systemUserService;
+    this.prepareSystemUserService = prepareSystemUserService;
     this.referenceDataLoader = referenceDataLoader;
     this.testTenant = testTenant;
     this.tenantRepository = tenantRepository;
@@ -41,7 +41,7 @@ public class CustomTenantService extends TenantService {
   protected void afterTenantUpdate(TenantAttributes tenantAttributes) {
     log.debug("afterTenantUpdate:: parameters tenantAttributes: {}", tenantAttributes);
     if (!context.getTenantId().startsWith(testTenant.getTenantName())) {
-      systemUserService.setupSystemUser();
+      prepareSystemUserService.setupSystemUser();
       saveTenant();
     }
   }
