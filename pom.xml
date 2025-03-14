@@ -9,7 +9,7 @@
   </parent>
   <groupId>org.folio</groupId>
   <artifactId>mod-inn-reach</artifactId>
-  <version>3.4.1-SNAPSHOT</version>
+  <version>3.5.0-SNAPSHOT</version>
   <name>mod-inn-reach</name>
   <description>Access to INN-Reach service</description>
 
@@ -31,12 +31,11 @@
     <coffee-boots.version>4.0.0</coffee-boots.version>
 
     <!-- test dependencies -->
-    <wiremock-standalone.version>3.4.2</wiremock-standalone.version>
-    <awaitility.version>4.2.2</awaitility.version>
+    <awaitility.version>4.3.0</awaitility.version>
     <junit-extensions.version>2.6.0</junit-extensions.version>
     <easy-random.version>5.0.0</easy-random.version>
-    <micrometer.version>1.10.3</micrometer.version>
-    <log4j2.version>2.19.0</log4j2.version>
+    <micrometer.version>1.14.5</micrometer.version>
+    <log4j2.version>2.24.3</log4j2.version>
 
     <!-- plugins -->
     <openapi-generator.version>7.9.0</openapi-generator.version>
@@ -233,8 +232,8 @@
     </dependency>
     <dependency>
       <groupId>org.wiremock</groupId>
-      <artifactId>wiremock-standalone</artifactId>
-      <version>${wiremock-standalone.version}</version>
+      <artifactId>wiremock</artifactId>
+      <version>3.12.1</version>
       <scope>test</scope>
     </dependency>
     <dependency>
