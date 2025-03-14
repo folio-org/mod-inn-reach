@@ -36,6 +36,7 @@
     <easy-random.version>5.0.0</easy-random.version>
     <micrometer.version>1.14.5</micrometer.version>
     <log4j2.version>2.24.3</log4j2.version>
+    <wiremock-standalone.version>3.4.2</wiremock-standalone.version>
 
     <!-- plugins -->
     <openapi-generator.version>7.9.0</openapi-generator.version>
@@ -230,12 +231,12 @@
       <version>${easy-random.version}</version>
       <scope>test</scope>
     </dependency>
-    <dependency>
-      <groupId>org.wiremock</groupId>
-      <artifactId>wiremock</artifactId>
-      <version>3.12.1</version>
-      <scope>test</scope>
-    </dependency>
+  <dependency>
+    <groupId>org.wiremock</groupId>
+    <artifactId>wiremock-standalone</artifactId>
+    <version>${wiremock-standalone.version}</version>
+    <scope>test</scope>
+  </dependency>
     <dependency>
       <groupId>org.awaitility</groupId>
       <artifactId>awaitility</artifactId>
