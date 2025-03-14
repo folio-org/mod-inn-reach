@@ -9,7 +9,7 @@
   </parent>
   <groupId>org.folio</groupId>
   <artifactId>mod-inn-reach</artifactId>
-  <version>3.4.0-SNAPSHOT</version>
+  <version>3.5.0-SNAPSHOT</version>
   <name>mod-inn-reach</name>
   <description>Access to INN-Reach service</description>
 
@@ -31,7 +31,7 @@
     <coffee-boots.version>4.0.0</coffee-boots.version>
 
     <!-- test dependencies -->
-    <wiremock-standalone.version>3.4.2</wiremock-standalone.version>
+    <wiremock-standalone.version>3.12.1</wiremock-standalone.version>
     <awaitility.version>4.2.2</awaitility.version>
     <junit-extensions.version>2.6.0</junit-extensions.version>
     <easy-random.version>5.0.0</easy-random.version>
@@ -41,9 +41,9 @@
     <!-- plugins -->
     <openapi-generator.version>7.9.0</openapi-generator.version>
     <copy-rename-maven-plugin.version>1.0.1</copy-rename-maven-plugin.version>
-    <folio-module-descriptor-validator.version>1.0.0</folio-module-descriptor-validator.version>
+    <folio-module-descriptor-validator.version>1.0.1</folio-module-descriptor-validator.version>
     <build-helper-maven-plugin.version>3.6.0</build-helper-maven-plugin.version>
-    <maven-surefire-plugin.version>3.5.1</maven-surefire-plugin.version>
+    <maven-surefire-plugin.version>3.5.2</maven-surefire-plugin.version>
     <maven-release-plugin.version>3.1.1</maven-release-plugin.version>
     <maven-enforcer-plugin.version>3.5.0</maven-enforcer-plugin.version>
 

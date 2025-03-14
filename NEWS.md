@@ -1,3 +1,12 @@
+## v3.4.0 2025-03-14
+
+### Stories
+* [FOLIO-3944](https://folio-org.atlassian.net/browse/FOLIO-3944) - Upgrade the Actions used by API-related GitHub Workflows
+* [FOLIO-4227](https://folio-org.atlassian.net/browse/FOLIO-4227) - Update to mod-inn-reach Java 21 (Upgraded Java and Spring version)
+
+### Bugs
+* [PR#436](https://github.com/folio-org/mod-inn-reach/pull/436) - fixed prepareSystemUserService bean issue
+
 ## v3.3.1 2024-11-20
 
 ### Stories
