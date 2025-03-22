@@ -56,8 +56,8 @@ public class CentralServerFixture {
       ))
       .centralServerKey(randomUUIDString())
       .centralServerSecret(randomUUIDString())
-      .localServerKey(randomUUIDString())
-      .localServerSecret(randomUUIDString());
+      .localServerKey(UUID.randomUUID())
+      .localServerSecret(UUID.randomUUID());
   }
 
   public static CentralServerConnectionDetailsDTO createCentralServerConnectionDetailsDTO() {

@@ -51,11 +51,13 @@
     },
     "localServerKey": {
       "description": "Local server key",
-      "type": "string"
+      "type": "string",
+      "format": "UUID"
     },
     "localServerSecret": {
       "description": "Local server secret",
-      "type": "string"
+      "type": "string",
+      "format": "UUID"
     },
     "checkPickupLocation": {
       "description": "Indicates whether to look up pickup locations for INN-Reach item hold requests based on transaction pickupLocation",
