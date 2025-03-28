@@ -66,7 +66,6 @@ public class ItemServiceImpl implements ItemService {
     query.append("id=(").append(itemIdKey).append(")");
     query.append(" and ");
     query.append("effectiveLocationId=(").append(locationIdKey).append(")");
-    log.info("findItemsByIdsAndLocations> Query :{}", query);
 
     CQLQueryRequestDto cqlQueryRequestDto = CQLQueryRequestDto.builder()
             .query(query.toString())
