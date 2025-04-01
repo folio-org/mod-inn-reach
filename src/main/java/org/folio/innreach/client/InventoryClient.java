@@ -3,6 +3,8 @@ package org.folio.innreach.client;
 import java.util.Optional;
 import java.util.UUID;
 
+import jakarta.validation.Valid;
+import org.folio.innreach.domain.dto.CQLQueryRequestDto;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -54,6 +56,8 @@ public interface InventoryClient {
   ResultList<InventoryItemDTO> queryItemsByIdsAndLocations(@PathVariable("itemIds") String itemIdKey,
                                                            @PathVariable("locationIds") String locationIdKey,
                                                            @RequestParam("limit") int limit);
+  @PostMapping("/items/retrieve")
+  ResultList<InventoryItemDTO> retrieveItemsByCQLBody(@Valid @RequestBody CQLQueryRequestDto cqlQueryRequestDto);
 
   @GetMapping("/instances?query=id=({instanceIds})")
   ResultList<InventoryInstanceDTO> queryInstancesByIds(@PathVariable("instanceIds") String instanceIdKey, @RequestParam("limit") int limit);
