@@ -24,8 +24,8 @@ public interface CentralServerMapper {
     }
 
     var localServerCredentials = new LocalServerCredentials();
-    localServerCredentials.setLocalServerKey(centralServerDTO.getLocalServerKey());
-    localServerCredentials.setLocalServerSecret(centralServerDTO.getLocalServerSecret());
+    localServerCredentials.setLocalServerKey(centralServerDTO.getLocalServerKey().toString());
+    localServerCredentials.setLocalServerSecret(centralServerDTO.getLocalServerSecret().toString());
     return localServerCredentials;
   }
 
