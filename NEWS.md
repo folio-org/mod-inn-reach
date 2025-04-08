@@ -1,3 +1,9 @@
+## v3.3.3 2025-04-08
+
+### Bugs
+* [MODINREACH-487](https://folio-org.atlassian.net/browse/MODINREACH-487) - fixed HTTP 414 (URI too long) error for INN-Reach Paging Slips
+* [MODINREACH-489](https://folio-org.atlassian.net/browse/MODINREACH-489) - Bump Spring Boot from 3.3.5 to 3.3.10 (Ramsons)
+
 ## v3.3.2 2025-02-20
 
 ### Bugs

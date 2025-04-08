@@ -108,7 +108,7 @@ class PagingSlipControllerTest extends BaseControllerTest {
 
     when(locationsClient.queryLocationsByServicePoint(any(), anyInt())).thenReturn(ResultList.asSinglePage(location));
     when(circulationClient.queryNotFilledRequestsByIds(any(), anyInt())).thenReturn(ResultList.asSinglePage(request));
-    when(inventoryClient.queryItemsByIdsAndLocations(any(), any(), anyInt())).thenReturn(ResultList.asSinglePage(item));
+    when(inventoryClient.retrieveItemsByCQLBody(any())).thenReturn(ResultList.asSinglePage(item));
     when(inventoryClient.queryInstancesByIds(any(), anyInt())).thenReturn(ResultList.asSinglePage(instance));
 
     when(innReachClient.callInnReachApi(matchURI(INN_REACH_LOCAL_SERVERS_URI), any(), any(), any()))

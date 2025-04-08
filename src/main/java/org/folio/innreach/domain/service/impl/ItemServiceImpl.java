@@ -10,6 +10,7 @@ import java.util.UUID;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.folio.innreach.domain.dto.CQLQueryRequestDto;
 import org.springframework.stereotype.Service;
 
 import org.folio.innreach.client.InventoryClient;
@@ -61,7 +62,16 @@ public class ItemServiceImpl implements ItemService {
     var itemIdKey = matchAny(itemIds);
     var locationIdKey = matchAny(locationIds);
 
-    return inventoryClient.queryItemsByIdsAndLocations(itemIdKey, locationIdKey, limit).getResult();
+    StringBuilder query = new StringBuilder();
+    query.append("id=(").append(itemIdKey).append(")");
+    query.append(" and ");
+    query.append("effectiveLocationId=(").append(locationIdKey).append(")");
+
+    CQLQueryRequestDto cqlQueryRequestDto = CQLQueryRequestDto.builder()
+            .query(query.toString())
+            .limit(limit)
+            .build();
+    return inventoryClient.retrieveItemsByCQLBody(cqlQueryRequestDto).getResult();
   }
 
   private Optional<InventoryItemDTO> findItem(String barcode) {
