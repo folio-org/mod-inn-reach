@@ -55,9 +55,8 @@
       "format": "UUID"
     },
     "localServerSecret": {
-      "description": "Local server secret",
-      "type": "string",
-      "format": "UUID"
+      "description": "Local server secret; UUID on write, then it will be hashed and salted",
+      "type": "string"
     },
     "checkPickupLocation": {
       "description": "Indicates whether to look up pickup locations for INN-Reach item hold requests based on transaction pickupLocation",
