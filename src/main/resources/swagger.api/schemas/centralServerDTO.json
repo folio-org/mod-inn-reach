@@ -51,10 +51,11 @@
     },
     "localServerKey": {
       "description": "Local server key",
-      "type": "string"
+      "type": "string",
+      "format": "UUID"
     },
     "localServerSecret": {
-      "description": "Local server secret",
+      "description": "Local server secret; UUID on write, then it will be hashed and salted",
       "type": "string"
     },
     "checkPickupLocation": {
