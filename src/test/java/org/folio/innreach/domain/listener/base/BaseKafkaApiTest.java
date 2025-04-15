@@ -95,10 +95,13 @@ public class BaseKafkaApiTest {
 
   @DynamicPropertySource
   static void setDatasourceProperties(DynamicPropertyRegistry propertyRegistry) {
+    System.out.println("qqq setDatasourceProperties before start: " + propertyRegistry.toString());
     postgresqlContainer.start();
+    System.out.println("qqq setDatasourceProperties after start: " + propertyRegistry.toString());
     propertyRegistry.add("spring.datasource.url", postgresqlContainer::getJdbcUrl);
     propertyRegistry.add("spring.datasource.password", postgresqlContainer::getPassword);
     propertyRegistry.add("spring.datasource.username", postgresqlContainer::getUsername);
+    System.out.println("qqq setDatasourceProperties after add: " + propertyRegistry.toString());
   }
 
   private KafkaTemplate<String, DomainEvent> buildKafkaTemplate() {
