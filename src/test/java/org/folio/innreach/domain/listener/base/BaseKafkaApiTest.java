@@ -38,6 +38,7 @@ import org.springframework.kafka.test.EmbeddedKafkaBroker;
 import org.springframework.kafka.test.context.EmbeddedKafka;
 import org.springframework.kafka.test.utils.KafkaTestUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
@@ -51,6 +52,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
   INVENTORY_ITEM_TOPIC, INVENTORY_HOLDING_TOPIC, INVENTORY_INSTANCE_TOPIC, INVENTORY_ITEM_TOPIC1, INVENTORY_ITEM_TOPIC2, INVENTORY_ITEM_TOPIC4})
 @SpringBootTest(
   classes = {ModInnReachApplication.class, TestTenantScopedExecutionService.class})
+@DirtiesContext
 @Testcontainers
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class BaseKafkaApiTest {
