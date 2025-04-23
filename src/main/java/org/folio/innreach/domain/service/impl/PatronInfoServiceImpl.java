@@ -256,12 +256,18 @@ public class PatronInfoServiceImpl implements PatronInfoService {
     } else if (patronNameTokens.length == 4) {
       // "first first last last" format or "last last first first" format or "first first last middle" format or "last last first middle" format
       // or "first last last middle" format or "last first first middle" format
+      // or "last first first first" format or "first first first last" format or "first last last last " format or "last last last first" format
       return (checkFirstNameLastNameWithPosition(personal, new String[]{patronNameTokens[0] + " " + patronNameTokens[1], patronNameTokens[2] + " " + patronNameTokens[3]}, 0, 1)
         || checkFirstNameLastNameWithPosition(personal, new String[]{patronNameTokens[0] + " " + patronNameTokens[1], patronNameTokens[2] + " " + patronNameTokens[3]}, 1, 0)
         || checkFirstNameMiddleNameLastNameWithPosition(personal, new String[]{concatenateWithSpace(patronNameTokens[0], patronNameTokens[1]), patronNameTokens[2], patronNameTokens[3]}, 0, 2, 1)
         || checkFirstNameMiddleNameLastNameWithPosition(personal, new String[]{concatenateWithSpace(patronNameTokens[0], patronNameTokens[1]), patronNameTokens[2], patronNameTokens[3]}, 1, 2, 0)
         || checkFirstNameMiddleNameLastNameWithPosition(personal, new String[]{patronNameTokens[0], concatenateWithSpace(patronNameTokens[1], patronNameTokens[2]), patronNameTokens[3]}, 0, 2, 1)
-        || checkFirstNameMiddleNameLastNameWithPosition(personal, new String[]{patronNameTokens[0], concatenateWithSpace(patronNameTokens[1], patronNameTokens[2]), patronNameTokens[3]}, 1, 2, 0));
+        || checkFirstNameMiddleNameLastNameWithPosition(personal, new String[]{patronNameTokens[0], concatenateWithSpace(patronNameTokens[1], patronNameTokens[2]), patronNameTokens[3]}, 1, 2, 0)
+        || checkFirstNameLastNameWithPosition(personal, new String[]{patronNameTokens[0], patronNameTokens[1] + " " + patronNameTokens[2] + " " + patronNameTokens[3]}, 1, 0)
+        || checkFirstNameLastNameWithPosition(personal, new String[]{patronNameTokens[0] + " " + patronNameTokens[1] + " " + patronNameTokens[2], patronNameTokens[3]}, 0, 1)
+        || checkFirstNameLastNameWithPosition(personal, new String[]{patronNameTokens[0], patronNameTokens[1] + " " + patronNameTokens[2] + " " + patronNameTokens[3]}, 0, 1)
+        || checkFirstNameLastNameWithPosition(personal, new String[]{patronNameTokens[0] + " " + patronNameTokens[1] + " " + patronNameTokens[2], patronNameTokens[3]}, 1, 0)
+      );
     } else if (patronNameTokens.length == 5) {
       // "first first last last middle" format or "last last first first middle" format
       return (checkFirstNameMiddleNameLastNameWithPosition(personal, new String[]{concatenateWithSpace(patronNameTokens[0], patronNameTokens[1]), concatenateWithSpace(patronNameTokens[2], patronNameTokens[3]), patronNameTokens[4]}, 0, 2, 1)
