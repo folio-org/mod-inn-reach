@@ -14,6 +14,11 @@
 ### Bugs
 * [PR#436](https://github.com/folio-org/mod-inn-reach/pull/436) - fixed prepareSystemUserService bean issue
 
+## v3.3.4 2025-05-05
+
+### Bugs
+* [MODINREACH-477](https://folio-org.atlassian.net/browse/MODINREACH-477) - INN-Reach Login Issue (Users with more than one space in their first or last name and/or a middle name can't log in)
+
 ## v3.3.3 2025-04-08
 
 ### Bugs
