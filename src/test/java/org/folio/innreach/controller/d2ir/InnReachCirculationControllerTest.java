@@ -367,8 +367,8 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     verify(innReachExternalService).postInnReachApi(eq(PRE_POPULATED_CENTRAL_CODE),
       eq(OWNINGSITE_CANCEL_PATH_TEMPLATE.formatted(NEW_TRANSACTION_TRACKING_ID, PRE_POPULATED_CENTRAL_CODE)),
       any(OwningSiteCancelsRequestDTO.class));
-    verify(recordContributionService).contributeItems(eq(PRE_POPULATED_CENTRAL_SERVER_ID),
-      eq(instanceDto.getHrid()), eq(List.of(expectedRecontributionItem)));
+    verify(recordContributionService).contributeItems(PRE_POPULATED_CENTRAL_SERVER_ID,
+      instanceDto.getHrid(), List.of(expectedRecontributionItem));
   }
 
   @Test
