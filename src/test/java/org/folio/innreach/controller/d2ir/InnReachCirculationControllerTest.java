@@ -1,5 +1,6 @@
 package org.folio.innreach.controller.d2ir;
 
+import static java.util.UUID.randomUUID;
 import static org.awaitility.Awaitility.await;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.BORROWER_RENEW;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.BORROWING_SITE_CANCEL;
@@ -19,6 +20,7 @@ import static org.folio.innreach.fixture.CirculationFixture.createClaimsItemRetu
 import static org.folio.innreach.fixture.CirculationFixture.createItemShippedDTO;
 import static org.folio.innreach.fixture.CirculationFixture.createRecallDTO;
 import static org.folio.innreach.fixture.CirculationFixture.createTransactionHoldDTO;
+import static org.folio.innreach.fixture.InventoryFixture.createInventoryHoldingDTO;
 import static org.folio.innreach.fixture.InventoryFixture.createInventoryItemDTO;
 import static org.folio.innreach.fixture.RequestFixture.createRequestDTO;
 import static org.folio.innreach.fixture.ServicePointUserFixture.createServicePointUserDTO;
@@ -44,16 +46,22 @@ import static org.springframework.http.HttpStatus.OK;
 import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TEST_METHOD;
 import static org.springframework.test.context.jdbc.SqlMergeMode.MergeMode.MERGE;
 
+import lombok.SneakyThrows;
 import org.apache.commons.lang3.ObjectUtils;
 import org.folio.innreach.batch.contribution.IterationEventReaderFactory;
 import org.folio.innreach.client.CirculationClient;
 import org.folio.innreach.client.HridSettingsClient;
+import org.folio.innreach.client.ItemStorageClient;
 import org.folio.innreach.client.ServicePointsUsersClient;
 import org.folio.innreach.controller.base.BaseControllerTest;
+import org.folio.innreach.domain.dto.OwningSiteCancelsRequestDTO;
 import org.folio.innreach.domain.dto.folio.ResultList;
 import org.folio.innreach.domain.dto.folio.User;
 import org.folio.innreach.domain.dto.folio.circulation.RequestDTO;
 import org.folio.innreach.domain.dto.folio.configuration.ConfigurationDTO;
+import org.folio.innreach.domain.dto.folio.inventory.InventoryInstanceDTO;
+import org.folio.innreach.domain.dto.folio.inventory.InventoryItemStatus;
+import org.folio.innreach.domain.dto.folio.requestpreference.RequestPreferenceDTO;
 import org.folio.innreach.domain.entity.InnReachTransaction;
 import org.folio.innreach.domain.entity.TransactionPatronHold;
 import org.folio.innreach.domain.service.ConfigurationService;
@@ -62,6 +70,8 @@ import org.folio.innreach.domain.service.InstanceService;
 import org.folio.innreach.domain.service.InventoryService;
 import org.folio.innreach.domain.service.ItemService;
 import org.folio.innreach.domain.service.PatronHoldService;
+import org.folio.innreach.domain.service.RecordContributionService;
+import org.folio.innreach.domain.service.RequestPreferenceService;
 import org.folio.innreach.domain.service.RequestService;
 import org.folio.innreach.domain.service.UserService;
 import org.folio.innreach.domain.service.VirtualRecordService;
@@ -69,6 +79,7 @@ import org.folio.innreach.dto.CheckOutRequestDTO;
 import org.folio.innreach.dto.InnReachResponseDTO;
 import org.folio.innreach.dto.LoanDTO;
 import org.folio.innreach.dto.RenewLoanDTO;
+import org.folio.innreach.dto.TransactionHoldDTO;
 import org.folio.innreach.external.dto.InnReachResponse;
 import org.folio.innreach.external.service.InnReachExternalService;
 import org.folio.innreach.mapper.InnReachTransactionHoldMapper;
@@ -94,6 +105,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -117,8 +129,10 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
   private static final String ITEM_RECEIVED_PATH = "/inn-reach/d2ir/circ/itemreceived/{trackingId}/{centralCode}";
   private static final String RECALL_REQUEST_PATH = "/inn-reach/d2ir/circ/recall/{trackingId}/{centralCode}";
   private static final String CANCEL_REQUEST_PATH = "/inn-reach/d2ir/circ/cancelrequest/{trackingId}/{centralCode}";
+  private static final String OWNINGSITE_CANCEL_PATH_TEMPLATE = "/circ/owningsitecancel/%s/%s";
 
   private static final String PATRON_HOLD_OPERATION = "patronhold";
+  private static final String ITEM_HOLD_OPERATION = "itemhold";
   private static final String ITEM_SHIPPED_OPERATION = "itemshipped";
   private static final String LOCAL_HOLD_OPERATION = "localhold";
 
@@ -134,6 +148,8 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
   private static final UUID PICK_IP_SERVICE_POINT = UUID.fromString("d08b7bbe-a978-4db8-b5af-a80556254a99");
   private static final UUID PRE_POPULATE_SERVICE_ID = UUID.fromString("74a215e6-e3a1-475d-b7d6-f23b3a5d3c47");
   private static final UUID PRE_POPULATE_PATRON_GROUP_ID = UUID.fromString("54e17c4c-e315-4d20-8879-efc694dea1ce");
+  private static final UUID PRE_POPULATED_CENTRAL_SERVER_ID = UUID.fromString("edab6baf-c696-42b1-89bb-1bbb8759b0d2");
+  private static final UUID PRE_POPULATED_MATERIAL_TYPE_ID = UUID.fromString("1a54b431-2e4f-452d-9cae-9cee66c9a892");
 
   private static final String PRE_POPULATED_TRACKING1_ID = "tracking1";
   private static final String PRE_POPULATED_TRACKING2_ID = "tracking2";
@@ -145,6 +161,7 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
   private static final Integer PRE_POPULATED_CENTRAL_PATRON_TYPE = 1;
   private static final String CENTRAL_PATRON_NAME = "Atreides, Paul";
   private static final Duration ASYNC_AWAIT_TIMEOUT = Duration.ofSeconds(15);
+  private static final String PRE_POPULATED_USER_BARCODE = "0000098765";
 
   @Autowired
   private TestRestTemplate testRestTemplate;
@@ -173,9 +190,15 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
   @MockitoBean
   private HoldingsService holdingsService;
   @MockitoBean
-  VirtualRecordService virtualRecordService;
+  private VirtualRecordService virtualRecordService;
   @MockitoBean
-  ConfigurationService configurationService;
+  private ConfigurationService configurationService;
+  @MockitoBean
+  private RequestPreferenceService requestPreferenceService;
+  @MockitoBean
+  private RecordContributionService recordContributionService;
+  @MockitoBean
+  private ItemStorageClient itemStorageClient;
 
   @Autowired
   private InnReachTransactionRepository transactionRepository;
@@ -225,6 +248,127 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     assertNotNull(innReachTransaction.getHold());
     assertEquals(CENTRAL_PATRON_NAME, innReachTransaction.getHold().getPatronName());
     assertEquals(PRE_POPULATED_CENTRAL_PATRON_TYPE, innReachTransaction.getHold().getCentralPatronType());
+  }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/patron-type-mapping/pre-populate-patron-type-mapping.sql",
+    "classpath:db/agency-loc-mapping/pre-populate-agency-location-mapping.sql",
+    "classpath:db/item-type-mapping/pre-populate-item-type-mapping.sql",
+    "classpath:db/mtype-mapping/pre-populate-material-type-mapping.sql",
+    "classpath:db/central-patron-type-mapping/pre-populate-central-patron_type-mapping-table.sql"
+  })
+  void processItemHoldCirculationRequest_createOwningSiteRequest() {
+    var randomUUID = randomUUID();
+    var item = createInventoryItemDTO(InventoryItemStatus.AVAILABLE, PRE_POPULATED_MATERIAL_TYPE_ID,
+      randomUUID, randomUUID, randomUUID);
+    item.setHrid("0000085");
+    item.setHoldingsRecordId(randomUUID);
+    var transactionHoldDTO = sampleTransactionHoldDto(item.getHrid());
+
+    var holding = createInventoryHoldingDTO();
+    holding.setInstanceId(randomUUID);
+    var user = populateUser();
+    var circulationResuestDTO = createRequestDTO();
+    var requestPreference = new RequestPreferenceDTO(user.getId(), randomUUID);
+
+    when(itemService.getItemByHrId(any())).thenReturn(item);
+    when(holdingsService.find(any(UUID.class))).thenReturn(Optional.of(holding));
+    when(userService.getUserByQuery(anyString())).thenReturn(Optional.of(user));
+    when(circulationClient.sendRequest(requestDtoCaptor.capture())).thenReturn(circulationResuestDTO);
+    when(requestPreferenceService.findUserRequestPreference(any(UUID.class))).thenReturn(requestPreference);
+
+    var responseEntity = testRestTemplate.postForEntity(
+      CIRCULATION_OPERATION_ENDPOINT,
+      new HttpEntity<>(transactionHoldDTO, headers), InnReachResponseDTO.class,
+      ITEM_HOLD_OPERATION, NEW_TRANSACTION_TRACKING_ID, PRE_POPULATED_CENTRAL_CODE);
+
+    await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() -> {
+        assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+        var responseBody = responseEntity.getBody();
+        assertNotNull(responseBody);
+        assertNotNull(responseBody.getErrors());
+        assertEquals(0, responseBody.getErrors().size());
+        assertEquals(InnReachResponse.OK_STATUS, responseBody.getStatus());
+      });
+
+    var innReachTransaction = repository.findByTrackingIdAndCentralServerCode(
+      NEW_TRANSACTION_TRACKING_ID, PRE_POPULATED_CENTRAL_CODE).orElse(null);
+
+    assertNotNull(innReachTransaction);
+    assertNotNull(innReachTransaction.getHold());
+    assertEquals(circulationResuestDTO.getId(), innReachTransaction.getHold().getFolioRequestId());
+    assertEquals(user.getBarcode(), innReachTransaction.getHold().getFolioPatronBarcode());
+
+    var capturedRequest = requestDtoCaptor.getValue();
+    assertNotNull(capturedRequest);
+    assertEquals(holding.getInstanceId(), capturedRequest.getInstanceId());
+    assertEquals(item.getHoldingsRecordId(), capturedRequest.getHoldingsRecordId());
+    assertEquals(requestPreference.getDefaultServicePointId(), capturedRequest.getPickupServicePointId());
+  }
+
+  @SneakyThrows
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/patron-type-mapping/pre-populate-patron-type-mapping.sql",
+    "classpath:db/agency-loc-mapping/pre-populate-agency-location-mapping.sql",
+    "classpath:db/item-type-mapping/pre-populate-item-type-mapping.sql",
+    "classpath:db/mtype-mapping/pre-populate-material-type-mapping.sql",
+    "classpath:db/central-patron-type-mapping/pre-populate-central-patron_type-mapping-table.sql"
+  })
+  void processItemHoldCirculationRequest_failToCreateOwningSiteRequest() {
+    var randomUUID = randomUUID();
+    var item = createInventoryItemDTO(InventoryItemStatus.AVAILABLE, PRE_POPULATED_MATERIAL_TYPE_ID,
+      randomUUID, randomUUID, randomUUID);
+    item.setHrid("0000085");
+    item.setHoldingsRecordId(randomUUID);
+    var transactionHoldDTO = sampleTransactionHoldDto(item.getHrid());
+
+    var holding = createInventoryHoldingDTO();
+    holding.setInstanceId(randomUUID);
+    var instanceDto = new InventoryInstanceDTO();
+    instanceDto.setHrid("in000001");
+    var expectedRecontributionItem = new org.folio.innreach.dto.Item();
+    expectedRecontributionItem.setHoldingsRecordId(randomUUID);
+    var user = populateUser();
+    var requestPreference = new RequestPreferenceDTO(user.getId(), randomUUID);
+
+    when(itemService.getItemByHrId(any())).thenReturn(item);
+    when(holdingsService.find(any(UUID.class))).thenReturn(Optional.of(holding));
+    when(instanceService.find(any(UUID.class))).thenReturn(Optional.of(instanceDto));
+    when(userService.getUserByQuery(anyString())).thenReturn(Optional.of(user));
+    when(circulationClient.sendRequest(any()))
+      .thenThrow(new RuntimeException("Request not permitted"));
+    when(requestPreferenceService.findUserRequestPreference(any(UUID.class))).thenReturn(requestPreference);
+    when(itemStorageClient.getItemByHrId(item.getHrid()))
+      .thenReturn(ResultList.of(1, List.of(expectedRecontributionItem)));
+
+    var responseEntity = testRestTemplate.postForEntity(
+      CIRCULATION_OPERATION_ENDPOINT,
+      new HttpEntity<>(transactionHoldDTO, headers), InnReachResponseDTO.class,
+      ITEM_HOLD_OPERATION, NEW_TRANSACTION_TRACKING_ID, PRE_POPULATED_CENTRAL_CODE);
+
+    await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() -> {
+      assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+      var responseBody = responseEntity.getBody();
+      assertNotNull(responseBody);
+      assertNotNull(responseBody.getErrors());
+      assertEquals(0, responseBody.getErrors().size());
+      assertEquals(InnReachResponse.OK_STATUS, responseBody.getStatus());
+    });
+
+    var innReachTransaction = repository.findByTrackingIdAndCentralServerCode(
+      NEW_TRANSACTION_TRACKING_ID, PRE_POPULATED_CENTRAL_CODE).orElse(null);
+
+    assertNotNull(innReachTransaction);
+    assertEquals(CANCEL_REQUEST, innReachTransaction.getState());
+    verify(innReachExternalService).postInnReachApi(eq(PRE_POPULATED_CENTRAL_CODE),
+      eq(OWNINGSITE_CANCEL_PATH_TEMPLATE.formatted(NEW_TRANSACTION_TRACKING_ID, PRE_POPULATED_CENTRAL_CODE)),
+      any(OwningSiteCancelsRequestDTO.class));
+    verify(recordContributionService).contributeItems(eq(PRE_POPULATED_CENTRAL_SERVER_ID),
+      eq(instanceDto.getHrid()), eq(List.of(expectedRecontributionItem)));
   }
 
   @Test
@@ -1211,6 +1355,7 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     user.setId(PRE_POPULATED_PATRON_ID);
     user.setActive(true);
     user.setUsername("test");
+    user.setBarcode(PRE_POPULATED_USER_BARCODE);
     user.setPatronGroupId(PRE_POPULATE_PATRON_GROUP_ID);
     var personal = new User.Personal();
     personal.setPreferredFirstName("Paul");
@@ -1218,6 +1363,19 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     personal.setLastName("Atreides");
     user.setPersonal(personal);
     return user;
+  }
+
+  private TransactionHoldDTO sampleTransactionHoldDto(String itemId) {
+    return new TransactionHoldDTO()
+      .centralPatronType(200)
+      .patronName("patron")
+      .itemId(itemId)
+      .centralItemType(0)
+      .itemAgencyCode("abc01")
+      .pickupLocation("abc11:def22:ghi33")
+      .transactionTime(123456)
+      .patronAgencyCode("xyz01")
+      .patronId("123445667");
   }
 
   private static boolean isCentralPatronInfoCleared(InnReachTransaction transaction) {
