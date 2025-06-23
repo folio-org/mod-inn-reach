@@ -371,6 +371,7 @@
             "inventory-storage.holdings.item.post",
             "inventory-storage.holdings.item.get",
             "inventory-storage.holdings.item.put",
+            "inventory-storage.holdings-sources.collection.get",
             "inventory-storage.hrid-settings.item.get",
             "inventory-storage.service-points.collection.get",
             "inventory.instances.collection.get",

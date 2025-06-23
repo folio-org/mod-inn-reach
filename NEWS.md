@@ -6,6 +6,7 @@
 * [MODINREACH-490](https://folio-org.atlassian.net/browse/MODINREACH-490) - Local server: Enforce UUID of key, explain UUID of secret
 * [MODINREACH-485](https://folio-org.atlassian.net/browse/MODINREACH-485) - Recontribute for requested Item on automatically item hold cancelled transaction.
 * [MODINREACH-485](https://folio-org.atlassian.net/browse/MODINREACH-485) - Bump Spring Boot from 3.4.4 to 3.5.0
+* [MODINREACH-496](https://folio-org.atlassian.net/browse/MODINREACH-496) - Add missing module permission to get holdings sources for INN-Reach circulation endpoints
 
 ## v3.4.0 2025-03-14
 
