@@ -31,8 +31,8 @@
     <coffee-boots.version>4.0.0</coffee-boots.version>
 
     <!-- test dependencies -->
-    <wiremock-standalone.version>3.12.1</wiremock-standalone.version>
-    <awaitility.version>4.2.2</awaitility.version>
+    <wiremock-standalone.version>3.13.1</wiremock-standalone.version>
+    <awaitility.version>4.3.0</awaitility.version>
     <junit-extensions.version>2.6.0</junit-extensions.version>
     <easy-random.version>5.0.0</easy-random.version>
     <micrometer.version>1.15.1</micrometer.version>
