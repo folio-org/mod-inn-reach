@@ -25,6 +25,9 @@ public interface UsersClient {
   @GetMapping
   ResultList<User> query(@RequestParam("query") String query);
 
+  @GetMapping(path = "?query=barcode=={barcode}", produces = APPLICATION_JSON_VALUE, consumes = APPLICATION_JSON_VALUE)
+  ResultList<User> queryUsersByBarcode(@PathVariable("barcode") String barcode);
+
   @PostMapping(consumes = APPLICATION_JSON_VALUE)
   void saveUser(@RequestBody User user);
 

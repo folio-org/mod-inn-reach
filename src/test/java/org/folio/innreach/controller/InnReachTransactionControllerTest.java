@@ -11,6 +11,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
@@ -68,7 +69,10 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import lombok.SneakyThrows;
 import org.apache.commons.text.RandomStringGenerator;
+import org.folio.innreach.client.ItemStorageClient;
+import org.folio.innreach.domain.service.RecordContributionService;
 import org.folio.innreach.util.DateHelper;
 
 import org.apache.commons.lang3.StringUtils;
@@ -170,7 +174,6 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   private static final String PRE_POPULATED_CENTRAL_SERVER_CODE = "d2ir";
   private static final String PRE_POPULATED_CENTRAL_SERVER_ID = "edab6baf-c696-42b1-89bb-1bbb8759b0d2";
   private static final String PRE_POPULATED_USER_BARCODE = "0000098765";
-  private static final String PRE_POPULATED_USER_BARCODE_QUERY = "(barcode==\"" + PRE_POPULATED_USER_BARCODE + "\")";
   private static final Integer PRE_POPULATED_CENTRAL_PATRON_TYPE = 200;
   private static final String PRE_POPULATED_MATERIAL_TYPE_ID = "1a54b431-2e4f-452d-9cae-9cee66c9a892";
   private static final String NEW_CENTRAL_SERVER_CODE = "a0aa";
@@ -232,6 +235,10 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   private ServicePointsClient servicePointsClient;
   @MockitoBean
   private ServicePointsUsersClient servicePointsUsersClient;
+  @MockitoBean
+  private ItemStorageClient itemStorageClient;
+  @MockitoBean
+  private RecordContributionService recordContributionService;
   @MockitoSpyBean
   private RequestService requestService;
   @MockitoSpyBean
@@ -254,7 +261,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   User mockUserClient() {
     var user = createUser();
     user.setBarcode(PRE_POPULATED_USER_BARCODE);
-    when(usersClient.query(PRE_POPULATED_USER_BARCODE_QUERY)).thenReturn(ResultList.of(1, List.of(user)));
+    when(usersClient.queryUsersByBarcode(PRE_POPULATED_USER_BARCODE)).thenReturn(ResultList.of(1, List.of(user)));
     return user;
   }
 
@@ -724,7 +731,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     verify(requestService).createItemHoldRequest(TRACKING_ID, PRE_POPULATED_CENTRAL_SERVER_CODE);
     verify(inventoryClient, times(2)).getItemsByHrId(itemHoldDTO.getItemId());
     verify(circulationClient).queryRequestsByItemId(inventoryItemDTO.getId());
-    verify(usersClient).query(PRE_POPULATED_USER_BARCODE_QUERY);
+    verify(usersClient).queryUsersByBarcode(PRE_POPULATED_USER_BARCODE);
     verify(requestPreferenceClient).getUserRequestPreference(user.getId());
     verify(circulationClient).sendRequest(any());
 
@@ -998,6 +1005,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
         " and material type id = " + PRE_POPULATED_MATERIAL_TYPE_ID + " not found"));
   }
 
+  @SneakyThrows
   @Test
   @Sql(scripts = {
     "classpath:db/central-server/pre-populate-central-server.sql",
@@ -1010,6 +1018,10 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     var user = mockUserClient();
     when(requestPreferenceClient.getUserRequestPreference(user.getId())).thenThrow(IllegalStateException.class);
     when(innReachClient.postInnReachApi(any(), anyString(), anyString(), anyString())).thenReturn("response");
+    when(holdingsStorageClient.findHolding(any())).thenReturn(Optional.empty());
+    when(itemStorageClient.getItemByHrId(any())).thenReturn(ResultList.asSinglePage(new org.folio.innreach.dto.Item()));
+    when(recordContributionService.contributeItems(eq(UUID.fromString(PRE_POPULATED_CENTRAL_SERVER_ID)), any(), anyList()))
+      .thenReturn(1);
 
     var itemHoldDTO = deserializeFromJsonFile(
       "/inn-reach-transaction/create-item-hold-request.json", TransactionHoldDTO.class);
@@ -1026,15 +1038,17 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
 
     verify(inventoryClient).getItemsByHrId(inventoryItemDTO.getHrid());
     verify(circulationClient, never()).queryRequestsByItemId(inventoryItemDTO.getId());
-    verify(usersClient).query(PRE_POPULATED_USER_BARCODE_QUERY);
+    verify(usersClient).queryUsersByBarcode(PRE_POPULATED_USER_BARCODE);
     verify(requestPreferenceClient).getUserRequestPreference(user.getId());
     verify(circulationClient, never()).sendRequest(any());
 
     var cancelRequest = ArgumentCaptor.forClass(OwningSiteCancelsRequestDTO.class);
     verify(innReachClient).postInnReachApi(any(), anyString(), anyString(), anyString(), cancelRequest.capture());
     assertEquals("Request not permitted", cancelRequest.getValue().getReason());
+    verify(recordContributionService).contributeItems(eq(UUID.fromString(PRE_POPULATED_CENTRAL_SERVER_ID)), any(), anyList());
   }
 
+  @SneakyThrows
   @Test
   @Sql(scripts = {
     "classpath:db/central-server/pre-populate-central-server.sql",
@@ -1050,6 +1064,9 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     when(requestPreferenceClient.getUserRequestPreference(user.getId())).thenReturn(ResultList.of(1, List.of(requestPreference)));
     when(innReachClient.postInnReachApi(any(), anyString(), anyString(), anyString())).thenReturn("response");
     when(holdingsStorageClient.findHolding(any())).thenReturn(Optional.empty());
+    when(itemStorageClient.getItemByHrId(any())).thenReturn(ResultList.asSinglePage(new org.folio.innreach.dto.Item()));
+    when(recordContributionService.contributeItems(eq(UUID.fromString(PRE_POPULATED_CENTRAL_SERVER_ID)), any(), anyList()))
+      .thenReturn(1);
 
     var itemHoldDTO = deserializeFromJsonFile(
       "/inn-reach-transaction/create-item-hold-request.json", TransactionHoldDTO.class);
@@ -1066,13 +1083,14 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
 
     verify(inventoryClient, times(2)).getItemsByHrId(inventoryItemDTO.getHrid());
     verify(circulationClient).queryRequestsByItemId(inventoryItemDTO.getId());
-    verify(usersClient).query(PRE_POPULATED_USER_BARCODE_QUERY);
+    verify(usersClient).queryUsersByBarcode(PRE_POPULATED_USER_BARCODE);
     verify(requestPreferenceClient).getUserRequestPreference(user.getId());
     verify(circulationClient, never()).sendRequest(any());
 
     var request = ArgumentCaptor.forClass(OwningSiteCancelsRequestDTO.class);
     verify(innReachClient).postInnReachApi(any(), anyString(), anyString(), anyString(), request.capture());
     assertEquals("Item not available", request.getValue().getReason());
+    verify(recordContributionService).contributeItems(eq(UUID.fromString(PRE_POPULATED_CENTRAL_SERVER_ID)), any(), anyList());
   }
 
   @Test
