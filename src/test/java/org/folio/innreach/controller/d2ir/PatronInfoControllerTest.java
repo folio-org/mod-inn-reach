@@ -81,7 +81,7 @@ class PatronInfoControllerTest extends BaseApiControllerTest {
   void return200HttpCode_and_patronInfoResponseWithPatronInfo_when_patronFoundAndRequestAllowed() {
     var user = createUser();
     user.setPatronGroupId(UUID.fromString("54e17c4c-e315-4d20-8879-efc694dea1ce"));
-    when(usersClient.query(anyString())).thenReturn(ResultList.of(1, List.of(user)));
+    when(usersClient.queryUsersByBarcode(anyString())).thenReturn(ResultList.of(1, List.of(user)));
     when(automatedBlocksClient.getPatronBlocks(any())).thenReturn(ResultList.empty());
     when(manualBlocksClient.getPatronBlocks(any())).thenReturn(ResultList.empty());
     when(patronClient.getAccountDetails(any())).thenReturn(new PatronDTO());
@@ -109,7 +109,7 @@ class PatronInfoControllerTest extends BaseApiControllerTest {
   void return200HttpCode_and_patronInfoResponseWithPatronInfo_when_patronFoundWithNoExpirationDateAndRequestAllowed() {
     var user = createUserWithoutExpirationDate();
     user.setPatronGroupId(UUID.fromString("54e17c4c-e315-4d20-8879-efc694dea1ce"));
-    when(usersClient.query(anyString())).thenReturn(ResultList.of(1, List.of(user)));
+    when(usersClient.queryUsersByBarcode(anyString())).thenReturn(ResultList.of(1, List.of(user)));
     when(automatedBlocksClient.getPatronBlocks(any())).thenReturn(ResultList.empty());
     when(manualBlocksClient.getPatronBlocks(any())).thenReturn(ResultList.empty());
     when(patronClient.getAccountDetails(any())).thenReturn(new PatronDTO());
@@ -138,7 +138,7 @@ class PatronInfoControllerTest extends BaseApiControllerTest {
   void return200HttpCode_and_patronInfoResponseWithPatronInfo_hasLastNameFirstNameOrder_when_patronFoundAndRequestAllowed() {
     var user = createUser();
     user.setPatronGroupId(UUID.fromString("54e17c4c-e315-4d20-8879-efc694dea1ce"));
-    when(usersClient.query(anyString())).thenReturn(ResultList.of(1, List.of(user)));
+    when(usersClient.queryUsersByBarcode(anyString())).thenReturn(ResultList.of(1, List.of(user)));
     when(automatedBlocksClient.getPatronBlocks(any())).thenReturn(ResultList.empty());
     when(manualBlocksClient.getPatronBlocks(any())).thenReturn(ResultList.empty());
     when(patronClient.getAccountDetails(any())).thenReturn(new PatronDTO());
@@ -166,7 +166,7 @@ class PatronInfoControllerTest extends BaseApiControllerTest {
   void return200HttpCode_and_patronInfoResponseWithPatronInfo_hasFirstNameMiddleNameLastNameOrder_when_patronFoundAndRequestAllowed() {
     var user = createUserWithMiddleName();
     user.setPatronGroupId(UUID.fromString("54e17c4c-e315-4d20-8879-efc694dea1ce"));
-    when(usersClient.query(anyString())).thenReturn(ResultList.of(1, List.of(user)));
+    when(usersClient.queryUsersByBarcode(anyString())).thenReturn(ResultList.of(1, List.of(user)));
     when(automatedBlocksClient.getPatronBlocks(any())).thenReturn(ResultList.empty());
     when(manualBlocksClient.getPatronBlocks(any())).thenReturn(ResultList.empty());
     when(patronClient.getAccountDetails(any())).thenReturn(new PatronDTO());
@@ -194,7 +194,7 @@ class PatronInfoControllerTest extends BaseApiControllerTest {
   void return200HttpCode_and_patronInfoResponseWithPatronInfo_hasLastNameFirstNameMiddleNameOrder_when_patronFoundAndRequestAllowed() {
     var user = createUserWithMiddleName();
     user.setPatronGroupId(UUID.fromString("54e17c4c-e315-4d20-8879-efc694dea1ce"));
-    when(usersClient.query(anyString())).thenReturn(ResultList.of(1, List.of(user)));
+    when(usersClient.queryUsersByBarcode(anyString())).thenReturn(ResultList.of(1, List.of(user)));
     when(automatedBlocksClient.getPatronBlocks(any())).thenReturn(ResultList.empty());
     when(manualBlocksClient.getPatronBlocks(any())).thenReturn(ResultList.empty());
     when(patronClient.getAccountDetails(any())).thenReturn(new PatronDTO());
@@ -225,7 +225,7 @@ class PatronInfoControllerTest extends BaseApiControllerTest {
   void return200HttpCode_and_patronInfoResponseWithPatronInfo_hasWrongOrder_when_patronNotFound(String updatedName) {
     var user = createUserWithMiddleName();
     user.setPatronGroupId(UUID.fromString("54e17c4c-e315-4d20-8879-efc694dea1ce"));
-    when(usersClient.query(anyString())).thenReturn(ResultList.of(1, List.of(user)));
+    when(usersClient.queryUsersByBarcode(anyString())).thenReturn(ResultList.of(1, List.of(user)));
     when(automatedBlocksClient.getPatronBlocks(any())).thenReturn(ResultList.empty());
     when(manualBlocksClient.getPatronBlocks(any())).thenReturn(ResultList.empty());
     when(patronClient.getAccountDetails(any())).thenReturn(new PatronDTO());
@@ -255,7 +255,7 @@ class PatronInfoControllerTest extends BaseApiControllerTest {
   void return200HttpCode_and_patronInfoResponseWithPatronInfo_hasIgnoreCaseCorrectOrderWithOutMiddleName_when_patronFoundAndRequestAllowed(String patronName) {
     var user = createUser();
     user.setPatronGroupId(UUID.fromString("54e17c4c-e315-4d20-8879-efc694dea1ce"));
-    when(usersClient.query(anyString())).thenReturn(ResultList.of(1, List.of(user)));
+    when(usersClient.queryUsersByBarcode(anyString())).thenReturn(ResultList.of(1, List.of(user)));
     when(automatedBlocksClient.getPatronBlocks(any())).thenReturn(ResultList.empty());
     when(manualBlocksClient.getPatronBlocks(any())).thenReturn(ResultList.empty());
     when(patronClient.getAccountDetails(any())).thenReturn(new PatronDTO());
@@ -287,7 +287,7 @@ class PatronInfoControllerTest extends BaseApiControllerTest {
   void return200HttpCode_and_patronInfoResponseWithPatronInfo_hasIgnoreCaseCorrectOrderWithMiddleName_when_patronFoundAndRequestAllowed(String patronName) {
     var user = createUserWithMiddleName();
     user.setPatronGroupId(UUID.fromString("54e17c4c-e315-4d20-8879-efc694dea1ce"));
-    when(usersClient.query(anyString())).thenReturn(ResultList.of(1, List.of(user)));
+    when(usersClient.queryUsersByBarcode(anyString())).thenReturn(ResultList.of(1, List.of(user)));
     when(automatedBlocksClient.getPatronBlocks(any())).thenReturn(ResultList.empty());
     when(manualBlocksClient.getPatronBlocks(any())).thenReturn(ResultList.empty());
     when(patronClient.getAccountDetails(any())).thenReturn(new PatronDTO());
@@ -320,7 +320,7 @@ class PatronInfoControllerTest extends BaseApiControllerTest {
     // "last last, first first middle"
     var user = createUserWithTwoFirstAndTwoLastNames("john jimmy", "doe smith");
     user.setPatronGroupId(UUID.fromString("54e17c4c-e315-4d20-8879-efc694dea1ce"));
-    when(usersClient.query(anyString())).thenReturn(ResultList.of(1, List.of(user)));
+    when(usersClient.queryUsersByBarcode(anyString())).thenReturn(ResultList.of(1, List.of(user)));
     when(automatedBlocksClient.getPatronBlocks(any())).thenReturn(ResultList.empty());
     when(manualBlocksClient.getPatronBlocks(any())).thenReturn(ResultList.empty());
     when(patronClient.getAccountDetails(any())).thenReturn(new PatronDTO());
@@ -353,7 +353,7 @@ class PatronInfoControllerTest extends BaseApiControllerTest {
     // "first first last middle", "last first first", "last, first first"
     var user = createUserWithTwoFirstAndTwoLastNames("john jimmy", PATRON_LAST_NAME);
     user.setPatronGroupId(UUID.fromString("54e17c4c-e315-4d20-8879-efc694dea1ce"));
-    when(usersClient.query(anyString())).thenReturn(ResultList.of(1, List.of(user)));
+    when(usersClient.queryUsersByBarcode(anyString())).thenReturn(ResultList.of(1, List.of(user)));
     when(automatedBlocksClient.getPatronBlocks(any())).thenReturn(ResultList.empty());
     when(manualBlocksClient.getPatronBlocks(any())).thenReturn(ResultList.empty());
     when(patronClient.getAccountDetails(any())).thenReturn(new PatronDTO());
@@ -385,7 +385,7 @@ class PatronInfoControllerTest extends BaseApiControllerTest {
     // This test covers "last first first first" and "first first first last"
     var user = createUserWithTwoFirstAndTwoLastNames("john jimmy soni", PATRON_LAST_NAME);
     user.setPatronGroupId(UUID.fromString("54e17c4c-e315-4d20-8879-efc694dea1ce"));
-    when(usersClient.query(anyString())).thenReturn(ResultList.of(1, List.of(user)));
+    when(usersClient.queryUsersByBarcode(anyString())).thenReturn(ResultList.of(1, List.of(user)));
     when(automatedBlocksClient.getPatronBlocks(any())).thenReturn(ResultList.empty());
     when(manualBlocksClient.getPatronBlocks(any())).thenReturn(ResultList.empty());
     when(patronClient.getAccountDetails(any())).thenReturn(new PatronDTO());
@@ -417,7 +417,7 @@ class PatronInfoControllerTest extends BaseApiControllerTest {
     // This test covers "first last last last" and "last last last first"
     var user = createUserWithTwoFirstAndTwoLastNames(PATRON_FIRST_NAME, "tan man dhan");
     user.setPatronGroupId(UUID.fromString("54e17c4c-e315-4d20-8879-efc694dea1ce"));
-    when(usersClient.query(anyString())).thenReturn(ResultList.of(1, List.of(user)));
+    when(usersClient.queryUsersByBarcode(anyString())).thenReturn(ResultList.of(1, List.of(user)));
     when(automatedBlocksClient.getPatronBlocks(any())).thenReturn(ResultList.empty());
     when(manualBlocksClient.getPatronBlocks(any())).thenReturn(ResultList.empty());
     when(patronClient.getAccountDetails(any())).thenReturn(new PatronDTO());
@@ -450,7 +450,7 @@ class PatronInfoControllerTest extends BaseApiControllerTest {
     // "last last, first middle", "first last last"
     var user = createUserWithTwoFirstAndTwoLastNames(PATRON_FIRST_NAME, "doe smith");
     user.setPatronGroupId(UUID.fromString("54e17c4c-e315-4d20-8879-efc694dea1ce"));
-    when(usersClient.query(anyString())).thenReturn(ResultList.of(1, List.of(user)));
+    when(usersClient.queryUsersByBarcode(anyString())).thenReturn(ResultList.of(1, List.of(user)));
     when(automatedBlocksClient.getPatronBlocks(any())).thenReturn(ResultList.empty());
     when(manualBlocksClient.getPatronBlocks(any())).thenReturn(ResultList.empty());
     when(patronClient.getAccountDetails(any())).thenReturn(new PatronDTO());
@@ -481,7 +481,7 @@ class PatronInfoControllerTest extends BaseApiControllerTest {
     var block = new AutomatedPatronBlocksClient.AutomatedPatronBlock();
     block.setBlockBorrowing(true);
     user.setPatronGroupId(UUID.fromString("54e17c4c-e315-4d20-8879-efc694dea1ce"));
-    when(usersClient.query(anyString())).thenReturn(ResultList.of(1, List.of(user)));
+    when(usersClient.queryUsersByBarcode(anyString())).thenReturn(ResultList.of(1, List.of(user)));
     when(automatedBlocksClient.getPatronBlocks(any())).thenReturn(ResultList.of(1,
       List.of(block)));
     when(manualBlocksClient.getPatronBlocks(any())).thenReturn(ResultList.empty());
@@ -508,7 +508,7 @@ class PatronInfoControllerTest extends BaseApiControllerTest {
     "classpath:db/user-custom-field-mapping/pre-populate-user-custom-field-mapping.sql"
   })
   void return200HttpCode_and_patronInfoResponseWithError_when_verificationRequestFails() {
-    when(usersClient.query(anyString())).thenThrow(new IllegalArgumentException("Test exception"));
+    when(usersClient.queryUsersByBarcode(anyString())).thenThrow(new IllegalArgumentException("Test exception"));
 
     var patronInfoRequest = createPatronInfoRequest();
 
