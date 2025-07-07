@@ -1,0 +1,20 @@
+{
+  "requestPreferences": [
+    {
+      "id": "c0933934-9135-4e33-b26f-af78daf31eab",
+      "userId": "5d9bd03d-f031-4820-baea-6dc953ef4b7b",
+      "holdShelf": true,
+      "delivery": false,
+      "defaultServicePointId": "a197450b-6103-4206-8125-1a1cacc66edc",
+      "defaultDeliveryAddressTypeId": "93d3d88d-499b-45d0-9bc7-ac73c3a19880",
+      "fulfillment": "Hold Shelf",
+      "metadata": {
+        "createdDate": "2025-07-01T06:18:04.110+00:00",
+        "createdByUserId": "c1407368-219a-4b6f-bf50-62e89dac3e61",
+        "updatedDate": "2025-07-01T06:18:04.110+00:00",
+        "updatedByUserId": "c1407368-219a-4b6f-bf50-62e89dac3e61"
+      }
+    }
+  ],
+  "totalRecords": 1
+}
