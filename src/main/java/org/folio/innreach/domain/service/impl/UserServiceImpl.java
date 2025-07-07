@@ -55,7 +55,7 @@ public class UserServiceImpl implements UserService {
   @Override
   public Optional<User> getUserByBarcode(String userPublicId) {
     log.debug("getUserByBarcode:: parameters userPublicId: {}", userPublicId);
-    var users = usersClient.query(String.format("barcode==%1$s", userPublicId));
+    var users = usersClient.queryUsersByBarcode(userPublicId);
 
     return ListUtils.getFirstItem(users);
   }

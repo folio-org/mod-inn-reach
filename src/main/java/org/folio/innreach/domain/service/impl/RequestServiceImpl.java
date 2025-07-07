@@ -137,6 +137,7 @@ public class RequestServiceImpl implements RequestService {
       log.info("createItemHoldRequest:: Item hold request created");
     } catch (Exception e) {
       handleOwningSiteRequestException(transaction, centralPatronName, e);
+      reContributeItem(transaction);
     }
   }
 
@@ -238,8 +239,6 @@ public class RequestServiceImpl implements RequestService {
 
     var errorReason = e instanceof ItemNotRequestableException ? "Item not available" : "Request not permitted";
     issueOwningSiteCancelsRequest(transaction, centralPatronName, errorReason);
-
-    reContributeItem(transaction);
   }
 
   private void reContributeItem(InnReachTransaction transaction) {
@@ -414,12 +413,8 @@ public class RequestServiceImpl implements RequestService {
     return servicePointId != null ? servicePointId : getUserRequestPreferenceDefaultServicePoint(patron.getId());
   }
 
-  private String queryByBarcode(String patronBarcode) {
-    return "(barcode==\"" + patronBarcode + "\")";
-  }
-
   private User getUserByBarcode(String patronBarcode) {
-    return userService.getUserByQuery(queryByBarcode(patronBarcode)).orElseThrow(
+    return userService.getUserByBarcode(patronBarcode).orElseThrow(
       () -> new EntityNotFoundException("User not found for barcode = " + patronBarcode)
     );
   }

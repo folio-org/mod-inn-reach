@@ -60,6 +60,7 @@ class MaterialTypeMappingControllerTest extends BaseControllerTest {
   private static final String PRE_POPULATED_CENTRAL_SERVER_ID = "edab6baf-c696-42b1-89bb-1bbb8759b0d2";
   private static final String PRE_POPULATED_MAPPING1_ID = "71bd0beb-28cb-40bb-9f40-87463d61a553";
   private static final String PRE_POPULATED_MAPPING2_ID = "d9985d0d-b121-4ccd-ac16-5ebd0ccccf7f";
+  private static final String PRE_POPULATED_MAPPING3_ID = "6f783255-e0ee-42c2-aa84-669d8c70f107";
   private static final String PRE_POPULATED_MATERIAL_TYPE2_ID = "5ee11d91-f7e8-481d-b079-65d708582ccc";
 
   @Autowired
@@ -126,9 +127,9 @@ class MaterialTypeMappingControllerTest extends BaseControllerTest {
     var response = responseEntity.getBody();
     assertNotNull(response);
 
-    var expectedMapping = findMapping(PRE_POPULATED_MAPPING1_ID);
+    var expectedMapping = findMapping(PRE_POPULATED_MAPPING3_ID);
 
-    assertEquals(3, response.getTotalRecords());
+    assertEquals(4, response.getTotalRecords());
     assertEquals(singletonList(expectedMapping), response.getMaterialTypeMappings());
   }
 

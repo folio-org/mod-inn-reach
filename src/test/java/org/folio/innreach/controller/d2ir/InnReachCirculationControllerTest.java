@@ -275,7 +275,7 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
 
     when(itemService.getItemByHrId(any())).thenReturn(item);
     when(holdingsService.find(any(UUID.class))).thenReturn(Optional.of(holding));
-    when(userService.getUserByQuery(anyString())).thenReturn(Optional.of(user));
+    when(userService.getUserByBarcode(anyString())).thenReturn(Optional.of(user));
     when(circulationClient.sendRequest(requestDtoCaptor.capture())).thenReturn(circulationResuestDTO);
     when(requestPreferenceService.findUserRequestPreference(any(UUID.class))).thenReturn(requestPreference);
 
