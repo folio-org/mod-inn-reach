@@ -118,10 +118,6 @@
                   "suffix": {
                     "type": "string",
                     "description": "Effective Call Number Suffix is the suffix of the identifier assigned to an item or its holding and associated with the item."
-                  },
-                  "typeId": {
-                    "type": "string",
-                    "description": "Effective Call Number Type Id is the call number type id assigned to the item or associated holding."
                   }
                 }
               },
