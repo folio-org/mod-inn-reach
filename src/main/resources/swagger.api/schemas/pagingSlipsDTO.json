@@ -102,6 +102,48 @@
               "hrid": {
                 "type": "string",
                 "description": "The human readable ID, also called eye readable ID. A system-assigned sequential alternate ID"
+              },
+              "effectiveCallNumberComponents": {
+                "type": "object",
+                "description": "Elements of a full call number generated from the item or holding",
+                "properties": {
+                  "callNumber": {
+                    "type": "string",
+                    "description": "Effective Call Number is an identifier assigned to an item or its holding and associated with the item."
+                  },
+                  "prefix": {
+                    "type": "string",
+                    "description": "Effective Call Number Prefix is the prefix of the identifier assigned to an item or its holding and associated with the item."
+                  },
+                  "suffix": {
+                    "type": "string",
+                    "description": "Effective Call Number Suffix is the suffix of the identifier assigned to an item or its holding and associated with the item."
+                  },
+                  "typeId": {
+                    "type": "string",
+                    "description": "Effective Call Number Type Id is the call number type id assigned to the item or associated holding."
+                  }
+                }
+              },
+              "volume": {
+                "description": "Volume is intended for monographs when a multipart monograph (e.g. a biography of Gerorge Bernard Shaw in three volumes)",
+                "type": "string"
+              },
+              "enumeration": {
+                "description": "Enumeration is the descriptive information for the numbering scheme of a serial, usually identified by level and a descriptive caption, e.g., level 0 = v. and level 1 = no. This means that each issue of the serial has a volume and an issue number that would appear (e.g. v.71:no.6-2)",
+                "type": "string"
+              },
+              "chronology": {
+                "description": "Chronology is the descriptive information for the dating scheme of a serial, usually identified by level, e.g., level 0 = year level 1 = month. This means that each issue of the serial has a month and a year on each issue (e.g. 1985:July-Dec.)",
+                "type": "string"
+              },
+              "copyNumber": {
+                "description": "Copy number is the piece identifier. The copy number reflects if the library has a copy of a single-volume monograph; a copy of a multi-volume, (e.g. Copy 1, or C.7.)",
+                "type": "string"
+              },
+              "displaySummary": {
+                "description": "Display summary about the item",
+                "type": "string"
               }
             },
             "additionalProperties": false

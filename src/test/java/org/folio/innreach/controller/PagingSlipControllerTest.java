@@ -17,6 +17,7 @@ import java.net.URI;
 import java.util.List;
 import java.util.UUID;
 
+import org.folio.innreach.domain.dto.folio.inventory.InventoryItemDTO;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.web.client.TestRestTemplate;
@@ -131,6 +132,14 @@ class PagingSlipControllerTest extends BaseControllerTest {
     assertEquals("INN-Reach Paging Slip - " + PRE_POPULATED_CENTRAL_SERVER_NAME, slip.getName());
 
     var itemSlip = pagingSlip.getItem();
+    assertItemSlipData(item, itemSlip, author);
+
+    var transactionSlip = pagingSlip.getInnReachTransaction();
+    assertTransactionSlip(transactionSlip);
+  }
+
+  private static void assertItemSlipData(InventoryItemDTO item, org.folio.innreach.dto.PagingSlipItem itemSlip,
+    InventoryInstanceDTO.ContributorDTO author) {
     assertEquals(item.getEffectiveLocation().getName(), itemSlip.getEffectiveLocationFolioName());
     assertEquals(item.getTitle(), itemSlip.getTitle());
     assertEquals(item.getBarcode(), itemSlip.getBarcode());
@@ -138,8 +147,17 @@ class PagingSlipControllerTest extends BaseControllerTest {
     assertEquals(item.getEffectiveShelvingOrder(), itemSlip.getShelvingOrder());
     assertEquals(item.getHrid(), itemSlip.getHrid());
     assertEquals(author.getName(), itemSlip.getAuthor());
+    assertEquals(item.getEffectiveCallNumberComponents().getCallNumber(), itemSlip.getEffectiveCallNumberComponents().getCallNumber());
+    assertEquals(item.getEffectiveCallNumberComponents().getPrefix(), itemSlip.getEffectiveCallNumberComponents().getPrefix());
+    assertEquals(item.getEffectiveCallNumberComponents().getSuffix(), itemSlip.getEffectiveCallNumberComponents().getSuffix());
+    assertEquals(item.getVolume(), itemSlip.getVolume());
+    assertEquals(item.getDisplaySummary(), itemSlip.getDisplaySummary());
+    assertEquals(item.getEnumeration(), itemSlip.getEnumeration());
+    assertEquals(item.getChronology(), itemSlip.getChronology());
+    assertEquals(item.getCopyNumber(), itemSlip.getCopyNumber());
+  }
 
-    var transactionSlip = pagingSlip.getInnReachTransaction();
+  private static void assertTransactionSlip(org.folio.innreach.dto.PagingSlipInnReachTransaction transactionSlip) {
     assertEquals(PRE_POPULATED_PATRON_NAME, transactionSlip.getPatronName());
     assertEquals(PRE_POPULATED_PATRON_AGENCY_CODE, transactionSlip.getPatronAgencyCode());
     assertEquals(PATRON_AGENCY_DESCRIPTION, transactionSlip.getPatronAgencyDescription());

@@ -30,6 +30,12 @@ public class InventoryItemDTO {
   private Boolean discoverySuppress;
   private String title;
   private String effectiveShelvingOrder;
+  private EffectiveCallNumberComponents effectiveCallNumberComponents;
+  private String volume;
+  private String displaySummary;
+  private String enumeration;
+  private String chronology;
+  private String copyNumber;
 
   @Data
   public static class MaterialType {
@@ -47,6 +53,13 @@ public class InventoryItemDTO {
   public static class Location {
     private final UUID id;
     private final String name;
+  }
+
+  @Data
+  public static class EffectiveCallNumberComponents {
+    private final String callNumber;
+    private final String prefix;
+    private final String suffix;
   }
 
 }
