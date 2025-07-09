@@ -1,3 +1,8 @@
+## v3.X.X 2025-xx-xx
+
+### Bugs
+* [MODINREACH-503](https://folio-org.atlassian.net/browse/MODINREACH-503) - [INN-Reach] Add missing tokens to API
+
 ## v3.4.1 2025-04-15
 
 ### Bugs
