@@ -283,7 +283,20 @@ public class PagingSlipServiceImpl implements PagingSlipService {
       .author(author)
       .effectiveCallNumber(item.getCallNumber())
       .shelvingOrder(item.getEffectiveShelvingOrder())
-      .hrid(item.getHrid());
+      .hrid(item.getHrid())
+      .effectiveCallNumberComponents(createEffectiveCallNumberComponents(item.getEffectiveCallNumberComponents()))
+      .volume(item.getVolume())
+      .displaySummary(item.getDisplaySummary())
+      .enumeration(item.getEnumeration())
+      .chronology(item.getChronology())
+      .copyNumber(item.getCopyNumber());
+  }
+
+  private org.folio.innreach.dto.PagingSlipItemEffectiveCallNumberComponents createEffectiveCallNumberComponents(InventoryItemDTO.EffectiveCallNumberComponents effectiveCallNumberComponents) {
+    return new org.folio.innreach.dto.PagingSlipItemEffectiveCallNumberComponents()
+      .callNumber(effectiveCallNumberComponents.getCallNumber())
+      .prefix(effectiveCallNumberComponents.getPrefix())
+      .suffix(effectiveCallNumberComponents.getSuffix());
   }
 
   private PagingSlipSlip createSlip(CentralServerDTO centralServer) {
