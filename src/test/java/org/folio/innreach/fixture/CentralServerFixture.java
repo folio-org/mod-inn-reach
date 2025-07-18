@@ -56,7 +56,7 @@ public class CentralServerFixture {
       ))
       .centralServerKey(randomUUIDString())
       .centralServerSecret(randomUUIDString())
-      .localServerKey(randomUUIDString())
+      .localServerKey(UUID.randomUUID())
       .localServerSecret(randomUUIDString());
   }
 
