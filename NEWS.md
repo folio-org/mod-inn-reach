@@ -1,10 +1,14 @@
+## v3.4.2 2025-07-18
+
+### Bugs
+* [MODINREACH-485](https://folio-org.atlassian.net/browse/MODINREACH-485) - Recontribute for requested Item on automatically item hold cancelled transaction.
+
 ## v3.4.1 2025-04-15
 
 ### Bugs
 * [MODINREACH-487](https://folio-org.atlassian.net/browse/MODINREACH-487) - fixed HTTP 414 (URI too long) error for INN-Reach Paging Slips
 * [MODINREACH-488](https://folio-org.atlassian.net/browse/MODINREACH-488) - Bump Spring Boot from 3.4.3 to 3.4.4
 * [MODINREACH-490](https://folio-org.atlassian.net/browse/MODINREACH-490) - Local server: Enforce UUID of key, explain UUID of secret
-* [MODINREACH-485](https://folio-org.atlassian.net/browse/MODINREACH-485) - Recontribute for requested Item on automatically item hold cancelled transaction.
 
 ## v3.4.0 2025-03-14
 
