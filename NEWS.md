@@ -1,3 +1,8 @@
+## v3.4.2 2025-07-18
+
+### Bugs
+* [MODINREACH-485](https://folio-org.atlassian.net/browse/MODINREACH-485) - Recontribute for requested Item on automatically item hold cancelled transaction.
+
 ## v3.4.1 2025-04-15
 
 ### Bugs

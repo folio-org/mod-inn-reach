@@ -33,6 +33,7 @@ class MaterialTypeMappingRepositoryTest extends BaseRepositoryTest {
   private static final String PRE_POPULATED_MAPPING1_ID = "71bd0beb-28cb-40bb-9f40-87463d61a553";
   private static final String PRE_POPULATED_MAPPING2_ID = "d9985d0d-b121-4ccd-ac16-5ebd0ccccf7f";
   private static final String PRE_POPULATED_MAPPING3_ID = "57fad69e-8c91-48c0-a61f-a6122f52737a";
+  private static final String PRE_POPULATED_MAPPING4_ID = "6f783255-e0ee-42c2-aa84-669d8c70f107";
   private static final AuditableUser PRE_POPULATED_USER = AuditableUser.SYSTEM;
 
   @Autowired
@@ -42,11 +43,11 @@ class MaterialTypeMappingRepositoryTest extends BaseRepositoryTest {
   void shouldFindAllExistingMappings() {
     var mappings = repository.findAll();
 
-    assertEquals(3, mappings.size());
+    assertEquals(4, mappings.size());
 
     List<String> ids = mapItems(mappings, mapping -> mapping.getId().toString());
 
-    assertEquals(ids, List.of(PRE_POPULATED_MAPPING1_ID, PRE_POPULATED_MAPPING2_ID, PRE_POPULATED_MAPPING3_ID));
+    assertEquals(ids, List.of(PRE_POPULATED_MAPPING1_ID, PRE_POPULATED_MAPPING2_ID, PRE_POPULATED_MAPPING3_ID, PRE_POPULATED_MAPPING4_ID));
   }
 
   @Test
@@ -119,7 +120,7 @@ class MaterialTypeMappingRepositoryTest extends BaseRepositoryTest {
     var mapping = createMaterialTypeMapping();
     mapping.setMaterialTypeId(existing.getMaterialTypeId());
     mapping.setCentralServer(existing.getCentralServer());
-    
+
     var ex = assertThrows(DataIntegrityViolationException.class, () -> repository.saveAndFlush(mapping));
     assertThat(ex.getMessage(), containsString("constraint [unq_mtype_mapping_server_mtype]"));
   }

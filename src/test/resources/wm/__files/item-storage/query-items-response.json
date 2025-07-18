@@ -1,0 +1,41 @@
+{
+  "items": [
+    {
+      "id": "9a326225-6530-41cc-9399-a61987bfab3c",
+      "_version": 1,
+      "hrid": "itnewtrackingid5east",
+      "holdingsRecordId": "16f40c4e-235d-4912-a683-2ad919cc8b07",
+      "formerIds": [],
+      "barcode": "2222222",
+      "effectiveShelvingOrder": "K1 .M44 v.72:no.1-6 1986:Jan.-June",
+      "effectiveCallNumberComponents": {
+        "callNumber": "K1 .M44"
+      },
+      "enumeration": "v.72:no.1-6",
+      "chronology": "1986:Jan.-June",
+      "yearCaption": [],
+      "administrativeNotes": [],
+      "notes": [],
+      "circulationNotes": [],
+      "status": {
+        "name": "Available",
+        "date": "2025-07-01T01:14:16.489+00:00"
+      },
+      "materialTypeId": "d9acad2f-2aac-4b48-9097-e6ab85906b25",
+      "permanentLoanTypeId": "2b94c631-fca9-4892-a730-03ee529ffe27",
+      "effectiveLocationId": "fcd64ce1-6995-48f0-840e-89ffa2288371",
+      "electronicAccess": [],
+      "statisticalCodeIds": [],
+      "metadata": {
+        "createdDate": "2025-07-01T01:14:16.489+00:00",
+        "updatedDate": "2025-07-01T01:14:16.489+00:00"
+      }
+    }
+  ],
+  "totalRecords": 1,
+  "resultInfo": {
+    "totalRecords": 1,
+    "facets": [],
+    "diagnostics": []
+  }
+}
