@@ -1429,7 +1429,8 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
 
     var checkOutResponse = new LoanDTO()
       .id(FOLIO_CHECKOUT_ID)
-      .item(new LoanItem().barcode(PRE_POPULATED_ITEM_HOLD_ITEM_BARCODE));
+      .item(new LoanItem().barcode(PRE_POPULATED_ITEM_HOLD_ITEM_BARCODE))
+      .dueDate(Date.from(DUE_DATE.toInstant()));
 
     when(circulationClient.checkOutByBarcode(any(CheckOutRequestDTO.class))).thenReturn(checkOutResponse);
 
