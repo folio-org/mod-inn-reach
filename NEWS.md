@@ -1,7 +1,11 @@
-## v3.X.X 2025-xx-xx
+## v3.5.0 2025-xx-xx
 
 ### Bugs
 * [MODINREACH-503](https://folio-org.atlassian.net/browse/MODINREACH-503) - [INN-Reach] Add missing tokens to API
+* [MODINREACH-485](https://folio-org.atlassian.net/browse/MODINREACH-485) - Recontribute for requested Item on automatically item hold cancelled transaction.
+* [MODINREACH-485](https://folio-org.atlassian.net/browse/MODINREACH-485) - Bump Spring Boot from 3.4.4 to 3.5.0
+* [MODINREACH-496](https://folio-org.atlassian.net/browse/MODINREACH-496) - Add missing module permission to get holdings sources for INN-Reach circulation endpoints
+* [MODINREACH-467](https://folio-org.atlassian.net/browse/MODINREACH-467) - Assign Item Hold Transaction due date when item checked out to borrowing site
 
 ## v3.4.1 2025-04-15
 
@@ -9,9 +13,6 @@
 * [MODINREACH-487](https://folio-org.atlassian.net/browse/MODINREACH-487) - fixed HTTP 414 (URI too long) error for INN-Reach Paging Slips
 * [MODINREACH-488](https://folio-org.atlassian.net/browse/MODINREACH-488) - Bump Spring Boot from 3.4.3 to 3.4.4
 * [MODINREACH-490](https://folio-org.atlassian.net/browse/MODINREACH-490) - Local server: Enforce UUID of key, explain UUID of secret
-* [MODINREACH-485](https://folio-org.atlassian.net/browse/MODINREACH-485) - Recontribute for requested Item on automatically item hold cancelled transaction.
-* [MODINREACH-485](https://folio-org.atlassian.net/browse/MODINREACH-485) - Bump Spring Boot from 3.4.4 to 3.5.0
-* [MODINREACH-496](https://folio-org.atlassian.net/browse/MODINREACH-496) - Add missing module permission to get holdings sources for INN-Reach circulation endpoints
 
 ## v3.4.0 2025-03-14
 
