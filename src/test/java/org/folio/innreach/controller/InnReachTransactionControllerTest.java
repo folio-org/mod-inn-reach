@@ -1,5 +1,6 @@
 package org.folio.innreach.controller;
 
+import static java.time.format.DateTimeFormatter.ISO_OFFSET_DATE_TIME;
 import static java.util.UUID.randomUUID;
 import static org.awaitility.Awaitility.await;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -58,6 +59,7 @@ import static org.folio.innreach.fixture.UserFixture.createUser;
 import static org.folio.innreach.util.DateHelper.toEpochSec;
 
 import java.time.Duration;
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -203,6 +205,10 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   private static final AuditableUser PRE_POPULATED_USER = AuditableUser.SYSTEM;
 
   private static final Duration ASYNC_AWAIT_TIMEOUT = Duration.ofSeconds(15);
+
+  private static final OffsetDateTime DUE_DATE = OffsetDateTime.parse(
+    "2025-07-30T05:00:00+02:00",
+    ISO_OFFSET_DATE_TIME);
 
   @Autowired
   private TestRestTemplate testRestTemplate;
@@ -1364,9 +1370,11 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
   })
   void testCheckOutItemHoldItem() {
+    var expectedDueDate = Date.from(DUE_DATE.toInstant());
     var checkOutResponse = new LoanDTO()
       .id(FOLIO_CHECKOUT_ID)
-      .item(new LoanItem().barcode(PRE_POPULATED_ITEM_HOLD_ITEM_BARCODE));
+      .item(new LoanItem().barcode(PRE_POPULATED_ITEM_HOLD_ITEM_BARCODE))
+        .dueDate(expectedDueDate);
 
     when(circulationClient.checkOutByBarcode(any(CheckOutRequestDTO.class))).thenReturn(checkOutResponse);
 
@@ -1381,10 +1389,12 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
 
     var transaction = response.getTransaction();
     assertEquals(PRE_POPULATED_ITEM_HOLD_TRANSACTION_ID, transaction.getId());
+    assertEquals(toEpochSec(expectedDueDate), transaction.getHold().getDueDateTime());
 
     var folioCheckOut = response.getFolioCheckOut();
     assertNotNull(folioCheckOut);
     assertEquals(FOLIO_CHECKOUT_ID, folioCheckOut.getId());
+    assertEquals(expectedDueDate, folioCheckOut.getDueDate());
   }
 
   @Test
@@ -1419,7 +1429,8 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
 
     var checkOutResponse = new LoanDTO()
       .id(FOLIO_CHECKOUT_ID)
-      .item(new LoanItem().barcode(PRE_POPULATED_ITEM_HOLD_ITEM_BARCODE));
+      .item(new LoanItem().barcode(PRE_POPULATED_ITEM_HOLD_ITEM_BARCODE))
+      .dueDate(Date.from(DUE_DATE.toInstant()));
 
     when(circulationClient.checkOutByBarcode(any(CheckOutRequestDTO.class))).thenReturn(checkOutResponse);
 
