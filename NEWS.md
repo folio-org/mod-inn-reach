@@ -6,6 +6,7 @@
 * [MODINREACH-485](https://folio-org.atlassian.net/browse/MODINREACH-485) - Bump Spring Boot from 3.4.4 to 3.5.0
 * [MODINREACH-496](https://folio-org.atlassian.net/browse/MODINREACH-496) - Add missing module permission to get holdings sources for INN-Reach circulation endpoints
 * [MODINREACH-467](https://folio-org.atlassian.net/browse/MODINREACH-467) - Assign Item Hold Transaction due date when item checked out to borrowing site
+* [MODINREACH-508](https://folio-org.atlassian.net/browse/MODINREACH-508) - Add missing permissions for INN-Reach circulation endpoints and for System User
 
 ## v3.4.1 2025-04-15
 
