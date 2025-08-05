@@ -16,3 +16,8 @@ circulation.requests.collection.get
 circulation.loans.collection.get
 inventory.items.item.put
 inventory-storage.holdings.item.put
+circulation.requests.item.delete
+circulation.loans.item.delete
+inventory.items.item.delete
+inventory-storage.holdings.item.delete
+inventory.instances.item.delete
