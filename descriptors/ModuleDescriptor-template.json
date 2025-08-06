@@ -396,7 +396,11 @@
             "circulation.loans.claim-item-returned.post",
             "inventory.instances.item.get",
             "users.collection.get",
-            "configuration.entries.collection.get"
+            "configuration.entries.collection.get",
+            "inventory.items.item.delete",
+            "inventory-storage.holdings.item.delete",
+            "inventory.instances.item.delete",
+            "circulation.loans.item.delete"
           ]
         },
         {
@@ -472,7 +476,12 @@
           "modulePermissions": [
             "inventory.items.item.get",
             "circulation.requests.item.get",
-            "circulation.requests.item.put"
+            "circulation.requests.item.put",
+            "circulation.requests.item.delete",
+            "circulation.loans.item.delete",
+            "inventory.items.item.delete",
+            "inventory-storage.holdings.item.delete",
+            "inventory.instances.item.delete"
           ]
         },
         {
@@ -1365,7 +1374,12 @@
         "circulation.requests.collection.get",
         "circulation.loans.collection.get",
         "inventory.items.item.put",
-        "inventory-storage.holdings.item.put"
+        "inventory-storage.holdings.item.put",
+        "circulation.requests.item.delete",
+        "circulation.loans.item.delete",
+        "inventory.items.item.delete",
+        "inventory-storage.holdings.item.delete",
+        "inventory.instances.item.delete"
       ]
     }
   },
