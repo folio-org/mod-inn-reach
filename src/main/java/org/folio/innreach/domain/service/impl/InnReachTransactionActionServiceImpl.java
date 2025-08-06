@@ -302,10 +302,10 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
     var request = requestService.findRequest(requestId);
 
     if (requestService.isOpenRequest(request)) {
-      log.info("cancelPatronHold:: is request open");
+      log.info("cancelPatronHold:: request is open");
       cancelPatronHoldWithOpenRequest(cancelRequest, transaction);
     } else if (request.getStatus() == CLOSED_CANCELLED) {
-      log.info("cancelPatronHold:: is request closed cancelled");
+      log.info("cancelPatronHold:: request is closed cancelled");
       cancelPatronHoldWithClosedRequest(transaction);
     }
 

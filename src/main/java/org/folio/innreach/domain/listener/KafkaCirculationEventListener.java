@@ -5,7 +5,6 @@ import static org.folio.innreach.domain.event.DomainEventType.UPDATED;
 
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -106,7 +105,7 @@ public class KafkaCirculationEventListener {
     return consumerRecords.stream()
       .map(ConsumerRecord::value)
       .filter(Objects::nonNull)
-      .collect(Collectors.toList());
+      .toList();
   }
 
 }
