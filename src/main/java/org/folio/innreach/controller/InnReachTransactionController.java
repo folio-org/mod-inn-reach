@@ -2,6 +2,8 @@ package org.folio.innreach.controller;
 
 import java.util.UUID;
 
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.enums.ParameterIn;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.http.ResponseEntity;
@@ -102,6 +104,12 @@ public class InnReachTransactionController implements InnReachTransactionApi {
 
     var response = transactionActionService.cancelPatronHold(id, cancelRequest);
     return ResponseEntity.ok(response);
+  }
+
+  @Override
+  @PostMapping("/{id}/patronhold/remove")
+  public ResponseEntity<InnReachTransactionDTO> removePatronHoldTransaction(@PathVariable("id") UUID id) {
+
   }
 
   @Override
