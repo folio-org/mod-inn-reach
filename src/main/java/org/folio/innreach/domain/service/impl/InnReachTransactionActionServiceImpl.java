@@ -161,6 +161,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
     var callNumber = checkOutResponse.getItem().getCallNumber();
 
     hold.setFolioLoanId(checkOutResponse.getId());
+    hold.setDueDateTime(toEpochSec(checkOutResponse.getDueDate()));
 
     transaction.setState(ITEM_SHIPPED);
 
