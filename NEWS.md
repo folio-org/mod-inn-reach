@@ -1,3 +1,8 @@
+## v3.3.6 2025-08-19
+
+### Bugs
+* [MODINREACH-508](https://folio-org.atlassian.net/browse/MODINREACH-508) - Add missing permissions for INN-Reach circulation endpoints and for System User
+
 ## v3.3.5 2025-08-15
 
 ### Bugs
