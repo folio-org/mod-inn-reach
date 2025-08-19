@@ -163,6 +163,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   private static final String LOCAL_HOLD_CHECK_OUT_ENDPOINT = "/inn-reach/transactions/{id}/localhold/check-out-item/{servicePointId}";
   private static final String UPDATE_TRANSACTION_ENDPOINT = "/inn-reach/transactions/{transactionId}";
   private static final String PATRON_HOLD_CANCEL_ENDPOINT = "/inn-reach/transactions/{id}/patronhold/cancel";
+  private static final String PATRON_HOLD_REMOVE_ENDPOINT = "/inn-reach/transactions/{id}/patronhold/remove";
   private static final String LOCAL_HOLD_CANCEL_ENDPOINT = "/inn-reach/transactions/{id}/localhold/cancel";
   private static final String ITEM_HOLD_CANCEL_ENDPOINT = "/inn-reach/transactions/{id}/itemhold/cancel";
   private static final String ITEM_HOLD_RECALL_ENDPOINT = "/inn-reach/transactions/{id}/itemhold/recall";
@@ -352,6 +353,39 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     assertEquals(PATRON_HOLD, transaction.getState());
   }
 
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-broken_patron_hold_transaction.sql"
+  })
+  void return200HttpCode_and_cancelPatronTransaction_whenNoVirtualItemAndRequestCreatedForPatronHoldTransaction() {
+    var responseEntity = testRestTemplate.postForEntity(
+      PATRON_HOLD_REMOVE_ENDPOINT, null, InnReachTransactionDTO.class, PRE_POPULATED_PATRON_HOLD_TRANSACTION_ID);
+
+    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+    assertNotNull(responseEntity.getBody());
+    assertEquals(PRE_POPULATED_PATRON_HOLD_TRANSACTION_ID, responseEntity.getBody().getId());
+    assertEquals(PRE_POPULATED_TRACKING_ID, responseEntity.getBody().getTrackingId());
+    assertEquals(TransactionStateEnum.CANCEL_REQUEST, responseEntity.getBody().getState());
+  }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
+  })
+  void return400HttpCode_and_notCancelPatronTransaction_whenValidPatronHoldTransaction() {
+    when(inventoryClient.findItem(any())).thenReturn(Optional.of(createInventoryItemDTO()));
+    when(circulationClient.findRequest(any())).thenReturn(Optional.of(createRequestDTO()));
+
+    var responseEntity = testRestTemplate.postForEntity(
+      PATRON_HOLD_REMOVE_ENDPOINT, null, InnReachTransactionDTO.class, PRE_POPULATED_PATRON_HOLD_TRANSACTION_ID);
+
+    assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
+    var transaction = repository.fetchOneById(PRE_POPULATED_PATRON_HOLD_TRANSACTION_ID);
+    assertTrue(transaction.isPresent());
+    assertEquals(TransactionState.PATRON_HOLD, transaction.get().getState());
+  }
 
   @Test
   @Sql(scripts = {
