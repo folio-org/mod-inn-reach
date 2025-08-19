@@ -313,6 +313,25 @@ paths:
           $ref: "api-common.yaml#/components/responses/trait_response_500"
       parameters:
         - $ref: 'api-common.yaml#/components/parameters/id'
+  /transactions/{id}/patronhold/remove:
+    post:
+      operationId: removePatronHoldTransaction
+      description: Cancel patron hold transaction which does not have associated item and request details
+      tags:
+        - inn-reach-transaction
+      responses:
+        '200':
+          description: "OK"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/innReachTransactionDTO"
+        '404':
+          $ref: "api-common.yaml#/components/responses/trait_response_404"
+        '500':
+          $ref: "api-common.yaml#/components/responses/trait_response_500"
+      parameters:
+        - $ref: 'api-common.yaml#/components/parameters/id'
   /transactions/{id}/itemhold/recall:
     post:
       operationId: recallItemHoldTransaction
