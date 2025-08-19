@@ -35,7 +35,7 @@
     <awaitility.version>4.3.0</awaitility.version>
     <junit-extensions.version>2.6.0</junit-extensions.version>
     <easy-random.version>5.0.0</easy-random.version>
-    <micrometer.version>1.15.2</micrometer.version>
+    <micrometer.version>1.15.3</micrometer.version>
     <log4j2.version>2.19.0</log4j2.version>
 
     <!-- plugins -->
