@@ -7,6 +7,7 @@
 * [MODINREACH-496](https://folio-org.atlassian.net/browse/MODINREACH-496) - Add missing module permission to get holdings sources for INN-Reach circulation endpoints
 * [MODINREACH-467](https://folio-org.atlassian.net/browse/MODINREACH-467) - Assign Item Hold Transaction due date when item checked out to borrowing site
 * [MODINREACH-508](https://folio-org.atlassian.net/browse/MODINREACH-508) - Add missing permissions for INN-Reach circulation endpoints and for System User
+* [MODINREACH-482](https://folio-org.atlassian.net/browse/MODINREACH-482) - Add remove patron hold API to cancel `PATRON_HOLD` transactions with no created virtual item and request
 
 ## v3.4.1 2025-04-15
 

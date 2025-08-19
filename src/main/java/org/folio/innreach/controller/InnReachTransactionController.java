@@ -105,6 +105,13 @@ public class InnReachTransactionController implements InnReachTransactionApi {
   }
 
   @Override
+  @PostMapping("/{id}/patronhold/remove")
+  public ResponseEntity<InnReachTransactionDTO> removePatronHoldTransaction(@PathVariable("id") UUID id) {
+    var response = transactionActionService.removePatronHold(id);
+    return ResponseEntity.ok(response);
+  }
+
+  @Override
   @PostMapping("/{id}/itemhold/recall")
   public ResponseEntity<Void> recallItemHoldTransaction(@PathVariable UUID id) {
 
