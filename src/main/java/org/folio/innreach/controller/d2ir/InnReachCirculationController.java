@@ -1,6 +1,7 @@
 package org.folio.innreach.controller.d2ir;
 
 import lombok.RequiredArgsConstructor;
+import org.folio.innreach.domain.service.InnReachTransactionService;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -35,6 +36,7 @@ public class InnReachCirculationController implements InnReachCirculationApi {
 
   private final CirculationService circulationService;
   private final RequestService requestService;
+  private final InnReachTransactionService innReachTransactionService;
 
   @Override
   @PostMapping("/itemhold/{trackingId}/{centralCode}")
@@ -191,6 +193,7 @@ public class InnReachCirculationController implements InnReachCirculationApi {
       produces = MediaType.APPLICATION_JSON_VALUE)
   public ResponseEntity<InnReachResponseDTO> ownerRenew(@PathVariable String trackingId,
                                                         @PathVariable String centralCode, RenewLoanDTO renewLoan) {
+    innReachTransactionService.updateInnReachTransactionOnOwnerRenew(trackingId, centralCode, renewLoan.getDueDateTime());
     var innReachResponse = circulationService.ownerRenewLoan(trackingId, centralCode, renewLoan);
 
     return ResponseEntity.ok(innReachResponse);
