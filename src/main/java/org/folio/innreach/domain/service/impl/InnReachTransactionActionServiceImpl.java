@@ -15,6 +15,7 @@ import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionSt
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.ITEM_SHIPPED;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.LOCAL_CHECKOUT;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.LOCAL_HOLD;
+import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.OWNER_RENEW;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.PATRON_HOLD;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.RECALL;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.RECEIVE_UNANNOUNCED;
@@ -551,6 +552,13 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
   private void updateTransactionOnLoanRenewal(StorageLoanDTO loan, InnReachTransaction transaction) {
     log.debug("updateTransactionOnLoanRenewal:: parameters loan: {}, transaction: {}", loan, transaction);
     if (transaction.getType() != PATRON) {
+      return;
+    }
+
+    if (transaction.getState() == OWNER_RENEW) {
+      // on reacting to OWNER_RENEW message the borrower for patron transaction sets state to OWNER_RENEW and due date
+      // to the requested one which results in updating/renewing the related loan. So, no need to update the transaction
+      // again here by reacting to the resulted renew action.
       return;
     }
 

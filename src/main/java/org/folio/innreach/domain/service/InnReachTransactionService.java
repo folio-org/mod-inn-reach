@@ -16,4 +16,6 @@ public interface InnReachTransactionService {
   InnReachTransactionsDTO getAllTransactions(Integer offset, Integer limit, InnReachTransactionFilterParametersDTO parameters);
 
   void updateInnReachTransaction(UUID transactionId, InnReachTransactionDTO transaction);
+
+  void updateInnReachTransactionOnOwnerRenew(String trackingId, String centralCode, Integer dueDate);
 }

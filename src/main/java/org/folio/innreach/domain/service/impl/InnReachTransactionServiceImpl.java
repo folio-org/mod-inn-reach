@@ -1,5 +1,9 @@
 package org.folio.innreach.domain.service.impl;
 
+import static java.lang.String.format;
+import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.OWNER_RENEW;
+import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionType.PATRON;
+
 import java.util.List;
 import java.util.UUID;
 
@@ -80,6 +84,23 @@ public class InnReachTransactionServiceImpl implements InnReachTransactionServic
     updateTransactionHold(newTransaction.getHold(), oldTransaction.getHold());
 
     repository.save(oldTransaction);
+  }
+
+  @Override
+  @Transactional
+  public void updateInnReachTransactionOnOwnerRenew(String trackingId, String centralCode, Integer dueDate) {
+    var transaction = repository.findByTrackingIdAndCentralServerCode(trackingId, centralCode)
+      .orElseThrow(() -> new EntityNotFoundException(format(
+        "InnReach transaction with tracking id [%s] and central code [%s] not found", trackingId, centralCode)));
+    if (transaction.getType() != PATRON) {
+      throw new IllegalStateException(format(
+        "InnReach transaction with tracking id [%s] and central code [%s] is not of type PATRON",
+        trackingId, centralCode));
+    }
+
+    transaction.getHold().setDueDateTime(dueDate);
+    transaction.setState(OWNER_RENEW);
+    repository.save(transaction);
   }
 
   private void updateTransactionHold(TransactionHold newHold, TransactionHold oldHold) {
