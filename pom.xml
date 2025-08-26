@@ -4,7 +4,7 @@
   <parent>
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-parent</artifactId>
-    <version>3.5.4</version>
+    <version>3.5.5</version>
     <relativePath />
   </parent>
   <groupId>org.folio</groupId>
@@ -39,7 +39,7 @@
     <log4j2.version>2.19.0</log4j2.version>
 
     <!-- plugins -->
-    <openapi-generator.version>7.14.0</openapi-generator.version>
+    <openapi-generator.version>7.15.0</openapi-generator.version>
     <copy-rename-maven-plugin.version>1.0.1</copy-rename-maven-plugin.version>
     <folio-module-descriptor-validator.version>1.0.1</folio-module-descriptor-validator.version>
     <build-helper-maven-plugin.version>3.6.1</build-helper-maven-plugin.version>
