@@ -127,14 +127,14 @@ class OwnerRenewCirculationApiTest extends BaseApiControllerTest {
   }
 
   @ParameterizedTest
-  @MethodSource("transactionNotFoundArgProvider")
+  @MethodSource("transactionNotFoundOrInvalidTypeArgProvider")
   @Sql(
     scripts = {
       "classpath:db/agency-loc-mapping/pre-populate-agency-location-mapping.sql",
       "classpath:db/item-type-mapping/pre-populate-item-type-mapping.sql",
       "classpath:db/patron-type-mapping/pre-populate-patron-type-mapping-circulation.sql"
     })
-  void return400_when_TransactionNotFound(String trackingId, String centralCode, RenewLoanDTO req)
+  void return400_when_TransactionNotFoundOrOfInvalidType(String trackingId, String centralCode, Class<RuntimeException> exceptionType, RenewLoanDTO req)
       throws Exception {
     req.setPatronId(PRE_POPULATED_PATRON_ID);
     var patronId = UUIDEncoder.decode(req.getPatronId());
@@ -145,13 +145,14 @@ class OwnerRenewCirculationApiTest extends BaseApiControllerTest {
         .andExpect(status().isBadRequest())
         .andExpect(failedWithReason(containsString(trackingId), containsString(centralCode)))
         .andExpect(emptyErrors())
-        .andExpect(exceptionMatch(EntityNotFoundException.class));
+        .andExpect(exceptionMatch(exceptionType));
   }
 
-  static Stream<Arguments> transactionNotFoundArgProvider() {
+  static Stream<Arguments> transactionNotFoundOrInvalidTypeArgProvider() {
     return Stream.of(
-        arguments(PRE_POPULATED_TRACKING_ID, randomAlphanumeric5(), createRenewLoanDTO()),
-        arguments(randomAlphanumeric32Max(), PRE_POPULATED_CENTRAL_CODE, createRenewLoanDTO())
+        arguments(PRE_POPULATED_TRACKING_ID, randomAlphanumeric5(), EntityNotFoundException.class, createRenewLoanDTO()),
+        arguments(randomAlphanumeric32Max(), PRE_POPULATED_CENTRAL_CODE, EntityNotFoundException.class, createRenewLoanDTO()),
+        arguments("tracking2", PRE_POPULATED_CENTRAL_CODE, IllegalArgumentException.class, createRenewLoanDTO())
     );
   }
   private static URI ownerRenewUri() {

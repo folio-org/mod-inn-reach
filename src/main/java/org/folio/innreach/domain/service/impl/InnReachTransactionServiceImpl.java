@@ -93,7 +93,7 @@ public class InnReachTransactionServiceImpl implements InnReachTransactionServic
       .orElseThrow(() -> new EntityNotFoundException(format(
         "InnReach transaction with tracking id [%s] and central code [%s] not found", trackingId, centralCode)));
     if (transaction.getType() != PATRON) {
-      throw new IllegalStateException(format(
+      throw new IllegalArgumentException(format(
         "InnReach transaction with tracking id [%s] and central code [%s] is not of type PATRON",
         trackingId, centralCode));
     }
