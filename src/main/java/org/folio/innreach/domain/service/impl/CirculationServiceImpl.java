@@ -437,15 +437,11 @@ public class CirculationServiceImpl implements CirculationService {
     patronInfoService.populateTransactionPatronInfo(transaction.getHold(), centralCode);
 
     var renewedLoan = renewLoan(transaction.getHold());
-
     var calculatedDueDate = renewedLoan.getDueDate().toInstant();
     var requestedDueDate = ofEpochSecond(renewLoan.getDueDateTime());
     if (calculatedDueDate.isAfter(requestedDueDate)) {
       loanService.changeDueDate(renewedLoan, Date.from(requestedDueDate));
     }
-
-    transaction.getHold().setDueDateTime(renewLoan.getDueDateTime());
-    transaction.setState(OWNER_RENEW);
 
     log.info("ownerRenewLoan:: result: {}", success());
     return success();
