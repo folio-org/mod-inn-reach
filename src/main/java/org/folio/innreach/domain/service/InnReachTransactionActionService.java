@@ -27,7 +27,7 @@ public interface InnReachTransactionActionService {
 
   void handleLoanUpdate(StorageLoanDTO loan);
 
-  void handleRequestUpdate(RequestDTO requestDTO);
+  void handleRequestUpdate(RequestDTO oldRequest, RequestDTO newRequest);
 
   void handleCheckInCreation(CheckInDTO checkIn);
 

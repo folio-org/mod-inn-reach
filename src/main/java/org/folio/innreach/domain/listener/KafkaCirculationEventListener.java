@@ -70,11 +70,12 @@ public class KafkaCirculationEventListener {
 
     eventProcessor.process(events, event -> {
       var newEntity = event.getData().getNewEntity();
+      var oldEntity = event.getData().getOldEntity();
 
       contributionActionService.handleRequestChange(newEntity);
 
       if (event.getType() == UPDATED) {
-        transactionActionService.handleRequestUpdate(newEntity);
+        transactionActionService.handleRequestUpdate(oldEntity, newEntity);
       }
     });
   }
