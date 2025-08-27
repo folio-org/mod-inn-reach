@@ -33,7 +33,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
 
 @ExtendWith(MockitoExtension.class)
-public class InnReachTransactionActionServiceTest {
+class InnReachTransactionActionServiceTest {
 
   @Mock
   private InnReachTransactionRepository transactionRepository;
