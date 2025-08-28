@@ -1,3 +1,12 @@
+## v3.4.3 2025-08-28
+
+### Bugs
+* [MODINREACH-482](https://folio-org.atlassian.net/browse/MODINREACH-482) - Add remove patron hold API to cancel PATRON_HOLD transactions with no created virtual item and request 
+* [MODINREACH-477](https://folio-org.atlassian.net/browse/MODINREACH-477) - Add "Last First First First" pattern match for verifypatron api 
+* [MODINREACH-467](https://folio-org.atlassian.net/browse/MODINREACH-467) - Assign Item Hold Transaction due date when item checked out to borrowing site 
+* [MODINREACH-503](https://folio-org.atlassian.net/browse/MODINREACH-503) - [INN-Reach] Add missing tokens to API
+* [MODINREACH-508](https://folio-org.atlassian.net/browse/MODINREACH-508) - Add missing permissions for INN-Reach circulation endpoints and for System User
+
 ## v3.4.2 2025-07-18
 
 ### Bugs
