@@ -385,7 +385,7 @@ class PatronInfoControllerTest extends BaseApiControllerTest {
     // This test covers "last first first first" and "first first first last"
     var user = createUserWithTwoFirstAndTwoLastNames("john jimmy soni", PATRON_LAST_NAME);
     user.setPatronGroupId(UUID.fromString("54e17c4c-e315-4d20-8879-efc694dea1ce"));
-    when(usersClient.query(anyString())).thenReturn(ResultList.of(1, List.of(user)));
+    when(usersClient.queryUsersByBarcode(anyString())).thenReturn(ResultList.of(1, List.of(user)));
     when(automatedBlocksClient.getPatronBlocks(any())).thenReturn(ResultList.empty());
     when(manualBlocksClient.getPatronBlocks(any())).thenReturn(ResultList.empty());
     when(patronClient.getAccountDetails(any())).thenReturn(new PatronDTO());
@@ -417,7 +417,7 @@ class PatronInfoControllerTest extends BaseApiControllerTest {
     // This test covers "first last last last" and "last last last first"
     var user = createUserWithTwoFirstAndTwoLastNames(PATRON_FIRST_NAME, "tan man dhan");
     user.setPatronGroupId(UUID.fromString("54e17c4c-e315-4d20-8879-efc694dea1ce"));
-    when(usersClient.query(anyString())).thenReturn(ResultList.of(1, List.of(user)));
+    when(usersClient.queryUsersByBarcode(anyString())).thenReturn(ResultList.of(1, List.of(user)));
     when(automatedBlocksClient.getPatronBlocks(any())).thenReturn(ResultList.empty());
     when(manualBlocksClient.getPatronBlocks(any())).thenReturn(ResultList.empty());
     when(patronClient.getAccountDetails(any())).thenReturn(new PatronDTO());
