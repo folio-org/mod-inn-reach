@@ -374,6 +374,70 @@ class PatronInfoControllerTest extends BaseApiControllerTest {
   }
 
   @ParameterizedTest
+  @ValueSource(strings = {"john jimmy soni doe", "doe john jimmy soni", "DOE JOHN JIMMY SONI",
+          "    john    jiMMy     soNi   doE    ", "    dOe     joHN      JimmY       SOni"})
+  @Sql(scripts = {
+          "classpath:db/central-server/pre-populate-central-server.sql",
+          "classpath:db/patron-type-mapping/pre-populate-patron-type-mapping.sql",
+          "classpath:db/user-custom-field-mapping/pre-populate-user-custom-field-mapping.sql"
+  })
+  void return200HttpCode_and_patronInfoResponseWithPatronInfo_WithSpaceInFirstName_WithThreeFirstName(String patronName) {
+    // This test covers "last first first first" and "first first first last"
+    var user = createUserWithTwoFirstAndTwoLastNames("john jimmy soni", PATRON_LAST_NAME);
+    user.setPatronGroupId(UUID.fromString("54e17c4c-e315-4d20-8879-efc694dea1ce"));
+    when(usersClient.queryUsersByBarcode(anyString())).thenReturn(ResultList.of(1, List.of(user)));
+    when(automatedBlocksClient.getPatronBlocks(any())).thenReturn(ResultList.empty());
+    when(manualBlocksClient.getPatronBlocks(any())).thenReturn(ResultList.empty());
+    when(patronClient.getAccountDetails(any())).thenReturn(new PatronDTO());
+    when(userCustomFieldService.getMapping(any())).thenReturn(createCustomFieldMapping());
+
+    var patronInfoRequest = createPatronInfoRequest();
+    patronInfoRequest.setPatronName(patronName);
+
+    var responseEntity = testRestTemplate.postForEntity(
+            "/inn-reach/d2ir/circ/verifypatron", new HttpEntity<>(patronInfoRequest, headers), PatronInfoResponseDTO.class);
+
+    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+    assertNotNull(responseEntity.getBody());
+
+    var response = responseEntity.getBody();
+    assertTrue(response.getRequestAllowed());
+    assertNotNull(response.getPatronInfo());
+  }
+
+  @ParameterizedTest
+  @ValueSource(strings = {"john tan man dhan","tan man dhan john", "TAN MAN DHAN JOHN",
+          "    joHn    tAn     MaN dHaN     ","    Tan  Man    DhAn     jOhN    "})
+  @Sql(scripts = {
+          "classpath:db/central-server/pre-populate-central-server.sql",
+          "classpath:db/patron-type-mapping/pre-populate-patron-type-mapping.sql",
+          "classpath:db/user-custom-field-mapping/pre-populate-user-custom-field-mapping.sql"
+  })
+  void return200HttpCode_and_patronInfoResponseWithPatronInfo_WithSpaceInFirstName_WithThreeLastName(String patronName) {
+    // This test covers "first last last last" and "last last last first"
+    var user = createUserWithTwoFirstAndTwoLastNames(PATRON_FIRST_NAME, "tan man dhan");
+    user.setPatronGroupId(UUID.fromString("54e17c4c-e315-4d20-8879-efc694dea1ce"));
+    when(usersClient.queryUsersByBarcode(anyString())).thenReturn(ResultList.of(1, List.of(user)));
+    when(automatedBlocksClient.getPatronBlocks(any())).thenReturn(ResultList.empty());
+    when(manualBlocksClient.getPatronBlocks(any())).thenReturn(ResultList.empty());
+    when(patronClient.getAccountDetails(any())).thenReturn(new PatronDTO());
+    when(userCustomFieldService.getMapping(any())).thenReturn(createCustomFieldMapping());
+
+    var patronInfoRequest = createPatronInfoRequest();
+    patronInfoRequest.setPatronName(patronName);
+
+    var responseEntity = testRestTemplate.postForEntity(
+            "/inn-reach/d2ir/circ/verifypatron", new HttpEntity<>(patronInfoRequest, headers), PatronInfoResponseDTO.class);
+
+    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+    assertNotNull(responseEntity.getBody());
+
+    var response = responseEntity.getBody();
+    assertTrue(response.getRequestAllowed());
+    assertNotNull(response.getPatronInfo());
+  }
+
+  @ParameterizedTest
   @ValueSource(strings = {"doe smith john","john doe smith paul","doe smith john pauL",
     "doe smith, john pauL", "john doe smith"})
   @Sql(scripts = {

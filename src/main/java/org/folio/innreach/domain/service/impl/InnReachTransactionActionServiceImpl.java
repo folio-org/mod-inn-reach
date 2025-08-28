@@ -46,6 +46,7 @@ import org.folio.innreach.domain.entity.TransactionPatronHold;
 import org.folio.innreach.domain.event.CancelRequestEvent;
 import org.folio.innreach.domain.event.MoveRequestEvent;
 import org.folio.innreach.domain.event.RecallRequestEvent;
+import org.folio.innreach.domain.exception.CirculationException;
 import org.folio.innreach.domain.exception.EntityNotFoundException;
 import org.folio.innreach.domain.service.InnReachRecallUserService;
 import org.folio.innreach.domain.service.InnReachTransactionActionService;
@@ -161,6 +162,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
     var callNumber = checkOutResponse.getItem().getCallNumber();
 
     hold.setFolioLoanId(checkOutResponse.getId());
+    hold.setDueDateTime(toEpochSec(checkOutResponse.getDueDate()));
 
     transaction.setState(ITEM_SHIPPED);
 
@@ -300,14 +302,28 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
     var request = requestService.findRequest(requestId);
 
     if (requestService.isOpenRequest(request)) {
-      log.info("cancelPatronHold:: is request open");
+      log.info("cancelPatronHold:: request is open");
       cancelPatronHoldWithOpenRequest(cancelRequest, transaction);
     } else if (request.getStatus() == CLOSED_CANCELLED) {
-      log.info("cancelPatronHold:: is request closed cancelled");
+      log.info("cancelPatronHold:: request is closed cancelled");
       cancelPatronHoldWithClosedRequest(transaction);
     }
 
     log.info("Patron request successfully cancelled");
+    return transactionMapper.toDTO(transaction);
+  }
+
+  @Override
+  public InnReachTransactionDTO removePatronHold(UUID transactionId) {
+    log.info("Removing Patron Hold transaction: {}", transactionId);
+
+    var transaction = fetchTransactionOfType(transactionId, PATRON);
+    validateIsPatronHoldWithVirtualItemRequest(transaction);
+
+    transaction.setState(CANCEL_REQUEST);
+    transactionRepository.save(transaction);
+
+    log.info("Patron request successfully removed");
     return transactionMapper.toDTO(transaction);
   }
 
@@ -789,5 +805,20 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
 
   private boolean isLoanCheckedIn(String loanAction, String loanStatus) {
     return "checkedin".equalsIgnoreCase(loanAction) && "closed".equalsIgnoreCase(loanStatus);
+  }
+
+  private void validateIsPatronHoldWithVirtualItemRequest(InnReachTransaction transaction) {
+    verifyState(transaction, PATRON_HOLD);
+
+    var requestId = transaction.getHold().getFolioRequestId();
+    var itemId = transaction.getHold().getFolioItemId();
+
+    if (itemId != null && requestId != null && itemService.find(itemId).isPresent()
+      && requestService.findRequest(requestId) != null) {
+      log.warn("validateIsPatronHoldWithVirtualItemRequest:: illegal operation to remove PATRON_HOLD transaction, " +
+        "item and request are present");
+      throw new CirculationException("Removing valid PATRON_HOLD transaction is not allowed, " +
+        "item: %s and request: %s are present".formatted(itemId, requestId));
+    }
   }
 }

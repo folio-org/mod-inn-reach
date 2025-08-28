@@ -58,7 +58,7 @@
   "provides": [
     {
       "id": "inn-reach",
-      "version": "1.0",
+      "version": "1.2",
       "handlers": [
         {
           "methods": ["POST"],
@@ -395,7 +395,11 @@
             "circulation.loans.claim-item-returned.post",
             "inventory.instances.item.get",
             "users.collection.get",
-            "configuration.entries.collection.get"
+            "configuration.entries.collection.get",
+            "inventory.items.item.delete",
+            "inventory-storage.holdings.item.delete",
+            "inventory.instances.item.delete",
+            "circulation.loans.item.delete"
           ]
         },
         {
@@ -471,7 +475,21 @@
           "modulePermissions": [
             "inventory.items.item.get",
             "circulation.requests.item.get",
-            "circulation.requests.item.put"
+            "circulation.requests.item.put",
+            "circulation.requests.item.delete",
+            "circulation.loans.item.delete",
+            "inventory.items.item.delete",
+            "inventory-storage.holdings.item.delete",
+            "inventory.instances.item.delete"
+          ]
+        },
+        {
+          "methods": ["POST"],
+          "pathPattern": "/inn-reach/transactions/{id}/patronhold/remove",
+          "permissionsRequired": ["inn-reach.d2ir.inn-reach-transaction.patron-hold.remove.post"],
+          "modulePermissions": [
+            "inventory.items.item.get",
+            "circulation.requests.item.get"
           ]
         },
         {
@@ -1069,6 +1087,11 @@
       "description" : "POST INN-Reach Transaction: Cancel Patron Hold"
     },
     {
+      "permissionName" : "inn-reach.d2ir.inn-reach-transaction.patron-hold.remove.post",
+      "displayName" : "POST INN-Reach Transaction: Remove Patron Hold",
+      "description" : "POST INN-Reach Transaction: Remove Patron Hold"
+    },
+    {
       "permissionName" : "inn-reach.d2ir.inn-reach-transaction.item-hold.cancel.post",
       "displayName" : "POST INN-Reach Transaction: Cancel Item Hold",
       "description" : "POST INN-Reach Transaction: Cancel Item Hold"
@@ -1150,7 +1173,8 @@
         "inn-reach.d2ir.inn-reach-transaction.item-hold.recall.post",
         "inn-reach.d2ir.inn-reach-transaction.patron-hold.return-item.post",
         "inn-reach.d2ir.inn-reach-transaction.item-hold.final-checkin.post",
-        "inn-reach.inn-reach-transaction.item.get"
+        "inn-reach.inn-reach-transaction.item.get",
+        "inn-reach.d2ir.inn-reach-transaction.patron-hold.remove.post"
       ]
     },
     {
@@ -1364,7 +1388,12 @@
         "circulation.requests.collection.get",
         "circulation.loans.collection.get",
         "inventory.items.item.put",
-        "inventory-storage.holdings.item.put"
+        "inventory-storage.holdings.item.put",
+        "circulation.requests.item.delete",
+        "circulation.loans.item.delete",
+        "inventory.items.item.delete",
+        "inventory-storage.holdings.item.delete",
+        "inventory.instances.item.delete"
       ]
     }
   },

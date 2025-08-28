@@ -1,5 +1,6 @@
 package org.folio.innreach.controller;
 
+import static java.time.format.DateTimeFormatter.ISO_OFFSET_DATE_TIME;
 import static java.util.UUID.randomUUID;
 import static org.awaitility.Awaitility.await;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -58,6 +59,7 @@ import static org.folio.innreach.fixture.UserFixture.createUser;
 import static org.folio.innreach.util.DateHelper.toEpochSec;
 
 import java.time.Duration;
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -161,6 +163,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   private static final String LOCAL_HOLD_CHECK_OUT_ENDPOINT = "/inn-reach/transactions/{id}/localhold/check-out-item/{servicePointId}";
   private static final String UPDATE_TRANSACTION_ENDPOINT = "/inn-reach/transactions/{transactionId}";
   private static final String PATRON_HOLD_CANCEL_ENDPOINT = "/inn-reach/transactions/{id}/patronhold/cancel";
+  private static final String PATRON_HOLD_REMOVE_ENDPOINT = "/inn-reach/transactions/{id}/patronhold/remove";
   private static final String LOCAL_HOLD_CANCEL_ENDPOINT = "/inn-reach/transactions/{id}/localhold/cancel";
   private static final String ITEM_HOLD_CANCEL_ENDPOINT = "/inn-reach/transactions/{id}/itemhold/cancel";
   private static final String ITEM_HOLD_RECALL_ENDPOINT = "/inn-reach/transactions/{id}/itemhold/recall";
@@ -203,6 +206,10 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   private static final AuditableUser PRE_POPULATED_USER = AuditableUser.SYSTEM;
 
   private static final Duration ASYNC_AWAIT_TIMEOUT = Duration.ofSeconds(15);
+
+  private static final OffsetDateTime DUE_DATE = OffsetDateTime.parse(
+    "2025-07-30T05:00:00+02:00",
+    ISO_OFFSET_DATE_TIME);
 
   @Autowired
   private TestRestTemplate testRestTemplate;
@@ -346,6 +353,39 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     assertEquals(PATRON_HOLD, transaction.getState());
   }
 
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-broken_patron_hold_transaction.sql"
+  })
+  void return200HttpCode_and_cancelPatronTransaction_whenNoVirtualItemAndRequestCreatedForPatronHoldTransaction() {
+    var responseEntity = testRestTemplate.postForEntity(
+      PATRON_HOLD_REMOVE_ENDPOINT, null, InnReachTransactionDTO.class, PRE_POPULATED_PATRON_HOLD_TRANSACTION_ID);
+
+    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+    assertNotNull(responseEntity.getBody());
+    assertEquals(PRE_POPULATED_PATRON_HOLD_TRANSACTION_ID, responseEntity.getBody().getId());
+    assertEquals(PRE_POPULATED_TRACKING_ID, responseEntity.getBody().getTrackingId());
+    assertEquals(TransactionStateEnum.CANCEL_REQUEST, responseEntity.getBody().getState());
+  }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
+  })
+  void return400HttpCode_and_notCancelPatronTransaction_whenValidPatronHoldTransaction() {
+    when(inventoryClient.findItem(any())).thenReturn(Optional.of(createInventoryItemDTO()));
+    when(circulationClient.findRequest(any())).thenReturn(Optional.of(createRequestDTO()));
+
+    var responseEntity = testRestTemplate.postForEntity(
+      PATRON_HOLD_REMOVE_ENDPOINT, null, InnReachTransactionDTO.class, PRE_POPULATED_PATRON_HOLD_TRANSACTION_ID);
+
+    assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
+    var transaction = repository.fetchOneById(PRE_POPULATED_PATRON_HOLD_TRANSACTION_ID);
+    assertTrue(transaction.isPresent());
+    assertEquals(TransactionState.PATRON_HOLD, transaction.get().getState());
+  }
 
   @Test
   @Sql(scripts = {
@@ -1364,9 +1404,11 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
   })
   void testCheckOutItemHoldItem() {
+    var expectedDueDate = Date.from(DUE_DATE.toInstant());
     var checkOutResponse = new LoanDTO()
       .id(FOLIO_CHECKOUT_ID)
-      .item(new LoanItem().barcode(PRE_POPULATED_ITEM_HOLD_ITEM_BARCODE));
+      .item(new LoanItem().barcode(PRE_POPULATED_ITEM_HOLD_ITEM_BARCODE))
+        .dueDate(expectedDueDate);
 
     when(circulationClient.checkOutByBarcode(any(CheckOutRequestDTO.class))).thenReturn(checkOutResponse);
 
@@ -1381,10 +1423,12 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
 
     var transaction = response.getTransaction();
     assertEquals(PRE_POPULATED_ITEM_HOLD_TRANSACTION_ID, transaction.getId());
+    assertEquals(toEpochSec(expectedDueDate), transaction.getHold().getDueDateTime());
 
     var folioCheckOut = response.getFolioCheckOut();
     assertNotNull(folioCheckOut);
     assertEquals(FOLIO_CHECKOUT_ID, folioCheckOut.getId());
+    assertEquals(expectedDueDate, folioCheckOut.getDueDate());
   }
 
   @Test
@@ -1419,7 +1463,8 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
 
     var checkOutResponse = new LoanDTO()
       .id(FOLIO_CHECKOUT_ID)
-      .item(new LoanItem().barcode(PRE_POPULATED_ITEM_HOLD_ITEM_BARCODE));
+      .item(new LoanItem().barcode(PRE_POPULATED_ITEM_HOLD_ITEM_BARCODE))
+      .dueDate(Date.from(DUE_DATE.toInstant()));
 
     when(circulationClient.checkOutByBarcode(any(CheckOutRequestDTO.class))).thenReturn(checkOutResponse);
 
