@@ -27,7 +27,6 @@ import static org.folio.innreach.fixture.TestUtil.randomAlphanumeric5;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
-import java.util.UUID;
 import java.util.stream.Stream;
 
 import org.folio.innreach.util.UUIDEncoder;
