@@ -105,6 +105,15 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
     AWAITING_PICKUP.getValue(), PAGED.getValue(), IN_TRANSIT.getValue(), CHECKED_OUT.getValue()
   };
 
+  private static final List<RequestDTO.RequestStatus> REQUEST_CLOSED_STATUSES_OTHER_THAN_FILLED = List.of(
+    CLOSED_CANCELLED, RequestDTO.RequestStatus.CLOSED_UNFILLED, RequestDTO.RequestStatus.CLOSED_PICKUP_EXPIRED
+  );
+
+  private static final List<RequestDTO.RequestStatus> REQUEST_OPEN_STATUSES = List.of(
+    OPEN_NOT_YET_FILLED, RequestDTO.RequestStatus.OPEN_AWAITING_PICKUP, RequestDTO.RequestStatus.OPEN_IN_TRANSIT,
+    RequestDTO.RequestStatus.OPEN_AWAITING_DELIVERY
+  );
+
   @Override
   public PatronHoldCheckInResponseDTO checkInPatronHoldItem(UUID transactionId, UUID servicePointId) {
     log.debug("checkInPatronHoldItem:: parameters transactionId: {}, servicePointId: {}", transactionId, servicePointId);
@@ -232,19 +241,19 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
   }
 
   @Override
-  public void handleRequestUpdate(RequestDTO requestDTO) {
-    log.debug("handleRequestUpdate:: parameters requestDTO: {}", requestDTO);
-    var transaction = transactionRepository.fetchActiveByRequestId(requestDTO.getId()).orElse(null);
+  public void handleRequestUpdate(RequestDTO oldRequest, RequestDTO newRequest) {
+    log.debug("handleRequestUpdate:: parameters old requestDTO: {}, new requestDTO: {}", oldRequest, newRequest);
+    var transaction = transactionRepository.fetchActiveByRequestId(newRequest.getId()).orElse(null);
     if (transaction == null) {
       return;
     }
 
     if (transaction.getType() == ITEM) {
-      updateItemTransactionOnRequestChange(requestDTO, transaction);
+      updateItemTransactionOnRequestChange(newRequest, transaction);
     } else if (transaction.getType() == PATRON) {
-      updatePatronTransactionOnRequestChange(requestDTO, transaction);
+      updatePatronTransactionOnRequestChange(newRequest, transaction);
     } else if (transaction.getType() == LOCAL) {
-      updateLocalTransactionOnRequestChange(requestDTO, transaction);
+      updateLocalTransactionOnRequestChange(oldRequest, newRequest, transaction);
     }
     log.info("handleRequestUpdate:: Request updated");
   }
@@ -742,20 +751,23 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
   }
 
 
-  private void updateLocalTransactionOnRequestChange(RequestDTO request, InnReachTransaction transaction) {
-    log.debug("updateLocalTransactionOnRequestChange:: parameters request: {}, transaction: {}", request, transaction);
+  private void updateLocalTransactionOnRequestChange(RequestDTO oldRequest, RequestDTO newRequest, InnReachTransaction transaction) {
+    log.debug("updateLocalTransactionOnRequestChange:: parameters request: {}, transaction: {}", newRequest, transaction);
     var hold = transaction.getHold();
     var transactionItemId = hold.getFolioItemId();
-    var itemId = request.getItemId();
+    var itemId = newRequest.getItemId();
     var requestId = hold.getFolioRequestId();
 
-    if (!transactionItemId.equals(itemId)) {
+    if (REQUEST_OPEN_STATUSES.contains(oldRequest.getStatus()) &&
+      REQUEST_CLOSED_STATUSES_OTHER_THAN_FILLED.contains(newRequest.getStatus())) {
+      checkOutItem(transaction, newRequest.getPickupServicePointId());
+    } else if (!transactionItemId.equals(itemId)) {
       log.info("Updating local hold transaction {} on moving a request {} from item {} to {}",
         transaction.getId(), requestId, transactionItemId, itemId);
 
-      var item = fetchItemById(request.getItemId());
+      var item = fetchItemById(newRequest.getItemId());
 
-      updateTransactionOnMovedRequest(request, item, transaction);
+      updateTransactionOnMovedRequest(newRequest, item, transaction);
     }
   }
 

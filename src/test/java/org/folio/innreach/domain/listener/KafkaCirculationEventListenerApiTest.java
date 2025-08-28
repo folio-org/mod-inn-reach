@@ -507,6 +507,8 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
     var holding = createInventoryHoldingDTO();
     var item = createInventoryItemDTO();
     var event = createRequestDomainEvent(DomainEventType.UPDATED);
+    event.getData().getNewEntity().setStatus(RequestStatus.OPEN_NOT_YET_FILLED);
+    event.getData().setOldEntity(event.getData().getNewEntity());
     var request = event.getData().getNewEntity();
 
     item.setHoldingsRecordId(holding.getId());

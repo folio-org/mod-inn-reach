@@ -9,6 +9,7 @@
 * [MODINREACH-508](https://folio-org.atlassian.net/browse/MODINREACH-508) - Add missing permissions for INN-Reach circulation endpoints and for System User
 * [MODINREACH-482](https://folio-org.atlassian.net/browse/MODINREACH-482) - Add remove patron hold API to cancel `PATRON_HOLD` transactions with no created virtual item and request
 * [MODINREACH-524](https://folio-org.atlassian.net/browse/MODINREACH-524) - Fix handling Owner Renew Item message (Borrowing Site) and setting correct state
+* [MODINREACH-427](https://folio-org.atlassian.net/browse/MODINREACH-427) - Checkout local hold item on closing of item request and notify inn-reach central server
 
 ## v3.4.1 2025-04-15
 
