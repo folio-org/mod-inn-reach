@@ -66,7 +66,6 @@ class OwnerRenewCirculationApiTest extends BaseApiControllerTest {
   private static final int REQ_DUE_DATE_TIME_BEFORE = (int) Instant.parse("2021-12-01T00:00:00Z").getEpochSecond();
   private static final String LOAN_ID = "19bb9798-d396-4b37-8fd6-5df0885e020e";
   private static final String PRE_POPULATED_PATRON_ID = "ifkkmbcnljgy5elaav74pnxgxa";
-  private static final UUID PRE_POPULATE_PATRON_GROUP_ID = UUID.fromString("8534295a-e031-4738-a952-f7db900df8c0");
 
   @Autowired
   private InnReachTransactionRepository repository;
