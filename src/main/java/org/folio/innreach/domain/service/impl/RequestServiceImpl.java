@@ -34,11 +34,15 @@ import static org.folio.innreach.util.CqlHelper.matchAny;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
+import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.UUID;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+
+import org.folio.innreach.util.ApiRequestSplitter;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
@@ -110,6 +114,9 @@ public class RequestServiceImpl implements RequestService {
   private final RequestPreferenceService requestPreferenceService;
   private final CentralServerService centralServerService;
   private final InstanceService instanceService;
+
+  @Value("${inn-reach.request-ids.split-size:50}")
+  private Integer innReachRequestIdsSplitSize;
 
   @Async
   @Override
@@ -308,7 +315,10 @@ public class RequestServiceImpl implements RequestService {
 
   @Override
   public ResultList<RequestDTO> findNotFilledRequestsByIds(Set<UUID> requestIds, int limit) {
-    return circulationClient.queryNotFilledRequestsByIds(matchAny(requestIds), limit);
+    return ApiRequestSplitter.execute(
+      requestIds, innReachRequestIdsSplitSize,
+      batch -> circulationClient.queryNotFilledRequestsByIds(matchAny(new LinkedHashSet<>(batch)), limit)
+    );
   }
 
   private void cancelRequest(RequestDTO request, UUID reasonId, String reasonDetails) {

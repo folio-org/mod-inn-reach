@@ -96,6 +96,8 @@ management:
       enabled: true
 debug: false
 inn-reach:
+  request-ids:
+    split-size: ${INN_REACH_REQUEST_IDS_SPLIT_SIZE:50}
   jwt-access-token:
     cache:
       ttl: 500
