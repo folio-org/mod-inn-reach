@@ -35,7 +35,7 @@ import static org.folio.innreach.util.ListUtils.getFirstItem;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -352,7 +352,7 @@ public class RequestServiceImpl implements RequestService {
   public ResultList<RequestDTO> findNotFilledRequestsByIds(Set<UUID> requestIds, int limit) {
     return ApiRequestSplitter.execute(
       requestIds, innReachRequestIdsSplitSize,
-      batch -> circulationClient.queryNotFilledRequestsByIds(matchAny(new HashSet<>(batch)), limit)
+      batch -> circulationClient.queryNotFilledRequestsByIds(matchAny(new LinkedHashSet<>(batch)), limit)
     );
   }
 

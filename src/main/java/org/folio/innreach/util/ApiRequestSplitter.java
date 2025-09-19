@@ -48,7 +48,7 @@ public class ApiRequestSplitter {
     Set<K> requestIds, int batchSize,
     Function<List<K>, ResultList<T>> apiClient) {
 
-    List<List<K>> partitions = ApiRequestSplitter.partition(requestIds, batchSize);
+    List<List<K>> partitions = partition(requestIds, batchSize);
 
     List<T> allResults = new ArrayList<>();
 
