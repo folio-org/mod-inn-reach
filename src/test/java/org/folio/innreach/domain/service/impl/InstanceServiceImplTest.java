@@ -1,23 +1,29 @@
 package org.folio.innreach.domain.service.impl;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.when;
+
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
+import org.folio.innreach.domain.dto.CQLQueryRequestDto;
+import org.folio.innreach.domain.dto.folio.ResultList;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 
 import java.util.ArrayList;
 
 import org.folio.innreach.client.InventoryClient;
 import org.folio.innreach.domain.dto.folio.inventory.InventoryInstanceDTO;
-import org.folio.innreach.domain.service.InstanceService;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
-import static org.junit.Assert.assertEquals;
-
+@ExtendWith(MockitoExtension.class)
 class InstanceServiceImplTest {
 
-  @MockitoBean
-  private InventoryClient inventoryClient;
-  @InjectMocks
-  private InstanceService instanceService = new InstanceServiceImpl(inventoryClient);
+  @Mock private InventoryClient inventoryClient;
+  @InjectMocks private InstanceServiceImpl instanceService;
 
   @Test
   void shouldReturnAuthorFromInstanceEntity() {
@@ -39,5 +45,26 @@ class InstanceServiceImplTest {
     var author = instanceService.getAuthor(instance);
 
     assertEquals(contributors.get(1).getName(), author);
+  }
+
+  @Test
+  void findInstancesByIds() {
+    var instanceId = UUID.randomUUID();
+    var expectedDto = CQLQueryRequestDto.builder()
+        .query(String.format("id=(%s)", instanceId))
+        .limit(100)
+        .build();
+
+    var expectedInstance = InventoryInstanceDTO.builder()
+        .id(instanceId)
+        .title("test instance")
+        .build();
+
+    var expectedResult = ResultList.asSinglePage(expectedInstance);
+
+    when(inventoryClient.retrieveInstancesByCQLBody(expectedDto)).thenReturn(expectedResult);
+    var actual = instanceService.findInstancesByIds(Set.of(instanceId), 100);
+
+    assertEquals(List.of(expectedInstance), actual);
   }
 }
