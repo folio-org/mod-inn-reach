@@ -69,7 +69,6 @@ public class InnReachTransactionServiceImpl implements InnReachTransactionServic
     var parameters = parametersMapper.toEntity(parametersDTO);
     var pageRequest = new OffsetRequest(offset, limit, Sort.unsorted());
     var transactions = repository.findAll(specification.filterByParameters(parameters), pageRequest);
-    log.info("getAllTransactions:: result: {}", transactionMapper.toDTOCollection(transactions));
     return transactionMapper.toDTOCollection(transactions);
   }
 
