@@ -3,6 +3,7 @@ package org.folio.innreach.domain.service.impl;
 import static org.folio.innreach.util.CqlHelper.matchAny;
 import static org.folio.innreach.util.ListUtils.getFirstItem;
 
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -10,7 +11,8 @@ import java.util.UUID;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
-import org.folio.innreach.domain.dto.CQLQueryRequestDto;
+import org.folio.innreach.config.props.SplitRequestIdsConfiguration;
+import org.folio.innreach.util.ApiRequestSplitter;
 import org.springframework.stereotype.Service;
 
 import org.folio.innreach.client.InventoryClient;
@@ -23,6 +25,7 @@ import org.folio.innreach.domain.service.InstanceService;
 public class InstanceServiceImpl implements InstanceService {
 
   private final InventoryClient inventoryClient;
+  private final SplitRequestIdsConfiguration splitIdsConfiguration;
 
   @Override
   public InventoryInstanceDTO queryInstanceByHrid(String instanceHrid) {
@@ -53,12 +56,11 @@ public class InstanceServiceImpl implements InstanceService {
   @Override
   public List<InventoryInstanceDTO> findInstancesByIds(Set<UUID> instanceIds, int limit) {
     log.debug("findInstancesByIds:: parameters instanceIds: {}, limit: {}", instanceIds, limit);
-    var cqlQueryRequestDto = CQLQueryRequestDto.builder()
-        .query(String.format("id=(%s)", matchAny(instanceIds)))
-        .limit(limit)
-        .build();
-
-    return inventoryClient.retrieveInstancesByCQLBody(cqlQueryRequestDto).getResult();
+    var loadResult = ApiRequestSplitter.execute(
+        instanceIds, splitIdsConfiguration.getSplitSize(),
+        batch -> inventoryClient.queryInstancesByIds(matchAny(new LinkedHashSet<>(batch)), limit)
+    );
+    return loadResult.getResult();
   }
 
   @Override

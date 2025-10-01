@@ -43,6 +43,7 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.folio.innreach.client.ItemStorageClient;
+import org.folio.innreach.config.props.SplitRequestIdsConfiguration;
 import org.folio.innreach.domain.dto.folio.inventory.InventoryInstanceDTO;
 import org.folio.innreach.domain.service.RecordContributionService;
 import org.folio.innreach.domain.service.UserService;
@@ -121,9 +122,7 @@ public class RequestServiceImpl implements RequestService {
   private final InstanceService instanceService;
   private final RecordContributionService recordContributionService;
   private final ItemStorageClient itemStorageClient;
-
-  @Value("${inn-reach.request-ids.split-size:50}")
-  private Integer innReachRequestIdsSplitSize;
+  private final SplitRequestIdsConfiguration splitIdsConfiguration;
 
   @Async
   @Override
@@ -351,7 +350,7 @@ public class RequestServiceImpl implements RequestService {
   @Override
   public ResultList<RequestDTO> findNotFilledRequestsByIds(Set<UUID> requestIds, int limit) {
     return ApiRequestSplitter.execute(
-      requestIds, innReachRequestIdsSplitSize,
+      requestIds, splitIdsConfiguration.getSplitSize(),
       batch -> circulationClient.queryNotFilledRequestsByIds(matchAny(new LinkedHashSet<>(batch)), limit)
     );
   }
