@@ -59,6 +59,7 @@ public interface InventoryClient {
   @PostMapping("/items/retrieve")
   ResultList<InventoryItemDTO> retrieveItemsByCQLBody(@Valid @RequestBody CQLQueryRequestDto cqlQueryRequestDto);
 
-  @PostMapping("/instances/retrieve")
-  ResultList<InventoryInstanceDTO> retrieveInstancesByCQLBody(@Valid @RequestBody CQLQueryRequestDto cqlQueryRequestDto);
+  @GetMapping("/instances?query=id=({instanceIds})")
+  ResultList<InventoryInstanceDTO> queryInstancesByIds(@PathVariable("instanceIds") String instanceIdKey, @RequestParam("limit") int limit);
+
 }

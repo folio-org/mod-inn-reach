@@ -1378,7 +1378,8 @@
         "circulation.loans.item.delete",
         "inventory.items.item.delete",
         "inventory-storage.holdings.item.delete",
-        "inventory.instances.item.delete"
+        "inventory.instances.item.delete",
+        "inventory.instances.collection.get"
       ]
     }
   },

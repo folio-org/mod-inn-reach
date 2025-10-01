@@ -6,7 +6,7 @@ import static org.mockito.Mockito.when;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
-import org.folio.innreach.domain.dto.CQLQueryRequestDto;
+import org.folio.innreach.config.props.SplitRequestIdsConfiguration;
 import org.folio.innreach.domain.dto.folio.ResultList;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -23,6 +23,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class InstanceServiceImplTest {
 
   @Mock private InventoryClient inventoryClient;
+  @Mock private SplitRequestIdsConfiguration splitIdsConfiguration;
   @InjectMocks private InstanceServiceImpl instanceService;
 
   @Test
@@ -50,19 +51,14 @@ class InstanceServiceImplTest {
   @Test
   void findInstancesByIds() {
     var instanceId = UUID.randomUUID();
-    var expectedDto = CQLQueryRequestDto.builder()
-        .query(String.format("id=(%s)", instanceId))
-        .limit(100)
-        .build();
-
     var expectedInstance = InventoryInstanceDTO.builder()
         .id(instanceId)
         .title("test instance")
         .build();
 
-    var expectedResult = ResultList.asSinglePage(expectedInstance);
-
-    when(inventoryClient.retrieveInstancesByCQLBody(expectedDto)).thenReturn(expectedResult);
+    var expected = ResultList.asSinglePage(expectedInstance);
+    when(splitIdsConfiguration.getSplitSize()).thenReturn(50);
+    when(inventoryClient.queryInstancesByIds(instanceId.toString(), 100)).thenReturn(expected);
     var actual = instanceService.findInstancesByIds(Set.of(instanceId), 100);
 
     assertEquals(List.of(expectedInstance), actual);

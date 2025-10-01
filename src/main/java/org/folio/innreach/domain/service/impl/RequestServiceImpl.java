@@ -30,25 +30,29 @@ import static org.folio.innreach.domain.dto.folio.inventory.InventoryItemStatus.
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.CANCEL_REQUEST;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionType.ITEM;
 import static org.folio.innreach.util.CqlHelper.matchAny;
+import static org.folio.innreach.util.ListUtils.getFirstItem;
 
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
-
+import org.folio.innreach.client.ItemStorageClient;
+import org.folio.innreach.config.props.SplitRequestIdsConfiguration;
+import org.folio.innreach.domain.dto.folio.inventory.InventoryInstanceDTO;
+import org.folio.innreach.domain.service.RecordContributionService;
+import org.folio.innreach.domain.service.UserService;
 import org.folio.innreach.util.ApiRequestSplitter;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 
 import org.folio.innreach.client.CirculationClient;
-import org.folio.innreach.client.UsersClient;
 import org.folio.innreach.domain.dto.OwningSiteCancelsRequestDTO;
 import org.folio.innreach.domain.dto.folio.ResultList;
 import org.folio.innreach.domain.dto.folio.User;
@@ -72,6 +76,7 @@ import org.folio.innreach.domain.service.RequestPreferenceService;
 import org.folio.innreach.domain.service.RequestService;
 import org.folio.innreach.domain.service.CentralServerService;
 import org.folio.innreach.domain.service.InstanceService;
+import org.folio.innreach.dto.Item;
 import org.folio.innreach.dto.Holding;
 import org.folio.innreach.external.service.InnReachExternalService;
 import org.folio.innreach.mapper.InnReachTransactionPickupLocationMapper;
@@ -114,9 +119,9 @@ public class RequestServiceImpl implements RequestService {
   private final RequestPreferenceService requestPreferenceService;
   private final CentralServerService centralServerService;
   private final InstanceService instanceService;
-
-  @Value("${inn-reach.request-ids.split-size:50}")
-  private Integer innReachRequestIdsSplitSize;
+  private final RecordContributionService recordContributionService;
+  private final ItemStorageClient itemStorageClient;
+  private final SplitRequestIdsConfiguration splitIdsConfiguration;
 
   @Async
   @Override
@@ -316,7 +321,7 @@ public class RequestServiceImpl implements RequestService {
   @Override
   public ResultList<RequestDTO> findNotFilledRequestsByIds(Set<UUID> requestIds, int limit) {
     return ApiRequestSplitter.execute(
-      requestIds, innReachRequestIdsSplitSize,
+      requestIds, splitIdsConfiguration.getSplitSize(),
       batch -> circulationClient.queryNotFilledRequestsByIds(matchAny(new LinkedHashSet<>(batch)), limit)
     );
   }
