@@ -3,6 +3,7 @@ package org.folio.innreach.client;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.folio.innreach.domain.dto.folio.ResultList;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -15,5 +16,8 @@ public interface ItemStorageClient {
 
   @GetMapping("/items/{itemId}")
   Optional<Item> getItemById(@PathVariable("itemId") UUID itemId);
+
+  @GetMapping("/items?query=hrid=={hrId}")
+  ResultList<Item> getItemByHrId(@PathVariable("hrId") String hrId);
 
 }

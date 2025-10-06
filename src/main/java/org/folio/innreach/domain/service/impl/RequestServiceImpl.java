@@ -30,21 +30,29 @@ import static org.folio.innreach.domain.dto.folio.inventory.InventoryItemStatus.
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.CANCEL_REQUEST;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionType.ITEM;
 import static org.folio.innreach.util.CqlHelper.matchAny;
+import static org.folio.innreach.util.ListUtils.getFirstItem;
 
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.folio.innreach.client.ItemStorageClient;
+import org.folio.innreach.config.props.SplitRequestIdsConfiguration;
+import org.folio.innreach.domain.dto.folio.inventory.InventoryInstanceDTO;
+import org.folio.innreach.domain.service.RecordContributionService;
+import org.folio.innreach.domain.service.UserService;
+import org.folio.innreach.util.ApiRequestSplitter;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 
 import org.folio.innreach.client.CirculationClient;
-import org.folio.innreach.client.UsersClient;
 import org.folio.innreach.domain.dto.OwningSiteCancelsRequestDTO;
 import org.folio.innreach.domain.dto.folio.ResultList;
 import org.folio.innreach.domain.dto.folio.User;
@@ -68,6 +76,7 @@ import org.folio.innreach.domain.service.RequestPreferenceService;
 import org.folio.innreach.domain.service.RequestService;
 import org.folio.innreach.domain.service.CentralServerService;
 import org.folio.innreach.domain.service.InstanceService;
+import org.folio.innreach.dto.Item;
 import org.folio.innreach.dto.Holding;
 import org.folio.innreach.external.service.InnReachExternalService;
 import org.folio.innreach.mapper.InnReachTransactionPickupLocationMapper;
@@ -101,7 +110,7 @@ public class RequestServiceImpl implements RequestService {
   private final InnReachTransactionPickupLocationMapper transactionPickupLocationMapper;
   private final CirculationClient circulationClient;
   private final InventoryService inventoryService;
-  private final UsersClient usersClient;
+  private final UserService userService;
 
   private final InnReachExternalService innReachService;
   private final ItemService itemService;
@@ -110,6 +119,9 @@ public class RequestServiceImpl implements RequestService {
   private final RequestPreferenceService requestPreferenceService;
   private final CentralServerService centralServerService;
   private final InstanceService instanceService;
+  private final RecordContributionService recordContributionService;
+  private final ItemStorageClient itemStorageClient;
+  private final SplitRequestIdsConfiguration splitIdsConfiguration;
 
   @Async
   @Override
@@ -129,6 +141,7 @@ public class RequestServiceImpl implements RequestService {
       log.info("createItemHoldRequest:: Item hold request created");
     } catch (Exception e) {
       handleOwningSiteRequestException(transaction, centralPatronName, e);
+      reContributeItem(transaction);
     }
   }
 
@@ -232,9 +245,36 @@ public class RequestServiceImpl implements RequestService {
     issueOwningSiteCancelsRequest(transaction, centralPatronName, errorReason);
   }
 
+  private void reContributeItem(InnReachTransaction transaction) {
+    // re-contribute item to the central server in order to update back its status to AVAILABLE or
+    // what was before the request
+    log.info("re-contributing item for transaction with trackingId: {}", transaction.getTrackingId());
+    var centralServerId = centralServerService.getCentralServerIdByCentralCode(transaction.getCentralServerCode());
+
+    try {
+      var item = fetchItem(transaction.getHold().getItemId());
+      var bibId = holdingsService.find(item.getHoldingsRecordId())
+        .map(Holding::getInstanceId)
+        .flatMap(instanceService::find)
+        .map(InventoryInstanceDTO::getHrid)
+        .orElse(null);
+
+      recordContributionService.contributeItems(centralServerId, bibId, List.of(item));
+    } catch (Exception e) {
+      log.error("Failed to re-contribute item for transaction with trackingId: {}. Error: {}",
+        transaction.getTrackingId(), e.getMessage());
+    }
+  }
+
   private void cancelTransaction(InnReachTransaction transaction) {
     transaction.setState(CANCEL_REQUEST);
     transactionRepository.save(transaction);
+  }
+
+  private Item fetchItem(String itemHrId) {
+    var resultList = itemStorageClient.getItemByHrId(itemHrId);
+    return getFirstItem(resultList)
+      .orElseThrow(() -> new IllegalArgumentException("Item with hrid = " + itemHrId + " not found."));
   }
 
   @Override
@@ -308,7 +348,10 @@ public class RequestServiceImpl implements RequestService {
 
   @Override
   public ResultList<RequestDTO> findNotFilledRequestsByIds(Set<UUID> requestIds, int limit) {
-    return circulationClient.queryNotFilledRequestsByIds(matchAny(requestIds), limit);
+    return ApiRequestSplitter.execute(
+      requestIds, splitIdsConfiguration.getSplitSize(),
+      batch -> circulationClient.queryNotFilledRequestsByIds(matchAny(new LinkedHashSet<>(batch)), limit)
+    );
   }
 
   private void cancelRequest(RequestDTO request, UUID reasonId, String reasonDetails) {
@@ -377,18 +420,14 @@ public class RequestServiceImpl implements RequestService {
     return servicePointId != null ? servicePointId : getUserRequestPreferenceDefaultServicePoint(patron.getId());
   }
 
-  private String queryByBarcode(String patronBarcode) {
-    return "(barcode==\"" + patronBarcode + "\")";
-  }
-
   private User getUserByBarcode(String patronBarcode) {
-    return usersClient.query(queryByBarcode(patronBarcode)).getResult().stream().findFirst().orElseThrow(
+    return userService.getUserByBarcode(patronBarcode).orElseThrow(
       () -> new EntityNotFoundException("User not found for barcode = " + patronBarcode)
     );
   }
 
   private User getUserById(UUID patronId) {
-    return usersClient.getUserById(patronId)
+    return userService.getUserById(patronId)
       .orElseThrow(() -> new IllegalArgumentException("Patron is not found by id: " + patronId));
   }
 
