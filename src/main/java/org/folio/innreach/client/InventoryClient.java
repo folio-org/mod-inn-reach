@@ -61,5 +61,4 @@ public interface InventoryClient {
 
   @GetMapping("/instances?query=id=({instanceIds})")
   ResultList<InventoryInstanceDTO> queryInstancesByIds(@PathVariable("instanceIds") String instanceIdKey, @RequestParam("limit") int limit);
-
 }

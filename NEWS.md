@@ -11,6 +11,7 @@
 * [MODINREACH-524](https://folio-org.atlassian.net/browse/MODINREACH-524) - Fix handling Owner Renew Item message (Borrowing Site) and setting correct state
 * [MODINREACH-427](https://folio-org.atlassian.net/browse/MODINREACH-427) - Checkout local hold item on closing of item request and notify inn-reach central server
 * [MODINREACH-532](https://folio-org.atlassian.net/browse/MODINREACH-532) - Remove log message with sensitive information
+* [MODINREACH-531](https://folio-org.atlassian.net/browse/MODINREACH-531) - 414 Request-URI Too Long when calling circulation/requests during getPagingSlipsByServicePoint call
 
 ## v3.4.1 2025-04-15
 
