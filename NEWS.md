@@ -1,3 +1,10 @@
+## v3.3.7 2025-10-22
+
+### Bugs
+* [MODINREACH-503](https://folio-org.atlassian.net/browse/MODINREACH-503) - [INN-Reach] Add missing tokens to API
+* [MODINREACH-469](https://folio-org.atlassian.net/browse/MODINREACH-469) - Add status set for validating item contribution availability
+* [MODINREACH-531](https://folio-org.atlassian.net/browse/MODINREACH-531) - 414 Request-URI Too Long when calling circulation/requests during getPagingSlipsByServicePoint call
+
 ## v3.3.6 2025-08-19
 
 ### Bugs
