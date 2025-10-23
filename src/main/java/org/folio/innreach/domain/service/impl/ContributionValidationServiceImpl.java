@@ -20,6 +20,7 @@ import org.folio.innreach.dto.Holding;
 import org.folio.innreach.dto.InnReachLocationDTO;
 import org.folio.innreach.dto.Instance;
 import org.folio.innreach.dto.Item;
+import org.folio.innreach.dto.ItemStatus;
 import org.folio.innreach.dto.ItemContributionOptionsConfigurationDTO;
 import org.folio.innreach.dto.LibraryMappingDTO;
 import org.folio.innreach.dto.MappingValidationStatusDTO;
@@ -42,6 +43,12 @@ import static org.folio.innreach.dto.ItemStatus.NameEnum.CHECKED_OUT;
 import static org.folio.innreach.dto.ItemStatus.NameEnum.IN_TRANSIT;
 import static org.folio.innreach.dto.MappingValidationStatusDTO.INVALID;
 import static org.folio.innreach.dto.MappingValidationStatusDTO.VALID;
+import static org.folio.innreach.dto.ItemStatus.NameEnum.LONG_MISSING;
+import static org.folio.innreach.dto.ItemStatus.NameEnum.DECLARED_LOST;
+import static org.folio.innreach.dto.ItemStatus.NameEnum.AGED_TO_LOST;
+import static org.folio.innreach.dto.ItemStatus.NameEnum.AWAITING_PICKUP;
+import static org.folio.innreach.dto.ItemStatus.NameEnum.PAGED;
+import static org.folio.innreach.dto.ItemStatus.NameEnum.WITHDRAWN;
 import static org.folio.innreach.util.ListUtils.mapItems;
 
 @Log4j2
@@ -65,6 +72,9 @@ public class ContributionValidationServiceImpl implements ContributionValidation
   private final FolioLocationService folioLocationService;
 
   private final ItemContributionOptionsConfigurationService itemContributionOptionsConfigurationService;
+
+  private static final Set<ItemStatus.NameEnum> notAvailableItemStatuses = Set.of(
+    LONG_MISSING, DECLARED_LOST, AGED_TO_LOST, AWAITING_PICKUP, PAGED, WITHDRAWN);
 
   private final CirculationClient circulationClient;
 
@@ -279,7 +289,9 @@ public class ContributionValidationServiceImpl implements ContributionValidation
       return false;
     }
 
-    return itemStatus.getName() == AVAILABLE || !itemContributionConfig.getNotAvailableItemStatuses().contains(itemStatus.getName().getValue());
+    return itemStatus.getName() == AVAILABLE
+      ||  (!notAvailableItemStatuses.contains(itemStatus.getName())
+      && !itemContributionConfig.getNotAvailableItemStatuses().contains(itemStatus.getName().getValue()));
   }
 
   private boolean isItemRequested(Item inventoryItem) {
