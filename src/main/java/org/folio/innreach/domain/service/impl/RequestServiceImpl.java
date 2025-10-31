@@ -35,6 +35,7 @@ import static org.folio.innreach.util.ListUtils.getFirstItem;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -42,9 +43,12 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.folio.innreach.client.ItemStorageClient;
+import org.folio.innreach.config.props.SplitRequestIdsConfiguration;
 import org.folio.innreach.domain.dto.folio.inventory.InventoryInstanceDTO;
 import org.folio.innreach.domain.service.RecordContributionService;
 import org.folio.innreach.domain.service.UserService;
+import org.folio.innreach.util.ApiRequestSplitter;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
@@ -118,6 +122,7 @@ public class RequestServiceImpl implements RequestService {
   private final InstanceService instanceService;
   private final RecordContributionService recordContributionService;
   private final ItemStorageClient itemStorageClient;
+  private final SplitRequestIdsConfiguration splitIdsConfiguration;
 
   @Async
   @Override
@@ -344,7 +349,10 @@ public class RequestServiceImpl implements RequestService {
 
   @Override
   public ResultList<RequestDTO> findNotFilledRequestsByIds(Set<UUID> requestIds, int limit) {
-    return circulationClient.queryNotFilledRequestsByIds(matchAny(requestIds), limit);
+    return ApiRequestSplitter.execute(
+      requestIds, splitIdsConfiguration.getSplitSize(),
+      batch -> circulationClient.queryNotFilledRequestsByIds(matchAny(new LinkedHashSet<>(batch)), limit)
+    );
   }
 
   private void cancelRequest(RequestDTO request, UUID reasonId, String reasonDetails) {

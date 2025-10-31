@@ -1,3 +1,8 @@
+## v3.4.4 2025-10-31
+* [MODINREACH-531](https://folio-org.atlassian.net/browse/MODINREACH-531) - 414 Request-URI Too Long when calling circulation/requests during getPagingSlipsByServicePoint call
+
+### Bugs
+
 ## v3.4.3 2025-08-28
 
 ### Bugs
