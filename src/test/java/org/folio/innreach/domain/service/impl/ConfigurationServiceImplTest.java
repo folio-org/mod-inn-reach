@@ -1,8 +1,8 @@
 package org.folio.innreach.domain.service.impl;
 
-import org.folio.innreach.client.ConfigurationClient;
+import org.folio.innreach.client.CirculationClient;
 import org.folio.innreach.domain.dto.folio.ResultList;
-import org.folio.innreach.domain.dto.folio.configuration.ConfigurationDTO;
+import org.folio.innreach.domain.dto.folio.circulation.CirculationSettingDTO;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -11,7 +11,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.folio.innreach.fixture.TestUtil.deserializeFromJsonFile;
 import static org.junit.Assert.assertNotNull;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -19,22 +18,22 @@ import static org.mockito.Mockito.when;
 class ConfigurationServiceImplTest {
 
   @Mock
-  private ConfigurationClient configurationClient;
+  private CirculationClient circulationClient;
 
   @InjectMocks
   private ConfigurationServiceImpl service;
 
   @Test
-  void shouldGetInstanceById() {
-    var configurationDto =
-            deserializeFromJsonFile("/configuration/configuration-details-example.json", ConfigurationDTO.class);
-    when(service.fetchConfigurationsDetailsByModule(any())).
-            thenReturn(ResultList.asSinglePage(configurationDto));
+  void shouldGetCheckoutSettings() {
+    var circulationSettingDto =
+            deserializeFromJsonFile("/configuration/configuration-details-example.json", CirculationSettingDTO.class);
+    when(circulationClient.getCheckoutSettings())
+            .thenReturn(ResultList.asSinglePage(circulationSettingDto));
 
-    var instance = service.fetchConfigurationsDetailsByModule(any());
+    var result = service.fetchCheckoutSettings();
 
-    assertNotNull(instance);
+    assertNotNull(result);
 
-    verify(configurationClient).queryRequestByModule(any());
+    verify(circulationClient).getCheckoutSettings();
   }
 }

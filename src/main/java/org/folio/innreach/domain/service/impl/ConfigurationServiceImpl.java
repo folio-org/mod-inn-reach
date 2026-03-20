@@ -2,24 +2,22 @@ package org.folio.innreach.domain.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
-import org.folio.innreach.client.ConfigurationClient;
+import org.folio.innreach.client.CirculationClient;
 import org.folio.innreach.domain.dto.folio.ResultList;
-import org.folio.innreach.domain.dto.folio.configuration.ConfigurationDTO;
+import org.folio.innreach.domain.dto.folio.circulation.CirculationSettingDTO;
 import org.folio.innreach.domain.service.ConfigurationService;
 import org.springframework.stereotype.Service;
-
-import java.util.Date;
 
 @Service
 @RequiredArgsConstructor
 @Log4j2
 public class ConfigurationServiceImpl implements ConfigurationService {
 
-    private final ConfigurationClient configurationClient;
+    private final CirculationClient circulationClient;
 
     @Override
-    public ResultList<ConfigurationDTO> fetchConfigurationsDetailsByModule(String module) {
-        log.debug("fetchConfigurationsDetailsByModule :: parameter  module : {}", module);
-        return configurationClient.queryRequestByModule(module);
+    public ResultList<CirculationSettingDTO> fetchCheckoutSettings() {
+        log.debug("fetchCheckoutSettings :: fetching CHECKOUT other_settings from circulation/settings");
+        return circulationClient.getCheckoutSettings();
     }
 }

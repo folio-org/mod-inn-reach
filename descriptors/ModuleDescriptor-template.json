@@ -47,6 +47,10 @@
       "version": "14.6"
     },
     {
+      "id": "circulation-settings",
+      "version": "1.0"
+    },
+    {
       "id": "source-storage-records",
       "version": "3.4"
     },
@@ -396,7 +400,7 @@
             "circulation.loans.claim-item-returned.post",
             "inventory.instances.item.get",
             "users.collection.get",
-            "configuration.entries.collection.get",
+            "circulation.settings.collection.get",
             "inventory.items.item.delete",
             "inventory-storage.holdings.item.delete",
             "inventory.instances.item.delete",

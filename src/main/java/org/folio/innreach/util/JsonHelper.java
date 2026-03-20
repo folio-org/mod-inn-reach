@@ -2,11 +2,9 @@ package org.folio.innreach.util;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.gson.Gson;
-import com.google.gson.JsonObject;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
-import org.folio.innreach.domain.dto.folio.configuration.ConfigurationDTO;
+import org.folio.innreach.domain.dto.folio.circulation.CirculationSettingDTO;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -67,12 +65,16 @@ public class JsonHelper {
   }
 
 
-  public static Long getCheckoutTimeDurationInMilliseconds(List<ConfigurationDTO> configData) {
+  public static Long getCheckoutTimeDurationInMilliseconds(List<CirculationSettingDTO> configData) {
     long checkOutTime = defaultCheckoutTimeDuration;
-    if(!configData.isEmpty()) {
+    if (!configData.isEmpty()) {
       var value = configData.get(0).getValue();
-      JsonObject valueObject = new Gson().fromJson(value, JsonObject.class);
-      checkOutTime = valueObject.get(CHECKOUT_TIMEOUT_DURATION).getAsLong();
+      if (value != null && value.containsKey(CHECKOUT_TIMEOUT_DURATION)) {
+        Object duration = value.get(CHECKOUT_TIMEOUT_DURATION);
+        if (duration instanceof Number) {
+          checkOutTime = ((Number) duration).longValue();
+        }
+      }
     }
     return checkOutTime * 60000;
   }

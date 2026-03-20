@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 
 import org.folio.innreach.client.config.FolioFeignClientConfig;
 import org.folio.innreach.domain.dto.folio.ResultList;
+import org.folio.innreach.domain.dto.folio.circulation.CirculationSettingDTO;
 import org.folio.innreach.domain.dto.folio.circulation.MoveRequestDTO;
 import org.folio.innreach.domain.dto.folio.circulation.RenewByIdDTO;
 import org.folio.innreach.domain.dto.folio.circulation.RequestDTO;
@@ -25,6 +26,9 @@ import org.folio.innreach.dto.LoanDTO;
 
 @FeignClient(name = "circulation", configuration = FolioFeignClientConfig.class, dismiss404 = true)
 public interface CirculationClient {
+
+  @GetMapping("/settings?query=(name==other_settings)")
+  ResultList<CirculationSettingDTO> getCheckoutSettings();
 
   @GetMapping("/requests?query=(itemId=={itemId})")
   ResultList<RequestDTO> queryRequestsByItemId(@PathVariable("itemId") UUID itemId);
