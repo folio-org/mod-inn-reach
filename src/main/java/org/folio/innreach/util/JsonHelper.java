@@ -66,17 +66,15 @@ public class JsonHelper {
 
 
   public static Long getCheckoutTimeDurationInMilliseconds(List<CirculationSettingDTO> configData) {
-    long checkOutTime = defaultCheckoutTimeDuration;
-    if (!configData.isEmpty()) {
-      var value = configData.get(0).getValue();
-      if (value != null && value.containsKey(CHECKOUT_TIMEOUT_DURATION)) {
-        Object duration = value.get(CHECKOUT_TIMEOUT_DURATION);
-        if (duration instanceof Number) {
-          checkOutTime = ((Number) duration).longValue();
-        }
-      }
-    }
-    return checkOutTime * 60000;
+    long duration = configData.stream()
+      .findFirst()
+      .map(CirculationSettingDTO::getValue)
+      .map(v -> v.get(CHECKOUT_TIMEOUT_DURATION))
+      .filter(Number.class::isInstance)
+      .map(Number.class::cast)
+      .map(Number::longValue)
+      .orElse(defaultCheckoutTimeDuration);
+    return duration * 60000;
   }
 
 }
