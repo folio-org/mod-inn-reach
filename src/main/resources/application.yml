@@ -62,10 +62,10 @@ folio:
   logging:
     feign:
       enabled: ${LOG_HTTP:true}
-      level: FULL
+      level: BASIC
     request:
       enabled: ${LOG_HTTP:true}
-      level: FULL
+      level: BASIC
   system-user:
     enabled: ${SYSTEM_USER_ENABLED:true}
     username: ${SYSTEM_USER_NAME:mod-innreach}
