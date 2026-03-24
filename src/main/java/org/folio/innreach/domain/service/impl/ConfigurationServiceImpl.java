@@ -1,8 +1,15 @@
 package org.folio.innreach.domain.service.impl;
 
+import java.util.Collections;
+import java.util.Map;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.folio.innreach.client.CirculationClient;
+import org.folio.innreach.client.ConfigurationClient;
 import org.folio.innreach.domain.dto.folio.ResultList;
 import org.folio.innreach.domain.dto.folio.circulation.CirculationSettingDTO;
 import org.folio.innreach.domain.service.ConfigurationService;
@@ -13,11 +20,45 @@ import org.springframework.stereotype.Service;
 @Log4j2
 public class ConfigurationServiceImpl implements ConfigurationService {
 
-    private final CirculationClient circulationClient;
+  static final String CHECKOUT_MODULE = "CHECKOUT";
 
-    @Override
-    public ResultList<CirculationSettingDTO> fetchCheckoutSettings() {
-        log.debug("fetchCheckoutSettings :: fetching CHECKOUT other_settings from circulation/settings");
-        return circulationClient.getCheckoutSettings();
+  private final CirculationClient circulationClient;
+  private final ConfigurationClient configurationClient;
+  private final ObjectMapper objectMapper;
+
+  @Override
+  public ResultList<CirculationSettingDTO> fetchCheckoutSettings() {
+    log.debug("fetchCheckoutSettings:: trying circulation/settings first");
+    var result = circulationClient.getCheckoutSettings();
+    if (result != null && !result.getResult().isEmpty()) {
+      log.debug("fetchCheckoutSettings:: found settings in circulation/settings");
+      return result;
     }
+
+    log.info("fetchCheckoutSettings:: circulation/settings empty, falling back to configuration/entries");
+    var legacyResult = configurationClient.queryRequestByModule(CHECKOUT_MODULE);
+    if (legacyResult == null || legacyResult.getResult().isEmpty()) {
+      log.info("fetchCheckoutSettings:: no settings found in either source, using defaults");
+      return ResultList.empty();
+    }
+
+    var adapted = legacyResult.getResult().stream()
+      .map(dto -> new CirculationSettingDTO(dto.getId(), dto.getConfigName(), parseValue(dto.getValue())))
+      .toList();
+
+    return ResultList.asSinglePage(adapted);
+  }
+
+  private Map<String, Object> parseValue(String jsonValue) {
+    if (jsonValue == null || jsonValue.isBlank()) {
+      return Collections.emptyMap();
+    }
+    try {
+      return objectMapper.readValue(jsonValue, new TypeReference<>() {});
+    } catch (JsonProcessingException e) {
+      log.warn("fetchCheckoutSettings:: failed to parse configuration value, using empty map. Value: [{}], Error: {}",
+        jsonValue, e.getMessage());
+      return Collections.emptyMap();
+    }
+  }
 }
