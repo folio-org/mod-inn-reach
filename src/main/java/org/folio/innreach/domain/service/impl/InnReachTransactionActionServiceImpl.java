@@ -349,7 +349,8 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
 
   @Override
   public void cancelItemHold(UUID transactionId, CancelTransactionHoldDTO cancelRequest) {
-    log.debug("cancelItemHold:: parameters transactionId: {}, cancelRequest: {}", transactionId, cancelRequest);
+    log.debug("cancelItemHold:: parameters transactionId: {}, cancellationReasonId: {}, hasAdditionalInformation: {}",
+      transactionId, cancelRequest.getCancellationReasonId(), cancelRequest.getCancellationAdditionalInformation() != null);
     var transaction = fetchTransactionOfType(transactionId, ITEM);
 
     verifyState(transaction, ITEM_HOLD, TRANSFER);
@@ -362,7 +363,8 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
 
   @Override
   public InnReachTransactionDTO cancelLocalHold(UUID transactionId, CancelTransactionHoldDTO cancelRequest) {
-    log.debug("cancelLocalHold:: parameters transactionId: {}, cancelRequest: {}", transactionId, cancelRequest);
+    log.debug("cancelLocalHold:: parameters transactionId: {}, cancellationReasonId: {}, hasAdditionalInformation: {}",
+      transactionId, cancelRequest.getCancellationReasonId(), cancelRequest.getCancellationAdditionalInformation() != null);
     var transaction = fetchTransactionOfType(transactionId, LOCAL);
 
     verifyState(transaction, LOCAL_HOLD);
@@ -380,7 +382,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
     var instance = fetchInstanceById(request.getInstanceId());
     notifier.reportOwningSiteCancel(transaction, instance.getHrid(), transaction.getHold().getPatronName());
 
-    log.info("cancelLocalHold:: result: {}", transactionMapper.toDTO(transaction));
+    log.info("cancelLocalHold:: result transactionId: {}, state: {}", transaction.getId(), transaction.getState());
     return transactionMapper.toDTO(transaction);
   }
 
@@ -470,7 +472,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
       eventPublisher.publishEvent(MoveRequestEvent.of(transaction, item));
     }
 
-    log.info("transferLocalHold:: result: {}", transactionMapper.toDTO(transaction));
+    log.info("transferLocalHold:: result transactionId: {}, state: {}", transaction.getId(), transaction.getState());
     return transactionMapper.toDTO(transaction);
   }
 
@@ -663,7 +665,8 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
   }
 
   private void updateItemTransactionOnRequestChange(RequestDTO request, InnReachTransaction transaction) {
-    log.debug("updateItemTransactionOnRequestChange:: parameters request: {}, transaction: {}", request, transaction);
+    log.debug("updateItemTransactionOnRequestChange:: parameters requestId: {}, requestStatus: {}, transactionId: {}",
+      request.getId(), request.getStatus(), transaction.getId());
     var requestId = request.getId();
     var itemId = request.getItemId();
     var hold = transaction.getHold();
@@ -690,14 +693,16 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
   }
 
   private void updateItemTransactionOnMovedRequest(RequestDTO request, InventoryItemDTO item, InnReachTransaction transaction) {
-    log.debug("updateItemTransactionOnMovedRequest:: parameters request: {}, item: {}, transaction: {}", request, item, transaction);
+    log.debug("updateItemTransactionOnMovedRequest:: parameters requestId: {}, itemId: {}, transactionId: {}",
+      request.getId(), item.getId(), transaction.getId());
     updateTransactionOnMovedRequest(request, item, transaction);
 
     notifier.reportTransferRequest(transaction, item.getHrid());
   }
 
   private void updatePatronTransactionOnRequestChange(RequestDTO requestDTO, InnReachTransaction transaction) {
-    log.debug("updatePatronTransactionOnRequestChange:: parameters requestDTO: {}, transaction: {}", requestDTO, transaction);
+    log.debug("updatePatronTransactionOnRequestChange:: parameters requestId: {}, requestStatus: {}, transactionId: {}",
+      requestDTO.getId(), requestDTO.getStatus(), transaction.getId());
     if (requestDTO.getStatus() == CLOSED_CANCELLED &&
       (transaction.getState() == PATRON_HOLD || transaction.getState() == TRANSFER)) {
       log.info("Updating patron hold transaction {} on cancellation of a request {}", transaction.getId(), requestDTO.getId());
@@ -720,7 +725,8 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
 
   private void cancelPatronHoldWithOpenRequest(CancelTransactionHoldDTO cancelRequest,
                                                InnReachTransaction transaction) {
-    log.debug("cancelPatronHoldWithOpenRequest:: parameters cancelRequest: {}, transaction: {}", cancelRequest, transaction);
+    log.debug("cancelPatronHoldWithOpenRequest:: parameters transactionId: {}, cancellationReasonId: {}, hasAdditionalInformation: {}",
+      transaction.getId(), cancelRequest.getCancellationReasonId(), cancelRequest.getCancellationAdditionalInformation() != null);
     var trackingId = transaction.getTrackingId();
     var requestId = transaction.getHold().getFolioRequestId();
     if (transaction.getState() != ITEM_SHIPPED) {
@@ -752,7 +758,8 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
 
 
   private void updateLocalTransactionOnRequestChange(RequestDTO oldRequest, RequestDTO newRequest, InnReachTransaction transaction) {
-    log.debug("updateLocalTransactionOnRequestChange:: parameters request: {}, transaction: {}", newRequest, transaction);
+    log.debug("updateLocalTransactionOnRequestChange:: parameters oldRequestId: {}, newRequestId: {}, newRequestStatus: {}, transactionId: {}",
+      oldRequest.getId(), newRequest.getId(), newRequest.getStatus(), transaction.getId());
     var hold = transaction.getHold();
     var transactionItemId = hold.getFolioItemId();
     var itemId = newRequest.getItemId();
@@ -772,7 +779,8 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
   }
 
   private void updateTransactionOnMovedRequest(RequestDTO request, InventoryItemDTO item, InnReachTransaction transaction) {
-    log.debug("updateTransactionOnMovedRequest:: parameters request: {}, item: {}, transaction: {}", request, item, transaction);
+    log.debug("updateTransactionOnMovedRequest:: parameters requestId: {}, itemId: {}, transactionId: {}",
+      request.getId(), item.getId(), transaction.getId());
     var hold = transaction.getHold();
     hold.setFolioItemId(item.getId());
     hold.setItemId(item.getHrid());

@@ -70,7 +70,8 @@ public class PatronInfoServiceImpl implements PatronInfoService {
   @Override
   public PatronInfoResponseDTO verifyPatron(String centralServerCode, String visiblePatronId,
                                             String patronAgencyCode, String patronName) {
-    log.debug("verifyPatron:: parameters centralServerCode: {}, visiblePatronId: {}, patronAgencyCode: {}, patronName: {}", centralServerCode, visiblePatronId, patronAgencyCode, patronName);
+    log.debug("verifyPatron:: parameters centralServerCode: {}, hasVisiblePatronId: {}, hasPatronAgencyCode: {}, hasPatronName: {}",
+      centralServerCode, isNotEmpty(visiblePatronId), isNotEmpty(patronAgencyCode), isNotEmpty(patronName));
     PatronInfoResponse response;
     try {
       var centralServer = centralServerService.getCentralServerByCentralCode(centralServerCode);
@@ -88,7 +89,8 @@ public class PatronInfoServiceImpl implements PatronInfoService {
       log.warn(ERROR_REASON, e);
       response = PatronInfoResponse.error(ERROR_REASON, ofMessage(centralServerCode, e.getMessage()));
     }
-    log.info("verifyPatron:: result: {}", mapper.toDto(response));
+    log.info("verifyPatron:: result status: {}, requestAllowed: {}, errorCount: {}",
+      response.getStatus(), response.getRequestAllowed(), response.getErrors() == null ? 0 : response.getErrors().size());
     return mapper.toDto(response);
   }
 
@@ -103,7 +105,8 @@ public class PatronInfoServiceImpl implements PatronInfoService {
   }
 
   private PatronInfo getPatronInfo(UUID centralServerId, List<LocalAgencyDTO> agencies, User user) {
-    log.debug("getPatronInfo:: parameters centralServerId: {}, agencies: {}, user: {}", centralServerId, agencies, user);
+    log.debug("getPatronInfo:: parameters centralServerId: {}, agenciesCount: {}",
+      centralServerId, agencies.size());
     var centralPatronType = getCentralPatronType(centralServerId, user);
     var patronId = getPatronId(user);
     var patron = getPatron(user);

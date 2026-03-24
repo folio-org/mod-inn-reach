@@ -65,7 +65,8 @@ public class InnReachTransactionServiceImpl implements InnReachTransactionServic
   @Transactional(readOnly = true)
   public InnReachTransactionsDTO getAllTransactions(Integer offset, Integer limit,
                                                     InnReachTransactionFilterParametersDTO parametersDTO) {
-    log.debug("getAllTransactions:: parameters offset: {}, limit: {}, parametersDTO: {}", offset, limit, parametersDTO);
+    log.debug("getAllTransactions:: parameters offset: {}, limit: {}, hasParameters: {}",
+      offset, limit, parametersDTO != null);
     var parameters = parametersMapper.toEntity(parametersDTO);
     var pageRequest = new OffsetRequest(offset, limit, Sort.unsorted());
     var transactions = repository.findAll(specification.filterByParameters(parameters), pageRequest);
@@ -75,7 +76,8 @@ public class InnReachTransactionServiceImpl implements InnReachTransactionServic
   @Override
   @Transactional
   public void updateInnReachTransaction(UUID transactionId, InnReachTransactionDTO transactionDTO) {
-    log.debug("updateInnReachTransaction:: parameters transactionId: {}, transactionDTO: {}", transactionId, transactionDTO);
+    log.debug("updateInnReachTransaction:: parameters transactionId: {}, transactionState: {}, transactionType: {}",
+      transactionId, transactionDTO.getState(), transactionDTO.getType());
     var oldTransaction = repository.getById(transactionId);
     var newTransaction = transactionMapper.toEntity(transactionDTO);
 
@@ -103,7 +105,8 @@ public class InnReachTransactionServiceImpl implements InnReachTransactionServic
   }
 
   private void updateTransactionHold(TransactionHold newHold, TransactionHold oldHold) {
-    log.debug("updateTransactionHold:: parameters newHold: {}, oldHold: {}", newHold, oldHold);
+    log.debug("updateTransactionHold:: parameters newHoldType: {}, oldHoldType: {}",
+      newHold.getClass().getSimpleName(), oldHold.getClass().getSimpleName());
     var oldPickupLocation = oldHold.getPickupLocation();
     var newPickupLocation = newHold.getPickupLocation();
 
