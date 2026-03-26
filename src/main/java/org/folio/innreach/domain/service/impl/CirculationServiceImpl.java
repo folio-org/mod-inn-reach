@@ -232,7 +232,8 @@ public class CirculationServiceImpl implements CirculationService {
 
   @Override
   public InnReachResponseDTO cancelPatronHold(String trackingId, String centralCode, CancelRequestDTO cancelRequest) {
-    log.debug("cancelPatronHold:: parameters trackingId: {}, centralCode: {}, cancelRequest: {}", trackingId, centralCode, cancelRequest);
+    log.debug("cancelPatronHold:: parameters trackingId: {}, centralCode: {}, hasReason: {}",
+      trackingId, centralCode, cancelRequest.getReason() != null);
 
     var transaction = getTransactionOfType(trackingId, centralCode, PATRON);
     patronInfoService.populateTransactionPatronInfo(transaction.getHold(), centralCode);
@@ -261,7 +262,7 @@ public class CirculationServiceImpl implements CirculationService {
   }
   @Override
   public InnReachResponseDTO transferPatronHoldItem(String trackingId, String centralCode, TransferRequestDTO request) {
-    log.debug("transferPatronHoldItem:: parameters trackingId: {}, centralCode: {}, request: {}", trackingId, centralCode, request);
+    log.debug("transferPatronHoldItem:: parameters trackingId: {}, centralCode: {}", trackingId, centralCode);
     var transaction = getTransactionOfType(trackingId, centralCode, PATRON);
     patronInfoService.populateTransactionPatronInfo(transaction.getHold(), centralCode);
 
@@ -277,7 +278,7 @@ public class CirculationServiceImpl implements CirculationService {
 
   @Override
   public InnReachResponseDTO cancelItemHold(String trackingId, String centralCode, BaseCircRequestDTO cancelItemDTO) {
-    log.debug("cancelItemHold:: parameters trackingId: {}, centralCode: {}, cancelItemDTO: {}", trackingId, centralCode, cancelItemDTO);
+    log.debug("cancelItemHold:: parameters trackingId: {}, centralCode: {}", trackingId, centralCode);
 
     var transaction = getTransactionOfType(trackingId, centralCode, ITEM);
     var requestId = transaction.getHold().getFolioRequestId();

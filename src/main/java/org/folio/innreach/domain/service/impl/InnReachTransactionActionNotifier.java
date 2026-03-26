@@ -55,7 +55,8 @@ public class InnReachTransactionActionNotifier {
   }
 
   public void reportOwningSiteCancel(InnReachTransaction transaction, String localBibId, String patronName) {
-    log.debug("reportOwningSiteCancel:: parameters transaction: {}, localBibId: {}, patronName: {}", transaction, localBibId, patronName);
+    log.debug("reportOwningSiteCancel:: parameters transactionId: {}, localBibId: {}",
+      transaction.getId(), localBibId);
     var payload = new HashMap<>();
     payload.put("localBibId", localBibId);
     payload.put("reasonCode", 7);
@@ -123,7 +124,8 @@ public class InnReachTransactionActionNotifier {
   }
 
   private void callD2irCircOperation(String operation, InnReachTransaction transaction, Map<Object, Object> payload) {
-    log.debug("callD2irCircOperation:: parameters operation: {}, transaction: {}, payload: {}", operation, transaction, payload);
+    log.debug("callD2irCircOperation:: parameters operation: {}, transactionId: {}, hasPayload: {}, payloadKeys: {}",
+      operation, transaction.getId(), payload != null, payload == null ? null : payload.keySet());
     var centralCode = transaction.getCentralServerCode();
     var trackingId = transaction.getTrackingId();
     var requestPath = resolveD2irCircPath(operation, trackingId, centralCode);

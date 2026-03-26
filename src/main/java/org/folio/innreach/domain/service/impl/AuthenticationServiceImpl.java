@@ -21,7 +21,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
   @Override
   public void authenticate(AuthenticationRequest authenticationRequest) {
-    log.debug("authenticate:: parameters authenticationRequest: {}", authenticationRequest);
+    log.debug("authenticate:: parameters localServerKey: {}", authenticationRequest.getKey());
     var localServerCredentials = localServerCredentialsRepository
       .findByLocalServerKey(authenticationRequest.getKey().toString())
       .orElseThrow(() -> new LocalServerCredentialsNotFoundException(
