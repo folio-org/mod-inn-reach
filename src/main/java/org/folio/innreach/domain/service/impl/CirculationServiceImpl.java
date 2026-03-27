@@ -122,7 +122,6 @@ public class CirculationServiceImpl implements CirculationService {
 
   private static final String UNEXPECTED_TRANSACTION_STATE = "Unexpected transaction state: ";
   private static final String D2IR_ITEM_RECALL_OPERATION = "recall";
-  public static final String CHECKOUT = "CHECKOUT";
 
   @Qualifier("modAsyncExecutor")
   private final ThreadPoolTaskScheduler taskExecutor;
@@ -475,8 +474,7 @@ public class CirculationServiceImpl implements CirculationService {
   public void executeDeleteVirtualRecordsWithDelay(UUID folioItemId, UUID folioHoldingId,
                                                     UUID folioInstanceId, UUID folioLoanId) {
 
-    var configDataList=
-            configurationService.fetchConfigurationsDetailsByModule(CHECKOUT);
+    var configDataList = configurationService.fetchCheckoutSettings();
 
     Long checkOutTimeDuration = getCheckoutTimeDurationInMilliseconds(configDataList.getResult());
 

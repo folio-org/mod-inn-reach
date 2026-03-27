@@ -13,6 +13,8 @@
 * [MODINREACH-532](https://folio-org.atlassian.net/browse/MODINREACH-532) - Remove log message with sensitive information
 * [MODINREACH-531](https://folio-org.atlassian.net/browse/MODINREACH-531) - 414 Request-URI Too Long when calling circulation/requests during getPagingSlipsByServicePoint call
 * [MODINREACH-559](https://folio-org.atlassian.net/browse/MODINREACH-559) - Use GitHub Workflows for Maven
+* [MODINREACH-561](https://folio-org.atlassian.net/browse/MODINREACH-561) - Use circulation/settings instead of mod-configuration for CHECKOUT other_settings
+
 
 ## v3.4.1 2025-04-15
 

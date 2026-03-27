@@ -57,8 +57,8 @@ import org.folio.innreach.controller.base.BaseControllerTest;
 import org.folio.innreach.domain.dto.OwningSiteCancelsRequestDTO;
 import org.folio.innreach.domain.dto.folio.ResultList;
 import org.folio.innreach.domain.dto.folio.User;
+import org.folio.innreach.domain.dto.folio.circulation.CirculationSettingDTO;
 import org.folio.innreach.domain.dto.folio.circulation.RequestDTO;
-import org.folio.innreach.domain.dto.folio.configuration.ConfigurationDTO;
 import org.folio.innreach.domain.dto.folio.inventory.InventoryInstanceDTO;
 import org.folio.innreach.domain.dto.folio.inventory.InventoryItemStatus;
 import org.folio.innreach.domain.dto.folio.requestpreference.RequestPreferenceDTO;
@@ -1186,8 +1186,8 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     var transactionHoldDTO = createTransactionHoldDTO();
     var transactionBefore = fetchPrePopulatedTransaction();
     var configurationDto =
-            deserializeFromJsonFile("/configuration/configuration-details-example.json", ConfigurationDTO.class);
-    when(configurationService.fetchConfigurationsDetailsByModule(any())).
+            deserializeFromJsonFile("/configuration/configuration-details-example.json", CirculationSettingDTO.class);
+    when(configurationService.fetchCheckoutSettings()).
             thenReturn(ResultList.asSinglePage(configurationDto));
 
     transactionBefore.setState(state);
@@ -1318,8 +1318,8 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     var transactionHoldDTO = createTransactionHoldDTO();
     var transactionBefore = fetchPrePopulatedTransaction();
     var configurationDto =
-            deserializeFromJsonFile("/configuration/configuration-details-example.json", ConfigurationDTO.class);
-    when(configurationService.fetchConfigurationsDetailsByModule(any())).
+            deserializeFromJsonFile("/configuration/configuration-details-example.json", CirculationSettingDTO.class);
+    when(configurationService.fetchCheckoutSettings()).
             thenReturn(ResultList.asSinglePage(configurationDto));
 
     transactionBefore.setState(state);
