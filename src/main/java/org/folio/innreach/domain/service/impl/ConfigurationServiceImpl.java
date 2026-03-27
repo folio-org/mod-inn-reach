@@ -8,6 +8,8 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.folio.innreach.client.CirculationClient;
 import org.folio.innreach.client.ConfigurationClient;
 import org.folio.innreach.domain.dto.folio.ResultList;
@@ -30,14 +32,14 @@ public class ConfigurationServiceImpl implements ConfigurationService {
   public ResultList<CirculationSettingDTO> fetchCheckoutSettings() {
     log.debug("fetchCheckoutSettings:: trying circulation/settings first");
     var result = circulationClient.getCheckoutSettings();
-    if (result != null && !result.getResult().isEmpty()) {
+    if (result != null && CollectionUtils.isNotEmpty(result.getResult())) {
       log.debug("fetchCheckoutSettings:: found settings in circulation/settings");
       return result;
     }
 
     log.info("fetchCheckoutSettings:: circulation/settings empty, falling back to configuration/entries");
     var legacyResult = configurationClient.queryRequestByModule(CHECKOUT_MODULE);
-    if (legacyResult == null || legacyResult.getResult().isEmpty()) {
+    if (legacyResult == null || CollectionUtils.isEmpty(legacyResult.getResult())) {
       log.info("fetchCheckoutSettings:: no settings found in either source, using defaults");
       return ResultList.empty();
     }
@@ -50,7 +52,7 @@ public class ConfigurationServiceImpl implements ConfigurationService {
   }
 
   private Map<String, Object> parseValue(String jsonValue) {
-    if (jsonValue == null || jsonValue.isBlank()) {
+    if (StringUtils.isBlank(jsonValue)) {
       return Collections.emptyMap();
     }
     try {
