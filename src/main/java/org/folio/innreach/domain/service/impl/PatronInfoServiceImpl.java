@@ -11,11 +11,13 @@ import static org.folio.innreach.external.dto.InnReachResponse.Error.ofMessage;
 
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -147,7 +149,7 @@ public class PatronInfoServiceImpl implements PatronInfoService {
     var fields = fieldConfig.getFields();
     var checkCustomFields = fields.remove(USER_CUSTOM_FIELDS);
     var fieldsString = fields.stream().map(VisiblePatronFieldConfiguration.VisiblePatronField::getValue)
-      .toList();
+      .collect(Collectors.toCollection(ArrayList::new));
     if (checkCustomFields) {
       fieldsString.addAll(
         fieldConfig.getUserCustomFields().stream().map(field -> "customFields." + field).toList());
