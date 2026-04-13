@@ -123,19 +123,21 @@ class ItemContributorTest {
     when(recordTransformationService.getBibItems(any(), any(), any())).thenReturn(List.of(new BibItem(),new BibItem()));
     when(response.getErrors()).thenReturn(of(errorResp1));
     when(response.isOk()).thenReturn(true);
+    var item = createItem();
+    var centralServerId = JOB_CONTEXT.getCentralServerId();
 
-    service.contributeItems(JOB_CONTEXT.getCentralServerId(), "test", of(createItem()));
-    verify(irContributionService).contributeBibItems(eq(JOB_CONTEXT.getCentralServerId()), any(), any());
+    service.contributeItems(centralServerId, "test", of(createItem()));
+    verify(irContributionService).contributeBibItems(eq(centralServerId), any(), any());
 
     when(response.getErrors()).thenReturn(of(errorResp2));
-    assertThatThrownBy(() -> service.contributeItems(JOB_CONTEXT.getCentralServerId(), "test", of(createItem())))
+    assertThatThrownBy(() -> service.contributeItems(centralServerId, "test", of(item)))
       .isInstanceOf(InnReachRetryException.class)
       .hasMessageContaining("Contributing items for bib test has failed")
       .cause().isInstanceOf(ServiceSuspendedException.class)
       .hasMessageContaining("is currently suspended");
 
     when(response.getErrors()).thenReturn(of(errorResp3));
-    assertThatThrownBy(() -> service.contributeItems(JOB_CONTEXT.getCentralServerId(), "test", of(createItem())))
+    assertThatThrownBy(() -> service.contributeItems(centralServerId, "test", of(item)))
       .isInstanceOf(InnReachRetryException.class)
       .hasMessageContaining("Contributing items for bib test has failed")
       .cause().isInstanceOf(InnReachConnectionException.class)
@@ -144,7 +146,7 @@ class ItemContributorTest {
 
     when(recordTransformationService.getBibItems(any(), any(), any())).thenReturn(List.of());
     assertThrows(IllegalArgumentException.class,
-      () -> service.contributeItems(JOB_CONTEXT.getCentralServerId(), "test", of(createItem())),
+      () -> service.contributeItems(centralServerId, "test", of(item)),
        "Failed to convert items for contribution");
   }
 

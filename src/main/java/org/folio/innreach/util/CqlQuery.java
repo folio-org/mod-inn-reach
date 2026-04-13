@@ -3,18 +3,12 @@ package org.folio.innreach.util;
 import static java.util.stream.Collectors.joining;
 import static org.folio.util.StringUtil.cqlEncode;
 
+import java.util.List;
 import lombok.AccessLevel;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
-import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.collections4.ListUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.folio.util.StringUtil;
-
-import java.util.Collection;
-import java.util.List;
-import java.util.Objects;
-import java.util.function.Function;
 
 @Data
 @RequiredArgsConstructor(access = AccessLevel.PRIVATE, staticName = "of")
@@ -140,23 +134,5 @@ public class CqlQuery {
 
   private static CqlQuery exactMatchQuery(String param, String value) {
     return new CqlQuery("%s==%s".formatted(param, cqlEncode(value)));
-  }
-
-  private static <T> CqlQuery exactMatchAnyQuery(String param,
-    Collection<T> values, Function<T, String> stringValueMapper) {
-
-    var stringValues = CollectionUtils.emptyIfNull(values).stream()
-      .filter(Objects::nonNull)
-      .map(stringValueMapper)
-      .toList();
-    return exactMatchAnyQuery(param, stringValues);
-  }
-
-  private static CqlQuery exactMatchAnyQuery(String param, List<String> values) {
-    var stringValues = ListUtils.emptyIfNull(values).stream()
-      .filter(StringUtils::isNotBlank)
-      .map(StringUtil::cqlEncode)
-      .collect(joining(" or "));
-    return new CqlQuery("%s==(%s)".formatted(param, stringValues));
   }
 }

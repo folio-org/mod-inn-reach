@@ -58,13 +58,15 @@ class UriHelperTest {
 
   @Test
   void buildUri_withNullPath_throwsNullPointerException() {
-    assertThrows(NullPointerException.class, () -> UriHelper.buildUri(URI.create("https://example.com/base"), null));
+    var uri = URI.create("https://example.com/base");
+    assertThrows(NullPointerException.class, () -> UriHelper.buildUri(uri, null));
   }
 
   @Test
   void buildUri_withMissingTemplateVariable_throwsIllegalArgumentException() {
+    var uri = URI.create("https://example.com/base");
     assertThrows(IllegalArgumentException.class,
-      () -> UriHelper.buildUri(URI.create("https://example.com/base"), "items/{id}/{holdingId}", 1));
+      () -> UriHelper.buildUri(uri, "items/{id}/{holdingId}", 1));
   }
 }
 

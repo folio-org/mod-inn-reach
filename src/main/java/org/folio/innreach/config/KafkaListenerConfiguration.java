@@ -55,7 +55,7 @@ public class KafkaListenerConfiguration {
   public ConsumerFactory<String, DomainEvent> kafkaDomainEventConsumerFactory() {
     var consumerProperties = kafkaProperties.buildConsumerProperties();
 
-    var deserializer = new JacksonJsonDeserializer<>(mapper);
+    JacksonJsonDeserializer<DomainEvent> deserializer = new JacksonJsonDeserializer<>(mapper);
     deserializer.setTypeResolver(typeResolver);
     deserializer.setUseTypeHeaders(false);
     deserializer.addTrustedPackages("*");
@@ -67,7 +67,7 @@ public class KafkaListenerConfiguration {
         return null;
       });
 
-    return new DefaultKafkaConsumerFactory(consumerProperties, new StringDeserializer(), errorDeserializer);
+    return new DefaultKafkaConsumerFactory<>(consumerProperties, new StringDeserializer(), errorDeserializer);
   }
 
   @Bean(KAFKA_CONTAINER_FACTORY)
@@ -75,7 +75,6 @@ public class KafkaListenerConfiguration {
     var factory = new ConcurrentKafkaListenerContainerFactory<String, DomainEvent>();
     factory.setBatchListener(true);
     factory.setConsumerFactory(kafkaDomainEventConsumerFactory());
- //   factory.setBatchErrorHandler(((exception, data) -> log.error("Unable to consume event {}", data, exception)));
     factory.setCommonErrorHandler(errorHandler());
     return factory;
   }
