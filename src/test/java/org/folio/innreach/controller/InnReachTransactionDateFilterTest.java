@@ -30,7 +30,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.boot.resttestclient.TestRestTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlMergeMode;
@@ -271,7 +271,7 @@ class InnReachTransactionDateFilterTest extends BaseControllerTest {
   private static String constructUri(String dateParam, List<OffsetDateTime> dates, FilterDateOperation operation) {
     StringBuilder uri = new StringBuilder("/inn-reach/transactions?");
 
-    uri.append(String.join("&", 
+    uri.append(String.join("&",
         mapItems(dates, dt -> dateParam + "=" + URLEncoder.encode(dt.format(ISO_OFFSET_DATE_TIME), StandardCharsets.UTF_8))
     ));
 
@@ -279,7 +279,7 @@ class InnReachTransactionDateFilterTest extends BaseControllerTest {
       uri.append('&').append(dateParam).append("Op").append("=").append(operation.getValue());
     }
 
-    return uri.toString(); 
+    return uri.toString();
   }
 
 }

@@ -11,7 +11,6 @@ import java.util.List;
 import java.util.UUID;
 import java.util.function.Consumer;
 
-import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.folio.innreach.batch.contribution.service.OngoingContributionStatusService;
@@ -38,6 +37,8 @@ import org.folio.innreach.dto.Item;
 import org.folio.innreach.dto.StorageLoanDTO;
 import org.folio.innreach.repository.CentralServerRepository;
 import org.folio.spring.data.OffsetRequest;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpServerErrorException;
 
 @Log4j2
 @RequiredArgsConstructor
@@ -256,7 +257,7 @@ public class ContributionActionServiceImpl implements ContributionActionService 
           log.warn("Central server {} contribution configuration is not valid", csId);
         }
       }
-      catch (ServiceSuspendedException | FeignException | InnReachConnectionException | SocketTimeOutExceptionWrapper e) {
+      catch (ServiceSuspendedException | HttpServerErrorException | HttpClientErrorException | InnReachConnectionException | SocketTimeOutExceptionWrapper e) {
         log.info("exception thrown from handlePerCentralServer", e);
         throw e;
       }

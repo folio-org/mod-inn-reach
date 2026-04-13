@@ -6,7 +6,10 @@ import static com.github.tomakehurst.wiremock.client.WireMock.noContent;
 import static com.github.tomakehurst.wiremock.client.WireMock.ok;
 import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
+import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
+import static org.awaitility.Durations.ONE_HUNDRED_MILLISECONDS;
+import static org.awaitility.Durations.ONE_MINUTE;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -24,19 +27,22 @@ import com.github.tomakehurst.wiremock.client.MappingBuilder;
 import com.github.tomakehurst.wiremock.client.ResponseDefinitionBuilder;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.common.Slf4jNotifier;
+import com.github.tomakehurst.wiremock.matching.UrlPattern;
 import io.github.glytching.junit.extension.watcher.WatcherExtension;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.awaitility.Awaitility;
+import org.awaitility.core.ThrowingRunnable;
 import org.folio.innreach.domain.listener.KafkaInitialContributionEventListener;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -82,7 +88,7 @@ public class BaseApiControllerTest {
 
   @DynamicPropertySource
   static void registerOkapiURL(DynamicPropertyRegistry registry) {
-    registry.add("okapi_url", () -> wm.baseUrl());
+    registry.add("folio.okapi-url", () -> wm.baseUrl());
     log.info("OKAPI Url: {}", wm.baseUrl());
   }
 
@@ -129,6 +135,13 @@ public class BaseApiControllerTest {
     stubGet(url, Collections.emptyMap(), responsePath);
   }
 
+  protected static void stubGet(String path, String responsePath, Map<String, String> queryParamAndValues) {
+    stubGet(urlPathEqualTo(path), responsePath, ResponseActions.none(), mappingBuilder -> {
+      queryParamAndValues.forEach((param, value) -> mappingBuilder.withQueryParam(param, equalTo(value)));
+      return mappingBuilder;
+    });
+  }
+
   protected static void stubGet(String url, Map<String, String> requestHeaders, String responsePath) {
     stubGet(url, requestHeaders, responsePath, ResponseActions.none());
   }
@@ -148,6 +161,12 @@ public class BaseApiControllerTest {
   protected static void stubGet(String url, String responsePath,
                                 ResponseActions additionalResponseActions,
                                 MappingActions additionalMapping) {
+    stubGet(urlEqualTo(url), responsePath, additionalResponseActions, additionalMapping);
+  }
+
+  protected static void stubGet(UrlPattern pattern, String responsePath,
+                                ResponseActions additionalResponseActions,
+                                MappingActions additionalMapping) {
 
     ResponseDefinitionBuilder responseBuilder = ok()
       .withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
@@ -155,8 +174,7 @@ public class BaseApiControllerTest {
       .withBodyFile(responsePath);
 
     responseBuilder = additionalResponseActions.apply(responseBuilder);
-
-    MappingBuilder mappingBuilder = WireMock.get(urlEqualTo(url)).willReturn(responseBuilder);
+    MappingBuilder mappingBuilder = WireMock.get(pattern).willReturn(responseBuilder);
     mappingBuilder = additionalMapping.apply(mappingBuilder);
 
     stubFor(mappingBuilder);
@@ -226,6 +244,13 @@ public class BaseApiControllerTest {
     HttpHeaders headers = circHeaders();
     headers.add(XOkapiHeaders.URL, wm.baseUrl());
     return headers;
+  }
+
+  public static void awaitAssertion(ThrowingRunnable runnable) {
+    Awaitility.await()
+      .atMost(ONE_MINUTE)
+      .pollInterval(ONE_HUNDRED_MILLISECONDS)
+      .untilAsserted(runnable);
   }
 
   @RequiredArgsConstructor(staticName = "of")

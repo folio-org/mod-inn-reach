@@ -3,16 +3,15 @@ package org.folio.innreach.client;
 import java.util.Optional;
 import java.util.UUID;
 
-import org.springframework.cloud.openfeign.FeignClient;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.service.annotation.DeleteExchange;
+import org.springframework.web.service.annotation.GetExchange;
+import org.springframework.web.service.annotation.HttpExchange;
+import org.springframework.web.service.annotation.PostExchange;
+import org.springframework.web.service.annotation.PutExchange;
 
-import org.folio.innreach.client.config.FolioFeignClientConfig;
 import org.folio.innreach.domain.dto.folio.ResultList;
 import org.folio.innreach.domain.dto.folio.circulation.CirculationSettingDTO;
 import org.folio.innreach.domain.dto.folio.circulation.MoveRequestDTO;
@@ -24,67 +23,67 @@ import org.folio.innreach.dto.CheckOutRequestDTO;
 import org.folio.innreach.dto.ClaimItemReturnedRequestDTO;
 import org.folio.innreach.dto.LoanDTO;
 
-@FeignClient(name = "circulation", configuration = FolioFeignClientConfig.class, dismiss404 = true)
+@HttpExchange("circulation")
 public interface CirculationClient {
 
-  @GetMapping("/settings?query=(name==other_settings)")
+  @GetExchange("/settings?query=(name==other_settings)")
   ResultList<CirculationSettingDTO> getCheckoutSettings();
 
-  @GetMapping("/requests?query=(itemId=={itemId})")
+  @GetExchange("/requests?query=(itemId=={itemId})")
   ResultList<RequestDTO> queryRequestsByItemId(@PathVariable("itemId") UUID itemId);
 
-  @GetMapping("/requests?query=(itemId=={itemId}) and " +
+  @GetExchange("/requests?query=(itemId=={itemId}) and " +
           "status==(\"Open - Awaiting pickup\" or \"Open - Not yet filled\" or \"Open - In transit\" or \"Open - Awaiting delivery\") " +
           "sortby requestDate desc")
   ResultList<RequestDTO> queryRequestsByItemIdAndStatus(@PathVariable("itemId") UUID itemId,@RequestParam("limit") int limit);
 
 
-  @GetMapping("/requests?query=id=({requestIds}) and status==\"Open - Not yet filled\"")
+  @GetExchange("/requests?query=id=({requestIds}) and status==\"Open - Not yet filled\"")
   ResultList<RequestDTO> queryNotFilledRequestsByIds(@PathVariable("requestIds") String requestIds, @RequestParam("limit") int limit);
 
-  @GetMapping("/requests/{requestId}")
+  @GetExchange("/requests/{requestId}")
   Optional<RequestDTO> findRequest(@PathVariable("requestId") UUID requestId);
 
-  @DeleteMapping("/requests/{requestId}")
+  @DeleteExchange("/requests/{requestId}")
   void deleteRequest(@PathVariable("requestId") UUID requestId);
 
-  @PostMapping("/requests")
+  @PostExchange("/requests")
   RequestDTO sendRequest(@RequestBody RequestDTO requestDTO);
 
-  @PutMapping("/requests/{requestId}")
+  @PutExchange("/requests/{requestId}")
   void updateRequest(@PathVariable("requestId") UUID requestId, @RequestBody RequestDTO request);
 
-  @PostMapping("/requests/{requestId}/move")
+  @PostExchange("/requests/{requestId}/move")
   RequestDTO moveRequest(@PathVariable("requestId") UUID requestId, @RequestBody MoveRequestDTO payload);
 
-  @PostMapping("/check-in-by-barcode")
+  @PostExchange("/check-in-by-barcode")
   CheckInResponseDTO checkInByBarcode(CheckInRequestDTO checkIn);
 
-  @PostMapping("/check-out-by-barcode")
+  @PostExchange("/check-out-by-barcode")
   LoanDTO checkOutByBarcode(CheckOutRequestDTO checkOut);
 
-  @GetMapping("/loans?query=(itemId=={itemId})")
+  @GetExchange("/loans?query=(itemId=={itemId})")
   ResultList<LoanDTO> queryLoansByItemId(@PathVariable("itemId") UUID itemId);
 
-  @GetMapping("/loans?query=(itemId=={itemId}) and status=({status})")
+  @GetExchange("/loans?query=(itemId=={itemId}) and status=({status})")
   ResultList<LoanDTO> queryLoansByItemIdAndStatus(@PathVariable("itemId") UUID itemId, @PathVariable("status") String status);
 
-  @GetMapping("/loans/{loanId}")
+  @GetExchange("/loans/{loanId}")
   Optional<LoanDTO> findLoan(@PathVariable("loanId") UUID loanId);
 
-  @DeleteMapping("/loans/{loanId}")
+  @DeleteExchange("/loans/{loanId}")
   Optional<LoanDTO> deleteLoan(@PathVariable("loanId") UUID loanId);
 
-  @PostMapping("/loans")
+  @PostExchange("/loans")
   LoanDTO createLoan(@RequestBody LoanDTO loan);
 
-  @PutMapping("/loans/{loanId}")
+  @PutExchange("/loans/{loanId}")
   void updateLoan(@PathVariable("loanId") UUID loanId, @RequestBody LoanDTO loan);
 
-  @PostMapping("/renew-by-id")
+  @PostExchange("/renew-by-id")
   LoanDTO renewLoan(@RequestBody RenewByIdDTO renewLoan);
 
-  @PostMapping("/loans/{loanId}/claim-item-returned")
+  @PostExchange("/loans/{loanId}/claim-item-returned")
   void claimItemReturned(@PathVariable("loanId") UUID loanId, @RequestBody ClaimItemReturnedRequestDTO payload);
 
 }

@@ -1,7 +1,7 @@
 package org.folio.innreach.mapper;
 
 import static java.util.Collections.emptyList;
-import static org.apache.commons.lang3.ObjectUtils.defaultIfNull;
+import static org.apache.commons.lang3.ObjectUtils.getIfNull;
 
 import java.util.List;
 
@@ -29,13 +29,13 @@ public interface LibraryMappingMapper {
   List<LibraryMappingDTO> toDTOs(Iterable<LibraryMapping> entities);
 
   default LibraryMappingsDTO toDTOCollection(Page<LibraryMapping> pageable) {
-    List<LibraryMappingDTO> dtos = defaultIfNull(toDTOs(pageable), emptyList());
+    List<LibraryMappingDTO> dtos = getIfNull(toDTOs(pageable), emptyList());
 
     return new LibraryMappingsDTO().libraryMappings(dtos).totalRecords((int) pageable.getTotalElements());
   }
 
   default LibraryMappingsDTO toDTOCollection(Iterable<LibraryMapping> entities) {
-    List<LibraryMappingDTO> dtos = defaultIfNull(toDTOs(entities), emptyList());
+    List<LibraryMappingDTO> dtos = getIfNull(toDTOs(entities), emptyList());
 
     return new LibraryMappingsDTO().libraryMappings(dtos).totalRecords(dtos.size());
   }

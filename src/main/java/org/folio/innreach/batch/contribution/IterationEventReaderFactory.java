@@ -8,7 +8,8 @@ import java.util.Properties;
 import java.util.UUID;
 import java.util.function.Consumer;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.boot.kafka.autoconfigure.KafkaProperties;
+import org.springframework.kafka.support.serializer.JacksonJsonDeserializer;
 import lombok.RequiredArgsConstructor;
 
 import lombok.extern.log4j.Log4j2;
@@ -22,13 +23,12 @@ import org.folio.spring.config.properties.FolioEnvironment;
 import org.folio.spring.tools.kafka.KafkaUtils;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.kafka.KafkaProperties;
-import org.springframework.kafka.support.serializer.JsonDeserializer;
 import org.springframework.stereotype.Component;
 
 import org.folio.innreach.batch.KafkaItemReader;
 import org.folio.innreach.config.props.ContributionJobProperties;
 import org.folio.innreach.domain.dto.folio.inventorystorage.InstanceIterationEvent;
+import tools.jackson.databind.json.JsonMapper;
 
 @Component
 @RequiredArgsConstructor
@@ -48,7 +48,7 @@ public class IterationEventReaderFactory {
   private final KafkaProperties kafkaProperties;
   private final FolioEnvironment folioEnv;
   private final ContributionJobProperties jobProperties;
-  private final ObjectMapper mapper;
+  private final JsonMapper mapper;
 
   @Value(value = "${kafka.custom-offset}")
   private String DEFAULT_OFFSET;
@@ -63,7 +63,7 @@ public class IterationEventReaderFactory {
 
   public KafkaItemReader<String, InstanceIterationEvent> createReader(String tenantId) {
     Properties props = new Properties();
-    props.putAll(kafkaProperties.buildConsumerProperties(null));
+    props.putAll(kafkaProperties.buildConsumerProperties());
     props.put(GROUP_ID_CONFIG, jobProperties.getReaderGroupId());
 
     var topic = getTopicName(tenantId);
@@ -76,7 +76,7 @@ public class IterationEventReaderFactory {
   }
 
   private Deserializer<InstanceIterationEvent> valueDeserializer() {
-    JsonDeserializer<InstanceIterationEvent> deserializer = new JsonDeserializer<>(InstanceIterationEvent.class, mapper);
+    JacksonJsonDeserializer<InstanceIterationEvent> deserializer = new JacksonJsonDeserializer<>(InstanceIterationEvent.class, mapper);
     deserializer.setUseTypeHeaders(false);
     deserializer.addTrustedPackages("*");
 
@@ -93,7 +93,7 @@ public class IterationEventReaderFactory {
 
   public InitialContributionJobConsumerContainer createInitialContributionConsumerContainer(String tenantId, ContributionJobRunner contributionJobRunner) {
     log.info("Default offset: {}", DEFAULT_OFFSET);
-    var consumerProperties = kafkaProperties.buildConsumerProperties(null);
+    var consumerProperties = kafkaProperties.buildConsumerProperties();
     consumerProperties.put(GROUP_ID_CONFIG, jobProperties.getReaderGroupId());
     consumerProperties.put(AUTO_OFFSET_RESET_CONFIG, DEFAULT_OFFSET);
 

@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import org.folio.spring.FolioExecutionContext;
 import org.folio.spring.context.ExecutionContextBuilder;
+import org.folio.spring.scope.FolioExecutionContextService;
 import org.folio.spring.scope.FolioExecutionContextSetter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -17,6 +18,7 @@ public class TenantScopedExecutionService {
 
   private final ExecutionContextBuilder contextBuilder;
   private SystemUserService systemUserService;
+  FolioExecutionContextService executionContextService;
 
   @Autowired(required = false)
   public void setSystemUserService(SystemUserService systemUserService) {

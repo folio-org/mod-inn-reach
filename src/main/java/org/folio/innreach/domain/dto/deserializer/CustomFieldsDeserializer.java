@@ -1,29 +1,25 @@
 package org.folio.innreach.domain.dto.deserializer;
 
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.databind.JsonDeserializer;
-import com.fasterxml.jackson.databind.JsonNode;
+import tools.jackson.core.JsonParser;
+import tools.jackson.databind.DeserializationContext;
+import tools.jackson.databind.ValueDeserializer;
+import tools.jackson.databind.JsonNode;
 
-import java.io.IOException;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 
-public class CustomFieldsDeserializer extends JsonDeserializer<Map<String, String>> {
+public class CustomFieldsDeserializer extends ValueDeserializer<Map<String, String>> {
   @Override
-  public Map<String, String> deserialize(JsonParser parser, DeserializationContext context) throws IOException {
+  public Map<String, String> deserialize(JsonParser parser, DeserializationContext context) {
     Map<String, String> customFields = new HashMap<>();
-    JsonNode node = parser.getCodec().readTree(parser);
+    JsonNode node = parser.readValueAsTree();
 
-    Iterator<Map.Entry<String, JsonNode>> fields = node.fields();
-    while (fields.hasNext()) {
-      Map.Entry<String, JsonNode> field = fields.next();
+    for (Map.Entry<String, JsonNode> field : node.properties()) {
       String key = field.getKey();
       JsonNode valueNode = field.getValue();
 
-      if (valueNode.isTextual()) {
-        customFields.put(key, valueNode.asText());
+      if (valueNode.isString()) {
+        customFields.put(key, valueNode.asString());
       }
     }
     return customFields;

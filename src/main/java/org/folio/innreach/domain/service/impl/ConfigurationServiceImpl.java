@@ -3,9 +3,9 @@ package org.folio.innreach.domain.service.impl;
 import java.util.Collections;
 import java.util.Map;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.type.TypeReference;
+import tools.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.collections4.CollectionUtils;
@@ -57,7 +57,7 @@ public class ConfigurationServiceImpl implements ConfigurationService {
     }
     try {
       return objectMapper.readValue(jsonValue, new TypeReference<>() {});
-    } catch (JsonProcessingException e) {
+    } catch (JacksonException e) {
       log.warn("fetchCheckoutSettings:: failed to parse configuration value, using empty map. Value: [{}], Error: {}",
         jsonValue, e.getMessage());
       return Collections.emptyMap();

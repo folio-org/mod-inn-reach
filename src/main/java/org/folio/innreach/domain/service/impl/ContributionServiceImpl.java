@@ -1,7 +1,6 @@
 package org.folio.innreach.domain.service.impl;
 
-import static org.apache.commons.lang3.ObjectUtils.defaultIfNull;
-
+import static org.apache.commons.lang3.ObjectUtils.getIfNull;
 import static org.folio.innreach.domain.dto.folio.inventorystorage.JobResponse.JobStatus.IN_PROGRESS;
 import static org.folio.innreach.domain.entity.Contribution.Status.CANCELLED;
 import static org.folio.innreach.domain.entity.Contribution.Status.COMPLETE;
@@ -15,11 +14,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.folio.innreach.batch.contribution.InitialContributionJobConsumerContainer;
 import org.folio.innreach.config.props.ContributionJobProperties;
-import org.folio.innreach.external.exception.InnReachException;
 import org.folio.spring.config.properties.FolioEnvironment;
 import org.springframework.beans.factory.BeanFactory;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.retry.support.RetryTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
@@ -56,8 +52,6 @@ public class ContributionServiceImpl implements ContributionService {
   private final FolioEnvironment folioEnv;
   private final ContributionJobProperties jobProperties;
   private ContributionJobRunner jobRunner;
-  @Qualifier("contributionRetryTemplate")
-  private final RetryTemplate retryTemplate;
 
   @Override
   public ContributionDTO getCurrent(UUID centralServerId) {
@@ -104,11 +98,11 @@ public class ContributionServiceImpl implements ContributionService {
     log.debug("updateContributionStats:: parameters contributionId: {}, contribution: {}", contributionId, contribution);
     var entity = fetchById(contributionId);
 
-    Long total = defaultIfNull(contribution.getRecordsTotal(), entity.getRecordsTotal());
-    Long processed = defaultIfNull(contribution.getRecordsProcessed(), entity.getRecordsProcessed());
-    Long contributed = defaultIfNull(contribution.getRecordsContributed(), entity.getRecordsContributed());
-    Long updated = defaultIfNull(contribution.getRecordsUpdated(), entity.getRecordsUpdated());
-    Long decontributed = defaultIfNull(contribution.getRecordsDecontributed(), entity.getRecordsDecontributed());
+    Long total = getIfNull(contribution.getRecordsTotal(), entity.getRecordsTotal());
+    Long processed = getIfNull(contribution.getRecordsProcessed(), entity.getRecordsProcessed());
+    Long contributed = getIfNull(contribution.getRecordsContributed(), entity.getRecordsContributed());
+    Long updated = getIfNull(contribution.getRecordsUpdated(), entity.getRecordsUpdated());
+    Long decontributed = getIfNull(contribution.getRecordsDecontributed(), entity.getRecordsDecontributed());
 
     entity.setRecordsTotal(total);
     entity.setRecordsProcessed(processed);

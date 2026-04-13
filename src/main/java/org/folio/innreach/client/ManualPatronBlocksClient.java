@@ -6,17 +6,16 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.springframework.cloud.openfeign.FeignClient;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.service.annotation.GetExchange;
+import org.springframework.web.service.annotation.HttpExchange;
 
-import org.folio.innreach.client.config.FolioFeignClientConfig;
 import org.folio.innreach.domain.dto.folio.ResultList;
 
-@FeignClient(name = "manualblocks", configuration = FolioFeignClientConfig.class)
+@HttpExchange("manualblocks")
 public interface ManualPatronBlocksClient {
 
-  @GetMapping("?query=(userId=={userId})")
+  @GetExchange("?query=(userId=={userId})")
   ResultList<ManualPatronBlock> getPatronBlocks(@PathVariable("userId") UUID userId);
 
   @Data

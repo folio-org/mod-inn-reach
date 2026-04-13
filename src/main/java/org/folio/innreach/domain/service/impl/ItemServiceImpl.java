@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import org.folio.innreach.client.InventoryClient;
 import org.folio.innreach.domain.dto.folio.inventory.InventoryItemDTO;
 import org.folio.innreach.domain.service.ItemService;
+
 @Log4j2
 @Service
 @RequiredArgsConstructor

@@ -4,16 +4,16 @@ import static java.util.UUID.fromString;
 import static java.util.UUID.randomUUID;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertThrows;
-import static org.junit.Assert.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import static org.folio.innreach.fixture.AgencyLocationMappingFixture.createLocalServerMapping;
 import static org.folio.innreach.fixture.AgencyLocationMappingFixture.createMapping;
 import static org.folio.innreach.fixture.AgencyLocationMappingFixture.findLocalServerMappingByCode;
 import static org.folio.innreach.util.ListUtils.mapItems;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 import java.util.Optional;

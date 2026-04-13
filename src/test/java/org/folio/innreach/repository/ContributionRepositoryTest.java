@@ -3,12 +3,12 @@ package org.folio.innreach.repository;
 import static java.util.UUID.randomUUID;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
-import static org.junit.Assert.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import static org.folio.innreach.domain.entity.Contribution.Status.COMPLETE;
 import static org.folio.innreach.fixture.ContributionFixture.createContribution;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.util.Arrays;
 import java.util.UUID;

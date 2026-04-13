@@ -16,7 +16,7 @@ import org.folio.innreach.domain.service.RecordContributionService;
 import org.folio.innreach.domain.service.impl.TenantScopedExecutionService;
 import org.folio.innreach.external.exception.InnReachConnectionException;
 import org.folio.innreach.external.exception.InnReachGatewayException;
-import org.folio.innreach.external.exception.RetryException;
+import org.folio.innreach.external.exception.InnReachRetryException;
 import org.folio.innreach.external.exception.ServiceSuspendedException;
 import org.folio.innreach.external.exception.SocketTimeOutExceptionWrapper;
 import org.folio.innreach.repository.ContributionRepository;
@@ -91,7 +91,7 @@ public class InitialContributionEventProcessor {
   private void checkRetryLimit(JobExecutionStatus job) {
     if (maxRetryAttempts != 0 && job.getRetryAttempts() > maxRetryAttempts) {
       log.warn("checkRetryLimit:: Retry limit exhausted for instanceId {} ", job.getInstanceId());
-      throw new RetryException("Retry limit exhausted");
+      throw new InnReachRetryException("Retry limit exhausted");
     }
   }
 

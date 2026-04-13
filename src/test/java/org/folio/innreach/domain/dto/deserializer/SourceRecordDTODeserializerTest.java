@@ -2,7 +2,7 @@ package org.folio.innreach.domain.dto.deserializer;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,8 +20,8 @@ class SourceRecordDTODeserializerTest {
   @Test
   @SneakyThrows
   public void shouldDeserializeSourceRecordDTO() {
-    var resource = this.getClass().getResource("/json/source-record-storage/source-record-storage-example.json");
-    var sourceRecordDTO = objectMapper.readValue(resource, SourceRecordDTO.class);
+    var resourceStream = this.getClass().getResourceAsStream("/json/source-record-storage/source-record-storage-example.json");
+    var sourceRecordDTO = objectMapper.readValue(resourceStream, SourceRecordDTO.class);
 
     assertNotNull(sourceRecordDTO);
   }
@@ -29,7 +29,7 @@ class SourceRecordDTODeserializerTest {
   @Test
   @SneakyThrows
   public void shouldDeserializeInstance() {
-    var resource = this.getClass().getResource("/json/inventory-storage/american-bar-association.json");
+    var resource = this.getClass().getResourceAsStream("/json/inventory-storage/american-bar-association.json");
     var inventoryInstanceDTO = objectMapper.readValue(resource, Instance.class);
 
     assertNotNull(inventoryInstanceDTO);

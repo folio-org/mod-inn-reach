@@ -1,6 +1,6 @@
 package org.folio.innreach.batch.contribution.listener;
 
-import static org.apache.commons.lang3.ObjectUtils.defaultIfNull;
+import static org.apache.commons.lang3.ObjectUtils.getIfNull;
 
 import static org.folio.innreach.batch.contribution.ContributionJobContextManager.getContributionJobContext;
 
@@ -11,7 +11,6 @@ import lombok.extern.log4j.Log4j2;
 
 import org.folio.innreach.domain.service.ContributionService;
 import org.folio.innreach.dto.ContributionErrorDTO;
-import org.springframework.stereotype.Service;
 
 @Log4j2
 @RequiredArgsConstructor
@@ -41,7 +40,7 @@ public class ContributionExceptionListener {
   }
 
   public void logWriteError(Exception e, UUID recordId) {
-    logError(e, defaultIfNull(recordId, UNKNOWN_ID), "write");
+    logError(e, getIfNull(recordId, UNKNOWN_ID), "write");
   }
 
   public void logError(Exception e, UUID recordId, UUID contributionId) {
@@ -58,7 +57,7 @@ public class ContributionExceptionListener {
   }
 
   public void logProcessError(Exception e, UUID recordId) {
-    logError(e, defaultIfNull(recordId, UNKNOWN_ID), "process");
+    logError(e, getIfNull(recordId, UNKNOWN_ID), "process");
   }
 
 }

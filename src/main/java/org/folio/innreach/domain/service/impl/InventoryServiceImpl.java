@@ -7,6 +7,7 @@ import java.util.UUID;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.folio.innreach.util.CqlQuery;
 import org.springframework.stereotype.Service;
 
 import org.folio.innreach.client.HridSettingsClient;
@@ -38,21 +39,24 @@ public class InventoryServiceImpl implements InventoryService {
   @Override
   public Optional<UUID> findServicePointIdByCode(String code) {
     log.debug("findServicePointIdByCode:: parameters code: {}", code);
-    return getFirstItem(servicePointsClient.queryServicePointByCode(code))
+    var cqlQuery = CqlQuery.exactMatchByCode(code);
+    return getFirstItem(servicePointsClient.findByQuery(cqlQuery.getQuery()))
       .map(ServicePointsClient.ServicePoint::getId);
   }
 
   @Override
   public InstanceTypeClient.InstanceType queryInstanceTypeByName(String name) {
     log.debug("queryInstanceTypeByName:: parameters name: {}", name);
-    return getFirstItem(instanceTypeClient.queryInstanceTypeByName(name))
+    var cqlQuery = CqlQuery.exactMatchByName(name);
+    return getFirstItem(instanceTypeClient.findByQuery(cqlQuery.getQuery()))
       .orElseThrow(() -> new IllegalArgumentException("Instance type is not found by name: " + name));
   }
 
   @Override
   public InstanceContributorTypeClient.NameType queryContributorTypeByName(String name) {
     log.debug("queryContributorTypeByName:: parameters name: {}", name);
-    return getFirstItem(nameTypeClient.queryContributorTypeByName(name))
+    var cql = CqlQuery.exactMatchByName(name);
+    return getFirstItem(nameTypeClient.findByQuery(cql.getQuery()))
       .orElseThrow(() -> new IllegalArgumentException("Contributor name type is not found by name: " + name));
   }
 

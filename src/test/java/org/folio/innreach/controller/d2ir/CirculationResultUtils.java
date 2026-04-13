@@ -37,16 +37,23 @@ public class CirculationResultUtils {
     return jsonPath("$.status").value("failed");
   }
 
+  static ResultHandler logResponse() {
+    return result -> log.info(result.getResponse().getContentAsString());
+  }
+
+  @SafeVarargs
   static ResultMatcher failedWithReason(Matcher<String>... reasonMatchers) {
-    return ResultMatcher.matchAll(failedStatus(), reasonMatch(reasonMatchers));
+    return result -> {
+      failedStatus().match(result);
+      reasonMatch(reasonMatchers).match(result);
+    };
   }
 
   static ResultMatcher failedWithReason(String reason) {
-    return ResultMatcher.matchAll(failedStatus(), reasonMatch(equalTo(reason)));
-  }
-
-  static ResultHandler logResponse() {
-    return result -> log.info(result.getResponse().getContentAsString());
+    return result -> {
+      failedStatus().match(result);
+      reasonMatch(equalTo(reason)).match(result);
+    };
   }
 
   static <T> ResultMatcher exceptionMatch(Class<T> type) {

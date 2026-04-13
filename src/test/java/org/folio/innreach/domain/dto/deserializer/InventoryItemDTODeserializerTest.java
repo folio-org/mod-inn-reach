@@ -2,7 +2,7 @@ package org.folio.innreach.domain.dto.deserializer;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,7 +19,7 @@ class InventoryItemDTODeserializerTest {
   @Test
   @SneakyThrows
   void deserializeInventoryItemJson() {
-    var resource = this.getClass().getResource("/json/inventory-item/item.json");
+    var resource = this.getClass().getResourceAsStream("/json/inventory-item/item.json");
 
     var inventoryItemDTO = objectMapper.readValue(resource, InventoryItemDTO.class);
 

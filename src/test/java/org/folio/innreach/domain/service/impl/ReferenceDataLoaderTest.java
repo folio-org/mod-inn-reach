@@ -48,8 +48,8 @@ class ReferenceDataLoaderTest {
     when(jsonHelper.fromJson(any(InputStream.class), eq(CancellationReason.class)))
       .thenReturn(new CancellationReason());
 
-    when(instanceTypeClient.queryInstanceTypeByName(any())).thenReturn(ResultList.empty());
-    when(instanceContributorTypeClient.queryContributorTypeByName(any())).thenReturn(ResultList.empty());
+    when(instanceTypeClient.findByQuery(any())).thenReturn(ResultList.empty());
+    when(instanceContributorTypeClient.findByQuery(any())).thenReturn(ResultList.empty());
     when(cancellationReasonClient.queryReasonByName(any())).thenReturn(ResultList.empty());
 
     service.loadRefData();
@@ -68,8 +68,8 @@ class ReferenceDataLoaderTest {
     when(jsonHelper.fromJson(any(InputStream.class), eq(CancellationReason.class)))
       .thenReturn(new CancellationReason());
 
-    when(instanceTypeClient.queryInstanceTypeByName(any())).thenReturn(asSinglePage(new InstanceTypeClient.InstanceType()));
-    when(instanceContributorTypeClient.queryContributorTypeByName(any())).thenReturn(asSinglePage(new InstanceContributorTypeClient.NameType()));
+    when(instanceTypeClient.findByQuery(any())).thenReturn(asSinglePage(new InstanceTypeClient.InstanceType()));
+    when(instanceContributorTypeClient.findByQuery(any())).thenReturn(asSinglePage(new InstanceContributorTypeClient.NameType()));
     when(cancellationReasonClient.queryReasonByName(any())).thenReturn(asSinglePage(new CancellationReason()));
 
     service.loadRefData();

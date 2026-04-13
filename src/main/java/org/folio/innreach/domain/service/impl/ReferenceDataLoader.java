@@ -8,10 +8,10 @@ import java.util.function.Function;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.folio.innreach.util.CqlQuery;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
-import org.springframework.retry.annotation.Backoff;
-import org.springframework.retry.annotation.Retryable;
+import org.springframework.resilience.annotation.Retryable;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
@@ -43,8 +43,9 @@ public class ReferenceDataLoader {
   private final JsonHelper jsonHelper;
 
   @Async
-  @Retryable(maxAttemptsExpression = "#{${reference-data.loader.retry-attempts}}",
-    backoff = @Backoff(delayExpression = "#{${reference-data.loader.retry-interval-ms}}"))
+  @Retryable(
+    maxRetriesString = "#{${reference-data.loader.retry-attempts}}",
+    delayString = "#{${reference-data.loader.retry-interval-ms}}")
   public void loadRefData() {
     try {
       log.info("Loading reference data");
@@ -60,22 +61,28 @@ public class ReferenceDataLoader {
 
   private void loadInstanceTypes() {
     load(INSTANCE_TYPES_DIR, InstanceType.class,
-      r -> instanceTypeClient.queryInstanceTypeByName(r.getName()),
-      r -> instanceTypeClient.createInstanceType(r)
+      r -> {
+        var cqlQuery = CqlQuery.exactMatchByName(r.getName());
+        return instanceTypeClient.findByQuery(cqlQuery.getQuery());
+      },
+      instanceTypeClient::createInstanceType
     );
   }
 
   private void loadContributorNameTypes() {
     load(CONTRIBUTION_NAME_TYPES_DIR, NameType.class,
-      r -> instanceContributorTypeClient.queryContributorTypeByName(r.getName()),
-      r -> instanceContributorTypeClient.createContributorType(r)
+      r -> {
+        var cqlQuery = CqlQuery.exactMatchByName(r.getName());
+        return instanceContributorTypeClient.findByQuery(cqlQuery.getQuery());
+      },
+      instanceContributorTypeClient::createContributorType
     );
   }
 
   private void loadCancellationReasons() {
     load(CANCELLATION_REASONS_DIR, CancellationReason.class,
       r -> cancellationReasonClient.queryReasonByName(r.getName()),
-      r -> cancellationReasonClient.createReason(r)
+      cancellationReasonClient::createReason
     );
   }
 

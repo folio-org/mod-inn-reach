@@ -2,11 +2,11 @@ package org.folio.innreach.domain.service.impl;
 
 import java.util.Collection;
 
-import com.fasterxml.jackson.databind.JavaType;
-import com.fasterxml.jackson.databind.type.TypeFactory;
+import tools.jackson.databind.JavaType;
+import tools.jackson.databind.type.TypeFactory;
 import org.apache.kafka.common.header.Headers;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.kafka.support.serializer.JsonTypeResolver;
+import org.springframework.kafka.support.serializer.JacksonJsonTypeResolver;
 import org.springframework.stereotype.Service;
 
 import org.folio.innreach.config.props.FolioKafkaProperties;
@@ -14,7 +14,7 @@ import org.folio.innreach.config.props.FolioKafkaProperties.KafkaListenerPropert
 import org.folio.innreach.domain.event.DomainEvent;
 
 @Service
-public class DomainEventTypeResolver implements JsonTypeResolver {
+public class DomainEventTypeResolver implements JacksonJsonTypeResolver {
 
   private static final String DOMAIN_EVENT_DATA_TYPE_CACHE = "domain-event-data-type";
 
@@ -36,6 +36,6 @@ public class DomainEventTypeResolver implements JsonTypeResolver {
   }
 
   private JavaType toJavaType(Class<?> listenerDataType) {
-    return TypeFactory.defaultInstance().constructParametricType(DomainEvent.class, listenerDataType);
+    return TypeFactory.createDefaultInstance().constructParametricType(DomainEvent.class, listenerDataType);
   }
 }

@@ -11,7 +11,6 @@
   "properties": {
     "patronInfo": {
       "description": "D2IR Patron info",
-      "type": "object",
       "$ref": "patronInfo.json"
     },
     "requestAllowed":{

@@ -1,17 +1,17 @@
 package org.folio.innreach.client;
 
-import org.springframework.cloud.openfeign.FeignClient;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.service.annotation.GetExchange;
+import org.springframework.web.service.annotation.HttpExchange;
 
-import org.folio.innreach.client.config.FolioFeignClientConfig;
 import org.folio.innreach.domain.dto.folio.ResultList;
 import org.folio.innreach.dto.HoldingSourceDTO;
 
-@FeignClient(name = "holdings-sources", configuration = FolioFeignClientConfig.class)
+@HttpExchange("holdings-sources")
 public interface HoldingSourcesClient {
 
-  @GetMapping("?query=name=={sourceName}&limit=1")
-  ResultList<HoldingSourceDTO> querySourceByName(@PathVariable("sourceName") String sourceName);
+  @GetExchange
+  ResultList<HoldingSourceDTO> findByQuery(@RequestParam("query") String query,
+                                           @RequestParam("limit") int limit);
 
 }

@@ -1,6 +1,5 @@
 package org.folio.innreach.batch.contribution.service;
 
-import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -9,6 +8,8 @@ import org.folio.innreach.external.exception.InnReachConnectionException;
 import org.folio.innreach.external.exception.ServiceSuspendedException;
 import org.folio.innreach.external.exception.SocketTimeOutExceptionWrapper;
 import org.springframework.kafka.listener.MessageListener;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpServerErrorException;
 
 import java.util.UUID;
 
@@ -38,7 +39,7 @@ public class InitialContributionMessageListener implements MessageListener<Strin
 
       iMessageProcessor.processMessage(instanceIterationEvent, consumerRecord.topic());
     }
-    catch (ServiceSuspendedException | FeignException | InnReachConnectionException | SocketTimeOutExceptionWrapper e) {
+    catch (ServiceSuspendedException | HttpClientErrorException | HttpServerErrorException | InnReachConnectionException | SocketTimeOutExceptionWrapper e) {
       throw e;
     }
     catch (Exception e) {

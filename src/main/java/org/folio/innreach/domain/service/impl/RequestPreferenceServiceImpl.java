@@ -4,6 +4,7 @@ import java.util.UUID;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.folio.innreach.util.CqlQuery;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 
@@ -19,7 +20,8 @@ public class RequestPreferenceServiceImpl implements RequestPreferenceService {
   @Override
   public RequestPreferenceDTO findUserRequestPreference(UUID userId) {
     log.debug("findUserRequestPreference:: parameters userId: {}", userId);
-    var requestPreferences = client.getUserRequestPreference(userId);
+    var cql = CqlQuery.exactMatch("userId", userId.toString());
+    var requestPreferences = client.findByQuery(cql.getQuery());
     Assert.isTrue(requestPreferences.getTotalRecords() == 1, "Could not retrieve 1 request preferences" +
       "record for userId = " + userId);
     log.info("findUserRequestPreference:: result: {}", requestPreferences.getResult().get(0));

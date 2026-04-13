@@ -36,7 +36,7 @@ import static org.folio.innreach.util.InnReachTransactionUtils.verifyState;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
-import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 import org.folio.innreach.domain.dto.folio.circulation.RequestDTO;
 import org.folio.innreach.domain.dto.folio.inventory.InventoryInstanceDTO;
 import org.folio.innreach.domain.dto.folio.inventory.InventoryItemDTO;
@@ -56,6 +56,7 @@ import org.folio.innreach.domain.service.ItemService;
 import org.folio.innreach.domain.service.LoanService;
 import org.folio.innreach.domain.service.PatronHoldService;
 import org.folio.innreach.domain.service.RequestService;
+import org.folio.innreach.domain.service.RetryableUpdateService;
 import org.folio.innreach.domain.service.VirtualRecordService;
 import org.folio.innreach.dto.CancelTransactionHoldDTO;
 import org.folio.innreach.dto.CheckInDTO;
@@ -96,6 +97,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
   private final PatronHoldService patronHoldService;
   private final ItemService itemService;
   private final InstanceService instanceService;
+  private final RetryableUpdateService retryableUpdateService;
   private final InnReachTransactionActionNotifier notifier;
   private final ApplicationEventPublisher eventPublisher;
   private final InnReachRecallUserService recallUserService;
@@ -264,7 +266,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
     var itemId = checkIn.getItemId();
     var itemStatusPriorToCheckIn = checkIn.getItemStatusPriorToCheckIn();
 
-    if (StringUtils.equalsAnyIgnoreCase(itemStatusPriorToCheckIn, UNCIRCULATED_ITEM_STATUSES)) {
+    if (Strings.CI.equalsAny(itemStatusPriorToCheckIn, UNCIRCULATED_ITEM_STATUSES)) {
       var transaction = transactionRepository.fetchActiveByFolioItemId(itemId).orElse(null);
 
       if (transaction == null || transaction.getType() != PATRON) {
@@ -799,7 +801,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
   }
 
   private Optional<InventoryItemDTO> updateItem(UUID itemId) {
-    return itemService.changeAndUpdate(itemId, item -> {
+    return retryableUpdateService.changeAndUpdateWithRetry(itemService, itemId, item -> {
       item.setBarcode(null);
       return item;
     });

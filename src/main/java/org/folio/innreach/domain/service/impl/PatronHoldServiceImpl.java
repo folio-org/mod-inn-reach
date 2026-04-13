@@ -31,6 +31,7 @@ import org.folio.innreach.domain.service.ItemService;
 import org.folio.innreach.domain.service.ItemTypeMappingService;
 import org.folio.innreach.domain.service.PatronHoldService;
 import org.folio.innreach.domain.service.RequestService;
+import org.folio.innreach.domain.service.RetryableUpdateService;
 import org.folio.innreach.domain.service.UpdateTemplate;
 import org.folio.innreach.domain.service.UserService;
 import org.folio.innreach.dto.CentralServerDTO;
@@ -58,6 +59,7 @@ public class PatronHoldServiceImpl implements PatronHoldService {
   private final ItemService itemService;
   private final HoldingsService holdingsService;
   private final UserService userService;
+  private final RetryableUpdateService retryableUpdateService;
   private final InnReachTransactionRepository repository;
 
   @Async
@@ -135,7 +137,7 @@ public class PatronHoldServiceImpl implements PatronHoldService {
     }
 
     var folioItemId = hold.getFolioItemId();
-    itemService.changeAndUpdate(folioItemId,
+    retryableUpdateService.changeAndUpdateWithRetry(itemService, folioItemId,
       () -> new IllegalArgumentException("Item with id = " + folioItemId + " not found!"),
       changeFolioAssociatedItem(folioItemBarcode, callNumber));
   }

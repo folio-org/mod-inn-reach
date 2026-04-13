@@ -3,6 +3,7 @@ package org.folio.innreach.controller;
 import static java.time.format.DateTimeFormatter.ISO_OFFSET_DATE_TIME;
 import static java.util.UUID.randomUUID;
 import static org.awaitility.Awaitility.await;
+import static org.folio.util.StringUtil.cqlEncode;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -68,7 +69,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import lombok.SneakyThrows;
@@ -88,7 +88,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.stubbing.Answer;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.boot.resttestclient.TestRestTemplate;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -138,7 +138,7 @@ import org.folio.innreach.dto.PatronHoldCheckInResponseDTO;
 import org.folio.innreach.dto.TransactionCheckOutResponseDTO;
 import org.folio.innreach.dto.TransactionHoldDTO;
 import org.folio.innreach.dto.TransactionStateEnum;
-import org.folio.innreach.external.client.feign.InnReachClient;
+import org.folio.innreach.external.client.InnReachClient;
 import org.folio.innreach.mapper.InnReachTransactionMapper;
 import org.folio.innreach.mapper.InnReachTransactionPickupLocationMapper;
 import org.folio.innreach.repository.InnReachTransactionRepository;
@@ -177,12 +177,14 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   private static final String PRE_POPULATED_CENTRAL_SERVER_CODE = "d2ir";
   private static final String PRE_POPULATED_CENTRAL_SERVER_ID = "edab6baf-c696-42b1-89bb-1bbb8759b0d2";
   private static final String PRE_POPULATED_USER_BARCODE = "0000098765";
+  private static final String USER_BARCODE_QUERY = "barcode==" + cqlEncode(PRE_POPULATED_USER_BARCODE);
   private static final Integer PRE_POPULATED_CENTRAL_PATRON_TYPE = 200;
   private static final String PRE_POPULATED_MATERIAL_TYPE_ID = "1a54b431-2e4f-452d-9cae-9cee66c9a892";
   private static final String NEW_CENTRAL_SERVER_CODE = "a0aa";
   private static final String NEW_ITEM_AND_AGENCY_CODE = "a0aa0";
   private static final String NEW_TEST_PARAMETER_VALUE = "abc";
   private static final String PRE_POPULATED_PICK_LOCATION_CODE = "Pickup Loc Code 1";
+  private static final String PICK_LOCATION_CODE_QUERY = "code==" + cqlEncode(PRE_POPULATED_PICK_LOCATION_CODE);
 
   private static final UUID PRE_POPULATED_FOLIO_ITEM_ID = UUID.fromString("4def31b0-2b60-4531-ad44-7eab60fa5428");
   private static final UUID PRE_POPULATED_FOLIO_LOAN_ID = UUID.fromString("06e820e3-71a0-455e-8c73-3963aea677d4");
@@ -268,7 +270,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   User mockUserClient() {
     var user = createUser();
     user.setBarcode(PRE_POPULATED_USER_BARCODE);
-    when(usersClient.queryUsersByBarcode(PRE_POPULATED_USER_BARCODE)).thenReturn(ResultList.of(1, List.of(user)));
+    when(usersClient.findByQuery(USER_BARCODE_QUERY)).thenReturn(ResultList.of(1, List.of(user)));
     return user;
   }
 
@@ -298,12 +300,12 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     assertEquals(3, responseEntity.getBody().getTotalRecords());
 
     var transactionIds = responseEntity.getBody().getTransactions().stream()
-      .map(InnReachTransactionDTO::getId).collect(Collectors.toList());
+      .map(InnReachTransactionDTO::getId).toList();
     assertTrue(transactionIds.containsAll(
       List.of(PRE_POPULATED_PATRON_HOLD_TRANSACTION_ID, PRE_POPULATED_ITEM_HOLD_TRANSACTION_ID, PRE_POPULATED_LOCAL_HOLD_TRANSACTION_ID)));
 
     var transactionMetadatas = responseEntity.getBody().getTransactions().stream()
-      .map(InnReachTransactionDTO::getMetadata).collect(Collectors.toList());
+      .map(InnReachTransactionDTO::getMetadata).toList();
     assertTrue(transactionMetadatas.stream().allMatch(Objects::nonNull));
     assertTrue(transactionMetadatas.stream().allMatch(m -> m.getCreatedDate() != null));
     assertTrue(transactionMetadatas.stream().allMatch(m -> m.getCreatedByUsername().equals(PRE_POPULATED_USER.getName())));
@@ -343,7 +345,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     assertEquals(1, responseEntity.getBody().getTotalRecords());
 
     var transactionIds = responseEntity.getBody().getTransactions().stream()
-      .map(InnReachTransactionDTO::getId).collect(Collectors.toList());
+      .map(InnReachTransactionDTO::getId).toList();
     assertTrue(transactionIds.contains(PRE_POPULATED_PATRON_HOLD_TRANSACTION_ID));
 
     assertEquals(1, responseEntity.getBody().getTransactions().size());
@@ -405,7 +407,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     assertEquals(1, responseEntity.getBody().getTotalRecords());
 
     var transactionIds = responseEntity.getBody().getTransactions().stream()
-      .map(InnReachTransactionDTO::getId).collect(Collectors.toList());
+      .map(InnReachTransactionDTO::getId).toList();
     assertTrue(transactionIds.contains(PRE_POPULATED_PATRON_HOLD_TRANSACTION_ID));
   }
 
@@ -424,7 +426,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     assertEquals(1, responseEntity.getBody().getTotalRecords());
 
     var transactionIds = responseEntity.getBody().getTransactions().stream()
-      .map(InnReachTransactionDTO::getId).collect(Collectors.toList());
+      .map(InnReachTransactionDTO::getId).toList();
     assertTrue(transactionIds.contains(PRE_POPULATED_ITEM_HOLD_TRANSACTION_ID));
 
     assertEquals(1, responseEntity.getBody().getTransactions().size());
@@ -432,7 +434,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
       .allMatch(c -> c.equals("d2ir")));
 
     var holdDTOs = responseEntity.getBody().getTransactions().stream()
-      .map(InnReachTransactionDTO::getHold).collect(Collectors.toList());
+      .map(InnReachTransactionDTO::getHold).toList();
     assertTrue(holdDTOs.stream().allMatch(h -> h.getPatronAgencyCode().equals("qwe56")));
   }
 
@@ -451,13 +453,13 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     assertEquals(2, responseEntity.getBody().getTotalRecords());
 
     var transactionIds = responseEntity.getBody().getTransactions().stream()
-      .map(InnReachTransactionDTO::getId).collect(Collectors.toList());
+      .map(InnReachTransactionDTO::getId).toList();
     assertTrue(transactionIds.containsAll(
       List.of(PRE_POPULATED_ITEM_HOLD_TRANSACTION_ID, PRE_POPULATED_LOCAL_HOLD_TRANSACTION_ID)));
 
     assertEquals(2, responseEntity.getBody().getTransactions().size());
     var holdDTOs = responseEntity.getBody().getTransactions().stream()
-      .map(InnReachTransactionDTO::getHold).collect(Collectors.toList());
+      .map(InnReachTransactionDTO::getHold).toList();
     assertTrue(holdDTOs.stream().allMatch(h -> h.getItemAgencyCode().equals("asd78")));
   }
 
@@ -476,13 +478,13 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     assertEquals(2, responseEntity.getBody().getTotalRecords());
 
     var transactionIds = responseEntity.getBody().getTransactions().stream()
-      .map(InnReachTransactionDTO::getId).collect(Collectors.toList());
+      .map(InnReachTransactionDTO::getId).toList();
     assertTrue(transactionIds.containsAll(
       List.of(PRE_POPULATED_ITEM_HOLD_TRANSACTION_ID, PRE_POPULATED_LOCAL_HOLD_TRANSACTION_ID)));
 
     assertEquals(2, responseEntity.getBody().getTransactions().size());
     var centralPatronTypes = responseEntity.getBody().getTransactions().stream()
-      .map(InnReachTransactionDTO::getHold).map(TransactionHoldDTO::getCentralPatronType).collect(Collectors.toList());
+      .map(InnReachTransactionDTO::getHold).map(TransactionHoldDTO::getCentralPatronType).toList();
     assertTrue(centralPatronTypes.containsAll(List.of(0, 1)));
   }
 
@@ -501,12 +503,12 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     assertEquals(2, responseEntity.getBody().getTotalRecords());
 
     var transactionIds = responseEntity.getBody().getTransactions().stream()
-      .map(InnReachTransactionDTO::getId).collect(Collectors.toList());
+      .map(InnReachTransactionDTO::getId).toList();
     assertTrue(transactionIds.containsAll(List.of(PRE_POPULATED_PATRON_HOLD_TRANSACTION_ID, PRE_POPULATED_ITEM_HOLD_TRANSACTION_ID)));
 
     assertEquals(2, responseEntity.getBody().getTransactions().size());
     var centralItemTypes = responseEntity.getBody().getTransactions().stream()
-      .map(InnReachTransactionDTO::getHold).map(TransactionHoldDTO::getCentralItemType).collect(Collectors.toList());
+      .map(InnReachTransactionDTO::getHold).map(TransactionHoldDTO::getCentralItemType).toList();
     assertTrue(centralItemTypes.containsAll(List.of(1, 2)));
   }
 
@@ -618,7 +620,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     assertEquals(3, responseEntity.getBody().getTotalRecords());
 
     var titles = responseEntity.getBody().getTransactions().stream()
-      .map(InnReachTransactionDTO::getHold).map(TransactionHoldDTO::getTitle).collect(Collectors.toList());
+      .map(InnReachTransactionDTO::getHold).map(TransactionHoldDTO::getTitle).toList();
     assertEquals(3, titles.size());
     assertTrue(titles.stream().allMatch(t -> t.toLowerCase().contains("title")));
   }
@@ -744,7 +746,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
       List.of(requestDTO)));
     var user = mockUserClient();
     var requestPreference = new RequestPreferenceDTO(user.getId(), randomUUID());
-    when(requestPreferenceClient.getUserRequestPreference(user.getId())).thenReturn(ResultList.of(1, List.of(requestPreference)));
+    when(requestPreferenceClient.findByQuery("userId==" + cqlEncode(user.getId().toString()))).thenReturn(ResultList.of(1, List.of(requestPreference)));
     when(circulationClient.sendRequest(any(RequestDTO.class))).then((Answer<RequestDTO>) invocationOnMock -> {
       var sentRequest = (RequestDTO) invocationOnMock.getArgument(0);
       sentRequest.setId(randomUUID());
@@ -771,8 +773,8 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     verify(requestService).createItemHoldRequest(TRACKING_ID, PRE_POPULATED_CENTRAL_SERVER_CODE);
     verify(inventoryClient, times(2)).getItemsByHrId(itemHoldDTO.getItemId());
     verify(circulationClient).queryRequestsByItemId(inventoryItemDTO.getId());
-    verify(usersClient).queryUsersByBarcode(PRE_POPULATED_USER_BARCODE);
-    verify(requestPreferenceClient).getUserRequestPreference(user.getId());
+    verify(usersClient).findByQuery(USER_BARCODE_QUERY);
+    verify(requestPreferenceClient).findByQuery("userId==" + cqlEncode(user.getId().toString()));
     verify(circulationClient).sendRequest(any());
 
     var transaction = repository.fetchOneByTrackingId(TRACKING_ID);
@@ -813,11 +815,11 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     var requestPreference = new RequestPreferenceDTO(user.getId(), randomUUID());
 
     when(circulationClient.queryRequestsByItemId(inventoryItemDTO.getId())).thenReturn(ResultList.asSinglePage(requestDTO));
-    when(requestPreferenceClient.getUserRequestPreference(user.getId())).thenReturn(ResultList.asSinglePage(requestPreference));
+    when(requestPreferenceClient.findByQuery("userId==" + cqlEncode(user.getId().toString()))).thenReturn(ResultList.asSinglePage(requestPreference));
     when(circulationClient.sendRequest(any(RequestDTO.class))).then((Answer<RequestDTO>) invocationOnMock -> {
       return new RequestDTO();
     });
-    when(servicePointsClient.queryServicePointByCode(PRE_POPULATED_PICK_LOCATION_CODE))
+    when(servicePointsClient.findByQuery(PICK_LOCATION_CODE_QUERY))
       .thenReturn(ResultList.asSinglePage(servicePoint));
 
     var itemHoldDTO = deserializeFromJsonFile(
@@ -840,7 +842,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
 
     var newRequest = newRequestCaptor.getValue();
 
-    verify(servicePointsClient).queryServicePointByCode(PRE_POPULATED_PICK_LOCATION_CODE);
+    verify(servicePointsClient).findByQuery(PICK_LOCATION_CODE_QUERY);
     assertEquals(servicePoint.getId(), newRequest.getPickupServicePointId());
   }
 
@@ -863,16 +865,16 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     var requestPreference = new RequestPreferenceDTO(user.getId(), PRE_POPULATED_DEFAULT_SERVICE_POINT_ID);
 
     when(circulationClient.queryRequestsByItemId(inventoryItemDTO.getId())).thenReturn(ResultList.asSinglePage(requestDTO));
-    when(requestPreferenceClient.getUserRequestPreference(user.getId())).thenReturn(
+    when(requestPreferenceClient.findByQuery("userId==" + cqlEncode(user.getId().toString()))).thenReturn(
       ResultList.asSinglePage(requestPreference));
     when(circulationClient.sendRequest(any(RequestDTO.class))).then((Answer<RequestDTO>) invocationOnMock -> {
       var sentRequest = (RequestDTO) invocationOnMock.getArgument(0);
       sentRequest.setId(randomUUID());
       return sentRequest;
     });
-    when(servicePointsClient.queryServicePointByCode(PRE_POPULATED_PICK_LOCATION_CODE))
+    when(servicePointsClient.findByQuery(PICK_LOCATION_CODE_QUERY))
       .thenReturn(ResultList.of(1, null));
-    when(usersClient.query(PRE_POPULATED_USER_BARCODE)).thenReturn(ResultList.asSinglePage(user));
+    when(usersClient.findByQuery(PRE_POPULATED_USER_BARCODE)).thenReturn(ResultList.asSinglePage(user));
 
     var itemHoldDTO = deserializeFromJsonFile(
       "/inn-reach-transaction/create-item-hold-request.json", TransactionHoldDTO.class);
@@ -893,7 +895,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
 
     var servicePointIdFromTransaction = inventoryService.findServicePointIdByCode(PRE_POPULATED_PICK_LOCATION_CODE).orElse(null);
 
-    verify(servicePointsClient, times(2)).queryServicePointByCode(PRE_POPULATED_PICK_LOCATION_CODE);
+    verify(servicePointsClient, times(2)).findByQuery(PICK_LOCATION_CODE_QUERY);
     assertEquals(null, servicePointIdFromTransaction);
 
     var newRequestCaptor = ArgumentCaptor.forClass(RequestDTO.class);
@@ -1056,10 +1058,10 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     var inventoryItemDTO = mockInventoryClient();
     mockFindRequestsReturnsEmptyList(inventoryItemDTO);
     var user = mockUserClient();
-    when(requestPreferenceClient.getUserRequestPreference(user.getId())).thenThrow(IllegalStateException.class);
+    when(requestPreferenceClient.findByQuery("userId==" + cqlEncode(user.getId().toString()))).thenThrow(IllegalStateException.class);
     when(innReachClient.postInnReachApi(any(), anyString(), anyString(), anyString())).thenReturn("response");
     when(holdingsStorageClient.findHolding(any())).thenReturn(Optional.empty());
-    when(itemStorageClient.getItemByHrId(any())).thenReturn(ResultList.asSinglePage(new org.folio.innreach.dto.Item()));
+    when(itemStorageClient.findByQuery(any())).thenReturn(ResultList.asSinglePage(new org.folio.innreach.dto.Item()));
     when(recordContributionService.contributeItems(eq(UUID.fromString(PRE_POPULATED_CENTRAL_SERVER_ID)), any(), anyList()))
       .thenReturn(1);
 
@@ -1078,8 +1080,8 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
 
     verify(inventoryClient).getItemsByHrId(inventoryItemDTO.getHrid());
     verify(circulationClient, never()).queryRequestsByItemId(inventoryItemDTO.getId());
-    verify(usersClient).queryUsersByBarcode(PRE_POPULATED_USER_BARCODE);
-    verify(requestPreferenceClient).getUserRequestPreference(user.getId());
+    verify(usersClient).findByQuery(USER_BARCODE_QUERY);
+    verify(requestPreferenceClient).findByQuery("userId==" + cqlEncode(user.getId().toString()));
     verify(circulationClient, never()).sendRequest(any());
 
     var cancelRequest = ArgumentCaptor.forClass(OwningSiteCancelsRequestDTO.class);
@@ -1101,10 +1103,10 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     mockFindRequestsReturnsEmptyList(inventoryItemDTO);
     var user = mockUserClient();
     var requestPreference = new RequestPreferenceDTO(user.getId(), randomUUID());
-    when(requestPreferenceClient.getUserRequestPreference(user.getId())).thenReturn(ResultList.of(1, List.of(requestPreference)));
+    when(requestPreferenceClient.findByQuery("userId==" + cqlEncode(user.getId().toString()))).thenReturn(ResultList.of(1, List.of(requestPreference)));
     when(innReachClient.postInnReachApi(any(), anyString(), anyString(), anyString())).thenReturn("response");
     when(holdingsStorageClient.findHolding(any())).thenReturn(Optional.empty());
-    when(itemStorageClient.getItemByHrId(any())).thenReturn(ResultList.asSinglePage(new org.folio.innreach.dto.Item()));
+    when(itemStorageClient.findByQuery(any())).thenReturn(ResultList.asSinglePage(new org.folio.innreach.dto.Item()));
     when(recordContributionService.contributeItems(eq(UUID.fromString(PRE_POPULATED_CENTRAL_SERVER_ID)), any(), anyList()))
       .thenReturn(1);
 
@@ -1123,8 +1125,8 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
 
     verify(inventoryClient, times(2)).getItemsByHrId(inventoryItemDTO.getHrid());
     verify(circulationClient).queryRequestsByItemId(inventoryItemDTO.getId());
-    verify(usersClient).queryUsersByBarcode(PRE_POPULATED_USER_BARCODE);
-    verify(requestPreferenceClient).getUserRequestPreference(user.getId());
+    verify(usersClient).findByQuery(USER_BARCODE_QUERY);
+    verify(requestPreferenceClient).findByQuery("userId==" + cqlEncode(user.getId().toString()));
     verify(circulationClient, never()).sendRequest(any());
 
     var request = ArgumentCaptor.forClass(OwningSiteCancelsRequestDTO.class);

@@ -17,7 +17,6 @@ import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionSt
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.ITEM_RECEIVED;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.ITEM_SHIPPED;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.LOCAL_HOLD;
-import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.OWNER_RENEW;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.PATRON_HOLD;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.RECALL;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.RECEIVE_UNANNOUNCED;
@@ -32,7 +31,6 @@ import static org.folio.innreach.util.InnReachTransactionUtils.clearCentralPatro
 import static org.folio.innreach.util.InnReachTransactionUtils.clearPatronAndItemInfo;
 import static org.folio.innreach.util.InnReachTransactionUtils.verifyState;
 import static org.folio.innreach.util.InnReachTransactionUtils.verifyStateNot;
-import static org.folio.innreach.util.JsonHelper.getCheckoutTimeDurationInMilliseconds;
 
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
@@ -59,6 +57,7 @@ import org.folio.innreach.domain.service.MaterialTypeMappingService;
 import org.folio.innreach.domain.service.PatronHoldService;
 import org.folio.innreach.domain.service.PatronInfoService;
 import org.folio.innreach.domain.service.RequestService;
+import org.folio.innreach.domain.service.RetryableUpdateService;
 import org.folio.innreach.domain.service.VirtualRecordService;
 import org.folio.innreach.dto.BaseCircRequestDTO;
 import org.folio.innreach.dto.CancelRequestDTO;
@@ -80,6 +79,7 @@ import org.folio.innreach.mapper.InnReachTransactionHoldMapper;
 import org.folio.innreach.mapper.InnReachTransactionPickupLocationMapper;
 import org.folio.innreach.repository.InnReachTransactionRepository;
 import org.folio.innreach.repository.LocalAgencyRepository;
+import org.folio.innreach.util.JsonHelper;
 import org.folio.spring.FolioExecutionContext;
 import org.folio.spring.FolioModuleMetadata;
 import org.folio.spring.scope.FolioExecutionContextSetter;
@@ -135,6 +135,7 @@ public class CirculationServiceImpl implements CirculationService {
   private final ItemService itemService;
   private final HoldingsService holdingsService;
   private final LoanService loanService;
+  private final RetryableUpdateService retryableUpdateService;
   private final InnReachExternalService innReachExternalService;
   private final CentralServerService centralServerService;
   private final MaterialTypeMappingService materialService;
@@ -144,6 +145,7 @@ public class CirculationServiceImpl implements CirculationService {
   private final ApplicationEventPublisher eventPublisher;
   private final VirtualRecordService virtualRecordService;
   private final ConfigurationService configurationService;
+  private final JsonHelper jsonHelper;
 
   @Override
   public InnReachResponseDTO createInnReachTransactionItemHold(String trackingId, String centralCode, TransactionHoldDTO dto) {
@@ -179,7 +181,7 @@ public class CirculationServiceImpl implements CirculationService {
 
     initiateTransactionHold(trackingId, centralCode, transactionHold, PATRON,
       (transaction, isExisting) -> {
-        if (isExisting) {
+        if (Boolean.TRUE.equals(isExisting)) {
           patronHoldService.updateVirtualItems(transaction);
         } else {
           patronHoldService.createVirtualItems(transaction);
@@ -476,7 +478,7 @@ public class CirculationServiceImpl implements CirculationService {
 
     var configDataList = configurationService.fetchCheckoutSettings();
 
-    Long checkOutTimeDuration = getCheckoutTimeDurationInMilliseconds(configDataList.getResult());
+    Long checkOutTimeDuration = jsonHelper.getCheckoutTimeDurationInMilliseconds(configDataList.getResult());
 
     log.info("Checkout Time Duration is : {}", checkOutTimeDuration);
 
@@ -613,14 +615,14 @@ public class CirculationServiceImpl implements CirculationService {
   }
 
   private Optional<Holding> removeHoldingsTransactionInfo(InventoryItemDTO item) {
-    return holdingsService.changeAndUpdate(item.getHoldingsRecordId(), holding -> {
+    return retryableUpdateService.changeAndUpdateWithRetry(holdingsService, item.getHoldingsRecordId(), holding -> {
       holding.setCallNumber(null);
       return holding;
     });
   }
 
   private Optional<InventoryItemDTO> removeItemTransactionInfo(UUID itemId) {
-    return itemService.changeAndUpdate(itemId, item -> {
+    return retryableUpdateService.changeAndUpdateWithRetry(itemService, itemId, item -> {
       item.setCallNumber(null);
       item.setBarcode(null);
       return item;

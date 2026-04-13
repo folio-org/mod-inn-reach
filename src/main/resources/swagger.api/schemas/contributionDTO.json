@@ -15,13 +15,11 @@
     },
     "itemTypeMappingStatus": {
       "description": "Material type mapping validation status",
-      "type": "object",
       "$ref": "mappingValidationStatusDTO.json",
       "default": "Invalid"
     },
     "locationsMappingStatus": {
       "description": "Location mapping validation status",
-      "type": "object",
       "$ref": "mappingValidationStatusDTO.json",
       "default": "Invalid"
     },

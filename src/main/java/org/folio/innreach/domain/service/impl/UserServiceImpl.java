@@ -6,6 +6,7 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.StringUtils;
+import org.folio.innreach.util.CqlQuery;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
@@ -47,7 +48,7 @@ public class UserServiceImpl implements UserService {
       return Optional.empty();
     }
 
-    var users = usersClient.query("username==" + name);
+    var users = usersClient.findByQuery("username==" + name);
 
     return ListUtils.getFirstItem(users);
   }
@@ -55,7 +56,8 @@ public class UserServiceImpl implements UserService {
   @Override
   public Optional<User> getUserByBarcode(String userPublicId) {
     log.debug("getUserByBarcode:: parameters userPublicId: {}", userPublicId);
-    var users = usersClient.queryUsersByBarcode(userPublicId);
+    var cql = CqlQuery.exactMatch("barcode", userPublicId);
+    var users = usersClient.findByQuery(cql.getQuery());
 
     return ListUtils.getFirstItem(users);
   }
@@ -63,7 +65,7 @@ public class UserServiceImpl implements UserService {
   @Override
   public Optional<User> getUserByQuery(String query) {
     log.debug("getUserByQuery:: parameters query: {}", query);
-    var users = usersClient.query(query);
+    var users = usersClient.findByQuery(query);
 
     return ListUtils.getFirstItem(users);
   }

@@ -8,7 +8,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 import org.folio.innreach.client.CirculationClient;
 import org.folio.innreach.client.ConfigurationClient;
 import org.folio.innreach.domain.dto.folio.ResultList;

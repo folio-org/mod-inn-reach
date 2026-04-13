@@ -1,4 +1,5 @@
-## v3.5.0 2025-xx-xx
+## v3.5.0-SNAPSHOT 2025-xx-xx
+* [MODINREACH-550](https://folio-org.atlassian.net/browse/MODINREACH-550) - Upgrade to Spring Boot v4.0.5
 
 ### Bugs
 * [MODINREACH-503](https://folio-org.atlassian.net/browse/MODINREACH-503) - [INN-Reach] Add missing tokens to API

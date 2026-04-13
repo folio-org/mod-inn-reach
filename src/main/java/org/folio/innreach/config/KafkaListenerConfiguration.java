@@ -1,7 +1,5 @@
 package org.folio.innreach.config;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.apache.kafka.common.serialization.StringDeserializer;
@@ -11,7 +9,7 @@ import org.folio.innreach.domain.service.impl.TenantScopedExecutionService;
 import org.folio.innreach.external.exception.InnReachConnectionException;
 import org.folio.innreach.external.exception.ServiceSuspendedException;
 import org.folio.innreach.external.exception.SocketTimeOutExceptionWrapper;
-import org.springframework.boot.autoconfigure.kafka.KafkaProperties;
+import org.springframework.boot.kafka.autoconfigure.KafkaProperties;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -21,14 +19,16 @@ import org.springframework.kafka.core.ConsumerFactory;
 import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
 import org.springframework.kafka.listener.DefaultErrorHandler;
 import org.springframework.kafka.support.serializer.ErrorHandlingDeserializer;
-import org.springframework.kafka.support.serializer.JsonDeserializer;
-import org.springframework.retry.support.RetryTemplate;
+import org.springframework.kafka.support.serializer.JacksonJsonDeserializer;
 
 import org.folio.innreach.config.props.FolioKafkaProperties;
 import org.folio.innreach.domain.event.DomainEvent;
 import org.folio.innreach.domain.service.impl.DomainEventTypeResolver;
 import org.springframework.util.backoff.BackOff;
 import org.springframework.util.backoff.FixedBackOff;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpServerErrorException;
+import tools.jackson.databind.json.JsonMapper;
 
 import static org.folio.innreach.batch.contribution.ContributionJobContextManager.endContributionJobContext;
 import static org.folio.innreach.batch.contribution.ContributionJobContextManager.getContributionJobContext;
@@ -42,9 +42,8 @@ public class KafkaListenerConfiguration {
 
   public static final String KAFKA_CONTAINER_FACTORY = "kafkaDomainEventContainerFactory";
   public static final String KAFKA_CONSUMER_FACTORY = "kafkaDomainEventConsumerFactory";
-  public static final String BATCH_EVENT_PROCESSOR_RETRY_TEMPLATE = "batchEventRetryTemplate";
 
-  private final ObjectMapper mapper;
+  private final JsonMapper mapper;
   private final KafkaProperties kafkaProperties;
   private final DomainEventTypeResolver typeResolver;
   private final ContributionJobRunner contributionJobRunner;
@@ -54,9 +53,9 @@ public class KafkaListenerConfiguration {
 
   @Bean(KAFKA_CONSUMER_FACTORY)
   public ConsumerFactory<String, DomainEvent> kafkaDomainEventConsumerFactory() {
-    var consumerProperties = kafkaProperties.buildConsumerProperties(null);
+    var consumerProperties = kafkaProperties.buildConsumerProperties();
 
-    JsonDeserializer<DomainEvent> deserializer = new JsonDeserializer<>(mapper);
+    var deserializer = new JacksonJsonDeserializer<>(mapper);
     deserializer.setTypeResolver(typeResolver);
     deserializer.setUseTypeHeaders(false);
     deserializer.addTrustedPackages("*");
@@ -68,7 +67,7 @@ public class KafkaListenerConfiguration {
         return null;
       });
 
-    return new DefaultKafkaConsumerFactory<>(consumerProperties, new StringDeserializer(), errorDeserializer);
+    return new DefaultKafkaConsumerFactory(consumerProperties, new StringDeserializer(), errorDeserializer);
   }
 
   @Bean(KAFKA_CONTAINER_FACTORY)
@@ -83,9 +82,9 @@ public class KafkaListenerConfiguration {
 
   @Bean("kafkaInitialContributionConsumer")
   public ConsumerFactory<String, InstanceIterationEvent> kafkaInitialContributionEventConsumerFactory() {
-    var consumerProperties = kafkaProperties.buildConsumerProperties(null);
+    var consumerProperties = kafkaProperties.buildConsumerProperties();
 
-    JsonDeserializer<InstanceIterationEvent> deserializer = new JsonDeserializer<>(InstanceIterationEvent.class);
+    var deserializer = new JacksonJsonDeserializer<>(InstanceIterationEvent.class);
     deserializer.setUseTypeHeaders(false);
     deserializer.addTrustedPackages("*");
 
@@ -108,14 +107,6 @@ public class KafkaListenerConfiguration {
     return factory;
   }
 
-  @Bean(BATCH_EVENT_PROCESSOR_RETRY_TEMPLATE)
-  public RetryTemplate batchEventRetryTemplate() {
-    return RetryTemplate.builder()
-      .maxAttempts(2)
-      .fixedBackoff(100)
-      .build();
-  }
-
   public DefaultErrorHandler errorHandler() {
     BackOff fixedBackOff = new FixedBackOff(retryConfig.getInterval(), retryConfig.getMaxAttempts());
     DefaultErrorHandler errorHandler = new DefaultErrorHandler((consumerRecord, exception) -> {
@@ -131,7 +122,8 @@ public class KafkaListenerConfiguration {
     }, fixedBackOff);
     errorHandler.addRetryableExceptions(ServiceSuspendedException.class);
     errorHandler.addRetryableExceptions(SocketTimeOutExceptionWrapper.class);
-    errorHandler.addRetryableExceptions(FeignException.class);
+    errorHandler.addRetryableExceptions(HttpClientErrorException.class);
+    errorHandler.addRetryableExceptions(HttpServerErrorException.class);
     errorHandler.addRetryableExceptions(InnReachConnectionException.class);
     return errorHandler;
   }

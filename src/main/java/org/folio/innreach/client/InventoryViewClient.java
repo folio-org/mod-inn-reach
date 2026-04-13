@@ -8,23 +8,22 @@ import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.springframework.cloud.openfeign.FeignClient;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.service.annotation.GetExchange;
+import org.springframework.web.service.annotation.HttpExchange;
 
-import org.folio.innreach.client.config.FolioFeignClientConfig;
 import org.folio.innreach.domain.dto.folio.ResultList;
 import org.folio.innreach.dto.Holding;
 import org.folio.innreach.dto.Instance;
 import org.folio.innreach.dto.Item;
 
-@FeignClient(name = "inventory-view", configuration = FolioFeignClientConfig.class)
+@HttpExchange("inventory-view")
 public interface InventoryViewClient {
 
-  @GetMapping(path = "/instances?query=(id={instanceId})&limit=1", consumes = "binary/octet-stream")
+  @GetExchange(url = "/instances?query=(id={instanceId})&limit=1")
   ResultList<InstanceView> getInstanceById(@PathVariable("instanceId") UUID instanceId);
 
-  @GetMapping(path = "/instances?query=(instance.hrid={hrid})&limit=1", consumes = "binary/octet-stream")
+  @GetExchange(url = "/instances?query=(instance.hrid={hrid})&limit=1")
   ResultList<InstanceView> getInstanceByHrid(@PathVariable("hrid") String instanceHrid);
 
   @Data
