@@ -21,6 +21,8 @@ public class HttpInnReachServiceClientConfiguration {
 
   @Bean("innReachRestClientBuilder")
   public RestClient.Builder innReachRestClientBuilder(InnReachErrorHandler errorHandler, JsonMapper jsonMapper) {
+    // StringHttpMessageConverter must be registered first so that @HttpExchange methods
+    // returning String receive the raw JSON body instead of Jackson attempting deserialization.
     var stringConverter = new StringHttpMessageConverter();
     stringConverter.setSupportedMediaTypes(List.of(MediaType.TEXT_PLAIN, MediaType.APPLICATION_JSON, MediaType.ALL));
 

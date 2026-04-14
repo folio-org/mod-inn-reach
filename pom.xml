@@ -30,7 +30,7 @@
     <marc4j.version>2.9.6</marc4j.version>
 
     <!-- test dependencies -->
-    <wiremock-standalone.version>3.13.1</wiremock-standalone.version>
+    <wiremock-standalone.version>3.13.2</wiremock-standalone.version>
     <junit-extensions.version>2.6.0</junit-extensions.version>
     <easy-random.version>5.0.0</easy-random.version>
     <micrometer.version>1.15.4</micrometer.version>

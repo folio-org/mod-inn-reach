@@ -7,8 +7,9 @@ spring:
     username: ${DB_USERNAME:postgres}
     password: ${DB_PASSWORD:postgres}
     url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_DATABASE:db}
+    hikari:
+      connection-init-sql: SET timezone = 'UTC'
   jpa:
-    database-platform: org.hibernate.dialect.PostgreSQLDialect
     hibernate:
       ddl-auto: none
       naming:
@@ -16,12 +17,14 @@ spring:
         implicit-strategy: org.springframework.boot.hibernate.SpringImplicitNamingStrategy
     properties:
       hibernate:
-        dialect: org.hibernate.dialect.PostgreSQLDialect
         format_sql: true
+        # NORMALIZE_UTC: Hibernate 7 normalizes OffsetDateTime to UTC before binding to JDBC.
+        # Combined with hibernate.jdbc.time_zone=UTC and connection-init-sql=SET timezone='UTC'
+        # to ensure consistent TIMESTAMP WITHOUT TIME ZONE handling regardless of JVM timezone.
         jdbc:
           time_zone: UTC
         timezone:
-            default_storage: NORMALIZE_UTC
+          default_storage: NORMALIZE_UTC
     show-sql: false
   liquibase:
     enabled: true
