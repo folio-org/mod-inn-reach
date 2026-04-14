@@ -19,7 +19,7 @@ spring:
         jdbc:
           time_zone: UTC
         timezone:
-            default_storage: NORMALIZE_UTC
+          default_storage: NORMALIZE_UTC
   kafka:
     bootstrap-servers: ${spring.embedded.kafka.brokers}
     producer:
@@ -59,6 +59,10 @@ inn-reach:
 okapi.url: ${OKAPI_URL:http://localhost:8080}
 INNREACH_TENANTS: testing|testing1|testing4
 MAX_FAILURE: 0
+retryable-update:
+  on-conflict:
+    retry-attempts: 3
+    retry-interval-ms: 50
 contribution:
   scheduler:
     fixed-delay: 30000
