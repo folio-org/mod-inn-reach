@@ -2,7 +2,7 @@
   "priority": 100,
   "request": {
     "method": "POST",
-    "urlPath": "/innreach/v2/auth/v1/oauth2/token",
+    "urlPath": "/auth/v1/oauth2/token",
     "queryParameters": {
       "grant_type": {
         "equalTo": "client_credentials"

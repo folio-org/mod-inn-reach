@@ -36,7 +36,7 @@ public class InnReachAuthExternalServiceImpl implements InnReachAuthExternalServ
       return cachedAccessToken;
     }
 
-    var accessTokenUrl = format("%s/innreach/v2%s", centralServerBaseUrl, INN_REACH_ACCESS_TOKEN_PATH);
+    var accessTokenUrl = format("%s%s", centralServerBaseUrl, INN_REACH_ACCESS_TOKEN_PATH);
     var authorizationHeader = buildBasicAuthorizationHeader(connectionDetailsDTO);
     var responseEntity = innReachAuthClient.getAccessToken(URI.create(accessTokenUrl), authorizationHeader);
 
