@@ -17,7 +17,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import org.folio.innreach.external.client.feign.InnReachLocationClient;
+import org.folio.innreach.external.client.InnReachLocationClient;
 import org.folio.innreach.external.dto.InnReachLocationDTO;
 import org.folio.innreach.external.dto.InnReachLocationsDTO;
 import org.folio.innreach.external.service.InnReachAuthExternalService;
@@ -50,9 +50,9 @@ class InnReachLocationExternalServiceImplTest {
     ));
 
     verify(innReachLocationClient).addAllLocations(any(), any(), any(), any(), any());
-    verify(innReachLocationClient, never()).addLocation(any(), any(), any(), any(), any(), any());
-    verify(innReachLocationClient, never()).deleteLocation(any(), any(), any(), any(), any());
-    verify(innReachLocationClient, never()).updateLocation(any(), any(), any(), any(), any(), any());
+    verify(innReachLocationClient, never()).addLocation(any(), any(), any(), any(), any());
+    verify(innReachLocationClient, never()).deleteLocation(any(), any(), any(), any());
+    verify(innReachLocationClient, never()).updateLocation(any(), any(), any(), any(), any());
   }
 
   @Test
@@ -68,10 +68,10 @@ class InnReachLocationExternalServiceImplTest {
       new InnReachLocationDTO("asd12", "asd12 description")
     ));
 
-    verify(innReachLocationClient).deleteLocation(any(), any(), any(), any(), any());
-    verify(innReachLocationClient).addLocation(any(), any(), any(), any(), any(), any());
+    verify(innReachLocationClient).deleteLocation(any(), any(), any(), any());
+    verify(innReachLocationClient).addLocation(any(), any(), any(), any(), any());
     verify(innReachLocationClient, never()).addAllLocations(any(), any(), any(), any(), any());
-    verify(innReachLocationClient, never()).updateLocation(any(), any(), any(), any(), any(), any());
+    verify(innReachLocationClient, never()).updateLocation(any(), any(), any(), any(), any());
   }
 
   @Test
@@ -87,9 +87,9 @@ class InnReachLocationExternalServiceImplTest {
       new InnReachLocationDTO("qwe12", "qwe12 modified description")
     ));
 
-    verify(innReachLocationClient).updateLocation(any(), any(), any(), any(), any(), any());
-    verify(innReachLocationClient, never()).deleteLocation(any(), any(), any(), any(), any());
-    verify(innReachLocationClient, never()).addLocation(any(), any(), any(), any(), any(), any());
+    verify(innReachLocationClient).updateLocation(any(), any(), any(), any(), any());
+    verify(innReachLocationClient, never()).deleteLocation(any(), any(), any(), any());
+    verify(innReachLocationClient, never()).addLocation(any(), any(), any(), any(), any());
     verify(innReachLocationClient, never()).addAllLocations(any(), any(), any(), any(), any());
   }
 }

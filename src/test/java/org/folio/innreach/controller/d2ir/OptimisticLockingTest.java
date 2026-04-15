@@ -2,6 +2,7 @@ package org.folio.innreach.controller.d2ir;
 
 import static com.github.tomakehurst.wiremock.stubbing.Scenario.STARTED;
 import static java.lang.String.format;
+import static org.folio.innreach.controller.d2ir.CirculationResultUtils.failedWithReason;
 import static org.hamcrest.Matchers.containsString;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TEST_METHOD;
@@ -9,7 +10,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import static org.folio.innreach.controller.d2ir.CirculationResultUtils.emptyErrors;
 import static org.folio.innreach.controller.d2ir.CirculationResultUtils.exceptionMatch;
-import static org.folio.innreach.controller.d2ir.CirculationResultUtils.failedWithReason;
 import static org.folio.innreach.controller.d2ir.CirculationResultUtils.logResponse;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.CANCEL_REQUEST;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.ITEM_SHIPPED;
@@ -27,9 +27,9 @@ import org.folio.innreach.controller.base.BaseApiControllerTest;
 import org.folio.innreach.domain.entity.InnReachTransaction;
 import org.folio.innreach.domain.entity.InnReachTransaction.TransactionState;
 import org.folio.innreach.domain.exception.ResourceVersionConflictException;
-import org.folio.innreach.dto.BaseCircRequestDTO;
 import org.folio.innreach.repository.InnReachTransactionRepository;
 
+import java.util.Map;
 import java.util.UUID;
 
 @Sql(
@@ -70,6 +70,7 @@ class OptimisticLockingTest extends BaseApiControllerTest {
   private static final String HOLDINGS_CONFLICT_STATE = "Holdings Conflict";
   private static final String PRE_POPULATED_PATRON_ID = "ifkkmbcnljgy5elaav74pnxgxa";
   private static final String USER_BY_ID_URL_TEMPLATE = "/users/%s";
+  private static final String ITEMS_URL = "/inventory/items";
 
   @Autowired
   private InnReachTransactionRepository repository;
@@ -82,7 +83,7 @@ class OptimisticLockingTest extends BaseApiControllerTest {
     var patronId = UUIDEncoder.decode(req.getPatronId());
 
     stubGet(format(USER_BY_ID_URL_TEMPLATE, patronId), "users/user.json");
-    stubGet(format("/inventory/items?query=barcode==%s", req.getItemBarcode()), "inventory/query-items-response.json");
+    stubGet(ITEMS_URL, "inventory/query-items-response.json", Map.of("query", "barcode==" + req.getItemBarcode()));
 
     stubItemRecoverableScenario();
 
@@ -98,7 +99,7 @@ class OptimisticLockingTest extends BaseApiControllerTest {
     var patronId = UUIDEncoder.decode(req.getPatronId());
 
     stubGet(format(USER_BY_ID_URL_TEMPLATE, patronId), "users/user.json");
-    stubGet(format("/inventory/items?query=barcode==%s", req.getItemBarcode()), "inventory/query-items-response.json");
+    stubGet(ITEMS_URL, "inventory/query-items-response.json", Map.of("query", "barcode==" + req.getItemBarcode()));
 
     stubItemUnrecoverableScenarion();
 

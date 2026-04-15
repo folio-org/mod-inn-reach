@@ -15,7 +15,7 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import org.folio.innreach.domain.service.CentralServerService;
-import org.folio.innreach.external.client.feign.InnReachClient;
+import org.folio.innreach.external.client.InnReachClient;
 import org.folio.innreach.external.service.InnReachAuthExternalService;
 
 class InnReachExternalServiceImplTest {

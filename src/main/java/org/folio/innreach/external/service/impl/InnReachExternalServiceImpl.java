@@ -10,7 +10,7 @@ import lombok.extern.log4j.Log4j2;
 import org.springframework.stereotype.Service;
 
 import org.folio.innreach.domain.service.CentralServerService;
-import org.folio.innreach.external.client.feign.InnReachClient;
+import org.folio.innreach.external.client.InnReachClient;
 import org.folio.innreach.external.service.InnReachAuthExternalService;
 import org.folio.innreach.external.service.InnReachExternalService;
 

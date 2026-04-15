@@ -2,7 +2,7 @@ package org.folio.innreach.mapper;
 
 import static java.util.Collections.emptyList;
 import static org.apache.commons.collections4.ListUtils.emptyIfNull;
-import static org.apache.commons.lang3.ObjectUtils.defaultIfNull;
+import static org.apache.commons.lang3.ObjectUtils.getIfNull;
 
 import java.util.List;
 
@@ -32,7 +32,7 @@ public interface ItemTypeMappingMapper {
   }
 
   default ItemTypeMappingsDTO toDTOCollection(Iterable<ItemTypeMapping> entities) {
-    List<ItemTypeMappingDTO> dtos = defaultIfNull(toDTOs(entities), emptyList());
+    List<ItemTypeMappingDTO> dtos = getIfNull(toDTOs(entities), emptyList());
 
     return new ItemTypeMappingsDTO().itemTypeMappings(dtos).totalRecords(dtos.size());
   }

@@ -1,7 +1,7 @@
 package org.folio.innreach.util;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.folio.innreach.domain.dto.folio.circulation.CirculationSettingDTO;
@@ -18,7 +18,7 @@ import java.util.List;
 public class JsonHelper {
 
   @Value("${inn-reach.checkout-time.duration}")
-  private static long defaultCheckoutTimeDuration;
+  private long defaultCheckoutTimeDuration;
 
   public static final String CHECKOUT_TIMEOUT_DURATION = "checkoutTimeoutDuration";
   private final ObjectMapper mapper;
@@ -33,7 +33,7 @@ public class JsonHelper {
     String jsonString;
     try {
       jsonString = mapper.writeValueAsString(o);
-    } catch (JsonProcessingException e) {
+    } catch (JacksonException e) {
       log.info(OBJECT_SERIALIZATION_FAILED, e);
       throw new IllegalStateException(OBJECT_SERIALIZATION_FAILED + ": " + e.getMessage());
     }
@@ -46,7 +46,7 @@ public class JsonHelper {
     T obj;
     try {
       obj = mapper.readValue(jsonString, valueType);
-    } catch (JsonProcessingException e) {
+    } catch (JacksonException e) {
       log.info(OBJECT_DESERIALIZATION_FAILED, e);
       throw new IllegalStateException(OBJECT_DESERIALIZATION_FAILED + ": " + e.getMessage());
     }
@@ -57,7 +57,7 @@ public class JsonHelper {
     T obj;
     try {
       obj = mapper.readValue(inputStream, valueType);
-    } catch (JsonProcessingException e) {
+    } catch (JacksonException e) {
       log.info(OBJECT_DESERIALIZATION_FAILED, e);
       throw new IllegalStateException(OBJECT_DESERIALIZATION_FAILED + ": " + e.getMessage());
     }
@@ -65,7 +65,7 @@ public class JsonHelper {
   }
 
 
-  public static Long getCheckoutTimeDurationInMilliseconds(List<CirculationSettingDTO> configData) {
+  public Long getCheckoutTimeDurationInMilliseconds(List<CirculationSettingDTO> configData) {
     long duration = configData.stream()
       .findFirst()
       .map(CirculationSettingDTO::getValue)

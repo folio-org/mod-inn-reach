@@ -12,20 +12,22 @@ import static org.folio.innreach.external.InnReachHeaders.X_TO_CODE;
 import java.io.File;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.util.Objects;
 import java.util.Random;
 import java.util.Set;
 import java.util.UUID;
 
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.DeserializationFeature;
+import tools.jackson.databind.json.JsonMapper;
 import lombok.SneakyThrows;
 import lombok.experimental.UtilityClass;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.springframework.core.retry.RetryPolicy;
+import org.springframework.core.retry.RetryTemplate;
 import org.springframework.http.HttpHeaders;
-import org.springframework.retry.support.RetryTemplate;
 
 import org.folio.innreach.domain.entity.CentralServer;
 import org.folio.innreach.util.UUIDEncoder;
@@ -33,6 +35,10 @@ import org.folio.innreach.util.UUIDEncoder;
 @UtilityClass
 @Log4j2
 public class TestUtil {
+
+  private static final JsonMapper JSON_MAPPER = JsonMapper.builder()
+    .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
+    .build();
 
   public static String randomUUIDString() {
     return UUID.randomUUID().toString();
@@ -73,9 +79,10 @@ public class TestUtil {
 
   @SneakyThrows
   public static <T> T deserializeFromJsonFile(String path, Class<T> type) {
-    var objectMapper = new ObjectMapper();
-    objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-    return objectMapper.readValue(TestUtil.class.getResource("/json" + path), type);
+    try (var inputStream = TestUtil.class.getResourceAsStream("/json" + path)) {
+      Objects.requireNonNull(inputStream, "Test resource not found: /json" + path);
+      return JSON_MAPPER.readValue(inputStream, type);
+    }
   }
 
   public static CentralServer refCentralServer(UUID id) {
@@ -93,10 +100,10 @@ public class TestUtil {
   }
 
   public static RetryTemplate createNoRetryTemplate() {
-    return RetryTemplate.builder()
-      .noBackoff()
-      .notRetryOn(Exception.class)
-      .build();
+    return new RetryTemplate(RetryPolicy.builder()
+      .maxDelay(Duration.ofMillis(1))
+      .excludes(Exception.class)
+      .build());
   }
 
   @SneakyThrows

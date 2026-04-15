@@ -48,7 +48,7 @@ import org.folio.innreach.domain.dto.folio.inventory.InventoryInstanceDTO;
 import org.folio.innreach.domain.service.RecordContributionService;
 import org.folio.innreach.domain.service.UserService;
 import org.folio.innreach.util.ApiRequestSplitter;
-import org.springframework.beans.factory.annotation.Value;
+import org.folio.innreach.util.CqlQuery;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
@@ -273,7 +273,8 @@ public class RequestServiceImpl implements RequestService {
   }
 
   private Item fetchItem(String itemHrId) {
-    var resultList = itemStorageClient.getItemByHrId(itemHrId);
+    var cql = CqlQuery.exactMatch("hrid", itemHrId);
+    var resultList = itemStorageClient.findByQuery(cql.getQuery());
     return getFirstItem(resultList)
       .orElseThrow(() -> new IllegalArgumentException("Item with hrid = " + itemHrId + " not found."));
   }

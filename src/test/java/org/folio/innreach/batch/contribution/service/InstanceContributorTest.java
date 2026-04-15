@@ -18,9 +18,9 @@ import java.net.SocketTimeoutException;
 import java.util.ArrayList;
 import java.util.UUID;
 
-import io.swagger.models.auth.In;
+import lombok.SneakyThrows;
 import org.folio.innreach.external.dto.InnReachResponse;
-import org.junit.Assert;
+import org.folio.innreach.external.exception.InnReachRetryException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -29,7 +29,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.retry.support.RetryTemplate;
 
 import org.folio.innreach.batch.contribution.ContributionJobContext;
 import org.folio.innreach.batch.contribution.ContributionJobContextManager;
@@ -37,6 +36,7 @@ import org.folio.innreach.domain.service.RecordTransformationService;
 import org.folio.innreach.domain.service.impl.RecordContributionServiceImpl;
 import org.folio.innreach.dto.BibInfo;
 import org.folio.innreach.external.service.InnReachContributionService;
+import org.springframework.core.retry.RetryTemplate;
 
 @ExtendWith(MockitoExtension.class)
 class InstanceContributorTest {
@@ -66,8 +66,9 @@ class InstanceContributorTest {
     ContributionJobContextManager.endContributionJobContext();
   }
 
+  @SneakyThrows
   @Test
-  void shouldContributeAndLookUp() throws SocketTimeoutException {
+  void shouldContributeAndLookUp() {
     when(instanceTransformationService.getBibInfo(any(), any())).thenReturn(new BibInfo());
     when(irContributionService.contributeBib(any(), any(), any())).thenReturn(response);
     when(irContributionService.lookUpBib(any(),any())).thenReturn(response);
@@ -103,7 +104,9 @@ class InstanceContributorTest {
     when(response.isOk()).thenReturn(false);
 
     assertThatThrownBy(() -> instanceContributor.contributeInstance(CENTRAL_SERVER_ID, instance))
-      .isInstanceOf(IllegalArgumentException.class)
+      .isInstanceOf(InnReachRetryException.class)
+      .hasMessageContaining("Contributing bib test has failed")
+      .cause().isInstanceOf(IllegalArgumentException.class)
       .hasMessageContaining("Unexpected contribution response:");
   }
 
@@ -118,7 +121,9 @@ class InstanceContributorTest {
     when(irContributionService.lookUpBib(any(), any())).thenReturn(errorResponse());
 
     assertThatThrownBy(() -> instanceContributor.contributeInstance(CENTRAL_SERVER_ID, instance))
-      .isInstanceOf(IllegalArgumentException.class)
+      .isInstanceOf(InnReachRetryException.class)
+      .hasMessageContaining("Contributing bib test has failed")
+      .cause().isInstanceOf(IllegalArgumentException.class)
       .hasMessageContaining("Unexpected verification response:");
   }
 

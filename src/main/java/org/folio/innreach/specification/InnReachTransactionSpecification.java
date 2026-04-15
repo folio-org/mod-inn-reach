@@ -24,6 +24,7 @@ import org.folio.innreach.domain.entity.InnReachTransaction;
 import org.folio.innreach.domain.entity.InnReachTransactionFilterParameters;
 import org.folio.innreach.domain.entity.InnReachTransactionFilterParameters.SortBy;
 import org.folio.innreach.domain.entity.InnReachTransactionFilterParameters.SortOrder;
+import org.folio.innreach.domain.entity.TransactionPatronHold;
 
 @Component
 public class InnReachTransactionSpecification {
@@ -175,9 +176,10 @@ public class InnReachTransactionSpecification {
       return cb.conjunction();
     }
 
+    var patronHold = cb.treat(hold, TransactionPatronHold.class);
     var shippedItemBarcodePredicate = cb.and(
       cb.equal(transaction.get("type"), PATRON),
-      hold.get("shippedItemBarcode").in(itemBarcodes)
+      patronHold.get("shippedItemBarcode").in(itemBarcodes)
     );
 
     var folioItemBarcodePredicate = cb.and(

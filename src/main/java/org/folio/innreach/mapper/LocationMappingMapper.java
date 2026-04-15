@@ -1,7 +1,7 @@
 package org.folio.innreach.mapper;
 
 import static java.util.Collections.emptyList;
-import static org.apache.commons.lang3.ObjectUtils.defaultIfNull;
+import static org.apache.commons.lang3.ObjectUtils.getIfNull;
 
 import java.util.List;
 
@@ -29,13 +29,13 @@ public interface LocationMappingMapper {
   List<LocationMappingDTO> toDTOs(Iterable<LocationMapping> entities);
 
   default LocationMappingsDTO toDTOCollection(Page<LocationMapping> pageable) {
-    List<LocationMappingDTO> dtos = defaultIfNull(toDTOs(pageable), emptyList());
+    List<LocationMappingDTO> dtos = getIfNull(toDTOs(pageable), emptyList());
 
     return new LocationMappingsDTO().locationMappings(dtos).totalRecords((int) pageable.getTotalElements());
   }
 
   default LocationMappingsDTO toDTOCollection(Iterable<LocationMapping> entities) {
-    List<LocationMappingDTO> dtos = defaultIfNull(toDTOs(entities), emptyList());
+    List<LocationMappingDTO> dtos = getIfNull(toDTOs(entities), emptyList());
 
     return new LocationMappingsDTO().locationMappings(dtos).totalRecords(dtos.size());
   }

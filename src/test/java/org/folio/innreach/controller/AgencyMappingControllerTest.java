@@ -21,12 +21,11 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.boot.resttestclient.TestRestTemplate;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
@@ -297,7 +296,7 @@ class AgencyMappingControllerTest extends BaseControllerTest {
     return lsMappings
       .stream()
       .flatMap(m -> m.getAgencyCodeMappings().stream())
-      .collect(Collectors.toList());
+      .toList();
   }
 
   private static <T> Optional<T> findInCollection(Collection<T> mappings, Predicate<T> filter) {

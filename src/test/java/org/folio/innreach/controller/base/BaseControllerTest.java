@@ -8,6 +8,7 @@ import jakarta.validation.Valid;
 import org.folio.innreach.domain.listener.KafkaInitialContributionEventListener;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
+import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureTestRestTemplate;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
@@ -19,7 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.folio.innreach.ModInnReachApplication;
 import org.folio.innreach.domain.listener.KafkaCirculationEventListener;
 import org.folio.innreach.domain.listener.KafkaInventoryEventListener;
-import org.folio.innreach.external.client.feign.InnReachAuthClient;
+import org.folio.innreach.external.client.InnReachAuthClient;
 import org.folio.innreach.external.dto.AccessTokenDTO;
 import org.folio.spring.liquibase.FolioLiquibaseConfiguration;
 import org.folio.tenant.domain.dto.TenantAttributes;
@@ -28,6 +29,7 @@ import org.folio.tenant.rest.resource.TenantApi;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, classes = {ModInnReachApplication.class,
   BaseControllerTest.TestTenantController.class})
 @ActiveProfiles({"test", "testcontainers-pg"})
+@AutoConfigureTestRestTemplate
 public class BaseControllerTest {
 
   @MockitoBean

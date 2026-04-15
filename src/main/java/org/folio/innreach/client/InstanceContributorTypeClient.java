@@ -8,21 +8,20 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.springframework.cloud.openfeign.FeignClient;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.service.annotation.GetExchange;
+import org.springframework.web.service.annotation.HttpExchange;
+import org.springframework.web.service.annotation.PostExchange;
 
-import org.folio.innreach.client.config.FolioFeignClientConfig;
 import org.folio.innreach.domain.dto.folio.ResultList;
 
-@FeignClient(value = "contributor-name-types", configuration = FolioFeignClientConfig.class)
+@HttpExchange("contributor-name-types")
 public interface InstanceContributorTypeClient {
 
-  @GetMapping(value = "?query=(name=={name})", produces = APPLICATION_JSON_VALUE)
-  ResultList<NameType> queryContributorTypeByName(@PathVariable("name") String name);
+  @GetExchange(accept = APPLICATION_JSON_VALUE)
+  ResultList<NameType> findByQuery(@RequestParam("query") String query);
 
-  @PostMapping(consumes = APPLICATION_JSON_VALUE)
+  @PostExchange(contentType = APPLICATION_JSON_VALUE)
   void createContributorType(NameType nameType);
 
   @Builder

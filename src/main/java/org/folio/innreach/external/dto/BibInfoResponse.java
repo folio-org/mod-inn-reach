@@ -1,9 +1,5 @@
 package org.folio.innreach.external.dto;
 
-import static java.util.List.of;
-
-import static org.folio.innreach.external.dto.InnReachResponse.Error.fieldError;
-
 import java.util.List;
 
 import lombok.AllArgsConstructor;

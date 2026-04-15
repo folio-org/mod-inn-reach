@@ -20,7 +20,6 @@ import org.folio.innreach.config.props.ContributionJobProperties;
 import org.folio.spring.config.properties.FolioEnvironment;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
@@ -39,7 +38,6 @@ import org.folio.innreach.mapper.MappingMethods;
 import org.folio.innreach.repository.ContributionErrorRepository;
 import org.folio.innreach.repository.ContributionRepository;
 import org.folio.spring.FolioExecutionContext;
-import org.springframework.retry.support.RetryTemplate;
 
 class ContributionServiceImplTest {
 
@@ -69,10 +67,6 @@ class ContributionServiceImplTest {
 
   @InjectMocks
   private ContributionServiceImpl service;
-
-  @Spy
-//  @Qualifier("contributionRetryTemplate")
-  private RetryTemplate retryTemplate;
 
   @Mock
   private FolioEnvironment folioEnv;
@@ -130,7 +124,6 @@ class ContributionServiceImplTest {
   @Test
   void shouldUpdateContributionStats() {
     var contribution = createContribution();
-    var centralServerId = contribution.getCentralServer().getId();
     contribution.setRecordsTotal(4343L);
     contribution.setRecordsProcessed(11L);
     contribution.setRecordsContributed(10L);
@@ -139,8 +132,6 @@ class ContributionServiceImplTest {
     when(repository.save(any())).thenReturn(contribution);
 
     service.updateContributionStats(contribution.getId(), mapper.toDTO(contribution));
-
-    ArgumentCaptor<Contribution> argument = ArgumentCaptor.forClass(Contribution.class);
 
     Contribution saved = repository.findById(contribution.getId()).get();
     assertEquals(contribution.getRecordsTotal(), saved.getRecordsTotal());

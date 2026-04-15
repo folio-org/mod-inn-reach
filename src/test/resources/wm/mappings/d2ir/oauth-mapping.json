@@ -2,7 +2,15 @@
   "priority": 100,
   "request": {
     "method": "POST",
-    "url": "/auth/v1/oauth2/token?grant_type=client_credentials&scope=innreach_tp"
+    "urlPath": "/auth/v1/oauth2/token",
+    "queryParameters": {
+      "grant_type": {
+        "equalTo": "client_credentials"
+      },
+      "scope": {
+        "equalTo": "innreach_tp"
+      }
+    }
   },
   "response": {
     "status": 200,

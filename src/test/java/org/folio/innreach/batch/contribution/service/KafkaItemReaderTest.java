@@ -24,10 +24,10 @@ import org.mockito.Answers;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.kafka.support.serializer.JsonDeserializer;
 
 import org.folio.innreach.batch.KafkaItemReader;
 import org.folio.innreach.domain.dto.folio.inventorystorage.InstanceIterationEvent;
+import org.springframework.kafka.support.serializer.JacksonJsonDeserializer;
 
 @ExtendWith(MockitoExtension.class)
 class KafkaItemReaderTest {
@@ -40,7 +40,7 @@ class KafkaItemReaderTest {
 
   @InjectMocks
   private KafkaItemReader<String, InstanceIterationEvent> reader = new KafkaItemReader<>(new Properties(), "topic",
-    new StringDeserializer(), new JsonDeserializer<>());
+    new StringDeserializer(), new JacksonJsonDeserializer<>());
 
   @BeforeEach
   void setUp() {

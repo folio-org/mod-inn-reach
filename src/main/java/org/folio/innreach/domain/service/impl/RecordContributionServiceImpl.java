@@ -7,9 +7,11 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.folio.innreach.external.exception.InnReachConnectionException;
+import org.folio.innreach.external.exception.InnReachRetryException;
 import org.folio.innreach.external.exception.ServiceSuspendedException;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.retry.support.RetryTemplate;
+import org.springframework.core.retry.RetryException;
+import org.springframework.core.retry.RetryTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 
@@ -40,7 +42,7 @@ public class RecordContributionServiceImpl implements RecordContributionService 
   private final ContributionExceptionListener exceptionListener;
 
   @Override
-  public void contributeInstance(UUID centralServerId, Instance instance) throws SocketTimeoutException{
+  public void contributeInstance(UUID centralServerId, Instance instance) throws SocketTimeoutException {
     var bibId = instance.getHrid();
 
     log.info("contributeInstance: contributing bib {}", bibId);
@@ -63,7 +65,7 @@ public class RecordContributionServiceImpl implements RecordContributionService 
   }
 
   @Override
-  public void deContributeInstance(UUID centralServerId, Instance instance) throws SocketTimeoutException{
+  public void deContributeInstance(UUID centralServerId, Instance instance) throws SocketTimeoutException {
     var bibId = instance.getHrid();
     log.info("De-contributing bib {}", bibId);
     irContributionService.deContributeBib(centralServerId, bibId);
@@ -71,9 +73,14 @@ public class RecordContributionServiceImpl implements RecordContributionService 
 
   private void contributeAndVerifyBib(UUID centralServerId, String bibId, BibInfo bib) {
     log.info("contributeAndVerifyBib: bib id {}", bibId);
-    retryTemplate.execute(r -> contributeBib(centralServerId, bibId, bib));
-    retryTemplate.execute(r -> verifyBibContribution(centralServerId, bibId));
-    log.info("contributeAndVerifyBib: finished contribution of bib {}", bibId);
+    try {
+      retryTemplate.execute(() -> contributeBib(centralServerId, bibId, bib));
+      retryTemplate.execute(() -> verifyBibContribution(centralServerId, bibId));
+      log.info("contributeAndVerifyBib: finished contribution of bib {}", bibId);
+    } catch (RetryException ex) {
+      log.error("contributeAndVerifyBib:: Failed to contribute bib {} after retries", bibId, ex);
+      throw new InnReachRetryException("Contributing bib %s has failed".formatted(bibId), ex.getLastException());
+    }
   }
 
   @Override
@@ -111,7 +118,12 @@ public class RecordContributionServiceImpl implements RecordContributionService 
 
     log.info("Loaded {} items", itemsCount);
 
-    retryTemplate.execute(r -> contributeBibItems(bibId, centralServerId, bibItems));
+    try {
+      retryTemplate.execute(() -> contributeBibItems(bibId, centralServerId, bibItems));
+    } catch (RetryException ex) {
+      log.error("Failed to contribute items for bib {} after retries", bibId, ex);
+      throw new InnReachRetryException("Contributing items for bib %s has failed".formatted(bibId), ex.getLastException());
+    }
 
     log.info("Finished contributing items of bib {}", bibId);
 

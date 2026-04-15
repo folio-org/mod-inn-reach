@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 @Data
-@ConfigurationProperties("system-user")
+@ConfigurationProperties("folio.system-user")
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor

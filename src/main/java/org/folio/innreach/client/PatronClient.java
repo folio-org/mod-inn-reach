@@ -4,17 +4,16 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
 import java.util.UUID;
 
-import org.springframework.cloud.openfeign.FeignClient;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.service.annotation.GetExchange;
+import org.springframework.web.service.annotation.HttpExchange;
 
-import org.folio.innreach.client.config.FolioFeignClientConfig;
 import org.folio.innreach.domain.dto.folio.patron.PatronDTO;
 
-@FeignClient(name = "patron", configuration = FolioFeignClientConfig.class)
+@HttpExchange("patron")
 public interface PatronClient {
 
-  @GetMapping(value = "/account/{id}", produces = APPLICATION_JSON_VALUE)
+  @GetExchange(value = "/account/{id}", accept = APPLICATION_JSON_VALUE)
   PatronDTO getAccountDetails(@PathVariable("id") UUID userId);
 
 }

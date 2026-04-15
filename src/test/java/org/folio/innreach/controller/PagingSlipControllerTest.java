@@ -20,7 +20,7 @@ import java.util.UUID;
 import org.folio.innreach.domain.dto.folio.inventory.InventoryItemDTO;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.boot.resttestclient.TestRestTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.jdbc.Sql;
@@ -35,7 +35,7 @@ import org.folio.innreach.domain.dto.folio.circulation.RequestDTO;
 import org.folio.innreach.domain.dto.folio.inventory.InventoryInstanceDTO;
 import org.folio.innreach.domain.dto.folio.inventorystorage.LocationDTO;
 import org.folio.innreach.dto.PagingSlipsDTO;
-import org.folio.innreach.external.client.feign.InnReachClient;
+import org.folio.innreach.external.client.InnReachClient;
 
 @Sql(
   scripts = {"classpath:db/inn-reach-transaction/clear-inn-reach-transaction-tables.sql",

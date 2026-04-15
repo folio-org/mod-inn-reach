@@ -3,17 +3,14 @@ package org.folio.innreach.client;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
 import java.util.UUID;
-
 import lombok.Data;
-import org.springframework.cloud.openfeign.FeignClient;
-import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.service.annotation.GetExchange;
+import org.springframework.web.service.annotation.HttpExchange;
 
-import org.folio.innreach.client.config.FolioFeignClientConfig;
-
-@FeignClient(value = "hrid-settings-storage", configuration = FolioFeignClientConfig.class)
+@HttpExchange("hrid-settings-storage")
 public interface HridSettingsClient {
 
-  @GetMapping(value = "hrid-settings", produces = APPLICATION_JSON_VALUE)
+  @GetExchange(value = "hrid-settings", accept = APPLICATION_JSON_VALUE)
   HridSettings getHridSettings();
 
   @Data

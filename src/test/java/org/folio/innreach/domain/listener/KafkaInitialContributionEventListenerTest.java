@@ -8,7 +8,7 @@ import org.folio.innreach.domain.dto.folio.inventorystorage.InstanceIterationEve
 import org.folio.innreach.domain.listener.base.BaseKafkaApiTest;
 import org.folio.innreach.repository.JobExecutionStatusRepository;
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 
 import java.time.Duration;
 import java.util.ArrayList;
@@ -22,7 +22,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 @Log4j2
 class KafkaInitialContributionEventListenerTest extends BaseKafkaApiTest {
 
-  @SpyBean
+  @MockitoSpyBean
   private JobExecutionStatusRepository jobExecutionStatusRepository;
 
   @Test

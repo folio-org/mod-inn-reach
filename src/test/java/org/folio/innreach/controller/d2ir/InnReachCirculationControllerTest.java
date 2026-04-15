@@ -26,6 +26,7 @@ import static org.folio.innreach.fixture.RequestFixture.createRequestDTO;
 import static org.folio.innreach.fixture.ServicePointUserFixture.createServicePointUserDTO;
 import static org.folio.innreach.fixture.TestUtil.circHeaders;
 import static org.folio.innreach.fixture.TestUtil.deserializeFromJsonFile;
+import static org.folio.util.StringUtil.cqlEncode;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -47,7 +48,6 @@ import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TES
 import static org.springframework.test.context.jdbc.SqlMergeMode.MergeMode.MERGE;
 
 import lombok.SneakyThrows;
-import org.apache.commons.lang3.ObjectUtils;
 import org.folio.innreach.batch.contribution.IterationEventReaderFactory;
 import org.folio.innreach.client.CirculationClient;
 import org.folio.innreach.client.HridSettingsClient;
@@ -73,6 +73,7 @@ import org.folio.innreach.domain.service.PatronHoldService;
 import org.folio.innreach.domain.service.RecordContributionService;
 import org.folio.innreach.domain.service.RequestPreferenceService;
 import org.folio.innreach.domain.service.RequestService;
+import org.folio.innreach.domain.service.RetryableUpdateService;
 import org.folio.innreach.domain.service.UserService;
 import org.folio.innreach.domain.service.VirtualRecordService;
 import org.folio.innreach.dto.CheckOutRequestDTO;
@@ -85,12 +86,14 @@ import org.folio.innreach.external.service.InnReachExternalService;
 import org.folio.innreach.mapper.InnReachTransactionHoldMapper;
 import org.folio.innreach.repository.InnReachTransactionRepository;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.boot.resttestclient.TestRestTemplate;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -121,6 +124,7 @@ import java.util.UUID;
   executionPhase = AFTER_TEST_METHOD
 )
 @SqlMergeMode(MERGE)
+@ExtendWith(MockitoExtension.class)
 class InnReachCirculationControllerTest extends BaseControllerTest {
 
   private static final String ITEM_IN_TRANSIT_ENDPOINT = "/inn-reach/d2ir/circ/intransit/{trackingId}/{centralCode}";
@@ -171,6 +175,8 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
 
   @MockitoBean
   private ItemService itemService;
+  @MockitoBean
+  private RetryableUpdateService retryableUpdateService;
   @MockitoBean
   private CirculationClient circulationClient;
   @MockitoSpyBean
@@ -342,7 +348,7 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     when(circulationClient.sendRequest(any()))
       .thenThrow(new RuntimeException("Request not permitted"));
     when(requestPreferenceService.findUserRequestPreference(any(UUID.class))).thenReturn(requestPreference);
-    when(itemStorageClient.getItemByHrId(item.getHrid()))
+    when(itemStorageClient.findByQuery("hrid==" + cqlEncode(item.getHrid())))
       .thenReturn(ResultList.of(1, List.of(expectedRecontributionItem)));
 
     var responseEntity = testRestTemplate.postForEntity(
@@ -431,7 +437,7 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     when(userService.getUserById(any())).thenReturn(Optional.of(user));
     when(itemService.find(any())).thenReturn(Optional.of(item));
     when(itemService.findItemByBarcode(any())).thenReturn(Optional.of(item));
-    when(itemService.changeAndUpdate(any(), any())).thenReturn(Optional.of(item));
+    when(retryableUpdateService.changeAndUpdateWithRetry(any(), any(), any())).thenReturn(Optional.of(item));
 
     var itemShippedDTO = createItemShippedDTO();
 
@@ -455,7 +461,7 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
   })
   void processItemShippedCircRequest_returnFailedStatus_whenAssociatedItemDoesNotExist() {
     when(itemService.findItemByBarcode(any())).thenReturn(Optional.of(createInventoryItemDTO()));
-    when(itemService.changeAndUpdate(any(), any(), any())).thenThrow(new IllegalArgumentException("Not found"));
+    when(retryableUpdateService.changeAndUpdateWithRetry(any(), any(), any())).thenThrow(new IllegalArgumentException("Not found"));
 
     var transactionHoldDTO = createTransactionHoldDTO();
 
@@ -1376,10 +1382,5 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
       .transactionTime(123456)
       .patronAgencyCode("xyz01")
       .patronId("123445667");
-  }
-
-  private static boolean isCentralPatronInfoCleared(InnReachTransaction transaction) {
-    var hold = transaction.getHold();
-    return ObjectUtils.allNull(hold.getPatronId(), hold.getPatronName());
   }
 }

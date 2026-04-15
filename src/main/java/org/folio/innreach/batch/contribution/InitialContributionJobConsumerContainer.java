@@ -1,6 +1,5 @@
 package org.folio.innreach.batch.contribution;
 
-import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.extern.log4j.Log4j2;
@@ -19,6 +18,8 @@ import org.springframework.kafka.listener.ContainerProperties;
 import org.springframework.kafka.listener.DefaultErrorHandler;
 import org.springframework.util.backoff.BackOff;
 import org.springframework.util.backoff.FixedBackOff;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpServerErrorException;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -63,7 +64,8 @@ public class InitialContributionJobConsumerContainer {
     }, fixedBackOff);
     errorHandler.addRetryableExceptions(ServiceSuspendedException.class);
     errorHandler.addRetryableExceptions(SocketTimeOutExceptionWrapper.class);
-    errorHandler.addRetryableExceptions(FeignException.class);
+    errorHandler.addRetryableExceptions(HttpClientErrorException.class);
+    errorHandler.addRetryableExceptions(HttpServerErrorException.class);
     errorHandler.addRetryableExceptions(InnReachConnectionException.class);
     return errorHandler;
   }

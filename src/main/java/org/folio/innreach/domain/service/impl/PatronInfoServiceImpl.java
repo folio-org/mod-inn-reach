@@ -4,7 +4,6 @@ import static java.lang.Boolean.TRUE;
 import static java.util.Optional.ofNullable;
 import static org.apache.commons.collections4.ListUtils.emptyIfNull;
 import static org.apache.commons.lang3.StringUtils.defaultIfEmpty;
-import static org.apache.commons.lang3.StringUtils.equalsAnyIgnoreCase;
 import static org.apache.commons.lang3.StringUtils.isNotEmpty;
 
 import static org.folio.innreach.domain.entity.VisiblePatronFieldConfiguration.VisiblePatronField.USER_CUSTOM_FIELDS;
@@ -12,6 +11,7 @@ import static org.folio.innreach.external.dto.InnReachResponse.Error.ofMessage;
 
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
@@ -22,6 +22,7 @@ import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.Strings;
 import org.folio.innreach.util.DateHelper;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
@@ -148,10 +149,10 @@ public class PatronInfoServiceImpl implements PatronInfoService {
     var fields = fieldConfig.getFields();
     var checkCustomFields = fields.remove(USER_CUSTOM_FIELDS);
     var fieldsString = fields.stream().map(VisiblePatronFieldConfiguration.VisiblePatronField::getValue)
-      .collect(Collectors.toList());
+      .collect(Collectors.toCollection(ArrayList::new));
     if (checkCustomFields) {
       fieldsString.addAll(
-        fieldConfig.getUserCustomFields().stream().map(field -> "customFields." + field).collect(Collectors.toList()));
+        fieldConfig.getUserCustomFields().stream().map(field -> "customFields." + field).toList());
     }
 
     var query = String.join(QUERY_DELIMITER + " or ", fieldsString);
@@ -189,7 +190,7 @@ public class PatronInfoServiceImpl implements PatronInfoService {
   }
 
   private Integer countInnReachLoans(String patronId, List<PatronDTO.Loan> loans) {
-    var loanIds = loans.stream().map(PatronDTO.Loan::getId).collect(Collectors.toList());
+    var loanIds = loans.stream().map(PatronDTO.Loan::getId).toList();
     return transactionService.countInnReachLoans(patronId, loanIds);
   }
 
@@ -284,7 +285,7 @@ public class PatronInfoServiceImpl implements PatronInfoService {
                                                                       int firstNamePosition, int middleNamePosition,
                                                                       int lastNamePosition) {
 
-    boolean checkFirstName = equalsAnyIgnoreCase(patronNameTokens[firstNamePosition],
+    boolean checkFirstName = Strings.CI.equalsAny(patronNameTokens[firstNamePosition],
       nonNullStrip(personal.getFirstName()), nonNullStrip(personal.getPreferredFirstName()));
     boolean checkMiddleName = patronNameTokens[middleNamePosition].equalsIgnoreCase(nonNullStrip(personal.getMiddleName()));
     boolean checkLastName = patronNameTokens[lastNamePosition].equalsIgnoreCase(nonNullStrip(personal.getLastName()));
@@ -293,7 +294,7 @@ public class PatronInfoServiceImpl implements PatronInfoService {
 
   private static boolean checkFirstNameLastNameWithPosition(User.Personal personal, String[] patronNameTokens,
                                                             int firstNamePos, int lastNamePos) {
-    boolean checkFirstName = equalsAnyIgnoreCase(patronNameTokens[firstNamePos], nonNullStrip(personal.getFirstName()),
+    boolean checkFirstName = Strings.CI.equalsAny(patronNameTokens[firstNamePos], nonNullStrip(personal.getFirstName()),
       nonNullStrip(personal.getPreferredFirstName()), nonNullStrip(personal.getMiddleName()));
     boolean checkLastName = patronNameTokens[lastNamePos].equalsIgnoreCase(nonNullStrip(personal.getLastName()));
     return (checkFirstName && checkLastName);

@@ -2,7 +2,7 @@ package org.folio.innreach.mapper;
 
 import static java.util.Collections.emptyList;
 import static org.apache.commons.collections4.ListUtils.emptyIfNull;
-import static org.apache.commons.lang3.ObjectUtils.defaultIfNull;
+import static org.apache.commons.lang3.ObjectUtils.getIfNull;
 
 import java.util.List;
 
@@ -35,7 +35,7 @@ public interface CentralPatronTypeMappingMapper {
   }
 
   default CentralPatronTypeMappingsDTO toDTOCollection(Iterable<CentralPatronTypeMapping> entities) {
-    List<CentralPatronTypeMappingDTO> dtos = defaultIfNull(toDTOs(entities), emptyList());
+    List<CentralPatronTypeMappingDTO> dtos = getIfNull(toDTOs(entities), emptyList());
 
     return new CentralPatronTypeMappingsDTO().centralPatronTypeMappings(dtos).totalRecords(dtos.size());
   }

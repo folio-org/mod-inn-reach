@@ -17,7 +17,7 @@ import org.springframework.stereotype.Service;
 import org.folio.innreach.domain.dto.CentralServerConnectionDetailsDTO;
 import org.folio.innreach.domain.service.CentralServerService;
 import org.folio.innreach.dto.BibInfo;
-import org.folio.innreach.external.client.feign.InnReachContributionClient;
+import org.folio.innreach.external.client.InnReachContributionClient;
 import org.folio.innreach.external.dto.BibItemsInfo;
 import org.folio.innreach.external.dto.InnReachResponse;
 import org.folio.innreach.external.service.InnReachAuthExternalService;

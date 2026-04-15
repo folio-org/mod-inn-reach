@@ -7,6 +7,7 @@ import java.util.UUID;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.folio.innreach.util.CqlQuery;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
@@ -57,7 +58,8 @@ public class HoldingsServiceImpl implements HoldingsService {
   @Cacheable(cacheNames = HOLDING_SOURCE_CACHE, key = "@folioExecutionContext.tenantId + ': ' + #sourceName")
   public Optional<HoldingSourceDTO> findHoldingSourceByName(String sourceName) {
     log.debug("findHoldingSourceByName:: parameters sourceName: {}", sourceName);
-    return getFirstItem(holdingSourcesClient.querySourceByName(sourceName));
+    var cqlQuery = CqlQuery.exactMatchByName(sourceName);
+    return getFirstItem(holdingSourcesClient.findByQuery(cqlQuery.getQuery(), 1));
   }
 
 }

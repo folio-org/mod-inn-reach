@@ -12,15 +12,19 @@ import static org.folio.innreach.util.InnReachConstants.SKIPPING_INELIGIBLE_INST
 import static org.folio.innreach.util.InnReachConstants.SKIPPING_INELIGIBLE_MSG;
 
 import java.net.SocketTimeoutException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiConsumer;
-import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 import com.google.common.collect.Iterables;
 
-import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.folio.innreach.domain.entity.OngoingContributionStatus;
@@ -29,7 +33,7 @@ import org.folio.innreach.external.exception.ServiceSuspendedException;
 import org.folio.innreach.batch.contribution.InitialContributionJobConsumerContainer;
 import org.folio.innreach.external.exception.SocketTimeOutExceptionWrapper;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.retry.support.RetryTemplate;
+import org.springframework.core.retry.RetryTemplate;
 import org.springframework.stereotype.Service;
 
 import org.folio.innreach.batch.contribution.ContributionJobContext;
@@ -46,6 +50,8 @@ import org.folio.innreach.domain.service.RecordContributionService;
 import org.folio.innreach.dto.Instance;
 import org.folio.innreach.dto.Item;
 import org.folio.spring.FolioExecutionContext;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpServerErrorException;
 
 @Service
 @Log4j2
@@ -270,7 +276,7 @@ public class ContributionJobRunner {
         log.info("runItemContribution:: Re-contributing instance to update bib status, centralServer id: {}, instance id : {}, item id: {}", centralServerId, instance.getId(), item.getId());
         recordContributionService.contributeInstance(centralServerId, instance);
         if (eligibleItem) {
-          log.info("runItemContribution:: contributing centralServer id:{}, instance id : {}, item id: {}", centralServerId, instance.getId(), item.getId());
+          log.info("runItemContribution:: contributing centralServer id: {}, instance id : {}, item id: {}", centralServerId, instance.getId(), item.getId());
           recordContributionService.contributeItems(centralServerId, instance.getHrid(), List.of(item));
         } else if (contributedItem) {
           log.info("runItemContribution:: de-contributing centralServer id: {}, instance id : {}, item id: {}", centralServerId, instance.getId(), item.getId());
@@ -414,7 +420,7 @@ public class ContributionJobRunner {
     var bibId = instance.getHrid();
     var items = instance.getItems().stream()
       .filter(i -> isEligibleForContribution(centralServerId, i))
-      .collect(Collectors.toList());
+      .toList();
 
     if (items.isEmpty()) {
       log.info("item is empty while contributing instance id: {}", instance.getId());
@@ -456,7 +462,7 @@ public class ContributionJobRunner {
       stats.addRecordsContributed(itemsCount);
       addRecordProcessed();
     }
-    catch (ServiceSuspendedException | FeignException | InnReachConnectionException e) {
+    catch (ServiceSuspendedException | HttpClientErrorException | HttpServerErrorException | InnReachConnectionException e) {
       log.info(getContributionJobContext().isInitialContribution() ? "Initial: exception occurred: {}": "Ongoing: exception occurred: {}", e);
       throw e;
     }
@@ -490,7 +496,7 @@ public class ContributionJobRunner {
       recordContributionService.contributeInstance(centralServerId, instance);
       stats.addRecordsContributed(1);
     }
-    catch (ServiceSuspendedException | FeignException | InnReachConnectionException e) {
+    catch (ServiceSuspendedException | HttpServerErrorException | HttpClientErrorException | InnReachConnectionException e) {
       log.info(getContributionJobContext().isInitialContribution() ? "Initial: instance id:{}, exception occurred: {}": "Ongoing: instance id:{}, exception occurred: {}", instance.getId(), e);
       throw e;
     }
@@ -516,7 +522,7 @@ public class ContributionJobRunner {
       stats.addRecordsDeContributed(1);
       addRecordProcessed();
     }
-    catch (ServiceSuspendedException | FeignException | InnReachConnectionException e) {
+    catch (ServiceSuspendedException | HttpClientErrorException | HttpServerErrorException | InnReachConnectionException e) {
       log.info("Initial: instance id: {}, deContributeInstance exception occurred e: {}",instance.getId(), e);
       throw e;
     }
@@ -542,7 +548,7 @@ public class ContributionJobRunner {
       stats.addRecordsDeContributed(1);
       addRecordProcessed();
     }
-    catch (ServiceSuspendedException | FeignException | InnReachConnectionException e) {
+    catch (ServiceSuspendedException | HttpClientErrorException | HttpServerErrorException | InnReachConnectionException e) {
       log.info("Initial: item id: {}, deContributeItem exception occurred e: {}", item.getId(), e);
       throw e;
     }
@@ -575,7 +581,7 @@ public class ContributionJobRunner {
       completeContribution(context);
       endContributionJobContext();
     }
-    catch (ServiceSuspendedException | FeignException | InnReachConnectionException | SocketTimeOutExceptionWrapper e) {
+    catch (ServiceSuspendedException | HttpClientErrorException | HttpServerErrorException | InnReachConnectionException | SocketTimeOutExceptionWrapper e) {
       log.info("exception thrown from runOngoing :", e);
       throw e;
     }
@@ -607,7 +613,7 @@ public class ContributionJobRunner {
     log.info("loadInstanceWithItems:: parameters instanceId: {}", instanceId);
     Instance instance = null;
     try {
-      instance = retryTemplate.execute(r -> inventoryViewService.getInstance(instanceId));
+      instance = retryTemplate.execute(() -> inventoryViewService.getInstance(instanceId));
     } catch (Exception e) {
       log.info("loadInstanceWithItems:: exception occurred with instance id: {} and e: {}", instanceId, e);
       instanceExceptionListener.logProcessError(e, instanceId);

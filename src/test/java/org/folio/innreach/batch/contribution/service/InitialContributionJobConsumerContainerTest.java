@@ -1,16 +1,14 @@
 package org.folio.innreach.batch.contribution.service;
 
-import feign.FeignException;
 import org.folio.innreach.external.exception.ServiceSuspendedException;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.*;
-import org.mockito.Mock;
+import org.springframework.boot.kafka.autoconfigure.KafkaProperties;
 import org.springframework.kafka.core.*;
 import org.springframework.kafka.listener.ConcurrentMessageListenerContainer;
 import org.springframework.kafka.listener.ContainerProperties;
 import org.springframework.kafka.support.KafkaHeaders;
-import org.springframework.kafka.support.serializer.JsonSerializer;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.kafka.support.serializer.JacksonJsonDeserializer;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.Deserializer;
 import org.apache.kafka.common.serialization.StringDeserializer;
@@ -24,9 +22,11 @@ import org.folio.innreach.domain.dto.folio.inventorystorage.InstanceIterationEve
 import org.folio.innreach.domain.listener.base.BaseKafkaApiTest;
 import org.folio.innreach.domain.service.impl.ContributionServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.kafka.KafkaProperties;
-import org.springframework.kafka.support.serializer.JsonDeserializer;
+import org.springframework.kafka.support.serializer.JacksonJsonSerializer;
 import org.springframework.messaging.support.MessageBuilder;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.web.client.HttpClientErrorException;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.time.Duration;
 import java.util.HashMap;
@@ -56,7 +56,7 @@ class InitialContributionJobConsumerContainerTest extends BaseKafkaApiTest{
   private KafkaProperties kafkaProperties;
 
   @Autowired
-  private ObjectMapper mapper;
+  private JsonMapper mapper;
 
   @Autowired
   private ContributionJobProperties jobProperties;
@@ -64,13 +64,13 @@ class InitialContributionJobConsumerContainerTest extends BaseKafkaApiTest{
   @Autowired
   private RetryConfig retryConfig;
 
-  @Mock
+  @MockitoBean
   ContributionJobRunner contributionJobRunner;
 
   @Autowired
   ContributionServiceImpl contributionService;
 
-  @Mock
+  @MockitoBean("instanceExceptionListener")
   ContributionExceptionListener contributionExceptionListener;
 
   @BeforeEach
@@ -113,7 +113,7 @@ class InitialContributionJobConsumerContainerTest extends BaseKafkaApiTest{
     doNothing().when(contributionJobRunner).stopContribution(any());
     doNothing().when(contributionJobRunner).cancelContributionIfRetryExhausted(any());
 
-    doThrow(FeignException.class).when(contributionJobRunner)
+    doThrow(HttpClientErrorException.class).when(contributionJobRunner)
       .runInitialContribution(any(), any());
 
     initialContributionJobConsumerContainer.tryStartOrCreateConsumer(initialContributionMessageListener);
@@ -167,7 +167,7 @@ class InitialContributionJobConsumerContainerTest extends BaseKafkaApiTest{
     var topicName = getTopicName();
     var context = prepareContext();
 
-    var consumerProperties = kafkaProperties.buildConsumerProperties(null);
+    var consumerProperties = kafkaProperties.buildConsumerProperties();
 
     ConsumerFactory<String, InstanceIterationEvent> factory = new DefaultKafkaConsumerFactory<>(consumerProperties,keyDeserializer(),valueDeserializer());
 
@@ -215,7 +215,7 @@ class InitialContributionJobConsumerContainerTest extends BaseKafkaApiTest{
   }
 
   public InitialContributionJobConsumerContainer prepareContributionJobConsumerContainer(String tempTopic) {
-    var consumerProperties = kafkaProperties.buildConsumerProperties(null);
+    var consumerProperties = kafkaProperties.buildConsumerProperties();
     consumerProperties.put(GROUP_ID_CONFIG, jobProperties.getReaderGroupId());
 
     return new InitialContributionJobConsumerContainer(consumerProperties, tempTopic, keyDeserializer(), valueDeserializer(), maxInterval, maxAttempt,
@@ -223,7 +223,7 @@ class InitialContributionJobConsumerContainerTest extends BaseKafkaApiTest{
   }
 
   private Deserializer<InstanceIterationEvent> valueDeserializer() {
-    JsonDeserializer<InstanceIterationEvent> deserializer = new JsonDeserializer<>(InstanceIterationEvent.class, mapper);
+    JacksonJsonDeserializer<InstanceIterationEvent> deserializer = new JacksonJsonDeserializer<>(InstanceIterationEvent.class, mapper);
     deserializer.setUseTypeHeaders(false);
     deserializer.addTrustedPackages("*");
 
@@ -239,9 +239,9 @@ class InitialContributionJobConsumerContainerTest extends BaseKafkaApiTest{
   }
 
   public <V> ProducerFactory<String, V> producerFactory() {
-    Map<String, Object> props = new HashMap<>(kafkaProperties.buildProducerProperties(null));
+    Map<String, Object> props = new HashMap<>(kafkaProperties.buildProducerProperties());
     props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
-    props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class);
+    props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JacksonJsonSerializer.class);
     return new DefaultKafkaProducerFactory<>(props);
   }
 

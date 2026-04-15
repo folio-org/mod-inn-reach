@@ -1,15 +1,15 @@
 package org.folio.innreach.domain.dto.deserializer;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.JsonParser;
+import tools.jackson.databind.DeserializationContext;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.deser.std.StdDeserializer;
 
 import org.folio.innreach.domain.dto.folio.sourcerecord.ParsedRecordDTO;
 import org.folio.innreach.domain.dto.folio.sourcerecord.RecordFieldDTO;
@@ -37,18 +37,18 @@ public class SourceRecordDTODeserializer extends StdDeserializer<SourceRecordDTO
   }
 
   public SourceRecordDTODeserializer() {
-    this(null);
+    this(SourceRecordDTO.class);
   }
 
   @Override
   public SourceRecordDTO deserialize(JsonParser jsonParser, DeserializationContext deserializationContext)
-      throws IOException {
-    JsonNode node = jsonParser.getCodec().readTree(jsonParser);
+      throws JacksonException {
+    JsonNode node = jsonParser.readValueAsTree();
 
     return SourceRecordDTO.builder()
-      .id(UUID.fromString(node.get(ID_JSON_NODE_NAME).asText()))
-      .recordType(node.get(RECORD_TYPE_JSON_NODE_NAME).asText())
-      .state(node.get(STATE_JSON_NODE_NAME).asText())
+      .id(UUID.fromString(node.get(ID_JSON_NODE_NAME).asString()))
+      .recordType(node.get(RECORD_TYPE_JSON_NODE_NAME).asString())
+      .state(node.get(STATE_JSON_NODE_NAME).asString())
       .deleted(node.get(DELETED_JSON_NODE_NAME).asBoolean())
       .parsedRecord(deserializeParsedRecord(node.get(PARSED_RECORD_JSON_NODE_NAME)))
       .build();
@@ -58,8 +58,8 @@ public class SourceRecordDTODeserializer extends StdDeserializer<SourceRecordDTO
     var contentJsonNode = parsedRecordJsonNode.get(CONTENT_JSON_NODE_NAME);
 
     return ParsedRecordDTO.builder()
-      .id(UUID.fromString(parsedRecordJsonNode.get(ID_JSON_NODE_NAME).asText()))
-      .leader(contentJsonNode.get(LEADER_JSON_NODE_NAME).asText())
+      .id(UUID.fromString(parsedRecordJsonNode.get(ID_JSON_NODE_NAME).asString()))
+      .leader(contentJsonNode.get(LEADER_JSON_NODE_NAME).asString())
       .fields(deserializeRecordFields(contentJsonNode.get(FIELDS_JSON_NODE_NAME)))
       .build();
   }
@@ -67,8 +67,8 @@ public class SourceRecordDTODeserializer extends StdDeserializer<SourceRecordDTO
   private List<RecordFieldDTO> deserializeRecordFields(JsonNode recordFieldsJsonNode) {
     var fields = new ArrayList<RecordFieldDTO>();
 
-    recordFieldsJsonNode.forEach(recordField -> recordField.fields()
-      .forEachRemaining(fieldJsonNode -> fields.add(deserializeRecordField(fieldJsonNode)))
+    recordFieldsJsonNode.forEach(recordField -> recordField.properties()
+      .forEach(fieldJsonNode -> fields.add(deserializeRecordField(fieldJsonNode)))
     );
 
     return fields;
@@ -78,19 +78,19 @@ public class SourceRecordDTODeserializer extends StdDeserializer<SourceRecordDTO
     var key = fieldJsonNode.getKey();
     var value = fieldJsonNode.getValue();
 
-    if (value.isContainerNode()) {
+    if (value.isContainer()) {
       return RecordFieldDTO.builder()
         .code(key)
         .value(null)
         .subFields(deserializeSubFields(value))
-        .ind1(value.get(IND1_JSON_NODE_NAME).asText().charAt(0))
-        .ind2(value.get(IND2_JSON_NODE_NAME).asText().charAt(0))
+        .ind1(value.get(IND1_JSON_NODE_NAME).asString().charAt(0))
+        .ind2(value.get(IND2_JSON_NODE_NAME).asString().charAt(0))
         .build();
     }
 
     return RecordFieldDTO.builder()
       .code(key)
-      .value(value.asText())
+      .value(value.asString())
       .build();
   }
 
@@ -98,9 +98,9 @@ public class SourceRecordDTODeserializer extends StdDeserializer<SourceRecordDTO
     var subFields = new ArrayList<RecordFieldDTO.SubFieldDTO>();
 
     subFieldJsonNode.get(SUB_FIELDS_JSON_NODE_NAME)
-      .forEach(subFieldNode -> subFieldNode.fields()
-        .forEachRemaining(subfieldKeyValue -> subFields.add(
-          new RecordFieldDTO.SubFieldDTO(subfieldKeyValue.getKey().charAt(0), subfieldKeyValue.getValue().asText()))
+      .forEach(subFieldNode -> subFieldNode.properties()
+        .forEach(subfieldKeyValue -> subFields.add(
+          new RecordFieldDTO.SubFieldDTO(subfieldKeyValue.getKey().charAt(0), subfieldKeyValue.getValue().asString()))
         ));
 
     return subFields;

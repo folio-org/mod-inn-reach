@@ -22,7 +22,7 @@ import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.folio.innreach.ModInnReachApplication;
 import org.folio.innreach.domain.event.DomainEvent;
 import org.folio.innreach.domain.service.impl.TenantScopedExecutionService;
-import org.folio.innreach.external.client.feign.InnReachAuthClient;
+import org.folio.innreach.external.client.InnReachAuthClient;
 import org.folio.innreach.external.dto.AccessTokenDTO;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -43,7 +43,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.postgresql.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
@@ -70,7 +70,7 @@ public class BaseKafkaApiTest {
 
 
   @Container
-  public static PostgreSQLContainer<?> postgresqlContainer = new PostgreSQLContainer<>(Objects
+  public static PostgreSQLContainer postgresqlContainer = new PostgreSQLContainer(Objects
     .toString(System.getenv("TESTCONTAINERS_POSTGRES_IMAGE"), "postgres:16-alpine"));
 
   @Autowired
@@ -106,7 +106,7 @@ public class BaseKafkaApiTest {
   private KafkaTemplate<String, DomainEvent> buildKafkaTemplate() {
     var senderProps = KafkaTestUtils.producerProps(embeddedKafkaBroker);
     senderProps.put("key.serializer", "org.apache.kafka.common.serialization.StringSerializer");
-    senderProps.put("value.serializer", "org.springframework.kafka.support.serializer.JsonSerializer");
+    senderProps.put("value.serializer", "org.springframework.kafka.support.serializer.JacksonJsonSerializer");
     return new KafkaTemplate<>(new DefaultKafkaProducerFactory<>(senderProps));
   }
 

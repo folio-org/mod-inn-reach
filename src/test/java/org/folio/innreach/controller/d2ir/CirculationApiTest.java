@@ -1,8 +1,8 @@
 package org.folio.innreach.controller.d2ir;
 
 import static java.lang.String.format;
-import static org.awaitility.Awaitility.await;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.CANCEL_REQUEST;
+import static org.folio.util.StringUtil.cqlEncode;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
@@ -23,32 +23,32 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.folio.innreach.fixture.CirculationFixture.createTransactionHoldDTO;
 import static org.folio.innreach.util.UUIDEncoder.encode;
 
-import java.time.Duration;
 import java.time.Instant;
 import java.util.Map;
 import java.util.UUID;
 
 import lombok.SneakyThrows;
+import org.folio.innreach.controller.base.BaseApiControllerTest;
 import org.folio.innreach.domain.dto.OwningSiteCancelsRequestDTO;
 import org.folio.innreach.domain.service.RecordContributionService;
 import org.folio.innreach.external.service.InnReachExternalService;
-import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlMergeMode;
 
 import org.folio.innreach.client.CirculationClient;
-import org.folio.innreach.controller.base.BaseApiControllerTest;
 import org.folio.innreach.domain.dto.folio.circulation.RequestDTO;
 import org.folio.innreach.domain.service.HoldingsService;
 import org.folio.innreach.domain.service.RequestService;
-import org.folio.innreach.mapper.InnReachTransactionPickupLocationMapper;
 import org.folio.innreach.repository.InnReachTransactionRepository;
 import org.folio.innreach.util.JsonHelper;
 import org.folio.innreach.util.UUIDEncoder;
@@ -61,6 +61,7 @@ import org.folio.innreach.util.UUIDEncoder;
   executionPhase = AFTER_TEST_METHOD
 )
 @SqlMergeMode(MERGE)
+@ExtendWith(MockitoExtension.class)
 class CirculationApiTest extends BaseApiControllerTest {
 
   public static final String INNREACH_LOCALSERVERS_URL = "/innreach/v2/contribution/localservers";
@@ -68,25 +69,22 @@ class CirculationApiTest extends BaseApiControllerTest {
   public static final String HOLDINGS_URL = "/holdings-storage/holdings";
   public static final String INSTANCES_URL = "/inventory/instances";
   public static final String ITEMS_URL = "/inventory/items";
-  public static final String REQUESTS_URL = "/circulation/requests";
+  public static final String ITEMS_STORAGE_URL = "/item-storage/items";
+  public static final String CIRCULATION_REQUESTS_URL = "/circulation/requests";
+  public static final String USERS_URL = "/users";
+  public static final String REQUEST_PREFERENCE_URL = "/request-preference-storage/request-preference";
+  public static final String HOLDINGS_SOURCES_URL = "/holdings-sources";
+  public static final String SERVICE_POINTS_URL = "/service-points";
+  public static final String INSTANCE_TYPES_URL = "/instance-types";
+  public static final String CONTRIBUTOR_NAME_TYPES_URL = "/contributor-name-types";
   public static final String LOAN_URL = "/circulation/loans/fd5109c7-8934-4294-9504-c1a4a4f07c96";
-  public static final String QUERY_INSTANCE_BY_HRID_URL_TEMPLATE = "/inventory/instances?query=(hrid==%s)";
   public static final String QUERY_INSTANCE_BY_ID_URL_TEMPLATE = "/inventory/instances/%s";
-  public static final String QUERY_INVENTORY_ITEM_BY_HRID_URL_TEMPLATE = "/inventory/items?query=hrid==%s";
-  public static final String QUERY_ITEMS_BY_HRID_URL_TEMPLATE = "/item-storage/items?query=hrid==%s";
-  public static final String QUERY_REQUEST_BY_ITEM_ID_URL_TEMPLATE = "/circulation/requests?query=(itemId==%s)";
   public static final String MOVE_CIRCULATION_REQUEST_URL_TEMPLATE = "/circulation/requests/%s/move";
-  public static final String QUERY_CONTRIBUTOR_TYPE_BY_NAME_URL_TEMPLATE = "/contributor-name-types?query=(name==%s)";
-  public static final String QUERY_INSTANCE_TYPE_BY_NAME_URL_TEMPLATE = "/instance-types?query=(name==%s)";
-  public static final String QUERY_SERVICE_POINTS_BY_CODE_ULR_TEMPLATE = "/service-points?query=code==%s";
-  public static final String QUERY_HOLDING_SOURCE_BY_NAME_URL_TEMPLATE = "/holdings-sources?query=name==%s&limit=1";
   public static final String USER_BY_ID_URL_TEMPLATE = "/users/%s";
-  public static final String QUERY_USERS_BY_BARCODE = "/users?query=barcode==%s";
   private static final String HOLDING_URL = "/holdings-storage/holdings/%s";
-  private static final String REQUEST_PREFERENCE_STORAGE_BY_USER_ID_URL_TEMPLATE = "/request-preference-storage/request-preference?query=userId==%s";
 
-  private static final String INSTANCE_TYPE_NAME_URLENCODED = "INN-Reach%20temporary%20record";
-  private static final String INSTANCE_CONTRIBUTOR_NAME_URLENCODED = "INN-Reach%20author";
+  private static final String INSTANCE_TYPE_NAME_URLENCODED = "INN-Reach temporary record";
+  private static final String INSTANCE_CONTRIBUTOR_NAME_URLENCODED = "INN-Reach author";
 
   private static final String PATRON_HOLD_OPERATION = "patronhold";
   private static final String ITEM_HOLD_OPERATION = "itemhold";
@@ -107,7 +105,7 @@ class CirculationApiTest extends BaseApiControllerTest {
   private static final String PRE_POPULATED_PATRON_ID = "ifkkmbcnljgy5elaav74pnxgxa";
   private static final int PRE_POPULATED_CENTRAL_ITEM_TYPE = 1;
   private static final UUID PRE_POPULATED_REQUEST_ID = UUID.fromString("ea11eba7-3c0f-4d15-9cca-c8608cd6bc8a");
-  private static final UUID PRE_POPULATED_ITEM_ID = UUID.fromString("9a326225-6530-41cc-9399-a61987bfab3c");
+  private static final String PRE_POPULATED_ITEM_ID = "9a326225-6530-41cc-9399-a61987bfab3c";
 
   private static final UUID FOLIO_PATRON_ID = UUID.fromString("ea11eba7-3c0f-4d15-9cca-c8608cd6bc8a");
   private static final UUID NEW_HOLDING_ID = UUID.fromString("16f40c4e-235d-4912-a683-2ad919cc8b07");
@@ -122,8 +120,8 @@ class CirculationApiTest extends BaseApiControllerTest {
   private static final String FOLIO_HOLDING_SOURCE = "FOLIO";
   private static final String PATRON_ID = "0000098765";
   private static final String USER_ID = "5d9bd03d-f031-4820-baea-6dc953ef4b7b";
-
-  private static final Duration ASYNC_AWAIT_TIMEOUT = Duration.ofSeconds(20);
+  private static final String PICKUP_LOCATION = "cd1:Circ Desk 1:CD1DeliveryStop";
+  private static final String PICKUP_LOCATION_CODE = "cd1";
 
   @MockitoBean
   private InnReachExternalService innReachExternalService;
@@ -131,30 +129,27 @@ class CirculationApiTest extends BaseApiControllerTest {
   @MockitoBean
   private RecordContributionService recordContributionService;
 
-  @SpyBean
+  @MockitoSpyBean
   private InnReachTransactionRepository repository;
 
-  @SpyBean
+  @MockitoSpyBean
   private CirculationClient circulationClient;
 
-  @SpyBean
+  @MockitoSpyBean
   private RequestService requestService;
 
-  @SpyBean
+  @MockitoSpyBean
   private HoldingsService holdingsService;
 
   @Autowired
   private JsonHelper jsonHelper;
 
-  @Autowired
-  private InnReachTransactionPickupLocationMapper pickupLocationMapper;
-
   @Captor
-  ArgumentCaptor<RequestDTO> requestDtoCaptor;
+  private ArgumentCaptor<RequestDTO> requestDtoCaptor;
 
-  @AfterEach
-  protected void tearDown() {
-    super.tearDown();
+  @BeforeEach
+  void setup() {
+    wm.resetAll();
     reset(repository, circulationClient, requestService, holdingsService);
   }
 
@@ -173,15 +168,16 @@ class CirculationApiTest extends BaseApiControllerTest {
     transactionHoldDTO.setItemId(ITEM_HRID);
     transactionHoldDTO.setCentralPatronType(PRE_POPULATED_CENTRAL_PATRON_TYPE);
     var owningSiteCancelPath = "/circ/owningsitecancel/%s/%s".formatted(NEW_TRACKING_ID, PRE_POPULATED_CENTRAL_CODE);
-    stubGet(format(QUERY_INVENTORY_ITEM_BY_HRID_URL_TEMPLATE, ITEM_HRID), "inventory/query-items-response.json");
+    stubGet(ITEMS_URL, "inventory/query-items-response.json", Map.of("query", "hrid==" + ITEM_HRID));
     stubGet(format(HOLDING_URL, NEW_HOLDING_ID), "inventory-storage/holding-response.json");
     stubGet(format(QUERY_INSTANCE_BY_ID_URL_TEMPLATE, PRE_POPULATED_INSTANCE_ID), "inventory/instance-response.json");
-    stubGet(format(QUERY_USERS_BY_BARCODE, PATRON_ID), "users/query-users-response.json");
-    stubGet(format(REQUEST_PREFERENCE_STORAGE_BY_USER_ID_URL_TEMPLATE, USER_ID), "request-preference-storage/query-request-preference-response.json");
-    stubGet(format(QUERY_REQUEST_BY_ITEM_ID_URL_TEMPLATE, PRE_POPULATED_ITEM_ID), "circulation/empty-requests-response.json");
-    stubPost(REQUESTS_URL, "circulation/not-allowed-error-response.json",
+    stubGet(USERS_URL, "users/query-users-response.json", Map.of("query", "barcode==" + cqlEncode(PATRON_ID)));
+    stubGet(REQUEST_PREFERENCE_URL, "request-preference-storage/query-request-preference-response.json",
+      Map.of("query", "userId==" + cqlEncode(USER_ID)));
+    stubGet(CIRCULATION_REQUESTS_URL, "circulation/empty-requests-response.json", Map.of("query", "itemId==" + cqlEncode(PRE_POPULATED_ITEM_ID)));
+    stubPost(CIRCULATION_REQUESTS_URL, "circulation/not-allowed-error-response.json",
       respAction -> respAction.withStatus(422), MappingActions.none());
-    stubGet(format(QUERY_ITEMS_BY_HRID_URL_TEMPLATE, ITEM_HRID),"item-storage/query-items-response.json");
+    stubGet(ITEMS_STORAGE_URL, "item-storage/query-items-response.json", Map.of("query", "hrid==" + cqlEncode(ITEM_HRID)));
     when(innReachExternalService.postInnReachApi(eq(PRE_POPULATED_CENTRAL_CODE), eq(owningSiteCancelPath), any(OwningSiteCancelsRequestDTO.class)))
       .thenReturn("success");
     when(recordContributionService.contributeItems(eq(PRE_POPULATED_CENTRAL_SERVER_ID), any(), anyList()))
@@ -193,7 +189,7 @@ class CirculationApiTest extends BaseApiControllerTest {
         .headers(getOkapiHeaders()))
       .andExpect(status().isOk());
 
-    await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() -> {
+    awaitAssertion(() -> {
       var innReachTransaction = repository.findByTrackingIdAndCentralServerCode(
         NEW_TRACKING_ID, PRE_POPULATED_CENTRAL_CODE).orElse(null);
 
@@ -202,7 +198,7 @@ class CirculationApiTest extends BaseApiControllerTest {
     });
 
     verify(innReachExternalService).postInnReachApi(eq(PRE_POPULATED_CENTRAL_CODE), eq(owningSiteCancelPath), any());
-    await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() ->
+    awaitAssertion(() ->
       verify(recordContributionService).contributeItems(eq(PRE_POPULATED_CENTRAL_SERVER_ID), any(), anyList()));
   }
 
@@ -223,13 +219,14 @@ class CirculationApiTest extends BaseApiControllerTest {
 
     stubGet(format(USER_BY_ID_URL_TEMPLATE, patronId), "users/user.json");
     stubGet(HRID_SETTINGS_URL, "inventory-storage/hrid-settings-response.json");
-    stubGet(format(QUERY_INSTANCE_BY_HRID_URL_TEMPLATE, "intracking1d2ir"), "inventory/query-instance-response.json");
+    stubGet(INSTANCES_URL, "inventory/query-instance-response.json", Map.of("query", "(hrid==intracking1d2ir)"));
     stubGet(INNREACH_LOCALSERVERS_URL, "agency-codes/d2ir-local-servers-response-01.json");
-    stubGet(format(QUERY_HOLDING_SOURCE_BY_NAME_URL_TEMPLATE, FOLIO_HOLDING_SOURCE), "inventory-storage/holding-sources-response.json");
+    stubGet(HOLDINGS_SOURCES_URL, "inventory-storage/holding-sources-response.json",
+      Map.of("query", "name==" + cqlEncode(FOLIO_HOLDING_SOURCE), "limit", "1"));
     stubPost(HOLDINGS_URL, "inventory-storage/holding-response.json");
     stubPost(ITEMS_URL, "inventory/item-response.json");
-    stubGet(format(QUERY_INVENTORY_ITEM_BY_HRID_URL_TEMPLATE, "ittracking15east"), "inventory/query-items-response.json");
-    stubGet(format(QUERY_REQUEST_BY_ITEM_ID_URL_TEMPLATE, PRE_POPULATED_ITEM_ID), "circulation/empty-requests-response.json");
+    stubGet(ITEMS_URL, "inventory/query-items-response.json", Map.of("query", "hrid==" + cqlEncode("ittracking15east")));
+    stubGet(CIRCULATION_REQUESTS_URL, "circulation/empty-requests-response.json", Map.of("query", "itemId==(" + cqlEncode(PRE_POPULATED_ITEM_ID) + ")"));
     stubPost(format(MOVE_CIRCULATION_REQUEST_URL_TEMPLATE, PRE_POPULATED_REQUEST_ID), "circulation/updated-request-response.json");
 
     mockMvc.perform(post(CIRCULATION_ENDPOINT, PATRON_HOLD_OPERATION, PRE_POPULATED_TRACKING_ID, PRE_POPULATED_CENTRAL_CODE)
@@ -238,9 +235,8 @@ class CirculationApiTest extends BaseApiControllerTest {
         .headers(getOkapiHeaders()))
       .andExpect(status().isOk());
 
-    await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() ->
-      verify(repository).save(argThat(t -> UPDATED_REQUEST_ITEM_ID.equals(t.getHold().getFolioItemId())))
-    );
+    awaitAssertion(() ->
+      verify(repository).save(argThat(t -> UPDATED_REQUEST_ITEM_ID.equals(t.getHold().getFolioItemId()))));
 
     verify(holdingsService).create(argThat(holding -> holding.getSourceId() != null));
     verify(circulationClient).moveRequest(eq(PRE_POPULATED_REQUEST_ID), any());
@@ -267,24 +263,24 @@ class CirculationApiTest extends BaseApiControllerTest {
     transactionHoldDTO.setItemAgencyCode(PRE_POPULATED_CENTRAL_AGENCY_CODE);
     transactionHoldDTO.setCentralItemType(PRE_POPULATED_CENTRAL_ITEM_TYPE);
     transactionHoldDTO.setPatronId(PRE_POPULATED_PATRON_ID);
+    transactionHoldDTO.setPickupLocation(PICKUP_LOCATION);
     var patronId = UUIDEncoder.decode(transactionHoldDTO.getPatronId());
-    var pickupLocation = pickupLocationMapper.fromString(transactionHoldDTO.getPickupLocation());
 
     stubGet(format(USER_BY_ID_URL_TEMPLATE, patronId), "users/user.json");
     stubGet(format(USER_BY_ID_URL_TEMPLATE, FOLIO_PATRON_ID), "users/user-response.json");
-    stubGet(format(QUERY_INSTANCE_TYPE_BY_NAME_URL_TEMPLATE, INSTANCE_TYPE_NAME_URLENCODED), "inventory-storage/query-instance-types-response.json");
-    stubGet(format(QUERY_SERVICE_POINTS_BY_CODE_ULR_TEMPLATE, pickupLocation.getPickupLocCode()), "inventory-storage/query-service-points-response.json");
-    stubGet(format(QUERY_CONTRIBUTOR_TYPE_BY_NAME_URL_TEMPLATE, INSTANCE_CONTRIBUTOR_NAME_URLENCODED), "inventory-storage/query-contributor-name-types-response.json");
+    stubGet(INSTANCE_TYPES_URL, "inventory-storage/query-instance-types-response.json", Map.of("query", "name==" + cqlEncode(INSTANCE_TYPE_NAME_URLENCODED)));
+    stubGet(SERVICE_POINTS_URL, "inventory-storage/query-service-points-response.json", Map.of("query", "code==" + cqlEncode(PICKUP_LOCATION_CODE)));
+    stubGet(CONTRIBUTOR_NAME_TYPES_URL, "inventory-storage/query-contributor-name-types-response.json", Map.of("query", "name==" + cqlEncode(INSTANCE_CONTRIBUTOR_NAME_URLENCODED)));
     stubGet(HRID_SETTINGS_URL, "inventory-storage/hrid-settings-response.json");
-    stubGet(format(QUERY_INSTANCE_BY_HRID_URL_TEMPLATE, "innewtrackingidd2ir"), "inventory/query-instance-response.json");
+    stubGet(INSTANCES_URL, "inventory/query-instance-response.json", Map.of("query", "(hrid==innewtrackingidd2ir)"));
     stubGet(INNREACH_LOCALSERVERS_URL, "agency-codes/d2ir-local-servers-response-01.json");
     stubPost(INSTANCES_URL, "inventory/instance-response.json");
-    stubGet(format(QUERY_HOLDING_SOURCE_BY_NAME_URL_TEMPLATE, FOLIO_HOLDING_SOURCE), "inventory-storage/holding-sources-response.json");
+    stubGet(HOLDINGS_SOURCES_URL, "inventory-storage/holding-sources-response.json", Map.of("query", "name==" + cqlEncode(FOLIO_HOLDING_SOURCE), "limit", "1"));
     stubPost(HOLDINGS_URL, "inventory-storage/holding-response.json");
     stubPost(ITEMS_URL, "inventory/item-response.json");
-    stubPost(REQUESTS_URL, "circulation/item-request-response.json");
-    stubGet(format(QUERY_INVENTORY_ITEM_BY_HRID_URL_TEMPLATE, ITEM_HRID), "inventory/query-items-response.json");
-    stubGet(format(QUERY_REQUEST_BY_ITEM_ID_URL_TEMPLATE, PRE_POPULATED_ITEM_ID), "circulation/empty-requests-response.json");
+    stubPost(CIRCULATION_REQUESTS_URL, "circulation/item-request-response.json");
+    stubGet(ITEMS_URL, "inventory/query-items-response.json", Map.of("query", "hrid==" + cqlEncode(ITEM_HRID)));
+    stubGet(CIRCULATION_REQUESTS_URL, "inventory/query-items-response.json", Map.of("query", "(itemId==" + PRE_POPULATED_ITEM_ID + ")"));
 
     mockMvc.perform(post(CIRCULATION_ENDPOINT, PATRON_HOLD_OPERATION, "newtrackingid", PRE_POPULATED_CENTRAL_CODE)
         .content(jsonHelper.toJson(transactionHoldDTO))
@@ -292,8 +288,7 @@ class CirculationApiTest extends BaseApiControllerTest {
         .headers(getOkapiHeaders()))
       .andExpect(status().isOk());
 
-    await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() ->
-      verify(circulationClient).sendRequest(any()));
+    awaitAssertion(() -> verify(circulationClient).sendRequest(any()));
 
     verify(holdingsService).create(argThat(holding -> holding.getSourceId() != null));
   }
@@ -329,8 +324,8 @@ class CirculationApiTest extends BaseApiControllerTest {
     stubGet(format("%s/%s", HOLDINGS_URL, NEW_HOLDING_ID), "inventory-storage/holding-response.json");
     stubPut(format("%s/%s", HOLDINGS_URL, NEW_HOLDING_ID));
     stubDelete(format("%s/%s", HOLDINGS_URL, FOLIO_HOLDING_ID));
-    stubGet(format("%s/%s", REQUESTS_URL, PRE_POPULATED_REQUEST_ID), "circulation/item-request-response.json");
-    stubPut(format("%s/%s", REQUESTS_URL, PRE_POPULATED_REQUEST_ID));
+    stubGet(format("%s/%s", CIRCULATION_REQUESTS_URL, PRE_POPULATED_REQUEST_ID), "circulation/item-request-response.json");
+    stubPut(format("%s/%s", CIRCULATION_REQUESTS_URL, PRE_POPULATED_REQUEST_ID));
     stubDelete(format("%s/%s", INSTANCES_URL, FOLIO_INSTANCE_ID));
     stubGet(LOAN_URL, "circulation/loan-response.json");
     stubDelete(LOAN_URL);
@@ -366,8 +361,8 @@ class CirculationApiTest extends BaseApiControllerTest {
     stubPut(format("%s/%s", ITEMS_URL, PRE_POPULATED_ITEM_ID));
     stubGet(format("%s/%s", HOLDINGS_URL, NEW_HOLDING_ID), "inventory-storage/holding-response.json");
     stubPut(format("%s/%s", HOLDINGS_URL, NEW_HOLDING_ID));
-    stubGet(format("%s/%s", REQUESTS_URL, PRE_POPULATED_REQUEST_ID), "circulation/item-request-response.json");
-    stubPut(format("%s/%s", REQUESTS_URL, PRE_POPULATED_REQUEST_ID));
+    stubGet(format("%s/%s", CIRCULATION_REQUESTS_URL, PRE_POPULATED_REQUEST_ID), "circulation/item-request-response.json");
+    stubPut(format("%s/%s", CIRCULATION_REQUESTS_URL, PRE_POPULATED_REQUEST_ID));
 
     mockMvc.perform(put(CIRCULATION_ENDPOINT, CANCEL_REQ_OPERATION, PRE_POPULATED_TRACKING_ID, PRE_POPULATED_CENTRAL_CODE)
         .content(jsonHelper.toJson(requestPayload))
@@ -392,15 +387,16 @@ class CirculationApiTest extends BaseApiControllerTest {
     transactionHoldDTO.setPatronAgencyCode(PRE_POPULATED_LOCAL_AGENCY_CODE2);
     transactionHoldDTO.setCentralItemType(PRE_POPULATED_CENTRAL_ITEM_TYPE);
     transactionHoldDTO.setPatronId(encode(FOLIO_PATRON_ID));
-    var pickupLocation = pickupLocationMapper.fromString(transactionHoldDTO.getPickupLocation());
+    transactionHoldDTO.setPickupLocation(PICKUP_LOCATION);
 
     stubGet(format(USER_BY_ID_URL_TEMPLATE, FOLIO_PATRON_ID), "users/user-response.json");
-    stubGet(format(QUERY_SERVICE_POINTS_BY_CODE_ULR_TEMPLATE, pickupLocation.getPickupLocCode()), "inventory-storage/query-service-points-response.json");
+    stubGet(SERVICE_POINTS_URL, "inventory-storage/query-service-points-response.json", Map.of("query", "code==" + cqlEncode(PICKUP_LOCATION_CODE)));
     stubPost(HOLDINGS_URL, "inventory-storage/holding-response.json");
     stubPost(ITEMS_URL, "inventory/item-response.json");
-    stubPost(REQUESTS_URL, "circulation/item-request-response.json");
-    stubGet(format(QUERY_INVENTORY_ITEM_BY_HRID_URL_TEMPLATE, ITEM_HRID), "inventory/query-items-response.json");
-    stubGet(format(QUERY_REQUEST_BY_ITEM_ID_URL_TEMPLATE, PRE_POPULATED_ITEM_ID), "circulation/empty-requests-response.json");
+    stubPost(CIRCULATION_REQUESTS_URL, "circulation/item-request-response.json");
+    stubGet(ITEMS_URL, "inventory/query-items-response.json", Map.of("query", "hrid==" + ITEM_HRID));
+    stubGet(CIRCULATION_REQUESTS_URL, "circulation/empty-requests-response.json",
+      Map.of("query", "(itemId==" + cqlEncode(PRE_POPULATED_ITEM_ID) + ")"));
     stubGet(format(HOLDING_URL, NEW_HOLDING_ID), "inventory-storage/holding-response.json");
 
     mockMvc.perform(put(CIRCULATION_ENDPOINT, LOCAL_HOLD_OPERATION, "newtrackingid", PRE_POPULATED_CENTRAL_CODE)
@@ -409,12 +405,11 @@ class CirculationApiTest extends BaseApiControllerTest {
         .headers(getOkapiHeaders()))
       .andExpect(status().isOk());
 
-    await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() ->
-      verify(circulationClient).sendRequest(requestDtoCaptor.capture()));
+    awaitAssertion(() -> verify(circulationClient).sendRequest(requestDtoCaptor.capture()));
 
     var requestDTO = requestDtoCaptor.getValue();
     assertEquals(PRE_POPULATED_INSTANCE_ID, requestDTO.getInstanceId().toString());
-    assertEquals(PRE_POPULATED_ITEM_ID, requestDTO.getItemId());
+    assertEquals(UUID.fromString(PRE_POPULATED_ITEM_ID), requestDTO.getItemId());
     assertEquals(NEW_HOLDING_ID, requestDTO.getHoldingsRecordId());
     assertEquals(RequestDTO.RequestLevel.ITEM.getName(), requestDTO.getRequestLevel());
     assertEquals(PAGE_REQUEST_TYPE, requestDTO.getRequestType());

@@ -25,7 +25,6 @@ import org.folio.innreach.domain.dto.folio.inventorystorage.JobResponse;
 import org.folio.innreach.domain.dto.folio.inventorystorage.MaterialTypeDTO;
 import org.folio.innreach.domain.entity.CentralServer;
 import org.folio.innreach.domain.entity.Contribution;
-import org.folio.innreach.domain.entity.ContributionCriteriaConfiguration;
 import org.folio.innreach.domain.entity.base.AuditableUser;
 import org.folio.innreach.dto.ContributionCriteriaDTO;
 import org.folio.innreach.dto.Holding;

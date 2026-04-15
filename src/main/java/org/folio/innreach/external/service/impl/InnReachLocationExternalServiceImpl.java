@@ -9,10 +9,11 @@ import java.util.stream.Collectors;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.folio.innreach.util.UriHelper;
 import org.springframework.stereotype.Service;
 
 import org.folio.innreach.domain.dto.CentralServerConnectionDetailsDTO;
-import org.folio.innreach.external.client.feign.InnReachLocationClient;
+import org.folio.innreach.external.client.InnReachLocationClient;
 import org.folio.innreach.external.dto.InnReachLocationDTO;
 import org.folio.innreach.external.dto.InnReachLocationsDTO;
 import org.folio.innreach.external.service.InnReachAuthExternalService;
@@ -22,6 +23,9 @@ import org.folio.innreach.external.service.InnReachLocationExternalService;
 @Log4j2
 @Service
 public class InnReachLocationExternalServiceImpl implements InnReachLocationExternalService {
+
+  private static final String LOCATIONS_COLLECTION_PATH = "/innreach/v2/contribution/locations";
+  private static final String LOCATION_ITEM_PATH = "/innreach/v2/location/{locationKey}";
 
   private final InnReachLocationClient innReachLocationClient;
   private final InnReachAuthExternalService innReachAuthExternalService;
@@ -67,7 +71,8 @@ public class InnReachLocationExternalServiceImpl implements InnReachLocationExte
 
   private List<InnReachLocationDTO> getMappedLocationsFromInnReach(URI connectionUrl, String authorizationHeader,
                                                                    String localCode, String centralCode) {
-    return innReachLocationClient.getAllLocations(connectionUrl, authorizationHeader, localCode, centralCode)
+    var fullUri = UriHelper.buildUri(connectionUrl, LOCATIONS_COLLECTION_PATH);
+    return innReachLocationClient.getAllLocations(fullUri, authorizationHeader, localCode, centralCode)
       .getLocationList();
   }
 
@@ -76,7 +81,8 @@ public class InnReachLocationExternalServiceImpl implements InnReachLocationExte
                                             URI connectionUrl, String authorizationHeader, String localCode, String centralCode) {
     log.info("Submit all local server [{}] mapped locations to INN-Reach", connectionDetails.getLocalCode());
 
-    innReachLocationClient.addAllLocations(connectionUrl, authorizationHeader, localCode,
+    var fullUri = UriHelper.buildUri(connectionUrl, LOCATIONS_COLLECTION_PATH);
+    innReachLocationClient.addAllLocations(fullUri, authorizationHeader, localCode,
       centralCode, new InnReachLocationsDTO(actualMappedLocations));
   }
 
@@ -104,8 +110,8 @@ public class InnReachLocationExternalServiceImpl implements InnReachLocationExte
                                           InnReachLocationDTO deletedLocation) {
     log.info("Delete local server [{}] mapped location [{}] from INN-Reach", localCode, deletedLocation.getCode());
 
-    innReachLocationClient.deleteLocation(centralServerConnectionUrl, authorizationHeader, localCode,
-      centralCode, deletedLocation.getCode());
+    var fullUri = UriHelper.buildUri(centralServerConnectionUrl, LOCATION_ITEM_PATH, deletedLocation.getCode());
+    innReachLocationClient.deleteLocation(fullUri, authorizationHeader, localCode, centralCode);
   }
 
   private void submitUpdatedLocationToInnReach(URI centralServerConnectionUrl, String authorizationHeader,
@@ -113,16 +119,15 @@ public class InnReachLocationExternalServiceImpl implements InnReachLocationExte
     log.info("Submit updated local server [{}] mapped location [{}] to INN-Reach", localCode, updatedLocation
       .getCode());
 
-    innReachLocationClient.updateLocation(centralServerConnectionUrl, authorizationHeader, localCode,
-      centralCode, updatedLocation.getCode(), updatedLocation);
+    var fullUri = UriHelper.buildUri(centralServerConnectionUrl, LOCATION_ITEM_PATH, updatedLocation.getCode());
+    innReachLocationClient.updateLocation(fullUri, authorizationHeader, localCode, centralCode, updatedLocation);
   }
 
   private void submitNewLocationToInnReach(URI centralServerConnectionUrl, String authorizationHeader, String localCode,
                                            String centralCode, InnReachLocationDTO newLocation) {
     log.info("Submit the new local server [{}] mapped location [{}] to INN-Reach", localCode, newLocation.getCode());
 
-    innReachLocationClient.addLocation(centralServerConnectionUrl, authorizationHeader, localCode,
-      centralCode, newLocation.getCode(), newLocation);
+    var fullUri = UriHelper.buildUri(centralServerConnectionUrl, LOCATION_ITEM_PATH, newLocation.getCode());
+    innReachLocationClient.addLocation(fullUri, authorizationHeader, localCode, centralCode, newLocation);
   }
-
 }

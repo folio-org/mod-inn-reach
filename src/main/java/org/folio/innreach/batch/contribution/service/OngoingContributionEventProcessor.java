@@ -11,7 +11,7 @@ import org.folio.innreach.dto.Instance;
 import org.folio.innreach.dto.Item;
 import org.folio.innreach.external.exception.InnReachConnectionException;
 import org.folio.innreach.external.exception.InnReachGatewayException;
-import org.folio.innreach.external.exception.RetryException;
+import org.folio.innreach.external.exception.InnReachRetryException;
 import org.folio.innreach.external.exception.ServiceSuspendedException;
 import org.folio.innreach.external.exception.SocketTimeOutExceptionWrapper;
 import org.folio.innreach.util.JsonHelper;
@@ -105,7 +105,7 @@ public class OngoingContributionEventProcessor {
     if (maxRetryAttempts != 0 && job.getRetryAttempts() > maxRetryAttempts) {
       log.warn("checkRetryLimit:: ongoing job id {} retry attempts {} exceeds  max retry attempts {}",
         job.getId(), job.getRetryAttempts(), maxRetryAttempts);
-      throw new RetryException(RETRY_LIMIT_MESSAGE);
+      throw new InnReachRetryException(RETRY_LIMIT_MESSAGE);
     }
   }
 

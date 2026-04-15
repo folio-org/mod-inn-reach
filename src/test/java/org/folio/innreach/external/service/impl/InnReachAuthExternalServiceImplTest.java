@@ -18,7 +18,7 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.http.ResponseEntity;
 
-import org.folio.innreach.external.client.feign.InnReachAuthClient;
+import org.folio.innreach.external.client.InnReachAuthClient;
 import org.folio.innreach.external.dto.AccessTokenDTO;
 
 class InnReachAuthExternalServiceImplTest {

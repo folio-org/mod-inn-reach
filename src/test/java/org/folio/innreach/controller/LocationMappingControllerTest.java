@@ -29,11 +29,10 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.boot.resttestclient.TestRestTemplate;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
@@ -254,7 +253,7 @@ class LocationMappingControllerTest extends BaseControllerTest {
       UUID.fromString(PRE_POPULATED_CENTRAL_SERVER_ID), UUID.fromString(PRE_POPULATED_LIBRARY_ID)));
     var expected = newMappings.getLocationMappings().stream()
       .filter(mapping -> mapping.getInnReachLocationId() != null)
-      .collect(Collectors.toList());
+      .toList();
 
     assertEquals(expected.size(), created.size());
     assertThat(created, containsInAnyOrder(

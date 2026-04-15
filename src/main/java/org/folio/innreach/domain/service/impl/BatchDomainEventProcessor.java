@@ -1,24 +1,21 @@
 package org.folio.innreach.domain.service.impl;
 
-import static org.folio.innreach.config.KafkaListenerConfiguration.BATCH_EVENT_PROCESSOR_RETRY_TEMPLATE;
-
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.folio.innreach.external.exception.InnReachConnectionException;
 import org.folio.innreach.external.exception.ServiceSuspendedException;
 import org.folio.innreach.external.exception.SocketTimeOutExceptionWrapper;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.listener.ListenerExecutionFailedException;
-import org.springframework.retry.support.RetryTemplate;
 import org.springframework.stereotype.Service;
 
 import org.folio.innreach.domain.event.DomainEvent;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpServerErrorException;
 
 @Log4j2
 @Service
@@ -27,8 +24,6 @@ public class BatchDomainEventProcessor {
 
   private final TenantScopedExecutionService executionService;
 
-  @Qualifier(value = BATCH_EVENT_PROCESSOR_RETRY_TEMPLATE)
-  private final RetryTemplate retryTemplate;
   @Value("${innReachTenants}")
   private String innReachTenants;
 
@@ -43,7 +38,7 @@ public class BatchDomainEventProcessor {
           executionService.runTenantScoped(tenantId,
             () -> processTenantEvents(events, recordProcessor));
         }
-        catch (ServiceSuspendedException | FeignException | InnReachConnectionException | SocketTimeOutExceptionWrapper e) {
+        catch (ServiceSuspendedException | HttpClientErrorException | HttpServerErrorException | InnReachConnectionException | SocketTimeOutExceptionWrapper e) {
           log.info("exception thrown from process", e);
           throw e;
         }
@@ -63,7 +58,7 @@ public class BatchDomainEventProcessor {
       try {
           recordProcessor.accept(event);
       }
-      catch (ServiceSuspendedException | FeignException | InnReachConnectionException e) {
+      catch (ServiceSuspendedException | HttpClientErrorException | HttpServerErrorException | InnReachConnectionException e) {
         log.info("exception thrown from process", e);
         throw e;
       }

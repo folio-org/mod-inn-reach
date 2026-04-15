@@ -1,17 +1,16 @@
 package org.folio.innreach.client;
 
-import org.springframework.cloud.openfeign.FeignClient;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.service.annotation.GetExchange;
+import org.springframework.web.service.annotation.HttpExchange;
 
-import org.folio.innreach.client.config.FolioFeignClientConfig;
 import org.folio.innreach.domain.dto.folio.ResultList;
 import org.folio.innreach.domain.dto.folio.inventorystorage.MaterialTypeDTO;
 
-@FeignClient(name = "material-types", configuration = FolioFeignClientConfig.class)
+@HttpExchange("material-types")
 public interface MaterialTypesClient {
 
-  @GetMapping
+  @GetExchange
   ResultList<MaterialTypeDTO> getMaterialTypes(@RequestParam("query") String query, @RequestParam("limit") int limit);
 
 }

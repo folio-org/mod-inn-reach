@@ -1,22 +1,20 @@
 package org.folio.innreach.batch.contribution;
 
-import static org.junit.Assert.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import org.folio.innreach.batch.contribution.service.ContributionJobRunner;
 import org.folio.innreach.config.RetryConfig;
+import org.folio.innreach.config.props.ContributionJobProperties;
 import org.folio.spring.config.properties.FolioEnvironment;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.boot.autoconfigure.kafka.KafkaProperties;
-
-import org.folio.innreach.config.props.ContributionJobProperties;
+import org.springframework.boot.kafka.autoconfigure.KafkaProperties;
+import tools.jackson.databind.json.JsonMapper;
 
 @ExtendWith(MockitoExtension.class)
 class IterationEventReaderFactoryTest {
@@ -28,7 +26,7 @@ class IterationEventReaderFactoryTest {
   @Mock
   private ContributionJobProperties jobProperties;
   @Mock
-  private ObjectMapper mapper;
+  private JsonMapper mapper;
   @Mock
   ContributionJobRunner contributionJobRunner;
   @Mock
@@ -45,7 +43,7 @@ class IterationEventReaderFactoryTest {
 
     assertNotNull(reader);
 
-    verify(kafkaProperties).buildConsumerProperties(null);
+    verify(kafkaProperties).buildConsumerProperties();
     verify(folioEnv).getEnvironment();
     verify(jobProperties).getReaderTopic();
     verify(jobProperties).getReaderPollTimeoutSec();
@@ -56,7 +54,7 @@ class IterationEventReaderFactoryTest {
     var consumerContainer = factory.createInitialContributionConsumerContainer("test",contributionJobRunner);
     assertNotNull(consumerContainer);
 
-    verify(kafkaProperties).buildConsumerProperties(null);
+    verify(kafkaProperties).buildConsumerProperties();
     verify(folioEnv).getEnvironment();
     verify(jobProperties).getReaderTopic();
   }

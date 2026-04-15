@@ -13,7 +13,6 @@ import static org.mockito.Mockito.when;
 import static org.folio.innreach.fixture.ContributionFixture.createContributionCriteria;
 import static org.folio.innreach.fixture.ContributionFixture.createItem;
 import static org.folio.innreach.fixture.ItemContributionOptionsConfigurationFixture.createItmContribOptConfDTO;
-import static org.folio.innreach.fixture.TestUtil.deserializeFromJsonFile;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -25,7 +24,6 @@ import java.util.UUID;
 
 import lombok.extern.log4j.Log4j2;
 import org.folio.innreach.dto.CentralServerDTO;
-import org.folio.innreach.dto.ItemContributionOptionsConfigurationDTO;
 import org.folio.innreach.dto.LocalAgencyDTO;
 import org.folio.innreach.fixture.CentralServerFixture;
 import org.junit.jupiter.api.BeforeEach;
