@@ -63,7 +63,7 @@ import org.folio.spring.integration.XOkapiHeaders;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT,
   classes = {ModInnReachApplication.class})
 @AutoConfigureMockMvc
-@ActiveProfiles({"test", "testcontainers-pg"})
+@ActiveProfiles({"test", "it"})
 @ExtendWith(WatcherExtension.class)
 public class BaseApiControllerTest {
 
