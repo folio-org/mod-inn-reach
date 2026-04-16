@@ -11,7 +11,7 @@ import org.testcontainers.junit.jupiter.Container;
 import java.util.Objects;
 
 @Component
-@Profile("testcontainers-pg")
+@Profile("it")
 public class PostgresTestContainersBeanFactoryPostProcessor implements BeanFactoryPostProcessor {
 
   @Container

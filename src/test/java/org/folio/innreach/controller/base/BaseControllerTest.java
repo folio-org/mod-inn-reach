@@ -28,7 +28,7 @@ import org.folio.tenant.rest.resource.TenantApi;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, classes = {ModInnReachApplication.class,
   BaseControllerTest.TestTenantController.class})
-@ActiveProfiles({"test", "testcontainers-pg"})
+@ActiveProfiles({"test", "it"})
 @AutoConfigureTestRestTemplate
 public class BaseControllerTest {
 

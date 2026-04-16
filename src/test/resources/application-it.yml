@@ -1,0 +1,47 @@
+# Profile activated by tests that use TestContainers PostgreSQL without the "test" profile.
+# The "test" profile (application-test.yml) includes embedded Kafka config and activates
+# TestTenantController. This profile provides the minimal DB and app config needed to
+# start the application context against a TestContainers PostgreSQL instance.
+spring:
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    hikari:
+      connection-init-sql: SET timezone = 'UTC'
+  liquibase:
+    enabled: true
+  jpa:
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        jdbc:
+          time_zone: UTC
+        timezone:
+          default_storage: NORMALIZE_UTC
+folio:
+  tenant:
+    validation:
+      enabled: false
+  system-user:
+    enabled: false
+    username: mod-innreach
+    password: Mod-innreach-1-0-0
+    lastname: System
+    permissionsFilePath: permissions/test-permissions.csv
+management:
+  endpoints:
+    access:
+      default: none
+INNREACH_TENANTS: testing
+MAX_FAILURE: 0
+contribution:
+  scheduler:
+    fixed-delay: 30000
+    initial-delay: 1000
+  retry-attempts: 1
+  fetch-limit: 50
+  tenant-cache:
+    ttl: 120
+
