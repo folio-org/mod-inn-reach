@@ -1,3 +1,49 @@
+## v4.0.0 2026-04-17
+
+### Breaking changes
+* Upgrade module to Spring Boot v4.0.5 ([MODINREACH-550](https://folio-org.atlassian.net/browse/MODINREACH-550))
+
+### New APIs versions
+* Provides `inn-reach v1.2` (was `v1.0`)
+* Requires `inventory v14.2` (was `v14.1`)
+* Requires `circulation-settings v1.0` (added)
+* Requires `configuration v2.0` (added)
+
+### Features
+* Use circulation/settings instead of mod-configuration for CHECKOUT other_settings ([MODINREACH-561](https://folio-org.atlassian.net/browse/MODINREACH-561))
+* Add remove patron hold transaction API to cancel `PATRON_HOLD` transactions with no created virtual item and request ([MODINREACH-482](https://folio-org.atlassian.net/browse/MODINREACH-482))
+* Checkout local hold item on closing of item request and notify INN-Reach central server ([MODINREACH-427](https://folio-org.atlassian.net/browse/MODINREACH-427))
+
+### Bug fixes
+* Added "Last First / First First" pattern match for verifypatron API ([MODINREACH-477](https://folio-org.atlassian.net/browse/MODINREACH-477))
+* Fix 414 Request-URI Too Long when calling circulation/requests during getPagingSlipsByServicePoint call ([MODINREACH-531](https://folio-org.atlassian.net/browse/MODINREACH-531))
+* Fix handling OWNER_RENEW message from INN-Reach central and setting correct state ([MODINREACH-524](https://folio-org.atlassian.net/browse/MODINREACH-524))
+* Fixed HTTP 414 (URI too long) error for INN-Reach Paging Slips ([MODINREACH-487](https://folio-org.atlassian.net/browse/MODINREACH-487))
+* Recontribute requested item to update its status on cancelling item hold transaction ([MODINREACH-485](https://folio-org.atlassian.net/browse/MODINREACH-485))
+* Add missing tokens to paging slips item object ([MODINREACH-503](https://folio-org.atlassian.net/browse/MODINREACH-503))
+* Add missing module permissions to get holdings sources for POST and PUT circulation endpoints ([MODINREACH-496](https://folio-org.atlassian.net/browse/MODINREACH-496))
+* Add missing permissions for INN-Reach circulation endpoints and for System User ([MODINREACH-508](https://folio-org.atlassian.net/browse/MODINREACH-508))
+* Assign Item Hold Transaction due date when item checked out to the borrowing site ([MODINREACH-467](https://folio-org.atlassian.net/browse/MODINREACH-467))
+* Enforce UUID for key and secret of local server ([MODINREACH-490](https://folio-org.atlassian.net/browse/MODINREACH-490))
+
+### Tech Debt
+* Remove sensitive information from logs ([MODINREACH-532](https://folio-org.atlassian.net/browse/MODINREACH-532))
+* Sensitive data in logs cleanup ([MODINREACH-475](https://folio-org.atlassian.net/browse/MODINREACH-475))
+* Use GitHub Workflows for Maven ([MODINREACH-559](https://folio-org.atlassian.net/browse/MODINREACH-559))
+* Add config file for dependabot and pull request template ([MODINREACH-501](https://folio-org.atlassian.net/browse/MODINREACH-501))
+
+### Dependencies
+* Bump `spring-boot` from `3.4.4` to `4.0.5`
+* Bump `folio-spring-support` from `9.0.0` to `10.0.0`
+* Bump `folio-service-tools` from `5.0.0` to `6.0.0`
+* Bump `commons-collections4` from `4.4` to `4.5.0`
+* Bump `micrometer` from `1.10.3` to `1.15.4`
+* Bump `wiremock-standalone` from `3.12.1` to `3.13.2`
+* Bump `openapi-generator` from `7.9.0` to `7.21.0`
+* Remove `spring-cloud-starter-openfeign` (replaced by Spring Boot 4 built-in support)
+* Remove `coffee-boots` (no longer needed with Spring Boot 4)
+* Add `lombok-mapstruct-binding 0.2.0`
+
 ## v3.5.0-SNAPSHOT 2025-xx-xx
 * [MODINREACH-550](https://folio-org.atlassian.net/browse/MODINREACH-550) - Upgrade to Spring Boot v4.0.5
 
