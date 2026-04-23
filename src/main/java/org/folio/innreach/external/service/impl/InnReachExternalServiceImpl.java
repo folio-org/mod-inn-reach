@@ -29,16 +29,12 @@ public class InnReachExternalServiceImpl implements InnReachExternalService {
 
     var accessTokenDTO = innReachAuthExternalService.getAccessToken(connectionDetailsDTO);
 
-    var response = innReachClient.callInnReachApi(
+    return innReachClient.callInnReachApi(
       buildInnReachRequestUrl(connectionDetailsDTO.getConnectionUrl(), innReachRequestUri),
       buildBearerAuthHeader(accessTokenDTO.getAccessToken()),
       connectionDetailsDTO.getLocalCode(),
       connectionDetailsDTO.getCentralCode()
     );
-
-    log.info("callInnReachApi:: innReachRequestUri: {}, result response: {}", innReachRequestUri, response);
-
-    return response;
   }
 
   @Override

@@ -9,6 +9,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.service.annotation.GetExchange;
 import org.springframework.web.service.annotation.HttpExchange;
 import org.springframework.web.service.annotation.PostExchange;
@@ -21,7 +22,7 @@ public interface CancellationReasonClient {
   ResultList<CancellationReason> queryReasonByName(@PathVariable("name") String name);
 
   @PostExchange(url = "/cancellation-reasons", contentType = APPLICATION_JSON_VALUE)
-  void createReason(CancellationReason reason);
+  void createReason(@RequestBody CancellationReason reason);
 
   @Builder
   @Data

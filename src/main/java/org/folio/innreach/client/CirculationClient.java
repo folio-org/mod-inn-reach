@@ -1,5 +1,7 @@
 package org.folio.innreach.client;
 
+import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
+
 import java.util.Optional;
 import java.util.UUID;
 
@@ -57,10 +59,10 @@ public interface CirculationClient {
   RequestDTO moveRequest(@PathVariable("requestId") UUID requestId, @RequestBody MoveRequestDTO payload);
 
   @PostExchange("/check-in-by-barcode")
-  CheckInResponseDTO checkInByBarcode(CheckInRequestDTO checkIn);
+  CheckInResponseDTO checkInByBarcode(@RequestBody CheckInRequestDTO checkIn);
 
-  @PostExchange("/check-out-by-barcode")
-  LoanDTO checkOutByBarcode(CheckOutRequestDTO checkOut);
+  @PostExchange(value = "/check-out-by-barcode", contentType = APPLICATION_JSON_VALUE)
+  LoanDTO checkOutByBarcode(@RequestBody CheckOutRequestDTO checkOut);
 
   @GetExchange("/loans?query=(itemId=={itemId})")
   ResultList<LoanDTO> queryLoansByItemId(@PathVariable("itemId") UUID itemId);
