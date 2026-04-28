@@ -43,6 +43,8 @@ public class InnReachContributionServiceImpl implements InnReachContributionServ
     var localCode = connectionDetails.getLocalCode();
     var centralCode = connectionDetails.getCentralCode();
 
+    log.info("D2IR_CALL client=InnReachContributionClient method=contributeBib path=/innreach/v2/contribution/bib/{} localCode={} centralCode={}",
+      bibId, localCode, centralCode);
     return contributionClient.contributeBib(connectionUrl, authorizationHeader, localCode,
       centralCode, bibId, bib);
   }
@@ -59,6 +61,8 @@ public class InnReachContributionServiceImpl implements InnReachContributionServ
       var localCode = connectionDetails.getLocalCode();
       var centralCode = connectionDetails.getCentralCode();
 
+      log.info("D2IR_CALL client=InnReachContributionClient method=deContributeBib path=/innreach/v2/contribution/bib/{} localCode={} centralCode={}",
+        bibId, localCode, centralCode);
       var response = contributionClient.deContributeBib(connectionUrl, authorizationHeader, localCode,
         centralCode, bibId);
       verifyException(response);
@@ -80,6 +84,8 @@ public class InnReachContributionServiceImpl implements InnReachContributionServ
       var localCode = connectionDetails.getLocalCode();
       var centralCode = connectionDetails.getCentralCode();
 
+      log.info("D2IR_CALL client=InnReachContributionClient method=deContributeBibItem path=/innreach/v2/contribution/item/{} localCode={} centralCode={}",
+        itemId, localCode, centralCode);
       var response = contributionClient.deContributeBibItem(connectionUrl, authorizationHeader, localCode,
         centralCode, itemId);
       verifyException(response);
@@ -122,6 +128,8 @@ public class InnReachContributionServiceImpl implements InnReachContributionServ
     var localCode = connectionDetails.getLocalCode();
     var centralCode = connectionDetails.getCentralCode();
 
+    log.info("D2IR_CALL client=InnReachContributionClient method=contributeBibItems path=/innreach/v2/contribution/items/{} localCode={} centralCode={}",
+      bibId, localCode, centralCode);
     return contributionClient.contributeBibItems(connectionUrl, authorizationHeader, localCode,
       centralCode, bibId, bibItems);
   }
@@ -138,6 +146,8 @@ public class InnReachContributionServiceImpl implements InnReachContributionServ
     var centralCode = connectionDetails.getCentralCode();
 
     try {
+      log.info("D2IR_CALL client=InnReachContributionClient method=lookUpBib path=/innreach/v2/local/{}/bib/{} localCode={} centralCode={}",
+        localCode, bibId, localCode, centralCode);
       return contributionClient.lookUpBib(connectionUrl, authorizationHeader, localCode,
         centralCode, localCode, bibId);
     } catch (Exception e) {
@@ -157,6 +167,8 @@ public class InnReachContributionServiceImpl implements InnReachContributionServ
     var centralCode = connectionDetails.getCentralCode();
 
     try {
+      log.info("D2IR_CALL client=InnReachContributionClient method=lookUpBibItem path=/innreach/v2/local/{}/bib/{}/item/{} localCode={} centralCode={}",
+        localCode, bibId, itemId, localCode, centralCode);
       return contributionClient.lookUpBibItem(connectionUrl, authorizationHeader, localCode,
         centralCode, localCode, bibId, itemId);
     } catch (Exception e) {

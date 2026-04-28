@@ -31,6 +31,8 @@ public class InnReachAuthExternalServiceImpl implements InnReachAuthExternalServ
       return cachedAccessToken;
     }
 
+    log.info("D2IR_CALL client=InnReachAuthClient method=getAccessToken path=/auth/v1/oauth2/token baseUrl={}",
+      connectionDetailsDTO.getConnectionUrl());
     var responseEntity = innReachAuthClient.getAccessToken(
       URI.create(connectionDetailsDTO.getConnectionUrl()),
       buildBasicAuthorizationHeader(connectionDetailsDTO)
