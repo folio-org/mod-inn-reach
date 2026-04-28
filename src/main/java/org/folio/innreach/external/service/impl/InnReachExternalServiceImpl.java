@@ -29,6 +29,8 @@ public class InnReachExternalServiceImpl implements InnReachExternalService {
 
     var accessTokenDTO = innReachAuthExternalService.getAccessToken(connectionDetailsDTO);
 
+    log.info("D2IR_CALL client=InnReachClient method=callInnReachApi path={} localCode={} centralCode={}",
+      innReachRequestUri, connectionDetailsDTO.getLocalCode(), connectionDetailsDTO.getCentralCode());
     return innReachClient.callInnReachApi(
       buildInnReachRequestUrl(connectionDetailsDTO.getConnectionUrl(), innReachRequestUri),
       buildBearerAuthHeader(accessTokenDTO.getAccessToken()),
@@ -43,6 +45,8 @@ public class InnReachExternalServiceImpl implements InnReachExternalService {
 
     var accessTokenDTO = innReachAuthExternalService.getAccessToken(connectionDetails);
 
+    log.info("D2IR_CALL client=InnReachClient method=postInnReachApi path={} localCode={} centralCode={} hasBody={}",
+      innReachRequestUri, connectionDetails.getLocalCode(), connectionDetails.getCentralCode(), payload != null);
     return innReachClient.postInnReachApi(
       buildInnReachRequestUrl(connectionDetails.getConnectionUrl(), innReachRequestUri),
       buildBearerAuthHeader(accessTokenDTO.getAccessToken()),
@@ -58,6 +62,8 @@ public class InnReachExternalServiceImpl implements InnReachExternalService {
 
     var accessTokenDTO = innReachAuthExternalService.getAccessToken(connectionDetails);
 
+    log.info("D2IR_CALL client=InnReachClient method=postInnReachApi_noBody path={} localCode={} centralCode={}",
+      innReachRequestUri, connectionDetails.getLocalCode(), connectionDetails.getCentralCode());
     return innReachClient.postInnReachApi(
       buildInnReachRequestUrl(connectionDetails.getConnectionUrl(), innReachRequestUri),
       buildBearerAuthHeader(accessTokenDTO.getAccessToken()),

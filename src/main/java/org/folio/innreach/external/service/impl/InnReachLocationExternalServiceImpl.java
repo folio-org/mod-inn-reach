@@ -67,6 +67,8 @@ public class InnReachLocationExternalServiceImpl implements InnReachLocationExte
 
   private List<InnReachLocationDTO> getMappedLocationsFromInnReach(URI connectionUrl, String authorizationHeader,
                                                                    String localCode, String centralCode) {
+    log.info("D2IR_CALL client=InnReachLocationClient method=getAllLocations path=/innreach/v2/contribution/locations localCode={} centralCode={}",
+      localCode, centralCode);
     return innReachLocationClient.getAllLocations(connectionUrl, authorizationHeader, localCode, centralCode)
       .getLocationList();
   }
@@ -76,6 +78,8 @@ public class InnReachLocationExternalServiceImpl implements InnReachLocationExte
                                             URI connectionUrl, String authorizationHeader, String localCode, String centralCode) {
     log.info("Submit all local server [{}] mapped locations to INN-Reach", connectionDetails.getLocalCode());
 
+    log.info("D2IR_CALL client=InnReachLocationClient method=addAllLocations path=/innreach/v2/contribution/locations localCode={} centralCode={} count={}",
+      localCode, centralCode, actualMappedLocations != null ? actualMappedLocations.size() : 0);
     innReachLocationClient.addAllLocations(connectionUrl, authorizationHeader, localCode,
       centralCode, new InnReachLocationsDTO(actualMappedLocations));
   }
@@ -104,6 +108,8 @@ public class InnReachLocationExternalServiceImpl implements InnReachLocationExte
                                           InnReachLocationDTO deletedLocation) {
     log.info("Delete local server [{}] mapped location [{}] from INN-Reach", localCode, deletedLocation.getCode());
 
+    log.info("D2IR_CALL client=InnReachLocationClient method=deleteLocation path=/innreach/v2/location/{} localCode={} centralCode={}",
+      deletedLocation.getCode(), localCode, centralCode);
     innReachLocationClient.deleteLocation(centralServerConnectionUrl, authorizationHeader, localCode,
       centralCode, deletedLocation.getCode());
   }
@@ -113,6 +119,8 @@ public class InnReachLocationExternalServiceImpl implements InnReachLocationExte
     log.info("Submit updated local server [{}] mapped location [{}] to INN-Reach", localCode, updatedLocation
       .getCode());
 
+    log.info("D2IR_CALL client=InnReachLocationClient method=updateLocation path=/innreach/v2/location/{} localCode={} centralCode={}",
+      updatedLocation.getCode(), localCode, centralCode);
     innReachLocationClient.updateLocation(centralServerConnectionUrl, authorizationHeader, localCode,
       centralCode, updatedLocation.getCode(), updatedLocation);
   }
@@ -121,6 +129,8 @@ public class InnReachLocationExternalServiceImpl implements InnReachLocationExte
                                            String centralCode, InnReachLocationDTO newLocation) {
     log.info("Submit the new local server [{}] mapped location [{}] to INN-Reach", localCode, newLocation.getCode());
 
+    log.info("D2IR_CALL client=InnReachLocationClient method=addLocation path=/innreach/v2/location/{} localCode={} centralCode={}",
+      newLocation.getCode(), localCode, centralCode);
     innReachLocationClient.addLocation(centralServerConnectionUrl, authorizationHeader, localCode,
       centralCode, newLocation.getCode(), newLocation);
   }

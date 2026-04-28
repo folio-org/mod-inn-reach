@@ -27,7 +27,6 @@ public class KafkaCirculationEventListener {
 
   private final BatchDomainEventProcessor eventProcessor;
   private final InnReachTransactionActionService transactionActionService;
-  private final ContributionActionService contributionActionService;
 
   @KafkaListener(
     containerFactory = KAFKA_CONTAINER_FACTORY,
@@ -44,11 +43,9 @@ public class KafkaCirculationEventListener {
       var newEntity = event.getData().getNewEntity();
       switch (event.getType()) {
         case CREATED:
-          contributionActionService.handleLoanCreation(newEntity);
           transactionActionService.associateNewLoanWithTransaction(newEntity);
           break;
         case UPDATED:
-          contributionActionService.handleLoanUpdate(newEntity);
           transactionActionService.handleLoanUpdate(newEntity);
           break;
         default:
@@ -70,8 +67,6 @@ public class KafkaCirculationEventListener {
 
     eventProcessor.process(events, event -> {
       var newEntity = event.getData().getNewEntity();
-
-      contributionActionService.handleRequestChange(newEntity);
 
       if (event.getType() == UPDATED) {
         transactionActionService.handleRequestUpdate(newEntity);
