@@ -28,6 +28,8 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 class InnReachProxyControllerTest extends BaseControllerTest {
 
+  private static final String CENTRAL_SERVER_ID = "edab6baf-c696-42b1-89bb-1bbb8759b0d2";
+
   @Autowired
   private TestRestTemplate testRestTemplate;
 
@@ -40,12 +42,13 @@ class InnReachProxyControllerTest extends BaseControllerTest {
   @ParameterizedTest
   @MethodSource("innReachUriList")
   void should_handleAllRequestsWithD2RSuffixInUrl(String innReachUri) {
-    var responseEntity = testRestTemplate.getForEntity(
-      "/inn-reach/central-servers/edab6baf-c696-42b1-89bb-1bbb8759b0d2/d2r" + innReachUri, String.class);
+    var url = String.format("/inn-reach/central-servers/%s/d2r%s", CENTRAL_SERVER_ID, innReachUri);
+
+    var responseEntity = testRestTemplate.getForEntity(url, String.class);
 
     assertTrue(responseEntity.getStatusCode().is2xxSuccessful());
 
-    verify(innReachExternalService).callInnReachApi(UUID.fromString("edab6baf-c696-42b1-89bb-1bbb8759b0d2"), innReachUri);
+    verify(innReachExternalService).callInnReachApi(UUID.fromString(CENTRAL_SERVER_ID), innReachUri);
   }
 
   @Test

@@ -49,16 +49,16 @@ public interface CirculationClient {
   @DeleteExchange("/requests/{requestId}")
   void deleteRequest(@PathVariable("requestId") UUID requestId);
 
-  @PostExchange("/requests")
+  @PostExchange(value = "/requests", contentType = APPLICATION_JSON_VALUE)
   RequestDTO sendRequest(@RequestBody RequestDTO requestDTO);
 
-  @PutExchange("/requests/{requestId}")
+  @PutExchange(value = "/requests/{requestId}", contentType = APPLICATION_JSON_VALUE)
   void updateRequest(@PathVariable("requestId") UUID requestId, @RequestBody RequestDTO request);
 
-  @PostExchange("/requests/{requestId}/move")
+  @PostExchange(value = "/requests/{requestId}/move", contentType = APPLICATION_JSON_VALUE)
   RequestDTO moveRequest(@PathVariable("requestId") UUID requestId, @RequestBody MoveRequestDTO payload);
 
-  @PostExchange("/check-in-by-barcode")
+  @PostExchange(value = "/check-in-by-barcode", contentType = APPLICATION_JSON_VALUE)
   CheckInResponseDTO checkInByBarcode(@RequestBody CheckInRequestDTO checkIn);
 
   @PostExchange(value = "/check-out-by-barcode", contentType = APPLICATION_JSON_VALUE)
@@ -76,16 +76,16 @@ public interface CirculationClient {
   @DeleteExchange("/loans/{loanId}")
   Optional<LoanDTO> deleteLoan(@PathVariable("loanId") UUID loanId);
 
-  @PostExchange("/loans")
+  @PostExchange(value = "/loans", contentType = APPLICATION_JSON_VALUE)
   LoanDTO createLoan(@RequestBody LoanDTO loan);
 
-  @PutExchange("/loans/{loanId}")
+  @PutExchange(value = "/loans/{loanId}", contentType = APPLICATION_JSON_VALUE)
   void updateLoan(@PathVariable("loanId") UUID loanId, @RequestBody LoanDTO loan);
 
-  @PostExchange("/renew-by-id")
+  @PostExchange(value = "/renew-by-id", contentType = APPLICATION_JSON_VALUE)
   LoanDTO renewLoan(@RequestBody RenewByIdDTO renewLoan);
 
-  @PostExchange("/loans/{loanId}/claim-item-returned")
+  @PostExchange(value = "/loans/{loanId}/claim-item-returned", contentType = APPLICATION_JSON_VALUE)
   void claimItemReturned(@PathVariable("loanId") UUID loanId, @RequestBody ClaimItemReturnedRequestDTO payload);
 
 }
