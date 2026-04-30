@@ -32,7 +32,8 @@ public class InventoryServiceImpl implements InventoryService {
   @Override
   public Optional<UUID> findDefaultServicePointIdForUser(UUID userId) {
     log.debug("findDefaultServicePointIdForUser:: parameters userId: {}", userId);
-    return getFirstItem(servicePointsUsersClient.findServicePointsUsers(userId))
+    var cqlQuery = CqlQuery.exactMatch("userId", userId.toString());
+    return getFirstItem(servicePointsUsersClient.findServicePointsUsersByQuery(cqlQuery.getQuery()))
       .map(ServicePointUserDTO::getDefaultServicePointId);
   }
 

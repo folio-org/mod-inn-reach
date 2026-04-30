@@ -17,6 +17,7 @@ import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.tuple.Pair;
+import org.folio.innreach.util.CqlQuery;
 import org.springframework.stereotype.Service;
 
 import org.folio.innreach.client.LocationsClient;
@@ -186,7 +187,8 @@ public class PagingSlipServiceImpl implements PagingSlipService {
   }
 
   private Set<UUID> fetchLocationIdsByServicePoint(UUID servicePointId) {
-    return locationsClient.queryLocationsByServicePoint(servicePointId, FETCH_LIMIT).getResult()
+    var cqlQuery = CqlQuery.exactMatch("primaryServicePoint", servicePointId.toString());
+    return locationsClient.queryLocationsByServicePoint(cqlQuery.getQuery(), FETCH_LIMIT).getResult()
       .stream()
       .map(LocationDTO::getId)
       .collect(toSet());

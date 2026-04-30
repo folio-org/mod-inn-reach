@@ -8,6 +8,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.service.annotation.GetExchange;
 import org.springframework.web.service.annotation.HttpExchange;
@@ -22,7 +23,7 @@ public interface InstanceTypeClient {
   ResultList<InstanceType> findByQuery(@RequestParam("query") String query);
 
   @PostExchange(contentType = APPLICATION_JSON_VALUE)
-  void createInstanceType(InstanceType type);
+  void createInstanceType(@RequestBody InstanceType type);
 
   @Builder
   @Data

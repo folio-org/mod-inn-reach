@@ -1,10 +1,15 @@
 package org.folio.innreach.controller;
 
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.util.MimeTypeUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -25,9 +30,21 @@ public class InnReachProxyController {
     value = "/inn-reach/central-servers/{centralServerId}/d2r/**",
     produces = MimeTypeUtils.APPLICATION_JSON_VALUE
   )
-  public String handleD2RProxyCall(@PathVariable UUID centralServerId, HttpServletRequest request) {
+  public void handleD2RProxyCall(@PathVariable UUID centralServerId,
+                                 HttpServletRequest request,
+                                 HttpServletResponse response) throws IOException {
     var d2RRequestUri = getD2RRequestUri(request);
-    return innReachExternalService.callInnReachApi(centralServerId, d2RRequestUri);
+    var innReachResponse = innReachExternalService.callInnReachApi(centralServerId, d2RRequestUri);
+
+    var body = innReachResponse == null ? "" : innReachResponse;
+    var bytes = body.getBytes(StandardCharsets.UTF_8);
+
+    response.setStatus(HttpStatus.OK.value());
+    response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+    response.setCharacterEncoding(StandardCharsets.UTF_8.name());
+    response.setContentLength(bytes.length);
+    response.getOutputStream().write(bytes);
+    response.getOutputStream().flush();
   }
 
   private String getD2RRequestUri(HttpServletRequest request) {

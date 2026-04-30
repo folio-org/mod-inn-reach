@@ -545,7 +545,8 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     var transactionHoldDTO = createTransactionHoldDTO();
 
     when(circulationClient.findRequest(transaction.getHold().getFolioRequestId())).thenReturn(Optional.of(createRequestDTO()));
-    when(servicePointsUsersClient.findServicePointsUsers(eq(PRE_POPULATED_PATRON2_ID))).thenReturn(ResultList.asSinglePage(createServicePointUserDTO()));
+    when(servicePointsUsersClient.findServicePointsUsersByQuery("userId==" + cqlEncode(PRE_POPULATED_PATRON2_ID.toString())))
+      .thenReturn(ResultList.asSinglePage(createServicePointUserDTO()));
     when(circulationClient.checkOutByBarcode(any(CheckOutRequestDTO.class))).thenReturn(new LoanDTO().id(NEW_LOAN_ID));
 
     var responseEntity = testRestTemplate.exchange(
