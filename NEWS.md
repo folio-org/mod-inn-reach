@@ -1,3 +1,6 @@
+## v4.1.0-SNAPSHOT 2026-XX-XX
+* Fix issues found after migration to Spring Boot v4.0.5 ([MODINREACH-577](https://folio-org.atlassian.net/browse/MODINREACH-577))
+
 ## v4.0.0 2026-04-17
 
 ### Breaking changes
@@ -43,25 +46,6 @@
 * Remove `spring-cloud-starter-openfeign` (replaced by Spring Boot 4 built-in support)
 * Remove `coffee-boots` (no longer needed with Spring Boot 4)
 * Add `lombok-mapstruct-binding 0.2.0`
-
-## v3.5.0-SNAPSHOT 2025-xx-xx
-* [MODINREACH-550](https://folio-org.atlassian.net/browse/MODINREACH-550) - Upgrade to Spring Boot v4.0.5
-
-### Bugs
-* [MODINREACH-503](https://folio-org.atlassian.net/browse/MODINREACH-503) - [INN-Reach] Add missing tokens to API
-* [MODINREACH-485](https://folio-org.atlassian.net/browse/MODINREACH-485) - Recontribute for requested Item on automatically item hold cancelled transaction.
-* [MODINREACH-485](https://folio-org.atlassian.net/browse/MODINREACH-485) - Bump Spring Boot from 3.4.4 to 3.5.0
-* [MODINREACH-496](https://folio-org.atlassian.net/browse/MODINREACH-496) - Add missing module permission to get holdings sources for INN-Reach circulation endpoints
-* [MODINREACH-467](https://folio-org.atlassian.net/browse/MODINREACH-467) - Assign Item Hold Transaction due date when item checked out to borrowing site
-* [MODINREACH-508](https://folio-org.atlassian.net/browse/MODINREACH-508) - Add missing permissions for INN-Reach circulation endpoints and for System User
-* [MODINREACH-482](https://folio-org.atlassian.net/browse/MODINREACH-482) - Add remove patron hold API to cancel `PATRON_HOLD` transactions with no created virtual item and request
-* [MODINREACH-524](https://folio-org.atlassian.net/browse/MODINREACH-524) - Fix handling Owner Renew Item message (Borrowing Site) and setting correct state
-* [MODINREACH-427](https://folio-org.atlassian.net/browse/MODINREACH-427) - Checkout local hold item on closing of item request and notify inn-reach central server
-* [MODINREACH-532](https://folio-org.atlassian.net/browse/MODINREACH-532) - Remove log message with sensitive information
-* [MODINREACH-531](https://folio-org.atlassian.net/browse/MODINREACH-531) - 414 Request-URI Too Long when calling circulation/requests during getPagingSlipsByServicePoint call
-* [MODINREACH-559](https://folio-org.atlassian.net/browse/MODINREACH-559) - Use GitHub Workflows for Maven
-* [MODINREACH-561](https://folio-org.atlassian.net/browse/MODINREACH-561) - Use circulation/settings instead of mod-configuration for CHECKOUT other_settings
-
 
 ## v3.4.1 2025-04-15
 

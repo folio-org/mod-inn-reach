@@ -123,9 +123,9 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
 
     verifyState(transaction, ITEM_SHIPPED);
 
-    var response = checkInItem(transaction, servicePointId);
-
     transaction.setState(ITEM_RECEIVED);
+
+    var response = checkInItem(transaction, servicePointId);
 
     notifier.reportItemReceived(transaction);
 
@@ -146,9 +146,9 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
 
     patronHoldService.addItemBarcode(transaction, itemBarcode);
 
-    var response = checkInItem(transaction, servicePointId);
-
     transaction.setState(RECEIVE_UNANNOUNCED);
+
+    var response = checkInItem(transaction, servicePointId);
 
     notifier.reportUnshippedItemReceived(transaction);
 

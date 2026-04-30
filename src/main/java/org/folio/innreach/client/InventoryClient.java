@@ -1,5 +1,7 @@
 package org.folio.innreach.client;
 
+import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
+
 import java.util.Optional;
 import java.util.UUID;
 
@@ -24,16 +26,16 @@ public interface InventoryClient {
   @GetExchange("/items?query=hrid=={hrId}")
   ResultList<InventoryItemDTO> getItemsByHrId(@PathVariable("hrId") String hrId);
 
-  @PostExchange("/instances")
+  @PostExchange(value = "/instances", contentType = APPLICATION_JSON_VALUE)
   void createInstance(@RequestBody InventoryInstanceDTO instance);
 
   @GetExchange("/instances?query=(hrid=={hrid})")
   ResultList<InventoryInstanceDTO> queryInstanceByHrid(@PathVariable("hrid") String hrid);
 
-  @PostExchange("/items")
+  @PostExchange(value = "/items", contentType = APPLICATION_JSON_VALUE)
   InventoryItemDTO createItem(@RequestBody InventoryItemDTO item);
 
-  @PutExchange("/items/{itemId}")
+  @PutExchange(value = "/items/{itemId}", contentType = APPLICATION_JSON_VALUE)
   void updateItem(@PathVariable("itemId") UUID itemId, @RequestBody InventoryItemDTO item);
 
   @DeleteExchange("/items/{itemId}")
@@ -55,7 +57,7 @@ public interface InventoryClient {
   ResultList<InventoryItemDTO> queryItemsByIdsAndLocations(@PathVariable("itemIds") String itemIdKey,
                                                            @PathVariable("locationIds") String locationIdKey,
                                                            @RequestParam("limit") int limit);
-  @PostExchange("/items/retrieve")
+  @PostExchange(value = "/items/retrieve", contentType = APPLICATION_JSON_VALUE)
   ResultList<InventoryItemDTO> retrieveItemsByCQLBody(@Valid @RequestBody CQLQueryRequestDto cqlQueryRequestDto);
 
   @GetExchange("/instances?query=id=({instanceIds})")

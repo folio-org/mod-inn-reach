@@ -1,5 +1,7 @@
 package org.folio.innreach.client;
 
+import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
+
 import java.util.Optional;
 import java.util.UUID;
 
@@ -47,20 +49,20 @@ public interface CirculationClient {
   @DeleteExchange("/requests/{requestId}")
   void deleteRequest(@PathVariable("requestId") UUID requestId);
 
-  @PostExchange("/requests")
+  @PostExchange(value = "/requests", contentType = APPLICATION_JSON_VALUE)
   RequestDTO sendRequest(@RequestBody RequestDTO requestDTO);
 
-  @PutExchange("/requests/{requestId}")
+  @PutExchange(value = "/requests/{requestId}", contentType = APPLICATION_JSON_VALUE)
   void updateRequest(@PathVariable("requestId") UUID requestId, @RequestBody RequestDTO request);
 
-  @PostExchange("/requests/{requestId}/move")
+  @PostExchange(value = "/requests/{requestId}/move", contentType = APPLICATION_JSON_VALUE)
   RequestDTO moveRequest(@PathVariable("requestId") UUID requestId, @RequestBody MoveRequestDTO payload);
 
-  @PostExchange("/check-in-by-barcode")
-  CheckInResponseDTO checkInByBarcode(CheckInRequestDTO checkIn);
+  @PostExchange(value = "/check-in-by-barcode", contentType = APPLICATION_JSON_VALUE)
+  CheckInResponseDTO checkInByBarcode(@RequestBody CheckInRequestDTO checkIn);
 
-  @PostExchange("/check-out-by-barcode")
-  LoanDTO checkOutByBarcode(CheckOutRequestDTO checkOut);
+  @PostExchange(value = "/check-out-by-barcode", contentType = APPLICATION_JSON_VALUE)
+  LoanDTO checkOutByBarcode(@RequestBody CheckOutRequestDTO checkOut);
 
   @GetExchange("/loans?query=(itemId=={itemId})")
   ResultList<LoanDTO> queryLoansByItemId(@PathVariable("itemId") UUID itemId);
@@ -74,16 +76,16 @@ public interface CirculationClient {
   @DeleteExchange("/loans/{loanId}")
   Optional<LoanDTO> deleteLoan(@PathVariable("loanId") UUID loanId);
 
-  @PostExchange("/loans")
+  @PostExchange(value = "/loans", contentType = APPLICATION_JSON_VALUE)
   LoanDTO createLoan(@RequestBody LoanDTO loan);
 
-  @PutExchange("/loans/{loanId}")
+  @PutExchange(value = "/loans/{loanId}", contentType = APPLICATION_JSON_VALUE)
   void updateLoan(@PathVariable("loanId") UUID loanId, @RequestBody LoanDTO loan);
 
-  @PostExchange("/renew-by-id")
+  @PostExchange(value = "/renew-by-id", contentType = APPLICATION_JSON_VALUE)
   LoanDTO renewLoan(@RequestBody RenewByIdDTO renewLoan);
 
-  @PostExchange("/loans/{loanId}/claim-item-returned")
+  @PostExchange(value = "/loans/{loanId}/claim-item-returned", contentType = APPLICATION_JSON_VALUE)
   void claimItemReturned(@PathVariable("loanId") UUID loanId, @RequestBody ClaimItemReturnedRequestDTO payload);
 
 }

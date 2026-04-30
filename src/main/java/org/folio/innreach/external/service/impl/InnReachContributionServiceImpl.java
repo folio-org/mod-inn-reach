@@ -10,6 +10,7 @@ import java.util.UUID;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.apache.commons.collections4.CollectionUtils;
 import org.folio.innreach.external.exception.InnReachConnectionException;
 import org.folio.innreach.external.exception.ServiceSuspendedException;
 import org.springframework.stereotype.Service;
@@ -96,7 +97,7 @@ public class InnReachContributionServiceImpl implements InnReachContributionServ
       var error = errorResponse!=null ? errorResponse.getReason() : "";
       String errorMessages = "";
 
-      if(errorResponse!=null && errorResponse.getMessages()!=null && !errorResponse.getMessages().isEmpty()) {
+      if (errorResponse!=null && CollectionUtils.isNotEmpty(errorResponse.getMessages())) {
         errorMessages = errorResponse.getMessages().get(0);
       }
       log.info("checkServiceSuspension:: error is : {}",error);
@@ -104,7 +105,7 @@ public class InnReachContributionServiceImpl implements InnReachContributionServ
       if (error.contains(CONTRIBUTION_IS_CURRENTLY_SUSPENDED)) {
         throw new ServiceSuspendedException(CONTRIBUTION_IS_CURRENTLY_SUSPENDED);
       }
-      if(errorMessages.contains(CONNECTIONS_ALLOWED_FROM_THIS_SERVER)) {
+      if (errorMessages.contains(CONNECTIONS_ALLOWED_FROM_THIS_SERVER)) {
         log.info("Allowable maximum Connection limit error message occurred");
         throw new InnReachConnectionException("Only 5 connections allowed from this server");
       }
