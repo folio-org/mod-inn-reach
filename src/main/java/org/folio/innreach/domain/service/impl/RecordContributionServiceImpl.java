@@ -1,11 +1,16 @@
 package org.folio.innreach.domain.service.impl;
 
+import static org.apache.commons.collections4.CollectionUtils.isNotEmpty;
+
 import java.net.SocketTimeoutException;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.folio.innreach.external.exception.InnReachConnectionException;
 import org.folio.innreach.external.exception.InnReachRetryException;
 import org.folio.innreach.external.exception.ServiceSuspendedException;
@@ -147,7 +152,7 @@ public class RecordContributionServiceImpl implements RecordContributionService 
   private InnReachResponse contributeBib(UUID centralServerId, String bibId, BibInfo bib) {
     log.info("Retry happening for contributeBib with bibId: {}",bibId);
     var response = irContributionService.contributeBib(centralServerId, bibId, bib);
-    checkServiceSuspension(response);
+    verifyInnReachContributionResponse(response);
     Assert.isTrue(response.isOk(), "Unexpected contribution response: " + response);
     return response;
   }
@@ -155,33 +160,39 @@ public class RecordContributionServiceImpl implements RecordContributionService 
   private InnReachResponse verifyBibContribution(UUID centralServerId, String bibId) {
     log.info("verifyBibContribution with bibId: {}",bibId);
     var response = irContributionService.lookUpBib(centralServerId, bibId);
-    checkServiceSuspension(response);
+    verifyInnReachContributionResponse(response);
     Assert.isTrue(response.isOk(), "Unexpected verification response: " + response);
     return response;
   }
 
   private InnReachResponse contributeBibItems(String bibId, UUID centralServerId, List<BibItem> bibItems) {
     var response = irContributionService.contributeBibItems(centralServerId, bibId, BibItemsInfo.of(bibItems));
-    checkServiceSuspension(response);
+    verifyInnReachContributionResponse(response);
     Assert.isTrue(response.isOk(), "Unexpected items contribution response: " + response);
     return response;
   }
 
-  private void checkServiceSuspension(InnReachResponse response) {
-    if (response != null && response.getErrors() != null && !response.getErrors().isEmpty()) {
-      InnReachResponse.Error errorResponse = response.getErrors().get(0);
+  private void verifyInnReachContributionResponse(InnReachResponse response) {
+    if (response != null && isNotEmpty(response.getErrors())) {
+      InnReachResponse.Error errorResponse = response.getErrors().getFirst();
 
-      var error = errorResponse!=null ? errorResponse.getReason() : "";
-      String errorMessages = "";
-
-      if (errorResponse!=null && errorResponse.getMessages()!=null && !errorResponse.getMessages().isEmpty()) {
-        errorMessages = errorResponse.getMessages().get(0);
+      var errorReason = Optional.ofNullable(errorResponse)
+        .map(InnReachResponse.Error::getReason)
+        .orElse("");
+      if (StringUtils.isNotBlank(errorReason)) {
+        log.warn("verifyInnReachContributionResponse:: error reason: {}", errorReason);
       }
-      log.info("checkServiceSuspension error: {}", error);
-      if (error.contains(CONTRIBUTION_IS_CURRENTLY_SUSPENDED)) {
+      if (errorReason.contains(CONTRIBUTION_IS_CURRENTLY_SUSPENDED)) {
         log.info("Contribution to d2irm is currently suspended error message occurred");
         throw new ServiceSuspendedException(CONTRIBUTION_IS_CURRENTLY_SUSPENDED);
       }
+
+      var errorMessages = Optional.ofNullable(errorResponse)
+        .map(InnReachResponse.Error::getMessages)
+        .filter(CollectionUtils::isNotEmpty)
+        .map(List::getFirst)
+        .orElse("");
+
       if (errorMessages.contains(CONNECTIONS_ALLOWED_FROM_THIS_SERVER)) {
         log.info("Allowable maximum Connection limit error message occurred");
         throw new InnReachConnectionException("Only 5 connections allowed from this server");

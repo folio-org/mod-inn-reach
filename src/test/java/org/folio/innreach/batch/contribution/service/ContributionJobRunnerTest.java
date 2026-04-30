@@ -2,6 +2,7 @@ package org.folio.innreach.batch.contribution.service;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static org.folio.innreach.batch.contribution.ContributionJobContextManager.beginContributionJobContext;
+import static org.folio.innreach.util.InnReachConstants.SKIPPING_INELIGIBLE_INSTANCE_MSG;
 import static org.folio.innreach.util.InnReachConstants.SKIPPING_INELIGIBLE_MSG;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
@@ -296,7 +297,7 @@ class ContributionJobRunnerTest {
     jobRunner.runOngoingInstanceContribution(CENTRAL_SERVER_ID, instance, ongoingJob);
 
     verify(recordContributor, never()).deContributeInstance(any(), any());
-    verify(ongoingContributionStatusService).updateOngoingContribution(ongoingJob, SKIPPING_INELIGIBLE_MSG, ContributionStatus.FAILED);
+    verify(ongoingContributionStatusService).updateOngoingContribution(ongoingJob, SKIPPING_INELIGIBLE_INSTANCE_MSG, ContributionStatus.FAILED);
   }
 
   @SneakyThrows
@@ -451,60 +452,6 @@ class ContributionJobRunnerTest {
 
     verify(recordContributor, never()).contributeItems(any(), any(), anyList());
     verify(contributionService, never()).createOngoingContribution(any());
-  }
-
-  @SneakyThrows
-  @Test
-  void runItemDeContribution_shouldDeContribute() {
-    var item = createItem();
-    var instance = new Instance().source(MARC_RECORD_SOURCE);
-    instance.addItemsItem(item);
-    var contribution = new ContributionDTO();
-    contribution.setId(UUID.randomUUID());
-
-    when(validationService.isEligibleForContribution(any(), any(Instance.class))).thenReturn(true);
-    when(contributionService.createOngoingContribution(any())).thenReturn(contribution);
-    when(recordContributor.isContributed(any(), any(), any(Item.class))).thenReturn(true);
-
-    jobRunner.runItemDeContribution(CENTRAL_SERVER_ID, instance, item);
-
-    verify(recordContributor).deContributeItem(any(), any());
-    verify(recordContributor).contributeInstance(any(), any());
-  }
-
-  @SneakyThrows
-  @Test
-  void runItemDeContribution_shouldSkipNonContributed() {
-    var item = createItem();
-    var instance = new Instance().source(MARC_RECORD_SOURCE);
-    instance.addItemsItem(item);
-    var contribution = new ContributionDTO();
-    contribution.setId(UUID.randomUUID());
-
-    when(recordContributor.isContributed(any(), any(), any())).thenReturn(false);
-
-    jobRunner.runItemDeContribution(CENTRAL_SERVER_ID, instance, item);
-
-    verify(recordContributor, never()).deContributeItem(any(), any());
-    verify(recordContributor, never()).contributeInstance(any(), any());
-  }
-
-  @SneakyThrows
-  @Test
-  void runItemDeContribution_shouldDeContributeInstance() {
-    var item = createItem();
-    var instance = new Instance().source(MARC_RECORD_SOURCE);
-    instance.addItemsItem(item);
-    var contribution = new ContributionDTO();
-    contribution.setId(UUID.randomUUID());
-
-    when(validationService.isEligibleForContribution(any(), any(Instance.class))).thenReturn(false);
-    when(contributionService.createOngoingContribution(any())).thenReturn(contribution);
-    when(recordContributor.isContributed(any(), any(), any())).thenReturn(true);
-
-    jobRunner.runItemDeContribution(CENTRAL_SERVER_ID, instance, item);
-
-    verify(recordContributor).deContributeInstance(any(), any());
   }
 
   @Test

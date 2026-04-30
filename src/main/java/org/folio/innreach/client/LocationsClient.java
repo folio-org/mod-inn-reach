@@ -13,7 +13,7 @@ public interface LocationsClient {
   @GetExchange
   ResultList<LocationDTO> getLocations(@RequestParam("limit") int limit);
 
-  @GetExchange()
+  @GetExchange
   ResultList<LocationDTO> queryLocationsByServicePoint(@RequestParam("query") String query, @RequestParam("limit") int limit);
 
 }
