@@ -1,5 +1,8 @@
 package org.folio.innreach.controller;
 
+import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.ITEM_RECEIVED;
+import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.RECEIVE_UNANNOUNCED;
+import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.RETURN_UNCIRCULATED;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
@@ -11,8 +14,14 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Stream;
 
+import org.folio.innreach.domain.entity.InnReachTransaction;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import tools.jackson.databind.ObjectMapper;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.BeforeEach;
@@ -46,10 +55,24 @@ class InnReachTransactionControllerIT extends BaseApiControllerTest {
   private static final String GET_ALL_TRANSACTIONS_ENDPOINT = "/inn-reach/transactions";
   private static final String CHECK_IN_PATRON_HOLD_ENDPOINT =
     "/inn-reach/transactions/{id}/receive-item/{servicePointId}";
+  private static final String CHECK_IN_UNSHIPPED_ENDPOINT =
+    "/inn-reach/transactions/{id}/receive-unshipped-item/{servicePointId}/{itemBarcode}";
   private static final String CANCEL_ITEM_HOLD_ENDPOINT =
     "/inn-reach/transactions/{id}/itemhold/cancel";
   private static final String REMOVE_PATRON_HOLD_ENDPOINT =
     "/inn-reach/transactions/{id}/patronhold/remove";
+  private static final String RETURN_PATRON_HOLD_ENDPOINT =
+    "/inn-reach/transactions/{id}/patronhold/return-item/{servicePointId}";
+  private static final String TRANSFER_ITEM_HOLD_ENDPOINT =
+    "/inn-reach/transactions/{id}/itemhold/transfer-item/{itemId}";
+  private static final String CHECK_OUT_PATRON_HOLD_ENDPOINT =
+    "/inn-reach/transactions/{id}/patronhold/check-out-item/{servicePointId}";
+  private static final String CHECK_OUT_LOCAL_HOLD_ENDPOINT =
+    "/inn-reach/transactions/{id}/localhold/check-out-item/{servicePointId}";
+  private static final String FINAL_CHECKIN_ENDPOINT =
+    "/inn-reach/transactions/{id}/itemhold/finalcheckin/{servicePointId}";
+  private static final String CANCEL_LOCAL_HOLD_ENDPOINT =
+    "/inn-reach/transactions/{id}/localhold/cancel";
 
   private static final String PRE_POPULATED_ITEM_HOLD_ITEM_BARCODE = "DEF-def-5678";
   private static final String CHECK_OUT_BY_BARCODE_URL = "/circulation/check-out-by-barcode";
@@ -65,6 +88,17 @@ class InnReachTransactionControllerIT extends BaseApiControllerTest {
 
   // Item/request IDs from pre-populated data
   private static final String PATRON_HOLD_REQUEST_ID = "ea11eba7-3c0f-4d15-9cca-c8608cd6bc8a";
+  private static final String PATRON_HOLD_ITEM_ID = "9a326225-6530-41cc-9399-a61987bfab3c";
+  private static final String UNSHIPPED_ITEM_BARCODE = "newbarcode";
+
+  // Local hold data for testing
+  private static final String LOCAL_HOLD_TRANSACTION_ID = "79b0a1fb-55be-4e55-9d84-01303aaec1ce";
+  private static final String LOCAL_HOLD_REQUEST_ID = "4106d147-9085-4dfa-a59f-b8d50d551a48";
+  private static final String LOCAL_HOLD_INSTANCE_ID = "709c1075-0378-48af-a682-b4e7ac170424";
+  private static final String ITEM_HOLD_ITEM_ID = "4def31b0-2b60-4531-ad44-7eab60fa5428";
+  private static final String ITEM_HOLD_REQUEST_ID = "26278b3a-de32-4deb-b81b-896637b3dbeb";
+  private static final String ITEM_HOLD_LOAN_ID = "06e820e3-71a0-455e-8c73-3963aea677d4";
+  private static final String PATRON_HOLD_LOAN_ID = "fd5109c7-8934-4294-9504-c1a4a4f07c96";
 
   @MockitoBean
   private InnReachExternalService innReachExternalService;
@@ -168,16 +202,17 @@ class InnReachTransactionControllerIT extends BaseApiControllerTest {
   }
 
   @SneakyThrows
-  @Test
+  @ParameterizedTest
+  @MethodSource("checkInItemPatronHoldTestArguments")
   @Sql(scripts = {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-transaction-item-shipped.sql"
   })
-  void checkInPatronHoldItem_success() {
+  void checkInPatronHoldItem_success(InnReachTransaction.TransactionState expectedState, String requestStubResponse) {
     stubPost(CHECK_IN_BY_BARCODE_URL, "circulation/checkin-response.json");
 
     // Stub request lookup for handleItemWithCanceledRequest
-    stubGet("/circulation/requests/" + PATRON_HOLD_REQUEST_ID, "circulation/open-request-response.json");
+    stubGet("/circulation/requests/" + PATRON_HOLD_REQUEST_ID, requestStubResponse);
 
     when(innReachExternalService.postInnReachApi(any(), any(), any()))
       .thenReturn("ok");
@@ -188,7 +223,7 @@ class InnReachTransactionControllerIT extends BaseApiControllerTest {
         .headers(getOkapiHeaders()))
       .andExpect(status().isOk())
       .andExpect(jsonPath("$.transaction").exists())
-      .andExpect(jsonPath("$.transaction.state").value("ITEM_RECEIVED"))
+      .andExpect(jsonPath("$.transaction.state").value(expectedState.name()))
       .andExpect(jsonPath("$.folioCheckIn").exists());
   }
 
@@ -248,5 +283,170 @@ class InnReachTransactionControllerIT extends BaseApiControllerTest {
         .headers(getOkapiHeaders()))
       .andExpect(status().isNotFound());
   }
-}
 
+  @SneakyThrows
+  @ParameterizedTest
+  @MethodSource("checkInUnshippedTestArguments")
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-patron-hold-unshipped.sql"
+  })
+  void checkInPatronHoldUnshippedItem_success(InnReachTransaction.TransactionState expectedState, String requestStubResponse) {
+    // Stub barcode lookup - no existing item with this barcode
+    stubGet("/inventory/items", "inventory/empty-items-response.json",
+      Map.of("query", "barcode==" + UNSHIPPED_ITEM_BARCODE));
+
+    // Stub item find and update for addItemBarcode
+    stubGet("/inventory/items/" + PATRON_HOLD_ITEM_ID, "inventory/item-response.json");
+    stubPut("/inventory/items/" + PATRON_HOLD_ITEM_ID);
+
+    // Stub check-in
+    stubPost(CHECK_IN_BY_BARCODE_URL, "circulation/checkin-response.json");
+
+    // Stub request lookup for handleItemWithCanceledRequest
+    stubGet("/circulation/requests/" + PATRON_HOLD_REQUEST_ID, requestStubResponse);
+
+    when(innReachExternalService.postInnReachApi(any(), any(), any()))
+      .thenReturn("ok");
+
+    mockMvc.perform(post(CHECK_IN_UNSHIPPED_ENDPOINT,
+        PATRON_HOLD_TRANSACTION_ID, SERVICE_POINT_ID, UNSHIPPED_ITEM_BARCODE)
+        .contentType(MediaType.APPLICATION_JSON)
+        .headers(getOkapiHeaders()))
+      .andExpect(status().isOk())
+      .andExpect(jsonPath("$.transaction").exists())
+      .andExpect(jsonPath("$.transaction.state").value(expectedState.name()))
+      .andExpect(jsonPath("$.folioCheckIn").exists());
+  }
+
+  @SneakyThrows
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-patron-hold-item-received.sql"
+  })
+  void returnPatronHoldItem_withOpenLoan_success() {
+    stubGet("/circulation/loans/" + PATRON_HOLD_LOAN_ID, "circulation/open-loan-response.json");
+    stubPost(CHECK_IN_BY_BARCODE_URL, "circulation/checkin-response.json");
+
+    mockMvc.perform(post(RETURN_PATRON_HOLD_ENDPOINT,
+        PATRON_HOLD_TRANSACTION_ID, SERVICE_POINT_ID)
+        .contentType(MediaType.APPLICATION_JSON)
+        .headers(getOkapiHeaders()))
+      .andExpect(status().isNoContent());
+  }
+
+  @SneakyThrows
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
+  })
+  void transferItemHold_sameItemAsRequest_success() {
+    stubGet("/circulation/requests/" + ITEM_HOLD_REQUEST_ID, "circulation/item-hold-request-response.json");
+    stubGet("/inventory/items/" + ITEM_HOLD_ITEM_ID, "inventory/item-hold-item-response.json");
+
+    when(innReachExternalService.postInnReachApi(any(), any(), any()))
+      .thenReturn("ok");
+
+    mockMvc.perform(post(TRANSFER_ITEM_HOLD_ENDPOINT,
+        ITEM_HOLD_TRANSACTION_ID, ITEM_HOLD_ITEM_ID)
+        .contentType(MediaType.APPLICATION_JSON)
+        .headers(getOkapiHeaders()))
+      .andExpect(status().isNoContent());
+  }
+
+  @SneakyThrows
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-patron-hold-item-received.sql"
+  })
+  void checkOutPatronHoldItem_success() {
+    stubGet("/circulation/loans", "circulation/empty-loans-response.json", Map.of());
+    stubPost(CHECK_OUT_BY_BARCODE_URL, "circulation/checkout-response.json");
+
+    mockMvc.perform(post(CHECK_OUT_PATRON_HOLD_ENDPOINT,
+        PATRON_HOLD_TRANSACTION_ID, SERVICE_POINT_ID)
+        .contentType(MediaType.APPLICATION_JSON)
+        .headers(getOkapiHeaders()))
+      .andExpect(status().isOk())
+      .andExpect(jsonPath("$.folioCheckOut").exists())
+      .andExpect(jsonPath("$.transaction").exists());
+  }
+
+  @SneakyThrows
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
+  })
+  void checkOutLocalHoldItem_success() {
+    stubGet("/circulation/loans", "circulation/empty-loans-response.json", Map.of());
+    stubPost(CHECK_OUT_BY_BARCODE_URL, "circulation/checkout-response.json");
+
+    mockMvc.perform(post(CHECK_OUT_LOCAL_HOLD_ENDPOINT,
+        LOCAL_HOLD_TRANSACTION_ID, SERVICE_POINT_ID)
+        .contentType(MediaType.APPLICATION_JSON)
+        .headers(getOkapiHeaders()))
+      .andExpect(status().isOk())
+      .andExpect(jsonPath("$.folioCheckOut").exists())
+      .andExpect(jsonPath("$.transaction").exists());
+  }
+
+  @SneakyThrows
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-item-hold-shipped.sql"
+  })
+  void finalCheckInItemHold_withOpenLoan_success() {
+    stubGet("/circulation/loans/" + ITEM_HOLD_LOAN_ID, "circulation/item-hold-open-loan-response.json");
+    stubPost(CHECK_IN_BY_BARCODE_URL, "circulation/checkin-response.json");
+
+    when(innReachExternalService.postInnReachApi(any(), any(), any()))
+      .thenReturn("ok");
+
+    mockMvc.perform(post(FINAL_CHECKIN_ENDPOINT,
+        ITEM_HOLD_TRANSACTION_ID, SERVICE_POINT_ID)
+        .contentType(MediaType.APPLICATION_JSON)
+        .headers(getOkapiHeaders()))
+      .andExpect(status().isNoContent());
+  }
+
+  @SneakyThrows
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
+  })
+  void cancelLocalHold_success() {
+    stubGet("/circulation/requests/" + LOCAL_HOLD_REQUEST_ID, "circulation/local-hold-open-request-response.json");
+    stubPut("/circulation/requests/" + LOCAL_HOLD_REQUEST_ID);
+    stubGet("/inventory/instances/" + LOCAL_HOLD_INSTANCE_ID, "inventory/instance-response.json");
+
+    when(innReachExternalService.postInnReachApi(any(), any(), any()))
+      .thenReturn("ok");
+
+    mockMvc.perform(post(CANCEL_LOCAL_HOLD_ENDPOINT, LOCAL_HOLD_TRANSACTION_ID)
+        .contentType(MediaType.APPLICATION_JSON)
+        .content("{\"cancellationReasonId\":\"75187e8d-e25a-47a7-89ad-23ba612bb5aa\"}")
+        .headers(getOkapiHeaders()))
+      .andExpect(status().isOk())
+      .andExpect(jsonPath("$.state").value("CANCEL_REQUEST"));
+  }
+
+  private static Stream<Arguments> checkInItemPatronHoldTestArguments() {
+    return Stream.of(
+      Arguments.of(ITEM_RECEIVED, "circulation/open-request-response.json"),
+      Arguments.of(RETURN_UNCIRCULATED, "circulation/canceled-request-response.json")
+    );
+  }
+
+  private static Stream<Arguments> checkInUnshippedTestArguments() {
+    return Stream.of(
+      Arguments.of(RECEIVE_UNANNOUNCED, "circulation/open-request-response.json"),
+      Arguments.of(RETURN_UNCIRCULATED, "circulation/canceled-request-response.json")
+    );
+  }
+}
