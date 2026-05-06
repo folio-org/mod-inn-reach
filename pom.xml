@@ -4,7 +4,7 @@
   <parent>
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-parent</artifactId>
-    <version>4.0.5</version>
+    <version>4.0.6</version>
     <relativePath />
   </parent>
   <groupId>org.folio</groupId>
@@ -33,7 +33,7 @@
     <wiremock-standalone.version>3.13.2</wiremock-standalone.version>
     <junit-extensions.version>2.6.0</junit-extensions.version>
     <easy-random.version>5.0.0</easy-random.version>
-    <micrometer.version>1.15.4</micrometer.version>
+    <micrometer.version>1.16.5</micrometer.version>
     <log4j2.version>2.19.0</log4j2.version>
 
     <!-- plugins -->
