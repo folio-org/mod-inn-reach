@@ -1,0 +1,24 @@
+{
+  "id": "4def31b0-2b60-4531-ad44-7eab60fa5428",
+  "_version": "1",
+  "status": {
+    "name": "Available"
+  },
+  "title": "Item hold test",
+  "hrid": "it00000000002",
+  "barcode": "DEF-def-5678",
+  "holdingsRecordId": "891bfff3-ba79-4beb-8c25-f714f14c6a33",
+  "materialType": {
+    "id": "5ee11d91-f7e8-481d-b079-65d708582ccc",
+    "name": "dvd"
+  },
+  "permanentLoanType": {
+    "id": "f7171bd3-cd3e-44ea-b2dd-74e29884690a",
+    "name": "newLoanType 1"
+  },
+  "effectiveLocation": {
+    "id": "ae5032a1-fe55-41d1-ab29-b7696b3312a4",
+    "name": "Big Circ"
+  }
+}
+
