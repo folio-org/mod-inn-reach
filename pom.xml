@@ -37,10 +37,10 @@
     <log4j2.version>2.19.0</log4j2.version>
 
     <!-- plugins -->
-    <openapi-generator.version>7.21.0</openapi-generator.version>
+    <openapi-generator.version>7.22.0</openapi-generator.version>
     <copy-rename-maven-plugin.version>1.0.1</copy-rename-maven-plugin.version>
     <folio-module-descriptor-validator.version>1.0.1</folio-module-descriptor-validator.version>
-    <maven-release-plugin.version>3.1.1</maven-release-plugin.version>
+    <maven-release-plugin.version>3.3.1</maven-release-plugin.version>
 
     <!-- other properties -->
     <java.version>21</java.version>
