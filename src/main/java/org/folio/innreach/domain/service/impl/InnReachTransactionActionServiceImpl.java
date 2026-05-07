@@ -278,7 +278,6 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
 
   @Override
   public void handleItemUpdate(Item updatedItem, Item oldItem) {
-    log.debug("handleItemUpdate:: parameters updatedItem: {}, oldItem: {}", updatedItem, oldItem);
     var itemId = updatedItem.getId();
     var updatedItemBarcode = updatedItem.getBarcode();
 
@@ -289,7 +288,6 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
           t.getHold().setFolioItemBarcode(updatedItemBarcode);
         });
     }
-    log.info("handleItemUpdate:: Item updated");
   }
 
   @Override

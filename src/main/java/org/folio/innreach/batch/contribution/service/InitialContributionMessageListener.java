@@ -7,7 +7,7 @@ import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.folio.innreach.domain.dto.folio.inventorystorage.InstanceIterationEvent;
 import org.folio.innreach.external.exception.InnReachConnectionException;
 import org.folio.innreach.external.exception.ServiceSuspendedException;
-import org.folio.innreach.external.exception.SocketTimeOutExceptionWrapper;
+import org.folio.innreach.external.exception.InnReachTimeOutException;
 import org.springframework.kafka.listener.MessageListener;
 
 import java.util.UUID;
@@ -38,7 +38,7 @@ public class InitialContributionMessageListener implements MessageListener<Strin
 
       iMessageProcessor.processMessage(instanceIterationEvent, consumerRecord.topic());
     }
-    catch (ServiceSuspendedException | FeignException | InnReachConnectionException | SocketTimeOutExceptionWrapper e) {
+    catch (ServiceSuspendedException | FeignException | InnReachConnectionException | InnReachTimeOutException e) {
       throw e;
     }
     catch (Exception e) {

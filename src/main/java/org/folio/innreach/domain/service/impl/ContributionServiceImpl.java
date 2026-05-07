@@ -6,6 +6,7 @@ import static org.folio.innreach.domain.dto.folio.inventorystorage.JobResponse.J
 import static org.folio.innreach.domain.entity.Contribution.Status.CANCELLED;
 import static org.folio.innreach.domain.entity.Contribution.Status.COMPLETE;
 import static org.folio.innreach.domain.service.impl.ServiceUtils.centralServerRef;
+import static org.folio.innreach.dto.MappingValidationStatusDTO.INVALID;
 import static org.folio.innreach.dto.MappingValidationStatusDTO.VALID;
 
 import java.util.List;
@@ -15,11 +16,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.folio.innreach.batch.contribution.InitialContributionJobConsumerContainer;
 import org.folio.innreach.config.props.ContributionJobProperties;
-import org.folio.innreach.external.exception.InnReachException;
 import org.folio.spring.config.properties.FolioEnvironment;
 import org.springframework.beans.factory.BeanFactory;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.retry.support.RetryTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
@@ -56,8 +54,6 @@ public class ContributionServiceImpl implements ContributionService {
   private final FolioEnvironment folioEnv;
   private final ContributionJobProperties jobProperties;
   private ContributionJobRunner jobRunner;
-  @Qualifier("contributionRetryTemplate")
-  private final RetryTemplate retryTemplate;
 
   @Override
   public ContributionDTO getCurrent(UUID centralServerId) {
@@ -66,8 +62,14 @@ public class ContributionServiceImpl implements ContributionService {
       .map(mapper::toDTO)
       .orElseGet(ContributionDTO::new);
 
-    contribution.setLocationsMappingStatus(validationService.getLocationMappingStatus(centralServerId));
-    contribution.setItemTypeMappingStatus(validationService.getItemTypeMappingStatus(centralServerId));
+    try {
+      contribution.setLocationsMappingStatus(validationService.getLocationMappingStatus(centralServerId));
+      contribution.setItemTypeMappingStatus(validationService.getItemTypeMappingStatus(centralServerId));
+    } catch (Exception e) {
+      log.warn("Can't validate location mappings", e);
+      contribution.setLocationsMappingStatus(INVALID);
+      contribution.setItemTypeMappingStatus(INVALID);
+    }
 
     log.info("getCurrent:: result: {}", contribution);
     return contribution;

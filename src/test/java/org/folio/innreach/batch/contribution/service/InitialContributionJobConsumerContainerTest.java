@@ -80,7 +80,7 @@ class InitialContributionJobConsumerContainerTest extends BaseKafkaApiTest{
   }
 
   @Test
-  void testStartAndStopConsumerIfServiceException() throws InterruptedException {
+  void testStartAndStopConsumerIfServiceException() {
     var topicName = getTopicName();
     var context = prepareContext();
     var initialContributionJobConsumerContainer = prepareContributionJobConsumerContainer(topicName);
@@ -101,7 +101,7 @@ class InitialContributionJobConsumerContainerTest extends BaseKafkaApiTest{
   }
 
   @Test
-  void testStartAndStopConsumerIfFeignException() throws InterruptedException {
+  void testStartAndStopConsumerIfFeignException() {
     var topicName = getTopicName();
     var context = prepareContext();
     var initialContributionJobConsumerContainer = prepareContributionJobConsumerContainer(topicName);
@@ -122,7 +122,7 @@ class InitialContributionJobConsumerContainerTest extends BaseKafkaApiTest{
   }
 
   @Test
-  void testStartOrCreateConsumer() throws InterruptedException {
+  void testStartOrCreateConsumer() {
     var topicName = getTopicName();
     var context = prepareContext();
     var initialContributionJobConsumerContainer = prepareContributionJobConsumerContainer(topicName);
@@ -165,7 +165,6 @@ class InitialContributionJobConsumerContainerTest extends BaseKafkaApiTest{
   @Test
   void testContainerIfRunning() {
     var topicName = getTopicName();
-    var context = prepareContext();
 
     var consumerProperties = kafkaProperties.buildConsumerProperties(null);
 

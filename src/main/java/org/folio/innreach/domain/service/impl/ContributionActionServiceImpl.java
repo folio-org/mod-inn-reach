@@ -19,7 +19,7 @@ import org.folio.innreach.domain.entity.OngoingContributionStatus;
 import org.folio.innreach.domain.event.DomainEventType;
 import org.folio.innreach.external.exception.InnReachConnectionException;
 import org.folio.innreach.external.exception.ServiceSuspendedException;
-import org.folio.innreach.external.exception.SocketTimeOutExceptionWrapper;
+import org.folio.innreach.external.exception.InnReachTimeOutException;
 import org.folio.innreach.util.JsonHelper;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
@@ -249,14 +249,13 @@ public class ContributionActionServiceImpl implements ContributionActionService 
   private void handlePerCentralServer(UUID recordId, Consumer<UUID> centralServerHandler) {
     for (var csId : getCentralServerIds()) {
       try {
-        if (validationService.getItemTypeMappingStatus(csId) == VALID &&
-          validationService.getLocationMappingStatus(csId) == VALID) {
+        if (checkCentralServerValid(csId)) {
           centralServerHandler.accept(csId);
         } else {
           log.warn("Central server {} contribution configuration is not valid", csId);
         }
       }
-      catch (ServiceSuspendedException | FeignException | InnReachConnectionException | SocketTimeOutExceptionWrapper e) {
+      catch (ServiceSuspendedException | FeignException | InnReachConnectionException | InnReachTimeOutException e) {
         log.info("exception thrown from handlePerCentralServer", e);
         throw e;
       }

@@ -14,13 +14,10 @@ import static org.folio.innreach.fixture.ContributionFixture.createContributionJ
 import static org.folio.innreach.fixture.ContributionFixture.createInstance;
 import static org.folio.innreach.fixture.TestUtil.createNoRetryTemplate;
 
-import java.net.SocketTimeoutException;
 import java.util.ArrayList;
 import java.util.UUID;
 
-import io.swagger.models.auth.In;
 import org.folio.innreach.external.dto.InnReachResponse;
-import org.junit.Assert;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -57,17 +54,17 @@ class InstanceContributorTest {
   private RecordContributionServiceImpl instanceContributor;
 
   @BeforeEach
-  public void init() {
+  void init() {
     ContributionJobContextManager.beginContributionJobContext(JOB_CONTEXT);
   }
 
   @AfterEach
-  public void clear() {
+  void clear() {
     ContributionJobContextManager.endContributionJobContext();
   }
 
   @Test
-  void shouldContributeAndLookUp() throws SocketTimeoutException {
+  void shouldContributeAndLookUp() {
     when(instanceTransformationService.getBibInfo(any(), any())).thenReturn(new BibInfo());
     when(irContributionService.contributeBib(any(), any(), any())).thenReturn(response);
     when(irContributionService.lookUpBib(any(),any())).thenReturn(response);
@@ -123,7 +120,7 @@ class InstanceContributorTest {
   }
 
   @Test
-  void testDeContributeInstance() throws SocketTimeoutException {
+  void testDeContributeInstance() {
     when(irContributionService.deContributeBib(any(), any())).thenReturn(response);
     instanceContributor.deContributeInstance(CENTRAL_SERVER_ID, createInstance());
     verify(irContributionService).deContributeBib(any(),any());

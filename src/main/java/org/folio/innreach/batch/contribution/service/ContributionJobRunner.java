@@ -1,7 +1,8 @@
 package org.folio.innreach.batch.contribution.service;
 
 import static java.lang.Math.max;
-import static org.folio.innreach.batch.contribution.ContributionJobContextManager.*;
+import static org.folio.innreach.batch.contribution.ContributionJobContextManager.beginContributionJobContext;
+import static org.folio.innreach.batch.contribution.ContributionJobContextManager.endContributionJobContext;
 import static org.folio.innreach.batch.contribution.ContributionJobContextManager.getContributionJobContext;
 import static org.folio.innreach.domain.entity.ContributionStatus.DE_CONTRIBUTED;
 import static org.folio.innreach.domain.entity.ContributionStatus.FAILED;
@@ -11,8 +12,13 @@ import static org.folio.innreach.util.InnReachConstants.SKIPPING_INELIGIBLE_INST
 import static org.folio.innreach.util.InnReachConstants.SKIPPING_INELIGIBLE_INSTANCE_MSG;
 import static org.folio.innreach.util.InnReachConstants.SKIPPING_INELIGIBLE_MSG;
 
-import java.net.SocketTimeoutException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
@@ -27,7 +33,7 @@ import org.folio.innreach.domain.entity.OngoingContributionStatus;
 import org.folio.innreach.external.exception.InnReachConnectionException;
 import org.folio.innreach.external.exception.ServiceSuspendedException;
 import org.folio.innreach.batch.contribution.InitialContributionJobConsumerContainer;
-import org.folio.innreach.external.exception.SocketTimeOutExceptionWrapper;
+import org.folio.innreach.external.exception.InnReachTimeOutException;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.retry.support.RetryTemplate;
 import org.springframework.stereotype.Service;
@@ -177,55 +183,40 @@ public class ContributionJobRunner {
   }
 
   public void runOngoingInstanceContribution(UUID centralServerId, Instance instance, OngoingContributionStatus ongoingContributionStatus) {
-    try {
-      log.info("runOngoingInstanceContribution:: validating instance {} for contribution to central server {}", instance.getId(), centralServerId);
-      boolean eligibleInstance = isEligibleForContribution(centralServerId, instance);
-      boolean contributedInstance = isContributed(centralServerId, instance);
-      log.info("runOngoingInstanceContribution:: eligibleInstance: {}, contributedInstance: {}", eligibleInstance, contributedInstance);
-      if (!eligibleInstance && !contributedInstance) {
-        log.info("runOngoingInstanceContribution:: skipping ineligible and non-contributed instance with centralServerId {} and instanceId {}", centralServerId, instance.getId());
-        ongoingContributionStatusService.updateOngoingContribution(ongoingContributionStatus, SKIPPING_INELIGIBLE_MSG, FAILED);
-        return;
+    boolean eligibleInstance = isEligibleForContribution(centralServerId, instance);
+    boolean contributedInstance = isContributed(centralServerId, instance);
+    log.info("runOngoingInstanceContribution:: eligibleInstance: {}, contributedInstance: {}", eligibleInstance, contributedInstance);
+    if (!eligibleInstance && !contributedInstance) {
+      log.info("runOngoingInstanceContribution:: " + SKIPPING_INELIGIBLE_INSTANCE_MSG + ", instance id : {}", instance.getId());
+      ongoingContributionStatusService.updateOngoingContribution(ongoingContributionStatus, SKIPPING_INELIGIBLE_INSTANCE_MSG, FAILED);
+      return;
+    }
+    if (eligibleInstance) {
+      log.info("runOngoingInstanceContribution:: contributing instance id: {}", instance.getId());
+      recordContributionService.contributeInstance(centralServerId, instance);
+      if (!contributedInstance) {
+        log.info("runOngoingInstanceContribution:: contributing items of new instance id: {}", instance.getId());
+        contributeOngoingItems(centralServerId, instance);
       }
-      if (eligibleInstance) {
-        log.info("runOngoingInstanceContribution:: contributing instance id: {}", instance.getId());
-        recordContributionService.contributeInstance(centralServerId, instance);
-        if (!contributedInstance) {
-          log.info("runOngoingInstanceContribution:: contributing items of new instance id: {}", instance.getId());
-          contributeOngoingItems(centralServerId, instance);
-        }
-        ongoingContributionStatusService.updateOngoingContribution(ongoingContributionStatus, PROCESSED);
-      } else if (contributedInstance) {
-        log.info("runOngoingInstanceContribution:: " + DE_CONTRIBUTE_INSTANCE_MSG + ", instance id : {}", instance.getId());
-        recordContributionService.deContributeInstance(centralServerId, instance);
-        ongoingContributionStatusService.updateOngoingContribution(ongoingContributionStatus, DE_CONTRIBUTED);
-      } else {
-        log.info("runOngoingInstanceContribution:: " + SKIPPING_INELIGIBLE_INSTANCE_MSG + ", instance id : {}", instance.getId());
-        ongoingContributionStatusService.updateOngoingContribution(ongoingContributionStatus, SKIPPING_INELIGIBLE_INSTANCE_MSG, FAILED);
-      }
-    } catch (SocketTimeoutException ex) {
-      throw new SocketTimeOutExceptionWrapper(ex.getMessage());
+      ongoingContributionStatusService.updateOngoingContribution(ongoingContributionStatus, PROCESSED);
+    } else if (contributedInstance) {
+      log.info("runOngoingInstanceContribution:: " + DE_CONTRIBUTE_INSTANCE_MSG + ", instance id : {}", instance.getId());
+      recordContributionService.deContributeInstance(centralServerId, instance);
+      ongoingContributionStatusService.updateOngoingContribution(ongoingContributionStatus, DE_CONTRIBUTED);
     }
   }
 
   public void runOngoingInstanceDeContribution(UUID centralServerId, Instance deletedInstance, OngoingContributionStatus ongoingContributionStatus) {
-    try {
-      log.info("runOngoingInstanceDeContribution:: Validating instance {} for de-contribution from central server {}", deletedInstance.getId(), centralServerId);
-      if (!isContributed(centralServerId, deletedInstance)) {
-        log.info("runOngoingInstanceDeContribution:: Skipping non-contributed instance ,centralServer id: {}, instance id: {}", centralServerId, deletedInstance.getId());
-        ongoingContributionStatusService.updateOngoingContribution(ongoingContributionStatus, SKIPPING_INELIGIBLE_MSG, FAILED);
-        return;
-      }
-      recordContributionService.deContributeInstance(centralServerId, deletedInstance);
-      ongoingContributionStatusService.updateOngoingContribution(ongoingContributionStatus, DE_CONTRIBUTED);
-    } catch (SocketTimeoutException ex) {
-      throw new SocketTimeOutExceptionWrapper(ex.getMessage());
+    if (!isContributed(centralServerId, deletedInstance)) {
+      log.info("runOngoingInstanceDeContribution:: Skipping non-contributed instance, centralServer id: {}, instance id: {}", centralServerId, deletedInstance.getId());
+      ongoingContributionStatusService.updateOngoingContribution(ongoingContributionStatus, SKIPPING_INELIGIBLE_MSG, FAILED);
+      return;
     }
+    recordContributionService.deContributeInstance(centralServerId, deletedInstance);
+    ongoingContributionStatusService.updateOngoingContribution(ongoingContributionStatus, DE_CONTRIBUTED);
   }
 
   public void runItemContribution(UUID centralServerId, Instance instance, Item item) {
-    log.info("Ongoing: validating item {} for contribution to central server {} with instance id: {}", item.getId(), centralServerId, instance.getId());
-
     boolean eligibleItem = isEligibleForContribution(centralServerId, item);
     boolean contributedItem = isContributed(centralServerId, instance, item);
     log.info("Ongoing: eligibleItem: {}, contributedItem: {}", eligibleItem, contributedItem);
@@ -243,7 +234,7 @@ public class ContributionJobRunner {
 
         if (eligibleItem) {
           log.info("Ongoing: contributing centralServer id:{}, instance id : {}, item id: {}", centralServerId, instance.getId(), item.getId());
-          contributeItem(centralServerId, instance.getHrid(), item, statistics);
+          contributeItemsChunk(centralServerId, instance.getHrid(), List.of(item), statistics);
         } else if (contributedItem) {
           log.info("Ongoing: de-contributing centralServer id: {}, instance id : {}, item id: {}", centralServerId, instance.getId(), item.getId());
           deContributeItem(centralServerId, item, statistics);
@@ -256,82 +247,69 @@ public class ContributionJobRunner {
   }
 
   public void runItemContribution(UUID centralServerId, Instance instance, Item item, OngoingContributionStatus ongoingContributionStatus) {
-    try {
-      log.info("runItemContribution:: validating item {} for contribution to central server {} with instance id: {}", item.getId(), centralServerId, instance.getId());
-      boolean eligibleItem = isEligibleForContribution(centralServerId, item);
-      boolean contributedItem = isContributed(centralServerId, instance, item);
-      log.info("runItemContribution:: eligibleItem: {}, contributedItem: {}", eligibleItem, contributedItem);
-      if (!eligibleItem && !contributedItem) {
-        log.info("runItemContribution:: skipping ineligible and non-contributed centralServer id: {}, item id: {}, instance id : {}", centralServerId, item.getId(), instance.getId());
-        ongoingContributionStatusService.updateOngoingContribution(ongoingContributionStatus, SKIPPING_INELIGIBLE_MSG, FAILED);
-        return;
-      }
-      if (isEligibleForContribution(centralServerId, instance)) {
-        log.info("runItemContribution:: Re-contributing instance to update bib status, centralServer id: {}, instance id : {}, item id: {}", centralServerId, instance.getId(), item.getId());
-        recordContributionService.contributeInstance(centralServerId, instance);
-        if (eligibleItem) {
-          log.info("runItemContribution:: contributing centralServer id:{}, instance id : {}, item id: {}", centralServerId, instance.getId(), item.getId());
-          recordContributionService.contributeItems(centralServerId, instance.getHrid(), List.of(item));
-        } else if (contributedItem) {
-          log.info("runItemContribution:: de-contributing centralServer id: {}, instance id : {}, item id: {}", centralServerId, instance.getId(), item.getId());
-          recordContributionService.deContributeItem(centralServerId, item);
-        }
-        ongoingContributionStatusService.updateOngoingContribution(ongoingContributionStatus, PROCESSED);
+    boolean eligibleItem = isEligibleForContribution(centralServerId, item);
+    boolean contributedItem = isContributed(centralServerId, instance, item);
+    log.info("runItemContribution:: eligibleItem: {}, contributedItem: {}", eligibleItem, contributedItem);
+    if (!eligibleItem && !contributedItem) {
+      log.info("runItemContribution:: skipping ineligible and non-contributed centralServer id: {}, item id: {}, instance id : {}", centralServerId, item.getId(), instance.getId());
+      ongoingContributionStatusService.updateOngoingContribution(ongoingContributionStatus, SKIPPING_INELIGIBLE_MSG, FAILED);
+      return;
+    }
+    if (isEligibleForContribution(centralServerId, instance)) {
+      log.info("runItemContribution:: Re-contributing instance to update bib status, centralServer id: {}, instance id : {}, item id: {}", centralServerId, instance.getId(), item.getId());
+      recordContributionService.contributeInstance(centralServerId, instance);
+      if (eligibleItem) {
+        log.info("runItemContribution:: contributing centralServer id: {}, instance id : {}, item id: {}", centralServerId, instance.getId(), item.getId());
+        recordContributionService.contributeItems(centralServerId, instance.getHrid(), List.of(item));
       } else if (contributedItem) {
-        log.info("runItemContribution:: " + DE_CONTRIBUTE_INSTANCE_MSG + ", centralServer id: {}, instance id : {}, item id: {}", centralServerId, instance.getId(), item.getId());
-        recordContributionService.deContributeInstance(centralServerId, instance);
-        ongoingContributionStatusService.updateOngoingContribution(ongoingContributionStatus, DE_CONTRIBUTED);
-      } else {
-        log.info("runItemContribution:: " + SKIPPING_INELIGIBLE_INSTANCE_ITEM_MSG + " centralServer id: {}, instance id : {}, item id: {}", centralServerId, instance.getId(), item.getId());
-        ongoingContributionStatusService.updateOngoingContribution(ongoingContributionStatus, SKIPPING_INELIGIBLE_INSTANCE_ITEM_MSG, FAILED);
+        log.info("runItemContribution:: de-contributing centralServer id: {}, instance id : {}, item id: {}", centralServerId, instance.getId(), item.getId());
+        recordContributionService.deContributeItem(centralServerId, item);
       }
-    } catch (SocketTimeoutException ex) {
-      throw new SocketTimeOutExceptionWrapper(ex.getMessage());
+      ongoingContributionStatusService.updateOngoingContribution(ongoingContributionStatus, PROCESSED);
+    } else if (contributedItem) {
+      log.info("runItemContribution:: " + DE_CONTRIBUTE_INSTANCE_MSG + ", centralServer id: {}, instance id : {}, item id: {}", centralServerId, instance.getId(), item.getId());
+      recordContributionService.deContributeInstance(centralServerId, instance);
+      ongoingContributionStatusService.updateOngoingContribution(ongoingContributionStatus, DE_CONTRIBUTED);
+    } else {
+      log.info("runItemContribution:: " + SKIPPING_INELIGIBLE_INSTANCE_ITEM_MSG + " centralServer id: {}, instance id : {}, item id: {}", centralServerId, instance.getId(), item.getId());
+      ongoingContributionStatusService.updateOngoingContribution(ongoingContributionStatus, SKIPPING_INELIGIBLE_INSTANCE_ITEM_MSG, FAILED);
     }
   }
 
   public void runItemMove(UUID centralServerId, Instance newInstance, Instance oldInstance, Item item, OngoingContributionStatus ongoingContributionStatus) {
-    try {
-      log.info("runItemMove:: Validating item {} for moving to a new instance id : {} from old instance id : {} on central server {}", item.getId(), newInstance.getId(), oldInstance.getId(), centralServerId);
-
-      boolean eligibleItem = isEligibleForContribution(centralServerId, item);
-      boolean contributedItem = isContributed(centralServerId, oldInstance, item);
-      log.info("runItemMove:: eligibleItem: {}, contributedItem: {}", eligibleItem, contributedItem);
-      if (!eligibleItem && !contributedItem) {
-        log.info("runItemMove:: Skipping ineligible and non-contributed item id: {}, new instance id: {}, old instance id: {}", item.getId(), newInstance.getId(), oldInstance.getId());
-        ongoingContributionStatusService.updateOngoingContribution(ongoingContributionStatus, SKIPPING_INELIGIBLE_MSG, FAILED);
-        return;
-      }
-
-      log.info("runItemMove:: Starting ongoing item move job item id: {}, new instance id: {}, old instance id: {}", item.getId(), newInstance.getId(), oldInstance.getId());
-
-      // de-contribute item and update old instance
-      if (contributedItem) {
-        if (isEligibleForContribution(centralServerId, oldInstance)) {
-          log.info("runItemMove:: de-contributing item : {} from old instance id : {}", item.getId(), oldInstance.getId());
-          recordContributionService.deContributeItem(centralServerId, item);
-          log.info("runItemMove:: re-contributing old instance id:{} to update bib status, item id; {}", oldInstance.getId(), item.getId());
-          recordContributionService.contributeInstance(centralServerId, oldInstance);
-        } else {
-          log.info("runItemMove:: e-contributing old instance id: {}, item id: {}", oldInstance.getId(), item.getId());
-          recordContributionService.deContributeInstance(centralServerId, oldInstance);
-        }
-      }
-
-      // contribute item to a new instance
-      if (isEligibleForContribution(centralServerId, newInstance)) {
-        log.info("runItemMove:: re-contributing new instance id: {} to update bib status, item id: {}", newInstance.getId(), item.getId());
-        recordContributionService.contributeInstance(centralServerId, newInstance);
-
-        if (eligibleItem) {
-          log.info("runItemMove:: Contributing item to new instance id: {}, item id: {}", newInstance.getId(), item.getId());
-          recordContributionService.contributeItems(centralServerId, newInstance.getHrid(), List.of(item));
-        }
-      }
-      ongoingContributionStatusService.updateOngoingContribution(ongoingContributionStatus, PROCESSED);
-    } catch (SocketTimeoutException ex) {
-      throw new SocketTimeOutExceptionWrapper(ex.getMessage());
+    boolean eligibleItem = isEligibleForContribution(centralServerId, item);
+    boolean contributedItem = isContributed(centralServerId, oldInstance, item);
+    log.info("runItemMove:: eligibleItem: {}, contributedItem: {}", eligibleItem, contributedItem);
+    if (!eligibleItem && !contributedItem) {
+      log.info("runItemMove:: Skipping ineligible and non-contributed item id: {}, new instance id: {}, old instance id: {}", item.getId(), newInstance.getId(), oldInstance.getId());
+      ongoingContributionStatusService.updateOngoingContribution(ongoingContributionStatus, SKIPPING_INELIGIBLE_MSG, FAILED);
+      return;
     }
+
+    // de-contribute item and update old instance
+    if (contributedItem) {
+      if (isEligibleForContribution(centralServerId, oldInstance)) {
+        log.info("runItemMove:: de-contributing item : {} from old instance id : {}", item.getId(), oldInstance.getId());
+        recordContributionService.deContributeItem(centralServerId, item);
+        log.info("runItemMove:: re-contributing old instance id:{} to update bib status, item id; {}", oldInstance.getId(), item.getId());
+        recordContributionService.contributeInstance(centralServerId, oldInstance);
+      } else {
+        log.info("runItemMove:: e-contributing old instance id: {}, item id: {}", oldInstance.getId(), item.getId());
+        recordContributionService.deContributeInstance(centralServerId, oldInstance);
+      }
+    }
+
+    // contribute item to a new instance
+    if (isEligibleForContribution(centralServerId, newInstance)) {
+      log.info("runItemMove:: re-contributing new instance id: {} to update bib status, item id: {}", newInstance.getId(), item.getId());
+      recordContributionService.contributeInstance(centralServerId, newInstance);
+
+      if (eligibleItem) {
+        log.info("runItemMove:: Contributing item to new instance id: {}, item id: {}", newInstance.getId(), item.getId());
+        recordContributionService.contributeItems(centralServerId, newInstance.getHrid(), List.of(item));
+      }
+    }
+    ongoingContributionStatusService.updateOngoingContribution(ongoingContributionStatus, PROCESSED);
   }
 
   public void runItemDeContribution(UUID centralServerId, Instance instance, Item deletedItem) {
@@ -358,29 +336,23 @@ public class ContributionJobRunner {
   }
 
   public void runItemDeContribution(UUID centralServerId, Instance instance, Item deletedItem, OngoingContributionStatus ongoingContributionStatus) {
-    try {
-      log.info("runItemDeContribution:: Validating item id: {} for de-contribution from central server: {} with instance id: {}", deletedItem.getId(), centralServerId, instance.getId());
-      if (!isContributed(centralServerId, instance, deletedItem)) {
-        log.info("runItemDeContribution:: Skipping non-contributed item id: {}, instance id: {}", deletedItem.getId(), instance.getId());
-        ongoingContributionStatusService.updateOngoingContribution(ongoingContributionStatus, SKIPPING_INELIGIBLE_MSG, FAILED);
-        return;
-      }
-      log.info("runItemDeContribution:: Starting ongoing item de-contribution job centralServer id: {}, item id: {}, instance id: {}", centralServerId, deletedItem.getId(), instance.getId());
+    if (!isContributed(centralServerId, instance, deletedItem)) {
+      log.info("runItemDeContribution:: Skipping non-contributed item id: {}, instance id: {}", deletedItem.getId(), instance.getId());
+      ongoingContributionStatusService.updateOngoingContribution(ongoingContributionStatus, SKIPPING_INELIGIBLE_MSG, FAILED);
+      return;
+    }
 
-      if (isEligibleForContribution(centralServerId, instance)) {
-        log.info("runItemDeContribution:: de-contributing centralServer id: {}, item id: {}, instance id: {}", centralServerId, deletedItem.getId(), instance.getId());
-        recordContributionService.deContributeItem(centralServerId, deletedItem);
+    if (isEligibleForContribution(centralServerId, instance)) {
+      log.info("runItemDeContribution:: de-contributing centralServer id: {}, item id: {}, instance id: {}", centralServerId, deletedItem.getId(), instance.getId());
+      recordContributionService.deContributeItem(centralServerId, deletedItem);
 
-        log.info("runItemDeContribution:: re-contributing instance to update bib status centralServer id: {}, item id: {}, instance id: {}", centralServerId, deletedItem.getId(), instance.getId());
-        recordContributionService.contributeInstance(centralServerId, instance);
-        ongoingContributionStatusService.updateOngoingContribution(ongoingContributionStatus, PROCESSED);
-      } else {
-        log.info("runItemDeContribution:: " + DE_CONTRIBUTE_INSTANCE_MSG + ", centralServer id: {}, item id: {}, instance id : {}", centralServerId, deletedItem.getId(), instance.getId());
-        recordContributionService.deContributeInstance(centralServerId, instance);
-        ongoingContributionStatusService.updateOngoingContribution(ongoingContributionStatus, DE_CONTRIBUTED);
-      }
-    } catch (SocketTimeoutException ex) {
-      throw new SocketTimeOutExceptionWrapper(ex.getMessage());
+      log.info("runItemDeContribution:: re-contributing instance to update bib status centralServer id: {}, item id: {}, instance id: {}", centralServerId, deletedItem.getId(), instance.getId());
+      recordContributionService.contributeInstance(centralServerId, instance);
+      ongoingContributionStatusService.updateOngoingContribution(ongoingContributionStatus, PROCESSED);
+    } else {
+      log.info("runItemDeContribution:: " + DE_CONTRIBUTE_INSTANCE_MSG + ", centralServer id: {}, item id: {}, instance id : {}", centralServerId, deletedItem.getId(), instance.getId());
+      recordContributionService.deContributeInstance(centralServerId, instance);
+      ongoingContributionStatusService.updateOngoingContribution(ongoingContributionStatus, DE_CONTRIBUTED);
     }
   }
 
@@ -433,18 +405,13 @@ public class ContributionJobRunner {
     var items = instance.getItems().stream()
       .filter(i -> isEligibleForContribution(centralServerId, i)).toList();
     if (items.isEmpty()) {
-      log.info("contributeOngoingItems:: item is empty while contributing instance id: {}", instance.getId());
+      log.info("contributeOngoingItems:: no items for contribution for instance id: {}", instance.getId());
       return;
     }
     int chunkSize = max(jobProperties.getChunkSize(), 1);
     StreamSupport.stream(Iterables.partition(items, chunkSize).spliterator(), false)
       .forEach(itemsChunk -> recordContributionService.contributeItemsWithoutRetry(centralServerId, bibId, itemsChunk));
     log.info("contributeOngoingItems:: Item contribution completed for instanceId {} ", instance.getId());
-  }
-
-  private void contributeItem(UUID centralServerId, String bibId, Item item, Statistics stats) {
-    log.info("contributeItem:: parameters centralServerId: {}, bibId: {}, item id: {}", centralServerId, bibId, item.getId());
-    contributeItemsChunk(centralServerId, bibId, List.of(item), stats);
   }
 
   private void contributeItemsChunk(UUID centralServerId, String bibId, List<Item> items, Statistics stats) {
@@ -456,19 +423,15 @@ public class ContributionJobRunner {
       stats.addRecordsContributed(itemsCount);
       addRecordProcessed();
     }
-    catch (ServiceSuspendedException | FeignException | InnReachConnectionException e) {
-      log.info(getContributionJobContext().isInitialContribution() ? "Initial: exception occurred: {}": "Ongoing: exception occurred: {}", e);
-      throw e;
+    catch (ServiceSuspendedException | FeignException | InnReachConnectionException | InnReachTimeOutException ex) {
+      log.error("contributeItemsChunk:: exception occurred: {}", ex.getMessage(), ex);
+      throw ex;
     }
-    catch (SocketTimeoutException socketTimeoutException) {
-      log.info(getContributionJobContext().isInitialContribution() ? "Initial: socket exception occurred: {}": "Ongoing: socket exception occurred: {}", socketTimeoutException);
-      throw new SocketTimeOutExceptionWrapper(socketTimeoutException.getMessage());
-    }
-    catch (Exception e) {
+    catch (Exception ex) {
       // not possible to guess what item failed when the chunk of multiple items is being contributed
-      var recordId = items.size() == 1 ? items.get(0).getId() : null;
-      itemExceptionListener.logWriteError(e, recordId);
-      log.info("contributeItemsChunk:: recordId: {}, exception occurred: {}", recordId, e);
+      var recordId = items.size() == 1 ? items.getFirst().getId() : null;
+      itemExceptionListener.logWriteError(ex, recordId);
+      log.info("contributeItemsChunk:: unexpected exception occurred on items contribution for bib id: {}", bibId, ex);
       addRecordProcessed();
     } finally {
       stats.addRecordsProcessed(itemsCount);
@@ -489,16 +452,10 @@ public class ContributionJobRunner {
       stats.addRecordsTotal(1);
       recordContributionService.contributeInstance(centralServerId, instance);
       stats.addRecordsContributed(1);
-    }
-    catch (ServiceSuspendedException | FeignException | InnReachConnectionException e) {
+    } catch (ServiceSuspendedException | FeignException | InnReachConnectionException | InnReachTimeOutException e) {
       log.info(getContributionJobContext().isInitialContribution() ? "Initial: instance id:{}, exception occurred: {}": "Ongoing: instance id:{}, exception occurred: {}", instance.getId(), e);
       throw e;
-    }
-    catch (SocketTimeoutException socketTimeoutException) {
-      log.info(getContributionJobContext().isInitialContribution() ? "Initial: instance id:{}, socket exception occurred: {}": "Ongoing: instance id:{}, socket exception occurred: {}", instance.getId(), socketTimeoutException);
-      throw new SocketTimeOutExceptionWrapper(socketTimeoutException.getMessage());
-    }
-    catch (Exception e) {
+    } catch (Exception e) {
       log.info("Initial: instance id: {}, exception caught in contributeInstance e: {}", instance.getId(), e);
       instanceExceptionListener.logWriteError(e, instance.getId());
     } finally {
@@ -509,55 +466,49 @@ public class ContributionJobRunner {
   }
 
   private void deContributeInstance(UUID centralServerId, Instance instance, Statistics stats) {
-    log.info("Initial: deContributeInstance centralServerId: {}, instanceId: {}", centralServerId, instance.getId());
     try {
       stats.addRecordsTotal(1);
       recordContributionService.deContributeInstance(centralServerId, instance);
       stats.addRecordsDeContributed(1);
       addRecordProcessed();
     }
-    catch (ServiceSuspendedException | FeignException | InnReachConnectionException e) {
+    catch (ServiceSuspendedException | FeignException | InnReachConnectionException | InnReachTimeOutException e) {
       log.info("Initial: instance id: {}, deContributeInstance exception occurred e: {}",instance.getId(), e);
       throw e;
     }
-    catch (SocketTimeoutException socketTimeoutException) {
-      log.info("instance id: {}, socketTimeoutException occur: {}",instance.getId(), socketTimeoutException);
-      throw new SocketTimeOutExceptionWrapper(socketTimeoutException.getMessage());
-    }
-    catch (Exception e) {
-      log.info("Initial: deContributeInstance exception occurred e: {} for instanceId: {}", e, instance.getId());
-      instanceExceptionListener.logWriteError(e, instance.getId());
+    catch (Exception ex) {
+      log.error("deContributeInstance:: unexpected exception occurred on de-contribution of instance id {}: {}",
+        instance.getId(), ex.getMessage(), ex);
+      instanceExceptionListener.logWriteError(ex, instance.getId());
     } finally {
-      log.info("Initial: deContributeInstance finally added processed records and updated stats, instance id: {}", instance.getId());
+      log.info("deContributeInstance:: de-contribution of instance id {} has finished", instance.getId());
       stats.addRecordsProcessed(1);
       updateStats(stats);
     }
   }
 
   private void deContributeItem(UUID centralServerId, Item item, Statistics stats) {
-    log.info("Initial: deContributeItem centralServerId: {}, item id: {}", centralServerId, item.getId());
     try {
       stats.addRecordsTotal(1);
       recordContributionService.deContributeItem(centralServerId, item);
       stats.addRecordsDeContributed(1);
       addRecordProcessed();
     }
-    catch (ServiceSuspendedException | FeignException | InnReachConnectionException e) {
-      log.info("Initial: item id: {}, deContributeItem exception occurred e: {}", item.getId(), e);
-      throw e;
+    catch (ServiceSuspendedException | FeignException | InnReachConnectionException ex) {
+      log.error("deContributeItem:: exception occurred on de-contribution of item id {}: {}", item.getId(), ex.getMessage(), ex);
+      throw ex;
     }
-    catch (Exception e) {
-      log.info("Initial: deContributeItem exception occurred e: {} for item id: {}", e, item.getId());
-      itemExceptionListener.logWriteError(e, item.getId());
+    catch (Exception ex) {
+      log.error("deContributeItem:: unexpected exception occurred on de-contribution of item id {}: {}", item.getId(), ex.getMessage(), ex);
+      itemExceptionListener.logWriteError(ex, item.getId());
     } finally {
-      log.info("Initial: deContributeItem finally added processed records and updated stats, item id: {}", item.getId());
+      log.info("deContributeItem:: de-contribution of item id {} has finished", item.getId());
       stats.addRecordsProcessed(1);
       updateStats(stats);
     }
   }
 
   private void runOngoing(UUID centralServerId, BiConsumer<ContributionJobContext, Statistics> processor) {
-    log.info("Initial: runOngoing  centralServerId: {}", centralServerId);
     var contribution = contributionService.createOngoingContribution(centralServerId);
     var context = ContributionJobContext.builder()
       .contributionId(contribution.getId())
@@ -568,19 +519,19 @@ public class ContributionJobRunner {
     var statistics = new Statistics();
     try {
       if(getContributionJobContext()==null) {
-        log.info("setting ongoing contribution context for contributionID:{}", context.getContributionId());
+        log.info("runOngoing:: setting ongoing contribution context for contributionID: {}", context.getContributionId());
         beginContributionJobContext(context);
       }
       processor.accept(context, statistics);
       completeContribution(context);
       endContributionJobContext();
     }
-    catch (ServiceSuspendedException | FeignException | InnReachConnectionException | SocketTimeOutExceptionWrapper e) {
-      log.info("exception thrown from runOngoing :", e);
-      throw e;
+    catch (ServiceSuspendedException | FeignException | InnReachConnectionException | InnReachTimeOutException ex) {
+      log.error("runOngoing:: exception occurred on ongoing contribution: {}", context.getContributionId(), ex);
+      throw ex;
     }
     catch (Exception e) {
-      log.info("contributeInstance exception block :", e);
+      log.info("runOngoing:: unexpected exception occurred on ongoing contribution: ", e);
       throw e;
     }
   }
@@ -590,12 +541,11 @@ public class ContributionJobRunner {
   }
 
   public void completeContribution(ContributionJobContext context) {
-    log.info("completeContribution:: parameters context contribution id: {}", context.getContributionId());
     try {
       contributionService.completeContribution(context.getContributionId());
-      log.info("Completed contribution");
+      log.info("completeContribution:: Completed contribution: {}", context.getContributionId());
     } catch (Exception e) {
-      log.info("Failed to complete contribution job: {}", context, e);
+      log.error("completeContribution:: Failed to complete contribution with id: {}", context.getContributionId(), e);
     }
   }
 
@@ -604,12 +554,11 @@ public class ContributionJobRunner {
   }
 
   private Instance loadInstanceWithItems(UUID instanceId) {
-    log.info("loadInstanceWithItems:: parameters instanceId: {}", instanceId);
     Instance instance = null;
     try {
       instance = retryTemplate.execute(r -> inventoryViewService.getInstance(instanceId));
     } catch (Exception e) {
-      log.info("loadInstanceWithItems:: exception occurred with instance id: {} and e: {}", instanceId, e);
+      log.error("loadInstanceWithItems:: exception occurred with instance id: {}", instanceId, e);
       instanceExceptionListener.logProcessError(e, instanceId);
     }
     log.info("loadInstanceWithItems:: loaded instance with items, instance id: {}", instanceId);
