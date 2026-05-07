@@ -1218,6 +1218,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
 
     var transaction = response.getTransaction();
     assertEquals(PRE_POPULATED_ITEM_SHIPPED_TRANSACTION_ID, transaction.getId());
+    assertEquals(TransactionStateEnum.ITEM_RECEIVED, transaction.getState());
 
     var checkInResponse = response.getFolioCheckIn();
     assertEquals(PRE_POPULATED_PATRON_HOLD_ITEM_BARCODE, checkInResponse.getItem().getBarcode());
@@ -1252,6 +1253,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
 
     var transaction = response.getTransaction();
     assertEquals(PRE_POPULATED_ITEM_SHIPPED_TRANSACTION_ID, transaction.getId());
+    assertEquals(TransactionStateEnum.RETURN_UNCIRCULATED, transaction.getState());
 
     var checkInResponse = response.getFolioCheckIn();
     assertEquals(PRE_POPULATED_PATRON_HOLD_ITEM_BARCODE, checkInResponse.getItem().getBarcode());
@@ -1911,8 +1913,8 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   void cancelPatronHold_when_TransactionIsOnHoldOrTransfer_and_RequestIsClosed_withNoVirtualRecord(TransactionState state) {
     mockFindRequest(PRE_POPULATED_PATRON_HOLD_REQUEST_ID, CLOSED_CANCELLED);
 
-    modifyTransactionState(PRE_POPULATED_PATRON_HOLD_TRANSACTION_ID, state);
     modifyTransaction(PRE_POPULATED_PATRON_HOLD_TRANSACTION_ID, t -> {
+      t.setState(state);
       t.getHold().setFolioItemId(null);
       t.getHold().setFolioHoldingId(null);
       t.getHold().setFolioInstanceId(null);

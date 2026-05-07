@@ -1,0 +1,12 @@
+{
+  "id": "fd5109c7-8934-4294-9504-c1a4a4f07c96",
+  "userId": "4154a604-4d5a-4d8e-9160-057fc7b6e6b8",
+  "itemId": "9a326225-6530-41cc-9399-a61987bfab3c",
+  "status": {
+    "name": "Open"
+  },
+  "loanDate": "2025-01-01T00:00:00.000Z",
+  "dueDate": "2025-02-01T00:00:00.000Z",
+  "action": "checkedout"
+}
+
