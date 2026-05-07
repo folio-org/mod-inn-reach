@@ -23,7 +23,6 @@ import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlMergeMode;
 
-import java.net.SocketTimeoutException;
 import java.time.Duration;
 import java.util.List;
 import java.util.Set;
@@ -308,7 +307,7 @@ class InitialContributionEventProcessorTest extends BaseControllerTest {
   }
 
   @Test
-  void testDeContributeInstance() throws SocketTimeoutException {
+  void testDeContributeInstance() {
     UUID jobId = UUID.randomUUID();
     UUID instanceId = UUID.randomUUID();
     JobExecutionStatus job = jobExecutionStatusRepository.save(createMockJobExecution(jobId, instanceId, false));

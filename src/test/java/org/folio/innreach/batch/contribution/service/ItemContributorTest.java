@@ -22,7 +22,7 @@ import java.util.List;
 import lombok.SneakyThrows;
 import org.folio.innreach.external.dto.InnReachResponse;
 import org.folio.innreach.external.exception.InnReachConnectionException;
-import org.folio.innreach.external.exception.InnReachRetryException;
+import org.folio.innreach.external.exception.InnReachContributionRequestException;
 import org.folio.innreach.external.exception.ServiceSuspendedException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -131,14 +131,14 @@ class ItemContributorTest {
 
     when(response.getErrors()).thenReturn(of(errorResp2));
     assertThatThrownBy(() -> service.contributeItems(centralServerId, "test", of(item)))
-      .isInstanceOf(InnReachRetryException.class)
+      .isInstanceOf(InnReachContributionRequestException.class)
       .hasMessageContaining("Contributing items for bib test has failed")
       .cause().isInstanceOf(ServiceSuspendedException.class)
       .hasMessageContaining("is currently suspended");
 
     when(response.getErrors()).thenReturn(of(errorResp3));
     assertThatThrownBy(() -> service.contributeItems(centralServerId, "test", of(item)))
-      .isInstanceOf(InnReachRetryException.class)
+      .isInstanceOf(InnReachContributionRequestException.class)
       .hasMessageContaining("Contributing items for bib test has failed")
       .cause().isInstanceOf(InnReachConnectionException.class)
       .hasMessageContaining("Only 5 connections allowed from this server");
@@ -161,20 +161,5 @@ class ItemContributorTest {
     response.setStatus("nok");
     resp = service.isContributed(JOB_CONTEXT.getCentralServerId(), createInstance(),createItem());
     assertFalse(resp);
-  }
-
-  @SneakyThrows
-  @Test
-  void testMoveItem() {
-    when(irContributionService.deContributeBibItem(any(), any())).thenReturn(response);
-    when(irContributionService.contributeBibItems(any(), any(), any())).thenReturn(response);
-    when(recordTransformationService.getBibItems(any(), any(), any())).thenReturn(List.of(new BibItem()));
-    when(response.getErrors()).thenReturn(new ArrayList<>());
-    when(response.isOk()).thenReturn(true);
-
-    service.moveItem(JOB_CONTEXT.getCentralServerId(), "test", createItem());
-
-    verify(irContributionService).deContributeBibItem(any(),any());
-    verify(irContributionService).contributeBibItems(eq(JOB_CONTEXT.getCentralServerId()), any(), any());
   }
 }

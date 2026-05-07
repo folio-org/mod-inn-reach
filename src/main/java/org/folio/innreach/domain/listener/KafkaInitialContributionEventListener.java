@@ -31,13 +31,11 @@ public class KafkaInitialContributionEventListener {
     topicPattern = "${kafka.listener.contribution.topic-pattern}",
     concurrency = "${kafka.listener.contribution.concurrency}")
   public void processInitialContributionEvents(List<ConsumerRecord<String, InstanceIterationEvent>> consumerRecords) {
-    log.debug("processInitialContributionEvents:: Received records of size {} ", consumerRecords.size());
+    log.info("processInitialContributionEvents :: Handling {} Instance Iteration Events", consumerRecords.size());
     consumerRecords.forEach(consumerRecord -> {
-      log.info("processInitialContributionEvents :: consumerRecord {} ", consumerRecord);
       var instanceIterationEvent = getInstanceIterationEventFromKafkaRecord(consumerRecord);
       kafkaEventProcessorService.process(instanceIterationEvent, event ->
-          jobExecutionStatusRepository.save(jobExecutionStatusMapper.toEntity(event))
-        , instanceIterationEvent.getTenant());
+        jobExecutionStatusRepository.save(jobExecutionStatusMapper.toEntity(event)), instanceIterationEvent.getTenant());
     });
   }
 

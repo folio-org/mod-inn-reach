@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.folio.innreach.external.exception.InnReachTimeOutException;
 import org.folio.innreach.util.UriHelper;
 import org.springframework.stereotype.Service;
 
@@ -18,6 +19,7 @@ import org.folio.innreach.external.dto.InnReachLocationDTO;
 import org.folio.innreach.external.dto.InnReachLocationsDTO;
 import org.folio.innreach.external.service.InnReachAuthExternalService;
 import org.folio.innreach.external.service.InnReachLocationExternalService;
+import org.springframework.web.client.ResourceAccessException;
 
 @RequiredArgsConstructor
 @Log4j2
@@ -60,13 +62,18 @@ public class InnReachLocationExternalServiceImpl implements InnReachLocationExte
   @Override
   public List<InnReachLocationDTO> getAllLocations(CentralServerConnectionDetailsDTO connectionDetails) {
     log.debug("getAllLocations:: parameters connectionDetails: {}", connectionDetails);
-    var accessTokenDTO = innReachAuthExternalService.getAccessToken(connectionDetails);
-    var connectionUrl = URI.create(connectionDetails.getConnectionUrl());
-    var authorizationHeader = buildBearerAuthHeader(accessTokenDTO.getAccessToken());
-    var localCode = connectionDetails.getLocalCode();
-    var centralCode = connectionDetails.getCentralCode();
+    try {
+      var accessTokenDTO = innReachAuthExternalService.getAccessToken(connectionDetails);
+      var connectionUrl = URI.create(connectionDetails.getConnectionUrl());
+      var authorizationHeader = buildBearerAuthHeader(accessTokenDTO.getAccessToken());
+      var localCode = connectionDetails.getLocalCode();
+      var centralCode = connectionDetails.getCentralCode();
 
-    return getMappedLocationsFromInnReach(connectionUrl, authorizationHeader, localCode, centralCode);
+      return getMappedLocationsFromInnReach(connectionUrl, authorizationHeader, localCode, centralCode);
+    } catch (ResourceAccessException ex) {
+      log.error("getAllLocations:: Request timeout occurred while fetching inn-reach locations: {}", ex.getMessage());
+      throw new InnReachTimeOutException("Fetching Inn-Reach Locations is timed out");
+    }
   }
 
   private List<InnReachLocationDTO> getMappedLocationsFromInnReach(URI connectionUrl, String authorizationHeader,

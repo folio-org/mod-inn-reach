@@ -5,7 +5,7 @@ import lombok.extern.log4j.Log4j2;
 import org.folio.innreach.domain.dto.folio.inventorystorage.InstanceIterationEvent;
 import org.folio.innreach.external.exception.InnReachConnectionException;
 import org.folio.innreach.external.exception.ServiceSuspendedException;
-import org.folio.innreach.external.exception.SocketTimeOutExceptionWrapper;
+import org.folio.innreach.external.exception.InnReachTimeOutException;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
 
@@ -22,7 +22,8 @@ public class ContributionProcessor implements IMessageProcessor{
       log.info("processMessage: {}", event.toString());
       contributionJobRunner.runInitialContribution(event, topic);
     }
-    catch (ServiceSuspendedException | HttpServerErrorException | HttpClientErrorException | InnReachConnectionException | SocketTimeOutExceptionWrapper e) {
+    catch (ServiceSuspendedException | HttpServerErrorException | HttpClientErrorException | InnReachConnectionException |
+           InnReachTimeOutException e) {
       throw e;
     }
     catch (Exception e) {

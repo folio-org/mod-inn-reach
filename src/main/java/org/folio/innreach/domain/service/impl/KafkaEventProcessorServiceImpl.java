@@ -25,11 +25,9 @@ public class KafkaEventProcessorServiceImpl implements KafkaEventProcessorServic
   @Override
   public <T> void process(T event, Consumer<T> eventProcessor, String tenant) {
     try {
-      log.info("process: event {} , tenant {} ", event, tenant);
-      executionService.runTenantScoped(tenant,
-        () -> eventProcessor.accept(event));
+      executionService.runTenantScoped(tenant, () -> eventProcessor.accept(event));
     } catch (Exception ex) {
-      log.warn("Unable to save kafka event into outbox table ", ex);
+      log.error("process:: Unable to save kafka event into outbox table for tenant {}", tenant, ex);
     }
   }
 
@@ -38,7 +36,6 @@ public class KafkaEventProcessorServiceImpl implements KafkaEventProcessorServic
     try {
       Map<String, List<DomainEvent<T>>> tenantMap = events.stream().collect(Collectors.groupingBy(DomainEvent::getTenant));
       tenantMap.forEach((tenant, eventList) -> {
-        log.debug("process:: processing eventList {} for tenant {}", eventList, tenant);
         if (innReachTenants.contains(tenant)) {
           executionService.runTenantScoped(tenant,
             () -> eventProcessor.accept(eventList, tenant));
@@ -47,7 +44,7 @@ public class KafkaEventProcessorServiceImpl implements KafkaEventProcessorServic
         }
       });
     } catch (Exception ex) {
-      log.error("process:: Unable to save kafka event {} into outbox table ", events, ex);
+      log.error("process:: Unable to save {} events into outbox table", events.size(), ex);
     }
   }
 }
