@@ -5,6 +5,7 @@ import static org.folio.innreach.domain.dto.folio.inventorystorage.JobResponse.J
 import static org.folio.innreach.domain.entity.Contribution.Status.CANCELLED;
 import static org.folio.innreach.domain.entity.Contribution.Status.COMPLETE;
 import static org.folio.innreach.domain.service.impl.ServiceUtils.centralServerRef;
+import static org.folio.innreach.dto.MappingValidationStatusDTO.INVALID;
 import static org.folio.innreach.dto.MappingValidationStatusDTO.VALID;
 
 import java.util.List;
@@ -60,8 +61,14 @@ public class ContributionServiceImpl implements ContributionService {
       .map(mapper::toDTO)
       .orElseGet(ContributionDTO::new);
 
-    contribution.setLocationsMappingStatus(validationService.getLocationMappingStatus(centralServerId));
-    contribution.setItemTypeMappingStatus(validationService.getItemTypeMappingStatus(centralServerId));
+    try {
+      contribution.setLocationsMappingStatus(validationService.getLocationMappingStatus(centralServerId));
+      contribution.setItemTypeMappingStatus(validationService.getItemTypeMappingStatus(centralServerId));
+    } catch (Exception e) {
+      log.warn("Can't validate location mappings", e);
+      contribution.setLocationsMappingStatus(INVALID);
+      contribution.setItemTypeMappingStatus(INVALID);
+    }
 
     log.info("getCurrent:: result: {}", contribution);
     return contribution;

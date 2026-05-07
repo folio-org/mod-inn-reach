@@ -1,15 +1,11 @@
 package org.folio.innreach.domain.listener;
 
 import static org.folio.innreach.config.KafkaListenerConfiguration.KAFKA_CONTAINER_FACTORY;
-import static org.folio.innreach.domain.event.DomainEventType.CREATED;
-import static org.folio.innreach.domain.event.DomainEventType.DELETED;
-import static org.folio.innreach.domain.event.DomainEventType.UPDATED;
 
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -51,7 +47,7 @@ public class KafkaInventoryEventListener {
     topicPattern = "${kafka.listener.item.topic-pattern}",
     concurrency = "${kafka.listener.item.concurrency}")
   public void handleItemEvents(List<ConsumerRecord<String, DomainEvent<Item>>> consumerRecords) {
-    log.info("Handling inventory item events from Kafka [number of events: {}]", consumerRecords.size());
+    log.info("Handling {} inventory item events", consumerRecords.size());
     processEvents(ongoingContributionStatusMapper::convertItemListToEntities, consumerRecords);
   }
 
@@ -62,7 +58,7 @@ public class KafkaInventoryEventListener {
     topicPattern = "${kafka.listener.instance.topic-pattern}",
     concurrency = "${kafka.listener.instance.concurrency}")
   public void handleInstanceEvents(List<ConsumerRecord<String, DomainEvent<Instance>>> consumerRecords) {
-    log.info("Handling inventory instance events from Kafka [number of events: {}]", consumerRecords.size());
+    log.info("Handling {} inventory instance events", consumerRecords.size());
     processEvents(ongoingContributionStatusMapper::convertInstanceListToEntities, consumerRecords);
   }
 
@@ -73,20 +69,21 @@ public class KafkaInventoryEventListener {
     topicPattern = "${kafka.listener.holding.topic-pattern}",
     concurrency = "${kafka.listener.holding.concurrency}")
   public void handleHoldingEvents(List<ConsumerRecord<String, DomainEvent<Holding>>> consumerRecords) {
-    log.info("Handling inventory holding events from Kafka [number of events: {}]", consumerRecords.size());
+    log.info("Handling {} inventory holding events", consumerRecords.size());
     processEvents(ongoingContributionStatusMapper::convertHoldingListToEntities, consumerRecords);
   }
 
   private <T> void processEvents(Function<List<DomainEvent<T>>, List<OngoingContributionStatus>> convertDomainEventToEntities,
                                  List<ConsumerRecord<String, DomainEvent<T>>> consumerRecords) {
     var events = getEvents(consumerRecords);
-    logEvents(events);
     kafkaEventProcessorService.process(events, (tenantGroupedEvents, tenant) -> getCentralServerIds().forEach(centralServerId -> {
       var ongoingContributionStatusList = convertDomainEventToEntities.apply(tenantGroupedEvents);
       ongoingContributionStatusList.forEach(ongoingContributionStatus -> {
         ongoingContributionStatus.setCentralServerId(centralServerId);
         ongoingContributionStatus.setTenant(tenant);
       });
+      log.info("processEvents:: Saving {} ongoing contribution status entities for tenant {}",
+        ongoingContributionStatusList.size(), tenant);
       ongoingContributionStatusRepository.saveAll(ongoingContributionStatusList);
     }));
   }
@@ -95,24 +92,7 @@ public class KafkaInventoryEventListener {
     return consumerRecords.stream()
       .map(ConsumerRecord::value)
       .filter(Objects::nonNull)
-      .collect(Collectors.toList());
-  }
-
-  public <T> void logEvents(List<DomainEvent<T>> events) {
-    for (DomainEvent<T> event : events) {
-      var oldEntity = event.getData().getOldEntity();
-      var newEntity = event.getData().getNewEntity();
-      log.info("handleEvents:: Event type: {}, tenant: {}, timestamp: {}, data: {}", event.getType(), event.getTenant(), event.getTimestamp(), event.getData());
-      if (event.getType().equals(CREATED)) {
-        log.info("created handleEvents:: New Entity: {}", newEntity);
-      }
-      else if (event.getType().equals(UPDATED)) {
-        log.info("updated handleEvents:: Old Entity: {}, New Entity: {}", oldEntity, newEntity);
-      }
-      else if (event.getType().equals(DELETED)) {
-        log.info("deleted handleEvents:: Old Entity: {}", oldEntity);
-      }
-    }
+      .toList();
   }
 
   private List<UUID> getCentralServerIds() {

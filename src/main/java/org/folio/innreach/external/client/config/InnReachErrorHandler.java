@@ -35,7 +35,7 @@ public class InnReachErrorHandler {
         .formatted(statusValue, errorMessage));
     }
 
-    throw new InnReachException("INN-Reach call failed: " + errorMessage);
+    throw new InnReachException("INN-Reach call failed: status=" + statusValue + " message: " + errorMessage);
   }
 
   private String parseErrorMessage(ClientHttpResponse response) {

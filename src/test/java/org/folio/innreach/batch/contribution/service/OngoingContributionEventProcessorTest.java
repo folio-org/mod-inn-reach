@@ -16,6 +16,7 @@ import org.folio.innreach.dto.Instance;
 import org.folio.innreach.dto.Holding;
 import org.folio.innreach.dto.MappingValidationStatusDTO;
 import org.folio.innreach.external.exception.InnReachConnectionException;
+import org.folio.innreach.external.exception.InnReachContributionRequestException;
 import org.folio.innreach.external.exception.ServiceSuspendedException;
 import org.folio.innreach.mapper.OngoingContributionStatusMapper;
 import org.folio.innreach.repository.OngoingContributionStatusRepository;
@@ -25,7 +26,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 
-import java.net.SocketTimeoutException;
 import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
@@ -41,7 +41,7 @@ import static org.folio.innreach.fixture.ContributionFixture.createInstance;
 import static org.folio.innreach.fixture.ContributionFixture.createItem;
 import static org.folio.innreach.util.InnReachConstants.INVALID_CENTRAL_SERVER_ID;
 import static org.folio.innreach.util.InnReachConstants.MARC_ERROR_MSG;
-import static org.folio.innreach.util.InnReachConstants.RETRY_LIMIT_MESSAGE;
+import static org.folio.innreach.util.InnReachConstants.ONGOING_CONTRIBUTION_RETRY_LIMIT_MESSAGE;
 import static org.folio.innreach.util.InnReachConstants.SKIPPING_INELIGIBLE_INSTANCE_MSG;
 import static org.folio.innreach.util.InnReachConstants.SKIPPING_INELIGIBLE_MSG;
 import static org.folio.innreach.util.InnReachConstants.UNKNOWN_TYPE_MESSAGE;
@@ -90,6 +90,7 @@ class OngoingContributionEventProcessorTest extends BaseControllerTest {
   DomainEvent<Instance> instanceCreate;
   DomainEvent<Instance> instanceUpdate;
   DomainEvent<Instance> instanceDelete;
+
   @BeforeEach
   void runBefore() {
     itemId = UUID.randomUUID();
@@ -125,7 +126,9 @@ class OngoingContributionEventProcessorTest extends BaseControllerTest {
       .convertItemToEntity(itemCreate), UUID.randomUUID());
     when(holdingsService.find(itemCreate.getData().getNewEntity().getHoldingsRecordId()))
       .thenReturn(Optional.of(holdings));
+
     eventProcessor.processOngoingContribution(ongoingContributionStatus);
+
     await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() ->
         verify(ongoingContributionStatusRepository, times(2)).save(any()));
     assertEquals(FAILED, ongoingContributionStatus.getStatus());
@@ -138,7 +141,9 @@ class OngoingContributionEventProcessorTest extends BaseControllerTest {
       .convertItemToEntity(itemCreate), UUID.randomUUID());
     when(holdingsService.find(itemCreate.getData().getNewEntity().getHoldingsRecordId()))
       .thenReturn(Optional.of(holdings));
+
     eventProcessor.processOngoingContribution(ongoingContributionStatus);
+
     await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() ->
         verify(ongoingContributionStatusRepository, times(2)).save(any()));
     assertEquals(FAILED, ongoingContributionStatus.getStatus());
@@ -155,7 +160,9 @@ class OngoingContributionEventProcessorTest extends BaseControllerTest {
       .thenReturn(false);
     when(recordContributionService.isContributed(any(UUID.class), any(Instance.class), any(Item.class)))
       .thenReturn(false);
+
     eventProcessor.processOngoingContribution(ongoingContributionStatus);
+
     await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() ->
         verify(ongoingContributionStatusRepository, times(2)).save(any()));
     assertEquals(FAILED, ongoingContributionStatus.getStatus());
@@ -163,7 +170,7 @@ class OngoingContributionEventProcessorTest extends BaseControllerTest {
   }
 
   @Test
-  void testItemCreationEventWithInEligibleItemButAlreadyContributed() throws SocketTimeoutException {
+  void testItemCreationEventWithInEligibleItemButAlreadyContributed() {
     var ongoingContributionStatus = saveOngoingContributionStatus(ongoingContributionStatusMapper
       .convertItemToEntity(itemCreate), CENTRAL_SERVER_ID);
     when(holdingsService.find(itemCreate.getData().getNewEntity().getHoldingsRecordId()))
@@ -173,7 +180,9 @@ class OngoingContributionEventProcessorTest extends BaseControllerTest {
     when(recordContributionService.isContributed(any(UUID.class), any(Instance.class), any(Item.class)))
       .thenReturn(true);
     doNothing().when(recordContributionService).deContributeInstance(any(), any());
+
     eventProcessor.processOngoingContribution(ongoingContributionStatus);
+
     await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() ->
         verify(ongoingContributionStatusRepository, times(2)).save(any()));
     verify(recordContributionService).deContributeInstance(any(), any());
@@ -185,7 +194,7 @@ class OngoingContributionEventProcessorTest extends BaseControllerTest {
   }
 
   @Test
-  void testItemCreationEventWithEligibleInstanceAndItem() throws SocketTimeoutException {
+  void testItemCreationEventWithEligibleInstanceAndItem() {
     var ongoingContributionStatus = saveOngoingContributionStatus(ongoingContributionStatusMapper
       .convertItemToEntity(itemCreate), CENTRAL_SERVER_ID);
     when(holdingsService.find(itemCreate.getData().getNewEntity().getHoldingsRecordId()))
@@ -198,7 +207,9 @@ class OngoingContributionEventProcessorTest extends BaseControllerTest {
       .thenReturn(true);
     doNothing().when(recordContributionService).contributeInstance(any(), any());
     when(recordContributionService.contributeItems(any(), any(), any())).thenReturn(1);
+
     eventProcessor.processOngoingContribution(ongoingContributionStatus);
+
     await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() ->
         verify(ongoingContributionStatusRepository, times(2)).save(any()));
     verify(recordContributionService, never()).deContributeInstance(any(), any());
@@ -210,7 +221,7 @@ class OngoingContributionEventProcessorTest extends BaseControllerTest {
   }
 
   @Test
-  void testItemCreationEventWithEligibleInstanceAndInEligibleItem() throws SocketTimeoutException {
+  void testItemCreationEventWithEligibleInstanceAndInEligibleItem() {
     var ongoingContributionStatus = saveOngoingContributionStatus(ongoingContributionStatusMapper
       .convertItemToEntity(itemCreate), CENTRAL_SERVER_ID);
     when(holdingsService.find(itemCreate.getData().getNewEntity().getHoldingsRecordId()))
@@ -223,7 +234,9 @@ class OngoingContributionEventProcessorTest extends BaseControllerTest {
       .thenReturn(true);
     doNothing().when(recordContributionService).contributeInstance(any(), any());
     doNothing().when(recordContributionService).deContributeItem(any(), any());
+
     eventProcessor.processOngoingContribution(ongoingContributionStatus);
+
     await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() ->
         verify(ongoingContributionStatusRepository, times(2)).save(any()));
     verify(recordContributionService, never()).deContributeInstance(any(), any());
@@ -241,7 +254,9 @@ class OngoingContributionEventProcessorTest extends BaseControllerTest {
       .convertItemToEntity(itemDelete), UUID.randomUUID());
     when(holdingsService.find(itemDelete.getData().getOldEntity().getHoldingsRecordId()))
       .thenReturn(Optional.of(holdings));
+
     eventProcessor.processOngoingContribution(ongoingContributionStatus);
+
     await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() ->
         verify(ongoingContributionStatusRepository, times(2)).save(any()));
     assertEquals(FAILED, ongoingContributionStatus.getStatus());
@@ -256,7 +271,9 @@ class OngoingContributionEventProcessorTest extends BaseControllerTest {
       .thenReturn(Optional.of(holdings));
     when(recordContributionService.isContributed(any(), any(), any()))
       .thenReturn(false);
+
     eventProcessor.processOngoingContribution(ongoingContributionStatus);
+
     await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() ->
         verify(ongoingContributionStatusRepository, times(2)).save(any()));
     assertEquals(FAILED, ongoingContributionStatus.getStatus());
@@ -264,7 +281,7 @@ class OngoingContributionEventProcessorTest extends BaseControllerTest {
   }
 
   @Test
-  void testItemDeletionEventWithContributedItemAndInvalidInstance() throws SocketTimeoutException {
+  void testItemDeletionEventWithContributedItemAndInvalidInstance() {
     var ongoingContributionStatus = saveOngoingContributionStatus(ongoingContributionStatusMapper
       .convertItemToEntity(itemDelete), UUID.randomUUID());
     when(holdingsService.find(itemDelete.getData().getOldEntity().getHoldingsRecordId()))
@@ -273,7 +290,9 @@ class OngoingContributionEventProcessorTest extends BaseControllerTest {
       .thenReturn(true);
     when(validationService.isEligibleForContribution(any(), any(Instance.class)))
       .thenReturn(false);
+
     eventProcessor.processOngoingContribution(ongoingContributionStatus);
+
     await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() ->
       verify(ongoingContributionStatusRepository, times(2)).save(any()));
     verify(recordContributionService, never()).contributeInstance(any(), any());
@@ -285,7 +304,7 @@ class OngoingContributionEventProcessorTest extends BaseControllerTest {
   }
 
   @Test
-  void testItemDeletionEventWithContributedItemAndInstance() throws SocketTimeoutException {
+  void testItemDeletionEventWithContributedItemAndInstance() {
     var ongoingContributionStatus = saveOngoingContributionStatus(ongoingContributionStatusMapper
       .convertItemToEntity(itemDelete), UUID.randomUUID());
     when(holdingsService.find(itemDelete.getData().getOldEntity().getHoldingsRecordId()))
@@ -294,7 +313,9 @@ class OngoingContributionEventProcessorTest extends BaseControllerTest {
       .thenReturn(true);
     when(validationService.isEligibleForContribution(any(), any(Instance.class)))
       .thenReturn(true);
+
     eventProcessor.processOngoingContribution(ongoingContributionStatus);
+
     await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() ->
         verify(ongoingContributionStatusRepository, times(2)).save(any()));
     verify(recordContributionService, never()).deContributeInstance(any(), any());
@@ -313,7 +334,9 @@ class OngoingContributionEventProcessorTest extends BaseControllerTest {
       .convertItemToEntity(itemUpdate), UUID.randomUUID());
     when(holdingsService.find(itemUpdate.getData().getNewEntity().getHoldingsRecordId()))
       .thenReturn(Optional.of(holdings));
+
     eventProcessor.processOngoingContribution(ongoingContributionStatus);
+
     await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() ->
       verify(ongoingContributionStatusRepository, times(2)).save(any()));
     assertEquals(FAILED, ongoingContributionStatus.getStatus());
@@ -327,7 +350,9 @@ class OngoingContributionEventProcessorTest extends BaseControllerTest {
       .convertItemToEntity(itemUpdate), UUID.randomUUID());
     when(holdingsService.find(itemUpdate.getData().getNewEntity().getHoldingsRecordId()))
       .thenReturn(Optional.of(holdings));
+
     eventProcessor.processOngoingContribution(ongoingContributionStatus);
+
     await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() ->
       verify(ongoingContributionStatusRepository, times(2)).save(any()));
     assertEquals(FAILED, ongoingContributionStatus.getStatus());
@@ -345,7 +370,9 @@ class OngoingContributionEventProcessorTest extends BaseControllerTest {
       .thenReturn(false);
     when(recordContributionService.isContributed(any(UUID.class), any(Instance.class), any(Item.class)))
       .thenReturn(false);
+
     eventProcessor.processOngoingContribution(ongoingContributionStatus);
+
     await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() ->
       verify(ongoingContributionStatusRepository, times(2)).save(any()));
     assertEquals(FAILED, ongoingContributionStatus.getStatus());
@@ -353,7 +380,7 @@ class OngoingContributionEventProcessorTest extends BaseControllerTest {
   }
 
   @Test
-  void testItemUpdateEventWithInEligibleItemButAlreadyContributed() throws SocketTimeoutException {
+  void testItemUpdateEventWithInEligibleItemButAlreadyContributed() {
     itemUpdate.getData().getOldEntity().setHoldingsRecordId(itemUpdate.getData().getNewEntity().getHoldingsRecordId());
     var ongoingContributionStatus = saveOngoingContributionStatus(ongoingContributionStatusMapper
       .convertItemToEntity(itemUpdate), CENTRAL_SERVER_ID);
@@ -364,7 +391,9 @@ class OngoingContributionEventProcessorTest extends BaseControllerTest {
     when(recordContributionService.isContributed(any(UUID.class), any(Instance.class), any(Item.class)))
       .thenReturn(true);
     doNothing().when(recordContributionService).deContributeInstance(any(), any());
+
     eventProcessor.processOngoingContribution(ongoingContributionStatus);
+
     await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() ->
       verify(ongoingContributionStatusRepository, times(2)).save(any()));
     verify(recordContributionService).deContributeInstance(any(), any());
@@ -376,7 +405,7 @@ class OngoingContributionEventProcessorTest extends BaseControllerTest {
   }
 
   @Test
-  void testItemUpdateEventWithEligibleInstanceAndItem() throws SocketTimeoutException {
+  void testItemUpdateEventWithEligibleInstanceAndItem() {
     itemUpdate.getData().getOldEntity().setHoldingsRecordId(itemUpdate.getData().getNewEntity().getHoldingsRecordId());
     var ongoingContributionStatus = saveOngoingContributionStatus(ongoingContributionStatusMapper
       .convertItemToEntity(itemUpdate), CENTRAL_SERVER_ID);
@@ -390,7 +419,9 @@ class OngoingContributionEventProcessorTest extends BaseControllerTest {
       .thenReturn(true);
     doNothing().when(recordContributionService).contributeInstance(any(), any());
     when(recordContributionService.contributeItems(any(), any(), any())).thenReturn(1);
+
     eventProcessor.processOngoingContribution(ongoingContributionStatus);
+
     await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() ->
       verify(ongoingContributionStatusRepository, times(2)).save(any()));
     verify(recordContributionService, never()).deContributeInstance(any(), any());
@@ -402,7 +433,7 @@ class OngoingContributionEventProcessorTest extends BaseControllerTest {
   }
 
   @Test
-  void testItemUpdateEventWithEligibleInstanceAndInEligibleItem() throws SocketTimeoutException {
+  void testItemUpdateEventWithEligibleInstanceAndInEligibleItem() {
     itemUpdate.getData().getOldEntity().setHoldingsRecordId(itemUpdate.getData().getNewEntity().getHoldingsRecordId());
     var ongoingContributionStatus = saveOngoingContributionStatus(ongoingContributionStatusMapper
       .convertItemToEntity(itemUpdate), CENTRAL_SERVER_ID);
@@ -416,7 +447,9 @@ class OngoingContributionEventProcessorTest extends BaseControllerTest {
       .thenReturn(true);
     doNothing().when(recordContributionService).contributeInstance(any(), any());
     doNothing().when(recordContributionService).deContributeItem(any(), any());
+
     eventProcessor.processOngoingContribution(ongoingContributionStatus);
+
     await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() ->
       verify(ongoingContributionStatusRepository, times(2)).save(any()));
     verify(recordContributionService, never()).deContributeInstance(any(), any());
@@ -446,7 +479,9 @@ class OngoingContributionEventProcessorTest extends BaseControllerTest {
       .thenReturn(false);
     when(recordContributionService.isContributed(any(UUID.class), any(Instance.class), any(Item.class)))
       .thenReturn(false);
+
     eventProcessor.processOngoingContribution(ongoingContributionStatus);
+
     await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() ->
       verify(ongoingContributionStatusRepository, times(2)).save(any()));
     assertEquals(FAILED, ongoingContributionStatus.getStatus());
@@ -454,7 +489,7 @@ class OngoingContributionEventProcessorTest extends BaseControllerTest {
   }
 
   @Test
-  void testItemUpdateEventWithInstanceUpdateAndContributedIneligibleItem() throws SocketTimeoutException {
+  void testItemUpdateEventWithInstanceUpdateAndContributedIneligibleItem() {
     var ongoingContributionStatus = saveOngoingContributionStatus(ongoingContributionStatusMapper
       .convertItemToEntity(itemUpdate), CENTRAL_SERVER_ID);
     when(holdingsService.find(itemUpdate.getData().getNewEntity().getHoldingsRecordId()))
@@ -472,7 +507,9 @@ class OngoingContributionEventProcessorTest extends BaseControllerTest {
       .thenReturn(true);
     when(validationService.isEligibleForContribution(any(UUID.class), any(Instance.class)))
       .thenReturn(true);
+
     eventProcessor.processOngoingContribution(ongoingContributionStatus);
+
     await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() ->
       verify(ongoingContributionStatusRepository, times(2)).save(any()));
     verify(recordContributionService).deContributeItem(any(), any());
@@ -482,7 +519,7 @@ class OngoingContributionEventProcessorTest extends BaseControllerTest {
   }
 
   @Test
-  void testItemUpdateEventWithInstanceUpdateAndContributedeligibleItem() throws SocketTimeoutException {
+  void testItemUpdateEventWithInstanceUpdateAndContributedEligibleItem() {
     var ongoingContributionStatus = saveOngoingContributionStatus(ongoingContributionStatusMapper
       .convertItemToEntity(itemUpdate), CENTRAL_SERVER_ID);
     when(holdingsService.find(itemUpdate.getData().getNewEntity().getHoldingsRecordId()))
@@ -500,7 +537,9 @@ class OngoingContributionEventProcessorTest extends BaseControllerTest {
       .thenReturn(true);
     when(validationService.isEligibleForContribution(any(UUID.class), any(Instance.class)))
       .thenReturn(true);
+
     eventProcessor.processOngoingContribution(ongoingContributionStatus);
+
     await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() ->
       verify(ongoingContributionStatusRepository, times(2)).save(any()));
     verify(recordContributionService).deContributeItem(any(), any());
@@ -511,7 +550,7 @@ class OngoingContributionEventProcessorTest extends BaseControllerTest {
   }
 
   @Test
-  void testItemUpdateEventWithInstanceUpdateAndIneligibleInstance() throws SocketTimeoutException {
+  void testItemUpdateEventWithInstanceUpdateAndIneligibleInstance() {
     var ongoingContributionStatus = saveOngoingContributionStatus(ongoingContributionStatusMapper
       .convertItemToEntity(itemUpdate), CENTRAL_SERVER_ID);
     when(holdingsService.find(itemUpdate.getData().getNewEntity().getHoldingsRecordId()))
@@ -529,7 +568,9 @@ class OngoingContributionEventProcessorTest extends BaseControllerTest {
       .thenReturn(true);
     when(validationService.isEligibleForContribution(any(UUID.class), any(Instance.class)))
       .thenReturn(false);
+
     eventProcessor.processOngoingContribution(ongoingContributionStatus);
+
     await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() ->
       verify(ongoingContributionStatusRepository, times(2)).save(any()));
     verify(recordContributionService).deContributeInstance(any(), any());
@@ -540,7 +581,7 @@ class OngoingContributionEventProcessorTest extends BaseControllerTest {
   }
 
   @Test
-  void testItemUpdateEventThrowInnReachConnectionException() throws SocketTimeoutException {
+  void testItemUpdateEventThrowInnReachConnectionException() {
     var ongoingContributionStatus = saveOngoingContributionStatus(ongoingContributionStatusMapper
       .convertItemToEntity(itemUpdate), CENTRAL_SERVER_ID);
     when(holdingsService.find(itemUpdate.getData().getNewEntity().getHoldingsRecordId()))
@@ -563,7 +604,9 @@ class OngoingContributionEventProcessorTest extends BaseControllerTest {
     when(validationService.isEligibleForContribution(any(UUID.class), any(Instance.class)))
       .thenReturn(false);
     doThrow(InnReachConnectionException.class).when(recordContributionService).deContributeInstance(any(), any());
+
     eventProcessor.processOngoingContribution(ongoingContributionStatus);
+
     await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() ->
       verify(ongoingContributionStatusRepository, times(2)).save(any()));
     assertEquals(RETRY, ongoingContributionStatus.getStatus());
@@ -580,7 +623,7 @@ class OngoingContributionEventProcessorTest extends BaseControllerTest {
     await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() ->
       verify(ongoingContributionStatusRepository, times(4)).save(any()));
     assertEquals(FAILED, ongoingContributionStatus.getStatus());
-    assertEquals(RETRY_LIMIT_MESSAGE, ongoingContributionStatus.getError());
+    assertEquals(ONGOING_CONTRIBUTION_RETRY_LIMIT_MESSAGE, ongoingContributionStatus.getError());
   }
 
   @Test
@@ -589,7 +632,9 @@ class OngoingContributionEventProcessorTest extends BaseControllerTest {
     itemCreate = createItemDomainEvent(itemId, DomainEventType.ALL_DELETED);
     var ongoingContributionStatus = saveOngoingContributionStatus(ongoingContributionStatusMapper
       .convertItemToEntity(itemCreate), UUID.randomUUID());
+
     eventProcessor.processOngoingContribution(ongoingContributionStatus);
+
     await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() ->
       verify(ongoingContributionStatusRepository, times(2)).save(any()));
     assertEquals(FAILED, ongoingContributionStatus.getStatus());
@@ -603,7 +648,9 @@ class OngoingContributionEventProcessorTest extends BaseControllerTest {
       .convertHoldingToEntity(holdingUpdate), UUID.randomUUID());
     when(inventoryViewClient.getInstanceById(holdingUpdate.getData().getNewEntity().getInstanceId()))
       .thenReturn(ResultList.of(1, List.of(instanceView)));
+
     eventProcessor.processOngoingContribution(ongoingContributionStatus);
+
     await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() ->
       verify(ongoingContributionStatusRepository, times(2)).save(any()));
     assertEquals(FAILED, ongoingContributionStatus.getStatus());
@@ -616,7 +663,9 @@ class OngoingContributionEventProcessorTest extends BaseControllerTest {
       .convertHoldingToEntity(holdingUpdate), UUID.randomUUID());
     when(inventoryViewClient.getInstanceById(holdingUpdate.getData().getNewEntity().getInstanceId()))
       .thenReturn(ResultList.of(1, List.of(instanceView)));
+
     eventProcessor.processOngoingContribution(ongoingContributionStatus);
+
     await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() ->
       verify(ongoingContributionStatusRepository, times(2)).save(any()));
     assertEquals(FAILED, ongoingContributionStatus.getStatus());
@@ -637,7 +686,9 @@ class OngoingContributionEventProcessorTest extends BaseControllerTest {
       .thenReturn(false);
     when(recordContributionService.isContributed(any(UUID.class), any(Instance.class), any(Item.class)))
       .thenReturn(false);
+
     eventProcessor.processOngoingContribution(ongoingContributionStatus);
+
     await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() ->
       verify(ongoingContributionStatusRepository, times(3)).save(any()));
     assertEquals(PROCESSED, ongoingContributionStatus.getStatus());
@@ -645,7 +696,7 @@ class OngoingContributionEventProcessorTest extends BaseControllerTest {
   }
 
   @Test
-  void testHoldingUpdateEventWithInEligibleItemButAlreadyContributed() throws SocketTimeoutException {
+  void testHoldingUpdateEventWithInEligibleItemButAlreadyContributed() {
     var ongoingContributionStatus = saveOngoingContributionStatus(ongoingContributionStatusMapper
       .convertHoldingToEntity(holdingUpdate), CENTRAL_SERVER_ID);
     holdings.setId(holdingId);
@@ -659,7 +710,9 @@ class OngoingContributionEventProcessorTest extends BaseControllerTest {
     when(recordContributionService.isContributed(any(UUID.class), any(Instance.class), any(Item.class)))
       .thenReturn(true);
     doNothing().when(recordContributionService).deContributeInstance(any(), any());
+
     eventProcessor.processOngoingContribution(ongoingContributionStatus);
+
     await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() ->
       verify(ongoingContributionStatusRepository, times(3)).save(any()));
     verify(recordContributionService).deContributeInstance(any(), any());
@@ -671,7 +724,7 @@ class OngoingContributionEventProcessorTest extends BaseControllerTest {
   }
 
   @Test
-  void testHoldingUpdateEventWithEligibleInstanceAndItem() throws SocketTimeoutException {
+  void testHoldingUpdateEventWithEligibleInstanceAndItem() {
     var ongoingContributionStatus = saveOngoingContributionStatus(ongoingContributionStatusMapper
       .convertHoldingToEntity(holdingUpdate), CENTRAL_SERVER_ID);
     holdings.setId(holdingId);
@@ -690,6 +743,7 @@ class OngoingContributionEventProcessorTest extends BaseControllerTest {
       .thenReturn(true);
     doNothing().when(recordContributionService).contributeInstance(any(), any());
     when(recordContributionService.contributeItems(any(), any(), any())).thenReturn(1);
+
     eventProcessor.processOngoingContribution(ongoingContributionStatus);
     /*
      In this test, there are 2 items under a holding so item contribution is called twice and for every
@@ -707,7 +761,7 @@ class OngoingContributionEventProcessorTest extends BaseControllerTest {
   }
 
   @Test
-  void testHoldingUpdateEventWithEligibleInstanceAndInEligibleItem() throws SocketTimeoutException {
+  void testHoldingUpdateEventWithEligibleInstanceAndInEligibleItem() {
     var ongoingContributionStatus = saveOngoingContributionStatus(ongoingContributionStatusMapper
       .convertHoldingToEntity(holdingUpdate), CENTRAL_SERVER_ID);
     holdings.setId(holdingId);
@@ -724,7 +778,9 @@ class OngoingContributionEventProcessorTest extends BaseControllerTest {
       .thenReturn(true);
     doNothing().when(recordContributionService).contributeInstance(any(), any());
     doNothing().when(recordContributionService).deContributeItem(any(), any());
+
     eventProcessor.processOngoingContribution(ongoingContributionStatus);
+
     await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() ->
       verify(ongoingContributionStatusRepository, times(3)).save(any()));
     verify(recordContributionService, never()).deContributeInstance(any(), any());
@@ -742,7 +798,9 @@ class OngoingContributionEventProcessorTest extends BaseControllerTest {
       .convertHoldingToEntity(holdingDelete), UUID.randomUUID());
     when(inventoryViewClient.getInstanceById(holdingDelete.getData().getOldEntity().getInstanceId()))
       .thenReturn(ResultList.of(1, List.of(instanceView)));
+
     eventProcessor.processOngoingContribution(ongoingContributionStatus);
+
     await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() ->
       verify(ongoingContributionStatusRepository, times(2)).save(any()));
     assertEquals(FAILED, ongoingContributionStatus.getStatus());
@@ -761,7 +819,9 @@ class OngoingContributionEventProcessorTest extends BaseControllerTest {
       .thenReturn(ResultList.of(1, List.of(instanceView)));
     when(recordContributionService.isContributed(any(), any(), any()))
       .thenReturn(false);
+
     eventProcessor.processOngoingContribution(ongoingContributionStatus);
+
     await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() ->
       verify(ongoingContributionStatusRepository, times(3)).save(any()));
     assertEquals(PROCESSED, ongoingContributionStatus.getStatus());
@@ -769,7 +829,7 @@ class OngoingContributionEventProcessorTest extends BaseControllerTest {
   }
 
   @Test
-  void testHoldingDeletionEventWithContributedItemAndInvalidInstance() throws SocketTimeoutException {
+  void testHoldingDeletionEventWithContributedItemAndInvalidInstance() {
     var ongoingContributionStatus = saveOngoingContributionStatus(ongoingContributionStatusMapper
       .convertHoldingToEntity(holdingDelete), UUID.randomUUID());
     holdings.setId(holdingId);
@@ -782,7 +842,9 @@ class OngoingContributionEventProcessorTest extends BaseControllerTest {
       .thenReturn(true);
     when(validationService.isEligibleForContribution(any(), any(Instance.class)))
       .thenReturn(false);
+
     eventProcessor.processOngoingContribution(ongoingContributionStatus);
+
     await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() ->
       verify(ongoingContributionStatusRepository, times(3)).save(any()));
     verify(recordContributionService, never()).contributeInstance(any(), any());
@@ -794,7 +856,7 @@ class OngoingContributionEventProcessorTest extends BaseControllerTest {
   }
 
   @Test
-  void testHoldingDeletionEventWithContributedItemAndInstance() throws SocketTimeoutException {
+  void testHoldingDeletionEventWithContributedItemAndInstance() {
     holdingDelete.setNewEntity(null);
     var ongoingContributionStatus = saveOngoingContributionStatus(ongoingContributionStatusMapper
       .convertHoldingToEntity(holdingDelete), UUID.randomUUID());
@@ -810,6 +872,7 @@ class OngoingContributionEventProcessorTest extends BaseControllerTest {
       .thenReturn(true);
     when(validationService.isEligibleForContribution(any(), any(Instance.class)))
       .thenReturn(true);
+
     eventProcessor.processOngoingContribution(ongoingContributionStatus);
     /*
      In this test, there are 2 items under a holding so item contribution is called twice and for every
@@ -834,7 +897,9 @@ class OngoingContributionEventProcessorTest extends BaseControllerTest {
     holdingUpdate.setOldEntity(null);
     var ongoingContributionStatus = saveOngoingContributionStatus(ongoingContributionStatusMapper
       .convertHoldingToEntity(holdingUpdate), UUID.randomUUID());
+
     eventProcessor.processOngoingContribution(ongoingContributionStatus);
+
     await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() ->
       verify(ongoingContributionStatusRepository, times(2)).save(any()));
     assertEquals(FAILED, ongoingContributionStatus.getStatus());
@@ -846,7 +911,9 @@ class OngoingContributionEventProcessorTest extends BaseControllerTest {
     instanceCreate.getData().getNewEntity().setSource("Non Marc");
     var ongoingContributionStatus = saveOngoingContributionStatus(ongoingContributionStatusMapper
       .convertInstanceToEntity(instanceCreate), UUID.randomUUID());
+
     eventProcessor.processOngoingContribution(ongoingContributionStatus);
+
     await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() ->
       verify(ongoingContributionStatusRepository, times(2)).save(any()));
     assertEquals(FAILED, ongoingContributionStatus.getStatus());
@@ -859,7 +926,9 @@ class OngoingContributionEventProcessorTest extends BaseControllerTest {
       .convertInstanceToEntity(instanceCreate), UUID.randomUUID());
     when(inventoryViewClient.getInstanceById(instanceCreate.getData().getNewEntity().getId()))
       .thenReturn(ResultList.of(1, List.of(instanceView)));
+
     eventProcessor.processOngoingContribution(ongoingContributionStatus);
+
     await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() ->
       verify(ongoingContributionStatusRepository, times(2)).save(any()));
     assertEquals(FAILED, ongoingContributionStatus.getStatus());
@@ -876,7 +945,9 @@ class OngoingContributionEventProcessorTest extends BaseControllerTest {
       .thenReturn(false);
     when(validationService.isEligibleForContribution(any(), any(Instance.class)))
       .thenReturn(false);
+
     eventProcessor.processOngoingContribution(ongoingContributionStatus);
+
     await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() ->
       verify(ongoingContributionStatusRepository, times(2)).save(any()));
     assertEquals(FAILED, ongoingContributionStatus.getStatus());
@@ -884,7 +955,7 @@ class OngoingContributionEventProcessorTest extends BaseControllerTest {
   }
 
   @Test
-  void testInstanceCreationEventWithEligibleInstanceAndNonContributedInstance() throws SocketTimeoutException {
+  void testInstanceCreationEventWithEligibleInstanceAndNonContributedInstance() {
     var ongoingContributionStatus = saveOngoingContributionStatus(ongoingContributionStatusMapper
       .convertInstanceToEntity(instanceCreate), CENTRAL_SERVER_ID);
     instanceView.setItems(List.of(createItem()));
@@ -896,7 +967,9 @@ class OngoingContributionEventProcessorTest extends BaseControllerTest {
       .thenReturn(true);
     when(validationService.isEligibleForContribution(any(), any(Item.class)))
       .thenReturn(true);
+
     eventProcessor.processOngoingContribution(ongoingContributionStatus);
+
     await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() ->
       verify(ongoingContributionStatusRepository, times(2)).save(any()));
     verify(recordContributionService).contributeInstance(any(), any());
@@ -906,7 +979,7 @@ class OngoingContributionEventProcessorTest extends BaseControllerTest {
   }
 
   @Test
-  void testInstanceCreationEventWithEligibleInstanceAndNonContributedInstanceWithoutItems() throws SocketTimeoutException {
+  void testInstanceCreationEventWithEligibleInstanceAndNonContributedInstanceWithoutItems() {
     var ongoingContributionStatus = saveOngoingContributionStatus(ongoingContributionStatusMapper
       .convertInstanceToEntity(instanceCreate), CENTRAL_SERVER_ID);
     instanceView.setItems(List.of(createItem()));
@@ -916,7 +989,9 @@ class OngoingContributionEventProcessorTest extends BaseControllerTest {
       .thenReturn(false);
     when(validationService.isEligibleForContribution(any(), any(Instance.class)))
       .thenReturn(true);
+
     eventProcessor.processOngoingContribution(ongoingContributionStatus);
+
     await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() ->
       verify(ongoingContributionStatusRepository, times(2)).save(any()));
     verify(recordContributionService).contributeInstance(any(), any());
@@ -926,7 +1001,7 @@ class OngoingContributionEventProcessorTest extends BaseControllerTest {
   }
 
   @Test
-  void testInstanceCreationEventWithEligibleInstanceAndContributedInstance() throws SocketTimeoutException {
+  void testInstanceCreationEventWithEligibleInstanceAndContributedInstance() {
     var ongoingContributionStatus = saveOngoingContributionStatus(ongoingContributionStatusMapper
       .convertInstanceToEntity(instanceCreate), CENTRAL_SERVER_ID);
     instanceView.setItems(List.of(createItem()));
@@ -936,7 +1011,9 @@ class OngoingContributionEventProcessorTest extends BaseControllerTest {
       .thenReturn(true);
     when(validationService.isEligibleForContribution(any(), any(Instance.class)))
       .thenReturn(true);
+
     eventProcessor.processOngoingContribution(ongoingContributionStatus);
+
     await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() ->
       verify(ongoingContributionStatusRepository, times(2)).save(any()));
     verify(recordContributionService).contributeInstance(any(), any());
@@ -946,7 +1023,7 @@ class OngoingContributionEventProcessorTest extends BaseControllerTest {
   }
 
   @Test
-  void testInstanceUpdateEventWithInEligibleInstanceAndContributedInstance() throws SocketTimeoutException {
+  void testInstanceUpdateEventWithInEligibleInstanceAndContributedInstance() {
     var ongoingContributionStatus = saveOngoingContributionStatus(ongoingContributionStatusMapper
       .convertInstanceToEntity(instanceUpdate), CENTRAL_SERVER_ID);
     instanceView.setItems(List.of(createItem()));
@@ -956,7 +1033,9 @@ class OngoingContributionEventProcessorTest extends BaseControllerTest {
       .thenReturn(true);
     when(validationService.isEligibleForContribution(any(), any(Instance.class)))
       .thenReturn(false);
+
     eventProcessor.processOngoingContribution(ongoingContributionStatus);
+
     await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() ->
       verify(ongoingContributionStatusRepository, times(2)).save(any()));
     verify(recordContributionService).deContributeInstance(any(), any());
@@ -967,7 +1046,7 @@ class OngoingContributionEventProcessorTest extends BaseControllerTest {
   }
 
   @Test
-  void testInstanceUpdateEventWithSocketException() throws SocketTimeoutException {
+  void testInstanceUpdateEventWithContributionRequestException() {
     var ongoingContributionStatus = saveOngoingContributionStatus(ongoingContributionStatusMapper
       .convertInstanceToEntity(instanceUpdate), CENTRAL_SERVER_ID);
     instanceView.setItems(List.of(createItem()));
@@ -977,9 +1056,11 @@ class OngoingContributionEventProcessorTest extends BaseControllerTest {
       .thenReturn(true);
     when(validationService.isEligibleForContribution(any(), any(Instance.class)))
       .thenReturn(true);
-    doThrow(SocketTimeoutException.class).when(recordContributionService)
+    doThrow(InnReachContributionRequestException.class).when(recordContributionService)
       .contributeInstance(any(), any());
+
     eventProcessor.processOngoingContribution(ongoingContributionStatus);
+
     await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() ->
       verify(ongoingContributionStatusRepository, times(2)).save(any()));
     verify(recordContributionService, never()).contributeItemsWithoutRetry(any(), any(), any());
@@ -992,7 +1073,9 @@ class OngoingContributionEventProcessorTest extends BaseControllerTest {
     instanceDelete.getData().getOldEntity().setSource("Non Marc");
     var ongoingContributionStatus = saveOngoingContributionStatus(ongoingContributionStatusMapper
       .convertInstanceToEntity(instanceDelete), CENTRAL_SERVER_ID);
+
     eventProcessor.processOngoingContribution(ongoingContributionStatus);
+
     await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() ->
       verify(ongoingContributionStatusRepository, times(2)).save(any()));
     assertEquals(FAILED, ongoingContributionStatus.getStatus());
@@ -1000,7 +1083,7 @@ class OngoingContributionEventProcessorTest extends BaseControllerTest {
   }
 
   @Test
-  void testInstanceDeleteEventWithContributedInstance() throws SocketTimeoutException {
+  void testInstanceDeleteEventWithContributedInstance() {
     var ongoingContributionStatus = saveOngoingContributionStatus(ongoingContributionStatusMapper
       .convertInstanceToEntity(instanceUpdate), CENTRAL_SERVER_ID);
     instanceView.setItems(List.of(createItem()));
@@ -1008,7 +1091,9 @@ class OngoingContributionEventProcessorTest extends BaseControllerTest {
       .thenReturn(ResultList.of(1, List.of(instanceView)));
     when(recordContributionService.isContributed(any(), any()))
       .thenReturn(true);
+
     eventProcessor.processOngoingContribution(ongoingContributionStatus);
+
     await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() ->
       verify(ongoingContributionStatusRepository, times(2)).save(any()));
     verify(recordContributionService).deContributeInstance(any(), any());
@@ -1019,7 +1104,7 @@ class OngoingContributionEventProcessorTest extends BaseControllerTest {
   }
 
   @Test
-  void testInstanceDeleteEventWithSocketException() throws SocketTimeoutException {
+  void testInstanceDeleteEventWithServiceSuspendedException() {
     var ongoingContributionStatus = saveOngoingContributionStatus(ongoingContributionStatusMapper
       .convertInstanceToEntity(instanceDelete), CENTRAL_SERVER_ID);
     instanceView.setItems(List.of(createItem()));
@@ -1027,9 +1112,11 @@ class OngoingContributionEventProcessorTest extends BaseControllerTest {
       .thenReturn(ResultList.of(1, List.of(instanceView)));
     when(recordContributionService.isContributed(any(), any()))
       .thenReturn(true);
-    doThrow(SocketTimeoutException.class).when(recordContributionService)
+    doThrow(ServiceSuspendedException.class).when(recordContributionService)
       .deContributeInstance(any(), any());
+
     eventProcessor.processOngoingContribution(ongoingContributionStatus);
+
     await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() ->
       verify(ongoingContributionStatusRepository, times(2)).save(any()));
     verify(recordContributionService, never()).contributeInstance(any(), any());
@@ -1040,7 +1127,7 @@ class OngoingContributionEventProcessorTest extends BaseControllerTest {
   }
 
   @Test
-  void testInstanceDeleteEventWithNonContributedInstance() throws SocketTimeoutException {
+  void testInstanceDeleteEventWithNonContributedInstance() {
     var ongoingContributionStatus = saveOngoingContributionStatus(ongoingContributionStatusMapper
       .convertInstanceToEntity(instanceDelete), CENTRAL_SERVER_ID);
     instanceView.setItems(List.of(createItem()));
@@ -1048,7 +1135,9 @@ class OngoingContributionEventProcessorTest extends BaseControllerTest {
       .thenReturn(ResultList.of(1, List.of(instanceView)));
     when(recordContributionService.isContributed(any(), any()))
       .thenReturn(false);
+
     eventProcessor.processOngoingContribution(ongoingContributionStatus);
+
     await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() ->
       verify(ongoingContributionStatusRepository, times(2)).save(any()));
     verify(recordContributionService, never()).deContributeInstance(any(), any());
@@ -1059,11 +1148,13 @@ class OngoingContributionEventProcessorTest extends BaseControllerTest {
   }
 
   @Test
-  void testInstanceInvalidEvent() throws SocketTimeoutException {
+  void testInstanceInvalidEvent() {
     instanceUpdate.setType(DomainEventType.ALL_DELETED);
     var ongoingContributionStatus = saveOngoingContributionStatus(ongoingContributionStatusMapper
       .convertInstanceToEntity(instanceUpdate), CENTRAL_SERVER_ID);
+
     eventProcessor.processOngoingContribution(ongoingContributionStatus);
+
     await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() ->
       verify(ongoingContributionStatusRepository, times(2)).save(any()));
     verify(recordContributionService, never()).deContributeInstance(any(), any());

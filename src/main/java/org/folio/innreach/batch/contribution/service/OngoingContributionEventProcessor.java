@@ -3,6 +3,7 @@ package org.folio.innreach.batch.contribution.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.folio.innreach.domain.entity.OngoingContributionStatus;
+import org.folio.innreach.domain.event.DomainEventType;
 import org.folio.innreach.domain.service.ContributionActionService;
 import org.folio.innreach.domain.service.InnReachTransactionActionService;
 import org.folio.innreach.domain.service.impl.TenantScopedExecutionService;
@@ -10,10 +11,10 @@ import org.folio.innreach.dto.Holding;
 import org.folio.innreach.dto.Instance;
 import org.folio.innreach.dto.Item;
 import org.folio.innreach.external.exception.InnReachConnectionException;
+import org.folio.innreach.external.exception.InnReachContributionRequestException;
 import org.folio.innreach.external.exception.InnReachGatewayException;
-import org.folio.innreach.external.exception.InnReachRetryException;
 import org.folio.innreach.external.exception.ServiceSuspendedException;
-import org.folio.innreach.external.exception.SocketTimeOutExceptionWrapper;
+import org.folio.innreach.external.exception.InnReachTimeOutException;
 import org.folio.innreach.util.JsonHelper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
@@ -21,7 +22,7 @@ import org.springframework.stereotype.Service;
 
 import static org.folio.innreach.domain.entity.ContributionStatus.FAILED;
 import static org.folio.innreach.domain.entity.ContributionStatus.RETRY;
-import static org.folio.innreach.util.InnReachConstants.RETRY_LIMIT_MESSAGE;
+import static org.folio.innreach.external.exception.InnReachOngoingContributionException.ongoingContributionRetryExhausted;
 import static org.folio.innreach.util.InnReachConstants.UNKNOWN_EVENT_NAME_MESSAGE;
 import static org.folio.innreach.util.InnReachConstants.UNKNOWN_TYPE_MESSAGE;
 
@@ -41,7 +42,7 @@ public class OngoingContributionEventProcessor {
   @Async("ongoingSchedulerTaskExecutor")
   public void processOngoingContribution(OngoingContributionStatus ongoingContributionStatus) {
     try {
-      log.info("processOngoingContribution:: Processing ongoing contribution event with id {} , tenant {}",
+      log.info("processOngoingContribution:: Processing ongoing contribution, event id: [{}], tenant: [{}]",
         ongoingContributionStatus.getId(), ongoingContributionStatus.getTenant());
       executionService.executeAsyncTenantScoped(ongoingContributionStatus.getTenant(),
         () -> {
@@ -54,20 +55,24 @@ public class OngoingContributionEventProcessor {
               ongoingContributionStatusService.updateOngoingContribution(ongoingContributionStatus, UNKNOWN_EVENT_NAME_MESSAGE, FAILED);
           }
         });
-    } catch (ServiceSuspendedException | InnReachConnectionException |
-             SocketTimeOutExceptionWrapper | InnReachGatewayException ex) {
-      log.warn("processOngoingContribution:: {} occurred while processing ongoing contribution {}", ex.getClass().getSimpleName(), ongoingContributionStatus);
+    } catch (ServiceSuspendedException | InnReachConnectionException | InnReachTimeOutException |
+             InnReachGatewayException | InnReachContributionRequestException ex) {
+      log.warn("processOngoingContribution:: {} occurred while processing ongoing contribution {}", ex.getClass().getSimpleName(), ex.getMessage());
       ongoingContributionStatusService.updateOngoingContribution(ongoingContributionStatus, RETRY);
     } catch (Exception ex) {
-      log.error("processOngoingContribution:: Exception occurred while processing job {}", ongoingContributionStatus, ex);
+      log.error("processOngoingContribution:: Exception occurred while processing job {}", ex.getMessage(), ex);
       ongoingContributionStatusService.updateOngoingContribution(ongoingContributionStatus, ex.getMessage(), FAILED);
     }
   }
 
   private void processItem(OngoingContributionStatus ongoingContributionStatus) {
-    Item oldEntity = jsonHelper.fromJson(ongoingContributionStatus.getOldEntity(), Item.class);
-    Item newEntity = jsonHelper.fromJson(ongoingContributionStatus.getNewEntity(), Item.class);
-    log.info("processItem:: processing item with oldEntity {} and newEntity {}", oldEntity, newEntity);
+    var oldEntity = jsonHelper.fromJson(ongoingContributionStatus.getOldEntity(), Item.class);
+    var newEntity = jsonHelper.fromJson(ongoingContributionStatus.getNewEntity(), Item.class);
+    var eventType = ongoingContributionStatus.getDomainEventType();
+    var itemId = eventType == DomainEventType.CREATED ? newEntity.getId() : oldEntity.getId();
+    log.debug("processItem:: processing item with oldEntity {} and newEntity {}", oldEntity, newEntity);
+    log.info("processItem:: processing event type [{}] for Item id: [{}]", eventType, itemId);
+
     switch (ongoingContributionStatus.getDomainEventType()) {
       case CREATED -> contributionActionService.handleItemCreation(newEntity, ongoingContributionStatus);
       case UPDATED -> {
@@ -105,7 +110,7 @@ public class OngoingContributionEventProcessor {
     if (maxRetryAttempts != 0 && job.getRetryAttempts() > maxRetryAttempts) {
       log.warn("checkRetryLimit:: ongoing job id {} retry attempts {} exceeds  max retry attempts {}",
         job.getId(), job.getRetryAttempts(), maxRetryAttempts);
-      throw new InnReachRetryException(RETRY_LIMIT_MESSAGE);
+      throw ongoingContributionRetryExhausted();
     }
   }
 
