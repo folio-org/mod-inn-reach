@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import feign.RetryableException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.folio.innreach.external.exception.InnReachTimeOutException;
@@ -18,7 +19,6 @@ import org.folio.innreach.external.dto.InnReachLocationDTO;
 import org.folio.innreach.external.dto.InnReachLocationsDTO;
 import org.folio.innreach.external.service.InnReachAuthExternalService;
 import org.folio.innreach.external.service.InnReachLocationExternalService;
-import org.springframework.web.client.ResourceAccessException;
 
 @RequiredArgsConstructor
 @Log4j2
@@ -66,7 +66,7 @@ public class InnReachLocationExternalServiceImpl implements InnReachLocationExte
       var centralCode = connectionDetails.getCentralCode();
 
       return getMappedLocationsFromInnReach(connectionUrl, authorizationHeader, localCode, centralCode);
-    } catch (ResourceAccessException ex) {
+    } catch (RetryableException ex) {
       log.error("getAllLocations:: Request timeout occurred while fetching inn-reach locations: {}", ex.getMessage());
       throw new InnReachTimeOutException("Fetching Inn-Reach Locations is timed out");
     }

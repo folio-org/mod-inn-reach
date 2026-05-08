@@ -3,11 +3,13 @@ package org.folio.innreach.domain.service.impl;
 import static org.folio.innreach.fixture.JobResponseFixture.updateJobResponse;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import static org.folio.innreach.dto.ContributionDTO.StatusEnum.COMPLETE;
+import static org.folio.innreach.dto.MappingValidationStatusDTO.INVALID;
 import static org.folio.innreach.dto.MappingValidationStatusDTO.VALID;
 import static org.folio.innreach.fixture.ContributionFixture.createContribution;
 import static org.folio.innreach.fixture.JobResponseFixture.createJobResponse;
@@ -32,6 +34,7 @@ import org.folio.innreach.client.InstanceStorageClient;
 import org.folio.innreach.domain.entity.Contribution;
 import org.folio.innreach.domain.entity.ContributionError;
 import org.folio.innreach.domain.service.ContributionValidationService;
+import org.folio.innreach.dto.ContributionDTO;
 import org.folio.innreach.dto.ContributionErrorDTO;
 import org.folio.innreach.mapper.ContributionMapper;
 import org.folio.innreach.mapper.ContributionMapperImpl;
@@ -76,11 +79,12 @@ class ContributionServiceImplTest {
 
   @Mock
   private FolioEnvironment folioEnv;
+
   @Mock
   private ContributionJobProperties jobProperties;
 
   @BeforeEach
-  public void beforeEachSetup() {
+  void beforeEachSetup() {
     MockitoAnnotations.openMocks(this);
   }
 
@@ -92,6 +96,7 @@ class ContributionServiceImplTest {
     when(validationService.getItemTypeMappingStatus(any())).thenReturn(VALID);
     when(validationService.getLocationMappingStatus(any())).thenReturn(VALID);
     when(beanFactory.getBean(ContributionJobRunner.class)).thenReturn(jobRunner);
+
     service.startInitialContribution(UUID.randomUUID());
 
     verify(storageClient).startInstanceIteration(any());
@@ -123,6 +128,7 @@ class ContributionServiceImplTest {
     var contribution = createContribution();
     var centralServerId = contribution.getCentralServer().getId();
     when(repository.save(any())).thenReturn(contribution);
+
     assertNotNull(service.createOngoingContribution(centralServerId));
   }
 
@@ -162,7 +168,137 @@ class ContributionServiceImplTest {
   @Test
   void cancelAllTest(){
     when(repository.findAllByStatus(any())).thenReturn(Arrays.asList(createContribution()));
+
     service.cancelAll();
+
+    verify(repository).findAllByStatus(any());
+  }
+
+  @Test
+  void shouldGetCurrentContribution() {
+    var contribution = createContribution();
+    var centralServerId = contribution.getCentralServer().getId();
+
+    when(repository.fetchCurrentByCentralServerId(centralServerId)).thenReturn(Optional.of(contribution));
+    when(validationService.getItemTypeMappingStatus(centralServerId)).thenReturn(VALID);
+    when(validationService.getLocationMappingStatus(centralServerId)).thenReturn(VALID);
+
+    var result = service.getCurrent(centralServerId);
+
+    assertNotNull(result);
+    assertEquals(VALID, result.getItemTypeMappingStatus());
+    assertEquals(VALID, result.getLocationsMappingStatus());
+  }
+
+  @Test
+  void shouldReturnEmptyContributionWhenNoCurrentExists() {
+    var centralServerId = UUID.randomUUID();
+
+    when(repository.fetchCurrentByCentralServerId(centralServerId)).thenReturn(Optional.empty());
+    when(validationService.getItemTypeMappingStatus(centralServerId)).thenReturn(VALID);
+    when(validationService.getLocationMappingStatus(centralServerId)).thenReturn(VALID);
+
+    var result = service.getCurrent(centralServerId);
+
+    assertNotNull(result);
+    assertEquals(VALID, result.getItemTypeMappingStatus());
+  }
+
+  @Test
+  void shouldSetInvalidStatusWhenValidationFails() {
+    var centralServerId = UUID.randomUUID();
+
+    when(repository.fetchCurrentByCentralServerId(centralServerId)).thenReturn(Optional.empty());
+    when(validationService.getItemTypeMappingStatus(centralServerId)).thenThrow(new RuntimeException("validation error"));
+
+    var result = service.getCurrent(centralServerId);
+
+    assertNotNull(result);
+    assertEquals(INVALID, result.getItemTypeMappingStatus());
+    assertEquals(INVALID, result.getLocationsMappingStatus());
+  }
+
+  @Test
+  void shouldThrowWhenContributionAlreadyInProgress() {
+    var contribution = createContribution();
+    var centralServerId = contribution.getCentralServer().getId();
+
+    when(repository.fetchCurrentByCentralServerId(centralServerId)).thenReturn(Optional.of(contribution));
+
+    assertThrows(IllegalArgumentException.class,
+      () -> service.startInitialContribution(centralServerId));
+  }
+
+  @Test
+  void shouldThrowWhenItemTypeMappingInvalid() {
+    var centralServerId = UUID.randomUUID();
+
+    when(repository.fetchCurrentByCentralServerId(centralServerId)).thenReturn(Optional.empty());
+    when(repository.save(any())).thenAnswer(i -> i.getArgument(0));
+    when(validationService.getItemTypeMappingStatus(centralServerId)).thenReturn(INVALID);
+
+    assertThrows(IllegalArgumentException.class,
+      () -> service.startInitialContribution(centralServerId));
+  }
+
+  @Test
+  void shouldThrowWhenLocationMappingInvalid() {
+    var centralServerId = UUID.randomUUID();
+
+    when(repository.fetchCurrentByCentralServerId(centralServerId)).thenReturn(Optional.empty());
+    when(repository.save(any())).thenAnswer(i -> i.getArgument(0));
+    when(validationService.getItemTypeMappingStatus(centralServerId)).thenReturn(VALID);
+    when(validationService.getLocationMappingStatus(centralServerId)).thenReturn(INVALID);
+
+    assertThrows(IllegalArgumentException.class,
+      () -> service.startInitialContribution(centralServerId));
+  }
+
+  @Test
+  void shouldThrowWhenCompleteContributionNotFound() {
+    var contributionId = UUID.randomUUID();
+
+    when(repository.findById(contributionId)).thenReturn(Optional.empty());
+
+    assertThrows(IllegalArgumentException.class,
+      () -> service.completeContribution(contributionId));
+  }
+
+  @Test
+  void shouldThrowWhenUpdateStatsContributionNotFound() {
+    var contributionId = UUID.randomUUID();
+
+    when(repository.findById(contributionId)).thenReturn(Optional.empty());
+
+    var contributionDTO = new ContributionDTO();
+    assertThrows(IllegalArgumentException.class,
+      () -> service.updateContributionStats(contributionId, contributionDTO));
+  }
+
+  @Test
+  void shouldUpdateStatisticsAndContributionStatus() {
+    when(repository.updateStatisticsByCentralServerId()).thenReturn(Optional.of(createContribution()));
+
+    service.updateStatisticsAndContributionStatus();
+
+    verify(repository).updateStatisticsByCentralServerId();
+  }
+
+  @Test
+  void shouldUpdateStatisticsWhenNoContributionFound() {
+    when(repository.updateStatisticsByCentralServerId()).thenReturn(Optional.empty());
+
+    service.updateStatisticsAndContributionStatus();
+
+    verify(repository).updateStatisticsByCentralServerId();
+  }
+
+  @Test
+  void shouldCancelAllWithEmptyList() {
+    when(repository.findAllByStatus(any())).thenReturn(Arrays.asList());
+
+    service.cancelAll();
+
     verify(repository).findAllByStatus(any());
   }
 
