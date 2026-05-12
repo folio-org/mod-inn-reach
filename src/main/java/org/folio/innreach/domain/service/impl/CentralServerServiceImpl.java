@@ -59,13 +59,12 @@ public class CentralServerServiceImpl implements CentralServerService {
     Assert.isTrue(localAgencyRepository.findLibraryIdsAssignedToMultipleAgencies(createdCentralServer.getId()).isEmpty(),
       "FOLIO library may only be associated with one agency per central server");
 
-    log.info("createCentralServer:: result: {}", centralServerMapper.mapToCentralServerDTO(createdCentralServer));
+    log.info("createCentralServer:: Created Central Server: {}", createdCentralServer.getId());
     return centralServerMapper.mapToCentralServerDTO(createdCentralServer);
   }
 
   private void checkCentralServerConnection(CentralServerDTO centralServerDTO) {
-    log.debug("checkCentralServerConnection:: parameters centralServerDTO: {}", centralServerDTO);
-    log.debug("Get an access token to check the connection to the Central Server with URI: {}",
+    log.debug("checkCentralServerConnection:: Get an access token to check the connection to the Central Server with URI: {}",
       centralServerDTO.getCentralServerAddress());
 
     var centralServerConnectionDetailsDTO = CentralServerConnectionDetailsDTO.builder()
@@ -81,41 +80,34 @@ public class CentralServerServiceImpl implements CentralServerService {
   }
 
   private void hashAndSaltLocalServerCredentials(LocalServerCredentials localServerCredentials) {
-    log.debug("hashAndSaltLocalServerCredentials:: parameters localServerCredentials: {}", localServerCredentials);
     localServerCredentials.setLocalServerSecret(passwordEncoder.encode(localServerCredentials.getLocalServerSecret()));
   }
 
   @Override
   @Transactional(readOnly = true)
   public CentralServerDTO getCentralServer(UUID centralServerId) {
-    log.debug("getCentralServer:: parameters centralServerId: {}", centralServerId);
     var centralServer = fetchOne(centralServerId);
-    log.info("getCentralServer:: result: {}", centralServerMapper.mapToCentralServerDTO(centralServer));
     return centralServerMapper.mapToCentralServerDTO(centralServer);
   }
 
   @Override
   @Transactional(readOnly = true)
   public CentralServerDTO getCentralServerByCentralCode(String code) {
-    log.debug("getCentralServerByCentralCode:: parameters code: {}", code);
     var centralServer = centralServerRepository.fetchOneByCentralCode(code)
-      .orElseThrow(() -> new EntityNotFoundException("Central server with code: " + code + " not found"));
+      .orElseThrow(() -> EntityNotFoundException.centralServerNotFoundByCode(code));
 
-    log.info("getCentralServerByCentralCode:: result: {}", centralServerMapper.mapToCentralServerDTO(centralServer));
     return centralServerMapper.mapToCentralServerDTO(centralServer);
   }
 
   @Override
   public UUID getCentralServerIdByCentralCode(String code) {
-    log.debug("getCentralServerIdByCentralCode:: parameters code: {}", code);
     return centralServerRepository.getIdByCentralCode(code)
-      .orElseThrow(() -> new EntityNotFoundException("Central server with code: " + code + " not found"));
+      .orElseThrow(() -> EntityNotFoundException.centralServerNotFoundByCode(code));
   }
 
   private CentralServer fetchOne(UUID centralServerId) {
-    log.debug("fetchOne:: parameters centralServerId: {}", centralServerId);
     return centralServerRepository.fetchOne(centralServerId)
-      .orElseThrow(() -> new EntityNotFoundException("Central server with ID: " + centralServerId + " not found"));
+      .orElseThrow(() -> EntityNotFoundException.centralServerNotFoundById(centralServerId));
   }
 
   @Override
@@ -127,7 +119,6 @@ public class CentralServerServiceImpl implements CentralServerService {
     var centralServerDTOS = mapItems(centralServerRepository.fetchAllById(ids.getContent()),
       centralServerMapper::mapToCentralServerDTO);
 
-    log.info("getAllCentralServers:: result: {}", centralServerDTOS);
     return new CentralServersDTO()
       .centralServers(centralServerDTOS)
       .totalRecords((int) ids.getTotalElements());
@@ -156,7 +147,6 @@ public class CentralServerServiceImpl implements CentralServerService {
     Assert.isTrue(localAgencyRepository.findLibraryIdsAssignedToMultipleAgencies(centralServer.getId()).isEmpty(),
       "FOLIO library may only be associated with one agency per central server");
 
-    log.info("updateCentralServer:: result: {}", centralServerMapper.mapToCentralServerDTO(centralServer));
     return centralServerMapper.mapToCentralServerDTO(centralServer);
   }
 
@@ -177,7 +167,6 @@ public class CentralServerServiceImpl implements CentralServerService {
   }
 
   private void updateLocalServerCredentials(CentralServer centralServer, LocalServerCredentials updatedLocalServerCredentials) {
-    log.debug("updateLocalServerCredentials:: parameters centralServer: {}, updatedLocalServerCredentials: {}", centralServer, updatedLocalServerCredentials);
     var localServerCredentials = centralServer.getLocalServerCredentials();
 
     if (localServerCredentials == null) {
@@ -201,7 +190,6 @@ public class CentralServerServiceImpl implements CentralServerService {
   }
 
   private void updateLocalAgencies(CentralServer centralServer, CentralServer updatedCentralServer) {
-    log.debug("updateLocalAgencies:: parameters centralServer: {}, updatedCentralServer: {}", centralServer, updatedCentralServer);
     var currentLocalAgencies = new ArrayList<>(centralServer.getLocalAgencies());
     var updatedLocalAgencies = updatedCentralServer.getLocalAgencies();
 
@@ -222,7 +210,6 @@ public class CentralServerServiceImpl implements CentralServerService {
       updLocalAgency.setCentralServer(centralServer);
       centralServer.getLocalAgencies().set(centralServer.getLocalAgencies().indexOf(updLocalAgency), updLocalAgency);
     }
-    log.info("updateLocalAgencies:: Local agency updated");
   }
 
   @Override
@@ -230,7 +217,7 @@ public class CentralServerServiceImpl implements CentralServerService {
   public void deleteCentralServer(UUID centralServerId) {
     log.debug("deleteCentralServer:: parameters centralServerId: {}", centralServerId);
     var centralServer = centralServerRepository.findById(centralServerId)
-      .orElseThrow(() -> new EntityNotFoundException("Central server with ID: " + centralServerId + " not found"));
+      .orElseThrow(() -> EntityNotFoundException.centralServerNotFoundById(centralServerId));
 
     centralServerRepository.delete(centralServer);
     log.info("deleteCentralServer:: Central server deleted");
@@ -238,15 +225,14 @@ public class CentralServerServiceImpl implements CentralServerService {
 
   @Override
   public CentralServerConnectionDetailsDTO getCentralServerConnectionDetails(UUID centralServerId) {
-    log.debug("getCentralServerConnectionDetails:: parameters centralServerId: {}", centralServerId);
     return centralServerRepository.fetchConnectionDetails(centralServerId)
-      .orElseThrow(() -> new EntityNotFoundException("Central server with ID: " + centralServerId + " not found"));
+      .orElseThrow(() -> EntityNotFoundException.centralServerNotFoundById(centralServerId));
   }
 
   @Override
   public CentralServerConnectionDetailsDTO getConnectionDetailsByCode(String centralCode) {
     log.debug("getConnectionDetailsByCode:: parameters centralCode: {}", centralCode);
     return centralServerRepository.fetchConnectionDetailsByCentralCode(centralCode)
-      .orElseThrow(() -> new EntityNotFoundException("Central server with code: " + centralCode + " not found"));
+      .orElseThrow(() -> EntityNotFoundException.centralServerNotFoundByCode(centralCode));
   }
 }

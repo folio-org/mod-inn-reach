@@ -121,7 +121,8 @@ public class PatronInfoServiceImpl implements PatronInfoService {
     patronInfo.setLocalLoans(totalLoans - innReachLoans);
     patronInfo.setPatronExpireDate(expirationDate);
     patronInfo.setPatronName(patronName);
-    log.info("getPatronInfo:: result: {}", patronInfo);
+
+    log.info("getPatronInfo:: Patron Info retrieved for patron: {}", patronId);
     return patronInfo;
   }
 

@@ -39,7 +39,6 @@ public class ContributionCriteriaConfigurationServiceImpl implements Contributio
 
     var saved = repository.save(entity);
 
-    log.info("createCriteria:: result: {}", mapper.toDTO(saved));
     return mapper.toDTO(saved);
   }
 
@@ -49,7 +48,6 @@ public class ContributionCriteriaConfigurationServiceImpl implements Contributio
     log.debug("getCriteria:: parameters centralServerId: {}", centralServerId);
     var criteria = findCriteria(centralServerId);
 
-    log.info("getCriteria:: result: {}", mapper.toDTO(criteria));
     return mapper.toDTO(criteria);
   }
 
@@ -65,7 +63,6 @@ public class ContributionCriteriaConfigurationServiceImpl implements Contributio
     merge(dto.getLocationIds(), criteria.getExcludedLocationIds(),
         criteria::addExcludedLocationId, nothing(), criteria::removeExcludedLocationId);
 
-    log.info("updateCriteria:: result: {}", mapper.toDTO(criteria));
     return mapper.toDTO(criteria);
   }
 
@@ -74,7 +71,6 @@ public class ContributionCriteriaConfigurationServiceImpl implements Contributio
     log.debug("deleteCriteria:: parameters centralServerId: {}", centralServerId);
     var criteria = findCriteria(centralServerId);
     repository.delete(criteria);
-    log.info("deleteCriteria:: Criteria deleted");
   }
 
   private ContributionCriteriaConfiguration findCriteria(UUID centralServerId) {
@@ -89,7 +85,6 @@ public class ContributionCriteriaConfigurationServiceImpl implements Contributio
     var toFind = new ContributionCriteriaConfiguration();
     toFind.setCentralServer(centralServerRef(centralServerId));
 
-    log.info("exampleWithServerId:: result: {}", Example.of(toFind));
     return Example.of(toFind);
   }
 

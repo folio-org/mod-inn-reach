@@ -256,11 +256,10 @@ public class ContributionActionServiceImpl implements ContributionActionService 
         }
       }
       catch (ServiceSuspendedException | FeignException | InnReachConnectionException | InnReachTimeOutException e) {
-        log.info("exception thrown from handlePerCentralServer", e);
+        log.warn("handlePerCentralServer:: exception thrown: {}", e.getMessage());
         throw e;
-      }
-      catch (Exception e) {
-        log.error("Unable to handle record {} for central server {}", recordId, csId, e);
+      } catch (Exception e) {
+        log.error("handlePerCentralServer:: Unable to handle record {} for central server {}", recordId, csId, e);
       }
     }
   }

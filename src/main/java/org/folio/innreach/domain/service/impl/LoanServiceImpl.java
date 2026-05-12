@@ -50,7 +50,7 @@ public class LoanServiceImpl implements LoanService {
   public void delete(UUID loanId) {
     circulationClient.findLoan(loanId)
       .ifPresentOrElse(loanDTO -> circulationClient.deleteLoan(loanId),
-        () -> log.info("Loan not found with loanId : {}", loanId));
+        () -> log.warn("Loan not found with loanId: {} for a delete", loanId));
   }
 
   @Override
@@ -78,7 +78,7 @@ public class LoanServiceImpl implements LoanService {
 
   @Override
   public CheckInResponseDTO checkInItem(InnReachTransaction transaction, UUID servicePointId) {
-    log.info("Processing item check-in for transaction {}", transaction);
+    log.info("Processing item check-in for transaction {} and service point {}", transaction.getId(), servicePointId);
 
     var checkIn = new CheckInRequestDTO()
       .servicePointId(servicePointId)
@@ -90,7 +90,7 @@ public class LoanServiceImpl implements LoanService {
 
   @Override
   public LoanDTO checkOutItem(InnReachTransaction transaction, UUID servicePointId) {
-    log.info("Processing item check-out for transaction {}", transaction);
+    log.info("Processing item check-out for transaction {} and service point {}", transaction.getTrackingId(), servicePointId);
 
     var hold = transaction.getHold();
 

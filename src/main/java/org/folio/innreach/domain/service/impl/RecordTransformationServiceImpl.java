@@ -72,7 +72,7 @@ public class RecordTransformationServiceImpl implements RecordTransformationServ
 
   @Override
   public BibInfo getBibInfo(UUID centralServerId, Instance instance) {
-    log.debug("getBibInfo:: parameters centralServerId: {}, instance: {}", centralServerId, instance);
+    log.debug("getBibInfo:: parameters centralServerId: {}, instance hrid: {}", centralServerId, instance.getHrid());
     var bibId = instance.getHrid();
 
     var suppressionStatus = validationService.getSuppressionStatus(centralServerId, instance.getStatisticalCodeIds());
@@ -143,7 +143,7 @@ public class RecordTransformationServiceImpl implements RecordTransformationServ
 
       validateRequiredFields(bibItem);
 
-      log.info("Loaded Bib Item with ID: [{}]", itemId);
+      log.info("Loaded Bib Item for Item ID: [{}]", itemId);
 
       return bibItem;
     } catch (Exception e) {

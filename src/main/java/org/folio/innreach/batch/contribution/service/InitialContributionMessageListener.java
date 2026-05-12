@@ -42,7 +42,7 @@ public class InitialContributionMessageListener implements MessageListener<Strin
       throw e;
     }
     catch (Exception e) {
-      log.info("InitialContributionMessageListener: error happened while consuming : {}", e.getMessage());
+      log.error("InitialContributionMessageListener: error happened while consuming : {}", e.getMessage(), e);
     }
   }
 }

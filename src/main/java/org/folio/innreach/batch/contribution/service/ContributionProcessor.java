@@ -25,7 +25,7 @@ public class ContributionProcessor implements IMessageProcessor{
       throw e;
     }
     catch (Exception e) {
-      log.info("ContributionProcessor: error happened while consuming : {}", e.getMessage());
+      log.error("ContributionProcessor: error happened while consuming : {}", e.getMessage(), e);
     }
   }
 }

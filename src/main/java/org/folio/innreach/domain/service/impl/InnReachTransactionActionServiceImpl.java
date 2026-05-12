@@ -227,7 +227,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
       log.info("handleLoanUpdate:: loan action is recallRequested");
       updateTransactionOnLoanRecallRequested(loan.getId(), loan.getDueDate(), transaction);
     }
-    log.info("handleLoanUpdate:: Loan updated");
+    log.info("handleLoanUpdate:: Finish handling Loan update");
   }
 
   @Override
@@ -245,7 +245,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
     } else if (transaction.getType() == LOCAL) {
       updateLocalTransactionOnRequestChange(requestDTO, transaction);
     }
-    log.info("handleRequestUpdate:: Request updated");
+    log.info("handleRequestUpdate:: Finished handling Request update");
   }
 
   @Override
@@ -423,7 +423,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
 
   @Override
   public void finalCheckInItemHold(UUID transactionId, UUID servicePointId) {
-    log.info("finalCheckInItemHold:: parameters transactionId: {}, servicePointId: {}", transactionId, servicePointId);
+    log.info("finalCheckInItemHold:: transactionId: {}, servicePointId: {}", transactionId, servicePointId);
     var transaction = fetchTransactionOfType(transactionId, ITEM);
 
     verifyState(transaction, ITEM_RECEIVED, RECEIVE_UNANNOUNCED, ITEM_SHIPPED, ITEM_IN_TRANSIT, RETURN_UNCIRCULATED, BORROWER_RENEW);
@@ -568,11 +568,16 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
 
   private void updateTransactionOnLoanClosure(StorageLoanDTO loan, InnReachTransaction transaction) {
     log.debug("updateTransactionOnLoanClosure:: parameters loan: {}, transaction: {}", loan, transaction);
+
+    if (transaction.getType() == LOCAL) {
+      return;
+    }
+
+    log.info("updateTransactionOnLoanClosure:: updating transaction for type {}", transaction.getType());
     if (transaction.getType() == ITEM) {
-      log.info("updateTransactionOnLoanClosure:: updating transaction for type {}", transaction.getType());
       updateItemTransactionOnLoanClosure(transaction, loan.getId());
-    } else if (transaction.getType() == PATRON) {
-      log.info("updateTransactionOnLoanClosure:: updating transaction for type {}", transaction.getType());
+    } else {
+      // PATRON type transaction
       updatePatronTransactionOnLoanClosure(transaction, loan.getId());
     }
   }
@@ -741,7 +746,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
 
     if (!transactionItemId.equals(itemId)) {
       log.info("Updating local hold transaction {} on moving a request {} from item {} to {}",
-        transaction.getId(), requestId, transactionItemId, itemId);
+        transaction.getTrackingId(), requestId, transactionItemId, itemId);
 
       var item = fetchItemById(request.getItemId());
 
