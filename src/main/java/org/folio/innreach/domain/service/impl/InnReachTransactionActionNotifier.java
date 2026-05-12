@@ -137,7 +137,7 @@ public class InnReachTransactionActionNotifier {
       }
     } catch (InnReachException e) {
       //TODO: the suppression of error is temporal, see https://issues.folio.org/browse/MODINREACH-192 for more details.
-      log.warn("Unexpected D2IR response: {}", e.getMessage(), e);
+      log.warn("Unexpected D2IR response: {} for operation: {}", e.getMessage(), operation, e);
     }
   }
 

@@ -42,7 +42,6 @@ import org.folio.spring.data.OffsetRequest;
 @Service
 public class ContributionServiceImpl implements ContributionService {
 
-  public static final String COMPLETED = "COMPLETED";
   private final ContributionRepository repository;
   private final ContributionErrorRepository errorRepository;
   private final ContributionMapper mapper;
@@ -56,7 +55,6 @@ public class ContributionServiceImpl implements ContributionService {
 
   @Override
   public ContributionDTO getCurrent(UUID centralServerId) {
-    log.debug("getCurrent:: parameters centralServerId: {}", centralServerId);
     var contribution = repository.fetchCurrentByCentralServerId(centralServerId)
       .map(mapper::toDTO)
       .orElseGet(ContributionDTO::new);
@@ -65,19 +63,17 @@ public class ContributionServiceImpl implements ContributionService {
       contribution.setLocationsMappingStatus(validationService.getLocationMappingStatus(centralServerId));
       contribution.setItemTypeMappingStatus(validationService.getItemTypeMappingStatus(centralServerId));
     } catch (Exception e) {
-      log.warn("Can't validate location mappings", e);
+      log.warn("getCurrent:: Can't validate location mappings", e);
       contribution.setLocationsMappingStatus(INVALID);
       contribution.setItemTypeMappingStatus(INVALID);
     }
 
-    log.info("getCurrent:: result: {}", contribution);
     return contribution;
   }
 
   @Transactional
   @Override
   public ContributionDTO completeContribution(UUID contributionId) {
-    log.info("completeContribution:: parameters contributionId: {}", contributionId);
     var entity = fetchById(contributionId);
 
     entity.setStatus(COMPLETE);
@@ -93,9 +89,8 @@ public class ContributionServiceImpl implements ContributionService {
 
   @Override
   public ContributionsDTO getHistory(UUID centralServerId, int offset, int limit) {
-    log.debug("getHistory:: parameters centralServerId: {}, offset: {}, limit: {}", centralServerId, offset, limit);
     var page = repository.fetchHistoryByCentralServerId(centralServerId, new OffsetRequest(offset, limit));
-    log.info("getHistory:: result: {}", mapper.toDTOCollection(page));
+
     return mapper.toDTOCollection(page);
   }
 
@@ -116,7 +111,6 @@ public class ContributionServiceImpl implements ContributionService {
     entity.setRecordsContributed(contributed);
     entity.setRecordsUpdated(updated);
     entity.setRecordsDecontributed(decontributed);
-    log.info("updateContributionStats:: Contribution stats updated");
   }
 
   @Override
@@ -131,18 +125,16 @@ public class ContributionServiceImpl implements ContributionService {
 
     var contribution = createEmptyContribution(centralServerId);
 
-    log.info("Validating contribution settings");
     validateContribution(centralServerId);
 
-    log.info("Triggering inventory instance iteration");
     var iterationJobResponse = triggerInstanceIteration();
     var numberOfRecords = iterationJobResponse.getNumberOfRecordsPublished();
-    log.info("numberOfRecords from iterationJobResponse: {}",numberOfRecords);
     contribution.setJobId(iterationJobResponse.getId());
     contribution.setRecordsTotal(numberOfRecords.longValue());
-    repository.save(contribution);
+    var saved = repository.save(contribution);
 
-    log.info("Initial contribution process started");
+    log.info("Initial contribution started with contribution id: {} and job id: {}",
+      saved.getId(), iterationJobResponse.getId());
   }
 
   @Override
@@ -155,7 +147,6 @@ public class ContributionServiceImpl implements ContributionService {
 
   @Override
   public ContributionDTO createOngoingContribution(UUID centralServerId) {
-    log.info("createOngoingContribution:: parameters centralServerId: {}", centralServerId);
     var contribution = createEmptyContribution(centralServerId);
     contribution.setOngoing(true);
 
@@ -178,7 +169,6 @@ public class ContributionServiceImpl implements ContributionService {
   @Transactional
   @Override
   public void cancelCurrent(UUID centralServerId) {
-    log.info("cancelCurrent:: parameters centralServerId: {}", centralServerId);
     repository.fetchCurrentByCentralServerId(centralServerId).ifPresent(contribution -> {
       log.info("Cancelling initial contribution for central server {}", centralServerId);
 
@@ -205,7 +195,6 @@ public class ContributionServiceImpl implements ContributionService {
   }
 
   private Contribution fetchById(UUID contributionId) {
-    log.info("fetchById:: parameters contributionId: {}", contributionId);
     return repository.findById(contributionId)
       .orElseThrow(() -> new IllegalArgumentException("Contribution is not found by id: " + contributionId));
   }
@@ -215,21 +204,15 @@ public class ContributionServiceImpl implements ContributionService {
   }
 
   private JobResponse triggerInstanceIteration() {
-    log.debug("triggerInstanceIteration:: no parameter");
     var request = createInstanceIterationRequest();
 
     var iterationJob = instanceStorageClient.startInstanceIteration(request);
     Assert.isTrue(iterationJob.getStatus() == IN_PROGRESS, "Unexpected iteration job status received: " + iterationJob.getStatus());
 
-    log.info("triggerInstanceIteration: result: {}", iterationJob.toString());
-    log.info("triggerInstanceIteration: message published number: {}", iterationJob.getNumberOfRecordsPublished());
-    log.info("triggerInstanceIteration: message published status: {}", iterationJob.getStatus().toString());
-    log.info("triggerInstanceIteration: message published id: {}", iterationJob.getId());
     return iterationJob;
   }
 
   private void cancelInstanceIteration(Contribution contribution) {
-    log.info("cancelInstanceIteration:: parameters contribution: {}", contribution);
     var iterationJobId = contribution.getJobId();
     try {
       instanceStorageClient.cancelInstanceIteration(iterationJobId);
@@ -239,7 +222,6 @@ public class ContributionServiceImpl implements ContributionService {
   }
 
   private void validateContribution(UUID centralServerId) {
-    log.debug("validateContribution:: parameters centralServerId: {}", centralServerId);
     var itemTypeMappingStatus = validationService.getItemTypeMappingStatus(centralServerId);
     Assert.isTrue(itemTypeMappingStatus == VALID, "Invalid item types mapping status");
 
@@ -248,15 +230,12 @@ public class ContributionServiceImpl implements ContributionService {
   }
 
   private InstanceIterationRequest createInstanceIterationRequest() {
-    log.debug("createInstanceIterationRequest:: no parameter");
     var request = new InstanceIterationRequest();
     request.setTopicName("inventory.instance-contribution");
-    log.info("createInstanceIterationRequest:: result: {}", request);
     return request;
   }
 
   private Contribution createEmptyContribution(UUID centralServerId) {
-    log.debug("createEmptyContribution:: parameters centralServerId: {}", centralServerId);
     var contribution = new Contribution();
     contribution.setStatus(Contribution.Status.IN_PROGRESS);
     contribution.setRecordsTotal(0L);
@@ -265,7 +244,6 @@ public class ContributionServiceImpl implements ContributionService {
     contribution.setRecordsUpdated(0L);
     contribution.setRecordsDecontributed(0L);
     contribution.setCentralServer(centralServerRef(centralServerId));
-    log.info("createEmptyContribution:: result: {}", contribution);
     return contribution;
   }
 

@@ -153,8 +153,6 @@ public class InitialContributionEventProcessor {
   }
 
   private boolean isEligibleForContribution(UUID centralServerId, Instance instance) {
-    log.info("isEligibleForContribution:: parameters centralServerId: {} and instance id: {}",
-      centralServerId, instance);
     return validationService.isEligibleForContribution(centralServerId, instance);
   }
 
