@@ -42,6 +42,7 @@ import static org.folio.innreach.fixture.ContributionFixture.createItem;
 import static org.folio.innreach.util.InnReachConstants.INVALID_CENTRAL_SERVER_ID;
 import static org.folio.innreach.util.InnReachConstants.MARC_ERROR_MSG;
 import static org.folio.innreach.util.InnReachConstants.RETRY_LIMIT_MESSAGE;
+import static org.folio.innreach.util.InnReachConstants.SKIPPING_INELIGIBLE_INSTANCE_MSG;
 import static org.folio.innreach.util.InnReachConstants.SKIPPING_INELIGIBLE_MSG;
 import static org.folio.innreach.util.InnReachConstants.UNKNOWN_TYPE_MESSAGE;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -879,7 +880,7 @@ class OngoingContributionEventProcessorTest extends BaseControllerTest {
     await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() ->
       verify(ongoingContributionStatusRepository, times(2)).save(any()));
     assertEquals(FAILED, ongoingContributionStatus.getStatus());
-    assertEquals(SKIPPING_INELIGIBLE_MSG, ongoingContributionStatus.getError());
+    assertEquals(SKIPPING_INELIGIBLE_INSTANCE_MSG, ongoingContributionStatus.getError());
   }
 
   @Test

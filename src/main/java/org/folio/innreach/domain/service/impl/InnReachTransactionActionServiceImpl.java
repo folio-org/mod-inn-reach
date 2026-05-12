@@ -60,6 +60,7 @@ import org.folio.innreach.domain.service.RetryableUpdateService;
 import org.folio.innreach.domain.service.VirtualRecordService;
 import org.folio.innreach.dto.CancelTransactionHoldDTO;
 import org.folio.innreach.dto.CheckInDTO;
+import org.folio.innreach.dto.CheckInResponseDTO;
 import org.folio.innreach.dto.InnReachTransactionDTO;
 import org.folio.innreach.dto.Item;
 import org.folio.innreach.dto.LoanStatus;
@@ -123,39 +124,48 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
 
     verifyState(transaction, ITEM_SHIPPED);
 
-    var response = checkInItem(transaction, servicePointId);
-
     transaction.setState(ITEM_RECEIVED);
+
+    var checkInResponse = checkInItem(transaction, servicePointId);
 
     notifier.reportItemReceived(transaction);
 
     handleItemWithCanceledRequest(transaction);
 
-    log.info("checkInPatronHoldItem:: result: {}", response);
-    return response;
+    log.info("checkInPatronHoldItem:: Patron Hold Item is Checked-In");
+
+    var hold = (TransactionPatronHold) transaction.getHold();
+    return new PatronHoldCheckInResponseDTO()
+      .transaction(transactionMapper.toDTO(transaction))
+      .folioCheckIn(checkInResponse)
+      .barcodeAugmented(!hold.getShippedItemBarcode().equals(hold.getFolioItemBarcode()));
   }
 
   @Override
   public PatronHoldCheckInResponseDTO checkInPatronHoldUnshippedItem(UUID transactionId, UUID servicePointId, String itemBarcode) {
     log.debug("checkInPatronHoldUnshippedItem:: parameters transactionId: {}, servicePointId: {}", transactionId, servicePointId);
     var transaction = fetchTransactionById(transactionId);
-    var folioItemBarcode = transaction.getHold().getFolioItemBarcode();
+    var hold = (TransactionPatronHold) transaction.getHold();
+    var folioItemBarcode = hold.getFolioItemBarcode();
 
     verifyState(transaction, PATRON_HOLD, TRANSFER);
     Assert.isTrue(folioItemBarcode == null, "Item associated with the transaction has a barcode assigned");
 
     patronHoldService.addItemBarcode(transaction, itemBarcode);
 
-    var response = checkInItem(transaction, servicePointId);
-
     transaction.setState(RECEIVE_UNANNOUNCED);
+
+    var checkInResponse = checkInItem(transaction, servicePointId);
 
     notifier.reportUnshippedItemReceived(transaction);
 
     handleItemWithCanceledRequest(transaction);
 
-    log.info("checkInPatronHoldUnshippedItem:: result: {}", response);
-    return response;
+    log.info("checkInPatronHoldUnshippedItem:: Patron Hold Unshipped Item is Checked-In");
+    return new PatronHoldCheckInResponseDTO()
+      .transaction(transactionMapper.toDTO(transaction))
+      .folioCheckIn(checkInResponse)
+      .barcodeAugmented(!hold.getShippedItemBarcode().equals(hold.getFolioItemBarcode()));
   }
 
   @Override
@@ -649,7 +659,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
     }
   }
 
-  private PatronHoldCheckInResponseDTO checkInItem(InnReachTransaction transaction, UUID servicePointId) {
+  private CheckInResponseDTO checkInItem(InnReachTransaction transaction, UUID servicePointId) {
     log.debug("checkInItem:: parameters transaction: {}, servicePointId: {}", transaction, servicePointId);
     var hold = (TransactionPatronHold) transaction.getHold();
     var shippedItemBarcode = hold.getShippedItemBarcode();
@@ -658,12 +668,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
     Assert.isTrue(shippedItemBarcode != null, "shippedItemBarcode is not set");
     Assert.isTrue(folioItemBarcode != null, "folioItemBarcode is not set");
 
-    var checkInResponse = loanService.checkInItem(transaction, servicePointId);
-
-    return new PatronHoldCheckInResponseDTO()
-      .transaction(transactionMapper.toDTO(transaction))
-      .folioCheckIn(checkInResponse)
-      .barcodeAugmented(!shippedItemBarcode.equals(folioItemBarcode));
+    return loanService.checkInItem(transaction, servicePointId);
   }
 
   private void updateItemTransactionOnRequestChange(RequestDTO request, InnReachTransaction transaction) {

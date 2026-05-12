@@ -188,9 +188,9 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
 
   private static final UUID PRE_POPULATED_FOLIO_ITEM_ID = UUID.fromString("4def31b0-2b60-4531-ad44-7eab60fa5428");
   private static final UUID PRE_POPULATED_FOLIO_LOAN_ID = UUID.fromString("06e820e3-71a0-455e-8c73-3963aea677d4");
-  private static final UUID PRE_POPULATE_USER_ID = UUID.fromString("f75ffab1-2e2f-43be-b159-3031e2cfc458");
-  private final static UUID PRE_POPULATED_DEFAULT_SERVICE_POINT_ID = UUID.fromString("56f48d94-96e6-4eae-970b-b0e346ec02f0");
-  private final static UUID PRE_POPULATED_USER_ID = UUID.fromString("ef58f191-ec62-44bb-a571-d59c536bcf4a");
+  private static final String PRE_POPULATE_USER_ID_QUERY = "userId==" + cqlEncode("f75ffab1-2e2f-43be-b159-3031e2cfc458");
+  private static final UUID PRE_POPULATED_DEFAULT_SERVICE_POINT_ID = UUID.fromString("56f48d94-96e6-4eae-970b-b0e346ec02f0");
+  private static final UUID PRE_POPULATED_USER_ID = UUID.fromString("ef58f191-ec62-44bb-a571-d59c536bcf4a");
 
   private static final UUID PRE_POPULATED_LOCAL_HOLD_TRANSACTION_ID = UUID.fromString("79b0a1fb-55be-4e55-9d84-01303aaec1ce");
   private static final UUID PRE_POPULATED_PATRON_HOLD_TRANSACTION_ID = UUID.fromString("0aab1720-14b4-4210-9a19-0d0bf1cd64d3");
@@ -1218,6 +1218,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
 
     var transaction = response.getTransaction();
     assertEquals(PRE_POPULATED_ITEM_SHIPPED_TRANSACTION_ID, transaction.getId());
+    assertEquals(TransactionStateEnum.ITEM_RECEIVED, transaction.getState());
 
     var checkInResponse = response.getFolioCheckIn();
     assertEquals(PRE_POPULATED_PATRON_HOLD_ITEM_BARCODE, checkInResponse.getItem().getBarcode());
@@ -1252,6 +1253,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
 
     var transaction = response.getTransaction();
     assertEquals(PRE_POPULATED_ITEM_SHIPPED_TRANSACTION_ID, transaction.getId());
+    assertEquals(TransactionStateEnum.RETURN_UNCIRCULATED, transaction.getState());
 
     var checkInResponse = response.getFolioCheckIn();
     assertEquals(PRE_POPULATED_PATRON_HOLD_ITEM_BARCODE, checkInResponse.getItem().getBarcode());
@@ -1911,7 +1913,13 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   void cancelPatronHold_when_TransactionIsOnHoldOrTransfer_and_RequestIsClosed_withNoVirtualRecord(TransactionState state) {
     mockFindRequest(PRE_POPULATED_PATRON_HOLD_REQUEST_ID, CLOSED_CANCELLED);
 
-    modifyTransactionState(PRE_POPULATED_PATRON_HOLD_TRANSACTION_ID, state);
+    modifyTransaction(PRE_POPULATED_PATRON_HOLD_TRANSACTION_ID, t -> {
+      t.setState(state);
+      t.getHold().setFolioItemId(null);
+      t.getHold().setFolioHoldingId(null);
+      t.getHold().setFolioInstanceId(null);
+      t.getHold().setFolioLoanId(null);
+    });
     var cancelPatronHold = createCancelTransactionHold();
 
     var responseEntity = testRestTemplate.postForEntity(
@@ -1931,6 +1939,11 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     verify(circulationClient, never()).updateRequest(eq(PRE_POPULATED_PATRON_HOLD_REQUEST_ID), any());
     verify(actionNotifier).reportCancelItemHold(any());
     verify(innReachClient).postInnReachApi(any(), anyString(), anyString(), anyString());
+
+    verify(inventoryClient, never()).deleteItem(any());
+    verify(holdingsStorageClient, never()).deleteHolding(any());
+    verify(inventoryClient, never()).deleteInstance(any());
+    verify(circulationClient, never()).deleteLoan(any());
   }
 
   @ParameterizedTest
@@ -2385,13 +2398,13 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     modifyTransactionState(PRE_POPULATED_ITEM_HOLD_TRANSACTION_ID, ITEM_RECEIVED);
 
     when(circulationClient.queryRequestsByItemId(PRE_POPULATED_FOLIO_ITEM_ID)).thenReturn(getNotOpenRequests());
-    when(servicePointsUsersClient.findServicePointsUsers(PRE_POPULATE_USER_ID)).thenReturn(getServicePointUsers());
+    when(servicePointsUsersClient.findServicePointsUsersByQuery(PRE_POPULATE_USER_ID_QUERY)).thenReturn(getServicePointUsers());
 
     var responseEntity = testRestTemplate.postForEntity(
       ITEM_HOLD_RECALL_ENDPOINT, null, Void.class, PRE_POPULATED_ITEM_HOLD_TRANSACTION_ID);
 
     assertEquals(HttpStatus.NO_CONTENT, responseEntity.getStatusCode());
-    verify(servicePointsUsersClient).findServicePointsUsers(any());
+    verify(servicePointsUsersClient).findServicePointsUsersByQuery(any());
     verify(circulationClient).queryRequestsByItemId(any());
     verify(circulationClient).sendRequest(any());
   }
