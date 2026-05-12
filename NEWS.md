@@ -1,4 +1,6 @@
-## v4.1.0-SNAPSHOT 2026-XX-XX
+## v4.0.1 2026-05-12
+
+### Bug fixes
 * Fix issues found after migration to Spring Boot v4.0.5 ([MODINREACH-577](https://folio-org.atlassian.net/browse/MODINREACH-577))
 
 ## v4.0.0 2026-04-17
