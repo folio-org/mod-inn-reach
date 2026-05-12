@@ -11,14 +11,10 @@ import static org.folio.innreach.external.dto.InnReachResponse.ERROR_STATUS;
 import static org.folio.innreach.fixture.AccessTokenFixture.createAccessToken;
 import static org.folio.innreach.fixture.CentralServerFixture.createCentralServerConnectionDetailsDTO;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 import java.util.UUID;
 
 import org.folio.innreach.external.dto.InnReachResponse;
-import org.folio.innreach.external.exception.InnReachConnectionException;
-import org.folio.innreach.external.exception.ServiceSuspendedException;
+import org.folio.innreach.external.exception.InnReachTimeOutException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -30,6 +26,7 @@ import org.folio.innreach.dto.BibInfo;
 import org.folio.innreach.external.client.InnReachContributionClient;
 import org.folio.innreach.external.dto.BibItemsInfo;
 import org.folio.innreach.external.service.InnReachAuthExternalService;
+import org.springframework.web.client.ResourceAccessException;
 
 @ExtendWith(MockitoExtension.class)
 class InnReachContributionServiceImplTest {
@@ -100,29 +97,10 @@ class InnReachContributionServiceImplTest {
     when(centralServerService.getCentralServerConnectionDetails(any())).thenReturn(connectionDetails);
     when(innReachAuthExternalService.getAccessToken(any())).thenReturn(createAccessToken());
     when(contributionClient.deContributeBib(any(), any(), any(), any(), any())).thenReturn(response);
-    when(response.getErrors()).thenReturn(new ArrayList<>());
 
     service.deContributeBib(CENTRAL_SERVER_ID, BIB_ID);
 
     verify(contributionClient).deContributeBib(any(), any(), any(), any(), any());
-  }
-
-  @Test
-  public void deContributeBib_throwError() {
-    var connectionDetails = createCentralServerConnectionDetailsDTO();
-    InnReachResponse.Error errorResp1 = InnReachResponse.Error.builder().reason("Contribution to d2irm is not currently suspended").build();
-    InnReachResponse.Error errorResp2 = InnReachResponse.Error.builder().reason("Contribution to d2irm is currently suspended").build();
-
-    when(centralServerService.getCentralServerConnectionDetails(any())).thenReturn(connectionDetails);
-    when(innReachAuthExternalService.getAccessToken(any())).thenReturn(createAccessToken());
-    when(contributionClient.deContributeBib(any(), any(), any(), any(), any())).thenReturn(response);
-    when(response.getErrors()).thenReturn(Arrays.asList(errorResp1));
-
-    service.deContributeBib(CENTRAL_SERVER_ID, BIB_ID);
-    verify(contributionClient).deContributeBib(any(), any(), any(), any(), any());
-
-    when(response.getErrors()).thenReturn(Arrays.asList(errorResp2));
-    assertThrows(ServiceSuspendedException.class,()->service.deContributeBib(CENTRAL_SERVER_ID, BIB_ID));
   }
 
   @Test
@@ -144,30 +122,10 @@ class InnReachContributionServiceImplTest {
     when(centralServerService.getCentralServerConnectionDetails(any())).thenReturn(connectionDetails);
     when(innReachAuthExternalService.getAccessToken(any())).thenReturn(createAccessToken());
     when(contributionClient.deContributeBibItem(any(), any(), any(), any(), any())).thenReturn(response);
-    when(response.getErrors()).thenReturn(new ArrayList<>());
 
     service.deContributeBibItem(CENTRAL_SERVER_ID, ITEM_ID);
 
     verify(contributionClient).deContributeBibItem(any(), any(), any(), any(), any());
-  }
-
-  @Test
-  void deContributeBibItem_throwError() {
-    var connectionDetails = createCentralServerConnectionDetailsDTO();
-    InnReachResponse.Error errorResp1 = InnReachResponse.Error.builder().reason("Contribution to d2irm is not currently suspended")
-      .messages(List.of("connections allowed from this server")).build();
-    InnReachResponse.Error errorResp2 = InnReachResponse.Error.builder().reason("Contribution to d2irm is currently suspended")
-      .messages(List.of("is currently suspended")).build();
-
-    when(centralServerService.getCentralServerConnectionDetails(any())).thenReturn(connectionDetails);
-    when(innReachAuthExternalService.getAccessToken(any())).thenReturn(createAccessToken());
-    when(contributionClient.deContributeBibItem(any(), any(), any(), any(), any())).thenReturn(response);
-    when(response.getErrors()).thenReturn(Arrays.asList(errorResp1));
-    assertThrows(InnReachConnectionException.class,()->service.deContributeBibItem(CENTRAL_SERVER_ID, ITEM_ID));
-
-    when(response.getErrors()).thenReturn(Arrays.asList(errorResp2));
-    assertThrows(ServiceSuspendedException.class,()->service.deContributeBibItem(CENTRAL_SERVER_ID, ITEM_ID));
-
   }
 
 
@@ -196,6 +154,100 @@ class InnReachContributionServiceImplTest {
     assertNotNull(response);
     assertEquals(ERROR_STATUS, response.getStatus());
     assertEquals(ERROR_MSG, response.getReason());
+  }
+
+  @Test
+  void contributeBib_shouldThrowTimeOutException_whenResourceAccessException() {
+    var connectionDetails = createCentralServerConnectionDetailsDTO();
+    var bibInfo = new BibInfo();
+
+    when(centralServerService.getCentralServerConnectionDetails(any())).thenReturn(connectionDetails);
+    when(innReachAuthExternalService.getAccessToken(any())).thenReturn(createAccessToken());
+    when(contributionClient.contributeBib(any(), any(), any(), any(), any(), any()))
+      .thenThrow(new ResourceAccessException("timeout", new java.net.SocketTimeoutException("Read timed out")));
+
+    assertThrows(InnReachTimeOutException.class,
+      () -> service.contributeBib(CENTRAL_SERVER_ID, BIB_ID, bibInfo));
+  }
+
+  @Test
+  void deContributeBib_shouldThrowTimeOutException_whenResourceAccessException() {
+    var connectionDetails = createCentralServerConnectionDetailsDTO();
+
+    when(centralServerService.getCentralServerConnectionDetails(any())).thenReturn(connectionDetails);
+    when(innReachAuthExternalService.getAccessToken(any())).thenReturn(createAccessToken());
+    when(contributionClient.deContributeBib(any(), any(), any(), any(), any()))
+      .thenThrow(new ResourceAccessException("timeout", new java.net.ConnectException("Connection timed out")));
+
+    assertThrows(InnReachTimeOutException.class,
+      () -> service.deContributeBib(CENTRAL_SERVER_ID, BIB_ID));
+  }
+
+  @Test
+  void deContributeBibItem_shouldThrowTimeOutException_whenResourceAccessException() {
+    var connectionDetails = createCentralServerConnectionDetailsDTO();
+
+    when(centralServerService.getCentralServerConnectionDetails(any())).thenReturn(connectionDetails);
+    when(innReachAuthExternalService.getAccessToken(any())).thenReturn(createAccessToken());
+    when(contributionClient.deContributeBibItem(any(), any(), any(), any(), any()))
+      .thenThrow(new ResourceAccessException("timeout", new java.net.SocketTimeoutException("Read timed out")));
+
+    assertThrows(InnReachTimeOutException.class,
+      () -> service.deContributeBibItem(CENTRAL_SERVER_ID, ITEM_ID));
+  }
+
+  @Test
+  void contributeBibItems_shouldThrowTimeOutException_whenResourceAccessException() {
+    var connectionDetails = createCentralServerConnectionDetailsDTO();
+    var bibItemsInfo = new BibItemsInfo();
+
+    when(centralServerService.getCentralServerConnectionDetails(any())).thenReturn(connectionDetails);
+    when(innReachAuthExternalService.getAccessToken(any())).thenReturn(createAccessToken());
+    when(contributionClient.contributeBibItems(any(), any(), any(), any(), any(), any()))
+      .thenThrow(new ResourceAccessException("timeout", new java.net.ConnectException("Connection timed out")));
+
+    assertThrows(InnReachTimeOutException.class,
+      () -> service.contributeBibItems(CENTRAL_SERVER_ID, BIB_ID, bibItemsInfo));
+  }
+
+  @Test
+  void lookUpBib_shouldThrowTimeOutException_whenResourceAccessException() {
+    var connectionDetails = createCentralServerConnectionDetailsDTO();
+
+    when(centralServerService.getCentralServerConnectionDetails(any())).thenReturn(connectionDetails);
+    when(innReachAuthExternalService.getAccessToken(any())).thenReturn(createAccessToken());
+    when(contributionClient.lookUpBib(any(), any(), any(), any(), any(), any()))
+      .thenThrow(new ResourceAccessException("timeout", new java.net.SocketTimeoutException("Read timed out")));
+
+    assertThrows(InnReachTimeOutException.class,
+      () -> service.lookUpBib(CENTRAL_SERVER_ID, BIB_ID));
+  }
+
+  @Test
+  void lookUpBibItem_shouldThrowTimeOutException_whenResourceAccessException() {
+    var connectionDetails = createCentralServerConnectionDetailsDTO();
+
+    when(centralServerService.getCentralServerConnectionDetails(any())).thenReturn(connectionDetails);
+    when(innReachAuthExternalService.getAccessToken(any())).thenReturn(createAccessToken());
+    when(contributionClient.lookUpBibItem(any(), any(), any(), any(), any(), any(), any()))
+      .thenThrow(new ResourceAccessException("timeout", new java.net.SocketTimeoutException("Read timed out")));
+
+    assertThrows(InnReachTimeOutException.class,
+      () -> service.lookUpBibItem(CENTRAL_SERVER_ID, BIB_ID, ITEM_ID));
+  }
+
+  @Test
+  void contributeBib_shouldThrowTimeOutException_whenResourceAccessExceptionWithNonTimeoutCause() {
+    var connectionDetails = createCentralServerConnectionDetailsDTO();
+    var bibInfo = new BibInfo();
+
+    when(centralServerService.getCentralServerConnectionDetails(any())).thenReturn(connectionDetails);
+    when(innReachAuthExternalService.getAccessToken(any())).thenReturn(createAccessToken());
+    when(contributionClient.contributeBib(any(), any(), any(), any(), any(), any()))
+      .thenThrow(new ResourceAccessException("I/O error", new java.io.IOException("Connection reset")));
+
+    assertThrows(InnReachTimeOutException.class,
+      () -> service.contributeBib(CENTRAL_SERVER_ID, BIB_ID, bibInfo));
   }
 
 }

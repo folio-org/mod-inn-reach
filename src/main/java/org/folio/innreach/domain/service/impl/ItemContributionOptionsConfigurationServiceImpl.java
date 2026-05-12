@@ -30,7 +30,7 @@ public class ItemContributionOptionsConfigurationServiceImpl implements ItemCont
   public ItemContributionOptionsConfigurationDTO getItmContribOptConf(UUID centralServerId) {
     log.debug("getItmContribOptConf:: parameters centralServerId: {}", centralServerId);
     var itmContribOptConf = findItmContribOptConf(centralServerId);
-    log.info("getItmContribOptConf:: result: {}", mapper.toDto(itmContribOptConf));
+
     return mapper.toDto(itmContribOptConf);
   }
 
@@ -40,7 +40,8 @@ public class ItemContributionOptionsConfigurationServiceImpl implements ItemCont
     var itmContribOptConf = mapper.toEntity(itmContribOptConfDTO);
     itmContribOptConf.setCentralServer(centralServerRef(centralServerId));
     var createdItmContribOptConf = repository.save(itmContribOptConf);
-    log.info("createItmContribOptConf:: result: {}", mapper.toDto(createdItmContribOptConf));
+
+    log.info("createItmContribOptConf:: created item contribution options configuration entity: {}", createdItmContribOptConf.getId());
     return mapper.toDto(createdItmContribOptConf);
   }
 
@@ -53,7 +54,7 @@ public class ItemContributionOptionsConfigurationServiceImpl implements ItemCont
 
     repository.save(itmContribOptConf);
 
-    log.info("updateItmContribOptConf:: result: {}", mapper.toDto(itmContribOptConf));
+    log.info("updateItmContribOptConf:: updated item contribution options configuration entity: {}", itmContribOptConf.getId());
     return mapper.toDto(itmContribOptConf);
   }
 

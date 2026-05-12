@@ -43,7 +43,6 @@ public class LibraryMappingServiceImpl implements LibraryMappingService {
 
     Page<LibraryMapping> mappings = repository.findAll(example, new OffsetRequest(offset, limit, DEFAULT_SORT));
 
-    log.info("getAllMappings:: result: {}", mapper.toDTOCollection(mappings));
     return mapper.toDTOCollection(mappings);
   }
 
@@ -60,7 +59,6 @@ public class LibraryMappingServiceImpl implements LibraryMappingService {
 
     locationContributionService.contributeInnReachLocations(centralServerId);
 
-    log.info("updateAllMappings:: result: {}", mapper.toDTOCollection(saved));
     return mapper.toDTOCollection(saved);
   }
 

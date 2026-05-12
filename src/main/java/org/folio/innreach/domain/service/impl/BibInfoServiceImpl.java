@@ -40,10 +40,9 @@ public class BibInfoServiceImpl implements BibInfoService {
       var instance = instanceService.getInstanceByHrid(bibId);
       var bib = instanceTransformationService.getBibInfo(centralServer.getId(), instance);
 
-      log.info("fetchBibInfo:: result: {}", BibInfoResponse.ofBibInfo(bib));
       return BibInfoResponse.ofBibInfo(bib);
     } catch (Exception e) {
-      log.warn("Unable to load bib info by central code {} and inventory instance hrid {}", centralCode, bibId, e);
+      log.warn("fetchBibInfo:: Unable to load bib info by central code {} and inventory instance hrid {}", centralCode, bibId, e);
 
       return BibInfoResponse.errorResponse(ERROR_MESSAGE,
         of(fieldError("centralCode", centralCode), fieldError("bibId", bibId)));

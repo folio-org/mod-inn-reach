@@ -65,7 +65,7 @@ public class PatronHoldServiceImpl implements PatronHoldService {
   @Async
   @Override
   public void createVirtualItems(InnReachTransaction transaction) {
-    log.info("Creating inventory virtual items for transaction {}", transaction);
+    log.info("Creating inventory virtual items for transaction {}", transaction.getTrackingId());
 
     var hold = (TransactionPatronHold) transaction.getHold();
     var hridSettings = inventoryService.getHridSettings();
@@ -89,7 +89,7 @@ public class PatronHoldServiceImpl implements PatronHoldService {
   @Async
   @Override
   public void updateVirtualItems(InnReachTransaction transaction) {
-    log.info("Updating inventory virtual items for transaction {}", transaction);
+    log.info("Updating inventory virtual items for transaction {}", transaction.getTrackingId());
 
     var hold = (TransactionPatronHold) transaction.getHold();
     var hridSettings = inventoryService.getHridSettings();

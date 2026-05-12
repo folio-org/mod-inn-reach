@@ -1,5 +1,7 @@
 ## v4.1.0-SNAPSHOT 2026-XX-XX
 * Fix issues found after migration to Spring Boot v4.0.5 ([MODINREACH-577](https://folio-org.atlassian.net/browse/MODINREACH-577))
+* Fix handling time-out errors from central server during ongoing contribution ([MODINREACH-581](https://folio-org.atlassian.net/browse/MODINREACH-581))
+* Fix redundant and overly verbose logging statements ([MODINREACH-583](https://folio-org.atlassian.net/browse/MODINREACH-583))
 
 ## v4.0.0 2026-04-17
 
