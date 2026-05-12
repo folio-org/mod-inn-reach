@@ -38,7 +38,6 @@ public class CentralPatronTypeMappingServiceImpl implements CentralPatronTypeMap
 
     var centralPatronTypeMappings = repository.findAll(centralPatronTypeMappingExample, new OffsetRequest(offset, limit));
 
-    log.info("getCentralPatronTypeMappings:: result: {}", mapper.toDTOCollection(centralPatronTypeMappings));
     return mapper.toDTOCollection(centralPatronTypeMappings);
   }
 
@@ -53,27 +52,22 @@ public class CentralPatronTypeMappingServiceImpl implements CentralPatronTypeMap
 
     var saved = mergeAndSave(incoming, stored, repository, this::copyData);
 
-    log.info("updateCentralPatronTypeMappings:: result: {}", mapper.toDTOCollection(saved));
     return mapper.toDTOCollection(saved);
   }
 
   private static Example<CentralPatronTypeMapping> mappingExampleWithServerId(UUID centralServerId) {
-    log.debug("mappingExampleWithServerId:: parameters centralServerId: {}", centralServerId);
     var toFind = new CentralPatronTypeMapping();
     toFind.setCentralServer(centralServerRef(centralServerId));
 
-    log.info("mappingExampleWithServerId:: result: {}", Example.of(toFind));
     return Example.of(toFind);
   }
 
   private void copyData(CentralPatronTypeMapping from, CentralPatronTypeMapping to) {
-    log.debug("copyData:: parameters from: {}, to: {}", from, to);
     to.setCentralPatronType(from.getCentralPatronType());
     to.setBarcode(from.getBarcode());
   }
 
   private static Consumer<CentralPatronTypeMapping> setCentralServerRef(CentralServer centralServer) {
-    log.debug("setCentralServerRef:: parameters centralServer: {}", centralServer);
     return mapping -> mapping.setCentralServer(centralServer);
   }
 }

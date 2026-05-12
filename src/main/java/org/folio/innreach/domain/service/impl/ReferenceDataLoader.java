@@ -95,7 +95,7 @@ public class ReferenceDataLoader {
       var existing = loadExistingFunc.apply(rec);
 
       if (isEmpty(existing.getResult())) {
-        log.info("Creating reference data record {}", rec);
+        log.info("Creating reference data record for {}", resourceType.getSimpleName());
         createFunc.accept(rec);
       }
     }

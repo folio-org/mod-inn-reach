@@ -30,7 +30,7 @@ public class D2irExceptionHandlerController {
   @ExceptionHandler(Exception.class)
   @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
   public InnReachResponseDTO handleException(Exception e) {
-    log.error("Unexpected exception: " + e.getMessage(), e);
+    log.error("Unexpected exception: {}", e.getMessage(), e);
 
     return failed(e);
   }
@@ -53,7 +53,7 @@ public class D2irExceptionHandlerController {
     MissingRequestHeaderException.class})
   @ResponseStatus(HttpStatus.BAD_REQUEST)
   public InnReachResponseDTO handleEntityNotFoundException(Exception e) {
-    log.warn(e.getMessage(), e);
+    log.warn(e.getMessage());
 
     return failed(e);
   }

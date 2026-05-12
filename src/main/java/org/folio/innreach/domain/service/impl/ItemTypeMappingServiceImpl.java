@@ -41,7 +41,6 @@ public class ItemTypeMappingServiceImpl implements ItemTypeMappingService {
 
     Page<ItemTypeMapping> mappings = repository.findAll(example, new OffsetRequest(offset, limit));
 
-    log.info("getAllMappings:: result: {}", mapper.toDTOCollection(mappings));
     return mapper.toDTOCollection(mappings);
   }
 
@@ -56,7 +55,6 @@ public class ItemTypeMappingServiceImpl implements ItemTypeMappingService {
 
   @Override
   public ItemTypeMappingsDTO updateAllMappings(UUID centralServerId, ItemTypeMappingsDTO itemTypeMappingsDTO) {
-    log.debug("updateAllMappings:: parameters centralServerId: {}, itemTypeMappingsDTO", centralServerId, itemTypeMappingsDTO);
     var stored = repository.findAll(mappingExampleWithServerId(centralServerId));
 
     var incoming = mapper.toEntities(itemTypeMappingsDTO.getItemTypeMappings());
@@ -65,7 +63,7 @@ public class ItemTypeMappingServiceImpl implements ItemTypeMappingService {
 
     var saved = mergeAndSave(incoming, stored, repository, this::copyData);
 
-    log.info("updateAllMappings:: result: {}", mapper.toDTOCollection(saved));
+    log.info("updateAllMappings:: updated {} item type mappings", saved.size());
     return mapper.toDTOCollection(saved);
   }
 

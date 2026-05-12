@@ -45,7 +45,6 @@ public class LocationMappingServiceImpl implements LocationMappingService {
 
     Page<LocationMapping> mappings = repository.findAll(example, new OffsetRequest(offset, limit, DEFAULT_SORT));
 
-    log.info("getMappingsByLibraryId:: result: {}", mapper.toDTOCollection(mappings));
     return mapper.toDTOCollection(mappings);
   }
 
@@ -57,7 +56,6 @@ public class LocationMappingServiceImpl implements LocationMappingService {
 
     List<LocationMapping> mappings = repository.findAll(example);
 
-    log.info("getAllMappings:: result: {}", mapper.toDTOs(mappings));
     return mapper.toDTOs(mappings);
   }
 
@@ -80,7 +78,7 @@ public class LocationMappingServiceImpl implements LocationMappingService {
 
     locationContributionService.contributeInnReachLocations(centralServerId);
 
-    log.info("updateAllMappings:: result: {}", mapper.toDTOCollection(saved));
+    log.info("updateAllMappings:: updated {} location mappings", saved.size());
     return mapper.toDTOCollection(saved);
   }
 

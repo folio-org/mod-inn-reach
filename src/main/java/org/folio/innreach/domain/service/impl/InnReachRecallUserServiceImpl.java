@@ -38,7 +38,7 @@ public class InnReachRecallUserServiceImpl implements InnReachRecallUserService 
 
     centralServer.setInnReachRecallUser(savedRecallUser);
 
-    log.info("saveInnReachRecallUser:: result: {}", recallUserMapper.toDto(savedRecallUser));
+    log.info("saveInnReachRecallUser:: Saved Inn Reach Recall User: {}", savedRecallUser.getId());
     return recallUserMapper.toDto(savedRecallUser);
   }
 
@@ -46,21 +46,22 @@ public class InnReachRecallUserServiceImpl implements InnReachRecallUserService 
   public InnReachRecallUserDTO getInnReachRecallUser(UUID centralServerId) {
     log.debug("getInnReachRecallUser:: parameters centralServerId: {}", centralServerId);
     var centralServer = fetchCentralServerWithRecallUser(centralServerId);
-    log.info("getInnReachRecallUser:: result: {}", recallUserMapper.toDto(centralServer.getInnReachRecallUser()));
+
     return recallUserMapper.toDto(centralServer.getInnReachRecallUser());
   }
 
   @Override
   @Transactional
   public InnReachRecallUserDTO updateInnReachRecallUser(UUID centralServerId, InnReachRecallUserDTO innReachRecallUserDTO) {
-    log.debug("updateInnReachRecallUser:: parameters centralServerId: {}, innReachRecallUserDTO: {}", centralServerId, innReachRecallUserDTO);
+    log.debug("updateInnReachRecallUser:: parameters centralServerId: {}, innReachRecallUserDTO: {}",
+      centralServerId, innReachRecallUserDTO);
     var centralServer = fetchCentralServerWithRecallUser(centralServerId);
 
     var innReachRecallUser = centralServer.getInnReachRecallUser();
     innReachRecallUser.setUserId(innReachRecallUserDTO.getUserId());
 
-    log.info("updateInnReachRecallUser:: result: {}", recallUserMapper.toDto(centralServer.getInnReachRecallUser()));
-    return recallUserMapper.toDto(centralServer.getInnReachRecallUser());
+    log.info("updateInnReachRecallUser:: Updated Inn Reach Recall User: {}", innReachRecallUser.getId());
+    return recallUserMapper.toDto(innReachRecallUser);
   }
 
   @Override

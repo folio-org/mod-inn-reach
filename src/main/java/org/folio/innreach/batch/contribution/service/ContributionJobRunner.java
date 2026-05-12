@@ -184,7 +184,7 @@ public class ContributionJobRunner {
     boolean contributedInstance = isContributed(centralServerId, instance);
     log.info("runOngoingInstanceContribution:: eligibleInstance: {}, contributedInstance: {}", eligibleInstance, contributedInstance);
     if (!eligibleInstance && !contributedInstance) {
-      log.info("runOngoingInstanceContribution:: " + SKIPPING_INELIGIBLE_INSTANCE_MSG + ", instance id : {}", instance.getId());
+      log.info("runOngoingInstanceContribution:: {}, instance id : {}", SKIPPING_INELIGIBLE_INSTANCE_MSG, instance.getId());
       ongoingContributionStatusService.updateOngoingContribution(ongoingContributionStatus, SKIPPING_INELIGIBLE_INSTANCE_MSG, FAILED);
       return;
     }
@@ -197,7 +197,7 @@ public class ContributionJobRunner {
       }
       ongoingContributionStatusService.updateOngoingContribution(ongoingContributionStatus, PROCESSED);
     } else if (contributedInstance) {
-      log.info("runOngoingInstanceContribution:: " + DE_CONTRIBUTE_INSTANCE_MSG + ", instance id : {}", instance.getId());
+      log.info("runOngoingInstanceContribution:: {}, instance id : {}", DE_CONTRIBUTE_INSTANCE_MSG, instance.getId());
       recordContributionService.deContributeInstance(centralServerId, instance);
       ongoingContributionStatusService.updateOngoingContribution(ongoingContributionStatus, DE_CONTRIBUTED);
     }
@@ -237,7 +237,7 @@ public class ContributionJobRunner {
           deContributeItem(centralServerId, item, statistics);
         }
       } else if (contributedItem) {
-        log.info(" Ongoing: " + DE_CONTRIBUTE_INSTANCE_MSG + ", centralServer id: {}, instance id : {}, item id: {}", centralServerId, instance.getId(), item.getId());
+        log.info(" Ongoing: {}, centralServer id: {}, instance id : {}, item id: {}", DE_CONTRIBUTE_INSTANCE_MSG, centralServerId, instance.getId(), item.getId());
         deContributeInstance(centralServerId, instance, statistics);
       }
     });
@@ -264,11 +264,11 @@ public class ContributionJobRunner {
       }
       ongoingContributionStatusService.updateOngoingContribution(ongoingContributionStatus, PROCESSED);
     } else if (contributedItem) {
-      log.info("runItemContribution:: " + DE_CONTRIBUTE_INSTANCE_MSG + ", centralServer id: {}, instance id : {}, item id: {}", centralServerId, instance.getId(), item.getId());
+      log.info("runItemContribution:: {}, centralServer id: {}, instance id : {}, item id: {}", DE_CONTRIBUTE_INSTANCE_MSG, centralServerId, instance.getId(), item.getId());
       recordContributionService.deContributeInstance(centralServerId, instance);
       ongoingContributionStatusService.updateOngoingContribution(ongoingContributionStatus, DE_CONTRIBUTED);
     } else {
-      log.info("runItemContribution:: " + SKIPPING_INELIGIBLE_INSTANCE_ITEM_MSG + " centralServer id: {}, instance id : {}, item id: {}", centralServerId, instance.getId(), item.getId());
+      log.info("runItemContribution:: {}, centralServer id: {}, instance id : {}, item id: {}", SKIPPING_INELIGIBLE_INSTANCE_ITEM_MSG, centralServerId, instance.getId(), item.getId());
       ongoingContributionStatusService.updateOngoingContribution(ongoingContributionStatus, SKIPPING_INELIGIBLE_INSTANCE_ITEM_MSG, FAILED);
     }
   }
@@ -317,14 +317,17 @@ public class ContributionJobRunner {
     }
 
     if (isEligibleForContribution(centralServerId, instance)) {
-      log.info("runItemDeContribution:: de-contributing centralServer id: {}, item id: {}, instance id: {}", centralServerId, deletedItem.getId(), instance.getId());
+      log.info("runItemDeContribution:: de-contributing centralServer id: {}, item id: {}, instance id: {}",
+        centralServerId, deletedItem.getId(), instance.getId());
       recordContributionService.deContributeItem(centralServerId, deletedItem);
 
-      log.info("runItemDeContribution:: re-contributing instance to update bib status centralServer id: {}, item id: {}, instance id: {}", centralServerId, deletedItem.getId(), instance.getId());
+      log.info("runItemDeContribution:: re-contributing instance to update bib status centralServer id: {}, item id: {}, instance id: {}",
+        centralServerId, deletedItem.getId(), instance.getId());
       recordContributionService.contributeInstance(centralServerId, instance);
       ongoingContributionStatusService.updateOngoingContribution(ongoingContributionStatus, PROCESSED);
     } else {
-      log.info("runItemDeContribution:: " + DE_CONTRIBUTE_INSTANCE_MSG + ", centralServer id: {}, item id: {}, instance id : {}", centralServerId, deletedItem.getId(), instance.getId());
+      log.info("runItemDeContribution:: {}, centralServer id: {}, item id: {}, instance id : {}",
+        DE_CONTRIBUTE_INSTANCE_MSG, centralServerId, deletedItem.getId(), instance.getId());
       recordContributionService.deContributeInstance(centralServerId, instance);
       ongoingContributionStatusService.updateOngoingContribution(ongoingContributionStatus, DE_CONTRIBUTED);
     }
@@ -404,7 +407,7 @@ public class ContributionJobRunner {
       // not possible to guess what item failed when the chunk of multiple items is being contributed
       var recordId = items.size() == 1 ? items.getFirst().getId() : null;
       itemExceptionListener.logWriteError(ex, recordId);
-      log.info("contributeItemsChunk:: unexpected exception occurred on items contribution for bib id: {}", bibId, ex);
+      log.warn("contributeItemsChunk:: unexpected exception occurred on items contribution for bib id: {}", bibId, ex);
       addRecordProcessed();
     } finally {
       stats.addRecordsProcessed(itemsCount);
@@ -420,7 +423,6 @@ public class ContributionJobRunner {
   }
 
   private void contributeInstance(UUID centralServerId, Instance instance, Statistics stats) {
-    log.info("Initial: contributeInstance centralServerId: {}, instanceId: {}", centralServerId, instance.getId());
     try {
       stats.addRecordsTotal(1);
       recordContributionService.contributeInstance(centralServerId, instance);
@@ -428,13 +430,13 @@ public class ContributionJobRunner {
     }
     catch (ServiceSuspendedException | HttpServerErrorException | HttpClientErrorException | InnReachConnectionException |
            InnReachContributionRequestException e) {
-      log.info(getContributionJobContext().isInitialContribution() ? "Initial: instance id:{}, exception occurred: {}": "Ongoing: instance id:{}, exception occurred: {}", instance.getId(), e);
+      log.warn(getContributionJobContext().isInitialContribution() ? "Initial: instance id:{}, exception occurred: {}": "Ongoing: instance id:{}, exception occurred: {}", instance.getId(), e);
       throw e;
     } catch (Exception e) {
-      log.info("Initial: instance id: {}, exception caught in contributeInstance e: {}", instance.getId(), e);
+      log.warn("contributeInstance:: Initial: instance id: {}, exception caught: {}", instance.getId(), e.getMessage(), e);
       instanceExceptionListener.logWriteError(e, instance.getId());
     } finally {
-      log.info("Initial: contributeInstance finally called, instance id: {}", instance.getId());
+      log.info("contributeInstance:: contribution for instance: {} finished", instance.getId());
       stats.addRecordsProcessed(1);
       updateStats(stats);
     }
@@ -499,7 +501,7 @@ public class ContributionJobRunner {
       log.error("runOngoing:: exception occurred on ongoing contribution: {}", context.getContributionId(), ex);
       throw ex;
     } catch (Exception ex) {
-      log.info("runOngoing:: unexpected exception occurred on ongoing contribution: ", ex);
+      log.error("runOngoing:: unexpected exception occurred on ongoing contribution: ", ex);
       throw ex;
     }
   }

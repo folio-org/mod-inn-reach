@@ -28,7 +28,6 @@ public class BatchDomainEventProcessor {
   private String innReachTenants;
 
   public <T> void process(List<DomainEvent<T>> batch, Consumer<DomainEvent<T>> recordProcessor) {
-    log.debug("process:: parameters batch: {}, recordProcessor: {}", batch, recordProcessor);
     var tenantEventsMap = batch.stream().collect(Collectors.groupingBy(DomainEvent::getTenant));
     for (var tenantEventsEntry : tenantEventsMap.entrySet()) {
       var tenantId = tenantEventsEntry.getKey();

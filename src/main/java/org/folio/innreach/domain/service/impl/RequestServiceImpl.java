@@ -149,7 +149,7 @@ public class RequestServiceImpl implements RequestService {
   @Async
   @Override
   public void createLocalHoldRequest(InnReachTransaction transaction) {
-    log.debug("createLocalHoldRequest:: parameters transaction: {}", transaction);
+    log.debug("createLocalHoldRequest:: parameters transaction: {}", transaction.getTrackingId());
     var hold = (TransactionLocalHold) transaction.getHold();
     var centralPatronName = hold.getPatronName();
     try {
@@ -168,7 +168,7 @@ public class RequestServiceImpl implements RequestService {
   @Override
   public void createItemRequest(InnReachTransaction transaction, Holding holding, InventoryItemDTO item,
                                 User patron, UUID servicePointId, RequestType requestType) {
-    log.info("Creating item request for transaction {}", transaction);
+    log.info("createItemRequest:: Creating item request for transaction {}", transaction.getTrackingId());
     var hold = transaction.getHold();
 
     //getting required data for a request
@@ -191,10 +191,8 @@ public class RequestServiceImpl implements RequestService {
       .fulfillmentPreference(HOLD_SHELF.getName())
       .build();
     var createdRequest = circulationClient.sendRequest(newRequest);
-    log.info("createdRequest {}", createdRequest.toString());
+    log.info("createItemRequest:: Item request successfully created with ID: {}", createdRequest.getId());
     updateTransaction(transaction, item, holding, createdRequest, patron);
-
-    log.info("Item request successfully created.");
   }
 
   @Override
@@ -281,7 +279,8 @@ public class RequestServiceImpl implements RequestService {
 
   @Override
   public void createRecallRequest(UUID recallUserId, UUID itemId, UUID instanceId, UUID holdingId) {
-    log.debug("createRecallRequest:: parameters recallUserId: {}, itemId: {}, instanceId: {}, holdingId: {}", recallUserId, itemId, instanceId, holdingId);
+    log.debug("createRecallRequest:: parameters recallUserId: {}, itemId: {}, instanceId: {}, holdingId: {}",
+      recallUserId, itemId, instanceId, holdingId);
     var pickupServicePoint = getDefaultServicePointIdForPatron(recallUserId);
 
     var request = RequestDTO.builder()
@@ -295,8 +294,8 @@ public class RequestServiceImpl implements RequestService {
       .fulfillmentPreference(HOLD_SHELF.getName())
       .pickupServicePointId(pickupServicePoint)
       .build();
-    circulationClient.sendRequest(request);
-    log.info("createRecallRequest:: Recall request created successfully");
+    var created = circulationClient.sendRequest(request);
+    log.info("createRecallRequest:: Recall request created successfully with id: {}", created.getId());
   }
 
   @Override

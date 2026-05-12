@@ -98,6 +98,8 @@ public class PagingSlipServiceImpl implements PagingSlipService {
       pagingSlips.add(pagingSlip);
     }
 
+    log.info("Completed preparing {} page slips for service point {}", pagingSlips.size(), servicePointId);
+
     return new PagingSlipsDTO()
       .pagingSlips(pagingSlips)
       .totalRecords(pagingSlips.size());
