@@ -20,7 +20,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.BiConsumer;
 import java.util.stream.StreamSupport;
 
 import com.google.common.collect.Iterables;
@@ -32,7 +31,6 @@ import org.folio.innreach.external.exception.InnReachConnectionException;
 import org.folio.innreach.external.exception.InnReachContributionRequestException;
 import org.folio.innreach.external.exception.ServiceSuspendedException;
 import org.folio.innreach.batch.contribution.InitialContributionJobConsumerContainer;
-import org.folio.innreach.external.exception.InnReachTimeOutException;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.retry.RetryTemplate;
 import org.springframework.stereotype.Service;
@@ -50,7 +48,6 @@ import org.folio.innreach.domain.service.InventoryViewService;
 import org.folio.innreach.domain.service.RecordContributionService;
 import org.folio.innreach.dto.Instance;
 import org.folio.innreach.dto.Item;
-import org.folio.spring.FolioExecutionContext;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
 
@@ -69,7 +66,6 @@ public class ContributionJobRunner {
   private final InventoryViewService inventoryViewService;
   private final ContributionJobProperties jobProperties;
   private final ContributionService contributionService;
-  private final FolioExecutionContext folioContext;
   @Qualifier("contributionRetryTemplate")
   private final RetryTemplate retryTemplate;
   private final IterationEventReaderFactory itemReaderFactory;
@@ -211,36 +207,6 @@ public class ContributionJobRunner {
     }
     recordContributionService.deContributeInstance(centralServerId, deletedInstance);
     ongoingContributionStatusService.updateOngoingContribution(ongoingContributionStatus, DE_CONTRIBUTED);
-  }
-
-  public void runItemContribution(UUID centralServerId, Instance instance, Item item) {
-    boolean eligibleItem = isEligibleForContribution(centralServerId, item);
-    boolean contributedItem = isContributed(centralServerId, instance, item);
-    log.info("Ongoing: eligibleItem: {}, contributedItem: {}", eligibleItem, contributedItem);
-    if (!eligibleItem && !contributedItem) {
-      log.info("Ongoing: skipping ineligible and non-contributed centralServer id: {}, item id: {}, instance id : {}", centralServerId, item.getId(), instance.getId());
-      return;
-    }
-
-    runOngoing(centralServerId, (ctx, statistics) -> {
-      log.info("Starting ongoing centralServer id: {}, item id: {} contribution job {}, instance id : {}", centralServerId, item.getId(), ctx, instance.getId());
-
-      if (isEligibleForContribution(centralServerId, instance)) {
-        log.info("Ongoing: Re-contributing instance to update bib status, centralServer id: {}, instance id : {}, item id: {}", centralServerId, instance.getId(), item.getId());
-        contributeInstance(centralServerId, instance, statistics);
-
-        if (eligibleItem) {
-          log.info("Ongoing: contributing centralServer id:{}, instance id : {}, item id: {}", centralServerId, instance.getId(), item.getId());
-          contributeItemsChunk(centralServerId, instance.getHrid(), List.of(item), statistics);
-        } else if (contributedItem) {
-          log.info("Ongoing: de-contributing centralServer id: {}, instance id : {}, item id: {}", centralServerId, instance.getId(), item.getId());
-          deContributeItem(centralServerId, item, statistics);
-        }
-      } else if (contributedItem) {
-        log.info(" Ongoing: {}, centralServer id: {}, instance id : {}, item id: {}", DE_CONTRIBUTE_INSTANCE_MSG, centralServerId, instance.getId(), item.getId());
-        deContributeInstance(centralServerId, instance, statistics);
-      }
-    });
   }
 
   public void runItemContribution(UUID centralServerId, Instance instance, Item item, OngoingContributionStatus ongoingContributionStatus) {
@@ -458,51 +424,6 @@ public class ContributionJobRunner {
       log.info("deContributeInstance:: de-contribution of instance id {} has finished", instance.getId());
       stats.addRecordsProcessed(1);
       updateStats(stats);
-    }
-  }
-
-  private void deContributeItem(UUID centralServerId, Item item, Statistics stats) {
-    try {
-      stats.addRecordsTotal(1);
-      recordContributionService.deContributeItem(centralServerId, item);
-      stats.addRecordsDeContributed(1);
-      addRecordProcessed();
-    } catch (ServiceSuspendedException | HttpClientErrorException | HttpServerErrorException | InnReachConnectionException ex) {
-      log.error("deContributeItem:: exception occurred on de-contribution of item id {}: {}", item.getId(), ex.getMessage(), ex);
-      throw ex;
-    } catch (Exception ex) {
-      log.error("deContributeItem:: unexpected exception occurred on de-contribution of item id {}: {}", item.getId(), ex.getMessage(), ex);
-      itemExceptionListener.logWriteError(ex, item.getId());
-    } finally {
-      log.info("deContributeItem:: de-contribution of item id {} has finished", item.getId());
-      stats.addRecordsProcessed(1);
-      updateStats(stats);
-    }
-  }
-
-  private void runOngoing(UUID centralServerId, BiConsumer<ContributionJobContext, Statistics> processor) {
-    var contribution = contributionService.createOngoingContribution(centralServerId);
-    var context = ContributionJobContext.builder()
-      .contributionId(contribution.getId())
-      .centralServerId(centralServerId)
-      .tenantId(folioContext.getTenantId())
-      .build();
-
-    var statistics = new Statistics();
-    try {
-      if(getContributionJobContext()==null) {
-        log.info("runOngoing:: setting ongoing contribution context for contributionID: {}", context.getContributionId());
-        beginContributionJobContext(context);
-      }
-      processor.accept(context, statistics);
-      completeContribution(context);
-      endContributionJobContext();
-    } catch (ServiceSuspendedException | HttpClientErrorException | HttpServerErrorException | InnReachConnectionException | InnReachTimeOutException ex) {
-      log.error("runOngoing:: exception occurred on ongoing contribution: {}", context.getContributionId(), ex);
-      throw ex;
-    } catch (Exception ex) {
-      log.error("runOngoing:: unexpected exception occurred on ongoing contribution: ", ex);
-      throw ex;
     }
   }
 
