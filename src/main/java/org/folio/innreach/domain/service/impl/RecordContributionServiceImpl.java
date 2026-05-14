@@ -104,7 +104,7 @@ public class RecordContributionServiceImpl implements RecordContributionService 
 
     retryTemplate.execute(r -> contributeBibItems(bibId, centralServerId, bibItems));
 
-    log.info("Finished contributing items of bib {}", bibId);
+    log.info("Finished contributing {} items of bib {}", items.size(), bibId);
     return itemsCount;
   }
 
