@@ -84,6 +84,9 @@ public class InitialContributionEventProcessor {
         var contribution = contributionRecord.get(job.getJobId());
         if (contribution != null) {
           logException(job, ex, contribution.getId());
+        } else {
+          log.warn("processInitialContributionEvents:: No contribution record found for jobId {}, exception: {}",
+            job.getJobId(), ex.getMessage());
         }
         updateJobAndContributionStatus(job, FAILED, job.isInstanceContributed());
       }

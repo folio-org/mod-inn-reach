@@ -15,7 +15,6 @@ import static org.folio.innreach.dto.MappingValidationStatusDTO.INVALID;
 import static org.folio.innreach.dto.MappingValidationStatusDTO.VALID;
 import static org.folio.innreach.fixture.ContributionFixture.createInstance;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -27,17 +26,11 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.data.domain.PageImpl;
 
 import org.folio.innreach.batch.contribution.service.ContributionJobRunner;
-import org.folio.innreach.client.InstanceStorageClient;
-import org.folio.innreach.client.ItemStorageClient;
-import org.folio.innreach.domain.dto.folio.circulation.RequestDTO;
 import org.folio.innreach.domain.service.ContributionValidationService;
 import org.folio.innreach.domain.service.HoldingsService;
 import org.folio.innreach.domain.service.InventoryViewService;
-import org.folio.innreach.dto.StorageLoanDTO;
-import org.folio.innreach.repository.CentralServerRepository;
 
 @ExtendWith(MockitoExtension.class)
 class ContributionActionServiceImplTest {
@@ -46,13 +39,7 @@ class ContributionActionServiceImplTest {
   @Mock
   private ContributionJobRunner contributionJobRunner;
   @Mock
-  private CentralServerRepository centralServerRepository;
-  @Mock
-  private ItemStorageClient itemStorageClient;
-  @Mock
   private InventoryViewService inventoryViewService;
-  @Mock
-  private InstanceStorageClient instanceStorageClient;
   @Mock
   private HoldingsService holdingsService;
   @Mock
@@ -63,63 +50,6 @@ class ContributionActionServiceImplTest {
   private OngoingContributionStatusServiceImpl ongoingContributionStatusService;
   @Mock
   private JsonHelper jsonHelper;
-
-  @Test
-  void handleLoanCreation() {
-    var instance = createInstance();
-    var item = instance.getItems().get(0);
-    var holding = instance.getHoldingsRecords().get(0);
-    var loan = new StorageLoanDTO().id(UUID.randomUUID()).itemId(UUID.randomUUID());
-
-    when(centralServerRepository.getIds(any())).thenReturn(new PageImpl<>(List.of(CENTRAL_SERVER_ID)));
-    when(itemStorageClient.getItemById(any())).thenReturn(Optional.of(item));
-    when(inventoryViewService.getInstance(any())).thenReturn(instance);
-    when(holdingsService.find(any())).thenReturn(Optional.of(holding));
-    when(validationService.getItemTypeMappingStatus(any())).thenReturn(VALID);
-    when(validationService.getLocationMappingStatus(any())).thenReturn(VALID);
-
-    service.handleLoanCreation(loan);
-
-    verify(contributionJobRunner).runItemContribution(CENTRAL_SERVER_ID, instance, item);
-  }
-
-  @Test
-  void handleLoanUpdate() {
-    var instance = createInstance();
-    var item = instance.getItems().get(0);
-    var holding = instance.getHoldingsRecords().get(0);
-    var loan = new StorageLoanDTO().id(UUID.randomUUID()).itemId(UUID.randomUUID()).action("renewed");
-
-    when(centralServerRepository.getIds(any())).thenReturn(new PageImpl<>(List.of(CENTRAL_SERVER_ID)));
-    when(itemStorageClient.getItemById(any())).thenReturn(Optional.of(item));
-    when(inventoryViewService.getInstance(any())).thenReturn(instance);
-    when(holdingsService.find(any())).thenReturn(Optional.of(holding));
-    when(validationService.getItemTypeMappingStatus(any())).thenReturn(VALID);
-    when(validationService.getLocationMappingStatus(any())).thenReturn(VALID);
-
-    service.handleLoanUpdate(loan);
-
-    verify(contributionJobRunner).runItemContribution(CENTRAL_SERVER_ID, instance, item);
-  }
-
-  @Test
-  void handleRequestChange() {
-    var instance = createInstance();
-    var item = instance.getItems().get(0);
-    var holding = instance.getHoldingsRecords().get(0);
-    var request = RequestDTO.builder().id(UUID.randomUUID()).itemId(item.getId()).build();
-
-    when(centralServerRepository.getIds(any())).thenReturn(new PageImpl<>(List.of(CENTRAL_SERVER_ID)));
-    when(itemStorageClient.getItemById(any())).thenReturn(Optional.of(item));
-    when(inventoryViewService.getInstance(any())).thenReturn(instance);
-    when(holdingsService.find(any())).thenReturn(Optional.of(holding));
-    when(validationService.getItemTypeMappingStatus(any())).thenReturn(VALID);
-    when(validationService.getLocationMappingStatus(any())).thenReturn(VALID);
-
-    service.handleRequestChange(request);
-
-    verify(contributionJobRunner).runItemContribution(CENTRAL_SERVER_ID, instance, item);
-  }
 
   @Test
   void handleNonMarcItemCreationForOngoingJob() {

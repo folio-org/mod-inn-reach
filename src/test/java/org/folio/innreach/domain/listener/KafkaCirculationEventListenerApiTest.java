@@ -73,7 +73,6 @@ import org.folio.innreach.domain.event.DomainEvent;
 import org.folio.innreach.domain.event.DomainEventType;
 import org.folio.innreach.domain.event.EntityChangedData;
 import org.folio.innreach.domain.listener.base.BaseKafkaApiTest;
-import org.folio.innreach.domain.service.ContributionActionService;
 import org.folio.innreach.domain.service.impl.BatchDomainEventProcessor;
 import org.folio.innreach.dto.CheckInDTO;
 import org.folio.innreach.dto.ItemStatus;
@@ -124,9 +123,6 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
 
   @MockitoBean
   private InnReachExternalService innReachExternalService;
-
-  @MockitoBean
-  private ContributionActionService contributionActionService;
 
   @MockitoBean
   private InventoryClient inventoryClient;
