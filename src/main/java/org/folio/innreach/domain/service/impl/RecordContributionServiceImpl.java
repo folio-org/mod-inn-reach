@@ -114,11 +114,11 @@ public class RecordContributionServiceImpl implements RecordContributionService 
     try {
       retryTemplate.execute(() -> contributeBibItems(bibId, centralServerId, bibItems));
     } catch (RetryException ex) {
-      log.error("Failed to contribute items for bib {}", bibId, ex);
+      log.error("Failed to contribute {} items for bib {}", items.size(), bibId, ex);
       throw new InnReachContributionRequestException("Contributing items for bib %s has failed".formatted(bibId), ex.getLastException());
     }
 
-    log.info("Finished contributing items of bib {}", bibId);
+    log.info("Finished contributing {} items of bib {}", items.size(), bibId);
     return itemsCount;
   }
 
