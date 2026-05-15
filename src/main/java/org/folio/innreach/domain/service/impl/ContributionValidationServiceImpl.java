@@ -229,19 +229,14 @@ public class ContributionValidationServiceImpl implements ContributionValidation
 
   @Override
   public MappingValidationStatusDTO getLocationMappingStatus(UUID centralServerId) {
-    try {
-      List<LibraryMappingDTO> libraryMappings = getLibraryMappings(centralServerId);
+    List<LibraryMappingDTO> libraryMappings = getLibraryMappings(centralServerId);
 
-      var libraryMappingStatus = validateLibraryMappings(centralServerId, libraryMappings);
-      if (libraryMappingStatus == INVALID) {
-        return libraryMappingStatus;
-      }
-
-      return validateInnReachLocations(centralServerId, libraryMappings);
-    } catch (Exception e) {
-      log.warn("getLocationMappingStatus:: Can't validate location mappings", e);
-      return INVALID;
+    var libraryMappingStatus = validateLibraryMappings(centralServerId, libraryMappings);
+    if (libraryMappingStatus == INVALID) {
+      return libraryMappingStatus;
     }
+
+    return validateInnReachLocations(centralServerId, libraryMappings);
   }
 
   private Set<UUID> fetchHoldingStatisticalCodes(Item item) {

@@ -24,6 +24,7 @@ import java.time.OffsetDateTime;
 import java.util.UUID;
 
 import org.folio.innreach.batch.contribution.IterationEventReaderFactory;
+import org.folio.innreach.external.exception.InnReachTimeOutException;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -331,8 +332,28 @@ class ContributionControllerTest extends BaseControllerTest {
   }
 
   @Test
-  void shouldDeserializeJsonJobResponse() {
-    var jobResponse = deserializeFromJsonFile("/contribution/job-response.json", JobResponse.class);
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/mtype-mapping/pre-populate-material-type-mapping.sql",
+    "classpath:db/inn-reach-location/pre-populate-inn-reach-location-code.sql",
+    "classpath:db/lib-mapping/pre-populate-another-library-mapping.sql",
+  })
+  void return400HttpCode_whenStartInitialContribution_andLocationMappingValidationThrowsInnReachTimeOutException() {
+    when(materialTypesClient.getMaterialTypes(anyString(), anyInt())).thenReturn(createMaterialTypes());
+    when(irLocationService.getAllLocations(any()))
+        .thenThrow(new InnReachTimeOutException("Connection timed out to InnReach server"));
+
+    var responseEntity = testRestTemplate.postForEntity(
+      "/inn-reach/central-servers/{centralServerId}/contributions", HttpEntity.EMPTY, Error.class,
+      PRE_POPULATED_CENTRAL_SERVER_ID);
+
+    assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
+    assertEquals("Failed to validate contribution status: Connection timed out to InnReach server. Please try again later.",
+      responseEntity.getBody().getMessage());
+  }
+
+  @Test
+  void shouldDeserializeJsonJobResponse() {    var jobResponse = deserializeFromJsonFile("/contribution/job-response.json", JobResponse.class);
 
     assertEquals("813de9bd-d1ad-4687-9fd7-3239385e5fe5", jobResponse.getId().toString());
     assertEquals(100, jobResponse.getNumberOfRecordsPublished());

@@ -19,6 +19,8 @@ import java.util.Optional;
 import java.util.UUID;
 
 import org.folio.innreach.config.props.ContributionJobProperties;
+import org.folio.innreach.domain.exception.InitialContributionStatusValidationException;
+import org.folio.innreach.external.exception.InnReachTimeOutException;
 import org.folio.spring.config.properties.FolioEnvironment;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -228,7 +230,7 @@ class ContributionServiceImplTest {
     when(repository.save(any())).thenAnswer(i -> i.getArgument(0));
     when(validationService.getItemTypeMappingStatus(centralServerId)).thenReturn(INVALID);
 
-    assertThrows(IllegalArgumentException.class,
+    assertThrows(InitialContributionStatusValidationException.class,
       () -> service.startInitialContribution(centralServerId));
   }
 
@@ -241,8 +243,25 @@ class ContributionServiceImplTest {
     when(validationService.getItemTypeMappingStatus(centralServerId)).thenReturn(VALID);
     when(validationService.getLocationMappingStatus(centralServerId)).thenReturn(INVALID);
 
-    assertThrows(IllegalArgumentException.class,
+    assertThrows(InitialContributionStatusValidationException.class,
       () -> service.startInitialContribution(centralServerId));
+  }
+
+  @Test
+  void shouldThrowInitialContributionStatusValidationException_whenLocationMappingValidationThrowsInnReachTimeOutException() {
+    var centralServerId = UUID.randomUUID();
+
+    when(repository.fetchCurrentByCentralServerId(centralServerId)).thenReturn(Optional.empty());
+    when(repository.save(any())).thenAnswer(i -> i.getArgument(0));
+    when(validationService.getItemTypeMappingStatus(centralServerId)).thenReturn(VALID);
+    when(validationService.getLocationMappingStatus(centralServerId))
+      .thenThrow(new InnReachTimeOutException("Connection timed out to InnReach server"));
+
+    var exception = assertThrows(InitialContributionStatusValidationException.class,
+      () -> service.startInitialContribution(centralServerId));
+
+    assertEquals("Failed to validate contribution status: Connection timed out to InnReach server. Please try again later.",
+      exception.getMessage());
   }
 
   @Test
