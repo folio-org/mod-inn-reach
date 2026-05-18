@@ -6,7 +6,6 @@ import static org.folio.innreach.domain.entity.Contribution.Status.CANCELLED;
 import static org.folio.innreach.domain.entity.Contribution.Status.COMPLETE;
 import static org.folio.innreach.domain.service.impl.ServiceUtils.centralServerRef;
 import static org.folio.innreach.dto.MappingValidationStatusDTO.INVALID;
-import static org.folio.innreach.dto.MappingValidationStatusDTO.VALID;
 
 import java.util.List;
 import java.util.UUID;
@@ -15,7 +14,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.folio.innreach.batch.contribution.InitialContributionJobConsumerContainer;
 import org.folio.innreach.config.props.ContributionJobProperties;
-import org.folio.innreach.domain.exception.InitialContributionStatusValidationException;
+import org.folio.innreach.domain.exception.ContributionValidationException;
 import org.folio.innreach.external.exception.InnReachTimeOutException;
 import org.folio.spring.config.properties.FolioEnvironment;
 import org.springframework.beans.factory.BeanFactory;
@@ -224,26 +223,30 @@ public class ContributionServiceImpl implements ContributionService {
   }
 
   private void validateContribution(UUID centralServerId) {
+    var itemTypeMappingStatus = INVALID;
+    var locationMappingStatus = INVALID;
+
     try {
-      var itemTypeMappingStatus = validationService.getItemTypeMappingStatus(centralServerId);
-      var locationMappingStatus = validationService.getLocationMappingStatus(centralServerId);
-
-      if (itemTypeMappingStatus == INVALID) {
-        log.warn("validateContribution:: Contribution validation failed for central server {}, itemTypeMappingStatus: {}",
-          centralServerId, itemTypeMappingStatus);
-        throw new InitialContributionStatusValidationException("Contribution validation failed. Please fix item type mapping issues before starting contribution");
-      }
-
-      if (locationMappingStatus == INVALID) {
-        log.warn("validateContribution:: Contribution validation failed for central server {}, locationMappingStatus: {}",
-          centralServerId, locationMappingStatus);
-        throw new InitialContributionStatusValidationException("Contribution validation failed. Please fix location mapping issues before starting contribution");
-      }
+      itemTypeMappingStatus = validationService.getItemTypeMappingStatus(centralServerId);
+      locationMappingStatus = validationService.getLocationMappingStatus(centralServerId);
     } catch (InnReachTimeOutException ex) {
       log.warn("validateContribution:: Timeout occurred while validating contribution for central server {}", centralServerId, ex);
-      throw new InitialContributionStatusValidationException("Failed to validate contribution status: %s. Please try again later.".formatted(ex.getMessage()));
+      throw new ContributionValidationException("Failed to validate contribution status: %s. Please try again later.".formatted(ex.getMessage()));
     } catch (Exception ex) {
-      throw new InitialContributionStatusValidationException("Failed to validate contribution status.", ex);
+      log.error("validateContribution:: Exception occurred while validating contribution for central server {}", centralServerId, ex);
+      throw new ContributionValidationException("Failed to validate contribution status.", ex);
+    }
+
+    if (itemTypeMappingStatus == INVALID) {
+      log.warn("validateContribution:: Contribution validation failed for central server {}, itemTypeMappingStatus: {}",
+        centralServerId, itemTypeMappingStatus);
+      throw new ContributionValidationException("Contribution validation failed. Please fix item type mapping issues before starting contribution");
+    }
+
+    if (locationMappingStatus == INVALID) {
+      log.warn("validateContribution:: Contribution validation failed for central server {}, locationMappingStatus: {}",
+        centralServerId, locationMappingStatus);
+      throw new ContributionValidationException("Contribution validation failed. Please fix location mapping issues before starting contribution");
     }
   }
 

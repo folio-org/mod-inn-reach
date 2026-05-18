@@ -301,7 +301,7 @@ public class ContributionValidationServiceImpl implements ContributionValidation
     var mappingStatus = new HashSet<>(mappedLibraryIds).containsAll(centralServerFolioLibraryIds) ? VALID : INVALID;
 
     if (mappingStatus == INVALID) {
-      log.warn("validateInnReachLocations:: Not all INN-Reach Library IDs are mapped, " +
+      log.warn("validateLibraryMappings:: Not all INN-Reach Library IDs are mapped, " +
         "mapped library count: {}, available library count: {}", mappedLibraryIds.size(), centralServerFolioLibraryIds.size());
     }
 

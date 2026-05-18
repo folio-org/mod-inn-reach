@@ -353,7 +353,8 @@ class ContributionControllerTest extends BaseControllerTest {
   }
 
   @Test
-  void shouldDeserializeJsonJobResponse() {    var jobResponse = deserializeFromJsonFile("/contribution/job-response.json", JobResponse.class);
+  void shouldDeserializeJsonJobResponse() {
+    var jobResponse = deserializeFromJsonFile("/contribution/job-response.json", JobResponse.class);
 
     assertEquals("813de9bd-d1ad-4687-9fd7-3239385e5fe5", jobResponse.getId().toString());
     assertEquals(100, jobResponse.getNumberOfRecordsPublished());

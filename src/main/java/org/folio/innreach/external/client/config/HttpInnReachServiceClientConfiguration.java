@@ -52,7 +52,7 @@ public class HttpInnReachServiceClientConfiguration {
   }
 
   private ClientHttpRequestFactory buildRequestFactory() {
-    var httpClient  = HttpClient.newBuilder()
+    var httpClient = HttpClient.newBuilder()
       .connectTimeout(Duration.ofMillis(innReachHttpClientProperties.connectTimeoutMs()))
       .build();
     var requestFactory = new JdkClientHttpRequestFactory(httpClient);
