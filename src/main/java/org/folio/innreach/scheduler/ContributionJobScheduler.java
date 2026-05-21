@@ -34,6 +34,11 @@ public class ContributionJobScheduler {
   private int recordLimit;
   @Value(value = "${contribution.item-pause}")
   private double itemPause;
+  // Minimum number of available slots (recordLimit - inProgressCount) required before
+  // claiming a new batch. If available < minBatchThreshold, the scheduler skips
+  // this tick for the tenant. Value depends on fetch-limit and scheduler.fixed-delay.
+  @Value(value = "${contribution.min-batch-threshold}")
+  private int minBatchThreshold;
   private final Cache<String, List<String>> tenantDetailsCache;
 
   @PostConstruct
@@ -60,15 +65,18 @@ public class ContributionJobScheduler {
       tenantScopedExecutionService.runTenantScoped(tenant, () -> {
         try {
           long inProgressCount = jobExecutionStatusRepository.getInProgressRecordsCount();
-          if(recordLimit > inProgressCount) {
-            var newRecordsToProcess = jobExecutionStatusRepository.updateAndFetchJobExecutionRecordsByStatus(recordLimit, itemPause);
+          long available = recordLimit - inProgressCount;
+          if (available >= minBatchThreshold) {
+            var newRecordsToProcess = jobExecutionStatusRepository.updateAndFetchJobExecutionRecordsByStatus((int) available, itemPause);
             if (!newRecordsToProcess.isEmpty()) {
-              log.info("processInitialContributionEvents:: Fetched new set of {} initial contribution records", newRecordsToProcess.size());
+              log.info("processInitialContributionEvents:: Fetched new set of {} initial contribution records (available={})",
+                newRecordsToProcess.size(), available);
               newRecordsToProcess.forEach(eventProcessor::processInitialContributionEvents);
             }
           } else {
-            log.info("processInitialContributionEvents:: unable to fetch new records, " +
-              "as inProgress count {} is greater than fetchLimit {}", inProgressCount, recordLimit);
+            log.info("processInitialContributionEvents:: skipping tick for tenant {}, " +
+              "available {} is below minBatchThreshold {} (inProgress={}, fetchLimit={})",
+              tenant, available, minBatchThreshold, inProgressCount, recordLimit);
           }
           contributionService.updateStatisticsAndContributionStatus();
         } catch (Exception ex) {
