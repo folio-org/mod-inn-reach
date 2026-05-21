@@ -8,6 +8,7 @@ import jakarta.validation.ConstraintViolationException;
 import java.util.List;
 
 import lombok.extern.log4j.Log4j2;
+import org.folio.innreach.domain.exception.ContributionValidationException;
 import org.folio.innreach.external.exception.InnReachGatewayException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
@@ -66,6 +67,12 @@ public class ExceptionHandlerController {
     }
 
     return errors;
+  }
+
+  @ExceptionHandler(ContributionValidationException.class)
+  @ResponseStatus(HttpStatus.BAD_REQUEST)
+  public Error handleInitialContributionValidationException(ContributionValidationException ex) {
+    return createError(HttpStatus.BAD_REQUEST, ex.getMessage());
   }
 
   @ExceptionHandler(DataIntegrityViolationException.class)

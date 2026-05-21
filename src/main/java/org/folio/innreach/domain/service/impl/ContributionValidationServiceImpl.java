@@ -28,6 +28,7 @@ import org.folio.innreach.external.service.InnReachLocationExternalService;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 
@@ -226,21 +227,14 @@ public class ContributionValidationServiceImpl implements ContributionValidation
 
   @Override
   public MappingValidationStatusDTO getLocationMappingStatus(UUID centralServerId) {
-    log.debug("getLocationMappingStatus:: parameters centralServerId: {}", centralServerId);
-    try {
-      List<LibraryMappingDTO> libraryMappings = getLibraryMappings(centralServerId);
+    List<LibraryMappingDTO> libraryMappings = getLibraryMappings(centralServerId);
 
-      var libraryMappingStatus = validateLibraryMappings(centralServerId, libraryMappings);
-      if (libraryMappingStatus != VALID) {
-        log.info("getLocationMappingStatus:: result when status not valid: {}", libraryMappingStatus);
-        return libraryMappingStatus;
-      }
-
-      return validateInnReachLocations(centralServerId, libraryMappings);
-    } catch (Exception e) {
-      log.warn("Can't validate location mappings", e);
-      return INVALID;
+    var libraryMappingStatus = validateLibraryMappings(centralServerId, libraryMappings);
+    if (libraryMappingStatus == INVALID) {
+      return libraryMappingStatus;
     }
+
+    return validateInnReachLocations(centralServerId, libraryMappings);
   }
 
   private Set<UUID> fetchHoldingStatisticalCodes(Item item) {
@@ -312,7 +306,14 @@ public class ContributionValidationServiceImpl implements ContributionValidation
 
     var mappedLibraryIds = mapItems(libraryMappings, LibraryMappingDTO::getLibraryId);
 
-    return mappedLibraryIds.containsAll(centralServerFolioLibraryIds) ? VALID : INVALID;
+    var mappingStatus = new HashSet<>(mappedLibraryIds).containsAll(centralServerFolioLibraryIds) ? VALID : INVALID;
+
+    if (mappingStatus == INVALID) {
+      log.warn("validateLibraryMappings:: Not all INN-Reach Library IDs are mapped, " +
+        "mapped library count: {}, available library count: {}", mappedLibraryIds.size(), centralServerFolioLibraryIds.size());
+    }
+
+    return mappingStatus;
   }
 
   private MappingValidationStatusDTO validateInnReachLocations(UUID centralServerId, List<LibraryMappingDTO> libraryMappings) {

@@ -55,10 +55,10 @@ public class OngoingContributionEventProcessor {
           }
         });
     } catch (ServiceSuspendedException | InnReachConnectionException | InnReachTimeOutException | InnReachGatewayException ex) {
-      log.warn("processOngoingContribution:: {} occurred while processing ongoing contribution {}", ex.getClass().getSimpleName(), ex.getMessage());
+      log.warn("processOngoingContribution:: {} occurred while processing ongoing contribution: {}", ex.getClass().getSimpleName(), ex.getMessage());
       ongoingContributionStatusService.updateOngoingContribution(ongoingContributionStatus, RETRY);
     } catch (Exception ex) {
-      log.error("processOngoingContribution:: Exception occurred while processing job {}", ex.getMessage(), ex);
+      log.error("processOngoingContribution:: Exception occurred while processing job: {}", ex.getMessage(), ex);
       ongoingContributionStatusService.updateOngoingContribution(ongoingContributionStatus, ex.getMessage(), FAILED);
     }
   }
