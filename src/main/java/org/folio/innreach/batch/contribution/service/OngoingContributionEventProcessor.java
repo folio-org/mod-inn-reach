@@ -3,6 +3,7 @@ package org.folio.innreach.batch.contribution.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.folio.innreach.domain.entity.OngoingContributionStatus;
+import org.folio.innreach.domain.event.DomainEventType;
 import org.folio.innreach.domain.service.ContributionActionService;
 import org.folio.innreach.domain.service.InnReachTransactionActionService;
 import org.folio.innreach.domain.service.impl.TenantScopedExecutionService;
@@ -56,14 +57,14 @@ public class OngoingContributionEventProcessor {
           }
         } catch (ServiceSuspendedException | InnReachConnectionException | InnReachTimeOutException |
                  InnReachGatewayException | InnReachContributionRequestException ex) {
-          log.warn("processOngoingContribution:: {} occurred while processing ongoing contribution {}", ex.getClass().getSimpleName(), ex.getMessage());
+          log.warn("processOngoingContribution:: {} occurred while processing ongoing contribution: {}", ex.getClass().getSimpleName(), ex.getMessage());
           ongoingContributionStatusService.updateOngoingContribution(ongoingContributionStatus, RETRY);
         } catch (InnReachOngoingContributionException ex) {
           log.warn("processOngoingContribution:: Retry exhausted for event id: [{}], tenant: [{}]: {}",
             ongoingContributionStatus.getId(), ongoingContributionStatus.getTenant(), ex.getMessage());
           ongoingContributionStatusService.updateOngoingContribution(ongoingContributionStatus, ex.getMessage(), FAILED);
         } catch (Exception ex) {
-          log.error("processOngoingContribution:: Exception occurred while processing job {}", ex.getMessage(), ex);
+          log.error("processOngoingContribution:: Exception occurred while processing job: {}", ex.getMessage(), ex);
           ongoingContributionStatusService.updateOngoingContribution(ongoingContributionStatus, ex.getMessage(), FAILED);
         }
       });

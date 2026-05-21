@@ -97,6 +97,9 @@ management:
       enabled: true
 debug: false
 inn-reach:
+  client:
+    connect-timeout-ms: ${INN_REACH_HTTP_CLIENT_CONNECTION_TIMEOUT:120000}
+    read-timeout-ms: ${INN_REACH_HTTP_CLIENT_READ_TIMEOUT:60000}
   request-ids:
     split-size: ${INN_REACH_REQUEST_IDS_SPLIT_SIZE:50}
   jwt-access-token:
