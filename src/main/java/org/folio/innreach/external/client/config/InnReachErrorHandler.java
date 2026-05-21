@@ -10,9 +10,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.client.ClientHttpResponse;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.stereotype.Component;
-import org.springframework.web.client.HttpClientErrorException;
-import org.springframework.web.client.HttpServerErrorException;
-import org.springframework.web.client.RestClientResponseException;
 
 @Log4j2
 @RequiredArgsConstructor
@@ -22,7 +19,6 @@ public class InnReachErrorHandler {
   private final JsonHelper jsonHelper;
 
   public void handle(ClientHttpResponse response) throws IOException {
-    var errorMessage = parseErrorMessage(response);
     var statusValue = response.getStatusCode().value();
     if (statusValue == HttpStatus.UNAUTHORIZED.value()) {
       log.debug("Can't get InnReach access token. CentralServer authentication failed with status: {}", statusValue);
@@ -31,27 +27,10 @@ public class InnReachErrorHandler {
 
     if (isGatewayError(response)) {
       log.debug("INN_Reach call failed with status {}", statusValue);
-      throw new InnReachGatewayException("INN_Reach call failed with status: %s and message: %s"
-        .formatted(statusValue, errorMessage));
+      throw new InnReachGatewayException("INN_Reach call failed with status: %s".formatted(statusValue));
     }
 
-    throw new InnReachException("INN-Reach call failed: status=" + statusValue + " message: " + errorMessage);
-  }
-
-  private String parseErrorMessage(ClientHttpResponse response) {
-    try {
-      if (response.getStatusCode().is5xxServerError()) {
-        return jsonHelper.fromJson(response.getBody(), HttpServerErrorException.class).getMessage();
-      }
-
-      if (response.getStatusCode().is4xxClientError()) {
-        return jsonHelper.fromJson(response.getBody(), HttpClientErrorException.class).getMessage();
-      }
-
-      return jsonHelper.fromJson(response.getBody(), RestClientResponseException.class).getMessage();
-    } catch (IOException | IllegalStateException e) {
-      return "";
-    }
+    throw new InnReachException("INN-Reach call failed with status: " + statusValue);
   }
 
   private boolean isGatewayError(ClientHttpResponse response) throws IOException {

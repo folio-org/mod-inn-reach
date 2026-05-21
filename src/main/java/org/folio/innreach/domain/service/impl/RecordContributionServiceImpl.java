@@ -80,7 +80,7 @@ public class RecordContributionServiceImpl implements RecordContributionService 
       log.info("contributeAndVerifyBib: finished contribution of bib {}", bibId);
     } catch (RetryException ex) {
       var lastException = ex.getLastException();
-      log.error("contributeAndVerifyBib:: Failed to contribute bib {}", bibId, lastException);
+      log.error("contributeAndVerifyBib:: Failed to contribute bib {} : {}", bibId, lastException.getMessage());
       throw new InnReachContributionRequestException("Contributing bib %s has failed".formatted(bibId), lastException);
     }
   }
