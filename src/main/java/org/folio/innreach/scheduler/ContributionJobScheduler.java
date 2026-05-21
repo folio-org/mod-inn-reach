@@ -121,15 +121,18 @@ public class ContributionJobScheduler {
   private void processOngoingContributionForTenant(String tenant) {
     try {
       long inProgressCount = ongoingContributionStatusRepository.getInProgressRecordsCount();
-      if (recordLimit > inProgressCount) {
-        var newRecordsToProcess = ongoingContributionStatusRepository.updateAndFetchOngoingContributionRecordsByStatus(recordLimit);
+      long available = recordLimit - inProgressCount;
+      if (available >= minBatchThreshold) {
+        var newRecordsToProcess = ongoingContributionStatusRepository.updateAndFetchOngoingContributionRecordsByStatus((int) available);
         if (!newRecordsToProcess.isEmpty()) {
-          log.info("processOngoingContributionEvents:: Fetched new set of {} ongoing contribution records", newRecordsToProcess.size());
+          log.info("processOngoingContributionEvents:: Fetched new set of {} ongoing contribution records (available={})",
+            newRecordsToProcess.size(), available);
           newRecordsToProcess.forEach(ongoingContributionEventProcessor::processOngoingContribution);
         }
       } else {
-        log.info("processOngoingContributionEvents:: unable to fetch new records, " +
-          "as inProgress count {} is greater than fetchLimit {}", inProgressCount, recordLimit);
+        log.info("processOngoingContributionEvents:: skipping tick for tenant {}, " +
+          "available {} is below minBatchThreshold {} (inProgress={}, fetchLimit={})",
+          tenant, available, minBatchThreshold, inProgressCount, recordLimit);
       }
     } catch (Exception ex) {
       log.warn("processOngoingContributionEvents:: Exception caught while processing ongoing contribution for tenant {} {} ", tenant, ex.getMessage());
