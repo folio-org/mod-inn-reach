@@ -4,8 +4,8 @@
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
                    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.4.xsd">
 
-  <changeSet id="2025-05-20-01__add_indexes_job_execution_status" author="Mukhiddin Yusupov">
-    <sqlFile path="sql/2025-05-20-01__add_indexes_job_execution_status.sql" relativeToChangelogFile="true"/>
+  <changeSet id="2025-05-21-01__add_indexes_ongoing_contribution_status" author="Mukhiddin Yusupov">
+    <sqlFile path="sql/2025-05-21-01__add_indexes_ongoing_contribution_status.sql" relativeToChangelogFile="true"/>
   </changeSet>
 
 </databaseChangeLog>
