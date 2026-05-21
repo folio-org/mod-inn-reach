@@ -17,6 +17,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.concurrent.locks.ReentrantLock;
 
 
 @Service
@@ -41,6 +42,11 @@ public class ContributionJobScheduler {
   private int minBatchThreshold;
   private final Cache<String, List<String>> tenantDetailsCache;
 
+  // Guards against re-entrant scheduler ticks: if the previous tick's tenant loop
+  // is still running, the next tick skips instead of piling up overlapping work.
+  private final ReentrantLock initialContributionLock = new ReentrantLock();
+  private final ReentrantLock ongoingContributionLock = new ReentrantLock();
+
   @PostConstruct
   public void postConstruct() {
     try {
@@ -59,55 +65,75 @@ public class ContributionJobScheduler {
   @Scheduled(fixedDelayString = "${contribution.scheduler.fixed-delay}",
     initialDelayString = "${contribution.scheduler.initial-delay}")
   public void processInitialContributionEvents() {
-    List<String> tenants = loadTenants();
-    log.debug("processInitialContributionEvents :: tenantsList {}", tenants);
-    tenants.forEach(tenant ->
-      tenantScopedExecutionService.runTenantScoped(tenant, () -> {
-        try {
-          long inProgressCount = jobExecutionStatusRepository.getInProgressRecordsCount();
-          long available = recordLimit - inProgressCount;
-          if (available >= minBatchThreshold) {
-            var newRecordsToProcess = jobExecutionStatusRepository.updateAndFetchJobExecutionRecordsByStatus((int) available, itemPause);
-            if (!newRecordsToProcess.isEmpty()) {
-              log.info("processInitialContributionEvents:: Fetched new set of {} initial contribution records (available={})",
-                newRecordsToProcess.size(), available);
-              newRecordsToProcess.forEach(eventProcessor::processInitialContributionEvents);
-            }
-          } else {
-            log.info("processInitialContributionEvents:: skipping tick for tenant {}, " +
-              "available {} is below minBatchThreshold {} (inProgress={}, fetchLimit={})",
-              tenant, available, minBatchThreshold, inProgressCount, recordLimit);
-          }
-          contributionService.updateStatisticsAndContributionStatus();
-        } catch (Exception ex) {
-          log.warn("Exception caught while processing Initial contribution for tenant {} {} ", tenant, ex.getMessage());
+    if (!initialContributionLock.tryLock()) {
+      log.debug("processInitialContributionEvents:: previous tick still running, skipping");
+      return;
+    }
+    try {
+      List<String> tenants = loadTenants();
+      log.debug("processInitialContributionEvents :: tenantsList {}", tenants);
+      tenants.forEach(tenant ->
+        tenantScopedExecutionService.runTenantScoped(tenant, () -> processInitialContributionForTenant(tenant)));
+    } finally {
+      initialContributionLock.unlock();
+    }
+  }
+
+  private void processInitialContributionForTenant(String tenant) {
+    try {
+      long inProgressCount = jobExecutionStatusRepository.getInProgressRecordsCount();
+      long available = recordLimit - inProgressCount;
+      if (available >= minBatchThreshold) {
+        var newRecordsToProcess = jobExecutionStatusRepository.updateAndFetchJobExecutionRecordsByStatus((int) available, itemPause);
+        if (!newRecordsToProcess.isEmpty()) {
+          log.info("processInitialContributionEvents:: Fetched new set of {} initial contribution records (available={})",
+            newRecordsToProcess.size(), available);
+          newRecordsToProcess.forEach(eventProcessor::processInitialContributionEvents);
         }
-      }));
+      } else {
+        log.info("processInitialContributionEvents:: skipping tick for tenant {}, " +
+          "available {} is below minBatchThreshold {} (inProgress={}, fetchLimit={})",
+          tenant, available, minBatchThreshold, inProgressCount, recordLimit);
+      }
+      contributionService.updateStatisticsAndContributionStatus();
+    } catch (Exception ex) {
+      log.warn("Exception caught while processing Initial contribution for tenant {} {} ", tenant, ex.getMessage());
+    }
   }
 
   @Scheduled(fixedDelayString = "${contribution.scheduler.fixed-delay}",
     initialDelayString = "${contribution.scheduler.initial-delay}")
   public void processOngoingContributionEvents() {
-    List<String> tenants = loadTenants();
-    log.debug("processOngoingContributionEvents :: tenantsList {}", tenants);
-    tenants.forEach(tenant ->
-      tenantScopedExecutionService.runTenantScoped(tenant, () -> {
-        try {
-          long inProgressCount = ongoingContributionStatusRepository.getInProgressRecordsCount();
-          if(recordLimit > inProgressCount) {
-            var newRecordsToProcess = ongoingContributionStatusRepository.updateAndFetchOngoingContributionRecordsByStatus(recordLimit);
-            if (!newRecordsToProcess.isEmpty()) {
-              log.info("processOngoingContributionEvents:: Fetched new set of {} ongoing contribution records", newRecordsToProcess.size());
-              newRecordsToProcess.forEach(ongoingContributionEventProcessor::processOngoingContribution);
-            }
-          } else {
-            log.info("processOngoingContributionEvents:: unable to fetch new records, " +
-              "as inProgress count {} is greater than fetchLimit {}", inProgressCount, recordLimit);
-          }
-        } catch (Exception ex) {
-          log.warn("processOngoingContributionEvents:: Exception caught while processing ongoing contribution for tenant {} {} ", tenant, ex.getMessage());
+    if (!ongoingContributionLock.tryLock()) {
+      log.debug("processOngoingContributionEvents:: previous tick still running, skipping");
+      return;
+    }
+    try {
+      List<String> tenants = loadTenants();
+      log.debug("processOngoingContributionEvents :: tenantsList {}", tenants);
+      tenants.forEach(tenant ->
+        tenantScopedExecutionService.runTenantScoped(tenant, () -> processOngoingContributionForTenant(tenant)));
+    } finally {
+      ongoingContributionLock.unlock();
+    }
+  }
+
+  private void processOngoingContributionForTenant(String tenant) {
+    try {
+      long inProgressCount = ongoingContributionStatusRepository.getInProgressRecordsCount();
+      if (recordLimit > inProgressCount) {
+        var newRecordsToProcess = ongoingContributionStatusRepository.updateAndFetchOngoingContributionRecordsByStatus(recordLimit);
+        if (!newRecordsToProcess.isEmpty()) {
+          log.info("processOngoingContributionEvents:: Fetched new set of {} ongoing contribution records", newRecordsToProcess.size());
+          newRecordsToProcess.forEach(ongoingContributionEventProcessor::processOngoingContribution);
         }
-      }));
+      } else {
+        log.info("processOngoingContributionEvents:: unable to fetch new records, " +
+          "as inProgress count {} is greater than fetchLimit {}", inProgressCount, recordLimit);
+      }
+    } catch (Exception ex) {
+      log.warn("processOngoingContributionEvents:: Exception caught while processing ongoing contribution for tenant {} {} ", tenant, ex.getMessage());
+    }
   }
 
   private List<String> loadTenants() {
