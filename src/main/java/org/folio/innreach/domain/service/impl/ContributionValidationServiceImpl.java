@@ -229,19 +229,14 @@ public class ContributionValidationServiceImpl implements ContributionValidation
 
   @Override
   public MappingValidationStatusDTO getLocationMappingStatus(UUID centralServerId) {
-    try {
-      List<LibraryMappingDTO> libraryMappings = getLibraryMappings(centralServerId);
+    List<LibraryMappingDTO> libraryMappings = getLibraryMappings(centralServerId);
 
-      var libraryMappingStatus = validateLibraryMappings(centralServerId, libraryMappings);
-      if (libraryMappingStatus == INVALID) {
-        return libraryMappingStatus;
-      }
-
-      return validateInnReachLocations(centralServerId, libraryMappings);
-    } catch (Exception e) {
-      log.warn("getLocationMappingStatus:: Can't validate location mappings", e);
-      return INVALID;
+    var libraryMappingStatus = validateLibraryMappings(centralServerId, libraryMappings);
+    if (libraryMappingStatus == INVALID) {
+      return libraryMappingStatus;
     }
+
+    return validateInnReachLocations(centralServerId, libraryMappings);
   }
 
   private Set<UUID> fetchHoldingStatisticalCodes(Item item) {
@@ -306,7 +301,7 @@ public class ContributionValidationServiceImpl implements ContributionValidation
     var mappingStatus = new HashSet<>(mappedLibraryIds).containsAll(centralServerFolioLibraryIds) ? VALID : INVALID;
 
     if (mappingStatus == INVALID) {
-      log.warn("validateInnReachLocations:: Not all INN-Reach Library IDs are mapped, " +
+      log.warn("validateLibraryMappings:: Not all INN-Reach Library IDs are mapped, " +
         "mapped library count: {}, available library count: {}", mappedLibraryIds.size(), centralServerFolioLibraryIds.size());
     }
 
