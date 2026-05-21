@@ -3,7 +3,6 @@ package org.folio.innreach.batch.contribution.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.folio.innreach.domain.entity.OngoingContributionStatus;
-import org.folio.innreach.domain.event.DomainEventType;
 import org.folio.innreach.domain.service.ContributionActionService;
 import org.folio.innreach.domain.service.InnReachTransactionActionService;
 import org.folio.innreach.domain.service.impl.TenantScopedExecutionService;
@@ -13,6 +12,7 @@ import org.folio.innreach.dto.Item;
 import org.folio.innreach.external.exception.InnReachConnectionException;
 import org.folio.innreach.external.exception.InnReachContributionRequestException;
 import org.folio.innreach.external.exception.InnReachGatewayException;
+import org.folio.innreach.external.exception.InnReachOngoingContributionException;
 import org.folio.innreach.external.exception.ServiceSuspendedException;
 import org.folio.innreach.external.exception.InnReachTimeOutException;
 import org.folio.innreach.util.JsonHelper;
@@ -58,6 +58,10 @@ public class OngoingContributionEventProcessor {
                  InnReachGatewayException | InnReachContributionRequestException ex) {
           log.warn("processOngoingContribution:: {} occurred while processing ongoing contribution {}", ex.getClass().getSimpleName(), ex.getMessage());
           ongoingContributionStatusService.updateOngoingContribution(ongoingContributionStatus, RETRY);
+        } catch (InnReachOngoingContributionException ex) {
+          log.warn("processOngoingContribution:: Retry exhausted for event id: [{}], tenant: [{}]: {}",
+            ongoingContributionStatus.getId(), ongoingContributionStatus.getTenant(), ex.getMessage());
+          ongoingContributionStatusService.updateOngoingContribution(ongoingContributionStatus, ex.getMessage(), FAILED);
         } catch (Exception ex) {
           log.error("processOngoingContribution:: Exception occurred while processing job {}", ex.getMessage(), ex);
           ongoingContributionStatusService.updateOngoingContribution(ongoingContributionStatus, ex.getMessage(), FAILED);
@@ -66,42 +70,59 @@ public class OngoingContributionEventProcessor {
   }
 
   private void processItem(OngoingContributionStatus ongoingContributionStatus) {
-    var oldEntity = jsonHelper.fromJson(ongoingContributionStatus.getOldEntity(), Item.class);
-    var newEntity = jsonHelper.fromJson(ongoingContributionStatus.getNewEntity(), Item.class);
     var eventType = ongoingContributionStatus.getDomainEventType();
-    var itemId = eventType == DomainEventType.CREATED ? newEntity.getId() : oldEntity.getId();
-    log.debug("processItem:: processing item with oldEntity {} and newEntity {}", oldEntity, newEntity);
-    log.info("processItem:: processing event type [{}] for Item id: [{}]", eventType, itemId);
 
-    switch (ongoingContributionStatus.getDomainEventType()) {
-      case CREATED -> contributionActionService.handleItemCreation(newEntity, ongoingContributionStatus);
+    switch (eventType) {
+      case CREATED -> {
+        var newEntity = jsonHelper.fromJson(ongoingContributionStatus.getNewEntity(), Item.class);
+        log.info("processItem:: processing CREATED for Item id: [{}]", newEntity.getId());
+        contributionActionService.handleItemCreation(newEntity, ongoingContributionStatus);
+      }
       case UPDATED -> {
+        var oldEntity = jsonHelper.fromJson(ongoingContributionStatus.getOldEntity(), Item.class);
+        var newEntity = jsonHelper.fromJson(ongoingContributionStatus.getNewEntity(), Item.class);
+        log.info("processItem:: processing UPDATED for Item id: [{}]", newEntity.getId());
         contributionActionService.handleItemUpdate(newEntity, oldEntity, ongoingContributionStatus);
         transactionActionService.handleItemUpdate(newEntity, oldEntity);
       }
-      case DELETED -> contributionActionService.handleItemDelete(oldEntity, ongoingContributionStatus);
+      case DELETED -> {
+        var oldEntity = jsonHelper.fromJson(ongoingContributionStatus.getOldEntity(), Item.class);
+        log.info("processItem:: processing DELETED for Item id: [{}]", oldEntity.getId());
+        contributionActionService.handleItemDelete(oldEntity, ongoingContributionStatus);
+      }
       default ->
         ongoingContributionStatusService.updateOngoingContribution(ongoingContributionStatus, UNKNOWN_TYPE_MESSAGE, FAILED);
     }
   }
 
   private void processHoldings(OngoingContributionStatus ongoingContributionStatus) {
-    Holding oldEntity = jsonHelper.fromJson(ongoingContributionStatus.getOldEntity(), Holding.class);
-    Holding newEntity = jsonHelper.fromJson(ongoingContributionStatus.getNewEntity(), Holding.class);
     switch (ongoingContributionStatus.getDomainEventType()) {
-      case UPDATED -> contributionActionService.handleHoldingUpdate(newEntity, ongoingContributionStatus);
-      case DELETED -> contributionActionService.handleHoldingDelete(oldEntity, ongoingContributionStatus);
+      case UPDATED -> {
+        var newEntity = jsonHelper.fromJson(ongoingContributionStatus.getNewEntity(), Holding.class);
+        contributionActionService.handleHoldingUpdate(newEntity, ongoingContributionStatus);
+      }
+      case DELETED -> {
+        var oldEntity = jsonHelper.fromJson(ongoingContributionStatus.getOldEntity(), Holding.class);
+        contributionActionService.handleHoldingDelete(oldEntity, ongoingContributionStatus);
+      }
       default -> ongoingContributionStatusService.updateOngoingContribution(ongoingContributionStatus, UNKNOWN_TYPE_MESSAGE, FAILED);
     }
   }
 
   private void processInstance(OngoingContributionStatus ongoingContributionStatus) {
-    Instance oldEntity = jsonHelper.fromJson(ongoingContributionStatus.getOldEntity(), Instance.class);
-    Instance newEntity = jsonHelper.fromJson(ongoingContributionStatus.getNewEntity(), Instance.class);
     switch (ongoingContributionStatus.getDomainEventType()) {
-      case CREATED -> contributionActionService.handleInstanceCreation(newEntity, ongoingContributionStatus);
-      case UPDATED -> contributionActionService.handleInstanceUpdate(newEntity, ongoingContributionStatus);
-      case DELETED -> contributionActionService.handleInstanceDelete(oldEntity, ongoingContributionStatus);
+      case CREATED -> {
+        var newEntity = jsonHelper.fromJson(ongoingContributionStatus.getNewEntity(), Instance.class);
+        contributionActionService.handleInstanceCreation(newEntity, ongoingContributionStatus);
+      }
+      case UPDATED -> {
+        var newEntity = jsonHelper.fromJson(ongoingContributionStatus.getNewEntity(), Instance.class);
+        contributionActionService.handleInstanceUpdate(newEntity, ongoingContributionStatus);
+      }
+      case DELETED -> {
+        var oldEntity = jsonHelper.fromJson(ongoingContributionStatus.getOldEntity(), Instance.class);
+        contributionActionService.handleInstanceDelete(oldEntity, ongoingContributionStatus);
+      }
       default -> ongoingContributionStatusService.updateOngoingContribution(ongoingContributionStatus, UNKNOWN_TYPE_MESSAGE, FAILED);
     }
   }
