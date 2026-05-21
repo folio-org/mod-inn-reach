@@ -41,11 +41,11 @@ public class OngoingContributionEventProcessor {
 
   @Async("ongoingSchedulerTaskExecutor")
   public void processOngoingContribution(OngoingContributionStatus ongoingContributionStatus) {
-    try {
-      log.info("processOngoingContribution:: Processing ongoing contribution, event id: [{}], tenant: [{}]",
-        ongoingContributionStatus.getId(), ongoingContributionStatus.getTenant());
-      executionService.executeAsyncTenantScoped(ongoingContributionStatus.getTenant(),
-        () -> {
+    log.info("processOngoingContribution:: Processing ongoing contribution, event id: [{}], tenant: [{}]",
+      ongoingContributionStatus.getId(), ongoingContributionStatus.getTenant());
+    executionService.executeAsyncTenantScoped(ongoingContributionStatus.getTenant(),
+      () -> {
+        try {
           checkRetryLimit(ongoingContributionStatus);
           switch (ongoingContributionStatus.getDomainEventName()) {
             case ITEM -> processItem(ongoingContributionStatus);
@@ -54,15 +54,15 @@ public class OngoingContributionEventProcessor {
             default ->
               ongoingContributionStatusService.updateOngoingContribution(ongoingContributionStatus, UNKNOWN_EVENT_NAME_MESSAGE, FAILED);
           }
-        });
-    } catch (ServiceSuspendedException | InnReachConnectionException | InnReachTimeOutException |
-             InnReachGatewayException | InnReachContributionRequestException ex) {
-      log.warn("processOngoingContribution:: {} occurred while processing ongoing contribution {}", ex.getClass().getSimpleName(), ex.getMessage());
-      ongoingContributionStatusService.updateOngoingContribution(ongoingContributionStatus, RETRY);
-    } catch (Exception ex) {
-      log.error("processOngoingContribution:: Exception occurred while processing job {}", ex.getMessage(), ex);
-      ongoingContributionStatusService.updateOngoingContribution(ongoingContributionStatus, ex.getMessage(), FAILED);
-    }
+        } catch (ServiceSuspendedException | InnReachConnectionException | InnReachTimeOutException |
+                 InnReachGatewayException | InnReachContributionRequestException ex) {
+          log.warn("processOngoingContribution:: {} occurred while processing ongoing contribution {}", ex.getClass().getSimpleName(), ex.getMessage());
+          ongoingContributionStatusService.updateOngoingContribution(ongoingContributionStatus, RETRY);
+        } catch (Exception ex) {
+          log.error("processOngoingContribution:: Exception occurred while processing job {}", ex.getMessage(), ex);
+          ongoingContributionStatusService.updateOngoingContribution(ongoingContributionStatus, ex.getMessage(), FAILED);
+        }
+      });
   }
 
   private void processItem(OngoingContributionStatus ongoingContributionStatus) {
