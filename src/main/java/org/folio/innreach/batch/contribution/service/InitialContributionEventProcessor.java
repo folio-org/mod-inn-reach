@@ -63,8 +63,7 @@ public class InitialContributionEventProcessor {
       log.info("processInitialContributionEvents:: Processing Initial contribution events {}", job);
       try {
         var instanceId = job.getInstanceId();
-        var centralServerId = contributionRecord.get(job.getJobId()) != null ?
-          contributionRecord.get(job.getJobId()).getCentralServer().getId() : getCentralServerId(job.getJobId());
+        var centralServerId = getCentralServerId(job.getJobId());
         var instance = inventoryViewService.getInstance(instanceId);
         if (centralServerId == null || instance == null) {
           log.warn("processInitialContributionEvents:: Unable to process event with instance " +
@@ -102,8 +101,12 @@ public class InitialContributionEventProcessor {
   }
 
   private UUID getCentralServerId(UUID jobId) {
-    Contribution contribution = contributionRepository.findByJobId(jobId);
-    if (contribution != null && contribution.getCentralServer() != null) {
+    var cached = contributionRecord.get(jobId);
+    if (cached != null) {
+      return cached.getCentralServer().getId();
+    }
+    var contribution = contributionRepository.findByJobId(jobId);
+    if (contribution != null) {
       contributionRecord.put(jobId, contribution);
       return contribution.getCentralServer().getId();
     }

@@ -3,6 +3,8 @@
 * Fix handling time-out errors from central server during ongoing contribution ([MODINREACH-581](https://folio-org.atlassian.net/browse/MODINREACH-581))
 * Fix redundant and overly verbose logging statements ([MODINREACH-583](https://folio-org.atlassian.net/browse/MODINREACH-583))
 * Remove Item Contribution logic from Circulation (loan and request) events handlers ([MODINREACH-572](https://folio-org.atlassian.net/browse/MODINREACH-572))
+* Add performance and correctness improvements for the initial contribution and ongoing contribution ([MODINREACH-582](https://folio-org.atlassian.net/browse/MODINREACH-582))
+* Add logs to track all Inn-Reach server calls ([MODINREACH-587](https://folio-org.atlassian.net/browse/MODINREACH-587))
 
 ## v4.0.0 2026-04-17
 

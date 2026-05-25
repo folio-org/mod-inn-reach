@@ -26,6 +26,10 @@ import org.springframework.web.client.ResourceAccessException;
 @Service
 public class InnReachContributionServiceImpl implements InnReachContributionService {
 
+  private static final String D2IR_CALL_LOG_TEMPLATE =
+    "D2IR_CALL client=InnReachContributionClient method={} path=%s localCode={} centralCode={}";
+  private static final String INN_REACH_BIB_ID = "bibId: %s";
+
   private final InnReachContributionClient contributionClient;
   private final InnReachAuthExternalService innReachAuthExternalService;
   private final CentralServerService centralServerService;
@@ -42,10 +46,12 @@ public class InnReachContributionServiceImpl implements InnReachContributionServ
       var localCode = connectionDetails.getLocalCode();
       var centralCode = connectionDetails.getCentralCode();
 
-      return contributionClient.contributeBib(connectionUrl, authorizationHeader, localCode,
-        centralCode, bibId, bib);
+
+      log.info(D2IR_CALL_LOG_TEMPLATE.formatted("/innreach/v2/contribution/bib/{}"),
+        "contributeBib", bibId, localCode, centralCode);
+      return contributionClient.contributeBib(connectionUrl, authorizationHeader, localCode, centralCode, bibId, bib);
     } catch (ResourceAccessException ex) {
-      logTimeOutException("contributeBib", "bibId: " + bibId, ex);
+      logTimeOutException("contributeBib", INN_REACH_BIB_ID.formatted(bibId), ex);
       throw new InnReachTimeOutException("Bib contribution request to InnReach Server is timed out");
     }
   }
@@ -62,9 +68,11 @@ public class InnReachContributionServiceImpl implements InnReachContributionServ
       var localCode = connectionDetails.getLocalCode();
       var centralCode = connectionDetails.getCentralCode();
 
+      log.info(D2IR_CALL_LOG_TEMPLATE.formatted("/innreach/v2/contribution/bib/{}"),
+        "deContributeBib", bibId, localCode, centralCode);
       return contributionClient.deContributeBib(connectionUrl, authorizationHeader, localCode, centralCode, bibId);
     } catch (ResourceAccessException ex) {
-      logTimeOutException("deContributeBib", "bibId: " + bibId, ex);
+      logTimeOutException("deContributeBib", INN_REACH_BIB_ID.formatted(bibId), ex);
       throw new InnReachTimeOutException("Bib de-contribution request to InnReach Server is timed out");
     }
   }
@@ -81,6 +89,8 @@ public class InnReachContributionServiceImpl implements InnReachContributionServ
       var localCode = connectionDetails.getLocalCode();
       var centralCode = connectionDetails.getCentralCode();
 
+      log.info(D2IR_CALL_LOG_TEMPLATE.formatted("/innreach/v2/contribution/item/{}"),
+        "deContributeBibItem", itemId, localCode, centralCode);
       return contributionClient.deContributeBibItem(connectionUrl, authorizationHeader, localCode, centralCode, itemId);
     } catch (ResourceAccessException ex) {
       logTimeOutException("deContributeBibItem", "itemId: " + itemId, ex);
@@ -100,10 +110,12 @@ public class InnReachContributionServiceImpl implements InnReachContributionServ
       var localCode = connectionDetails.getLocalCode();
       var centralCode = connectionDetails.getCentralCode();
 
+      log.info(D2IR_CALL_LOG_TEMPLATE.formatted("/innreach/v2/contribution/items/{}"),
+        "contributeBibItems", bibId, localCode, centralCode);
       return contributionClient.contributeBibItems(connectionUrl, authorizationHeader, localCode,
         centralCode, bibId, bibItems);
     } catch (ResourceAccessException ex) {
-      logTimeOutException("contributeBibItems", "bibId: " + bibId, ex);
+      logTimeOutException("contributeBibItems", INN_REACH_BIB_ID.formatted(bibId), ex);
       throw new InnReachTimeOutException("Bib Items contribution request to InnReach Server is timed out");
     }
   }
@@ -120,10 +132,12 @@ public class InnReachContributionServiceImpl implements InnReachContributionServ
       var localCode = connectionDetails.getLocalCode();
       var centralCode = connectionDetails.getCentralCode();
 
+      log.info(D2IR_CALL_LOG_TEMPLATE.formatted("path=/innreach/v2/local/{}/bib/{}"),
+        "lookUpBib", localCode, bibId, localCode, centralCode);
       return contributionClient.lookUpBib(connectionUrl, authorizationHeader, localCode,
         centralCode, localCode, bibId);
     } catch (ResourceAccessException ex) {
-      logTimeOutException("lookUpBib", "bibId: " + bibId, ex);
+      logTimeOutException("lookUpBib", INN_REACH_BIB_ID.formatted(bibId), ex);
       throw new InnReachTimeOutException("Look-up Bib request to InnReach Server is timed out");
     } catch (Exception e) {
       return InnReachResponse.errorResponse(e.getMessage(), emptyList());
@@ -142,10 +156,12 @@ public class InnReachContributionServiceImpl implements InnReachContributionServ
       var localCode = connectionDetails.getLocalCode();
       var centralCode = connectionDetails.getCentralCode();
 
+      log.info(D2IR_CALL_LOG_TEMPLATE.formatted("/innreach/v2/local/{}/bib/{}/item/{}"),
+        "lookUpBibItem", localCode, bibId, itemId, localCode, centralCode);
       return contributionClient.lookUpBibItem(connectionUrl, authorizationHeader, localCode,
         centralCode, localCode, bibId, itemId);
     } catch (ResourceAccessException ex) {
-      logTimeOutException("lookUpBibItem", "bibId: " + bibId + " itemId: " + itemId, ex);
+      logTimeOutException("lookUpBibItem", INN_REACH_BIB_ID.formatted(bibId) + " itemId: " + itemId, ex);
       throw new InnReachTimeOutException("Look-up Bib Item request to InnReach Server is timed out");
     } catch (Exception e) {
       return InnReachResponse.errorResponse(e.getMessage(), emptyList());

@@ -196,6 +196,13 @@ contribution:
     initial-delay: 300000
   retry-attempts: ${CONTRIBUTION_RETRIES:3600}
   fetch-limit: ${CONTRIBUTION_FETCH_LIMIT:50}
+  # Minimum number of available slots (recordLimit - inProgressCount) required before
+  # claiming a new batch. If available < minBatchThreshold, the scheduler skips this
+  # tick for the tenant. Default is ~10% of fetch-limit (recordLimit / 10).
+  # Tune together with fetch-limit and scheduler.fixed-delay:
+  #   - Higher value → fewer, larger batches, less DB overhead, but higher latency.
+  #   - Lower value → more frequent small batches, more DB overhead, but lower latency.
+  min-batch-threshold: ${CONTRIBUTION_MIN_BATCH_THRESHOLD:5}
   item-pause: ${CONTRIBUTION_ITEM_PAUSE:0.5}
   tenant-cache:
     ttl: 3600
