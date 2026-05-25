@@ -11,6 +11,7 @@ import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 
 import java.util.concurrent.Executor;
+import java.util.concurrent.ThreadPoolExecutor;
 
 @Configuration
 public class SpringAsyncConfig implements AsyncConfigurer {
@@ -54,6 +55,9 @@ public class SpringAsyncConfig implements AsyncConfigurer {
     executor.setMaxPoolSize(schedulerTaskPoolSize + 10);
     executor.setQueueCapacity(50);
     executor.setThreadNamePrefix("initialSchedulerTaskExecutor-");
+    // When the queue is full, run the task on the caller (scheduler) thread instead of
+    // rejecting. This prevents orphaned IN_PROGRESS rows and provides natural back-pressure.
+    executor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
     executor.initialize();
     return executor;
   }
@@ -65,6 +69,9 @@ public class SpringAsyncConfig implements AsyncConfigurer {
     executor.setMaxPoolSize(schedulerTaskPoolSize + 10);
     executor.setQueueCapacity(50);
     executor.setThreadNamePrefix("ongoingSchedulerTaskExecutor-");
+    // When the queue is full, run the task on the caller (scheduler) thread instead of
+    // rejecting. This prevents orphaned IN_PROGRESS rows and provides natural back-pressure.
+    executor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
     executor.initialize();
     return executor;
   }
