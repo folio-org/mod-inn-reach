@@ -39,6 +39,9 @@ public class InnReachAuthExternalServiceImpl implements InnReachAuthExternalServ
 
     var accessTokenUrl = buildUri(URI.create(centralServerBaseUrl), INN_REACH_ACCESS_TOKEN_PATH);
     var authorizationHeader = buildBasicAuthorizationHeader(connectionDetailsDTO);
+
+    log.info("D2IR_CALL client=InnReachAuthClient method=getAccessToken path=/auth/v1/oauth2/token baseUrl={}",
+      connectionDetailsDTO.getConnectionUrl());
     var responseEntity = innReachAuthClient.getAccessToken(accessTokenUrl, authorizationHeader);
 
     var accessTokenDTO = responseEntity.getBody();
