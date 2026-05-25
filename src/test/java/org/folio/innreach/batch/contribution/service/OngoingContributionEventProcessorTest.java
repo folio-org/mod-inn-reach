@@ -1206,4 +1206,24 @@ class OngoingContributionEventProcessorTest extends BaseControllerTest {
     return ongoingContributionStatusRepository.save(ongoingContributionStatus);
   }
 
+  @Test
+  void testRetryExhaustedSetsStatusToFailedWithRetryLimitMessage() {
+    var ongoingContributionStatus = saveOngoingContributionStatus(ongoingContributionStatusMapper
+      .convertItemToEntity(itemCreate), CENTRAL_SERVER_ID);
+    // Set retry attempts above the configured max (default is 2) to trigger retry exhaustion immediately
+    ongoingContributionStatus.setRetryAttempts(3);
+    ongoingContributionStatusRepository.save(ongoingContributionStatus);
+
+    eventProcessor.processOngoingContribution(ongoingContributionStatus);
+
+    await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() ->
+      verify(ongoingContributionStatusRepository, times(3)).save(any()));
+    assertEquals(FAILED, ongoingContributionStatus.getStatus());
+    assertEquals(ONGOING_CONTRIBUTION_RETRY_LIMIT_MESSAGE, ongoingContributionStatus.getError());
+    // Verify no contribution service calls were made since retry limit was hit before processing
+    verify(recordContributionService, never()).contributeInstance(any(), any());
+    verify(recordContributionService, never()).contributeItems(any(), any(), any());
+    verify(recordContributionService, never()).deContributeInstance(any(), any());
+  }
+
 }
