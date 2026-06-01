@@ -23,7 +23,6 @@ public interface JobExecutionStatusRepository extends JpaRepository<JobExecution
     "AND t.status IN ('READY', 'RETRY') " +
     "AND (t.instance_contributed = false " +
     "OR t.updated_date < current_timestamp - (interval '1 hour') * :itemPause) " +
-    "ORDER BY t.instance_contributed ASC, t.updated_date NULLS FIRST " +
     "FOR UPDATE OF t SKIP LOCKED " +
     "LIMIT :limit) " +
     "UPDATE job_execution_status s " +
