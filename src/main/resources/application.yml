@@ -201,9 +201,14 @@ kafka:
 contribution:
   async:
     pool-size: ${CONTRIBUTION_POOL_SIZE:50}
-  scheduler:
-    fixed-delay: ${CONTRIBUTION_SCHEDULER_DELAY:10000}
-    initial-delay: 300000
+  initial:
+    scheduler:
+      fixed-delay: ${INITIAL_CONTRIBUTION_SCHEDULER_DELAY:10000}
+      initial-delay: 360000
+  ongoing:
+    scheduler:
+      fixed-delay: ${CONTRIBUTION_SCHEDULER_DELAY:10000}
+      initial-delay: 300000
   retry-attempts: ${CONTRIBUTION_RETRIES:3600}
   fetch-limit: ${CONTRIBUTION_FETCH_LIMIT:50}
   # Minimum number of available slots (recordLimit - inProgressCount) required before
