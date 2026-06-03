@@ -5,6 +5,7 @@
 * Remove Item Contribution logic from Circulation (loan and request) events handlers ([MODINREACH-572](https://folio-org.atlassian.net/browse/MODINREACH-572))
 * Add performance and correctness improvements for the initial contribution and ongoing contribution ([MODINREACH-582](https://folio-org.atlassian.net/browse/MODINREACH-582))
 * Add logs to track all Inn-Reach server calls ([MODINREACH-587](https://folio-org.atlassian.net/browse/MODINREACH-587))
+* Separate scheduler job configs for initial and ongoing contributions ([MODINREACH-599](https://folio-org.atlassian.net/browse/MODINREACH-599))
 
 ## v4.0.0 2026-04-17
 
