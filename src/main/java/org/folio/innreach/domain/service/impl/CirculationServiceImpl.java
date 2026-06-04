@@ -251,19 +251,17 @@ public class CirculationServiceImpl implements CirculationService {
     transaction.setState(CANCEL_REQUEST);
 
     var folioItemId = transaction.getHold().getFolioItemId();
-
-    removeItemTransactionInfo(folioItemId)
-      .ifPresent(this::removeHoldingsTransactionInfo);
-
     var folioHoldingId = transaction.getHold().getFolioHoldingId();
     var folioInstanceId = transaction.getHold().getFolioInstanceId();
     var folioLoanId = transaction.getHold().getFolioLoanId();
 
-    virtualRecordService.deleteVirtualRecords(folioItemId,folioHoldingId,folioInstanceId,folioLoanId);
+    executeDeleteVirtualRecordsWithDelay(folioItemId, folioHoldingId, folioInstanceId, folioLoanId);
 
     eventPublisher.publishEvent(CancelRequestEvent.of(transaction,
       INN_REACH_CANCELLATION_REASON_ID, cancelRequest.getReason()));
 
+    removeItemTransactionInfo(folioItemId)
+      .ifPresent(this::removeHoldingsTransactionInfo);
     clearPatronAndItemInfo(transaction.getHold());
 
     log.info("cancelPatronHold:: Cancelled Patron Hold transaction, tracking ID: [{}], central code: [{}]",
