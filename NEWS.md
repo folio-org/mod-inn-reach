@@ -1,3 +1,20 @@
+## v3.4.5 2026-06-04
+
+### Bugs
+* **General**
+  * Fix redundant and overly verbose logging statements ([MODINREACH-583](https://folio-org.atlassian.net/browse/MODINREACH-583))
+* **Contribution**
+  * Fix handling time-out errors from central server during ongoing contribution ([MODINREACH-581](https://folio-org.atlassian.net/browse/MODINREACH-581))
+  * Add performance and correctness improvements for the initial contribution and ongoing contribution ([MODINREACH-582](https://folio-org.atlassian.net/browse/MODINREACH-582))
+
+### Features
+* **General**
+  * Add logs to track all Inn-Reach server calls ([MODINREACH-587](https://folio-org.atlassian.net/browse/MODINREACH-587))
+* **Contribution**
+  * Remove Item Contribution logic from Circulation (loan and request) events handlers ([MODINREACH-572](https://folio-org.atlassian.net/browse/MODINREACH-572))
+  * Separate scheduler job configs for initial and ongoing contributions ([MODINREACH-599](https://folio-org.atlassian.net/browse/MODINREACH-599))
+
+
 ## v3.4.4 2025-10-31
 * [MODINREACH-531](https://folio-org.atlassian.net/browse/MODINREACH-531) - 414 Request-URI Too Long when calling circulation/requests during getPagingSlipsByServicePoint call
 
