@@ -1,7 +1,5 @@
 package org.folio.innreach.domain.service.impl;
 
-import static org.folio.innreach.config.KafkaListenerConfiguration.BATCH_EVENT_PROCESSOR_RETRY_TEMPLATE;
-
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -11,11 +9,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.folio.innreach.external.exception.InnReachConnectionException;
 import org.folio.innreach.external.exception.ServiceSuspendedException;
-import org.folio.innreach.external.exception.SocketTimeOutExceptionWrapper;
-import org.springframework.beans.factory.annotation.Qualifier;
+import org.folio.innreach.external.exception.InnReachTimeOutException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.listener.ListenerExecutionFailedException;
-import org.springframework.retry.support.RetryTemplate;
 import org.springframework.stereotype.Service;
 
 import org.folio.innreach.domain.event.DomainEvent;
@@ -27,13 +23,10 @@ public class BatchDomainEventProcessor {
 
   private final TenantScopedExecutionService executionService;
 
-  @Qualifier(value = BATCH_EVENT_PROCESSOR_RETRY_TEMPLATE)
-  private final RetryTemplate retryTemplate;
   @Value("${innReachTenants}")
   private String innReachTenants;
 
   public <T> void process(List<DomainEvent<T>> batch, Consumer<DomainEvent<T>> recordProcessor) {
-    log.debug("process:: parameters batch: {}, recordProcessor: {}", batch, recordProcessor);
     var tenantEventsMap = batch.stream().collect(Collectors.groupingBy(DomainEvent::getTenant));
     for (var tenantEventsEntry : tenantEventsMap.entrySet()) {
       var tenantId = tenantEventsEntry.getKey();
@@ -43,32 +36,30 @@ public class BatchDomainEventProcessor {
           executionService.runTenantScoped(tenantId,
             () -> processTenantEvents(events, recordProcessor));
         }
-        catch (ServiceSuspendedException | FeignException | InnReachConnectionException | SocketTimeOutExceptionWrapper e) {
-          log.info("exception thrown from process", e);
+        catch (ServiceSuspendedException | FeignException | InnReachConnectionException | InnReachTimeOutException e) {
+          log.error("process:: exception thrown on events processing: {}", e.getMessage(), e);
           throw e;
-        }
-        catch (ListenerExecutionFailedException listenerExecutionFailedException) {
-          log.warn("Consuming this event [{}] not permitted for system user [tenantId={}]", recordProcessor, tenantId);
+        } catch (ListenerExecutionFailedException listenerExecutionFailedException) {
+          log.warn("process:: Consuming events not permitted for system user [tenantId={}]", tenantId);
         }
       } else {
-        log.warn("Ignoring event of unknown tenant {}", tenantId);
+        log.warn("process:: Ignoring event of unknown tenant {}", tenantId);
       }
     }
   }
 
   private <T> void processTenantEvents(List<DomainEvent<T>> events, Consumer<DomainEvent<T>> recordProcessor) {
-    log.debug("processTenantEvents:: parameters events: {}, recordProcessor: {}", events, recordProcessor);
     for (var event : events) {
-      log.info("Processing event {}", event);
+      log.info("processTenantEvents:: Processing event type {} for {}", event.getType(), event.getClass().getSimpleName());
       try {
           recordProcessor.accept(event);
       }
       catch (ServiceSuspendedException | FeignException | InnReachConnectionException e) {
-        log.info("exception thrown from process", e);
+        log.error("processTenantEvents:: Exception thrown from event processing: {}", e.getMessage(), e);
         throw e;
-      }
-      catch (Exception e) {
-        log.warn("Failed to process event {}", event, e);
+      } catch (Exception e) {
+        log.error("processTenantEvents:: Failed to process event type {} for {}: {}",
+          event.getType(), event.getClass().getSimpleName(), e.getMessage(), e);
       }
     }
   }

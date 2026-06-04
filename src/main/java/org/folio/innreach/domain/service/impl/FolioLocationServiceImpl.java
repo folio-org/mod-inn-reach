@@ -26,7 +26,6 @@ public class FolioLocationServiceImpl implements FolioLocationService {
   @Override
   @Cacheable(value = LOCATION_LIBRARY_MAPPING_CACHE, key = "@folioExecutionContext.tenantId")
   public Map<UUID, UUID> getLocationLibraryMappings() {
-    log.debug("getLocationLibraryMappings:: no parameter");
     return locationsClient.getLocations(FETCH_LIMIT).getResult().stream()
       .collect(toMap(LocationDTO::getId, LocationDTO::getLibraryId));
   }

@@ -3,7 +3,6 @@ package org.folio.innreach.domain.service.impl;
 import static java.util.stream.Collectors.toMap;
 
 import static org.folio.innreach.domain.dto.folio.ContributionItemCirculationStatus.ON_LOAN;
-import static org.folio.innreach.util.ListUtils.getFirstItem;
 import static org.folio.innreach.util.ListUtils.getLastItem;
 
 import java.util.Collection;
@@ -73,7 +72,7 @@ public class RecordTransformationServiceImpl implements RecordTransformationServ
 
   @Override
   public BibInfo getBibInfo(UUID centralServerId, Instance instance) {
-    log.debug("getBibInfo:: parameters centralServerId: {}, instance: {}", centralServerId, instance);
+    log.debug("getBibInfo:: parameters centralServerId: {}, instance hrid: {}", centralServerId, instance.getHrid());
     var bibId = instance.getHrid();
 
     var suppressionStatus = validationService.getSuppressionStatus(centralServerId, instance.getStatisticalCodeIds());
@@ -86,7 +85,7 @@ public class RecordTransformationServiceImpl implements RecordTransformationServ
     bibInfo.setMarc21BibFormat(MARC_BIB_FORMAT);
     bibInfo.setMarc21BibData(marc.getBase64rawContent());
     bibInfo.setItemCount(countContributionItems(centralServerId, instance.getItems()));
-    log.info("getBibInfo:: result: {}", bibInfo);
+    log.info("getBibInfo:: Obtained Bib Info for bib id: [{}]", bibInfo.getBibId());
     return bibInfo;
   }
 
@@ -94,7 +93,7 @@ public class RecordTransformationServiceImpl implements RecordTransformationServ
   public List<BibItem> getBibItems(UUID centralServerId, List<Item> items, BiConsumer<Item, Exception> errorHandler) {
     log.debug("getBibItems:: parameters centralServerId: {}, item: {}, errorHandler: {}", centralServerId, items, errorHandler);
     var mappings = getContributionMappings(centralServerId);
-    log.info("Resolved contribution mappings: {}", mappings);
+    log.info("Resolved contribution mappings for central server: {}", centralServerId);
 
     return items.stream()
       .map(item -> convertItem(centralServerId, item, mappings, errorHandler))
@@ -103,7 +102,6 @@ public class RecordTransformationServiceImpl implements RecordTransformationServ
   }
 
   private BibItem convertItem(UUID centralServerId, Item item, ContributionMappings mappings, BiConsumer<Item, Exception> errorHandler) {
-    log.info("Loading item {} info", item.getHrid());
     try {
       var suppressionStatus = getSuppressionStatus(centralServerId, item);
       var circulationStatus = getCirculationStatus(centralServerId, item);
@@ -145,10 +143,11 @@ public class RecordTransformationServiceImpl implements RecordTransformationServ
 
       validateRequiredFields(bibItem);
 
-      log.info("Loaded bibItem {}", bibItem);
+      log.info("Loaded Bib Item for Item ID: [{}]", itemId);
 
       return bibItem;
     } catch (Exception e) {
+      log.error("Failed to load Bib Item with ID: [{}]", item.getId(), e);
       errorHandler.accept(item, e);
       return null;
     }

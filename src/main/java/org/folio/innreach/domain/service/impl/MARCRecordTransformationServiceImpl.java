@@ -107,7 +107,6 @@ public class MARCRecordTransformationServiceImpl implements MARCRecordTransforma
       transformationConfig = createEmptyMARCTransformationConfig();
     }
 
-    log.info("getMARCTransformationSettings:: result: {}", transformationConfig);
     return transformationConfig;
   }
 

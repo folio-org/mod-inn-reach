@@ -14,7 +14,6 @@ import static org.folio.innreach.fixture.ContributionFixture.createContributionJ
 import static org.folio.innreach.fixture.ContributionFixture.createItem;
 import static org.folio.innreach.fixture.TestUtil.createNoRetryTemplate;
 
-import java.net.SocketTimeoutException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -72,7 +71,7 @@ class ItemContributorTest {
   }
 
   @Test
-  void shouldContributeItems() throws SocketTimeoutException {
+  void shouldContributeItems() {
     when(irContributionService.contributeBibItems(any(), any(), any())).thenReturn(response);
     when(recordTransformationService.getBibItems(any(), any(), any())).thenReturn(List.of(new BibItem()));
     when(response.getErrors()).thenReturn(new ArrayList<>());
@@ -110,7 +109,7 @@ class ItemContributorTest {
   }
 
   @Test
-  void shouldContributeItems_throwException() throws SocketTimeoutException {
+  void shouldContributeItems_throwException() {
     InnReachResponse.Error errorResp1 = InnReachResponse.Error.builder().reason("Contribution to d2irm is not currently suspended").build();
     InnReachResponse.Error errorResp2 = InnReachResponse.Error.builder().reason("Contribution to d2irm is currently suspended").build();
     InnReachResponse.Error errorResp3 = InnReachResponse.Error.builder().reason("Central Error").central("d2irm")
@@ -146,19 +145,5 @@ class ItemContributorTest {
     response.setStatus("nok");
     resp = service.isContributed(JOB_CONTEXT.getCentralServerId(), createInstance(),createItem());
     assertFalse(resp);
-  }
-
-  @Test
-  void testMoveItem() throws SocketTimeoutException {
-    when(irContributionService.deContributeBibItem(any(), any())).thenReturn(response);
-    when(irContributionService.contributeBibItems(any(), any(), any())).thenReturn(response);
-    when(recordTransformationService.getBibItems(any(), any(), any())).thenReturn(List.of(new BibItem()));
-    when(response.getErrors()).thenReturn(new ArrayList<>());
-    when(response.isOk()).thenReturn(true);
-
-    service.moveItem(JOB_CONTEXT.getCentralServerId(), "test", createItem());
-
-    verify(irContributionService).deContributeBibItem(any(),any());
-    verify(irContributionService).contributeBibItems(eq(JOB_CONTEXT.getCentralServerId()), any(), any());
   }
 }

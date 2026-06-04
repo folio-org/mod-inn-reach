@@ -43,7 +43,6 @@ public class MaterialTypeMappingServiceImpl implements MaterialTypeMappingServic
 
     Page<MaterialTypeMapping> mappings = repository.findAll(example, new OffsetRequest(offset, limit));
 
-    log.info("getAllMappings:: result: {}", mapper.toDTOCollection(mappings));
     return mapper.toDTOCollection(mappings);
   }
 
@@ -53,7 +52,6 @@ public class MaterialTypeMappingServiceImpl implements MaterialTypeMappingServic
     log.debug("getMapping:: parameters centralServerId: {}, id: {}", centralServerId, id);
     var mapping = findMapping(centralServerId, id);
 
-    log.info("getMapping:: result: {}", mapper.toDTO(mapping));
     return mapper.toDTO(mapping);
   }
 
@@ -65,7 +63,6 @@ public class MaterialTypeMappingServiceImpl implements MaterialTypeMappingServic
 
     var saved = repository.save(entity);
 
-    log.info("createMapping:: result: {}", mapper.toDTO(saved));
     return mapper.toDTO(saved);
   }
 
@@ -78,14 +75,14 @@ public class MaterialTypeMappingServiceImpl implements MaterialTypeMappingServic
     mapping.setMaterialTypeId(dto.getMaterialTypeId());
     mapping.setCentralItemType(dto.getCentralItemType());
 
-    log.info("updateMapping:: result: {}", mapper.toDTO(mapping));
     return mapper.toDTO(mapping);
   }
 
   @Override
   public MaterialTypeMappingsDTO updateAllMappings(UUID centralServerId,
       MaterialTypeMappingsDTO materialTypeMappingsDTO) {
-    log.debug("updateAllMappings:: parameters centralServerId: {}, materialTypeMappingsDTO: {}", centralServerId, materialTypeMappingsDTO);
+    log.debug("updateAllMappings:: parameters centralServerId: {}, materialTypeMappingsDTO: {}",
+      centralServerId, materialTypeMappingsDTO);
     var stored = repository.findAll(mappingExampleWithServerId(centralServerId));
 
     var incoming = mapper.toEntities(materialTypeMappingsDTO.getMaterialTypeMappings());
@@ -94,7 +91,6 @@ public class MaterialTypeMappingServiceImpl implements MaterialTypeMappingServic
 
     var saved = mergeAndSave(incoming, stored, repository, this::copyData);
 
-    log.info("updateAllMappings:: result: {}", mapper.toDTOCollection(saved));
     return mapper.toDTOCollection(saved);
   }
 
@@ -111,13 +107,14 @@ public class MaterialTypeMappingServiceImpl implements MaterialTypeMappingServic
 
   @Override
   public MaterialTypeMappingDTO findByCentralServerAndMaterialType(UUID centralServerId, UUID materialTypeId){
-    log.debug("findByCentralServerAndMaterialType:: parameters centralServerId: {}, materialTypeId: {}", centralServerId, materialTypeId);
+    log.debug("findByCentralServerAndMaterialType:: parameters centralServerId: {}, materialTypeId: {}",
+      centralServerId, materialTypeId);
     var materialType = repository.findOneByCentralServerIdAndMaterialTypeId(
       centralServerId, materialTypeId).orElseThrow(
       () -> new EntityNotFoundException("Material type mapping for central server id = " + centralServerId
         + " and material type id = " + materialTypeId + " not found")
     );
-    log.info("findByCentralServerAndMaterialType:: result: {}", mapper.toDTO(materialType));
+
     return mapper.toDTO(materialType);
   }
 
