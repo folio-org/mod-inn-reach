@@ -97,7 +97,7 @@ public class ContributionJobScheduler {
       }
       contributionService.updateStatisticsAndContributionStatus();
     } catch (Exception ex) {
-      log.warn("Exception caught while processing Initial contribution for tenant {} {} ", tenant, ex.getMessage());
+      log.warn("Exception caught while processing Initial contribution for tenant {} {} ", tenant, ex.getMessage(), ex);
     }
   }
 
