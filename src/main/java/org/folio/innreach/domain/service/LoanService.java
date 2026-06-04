@@ -1,6 +1,5 @@
 package org.folio.innreach.domain.service;
 
-import java.time.Instant;
 import java.util.Date;
 import java.util.Optional;
 import java.util.UUID;
@@ -24,7 +23,7 @@ public interface LoanService extends BasicService<UUID, LoanDTO> {
 
   CheckInResponseDTO checkInItem(InnReachTransaction transaction, UUID servicePointId);
 
-  void claimItemReturned(UUID loanId, Instant itemClaimedReturnedDateTime);
+  void claimItemReturned(UUID loanId, Date itemClaimedReturnedDateTime);
 
   boolean isOpen(LoanDTO loanDTO);
 }
