@@ -504,7 +504,7 @@ public class CirculationServiceImpl implements CirculationService {
     Long checkOutTimeDuration = jsonHelper.getCheckoutTimeDurationInMilliseconds(configDataList.getResult());
 
     log.info("deleteVirtualRecords execution started at: [{}] with Checkout Time Duration: [{}]",
-      new Date(), checkOutTimeDuration);
+      Instant.now(), checkOutTimeDuration);
     var task = new FolioAsyncExecutorWrapper(folioExecutionContext,
             () -> virtualRecordService.deleteVirtualRecords(folioItemId, folioHoldingId,
                     folioInstanceId, folioLoanId));
@@ -519,7 +519,7 @@ public class CirculationServiceImpl implements CirculationService {
     var transaction = getTransaction(trackingId, centralCode);
 
     var returnedDateSec = claimsItemReturned.getClaimsReturnedDate();
-    var returnedDate = returnedDateSec != -1 ? Date.from(ofEpochSecond(returnedDateSec)) : new Date();
+    var returnedDate = returnedDateSec != -1 ? ofEpochSecond(returnedDateSec) : Instant.now();
 
     var folioLoanId = transaction.getHold().getFolioLoanId();
     Assert.isTrue(folioLoanId != null, "Loan id is not set for transaction: " + trackingId);

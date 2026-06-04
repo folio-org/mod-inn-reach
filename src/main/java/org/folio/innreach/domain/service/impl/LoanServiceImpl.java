@@ -2,6 +2,7 @@ package org.folio.innreach.domain.service.impl;
 
 import static org.folio.innreach.util.ListUtils.getFirstItem;
 
+import java.time.Instant;
 import java.util.Date;
 import java.util.Optional;
 import java.util.UUID;
@@ -103,9 +104,9 @@ public class LoanServiceImpl implements LoanService {
   }
 
   @Override
-  public void claimItemReturned(UUID loanId, Date itemClaimedReturnedDate) {
+  public void claimItemReturned(UUID loanId, Instant itemClaimedReturnedDate) {
     var request = new ClaimItemReturnedRequestDTO()
-      .itemClaimedReturnedDateTime(itemClaimedReturnedDate);
+      .itemClaimedReturnedDateTime(Date.from(itemClaimedReturnedDate));
 
     circulationClient.claimItemReturned(loanId, request);
   }
