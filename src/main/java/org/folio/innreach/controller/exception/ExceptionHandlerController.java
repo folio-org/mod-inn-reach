@@ -8,6 +8,7 @@ import jakarta.validation.ConstraintViolationException;
 import java.util.List;
 
 import lombok.extern.log4j.Log4j2;
+import org.folio.innreach.domain.exception.ContributionValidationException;
 import org.folio.innreach.external.exception.InnReachGatewayException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
@@ -38,7 +39,7 @@ public class ExceptionHandlerController {
   @ExceptionHandler({IllegalArgumentException.class, InnReachException.class, CirculationException.class, InnReachGatewayException.class})
   @ResponseStatus(HttpStatus.BAD_REQUEST)
   public Error handleBadRequestException(Exception e) {
-    log.error("Unexpected exception: " + e.getMessage(), e);
+    log.error("Unexpected exception: {}", e.getMessage(), e);
 
     return createError(HttpStatus.BAD_REQUEST, e.getMessage());
   }
@@ -68,6 +69,12 @@ public class ExceptionHandlerController {
     return errors;
   }
 
+  @ExceptionHandler(ContributionValidationException.class)
+  @ResponseStatus(HttpStatus.BAD_REQUEST)
+  public Error handleInitialContributionValidationException(ContributionValidationException ex) {
+    return createError(HttpStatus.BAD_REQUEST, ex.getMessage());
+  }
+
   @ExceptionHandler(DataIntegrityViolationException.class)
   @ResponseStatus(HttpStatus.CONFLICT)
   public Error handleDataIntegrityViolationException(DataIntegrityViolationException e) {
@@ -77,7 +84,7 @@ public class ExceptionHandlerController {
   @ExceptionHandler(Exception.class)
   @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
   public Error handleException(Exception e) {
-    log.error("Unexpected exception: " + e.getMessage(), e);
+    log.error("Unexpected exception: {}", e.getMessage(), e);
 
     return createError(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
   }

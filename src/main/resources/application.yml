@@ -97,6 +97,9 @@ management:
       enabled: true
 debug: false
 inn-reach:
+  client:
+    connect-timeout-ms: ${INN_REACH_HTTP_CLIENT_CONNECTION_TIMEOUT:120000}
+    read-timeout-ms: ${INN_REACH_HTTP_CLIENT_READ_TIMEOUT:60000}
   request-ids:
     split-size: ${INN_REACH_REQUEST_IDS_SPLIT_SIZE:50}
   jwt-access-token:
@@ -188,11 +191,23 @@ kafka:
 contribution:
   async:
     pool-size: ${CONTRIBUTION_POOL_SIZE:50}
-  scheduler:
-    fixed-delay: ${CONTRIBUTION_SCHEDULER_DELAY:10000}
-    initial-delay: 300000
+  initial:
+    scheduler:
+      fixed-delay: ${INITIAL_CONTRIBUTION_SCHEDULER_DELAY:10000}
+      initial-delay: 360000
+  ongoing:
+    scheduler:
+      fixed-delay: ${CONTRIBUTION_SCHEDULER_DELAY:10000}
+      initial-delay: 300000
   retry-attempts: ${CONTRIBUTION_RETRIES:3600}
   fetch-limit: ${CONTRIBUTION_FETCH_LIMIT:50}
+  # Minimum number of available slots (recordLimit - inProgressCount) required before
+  # claiming a new batch. If available < minBatchThreshold, the scheduler skips this
+  # tick for the tenant. Default is ~10% of fetch-limit (recordLimit / 10).
+  # Tune together with fetch-limit and scheduler.fixed-delay:
+  #   - Higher value → fewer, larger batches, less DB overhead, but higher latency.
+  #   - Lower value → more frequent small batches, more DB overhead, but lower latency.
+  min-batch-threshold: ${CONTRIBUTION_MIN_BATCH_THRESHOLD:5}
   item-pause: ${CONTRIBUTION_ITEM_PAUSE:0.5}
   tenant-cache:
     ttl: 3600

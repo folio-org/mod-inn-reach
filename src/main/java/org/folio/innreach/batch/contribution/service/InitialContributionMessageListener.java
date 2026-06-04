@@ -6,7 +6,7 @@ import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.folio.innreach.domain.dto.folio.inventorystorage.InstanceIterationEvent;
 import org.folio.innreach.external.exception.InnReachConnectionException;
 import org.folio.innreach.external.exception.ServiceSuspendedException;
-import org.folio.innreach.external.exception.SocketTimeOutExceptionWrapper;
+import org.folio.innreach.external.exception.InnReachTimeOutException;
 import org.springframework.kafka.listener.MessageListener;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
@@ -39,11 +39,12 @@ public class InitialContributionMessageListener implements MessageListener<Strin
 
       iMessageProcessor.processMessage(instanceIterationEvent, consumerRecord.topic());
     }
-    catch (ServiceSuspendedException | HttpClientErrorException | HttpServerErrorException | InnReachConnectionException | SocketTimeOutExceptionWrapper e) {
+    catch (ServiceSuspendedException | HttpClientErrorException | HttpServerErrorException | InnReachConnectionException |
+           InnReachTimeOutException e) {
       throw e;
     }
     catch (Exception e) {
-      log.info("InitialContributionMessageListener: error happened while consuming : {}", e.getMessage());
+      log.error("InitialContributionMessageListener: error happened while consuming : {}", e.getMessage(), e);
     }
   }
 }

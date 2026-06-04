@@ -14,12 +14,21 @@ import java.util.UUID;
 @Repository
 public interface JobExecutionStatusRepository extends JpaRepository<JobExecutionStatus, UUID> {
 
-  @Query(value = "update job_execution_status s " +
-    "set status = 'IN_PROGRESS' where s.id in (select t.id from job_execution_status t " +
-    "inner join contribution c on c.job_id = t.job_id where c.status = 0 and " +
-    "((t.instance_contributed = true and t.updated_date < current_timestamp - (interval '1 hour') * :itemPause) " +
-    "or t.instance_contributed = false) and " +
-    "t.status in ('READY', 'RETRY') limit :limit) returning * ", nativeQuery = true)
+  @Modifying(flushAutomatically = true, clearAutomatically = true)
+  @Transactional
+  @Query(value = "WITH claimed AS (" +
+    "SELECT t.id FROM job_execution_status t " +
+    "JOIN contribution c ON c.job_id = t.job_id " +
+    "WHERE c.status = 0 " +
+    "AND t.status IN ('READY', 'RETRY') " +
+    "AND (t.instance_contributed = false " +
+    "OR t.updated_date < current_timestamp - (interval '1 hour') * :itemPause) " +
+    "FOR UPDATE OF t SKIP LOCKED " +
+    "LIMIT :limit) " +
+    "UPDATE job_execution_status s " +
+    "SET status = 'IN_PROGRESS', updated_date = now() " +
+    "FROM claimed WHERE s.id = claimed.id " +
+    "RETURNING s.*", nativeQuery = true)
   List<JobExecutionStatus> updateAndFetchJobExecutionRecordsByStatus(@Param("limit") int limit, @Param("itemPause") double itemPause);
 
   @Query(value = "select count(*) from job_execution_status j inner join contribution c on " +

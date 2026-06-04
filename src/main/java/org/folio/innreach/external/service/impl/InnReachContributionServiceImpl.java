@@ -1,8 +1,6 @@
 package org.folio.innreach.external.service.impl;
 
 import static java.util.Collections.emptyList;
-
-import static org.folio.innreach.domain.service.impl.RecordContributionServiceImpl.*;
 import static org.folio.innreach.external.util.AuthUtils.buildBearerAuthHeader;
 
 import java.net.URI;
@@ -10,9 +8,7 @@ import java.util.UUID;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
-import org.apache.commons.collections4.CollectionUtils;
-import org.folio.innreach.external.exception.InnReachConnectionException;
-import org.folio.innreach.external.exception.ServiceSuspendedException;
+import org.folio.innreach.external.exception.InnReachTimeOutException;
 import org.springframework.stereotype.Service;
 
 import org.folio.innreach.domain.dto.CentralServerConnectionDetailsDTO;
@@ -23,11 +19,16 @@ import org.folio.innreach.external.dto.BibItemsInfo;
 import org.folio.innreach.external.dto.InnReachResponse;
 import org.folio.innreach.external.service.InnReachAuthExternalService;
 import org.folio.innreach.external.service.InnReachContributionService;
+import org.springframework.web.client.ResourceAccessException;
 
 @RequiredArgsConstructor
 @Log4j2
 @Service
 public class InnReachContributionServiceImpl implements InnReachContributionService {
+
+  private static final String D2IR_CALL_LOG_TEMPLATE =
+    "D2IR_CALL client=InnReachContributionClient method={} path=%s localCode={} centralCode={}";
+  private static final String INN_REACH_BIB_ID = "bibId: %s";
 
   private final InnReachContributionClient contributionClient;
   private final InnReachAuthExternalService innReachAuthExternalService;
@@ -38,14 +39,21 @@ public class InnReachContributionServiceImpl implements InnReachContributionServ
     log.debug("contributeBib:: parameters centralServerId: {}, bibId: {}, bib: {}", centralServerId, bibId, bib);
     var connectionDetails = getConnectionDetails(centralServerId);
 
-    var accessTokenDTO = innReachAuthExternalService.getAccessToken(connectionDetails);
-    var connectionUrl = URI.create(connectionDetails.getConnectionUrl());
-    var authorizationHeader = buildBearerAuthHeader(accessTokenDTO.getAccessToken());
-    var localCode = connectionDetails.getLocalCode();
-    var centralCode = connectionDetails.getCentralCode();
+    try {
+      var accessTokenDTO = innReachAuthExternalService.getAccessToken(connectionDetails);
+      var connectionUrl = URI.create(connectionDetails.getConnectionUrl());
+      var authorizationHeader = buildBearerAuthHeader(accessTokenDTO.getAccessToken());
+      var localCode = connectionDetails.getLocalCode();
+      var centralCode = connectionDetails.getCentralCode();
 
-    return contributionClient.contributeBib(connectionUrl, authorizationHeader, localCode,
-      centralCode, bibId, bib);
+
+      log.info(D2IR_CALL_LOG_TEMPLATE.formatted("/innreach/v2/contribution/bib/{}"),
+        "contributeBib", bibId, localCode, centralCode);
+      return contributionClient.contributeBib(connectionUrl, authorizationHeader, localCode, centralCode, bibId, bib);
+    } catch (ResourceAccessException ex) {
+      logTimeOutException("contributeBib", INN_REACH_BIB_ID.formatted(bibId), ex);
+      throw new InnReachTimeOutException("Bib contribution request to InnReach Server is timed out");
+    }
   }
 
   @Override
@@ -60,12 +68,12 @@ public class InnReachContributionServiceImpl implements InnReachContributionServ
       var localCode = connectionDetails.getLocalCode();
       var centralCode = connectionDetails.getCentralCode();
 
-      var response = contributionClient.deContributeBib(connectionUrl, authorizationHeader, localCode,
-        centralCode, bibId);
-      verifyException(response);
-      return  response;
-    } catch (ServiceSuspendedException ex) {
-      throw new ServiceSuspendedException(ex.getMessage());
+      log.info(D2IR_CALL_LOG_TEMPLATE.formatted("/innreach/v2/contribution/bib/{}"),
+        "deContributeBib", bibId, localCode, centralCode);
+      return contributionClient.deContributeBib(connectionUrl, authorizationHeader, localCode, centralCode, bibId);
+    } catch (ResourceAccessException ex) {
+      logTimeOutException("deContributeBib", INN_REACH_BIB_ID.formatted(bibId), ex);
+      throw new InnReachTimeOutException("Bib de-contribution request to InnReach Server is timed out");
     }
   }
 
@@ -81,34 +89,12 @@ public class InnReachContributionServiceImpl implements InnReachContributionServ
       var localCode = connectionDetails.getLocalCode();
       var centralCode = connectionDetails.getCentralCode();
 
-      var response = contributionClient.deContributeBibItem(connectionUrl, authorizationHeader, localCode,
-        centralCode, itemId);
-      verifyException(response);
-      return response;
-    } catch (ServiceSuspendedException ex) {
-      throw new ServiceSuspendedException(ex.getMessage());
-    }
-  }
-
-  private void verifyException(InnReachResponse response) {
-    if (response !=null && response.getErrors()!=null && !response.getErrors().isEmpty()) {
-      InnReachResponse.Error errorResponse = response.getErrors().get(0);
-
-      var error = errorResponse!=null ? errorResponse.getReason() : "";
-      String errorMessages = "";
-
-      if (errorResponse!=null && CollectionUtils.isNotEmpty(errorResponse.getMessages())) {
-        errorMessages = errorResponse.getMessages().get(0);
-      }
-      log.info("checkServiceSuspension:: error is : {}",error);
-
-      if (error.contains(CONTRIBUTION_IS_CURRENTLY_SUSPENDED)) {
-        throw new ServiceSuspendedException(CONTRIBUTION_IS_CURRENTLY_SUSPENDED);
-      }
-      if (errorMessages.contains(CONNECTIONS_ALLOWED_FROM_THIS_SERVER)) {
-        log.info("Allowable maximum Connection limit error message occurred");
-        throw new InnReachConnectionException("Only 5 connections allowed from this server");
-      }
+      log.info(D2IR_CALL_LOG_TEMPLATE.formatted("/innreach/v2/contribution/item/{}"),
+        "deContributeBibItem", itemId, localCode, centralCode);
+      return contributionClient.deContributeBibItem(connectionUrl, authorizationHeader, localCode, centralCode, itemId);
+    } catch (ResourceAccessException ex) {
+      logTimeOutException("deContributeBibItem", "itemId: " + itemId, ex);
+      throw new InnReachTimeOutException("Bib Item de-contribution request to InnReach Server is timed out");
     }
   }
 
@@ -117,14 +103,21 @@ public class InnReachContributionServiceImpl implements InnReachContributionServ
     log.debug("contributeBibItems:: parameters centralServerId: {}, bibId: {}, bibItems: {}", centralServerId, bibId, bibItems);
     var connectionDetails = getConnectionDetails(centralServerId);
 
-    var accessTokenDTO = innReachAuthExternalService.getAccessToken(connectionDetails);
-    var connectionUrl = URI.create(connectionDetails.getConnectionUrl());
-    var authorizationHeader = buildBearerAuthHeader(accessTokenDTO.getAccessToken());
-    var localCode = connectionDetails.getLocalCode();
-    var centralCode = connectionDetails.getCentralCode();
+    try {
+      var accessTokenDTO = innReachAuthExternalService.getAccessToken(connectionDetails);
+      var connectionUrl = URI.create(connectionDetails.getConnectionUrl());
+      var authorizationHeader = buildBearerAuthHeader(accessTokenDTO.getAccessToken());
+      var localCode = connectionDetails.getLocalCode();
+      var centralCode = connectionDetails.getCentralCode();
 
-    return contributionClient.contributeBibItems(connectionUrl, authorizationHeader, localCode,
-      centralCode, bibId, bibItems);
+      log.info(D2IR_CALL_LOG_TEMPLATE.formatted("/innreach/v2/contribution/items/{}"),
+        "contributeBibItems", bibId, localCode, centralCode);
+      return contributionClient.contributeBibItems(connectionUrl, authorizationHeader, localCode,
+        centralCode, bibId, bibItems);
+    } catch (ResourceAccessException ex) {
+      logTimeOutException("contributeBibItems", INN_REACH_BIB_ID.formatted(bibId), ex);
+      throw new InnReachTimeOutException("Bib Items contribution request to InnReach Server is timed out");
+    }
   }
 
   @Override
@@ -132,15 +125,20 @@ public class InnReachContributionServiceImpl implements InnReachContributionServ
     log.debug("lookUpBib:: parameters centralServerId: {}, bibId: {}", centralServerId, bibId);
     var connectionDetails = getConnectionDetails(centralServerId);
 
-    var accessTokenDTO = innReachAuthExternalService.getAccessToken(connectionDetails);
-    var connectionUrl = URI.create(connectionDetails.getConnectionUrl());
-    var authorizationHeader = buildBearerAuthHeader(accessTokenDTO.getAccessToken());
-    var localCode = connectionDetails.getLocalCode();
-    var centralCode = connectionDetails.getCentralCode();
-
     try {
+      var accessTokenDTO = innReachAuthExternalService.getAccessToken(connectionDetails);
+      var connectionUrl = URI.create(connectionDetails.getConnectionUrl());
+      var authorizationHeader = buildBearerAuthHeader(accessTokenDTO.getAccessToken());
+      var localCode = connectionDetails.getLocalCode();
+      var centralCode = connectionDetails.getCentralCode();
+
+      log.info(D2IR_CALL_LOG_TEMPLATE.formatted("path=/innreach/v2/local/{}/bib/{}"),
+        "lookUpBib", localCode, bibId, localCode, centralCode);
       return contributionClient.lookUpBib(connectionUrl, authorizationHeader, localCode,
         centralCode, localCode, bibId);
+    } catch (ResourceAccessException ex) {
+      logTimeOutException("lookUpBib", INN_REACH_BIB_ID.formatted(bibId), ex);
+      throw new InnReachTimeOutException("Look-up Bib request to InnReach Server is timed out");
     } catch (Exception e) {
       return InnReachResponse.errorResponse(e.getMessage(), emptyList());
     }
@@ -151,15 +149,20 @@ public class InnReachContributionServiceImpl implements InnReachContributionServ
     log.debug("lookUpBibItem:: parameters centralServerId: {}, bibId: {}, itemId: {}", centralServerId, bibId, itemId);
     var connectionDetails = getConnectionDetails(centralServerId);
 
-    var accessTokenDTO = innReachAuthExternalService.getAccessToken(connectionDetails);
-    var connectionUrl = URI.create(connectionDetails.getConnectionUrl());
-    var authorizationHeader = buildBearerAuthHeader(accessTokenDTO.getAccessToken());
-    var localCode = connectionDetails.getLocalCode();
-    var centralCode = connectionDetails.getCentralCode();
-
     try {
+      var accessTokenDTO = innReachAuthExternalService.getAccessToken(connectionDetails);
+      var connectionUrl = URI.create(connectionDetails.getConnectionUrl());
+      var authorizationHeader = buildBearerAuthHeader(accessTokenDTO.getAccessToken());
+      var localCode = connectionDetails.getLocalCode();
+      var centralCode = connectionDetails.getCentralCode();
+
+      log.info(D2IR_CALL_LOG_TEMPLATE.formatted("/innreach/v2/local/{}/bib/{}/item/{}"),
+        "lookUpBibItem", localCode, bibId, itemId, localCode, centralCode);
       return contributionClient.lookUpBibItem(connectionUrl, authorizationHeader, localCode,
         centralCode, localCode, bibId, itemId);
+    } catch (ResourceAccessException ex) {
+      logTimeOutException("lookUpBibItem", INN_REACH_BIB_ID.formatted(bibId) + " itemId: " + itemId, ex);
+      throw new InnReachTimeOutException("Look-up Bib Item request to InnReach Server is timed out");
     } catch (Exception e) {
       return InnReachResponse.errorResponse(e.getMessage(), emptyList());
     }
@@ -167,5 +170,19 @@ public class InnReachContributionServiceImpl implements InnReachContributionServ
 
   private CentralServerConnectionDetailsDTO getConnectionDetails(UUID centralServerId) {
     return centralServerService.getCentralServerConnectionDetails(centralServerId);
+  }
+
+  private void logTimeOutException(String methodName, String resource, Exception ex) {
+    Throwable cause = ex.getCause();
+
+    if (cause instanceof java.net.ConnectException || cause instanceof java.net.http.HttpConnectTimeoutException) {
+      // connect timeout
+      log.error("{}:: Connection Time-Out occurred while processing {}, error: {}", methodName, resource, ex.getMessage());
+    } else if (cause instanceof java.net.SocketTimeoutException || cause instanceof java.net.http.HttpTimeoutException) {
+      // read timeout
+      log.error("{}:: Read Time-Out occurred while processing {}, error: {}", methodName, resource, ex.getMessage());
+    } else {
+      log.error("{}:: ResourceAccessException occurred while processing {}, error: {}", methodName, resource, ex.getMessage());
+    }
   }
 }

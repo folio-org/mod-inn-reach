@@ -28,6 +28,7 @@ import org.folio.innreach.external.service.InnReachLocationExternalService;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 
@@ -80,14 +81,14 @@ public class ContributionValidationServiceImpl implements ContributionValidation
 
   @Override
   public boolean isEligibleForContribution(UUID centralServerId, Instance instance) {
-    log.debug("isEligibleForContribution:: parameters centralServerId: {},instance: {}", centralServerId, instance);
     if (!isMARCRecord(instance)) {
-      log.info("Source {} is not supported", instance.getSource());
+      log.info("Instance [{}] has unsupported source: [{}]", instance.getHrid(), instance.getSource());
       return false;
     }
 
     if (isExcludedStatisticalCode(centralServerId, instance.getStatisticalCodeIds())) {
-      log.info("Instance has 'do not contribute' suppression status");
+      log.info("Instance [{}] has more than one statistical code defined or 'do not contribute' suppression status",
+        instance.getHrid());
       return false;
     }
 
@@ -96,7 +97,7 @@ public class ContributionValidationServiceImpl implements ContributionValidation
       .count();
 
     if (contributionItemsCount == 0) {
-      log.info("Instance has no items eligible for contribution");
+      log.info("Instance [{}] has no items eligible for contribution", instance.getHrid());
       return false;
     }
 
@@ -105,23 +106,29 @@ public class ContributionValidationServiceImpl implements ContributionValidation
 
   @Override
   public boolean isEligibleForContribution(UUID centralServerId, Item item) {
-    log.debug("isEligibleForContribution:: parameters centralServerId: {}, item: {}", centralServerId, item);
     var statisticalCodeIds = item.getStatisticalCodeIds();
     var holdingStatisticalCodeIds = fetchHoldingStatisticalCodes(item);
 
-    if (isExcludedStatisticalCode(centralServerId, statisticalCodeIds) ||
-      isExcludedStatisticalCode(centralServerId, holdingStatisticalCodeIds)) {
-      log.info("Item has 'do not contribute' suppression status");
+    if (isExcludedStatisticalCode(centralServerId, statisticalCodeIds)) {
+      log.info("Item [{}] has more than one statistical code defined or 'do not contribute' suppression status",
+        item.getHrid());
+      return false;
+    }
+
+    if (isExcludedStatisticalCode(centralServerId, holdingStatisticalCodeIds)) {
+      log.info("Holding [{}] has more than one statistical code defined or 'do not contribute' suppression status",
+        item.getHoldingsRecordId());
       return false;
     }
 
     if (isExcludedLocation(centralServerId, item)) {
-      log.info("Item {} with location is excluded from contribution", item.getHrid());
+      log.info("Item {} with location id {} is excluded from contribution", item.getHrid(), item.getEffectiveLocationId());
       return false;
     }
 
     if (!isItemHasAssociatedLibrary(centralServerId, item)) {
-      log.info("Item's location is not associated with INN-Reach local agencies");
+      log.info("Location with id {} for the Item {} is not associated with INN-Reach local agencies",
+        item.getEffectiveLocationId(), item.getHrid());
       return false;
     }
 
@@ -129,11 +136,9 @@ public class ContributionValidationServiceImpl implements ContributionValidation
   }
 
   private boolean isExcludedStatisticalCode(UUID centralServerId, Set<UUID> statisticalCodeIds) {
-    log.debug("isExcludedStatisticalCode:: parameters centralServerId: {}, statisticalCodeIds: {}", centralServerId, statisticalCodeIds);
     if (CollectionUtils.isEmpty(statisticalCodeIds)) {
       return false;
     } else if (statisticalCodeIds.size() > 1) {
-      log.info("More than one statistical code defined");
       return true;
     }
 
@@ -142,11 +147,7 @@ public class ContributionValidationServiceImpl implements ContributionValidation
     return DO_NOT_CONTRIBUTE_CODE.equals(suppressionCode);
   }
 
-  //If item's effective location is matched with contribution criteria excluded locations
   private boolean isExcludedLocation(UUID centralServerId, Item item) {
-
-    log.debug("isExcludedLocation:: parameters centralServerId: {}, item: {}", centralServerId, item);
-
     List<UUID> excludedLocationIds = Objects.
             requireNonNull(getContributionConfigService(centralServerId)).getLocationIds();
     return excludedLocationIds.contains(item.getEffectiveLocationId());
@@ -154,7 +155,6 @@ public class ContributionValidationServiceImpl implements ContributionValidation
 
   @Override
   public ContributionItemCirculationStatus getItemCirculationStatus(UUID centralServerId, Item item) {
-    log.debug("getItemCirculationStatus:: parameters centralServerId: {}, item: {}", centralServerId, item);
     var itemContributionConfig = itemContributionOptionsConfigurationService
       .getItmContribOptConf(centralServerId);
 
@@ -175,7 +175,6 @@ public class ContributionValidationServiceImpl implements ContributionValidation
 
   @Override
   public Character getSuppressionStatus(UUID centralServerId, Set<UUID> statisticalCodeIds) {
-    log.debug("getSuppressionStatus:: parameters centralServerId: {}, statisticalCodeIds: {}", centralServerId, statisticalCodeIds);
     if (CollectionUtils.isEmpty(statisticalCodeIds)) {
       return null;
     }
@@ -184,7 +183,7 @@ public class ContributionValidationServiceImpl implements ContributionValidation
 
     var config = getContributionConfigService(centralServerId);
     if (config == null) {
-      log.warn("Contribution criteria is not set, skipping suppression status check");
+      log.warn("Contribution criteria is not set for central server {}, skipping suppression status check", centralServerId);
       return null;
     }
 
@@ -210,41 +209,37 @@ public class ContributionValidationServiceImpl implements ContributionValidation
 
   @Override
   public MappingValidationStatusDTO getItemTypeMappingStatus(UUID centralServerId) {
-    log.debug("getItemTypeMappingStatus:: parameters centralServerId: {}", centralServerId);
     try {
       List<UUID> typeIds = getMaterialTypeIds();
 
       long mappedTypesCounter = typeMappingService.countByTypeIds(centralServerId, typeIds);
 
-      log.info("getItemTypeMappingStatus:: result: {}", mappedTypesCounter == typeIds.size() ? VALID : INVALID);
-      return mappedTypesCounter == typeIds.size() ? VALID : INVALID;
+      var itemTypeMappingStatus = mappedTypesCounter == typeIds.size() ? VALID : INVALID;
+      if (INVALID.equals(itemTypeMappingStatus)) {
+        log.info("getItemTypeMappingStatus:: Item type mapping status is Invalid, total types count: {}, mapped types count: {}",
+          typeIds.size(), mappedTypesCounter);
+      }
+
+      return itemTypeMappingStatus;
     } catch (Exception e) {
-      log.warn("Can't validate material type mappings", e);
+      log.warn("getItemTypeMappingStatus:: can't validate material type mappings", e);
       return INVALID;
     }
   }
 
   @Override
   public MappingValidationStatusDTO getLocationMappingStatus(UUID centralServerId) {
-    log.debug("getLocationMappingStatus:: parameters centralServerId: {}", centralServerId);
-    try {
-      List<LibraryMappingDTO> libraryMappings = getLibraryMappings(centralServerId);
+    List<LibraryMappingDTO> libraryMappings = getLibraryMappings(centralServerId);
 
-      var libraryMappingStatus = validateLibraryMappings(centralServerId, libraryMappings);
-      if (libraryMappingStatus != VALID) {
-        log.info("getLocationMappingStatus:: result when status not valid: {}", libraryMappingStatus);
-        return libraryMappingStatus;
-      }
-
-      return validateInnReachLocations(centralServerId, libraryMappings);
-    } catch (Exception e) {
-      log.warn("Can't validate location mappings", e);
-      return INVALID;
+    var libraryMappingStatus = validateLibraryMappings(centralServerId, libraryMappings);
+    if (libraryMappingStatus == INVALID) {
+      return libraryMappingStatus;
     }
+
+    return validateInnReachLocations(centralServerId, libraryMappings);
   }
 
   private Set<UUID> fetchHoldingStatisticalCodes(Item item) {
-    log.debug("fetchHoldingStatisticalCodes:: parameters item: {}", item);
     return holdingsService.find(item.getHoldingsRecordId())
       .map(Holding::getStatisticalCodeIds)
       .orElse(emptySet());
@@ -252,7 +247,6 @@ public class ContributionValidationServiceImpl implements ContributionValidation
 
   private boolean isItemNonLendable(Item inventoryItem,
                                     ItemContributionOptionsConfigurationDTO itemContributionConfig) {
-    log.debug("isItemNonLendable:: parameters inventoryItem: {}, itemContributionConfig: {}", inventoryItem, itemContributionConfig);
     return isItemNonLendableByLoanTypes(inventoryItem, itemContributionConfig) ||
       isItemNonLendableByLocations(inventoryItem, itemContributionConfig) ||
       isItemNonLendableByMaterialTypes(inventoryItem, itemContributionConfig);
@@ -260,7 +254,6 @@ public class ContributionValidationServiceImpl implements ContributionValidation
 
   private boolean isItemNonLendableByLoanTypes(Item inventoryItem,
                                                ItemContributionOptionsConfigurationDTO itemContributionConfig) {
-    log.debug("isItemNonLendableByLoanTypes:: parameters inventoryItem: {}, itemContributionConfig: {}", inventoryItem, itemContributionConfig);
     var nonLendableLoanTypes = emptyIfNull(itemContributionConfig.getNonLendableLoanTypes());
     return nonLendableLoanTypes.contains(inventoryItem.getPermanentLoanTypeId()) ||
       nonLendableLoanTypes.contains(inventoryItem.getTemporaryLoanTypeId());
@@ -268,21 +261,18 @@ public class ContributionValidationServiceImpl implements ContributionValidation
 
   private boolean isItemNonLendableByLocations(Item inventoryItem,
                                                ItemContributionOptionsConfigurationDTO itemContributionConfig) {
-    log.debug("isItemNonLendableByLocations:: parameters inventoryItem: {}, itemContributionConfig: {}", inventoryItem, itemContributionConfig);
     var nonLendableLocations = emptyIfNull(itemContributionConfig.getNonLendableLocations());
     return nonLendableLocations.contains(inventoryItem.getEffectiveLocationId());
   }
 
   private boolean isItemNonLendableByMaterialTypes(Item inventoryItem,
                                                    ItemContributionOptionsConfigurationDTO itemContributionConfig) {
-    log.debug("isItemNonLendableByMaterialTypes:: parameters inventoryItem: {}, itemContributionConfig: {}", inventoryItem, itemContributionConfig);
     var nonLendableMaterialTypes = emptyIfNull(itemContributionConfig.getNonLendableMaterialTypes());
     return nonLendableMaterialTypes.contains(inventoryItem.getMaterialTypeId());
   }
 
   private boolean isItemAvailableForContribution(Item inventoryItem,
                                                  ItemContributionOptionsConfigurationDTO itemContributionConfig) {
-    log.debug("isItemAvailableForContribution:: parameters inventoryItem: {}, itemContributionConfig: {}", inventoryItem, itemContributionConfig);
     var itemStatus = inventoryItem.getStatus();
 
     if (itemStatus.getName() == IN_TRANSIT && isItemRequested(inventoryItem)) {
@@ -295,15 +285,11 @@ public class ContributionValidationServiceImpl implements ContributionValidation
   }
 
   private boolean isItemRequested(Item inventoryItem) {
-
-    log.debug("isItemRequested:: parameters inventoryItem: {}", inventoryItem);
-
     var itemRequests = circulationClient.queryRequestsByItemIdAndStatus(inventoryItem.getId(),1);
     return itemRequests.getTotalRecords() != 0;
   }
 
   private List<UUID> getMaterialTypeIds() {
-    log.debug("getMaterialTypeIds:: no parameter");
     return mapItems(materialTypesClient.getMaterialTypes(MATERIAL_TYPES_CQL, LIMIT).getResult(), MaterialTypeDTO::getId);
   }
 
@@ -312,7 +298,14 @@ public class ContributionValidationServiceImpl implements ContributionValidation
 
     var mappedLibraryIds = mapItems(libraryMappings, LibraryMappingDTO::getLibraryId);
 
-    return mappedLibraryIds.containsAll(centralServerFolioLibraryIds) ? VALID : INVALID;
+    var mappingStatus = new HashSet<>(mappedLibraryIds).containsAll(centralServerFolioLibraryIds) ? VALID : INVALID;
+
+    if (mappingStatus == INVALID) {
+      log.warn("validateLibraryMappings:: Not all INN-Reach Library IDs are mapped, " +
+        "mapped library count: {}, available library count: {}", mappedLibraryIds.size(), centralServerFolioLibraryIds.size());
+    }
+
+    return mappingStatus;
   }
 
   private MappingValidationStatusDTO validateInnReachLocations(UUID centralServerId, List<LibraryMappingDTO> libraryMappings) {
@@ -320,11 +313,17 @@ public class ContributionValidationServiceImpl implements ContributionValidation
 
     List<String> mappedIrLocationCodes = getMappedInnReachLocationCodes(libraryMappings);
 
-    return irLocationCodes.containsAll(mappedIrLocationCodes) ? VALID : INVALID;
+    var mappingStatus = new HashSet<>(irLocationCodes).containsAll(mappedIrLocationCodes) ? VALID : INVALID;
+
+    if (mappingStatus == INVALID) {
+      log.warn("validateInnReachLocations:: Not all INN-Reach location codes are mapped, " +
+          "mapped codes count: {}, available codes count: {}", mappedIrLocationCodes.size(), irLocationCodes.size());
+    }
+
+    return mappingStatus;
   }
 
   private List<String> getAllInnReachLocationCodes(UUID centralServerId) {
-    log.debug("getAllInnReachLocationCodes:: parameters centralServerId: {}", centralServerId);
     var centralServerConnectionDetails = centralServerService.getCentralServerConnectionDetails(centralServerId);
 
     return mapItems(innReachLocationExternalService.getAllLocations(centralServerConnectionDetails),
@@ -332,7 +331,6 @@ public class ContributionValidationServiceImpl implements ContributionValidation
   }
 
   private List<UUID> getFolioLibraryIds(UUID centralServerId) {
-    log.debug("getFolioLibraryIds:: parameters centralServerId: {}", centralServerId);
     return centralServerService.getCentralServer(centralServerId).getLocalAgencies()
       .stream()
       .flatMap(agency -> agency.getFolioLibraryIds().stream())
@@ -341,32 +339,25 @@ public class ContributionValidationServiceImpl implements ContributionValidation
   }
 
   private List<LibraryMappingDTO> getLibraryMappings(UUID centralServerId) {
-    log.debug("getLibraryMappings:: parameters centralServerId: {}", centralServerId);
     return libraryMappingService.getAllMappings(centralServerId, 0, LIMIT).getLibraryMappings();
   }
 
   private List<String> getMappedInnReachLocationCodes(List<LibraryMappingDTO> libraryMappings) {
-    log.debug("getMappedInnReachLocationCodes:: parameters libraryMappings: {}", libraryMappings);
     var ids = mapItems(libraryMappings, LibraryMappingDTO::getInnReachLocationId);
 
     return mapItems(innReachLocationService.getInnReachLocations(ids).getLocations(), InnReachLocationDTO::getCode);
   }
 
   private ContributionCriteriaDTO getContributionConfigService(UUID centralServerId) {
-    log.debug("getContributionConfigService:: parameters centralServerId: {}", centralServerId);
-    ContributionCriteriaDTO config;
     try {
-      config = contributionConfigService.getCriteria(centralServerId);
+      return contributionConfigService.getCriteria(centralServerId);
     } catch (Exception e) {
-      log.warn("Unable to load contribution config for central server = {}", centralServerId, e);
+      log.warn("getContributionConfigService:: Unable to load contribution config for central server = {}", centralServerId, e);
       return null;
     }
-    log.info("getContributionConfigService:: result: {}", config);
-    return config;
   }
 
   private boolean isItemHasAssociatedLibrary(UUID centralServerId, Item item) {
-    log.debug("isItemHasAssociatedLibrary:: parameters centralServerId: {}, item: {}", centralServerId, item);
     var localAgencyLibraryIds = getFolioLibraryIds(centralServerId);
     var locationLibraryMappings = folioLocationService.getLocationLibraryMappings();
     var itemLibraryId = locationLibraryMappings.get(item.getEffectiveLocationId());

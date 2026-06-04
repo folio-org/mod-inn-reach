@@ -20,5 +20,12 @@ public interface ContributionValidationService {
 
   MappingValidationStatusDTO getItemTypeMappingStatus(UUID centralServerId);
 
+  /**
+   * Returns the location mapping validation status for the given central server.
+   * <p>
+   * Note: unlike {@link #getItemTypeMappingStatus}, this method does NOT suppress exceptions.
+   * Callers are expected to handle network/timeout errors (e.g. {@code InnReachTimeOutException})
+   * and other runtime exceptions appropriately.
+   */
   MappingValidationStatusDTO getLocationMappingStatus(UUID centralServerId);
 }

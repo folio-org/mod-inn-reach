@@ -9,6 +9,8 @@ import java.util.stream.Collectors;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.apache.commons.collections4.CollectionUtils;
+import org.folio.innreach.external.exception.InnReachTimeOutException;
 import org.folio.innreach.util.UriHelper;
 import org.springframework.stereotype.Service;
 
@@ -18,12 +20,17 @@ import org.folio.innreach.external.dto.InnReachLocationDTO;
 import org.folio.innreach.external.dto.InnReachLocationsDTO;
 import org.folio.innreach.external.service.InnReachAuthExternalService;
 import org.folio.innreach.external.service.InnReachLocationExternalService;
+import org.springframework.web.client.ResourceAccessException;
 
 @RequiredArgsConstructor
 @Log4j2
 @Service
 public class InnReachLocationExternalServiceImpl implements InnReachLocationExternalService {
 
+  private static final String INN_REACH_LOCATION_LOG_TEMPLATE_PREFIX =
+    "D2IR_CALL client=InnReachLocationClient method={} ";
+  private static final String INN_REACH_LOCATION_ITEM_CRUD_LOG_TEMPLATE =
+    INN_REACH_LOCATION_LOG_TEMPLATE_PREFIX + "path=/innreach/v2/location/{} localCode={} centralCode={}";
   private static final String LOCATIONS_COLLECTION_PATH = "/innreach/v2/contribution/locations";
   private static final String LOCATION_ITEM_PATH = "/innreach/v2/location/{locationKey}";
 
@@ -60,18 +67,25 @@ public class InnReachLocationExternalServiceImpl implements InnReachLocationExte
   @Override
   public List<InnReachLocationDTO> getAllLocations(CentralServerConnectionDetailsDTO connectionDetails) {
     log.debug("getAllLocations:: parameters connectionDetails: {}", connectionDetails);
-    var accessTokenDTO = innReachAuthExternalService.getAccessToken(connectionDetails);
-    var connectionUrl = URI.create(connectionDetails.getConnectionUrl());
-    var authorizationHeader = buildBearerAuthHeader(accessTokenDTO.getAccessToken());
-    var localCode = connectionDetails.getLocalCode();
-    var centralCode = connectionDetails.getCentralCode();
+    try {
+      var accessTokenDTO = innReachAuthExternalService.getAccessToken(connectionDetails);
+      var connectionUrl = URI.create(connectionDetails.getConnectionUrl());
+      var authorizationHeader = buildBearerAuthHeader(accessTokenDTO.getAccessToken());
+      var localCode = connectionDetails.getLocalCode();
+      var centralCode = connectionDetails.getCentralCode();
 
-    return getMappedLocationsFromInnReach(connectionUrl, authorizationHeader, localCode, centralCode);
+      return getMappedLocationsFromInnReach(connectionUrl, authorizationHeader, localCode, centralCode);
+    } catch (ResourceAccessException ex) {
+      log.error("getAllLocations:: Request timeout occurred while fetching inn-reach locations: {}", ex.getMessage());
+      throw new InnReachTimeOutException("Fetching Inn-Reach Locations is timed out");
+    }
   }
 
   private List<InnReachLocationDTO> getMappedLocationsFromInnReach(URI connectionUrl, String authorizationHeader,
                                                                    String localCode, String centralCode) {
     var fullUri = UriHelper.buildUri(connectionUrl, LOCATIONS_COLLECTION_PATH);
+    log.info(INN_REACH_LOCATION_LOG_TEMPLATE_PREFIX + "path={} localCode={} centralCode={}",
+      "getAllLocations", LOCATIONS_COLLECTION_PATH, localCode, centralCode);
     return innReachLocationClient.getAllLocations(fullUri, authorizationHeader, localCode, centralCode)
       .getLocationList();
   }
@@ -82,6 +96,8 @@ public class InnReachLocationExternalServiceImpl implements InnReachLocationExte
     log.info("Submit all local server [{}] mapped locations to INN-Reach", connectionDetails.getLocalCode());
 
     var fullUri = UriHelper.buildUri(connectionUrl, LOCATIONS_COLLECTION_PATH);
+    log.info(INN_REACH_LOCATION_LOG_TEMPLATE_PREFIX + "path={} localCode={} centralCode={} count={}",
+      "addAllLocations", LOCATIONS_COLLECTION_PATH, localCode, centralCode, CollectionUtils.emptyIfNull(actualMappedLocations).size());
     innReachLocationClient.addAllLocations(fullUri, authorizationHeader, localCode,
       centralCode, new InnReachLocationsDTO(actualMappedLocations));
   }
@@ -111,6 +127,8 @@ public class InnReachLocationExternalServiceImpl implements InnReachLocationExte
     log.info("Delete local server [{}] mapped location [{}] from INN-Reach", localCode, deletedLocation.getCode());
 
     var fullUri = UriHelper.buildUri(centralServerConnectionUrl, LOCATION_ITEM_PATH, deletedLocation.getCode());
+
+    log.info(INN_REACH_LOCATION_ITEM_CRUD_LOG_TEMPLATE, "deleteLocation", deletedLocation.getCode(), localCode, centralCode);
     innReachLocationClient.deleteLocation(fullUri, authorizationHeader, localCode, centralCode);
   }
 
@@ -120,6 +138,7 @@ public class InnReachLocationExternalServiceImpl implements InnReachLocationExte
       .getCode());
 
     var fullUri = UriHelper.buildUri(centralServerConnectionUrl, LOCATION_ITEM_PATH, updatedLocation.getCode());
+    log.info(INN_REACH_LOCATION_ITEM_CRUD_LOG_TEMPLATE, "updateLocation", updatedLocation.getCode(), localCode, centralCode);
     innReachLocationClient.updateLocation(fullUri, authorizationHeader, localCode, centralCode, updatedLocation);
   }
 
@@ -128,6 +147,7 @@ public class InnReachLocationExternalServiceImpl implements InnReachLocationExte
     log.info("Submit the new local server [{}] mapped location [{}] to INN-Reach", localCode, newLocation.getCode());
 
     var fullUri = UriHelper.buildUri(centralServerConnectionUrl, LOCATION_ITEM_PATH, newLocation.getCode());
+    log.info(INN_REACH_LOCATION_ITEM_CRUD_LOG_TEMPLATE, "addLocation", newLocation.getCode(), localCode, centralCode);
     innReachLocationClient.addLocation(fullUri, authorizationHeader, localCode, centralCode, newLocation);
   }
 }

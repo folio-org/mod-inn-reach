@@ -2,7 +2,6 @@ package org.folio.innreach.domain.service.impl;
 
 import static org.apache.commons.collections4.CollectionUtils.isNotEmpty;
 
-import java.net.SocketTimeoutException;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -12,7 +11,7 @@ import lombok.extern.log4j.Log4j2;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.folio.innreach.external.exception.InnReachConnectionException;
-import org.folio.innreach.external.exception.InnReachRetryException;
+import org.folio.innreach.external.exception.InnReachContributionRequestException;
 import org.folio.innreach.external.exception.ServiceSuspendedException;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.retry.RetryException;
@@ -47,14 +46,11 @@ public class RecordContributionServiceImpl implements RecordContributionService 
   private final ContributionExceptionListener exceptionListener;
 
   @Override
-  public void contributeInstance(UUID centralServerId, Instance instance) throws SocketTimeoutException {
+  public void contributeInstance(UUID centralServerId, Instance instance) {
     var bibId = instance.getHrid();
-
     log.info("contributeInstance: contributing bib {}", bibId);
 
     var bib = recordTransformationService.getBibInfo(centralServerId, instance);
-
-    log.info("contributeInstance: got bib info for bib: {}", bibId);
 
     contributeAndVerifyBib(centralServerId, bibId, bib);
 
@@ -70,21 +66,22 @@ public class RecordContributionServiceImpl implements RecordContributionService 
   }
 
   @Override
-  public void deContributeInstance(UUID centralServerId, Instance instance) throws SocketTimeoutException {
+  public void deContributeInstance(UUID centralServerId, Instance instance) {
     var bibId = instance.getHrid();
     log.info("De-contributing bib {}", bibId);
-    irContributionService.deContributeBib(centralServerId, bibId);
+    var response = irContributionService.deContributeBib(centralServerId, bibId);
+    verifyInnReachContributionResponse(response);
   }
 
   private void contributeAndVerifyBib(UUID centralServerId, String bibId, BibInfo bib) {
-    log.info("contributeAndVerifyBib: bib id {}", bibId);
     try {
       retryTemplate.execute(() -> contributeBib(centralServerId, bibId, bib));
       retryTemplate.execute(() -> verifyBibContribution(centralServerId, bibId));
       log.info("contributeAndVerifyBib: finished contribution of bib {}", bibId);
     } catch (RetryException ex) {
-      log.error("contributeAndVerifyBib:: Failed to contribute bib {} after retries", bibId, ex);
-      throw new InnReachRetryException("Contributing bib %s has failed".formatted(bibId), ex.getLastException());
+      var lastException = ex.getLastException();
+      log.error("contributeAndVerifyBib:: Failed to contribute bib {} : {}", bibId, lastException.getMessage());
+      throw new InnReachContributionRequestException("Contributing bib %s has failed".formatted(bibId), lastException);
     }
   }
 
@@ -101,37 +98,27 @@ public class RecordContributionServiceImpl implements RecordContributionService 
   }
 
   @Override
-  public void moveItem(UUID centralServerId, String newBibId, Item item) throws SocketTimeoutException {
-    deContributeItem(centralServerId, item);
-    contributeItems(centralServerId, newBibId, List.of(item));
-  }
-
-  @Override
   public void deContributeItem(UUID centralServerId, Item item) {
     var itemId = item.getHrid();
     log.info("De-contributing item {}", itemId);
-    irContributionService.deContributeBibItem(centralServerId, itemId);
+    var response = irContributionService.deContributeBibItem(centralServerId, itemId);
+    verifyInnReachContributionResponse(response);
   }
 
   @Override
-  public int contributeItems(UUID centralServerId, String bibId, List<Item> items) throws SocketTimeoutException {
+  public int contributeItems(UUID centralServerId, String bibId, List<Item> items) {
     var bibItems = recordTransformationService.getBibItems(centralServerId, items, this::logItemTransformationError);
-
     int itemsCount = bibItems.size();
-
     Assert.isTrue(itemsCount != 0, "Failed to convert items for contribution");
-
-    log.info("Loaded {} items", itemsCount);
 
     try {
       retryTemplate.execute(() -> contributeBibItems(bibId, centralServerId, bibItems));
     } catch (RetryException ex) {
-      log.error("Failed to contribute items for bib {} after retries", bibId, ex);
-      throw new InnReachRetryException("Contributing items for bib %s has failed".formatted(bibId), ex.getLastException());
+      log.error("Failed to contribute {} items for bib {}", items.size(), bibId, ex);
+      throw new InnReachContributionRequestException("Contributing items for bib %s has failed".formatted(bibId), ex.getLastException());
     }
 
-    log.info("Finished contributing items of bib {}", bibId);
-
+    log.info("Finished contributing {} items of bib {}", items.size(), bibId);
     return itemsCount;
   }
 
@@ -150,7 +137,7 @@ public class RecordContributionServiceImpl implements RecordContributionService 
   }
 
   private InnReachResponse contributeBib(UUID centralServerId, String bibId, BibInfo bib) {
-    log.info("Retry happening for contributeBib with bibId: {}",bibId);
+    log.info("contributeBib:: contributing bib with id: [{}]", bibId);
     var response = irContributionService.contributeBib(centralServerId, bibId, bib);
     verifyInnReachContributionResponse(response);
     Assert.isTrue(response.isOk(), "Unexpected contribution response: " + response);
@@ -158,7 +145,6 @@ public class RecordContributionServiceImpl implements RecordContributionService 
   }
 
   private InnReachResponse verifyBibContribution(UUID centralServerId, String bibId) {
-    log.info("verifyBibContribution with bibId: {}",bibId);
     var response = irContributionService.lookUpBib(centralServerId, bibId);
     verifyInnReachContributionResponse(response);
     Assert.isTrue(response.isOk(), "Unexpected verification response: " + response);
@@ -183,7 +169,7 @@ public class RecordContributionServiceImpl implements RecordContributionService 
         log.warn("verifyInnReachContributionResponse:: error reason: {}", errorReason);
       }
       if (errorReason.contains(CONTRIBUTION_IS_CURRENTLY_SUSPENDED)) {
-        log.info("Contribution to d2irm is currently suspended error message occurred");
+        log.warn("Contribution to d2irm is currently suspended error message occurred");
         throw new ServiceSuspendedException(CONTRIBUTION_IS_CURRENTLY_SUSPENDED);
       }
 
@@ -194,7 +180,7 @@ public class RecordContributionServiceImpl implements RecordContributionService 
         .orElse("");
 
       if (errorMessages.contains(CONNECTIONS_ALLOWED_FROM_THIS_SERVER)) {
-        log.info("Allowable maximum Connection limit error message occurred");
+        log.warn("Allowable maximum Connection limit error message occurred");
         throw new InnReachConnectionException("Only 5 connections allowed from this server");
       }
     }

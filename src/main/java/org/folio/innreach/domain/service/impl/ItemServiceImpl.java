@@ -44,7 +44,7 @@ public class ItemServiceImpl implements ItemService {
   public void delete(UUID itemId) {
       inventoryClient.findItem(itemId).
         ifPresentOrElse(p -> inventoryClient.deleteItem(itemId),
-          () -> log.info("No item found with itemId:{}", itemId));
+          () -> log.warn("No item found with itemId: {} for a delete", itemId));
   }
 
   @Override

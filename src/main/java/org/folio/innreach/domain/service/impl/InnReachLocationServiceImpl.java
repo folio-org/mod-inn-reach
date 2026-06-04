@@ -4,7 +4,6 @@ import static org.folio.innreach.util.ListUtils.mapItems;
 
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -31,12 +30,11 @@ public class InnReachLocationServiceImpl implements InnReachLocationService {
 	@Override
 	@Transactional
 	public InnReachLocationDTO createInnReachLocation(InnReachLocationDTO innReachLocationDTO) {
-    log.debug("createInnReachLocation:: parameters innReachLocationDTO: {}", innReachLocationDTO);
 		var innReachLocation = innReachLocationMapper.mapToInnReachLocation(innReachLocationDTO);
 
 		var savedInnReachLocation = innReachLocationRepository.save(innReachLocation);
 
-    log.info("createInnReachLocation:: result: {}", innReachLocationMapper.mapToInnReachLocationDTO(savedInnReachLocation));
+    log.info("createInnReachLocation:: created Inn Reach Location: [{}]", savedInnReachLocation.getId());
 		return innReachLocationMapper.mapToInnReachLocationDTO(savedInnReachLocation);
 	}
 
@@ -60,7 +58,6 @@ public class InnReachLocationServiceImpl implements InnReachLocationService {
     locationsDTO.setLocations(locations);
     locationsDTO.setTotalRecords(locations.size());
 
-    log.info("getInnReachLocations:: result: {}", locationsDTO);
     return locationsDTO;
   }
 
@@ -74,7 +71,6 @@ public class InnReachLocationServiceImpl implements InnReachLocationService {
     innReachLocationsDTO.setLocations(innReachLocations);
     innReachLocationsDTO.setTotalRecords(innReachLocations.size());
 
-    log.info("getAllInnReachLocations:: result: {}", innReachLocationsDTO);
     return innReachLocationsDTO;
   }
 
@@ -82,18 +78,17 @@ public class InnReachLocationServiceImpl implements InnReachLocationService {
     return innReachLocationRepository.findAll(new OffsetRequest(offset, limit))
       .stream()
       .map(innReachLocationMapper::mapToInnReachLocationDTO)
-      .collect(Collectors.toList());
+      .toList();
   }
 
 	@Override
 	@Transactional
 	public InnReachLocationDTO updateInnReachLocation(UUID innReachLocationId, InnReachLocationDTO innReachLocationDTO) {
-    log.debug("updateInnReachLocation:: parameters innReachLocationId: {}, innReachLocationDTO: {}", innReachLocationId, innReachLocationDTO);
     InnReachLocation innReachLocation = findInnReachLocationById(innReachLocationId);
     innReachLocation.setCode(innReachLocationDTO.getCode());
 		innReachLocation.setDescription(innReachLocationDTO.getDescription());
 
-    log.info("updateInnReachLocation:: result: {}", innReachLocationMapper.mapToInnReachLocationDTO(innReachLocation));
+    log.info("updateInnReachLocation:: Updated Inn Reach Location: [{}]", innReachLocationId);
 		return innReachLocationMapper.mapToInnReachLocationDTO(innReachLocation);
 	}
 
@@ -103,7 +98,7 @@ public class InnReachLocationServiceImpl implements InnReachLocationService {
     log.debug("deleteInnReachLocation:: parameters innReachLocationId: {}", innReachLocationId);
     InnReachLocation innReachLocation = findInnReachLocationById(innReachLocationId);
     innReachLocationRepository.delete(innReachLocation);
-    log.info("deleteInnReachLocation:: InnReach location deleted");
+    log.info("deleteInnReachLocation:: InnReach location deleted: [{}]", innReachLocationId);
 	}
 
   private InnReachLocation findInnReachLocationById(UUID innReachLocationId) {

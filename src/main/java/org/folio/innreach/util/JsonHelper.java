@@ -34,7 +34,7 @@ public class JsonHelper {
     try {
       jsonString = mapper.writeValueAsString(o);
     } catch (JacksonException e) {
-      log.info(OBJECT_SERIALIZATION_FAILED, e);
+      log.warn(OBJECT_SERIALIZATION_FAILED, e);
       throw new IllegalStateException(OBJECT_SERIALIZATION_FAILED + ": " + e.getMessage());
     }
     return jsonString;
@@ -47,7 +47,7 @@ public class JsonHelper {
     try {
       obj = mapper.readValue(jsonString, valueType);
     } catch (JacksonException e) {
-      log.info(OBJECT_DESERIALIZATION_FAILED, e);
+      log.warn(OBJECT_DESERIALIZATION_FAILED, e);
       throw new IllegalStateException(OBJECT_DESERIALIZATION_FAILED + ": " + e.getMessage());
     }
     return obj;
@@ -58,7 +58,7 @@ public class JsonHelper {
     try {
       obj = mapper.readValue(inputStream, valueType);
     } catch (JacksonException e) {
-      log.info(OBJECT_DESERIALIZATION_FAILED, e);
+      log.warn(OBJECT_DESERIALIZATION_FAILED, e);
       throw new IllegalStateException(OBJECT_DESERIALIZATION_FAILED + ": " + e.getMessage());
     }
     return obj;

@@ -22,7 +22,7 @@ public class InnReachRetryOperationListener implements RetryListener {
       return;
     }
 
-    log.info("onRetryableExecution:: Error {}, retry attempt {} for execution of {}",
+    log.warn("onRetryableExecution:: Error {}, retry attempt {} for execution of {}",
       exception.getClass().getSimpleName(), retryCount, executionName);
   }
 

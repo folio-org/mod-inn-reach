@@ -24,7 +24,7 @@ public class RequestPreferenceServiceImpl implements RequestPreferenceService {
     var requestPreferences = client.findByQuery(cql.getQuery());
     Assert.isTrue(requestPreferences.getTotalRecords() == 1, "Could not retrieve 1 request preferences" +
       "record for userId = " + userId);
-    log.info("findUserRequestPreference:: result: {}", requestPreferences.getResult().get(0));
-    return requestPreferences.getResult().get(0);
+
+    return requestPreferences.getResult().getFirst();
   }
 }
