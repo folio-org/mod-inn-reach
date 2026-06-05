@@ -109,6 +109,7 @@ import java.util.function.Supplier;
 @Service
 @Transactional
 @RequiredArgsConstructor
+@SuppressWarnings("java:S2143")
 public class CirculationServiceImpl implements CirculationService {
 
   private static final String[] TRANSACTION_HOLD_IGNORE_PROPS_ON_COPY = {
@@ -504,7 +505,7 @@ public class CirculationServiceImpl implements CirculationService {
     Long checkOutTimeDuration = jsonHelper.getCheckoutTimeDurationInMilliseconds(configDataList.getResult());
 
     log.info("deleteVirtualRecords execution started at: [{}] with Checkout Time Duration: [{}]",
-      new Date(), checkOutTimeDuration);
+      Instant.now(), checkOutTimeDuration);
     var task = new FolioAsyncExecutorWrapper(folioExecutionContext,
             () -> virtualRecordService.deleteVirtualRecords(folioItemId, folioHoldingId,
                     folioInstanceId, folioLoanId));

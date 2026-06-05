@@ -112,6 +112,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+@SuppressWarnings("java:S8692")
 @Sql(
   scripts = {
     "classpath:db/central-server/clear-central-server-tables.sql",
