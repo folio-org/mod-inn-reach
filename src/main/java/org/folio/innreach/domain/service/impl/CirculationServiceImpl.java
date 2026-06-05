@@ -96,7 +96,6 @@ import jakarta.persistence.EntityExistsException;
 
 import java.time.Instant;
 import java.util.Collection;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -109,7 +108,6 @@ import java.util.function.Supplier;
 @Service
 @Transactional
 @RequiredArgsConstructor
-@SuppressWarnings("java:S2143")
 public class CirculationServiceImpl implements CirculationService {
 
   private static final String[] TRANSACTION_HOLD_IGNORE_PROPS_ON_COPY = {
@@ -422,23 +420,23 @@ public class CirculationServiceImpl implements CirculationService {
     var transaction = getTransaction(trackingId, centralCode);
     var hold = transaction.getHold();
     var loan = loanService.getById(hold.getFolioLoanId());
-    var existingDueDate = loan.getDueDate();
-    var requestedDueDate = Date.from(ofEpochSecond(renewLoan.getDueDateTime()));
+    var existingDueDate = loan.getDueDate().toInstant();
+    var requestedDueDate = ofEpochSecond(renewLoan.getDueDateTime());
 
     try {
       hold.setDueDateTime(renewLoan.getDueDateTime());
 
       var renewedLoan = renewLoan(hold);
-      var calculatedDueDate = renewedLoan.getDueDate();
+      var calculatedDueDate = renewedLoan.getDueDate().toInstant();
 
-      if (calculatedDueDate.after(requestedDueDate) || calculatedDueDate.equals(requestedDueDate)) {
+      if (!calculatedDueDate.isBefore(requestedDueDate)) {
         transaction.setState(BORROWER_RENEW);
       } else {
         recallRequestToCentralSever(transaction, existingDueDate);
       }
     } catch (Exception e) {
       log.warn("Borrower renew loan failed for trackingId: {}", trackingId, e);
-      if (existingDueDate.before(requestedDueDate)) {
+      if (existingDueDate.isBefore(requestedDueDate)) {
         recallRequestToCentralSever(transaction, existingDueDate);
       } else {
         throw new CirculationException("Failed to renew loan: " + e.getMessage(), e);
@@ -460,10 +458,9 @@ public class CirculationServiceImpl implements CirculationService {
     var calculatedDueDate = renewedLoan.getDueDate().toInstant();
     var requestedDueDate = ofEpochSecond(renewLoan.getDueDateTime());
     if (calculatedDueDate.isAfter(requestedDueDate)) {
-      var changeToDate = Date.from(requestedDueDate);
-      loanService.changeDueDate(renewedLoan, changeToDate);
+      loanService.changeDueDate(renewedLoan, requestedDueDate);
       log.info("ownerRenewLoan:: Loan renewed and then changed to date: {}, trackingId: [{}], centralCode: [{}]",
-        changeToDate, trackingId, centralCode);
+        requestedDueDate, trackingId, centralCode);
       return success();
     }
 
@@ -520,7 +517,7 @@ public class CirculationServiceImpl implements CirculationService {
     var transaction = getTransaction(trackingId, centralCode);
 
     var returnedDateSec = claimsItemReturned.getClaimsReturnedDate();
-    var returnedDate = returnedDateSec != -1 ? Date.from(ofEpochSecond(returnedDateSec)) : new Date();
+    var returnedDate = returnedDateSec != -1 ? ofEpochSecond(returnedDateSec) : Instant.now();
 
     var folioLoanId = transaction.getHold().getFolioLoanId();
     Assert.isTrue(folioLoanId != null, "Loan id is not set for transaction: " + trackingId);
@@ -584,7 +581,7 @@ public class CirculationServiceImpl implements CirculationService {
     return loanService.renew(RenewByIdDTO.of(hold.getFolioItemId(), hold.getFolioPatronId()));
   }
 
-  private void recallRequestToCentralSever(InnReachTransaction transaction, Date existingDueDate) {
+  private void recallRequestToCentralSever(InnReachTransaction transaction, Instant existingDueDate) {
     var trackingId = transaction.getTrackingId();
     var centralCode = transaction.getCentralServerCode();
 
