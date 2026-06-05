@@ -1,5 +1,9 @@
 package org.folio.innreach.controller.d2ir;
 
+import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
+import static com.github.tomakehurst.wiremock.client.WireMock.ok;
+import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
+import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
 import static com.github.tomakehurst.wiremock.stubbing.Scenario.STARTED;
 import static java.lang.String.format;
 import static org.hamcrest.Matchers.containsString;
@@ -17,6 +21,7 @@ import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionSt
 import static org.folio.innreach.fixture.CirculationFixture.createCancelRequestDTO;
 import static org.folio.innreach.fixture.CirculationFixture.createItemShippedDTO;
 
+import com.github.tomakehurst.wiremock.client.WireMock;
 import org.apache.http.HttpStatus;
 import org.folio.innreach.util.UUIDEncoder;
 import org.junit.jupiter.api.Test;
@@ -27,10 +32,11 @@ import org.folio.innreach.controller.base.BaseApiControllerTest;
 import org.folio.innreach.domain.entity.InnReachTransaction;
 import org.folio.innreach.domain.entity.InnReachTransaction.TransactionState;
 import org.folio.innreach.domain.exception.ResourceVersionConflictException;
-import org.folio.innreach.dto.BaseCircRequestDTO;
 import org.folio.innreach.repository.InnReachTransactionRepository;
 
 import java.util.UUID;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 
 @Sql(
     scripts = {
@@ -113,6 +119,7 @@ class OptimisticLockingTest extends BaseApiControllerTest {
     req.setPatronId(PRE_POPULATED_PATRON_ID);
     var patronId = UUIDEncoder.decode(req.getPatronId());
 
+    stubConfigurationsByModule();
     stubGet(format(USER_BY_ID_URL_TEMPLATE, patronId), "users/user.json");
 
     stubGet(circRequestUrl(), "circulation/item-request-response.json");
@@ -137,6 +144,7 @@ class OptimisticLockingTest extends BaseApiControllerTest {
     req.setPatronId(PRE_POPULATED_PATRON_ID);
     var patronId = UUIDEncoder.decode(req.getPatronId());
 
+    stubConfigurationsByModule();
     stubGet(format(USER_BY_ID_URL_TEMPLATE, patronId), "users/user.json");
 
     stubGet(circRequestUrl(), "circulation/item-request-response.json");
@@ -158,6 +166,7 @@ class OptimisticLockingTest extends BaseApiControllerTest {
     req.setPatronId(PRE_POPULATED_PATRON_ID);
     var patronId = UUIDEncoder.decode(req.getPatronId());
 
+    stubConfigurationsByModule();
     stubGet(format(USER_BY_ID_URL_TEMPLATE, patronId), "users/user.json");
 
     stubGet(circRequestUrl(), "circulation/item-request-response.json");
@@ -183,6 +192,7 @@ class OptimisticLockingTest extends BaseApiControllerTest {
     req.setPatronId(PRE_POPULATED_PATRON_ID);
     var patronId = UUIDEncoder.decode(req.getPatronId());
 
+    stubConfigurationsByModule();
     stubGet(format(USER_BY_ID_URL_TEMPLATE, patronId), "users/user.json");
 
     stubGet(circRequestUrl(), "circulation/item-request-response.json");
@@ -204,6 +214,7 @@ class OptimisticLockingTest extends BaseApiControllerTest {
     req.setPatronId(PRE_POPULATED_PATRON_ID);
     var patronId = UUIDEncoder.decode(req.getPatronId());
 
+    stubConfigurationsByModule();
     stubGet(format(USER_BY_ID_URL_TEMPLATE, patronId), "users/user.json");
 
     stubGet(circRequestUrl(), "circulation/item-request-response.json");
@@ -337,6 +348,14 @@ class OptimisticLockingTest extends BaseApiControllerTest {
         .andExpect(failedWithReason(containsString("optimistic locking")))
         .andExpect(emptyErrors())
         .andExpect(exceptionMatch(ResourceVersionConflictException.class));
+  }
+
+  private static void stubConfigurationsByModule() {
+    stubFor(WireMock.get(urlPathEqualTo("/configurations/entries"))
+        .withQueryParam("query", equalTo("(module=CHECKOUT and configName=other_settings)"))
+        .willReturn(ok()
+            .withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+            .withBodyFile("configurations/query-checkout-configs.json")));
   }
 
 }

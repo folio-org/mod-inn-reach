@@ -1,5 +1,9 @@
 package org.folio.innreach.controller.d2ir;
 
+import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
+import static com.github.tomakehurst.wiremock.client.WireMock.ok;
+import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
+import static com.github.tomakehurst.wiremock.client.WireMock.urlPathEqualTo;
 import static java.lang.String.format;
 import static org.awaitility.Awaitility.await;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.CANCEL_REQUEST;
@@ -28,6 +32,7 @@ import java.time.Instant;
 import java.util.Map;
 import java.util.UUID;
 
+import com.github.tomakehurst.wiremock.client.WireMock;
 import lombok.SneakyThrows;
 import org.folio.innreach.domain.dto.OwningSiteCancelsRequestDTO;
 import org.folio.innreach.domain.service.RecordContributionService;
@@ -38,6 +43,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.jdbc.Sql;
@@ -334,6 +340,7 @@ class CirculationApiTest extends BaseApiControllerTest {
     stubDelete(format("%s/%s", INSTANCES_URL, FOLIO_INSTANCE_ID));
     stubGet(LOAN_URL, "circulation/loan-response.json");
     stubDelete(LOAN_URL);
+    stubConfigurationsByModule();
 
     mockMvc.perform(put(CIRCULATION_ENDPOINT, CANCEL_REQ_OPERATION, PRE_POPULATED_TRACKING_ID, PRE_POPULATED_CENTRAL_CODE)
         .content(jsonHelper.toJson(requestPayload))
@@ -420,6 +427,14 @@ class CirculationApiTest extends BaseApiControllerTest {
     assertEquals(PAGE_REQUEST_TYPE, requestDTO.getRequestType());
     assertEquals(FOLIO_PATRON_ID, requestDTO.getRequesterId());
     assertEquals(SERVICE_POINT_ID, requestDTO.getPickupServicePointId().toString());
+  }
+
+  private static void stubConfigurationsByModule() {
+    stubFor(WireMock.get(urlPathEqualTo("/configurations/entries"))
+      .withQueryParam("query", equalTo("(module=CHECKOUT and configName=other_settings)"))
+      .willReturn(ok()
+        .withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+        .withBodyFile("configurations/query-checkout-configs.json")));
   }
 
 }

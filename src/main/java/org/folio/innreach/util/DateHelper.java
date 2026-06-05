@@ -15,6 +15,10 @@ public class DateHelper {
     return (int) toInstantTruncatedToSec(date).getEpochSecond();
   }
 
+  public static int toEpochSec(Instant instant) {
+    return (int) instant.truncatedTo(ChronoUnit.SECONDS).getEpochSecond();
+  }
+
   public static Date addYearToDate(int n) {
     Calendar c = Calendar.getInstance();
     c.setTime(new Date());
