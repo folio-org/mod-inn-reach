@@ -7,6 +7,7 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatusCode;
+import org.springframework.http.MediaType;
 import org.springframework.http.client.ClientHttpRequestFactory;
 import org.springframework.http.client.JdkClientHttpRequestFactory;
 import org.springframework.http.converter.json.JacksonJsonHttpMessageConverter;
@@ -18,6 +19,7 @@ import tools.jackson.databind.json.JsonMapper;
 
 import java.net.http.HttpClient;
 import java.time.Duration;
+import java.util.ArrayList;
 
 @Configuration
 @ConditionalOnProperty(prefix = "folio.exchange", name = "enabled", havingValue = "true")
@@ -32,13 +34,18 @@ public class HttpInnReachServiceClientConfiguration {
 
   @Bean("innReachRestClientBuilder")
   public RestClient.Builder innReachRestClientBuilder(InnReachErrorHandler errorHandler, JsonMapper jsonMapper) {
+    var jacksonJsonMsgConverter = new JacksonJsonHttpMessageConverter(jsonMapper);
+    var supportedMediaTypes = new ArrayList<>(jacksonJsonMsgConverter.getSupportedMediaTypes());
+    supportedMediaTypes.add(new MediaType("text", "json"));
+    jacksonJsonMsgConverter.setSupportedMediaTypes(supportedMediaTypes);
+
     return RestClient.builder()
       .requestFactory(buildRequestFactory())
       .defaultStatusHandler(HttpStatusCode::isError,
         ((request, response) -> errorHandler.handle(response)))
       .configureMessageConverters(configurer -> configurer
         .registerDefaults()
-        .withJsonConverter(new JacksonJsonHttpMessageConverter(jsonMapper))
+        .withJsonConverter(jacksonJsonMsgConverter)
         .configureMessageConvertersList(converters -> converters.addFirst(new RawJsonStringHttpMessageConverter()))
       );
   }

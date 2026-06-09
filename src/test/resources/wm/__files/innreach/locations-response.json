@@ -1,0 +1,20 @@
+{
+  "status": "ok",
+  "reason": "success",
+  "errors": [],
+  "locationList": [
+    {
+      "locationKey": "q1w2e",
+      "description": "location 1"
+    },
+    {
+      "locationKey": "p0o9i",
+      "description": "location 2"
+    },
+    {
+      "locationKey": "u7y6t",
+      "description": "location 3"
+    }
+  ]
+}
+
