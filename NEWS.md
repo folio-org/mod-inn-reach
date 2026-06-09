@@ -1,3 +1,9 @@
+## v4.0.3 2026-06-09
+
+### Bugs
+* **Contribution**
+  * Fix http message converter for response of Fetch Inn-Reach Locations API ([MODINREACH-600](https://folio-org.atlassian.net/browse/MODINREACH-600))
+
 ## v4.0.2 2026-06-04
 
 ### Bugs
