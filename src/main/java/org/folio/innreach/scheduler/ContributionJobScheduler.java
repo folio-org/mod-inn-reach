@@ -62,8 +62,8 @@ public class ContributionJobScheduler {
     }
   }
 
-  @Scheduled(fixedDelayString = "${contribution.scheduler.fixed-delay}",
-    initialDelayString = "${contribution.scheduler.initial-delay}")
+  @Scheduled(fixedDelayString = "${contribution.initial.scheduler.fixed-delay}",
+    initialDelayString = "${contribution.initial.scheduler.initial-delay}")
   public void processInitialContributionEvents() {
     if (!initialContributionLock.tryLock()) {
       log.debug("processInitialContributionEvents:: previous tick still running, skipping");
@@ -101,8 +101,8 @@ public class ContributionJobScheduler {
     }
   }
 
-  @Scheduled(fixedDelayString = "${contribution.scheduler.fixed-delay}",
-    initialDelayString = "${contribution.scheduler.initial-delay}")
+  @Scheduled(fixedDelayString = "${contribution.ongoing.scheduler.fixed-delay}",
+    initialDelayString = "${contribution.ongoing.scheduler.initial-delay}")
   public void processOngoingContributionEvents() {
     if (!ongoingContributionLock.tryLock()) {
       log.debug("processOngoingContributionEvents:: previous tick still running, skipping");

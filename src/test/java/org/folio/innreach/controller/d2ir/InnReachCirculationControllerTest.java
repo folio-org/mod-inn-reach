@@ -112,6 +112,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+@SuppressWarnings("java:S8692")
 @Sql(
   scripts = {
     "classpath:db/central-server/clear-central-server-tables.sql",
@@ -195,7 +196,7 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
   private PatronHoldService patronHoldService;
   @MockitoBean
   private HoldingsService holdingsService;
-  @MockitoBean
+  @MockitoSpyBean
   private VirtualRecordService virtualRecordService;
   @MockitoBean
   private ConfigurationService configurationService;
@@ -1192,10 +1193,7 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
   void checkTransactionIsNotInStatePatronHoldOrTransfer(InnReachTransaction.TransactionState state) {
     var transactionHoldDTO = createTransactionHoldDTO();
     var transactionBefore = fetchPrePopulatedTransaction();
-    var configurationDto =
-            deserializeFromJsonFile("/configuration/configuration-details-example.json", CirculationSettingDTO.class);
-    when(configurationService.fetchCheckoutSettings()).
-            thenReturn(ResultList.asSinglePage(configurationDto));
+    mockFetchingCirculationSettings();
 
     transactionBefore.setState(state);
     repository.save(transactionBefore);
@@ -1294,8 +1292,8 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     "classpath:db/patron-type-mapping/pre-populate-patron-type-mapping.sql",
   })
   void processCancelRequest() {
+    mockFetchingCirculationSettings();
     doNothing().when(requestService).cancelRequest(anyString(), any(UUID.class), any(UUID.class), anyString());
-    doNothing().when(virtualRecordService).deleteVirtualRecords(any(UUID.class), any(UUID.class), any(UUID.class), any(UUID.class));
     when(userService.getUserById(any(UUID.class))).thenReturn(Optional.of(populateUser()));
 
     var cancelRequestDTO = createCancelRequestDTO();
@@ -1305,14 +1303,14 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
       new HttpEntity<>(cancelRequestDTO, headers), InnReachResponseDTO.class,
       PRE_POPULATED_TRACKING1_ID, PRE_POPULATED_CENTRAL_CODE);
 
-    verify(requestService).cancelRequest(anyString(), any(UUID.class), any(UUID.class), anyString());
-    verify(virtualRecordService).deleteVirtualRecords(any(UUID.class), any(UUID.class), any(UUID.class), any(UUID.class));
-
-    var transactionAfter = fetchPrePopulatedTransaction();
-
-    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
-    assertEquals(CANCEL_REQUEST, transactionAfter.getState());
-    assertPatronHoldFieldsAreNull((TransactionPatronHold) transactionAfter.getHold());
+    await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() -> {
+      var transactionAfter = fetchPrePopulatedTransaction();
+      assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+      assertEquals(CANCEL_REQUEST, transactionAfter.getState());
+      verify(requestService).cancelRequest(anyString(), any(UUID.class), any(UUID.class), anyString());
+      verify(virtualRecordService).deleteVirtualRecords(any(), any(), any(), any());
+      assertPatronHoldFieldsAreNull((TransactionPatronHold) transactionAfter.getHold());
+    });
   }
 
   @ParameterizedTest
@@ -1324,11 +1322,8 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
   void testFinalCheckInWithDeleteVirtualRecord(InnReachTransaction.TransactionState state) {
     var transactionHoldDTO = createTransactionHoldDTO();
     var transactionBefore = fetchPrePopulatedTransaction();
-    var configurationDto =
-            deserializeFromJsonFile("/configuration/configuration-details-example.json", CirculationSettingDTO.class);
-    when(configurationService.fetchCheckoutSettings()).
-            thenReturn(ResultList.asSinglePage(configurationDto));
 
+    mockFetchingCirculationSettings();
     transactionBefore.setState(state);
     repository.save(transactionBefore);
 
@@ -1341,8 +1336,18 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
       var transactionAfter = fetchPrePopulatedTransaction();
       assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
       assertEquals(FINAL_CHECKIN, transactionAfter.getState());
+      verify(virtualRecordService).deleteVirtualRecords(any(), any(), any(), any());
       assertPatronHoldFieldsAreNull((TransactionPatronHold) transactionAfter.getHold());
     });
+  }
+
+  private void mockFetchingCirculationSettings() {
+    var configurationDto =
+      deserializeFromJsonFile("/configuration/configuration-details-example.json", CirculationSettingDTO.class);
+    // Override checkoutTimeoutDuration to 0 so the scheduled delete task fires immediately in tests
+    configurationDto.getValue().put("checkoutTimeoutDuration", 0);
+    when(configurationService.fetchCheckoutSettings()).
+      thenReturn(ResultList.asSinglePage(configurationDto));
   }
 
   private void assertPatronHoldFieldsAreNull(TransactionPatronHold hold) {
