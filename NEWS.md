@@ -8,6 +8,7 @@
 * Separate scheduler job configs for initial and ongoing contributions ([MODINREACH-599](https://folio-org.atlassian.net/browse/MODINREACH-599))
 * Fix sending request cancellation notices on handling of cancel request message from central server ([MODINREACH-574](https://folio-org.atlassian.net/browse/MODINREACH-574)) 
 * Fix http message converter for response of Fetch Inn-Reach Locations API ([MODINREACH-600](https://folio-org.atlassian.net/browse/MODINREACH-600))  
+* Fix handling Loan closure for Item Transaction with Recall Status ([MODINREACH-575](https://folio-org.atlassian.net/browse/MODINREACH-575))
 
 ## v4.0.0 2026-04-17
 
