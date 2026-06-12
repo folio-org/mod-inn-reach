@@ -363,7 +363,7 @@ public class CirculationServiceImpl implements CirculationService {
       trackingId, centralCode, itemInTransitRequest);
     var transaction = getTransaction(trackingId, centralCode);
 
-    verifyState(transaction, ITEM_RECEIVED, RECEIVE_UNANNOUNCED);
+    verifyState(transaction, ITEM_RECEIVED, RECEIVE_UNANNOUNCED, RECALL);
 
     transaction.setState(ITEM_IN_TRANSIT);
 

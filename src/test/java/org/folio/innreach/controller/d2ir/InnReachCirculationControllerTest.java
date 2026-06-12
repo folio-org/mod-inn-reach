@@ -584,14 +584,15 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     assertNotEquals(RECEIVE_UNANNOUNCED, transactionUpdated.getState());
   }
 
-  @Test
+  @ParameterizedTest
+  @EnumSource(names = {"ITEM_RECEIVED", "RECEIVE_UNANNOUNCED", "RECALL"})
   @Sql(scripts = {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
   })
-  void processItemInTransit_updateTransactionState() {
+  void processItemInTransit_updateTransactionState(InnReachTransaction.TransactionState state) {
     var transaction = fetchPrePopulatedTransaction();
-    transaction.setState(ITEM_RECEIVED);
+    transaction.setState(state);
     repository.save(transaction);
 
     var transactionHoldDTO = createTransactionHoldDTO();
