@@ -585,7 +585,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
   private void updateItemTransactionOnLoanClosure(InnReachTransaction transaction, UUID loanId) {
     log.info("Updating item transaction {} on loan closure {}", transaction.getId(), loanId);
 
-    verifyState(transaction, ITEM_RECEIVED, RECEIVE_UNANNOUNCED, ITEM_SHIPPED, ITEM_IN_TRANSIT, RETURN_UNCIRCULATED, BORROWER_RENEW);
+    verifyState(transaction, ITEM_RECEIVED, RECEIVE_UNANNOUNCED, ITEM_SHIPPED, ITEM_IN_TRANSIT, RETURN_UNCIRCULATED, BORROWER_RENEW, RECALL);
 
     transaction.getHold().setDueDateTime(null);
 
