@@ -9,6 +9,7 @@
 * Fix sending request cancellation notices on handling of cancel request message from central server ([MODINREACH-574](https://folio-org.atlassian.net/browse/MODINREACH-574)) 
 * Fix http message converter for response of Fetch Inn-Reach Locations API ([MODINREACH-600](https://folio-org.atlassian.net/browse/MODINREACH-600))  
 * Fix handling Loan closure for Item Transaction with Recall Status ([MODINREACH-575](https://folio-org.atlassian.net/browse/MODINREACH-575))
+* Fix handling IN_TRANSIT message from In-Reach for Transaction with Recall status ([MODINREACH-576](https://folio-org.atlassian.net/browse/MODINREACH-576))
 
 ## v4.0.0 2026-04-17
 
