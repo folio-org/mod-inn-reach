@@ -1,3 +1,11 @@
+## v4.0.4 2026-06-12
+
+### Bugs
+* **Circulation**
+  * Fix sending request cancellation notices on handling of cancel request message from central server ([MODINREACH-574](https://folio-org.atlassian.net/browse/MODINREACH-574))
+  * Fix handling Loan closure for Item Transaction with Recall Status ([MODINREACH-575](https://folio-org.atlassian.net/browse/MODINREACH-575))
+  * Fix handling IN_TRANSIT message from In-Reach for Transaction with Recall status ([MODINREACH-576](https://folio-org.atlassian.net/browse/MODINREACH-576))
+
 ## v4.0.3 2026-06-09
 
 ### Bugs
