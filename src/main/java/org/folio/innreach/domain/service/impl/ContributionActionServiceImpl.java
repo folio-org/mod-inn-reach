@@ -7,6 +7,7 @@ import static org.folio.innreach.dto.MappingValidationStatusDTO.VALID;
 import static org.folio.innreach.util.InnReachConstants.INVALID_CENTRAL_SERVER_ID;
 import static org.folio.innreach.util.InnReachConstants.MARC_ERROR_MSG;
 
+import java.util.Objects;
 import java.util.UUID;
 
 import lombok.RequiredArgsConstructor;
@@ -55,7 +56,7 @@ public class ContributionActionServiceImpl implements ContributionActionService 
     var instance = fetchInstanceWithItems(updatedInstance.getId());
 
     var centralServerId = ongoingContributionStatus.getCentralServerId();
-    if (checkCentralServerValid(centralServerId)) {
+    if (isValidCentralServer(centralServerId)) {
       contributionJobRunner.runOngoingInstanceContribution(centralServerId, instance, ongoingContributionStatus);
     } else {
       ongoingContributionStatusService.updateOngoingContribution(ongoingContributionStatus, INVALID_CENTRAL_SERVER_ID, FAILED);
@@ -82,7 +83,7 @@ public class ContributionActionServiceImpl implements ContributionActionService 
       return;
     }
     var centralServerId = ongoingContributionStatus.getCentralServerId();
-    if (checkCentralServerValid(centralServerId)) {
+    if (isValidCentralServer(centralServerId)) {
       contributionJobRunner.runItemContribution(centralServerId, instance, newItem, ongoingContributionStatus);
     } else {
       ongoingContributionStatusService.updateOngoingContribution(ongoingContributionStatus, INVALID_CENTRAL_SERVER_ID, FAILED);
@@ -102,7 +103,7 @@ public class ContributionActionServiceImpl implements ContributionActionService 
     var oldInstance = fetchOldInstance(newItem, oldItem, instance);
     boolean itemMoved = !oldInstance.getId().equals(instance.getId());
     var centralServerId = ongoingContributionStatus.getCentralServerId();
-    if (checkCentralServerValid(centralServerId)) {
+    if (isValidCentralServer(centralServerId)) {
       if (itemMoved) {
         contributionJobRunner.runItemMove(centralServerId, instance, oldInstance, newItem, ongoingContributionStatus);
       } else {
@@ -126,39 +127,34 @@ public class ContributionActionServiceImpl implements ContributionActionService 
   }
 
   @Override
-  public void handleHoldingUpdate(Holding holding, OngoingContributionStatus ongoingContributionStatus) {
-    log.info("Handling holding update {}", holding.getId());
-    var instance = fetchInstanceWithItems(holding.getInstanceId());
+  public void handleHoldingUpdate(Holding newHolding, Holding oldHolding, OngoingContributionStatus ongoingContributionStatus) {
+    log.info("Handling holding update {}", newHolding.getId());
+    var instance = fetchInstanceWithItems(newHolding.getInstanceId());
     if (!isMARCRecord(instance)) {
       ongoingContributionStatusService.updateOngoingContribution(ongoingContributionStatus, MARC_ERROR_MSG, FAILED);
       return;
     }
-    // Filter out the list of item associated with the updated holdings
-    var items = instance.getItems()
-      .stream()
-      .filter(item -> item.getHoldingsRecordId().equals(holding.getId()))
-      .toList();
     var centralServerId = ongoingContributionStatus.getCentralServerId();
-    if (checkCentralServerValid(centralServerId)) {
-      items.forEach(item -> {
-        var newItemJob = createNewOngoingContributionStatus(ongoingContributionStatus, item);
-        newItemJob.setDomainEventType(DomainEventType.UPDATED);
-        contributionJobRunner.runItemContribution(centralServerId, instance, item, newItemJob);
-      });
-      ongoingContributionStatusService.updateOngoingContribution(ongoingContributionStatus, PROCESSED);
-    } else {
+    if (!isValidCentralServer(centralServerId)) {
       ongoingContributionStatusService.updateOngoingContribution(ongoingContributionStatus, INVALID_CENTRAL_SERVER_ID, FAILED);
+      return;
     }
-  }
+    // Filter out the list of item associated with the updated holdings
+    var items = instance.getItems().stream()
+      .filter(item -> item.getHoldingsRecordId().equals(newHolding.getId()))
+      .toList();
 
-  private OngoingContributionStatus createNewOngoingContributionStatus(OngoingContributionStatus holdingJob, Item item) {
-    var ongoingContribution = new OngoingContributionStatus();
-    ongoingContribution.setParentId(holdingJob.getId());
-    ongoingContribution.setTenant(holdingJob.getTenant());
-    ongoingContribution.setDomainEventName(OngoingContributionStatus.EventName.ITEM);
-    ongoingContribution.setCentralServerId(holdingJob.getCentralServerId());
-    ongoingContribution.setOldEntity(jsonHelper.toJson(item));
-    return ongoingContribution;
+    var itemMoved = !Objects.equals(oldHolding.getInstanceId(), newHolding.getInstanceId());
+    var oldInstance = itemMoved ? fetchInstanceWithItems(oldHolding.getInstanceId()) : null;
+    items.forEach(item -> {
+      var newItemJob = createNewOngoingContributionStatus(ongoingContributionStatus, item, DomainEventType.UPDATED);
+      if (itemMoved) {
+        contributionJobRunner.runItemMove(centralServerId, instance, oldInstance, item, newItemJob);
+      } else {
+        contributionJobRunner.runItemContribution(centralServerId, instance, item, newItemJob);
+      }
+    });
+    ongoingContributionStatusService.updateOngoingContribution(ongoingContributionStatus, PROCESSED);
   }
 
   @Override
@@ -178,14 +174,25 @@ public class ContributionActionServiceImpl implements ContributionActionService 
       .filter(item -> item.getHoldingsRecordId().equals(holding.getId()))
       .toList();
     items.forEach(item -> {
-      var newItemJob = createNewOngoingContributionStatus(ongoingContributionStatus, item);
-      newItemJob.setDomainEventType(DomainEventType.DELETED);
+      var newItemJob = createNewOngoingContributionStatus(ongoingContributionStatus, item, DomainEventType.DELETED);
       contributionJobRunner.runItemDeContribution(centralServerId, instance, item, newItemJob);
     });
     ongoingContributionStatusService.updateOngoingContribution(ongoingContributionStatus, PROCESSED);
   }
 
-  private boolean checkCentralServerValid(UUID centralServerId) {
+  private OngoingContributionStatus createNewOngoingContributionStatus(OngoingContributionStatus holdingJob, Item item,
+                                                                       DomainEventType eventType) {
+    var ongoingContribution = new OngoingContributionStatus();
+    ongoingContribution.setParentId(holdingJob.getId());
+    ongoingContribution.setTenant(holdingJob.getTenant());
+    ongoingContribution.setDomainEventName(OngoingContributionStatus.EventName.ITEM);
+    ongoingContribution.setCentralServerId(holdingJob.getCentralServerId());
+    ongoingContribution.setOldEntity(jsonHelper.toJson(item));
+    ongoingContribution.setDomainEventType(eventType);
+    return ongoingContribution;
+  }
+
+  private boolean isValidCentralServer(UUID centralServerId) {
     return centralServerId != null
       && validationService.getItemTypeMappingStatus(centralServerId) == VALID
       && validationService.getLocationMappingStatus(centralServerId) == VALID;

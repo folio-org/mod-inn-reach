@@ -15,8 +15,10 @@ import static org.folio.innreach.dto.MappingValidationStatusDTO.INVALID;
 import static org.folio.innreach.dto.MappingValidationStatusDTO.VALID;
 import static org.folio.innreach.fixture.ContributionFixture.createInstance;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.folio.innreach.fixture.ContributionFixture;
 
 import org.folio.innreach.batch.contribution.service.OngoingContributionStatusServiceImpl;
 import org.folio.innreach.domain.entity.OngoingContributionStatus;
@@ -226,7 +228,7 @@ class ContributionActionServiceImplTest {
     ongoingJob.setCentralServerId(CENTRAL_SERVER_ID);
     when(inventoryViewService.getInstance(any())).thenReturn(instance);
 
-    service.handleHoldingUpdate(holding, ongoingJob);
+    service.handleHoldingUpdate(holding, holding, ongoingJob);
 
     verify(contributionJobRunner, never()).runItemContribution(any(), any(), any(), any());
     verify(ongoingContributionStatusService).updateOngoingContribution(ongoingJob, MARC_ERROR_MSG, FAILED);
@@ -242,7 +244,7 @@ class ContributionActionServiceImplTest {
     when(inventoryViewService.getInstance(any())).thenReturn(instance);
     when(validationService.getItemTypeMappingStatus(any())).thenReturn(INVALID);
 
-    service.handleHoldingUpdate(holding, ongoingJob);
+    service.handleHoldingUpdate(holding, holding, ongoingJob);
 
     verify(contributionJobRunner, never()).runItemContribution(any(), any(), any(), any());
     verify(ongoingContributionStatusService).updateOngoingContribution(ongoingJob, INVALID_CENTRAL_SERVER_ID, FAILED);
@@ -261,7 +263,7 @@ class ContributionActionServiceImplTest {
     when(validationService.getItemTypeMappingStatus(any())).thenReturn(VALID);
     when(validationService.getLocationMappingStatus(any())).thenReturn(VALID);
 
-    service.handleHoldingUpdate(holding, ongoingJob);
+    service.handleHoldingUpdate(holding, holding, ongoingJob);
 
     verify(contributionJobRunner).runItemContribution(eq(CENTRAL_SERVER_ID), eq(instance), eq(item), any());
     verify(ongoingContributionStatusService).updateOngoingContribution(ongoingJob, PROCESSED);
@@ -350,6 +352,147 @@ class ContributionActionServiceImplTest {
     service.handleInstanceDelete(instance, ongoingJob);
 
     verify(contributionJobRunner).runOngoingInstanceDeContribution(CENTRAL_SERVER_ID, instance, ongoingJob);
+  }
+
+  @Test
+  void handleHoldingUpdateWithNullCentralServerId() {
+    var instance = createInstance();
+    var holding = instance.getHoldingsRecords().get(0);
+    instance.getItems().get(0).setHoldingsRecordId(holding.getId());
+    var ongoingJob = new OngoingContributionStatus();
+    ongoingJob.setCentralServerId(null);
+    when(inventoryViewService.getInstance(any())).thenReturn(instance);
+
+    service.handleHoldingUpdate(holding, holding, ongoingJob);
+
+    verify(ongoingContributionStatusService).updateOngoingContribution(ongoingJob, INVALID_CENTRAL_SERVER_ID, FAILED);
+    verifyNoInteractions(contributionJobRunner);
+  }
+
+  @Test
+  void handleHoldingUpdateWithInvalidLocationMapping() {
+    var instance = createInstance();
+    var holding = instance.getHoldingsRecords().get(0);
+    instance.getItems().get(0).setHoldingsRecordId(holding.getId());
+    var ongoingJob = new OngoingContributionStatus();
+    ongoingJob.setCentralServerId(CENTRAL_SERVER_ID);
+    when(inventoryViewService.getInstance(any())).thenReturn(instance);
+    when(validationService.getItemTypeMappingStatus(CENTRAL_SERVER_ID)).thenReturn(VALID);
+    when(validationService.getLocationMappingStatus(CENTRAL_SERVER_ID)).thenReturn(INVALID);
+
+    service.handleHoldingUpdate(holding, holding, ongoingJob);
+
+    verify(ongoingContributionStatusService).updateOngoingContribution(ongoingJob, INVALID_CENTRAL_SERVER_ID, FAILED);
+    verifyNoInteractions(contributionJobRunner);
+  }
+
+  @Test
+  void handleHoldingUpdateWithNoMatchingItems() {
+    var instance = createInstance();
+    var holding = instance.getHoldingsRecords().get(0);
+    var ongoingJob = new OngoingContributionStatus();
+    ongoingJob.setCentralServerId(CENTRAL_SERVER_ID);
+    when(inventoryViewService.getInstance(any())).thenReturn(instance);
+    when(validationService.getItemTypeMappingStatus(CENTRAL_SERVER_ID)).thenReturn(VALID);
+    when(validationService.getLocationMappingStatus(CENTRAL_SERVER_ID)).thenReturn(VALID);
+
+    service.handleHoldingUpdate(holding, holding, ongoingJob);
+
+    verifyNoInteractions(contributionJobRunner);
+    verify(ongoingContributionStatusService).updateOngoingContribution(ongoingJob, PROCESSED);
+  }
+
+  @Test
+  void handleHoldingUpdateWithItemMoveToDifferentInstance() {
+    var newInstance = createInstance();
+    var oldInstance = createInstance();
+    var newHolding = newInstance.getHoldingsRecords().get(0);
+    var oldHolding = oldInstance.getHoldingsRecords().get(0);
+    newHolding.setInstanceId(newInstance.getId());
+    oldHolding.setInstanceId(oldInstance.getId());
+    var item = newInstance.getItems().get(0);
+    item.setHoldingsRecordId(newHolding.getId());
+    var ongoingJob = new OngoingContributionStatus();
+    ongoingJob.setCentralServerId(CENTRAL_SERVER_ID);
+    when(inventoryViewService.getInstance(newHolding.getInstanceId())).thenReturn(newInstance);
+    when(inventoryViewService.getInstance(oldHolding.getInstanceId())).thenReturn(oldInstance);
+    when(validationService.getItemTypeMappingStatus(CENTRAL_SERVER_ID)).thenReturn(VALID);
+    when(validationService.getLocationMappingStatus(CENTRAL_SERVER_ID)).thenReturn(VALID);
+
+    service.handleHoldingUpdate(newHolding, oldHolding, ongoingJob);
+
+    verify(contributionJobRunner).runItemMove(eq(CENTRAL_SERVER_ID), eq(newInstance), eq(oldInstance), eq(item), any());
+    verify(ongoingContributionStatusService).updateOngoingContribution(ongoingJob, PROCESSED);
+  }
+
+  @Test
+  void handleHoldingUpdateWithMultipleMatchingItems() {
+    var instance = createInstance();
+    var holding = instance.getHoldingsRecords().get(0);
+    var item1 = instance.getItems().get(0);
+    item1.setHoldingsRecordId(holding.getId());
+    var item2 = ContributionFixture.createItem();
+    item2.setHoldingsRecordId(holding.getId());
+    instance.setItems(List.of(item1, item2));
+    var ongoingJob = new OngoingContributionStatus();
+    ongoingJob.setCentralServerId(CENTRAL_SERVER_ID);
+    when(inventoryViewService.getInstance(any())).thenReturn(instance);
+    when(validationService.getItemTypeMappingStatus(CENTRAL_SERVER_ID)).thenReturn(VALID);
+    when(validationService.getLocationMappingStatus(CENTRAL_SERVER_ID)).thenReturn(VALID);
+
+    service.handleHoldingUpdate(holding, holding, ongoingJob);
+
+    verify(contributionJobRunner).runItemContribution(eq(CENTRAL_SERVER_ID), eq(instance), eq(item1), any());
+    verify(contributionJobRunner).runItemContribution(eq(CENTRAL_SERVER_ID), eq(instance), eq(item2), any());
+    verify(ongoingContributionStatusService).updateOngoingContribution(ongoingJob, PROCESSED);
+  }
+
+  @Test
+  void handleHoldingUpdateWithMultipleItemsMovedToDifferentInstance() {
+    var newInstance = createInstance();
+    var oldInstance = createInstance();
+    var newHolding = newInstance.getHoldingsRecords().get(0);
+    var oldHolding = oldInstance.getHoldingsRecords().get(0);
+    newHolding.setInstanceId(newInstance.getId());
+    oldHolding.setInstanceId(oldInstance.getId());
+    var item1 = newInstance.getItems().get(0);
+    item1.setHoldingsRecordId(newHolding.getId());
+    var item2 = ContributionFixture.createItem();
+    item2.setHoldingsRecordId(newHolding.getId());
+    newInstance.setItems(List.of(item1, item2));
+    var ongoingJob = new OngoingContributionStatus();
+    ongoingJob.setCentralServerId(CENTRAL_SERVER_ID);
+    when(inventoryViewService.getInstance(newHolding.getInstanceId())).thenReturn(newInstance);
+    when(inventoryViewService.getInstance(oldHolding.getInstanceId())).thenReturn(oldInstance);
+    when(validationService.getItemTypeMappingStatus(CENTRAL_SERVER_ID)).thenReturn(VALID);
+    when(validationService.getLocationMappingStatus(CENTRAL_SERVER_ID)).thenReturn(VALID);
+
+    service.handleHoldingUpdate(newHolding, oldHolding, ongoingJob);
+
+    verify(contributionJobRunner).runItemMove(eq(CENTRAL_SERVER_ID), eq(newInstance), eq(oldInstance), eq(item1), any());
+    verify(contributionJobRunner).runItemMove(eq(CENTRAL_SERVER_ID), eq(newInstance), eq(oldInstance), eq(item2), any());
+    verify(ongoingContributionStatusService).updateOngoingContribution(ongoingJob, PROCESSED);
+  }
+
+  @Test
+  void handleHoldingUpdateWithSameInstanceId() {
+    var instance = createInstance();
+    var holding = instance.getHoldingsRecords().get(0);
+    var item = instance.getItems().get(0);
+    item.setHoldingsRecordId(holding.getId());
+    var oldHolding = ContributionFixture.createHolding();
+    oldHolding.setInstanceId(holding.getInstanceId());
+    var ongoingJob = new OngoingContributionStatus();
+    ongoingJob.setCentralServerId(CENTRAL_SERVER_ID);
+    when(inventoryViewService.getInstance(any())).thenReturn(instance);
+    when(validationService.getItemTypeMappingStatus(CENTRAL_SERVER_ID)).thenReturn(VALID);
+    when(validationService.getLocationMappingStatus(CENTRAL_SERVER_ID)).thenReturn(VALID);
+
+    service.handleHoldingUpdate(holding, oldHolding, ongoingJob);
+
+    verify(contributionJobRunner).runItemContribution(eq(CENTRAL_SERVER_ID), eq(instance), eq(item), any());
+    verify(contributionJobRunner, never()).runItemMove(any(), any(), any(), any(), any());
+    verify(ongoingContributionStatusService).updateOngoingContribution(ongoingJob, PROCESSED);
   }
 
 }
