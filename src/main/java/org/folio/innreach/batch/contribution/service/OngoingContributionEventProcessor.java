@@ -100,7 +100,8 @@ public class OngoingContributionEventProcessor {
     switch (ongoingContributionStatus.getDomainEventType()) {
       case UPDATED -> {
         var newEntity = jsonHelper.fromJson(ongoingContributionStatus.getNewEntity(), Holding.class);
-        contributionActionService.handleHoldingUpdate(newEntity, ongoingContributionStatus);
+        var oldEntity = jsonHelper.fromJson(ongoingContributionStatus.getOldEntity(), Holding.class);
+        contributionActionService.handleHoldingUpdate(newEntity, oldEntity, ongoingContributionStatus);
       }
       case DELETED -> {
         var oldEntity = jsonHelper.fromJson(ongoingContributionStatus.getOldEntity(), Holding.class);

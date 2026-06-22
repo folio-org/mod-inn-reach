@@ -19,7 +19,7 @@ public interface ContributionActionService {
 
   void handleItemDelete(Item deletedItem, OngoingContributionStatus ongoingContributionStatus);
 
-  void handleHoldingUpdate(Holding holding, OngoingContributionStatus ongoingContributionStatus);
+  void handleHoldingUpdate(Holding newHolding, Holding oldHolding, OngoingContributionStatus ongoingContributionStatus);
 
   void handleHoldingDelete(Holding holding, OngoingContributionStatus ongoingContributionStatus);
 }
