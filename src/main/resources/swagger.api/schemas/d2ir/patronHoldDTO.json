@@ -19,7 +19,7 @@
       "maximum": 255
     },
     "title": {
-      "description": "Item title",
+      "description": "Bibliographic title of the requested item. Required for patron hold: used as the title of the virtual Instance created in FOLIO inventory.",
       "type": "string",
       "maxLength": 256
     },
@@ -41,6 +41,7 @@
   "additionalProperties": false,
   "required": [
     "pickupLocation",
-    "centralItemType"
+    "centralItemType",
+    "title"
   ]
 }
