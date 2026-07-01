@@ -13,6 +13,7 @@ Version 2.0. See the file "[LICENSE](LICENSE)" for more information.
 * [Installing the module](#installing-the-module)
 * [Tenant Initialization](#tenant-initialization)
 * [Example value for INNREACH_TENANTS](#example-value-for-innreach_tenants)
+* [Circulation](#circulation)
 * [Additional information](#additional-information)
 
 ## Introduction
@@ -49,7 +50,7 @@ The module provides an access to INN-Reach.
  | MAX_FAILURE                                     |            360            | Default max attempts                                                                                                                                                                                                                                                                                                         |
 | DEFAULT_OFFSET                                  |          latest           | Default kafka offset                                                                                                                                                                                                                                                                                                         |
  | DEFAULT_CONCURRENCY                             |             2             | Deafult concurrency of kafka consumer                                                                                                                                                                                                                                                                                        |
-| INNREACH_TENANTS                                |             -             | This is a regex where list of tenants needs to be mentioned with pipe symbol as delimiter so that mod-inn-reach will listen only these tenant related topics. See here [Example value for INNREACH_TENANTS](#example-value-for-innreach_tenants)                                                                             |
+| INNREACH_TENANTS                                |             -             | Pipe-delimited list of tenant names that mod-inn-reach processes Kafka events for. See [Example value for INNREACH_TENANTS](#example-value-for-innreach_tenants)                                                                                                                                                            |
 | CONTRIBUTION_POOL_SIZE                          |            50             | Thread pool size of scheduler task executor, both for initial and ongoing contribution                                                                                                                                                                                                                                       |
 | CONTRIBUTION_SCHEDULER_DELAY                    |           10000           | Time interval between scheduler runs of Contribution job, value should be given in milli seconds                                                                                                                                                                                                                             |
 | INITIAL_CONTRIBUTION_SCHEDULER_DELAY            |           10000           | Same interval as `CONTRIBUTION_SCHEDULER_DELAY` but for initial contribution job scheduler, value should be given in milli seconds                                                                                                                                                                                           |
@@ -155,10 +156,52 @@ This results in a post to the module's `_tenant` API with the following structur
 See the section [Install modules per tenant](https://github.com/folio-org/okapi/blob/master/doc/guide.md#install-modules-per-tenant) in the Okapi guide for more information.
 
 ## Example value for INNREACH_TENANTS
+
 ```
-For single tenant - tenant1
-For multi  tenant - tenant1|tenant2
+# Single tenant
+INNREACH_TENANTS=tenant1
+
+# Multiple tenants (pipe-delimited)
+INNREACH_TENANTS=tenant1|tenant2|tenant3
 ```
+
+## Circulation
+
+### patronId Lifecycle
+
+The `patronId` field in D2IR circulation request bodies is a **Base32-encoded FOLIO user UUID**.
+
+#### Encoding
+
+When FOLIO responds to a patron verification request (`POST /d2ir/circ/verifypatron`), it encodes the patron's UUID using Base32 (lowercase, no padding) via `UUIDEncoder.encode(user.getId())`. This produces a 26-character lowercase alphanumeric string.
+
+#### Flow
+
+1. Central Server calls `POST /d2ir/circ/verifypatron` — FOLIO returns `patronId` (Base32-encoded UUID) in the `PatronInfo` response.
+2. Central Server stores this value and includes it in all subsequent D2IR circulation requests for that patron (item holds, patron holds, local holds, etc.).
+3. When FOLIO receives a D2IR request containing `patronId`, it decodes the Base32 string back to a UUID via `UUIDEncoder.decode(patronId)` and uses it to look up the FOLIO user record.
+
+#### Where it is actively decoded and used
+
+- `POST /d2ir/circ/patronhold` — decoded to look up patron for virtual record creation
+- `PUT /d2ir/circ/localhold` — decoded to look up patron as requester for item request
+- `POST /d2ir/circ/itemhold` — stored in the transaction; decoded later by lifecycle endpoints (`recall`, `ownerrenew`, `transferrequest`, etc.) that call `populateTransactionPatronInfo`
+
+#### Schema validation
+
+The field is validated by the pattern `[a-z,0-9]{1,32}` which accepts lowercase alphanumeric strings up to 32 characters.
+
+### title Usage
+
+The `title` field in D2IR circulation request bodies represents the **bibliographic title of the requested item**.
+
+#### Virtual Instance creation (Patron Hold flow)
+
+In the patron hold flow (`POST /d2ir/circ/patronhold`), the `title` value is used as the title of the **virtual Instance** created in FOLIO inventory. Since `title` is a required field for Instance creation in `mod-inventory-storage`, a missing or empty `title` in the patron hold request will result in a 422 error from the inventory API.
+
+#### Other flows
+
+In other flows, `title` is either overwritten from the actual inventory item's title (`itemhold`) or not used in processing logic (`localhold`, `itemshipped`, `itemreceived`, `returnuncirculated`).
 
 ## Additional information
 
