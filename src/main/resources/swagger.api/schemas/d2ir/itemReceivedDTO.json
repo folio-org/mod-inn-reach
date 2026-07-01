@@ -15,7 +15,7 @@
       "maximum": 255
     },
     "title": {
-      "description": "Item title",
+      "description": "Bibliographic title of the requested item. Informational only; not used in item-received processing logic.",
       "type": "string",
       "maxLength": 256
     },

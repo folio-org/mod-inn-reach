@@ -23,7 +23,7 @@
       "type": "string"
     },
     "title": {
-      "description": "Item title",
+      "description": "Bibliographic title of the requested item. Informational only; not used in item-shipped processing logic.",
       "type": "string",
       "maxLength": 256
     },
