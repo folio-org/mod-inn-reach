@@ -674,6 +674,7 @@ class OngoingContributionEventProcessorTest extends BaseControllerTest {
 
   @Test
   void testHoldingUpdateEventWithInEligibleItem() {
+    holdingUpdate.getData().getOldEntity().setInstanceId(holdingUpdate.getData().getNewEntity().getInstanceId());
     var ongoingContributionStatus = saveOngoingContributionStatus(ongoingContributionStatusMapper
       .convertHoldingToEntity(holdingUpdate), CENTRAL_SERVER_ID);
     holdings.setId(holdingId);
@@ -697,6 +698,7 @@ class OngoingContributionEventProcessorTest extends BaseControllerTest {
 
   @Test
   void testHoldingUpdateEventWithInEligibleItemButAlreadyContributed() {
+    holdingUpdate.getData().getOldEntity().setInstanceId(holdingUpdate.getData().getNewEntity().getInstanceId());
     var ongoingContributionStatus = saveOngoingContributionStatus(ongoingContributionStatusMapper
       .convertHoldingToEntity(holdingUpdate), CENTRAL_SERVER_ID);
     holdings.setId(holdingId);
@@ -725,6 +727,7 @@ class OngoingContributionEventProcessorTest extends BaseControllerTest {
 
   @Test
   void testHoldingUpdateEventWithEligibleInstanceAndItem() {
+    holdingUpdate.getData().getOldEntity().setInstanceId(holdingUpdate.getData().getNewEntity().getInstanceId());
     var ongoingContributionStatus = saveOngoingContributionStatus(ongoingContributionStatusMapper
       .convertHoldingToEntity(holdingUpdate), CENTRAL_SERVER_ID);
     holdings.setId(holdingId);
@@ -762,6 +765,7 @@ class OngoingContributionEventProcessorTest extends BaseControllerTest {
 
   @Test
   void testHoldingUpdateEventWithEligibleInstanceAndInEligibleItem() {
+    holdingUpdate.getData().getOldEntity().setInstanceId(holdingUpdate.getData().getNewEntity().getInstanceId());
     var ongoingContributionStatus = saveOngoingContributionStatus(ongoingContributionStatusMapper
       .convertHoldingToEntity(holdingUpdate), CENTRAL_SERVER_ID);
     holdings.setId(holdingId);
@@ -885,6 +889,201 @@ class OngoingContributionEventProcessorTest extends BaseControllerTest {
     verify(recordContributionService, times(2)).contributeInstance(any(), any());
     verify(recordContributionService, never()).contributeItems(any(), any(), any());
     verify(recordContributionService, times(2)).deContributeItem(any(), any());
+    verify(recordContributionService, never()).deContributeInstance(any(), any());
+    assertEquals(PROCESSED, ongoingContributionStatus.getStatus());
+    assertNull(ongoingContributionStatus.getError());
+  }
+
+  @Test
+  void testHoldingUpdateEventWithItemMoveAndIneligibleNonContributedItem() {
+    // old and new holdings have different instanceIds (item move scenario)
+    var ongoingContributionStatus = saveOngoingContributionStatus(ongoingContributionStatusMapper
+      .convertHoldingToEntity(holdingUpdate), CENTRAL_SERVER_ID);
+    var newHoldingInstanceId = holdingUpdate.getData().getNewEntity().getInstanceId();
+    var oldHoldingInstanceId = holdingUpdate.getData().getOldEntity().getInstanceId();
+    holdings.setId(holdingId);
+    instanceView.setHoldingsRecords(List.of(holdings));
+    item.setHoldingsRecordId(holdings.getId());
+    instanceView.setItems(List.of(item));
+    when(inventoryViewClient.getInstanceById(newHoldingInstanceId))
+      .thenReturn(ResultList.of(1, List.of(instanceView)));
+    var oldInstanceView = new InventoryViewClient.InstanceView();
+    oldInstanceView.setInstance(createInstance());
+    when(inventoryViewClient.getInstanceById(oldHoldingInstanceId))
+      .thenReturn(ResultList.of(1, List.of(oldInstanceView)));
+    when(validationService.isEligibleForContribution(any(UUID.class), any(Item.class)))
+      .thenReturn(false);
+    when(recordContributionService.isContributed(any(UUID.class), any(Instance.class), any(Item.class)))
+      .thenReturn(false);
+
+    eventProcessor.processOngoingContribution(ongoingContributionStatus);
+
+    await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() ->
+      verify(ongoingContributionStatusRepository, times(3)).save(any()));
+    verify(recordContributionService, never()).contributeInstance(any(), any());
+    verify(recordContributionService, never()).contributeItems(any(), any(), any());
+    verify(recordContributionService, never()).deContributeItem(any(), any());
+    verify(recordContributionService, never()).deContributeInstance(any(), any());
+    assertEquals(PROCESSED, ongoingContributionStatus.getStatus());
+    assertNull(ongoingContributionStatus.getError());
+  }
+
+  @Test
+  void testHoldingUpdateEventWithItemMoveAndContributedItemAndEligibleOldInstance() {
+    var ongoingContributionStatus = saveOngoingContributionStatus(ongoingContributionStatusMapper
+      .convertHoldingToEntity(holdingUpdate), CENTRAL_SERVER_ID);
+    var newHoldingInstanceId = holdingUpdate.getData().getNewEntity().getInstanceId();
+    var oldHoldingInstanceId = holdingUpdate.getData().getOldEntity().getInstanceId();
+    holdings.setId(holdingId);
+    instanceView.setHoldingsRecords(List.of(holdings));
+    item.setHoldingsRecordId(holdings.getId());
+    instanceView.setItems(List.of(item));
+    when(inventoryViewClient.getInstanceById(newHoldingInstanceId))
+      .thenReturn(ResultList.of(1, List.of(instanceView)));
+    var oldInstanceView = new InventoryViewClient.InstanceView();
+    oldInstanceView.setInstance(createInstance());
+    when(inventoryViewClient.getInstanceById(oldHoldingInstanceId))
+      .thenReturn(ResultList.of(1, List.of(oldInstanceView)));
+    when(validationService.isEligibleForContribution(any(UUID.class), any(Item.class)))
+      .thenReturn(true);
+    when(recordContributionService.isContributed(any(UUID.class), any(Instance.class), any(Item.class)))
+      .thenReturn(true);
+    when(validationService.isEligibleForContribution(any(UUID.class), any(Instance.class)))
+      .thenReturn(true);
+    doNothing().when(recordContributionService).deContributeItem(any(), any());
+    doNothing().when(recordContributionService).contributeInstance(any(), any());
+    when(recordContributionService.contributeItems(any(), any(), any())).thenReturn(1);
+
+    eventProcessor.processOngoingContribution(ongoingContributionStatus);
+
+    await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() ->
+      verify(ongoingContributionStatusRepository, times(3)).save(any()));
+    verify(recordContributionService).deContributeItem(any(), any());
+    // contributeInstance called for old instance (re-contribute) + new instance
+    verify(recordContributionService, times(2)).contributeInstance(any(), any());
+    verify(recordContributionService).contributeItems(any(), any(), any());
+    verify(recordContributionService, never()).deContributeInstance(any(), any());
+    assertEquals(PROCESSED, ongoingContributionStatus.getStatus());
+    assertNull(ongoingContributionStatus.getError());
+  }
+
+  @Test
+  void testHoldingUpdateEventWithItemMoveAndContributedItemAndIneligibleOldInstance() {
+    var ongoingContributionStatus = saveOngoingContributionStatus(ongoingContributionStatusMapper
+      .convertHoldingToEntity(holdingUpdate), CENTRAL_SERVER_ID);
+    var newHoldingInstanceId = holdingUpdate.getData().getNewEntity().getInstanceId();
+    var oldHoldingInstanceId = holdingUpdate.getData().getOldEntity().getInstanceId();
+    holdings.setId(holdingId);
+    instanceView.setHoldingsRecords(List.of(holdings));
+    item.setHoldingsRecordId(holdings.getId());
+    instanceView.setItems(List.of(item));
+    when(inventoryViewClient.getInstanceById(newHoldingInstanceId))
+      .thenReturn(ResultList.of(1, List.of(instanceView)));
+    var oldInstanceView = new InventoryViewClient.InstanceView();
+    oldInstanceView.setInstance(createInstance());
+    when(inventoryViewClient.getInstanceById(oldHoldingInstanceId))
+      .thenReturn(ResultList.of(1, List.of(oldInstanceView)));
+    when(validationService.isEligibleForContribution(any(UUID.class), any(Item.class)))
+      .thenReturn(true);
+    when(recordContributionService.isContributed(any(UUID.class), any(Instance.class), any(Item.class)))
+      .thenReturn(true);
+    when(validationService.isEligibleForContribution(any(UUID.class), any(Instance.class)))
+      .thenReturn(false);
+    doNothing().when(recordContributionService).deContributeInstance(any(), any());
+
+    eventProcessor.processOngoingContribution(ongoingContributionStatus);
+
+    await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() ->
+      verify(ongoingContributionStatusRepository, times(3)).save(any()));
+    // old instance is ineligible, so it gets de-contributed
+    verify(recordContributionService).deContributeInstance(any(), any());
+    // new instance is also ineligible, so no contributeInstance or contributeItems
+    verify(recordContributionService, never()).contributeInstance(any(), any());
+    verify(recordContributionService, never()).contributeItems(any(), any(), any());
+    verify(recordContributionService, never()).deContributeItem(any(), any());
+    assertEquals(PROCESSED, ongoingContributionStatus.getStatus());
+    assertNull(ongoingContributionStatus.getError());
+  }
+
+  @Test
+  void testHoldingUpdateEventWithItemMoveAndEligibleItemNotContributedOnOldInstance() {
+    var ongoingContributionStatus = saveOngoingContributionStatus(ongoingContributionStatusMapper
+      .convertHoldingToEntity(holdingUpdate), CENTRAL_SERVER_ID);
+    var newHoldingInstanceId = holdingUpdate.getData().getNewEntity().getInstanceId();
+    var oldHoldingInstanceId = holdingUpdate.getData().getOldEntity().getInstanceId();
+    holdings.setId(holdingId);
+    instanceView.setHoldingsRecords(List.of(holdings));
+    item.setHoldingsRecordId(holdings.getId());
+    instanceView.setItems(List.of(item));
+    when(inventoryViewClient.getInstanceById(newHoldingInstanceId))
+      .thenReturn(ResultList.of(1, List.of(instanceView)));
+    var oldInstanceView = new InventoryViewClient.InstanceView();
+    oldInstanceView.setInstance(createInstance());
+    when(inventoryViewClient.getInstanceById(oldHoldingInstanceId))
+      .thenReturn(ResultList.of(1, List.of(oldInstanceView)));
+    when(validationService.isEligibleForContribution(any(UUID.class), any(Item.class)))
+      .thenReturn(true);
+    when(recordContributionService.isContributed(any(UUID.class), any(Instance.class), any(Item.class)))
+      .thenReturn(false);
+    when(validationService.isEligibleForContribution(any(UUID.class), any(Instance.class)))
+      .thenReturn(true);
+    doNothing().when(recordContributionService).contributeInstance(any(), any());
+    when(recordContributionService.contributeItems(any(), any(), any())).thenReturn(1);
+
+    eventProcessor.processOngoingContribution(ongoingContributionStatus);
+
+    await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() ->
+      verify(ongoingContributionStatusRepository, times(3)).save(any()));
+    // item was not contributed on old instance, so no de-contribute calls for old instance
+    verify(recordContributionService, never()).deContributeItem(any(), any());
+    verify(recordContributionService, never()).deContributeInstance(any(), any());
+    // new instance is eligible, so contribute instance and items
+    verify(recordContributionService).contributeInstance(any(), any());
+    verify(recordContributionService).contributeItems(any(), any(), any());
+    assertEquals(PROCESSED, ongoingContributionStatus.getStatus());
+    assertNull(ongoingContributionStatus.getError());
+  }
+
+  @Test
+  void testHoldingUpdateEventWithItemMoveAndMultipleItems() {
+    var ongoingContributionStatus = saveOngoingContributionStatus(ongoingContributionStatusMapper
+      .convertHoldingToEntity(holdingUpdate), CENTRAL_SERVER_ID);
+    var newHoldingInstanceId = holdingUpdate.getData().getNewEntity().getInstanceId();
+    var oldHoldingInstanceId = holdingUpdate.getData().getOldEntity().getInstanceId();
+    holdings.setId(holdingId);
+    instanceView.setHoldingsRecords(List.of(holdings));
+    var item1 = createItem();
+    item1.setHoldingsRecordId(holdings.getId());
+    item.setHoldingsRecordId(holdings.getId());
+    instanceView.setItems(List.of(item, item1));
+    when(inventoryViewClient.getInstanceById(newHoldingInstanceId))
+      .thenReturn(ResultList.of(1, List.of(instanceView)));
+    var oldInstanceView = new InventoryViewClient.InstanceView();
+    oldInstanceView.setInstance(createInstance());
+    when(inventoryViewClient.getInstanceById(oldHoldingInstanceId))
+      .thenReturn(ResultList.of(1, List.of(oldInstanceView)));
+    when(validationService.isEligibleForContribution(any(UUID.class), any(Item.class)))
+      .thenReturn(true);
+    when(recordContributionService.isContributed(any(UUID.class), any(Instance.class), any(Item.class)))
+      .thenReturn(true);
+    when(validationService.isEligibleForContribution(any(UUID.class), any(Instance.class)))
+      .thenReturn(true);
+    doNothing().when(recordContributionService).deContributeItem(any(), any());
+    doNothing().when(recordContributionService).contributeInstance(any(), any());
+    when(recordContributionService.contributeItems(any(), any(), any())).thenReturn(1);
+
+    eventProcessor.processOngoingContribution(ongoingContributionStatus);
+
+    /*
+     In this test, there are 2 items under a holding being moved to different instance.
+     Each item triggers a separate runItemMove call with its own OngoingContributionStatus entry.
+     */
+    await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() ->
+      verify(ongoingContributionStatusRepository, times(4)).save(any()));
+    verify(recordContributionService, times(2)).deContributeItem(any(), any());
+    // contributeInstance called: 2x for old instances (re-contribute) + 2x for new instances
+    verify(recordContributionService, times(4)).contributeInstance(any(), any());
+    verify(recordContributionService, times(2)).contributeItems(any(), any(), any());
     verify(recordContributionService, never()).deContributeInstance(any(), any());
     assertEquals(PROCESSED, ongoingContributionStatus.getStatus());
     assertNull(ongoingContributionStatus.getError());
