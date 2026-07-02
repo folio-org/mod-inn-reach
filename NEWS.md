@@ -1,3 +1,9 @@
+## v4.0.5 2026-07-02
+
+### Features
+* **Contribution**
+* Handle contribution of Items from a holding moved to new Instance ([MODINREACH-512](https://folio-org.atlassian.net/browse/MODINREACH-512))
+
 ## v4.0.4 2026-06-12
 
 ### Bugs
