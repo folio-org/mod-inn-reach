@@ -37,7 +37,7 @@
       "type": "string"
     },
     "title": {
-      "description": "Item title",
+      "description": "Bibliographic title of the requested item. Stored for informational purposes; not used for instance creation in local hold flow.",
       "type": "string",
       "maxLength": 256
     },

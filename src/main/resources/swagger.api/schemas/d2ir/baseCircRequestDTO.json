@@ -7,7 +7,7 @@
       "type": "integer"
     },
     "patronId": {
-      "description": "Patron id",
+      "description": "Base32-encoded FOLIO user UUID (lowercase, no padding). The caller obtains this value from the patron verification response. Decoded server-side to resolve the FOLIO patron.",
       "type": "string",
       "pattern" : "[a-z,0-9]{1,32}"
     },
@@ -22,7 +22,7 @@
       "pattern": "[a-z,0-9]{5}"
     },
     "itemId": {
-      "description": "Item id",
+      "description": "FOLIO inventory item HRID (Human-Readable ID). Used to look up the item in FOLIO inventory.",
       "type": "string",
       "pattern": "[a-z,0-9]{1,32}"
     }

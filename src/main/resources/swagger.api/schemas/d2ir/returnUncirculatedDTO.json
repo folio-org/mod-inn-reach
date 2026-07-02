@@ -9,7 +9,7 @@
   "type": "object",
   "properties": {
     "title": {
-      "description": "Item title",
+      "description": "Bibliographic title of the requested item. Informational only; not used in return-uncirculated processing logic.",
       "type": "string",
       "maxLength": 256
     },

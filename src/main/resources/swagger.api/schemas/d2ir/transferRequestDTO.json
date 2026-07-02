@@ -9,7 +9,7 @@
   "type": "object",
   "properties": {
     "newItemId": {
-      "description": "New item id",
+      "description": "FOLIO inventory item HRID of the replacement item. The current itemId is validated against the stored value, then replaced with this newItemId.",
       "type": "string",
       "pattern": "[a-z,0-9]{1,32}"
     }
