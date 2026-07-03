@@ -3,6 +3,8 @@ package org.folio.innreach.it.base;
 import static com.github.tomakehurst.wiremock.client.WireMock.created;
 import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.noContent;
+
+import lombok.extern.log4j.Log4j2;
 import static com.github.tomakehurst.wiremock.client.WireMock.ok;
 import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
@@ -35,21 +37,26 @@ import org.folio.innreach.util.JsonHelper;
 import org.folio.spring.integration.XOkapiHeaders;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
-import com.zaxxer.hikari.HikariDataSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.web.servlet.ResultActions;
 
-import javax.sql.DataSource;
+import org.folio.innreach.support.FolioContextTestExecutionListener;
+import org.springframework.test.context.TestExecutionListeners;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+@Log4j2
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
+@TestExecutionListeners(
+  value = FolioContextTestExecutionListener.class,
+  mergeMode = TestExecutionListeners.MergeMode.MERGE_WITH_DEFAULTS)
 public abstract class BaseTenantIntegrationTest extends BaseIntegrationTest {
 
   protected static final List<String> TENANT_TOPICS = List.of(
@@ -69,12 +76,11 @@ public abstract class BaseTenantIntegrationTest extends BaseIntegrationTest {
   private static final String TENANT_SCHEMA = TEST_TENANT + "_mod_inn_reach";
 
   @BeforeAll
-  static void setUpTenant(@Autowired JsonHelper jh, @Autowired DataSource dataSource) {
+  static void setUpTenant(@Autowired JsonHelper jh) {
     jsonHelper = jh;
     createTopics(TENANT_TOPICS);
     setUpMockForTestTenantInit();
     enableTenant();
-    configureSearchPath(dataSource);
     resetWiremockStubs();
     wiremock = getWireMockClient();
   }
@@ -94,24 +100,6 @@ public abstract class BaseTenantIntegrationTest extends BaseIntegrationTest {
    */
   protected static void setUpMockForTestTenantInit() {
     // Add WireMock stubs needed during POST /_/tenant here.
-    // For example, stubs for reference-data endpoints that the app calls during init.
-  }
-
-  /**
-   * Configures HikariCP to set search_path on every new connection to include
-   * the tenant schema. This ensures @Sql scripts and JPA queries target the
-   * correct schema created by enableTenant().
-   */
-  private static void configureSearchPath(DataSource dataSource) {
-    if (dataSource instanceof HikariDataSource hds) {
-      hds.setConnectionInitSql(
-        "SET timezone = 'UTC'; SET search_path TO " + TENANT_SCHEMA + ", public");
-      // Evict existing connections so they pick up the new init SQL
-      var pool = hds.getHikariPoolMXBean();
-      if (pool != null) {
-        pool.softEvictConnections();
-      }
-    }
   }
 
   // --- WireMock helpers migrated from BaseApiControllerTest ---
