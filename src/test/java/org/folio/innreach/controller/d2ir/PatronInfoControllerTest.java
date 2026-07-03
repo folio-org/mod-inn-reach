@@ -44,6 +44,9 @@ import org.folio.innreach.client.AutomatedPatronBlocksClient;
 import org.folio.innreach.client.ManualPatronBlocksClient;
 import org.folio.innreach.client.PatronClient;
 import org.folio.innreach.client.UsersClient;
+import org.folio.innreach.domain.listener.KafkaCirculationEventListener;
+import org.folio.innreach.domain.listener.KafkaInitialContributionEventListener;
+import org.folio.innreach.domain.listener.KafkaInventoryEventListener;
 import org.folio.innreach.it.base.BaseTenantIntegrationTest;
 import org.folio.innreach.domain.dto.folio.ResultList;
 import org.folio.innreach.domain.dto.folio.patron.PatronDTO;
@@ -57,6 +60,13 @@ import org.folio.innreach.dto.PatronInfoResponseDTO;
 @SqlMergeMode(MERGE)
 @AutoConfigureTestRestTemplate
 class PatronInfoControllerTest extends BaseTenantIntegrationTest {
+
+  @MockitoBean
+  private KafkaCirculationEventListener kafkaCirculationEventListener;
+  @MockitoBean
+  private KafkaInventoryEventListener kafkaInventoryEventListener;
+  @MockitoBean
+  private KafkaInitialContributionEventListener kafkaInitialContributionEventListener;
 
   private static final String VERIFY_PATRON_PATH = "/inn-reach/d2ir/circ/verifypatron";
 

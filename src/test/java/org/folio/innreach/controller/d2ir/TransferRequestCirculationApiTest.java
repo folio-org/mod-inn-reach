@@ -29,11 +29,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlMergeMode;
 
+import org.folio.innreach.domain.listener.KafkaCirculationEventListener;
+import org.folio.innreach.domain.listener.KafkaInitialContributionEventListener;
+import org.folio.innreach.domain.listener.KafkaInventoryEventListener;
 import org.folio.innreach.it.base.BaseTenantIntegrationTest;
 import org.folio.innreach.domain.entity.InnReachTransaction;
 import org.folio.innreach.domain.exception.EntityNotFoundException;
 import org.folio.innreach.dto.TransferRequestDTO;
 import org.folio.innreach.repository.InnReachTransactionRepository;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 @Sql(scripts = {
     "classpath:db/central-server/pre-populate-central-server.sql",
@@ -46,6 +50,13 @@ import org.folio.innreach.repository.InnReachTransactionRepository;
 )
 @SqlMergeMode(MERGE)
 class TransferRequestCirculationApiTest extends BaseTenantIntegrationTest {
+
+  @MockitoBean
+  private KafkaCirculationEventListener kafkaCirculationEventListener;
+  @MockitoBean
+  private KafkaInventoryEventListener kafkaInventoryEventListener;
+  @MockitoBean
+  private KafkaInitialContributionEventListener kafkaInitialContributionEventListener;
 
   private static final String PRE_POPULATED_TRACKING_ID = "tracking1";
   private static final String PRE_POPULATED_CENTRAL_CODE = "d2ir";

@@ -17,10 +17,14 @@ import org.springframework.http.HttpStatus;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlMergeMode;
 
+import org.folio.innreach.domain.listener.KafkaCirculationEventListener;
+import org.folio.innreach.domain.listener.KafkaInitialContributionEventListener;
+import org.folio.innreach.domain.listener.KafkaInventoryEventListener;
 import org.folio.innreach.it.base.BaseTenantIntegrationTest;
 import org.folio.innreach.domain.entity.CentralServer;
 import org.folio.innreach.fixture.CentralServerFixture;
 import org.folio.innreach.repository.CentralServerRepository;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 @Sql(
     scripts = {
@@ -29,6 +33,13 @@ import org.folio.innreach.repository.CentralServerRepository;
 )
 @SqlMergeMode(MERGE)
 class CentralServerConfigurationControllerTest extends BaseTenantIntegrationTest {
+
+  @MockitoBean
+  private KafkaCirculationEventListener kafkaCirculationEventListener;
+  @MockitoBean
+  private KafkaInventoryEventListener kafkaInventoryEventListener;
+  @MockitoBean
+  private KafkaInitialContributionEventListener kafkaInitialContributionEventListener;
 
   private static final String CS_TEST_CODE1 = "test1";
   private static final String CS_TEST_CODE2 = "test2";

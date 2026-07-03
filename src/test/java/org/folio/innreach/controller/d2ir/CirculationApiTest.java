@@ -48,6 +48,9 @@ import org.springframework.test.context.jdbc.SqlMergeMode;
 
 import org.folio.innreach.client.CirculationClient;
 import org.folio.innreach.domain.dto.folio.circulation.RequestDTO;
+import org.folio.innreach.domain.listener.KafkaCirculationEventListener;
+import org.folio.innreach.domain.listener.KafkaInitialContributionEventListener;
+import org.folio.innreach.domain.listener.KafkaInventoryEventListener;
 import org.folio.innreach.domain.service.HoldingsService;
 import org.folio.innreach.domain.service.RequestService;
 import org.folio.innreach.repository.InnReachTransactionRepository;
@@ -64,6 +67,13 @@ import org.folio.innreach.util.UUIDEncoder;
 @SqlMergeMode(MERGE)
 @ExtendWith(MockitoExtension.class)
 class CirculationApiTest extends BaseTenantIntegrationTest {
+
+  @MockitoBean
+  private KafkaCirculationEventListener kafkaCirculationEventListener;
+  @MockitoBean
+  private KafkaInventoryEventListener kafkaInventoryEventListener;
+  @MockitoBean
+  private KafkaInitialContributionEventListener kafkaInitialContributionEventListener;
 
   public static final String INNREACH_LOCALSERVERS_URL = "/innreach/v2/contribution/localservers";
   public static final String HRID_SETTINGS_URL = "/hrid-settings-storage/hrid-settings";

@@ -35,6 +35,9 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlMergeMode;
 
+import org.folio.innreach.domain.listener.KafkaCirculationEventListener;
+import org.folio.innreach.domain.listener.KafkaInitialContributionEventListener;
+import org.folio.innreach.domain.listener.KafkaInventoryEventListener;
 import org.folio.innreach.it.base.BaseTenantIntegrationTest;
 import org.folio.innreach.dto.TransactionCheckOutResponseDTO;
 import org.folio.innreach.external.service.InnReachExternalService;
@@ -49,6 +52,13 @@ import org.folio.innreach.external.service.InnReachExternalService;
 @SqlMergeMode(MERGE)
 @ExtendWith(MockitoExtension.class)
 class InnReachTransactionControllerIT extends BaseTenantIntegrationTest {
+
+  @MockitoBean
+  private KafkaCirculationEventListener kafkaCirculationEventListener;
+  @MockitoBean
+  private KafkaInventoryEventListener kafkaInventoryEventListener;
+  @MockitoBean
+  private KafkaInitialContributionEventListener kafkaInitialContributionEventListener;
 
   private static final String CHECK_OUT_ITEM_HOLD_ENDPOINT =
     "/inn-reach/transactions/{itemBarcode}/check-out-item/{servicePointId}";

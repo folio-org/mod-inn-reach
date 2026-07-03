@@ -15,6 +15,9 @@ import java.util.UUID;
 import org.folio.innreach.batch.contribution.IterationEventReaderFactory;
 import org.folio.innreach.batch.contribution.service.ContributionJobRunner;
 import org.folio.innreach.client.InstanceStorageClient;
+import org.folio.innreach.domain.listener.KafkaCirculationEventListener;
+import org.folio.innreach.domain.listener.KafkaInitialContributionEventListener;
+import org.folio.innreach.domain.listener.KafkaInventoryEventListener;
 import org.folio.innreach.it.base.BaseTenantIntegrationTest;
 import org.folio.innreach.dto.ContributionDTO;
 import org.folio.innreach.dto.MappingValidationStatusDTO;
@@ -42,6 +45,13 @@ import org.springframework.test.context.jdbc.SqlMergeMode;
 @SqlMergeMode(MERGE)
 @ExtendWith(MockitoExtension.class)
 class ContributionControllerIT extends BaseTenantIntegrationTest {
+
+  @MockitoBean
+  private KafkaCirculationEventListener kafkaCirculationEventListener;
+  @MockitoBean
+  private KafkaInventoryEventListener kafkaInventoryEventListener;
+  @MockitoBean
+  private KafkaInitialContributionEventListener kafkaInitialContributionEventListener;
 
   private static final String CURRENT_CONTRIBUTION_URL =
     "/inn-reach/central-servers/{centralServerId}/contributions/current";
