@@ -1,28 +1,37 @@
 package org.folio.innreach.controller;
 
+import static org.folio.innreach.fixture.TestUtil.deserializeFromJsonFile;
+import static org.folio.innreach.fixture.TestUtil.randomUUIDString;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
+import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TEST_METHOD;
 import static org.springframework.test.context.jdbc.SqlMergeMode.MergeMode.MERGE;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import static org.folio.innreach.fixture.TestUtil.deserializeFromJsonFile;
-import static org.folio.innreach.fixture.TestUtil.randomUUIDString;
-
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.resttestclient.TestRestTemplate;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
-import org.springframework.test.context.jdbc.Sql;
-import org.springframework.test.context.jdbc.SqlMergeMode;
-
-import org.folio.innreach.controller.base.BaseControllerTest;
+import org.folio.innreach.domain.listener.KafkaCirculationEventListener;
+import org.folio.innreach.domain.listener.KafkaInitialContributionEventListener;
+import org.folio.innreach.domain.listener.KafkaInventoryEventListener;
 import org.folio.innreach.dto.CentralServerDTO;
 import org.folio.innreach.dto.CentralServersDTO;
+import org.folio.innreach.external.client.InnReachAuthClient;
+import org.folio.innreach.external.dto.AccessTokenDTO;
+import org.folio.innreach.it.base.BaseTenantIntegrationTest;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.http.ResponseEntity;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.context.jdbc.Sql;
+import org.springframework.test.context.jdbc.SqlMergeMode;
 
 @Sql(
   scripts = {
@@ -30,71 +39,83 @@ import org.folio.innreach.dto.CentralServersDTO;
   executionPhase = AFTER_TEST_METHOD
 )
 @SqlMergeMode(MERGE)
-class CentralServerControllerTest extends BaseControllerTest {
+class CentralServerControllerTest extends BaseTenantIntegrationTest {
 
   private static final String PRE_POPULATED_CENTRAL_SERVER_ID = "edab6baf-c696-42b1-89bb-1bbb8759b0d2";
 
-  @Autowired
-  private TestRestTemplate testRestTemplate;
+  @MockitoBean
+  private KafkaCirculationEventListener kafkaCirculationEventListener;
+  @MockitoBean
+  private KafkaInventoryEventListener kafkaInventoryEventListener;
+  @MockitoBean
+  private KafkaInitialContributionEventListener kafkaInitialContributionEventListener;
+  @MockitoBean
+  private InnReachAuthClient innReachAuthClient;
 
-  @Test
-  void return200HttpCode_and_createdCentralServerEntity_when_createCentralServer() {
-    var centralServerRequestDTO = deserializeFromJsonFile(
-      "/central-server/create-central-server-request.json", CentralServerDTO.class);
-
-    var responseEntity = testRestTemplate.postForEntity(
-      "/inn-reach/central-servers", centralServerRequestDTO, CentralServerDTO.class);
-
-    assertTrue(responseEntity.getStatusCode().is2xxSuccessful());
-    assertTrue(responseEntity.hasBody());
-
-    var createdCentralServer = responseEntity.getBody();
-
-    assertNotNull(createdCentralServer);
-    Assertions.assertFalse(createdCentralServer.getCheckPickupLocation());
+  @BeforeEach
+  void init() {
+    when(innReachAuthClient.getAccessToken(any(), any())).thenReturn(ResponseEntity.ok(new AccessTokenDTO()));
   }
 
   @Test
-  void return200HttpCode_and_createdCentralServerEntity_when_createCentralServerWithoutLocalServerCredentials() {
+  void return200HttpCode_and_createdCentralServerEntity_when_createCentralServer() throws Exception {
+    var centralServerRequestDTO = deserializeFromJsonFile(
+      "/central-server/create-central-server-request.json", CentralServerDTO.class);
+
+    var result = mockMvc.perform(post("/inn-reach/central-servers")
+        .content(asJsonString(centralServerRequestDTO))
+        .headers(defaultHeaders())
+        .contentType(APPLICATION_JSON))
+      .andExpect(status().is2xxSuccessful())
+      .andReturn();
+
+    var createdCentralServer = fromJson(result, CentralServerDTO.class);
+
+    assertNotNull(createdCentralServer);
+    assertFalse(createdCentralServer.getCheckPickupLocation());
+  }
+
+  @Test
+  void return200HttpCode_and_createdCentralServerEntity_when_createCentralServerWithoutLocalServerCredentials() throws Exception {
     var centralServerRequestDTO = deserializeFromJsonFile(
       "/central-server/create-central-server-without-local-server-credentials-request.json", CentralServerDTO.class);
 
-    var responseEntity = testRestTemplate.postForEntity(
-      "/inn-reach/central-servers", centralServerRequestDTO, CentralServerDTO.class);
+    var result = mockMvc.perform(post("/inn-reach/central-servers")
+        .content(asJsonString(centralServerRequestDTO))
+        .headers(defaultHeaders())
+        .contentType(APPLICATION_JSON))
+      .andExpect(status().is2xxSuccessful())
+      .andReturn();
 
-    assertTrue(responseEntity.getStatusCode().is2xxSuccessful());
-    assertTrue(responseEntity.hasBody());
-
-    var createdCentralServer = responseEntity.getBody();
+    var createdCentralServer = fromJson(result, CentralServerDTO.class);
 
     assertNotNull(createdCentralServer);
     assertNull(createdCentralServer.getLocalServerKey());
     assertNull(createdCentralServer.getLocalServerSecret());
-    Assertions.assertFalse(createdCentralServer.getCheckPickupLocation());
+    assertFalse(createdCentralServer.getCheckPickupLocation());
   }
 
   @Test
-  void return400HttpCode_when_requestDataIsInvalid() {
+  void return400HttpCode_when_requestDataIsInvalid() throws Exception {
     var centralServerRequestDTO = deserializeFromJsonFile(
       "/central-server/create-central-server-invalid-request.json", CentralServerDTO.class);
 
-    var responseEntity = testRestTemplate.postForEntity(
-      "/inn-reach/central-servers", centralServerRequestDTO, CentralServerDTO.class);
-
-    assertTrue(responseEntity.getStatusCode().is4xxClientError());
-    assertTrue(responseEntity.hasBody());
+    mockMvc.perform(post("/inn-reach/central-servers")
+        .content(asJsonString(centralServerRequestDTO))
+        .headers(defaultHeaders())
+        .contentType(APPLICATION_JSON))
+      .andExpect(status().is4xxClientError());
   }
 
   @Test
   @Sql(scripts = "classpath:db/central-server/pre-populate-central-server.sql")
-  void return200HttpCode_and_allCentralServerEntities_when_getForAllCentralServers() {
-    var responseEntity = testRestTemplate.getForEntity(
-      "/inn-reach/central-servers", CentralServersDTO.class);
+  void return200HttpCode_and_allCentralServerEntities_when_getForAllCentralServers() throws Exception {
+    var result = mockMvc.perform(get("/inn-reach/central-servers")
+        .headers(defaultHeaders()))
+      .andExpect(status().is2xxSuccessful())
+      .andReturn();
 
-    assertTrue(responseEntity.getStatusCode().is2xxSuccessful());
-    assertTrue(responseEntity.hasBody());
-
-    var centralServers = responseEntity.getBody();
+    var centralServers = fromJson(result, CentralServersDTO.class);
 
     assertNotNull(centralServers);
     assertNotNull(centralServers.getCentralServers());
@@ -104,134 +125,130 @@ class CentralServerControllerTest extends BaseControllerTest {
 
   @Test
   @Sql(scripts = "classpath:db/central-server/pre-populate-central-server.sql")
-  void return200HttpCode_and_centralServerEntityById_when_getForOneCentralServer() {
-    var responseEntity = testRestTemplate.getForEntity(
-      "/inn-reach/central-servers/{centralServerId}", CentralServerDTO.class, PRE_POPULATED_CENTRAL_SERVER_ID);
+  void return200HttpCode_and_centralServerEntityById_when_getForOneCentralServer() throws Exception {
+    var result = mockMvc.perform(get("/inn-reach/central-servers/{centralServerId}", PRE_POPULATED_CENTRAL_SERVER_ID)
+        .headers(defaultHeaders()))
+      .andExpect(status().is2xxSuccessful())
+      .andReturn();
 
-    assertTrue(responseEntity.getStatusCode().is2xxSuccessful());
-    assertTrue(responseEntity.hasBody());
-
-    var centralServer = responseEntity.getBody();
+    var centralServer = fromJson(result, CentralServerDTO.class);
 
     assertNotNull(centralServer);
-    Assertions.assertFalse(centralServer.getCheckPickupLocation());
+    assertFalse(centralServer.getCheckPickupLocation());
   }
 
   @Test
-  void return404HttpCode_when_centralServerByIdNotFound() {
-    var responseEntity = testRestTemplate.getForEntity(
-      "/inn-reach/central-servers/{centralServerId}", CentralServerDTO.class, randomUUIDString());
-
-    assertEquals(HttpStatus.NOT_FOUND, responseEntity.getStatusCode());
+  void return404HttpCode_when_centralServerByIdNotFound() throws Exception {
+    mockMvc.perform(get("/inn-reach/central-servers/{centralServerId}", randomUUIDString())
+        .headers(defaultHeaders()))
+      .andExpect(status().isNotFound());
   }
 
   @Test
   @Sql(scripts = "classpath:db/central-server/pre-populate-central-server.sql")
-  void return200HttpCode_when_updateCentralServer() {
+  void return200HttpCode_when_updateCentralServer() throws Exception {
     var centralServerRequestDTO = deserializeFromJsonFile(
       "/central-server/update-central-server-request.json", CentralServerDTO.class);
     centralServerRequestDTO.setCheckPickupLocation(true);
 
-    var responseEntityPut = testRestTemplate.exchange(
-      "/inn-reach/central-servers/{centralServerId}", HttpMethod.PUT, new HttpEntity<>(centralServerRequestDTO),
-      CentralServerDTO.class, PRE_POPULATED_CENTRAL_SERVER_ID);
+    mockMvc.perform(put("/inn-reach/central-servers/{centralServerId}", PRE_POPULATED_CENTRAL_SERVER_ID)
+        .content(asJsonString(centralServerRequestDTO))
+        .headers(defaultHeaders())
+        .contentType(APPLICATION_JSON))
+      .andExpect(status().is2xxSuccessful());
 
-    assertTrue(responseEntityPut.getStatusCode().is2xxSuccessful());
+    var resultGet = mockMvc.perform(get("/inn-reach/central-servers/{centralServerId}", PRE_POPULATED_CENTRAL_SERVER_ID)
+        .headers(defaultHeaders()))
+      .andExpect(status().is2xxSuccessful())
+      .andReturn();
 
-    var responseEntityGet = testRestTemplate.getForEntity(
-      "/inn-reach/central-servers/{centralServerId}", CentralServerDTO.class, PRE_POPULATED_CENTRAL_SERVER_ID);
-
-    assertTrue(responseEntityGet.getStatusCode().is2xxSuccessful());
-    assertTrue(responseEntityGet.hasBody());
-
-    var centralServer = responseEntityGet.getBody();
+    var centralServer = fromJson(resultGet, CentralServerDTO.class);
 
     assertNotNull(centralServer);
     assertTrue(centralServer.getCheckPickupLocation());
   }
 
   @Test
-  void return404HttpCode_when_updatableCentralServerNotFound() {
+  void return404HttpCode_when_updatableCentralServerNotFound() throws Exception {
     var centralServerRequestDTO = deserializeFromJsonFile(
       "/central-server/update-central-server-request.json", CentralServerDTO.class);
 
-    var responseEntity = testRestTemplate.exchange(
-      "/inn-reach/central-servers/{centralServerId}", HttpMethod.PUT, new HttpEntity<>(centralServerRequestDTO),
-      CentralServerDTO.class, randomUUIDString());
-
-    assertEquals(HttpStatus.NOT_FOUND, responseEntity.getStatusCode());
+    mockMvc.perform(put("/inn-reach/central-servers/{centralServerId}", randomUUIDString())
+        .content(asJsonString(centralServerRequestDTO))
+        .headers(defaultHeaders())
+        .contentType(APPLICATION_JSON))
+      .andExpect(status().isNotFound());
   }
 
   @Test
   @Sql(scripts = {
     "classpath:db/central-server/pre-populate-central-server.sql"
   })
-  void return204HttpCode_when_deleteCentralServer() {
-    var responseEntity = testRestTemplate.exchange(
-      "/inn-reach/central-servers/{centralServerId}", HttpMethod.DELETE, HttpEntity.EMPTY,
-      CentralServerDTO.class, PRE_POPULATED_CENTRAL_SERVER_ID);
-
-    assertEquals(HttpStatus.NO_CONTENT, responseEntity.getStatusCode());
+  void return204HttpCode_when_deleteCentralServer() throws Exception {
+    mockMvc.perform(delete("/inn-reach/central-servers/{centralServerId}", PRE_POPULATED_CENTRAL_SERVER_ID)
+        .headers(defaultHeaders()))
+      .andExpect(status().isNoContent());
   }
 
   @Test
-  void return404HttpCode_when_deletableCentralServerNotFound() {
-    var responseEntity = testRestTemplate.exchange(
-      "/inn-reach/central-servers/{centralServerId}", HttpMethod.DELETE, HttpEntity.EMPTY,
-      CentralServerDTO.class, randomUUIDString());
-
-    assertEquals(HttpStatus.NOT_FOUND, responseEntity.getStatusCode());
+  void return404HttpCode_when_deletableCentralServerNotFound() throws Exception {
+    mockMvc.perform(delete("/inn-reach/central-servers/{centralServerId}", randomUUIDString())
+        .headers(defaultHeaders()))
+      .andExpect(status().isNotFound());
   }
 
   @Test
   @Sql(scripts = "classpath:db/central-server/pre-populate-central-server.sql")
-  void return409HttpCode_when_createCentralServerWithUniqueViolation() {
+  void return409HttpCode_when_createCentralServerWithUniqueViolation() throws Exception {
     var centralServerRequestDTO = deserializeFromJsonFile(
       "/central-server/create-central-server-request.json", CentralServerDTO.class);
 
-    var responseEntity = testRestTemplate.postForEntity(
-      "/inn-reach/central-servers", centralServerRequestDTO, CentralServerDTO.class);
-
-    assertEquals(HttpStatus.CONFLICT, responseEntity.getStatusCode());
+    mockMvc.perform(post("/inn-reach/central-servers")
+        .content(asJsonString(centralServerRequestDTO))
+        .headers(defaultHeaders())
+        .contentType(APPLICATION_JSON))
+      .andExpect(status().isConflict());
   }
 
   @Test
-  void return400HttpCode_when_createCentralServerWithDuplicateFolioLibraries() {
+  void return400HttpCode_when_createCentralServerWithDuplicateFolioLibraries() throws Exception {
     var centralServerRequestDTO = deserializeFromJsonFile(
       "/central-server/create-central-server-invalid-libraries-request.json", CentralServerDTO.class);
 
-    var responseEntity = testRestTemplate.postForEntity(
-      "/inn-reach/central-servers", centralServerRequestDTO, CentralServerDTO.class);
-
-    assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
+    mockMvc.perform(post("/inn-reach/central-servers")
+        .content(asJsonString(centralServerRequestDTO))
+        .headers(defaultHeaders())
+        .contentType(APPLICATION_JSON))
+      .andExpect(status().isBadRequest());
   }
 
   @Test
   @Sql(scripts = "classpath:db/central-server/pre-populate-central-server.sql")
-  void return400HttpCode_when_updateCentralServerWithDuplicateFolioLibraries() {
+  void return400HttpCode_when_updateCentralServerWithDuplicateFolioLibraries() throws Exception {
     var centralServerRequestDTO = deserializeFromJsonFile(
       "/central-server/update-central-server-invalid-libraries-request.json", CentralServerDTO.class);
 
-    var responseEntity = testRestTemplate.exchange(
-      "/inn-reach/central-servers/{centralServerId}", HttpMethod.PUT, new HttpEntity<>(centralServerRequestDTO),
-      CentralServerDTO.class, PRE_POPULATED_CENTRAL_SERVER_ID);
-
-    assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
+    mockMvc.perform(put("/inn-reach/central-servers/{centralServerId}", PRE_POPULATED_CENTRAL_SERVER_ID)
+        .content(asJsonString(centralServerRequestDTO))
+        .headers(defaultHeaders())
+        .contentType(APPLICATION_JSON))
+      .andExpect(status().isBadRequest());
   }
 
   @Test
-  void return200HttpCode_and_createdCentralServerEntity_when_createCentralServerWithPickupLocationCheckTrue() {
+  void return200HttpCode_and_createdCentralServerEntity_when_createCentralServerWithPickupLocationCheckTrue() throws Exception {
     var centralServerRequestDTO = deserializeFromJsonFile(
       "/central-server/create-central-server-request.json", CentralServerDTO.class);
     centralServerRequestDTO.setCheckPickupLocation(true);
 
-    var responseEntity = testRestTemplate.postForEntity(
-      "/inn-reach/central-servers", centralServerRequestDTO, CentralServerDTO.class);
+    var result = mockMvc.perform(post("/inn-reach/central-servers")
+        .content(asJsonString(centralServerRequestDTO))
+        .headers(defaultHeaders())
+        .contentType(APPLICATION_JSON))
+      .andExpect(status().is2xxSuccessful())
+      .andReturn();
 
-    assertTrue(responseEntity.getStatusCode().is2xxSuccessful());
-    assertTrue(responseEntity.hasBody());
-
-    var createdCentralServer = responseEntity.getBody();
+    var createdCentralServer = fromJson(result, CentralServerDTO.class);
 
     assertNotNull(createdCentralServer);
     assertTrue(createdCentralServer.getCheckPickupLocation());
