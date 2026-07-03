@@ -6,8 +6,11 @@ import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
+import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TEST_METHOD;
 import static org.springframework.test.context.jdbc.SqlMergeMode.MergeMode.MERGE;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import static org.folio.innreach.dto.FilterDateOperation.between;
 import static org.folio.innreach.dto.FilterDateOperation.equal;
@@ -25,20 +28,28 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Stream;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.resttestclient.TestRestTemplate;
-import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlMergeMode;
 
-import org.folio.innreach.controller.base.BaseControllerTest;
+import org.folio.innreach.domain.listener.KafkaCirculationEventListener;
+import org.folio.innreach.domain.listener.KafkaInitialContributionEventListener;
+import org.folio.innreach.domain.listener.KafkaInventoryEventListener;
 import org.folio.innreach.dto.FilterDateOperation;
 import org.folio.innreach.dto.InnReachTransactionDTO;
 import org.folio.innreach.dto.InnReachTransactionsDTO;
+import org.folio.innreach.external.client.InnReachAuthClient;
+import org.folio.innreach.external.dto.AccessTokenDTO;
+import org.folio.innreach.it.base.BaseTenantIntegrationTest;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
 
 @Sql(
     scripts = {
@@ -54,7 +65,7 @@ import org.folio.innreach.dto.InnReachTransactionsDTO;
     executionPhase = AFTER_TEST_METHOD
 )
 @SqlMergeMode(MERGE)
-class InnReachTransactionDateFilterTest extends BaseControllerTest {
+class InnReachTransactionDateFilterTest extends BaseTenantIntegrationTest {
 
   private static final String PRE_POPULATED_TRACKING_ID1 = "tracking1";
   private static final String PRE_POPULATED_TRACKING_ID2 = "tracking2";
@@ -64,23 +75,34 @@ class InnReachTransactionDateFilterTest extends BaseControllerTest {
       "2022-02-24T05:00:00+02:00",
       ISO_OFFSET_DATE_TIME);
 
-  @Autowired
-  private TestRestTemplate testRestTemplate;
+  @MockitoBean
+  private KafkaCirculationEventListener kafkaCirculationEventListener;
+  @MockitoBean
+  private KafkaInventoryEventListener kafkaInventoryEventListener;
+  @MockitoBean
+  private KafkaInitialContributionEventListener kafkaInitialContributionEventListener;
+  @MockitoBean
+  private InnReachAuthClient innReachAuthClient;
 
+  @BeforeEach
+  void init() {
+    when(innReachAuthClient.getAccessToken(any(), any())).thenReturn(ResponseEntity.ok(new AccessTokenDTO()));
+  }
 
   @ParameterizedTest
   @MethodSource("dateTestData")
   @Sql(scripts = "classpath:db/inn-reach-transaction/set-auditing-dates-for-inn-reach-transactions.sql")
   void returnTransactions_when_filteredByCreatedDate(List<OffsetDateTime> dates, FilterDateOperation operation,
-      List<String> expectedTrxTrackingIds) {
-    var responseEntity = testRestTemplate.getForEntity(constructUri("createdDate", dates, operation),
-        InnReachTransactionsDTO.class);
+      List<String> expectedTrxTrackingIds) throws Exception {
+    var mvcResult = mockMvc.perform(get(constructUri("createdDate", dates, operation))
+        .headers(defaultHeaders()))
+      .andExpect(status().isOk())
+      .andReturn();
+    var response = fromJson(mvcResult, InnReachTransactionsDTO.class);
+    assertNotNull(response);
+    assertEquals(expectedTrxTrackingIds.size(), response.getTotalRecords());
 
-    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
-    assertNotNull(responseEntity.getBody());
-    assertEquals(expectedTrxTrackingIds.size(), responseEntity.getBody().getTotalRecords());
-
-    var transactions = responseEntity.getBody().getTransactions();
+    var transactions = response.getTransactions();
     assertEquals(expectedTrxTrackingIds.size(), transactions.size());
 
     var trackingIds = mapItems(transactions, InnReachTransactionDTO::getTrackingId);
@@ -89,16 +111,17 @@ class InnReachTransactionDateFilterTest extends BaseControllerTest {
 
   @Test
   @Sql(scripts = "classpath:db/inn-reach-transaction/set-auditing-dates-for-inn-reach-transactions.sql")
-  void returnTransaction_when_filteredByCreatedDate_and_otherField() {
-    var responseEntity = testRestTemplate.getForEntity(
-          constructUri("createdDate", List.of(TARGET_DATE), equal) + "&type=PATRON",
-          InnReachTransactionsDTO.class);
+  void returnTransaction_when_filteredByCreatedDate_and_otherField() throws Exception {
+    var mvcResult = mockMvc.perform(get(
+          constructUri("createdDate", List.of(TARGET_DATE), equal) + "&type=PATRON")
+        .headers(defaultHeaders()))
+      .andExpect(status().isOk())
+      .andReturn();
+    var response = fromJson(mvcResult, InnReachTransactionsDTO.class);
+    assertNotNull(response);
+    assertEquals(1, response.getTotalRecords());
 
-    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
-    assertNotNull(responseEntity.getBody());
-    assertEquals(1, responseEntity.getBody().getTotalRecords());
-
-    var transactions = responseEntity.getBody().getTransactions();
+    var transactions = response.getTransactions();
     assertEquals(1, transactions.size());
 
     assertEquals(PRE_POPULATED_TRACKING_ID1, transactions.get(0).getTrackingId());
@@ -108,15 +131,16 @@ class InnReachTransactionDateFilterTest extends BaseControllerTest {
   @MethodSource("dateTestData")
   @Sql(scripts = "classpath:db/inn-reach-transaction/set-auditing-dates-for-inn-reach-transactions.sql")
   void returnTransactions_when_filteredByUpdatedDate(List<OffsetDateTime> dates, FilterDateOperation operation,
-      List<String> expectedTrxTrackingIds) {
-    var responseEntity = testRestTemplate.getForEntity(constructUri("updatedDate", dates, operation),
-        InnReachTransactionsDTO.class);
+      List<String> expectedTrxTrackingIds) throws Exception {
+    var mvcResult = mockMvc.perform(get(constructUri("updatedDate", dates, operation))
+        .headers(defaultHeaders()))
+      .andExpect(status().isOk())
+      .andReturn();
+    var response = fromJson(mvcResult, InnReachTransactionsDTO.class);
+    assertNotNull(response);
+    assertEquals(expectedTrxTrackingIds.size(), response.getTotalRecords());
 
-    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
-    assertNotNull(responseEntity.getBody());
-    assertEquals(expectedTrxTrackingIds.size(), responseEntity.getBody().getTotalRecords());
-
-    var transactions = responseEntity.getBody().getTransactions();
+    var transactions = response.getTransactions();
     assertEquals(expectedTrxTrackingIds.size(), transactions.size());
 
     var trackingIds = mapItems(transactions, InnReachTransactionDTO::getTrackingId);
@@ -125,16 +149,17 @@ class InnReachTransactionDateFilterTest extends BaseControllerTest {
 
   @Test
   @Sql(scripts = "classpath:db/inn-reach-transaction/set-auditing-dates-for-inn-reach-transactions.sql")
-  void returnTransaction_when_filteredByUpdatedDate_and_otherField() {
-    var responseEntity = testRestTemplate.getForEntity(
-        constructUri("updatedDate", List.of(TARGET_DATE), equal) + "&state=PATRON_HOLD",
-        InnReachTransactionsDTO.class);
+  void returnTransaction_when_filteredByUpdatedDate_and_otherField() throws Exception {
+    var mvcResult = mockMvc.perform(get(
+        constructUri("updatedDate", List.of(TARGET_DATE), equal) + "&state=PATRON_HOLD")
+        .headers(defaultHeaders()))
+      .andExpect(status().isOk())
+      .andReturn();
+    var response = fromJson(mvcResult, InnReachTransactionsDTO.class);
+    assertNotNull(response);
+    assertEquals(1, response.getTotalRecords());
 
-    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
-    assertNotNull(responseEntity.getBody());
-    assertEquals(1, responseEntity.getBody().getTotalRecords());
-
-    var transactions = responseEntity.getBody().getTransactions();
+    var transactions = response.getTransactions();
     assertEquals(1, transactions.size());
 
     assertEquals(PRE_POPULATED_TRACKING_ID1, transactions.get(0).getTrackingId());
@@ -144,16 +169,17 @@ class InnReachTransactionDateFilterTest extends BaseControllerTest {
   @MethodSource("dateTestData")
   @Sql(scripts = "classpath:db/inn-reach-transaction/set-auditing-dates-for-hold-transactions.sql")
   void returnTransactions_when_filteredByHoldCreatedDate(List<OffsetDateTime> dates, FilterDateOperation operation,
-      List<String> expectedTrxTrackingIds) {
-    var responseEntity = testRestTemplate.getForEntity(
-        constructUri("holdCreatedDate", dates, operation),
-        InnReachTransactionsDTO.class);
+      List<String> expectedTrxTrackingIds) throws Exception {
+    var mvcResult = mockMvc.perform(get(
+        constructUri("holdCreatedDate", dates, operation))
+        .headers(defaultHeaders()))
+      .andExpect(status().isOk())
+      .andReturn();
+    var response = fromJson(mvcResult, InnReachTransactionsDTO.class);
+    assertNotNull(response);
+    assertEquals(expectedTrxTrackingIds.size(), response.getTotalRecords());
 
-    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
-    assertNotNull(responseEntity.getBody());
-    assertEquals(expectedTrxTrackingIds.size(), responseEntity.getBody().getTotalRecords());
-
-    var transactions = responseEntity.getBody().getTransactions();
+    var transactions = response.getTransactions();
     assertEquals(expectedTrxTrackingIds.size(), transactions.size());
 
     var trackingIds = mapItems(transactions, InnReachTransactionDTO::getTrackingId);
@@ -162,16 +188,17 @@ class InnReachTransactionDateFilterTest extends BaseControllerTest {
 
   @Test
   @Sql(scripts = "classpath:db/inn-reach-transaction/set-auditing-dates-for-hold-transactions.sql")
-  void returnTransaction_when_filteredByHoldCreatedDate_and_otherField() {
-    var responseEntity = testRestTemplate.getForEntity(
-        constructUri("holdCreatedDate", List.of(TARGET_DATE), equal) + "&patronAgencyCode=qwe12",
-        InnReachTransactionsDTO.class);
+  void returnTransaction_when_filteredByHoldCreatedDate_and_otherField() throws Exception {
+    var mvcResult = mockMvc.perform(get(
+        constructUri("holdCreatedDate", List.of(TARGET_DATE), equal) + "&patronAgencyCode=qwe12")
+        .headers(defaultHeaders()))
+      .andExpect(status().isOk())
+      .andReturn();
+    var response = fromJson(mvcResult, InnReachTransactionsDTO.class);
+    assertNotNull(response);
+    assertEquals(1, response.getTotalRecords());
 
-    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
-    assertNotNull(responseEntity.getBody());
-    assertEquals(1, responseEntity.getBody().getTotalRecords());
-
-    var transactions = responseEntity.getBody().getTransactions();
+    var transactions = response.getTransactions();
     assertEquals(1, transactions.size());
 
     assertEquals(PRE_POPULATED_TRACKING_ID1, transactions.get(0).getTrackingId());
@@ -181,16 +208,17 @@ class InnReachTransactionDateFilterTest extends BaseControllerTest {
   @MethodSource("dateTestData")
   @Sql(scripts = "classpath:db/inn-reach-transaction/set-auditing-dates-for-hold-transactions.sql")
   void returnTransactions_when_filteredByHoldUpdatedDate(List<OffsetDateTime> dates, FilterDateOperation operation,
-      List<String> expectedTrxTrackingIds) {
-    var responseEntity = testRestTemplate.getForEntity(
-        constructUri("holdUpdatedDate", dates, operation),
-        InnReachTransactionsDTO.class);
+      List<String> expectedTrxTrackingIds) throws Exception {
+    var mvcResult = mockMvc.perform(get(
+        constructUri("holdUpdatedDate", dates, operation))
+        .headers(defaultHeaders()))
+      .andExpect(status().isOk())
+      .andReturn();
+    var response = fromJson(mvcResult, InnReachTransactionsDTO.class);
+    assertNotNull(response);
+    assertEquals(expectedTrxTrackingIds.size(), response.getTotalRecords());
 
-    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
-    assertNotNull(responseEntity.getBody());
-    assertEquals(expectedTrxTrackingIds.size(), responseEntity.getBody().getTotalRecords());
-
-    var transactions = responseEntity.getBody().getTransactions();
+    var transactions = response.getTransactions();
     assertEquals(expectedTrxTrackingIds.size(), transactions.size());
 
     var trackingIds = mapItems(transactions, InnReachTransactionDTO::getTrackingId);
@@ -199,16 +227,17 @@ class InnReachTransactionDateFilterTest extends BaseControllerTest {
 
   @Test
   @Sql(scripts = "classpath:db/inn-reach-transaction/set-auditing-dates-for-hold-transactions.sql")
-  void returnTransaction_when_filteredByHoldUpdatedDate_and_otherField() {
-    var responseEntity = testRestTemplate.getForEntity(
-        constructUri("holdUpdatedDate", List.of(TARGET_DATE), equal) + "&patronAgencyCode=qwe12",
-        InnReachTransactionsDTO.class);
+  void returnTransaction_when_filteredByHoldUpdatedDate_and_otherField() throws Exception {
+    var mvcResult = mockMvc.perform(get(
+        constructUri("holdUpdatedDate", List.of(TARGET_DATE), equal) + "&patronAgencyCode=qwe12")
+        .headers(defaultHeaders()))
+      .andExpect(status().isOk())
+      .andReturn();
+    var response = fromJson(mvcResult, InnReachTransactionsDTO.class);
+    assertNotNull(response);
+    assertEquals(1, response.getTotalRecords());
 
-    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
-    assertNotNull(responseEntity.getBody());
-    assertEquals(1, responseEntity.getBody().getTotalRecords());
-
-    var transactions = responseEntity.getBody().getTransactions();
+    var transactions = response.getTransactions();
     assertEquals(1, transactions.size());
 
     assertEquals(PRE_POPULATED_TRACKING_ID1, transactions.get(0).getTrackingId());
@@ -218,16 +247,17 @@ class InnReachTransactionDateFilterTest extends BaseControllerTest {
   @MethodSource("dateTestData")
   @Sql(scripts = "classpath:db/inn-reach-transaction/set-due-dates-for-hold-transactions.sql")
   void returnTransactions_when_filteredByDueDate(List<OffsetDateTime> dates, FilterDateOperation operation,
-      List<String> expectedTrxTrackingIds) {
-    var responseEntity = testRestTemplate.getForEntity(
-        constructUri("dueDate", dates, operation),
-        InnReachTransactionsDTO.class);
+      List<String> expectedTrxTrackingIds) throws Exception {
+    var mvcResult = mockMvc.perform(get(
+        constructUri("dueDate", dates, operation))
+        .headers(defaultHeaders()))
+      .andExpect(status().isOk())
+      .andReturn();
+    var response = fromJson(mvcResult, InnReachTransactionsDTO.class);
+    assertNotNull(response);
+    assertEquals(expectedTrxTrackingIds.size(), response.getTotalRecords());
 
-    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
-    assertNotNull(responseEntity.getBody());
-    assertEquals(expectedTrxTrackingIds.size(), responseEntity.getBody().getTotalRecords());
-
-    var transactions = responseEntity.getBody().getTransactions();
+    var transactions = response.getTransactions();
     assertEquals(expectedTrxTrackingIds.size(), transactions.size());
 
     var trackingIds = mapItems(transactions, InnReachTransactionDTO::getTrackingId);
@@ -236,16 +266,17 @@ class InnReachTransactionDateFilterTest extends BaseControllerTest {
 
   @Test
   @Sql(scripts = "classpath:db/inn-reach-transaction/set-due-dates-for-hold-transactions.sql")
-  void returnTransaction_when_filteredByDueDate_and_otherField() {
-    var responseEntity = testRestTemplate.getForEntity(
-        constructUri("dueDate", List.of(TARGET_DATE), equal) + "&patronAgencyCode=qwe12",
-        InnReachTransactionsDTO.class);
+  void returnTransaction_when_filteredByDueDate_and_otherField() throws Exception {
+    var mvcResult = mockMvc.perform(get(
+        constructUri("dueDate", List.of(TARGET_DATE), equal) + "&patronAgencyCode=qwe12")
+        .headers(defaultHeaders()))
+      .andExpect(status().isOk())
+      .andReturn();
+    var response = fromJson(mvcResult, InnReachTransactionsDTO.class);
+    assertNotNull(response);
+    assertEquals(1, response.getTotalRecords());
 
-    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
-    assertNotNull(responseEntity.getBody());
-    assertEquals(1, responseEntity.getBody().getTotalRecords());
-
-    var transactions = responseEntity.getBody().getTransactions();
+    var transactions = response.getTransactions();
     assertEquals(1, transactions.size());
 
     assertEquals(PRE_POPULATED_TRACKING_ID1, transactions.get(0).getTrackingId());

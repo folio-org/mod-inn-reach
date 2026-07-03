@@ -5,6 +5,10 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -14,24 +18,40 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.UUID;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.resttestclient.TestRestTemplate;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.http.MediaType;
-
-import org.folio.innreach.controller.base.BaseControllerTest;
-import org.folio.innreach.external.service.InnReachExternalService;
+import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
-class InnReachProxyControllerTest extends BaseControllerTest {
+import org.folio.innreach.domain.listener.KafkaCirculationEventListener;
+import org.folio.innreach.domain.listener.KafkaInitialContributionEventListener;
+import org.folio.innreach.domain.listener.KafkaInventoryEventListener;
+import org.folio.innreach.external.client.InnReachAuthClient;
+import org.folio.innreach.external.dto.AccessTokenDTO;
+import org.folio.innreach.external.service.InnReachExternalService;
+import org.folio.innreach.it.base.BaseTenantIntegrationTest;
+
+class InnReachProxyControllerTest extends BaseTenantIntegrationTest {
 
   private static final String CENTRAL_SERVER_ID = "edab6baf-c696-42b1-89bb-1bbb8759b0d2";
 
-  @Autowired
-  private TestRestTemplate testRestTemplate;
+  @MockitoBean
+  private KafkaCirculationEventListener kafkaCirculationEventListener;
+  @MockitoBean
+  private KafkaInventoryEventListener kafkaInventoryEventListener;
+  @MockitoBean
+  private KafkaInitialContributionEventListener kafkaInitialContributionEventListener;
+  @MockitoBean
+  private InnReachAuthClient innReachAuthClient;
+
+  @BeforeEach
+  void init() {
+    when(innReachAuthClient.getAccessToken(any(), any())).thenReturn(ResponseEntity.ok(new AccessTokenDTO()));
+  }
 
   @LocalServerPort
   private int port;
@@ -41,12 +61,11 @@ class InnReachProxyControllerTest extends BaseControllerTest {
 
   @ParameterizedTest
   @MethodSource("innReachUriList")
-  void should_handleAllRequestsWithD2RSuffixInUrl(String innReachUri) {
+  void should_handleAllRequestsWithD2RSuffixInUrl(String innReachUri) throws Exception {
     var url = String.format("/inn-reach/central-servers/%s/d2r%s", CENTRAL_SERVER_ID, innReachUri);
 
-    var responseEntity = testRestTemplate.getForEntity(url, String.class);
-
-    assertTrue(responseEntity.getStatusCode().is2xxSuccessful());
+    mockMvc.perform(get(url).headers(defaultHeaders()))
+      .andExpect(status().is2xxSuccessful());
 
     verify(innReachExternalService).callInnReachApi(UUID.fromString(CENTRAL_SERVER_ID), innReachUri);
   }
@@ -75,7 +94,7 @@ class InnReachProxyControllerTest extends BaseControllerTest {
     // Use the raw JDK HttpClient to fetch the body as bytes without any JSON decoding.
     var httpClient = HttpClient.newHttpClient();
     var httpRequest = HttpRequest.newBuilder()
-      .uri(URI.create("http://localhost:" + port
+      .uri(java.net.URI.create("http://localhost:" + port
         + "/inn-reach/central-servers/edab6baf-c696-42b1-89bb-1bbb8759b0d2/d2r/contribution/itemtypes?limit=1000"))
       .GET()
       .build();

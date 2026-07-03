@@ -6,13 +6,16 @@ import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.samePropertyValuesAs;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
 import static org.springframework.http.HttpStatus.CONFLICT;
+import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TEST_METHOD;
 import static org.springframework.test.context.jdbc.SqlMergeMode.MergeMode.MERGE;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import static org.folio.innreach.fixture.TestUtil.deserializeFromJsonFile;
 import static org.folio.innreach.fixture.TestUtil.randomIntegerExcept;
@@ -26,22 +29,29 @@ import java.util.UUID;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.resttestclient.TestRestTemplate;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlMergeMode;
 
-import org.folio.innreach.controller.base.BaseControllerTest;
+import org.folio.innreach.domain.listener.KafkaCirculationEventListener;
+import org.folio.innreach.domain.listener.KafkaInitialContributionEventListener;
+import org.folio.innreach.domain.listener.KafkaInventoryEventListener;
 import org.folio.innreach.domain.entity.ItemTypeMapping;
 import org.folio.innreach.dto.Error;
 import org.folio.innreach.dto.ItemTypeMappingDTO;
 import org.folio.innreach.dto.ItemTypeMappingsDTO;
+import org.folio.innreach.external.client.InnReachAuthClient;
+import org.folio.innreach.external.dto.AccessTokenDTO;
+import org.folio.innreach.it.base.BaseTenantIntegrationTest;
 import org.folio.innreach.mapper.ItemTypeMappingMapper;
 import org.folio.innreach.repository.ItemTypeMappingRepository;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
 
 @Sql(
   scripts = {
@@ -50,7 +60,7 @@ import org.folio.innreach.repository.ItemTypeMappingRepository;
   executionPhase = AFTER_TEST_METHOD
 )
 @SqlMergeMode(MERGE)
-class ItemTypeMappingControllerTest extends BaseControllerTest {
+class ItemTypeMappingControllerTest extends BaseTenantIntegrationTest {
 
   private static final String PRE_POPULATED_CENTRAL_SERVER_ID = "edab6baf-c696-42b1-89bb-1bbb8759b0d2";
   private static final String PRE_POPULATED_ITEM_TYPE_MAPPING_ID1 = "f8c5d329-c3db-40c1-9e96-d6176f76b0da";
@@ -58,8 +68,20 @@ class ItemTypeMappingControllerTest extends BaseControllerTest {
 
   private static final Integer PRE_POPULATED_CENTRAL_ITEM_TYPE1 = 1;
 
-  @Autowired
-  private TestRestTemplate testRestTemplate;
+  @MockitoBean
+  private KafkaCirculationEventListener kafkaCirculationEventListener;
+  @MockitoBean
+  private KafkaInventoryEventListener kafkaInventoryEventListener;
+  @MockitoBean
+  private KafkaInitialContributionEventListener kafkaInitialContributionEventListener;
+  @MockitoBean
+  private InnReachAuthClient innReachAuthClient;
+
+  @BeforeEach
+  void init() {
+    when(innReachAuthClient.getAccessToken(any(), any())).thenReturn(ResponseEntity.ok(new AccessTokenDTO()));
+  }
+
   @Autowired
   private ItemTypeMappingRepository repository;
   @Autowired
@@ -70,15 +92,14 @@ class ItemTypeMappingControllerTest extends BaseControllerTest {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/item-type-mapping/pre-populate-item-type-mapping.sql"
   })
-  void shouldGetAllExistingMappings() {
-    var responseEntity = testRestTemplate.getForEntity(
-      "/inn-reach/central-servers/{centralServerId}/item-type-mappings", ItemTypeMappingsDTO.class,
-      PRE_POPULATED_CENTRAL_SERVER_ID);
+  void shouldGetAllExistingMappings() throws Exception {
+    var mvcResult = mockMvc.perform(get(
+        "/inn-reach/central-servers/{centralServerId}/item-type-mappings", PRE_POPULATED_CENTRAL_SERVER_ID)
+        .headers(defaultHeaders()))
+      .andExpect(status().is2xxSuccessful())
+      .andReturn();
 
-    assertTrue(responseEntity.getStatusCode().is2xxSuccessful());
-    assertTrue(responseEntity.hasBody());
-
-    var response = responseEntity.getBody();
+    var response = fromJson(mvcResult, ItemTypeMappingsDTO.class);
     assertNotNull(response);
 
     var mappings = response.getItemTypeMappings();
@@ -94,7 +115,7 @@ class ItemTypeMappingControllerTest extends BaseControllerTest {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/item-type-mapping/pre-populate-item-type-mapping.sql"
   })
-  void shouldUpdateAllExistingMappings() {
+  void shouldUpdateAllExistingMappings() throws Exception {
     var existing = mapper.toDTOCollection(repository.findAll());
     var centralItemTypes = existing.getItemTypeMappings().stream().map(
       ItemTypeMappingDTO::getCentralItemType).collect(Collectors.toSet());
@@ -102,12 +123,12 @@ class ItemTypeMappingControllerTest extends BaseControllerTest {
     var updatedCentralItemTypes = List.copyOf(centralItemTypes);
     existing.getItemTypeMappings().forEach(m -> m.setCentralItemType(updatedCentralItemTypes.get(existing.getItemTypeMappings().indexOf(m))));
 
-    var responseEntity = testRestTemplate.exchange(
-      "/inn-reach/central-servers/{centralServerId}/item-type-mappings", HttpMethod.PUT,
-      new HttpEntity<>(existing), Void.class, PRE_POPULATED_CENTRAL_SERVER_ID);
-
-    assertEquals(HttpStatus.NO_CONTENT, responseEntity.getStatusCode());
-    assertFalse(responseEntity.hasBody());
+    mockMvc.perform(put(
+        "/inn-reach/central-servers/{centralServerId}/item-type-mappings", PRE_POPULATED_CENTRAL_SERVER_ID)
+        .content(asJsonString(existing))
+        .headers(defaultHeaders())
+        .contentType(APPLICATION_JSON))
+      .andExpect(status().isNoContent());
 
     var updated = mapper.toDTOs(repository.findAll());
     var expected = existing.getItemTypeMappings();
@@ -122,7 +143,7 @@ class ItemTypeMappingControllerTest extends BaseControllerTest {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/item-type-mapping/pre-populate-item-type-mapping.sql"
   })
-  void shouldCreateUpdateAndDeleteMappingsAtTheSameTime() {
+  void shouldCreateUpdateAndDeleteMappingsAtTheSameTime() throws Exception {
     var mappings = mapper.toDTOCollection(repository.findAll());
     List<ItemTypeMappingDTO> em = mappings.getItemTypeMappings();
 
@@ -135,12 +156,12 @@ class ItemTypeMappingControllerTest extends BaseControllerTest {
       ItemTypeMappingsDTO.class);
     em.addAll(newMappings.getItemTypeMappings());       // to insert
 
-    var responseEntity = testRestTemplate.exchange(
-      "/inn-reach/central-servers/{centralServerId}/item-type-mappings", HttpMethod.PUT, new HttpEntity<>(mappings),
-      Void.class, PRE_POPULATED_CENTRAL_SERVER_ID);
-
-    assertEquals(HttpStatus.NO_CONTENT, responseEntity.getStatusCode());
-    assertFalse(responseEntity.hasBody());
+    mockMvc.perform(put(
+        "/inn-reach/central-servers/{centralServerId}/item-type-mappings", PRE_POPULATED_CENTRAL_SERVER_ID)
+        .content(asJsonString(mappings))
+        .headers(defaultHeaders())
+        .contentType(APPLICATION_JSON))
+      .andExpect(status().isNoContent());
 
     var stored = mapper.toDTOs(repository.findAll());
 
@@ -159,15 +180,18 @@ class ItemTypeMappingControllerTest extends BaseControllerTest {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/item-type-mapping/pre-populate-item-type-mapping.sql"
   })
-  void return409WhenUpdatingMappingAndCentralItemTypeIsAlreadyMapped() {
+  void return409WhenUpdatingMappingAndCentralItemTypeIsAlreadyMapped() throws Exception {
     var existing = mapper.toDTOCollection(repository.findAll());
     existing.getItemTypeMappings().forEach(m -> m.setCentralItemType(PRE_POPULATED_CENTRAL_ITEM_TYPE1));
 
-    var responseEntity = testRestTemplate.exchange(
-      "/inn-reach/central-servers/{centralServerId}/item-type-mappings", HttpMethod.PUT, new HttpEntity<>(existing),
-      Error.class, PRE_POPULATED_CENTRAL_SERVER_ID);
-
-    assertEquals(CONFLICT, responseEntity.getStatusCode());
+    var mvcResult = mockMvc.perform(put(
+        "/inn-reach/central-servers/{centralServerId}/item-type-mappings", PRE_POPULATED_CENTRAL_SERVER_ID)
+        .content(asJsonString(existing))
+        .headers(defaultHeaders())
+        .contentType(APPLICATION_JSON))
+      .andExpect(status().isConflict())
+      .andReturn();
+    fromJson(mvcResult, Error.class);
   }
 
   @Test
@@ -175,15 +199,18 @@ class ItemTypeMappingControllerTest extends BaseControllerTest {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/item-type-mapping/pre-populate-item-type-mapping.sql"
   })
-  void return409WhenUpdatingMappingWithInvalidCentralItemType() {
+  void return409WhenUpdatingMappingWithInvalidCentralItemType() throws Exception {
     var newMapping = deserializeFromJsonFile("/item-type-mapping/update-item-type-mappings-invalid-request.json",
       ItemTypeMappingsDTO.class);
 
-    var responseEntity = testRestTemplate.exchange(
-      "/inn-reach/central-servers/{centralServerId}/item-type-mappings", HttpMethod.PUT, new HttpEntity<>(newMapping),
-      Error.class, PRE_POPULATED_CENTRAL_SERVER_ID);
-
-    assertEquals(BAD_REQUEST, responseEntity.getStatusCode());
+    var mvcResult = mockMvc.perform(put(
+        "/inn-reach/central-servers/{centralServerId}/item-type-mappings", PRE_POPULATED_CENTRAL_SERVER_ID)
+        .content(asJsonString(newMapping))
+        .headers(defaultHeaders())
+        .contentType(APPLICATION_JSON))
+      .andExpect(status().isBadRequest())
+      .andReturn();
+    fromJson(mvcResult, Error.class);
   }
 
   private static Predicate<ItemTypeMappingDTO> idEqualsTo(UUID id) {

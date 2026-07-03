@@ -8,6 +8,8 @@ import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TEST_METHOD;
 import static org.springframework.test.context.jdbc.SqlMergeMode.MergeMode.MERGE;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import static org.folio.innreach.fixture.InventoryFixture.createInventoryInstance;
 import static org.folio.innreach.fixture.InventoryFixture.createInventoryItemDTO;
@@ -17,25 +19,28 @@ import java.net.URI;
 import java.util.List;
 import java.util.UUID;
 
-import org.folio.innreach.domain.dto.folio.inventory.InventoryItemDTO;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.resttestclient.TestRestTemplate;
-import org.springframework.http.HttpStatus;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.test.context.jdbc.Sql;
-import org.springframework.test.context.jdbc.SqlMergeMode;
-
 import org.folio.innreach.client.CirculationClient;
 import org.folio.innreach.client.InventoryClient;
 import org.folio.innreach.client.LocationsClient;
-import org.folio.innreach.controller.base.BaseControllerTest;
 import org.folio.innreach.domain.dto.folio.ResultList;
 import org.folio.innreach.domain.dto.folio.circulation.RequestDTO;
 import org.folio.innreach.domain.dto.folio.inventory.InventoryInstanceDTO;
+import org.folio.innreach.domain.dto.folio.inventory.InventoryItemDTO;
 import org.folio.innreach.domain.dto.folio.inventorystorage.LocationDTO;
+import org.folio.innreach.domain.listener.KafkaCirculationEventListener;
+import org.folio.innreach.domain.listener.KafkaInitialContributionEventListener;
+import org.folio.innreach.domain.listener.KafkaInventoryEventListener;
 import org.folio.innreach.dto.PagingSlipsDTO;
+import org.folio.innreach.external.client.InnReachAuthClient;
 import org.folio.innreach.external.client.InnReachClient;
+import org.folio.innreach.external.dto.AccessTokenDTO;
+import org.folio.innreach.it.base.BaseTenantIntegrationTest;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.http.ResponseEntity;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.context.jdbc.Sql;
+import org.springframework.test.context.jdbc.SqlMergeMode;
 
 @Sql(
   scripts = {"classpath:db/inn-reach-transaction/clear-inn-reach-transaction-tables.sql",
@@ -44,7 +49,7 @@ import org.folio.innreach.external.client.InnReachClient;
   executionPhase = AFTER_TEST_METHOD
 )
 @SqlMergeMode(MERGE)
-class PagingSlipControllerTest extends BaseControllerTest {
+class PagingSlipControllerTest extends BaseTenantIntegrationTest {
 
   private static final String INN_REACH_LOCAL_SERVERS_URI = ".*/contribution/localservers";
   private static final String INN_REACH_PATRON_TYPES_URI = ".*/circ/patrontypes";
@@ -69,8 +74,14 @@ class PagingSlipControllerTest extends BaseControllerTest {
   private static final String PATRON_AGENCY_DESCRIPTION = "Test agency 1";
   private static final String ITEM_AGENCY_DESCRIPTION = "Test agency 2";
 
-  @Autowired
-  private TestRestTemplate testRestTemplate;
+  @MockitoBean
+  private KafkaCirculationEventListener kafkaCirculationEventListener;
+  @MockitoBean
+  private KafkaInventoryEventListener kafkaInventoryEventListener;
+  @MockitoBean
+  private KafkaInitialContributionEventListener kafkaInitialContributionEventListener;
+  @MockitoBean
+  private InnReachAuthClient innReachAuthClient;
 
   @MockitoBean
   private CirculationClient circulationClient;
@@ -84,12 +95,17 @@ class PagingSlipControllerTest extends BaseControllerTest {
   @MockitoBean
   private InnReachClient innReachClient;
 
+  @BeforeEach
+  void init() {
+    when(innReachAuthClient.getAccessToken(any(), any())).thenReturn(ResponseEntity.ok(new AccessTokenDTO()));
+  }
+
   @Test
   @Sql(scripts = {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
   })
-  void returnPagingSlips() {
+  void returnPagingSlips() throws Exception {
     var item = createInventoryItemDTO();
     item.setId(PRE_POPULATED_ITEM_ID);
 
@@ -117,13 +133,12 @@ class PagingSlipControllerTest extends BaseControllerTest {
     when(innReachClient.callInnReachApi(matchURI(INN_REACH_PATRON_TYPES_URI), any(), any(), any()))
       .thenReturn(readFile(PATRON_TYPES_RESPONSE_PATH));
 
-    var responseEntity = testRestTemplate.getForEntity(
-      "/inn-reach/paging-slips/{servicePointId}", PagingSlipsDTO.class, UUID.randomUUID()
-    );
+    var result = mockMvc.perform(get("/inn-reach/paging-slips/{servicePointId}", UUID.randomUUID())
+        .headers(defaultHeaders()))
+      .andExpect(status().isOk())
+      .andReturn();
 
-    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
-
-    var pagingSlips = responseEntity.getBody();
+    var pagingSlips = fromJson(result, PagingSlipsDTO.class);
     assertEquals(1, pagingSlips.getTotalRecords());
 
     var pagingSlip = pagingSlips.getPagingSlips().get(0);
@@ -177,15 +192,13 @@ class PagingSlipControllerTest extends BaseControllerTest {
   @Sql(scripts = {
     "classpath:db/central-server/pre-populate-central-server.sql",
   })
-  void returnEmptySlips_whenTransactionsNotFound() {
-    var responseEntity = testRestTemplate.getForEntity(
-      "/inn-reach/paging-slips/{servicePointId}", PagingSlipsDTO.class, UUID.randomUUID()
-    );
+  void returnEmptySlips_whenTransactionsNotFound() throws Exception {
+    var result = mockMvc.perform(get("/inn-reach/paging-slips/{servicePointId}", UUID.randomUUID())
+        .headers(defaultHeaders()))
+      .andExpect(status().isOk())
+      .andReturn();
 
-    assertNotNull(responseEntity);
-    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
-
-    var pagingSlips = responseEntity.getBody();
+    var pagingSlips = fromJson(result, PagingSlipsDTO.class);
     assertNotNull(pagingSlips);
     assertEquals(0, pagingSlips.getTotalRecords());
   }
@@ -195,18 +208,16 @@ class PagingSlipControllerTest extends BaseControllerTest {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
   })
-  void returnEmptySlips_whenLocationsNotFound() {
+  void returnEmptySlips_whenLocationsNotFound() throws Exception {
     when(locationsClient.queryLocationsByServicePoint(any(), anyInt())).thenReturn(ResultList.asSinglePage(new LocationDTO()));
     when(circulationClient.queryNotFilledRequestsByIds(any(), anyInt())).thenReturn(ResultList.empty());
 
-    var responseEntity = testRestTemplate.getForEntity(
-      "/inn-reach/paging-slips/{servicePointId}", PagingSlipsDTO.class, UUID.randomUUID()
-    );
+    var result = mockMvc.perform(get("/inn-reach/paging-slips/{servicePointId}", UUID.randomUUID())
+        .headers(defaultHeaders()))
+      .andExpect(status().isOk())
+      .andReturn();
 
-    assertNotNull(responseEntity);
-    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
-
-    var pagingSlips = responseEntity.getBody();
+    var pagingSlips = fromJson(result, PagingSlipsDTO.class);
     assertNotNull(pagingSlips);
     assertEquals(0, pagingSlips.getTotalRecords());
   }
@@ -216,22 +227,20 @@ class PagingSlipControllerTest extends BaseControllerTest {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
   })
-  void returnEmptySlips_whenRequestsNotFound() {
+  void returnEmptySlips_whenRequestsNotFound() throws Exception {
     when(locationsClient.queryLocationsByServicePoint(any(), anyInt())).thenReturn(ResultList.empty());
 
-    var responseEntity = testRestTemplate.getForEntity(
-      "/inn-reach/paging-slips/{servicePointId}", PagingSlipsDTO.class, UUID.randomUUID()
-    );
+    var result = mockMvc.perform(get("/inn-reach/paging-slips/{servicePointId}", UUID.randomUUID())
+        .headers(defaultHeaders()))
+      .andExpect(status().isOk())
+      .andReturn();
 
-    assertNotNull(responseEntity);
-    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
-
-    var pagingSlips = responseEntity.getBody();
+    var pagingSlips = fromJson(result, PagingSlipsDTO.class);
     assertNotNull(pagingSlips);
     assertEquals(0, pagingSlips.getTotalRecords());
   }
 
-  private static URI matchURI(String uriPathPattern) {
+  private static java.net.URI matchURI(String uriPathPattern) {
     return argThat(uri -> uri != null && uri.getPath().matches(uriPathPattern));
   }
 

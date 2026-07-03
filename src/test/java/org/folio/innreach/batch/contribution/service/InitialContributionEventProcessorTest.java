@@ -1,7 +1,6 @@
 package org.folio.innreach.batch.contribution.service;
 
 import org.folio.innreach.batch.contribution.listener.ContributionExceptionListener;
-import org.folio.innreach.controller.base.BaseControllerTest;
 import org.folio.innreach.domain.entity.Contribution;
 import org.folio.innreach.domain.entity.ContributionStatus;
 import org.folio.innreach.domain.entity.JobExecutionStatus;
@@ -12,12 +11,20 @@ import org.folio.innreach.external.exception.InnReachConnectionException;
 import org.folio.innreach.external.exception.InnReachGatewayException;
 import org.folio.innreach.external.exception.ServiceSuspendedException;
 import org.folio.innreach.repository.CentralServerRepository;
+import org.folio.innreach.domain.listener.KafkaCirculationEventListener;
+import org.folio.innreach.domain.listener.KafkaInitialContributionEventListener;
+import org.folio.innreach.domain.listener.KafkaInventoryEventListener;
+import org.folio.innreach.external.client.InnReachAuthClient;
+import org.folio.innreach.external.dto.AccessTokenDTO;
+import org.folio.innreach.it.base.BaseTenantIntegrationTest;
 import org.folio.innreach.repository.ContributionErrorRepository;
 import org.folio.innreach.repository.ContributionRepository;
 import org.folio.innreach.repository.JobExecutionStatusRepository;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.test.context.jdbc.Sql;
@@ -55,9 +62,24 @@ import org.folio.innreach.dto.Item;
 },
   executionPhase = BEFORE_TEST_METHOD)
 @SqlMergeMode(MERGE)
-class InitialContributionEventProcessorTest extends BaseControllerTest {
+class InitialContributionEventProcessorTest extends BaseTenantIntegrationTest {
   private final UUID CENTRAL_SERVER_ID = UUID.fromString("edab6baf-c696-42b1-89bb-1bbb8759b0d2");
   private static final Duration ASYNC_AWAIT_TIMEOUT = Duration.ofSeconds(15);
+
+  @MockitoBean
+  private KafkaCirculationEventListener kafkaCirculationEventListener;
+  @MockitoBean
+  private KafkaInventoryEventListener kafkaInventoryEventListener;
+  @MockitoBean
+  private KafkaInitialContributionEventListener kafkaInitialContributionEventListener;
+  @MockitoBean
+  private InnReachAuthClient innReachAuthClient;
+
+  @BeforeEach
+  void init() {
+    when(innReachAuthClient.getAccessToken(any(), any())).thenReturn(ResponseEntity.ok(new AccessTokenDTO()));
+  }
+
   @Autowired
   InitialContributionEventProcessor eventProcessor;
   @Autowired

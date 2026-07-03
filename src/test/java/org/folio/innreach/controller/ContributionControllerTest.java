@@ -5,7 +5,6 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.samePropertyValuesAs;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -13,6 +12,10 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TEST_METHOD;
 import static org.springframework.test.context.jdbc.SqlMergeMode.MergeMode.MERGE;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import static org.folio.innreach.fixture.ContributionFixture.createIrLocations;
 import static org.folio.innreach.fixture.ContributionFixture.createIterationJobResponse;
@@ -25,14 +28,12 @@ import java.util.UUID;
 
 import org.folio.innreach.batch.contribution.IterationEventReaderFactory;
 import org.folio.innreach.external.exception.InnReachTimeOutException;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.resttestclient.TestRestTemplate;
 import org.springframework.core.retry.RetryTemplate;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlMergeMode;
@@ -40,14 +41,19 @@ import org.springframework.test.context.jdbc.SqlMergeMode;
 import org.folio.innreach.batch.contribution.service.ContributionJobRunner;
 import org.folio.innreach.client.InstanceStorageClient;
 import org.folio.innreach.client.MaterialTypesClient;
-import org.folio.innreach.controller.base.BaseControllerTest;
 import org.folio.innreach.domain.dto.folio.inventorystorage.InstanceIterationRequest;
 import org.folio.innreach.domain.dto.folio.inventorystorage.JobResponse;
 import org.folio.innreach.domain.entity.Contribution;
+import org.folio.innreach.domain.listener.KafkaCirculationEventListener;
+import org.folio.innreach.domain.listener.KafkaInitialContributionEventListener;
+import org.folio.innreach.domain.listener.KafkaInventoryEventListener;
 import org.folio.innreach.dto.ContributionDTO;
 import org.folio.innreach.dto.ContributionsDTO;
 import org.folio.innreach.dto.MappingValidationStatusDTO;
+import org.folio.innreach.external.client.InnReachAuthClient;
+import org.folio.innreach.external.dto.AccessTokenDTO;
 import org.folio.innreach.external.service.InnReachLocationExternalService;
+import org.folio.innreach.it.base.BaseTenantIntegrationTest;
 import org.folio.innreach.mapper.ContributionMapper;
 import org.folio.innreach.repository.ContributionRepository;
 import org.folio.spring.data.OffsetRequest;
@@ -62,17 +68,29 @@ import org.folio.spring.data.OffsetRequest;
   executionPhase = AFTER_TEST_METHOD
 )
 @SqlMergeMode(MERGE)
-class ContributionControllerTest extends BaseControllerTest {
+class ContributionControllerTest extends BaseTenantIntegrationTest {
 
   private static final UUID PRE_POPULATED_CENTRAL_SERVER_ID = UUID.fromString("edab6baf-c696-42b1-89bb-1bbb8759b0d2");
   private static final UUID PRE_POPULATED_CONTRIBUTION_ID = UUID.fromString("ae274737-c398-4cf6-8dd3-d228e5b1f608");
   private static final UUID PRE_POPULATED_ITERATION_JOB_ID = UUID.fromString("a193f510-b178-4ce6-ab70-d8e09f646a2d");
 
   @MockitoBean
+  private KafkaCirculationEventListener kafkaCirculationEventListener;
+  @MockitoBean
+  private KafkaInventoryEventListener kafkaInventoryEventListener;
+  @MockitoBean
+  private KafkaInitialContributionEventListener kafkaInitialContributionEventListener;
+  @MockitoBean
+  private InnReachAuthClient innReachAuthClient;
+
+  @BeforeEach
+  void init() {
+    when(innReachAuthClient.getAccessToken(any(), any())).thenReturn(ResponseEntity.ok(new AccessTokenDTO()));
+  }
+
+  @MockitoBean
   private InstanceStorageClient instanceStorageClient;
 
-  @Autowired
-  private TestRestTemplate testRestTemplate;
   @Autowired
   private ContributionRepository repository;
   @Autowired
@@ -98,17 +116,15 @@ class ContributionControllerTest extends BaseControllerTest {
     "classpath:db/lib-mapping/pre-populate-another-library-mapping.sql",
     "classpath:db/contribution/pre-populate-contribution.sql"
   })
-  void shouldGetCurrentContribution() {
+  void shouldGetCurrentContribution() throws Exception {
     when(materialTypesClient.getMaterialTypes(anyString(), anyInt())).thenReturn(createMaterialTypes());
     when(irLocationService.getAllLocations(any())).thenReturn(createIrLocations());
 
-    var responseEntity =
-      testRestTemplate.getForEntity(currentContributionUrl(), ContributionDTO.class);
+    var mvcResult = mockMvc.perform(get(currentContributionUrl()).headers(defaultHeaders()))
+      .andExpect(status().is2xxSuccessful())
+      .andReturn();
 
-    assertTrue(responseEntity.getStatusCode().is2xxSuccessful());
-    assertTrue(responseEntity.hasBody());
-
-    var response = responseEntity.getBody();
+    var response = fromJson(mvcResult, ContributionDTO.class);
     assertNotNull(response);
 
     var existing = fetchCurrentContribution();
@@ -126,16 +142,14 @@ class ContributionControllerTest extends BaseControllerTest {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/contribution/pre-populate-contribution.sql"
   })
-  void shouldGetContributionHistory() {
+  void shouldGetContributionHistory() throws Exception {
     when(materialTypesClient.getMaterialTypes(anyString(), anyInt())).thenReturn(createMaterialTypes());
 
-    var responseEntity =
-      testRestTemplate.getForEntity(contributionHistoryUrl(), ContributionsDTO.class);
+    var mvcResult = mockMvc.perform(get(contributionHistoryUrl()).headers(defaultHeaders()))
+      .andExpect(status().is2xxSuccessful())
+      .andReturn();
 
-    assertTrue(responseEntity.getStatusCode().is2xxSuccessful());
-    assertTrue(responseEntity.hasBody());
-
-    var response = responseEntity.getBody();
+    var response = fromJson(mvcResult, ContributionsDTO.class);
     assertNotNull(response);
 
     var existing = fetchContributionHistory();
@@ -150,17 +164,15 @@ class ContributionControllerTest extends BaseControllerTest {
     "classpath:db/inn-reach-location/pre-populate-inn-reach-location-code.sql",
     "classpath:db/lib-mapping/pre-populate-another-library-mapping.sql",
   })
-  void shouldReturnNotStartedContribution() {
+  void shouldReturnNotStartedContribution() throws Exception {
     when(materialTypesClient.getMaterialTypes(anyString(), anyInt())).thenReturn(createMaterialTypes());
     when(irLocationService.getAllLocations(any())).thenReturn(createIrLocations());
 
-    var responseEntity =
-      testRestTemplate.getForEntity(currentContributionUrl(), ContributionDTO.class);
+    var mvcResult = mockMvc.perform(get(currentContributionUrl()).headers(defaultHeaders()))
+      .andExpect(status().is2xxSuccessful())
+      .andReturn();
 
-    assertTrue(responseEntity.getStatusCode().is2xxSuccessful());
-    assertTrue(responseEntity.hasBody());
-
-    var response = responseEntity.getBody();
+    var response = fromJson(mvcResult, ContributionDTO.class);
     assertNotNull(response);
 
     assertEquals(ContributionDTO.StatusEnum.NOT_STARTED, response.getStatus());
@@ -174,17 +186,15 @@ class ContributionControllerTest extends BaseControllerTest {
     "classpath:db/inn-reach-location/pre-populate-inn-reach-location-code.sql",
     "classpath:db/lib-mapping/pre-populate-another-library-mapping.sql",
   })
-  void shouldReturnInvalidStatusOnMissingTypeMappings() {
+  void shouldReturnInvalidStatusOnMissingTypeMappings() throws Exception {
     when(materialTypesClient.getMaterialTypes(anyString(), anyInt())).thenReturn(createMaterialTypes());
     when(irLocationService.getAllLocations(any())).thenReturn(createIrLocations());
 
-    var responseEntity =
-      testRestTemplate.getForEntity(currentContributionUrl(), ContributionDTO.class);
+    var mvcResult = mockMvc.perform(get(currentContributionUrl()).headers(defaultHeaders()))
+      .andExpect(status().is2xxSuccessful())
+      .andReturn();
 
-    assertTrue(responseEntity.getStatusCode().is2xxSuccessful());
-    assertTrue(responseEntity.hasBody());
-
-    var response = responseEntity.getBody();
+    var response = fromJson(mvcResult, ContributionDTO.class);
     assertNotNull(response);
 
     assertEquals(ContributionDTO.StatusEnum.NOT_STARTED, response.getStatus());
@@ -198,17 +208,15 @@ class ContributionControllerTest extends BaseControllerTest {
     "classpath:db/mtype-mapping/pre-populate-material-type-mapping.sql",
     "classpath:db/inn-reach-location/pre-populate-inn-reach-location-code.sql",
   })
-  void shouldReturnInvalidStatusOnMissingLibraryMappings() {
+  void shouldReturnInvalidStatusOnMissingLibraryMappings() throws Exception {
     when(materialTypesClient.getMaterialTypes(anyString(), anyInt())).thenReturn(createMaterialTypes());
     when(irLocationService.getAllLocations(any())).thenReturn(createIrLocations());
 
-    var responseEntity =
-      testRestTemplate.getForEntity(currentContributionUrl(), ContributionDTO.class);
+    var mvcResult = mockMvc.perform(get(currentContributionUrl()).headers(defaultHeaders()))
+      .andExpect(status().is2xxSuccessful())
+      .andReturn();
 
-    assertTrue(responseEntity.getStatusCode().is2xxSuccessful());
-    assertTrue(responseEntity.hasBody());
-
-    var response = responseEntity.getBody();
+    var response = fromJson(mvcResult, ContributionDTO.class);
     assertNotNull(response);
 
     assertEquals(ContributionDTO.StatusEnum.NOT_STARTED, response.getStatus());
@@ -223,17 +231,15 @@ class ContributionControllerTest extends BaseControllerTest {
     "classpath:db/inn-reach-location/pre-populate-inn-reach-location-code.sql",
     "classpath:db/lib-mapping/pre-populate-another-library-mapping.sql",
   })
-  void shouldReturnInvalidStatusOnException() {
+  void shouldReturnInvalidStatusOnException() throws Exception {
     when(materialTypesClient.getMaterialTypes(anyString(), anyInt())).thenThrow(new RuntimeException("test"));
     when(irLocationService.getAllLocations(any())).thenThrow(new RuntimeException("test"));
 
-    var responseEntity =
-      testRestTemplate.getForEntity(currentContributionUrl(), ContributionDTO.class);
+    var mvcResult = mockMvc.perform(get(currentContributionUrl()).headers(defaultHeaders()))
+      .andExpect(status().is2xxSuccessful())
+      .andReturn();
 
-    assertTrue(responseEntity.getStatusCode().is2xxSuccessful());
-    assertTrue(responseEntity.hasBody());
-
-    var response = responseEntity.getBody();
+    var response = fromJson(mvcResult, ContributionDTO.class);
     assertNotNull(response);
 
     assertEquals(ContributionDTO.StatusEnum.NOT_STARTED, response.getStatus());
@@ -270,7 +276,7 @@ class ContributionControllerTest extends BaseControllerTest {
     "classpath:db/inn-reach-location/pre-populate-inn-reach-location-code.sql",
     "classpath:db/lib-mapping/pre-populate-another-library-mapping.sql",
   })
-  void return201HttpCode_whenInstanceIterationStarted() {
+  void return201HttpCode_whenInstanceIterationStarted() throws Exception {
     var jobResponse = createJobResponse();
     when(instanceStorageClient.startInstanceIteration(any(InstanceIterationRequest.class))).thenReturn(jobResponse);
     //update jobResponse
@@ -279,11 +285,10 @@ class ContributionControllerTest extends BaseControllerTest {
     when(materialTypesClient.getMaterialTypes(anyString(), anyInt())).thenReturn(createMaterialTypes());
     when(irLocationService.getAllLocations(any())).thenReturn(createIrLocations());
 
-    var responseEntity = testRestTemplate.postForEntity(
-      "/inn-reach/central-servers/{centralServerId}/contributions", HttpEntity.EMPTY, Void.class,
-      PRE_POPULATED_CENTRAL_SERVER_ID);
-
-    assertEquals(HttpStatus.CREATED, responseEntity.getStatusCode());
+    mockMvc.perform(post(
+        "/inn-reach/central-servers/{centralServerId}/contributions", PRE_POPULATED_CENTRAL_SERVER_ID)
+        .headers(defaultHeaders()))
+      .andExpect(status().isCreated());
 
     var fromDb = repository.fetchCurrentByCentralServerId(PRE_POPULATED_CENTRAL_SERVER_ID);
     assertNotNull(fromDb);
@@ -296,12 +301,11 @@ class ContributionControllerTest extends BaseControllerTest {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/contribution/pre-populate-contribution.sql"
   })
-  void return204HttpCode_whenInstanceIterationCanceled() {
-    var responseEntity = testRestTemplate.exchange(
-      "/inn-reach/central-servers/{centralServerId}/contributions/current", HttpMethod.DELETE, HttpEntity.EMPTY, Void.class,
-      PRE_POPULATED_CENTRAL_SERVER_ID);
-
-    assertEquals(HttpStatus.NO_CONTENT, responseEntity.getStatusCode());
+  void return204HttpCode_whenInstanceIterationCanceled() throws Exception {
+    mockMvc.perform(delete(
+        "/inn-reach/central-servers/{centralServerId}/contributions/current", PRE_POPULATED_CENTRAL_SERVER_ID)
+        .headers(defaultHeaders()))
+      .andExpect(status().isNoContent());
 
     verify(instanceStorageClient).cancelInstanceIteration(PRE_POPULATED_ITERATION_JOB_ID);
     verify(jobRunner).cancelInitialContribution(PRE_POPULATED_CONTRIBUTION_ID);
@@ -319,16 +323,15 @@ class ContributionControllerTest extends BaseControllerTest {
     "classpath:db/inn-reach-location/pre-populate-inn-reach-location-code.sql",
     "classpath:db/lib-mapping/pre-populate-another-library-mapping.sql",
   })
-  void return409HttpCode_whenStartingInstanceIterationForNonExistingCentralServer() {
+  void return409HttpCode_whenStartingInstanceIterationForNonExistingCentralServer() throws Exception {
     when(instanceStorageClient.startInstanceIteration(any(InstanceIterationRequest.class))).thenReturn(createIterationJobResponse());
     when(materialTypesClient.getMaterialTypes(anyString(), anyInt())).thenReturn(createMaterialTypes());
     when(irLocationService.getAllLocations(any())).thenReturn(createIrLocations());
 
-    var responseEntity = testRestTemplate.postForEntity(
-      "/inn-reach/central-servers/{centralServerId}/contributions", HttpEntity.EMPTY, Void.class,
-      PRE_POPULATED_CENTRAL_SERVER_ID);
-
-    assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
+    mockMvc.perform(post(
+        "/inn-reach/central-servers/{centralServerId}/contributions", PRE_POPULATED_CENTRAL_SERVER_ID)
+        .headers(defaultHeaders()))
+      .andExpect(status().isBadRequest());
   }
 
   @Test
@@ -338,18 +341,19 @@ class ContributionControllerTest extends BaseControllerTest {
     "classpath:db/inn-reach-location/pre-populate-inn-reach-location-code.sql",
     "classpath:db/lib-mapping/pre-populate-another-library-mapping.sql",
   })
-  void return400HttpCode_whenStartInitialContribution_andLocationMappingValidationThrowsInnReachTimeOutException() {
+  void return400HttpCode_whenStartInitialContribution_andLocationMappingValidationThrowsInnReachTimeOutException() throws Exception {
     when(materialTypesClient.getMaterialTypes(anyString(), anyInt())).thenReturn(createMaterialTypes());
     when(irLocationService.getAllLocations(any()))
         .thenThrow(new InnReachTimeOutException("Connection timed out to InnReach server"));
 
-    var responseEntity = testRestTemplate.postForEntity(
-      "/inn-reach/central-servers/{centralServerId}/contributions", HttpEntity.EMPTY, Error.class,
-      PRE_POPULATED_CENTRAL_SERVER_ID);
-
-    assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
+    var mvcResult = mockMvc.perform(post(
+        "/inn-reach/central-servers/{centralServerId}/contributions", PRE_POPULATED_CENTRAL_SERVER_ID)
+        .headers(defaultHeaders()))
+      .andExpect(status().isBadRequest())
+      .andReturn();
+    var response = fromJson(mvcResult, org.folio.innreach.dto.Error.class);
     assertEquals("Failed to validate contribution status: Connection timed out to InnReach server. Please try again later.",
-      responseEntity.getBody().getMessage());
+      response.getMessage());
   }
 
   @Test

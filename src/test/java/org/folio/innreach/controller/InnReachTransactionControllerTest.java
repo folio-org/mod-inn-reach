@@ -23,8 +23,13 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
+import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TEST_METHOD;
 import static org.springframework.test.context.jdbc.SqlMergeMode.MergeMode.MERGE;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import static org.folio.innreach.domain.dto.folio.circulation.RequestDTO.RequestStatus.CLOSED_CANCELLED;
 import static org.folio.innreach.domain.dto.folio.circulation.RequestDTO.RequestStatus.CLOSED_FILLER;
@@ -78,6 +83,7 @@ import org.folio.innreach.domain.service.RecordContributionService;
 import org.folio.innreach.util.DateHelper;
 
 import org.apache.commons.lang3.StringUtils;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -88,15 +94,13 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.stubbing.Answer;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.resttestclient.TestRestTemplate;
-import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlMergeMode;
+import org.springframework.test.web.servlet.MvcResult;
 
 import org.folio.innreach.client.ServicePointsUsersClient;
 import org.folio.innreach.client.ServicePointsClient;
@@ -105,7 +109,6 @@ import org.folio.innreach.client.HoldingsStorageClient;
 import org.folio.innreach.client.InventoryClient;
 import org.folio.innreach.client.RequestPreferenceStorageClient;
 import org.folio.innreach.client.UsersClient;
-import org.folio.innreach.controller.base.BaseControllerTest;
 import org.folio.innreach.domain.dto.OwningSiteCancelsRequestDTO;
 import org.folio.innreach.domain.dto.folio.ResultList;
 import org.folio.innreach.domain.dto.folio.User;
@@ -117,6 +120,9 @@ import org.folio.innreach.domain.dto.folio.requestpreference.RequestPreferenceDT
 import org.folio.innreach.domain.entity.InnReachTransaction;
 import org.folio.innreach.domain.entity.InnReachTransaction.TransactionState;
 import org.folio.innreach.domain.entity.base.AuditableUser;
+import org.folio.innreach.domain.listener.KafkaCirculationEventListener;
+import org.folio.innreach.domain.listener.KafkaInitialContributionEventListener;
+import org.folio.innreach.domain.listener.KafkaInventoryEventListener;
 import org.folio.innreach.domain.service.CentralServerService;
 import org.folio.innreach.domain.service.InventoryService;
 import org.folio.innreach.domain.service.RequestPreferenceService;
@@ -138,7 +144,10 @@ import org.folio.innreach.dto.PatronHoldCheckInResponseDTO;
 import org.folio.innreach.dto.TransactionCheckOutResponseDTO;
 import org.folio.innreach.dto.TransactionHoldDTO;
 import org.folio.innreach.dto.TransactionStateEnum;
+import org.folio.innreach.external.client.InnReachAuthClient;
 import org.folio.innreach.external.client.InnReachClient;
+import org.folio.innreach.external.dto.AccessTokenDTO;
+import org.folio.innreach.it.base.BaseTenantIntegrationTest;
 import org.folio.innreach.mapper.InnReachTransactionMapper;
 import org.folio.innreach.mapper.InnReachTransactionPickupLocationMapper;
 import org.folio.innreach.repository.InnReachTransactionRepository;
@@ -154,7 +163,7 @@ import org.folio.innreach.repository.InnReachTransactionRepository;
 )
 @SqlMergeMode(MERGE)
 @TestInstance(TestInstance.Lifecycle.PER_METHOD)
-class InnReachTransactionControllerTest extends BaseControllerTest {
+class InnReachTransactionControllerTest extends BaseTenantIntegrationTest {
 
   private static final String PATRON_HOLD_CHECK_IN_ENDPOINT = "/inn-reach/transactions/{id}/receive-item/{servicePointId}";
   private static final String PATRON_HOLD_CHECK_IN_UNSHIPPED_ENDPOINT = "/inn-reach/transactions/{id}/receive-unshipped-item/{servicePointId}/{itemBarcode}";
@@ -213,8 +222,20 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     "2025-07-30T05:00:00+02:00",
     ISO_OFFSET_DATE_TIME);
 
-  @Autowired
-  private TestRestTemplate testRestTemplate;
+  @MockitoBean
+  private KafkaCirculationEventListener kafkaCirculationEventListener;
+  @MockitoBean
+  private KafkaInventoryEventListener kafkaInventoryEventListener;
+  @MockitoBean
+  private KafkaInitialContributionEventListener kafkaInitialContributionEventListener;
+  @MockitoBean
+  private InnReachAuthClient innReachAuthClient;
+
+  @BeforeEach
+  void init() {
+    when(innReachAuthClient.getAccessToken(any(), any())).thenReturn(ResponseEntity.ok(new AccessTokenDTO()));
+  }
+
   @MockitoSpyBean
   private InnReachTransactionRepository repository;
   @Autowired
@@ -256,7 +277,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
   private static final HttpHeaders headers = circHeaders();
 
   RandomStringGenerator generator = new RandomStringGenerator.Builder()
-    .withinRange('a', 'z')  // Define character range
+    .withinRange('a', 'z')
     .get();
 
   InventoryItemDTO mockInventoryClient() {
@@ -290,21 +311,20 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
   })
-  void return200HttpCode_and_allExistingTransactions_when_getAllTransactionsWithNoFilters() {
-    var responseEntity = testRestTemplate.getForEntity(
-      "/inn-reach/transactions", InnReachTransactionsDTO.class
-    );
+  void return200HttpCode_and_allExistingTransactions_when_getAllTransactionsWithNoFilters() throws Exception {
+    var mvcResult = mockMvc.perform(get("/inn-reach/transactions").headers(defaultHeaders()))
+      .andExpect(status().isOk())
+      .andReturn();
+    var response = fromJson(mvcResult, InnReachTransactionsDTO.class);
+    assertNotNull(response);
+    assertEquals(3, response.getTotalRecords());
 
-    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
-    assertNotNull(responseEntity.getBody());
-    assertEquals(3, responseEntity.getBody().getTotalRecords());
-
-    var transactionIds = responseEntity.getBody().getTransactions().stream()
+    var transactionIds = response.getTransactions().stream()
       .map(InnReachTransactionDTO::getId).toList();
     assertTrue(transactionIds.containsAll(
       List.of(PRE_POPULATED_PATRON_HOLD_TRANSACTION_ID, PRE_POPULATED_ITEM_HOLD_TRANSACTION_ID, PRE_POPULATED_LOCAL_HOLD_TRANSACTION_ID)));
 
-    var transactionMetadatas = responseEntity.getBody().getTransactions().stream()
+    var transactionMetadatas = response.getTransactions().stream()
       .map(InnReachTransactionDTO::getMetadata).toList();
     assertTrue(transactionMetadatas.stream().allMatch(Objects::nonNull));
     assertTrue(transactionMetadatas.stream().allMatch(m -> m.getCreatedDate() != null));
@@ -316,16 +336,15 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
   })
-  void return200HttpCode_and_pageOfTransactions_when_getAllTransactionsWithOffsetAndLimit() {
-    var responseEntity = testRestTemplate.getForEntity(
-      "/inn-reach/transactions?offset=2&limit=2", InnReachTransactionsDTO.class
-    );
+  void return200HttpCode_and_pageOfTransactions_when_getAllTransactionsWithOffsetAndLimit() throws Exception {
+    var mvcResult = mockMvc.perform(get("/inn-reach/transactions?offset=2&limit=2").headers(defaultHeaders()))
+      .andExpect(status().isOk())
+      .andReturn();
+    var response = fromJson(mvcResult, InnReachTransactionsDTO.class);
+    assertNotNull(response);
+    assertEquals(3, response.getTotalRecords());
 
-    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
-    assertNotNull(responseEntity.getBody());
-    assertEquals(3, responseEntity.getBody().getTotalRecords());
-
-    var transactions = responseEntity.getBody().getTransactions();
+    var transactions = response.getTransactions();
 
     assertEquals(1, transactions.size());
   }
@@ -335,21 +354,21 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
   })
-  void return200HttpCode_and_sortedTransactions_when_getAllTransactionsWithTypeAndState() {
-    var responseEntity = testRestTemplate.getForEntity(
-      "/inn-reach/transactions?type=PATRON&type=ITEM&state=PATRON_HOLD", InnReachTransactionsDTO.class
-    );
+  void return200HttpCode_and_sortedTransactions_when_getAllTransactionsWithTypeAndState() throws Exception {
+    var mvcResult = mockMvc.perform(get(
+        "/inn-reach/transactions?type=PATRON&type=ITEM&state=PATRON_HOLD").headers(defaultHeaders()))
+      .andExpect(status().isOk())
+      .andReturn();
+    var response = fromJson(mvcResult, InnReachTransactionsDTO.class);
+    assertNotNull(response);
+    assertEquals(1, response.getTotalRecords());
 
-    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
-    assertNotNull(responseEntity.getBody());
-    assertEquals(1, responseEntity.getBody().getTotalRecords());
-
-    var transactionIds = responseEntity.getBody().getTransactions().stream()
+    var transactionIds = response.getTransactions().stream()
       .map(InnReachTransactionDTO::getId).toList();
     assertTrue(transactionIds.contains(PRE_POPULATED_PATRON_HOLD_TRANSACTION_ID));
 
-    assertEquals(1, responseEntity.getBody().getTransactions().size());
-    var transaction = responseEntity.getBody().getTransactions().stream()
+    assertEquals(1, response.getTransactions().size());
+    var transaction = response.getTransactions().stream()
       .findFirst().get();
     assertEquals(PATRON, transaction.getType());
     assertEquals(PATRON_HOLD, transaction.getState());
@@ -360,15 +379,16 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-broken_patron_hold_transaction.sql"
   })
-  void return200HttpCode_and_cancelPatronTransaction_whenNoVirtualItemAndRequestCreatedForPatronHoldTransaction() {
-    var responseEntity = testRestTemplate.postForEntity(
-      PATRON_HOLD_REMOVE_ENDPOINT, null, InnReachTransactionDTO.class, PRE_POPULATED_PATRON_HOLD_TRANSACTION_ID);
-
-    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
-    assertNotNull(responseEntity.getBody());
-    assertEquals(PRE_POPULATED_PATRON_HOLD_TRANSACTION_ID, responseEntity.getBody().getId());
-    assertEquals(PRE_POPULATED_TRACKING_ID, responseEntity.getBody().getTrackingId());
-    assertEquals(TransactionStateEnum.CANCEL_REQUEST, responseEntity.getBody().getState());
+  void return200HttpCode_and_cancelPatronTransaction_whenNoVirtualItemAndRequestCreatedForPatronHoldTransaction() throws Exception {
+    var mvcResult = mockMvc.perform(post(
+        PATRON_HOLD_REMOVE_ENDPOINT, PRE_POPULATED_PATRON_HOLD_TRANSACTION_ID).headers(defaultHeaders()))
+      .andExpect(status().isOk())
+      .andReturn();
+    var response = fromJson(mvcResult, InnReachTransactionDTO.class);
+    assertNotNull(response);
+    assertEquals(PRE_POPULATED_PATRON_HOLD_TRANSACTION_ID, response.getId());
+    assertEquals(PRE_POPULATED_TRACKING_ID, response.getTrackingId());
+    assertEquals(TransactionStateEnum.CANCEL_REQUEST, response.getState());
   }
 
   @Test
@@ -376,14 +396,14 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
   })
-  void return400HttpCode_and_notCancelPatronTransaction_whenValidPatronHoldTransaction() {
+  void return400HttpCode_and_notCancelPatronTransaction_whenValidPatronHoldTransaction() throws Exception {
     when(inventoryClient.findItem(any())).thenReturn(Optional.of(createInventoryItemDTO()));
     when(circulationClient.findRequest(any())).thenReturn(Optional.of(createRequestDTO()));
 
-    var responseEntity = testRestTemplate.postForEntity(
-      PATRON_HOLD_REMOVE_ENDPOINT, null, InnReachTransactionDTO.class, PRE_POPULATED_PATRON_HOLD_TRANSACTION_ID);
+    mockMvc.perform(post(
+        PATRON_HOLD_REMOVE_ENDPOINT, PRE_POPULATED_PATRON_HOLD_TRANSACTION_ID).headers(defaultHeaders()))
+      .andExpect(status().isBadRequest());
 
-    assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
     var transaction = repository.fetchOneById(PRE_POPULATED_PATRON_HOLD_TRANSACTION_ID);
     assertTrue(transaction.isPresent());
     assertEquals(TransactionState.PATRON_HOLD, transaction.get().getState());
@@ -394,19 +414,19 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
   })
-  void return200HttpCode_and_sortedTransactions_when_getRequestTooLongReport() {
-    var responseEntity = testRestTemplate.getForEntity(
-      "/inn-reach/transactions?createdDate=3022-11-16T18%3A30%3A00.000Z&createdDateOp=less&limit=1000&" +
-        "offset=0&requestedTooLong=true&sortBy=transactionTime&sortOrder=asc&state=PATRON_HOLD&" +
-        "state=TRANSFER&type=PATRON&updatedDate=3022-11-16T18%3A30%3A00.000Z&updatedDateOp=less"
-      , InnReachTransactionsDTO.class
-    );
+  void return200HttpCode_and_sortedTransactions_when_getRequestTooLongReport() throws Exception {
+    var mvcResult = mockMvc.perform(get(
+        "/inn-reach/transactions?createdDate=3022-11-16T18%3A30%3A00.000Z&createdDateOp=less&limit=1000&" +
+          "offset=0&requestedTooLong=true&sortBy=transactionTime&sortOrder=asc&state=PATRON_HOLD&" +
+          "state=TRANSFER&type=PATRON&updatedDate=3022-11-16T18%3A30%3A00.000Z&updatedDateOp=less")
+        .headers(defaultHeaders()))
+      .andExpect(status().isOk())
+      .andReturn();
+    var response = fromJson(mvcResult, InnReachTransactionsDTO.class);
+    assertNotNull(response);
+    assertEquals(1, response.getTotalRecords());
 
-    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
-    assertNotNull(responseEntity.getBody());
-    assertEquals(1, responseEntity.getBody().getTotalRecords());
-
-    var transactionIds = responseEntity.getBody().getTransactions().stream()
+    var transactionIds = response.getTransactions().stream()
       .map(InnReachTransactionDTO::getId).toList();
     assertTrue(transactionIds.contains(PRE_POPULATED_PATRON_HOLD_TRANSACTION_ID));
   }
@@ -416,24 +436,24 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
   })
-  void return200HttpCode_and_sortedTransactions_when_getAllTransactionsWithCentralServerCodeAndPatronAgencyCode() {
-    var responseEntity = testRestTemplate.getForEntity(
-      "/inn-reach/transactions?centralServerCode=d2ir&patronAgencyCode=qwe56", InnReachTransactionsDTO.class
-    );
+  void return200HttpCode_and_sortedTransactions_when_getAllTransactionsWithCentralServerCodeAndPatronAgencyCode() throws Exception {
+    var mvcResult = mockMvc.perform(get(
+        "/inn-reach/transactions?centralServerCode=d2ir&patronAgencyCode=qwe56").headers(defaultHeaders()))
+      .andExpect(status().isOk())
+      .andReturn();
+    var response = fromJson(mvcResult, InnReachTransactionsDTO.class);
+    assertNotNull(response);
+    assertEquals(1, response.getTotalRecords());
 
-    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
-    assertNotNull(responseEntity.getBody());
-    assertEquals(1, responseEntity.getBody().getTotalRecords());
-
-    var transactionIds = responseEntity.getBody().getTransactions().stream()
+    var transactionIds = response.getTransactions().stream()
       .map(InnReachTransactionDTO::getId).toList();
     assertTrue(transactionIds.contains(PRE_POPULATED_ITEM_HOLD_TRANSACTION_ID));
 
-    assertEquals(1, responseEntity.getBody().getTransactions().size());
-    assertTrue(responseEntity.getBody().getTransactions().stream().map(InnReachTransactionDTO::getCentralServerCode)
+    assertEquals(1, response.getTransactions().size());
+    assertTrue(response.getTransactions().stream().map(InnReachTransactionDTO::getCentralServerCode)
       .allMatch(c -> c.equals("d2ir")));
 
-    var holdDTOs = responseEntity.getBody().getTransactions().stream()
+    var holdDTOs = response.getTransactions().stream()
       .map(InnReachTransactionDTO::getHold).toList();
     assertTrue(holdDTOs.stream().allMatch(h -> h.getPatronAgencyCode().equals("qwe56")));
   }
@@ -443,22 +463,22 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
   })
-  void return200HttpCode_and_sortedTransactions_when_getAllTransactionsWithItemAgency() {
-    var responseEntity = testRestTemplate.getForEntity(
-      "/inn-reach/transactions?itemAgencyCode=asd78", InnReachTransactionsDTO.class
-    );
+  void return200HttpCode_and_sortedTransactions_when_getAllTransactionsWithItemAgency() throws Exception {
+    var mvcResult = mockMvc.perform(get(
+        "/inn-reach/transactions?itemAgencyCode=asd78").headers(defaultHeaders()))
+      .andExpect(status().isOk())
+      .andReturn();
+    var response = fromJson(mvcResult, InnReachTransactionsDTO.class);
+    assertNotNull(response);
+    assertEquals(2, response.getTotalRecords());
 
-    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
-    assertNotNull(responseEntity.getBody());
-    assertEquals(2, responseEntity.getBody().getTotalRecords());
-
-    var transactionIds = responseEntity.getBody().getTransactions().stream()
+    var transactionIds = response.getTransactions().stream()
       .map(InnReachTransactionDTO::getId).toList();
     assertTrue(transactionIds.containsAll(
       List.of(PRE_POPULATED_ITEM_HOLD_TRANSACTION_ID, PRE_POPULATED_LOCAL_HOLD_TRANSACTION_ID)));
 
-    assertEquals(2, responseEntity.getBody().getTransactions().size());
-    var holdDTOs = responseEntity.getBody().getTransactions().stream()
+    assertEquals(2, response.getTransactions().size());
+    var holdDTOs = response.getTransactions().stream()
       .map(InnReachTransactionDTO::getHold).toList();
     assertTrue(holdDTOs.stream().allMatch(h -> h.getItemAgencyCode().equals("asd78")));
   }
@@ -468,22 +488,22 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
   })
-  void return200HttpCode_and_sortedTransactions_when_getAllTransactionsWithPatronType() {
-    var responseEntity = testRestTemplate.getForEntity(
-      "/inn-reach/transactions?centralPatronType=1&centralPatronType=0", InnReachTransactionsDTO.class
-    );
+  void return200HttpCode_and_sortedTransactions_when_getAllTransactionsWithPatronType() throws Exception {
+    var mvcResult = mockMvc.perform(get(
+        "/inn-reach/transactions?centralPatronType=1&centralPatronType=0").headers(defaultHeaders()))
+      .andExpect(status().isOk())
+      .andReturn();
+    var response = fromJson(mvcResult, InnReachTransactionsDTO.class);
+    assertNotNull(response);
+    assertEquals(2, response.getTotalRecords());
 
-    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
-    assertNotNull(responseEntity.getBody());
-    assertEquals(2, responseEntity.getBody().getTotalRecords());
-
-    var transactionIds = responseEntity.getBody().getTransactions().stream()
+    var transactionIds = response.getTransactions().stream()
       .map(InnReachTransactionDTO::getId).toList();
     assertTrue(transactionIds.containsAll(
       List.of(PRE_POPULATED_ITEM_HOLD_TRANSACTION_ID, PRE_POPULATED_LOCAL_HOLD_TRANSACTION_ID)));
 
-    assertEquals(2, responseEntity.getBody().getTransactions().size());
-    var centralPatronTypes = responseEntity.getBody().getTransactions().stream()
+    assertEquals(2, response.getTransactions().size());
+    var centralPatronTypes = response.getTransactions().stream()
       .map(InnReachTransactionDTO::getHold).map(TransactionHoldDTO::getCentralPatronType).toList();
     assertTrue(centralPatronTypes.containsAll(List.of(0, 1)));
   }
@@ -493,21 +513,21 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
   })
-  void return200HttpCode_and_sortedTransactions_when_getAllTransactionsWithCentralItemType() {
-    var responseEntity = testRestTemplate.getForEntity(
-      "/inn-reach/transactions?centralItemType=1&centralItemType=2", InnReachTransactionsDTO.class
-    );
+  void return200HttpCode_and_sortedTransactions_when_getAllTransactionsWithCentralItemType() throws Exception {
+    var mvcResult = mockMvc.perform(get(
+        "/inn-reach/transactions?centralItemType=1&centralItemType=2").headers(defaultHeaders()))
+      .andExpect(status().isOk())
+      .andReturn();
+    var response = fromJson(mvcResult, InnReachTransactionsDTO.class);
+    assertNotNull(response);
+    assertEquals(2, response.getTotalRecords());
 
-    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
-    assertNotNull(responseEntity.getBody());
-    assertEquals(2, responseEntity.getBody().getTotalRecords());
-
-    var transactionIds = responseEntity.getBody().getTransactions().stream()
+    var transactionIds = response.getTransactions().stream()
       .map(InnReachTransactionDTO::getId).toList();
     assertTrue(transactionIds.containsAll(List.of(PRE_POPULATED_PATRON_HOLD_TRANSACTION_ID, PRE_POPULATED_ITEM_HOLD_TRANSACTION_ID)));
 
-    assertEquals(2, responseEntity.getBody().getTransactions().size());
-    var centralItemTypes = responseEntity.getBody().getTransactions().stream()
+    assertEquals(2, response.getTransactions().size());
+    var centralItemTypes = response.getTransactions().stream()
       .map(InnReachTransactionDTO::getHold).map(TransactionHoldDTO::getCentralItemType).toList();
     assertTrue(centralItemTypes.containsAll(List.of(1, 2)));
   }
@@ -517,15 +537,15 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
   })
-  void return200HttpCode_and_emptyTransactionList_when_noTransactionsMatchFilters() {
-    var responseEntity = testRestTemplate.getForEntity(
-      "/inn-reach/transactions?type=ITEM&state=PATRON_HOLD&centralServerCode=qwe12", InnReachTransactionsDTO.class
-    );
-
-    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
-    assertNotNull(responseEntity.getBody());
-    assertEquals(0, responseEntity.getBody().getTotalRecords());
-    assertTrue(responseEntity.getBody().getTransactions().isEmpty());
+  void return200HttpCode_and_emptyTransactionList_when_noTransactionsMatchFilters() throws Exception {
+    var mvcResult = mockMvc.perform(get(
+        "/inn-reach/transactions?type=ITEM&state=PATRON_HOLD&centralServerCode=qwe12").headers(defaultHeaders()))
+      .andExpect(status().isOk())
+      .andReturn();
+    var response = fromJson(mvcResult, InnReachTransactionsDTO.class);
+    assertNotNull(response);
+    assertEquals(0, response.getTotalRecords());
+    assertTrue(response.getTransactions().isEmpty());
   }
 
   @Test
@@ -533,17 +553,17 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
   })
-  void return200HttpCode_and_sortedTransactionList_when_SortByCreatedDateDescending() {
+  void return200HttpCode_and_sortedTransactionList_when_SortByCreatedDateDescending() throws Exception {
     modifyTransactionsDateCreated();
-    var responseEntity = testRestTemplate.getForEntity(
-      "/inn-reach/transactions?sortBy=createdDate&sortOrder=desc", InnReachTransactionsDTO.class
-    );
+    var mvcResult = mockMvc.perform(get(
+        "/inn-reach/transactions?sortBy=createdDate&sortOrder=desc").headers(defaultHeaders()))
+      .andExpect(status().isOk())
+      .andReturn();
+    var response = fromJson(mvcResult, InnReachTransactionsDTO.class);
+    assertNotNull(response);
+    assertEquals(3, response.getTotalRecords());
 
-    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
-    assertNotNull(responseEntity.getBody());
-    assertEquals(3, responseEntity.getBody().getTotalRecords());
-
-    var transactions = responseEntity.getBody().getTransactions();
+    var transactions = response.getTransactions();
     assertTrue(transactions.get(0).getMetadata().getCreatedDate().after(
       transactions.get(2).getMetadata().getCreatedDate()));
   }
@@ -553,16 +573,16 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
   })
-  void return200HttpCode_and_sortedTransactionList_when_SortByCentralItemTypeAscending() {
-    var responseEntity = testRestTemplate.getForEntity(
-      "/inn-reach/transactions?sortBy=centralItemType", InnReachTransactionsDTO.class
-    );
+  void return200HttpCode_and_sortedTransactionList_when_SortByCentralItemTypeAscending() throws Exception {
+    var mvcResult = mockMvc.perform(get(
+        "/inn-reach/transactions?sortBy=centralItemType").headers(defaultHeaders()))
+      .andExpect(status().isOk())
+      .andReturn();
+    var response = fromJson(mvcResult, InnReachTransactionsDTO.class);
+    assertNotNull(response);
+    assertEquals(3, response.getTotalRecords());
 
-    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
-    assertNotNull(responseEntity.getBody());
-    assertEquals(3, responseEntity.getBody().getTotalRecords());
-
-    var transactions = responseEntity.getBody().getTransactions();
+    var transactions = response.getTransactions();
     assertTrue(transactions.get(0).getHold().getCentralItemType() <
       transactions.get(2).getHold().getCentralItemType());
   }
@@ -572,16 +592,16 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
   })
-  void return200HttpCode_and_sortedTransactionList_when_SortByCentralPatronType() {
-    var responseEntity = testRestTemplate.getForEntity(
-      "/inn-reach/transactions?sortBy=centralPatronType", InnReachTransactionsDTO.class
-    );
+  void return200HttpCode_and_sortedTransactionList_when_SortByCentralPatronType() throws Exception {
+    var mvcResult = mockMvc.perform(get(
+        "/inn-reach/transactions?sortBy=centralPatronType").headers(defaultHeaders()))
+      .andExpect(status().isOk())
+      .andReturn();
+    var response = fromJson(mvcResult, InnReachTransactionsDTO.class);
+    assertNotNull(response);
+    assertEquals(3, response.getTotalRecords());
 
-    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
-    assertNotNull(responseEntity.getBody());
-    assertEquals(3, responseEntity.getBody().getTotalRecords());
-
-    var transactions = responseEntity.getBody().getTransactions();
+    var transactions = response.getTransactions();
     assertTrue(transactions.get(0).getHold().getCentralPatronType() <
       transactions.get(1).getHold().getCentralPatronType());
   }
@@ -591,16 +611,16 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
   })
-  void return200HttpCode_and_sortedTransactionList_when_getTransactionsWithItemBarcode() {
-    var responseEntity = testRestTemplate.getForEntity(
-      "/inn-reach/transactions?query=ABC-abc-1234", InnReachTransactionsDTO.class
-    );
+  void return200HttpCode_and_sortedTransactionList_when_getTransactionsWithItemBarcode() throws Exception {
+    var mvcResult = mockMvc.perform(get(
+        "/inn-reach/transactions?query=ABC-abc-1234").headers(defaultHeaders()))
+      .andExpect(status().isOk())
+      .andReturn();
+    var response = fromJson(mvcResult, InnReachTransactionsDTO.class);
+    assertNotNull(response);
+    assertEquals(1, response.getTotalRecords());
 
-    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
-    assertNotNull(responseEntity.getBody());
-    assertEquals(1, responseEntity.getBody().getTotalRecords());
-
-    var transactions = responseEntity.getBody().getTransactions();
+    var transactions = response.getTransactions();
     assertEquals(1, transactions.size());
     assertEquals("ABC-abc-1234", transactions.get(0).getHold().getFolioItemBarcode());
   }
@@ -610,16 +630,16 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
   })
-  void return200HttpCode_and_sortedTransactionList_when_getTransactionsWithItemTitle() {
-    var responseEntity = testRestTemplate.getForEntity(
-      "/inn-reach/transactions?query=TITLE", InnReachTransactionsDTO.class
-    );
+  void return200HttpCode_and_sortedTransactionList_when_getTransactionsWithItemTitle() throws Exception {
+    var mvcResult = mockMvc.perform(get(
+        "/inn-reach/transactions?query=TITLE").headers(defaultHeaders()))
+      .andExpect(status().isOk())
+      .andReturn();
+    var response = fromJson(mvcResult, InnReachTransactionsDTO.class);
+    assertNotNull(response);
+    assertEquals(3, response.getTotalRecords());
 
-    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
-    assertNotNull(responseEntity.getBody());
-    assertEquals(3, responseEntity.getBody().getTotalRecords());
-
-    var titles = responseEntity.getBody().getTransactions().stream()
+    var titles = response.getTransactions().stream()
       .map(InnReachTransactionDTO::getHold).map(TransactionHoldDTO::getTitle).toList();
     assertEquals(3, titles.size());
     assertTrue(titles.stream().allMatch(t -> t.toLowerCase().contains("title")));
@@ -630,16 +650,16 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
   })
-  void return200HttpCode_and_sortedTransactionList_when_getTransactionsWithTrackingId() {
-    var responseEntity = testRestTemplate.getForEntity(
-      "/inn-reach/transactions?query=tracking1", InnReachTransactionsDTO.class
-    );
+  void return200HttpCode_and_sortedTransactionList_when_getTransactionsWithTrackingId() throws Exception {
+    var mvcResult = mockMvc.perform(get(
+        "/inn-reach/transactions?query=tracking1").headers(defaultHeaders()))
+      .andExpect(status().isOk())
+      .andReturn();
+    var response = fromJson(mvcResult, InnReachTransactionsDTO.class);
+    assertNotNull(response);
+    assertEquals(1, response.getTotalRecords());
 
-    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
-    assertNotNull(responseEntity.getBody());
-    assertEquals(1, responseEntity.getBody().getTotalRecords());
-
-    var transactions = responseEntity.getBody().getTransactions();
+    var transactions = response.getTransactions();
     assertEquals(1, transactions.size());
     assertEquals("tracking1", transactions.get(0).getTrackingId());
   }
@@ -649,16 +669,16 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
   })
-  void return200HttpCode_and_sortedTransactionList_when_getTransactionsWithPatronId() {
-    var responseEntity = testRestTemplate.getForEntity(
-      "/inn-reach/transactions?query=" + PRE_POPULATED_CENTRAL_PATRON_ID2, InnReachTransactionsDTO.class
-    );
+  void return200HttpCode_and_sortedTransactionList_when_getTransactionsWithPatronId() throws Exception {
+    var mvcResult = mockMvc.perform(get(
+        "/inn-reach/transactions?query=" + PRE_POPULATED_CENTRAL_PATRON_ID2).headers(defaultHeaders()))
+      .andExpect(status().isOk())
+      .andReturn();
+    var response = fromJson(mvcResult, InnReachTransactionsDTO.class);
+    assertNotNull(response);
+    assertEquals(1, response.getTotalRecords());
 
-    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
-    assertNotNull(responseEntity.getBody());
-    assertEquals(1, responseEntity.getBody().getTotalRecords());
-
-    var transactions = responseEntity.getBody().getTransactions();
+    var transactions = response.getTransactions();
     assertEquals(1, transactions.size());
     assertEquals(PRE_POPULATED_CENTRAL_PATRON_ID2, transactions.get(0).getHold().getPatronId());
   }
@@ -668,16 +688,16 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
   })
-  void return200HttpCode_and_sortedTransactionList_when_getTransactionsWithPatronName() {
-    var responseEntity = testRestTemplate.getForEntity(
-      "/inn-reach/transactions?query=patronName1", InnReachTransactionsDTO.class
-    );
+  void return200HttpCode_and_sortedTransactionList_when_getTransactionsWithPatronName() throws Exception {
+    var mvcResult = mockMvc.perform(get(
+        "/inn-reach/transactions?query=patronName1").headers(defaultHeaders()))
+      .andExpect(status().isOk())
+      .andReturn();
+    var response = fromJson(mvcResult, InnReachTransactionsDTO.class);
+    assertNotNull(response);
+    assertEquals(1, response.getTotalRecords());
 
-    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
-    assertNotNull(responseEntity.getBody());
-    assertEquals(1, responseEntity.getBody().getTotalRecords());
-
-    var transactions = responseEntity.getBody().getTransactions();
+    var transactions = response.getTransactions();
     assertEquals(1, transactions.size());
     assertEquals("patronName1", transactions.get(0).getHold().getPatronName());
   }
@@ -688,16 +708,17 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql",
     "classpath:db/inn-reach-transaction/pre-populate-another-inn-reach-transaction.sql"
   })
-  void return200HttpCode_and_sortedTransactionList_when_getTransactionsWithMultipleFiltersAndSorted() {
-    var responseEntity = testRestTemplate.getForEntity(
-      "/inn-reach/transactions?type=ITEM&type=LOCAL&centralServerCode=d2ir1&itemAgencyCode=asd78&sortBy=centralPatronType", InnReachTransactionsDTO.class
-    );
+  void return200HttpCode_and_sortedTransactionList_when_getTransactionsWithMultipleFiltersAndSorted() throws Exception {
+    var mvcResult = mockMvc.perform(get(
+        "/inn-reach/transactions?type=ITEM&type=LOCAL&centralServerCode=d2ir1&itemAgencyCode=asd78&sortBy=centralPatronType")
+        .headers(defaultHeaders()))
+      .andExpect(status().isOk())
+      .andReturn();
+    var response = fromJson(mvcResult, InnReachTransactionsDTO.class);
+    assertNotNull(response);
+    assertEquals(2, response.getTotalRecords());
 
-    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
-    assertNotNull(responseEntity.getBody());
-    assertEquals(2, responseEntity.getBody().getTotalRecords());
-
-    var transactions = responseEntity.getBody().getTransactions();
+    var transactions = response.getTransactions();
     assertEquals(2, transactions.size());
     assertTrue(transactions.stream().allMatch(t -> t.getType().equals(ITEM) ||
       t.getType().equals(LOCAL)));
@@ -713,16 +734,17 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql",
     "classpath:db/inn-reach-transaction/pre-populate-another-inn-reach-transaction.sql"
   })
-  void return200HttpCode_and_sortedTransactionList_when_getTransactionsWithMultipleFiltersAndPaged() {
-    var responseEntity = testRestTemplate.getForEntity(
-      "/inn-reach/transactions?state=PATRON_HOLD&state=LOCAL_HOLD&patronAgencyCode=qwe12&query=2&limit=1&offset=1", InnReachTransactionsDTO.class
-    );
+  void return200HttpCode_and_sortedTransactionList_when_getTransactionsWithMultipleFiltersAndPaged() throws Exception {
+    var mvcResult = mockMvc.perform(get(
+        "/inn-reach/transactions?state=PATRON_HOLD&state=LOCAL_HOLD&patronAgencyCode=qwe12&query=2&limit=1&offset=1")
+        .headers(defaultHeaders()))
+      .andExpect(status().isOk())
+      .andReturn();
+    var response = fromJson(mvcResult, InnReachTransactionsDTO.class);
+    assertNotNull(response);
+    assertEquals(2, response.getTotalRecords());
 
-    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
-    assertNotNull(responseEntity.getBody());
-    assertEquals(2, responseEntity.getBody().getTotalRecords());
-
-    var transactions = responseEntity.getBody().getTransactions();
+    var transactions = response.getTransactions();
     assertEquals(1, transactions.size());
     var transaction = transactions.get(0);
     assertTrue(transaction.getType().equals(PATRON) || transaction.getType().equals(LOCAL));
@@ -736,7 +758,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     "classpath:db/mtype-mapping/pre-populate-material-type-mapping.sql",
     "classpath:db/central-patron-type-mapping/pre-populate-central-patron_type-mapping-table.sql"
   })
-  void return200HttpCode_and_sendRequest_whenItemHoldTransactionCreated() {
+  void return200HttpCode_and_sendRequest_whenItemHoldTransactionCreated() throws Exception {
     var inventoryItemDTO = mockInventoryClient();
     inventoryItemDTO.setStatus(IN_TRANSIT);
     inventoryItemDTO.setTitle(generator.generate(500));
@@ -758,13 +780,16 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     itemHoldDTO.setCentralPatronType(PRE_POPULATED_CENTRAL_PATRON_TYPE);
     itemHoldDTO.setItemId(inventoryItemDTO.getHrid());
 
-    var responseEntity = testRestTemplate.postForEntity(
-      "/inn-reach/d2ir/circ/itemhold/{trackingId}/{centralCode}", new HttpEntity<>(itemHoldDTO, headers), InnReachResponseDTO.class, TRACKING_ID,
-      PRE_POPULATED_CENTRAL_SERVER_CODE);
-
-    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
-    assertTrue(responseEntity.hasBody());
-    assertEquals("ok", responseEntity.getBody().getStatus());
+    var mvcResult = mockMvc.perform(post(
+        "/inn-reach/d2ir/circ/itemhold/{trackingId}/{centralCode}", TRACKING_ID, PRE_POPULATED_CENTRAL_SERVER_CODE)
+        .content(asJsonString(itemHoldDTO))
+        .headers(defaultHeaders())
+        .headers(headers)
+        .contentType(APPLICATION_JSON))
+      .andExpect(status().isOk())
+      .andReturn();
+    var response = fromJson(mvcResult, InnReachResponseDTO.class);
+    assertEquals("ok", response.getStatus());
 
     await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() ->
       verify(repository, atLeastOnce()).save(
@@ -802,7 +827,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     "classpath:db/mtype-mapping/pre-populate-material-type-mapping.sql",
     "classpath:db/central-patron-type-mapping/pre-populate-central-patron_type-mapping-table.sql"
   })
-  void return200HttpCode_and_sendRequest_whenItemHoldTransactionCreated_chosenPickLocationFromTransaction() {
+  void return200HttpCode_and_sendRequest_whenItemHoldTransactionCreated_chosenPickLocationFromTransaction() throws Exception {
     var inventoryItemDTO = mockInventoryClient();
     inventoryItemDTO.setStatus(IN_TRANSIT);
     inventoryItemDTO.setTitle(generator.generate(500));
@@ -827,14 +852,16 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     itemHoldDTO.setCentralPatronType(PRE_POPULATED_CENTRAL_PATRON_TYPE);
     itemHoldDTO.setItemId(inventoryItemDTO.getHrid());
 
-
-    var responseEntity = testRestTemplate.postForEntity(
-      "/inn-reach/d2ir/circ/itemhold/{trackingId}/{centralCode}", new HttpEntity<>(itemHoldDTO, headers), InnReachResponseDTO.class, TRACKING_ID,
-      PRE_POPULATED_CENTRAL_SERVER_CODE);
-
-    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
-    assertTrue(responseEntity.hasBody());
-    assertEquals("ok", responseEntity.getBody().getStatus());
+    var mvcResult = mockMvc.perform(post(
+        "/inn-reach/d2ir/circ/itemhold/{trackingId}/{centralCode}", TRACKING_ID, PRE_POPULATED_CENTRAL_SERVER_CODE)
+        .content(asJsonString(itemHoldDTO))
+        .headers(defaultHeaders())
+        .headers(headers)
+        .contentType(APPLICATION_JSON))
+      .andExpect(status().isOk())
+      .andReturn();
+    var response = fromJson(mvcResult, InnReachResponseDTO.class);
+    assertEquals("ok", response.getStatus());
 
     var newRequestCaptor = ArgumentCaptor.forClass(RequestDTO.class);
     await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() ->
@@ -852,7 +879,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     "classpath:db/mtype-mapping/pre-populate-material-type-mapping.sql",
     "classpath:db/central-patron-type-mapping/pre-populate-central-patron_type-mapping-table.sql"
   })
-  void return200HttpCode_and_sendRequest_whenItemHoldTransactionCreated_servicePointNotFoundByCode() {
+  void return200HttpCode_and_sendRequest_whenItemHoldTransactionCreated_servicePointNotFoundByCode() throws Exception {
     var inventoryItemDTO = mockInventoryClient();
     inventoryItemDTO.setStatus(IN_TRANSIT);
     inventoryItemDTO.setTitle(generator.generate(500));
@@ -881,13 +908,16 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     itemHoldDTO.setCentralPatronType(PRE_POPULATED_CENTRAL_PATRON_TYPE);
     itemHoldDTO.setItemId(inventoryItemDTO.getHrid());
 
-    var responseEntity = testRestTemplate.postForEntity(
-      "/inn-reach/d2ir/circ/itemhold/{trackingId}/{centralCode}", new HttpEntity<>(itemHoldDTO, headers), InnReachResponseDTO.class, TRACKING_ID,
-      PRE_POPULATED_CENTRAL_SERVER_CODE);
-
-    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
-    assertTrue(responseEntity.hasBody());
-    assertEquals("ok", responseEntity.getBody().getStatus());
+    var mvcResult = mockMvc.perform(post(
+        "/inn-reach/d2ir/circ/itemhold/{trackingId}/{centralCode}", TRACKING_ID, PRE_POPULATED_CENTRAL_SERVER_CODE)
+        .content(asJsonString(itemHoldDTO))
+        .headers(defaultHeaders())
+        .headers(headers)
+        .contentType(APPLICATION_JSON))
+      .andExpect(status().isOk())
+      .andReturn();
+    var response = fromJson(mvcResult, InnReachResponseDTO.class);
+    assertEquals("ok", response.getStatus());
 
     await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() ->
       verify(repository, atLeastOnce()).save(
@@ -913,7 +943,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     "classpath:db/mtype-mapping/pre-populate-material-type-mapping.sql",
     "classpath:db/central-patron-type-mapping/pre-populate-central-patron_type-mapping-table.sql"
   })
-  void return200HttpCode_and_doNotSendRequest_whenItemHoldTransactionCreatedForNotAvailableItem() {
+  void return200HttpCode_and_doNotSendRequest_whenItemHoldTransactionCreatedForNotAvailableItem() throws Exception {
     var inventoryItemDTO = mockInventoryClient();
     inventoryItemDTO.setStatus(MISSING);
     mockFindRequestsReturnsEmptyList(inventoryItemDTO);
@@ -928,11 +958,14 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     itemHoldDTO.setCentralPatronType(PRE_POPULATED_CENTRAL_PATRON_TYPE);
     itemHoldDTO.setItemId(inventoryItemDTO.getHrid());
 
-    var responseEntity = testRestTemplate.postForEntity(
-      "/inn-reach/d2ir/circ/itemhold/{trackingId}/{centralCode}", new HttpEntity<>(itemHoldDTO, headers), InnReachResponseDTO.class, TRACKING_ID,
-      PRE_POPULATED_CENTRAL_SERVER_CODE);
-
-    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+    var mvcResult = mockMvc.perform(post(
+        "/inn-reach/d2ir/circ/itemhold/{trackingId}/{centralCode}", TRACKING_ID, PRE_POPULATED_CENTRAL_SERVER_CODE)
+        .content(asJsonString(itemHoldDTO))
+        .headers(defaultHeaders())
+        .headers(headers)
+        .contentType(APPLICATION_JSON))
+      .andExpect(status().isOk())
+      .andReturn();
     verify(circulationClient, never()).sendRequest(any());
 
     var transaction = repository.fetchOneByTrackingId(TRACKING_ID);
@@ -947,21 +980,25 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/mtype-mapping/pre-populate-material-type-mapping.sql"
   })
-  void return400HttpCode_when_createInnReachTransactionWithItemHoldWithInvalidPatronId() {
+  void return400HttpCode_when_createInnReachTransactionWithItemHoldWithInvalidPatronId() throws Exception {
     var inventoryItemDTO = mockInventoryClient();
 
     var itemHoldDTO = deserializeFromJsonFile(
       "/inn-reach-transaction/create-item-hold-invalid-patron-id-request.json", TransactionHoldDTO.class);
     itemHoldDTO.setItemId(inventoryItemDTO.getHrid());
 
-    var responseEntity = testRestTemplate.postForEntity(
-      "/inn-reach/d2ir/circ/itemhold/{trackingId}/{centralCode}", new HttpEntity<>(itemHoldDTO, headers), InnReachResponseDTO.class, TRACKING_ID,
-      PRE_POPULATED_CENTRAL_SERVER_CODE);
-
-    assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
-    assertEquals("failed", responseEntity.getBody().getStatus());
-    assertEquals("Argument validation failed", responseEntity.getBody().getReason());
-    assertThat(responseEntity.getBody().getErrors().get(0).getReason(), containsString("must match \"[a-z,0-9]{1,32}\""));
+    var mvcResult = mockMvc.perform(post(
+        "/inn-reach/d2ir/circ/itemhold/{trackingId}/{centralCode}", TRACKING_ID, PRE_POPULATED_CENTRAL_SERVER_CODE)
+        .content(asJsonString(itemHoldDTO))
+        .headers(defaultHeaders())
+        .headers(headers)
+        .contentType(APPLICATION_JSON))
+      .andExpect(status().isBadRequest())
+      .andReturn();
+    var response = fromJson(mvcResult, InnReachResponseDTO.class);
+    assertEquals("failed", response.getStatus());
+    assertEquals("Argument validation failed", response.getReason());
+    assertThat(response.getErrors().get(0).getReason(), containsString("must match \"[a-z,0-9]{1,32}\""));
   }
 
   @Test
@@ -970,38 +1007,46 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     "classpath:db/mtype-mapping/pre-populate-material-type-mapping.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql",
   })
-  void return400HttpCode_when_createInnReachTransaction_and_trackingIdAlreadyExists() {
+  void return400HttpCode_when_createInnReachTransaction_and_trackingIdAlreadyExists() throws Exception {
     var inventoryItemDTO = mockInventoryClient();
 
     var itemHoldDTO = deserializeFromJsonFile(
       "/inn-reach-transaction/create-item-hold-request.json", TransactionHoldDTO.class);
     itemHoldDTO.setItemId(inventoryItemDTO.getHrid());
 
-    var responseEntity = testRestTemplate.postForEntity(
-      "/inn-reach/d2ir/circ/itemhold/{trackingId}/{centralCode}", new HttpEntity<>(itemHoldDTO, headers), InnReachResponseDTO.class, PRE_POPULATED_TRACKING_ID,
-      PRE_POPULATED_CENTRAL_SERVER_CODE);
+    var mvcResult = mockMvc.perform(post(
+        "/inn-reach/d2ir/circ/itemhold/{trackingId}/{centralCode}", PRE_POPULATED_TRACKING_ID, PRE_POPULATED_CENTRAL_SERVER_CODE)
+        .content(asJsonString(itemHoldDTO))
+        .headers(defaultHeaders())
+        .headers(headers)
+        .contentType(APPLICATION_JSON))
+      .andExpect(status().isBadRequest())
+      .andReturn();
+    var response = fromJson(mvcResult, InnReachResponseDTO.class);
+    assertEquals("failed", response.getStatus());
 
-    assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
-    assertEquals("failed", responseEntity.getBody().getStatus());
-
-    assertTrue(responseEntity.getBody().getReason().contains("INN-Reach Transaction with tracking ID = tracking1 already exists."));
+    assertTrue(response.getReason().contains("INN-Reach Transaction with tracking ID = tracking1 already exists."));
   }
 
   @Test
-  void return400HttpCode_when_createInnReachTransaction_and_centralServerDoesNotExist() {
+  void return400HttpCode_when_createInnReachTransaction_and_centralServerDoesNotExist() throws Exception {
     var inventoryItemDTO = mockInventoryClient();
 
     var itemHoldDTO = deserializeFromJsonFile(
       "/inn-reach-transaction/create-item-hold-request.json", TransactionHoldDTO.class);
     itemHoldDTO.setItemId(inventoryItemDTO.getHrid());
 
-    var responseEntity = testRestTemplate.postForEntity(
-      "/inn-reach/d2ir/circ/itemhold/{trackingId}/{centralCode}", new HttpEntity<>(itemHoldDTO, headers), InnReachResponseDTO.class, PRE_POPULATED_TRACKING_ID,
-      PRE_POPULATED_CENTRAL_SERVER_CODE);
-
-    assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
-    assertEquals("failed", responseEntity.getBody().getStatus());
-    assertTrue(responseEntity.getBody().getReason().contains("Central server with code: d2ir not found"));
+    var mvcResult = mockMvc.perform(post(
+        "/inn-reach/d2ir/circ/itemhold/{trackingId}/{centralCode}", PRE_POPULATED_TRACKING_ID, PRE_POPULATED_CENTRAL_SERVER_CODE)
+        .content(asJsonString(itemHoldDTO))
+        .headers(defaultHeaders())
+        .headers(headers)
+        .contentType(APPLICATION_JSON))
+      .andExpect(status().isBadRequest())
+      .andReturn();
+    var response = fromJson(mvcResult, InnReachResponseDTO.class);
+    assertEquals("failed", response.getStatus());
+    assertTrue(response.getReason().contains("Central server with code: d2ir not found"));
   }
 
   @Test
@@ -1009,40 +1054,48 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/mtype-mapping/pre-populate-material-type-mapping.sql"
   })
-  void return400HttpCode_when_createInnReachTransaction_and_pickupLocationIsNotValid() {
+  void return400HttpCode_when_createInnReachTransaction_and_pickupLocationIsNotValid() throws Exception {
     var inventoryItemDTO = mockInventoryClient();
 
     var itemHoldDTO = deserializeFromJsonFile(
       "/inn-reach-transaction/create-item-hold-invalid-pickup-location-request.json", TransactionHoldDTO.class);
     itemHoldDTO.setItemId(inventoryItemDTO.getHrid());
 
-    var responseEntity = testRestTemplate.postForEntity(
-      "/inn-reach/d2ir/circ/itemhold/{trackingId}/{centralCode}", new HttpEntity<>(itemHoldDTO, headers), InnReachResponseDTO.class, PRE_POPULATED_TRACKING_ID,
-      PRE_POPULATED_CENTRAL_SERVER_CODE);
-
-    assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
-    assertEquals("failed", responseEntity.getBody().getStatus());
-    assertTrue(responseEntity.getBody().getReason().contains("Pickup location must consist of 3 strings delimited by a colon."));
+    var mvcResult = mockMvc.perform(post(
+        "/inn-reach/d2ir/circ/itemhold/{trackingId}/{centralCode}", PRE_POPULATED_TRACKING_ID, PRE_POPULATED_CENTRAL_SERVER_CODE)
+        .content(asJsonString(itemHoldDTO))
+        .headers(defaultHeaders())
+        .headers(headers)
+        .contentType(APPLICATION_JSON))
+      .andExpect(status().isBadRequest())
+      .andReturn();
+    var response = fromJson(mvcResult, InnReachResponseDTO.class);
+    assertEquals("failed", response.getStatus());
+    assertTrue(response.getReason().contains("Pickup location must consist of 3 strings delimited by a colon."));
   }
 
   @Test
   @Sql(scripts = {
     "classpath:db/central-server/pre-populate-central-server.sql"
   })
-  void return400HttpCode_when_createInnReachTransactionWithInvalidMaterialType() {
+  void return400HttpCode_when_createInnReachTransactionWithInvalidMaterialType() throws Exception {
     var inventoryItemDTO = mockInventoryClient();
 
     var itemHoldDTO = deserializeFromJsonFile(
       "/inn-reach-transaction/create-item-hold-request.json", TransactionHoldDTO.class);
     itemHoldDTO.setItemId(inventoryItemDTO.getHrid());
 
-    var responseEntity = testRestTemplate.postForEntity(
-      "/inn-reach/d2ir/circ/itemhold/{trackingId}/{centralCode}", new HttpEntity<>(itemHoldDTO, headers), InnReachResponseDTO.class, TRACKING_ID,
-      PRE_POPULATED_CENTRAL_SERVER_CODE);
-
-    assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
-    assertEquals("failed", responseEntity.getBody().getStatus());
-    assertTrue(responseEntity.getBody().getReason()
+    var mvcResult = mockMvc.perform(post(
+        "/inn-reach/d2ir/circ/itemhold/{trackingId}/{centralCode}", TRACKING_ID, PRE_POPULATED_CENTRAL_SERVER_CODE)
+        .content(asJsonString(itemHoldDTO))
+        .headers(defaultHeaders())
+        .headers(headers)
+        .contentType(APPLICATION_JSON))
+      .andExpect(status().isBadRequest())
+      .andReturn();
+    var response = fromJson(mvcResult, InnReachResponseDTO.class);
+    assertEquals("failed", response.getStatus());
+    assertTrue(response.getReason()
       .contains("Material type mapping for central server id = " + PRE_POPULATED_CENTRAL_SERVER_ID +
         " and material type id = " + PRE_POPULATED_MATERIAL_TYPE_ID + " not found"));
   }
@@ -1054,7 +1107,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     "classpath:db/mtype-mapping/pre-populate-material-type-mapping.sql",
     "classpath:db/central-patron-type-mapping/pre-populate-central-patron_type-mapping-table.sql"
   })
-  void issueOwningSideCancelsRequest_when_createInnReachTransaction_and_creatingRequestFails() {
+  void issueOwningSideCancelsRequest_when_createInnReachTransaction_and_creatingRequestFails() throws Exception {
     var inventoryItemDTO = mockInventoryClient();
     mockFindRequestsReturnsEmptyList(inventoryItemDTO);
     var user = mockUserClient();
@@ -1070,11 +1123,13 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     itemHoldDTO.setItemId(inventoryItemDTO.getHrid());
     itemHoldDTO.setCentralPatronType(PRE_POPULATED_CENTRAL_PATRON_TYPE);
 
-    var responseEntity = testRestTemplate.postForEntity(
-      "/inn-reach/d2ir/circ/itemhold/{trackingId}/{centralCode}", new HttpEntity<>(itemHoldDTO, headers), InnReachResponseDTO.class, TRACKING_ID,
-      PRE_POPULATED_CENTRAL_SERVER_CODE);
-
-    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+    mockMvc.perform(post(
+        "/inn-reach/d2ir/circ/itemhold/{trackingId}/{centralCode}", TRACKING_ID, PRE_POPULATED_CENTRAL_SERVER_CODE)
+        .content(asJsonString(itemHoldDTO))
+        .headers(defaultHeaders())
+        .headers(headers)
+        .contentType(APPLICATION_JSON))
+      .andExpect(status().isOk());
 
     await().untilAsserted(() -> verify(innReachClient).postInnReachApi(any(), anyString(), anyString(), anyString(), any()));
 
@@ -1097,7 +1152,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     "classpath:db/mtype-mapping/pre-populate-material-type-mapping.sql",
     "classpath:db/central-patron-type-mapping/pre-populate-central-patron_type-mapping-table.sql"
   })
-  void issueOwningSideCancelsRequest_when_createInnReachTransaction_and_itemIsNotRequestable() {
+  void issueOwningSideCancelsRequest_when_createInnReachTransaction_and_itemIsNotRequestable() throws Exception {
     var inventoryItemDTO = mockInventoryClient();
     inventoryItemDTO.setStatus(UNAVAILABLE);
     mockFindRequestsReturnsEmptyList(inventoryItemDTO);
@@ -1115,11 +1170,13 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     itemHoldDTO.setItemId(inventoryItemDTO.getHrid());
     itemHoldDTO.setCentralPatronType(PRE_POPULATED_CENTRAL_PATRON_TYPE);
 
-    var responseEntity = testRestTemplate.postForEntity(
-      "/inn-reach/d2ir/circ/itemhold/{trackingId}/{centralCode}", new HttpEntity<>(itemHoldDTO, headers), InnReachResponseDTO.class, PRE_POPULATED_TRACKING_ID,
-      PRE_POPULATED_CENTRAL_SERVER_CODE);
-
-    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+    mockMvc.perform(post(
+        "/inn-reach/d2ir/circ/itemhold/{trackingId}/{centralCode}", PRE_POPULATED_TRACKING_ID, PRE_POPULATED_CENTRAL_SERVER_CODE)
+        .content(asJsonString(itemHoldDTO))
+        .headers(defaultHeaders())
+        .headers(headers)
+        .contentType(APPLICATION_JSON))
+      .andExpect(status().isOk());
 
     await().untilAsserted(() -> verify(innReachClient).postInnReachApi(any(), anyString(), anyString(), anyString(), any()));
 
@@ -1140,13 +1197,12 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql",
   })
-  void returnInnReachTransactionWithPatronHold_when_transactionExists() {
-    var responseEntity = testRestTemplate.getForEntity("/inn-reach/transactions/{transactionId}",
-      InnReachTransactionDTO.class, PRE_POPULATED_PATRON_HOLD_TRANSACTION_ID);
-
-    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
-
-    var responseBody = responseEntity.getBody();
+  void returnInnReachTransactionWithPatronHold_when_transactionExists() throws Exception {
+    var mvcResult = mockMvc.perform(get("/inn-reach/transactions/{transactionId}",
+        PRE_POPULATED_PATRON_HOLD_TRANSACTION_ID).headers(defaultHeaders()))
+      .andExpect(status().isOk())
+      .andReturn();
+    var responseBody = fromJson(mvcResult, InnReachTransactionDTO.class);
 
     assertNotNull(responseBody);
     assertNotNull(responseBody.getHold().getTitle());
@@ -1160,13 +1216,12 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql",
   })
-  void returnInnReachTransactionWithItemHold_when_transactionExists() {
-    var responseEntity = testRestTemplate.getForEntity("/inn-reach/transactions/{transactionId}",
-      InnReachTransactionDTO.class, PRE_POPULATED_ITEM_HOLD_TRANSACTION_ID);
-
-    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
-
-    var responseBody = responseEntity.getBody();
+  void returnInnReachTransactionWithItemHold_when_transactionExists() throws Exception {
+    var mvcResult = mockMvc.perform(get("/inn-reach/transactions/{transactionId}",
+        PRE_POPULATED_ITEM_HOLD_TRANSACTION_ID).headers(defaultHeaders()))
+      .andExpect(status().isOk())
+      .andReturn();
+    var responseBody = fromJson(mvcResult, InnReachTransactionDTO.class);
 
     assertNotNull(responseBody);
     assertNotNull(responseBody.getHold().getCentralPatronType());
@@ -1179,13 +1234,12 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql",
   })
-  void returnInnReachTransactionWithLocalHold_when_transactionExists() {
-    var responseEntity = testRestTemplate.getForEntity("/inn-reach/transactions/{transactionId}",
-      InnReachTransactionDTO.class, PRE_POPULATED_LOCAL_HOLD_TRANSACTION_ID);
-
-    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
-
-    var responseBody = responseEntity.getBody();
+  void returnInnReachTransactionWithLocalHold_when_transactionExists() throws Exception {
+    var mvcResult = mockMvc.perform(get("/inn-reach/transactions/{transactionId}",
+        PRE_POPULATED_LOCAL_HOLD_TRANSACTION_ID).headers(defaultHeaders()))
+      .andExpect(status().isOk())
+      .andReturn();
+    var responseBody = fromJson(mvcResult, InnReachTransactionDTO.class);
 
     assertNotNull(responseBody);
     assertNotNull(responseBody.getHold().getPatronHomeLibrary());
@@ -1201,19 +1255,19 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-transaction-item-shipped.sql"
   })
-  void testCheckInPatronHoldItem() {
+  void testCheckInPatronHoldItem() throws Exception {
     var requestDTO = new RequestDTO();
     when(circulationClient.findRequest(any())).thenReturn(Optional.of(requestDTO));
     when(circulationClient.checkInByBarcode(any(CheckInRequestDTO.class)))
       .thenReturn(new CheckInResponseDTO().item(new CheckInResponseDTOItem().barcode(PRE_POPULATED_PATRON_HOLD_ITEM_BARCODE)));
 
-    var responseEntity = testRestTemplate.postForEntity(
-      PATRON_HOLD_CHECK_IN_ENDPOINT, null, PatronHoldCheckInResponseDTO.class,
-      PRE_POPULATED_ITEM_SHIPPED_TRANSACTION_ID, UUID.randomUUID()
-    );
+    var mvcResult = mockMvc.perform(post(
+        PATRON_HOLD_CHECK_IN_ENDPOINT, PRE_POPULATED_ITEM_SHIPPED_TRANSACTION_ID, UUID.randomUUID())
+        .headers(defaultHeaders()))
+      .andExpect(status().isOk())
+      .andReturn();
+    var response = fromJson(mvcResult, PatronHoldCheckInResponseDTO.class);
 
-    var response = responseEntity.getBody();
-    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
     assertNotNull(response);
 
     var transaction = response.getTransaction();
@@ -1234,7 +1288,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-transaction-item-shipped.sql"
   })
-  void testCheckInPatronHoldItem_whenItemIsShippedAndRequestIsCancelled() {
+  void testCheckInPatronHoldItem_whenItemIsShippedAndRequestIsCancelled() throws Exception {
     when(innReachClient.postInnReachApi(any(), anyString(), anyString(), anyString())).thenReturn("test");
 
     when(circulationClient.findRequest(any())).thenReturn(Optional.of(createCancelledRequest()));
@@ -1242,13 +1296,13 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     when(circulationClient.checkInByBarcode(any(CheckInRequestDTO.class)))
       .thenReturn(new CheckInResponseDTO().item(new CheckInResponseDTOItem().barcode(PRE_POPULATED_PATRON_HOLD_ITEM_BARCODE)));
 
-    var responseEntity = testRestTemplate.postForEntity(
-      PATRON_HOLD_CHECK_IN_ENDPOINT, null, PatronHoldCheckInResponseDTO.class,
-      PRE_POPULATED_ITEM_SHIPPED_TRANSACTION_ID, UUID.randomUUID()
-    );
+    var mvcResult = mockMvc.perform(post(
+        PATRON_HOLD_CHECK_IN_ENDPOINT, PRE_POPULATED_ITEM_SHIPPED_TRANSACTION_ID, UUID.randomUUID())
+        .headers(defaultHeaders()))
+      .andExpect(status().isOk())
+      .andReturn();
+    var response = fromJson(mvcResult, PatronHoldCheckInResponseDTO.class);
 
-    var response = responseEntity.getBody();
-    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
     assertNotNull(response);
 
     var transaction = response.getTransaction();
@@ -1269,7 +1323,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
   })
-  void testCheckInPatronHoldUnshippedItem() {
+  void testCheckInPatronHoldUnshippedItem() throws Exception {
     modifyFolioItemBarcode(PRE_POPULATED_PATRON_HOLD_TRANSACTION_ID, null);
 
     when(circulationClient.findRequest(any())).thenReturn(Optional.of(new RequestDTO()));
@@ -1278,13 +1332,13 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     when(inventoryClient.getItemByBarcode(any())).thenReturn(ResultList.empty());
     when(inventoryClient.findItem(any())).thenReturn(Optional.of(createInventoryItemDTO()));
 
-    var responseEntity = testRestTemplate.postForEntity(
-      PATRON_HOLD_CHECK_IN_UNSHIPPED_ENDPOINT, null, PatronHoldCheckInResponseDTO.class,
-      PRE_POPULATED_PATRON_HOLD_TRANSACTION_ID, UUID.randomUUID(), "newbarcode"
-    );
+    var mvcResult = mockMvc.perform(post(
+        PATRON_HOLD_CHECK_IN_UNSHIPPED_ENDPOINT, PRE_POPULATED_PATRON_HOLD_TRANSACTION_ID, UUID.randomUUID(), "newbarcode")
+        .headers(defaultHeaders()))
+      .andExpect(status().isOk())
+      .andReturn();
+    var response = fromJson(mvcResult, PatronHoldCheckInResponseDTO.class);
 
-    var response = responseEntity.getBody();
-    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
     assertNotNull(response);
 
     var transaction = response.getTransaction();
@@ -1304,7 +1358,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
   })
-  void checkInPatronHoldUnshippedItem_barcodeAugmented() {
+  void checkInPatronHoldUnshippedItem_barcodeAugmented() throws Exception {
     modifyFolioItemBarcode(PRE_POPULATED_PATRON_HOLD_TRANSACTION_ID, null);
 
     when(circulationClient.findRequest(any())).thenReturn(Optional.of(new RequestDTO()));
@@ -1313,12 +1367,12 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     when(inventoryClient.getItemByBarcode(any())).thenReturn(ResultList.asSinglePage(new InventoryItemDTO()));
     when(inventoryClient.findItem(any())).thenReturn(Optional.of(createInventoryItemDTO()));
 
-    var responseEntity = testRestTemplate.postForEntity(
-      PATRON_HOLD_CHECK_IN_UNSHIPPED_ENDPOINT, null, PatronHoldCheckInResponseDTO.class,
-      PRE_POPULATED_PATRON_HOLD_TRANSACTION_ID, UUID.randomUUID(), "newbarcode"
-    );
-
-    var response = responseEntity.getBody();
+    var mvcResult = mockMvc.perform(post(
+        PATRON_HOLD_CHECK_IN_UNSHIPPED_ENDPOINT, PRE_POPULATED_PATRON_HOLD_TRANSACTION_ID, UUID.randomUUID(), "newbarcode")
+        .headers(defaultHeaders()))
+      .andExpect(status().isOk())
+      .andReturn();
+    var response = fromJson(mvcResult, PatronHoldCheckInResponseDTO.class);
     assertTrue(response.getBarcodeAugmented());
   }
 
@@ -1327,7 +1381,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
   })
-  void testCheckInPatronHoldUnshippedItem_whenRequestIsCancelled() {
+  void testCheckInPatronHoldUnshippedItem_whenRequestIsCancelled() throws Exception {
     modifyFolioItemBarcode(PRE_POPULATED_PATRON_HOLD_TRANSACTION_ID, null);
 
     when(circulationClient.findRequest(any())).thenReturn(Optional.of(createCancelledRequest()));
@@ -1336,13 +1390,13 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     when(inventoryClient.getItemByBarcode(any())).thenReturn(ResultList.empty());
     when(inventoryClient.findItem(any())).thenReturn(Optional.of(createInventoryItemDTO()));
 
-    var responseEntity = testRestTemplate.postForEntity(
-      PATRON_HOLD_CHECK_IN_UNSHIPPED_ENDPOINT, null, PatronHoldCheckInResponseDTO.class,
-      PRE_POPULATED_PATRON_HOLD_TRANSACTION_ID, UUID.randomUUID(), "newbarcode"
-    );
+    var mvcResult = mockMvc.perform(post(
+        PATRON_HOLD_CHECK_IN_UNSHIPPED_ENDPOINT, PRE_POPULATED_PATRON_HOLD_TRANSACTION_ID, UUID.randomUUID(), "newbarcode")
+        .headers(defaultHeaders()))
+      .andExpect(status().isOk())
+      .andReturn();
+    var response = fromJson(mvcResult, PatronHoldCheckInResponseDTO.class);
 
-    var response = responseEntity.getBody();
-    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
     assertNotNull(response);
 
     var transaction = response.getTransaction();
@@ -1362,7 +1416,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-transaction-item-shipped.sql"
   })
-  void testCheckInPatronHoldItem_withBarcodeAugmented() {
+  void testCheckInPatronHoldItem_withBarcodeAugmented() throws Exception {
     var requestDTO = new RequestDTO();
     when(circulationClient.findRequest(any())).thenReturn(Optional.of(requestDTO));
     modifyFolioItemBarcode(PRE_POPULATED_ITEM_SHIPPED_TRANSACTION_ID, PRE_POPULATED_PATRON_HOLD_ITEM_BARCODE + "1234");
@@ -1370,13 +1424,13 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     when(circulationClient.checkInByBarcode(any(CheckInRequestDTO.class)))
       .thenReturn(new CheckInResponseDTO().item(new CheckInResponseDTOItem().barcode(PRE_POPULATED_PATRON_HOLD_ITEM_BARCODE)));
 
-    var responseEntity = testRestTemplate.postForEntity(
-      PATRON_HOLD_CHECK_IN_ENDPOINT, null, PatronHoldCheckInResponseDTO.class,
-      PRE_POPULATED_ITEM_SHIPPED_TRANSACTION_ID, UUID.randomUUID()
-    );
+    var mvcResult = mockMvc.perform(post(
+        PATRON_HOLD_CHECK_IN_ENDPOINT, PRE_POPULATED_ITEM_SHIPPED_TRANSACTION_ID, UUID.randomUUID())
+        .headers(defaultHeaders()))
+      .andExpect(status().isOk())
+      .andReturn();
+    var response = fromJson(mvcResult, PatronHoldCheckInResponseDTO.class);
 
-    var response = responseEntity.getBody();
-    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
     assertNotNull(response);
 
     var transaction = response.getTransaction();
@@ -1393,13 +1447,11 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
   })
-  void testCheckInPatronHoldItem_invalidTransactionState() {
-    var responseEntity = testRestTemplate.postForEntity(
-      PATRON_HOLD_CHECK_IN_ENDPOINT, null, PatronHoldCheckInResponseDTO.class,
-      PRE_POPULATED_PATRON_HOLD_TRANSACTION_ID, UUID.randomUUID()
-    );
-
-    assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
+  void testCheckInPatronHoldItem_invalidTransactionState() throws Exception {
+    mockMvc.perform(post(
+        PATRON_HOLD_CHECK_IN_ENDPOINT, PRE_POPULATED_PATRON_HOLD_TRANSACTION_ID, UUID.randomUUID())
+        .headers(defaultHeaders()))
+      .andExpect(status().isBadRequest());
   }
 
   @Test
@@ -1407,7 +1459,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
   })
-  void testCheckOutItemHoldItem() {
+  void testCheckOutItemHoldItem() throws Exception {
     var expectedDueDate = Date.from(DUE_DATE.toInstant());
     var checkOutResponse = new LoanDTO()
       .id(FOLIO_CHECKOUT_ID)
@@ -1416,13 +1468,13 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
 
     when(circulationClient.checkOutByBarcode(any(CheckOutRequestDTO.class))).thenReturn(checkOutResponse);
 
-    var responseEntity = testRestTemplate.postForEntity(
-      ITEM_HOLD_CHECK_OUT_ENDPOINT, null, TransactionCheckOutResponseDTO.class,
-      PRE_POPULATED_ITEM_HOLD_ITEM_BARCODE, UUID.randomUUID()
-    );
+    var mvcResult = mockMvc.perform(post(
+        ITEM_HOLD_CHECK_OUT_ENDPOINT, PRE_POPULATED_ITEM_HOLD_ITEM_BARCODE, UUID.randomUUID())
+        .headers(defaultHeaders()))
+      .andExpect(status().isOk())
+      .andReturn();
+    var response = fromJson(mvcResult, TransactionCheckOutResponseDTO.class);
 
-    var response = responseEntity.getBody();
-    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
     assertNotNull(response);
 
     var transaction = response.getTransaction();
@@ -1440,15 +1492,13 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
   })
-  void testCheckOutItemHoldItem_invalidTransactionState() {
+  void testCheckOutItemHoldItem_invalidTransactionState() throws Exception {
     modifyTransactionState(PRE_POPULATED_ITEM_HOLD_TRANSACTION_ID, CANCEL_REQUEST);
 
-    var responseEntity = testRestTemplate.postForEntity(
-      ITEM_HOLD_CHECK_OUT_ENDPOINT, null, TransactionCheckOutResponseDTO.class,
-      PRE_POPULATED_ITEM_HOLD_ITEM_BARCODE, UUID.randomUUID()
-    );
-
-    assertEquals(HttpStatus.NOT_FOUND, responseEntity.getStatusCode());
+    mockMvc.perform(post(
+        ITEM_HOLD_CHECK_OUT_ENDPOINT, PRE_POPULATED_ITEM_HOLD_ITEM_BARCODE, UUID.randomUUID())
+        .headers(defaultHeaders()))
+      .andExpect(status().isNotFound());
   }
 
   @Test
@@ -1456,7 +1506,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql",
   })
-  void testCheckOutItemHoldItem_multipleTransactions() {
+  void testCheckOutItemHoldItem_multipleTransactions() throws Exception {
     var transactionWithTheSameItem = createInnReachTransaction(InnReachTransaction.TransactionType.ITEM);
     transactionWithTheSameItem.setCentralServerCode(PRE_POPULATED_CENTRAL_SERVER_CODE);
     transactionWithTheSameItem.getHold().setFolioItemBarcode(PRE_POPULATED_ITEM_HOLD_ITEM_BARCODE);
@@ -1472,13 +1522,13 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
 
     when(circulationClient.checkOutByBarcode(any(CheckOutRequestDTO.class))).thenReturn(checkOutResponse);
 
-    var responseEntity = testRestTemplate.postForEntity(
-      ITEM_HOLD_CHECK_OUT_ENDPOINT, null, TransactionCheckOutResponseDTO.class,
-      PRE_POPULATED_ITEM_HOLD_ITEM_BARCODE, UUID.randomUUID()
-    );
+    var mvcResult = mockMvc.perform(post(
+        ITEM_HOLD_CHECK_OUT_ENDPOINT, PRE_POPULATED_ITEM_HOLD_ITEM_BARCODE, UUID.randomUUID())
+        .headers(defaultHeaders()))
+      .andExpect(status().isOk())
+      .andReturn();
+    var response = fromJson(mvcResult, TransactionCheckOutResponseDTO.class);
 
-    var response = responseEntity.getBody();
-    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
     assertNotNull(response);
 
     var transaction = response.getTransaction();
@@ -1495,20 +1545,20 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql",
   })
-  void testCheckOutPatronHoldItem_linkExistingLoan(TransactionState state) {
+  void testCheckOutPatronHoldItem_linkExistingLoan(TransactionState state) throws Exception {
     var checkOutResponse = createOpenLoan();
 
     modifyTransactionState(PRE_POPULATED_PATRON_HOLD_TRANSACTION_ID, state);
 
     when(circulationClient.queryLoansByItemId(any())).thenReturn(ResultList.asSinglePage(checkOutResponse));
 
-    var responseEntity = testRestTemplate.postForEntity(
-      PATRON_HOLD_CHECK_OUT_ENDPOINT, null, TransactionCheckOutResponseDTO.class,
-      PRE_POPULATED_PATRON_HOLD_TRANSACTION_ID, UUID.randomUUID()
-    );
+    var mvcResult = mockMvc.perform(post(
+        PATRON_HOLD_CHECK_OUT_ENDPOINT, PRE_POPULATED_PATRON_HOLD_TRANSACTION_ID, UUID.randomUUID())
+        .headers(defaultHeaders()))
+      .andExpect(status().isOk())
+      .andReturn();
+    var response = fromJson(mvcResult, TransactionCheckOutResponseDTO.class);
 
-    var response = responseEntity.getBody();
-    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
     assertNotNull(response);
 
     var updatedTransaction = response.getTransaction();
@@ -1528,7 +1578,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql",
   })
-  void testCheckOutLocalHoldItem_linkExistingLoan(TransactionState state) {
+  void testCheckOutLocalHoldItem_linkExistingLoan(TransactionState state) throws Exception {
     var checkOutResponse = createOpenLoan();
 
     modifyTransactionState(PRE_POPULATED_LOCAL_HOLD_TRANSACTION_ID, state);
@@ -1536,15 +1586,15 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     when(circulationClient.queryLoansByItemId(any())).thenReturn(ResultList.asSinglePage(checkOutResponse));
     when(inventoryClient.findItem(any())).thenReturn(Optional.of(createInventoryItemDTO()));
 
-    var responseEntity = testRestTemplate.postForEntity(
-      LOCAL_HOLD_CHECK_OUT_ENDPOINT, null, TransactionCheckOutResponseDTO.class,
-      PRE_POPULATED_LOCAL_HOLD_TRANSACTION_ID, UUID.randomUUID()
-    );
+    var mvcResult = mockMvc.perform(post(
+        LOCAL_HOLD_CHECK_OUT_ENDPOINT, PRE_POPULATED_LOCAL_HOLD_TRANSACTION_ID, UUID.randomUUID())
+        .headers(defaultHeaders()))
+      .andExpect(status().isOk())
+      .andReturn();
 
     verify(actionNotifier).reportCheckOut(any(), any(), any());
 
-    var response = responseEntity.getBody();
-    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+    var response = fromJson(mvcResult, TransactionCheckOutResponseDTO.class);
     assertNotNull(response);
     assertNotNull(response.getFolioCheckOut());
 
@@ -1560,7 +1610,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql",
   })
-  void testCheckOutItem_createNewLoan(String checkOutEndpointPath, UUID transactionId, TransactionState state) {
+  void testCheckOutItem_createNewLoan(String checkOutEndpointPath, UUID transactionId, TransactionState state) throws Exception {
     var checkOutResponse = createOpenLoan();
 
     modifyTransactionState(transactionId, state);
@@ -1568,13 +1618,13 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     when(circulationClient.queryLoansByItemId(any())).thenReturn(ResultList.empty());
     when(circulationClient.checkOutByBarcode(any(CheckOutRequestDTO.class))).thenReturn(checkOutResponse);
 
-    var responseEntity = testRestTemplate.postForEntity(
-      checkOutEndpointPath, null, TransactionCheckOutResponseDTO.class,
-      transactionId, UUID.randomUUID()
-    );
+    var mvcResult = mockMvc.perform(post(
+        checkOutEndpointPath, transactionId, UUID.randomUUID())
+        .headers(defaultHeaders()))
+      .andExpect(status().isOk())
+      .andReturn();
+    var response = fromJson(mvcResult, TransactionCheckOutResponseDTO.class);
 
-    var response = responseEntity.getBody();
-    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
     assertNotNull(response);
 
     verify(circulationClient).checkOutByBarcode(any());
@@ -1594,19 +1644,17 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql",
   })
-  void testReturnPatronHoldItem_whenLoanIsOpen(TransactionState state) {
+  void testReturnPatronHoldItem_whenLoanIsOpen(TransactionState state) throws Exception {
     modifyTransactionState(PRE_POPULATED_PATRON_HOLD_TRANSACTION_ID, state);
 
     var loan = new LoanDTO().id(FOLIO_CHECKOUT_ID).status(new LoanStatus().name("Open"));
 
     when(circulationClient.findLoan(any())).thenReturn(Optional.ofNullable(loan));
 
-    var responseEntity = testRestTemplate.postForEntity(
-      PATRON_HOLD_RETURN_ITEM_ENDPOINT, null, Void.class,
-      PRE_POPULATED_PATRON_HOLD_TRANSACTION_ID, UUID.randomUUID()
-    );
-
-    assertEquals(HttpStatus.NO_CONTENT, responseEntity.getStatusCode());
+    mockMvc.perform(post(
+        PATRON_HOLD_RETURN_ITEM_ENDPOINT, PRE_POPULATED_PATRON_HOLD_TRANSACTION_ID, UUID.randomUUID())
+        .headers(defaultHeaders()))
+      .andExpect(status().isNoContent());
 
     verify(circulationClient).checkInByBarcode(any());
     verifyNoInteractions(requestService);
@@ -1618,19 +1666,17 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql",
   })
-  void testReturnPatronHoldItem_whenLoanIsClosed(TransactionState state) {
+  void testReturnPatronHoldItem_whenLoanIsClosed(TransactionState state) throws Exception {
     modifyTransactionState(PRE_POPULATED_PATRON_HOLD_TRANSACTION_ID, state);
 
     var loan = new LoanDTO().id(FOLIO_CHECKOUT_ID).status(new LoanStatus().name("Closed"));
 
     when(circulationClient.findLoan(any())).thenReturn(Optional.ofNullable(loan));
 
-    var responseEntity = testRestTemplate.postForEntity(
-      PATRON_HOLD_RETURN_ITEM_ENDPOINT, null, Void.class,
-      PRE_POPULATED_PATRON_HOLD_TRANSACTION_ID, UUID.randomUUID()
-    );
-
-    assertEquals(HttpStatus.NO_CONTENT, responseEntity.getStatusCode());
+    mockMvc.perform(post(
+        PATRON_HOLD_RETURN_ITEM_ENDPOINT, PRE_POPULATED_PATRON_HOLD_TRANSACTION_ID, UUID.randomUUID())
+        .headers(defaultHeaders()))
+      .andExpect(status().isNoContent());
 
     verify(actionNotifier).reportItemInTransit(any());
     verify(circulationClient, never()).checkInByBarcode(any());
@@ -1643,7 +1689,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql",
   })
-  void testReturnPatronHoldItem_whenNoLoan_and_requestIsClosed(TransactionState state) {
+  void testReturnPatronHoldItem_whenNoLoan_and_requestIsClosed(TransactionState state) throws Exception {
     var request = RequestDTO.builder()
       .id(PRE_POPULATED_PATRON_HOLD_REQUEST_ID)
       .status(CLOSED_CANCELLED)
@@ -1656,12 +1702,10 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
 
     when(circulationClient.findRequest(any())).thenReturn(Optional.ofNullable(request));
 
-    var responseEntity = testRestTemplate.postForEntity(
-      PATRON_HOLD_RETURN_ITEM_ENDPOINT, null, Void.class,
-      PRE_POPULATED_PATRON_HOLD_TRANSACTION_ID, UUID.randomUUID()
-    );
-
-    assertEquals(HttpStatus.NO_CONTENT, responseEntity.getStatusCode());
+    mockMvc.perform(post(
+        PATRON_HOLD_RETURN_ITEM_ENDPOINT, PRE_POPULATED_PATRON_HOLD_TRANSACTION_ID, UUID.randomUUID())
+        .headers(defaultHeaders()))
+      .andExpect(status().isNoContent());
 
     verify(circulationClient).checkInByBarcode(any());
     verify(requestService).findRequest(PRE_POPULATED_PATRON_HOLD_REQUEST_ID);
@@ -1672,15 +1716,14 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction-for-search.sql"
   })
-  void returnTransactionByBarcodeAndState_when_transactionsFound() {
-    var responseEntity = testRestTemplate.getForEntity(
-      "/inn-reach/transactions?itemBarcode={itemBarcode}&state={state1}&state={state2}", InnReachTransactionsDTO.class,
-      "ABC-abc-1234", "PATRON_HOLD", "ITEM_HOLD"
-    );
-
-    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
-
-    var body = responseEntity.getBody();
+  void returnTransactionByBarcodeAndState_when_transactionsFound() throws Exception {
+    var mvcResult = mockMvc.perform(get(
+        "/inn-reach/transactions?itemBarcode={itemBarcode}&state={state1}&state={state2}",
+        "ABC-abc-1234", "PATRON_HOLD", "ITEM_HOLD")
+        .headers(defaultHeaders()))
+      .andExpect(status().isOk())
+      .andReturn();
+    var body = fromJson(mvcResult, InnReachTransactionsDTO.class);
 
     assertNotNull(body);
     assertEquals(2, body.getTotalRecords());
@@ -1710,15 +1753,14 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction-for-search.sql"
   })
-  void returnEmptyListByBarcodeAndState_when_transactionsNotFound() {
-    var responseEntity = testRestTemplate.getForEntity(
-      "/inn-reach/transactions?itemBarcode={itemBarcode}&state={state1}&state={state2}", InnReachTransactionsDTO.class,
-      "ABC-abc-4321", "PATRON_HOLD", "ITEM_HOLD"
-    );
-
-    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
-
-    var body = responseEntity.getBody();
+  void returnEmptyListByBarcodeAndState_when_transactionsNotFound() throws Exception {
+    var mvcResult = mockMvc.perform(get(
+        "/inn-reach/transactions?itemBarcode={itemBarcode}&state={state1}&state={state2}",
+        "ABC-abc-4321", "PATRON_HOLD", "ITEM_HOLD")
+        .headers(defaultHeaders()))
+      .andExpect(status().isOk())
+      .andReturn();
+    var body = fromJson(mvcResult, InnReachTransactionsDTO.class);
 
     assertNotNull(body);
 
@@ -1736,7 +1778,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
   })
-  void updateTransactionWhenImmutableFieldsNotChanged(String transactionId) {
+  void updateTransactionWhenImmutableFieldsNotChanged(String transactionId) throws Exception {
     var transaction = repository.fetchOneById(UUID.fromString(transactionId)).get();
     var hold = transaction.getHold();
 
@@ -1746,15 +1788,15 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
 
     var transactionDTO = innReachTransactionMapper.toDTO(transaction);
 
-    var responseEntity = testRestTemplate.exchange(
-      UPDATE_TRANSACTION_ENDPOINT, HttpMethod.PUT,
-      new HttpEntity<>(transactionDTO, headers), InnReachTransactionDTO.class,
-      UUID.fromString(transactionId)
-    );
+    mockMvc.perform(put(UPDATE_TRANSACTION_ENDPOINT, UUID.fromString(transactionId))
+        .content(asJsonString(transactionDTO))
+        .headers(defaultHeaders())
+        .headers(headers)
+        .contentType(APPLICATION_JSON))
+      .andExpect(status().isNoContent());
 
     var updatedTransaction = repository.fetchOneById(UUID.fromString(transactionId)).get();
 
-    assertEquals(HttpStatus.NO_CONTENT, responseEntity.getStatusCode());
     assertEquals(FINAL_CHECKIN, updatedTransaction.getState());
     assertEquals(transaction.getTrackingId(), updatedTransaction.getTrackingId());
     assertEquals(transaction.getCentralServerCode(), updatedTransaction.getCentralServerCode());
@@ -1766,7 +1808,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
   })
-  void updateTransactionWhenImmutableFieldsChanged() {
+  void updateTransactionWhenImmutableFieldsChanged() throws Exception {
     var oldTransaction = repository.fetchOneById(PRE_POPULATED_ITEM_HOLD_TRANSACTION_ID).get();
     var transaction = repository.fetchOneById(PRE_POPULATED_ITEM_HOLD_TRANSACTION_ID).get();
     var hold = transaction.getHold();
@@ -1785,15 +1827,15 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
 
     var transactionDTO = innReachTransactionMapper.toDTO(transaction);
 
-    var responseEntity = testRestTemplate.exchange(
-      UPDATE_TRANSACTION_ENDPOINT, HttpMethod.PUT,
-      new HttpEntity<>(transactionDTO, headers), InnReachTransactionDTO.class,
-      PRE_POPULATED_ITEM_HOLD_TRANSACTION_ID
-    );
+    mockMvc.perform(put(UPDATE_TRANSACTION_ENDPOINT, PRE_POPULATED_ITEM_HOLD_TRANSACTION_ID)
+        .content(asJsonString(transactionDTO))
+        .headers(defaultHeaders())
+        .headers(headers)
+        .contentType(APPLICATION_JSON))
+      .andExpect(status().isNoContent());
 
     var updatedTransaction = repository.fetchOneById(PRE_POPULATED_ITEM_HOLD_TRANSACTION_ID).get();
 
-    assertEquals(HttpStatus.NO_CONTENT, responseEntity.getStatusCode());
     assertEquals(oldTransaction.getTrackingId(), updatedTransaction.getTrackingId());
     assertEquals(oldTransaction.getCentralServerCode(), updatedTransaction.getCentralServerCode());
     assertEquals(NEW_ITEM_AND_AGENCY_CODE, updatedTransaction.getHold().getItemAgencyCode());
@@ -1809,18 +1851,20 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql",
   })
-  void cancelPatronHold_when_ItemShipped_and_RequestIsOpen(RequestDTO.RequestStatus status) {
+  void cancelPatronHold_when_ItemShipped_and_RequestIsOpen(RequestDTO.RequestStatus status) throws Exception {
     mockFindRequest(PRE_POPULATED_PATRON_HOLD_REQUEST_ID, status);
 
     modifyTransactionState(PRE_POPULATED_PATRON_HOLD_TRANSACTION_ID, ITEM_SHIPPED);
     var cancelPatronHold = createCancelTransactionHold();
 
-    var responseEntity = testRestTemplate.postForEntity(
-      PATRON_HOLD_CANCEL_ENDPOINT, cancelPatronHold, InnReachTransactionDTO.class,
-      PRE_POPULATED_PATRON_HOLD_TRANSACTION_ID);
-
-    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
-    var updatedTransaction = responseEntity.getBody();
+    var mvcResult = mockMvc.perform(post(
+        PATRON_HOLD_CANCEL_ENDPOINT, PRE_POPULATED_PATRON_HOLD_TRANSACTION_ID)
+        .content(asJsonString(cancelPatronHold))
+        .headers(defaultHeaders())
+        .contentType(APPLICATION_JSON))
+      .andExpect(status().isOk())
+      .andReturn();
+    var updatedTransaction = fromJson(mvcResult, InnReachTransactionDTO.class);
 
     assertNotNull(updatedTransaction);
     assertEquals(TransactionStateEnum.ITEM_SHIPPED, updatedTransaction.getState());
@@ -1843,18 +1887,20 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql",
   })
-  void cancelPatronHold_when_ItemIsNotShipped_and_RequestIsOpen(RequestDTO.RequestStatus status) {
+  void cancelPatronHold_when_ItemIsNotShipped_and_RequestIsOpen(RequestDTO.RequestStatus status) throws Exception {
     mockFindRequest(PRE_POPULATED_PATRON_HOLD_REQUEST_ID, status);
 
     modifyTransactionState(PRE_POPULATED_PATRON_HOLD_TRANSACTION_ID, TransactionState.PATRON_HOLD);
     var cancelPatronHold = createCancelTransactionHold();
 
-    var responseEntity = testRestTemplate.postForEntity(
-      PATRON_HOLD_CANCEL_ENDPOINT, cancelPatronHold, InnReachTransactionDTO.class,
-      PRE_POPULATED_PATRON_HOLD_TRANSACTION_ID);
-
-    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
-    var updatedTransaction = responseEntity.getBody();
+    var mvcResult = mockMvc.perform(post(
+        PATRON_HOLD_CANCEL_ENDPOINT, PRE_POPULATED_PATRON_HOLD_TRANSACTION_ID)
+        .content(asJsonString(cancelPatronHold))
+        .headers(defaultHeaders())
+        .contentType(APPLICATION_JSON))
+      .andExpect(status().isOk())
+      .andReturn();
+    var updatedTransaction = fromJson(mvcResult, InnReachTransactionDTO.class);
 
     assertNotNull(updatedTransaction);
     assertEquals(TransactionStateEnum.BORROWING_SITE_CANCEL, updatedTransaction.getState());
@@ -1879,18 +1925,20 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql",
   })
-  void cancelPatronHold_when_TransactionIsOnHoldOrTransfer_and_RequestIsClosed(TransactionState state) {
+  void cancelPatronHold_when_TransactionIsOnHoldOrTransfer_and_RequestIsClosed(TransactionState state) throws Exception {
     mockFindRequest(PRE_POPULATED_PATRON_HOLD_REQUEST_ID, CLOSED_CANCELLED);
 
     modifyTransactionState(PRE_POPULATED_PATRON_HOLD_TRANSACTION_ID, state);
     var cancelPatronHold = createCancelTransactionHold();
 
-    var responseEntity = testRestTemplate.postForEntity(
-      PATRON_HOLD_CANCEL_ENDPOINT, cancelPatronHold, InnReachTransactionDTO.class,
-      PRE_POPULATED_PATRON_HOLD_TRANSACTION_ID);
-
-    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
-    var updatedTransaction = responseEntity.getBody();
+    var mvcResult = mockMvc.perform(post(
+        PATRON_HOLD_CANCEL_ENDPOINT, PRE_POPULATED_PATRON_HOLD_TRANSACTION_ID)
+        .content(asJsonString(cancelPatronHold))
+        .headers(defaultHeaders())
+        .contentType(APPLICATION_JSON))
+      .andExpect(status().isOk())
+      .andReturn();
+    var updatedTransaction = fromJson(mvcResult, InnReachTransactionDTO.class);
 
     assertNotNull(updatedTransaction);
     assertEquals(TransactionStateEnum.BORROWING_SITE_CANCEL, updatedTransaction.getState());
@@ -1910,7 +1958,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql",
   })
-  void cancelPatronHold_when_TransactionIsOnHoldOrTransfer_and_RequestIsClosed_withNoVirtualRecord(TransactionState state) {
+  void cancelPatronHold_when_TransactionIsOnHoldOrTransfer_and_RequestIsClosed_withNoVirtualRecord(TransactionState state) throws Exception {
     mockFindRequest(PRE_POPULATED_PATRON_HOLD_REQUEST_ID, CLOSED_CANCELLED);
 
     modifyTransaction(PRE_POPULATED_PATRON_HOLD_TRANSACTION_ID, t -> {
@@ -1922,12 +1970,14 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     });
     var cancelPatronHold = createCancelTransactionHold();
 
-    var responseEntity = testRestTemplate.postForEntity(
-      PATRON_HOLD_CANCEL_ENDPOINT, cancelPatronHold, InnReachTransactionDTO.class,
-      PRE_POPULATED_PATRON_HOLD_TRANSACTION_ID);
-
-    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
-    var updatedTransaction = responseEntity.getBody();
+    var mvcResult = mockMvc.perform(post(
+        PATRON_HOLD_CANCEL_ENDPOINT, PRE_POPULATED_PATRON_HOLD_TRANSACTION_ID)
+        .content(asJsonString(cancelPatronHold))
+        .headers(defaultHeaders())
+        .contentType(APPLICATION_JSON))
+      .andExpect(status().isOk())
+      .andReturn();
+    var updatedTransaction = fromJson(mvcResult, InnReachTransactionDTO.class);
 
     assertNotNull(updatedTransaction);
     assertEquals(TransactionStateEnum.BORROWING_SITE_CANCEL, updatedTransaction.getState());
@@ -1952,19 +2002,21 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql",
   })
-  void cancelPatronHold_when_ItemIsNotAwaitingPickup_and_RequestIsClosed(TransactionState state) {
+  void cancelPatronHold_when_ItemIsNotAwaitingPickup_and_RequestIsClosed(TransactionState state) throws Exception {
     mockFindRequest(PRE_POPULATED_PATRON_HOLD_REQUEST_ID, CLOSED_CANCELLED);
     mockFindItem(IN_PROCESS);
 
     modifyTransactionState(PRE_POPULATED_PATRON_HOLD_TRANSACTION_ID, state);
 
     var cancelPatronHold = createCancelTransactionHold();
-    var responseEntity = testRestTemplate.postForEntity(
-      PATRON_HOLD_CANCEL_ENDPOINT, cancelPatronHold, InnReachTransactionDTO.class,
-      PRE_POPULATED_PATRON_HOLD_TRANSACTION_ID);
-
-    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
-    var updatedTransaction = responseEntity.getBody();
+    var mvcResult = mockMvc.perform(post(
+        PATRON_HOLD_CANCEL_ENDPOINT, PRE_POPULATED_PATRON_HOLD_TRANSACTION_ID)
+        .content(asJsonString(cancelPatronHold))
+        .headers(defaultHeaders())
+        .contentType(APPLICATION_JSON))
+      .andExpect(status().isOk())
+      .andReturn();
+    var updatedTransaction = fromJson(mvcResult, InnReachTransactionDTO.class);
 
     assertNotNull(updatedTransaction);
     assertEquals(TransactionStateEnum.RETURN_UNCIRCULATED, updatedTransaction.getState());
@@ -1979,18 +2031,20 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql",
   })
-  void cancelLocalHold_openRequest() {
+  void cancelLocalHold_openRequest() throws Exception {
     var cancelTransaction = createCancelTransactionHold();
 
     when(inventoryClient.findInstance(any())).thenReturn(Optional.of(createInventoryInstance()));
     mockFindRequest(PRE_POPULATED_LOCAL_HOLD_REQUEST_ID, OPEN_AWAITING_DELIVERY);
 
-    var responseEntity = testRestTemplate.postForEntity(
-      LOCAL_HOLD_CANCEL_ENDPOINT, cancelTransaction, InnReachTransactionDTO.class,
-      PRE_POPULATED_LOCAL_HOLD_TRANSACTION_ID);
-
-    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
-    var updatedTransaction = responseEntity.getBody();
+    var mvcResult = mockMvc.perform(post(
+        LOCAL_HOLD_CANCEL_ENDPOINT, PRE_POPULATED_LOCAL_HOLD_TRANSACTION_ID)
+        .content(asJsonString(cancelTransaction))
+        .headers(defaultHeaders())
+        .contentType(APPLICATION_JSON))
+      .andExpect(status().isOk())
+      .andReturn();
+    var updatedTransaction = fromJson(mvcResult, InnReachTransactionDTO.class);
 
     assertNotNull(updatedTransaction);
     assertEquals(TransactionStateEnum.CANCEL_REQUEST, updatedTransaction.getState());
@@ -2013,18 +2067,20 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql",
   })
-  void cancelLocalHold_closedRequest() {
+  void cancelLocalHold_closedRequest() throws Exception {
     var cancelTransaction = createCancelTransactionHold();
 
     when(inventoryClient.findInstance(any())).thenReturn(Optional.of(createInventoryInstance()));
     mockFindRequest(PRE_POPULATED_LOCAL_HOLD_REQUEST_ID, CLOSED_CANCELLED);
 
-    var responseEntity = testRestTemplate.postForEntity(
-      LOCAL_HOLD_CANCEL_ENDPOINT, cancelTransaction, InnReachTransactionDTO.class,
-      PRE_POPULATED_LOCAL_HOLD_TRANSACTION_ID);
-
-    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
-    var updatedTransaction = responseEntity.getBody();
+    var mvcResult = mockMvc.perform(post(
+        LOCAL_HOLD_CANCEL_ENDPOINT, PRE_POPULATED_LOCAL_HOLD_TRANSACTION_ID)
+        .content(asJsonString(cancelTransaction))
+        .headers(defaultHeaders())
+        .contentType(APPLICATION_JSON))
+      .andExpect(status().isOk())
+      .andReturn();
+    var updatedTransaction = fromJson(mvcResult, InnReachTransactionDTO.class);
 
     assertNotNull(updatedTransaction);
     assertEquals(TransactionStateEnum.CANCEL_REQUEST, updatedTransaction.getState());
@@ -2039,7 +2095,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql",
   })
-  void transferItemHoldItem_moveRequest() {
+  void transferItemHoldItem_moveRequest() throws Exception {
     var item = createInventoryItemDTO();
     item.setStatus(AVAILABLE);
     var itemId = item.getId();
@@ -2050,12 +2106,10 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     when(inventoryClient.findItem(any())).thenReturn(Optional.of(item));
     when(circulationClient.findRequest(any())).thenReturn(Optional.of(request));
 
-    var responseEntity = testRestTemplate.postForEntity(
-      ITEM_HOLD_TRANSFER_ITEM_ENDPOINT, null, Void.class,
-      PRE_POPULATED_ITEM_HOLD_TRANSACTION_ID, itemId
-    );
-
-    assertEquals(HttpStatus.NO_CONTENT, responseEntity.getStatusCode());
+    mockMvc.perform(post(
+        ITEM_HOLD_TRANSFER_ITEM_ENDPOINT, PRE_POPULATED_ITEM_HOLD_TRANSACTION_ID, itemId)
+        .headers(defaultHeaders()))
+      .andExpect(status().isNoContent());
 
     verify(circulationClient).moveRequest(eq(PRE_POPULATED_ITEM_HOLD_REQUEST_ID), any());
   }
@@ -2066,7 +2120,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql",
   })
-  void transferItemHoldItem_linkMovedRequest(InnReachTransaction.TransactionState state) {
+  void transferItemHoldItem_linkMovedRequest(InnReachTransaction.TransactionState state) throws Exception {
     var item = createInventoryItemDTO();
     item.setStatus(AVAILABLE);
     var itemId = item.getId();
@@ -2080,12 +2134,10 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     when(inventoryClient.findItem(any())).thenReturn(Optional.of(item));
     when(circulationClient.findRequest(any())).thenReturn(Optional.of(request));
 
-    var responseEntity = testRestTemplate.postForEntity(
-      ITEM_HOLD_TRANSFER_ITEM_ENDPOINT, null, Void.class,
-      PRE_POPULATED_ITEM_HOLD_TRANSACTION_ID, itemId
-    );
-
-    assertEquals(HttpStatus.NO_CONTENT, responseEntity.getStatusCode());
+    mockMvc.perform(post(
+        ITEM_HOLD_TRANSFER_ITEM_ENDPOINT, PRE_POPULATED_ITEM_HOLD_TRANSACTION_ID, itemId)
+        .headers(defaultHeaders()))
+      .andExpect(status().isNoContent());
 
     verify(actionNotifier).reportTransferRequest(any(), eq(item.getHrid()));
     verify(circulationClient, never()).moveRequest(any(), any());
@@ -2105,7 +2157,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql",
   })
-  void transferItemHoldItem_moveRequestWithNotAvailableItem() {
+  void transferItemHoldItem_moveRequestWithNotAvailableItem() throws Exception {
     var item = createInventoryItemDTO();
     item.setStatus(UNAVAILABLE);
 
@@ -2116,12 +2168,10 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     when(circulationClient.findRequest(any())).thenReturn(Optional.of(request));
     when(circulationClient.queryRequestsByItemId(any())).thenReturn(ResultList.asSinglePage(request));
 
-    var responseEntity = testRestTemplate.postForEntity(
-      ITEM_HOLD_TRANSFER_ITEM_ENDPOINT, null, Void.class,
-      PRE_POPULATED_ITEM_HOLD_TRANSACTION_ID, UUID.randomUUID()
-    );
-
-    assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
+    mockMvc.perform(post(
+        ITEM_HOLD_TRANSFER_ITEM_ENDPOINT, PRE_POPULATED_ITEM_HOLD_TRANSACTION_ID, UUID.randomUUID())
+        .headers(defaultHeaders()))
+      .andExpect(status().isBadRequest());
 
     verify(circulationClient, never()).moveRequest(any(), any());
   }
@@ -2132,17 +2182,18 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql",
   })
-  void cancelItemHold_if_stateIsItemHoldOrTransfer(InnReachTransaction.TransactionState state) {
+  void cancelItemHold_if_stateIsItemHoldOrTransfer(InnReachTransaction.TransactionState state) throws Exception {
     mockFindRequest(PRE_POPULATED_ITEM_HOLD_REQUEST_ID, OPEN_NOT_YET_FILLED);
 
     modifyTransactionState(PRE_POPULATED_ITEM_HOLD_TRANSACTION_ID, state);
 
     var cancelHold = createCancelTransactionHold();
-    var responseEntity = testRestTemplate.postForEntity(
-      ITEM_HOLD_CANCEL_ENDPOINT, cancelHold, InnReachTransactionDTO.class,
-      PRE_POPULATED_ITEM_HOLD_TRANSACTION_ID);
-
-    assertEquals(HttpStatus.NO_CONTENT, responseEntity.getStatusCode());
+    mockMvc.perform(post(
+        ITEM_HOLD_CANCEL_ENDPOINT, PRE_POPULATED_ITEM_HOLD_TRANSACTION_ID)
+        .content(asJsonString(cancelHold))
+        .headers(defaultHeaders())
+        .contentType(APPLICATION_JSON))
+      .andExpect(status().isNoContent());
 
     var cancelRequestCaptor = ArgumentCaptor.forClass(RequestDTO.class);
     verify(circulationClient).updateRequest(eq(PRE_POPULATED_ITEM_HOLD_REQUEST_ID), cancelRequestCaptor.capture());
@@ -2158,16 +2209,17 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql",
   })
-  void cancelItemHoldNotPerformed_if_requestIsNotFound() {
+  void cancelItemHoldNotPerformed_if_requestIsNotFound() throws Exception {
     when(circulationClient.findRequest(PRE_POPULATED_ITEM_HOLD_REQUEST_ID))
       .thenReturn(Optional.empty());
 
     var cancelHold = createCancelTransactionHold();
-    var responseEntity = testRestTemplate.postForEntity(
-      ITEM_HOLD_CANCEL_ENDPOINT, cancelHold, InnReachTransactionDTO.class,
-      PRE_POPULATED_ITEM_HOLD_TRANSACTION_ID);
-
-    assertEquals(HttpStatus.NO_CONTENT, responseEntity.getStatusCode());
+    mockMvc.perform(post(
+        ITEM_HOLD_CANCEL_ENDPOINT, PRE_POPULATED_ITEM_HOLD_TRANSACTION_ID)
+        .content(asJsonString(cancelHold))
+        .headers(defaultHeaders())
+        .contentType(APPLICATION_JSON))
+      .andExpect(status().isNoContent());
 
     verify(circulationClient, never()).updateRequest(eq(PRE_POPULATED_ITEM_HOLD_REQUEST_ID), any());
   }
@@ -2180,18 +2232,21 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql",
   })
-  void returnHttp400_when_CancelItemHold_if_StateIsNotItemHoldAndTransfer(TransactionState state) {
+  void returnHttp400_when_CancelItemHold_if_StateIsNotItemHoldAndTransfer(TransactionState state) throws Exception {
     modifyTransactionState(PRE_POPULATED_ITEM_HOLD_TRANSACTION_ID, state);
 
     var cancelHold = createCancelTransactionHold();
-    var responseEntity = testRestTemplate.postForEntity(
-      ITEM_HOLD_CANCEL_ENDPOINT, cancelHold, Error.class,
-      PRE_POPULATED_ITEM_HOLD_TRANSACTION_ID);
+    var mvcResult = mockMvc.perform(post(
+        ITEM_HOLD_CANCEL_ENDPOINT, PRE_POPULATED_ITEM_HOLD_TRANSACTION_ID)
+        .content(asJsonString(cancelHold))
+        .headers(defaultHeaders())
+        .contentType(APPLICATION_JSON))
+      .andExpect(status().isBadRequest())
+      .andReturn();
+    var response = fromJson(mvcResult, Error.class);
 
-    assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
-
-    assertNotNull(responseEntity.getBody());
-    assertTrue(responseEntity.getBody().getMessage().contains("Unexpected transaction state"));
+    assertNotNull(response);
+    assertTrue(response.getMessage().contains("Unexpected transaction state"));
   }
 
   @ParameterizedTest
@@ -2202,7 +2257,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql",
   })
-  void testFinalCheckInItemHold_invalidStatus(InnReachTransaction.TransactionState state) {
+  void testFinalCheckInItemHold_invalidStatus(InnReachTransaction.TransactionState state) throws Exception {
     var loanStatus = new LoanStatus()
       .name("closed");
     var loan = new LoanDTO()
@@ -2212,14 +2267,15 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
 
     modifyTransactionState(PRE_POPULATED_ITEM_HOLD_TRANSACTION_ID, state);
 
-    var responseEntity = testRestTemplate.postForEntity(
-      ITEM_HOLD_FINAL_CHECK_IN_ENDPOINT, null, Error.class,
-      PRE_POPULATED_ITEM_HOLD_TRANSACTION_ID, UUID.randomUUID());
+    var mvcResult = mockMvc.perform(post(
+        ITEM_HOLD_FINAL_CHECK_IN_ENDPOINT, PRE_POPULATED_ITEM_HOLD_TRANSACTION_ID, UUID.randomUUID())
+        .headers(defaultHeaders()))
+      .andExpect(status().isBadRequest())
+      .andReturn();
+    var response = fromJson(mvcResult, Error.class);
 
-    assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
-
-    assertNotNull(responseEntity.getBody());
-    assertTrue(responseEntity.getBody().getMessage().contains("Unexpected transaction state"));
+    assertNotNull(response);
+    assertTrue(response.getMessage().contains("Unexpected transaction state"));
   }
 
   @ParameterizedTest
@@ -2229,7 +2285,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql",
   })
-  void testItemHoldFinalCheckInWhenLoanIsClosed(TransactionState state) {
+  void testItemHoldFinalCheckInWhenLoanIsClosed(TransactionState state) throws Exception {
     var loanStatus = new LoanStatus()
       .name("closed");
     var loan = new LoanDTO()
@@ -2240,12 +2296,10 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
 
     when(circulationClient.findLoan(any())).thenReturn(Optional.ofNullable(loan));
 
-    var responseEntity = testRestTemplate.postForEntity(
-      ITEM_HOLD_FINAL_CHECK_IN_ENDPOINT, null, void.class,
-      PRE_POPULATED_ITEM_HOLD_TRANSACTION_ID, UUID.randomUUID()
-    );
-
-    assertEquals(HttpStatus.NO_CONTENT, responseEntity.getStatusCode());
+    mockMvc.perform(post(
+        ITEM_HOLD_FINAL_CHECK_IN_ENDPOINT, PRE_POPULATED_ITEM_HOLD_TRANSACTION_ID, UUID.randomUUID())
+        .headers(defaultHeaders()))
+      .andExpect(status().isNoContent());
 
     var transaction = repository.fetchOneById(PRE_POPULATED_ITEM_HOLD_TRANSACTION_ID);
     assertEquals(FINAL_CHECKIN, transaction.get().getState());
@@ -2259,18 +2313,15 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql",
   })
-  void testItemHoldFinalCheckInWhenLoanIsOpen(TransactionState state) {
-
+  void testItemHoldFinalCheckInWhenLoanIsOpen(TransactionState state) throws Exception {
     modifyTransactionState(PRE_POPULATED_ITEM_HOLD_TRANSACTION_ID, state);
 
     when(circulationClient.findLoan(any())).thenReturn(Optional.of(new LoanDTO()));
 
-    var responseEntity = testRestTemplate.postForEntity(
-      ITEM_HOLD_FINAL_CHECK_IN_ENDPOINT, null, void.class,
-      PRE_POPULATED_ITEM_HOLD_TRANSACTION_ID, UUID.randomUUID()
-    );
-
-    assertEquals(HttpStatus.NO_CONTENT, responseEntity.getStatusCode());
+    mockMvc.perform(post(
+        ITEM_HOLD_FINAL_CHECK_IN_ENDPOINT, PRE_POPULATED_ITEM_HOLD_TRANSACTION_ID, UUID.randomUUID())
+        .headers(defaultHeaders()))
+      .andExpect(status().isNoContent());
 
     verify(circulationClient).checkInByBarcode(any());
   }
@@ -2280,7 +2331,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql",
   })
-  void transferLocalHoldItemLinkMovedRequest() {
+  void transferLocalHoldItemLinkMovedRequest() throws Exception {
     var item = createInventoryItemDTO();
     var holding = createInventoryHoldingDTO();
     item.setStatus(AVAILABLE);
@@ -2299,13 +2350,12 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     when(inventoryClient.findItem(itemId)).thenReturn(Optional.of(item));
     when(circulationClient.findRequest(request.getId())).thenReturn(Optional.of(request));
 
-    var responseEntity = testRestTemplate.postForEntity(
-      LOCAL_HOLD_TRANSFER_ITEM_ENDPOINT, null, InnReachTransactionDTO.class,
-      PRE_POPULATED_LOCAL_HOLD_TRANSACTION_ID, itemId
-    );
-
-    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
-    assertNotNull(responseEntity.getBody());
+    var mvcResult = mockMvc.perform(post(
+        LOCAL_HOLD_TRANSFER_ITEM_ENDPOINT, PRE_POPULATED_LOCAL_HOLD_TRANSACTION_ID, itemId)
+        .headers(defaultHeaders()))
+      .andExpect(status().isOk())
+      .andReturn();
+    assertNotNull(fromJson(mvcResult, InnReachTransactionDTO.class));
 
     var updatedTransaction = fetchTransaction(PRE_POPULATED_LOCAL_HOLD_TRANSACTION_ID);
     var updatedHold = updatedTransaction.getHold();
@@ -2322,7 +2372,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql",
   })
-  void transferLocalHoldItemMovedRequest() {
+  void transferLocalHoldItemMovedRequest() throws Exception {
     var item = createInventoryItemDTO();
     item.setStatus(AVAILABLE);
     var itemId = item.getId();
@@ -2334,12 +2384,11 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     when(inventoryClient.findItem(itemId)).thenReturn(Optional.of(item));
     when(circulationClient.findRequest(request.getId())).thenReturn(Optional.of(request));
 
-    var responseEntity = testRestTemplate.postForEntity(
-      LOCAL_HOLD_TRANSFER_ITEM_ENDPOINT, null, InnReachTransactionDTO.class,
-      PRE_POPULATED_LOCAL_HOLD_TRANSACTION_ID, itemId
-    );
-
-    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+    var mvcResult = mockMvc.perform(post(
+        LOCAL_HOLD_TRANSFER_ITEM_ENDPOINT, PRE_POPULATED_LOCAL_HOLD_TRANSACTION_ID, itemId)
+        .headers(defaultHeaders()))
+      .andExpect(status().isOk())
+      .andReturn();
 
     verify(circulationClient).moveRequest(eq(PRE_POPULATED_LOCAL_HOLD_REQUEST_ID), any());
   }
@@ -2349,15 +2398,13 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql",
   })
-  void return400_when_transferLocalHoldItem_and_transactionIsNotOfLocalHold() {
+  void return400_when_transferLocalHoldItem_and_transactionIsNotOfLocalHold() throws Exception {
     var item = createInventoryItemDTO();
 
-    var responseEntity = testRestTemplate.postForEntity(
-      LOCAL_HOLD_TRANSFER_ITEM_ENDPOINT, null, InnReachTransactionDTO.class,
-      PRE_POPULATED_ITEM_HOLD_TRANSACTION_ID, item.getId()
-    );
-
-    assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
+    mockMvc.perform(post(
+        LOCAL_HOLD_TRANSFER_ITEM_ENDPOINT, PRE_POPULATED_ITEM_HOLD_TRANSACTION_ID, item.getId())
+        .headers(defaultHeaders()))
+      .andExpect(status().isBadRequest());
   }
 
   @Test
@@ -2366,7 +2413,7 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     "classpath:db/central-server/pre-populate-central-server-with-recall-user.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
   })
-  void recallItemHoldWhenRequestStatusOpenNotYetFilled() {
+  void recallItemHoldWhenRequestStatusOpenNotYetFilled() throws Exception {
     modifyTransactionState(PRE_POPULATED_ITEM_HOLD_TRANSACTION_ID, ITEM_RECEIVED);
 
     var loan = new LoanDTO();
@@ -2378,12 +2425,13 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     when(circulationClient.findLoan(PRE_POPULATED_FOLIO_LOAN_ID)).thenReturn(Optional.of(loan));
     when(innReachClient.postInnReachApi(any(), anyString(), anyString(), anyString(), any())).thenReturn("response");
 
-    var responseEntity = testRestTemplate.postForEntity(
-      ITEM_HOLD_RECALL_ENDPOINT, null, Void.class, PRE_POPULATED_ITEM_HOLD_TRANSACTION_ID);
+    mockMvc.perform(post(
+        ITEM_HOLD_RECALL_ENDPOINT, PRE_POPULATED_ITEM_HOLD_TRANSACTION_ID)
+        .headers(defaultHeaders()))
+      .andExpect(status().isNoContent());
 
     var transactionAfterRecall = repository.fetchOneById(PRE_POPULATED_ITEM_HOLD_TRANSACTION_ID).get();
 
-    assertEquals(HttpStatus.NO_CONTENT, responseEntity.getStatusCode());
     assertEquals(TransactionState.RECALL, transactionAfterRecall.getState());
     assertEquals(intCurrentDate, transactionAfterRecall.getHold().getDueDateTime());
   }
@@ -2394,16 +2442,17 @@ class InnReachTransactionControllerTest extends BaseControllerTest {
     "classpath:db/central-server/pre-populate-central-server-with-recall-user.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql",
   })
-  void recallItemHoldWhenRequestStatusNotOpen() {
+  void recallItemHoldWhenRequestStatusNotOpen() throws Exception {
     modifyTransactionState(PRE_POPULATED_ITEM_HOLD_TRANSACTION_ID, ITEM_RECEIVED);
 
     when(circulationClient.queryRequestsByItemId(PRE_POPULATED_FOLIO_ITEM_ID)).thenReturn(getNotOpenRequests());
     when(servicePointsUsersClient.findServicePointsUsersByQuery(PRE_POPULATE_USER_ID_QUERY)).thenReturn(getServicePointUsers());
 
-    var responseEntity = testRestTemplate.postForEntity(
-      ITEM_HOLD_RECALL_ENDPOINT, null, Void.class, PRE_POPULATED_ITEM_HOLD_TRANSACTION_ID);
+    mockMvc.perform(post(
+        ITEM_HOLD_RECALL_ENDPOINT, PRE_POPULATED_ITEM_HOLD_TRANSACTION_ID)
+        .headers(defaultHeaders()))
+      .andExpect(status().isNoContent());
 
-    assertEquals(HttpStatus.NO_CONTENT, responseEntity.getStatusCode());
     verify(servicePointsUsersClient).findServicePointsUsersByQuery(any());
     verify(circulationClient).queryRequestsByItemId(any());
     verify(circulationClient).sendRequest(any());

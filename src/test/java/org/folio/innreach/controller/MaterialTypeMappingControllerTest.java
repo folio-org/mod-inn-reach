@@ -14,32 +14,42 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
-import static org.springframework.http.HttpStatus.CONFLICT;
+import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TEST_METHOD;
 import static org.springframework.test.context.jdbc.SqlMergeMode.MergeMode.MERGE;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import static org.folio.innreach.controller.ControllerTestUtils.collectFieldNames;
 import static org.folio.innreach.controller.ControllerTestUtils.createValidationError;
 import static org.folio.innreach.fixture.TestUtil.deserializeFromJsonFile;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Predicate;
 
+import org.folio.innreach.domain.listener.KafkaCirculationEventListener;
+import org.folio.innreach.domain.listener.KafkaInitialContributionEventListener;
+import org.folio.innreach.domain.listener.KafkaInventoryEventListener;
+import org.folio.innreach.external.client.InnReachAuthClient;
+import org.folio.innreach.external.dto.AccessTokenDTO;
+import org.folio.innreach.it.base.BaseTenantIntegrationTest;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.resttestclient.TestRestTemplate;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlMergeMode;
 
-import org.folio.innreach.controller.base.BaseControllerTest;
 import org.folio.innreach.domain.entity.MaterialTypeMapping;
 import org.folio.innreach.dto.Error;
 import org.folio.innreach.dto.MaterialTypeMappingDTO;
@@ -55,7 +65,7 @@ import org.folio.innreach.repository.MaterialTypeMappingRepository;
   executionPhase = AFTER_TEST_METHOD
 )
 @SqlMergeMode(MERGE)
-class MaterialTypeMappingControllerTest extends BaseControllerTest {
+class MaterialTypeMappingControllerTest extends BaseTenantIntegrationTest {
 
   private static final String PRE_POPULATED_CENTRAL_SERVER_ID = "edab6baf-c696-42b1-89bb-1bbb8759b0d2";
   private static final String PRE_POPULATED_MAPPING1_ID = "71bd0beb-28cb-40bb-9f40-87463d61a553";
@@ -63,8 +73,20 @@ class MaterialTypeMappingControllerTest extends BaseControllerTest {
   private static final String PRE_POPULATED_MAPPING3_ID = "6f783255-e0ee-42c2-aa84-669d8c70f107";
   private static final String PRE_POPULATED_MATERIAL_TYPE2_ID = "5ee11d91-f7e8-481d-b079-65d708582ccc";
 
-  @Autowired
-  private TestRestTemplate testRestTemplate;
+  @MockitoBean
+  private KafkaCirculationEventListener kafkaCirculationEventListener;
+  @MockitoBean
+  private KafkaInventoryEventListener kafkaInventoryEventListener;
+  @MockitoBean
+  private KafkaInitialContributionEventListener kafkaInitialContributionEventListener;
+  @MockitoBean
+  private InnReachAuthClient innReachAuthClient;
+
+  @BeforeEach
+  void init() {
+    when(innReachAuthClient.getAccessToken(any(), any())).thenReturn(ResponseEntity.ok(new AccessTokenDTO()));
+  }
+
   @Autowired
   private MaterialTypeMappingRepository repository;
   @Autowired
@@ -76,13 +98,13 @@ class MaterialTypeMappingControllerTest extends BaseControllerTest {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/mtype-mapping/pre-populate-material-type-mapping.sql"
   })
-  void shouldGetAllExistingMappings() {
-    var responseEntity = testRestTemplate.getForEntity(baseMappingURL(), MaterialTypeMappingsDTO.class);
+  void shouldGetAllExistingMappings() throws Exception {
+    var result = mockMvc.perform(get(baseMappingURL())
+        .headers(defaultHeaders()))
+      .andExpect(status().is2xxSuccessful())
+      .andReturn();
 
-    assertTrue(responseEntity.getStatusCode().is2xxSuccessful());
-    assertTrue(responseEntity.hasBody());
-
-    var response = responseEntity.getBody();
+    var response = fromJson(result, MaterialTypeMappingsDTO.class);
     assertNotNull(response);
 
     var mappings = response.getMaterialTypeMappings();
@@ -97,13 +119,13 @@ class MaterialTypeMappingControllerTest extends BaseControllerTest {
   @Sql(scripts = {
     "classpath:db/central-server/pre-populate-central-server.sql"
   })
-  void shouldGetEmptyMappingsWith0TotalIfNotSet() {
-    var responseEntity = testRestTemplate.getForEntity(baseMappingURL(), MaterialTypeMappingsDTO.class);
+  void shouldGetEmptyMappingsWith0TotalIfNotSet() throws Exception {
+    var result = mockMvc.perform(get(baseMappingURL())
+        .headers(defaultHeaders()))
+      .andExpect(status().is2xxSuccessful())
+      .andReturn();
 
-    assertTrue(responseEntity.getStatusCode().is2xxSuccessful());
-    assertTrue(responseEntity.hasBody());
-
-    var response = responseEntity.getBody();
+    var response = fromJson(result, MaterialTypeMappingsDTO.class);
     assertNotNull(response);
 
     var mappings = response.getMaterialTypeMappings();
@@ -117,14 +139,15 @@ class MaterialTypeMappingControllerTest extends BaseControllerTest {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/mtype-mapping/pre-populate-material-type-mapping.sql"
   })
-  void shouldApplyLimitAndOffsetWhenGettingAllExistingMappings() {
-    var responseEntity = testRestTemplate.getForEntity(baseMappingURL() + "?offset={offset}&limit={limit}",
-      MaterialTypeMappingsDTO.class, Map.of("offset", 1, "limit", 1));
+  void shouldApplyLimitAndOffsetWhenGettingAllExistingMappings() throws Exception {
+    var result = mockMvc.perform(get(baseMappingURL())
+        .param("offset", "1")
+        .param("limit", "1")
+        .headers(defaultHeaders()))
+      .andExpect(status().is2xxSuccessful())
+      .andReturn();
 
-    assertTrue(responseEntity.getStatusCode().is2xxSuccessful());
-    assertTrue(responseEntity.hasBody());
-
-    var response = responseEntity.getBody();
+    var response = fromJson(result, MaterialTypeMappingsDTO.class);
     assertNotNull(response);
 
     var expectedMapping = findMapping(PRE_POPULATED_MAPPING3_ID);
@@ -134,13 +157,15 @@ class MaterialTypeMappingControllerTest extends BaseControllerTest {
   }
 
   @Test
-  void return400WhenGetAllExistingMappingsIfLimitAndOffsetInvalid() {
-    var responseEntity = testRestTemplate.getForEntity(baseMappingURL() + "?offset={offset}&limit={limit}",
-      ValidationErrorsDTO.class, Map.of("offset", -1, "limit", -1));
+  void return400WhenGetAllExistingMappingsIfLimitAndOffsetInvalid() throws Exception {
+    var result = mockMvc.perform(get(baseMappingURL())
+        .param("offset", "-1")
+        .param("limit", "-1")
+        .headers(defaultHeaders()))
+      .andExpect(status().isBadRequest())
+      .andReturn();
 
-    assertEquals(BAD_REQUEST, responseEntity.getStatusCode());
-
-    var errors = responseEntity.getBody();
+    var errors = fromJson(result, ValidationErrorsDTO.class);
     assertNotNull(errors);
     assertEquals(BAD_REQUEST.value(), errors.getCode());
     assertThat(collectFieldNames(errors), containsInAnyOrder(containsString("offset"), containsString("limit")));
@@ -151,14 +176,13 @@ class MaterialTypeMappingControllerTest extends BaseControllerTest {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/mtype-mapping/pre-populate-material-type-mapping.sql"
   })
-  void shouldGetSingleMappingById() {
-    var responseEntity = testRestTemplate.getForEntity(baseMappingURL() + "/" + PRE_POPULATED_MAPPING2_ID,
-      MaterialTypeMappingDTO.class);
+  void shouldGetSingleMappingById() throws Exception {
+    var result = mockMvc.perform(get(baseMappingURL() + "/" + PRE_POPULATED_MAPPING2_ID)
+        .headers(defaultHeaders()))
+      .andExpect(status().is2xxSuccessful())
+      .andReturn();
 
-    assertTrue(responseEntity.getStatusCode().is2xxSuccessful());
-    assertTrue(responseEntity.hasBody());
-
-    var mapping = responseEntity.getBody();
+    var mapping = fromJson(result, MaterialTypeMappingDTO.class);
     assertNotNull(mapping);
 
     var expected = findMapping(PRE_POPULATED_MAPPING2_ID);
@@ -170,27 +194,28 @@ class MaterialTypeMappingControllerTest extends BaseControllerTest {
   @Sql(scripts = {
     "classpath:db/central-server/pre-populate-central-server.sql"
   })
-  void return404WhenMappingIsNotFoundById() {
-    var responseEntity = testRestTemplate.getForEntity(baseMappingURL() + "/" + UUID.randomUUID(),
-      MaterialTypeMappingDTO.class);
-
-    assertEquals(HttpStatus.NOT_FOUND, responseEntity.getStatusCode());
+  void return404WhenMappingIsNotFoundById() throws Exception {
+    mockMvc.perform(get(baseMappingURL() + "/" + UUID.randomUUID())
+        .headers(defaultHeaders()))
+      .andExpect(status().isNotFound());
   }
 
   @Test
   @Sql(scripts = {
     "classpath:db/central-server/pre-populate-central-server.sql"
   })
-  void shouldCreateNewMapping() {
+  void shouldCreateNewMapping() throws Exception {
     var newMapping = deserializeFromJsonFile("/material-type-mapping/create-material-type-mapping-request.json",
       MaterialTypeMappingDTO.class);
 
-    var responseEntity = testRestTemplate.postForEntity(baseMappingURL(), newMapping, MaterialTypeMappingDTO.class);
+    var result = mockMvc.perform(post(baseMappingURL())
+        .content(asJsonString(newMapping))
+        .headers(defaultHeaders())
+        .contentType(APPLICATION_JSON))
+      .andExpect(status().is2xxSuccessful())
+      .andReturn();
 
-    assertTrue(responseEntity.getStatusCode().is2xxSuccessful());
-    assertTrue(responseEntity.hasBody());
-
-    var created = responseEntity.getBody();
+    var created = fromJson(result, MaterialTypeMappingDTO.class);
 
     assertThat(created, samePropertyValuesAs(newMapping, "id", "metadata"));
   }
@@ -199,17 +224,21 @@ class MaterialTypeMappingControllerTest extends BaseControllerTest {
   @Sql(scripts = {
     "classpath:db/central-server/pre-populate-central-server.sql"
   })
-  void return400WhenCreatingNewMappingAndCentralItemTypeIsNull() {
+  void return400WhenCreatingNewMappingAndCentralItemTypeIsNull() throws Exception {
     var newMapping = deserializeFromJsonFile("/material-type-mapping/create-material-type-mapping-request.json",
       MaterialTypeMappingDTO.class);
     newMapping.setCentralItemType(null);
 
-    var responseEntity = testRestTemplate.postForEntity(baseMappingURL(), newMapping, ValidationErrorsDTO.class);
+    var result = mockMvc.perform(post(baseMappingURL())
+        .content(asJsonString(newMapping))
+        .headers(defaultHeaders())
+        .contentType(APPLICATION_JSON))
+      .andExpect(status().isBadRequest())
+      .andReturn();
 
-    assertEquals(BAD_REQUEST, responseEntity.getStatusCode());
-
-    assertNotNull(responseEntity.getBody());
-    assertThat(responseEntity.getBody().getValidationErrors(),
+    var body = fromJson(result, ValidationErrorsDTO.class);
+    assertNotNull(body);
+    assertThat(body.getValidationErrors(),
       contains(createValidationError("centralItemType", "must not be null")));
   }
 
@@ -217,17 +246,21 @@ class MaterialTypeMappingControllerTest extends BaseControllerTest {
   @Sql(scripts = {
     "classpath:db/central-server/pre-populate-central-server.sql"
   })
-  void return400WhenCreatingNewMappingAndMaterialTypeIdIsNull() {
+  void return400WhenCreatingNewMappingAndMaterialTypeIdIsNull() throws Exception {
     var newMapping = deserializeFromJsonFile("/material-type-mapping/create-material-type-mapping-request.json",
       MaterialTypeMappingDTO.class);
     newMapping.setMaterialTypeId(null);
 
-    var responseEntity = testRestTemplate.postForEntity(baseMappingURL(), newMapping, ValidationErrorsDTO.class);
+    var result = mockMvc.perform(post(baseMappingURL())
+        .content(asJsonString(newMapping))
+        .headers(defaultHeaders())
+        .contentType(APPLICATION_JSON))
+      .andExpect(status().isBadRequest())
+      .andReturn();
 
-    assertEquals(BAD_REQUEST, responseEntity.getStatusCode());
-
-    assertNotNull(responseEntity.getBody());
-    assertThat(responseEntity.getBody().getValidationErrors(),
+    var body = fromJson(result, ValidationErrorsDTO.class);
+    assertNotNull(body);
+    assertThat(body.getValidationErrors(),
       contains(createValidationError("materialTypeId", "must not be null")));
   }
 
@@ -236,14 +269,16 @@ class MaterialTypeMappingControllerTest extends BaseControllerTest {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/mtype-mapping/pre-populate-material-type-mapping.sql"
   })
-  void return409WhenCreatingNewMappingAndMaterialTypeIdAlreadyMapped() {
+  void return409WhenCreatingNewMappingAndMaterialTypeIdAlreadyMapped() throws Exception {
     var newMapping = deserializeFromJsonFile("/material-type-mapping/create-material-type-mapping-request.json",
       MaterialTypeMappingDTO.class);
     newMapping.setMaterialTypeId(fromString(PRE_POPULATED_MATERIAL_TYPE2_ID));
 
-    var responseEntity = testRestTemplate.postForEntity(baseMappingURL(), newMapping, Error.class);
-
-    assertEquals(CONFLICT, responseEntity.getStatusCode());
+    mockMvc.perform(post(baseMappingURL())
+        .content(asJsonString(newMapping))
+        .headers(defaultHeaders())
+        .contentType(APPLICATION_JSON))
+      .andExpect(status().isConflict());
   }
 
   @Test
@@ -251,28 +286,30 @@ class MaterialTypeMappingControllerTest extends BaseControllerTest {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/mtype-mapping/pre-populate-material-type-mapping.sql"
   })
-  void shouldUpdateExistingMapping() {
+  void shouldUpdateExistingMapping() throws Exception {
     var mapping = deserializeFromJsonFile("/material-type-mapping/update-material-type-mapping-request.json",
       MaterialTypeMappingDTO.class);
 
-    var responseEntity = testRestTemplate.exchange(baseMappingURL() + "/{mappingId}", HttpMethod.PUT,
-      new HttpEntity<>(mapping), MaterialTypeMappingDTO.class, PRE_POPULATED_MAPPING2_ID);
-
-    assertTrue(responseEntity.getStatusCode().is2xxSuccessful());
+    mockMvc.perform(put(baseMappingURL() + "/{mappingId}", PRE_POPULATED_MAPPING2_ID)
+        .content(asJsonString(mapping))
+        .headers(defaultHeaders())
+        .contentType(APPLICATION_JSON))
+      .andExpect(status().is2xxSuccessful());
   }
 
   @Test
   @Sql(scripts = {
     "classpath:db/central-server/pre-populate-central-server.sql"
   })
-  void return404IfMappingNotFoundWhenUpdating() {
+  void return404IfMappingNotFoundWhenUpdating() throws Exception {
     var mapping = deserializeFromJsonFile("/material-type-mapping/update-material-type-mapping-request.json",
       MaterialTypeMappingDTO.class);
 
-    var responseEntity = testRestTemplate.exchange(baseMappingURL() + "/{mappingId}", HttpMethod.PUT,
-      new HttpEntity<>(mapping), MaterialTypeMappingDTO.class, UUID.randomUUID());
-
-    assertEquals(HttpStatus.NOT_FOUND, responseEntity.getStatusCode());
+    mockMvc.perform(put(baseMappingURL() + "/{mappingId}", UUID.randomUUID())
+        .content(asJsonString(mapping))
+        .headers(defaultHeaders())
+        .contentType(APPLICATION_JSON))
+      .andExpect(status().isNotFound());
   }
 
   @Test
@@ -280,16 +317,16 @@ class MaterialTypeMappingControllerTest extends BaseControllerTest {
       "classpath:db/central-server/pre-populate-central-server.sql",
       "classpath:db/mtype-mapping/pre-populate-material-type-mapping.sql"
   })
-  void shouldUpdateExistingMappings() {
+  void shouldUpdateExistingMappings() throws Exception {
     var existing = mapper.toDTOCollection(repository.findAll());
     Integer itemType = 10;
     existing.getMaterialTypeMappings().forEach(mp -> mp.setCentralItemType(itemType));
 
-    var responseEntity = testRestTemplate.exchange(baseMappingURL(), HttpMethod.PUT, new HttpEntity<>(existing),
-        Void.class);
-
-    assertEquals(HttpStatus.NO_CONTENT, responseEntity.getStatusCode());
-    assertFalse(responseEntity.hasBody());
+    mockMvc.perform(put(baseMappingURL())
+        .content(asJsonString(existing))
+        .headers(defaultHeaders())
+        .contentType(APPLICATION_JSON))
+      .andExpect(status().isNoContent());
 
     var updated = mapper.toDTOs(repository.findAll());
     var expected = existing.getMaterialTypeMappings();
@@ -306,7 +343,7 @@ class MaterialTypeMappingControllerTest extends BaseControllerTest {
       "classpath:db/central-server/pre-populate-central-server.sql",
       "classpath:db/mtype-mapping/pre-populate-material-type-mapping.sql"
   })
-  void shouldCreateUpdateAndDeleteMappingsAtTheSameTime() {
+  void shouldCreateUpdateAndDeleteMappingsAtTheSameTime() throws Exception {
     var mappings = mapper.toDTOCollection(repository.findAll());
     List<MaterialTypeMappingDTO> em = mappings.getMaterialTypeMappings();
 
@@ -319,11 +356,11 @@ class MaterialTypeMappingControllerTest extends BaseControllerTest {
         MaterialTypeMappingsDTO.class);
     em.addAll(newMappings.getMaterialTypeMappings());       // to insert
 
-    var responseEntity = testRestTemplate.exchange(baseMappingURL(), HttpMethod.PUT, new HttpEntity<>(mappings),
-        Void.class);
-
-    assertEquals(HttpStatus.NO_CONTENT, responseEntity.getStatusCode());
-    assertFalse(responseEntity.hasBody());
+    mockMvc.perform(put(baseMappingURL())
+        .content(asJsonString(mappings))
+        .headers(defaultHeaders())
+        .contentType(APPLICATION_JSON))
+      .andExpect(status().isNoContent());
 
     var stored = mapper.toDTOs(repository.findAll());
 
@@ -346,11 +383,10 @@ class MaterialTypeMappingControllerTest extends BaseControllerTest {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/mtype-mapping/pre-populate-material-type-mapping.sql"
   })
-  void shouldDeleteExistingMapping() {
-    var responseEntity = testRestTemplate.exchange(baseMappingURL() + "/{mappingId}", HttpMethod.DELETE,
-      HttpEntity.EMPTY, MaterialTypeMappingDTO.class, PRE_POPULATED_MAPPING2_ID);
-
-    assertEquals(HttpStatus.NO_CONTENT, responseEntity.getStatusCode());
+  void shouldDeleteExistingMapping() throws Exception {
+    mockMvc.perform(delete(baseMappingURL() + "/{mappingId}", PRE_POPULATED_MAPPING2_ID)
+        .headers(defaultHeaders()))
+      .andExpect(status().isNoContent());
 
     var deleted = repository.findById(fromString(PRE_POPULATED_MAPPING2_ID));
     assertTrue(deleted.isEmpty());
@@ -360,11 +396,10 @@ class MaterialTypeMappingControllerTest extends BaseControllerTest {
   @Sql(scripts = {
     "classpath:db/central-server/pre-populate-central-server.sql",
   })
-  void return404IfMappingNotFoundWhenDeleting() {
-    var responseEntity = testRestTemplate.exchange(baseMappingURL() + "/{mappingId}", HttpMethod.DELETE,
-      HttpEntity.EMPTY, MaterialTypeMappingDTO.class, UUID.randomUUID());
-
-    assertEquals(HttpStatus.NOT_FOUND, responseEntity.getStatusCode());
+  void return404IfMappingNotFoundWhenDeleting() throws Exception {
+    mockMvc.perform(delete(baseMappingURL() + "/{mappingId}", UUID.randomUUID())
+        .headers(defaultHeaders()))
+      .andExpect(status().isNotFound());
   }
 
   private static Predicate<MaterialTypeMappingDTO> idEqualsTo(UUID id) {

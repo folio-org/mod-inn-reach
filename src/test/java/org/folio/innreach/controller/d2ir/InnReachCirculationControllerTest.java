@@ -44,8 +44,12 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
 import static org.springframework.http.HttpStatus.OK;
+import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TEST_METHOD;
 import static org.springframework.test.context.jdbc.SqlMergeMode.MergeMode.MERGE;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import lombok.SneakyThrows;
 import org.folio.innreach.batch.contribution.IterationEventReaderFactory;
@@ -53,7 +57,6 @@ import org.folio.innreach.client.CirculationClient;
 import org.folio.innreach.client.HridSettingsClient;
 import org.folio.innreach.client.ItemStorageClient;
 import org.folio.innreach.client.ServicePointsUsersClient;
-import org.folio.innreach.controller.base.BaseControllerTest;
 import org.folio.innreach.domain.dto.OwningSiteCancelsRequestDTO;
 import org.folio.innreach.domain.dto.folio.ResultList;
 import org.folio.innreach.domain.dto.folio.User;
@@ -64,6 +67,9 @@ import org.folio.innreach.domain.dto.folio.inventory.InventoryItemStatus;
 import org.folio.innreach.domain.dto.folio.requestpreference.RequestPreferenceDTO;
 import org.folio.innreach.domain.entity.InnReachTransaction;
 import org.folio.innreach.domain.entity.TransactionPatronHold;
+import org.folio.innreach.domain.listener.KafkaCirculationEventListener;
+import org.folio.innreach.domain.listener.KafkaInitialContributionEventListener;
+import org.folio.innreach.domain.listener.KafkaInventoryEventListener;
 import org.folio.innreach.domain.service.ConfigurationService;
 import org.folio.innreach.domain.service.HoldingsService;
 import org.folio.innreach.domain.service.InstanceService;
@@ -81,10 +87,14 @@ import org.folio.innreach.dto.InnReachResponseDTO;
 import org.folio.innreach.dto.LoanDTO;
 import org.folio.innreach.dto.RenewLoanDTO;
 import org.folio.innreach.dto.TransactionHoldDTO;
+import org.folio.innreach.external.client.InnReachAuthClient;
+import org.folio.innreach.external.dto.AccessTokenDTO;
 import org.folio.innreach.external.dto.InnReachResponse;
 import org.folio.innreach.external.service.InnReachExternalService;
+import org.folio.innreach.it.base.BaseTenantIntegrationTest;
 import org.folio.innreach.mapper.InnReachTransactionHoldMapper;
 import org.folio.innreach.repository.InnReachTransactionRepository;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -93,16 +103,14 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.resttestclient.TestRestTemplate;
-import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlConfig;
 import org.springframework.test.context.jdbc.SqlMergeMode;
+import org.springframework.test.web.servlet.MvcResult;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -126,7 +134,7 @@ import java.util.UUID;
 )
 @SqlMergeMode(MERGE)
 @ExtendWith(MockitoExtension.class)
-class InnReachCirculationControllerTest extends BaseControllerTest {
+class InnReachCirculationControllerTest extends BaseTenantIntegrationTest {
 
   private static final String ITEM_IN_TRANSIT_ENDPOINT = "/inn-reach/d2ir/circ/intransit/{trackingId}/{centralCode}";
   private static final String CIRCULATION_OPERATION_ENDPOINT = "/inn-reach/d2ir/circ/{circulationOperationName}/{trackingId}/{centralCode}";
@@ -168,8 +176,19 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
   private static final Duration ASYNC_AWAIT_TIMEOUT = Duration.ofSeconds(15);
   private static final String PRE_POPULATED_USER_BARCODE = "0000098765";
 
-  @Autowired
-  private TestRestTemplate testRestTemplate;
+  @MockitoBean
+  private KafkaCirculationEventListener kafkaCirculationEventListener;
+  @MockitoBean
+  private KafkaInventoryEventListener kafkaInventoryEventListener;
+  @MockitoBean
+  private KafkaInitialContributionEventListener kafkaInitialContributionEventListener;
+  @MockitoBean
+  private InnReachAuthClient innReachAuthClient;
+
+  @BeforeEach
+  void init() {
+    when(innReachAuthClient.getAccessToken(any(), any())).thenReturn(ResponseEntity.ok(new AccessTokenDTO()));
+  }
 
   @MockitoSpyBean
   private InnReachTransactionRepository repository;
@@ -215,7 +234,7 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
   @MockitoBean
   IterationEventReaderFactory iterationEventReaderFactory;
 
-  private HttpHeaders headers = circHeaders();
+  private final HttpHeaders headers = circHeaders();
 
   @Captor
   ArgumentCaptor<RequestDTO> requestDtoCaptor;
@@ -228,20 +247,21 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     "classpath:db/agency-loc-mapping/pre-populate-agency-location-mapping.sql",
     "classpath:db/item-type-mapping/pre-populate-item-type-mapping.sql"
   })
-  void processPatronHoldCirculationRequest_createNewPatronHold() {
+  void processPatronHoldCirculationRequest_createNewPatronHold() throws Exception {
     var transactionHoldDTO = createTransactionHoldDTO();
     var user = populateUser();
 
     when(userService.getUserById(any())).thenReturn(Optional.of(user));
 
-    var responseEntity = testRestTemplate.postForEntity(
-      CIRCULATION_OPERATION_ENDPOINT,
-      new HttpEntity<>(transactionHoldDTO, headers), InnReachResponseDTO.class,
-      PATRON_HOLD_OPERATION, NEW_TRANSACTION_TRACKING_ID, PRE_POPULATED_CENTRAL_CODE);
-
-    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
-
-    var responseBody = responseEntity.getBody();
+    var mvcResult = mockMvc.perform(post(
+        CIRCULATION_OPERATION_ENDPOINT, PATRON_HOLD_OPERATION, NEW_TRANSACTION_TRACKING_ID, PRE_POPULATED_CENTRAL_CODE)
+        .content(asJsonString(transactionHoldDTO))
+        .headers(defaultHeaders())
+        .headers(headers)
+        .contentType(APPLICATION_JSON))
+      .andExpect(status().isOk())
+      .andReturn();
+    var responseBody = fromJson(mvcResult, InnReachResponseDTO.class);
 
     assertNotNull(responseBody);
     assertNotNull(responseBody.getErrors());
@@ -266,7 +286,7 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     "classpath:db/mtype-mapping/pre-populate-material-type-mapping.sql",
     "classpath:db/central-patron-type-mapping/pre-populate-central-patron_type-mapping-table.sql"
   })
-  void processItemHoldCirculationRequest_createOwningSiteRequest() {
+  void processItemHoldCirculationRequest_createOwningSiteRequest() throws Exception {
     var randomUUID = randomUUID();
     var item = createInventoryItemDTO(InventoryItemStatus.AVAILABLE, PRE_POPULATED_MATERIAL_TYPE_ID,
       randomUUID, randomUUID, randomUUID);
@@ -286,14 +306,18 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     when(circulationClient.sendRequest(requestDtoCaptor.capture())).thenReturn(circulationResuestDTO);
     when(requestPreferenceService.findUserRequestPreference(any(UUID.class))).thenReturn(requestPreference);
 
-    var responseEntity = testRestTemplate.postForEntity(
-      CIRCULATION_OPERATION_ENDPOINT,
-      new HttpEntity<>(transactionHoldDTO, headers), InnReachResponseDTO.class,
-      ITEM_HOLD_OPERATION, NEW_TRANSACTION_TRACKING_ID, PRE_POPULATED_CENTRAL_CODE);
+    var mvcResult = mockMvc.perform(post(
+        CIRCULATION_OPERATION_ENDPOINT, ITEM_HOLD_OPERATION, NEW_TRANSACTION_TRACKING_ID, PRE_POPULATED_CENTRAL_CODE)
+        .content(asJsonString(transactionHoldDTO))
+        .headers(defaultHeaders())
+        .headers(headers)
+        .contentType(APPLICATION_JSON))
+      .andExpect(status().isOk())
+      .andReturn();
 
     await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() -> {
-        assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
-        var responseBody = responseEntity.getBody();
+        assertEquals(OK.value(), mvcResult.getResponse().getStatus());
+        var responseBody = fromJson(mvcResult, InnReachResponseDTO.class);
         assertNotNull(responseBody);
         assertNotNull(responseBody.getErrors());
         assertEquals(0, responseBody.getErrors().size());
@@ -325,7 +349,7 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     "classpath:db/mtype-mapping/pre-populate-material-type-mapping.sql",
     "classpath:db/central-patron-type-mapping/pre-populate-central-patron_type-mapping-table.sql"
   })
-  void processItemHoldCirculationRequest_failToCreateOwningSiteRequest() {
+  void processItemHoldCirculationRequest_failToCreateOwningSiteRequest() throws Exception {
     var randomUUID = randomUUID();
     var item = createInventoryItemDTO(InventoryItemStatus.AVAILABLE, PRE_POPULATED_MATERIAL_TYPE_ID,
       randomUUID, randomUUID, randomUUID);
@@ -352,14 +376,17 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     when(itemStorageClient.findByQuery("hrid==" + cqlEncode(item.getHrid())))
       .thenReturn(ResultList.of(1, List.of(expectedRecontributionItem)));
 
-    var responseEntity = testRestTemplate.postForEntity(
-      CIRCULATION_OPERATION_ENDPOINT,
-      new HttpEntity<>(transactionHoldDTO, headers), InnReachResponseDTO.class,
-      ITEM_HOLD_OPERATION, NEW_TRANSACTION_TRACKING_ID, PRE_POPULATED_CENTRAL_CODE);
+    var mvcResult = mockMvc.perform(post(
+        CIRCULATION_OPERATION_ENDPOINT, ITEM_HOLD_OPERATION, NEW_TRANSACTION_TRACKING_ID, PRE_POPULATED_CENTRAL_CODE)
+        .content(asJsonString(transactionHoldDTO))
+        .headers(defaultHeaders())
+        .headers(headers)
+        .contentType(APPLICATION_JSON))
+      .andExpect(status().isOk())
+      .andReturn();
 
     await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() -> {
-      assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
-      var responseBody = responseEntity.getBody();
+      var responseBody = fromJson(mvcResult, InnReachResponseDTO.class);
       assertNotNull(responseBody);
       assertNotNull(responseBody.getErrors());
       assertEquals(0, responseBody.getErrors().size());
@@ -386,7 +413,7 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     "classpath:db/agency-loc-mapping/pre-populate-agency-location-mapping.sql",
     "classpath:db/item-type-mapping/pre-populate-item-type-mapping.sql"
   })
-  void processPatronHoldCirculationRequest_updateExitingPatronHold() {
+  void processPatronHoldCirculationRequest_updateExitingPatronHold() throws Exception {
     var existing = transactionRepository.findByTrackingIdAndCentralServerCode(
       PRE_POPULATED_TRACKING1_ID, PRE_POPULATED_CENTRAL_CODE).get();
     var transactionHoldDTO = transactionHoldMapper.toPatronHoldDTO((TransactionPatronHold) existing.getHold());
@@ -395,14 +422,15 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     when(userService.getUserById(any())).thenReturn(Optional.of(user));
     when(inventoryService.getHridSettings()).thenReturn(new HridSettingsClient.HridSettings());
 
-    var responseEntity = testRestTemplate.postForEntity(
-      CIRCULATION_OPERATION_ENDPOINT,
-      new HttpEntity<>(transactionHoldDTO, headers), InnReachResponseDTO.class,
-      PATRON_HOLD_OPERATION, PRE_POPULATED_TRACKING1_ID, PRE_POPULATED_CENTRAL_CODE);
-
-    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
-
-    var responseBody = responseEntity.getBody();
+    var mvcResult = mockMvc.perform(post(
+        CIRCULATION_OPERATION_ENDPOINT, PATRON_HOLD_OPERATION, PRE_POPULATED_TRACKING1_ID, PRE_POPULATED_CENTRAL_CODE)
+        .content(asJsonString(transactionHoldDTO))
+        .headers(defaultHeaders())
+        .headers(headers)
+        .contentType(APPLICATION_JSON))
+      .andExpect(status().isOk())
+      .andReturn();
+    var responseBody = fromJson(mvcResult, InnReachResponseDTO.class);
 
     assertNotNull(responseBody);
     assertNotNull(responseBody.getErrors());
@@ -431,7 +459,7 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     "classpath:db/agency-loc-mapping/pre-populate-agency-location-mapping.sql",
     "classpath:db/item-type-mapping/pre-populate-item-type-mapping.sql"
   })
-  void processItemShippedCircRequest_updateFolioItem_whenAssociatedItemExists() {
+  void processItemShippedCircRequest_updateFolioItem_whenAssociatedItemExists() throws Exception {
     var user = populateUser();
     var item = createInventoryItemDTO();
 
@@ -442,14 +470,15 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
 
     var itemShippedDTO = createItemShippedDTO();
 
-    var responseEntity = testRestTemplate.exchange(
-      CIRCULATION_OPERATION_ENDPOINT, HttpMethod.PUT,
-      new HttpEntity<>(itemShippedDTO, headers), InnReachResponseDTO.class,
-      ITEM_SHIPPED_OPERATION, PRE_POPULATED_TRACKING1_ID, PRE_POPULATED_CENTRAL_CODE);
-
-    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
-
-    var responseEntityBody = responseEntity.getBody();
+    var mvcResult = mockMvc.perform(put(
+        CIRCULATION_OPERATION_ENDPOINT, ITEM_SHIPPED_OPERATION, PRE_POPULATED_TRACKING1_ID, PRE_POPULATED_CENTRAL_CODE)
+        .content(asJsonString(itemShippedDTO))
+        .headers(defaultHeaders())
+        .headers(headers)
+        .contentType(APPLICATION_JSON))
+      .andExpect(status().isOk())
+      .andReturn();
+    var responseEntityBody = fromJson(mvcResult, InnReachResponseDTO.class);
 
     assertNotNull(responseEntityBody);
     assertEquals("ok", responseEntityBody.getStatus());
@@ -460,22 +489,24 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
   })
-  void processItemShippedCircRequest_returnFailedStatus_whenAssociatedItemDoesNotExist() {
+  void processItemShippedCircRequest_returnFailedStatus_whenAssociatedItemDoesNotExist() throws Exception {
     when(itemService.findItemByBarcode(any())).thenReturn(Optional.of(createInventoryItemDTO()));
     when(retryableUpdateService.changeAndUpdateWithRetry(any(), any(), any())).thenThrow(new IllegalArgumentException("Not found"));
 
     var transactionHoldDTO = createTransactionHoldDTO();
 
-    var responseEntity = testRestTemplate.exchange(
-      CIRCULATION_OPERATION_ENDPOINT, HttpMethod.PUT,
-      new HttpEntity<>(transactionHoldDTO, headers), InnReachResponseDTO.class,
-      ITEM_SHIPPED_OPERATION, PRE_POPULATED_TRACKING1_ID, PRE_POPULATED_CENTRAL_CODE);
+    var mvcResult = mockMvc.perform(put(
+        CIRCULATION_OPERATION_ENDPOINT, ITEM_SHIPPED_OPERATION, PRE_POPULATED_TRACKING1_ID, PRE_POPULATED_CENTRAL_CODE)
+        .content(asJsonString(transactionHoldDTO))
+        .headers(defaultHeaders())
+        .headers(headers)
+        .contentType(APPLICATION_JSON))
+      .andExpect(status().isBadRequest())
+      .andReturn();
 
     verify(itemService, times(0)).update(any());
 
-    assertEquals(BAD_REQUEST, responseEntity.getStatusCode());
-
-    var responseEntityBody = responseEntity.getBody();
+    var responseEntityBody = fromJson(mvcResult, InnReachResponseDTO.class);
 
     assertNotNull(responseEntityBody);
     assertEquals("failed", responseEntityBody.getStatus());
@@ -486,7 +517,7 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
   })
-  void processCancelItemHoldRequest_whenItemIsNotCheckedOut() {
+  void processCancelItemHoldRequest_whenItemIsNotCheckedOut() throws Exception {
     when(circulationClient.findRequest(any())).thenReturn(Optional.of(new RequestDTO()));
     doNothing().when(circulationClient).updateRequest(any(), any());
 
@@ -496,12 +527,15 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
 
     var transactionHoldDTO = createTransactionHoldDTO();
 
-    var responseEntity = testRestTemplate.exchange(
-      CANCEL_ITEM_HOLD_PATH, HttpMethod.PUT, new HttpEntity<>(transactionHoldDTO, headers), InnReachResponseDTO.class,
-      PRE_POPULATED_TRACKING2_ID, PRE_POPULATED_CENTRAL_CODE);
-
-    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
-    var responseEntityBody = responseEntity.getBody();
+    var mvcResult = mockMvc.perform(put(
+        CANCEL_ITEM_HOLD_PATH, PRE_POPULATED_TRACKING2_ID, PRE_POPULATED_CENTRAL_CODE)
+        .content(asJsonString(transactionHoldDTO))
+        .headers(defaultHeaders())
+        .headers(headers)
+        .contentType(APPLICATION_JSON))
+      .andExpect(status().isOk())
+      .andReturn();
+    var responseEntityBody = fromJson(mvcResult, InnReachResponseDTO.class);
     assertNotNull(responseEntityBody);
     assertEquals("ok", responseEntityBody.getStatus());
 
@@ -515,15 +549,18 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
   })
-  void processCancelItemHoldRequest_whenItemIsCheckedOut() {
+  void processCancelItemHoldRequest_whenItemIsCheckedOut() throws Exception {
     var transactionHoldDTO = createTransactionHoldDTO();
 
-    var responseEntity = testRestTemplate.exchange(
-      CANCEL_ITEM_HOLD_PATH, HttpMethod.PUT, new HttpEntity<>(transactionHoldDTO, headers), InnReachResponseDTO.class,
-      PRE_POPULATED_TRACKING2_ID, PRE_POPULATED_CENTRAL_CODE);
-
-    assertEquals(BAD_REQUEST, responseEntity.getStatusCode());
-    var responseEntityBody = responseEntity.getBody();
+    var mvcResult = mockMvc.perform(put(
+        CANCEL_ITEM_HOLD_PATH, PRE_POPULATED_TRACKING2_ID, PRE_POPULATED_CENTRAL_CODE)
+        .content(asJsonString(transactionHoldDTO))
+        .headers(defaultHeaders())
+        .headers(headers)
+        .contentType(APPLICATION_JSON))
+      .andExpect(status().isBadRequest())
+      .andReturn();
+    var responseEntityBody = fromJson(mvcResult, InnReachResponseDTO.class);
     assertNotNull(responseEntityBody);
     assertEquals("Requested item is already checked out.",
       responseEntityBody.getReason());
@@ -538,7 +575,7 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
   })
-  void precessReportUnshippedItemReceived_whenTransactionItemHold() {
+  void precessReportUnshippedItemReceived_whenTransactionItemHold() throws Exception {
     var transaction = fetchTransactionByTrackingId(PRE_POPULATED_TRACKING2_ID);
     transaction.setState(ITEM_HOLD);
     repository.save(transaction);
@@ -550,13 +587,15 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
       .thenReturn(ResultList.asSinglePage(createServicePointUserDTO()));
     when(circulationClient.checkOutByBarcode(any(CheckOutRequestDTO.class))).thenReturn(new LoanDTO().id(NEW_LOAN_ID));
 
-    var responseEntity = testRestTemplate.exchange(
-      "/inn-reach/d2ir/circ/receiveunshipped/{trackingId}/{centralCode}", HttpMethod.PUT,
-      new HttpEntity<>(transactionHoldDTO, headers), InnReachResponseDTO.class,
-      PRE_POPULATED_TRACKING2_ID, PRE_POPULATED_CENTRAL_CODE);
-
-    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
-    var responseEntityBody = responseEntity.getBody();
+    var mvcResult = mockMvc.perform(put(
+        "/inn-reach/d2ir/circ/receiveunshipped/{trackingId}/{centralCode}", PRE_POPULATED_TRACKING2_ID, PRE_POPULATED_CENTRAL_CODE)
+        .content(asJsonString(transactionHoldDTO))
+        .headers(defaultHeaders())
+        .headers(headers)
+        .contentType(APPLICATION_JSON))
+      .andExpect(status().isOk())
+      .andReturn();
+    var responseEntityBody = fromJson(mvcResult, InnReachResponseDTO.class);
     assertNotNull(responseEntityBody);
     assertEquals("ok", responseEntityBody.getStatus());
 
@@ -570,20 +609,22 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
   })
-  void processReportUnshippedItemReceived_whenTransactionItemShipped() {
+  void processReportUnshippedItemReceived_whenTransactionItemShipped() throws Exception {
     var transaction = fetchTransactionByTrackingId(PRE_POPULATED_TRACKING2_ID);
     transaction.setState(ITEM_SHIPPED);
     repository.save(transaction);
 
     var transactionHoldDTO = createTransactionHoldDTO();
 
-    var responseEntity = testRestTemplate.exchange(
-      "/inn-reach/d2ir/circ/receiveunshipped/{trackingId}/{centralCode}", HttpMethod.PUT,
-      new HttpEntity<>(transactionHoldDTO, headers), InnReachResponseDTO.class,
-      PRE_POPULATED_TRACKING2_ID, PRE_POPULATED_CENTRAL_CODE);
-
-    assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
-    var responseEntityBody = responseEntity.getBody();
+    var mvcResult = mockMvc.perform(put(
+        "/inn-reach/d2ir/circ/receiveunshipped/{trackingId}/{centralCode}", PRE_POPULATED_TRACKING2_ID, PRE_POPULATED_CENTRAL_CODE)
+        .content(asJsonString(transactionHoldDTO))
+        .headers(defaultHeaders())
+        .headers(headers)
+        .contentType(APPLICATION_JSON))
+      .andExpect(status().isBadRequest())
+      .andReturn();
+    var responseEntityBody = fromJson(mvcResult, InnReachResponseDTO.class);
     assertNotNull(responseEntityBody);
     assertEquals(UNEXPECTED_TRANSACTION_STATE + transaction.getState(),
       responseEntityBody.getReason());
@@ -598,20 +639,22 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
   })
-  void processItemInTransit_updateTransactionState(InnReachTransaction.TransactionState state) {
+  void processItemInTransit_updateTransactionState(InnReachTransaction.TransactionState state) throws Exception {
     var transaction = fetchPrePopulatedTransaction();
     transaction.setState(state);
     repository.save(transaction);
 
     var transactionHoldDTO = createTransactionHoldDTO();
 
-    var responseEntity = testRestTemplate.exchange(ITEM_IN_TRANSIT_ENDPOINT, HttpMethod.PUT,
-      new HttpEntity<>(transactionHoldDTO, headers), InnReachResponseDTO.class,
-      PRE_POPULATED_TRACKING1_ID, PRE_POPULATED_CENTRAL_CODE);
+    var mvcResult = mockMvc.perform(put(ITEM_IN_TRANSIT_ENDPOINT, PRE_POPULATED_TRACKING1_ID, PRE_POPULATED_CENTRAL_CODE)
+        .content(asJsonString(transactionHoldDTO))
+        .headers(defaultHeaders())
+        .headers(headers)
+        .contentType(APPLICATION_JSON))
+      .andExpect(status().isOk())
+      .andReturn();
 
-    assertEquals(OK, responseEntity.getStatusCode());
-
-    var response = responseEntity.getBody();
+    var response = fromJson(mvcResult, InnReachResponseDTO.class);
     assertNotNull(response);
     assertEquals("success", response.getReason());
 
@@ -624,20 +667,22 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
   })
-  void processItemInTransit_unexpectedTransactionState() {
+  void processItemInTransit_unexpectedTransactionState() throws Exception {
     var transaction = fetchPrePopulatedTransaction();
     transaction.setState(ITEM_HOLD);
     repository.save(transaction);
 
     var transactionHoldDTO = createTransactionHoldDTO();
 
-    var responseEntity = testRestTemplate.exchange(ITEM_IN_TRANSIT_ENDPOINT, HttpMethod.PUT,
-      new HttpEntity<>(transactionHoldDTO, headers), InnReachResponseDTO.class,
-      PRE_POPULATED_TRACKING1_ID, PRE_POPULATED_CENTRAL_CODE);
+    var mvcResult = mockMvc.perform(put(ITEM_IN_TRANSIT_ENDPOINT, PRE_POPULATED_TRACKING1_ID, PRE_POPULATED_CENTRAL_CODE)
+        .content(asJsonString(transactionHoldDTO))
+        .headers(defaultHeaders())
+        .headers(headers)
+        .contentType(APPLICATION_JSON))
+      .andExpect(status().isBadRequest())
+      .andReturn();
 
-    assertEquals(BAD_REQUEST, responseEntity.getStatusCode());
-
-    var response = responseEntity.getBody();
+    var response = fromJson(mvcResult, InnReachResponseDTO.class);
     assertNotNull(response);
 
     assertEquals(UNEXPECTED_TRANSACTION_STATE + transaction.getState(), response.getReason());
@@ -652,21 +697,24 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
   })
-  void checkTransactionIsInStateItemReceivedOrReceiveUnannounced(InnReachTransaction.TransactionState testEnums) {
+  void checkTransactionIsInStateItemReceivedOrReceiveUnannounced(InnReachTransaction.TransactionState testEnums) throws Exception {
     var transactionHoldDTO = createTransactionHoldDTO();
     var transactionBefore = fetchTransactionByTrackingId(PRE_POPULATED_TRACKING2_ID);
 
     transactionBefore.setState(testEnums);
     repository.save(transactionBefore);
 
-    var responseEntity = testRestTemplate.exchange(
-      "/inn-reach/d2ir/circ/returnuncirculated/{trackingId}/{centralCode}", HttpMethod.PUT,
-      new HttpEntity<>(transactionHoldDTO, headers), InnReachResponseDTO.class,
-      PRE_POPULATED_TRACKING2_ID, PRE_POPULATED_CENTRAL_CODE);
+    var mvcResult = mockMvc.perform(put(
+        "/inn-reach/d2ir/circ/returnuncirculated/{trackingId}/{centralCode}", PRE_POPULATED_TRACKING2_ID, PRE_POPULATED_CENTRAL_CODE)
+        .content(asJsonString(transactionHoldDTO))
+        .headers(defaultHeaders())
+        .headers(headers)
+        .contentType(APPLICATION_JSON))
+      .andExpect(status().isOk())
+      .andReturn();
 
     var transactionAfter = fetchTransactionByTrackingId(PRE_POPULATED_TRACKING2_ID);
 
-    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
     assertEquals(RETURN_UNCIRCULATED, transactionAfter.getState());
   }
 
@@ -675,21 +723,24 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
   })
-  void checkTransactionIsNotInStateItemReceivedOrReceiveUnannounced() {
+  void checkTransactionIsNotInStateItemReceivedOrReceiveUnannounced() throws Exception {
     var transactionHoldDTO = createTransactionHoldDTO();
     var transactionBefore = fetchPrePopulatedTransaction();
 
     transactionBefore.setState(TRANSFER);
     repository.save(transactionBefore);
 
-    var responseEntity = testRestTemplate.exchange(
-      "/inn-reach/d2ir/circ/returnuncirculated/{trackingId}/{centralCode}", HttpMethod.PUT,
-      new HttpEntity<>(transactionHoldDTO, headers), InnReachResponseDTO.class,
-      PRE_POPULATED_TRACKING1_ID, PRE_POPULATED_CENTRAL_CODE);
+    var mvcResult = mockMvc.perform(put(
+        "/inn-reach/d2ir/circ/returnuncirculated/{trackingId}/{centralCode}", PRE_POPULATED_TRACKING1_ID, PRE_POPULATED_CENTRAL_CODE)
+        .content(asJsonString(transactionHoldDTO))
+        .headers(defaultHeaders())
+        .headers(headers)
+        .contentType(APPLICATION_JSON))
+      .andExpect(status().isBadRequest())
+      .andReturn();
 
     var transactionAfter = fetchPrePopulatedTransaction();
 
-    assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
     assertEquals(TRANSFER, transactionAfter.getState());
   }
 
@@ -698,20 +749,21 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     "classpath:db/central-server/pre-populate-central-server.sql"
   },
     config = @SqlConfig(transactionMode = SqlConfig.TransactionMode.ISOLATED))
-  void processLocalHoldCirculationRequest_createNew() {
+  void processLocalHoldCirculationRequest_createNew() throws Exception {
     var transactionHoldDTO = createTransactionHoldDTO();
     transactionHoldDTO.setItemAgencyCode(PRE_POPULATED_LOCAL_AGENCY_CODE1);
     transactionHoldDTO.setPatronAgencyCode(PRE_POPULATED_LOCAL_AGENCY_CODE2);
 
-    var responseEntity = testRestTemplate.exchange(
-      CIRCULATION_OPERATION_ENDPOINT, HttpMethod.PUT,
-      new HttpEntity<>(transactionHoldDTO, headers), InnReachResponseDTO.class,
-      LOCAL_HOLD_OPERATION, NEW_TRANSACTION_TRACKING_ID, PRE_POPULATED_CENTRAL_CODE
-    );
+    var mvcResult = mockMvc.perform(put(
+        CIRCULATION_OPERATION_ENDPOINT, LOCAL_HOLD_OPERATION, NEW_TRANSACTION_TRACKING_ID, PRE_POPULATED_CENTRAL_CODE)
+        .content(asJsonString(transactionHoldDTO))
+        .headers(defaultHeaders())
+        .headers(headers)
+        .contentType(APPLICATION_JSON))
+      .andExpect(status().isOk())
+      .andReturn();
 
-    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
-
-    var responseBody = responseEntity.getBody();
+    var responseBody = fromJson(mvcResult, InnReachResponseDTO.class);
 
     assertNotNull(responseBody);
     assertNotNull(responseBody.getErrors());
@@ -729,20 +781,21 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
   })
-  void processLocalHoldCirculationRequest_updateExiting() {
+  void processLocalHoldCirculationRequest_updateExiting() throws Exception {
     var transactionHoldDTO = createTransactionHoldDTO();
     transactionHoldDTO.setItemAgencyCode(PRE_POPULATED_LOCAL_AGENCY_CODE1);
     transactionHoldDTO.setPatronAgencyCode(PRE_POPULATED_LOCAL_AGENCY_CODE2);
 
-    var responseEntity = testRestTemplate.exchange(
-      CIRCULATION_OPERATION_ENDPOINT, HttpMethod.PUT,
-      new HttpEntity<>(transactionHoldDTO, headers), InnReachResponseDTO.class,
-      LOCAL_HOLD_OPERATION, PRE_POPULATED_TRACKING1_ID, PRE_POPULATED_CENTRAL_CODE
-    );
+    var mvcResult = mockMvc.perform(put(
+        CIRCULATION_OPERATION_ENDPOINT, LOCAL_HOLD_OPERATION, PRE_POPULATED_TRACKING1_ID, PRE_POPULATED_CENTRAL_CODE)
+        .content(asJsonString(transactionHoldDTO))
+        .headers(defaultHeaders())
+        .headers(headers)
+        .contentType(APPLICATION_JSON))
+      .andExpect(status().isOk())
+      .andReturn();
 
-    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
-
-    var responseBody = responseEntity.getBody();
+    var responseBody = fromJson(mvcResult, InnReachResponseDTO.class);
 
     assertNotNull(responseBody);
     assertNotNull(responseBody.getErrors());
@@ -763,20 +816,21 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     "classpath:db/central-server/pre-populate-another-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
   })
-  void processLocalHoldCirculationRequest_invalidAgencyCodes() {
+  void processLocalHoldCirculationRequest_invalidAgencyCodes() throws Exception {
     var transactionHoldDTO = createTransactionHoldDTO();
     transactionHoldDTO.setPatronAgencyCode(PRE_POPULATED_LOCAL_AGENCY_CODE1);
     transactionHoldDTO.setItemAgencyCode(PRE_POPULATED_ANOTHER_LOCAL_AGENCY_CODE1);
 
-    var responseEntity = testRestTemplate.exchange(
-      CIRCULATION_OPERATION_ENDPOINT, HttpMethod.PUT,
-      new HttpEntity<>(transactionHoldDTO, headers), InnReachResponseDTO.class,
-      LOCAL_HOLD_OPERATION, PRE_POPULATED_TRACKING1_ID, PRE_POPULATED_CENTRAL_CODE
-    );
-    var responseBody = responseEntity.getBody();
+    var mvcResult = mockMvc.perform(put(
+        CIRCULATION_OPERATION_ENDPOINT, LOCAL_HOLD_OPERATION, PRE_POPULATED_TRACKING1_ID, PRE_POPULATED_CENTRAL_CODE)
+        .content(asJsonString(transactionHoldDTO))
+        .headers(defaultHeaders())
+        .headers(headers)
+        .contentType(APPLICATION_JSON))
+      .andExpect(status().isBadRequest())
+      .andReturn();
+    var responseBody = fromJson(mvcResult, InnReachResponseDTO.class);
 
-    assertEquals(BAD_REQUEST, responseEntity.getStatusCode());
-    assertNotNull(responseBody);
     assertEquals("The patron and item agencies should be on the same local server", responseBody.getReason());
   }
 
@@ -793,7 +847,7 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
   })
-  void processItemReceivedRequest_whenItemIsShipped() {
+  void processItemReceivedRequest_whenItemIsShipped() throws Exception {
     var transaction = repository.findByTrackingIdAndCentralServerCode(PRE_POPULATED_TRACKING2_ID,
       PRE_POPULATED_CENTRAL_CODE).get();
     transaction.setState(ITEM_SHIPPED);
@@ -801,12 +855,15 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
 
     var transactionHoldDTO = createTransactionHoldDTO();
 
-    var responseEntity = testRestTemplate.exchange(
-      ITEM_RECEIVED_PATH, HttpMethod.PUT, new HttpEntity<>(transactionHoldDTO, headers), InnReachResponseDTO.class,
-      PRE_POPULATED_TRACKING2_ID, PRE_POPULATED_CENTRAL_CODE);
-
-    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
-    var responseEntityBody = responseEntity.getBody();
+    var mvcResult = mockMvc.perform(put(
+        ITEM_RECEIVED_PATH, PRE_POPULATED_TRACKING2_ID, PRE_POPULATED_CENTRAL_CODE)
+        .content(asJsonString(transactionHoldDTO))
+        .headers(defaultHeaders())
+        .headers(headers)
+        .contentType(APPLICATION_JSON))
+      .andExpect(status().isOk())
+      .andReturn();
+    var responseEntityBody = fromJson(mvcResult, InnReachResponseDTO.class);
     assertNotNull(responseEntityBody);
     assertEquals("ok", responseEntityBody.getStatus());
 
@@ -820,18 +877,21 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
   })
-  void processItemReceivedRequest_whenItemIsNotShipped() {
+  void processItemReceivedRequest_whenItemIsNotShipped() throws Exception {
     when(circulationClient.findRequest(any())).thenReturn(Optional.of(createRequestDTO()));
     when(circulationClient.checkOutByBarcode(any(CheckOutRequestDTO.class))).thenReturn(new LoanDTO().id(NEW_LOAN_ID));
     when(inventoryService.findDefaultServicePointIdForUser(PRE_POPULATED_PATRON2_ID)).thenReturn(Optional.of(PRE_POPULATE_SERVICE_ID));
     var transactionHoldDTO = createTransactionHoldDTO();
 
-    var responseEntity = testRestTemplate.exchange(
-      ITEM_RECEIVED_PATH, HttpMethod.PUT, new HttpEntity<>(transactionHoldDTO, headers), InnReachResponseDTO.class,
-      PRE_POPULATED_TRACKING2_ID, PRE_POPULATED_CENTRAL_CODE);
-
-    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
-    var responseEntityBody = responseEntity.getBody();
+    var mvcResult = mockMvc.perform(put(
+        ITEM_RECEIVED_PATH, PRE_POPULATED_TRACKING2_ID, PRE_POPULATED_CENTRAL_CODE)
+        .content(asJsonString(transactionHoldDTO))
+        .headers(defaultHeaders())
+        .headers(headers)
+        .contentType(APPLICATION_JSON))
+      .andExpect(status().isOk())
+      .andReturn();
+    var responseEntityBody = fromJson(mvcResult, InnReachResponseDTO.class);
     assertNotNull(responseEntityBody);
     assertEquals("ok", responseEntityBody.getStatus());
 
@@ -847,7 +907,7 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql",
     "classpath:db/patron-type-mapping/pre-populate-patron-type-mapping.sql"
   })
-  void processRecallRequest_whenItemIsOnLoanToThePatron() {
+  void processRecallRequest_whenItemIsOnLoanToThePatron() throws Exception {
     var recallDTO = createRecallDTO();
     var user = populateUser();
 
@@ -857,12 +917,15 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     when(inventoryService.findDefaultServicePointIdForUser(PRE_POPULATED_REQUESTER_ID))
       .thenReturn(Optional.of(PICK_IP_SERVICE_POINT));
 
-    var responseEntity = testRestTemplate.exchange(
-      RECALL_REQUEST_PATH, HttpMethod.PUT, new HttpEntity<>(recallDTO, headers), InnReachResponseDTO.class,
-      PRE_POPULATED_TRACKING1_ID, PRE_POPULATED_CENTRAL_CODE);
-
-    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
-    var responseEntityBody = responseEntity.getBody();
+    var mvcResult = mockMvc.perform(put(
+        RECALL_REQUEST_PATH, PRE_POPULATED_TRACKING1_ID, PRE_POPULATED_CENTRAL_CODE)
+        .content(asJsonString(recallDTO))
+        .headers(defaultHeaders())
+        .headers(headers)
+        .contentType(APPLICATION_JSON))
+      .andExpect(status().isOk())
+      .andReturn();
+    var responseEntityBody = fromJson(mvcResult, InnReachResponseDTO.class);
     assertNotNull(responseEntityBody);
     assertEquals("ok", responseEntityBody.getStatus());
 
@@ -885,7 +948,7 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql",
     "classpath:db/patron-type-mapping/pre-populate-patron-type-mapping.sql"
   })
-  void processRecallRequest_whenItemIsOnTheHoldShelf() {
+  void processRecallRequest_whenItemIsOnTheHoldShelf() throws Exception {
     var requestDTO = new RequestDTO();
     requestDTO.setStatus(RequestDTO.RequestStatus.OPEN_AWAITING_PICKUP);
     var user = populateUser();
@@ -904,12 +967,15 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
 
     var recallDTO = createRecallDTO();
 
-    var responseEntity = testRestTemplate.exchange(
-      RECALL_REQUEST_PATH, HttpMethod.PUT, new HttpEntity<>(recallDTO, headers), InnReachResponseDTO.class,
-      PRE_POPULATED_TRACKING1_ID, PRE_POPULATED_CENTRAL_CODE);
-
-    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
-    var responseEntityBody = responseEntity.getBody();
+    var mvcResult = mockMvc.perform(put(
+        RECALL_REQUEST_PATH, PRE_POPULATED_TRACKING1_ID, PRE_POPULATED_CENTRAL_CODE)
+        .content(asJsonString(recallDTO))
+        .headers(defaultHeaders())
+        .headers(headers)
+        .contentType(APPLICATION_JSON))
+      .andExpect(status().isOk())
+      .andReturn();
+    var responseEntityBody = fromJson(mvcResult, InnReachResponseDTO.class);
     assertNotNull(responseEntityBody);
     assertEquals("ok", responseEntityBody.getStatus());
 
@@ -925,7 +991,7 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql",
     "classpath:db/patron-type-mapping/pre-populate-patron-type-mapping.sql"
   })
-  void processRecallRequest_whenBadRequest() {
+  void processRecallRequest_whenBadRequest() throws Exception {
     var requestDTO = new RequestDTO();
     requestDTO.setStatus(RequestDTO.RequestStatus.OPEN_AWAITING_PICKUP);
     var user = populateUser();
@@ -937,12 +1003,15 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
 
     var recallDTO = createRecallDTO();
 
-    var responseEntity = testRestTemplate.exchange(
-      RECALL_REQUEST_PATH, HttpMethod.PUT, new HttpEntity<>(recallDTO, headers), InnReachResponseDTO.class,
-      PRE_POPULATED_TRACKING1_ID, PRE_POPULATED_CENTRAL_CODE);
-
-    assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
-    var responseEntityBody = responseEntity.getBody();
+    var mvcResult = mockMvc.perform(put(
+        RECALL_REQUEST_PATH, PRE_POPULATED_TRACKING1_ID, PRE_POPULATED_CENTRAL_CODE)
+        .content(asJsonString(recallDTO))
+        .headers(defaultHeaders())
+        .headers(headers)
+        .contentType(APPLICATION_JSON))
+      .andExpect(status().isBadRequest())
+      .andReturn();
+    var responseEntityBody = fromJson(mvcResult, InnReachResponseDTO.class);
     assertNotNull(responseEntityBody);
     assertTrue(responseEntityBody.getReason().contains("Test exception."));
 
@@ -957,7 +1026,7 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql",
     "classpath:db/patron-type-mapping/pre-populate-patron-type-mapping.sql"
   })
-  void processRecallRequest_whenRecallUserIsNotSet() {
+  void processRecallRequest_whenRecallUserIsNotSet() throws Exception {
     var user = populateUser();
 
     when(userService.getUserById(PRE_POPULATED_PATRON_ID)).thenReturn(Optional.of(user));
@@ -967,12 +1036,15 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     when(circulationClient.findRequest(any())).thenReturn(Optional.of(new RequestDTO()));
     var recallDTO = createRecallDTO();
 
-    var responseEntity = testRestTemplate.exchange(
-      RECALL_REQUEST_PATH, HttpMethod.PUT, new HttpEntity<>(recallDTO, headers), InnReachResponseDTO.class,
-      PRE_POPULATED_TRACKING1_ID, PRE_POPULATED_CENTRAL_CODE);
-
-    assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
-    var responseEntityBody = responseEntity.getBody();
+    var mvcResult = mockMvc.perform(put(
+        RECALL_REQUEST_PATH, PRE_POPULATED_TRACKING1_ID, PRE_POPULATED_CENTRAL_CODE)
+        .content(asJsonString(recallDTO))
+        .headers(defaultHeaders())
+        .headers(headers)
+        .contentType(APPLICATION_JSON))
+      .andExpect(status().isBadRequest())
+      .andReturn();
+    var responseEntityBody = fromJson(mvcResult, InnReachResponseDTO.class);
     assertNotNull(responseEntityBody);
     assertTrue(responseEntityBody.getReason().contains("Recall user is not set for central server with code = " + PRE_POPULATED_CENTRAL_CODE));
 
@@ -986,7 +1058,7 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
   })
-  void borrowerRenewRequestCalculatedDueDateAfterBorrowerDueDate() {
+  void borrowerRenewRequestCalculatedDueDateAfterBorrowerDueDate() throws Exception {
     var loan = new LoanDTO();
     loan.setDueDate(new Date(Instant.now().toEpochMilli()));
     when(circulationClient.findLoan(any())).thenReturn(Optional.of(loan));
@@ -1006,14 +1078,16 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     borrowerItem.setItemAgencyCode(transactionHoldDTO.getItemAgencyCode());
     borrowerItem.setItemId(transactionHoldDTO.getItemId());
 
-    var responseEntity = testRestTemplate.exchange(
-      "/inn-reach/d2ir/circ/borrowerrenew/{trackingId}/{centralCode}", HttpMethod.PUT,
-      new HttpEntity<>(borrowerItem, headers), RenewLoanDTO.class,
-      PRE_POPULATED_TRACKING1_ID, PRE_POPULATED_CENTRAL_CODE);
+    mockMvc.perform(put(
+        "/inn-reach/d2ir/circ/borrowerrenew/{trackingId}/{centralCode}", PRE_POPULATED_TRACKING1_ID, PRE_POPULATED_CENTRAL_CODE)
+        .content(asJsonString(borrowerItem))
+        .headers(defaultHeaders())
+        .headers(headers)
+        .contentType(APPLICATION_JSON))
+      .andExpect(status().isOk());
 
     var transactionState = fetchPrePopulatedTransaction().getState();
 
-    assertEquals(OK, responseEntity.getStatusCode());
     assertEquals(BORROWER_RENEW, transactionState);
   }
 
@@ -1022,7 +1096,7 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
   })
-  void borrowerRenewRequestCalculatedDueDateBeforeBorrowerDueDate() {
+  void borrowerRenewRequestCalculatedDueDateBeforeBorrowerDueDate() throws Exception {
     when(innReachExternalService.postInnReachApi(any(), any(), any())).thenReturn("ok");
 
     var loan = new LoanDTO();
@@ -1044,14 +1118,16 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     borrowerItem.setItemAgencyCode(transactionHoldDTO.getItemAgencyCode());
     borrowerItem.setItemId(transactionHoldDTO.getItemId());
 
-    var responseEntity = testRestTemplate.exchange(
-      "/inn-reach/d2ir/circ/borrowerrenew/{trackingId}/{centralCode}", HttpMethod.PUT,
-      new HttpEntity<>(borrowerItem, headers), RenewLoanDTO.class,
-      PRE_POPULATED_TRACKING1_ID, PRE_POPULATED_CENTRAL_CODE);
+    mockMvc.perform(put(
+        "/inn-reach/d2ir/circ/borrowerrenew/{trackingId}/{centralCode}", PRE_POPULATED_TRACKING1_ID, PRE_POPULATED_CENTRAL_CODE)
+        .content(asJsonString(borrowerItem))
+        .headers(defaultHeaders())
+        .headers(headers)
+        .contentType(APPLICATION_JSON))
+      .andExpect(status().isOk());
 
     var transactionState = fetchPrePopulatedTransaction().getState();
 
-    assertEquals(OK, responseEntity.getStatusCode());
     assertEquals(RECALL, transactionState);
   }
 
@@ -1060,7 +1136,7 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
   })
-  void borrowerRenewRequestExistingDueDateBeforeRequestedDueDateAndExceptionOccurs() {
+  void borrowerRenewRequestExistingDueDateBeforeRequestedDueDateAndExceptionOccurs() throws Exception {
     when(innReachExternalService.postInnReachApi(any(), any(), any())).thenReturn("ok");
 
     var loan = new LoanDTO();
@@ -1080,14 +1156,16 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     borrowerItem.setItemAgencyCode(transactionHoldDTO.getItemAgencyCode());
     borrowerItem.setItemId(transactionHoldDTO.getItemId());
 
-    var responseEntity = testRestTemplate.exchange(
-      "/inn-reach/d2ir/circ/borrowerrenew/{trackingId}/{centralCode}", HttpMethod.PUT,
-      new HttpEntity<>(borrowerItem, headers), RenewLoanDTO.class,
-      PRE_POPULATED_TRACKING1_ID, PRE_POPULATED_CENTRAL_CODE);
+    mockMvc.perform(put(
+        "/inn-reach/d2ir/circ/borrowerrenew/{trackingId}/{centralCode}", PRE_POPULATED_TRACKING1_ID, PRE_POPULATED_CENTRAL_CODE)
+        .content(asJsonString(borrowerItem))
+        .headers(defaultHeaders())
+        .headers(headers)
+        .contentType(APPLICATION_JSON))
+      .andExpect(status().isOk());
 
     var transactionState = fetchPrePopulatedTransaction().getState();
 
-    assertEquals(OK, responseEntity.getStatusCode());
     assertEquals(RECALL, transactionState);
   }
 
@@ -1096,7 +1174,7 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
   })
-  void borrowerRenewRequestFailedRenewLoan() {
+  void borrowerRenewRequestFailedRenewLoan() throws Exception {
     var loan = new LoanDTO();
     loan.setDueDate(new Date(Instant.now().toEpochMilli()));
     when(circulationClient.findLoan(any())).thenReturn(Optional.of(loan));
@@ -1116,14 +1194,16 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
 
     var transactionStateBefore = fetchPrePopulatedTransaction().getState();
 
-    var responseEntity = testRestTemplate.exchange(
-      "/inn-reach/d2ir/circ/borrowerrenew/{trackingId}/{centralCode}", HttpMethod.PUT,
-      new HttpEntity<>(borrowerItem, headers), RenewLoanDTO.class,
-      PRE_POPULATED_TRACKING1_ID, PRE_POPULATED_CENTRAL_CODE);
+    mockMvc.perform(put(
+        "/inn-reach/d2ir/circ/borrowerrenew/{trackingId}/{centralCode}", PRE_POPULATED_TRACKING1_ID, PRE_POPULATED_CENTRAL_CODE)
+        .content(asJsonString(borrowerItem))
+        .headers(defaultHeaders())
+        .headers(headers)
+        .contentType(APPLICATION_JSON))
+      .andExpect(status().isBadRequest());
 
     var transactionStateAfter = fetchPrePopulatedTransaction().getState();
 
-    assertEquals(BAD_REQUEST, responseEntity.getStatusCode());
     assertEquals(transactionStateBefore, transactionStateAfter);
   }
 
@@ -1132,7 +1212,7 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
   })
-  void borrowerRenewRequestFailedRecallRequest() {
+  void borrowerRenewRequestFailedRecallRequest() throws Exception {
     when(innReachExternalService.postInnReachApi(any(), any(), any())).thenThrow(IllegalArgumentException.class);
 
     var loan = new LoanDTO();
@@ -1156,14 +1236,16 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
 
     var transactionStateBefore = fetchPrePopulatedTransaction().getState();
 
-    var responseEntity = testRestTemplate.exchange(
-      "/inn-reach/d2ir/circ/borrowerrenew/{trackingId}/{centralCode}", HttpMethod.PUT,
-      new HttpEntity<>(borrowerItem, headers), RenewLoanDTO.class,
-      PRE_POPULATED_TRACKING1_ID, PRE_POPULATED_CENTRAL_CODE);
+    mockMvc.perform(put(
+        "/inn-reach/d2ir/circ/borrowerrenew/{trackingId}/{centralCode}", PRE_POPULATED_TRACKING1_ID, PRE_POPULATED_CENTRAL_CODE)
+        .content(asJsonString(borrowerItem))
+        .headers(defaultHeaders())
+        .headers(headers)
+        .contentType(APPLICATION_JSON))
+      .andExpect(status().isBadRequest());
 
     var transactionStateAfter = fetchPrePopulatedTransaction().getState();
 
-    assertEquals(BAD_REQUEST, responseEntity.getStatusCode());
     assertEquals(transactionStateBefore, transactionStateAfter);
   }
 
@@ -1172,15 +1254,17 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
   })
-  void shouldNotProcessCircRequest_whenRequiredHeadersAreNotPresent() {
+  void shouldNotProcessCircRequest_whenRequiredHeadersAreNotPresent() throws Exception {
     var transactionHoldDTO = createTransactionHoldDTO();
 
-    var responseEntity = testRestTemplate.exchange(
-      ITEM_RECEIVED_PATH, HttpMethod.PUT, new HttpEntity<>(transactionHoldDTO), InnReachResponseDTO.class,
-      PRE_POPULATED_TRACKING1_ID, PRE_POPULATED_CENTRAL_CODE);
-
-    assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
-    var responseEntityBody = responseEntity.getBody();
+    var mvcResult = mockMvc.perform(put(
+        ITEM_RECEIVED_PATH, PRE_POPULATED_TRACKING1_ID, PRE_POPULATED_CENTRAL_CODE)
+        .content(asJsonString(transactionHoldDTO))
+        .headers(defaultHeaders())
+        .contentType(APPLICATION_JSON))
+      .andExpect(status().isBadRequest())
+      .andReturn();
+    var responseEntityBody = fromJson(mvcResult, InnReachResponseDTO.class);
     assertNotNull(responseEntityBody);
     assertEquals("Required request header 'X-To-Code' for method parameter type String is not present", responseEntityBody.getReason());
   }
@@ -1191,7 +1275,7 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
   })
-  void checkTransactionIsNotInStatePatronHoldOrTransfer(InnReachTransaction.TransactionState state) {
+  void checkTransactionIsNotInStatePatronHoldOrTransfer(InnReachTransaction.TransactionState state) throws Exception {
     var transactionHoldDTO = createTransactionHoldDTO();
     var transactionBefore = fetchPrePopulatedTransaction();
     mockFetchingCirculationSettings();
@@ -1199,14 +1283,16 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     transactionBefore.setState(state);
     repository.save(transactionBefore);
 
-    var responseEntity = testRestTemplate.exchange(
-      "/inn-reach/d2ir/circ/finalcheckin/{trackingId}/{centralCode}", HttpMethod.PUT,
-      new HttpEntity<>(transactionHoldDTO, headers), InnReachResponseDTO.class,
-      PRE_POPULATED_TRACKING1_ID, PRE_POPULATED_CENTRAL_CODE);
+    var mvcResult = mockMvc.perform(put(
+        "/inn-reach/d2ir/circ/finalcheckin/{trackingId}/{centralCode}", PRE_POPULATED_TRACKING1_ID, PRE_POPULATED_CENTRAL_CODE)
+        .content(asJsonString(transactionHoldDTO))
+        .headers(defaultHeaders())
+        .headers(headers)
+        .contentType(APPLICATION_JSON))
+      .andExpect(status().isOk())
+      .andReturn();
 
     var transactionAfter = fetchPrePopulatedTransaction();
-
-    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
     assertEquals(FINAL_CHECKIN, transactionAfter.getState());
     assertPatronHoldFieldsAreNull((TransactionPatronHold) transactionAfter.getHold());
   }
@@ -1217,21 +1303,23 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
   })
-  void checkTransactionIsInStatePatronHoldOrTransfer(InnReachTransaction.TransactionState state) {
+  void checkTransactionIsInStatePatronHoldOrTransfer(InnReachTransaction.TransactionState state) throws Exception {
     var transactionHoldDTO = createTransactionHoldDTO();
     var transactionBefore = fetchPrePopulatedTransaction();
 
     transactionBefore.setState(state);
     repository.save(transactionBefore);
 
-    var responseEntity = testRestTemplate.exchange(
-      "/inn-reach/d2ir/circ/finalcheckin/{trackingId}/{centralCode}", HttpMethod.PUT,
-      new HttpEntity<>(transactionHoldDTO, headers), InnReachResponseDTO.class,
-      PRE_POPULATED_TRACKING1_ID, PRE_POPULATED_CENTRAL_CODE);
+    mockMvc.perform(put(
+        "/inn-reach/d2ir/circ/finalcheckin/{trackingId}/{centralCode}", PRE_POPULATED_TRACKING1_ID, PRE_POPULATED_CENTRAL_CODE)
+        .content(asJsonString(transactionHoldDTO))
+        .headers(defaultHeaders())
+        .headers(headers)
+        .contentType(APPLICATION_JSON))
+      .andExpect(status().isBadRequest());
 
     var transaction = fetchPrePopulatedTransaction();
 
-    assertEquals(HttpStatus.BAD_REQUEST, responseEntity.getStatusCode());
     assertEquals(state, transaction.getState());
   }
 
@@ -1240,17 +1328,18 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
   })
-  void testClaimsItemReturned() {
+  void testClaimsItemReturned() throws Exception {
     var request = createClaimsItemReturnedDTO();
     var date = Instant.now().truncatedTo(ChronoUnit.SECONDS);
     request.setClaimsReturnedDate((int) date.getEpochSecond());
 
-    var responseEntity = testRestTemplate.exchange(
-      "/inn-reach/d2ir/circ/claimsreturned/{trackingId}/{centralCode}", HttpMethod.PUT,
-      new HttpEntity<>(request, headers), InnReachResponseDTO.class,
-      PRE_POPULATED_TRACKING1_ID, PRE_POPULATED_CENTRAL_CODE);
-
-    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+    mockMvc.perform(put(
+        "/inn-reach/d2ir/circ/claimsreturned/{trackingId}/{centralCode}", PRE_POPULATED_TRACKING1_ID, PRE_POPULATED_CENTRAL_CODE)
+        .content(asJsonString(request))
+        .headers(defaultHeaders())
+        .headers(headers)
+        .contentType(APPLICATION_JSON))
+      .andExpect(status().isOk());
 
     var updatedTransaction = fetchPrePopulatedTransaction();
 
@@ -1266,16 +1355,17 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
   })
-  void testClaimsItemReturned_UnknownDate() {
+  void testClaimsItemReturned_UnknownDate() throws Exception {
     var request = createClaimsItemReturnedDTO();
     request.setClaimsReturnedDate(-1);
 
-    var responseEntity = testRestTemplate.exchange(
-      "/inn-reach/d2ir/circ/claimsreturned/{trackingId}/{centralCode}", HttpMethod.PUT,
-      new HttpEntity<>(request, headers), InnReachResponseDTO.class,
-      PRE_POPULATED_TRACKING1_ID, PRE_POPULATED_CENTRAL_CODE);
-
-    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
+    mockMvc.perform(put(
+        "/inn-reach/d2ir/circ/claimsreturned/{trackingId}/{centralCode}", PRE_POPULATED_TRACKING1_ID, PRE_POPULATED_CENTRAL_CODE)
+        .content(asJsonString(request))
+        .headers(defaultHeaders())
+        .headers(headers)
+        .contentType(APPLICATION_JSON))
+      .andExpect(status().isOk());
 
     var updatedTransaction = fetchPrePopulatedTransaction();
 
@@ -1292,21 +1382,24 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql",
     "classpath:db/patron-type-mapping/pre-populate-patron-type-mapping.sql",
   })
-  void processCancelRequest() {
+  void processCancelRequest() throws Exception {
     mockFetchingCirculationSettings();
     doNothing().when(requestService).cancelRequest(anyString(), any(UUID.class), any(UUID.class), anyString());
     when(userService.getUserById(any(UUID.class))).thenReturn(Optional.of(populateUser()));
 
     var cancelRequestDTO = createCancelRequestDTO();
 
-    var responseEntity = testRestTemplate.exchange(
-      CANCEL_REQUEST_PATH, HttpMethod.PUT,
-      new HttpEntity<>(cancelRequestDTO, headers), InnReachResponseDTO.class,
-      PRE_POPULATED_TRACKING1_ID, PRE_POPULATED_CENTRAL_CODE);
+    var mvcResult = mockMvc.perform(put(
+        CANCEL_REQUEST_PATH, PRE_POPULATED_TRACKING1_ID, PRE_POPULATED_CENTRAL_CODE)
+        .content(asJsonString(cancelRequestDTO))
+        .headers(defaultHeaders())
+        .headers(headers)
+        .contentType(APPLICATION_JSON))
+      .andExpect(status().isOk())
+      .andReturn();
 
     await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() -> {
       var transactionAfter = fetchPrePopulatedTransaction();
-      assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
       assertEquals(CANCEL_REQUEST, transactionAfter.getState());
       verify(requestService).cancelRequest(anyString(), any(UUID.class), any(UUID.class), anyString());
       verify(virtualRecordService).deleteVirtualRecords(any(), any(), any(), any());
@@ -1320,7 +1413,7 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
           "classpath:db/central-server/pre-populate-central-server.sql",
           "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
   })
-  void testFinalCheckInWithDeleteVirtualRecord(InnReachTransaction.TransactionState state) {
+  void testFinalCheckInWithDeleteVirtualRecord(InnReachTransaction.TransactionState state) throws Exception {
     var transactionHoldDTO = createTransactionHoldDTO();
     var transactionBefore = fetchPrePopulatedTransaction();
 
@@ -1328,14 +1421,17 @@ class InnReachCirculationControllerTest extends BaseControllerTest {
     transactionBefore.setState(state);
     repository.save(transactionBefore);
 
-    var responseEntity = testRestTemplate.exchange(
-            "/inn-reach/d2ir/circ/finalcheckin/{trackingId}/{centralCode}", HttpMethod.PUT,
-            new HttpEntity<>(transactionHoldDTO, headers), InnReachResponseDTO.class,
-            PRE_POPULATED_TRACKING1_ID, PRE_POPULATED_CENTRAL_CODE);
+    var mvcResult = mockMvc.perform(put(
+            "/inn-reach/d2ir/circ/finalcheckin/{trackingId}/{centralCode}", PRE_POPULATED_TRACKING1_ID, PRE_POPULATED_CENTRAL_CODE)
+            .content(asJsonString(transactionHoldDTO))
+            .headers(defaultHeaders())
+            .headers(headers)
+            .contentType(APPLICATION_JSON))
+      .andExpect(status().isOk())
+      .andReturn();
 
     await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() -> {
       var transactionAfter = fetchPrePopulatedTransaction();
-      assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
       assertEquals(FINAL_CHECKIN, transactionAfter.getState());
       verify(virtualRecordService).deleteVirtualRecords(any(), any(), any(), any());
       assertPatronHoldFieldsAreNull((TransactionPatronHold) transactionAfter.getHold());

@@ -2,22 +2,30 @@ package org.folio.innreach.controller;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
+import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TEST_METHOD;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import static org.folio.innreach.fixture.TestUtil.deserializeFromJsonFile;
 
+import org.folio.innreach.domain.listener.KafkaCirculationEventListener;
+import org.folio.innreach.domain.listener.KafkaInitialContributionEventListener;
+import org.folio.innreach.domain.listener.KafkaInventoryEventListener;
+import org.folio.innreach.dto.CentralPatronTypeMappingsDTO;
+import org.folio.innreach.external.client.InnReachAuthClient;
+import org.folio.innreach.external.dto.AccessTokenDTO;
+import org.folio.innreach.it.base.BaseTenantIntegrationTest;
+import org.folio.innreach.repository.CentralPatronTypeMappingRepository;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.resttestclient.TestRestTemplate;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.jdbc.Sql;
-
-import org.folio.innreach.controller.base.BaseControllerTest;
-import org.folio.innreach.dto.CentralPatronTypeMappingsDTO;
-import org.folio.innreach.repository.CentralPatronTypeMappingRepository;
 
 @Sql(
   scripts = {
@@ -32,26 +40,36 @@ import org.folio.innreach.repository.CentralPatronTypeMappingRepository;
   },
   executionPhase = AFTER_TEST_METHOD
 )
-class CentralPatronTypeMappingControllerTest extends BaseControllerTest {
+class CentralPatronTypeMappingControllerTest extends BaseTenantIntegrationTest {
 
   private static final String PRE_POPULATED_CENTRAL_SERVER_ID = "edab6baf-c696-42b1-89bb-1bbb8759b0d2";
 
-  @Autowired
-  private TestRestTemplate testRestTemplate;
+  @MockitoBean
+  private KafkaCirculationEventListener kafkaCirculationEventListener;
+  @MockitoBean
+  private KafkaInventoryEventListener kafkaInventoryEventListener;
+  @MockitoBean
+  private KafkaInitialContributionEventListener kafkaInitialContributionEventListener;
+  @MockitoBean
+  private InnReachAuthClient innReachAuthClient;
 
   @Autowired
   private CentralPatronTypeMappingRepository repository;
 
+  @BeforeEach
+  void init() {
+    when(innReachAuthClient.getAccessToken(any(), any())).thenReturn(ResponseEntity.ok(new AccessTokenDTO()));
+  }
+
   @Test
-  void getAllExistingMappings() {
-    var responseEntity = testRestTemplate.getForEntity(
-      "/inn-reach/central-servers/{centralServerId}/central-patron-type-mappings", CentralPatronTypeMappingsDTO.class,
-      PRE_POPULATED_CENTRAL_SERVER_ID);
+  void getAllExistingMappings() throws Exception {
+    var result = mockMvc.perform(get("/inn-reach/central-servers/{centralServerId}/central-patron-type-mappings",
+        PRE_POPULATED_CENTRAL_SERVER_ID)
+        .headers(defaultHeaders()))
+      .andExpect(status().is2xxSuccessful())
+      .andReturn();
 
-    assertTrue(responseEntity.getStatusCode().is2xxSuccessful());
-    assertTrue(responseEntity.hasBody());
-
-    var response = responseEntity.getBody();
+    var response = fromJson(result, CentralPatronTypeMappingsDTO.class);
 
     assertNotNull(response);
 
@@ -61,18 +79,19 @@ class CentralPatronTypeMappingControllerTest extends BaseControllerTest {
   }
 
   @Test
-  void updateAllExistingMappings() {
+  void updateAllExistingMappings() throws Exception {
     var centralPatronTypeMappingsDTO = deserializeFromJsonFile(
       "/central-patron-type-mappings/update-central-patron-type-mappings-request.json", CentralPatronTypeMappingsDTO.class);
 
     centralPatronTypeMappingsDTO.getCentralPatronTypeMappings().get(0).setId(null);
     centralPatronTypeMappingsDTO.getCentralPatronTypeMappings().get(1).setId(null);
 
-    var responseEntity = testRestTemplate.exchange(
-      "/inn-reach/central-servers/{centralServerId}/central-patron-type-mappings", HttpMethod.PUT,
-      new HttpEntity<>(centralPatronTypeMappingsDTO), Void.class, PRE_POPULATED_CENTRAL_SERVER_ID);
-
-    assertEquals(HttpStatus.NO_CONTENT, responseEntity.getStatusCode());
+    mockMvc.perform(put("/inn-reach/central-servers/{centralServerId}/central-patron-type-mappings",
+        PRE_POPULATED_CENTRAL_SERVER_ID)
+        .content(asJsonString(centralPatronTypeMappingsDTO))
+        .headers(defaultHeaders())
+        .contentType(APPLICATION_JSON))
+      .andExpect(status().isNoContent());
 
     var updCentralPatronTypeMappings = repository.findAll();
 

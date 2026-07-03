@@ -13,41 +13,47 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
-import static org.springframework.http.HttpStatus.CONFLICT;
-import static org.springframework.http.HttpStatus.NO_CONTENT;
+import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TEST_METHOD;
 import static org.springframework.test.context.jdbc.SqlMergeMode.MergeMode.MERGE;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import static org.folio.innreach.controller.ControllerTestUtils.collectFieldNames;
 import static org.folio.innreach.controller.ControllerTestUtils.createValidationError;
 import static org.folio.innreach.fixture.TestUtil.deserializeFromJsonFile;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Predicate;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.resttestclient.TestRestTemplate;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlMergeMode;
 
-import org.folio.innreach.controller.base.BaseControllerTest;
 import org.folio.innreach.domain.entity.LocationMapping;
+import org.folio.innreach.domain.listener.KafkaCirculationEventListener;
+import org.folio.innreach.domain.listener.KafkaInitialContributionEventListener;
+import org.folio.innreach.domain.listener.KafkaInventoryEventListener;
 import org.folio.innreach.domain.service.CentralServerService;
 import org.folio.innreach.dto.Error;
 import org.folio.innreach.dto.LocationMappingDTO;
 import org.folio.innreach.dto.LocationMappingsDTO;
 import org.folio.innreach.dto.ValidationErrorsDTO;
+import org.folio.innreach.external.client.InnReachAuthClient;
+import org.folio.innreach.external.dto.AccessTokenDTO;
 import org.folio.innreach.external.service.InnReachLocationExternalService;
+import org.folio.innreach.it.base.BaseTenantIntegrationTest;
 import org.folio.innreach.mapper.LocationMappingMapper;
 import org.folio.innreach.repository.LocationMappingRepository;
 
@@ -59,7 +65,7 @@ import org.folio.innreach.repository.LocationMappingRepository;
   executionPhase = AFTER_TEST_METHOD
 )
 @SqlMergeMode(MERGE)
-class LocationMappingControllerTest extends BaseControllerTest {
+class LocationMappingControllerTest extends BaseTenantIntegrationTest {
 
   private static final String PRE_POPULATED_CENTRAL_SERVER_ID = "edab6baf-c696-42b1-89bb-1bbb8759b0d2";
   private static final String PRE_POPULATED_LIBRARY_ID = "a0dd1106-3de8-4346-b0f4-b1ed0a4eaffd";
@@ -69,9 +75,20 @@ class LocationMappingControllerTest extends BaseControllerTest {
     "34c6a230-d264-44c5-90b3-6159ed2ebdc1");
   private static final UUID PRE_POPULATED_LOCATION2_ID = UUID.fromString("c8092f39-b969-418e-83ac-d73dd5ab9564");
 
+  @MockitoBean
+  private KafkaCirculationEventListener kafkaCirculationEventListener;
+  @MockitoBean
+  private KafkaInventoryEventListener kafkaInventoryEventListener;
+  @MockitoBean
+  private KafkaInitialContributionEventListener kafkaInitialContributionEventListener;
+  @MockitoBean
+  private InnReachAuthClient innReachAuthClient;
 
-  @Autowired
-  private TestRestTemplate testRestTemplate;
+  @BeforeEach
+  void init() {
+    when(innReachAuthClient.getAccessToken(any(), any())).thenReturn(ResponseEntity.ok(new AccessTokenDTO()));
+  }
+
   @Autowired
   private LocationMappingRepository repository;
   @Autowired
@@ -92,13 +109,13 @@ class LocationMappingControllerTest extends BaseControllerTest {
     "classpath:db/loc-mapping/pre-populate-location-mapping.sql",
     "classpath:db/loc-mapping/pre-populate-another-location-mapping.sql"
   })
-  void shouldGetAllExistingMappingsForOneLibrary() {
-    var responseEntity = testRestTemplate.getForEntity(baseMappingURL(), LocationMappingsDTO.class);
+  void shouldGetAllExistingMappingsForOneLibrary() throws Exception {
+    var result = mockMvc.perform(get(baseMappingURL())
+        .headers(defaultHeaders()))
+      .andExpect(status().is2xxSuccessful())
+      .andReturn();
 
-    assertTrue(responseEntity.getStatusCode().is2xxSuccessful());
-    assertTrue(responseEntity.hasBody());
-
-    var response = responseEntity.getBody();
+    var response = fromJson(result, LocationMappingsDTO.class);
     assertNotNull(response);
 
     var mappings = response.getLocationMappings();
@@ -118,14 +135,13 @@ class LocationMappingControllerTest extends BaseControllerTest {
     "classpath:db/loc-mapping/pre-populate-location-mapping.sql",
     "classpath:db/loc-mapping/pre-populate-another-location-mapping.sql"
   })
-  void shouldGetAllExistingMappingsForAllLibraries() {
-    var responseEntity = testRestTemplate.getForEntity(
-      baseMappingURLForAllLibraries(PRE_POPULATED_CENTRAL_SERVER_ID), List.class);
+  void shouldGetAllExistingMappingsForAllLibraries() throws Exception {
+    var result = mockMvc.perform(get(baseMappingURLForAllLibraries(PRE_POPULATED_CENTRAL_SERVER_ID))
+        .headers(defaultHeaders()))
+      .andExpect(status().is2xxSuccessful())
+      .andReturn();
 
-    assertTrue(responseEntity.getStatusCode().is2xxSuccessful());
-    assertTrue(responseEntity.hasBody());
-
-    var response = responseEntity.getBody();
+    var response = fromJson(result, List.class);
     assertNotNull(response);
 
     List<LocationMapping> dbMappings = repository.findByCentralServerId(UUID.fromString(PRE_POPULATED_CENTRAL_SERVER_ID));
@@ -137,13 +153,13 @@ class LocationMappingControllerTest extends BaseControllerTest {
   @Sql(scripts = {
     "classpath:db/central-server/pre-populate-central-server.sql"
   })
-  void shouldGetEmptyMappingsWith0TotalIfNotSet() {
-    var responseEntity = testRestTemplate.getForEntity(baseMappingURL(), LocationMappingsDTO.class);
+  void shouldGetEmptyMappingsWith0TotalIfNotSet() throws Exception {
+    var result = mockMvc.perform(get(baseMappingURL())
+        .headers(defaultHeaders()))
+      .andExpect(status().is2xxSuccessful())
+      .andReturn();
 
-    assertTrue(responseEntity.getStatusCode().is2xxSuccessful());
-    assertTrue(responseEntity.hasBody());
-
-    var response = responseEntity.getBody();
+    var response = fromJson(result, LocationMappingsDTO.class);
     assertNotNull(response);
 
     var mappings = response.getLocationMappings();
@@ -158,14 +174,13 @@ class LocationMappingControllerTest extends BaseControllerTest {
     "classpath:db/inn-reach-location/pre-populate-inn-reach-location-code.sql",
     "classpath:db/loc-mapping/pre-populate-location-mapping.sql"
   })
-  void shouldApplyLimitAndOffsetWhenGettingAllExistingMappings() {
-    var responseEntity = testRestTemplate.getForEntity(baseMappingURL() + "?offset={offset}&limit={limit}",
-      LocationMappingsDTO.class, Map.of("offset", 1, "limit", 1));
+  void shouldApplyLimitAndOffsetWhenGettingAllExistingMappings() throws Exception {
+    var result = mockMvc.perform(get(baseMappingURL() + "?offset=1&limit=1")
+        .headers(defaultHeaders()))
+      .andExpect(status().is2xxSuccessful())
+      .andReturn();
 
-    assertTrue(responseEntity.getStatusCode().is2xxSuccessful());
-    assertTrue(responseEntity.hasBody());
-
-    var response = responseEntity.getBody();
+    var response = fromJson(result, LocationMappingsDTO.class);
     assertNotNull(response);
 
     var expectedMapping = findMapping(PRE_POPULATED_MAPPING2_ID);
@@ -175,13 +190,13 @@ class LocationMappingControllerTest extends BaseControllerTest {
   }
 
   @Test
-  void return400WhenGetAllExistingMappingsIfLimitAndOffsetInvalid() {
-    var responseEntity = testRestTemplate.getForEntity(baseMappingURL() + "?offset={offset}&limit={limit}",
-      ValidationErrorsDTO.class, Map.of("offset", -1, "limit", -1));
+  void return400WhenGetAllExistingMappingsIfLimitAndOffsetInvalid() throws Exception {
+    var result = mockMvc.perform(get(baseMappingURL() + "?offset=-1&limit=-1")
+        .headers(defaultHeaders()))
+      .andExpect(status().isBadRequest())
+      .andReturn();
 
-    assertEquals(BAD_REQUEST, responseEntity.getStatusCode());
-
-    var errors = responseEntity.getBody();
+    var errors = fromJson(result, ValidationErrorsDTO.class);
     assertNotNull(errors);
     assertEquals(BAD_REQUEST.value(), errors.getCode());
     assertThat(collectFieldNames(errors), containsInAnyOrder(containsString("offset"), containsString("limit")));
@@ -192,15 +207,15 @@ class LocationMappingControllerTest extends BaseControllerTest {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-location/pre-populate-inn-reach-location-code.sql"
   })
-  void shouldCreateNewMappings() {
+  void shouldCreateNewMappings() throws Exception {
     var newMappings = deserializeFromJsonFile("/location-mapping/create-location-mappings-request.json",
       LocationMappingsDTO.class);
 
-    var responseEntity = testRestTemplate.exchange(baseMappingURL(), HttpMethod.PUT, new HttpEntity<>(newMappings),
-      Void.class);
-
-    assertEquals(HttpStatus.NO_CONTENT, responseEntity.getStatusCode());
-    assertFalse(responseEntity.hasBody());
+    mockMvc.perform(put(baseMappingURL())
+        .content(asJsonString(newMappings))
+        .headers(defaultHeaders())
+        .contentType(APPLICATION_JSON))
+      .andExpect(status().isNoContent());
 
     var created = mapper.toDTOs(repository.findByCentralServerIdAndLibraryId(
       UUID.fromString(PRE_POPULATED_CENTRAL_SERVER_ID), UUID.fromString(PRE_POPULATED_LIBRARY_ID)));
@@ -218,18 +233,21 @@ class LocationMappingControllerTest extends BaseControllerTest {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-location/pre-populate-inn-reach-location-code.sql"
   })
-  void return400WhenCreatingNewMappingsAndLocationIdIsNull() {
+  void return400WhenCreatingNewMappingsAndLocationIdIsNull() throws Exception {
     var newMappings = deserializeFromJsonFile("/location-mapping/create-location-mappings-request.json",
       LocationMappingsDTO.class);
     newMappings.getLocationMappings().get(0).setLocationId(null);
 
-    var responseEntity = testRestTemplate.exchange(baseMappingURL(), HttpMethod.PUT, new HttpEntity<>(newMappings),
-      ValidationErrorsDTO.class);
+    var result = mockMvc.perform(put(baseMappingURL())
+        .content(asJsonString(newMappings))
+        .headers(defaultHeaders())
+        .contentType(APPLICATION_JSON))
+      .andExpect(status().isBadRequest())
+      .andReturn();
 
-    assertEquals(BAD_REQUEST, responseEntity.getStatusCode());
-
-    assertNotNull(responseEntity.getBody());
-    assertThat(responseEntity.getBody().getValidationErrors(),
+    var body = fromJson(result, ValidationErrorsDTO.class);
+    assertNotNull(body);
+    assertThat(body.getValidationErrors(),
       contains(createValidationError("locationMappings[0].locationId", "must not be null")));
   }
 
@@ -238,16 +256,16 @@ class LocationMappingControllerTest extends BaseControllerTest {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-location/pre-populate-inn-reach-location-code.sql"
   })
-  void shouldCreateNewMappingsWhenInnReachLocationIdIsNull() {
+  void shouldCreateNewMappingsWhenInnReachLocationIdIsNull() throws Exception {
     var newMappings = deserializeFromJsonFile("/location-mapping/create-location-mappings-request.json",
       LocationMappingsDTO.class);
     newMappings.getLocationMappings().get(0).setInnReachLocationId(null);
 
-    var responseEntity = testRestTemplate.exchange(baseMappingURL(), HttpMethod.PUT, new HttpEntity<>(newMappings),
-      Void.class);
-
-    assertEquals(NO_CONTENT, responseEntity.getStatusCode());
-    assertFalse(responseEntity.hasBody());
+    mockMvc.perform(put(baseMappingURL())
+        .content(asJsonString(newMappings))
+        .headers(defaultHeaders())
+        .contentType(APPLICATION_JSON))
+      .andExpect(status().isNoContent());
 
     var created = mapper.toDTOs(repository.findByCentralServerIdAndLibraryId(
       UUID.fromString(PRE_POPULATED_CENTRAL_SERVER_ID), UUID.fromString(PRE_POPULATED_LIBRARY_ID)));
@@ -267,7 +285,7 @@ class LocationMappingControllerTest extends BaseControllerTest {
     "classpath:db/inn-reach-location/pre-populate-inn-reach-location-code.sql",
     "classpath:db/loc-mapping/pre-populate-location-mapping.sql"
   })
-  void return409WhenCreatingNewMappingsAndLocationIdAlreadyMapped() {
+  void return409WhenCreatingNewMappingsAndLocationIdAlreadyMapped() throws Exception {
     var newMappings = deserializeFromJsonFile("/location-mapping/create-location-mappings-request.json",
       LocationMappingsDTO.class);
     newMappings.getLocationMappings().get(0).setLocationId(PRE_POPULATED_LOCATION2_ID);
@@ -276,12 +294,16 @@ class LocationMappingControllerTest extends BaseControllerTest {
       UUID.fromString(PRE_POPULATED_CENTRAL_SERVER_ID), UUID.fromString(PRE_POPULATED_LIBRARY_ID)));
     newMappings.getLocationMappings().addAll(existing);
 
-    var responseEntity = testRestTemplate.exchange(baseMappingURL(), HttpMethod.PUT, new HttpEntity<>(newMappings),
-      Error.class);
+    var result = mockMvc.perform(put(baseMappingURL())
+        .content(asJsonString(newMappings))
+        .headers(defaultHeaders())
+        .contentType(APPLICATION_JSON))
+      .andExpect(status().isConflict())
+      .andReturn();
 
-    assertEquals(CONFLICT, responseEntity.getStatusCode());
-    assertNotNull(responseEntity.getBody());
-    assertThat(responseEntity.getBody().getMessage(), containsString("constraint [unq_location_mapping_server_loc]"));
+    var body = fromJson(result, Error.class);
+    assertNotNull(body);
+    assertThat(body.getMessage(), containsString("constraint [unq_location_mapping_server_loc]"));
   }
 
   @Test
@@ -292,17 +314,17 @@ class LocationMappingControllerTest extends BaseControllerTest {
     "classpath:db/loc-mapping/pre-populate-location-mapping.sql",
     "classpath:db/loc-mapping/pre-populate-another-location-mapping.sql"
   })
-  void shouldUpdateExistingMappings() {
+  void shouldUpdateExistingMappings() throws Exception {
     var existing = mapper.toDTOCollection(repository.findByCentralServerIdAndLibraryId(
       UUID.fromString(PRE_POPULATED_CENTRAL_SERVER_ID), UUID.fromString(PRE_POPULATED_LIBRARY_ID)));
     UUID innReachLocationId = PRE_POPULATED_INN_REACH_LOCATION1_ID;
     existing.getLocationMappings().forEach(mp -> mp.setInnReachLocationId(innReachLocationId));
 
-    var responseEntity = testRestTemplate.exchange(baseMappingURL(), HttpMethod.PUT, new HttpEntity<>(existing),
-      Void.class);
-
-    assertEquals(HttpStatus.NO_CONTENT, responseEntity.getStatusCode());
-    assertFalse(responseEntity.hasBody());
+    mockMvc.perform(put(baseMappingURL())
+        .content(asJsonString(existing))
+        .headers(defaultHeaders())
+        .contentType(APPLICATION_JSON))
+      .andExpect(status().isNoContent());
 
     var updated = mapper.toDTOs(repository.findByCentralServerIdAndLibraryId(
       UUID.fromString(PRE_POPULATED_CENTRAL_SERVER_ID), UUID.fromString(PRE_POPULATED_LIBRARY_ID)));
@@ -323,7 +345,7 @@ class LocationMappingControllerTest extends BaseControllerTest {
     "classpath:db/loc-mapping/pre-populate-location-mapping.sql",
     "classpath:db/loc-mapping/pre-populate-another-location-mapping.sql"
   })
-  void shouldCreateUpdateAndDeleteMappingsAtTheSameTime() {
+  void shouldCreateUpdateAndDeleteMappingsAtTheSameTime() throws Exception {
     var mappings = mapper.toDTOCollection(repository.findByCentralServerIdAndLibraryId(
       UUID.fromString(PRE_POPULATED_CENTRAL_SERVER_ID), UUID.fromString(PRE_POPULATED_LIBRARY_ID)));
     List<LocationMappingDTO> em = mappings.getLocationMappings();
@@ -336,11 +358,11 @@ class LocationMappingControllerTest extends BaseControllerTest {
       LocationMappingsDTO.class);
     em.addAll(newMappings.getLocationMappings());                // to insert
 
-    var responseEntity = testRestTemplate.exchange(baseMappingURL(), HttpMethod.PUT, new HttpEntity<>(mappings),
-      Void.class);
-
-    assertEquals(HttpStatus.NO_CONTENT, responseEntity.getStatusCode());
-    assertFalse(responseEntity.hasBody());
+    mockMvc.perform(put(baseMappingURL())
+        .content(asJsonString(mappings))
+        .headers(defaultHeaders())
+        .contentType(APPLICATION_JSON))
+      .andExpect(status().isNoContent());
 
     var stored = mapper.toDTOs(repository.findByCentralServerIdAndLibraryId(
       UUID.fromString(PRE_POPULATED_CENTRAL_SERVER_ID), UUID.fromString(PRE_POPULATED_LIBRARY_ID)));
@@ -365,14 +387,14 @@ class LocationMappingControllerTest extends BaseControllerTest {
     "classpath:db/inn-reach-location/pre-populate-inn-reach-location-code.sql",
     "classpath:db/loc-mapping/pre-populate-location-mapping.sql"
   })
-  void shouldDeleteAllMappingsIfEmptyCollectionGiven() {
+  void shouldDeleteAllMappingsIfEmptyCollectionGiven() throws Exception {
     var mappings = new LocationMappingsDTO();
 
-    var responseEntity = testRestTemplate.exchange(baseMappingURL(), HttpMethod.PUT, new HttpEntity<>(mappings),
-      Void.class);
-
-    assertEquals(HttpStatus.NO_CONTENT, responseEntity.getStatusCode());
-    assertFalse(responseEntity.hasBody());
+    mockMvc.perform(put(baseMappingURL())
+        .content(asJsonString(mappings))
+        .headers(defaultHeaders())
+        .contentType(APPLICATION_JSON))
+      .andExpect(status().isNoContent());
 
     assertEquals(0, repository.count());
   }

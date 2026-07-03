@@ -13,8 +13,9 @@ import org.springframework.test.context.support.AbstractTestExecutionListener;
  * ensuring that DataSourceFolioWrapper sets the correct search_path for
  * {@code @Sql} scripts and JPA queries.
  *
- * <p>Runs at order 4999, just before {@code SqlScriptsTestExecutionListener} (5000),
- * so the context is available when @Sql scripts execute.
+ * <p>Runs at order 3999, before {@code TransactionalTestExecutionListener} (4000)
+ * and {@code SqlScriptsTestExecutionListener} (5000), so the context is available
+ * when the transaction opens and when @Sql scripts execute.
  */
 public class FolioContextTestExecutionListener extends AbstractTestExecutionListener {
 
@@ -23,7 +24,7 @@ public class FolioContextTestExecutionListener extends AbstractTestExecutionList
 
   @Override
   public int getOrder() {
-    return 4999;
+    return 3999;
   }
 
   @Override

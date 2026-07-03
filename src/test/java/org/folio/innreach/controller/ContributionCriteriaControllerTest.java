@@ -9,9 +9,16 @@ import static org.hamcrest.Matchers.samePropertyValuesAs;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.springframework.http.HttpStatus.CONFLICT;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
+import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TEST_METHOD;
 import static org.springframework.test.context.jdbc.SqlMergeMode.MergeMode.MERGE;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import static org.folio.innreach.fixture.TestUtil.deserializeFromJsonFile;
 
@@ -19,21 +26,24 @@ import jakarta.transaction.Transactional;
 
 import java.util.UUID;
 
+import org.folio.innreach.domain.listener.KafkaCirculationEventListener;
+import org.folio.innreach.domain.listener.KafkaInitialContributionEventListener;
+import org.folio.innreach.domain.listener.KafkaInventoryEventListener;
+import org.folio.innreach.dto.ContributionCriteriaDTO;
+import org.folio.innreach.dto.Error;
+import org.folio.innreach.external.client.InnReachAuthClient;
+import org.folio.innreach.external.dto.AccessTokenDTO;
+import org.folio.innreach.it.base.BaseTenantIntegrationTest;
+import org.folio.innreach.mapper.ContributionCriteriaConfigurationMapper;
+import org.folio.innreach.repository.ContributionCriteriaConfigurationRepository;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.resttestclient.TestRestTemplate;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlConfig;
 import org.springframework.test.context.jdbc.SqlMergeMode;
-
-import org.folio.innreach.controller.base.BaseControllerTest;
-import org.folio.innreach.dto.ContributionCriteriaDTO;
-import org.folio.innreach.dto.Error;
-import org.folio.innreach.mapper.ContributionCriteriaConfigurationMapper;
-import org.folio.innreach.repository.ContributionCriteriaConfigurationRepository;
 
 @Sql(
     scripts = {
@@ -43,32 +53,43 @@ import org.folio.innreach.repository.ContributionCriteriaConfigurationRepository
 )
 @SqlConfig(transactionMode = SqlConfig.TransactionMode.ISOLATED)
 @SqlMergeMode(MERGE)
-@Transactional
-class ContributionCriteriaControllerTest extends BaseControllerTest {
+class ContributionCriteriaControllerTest extends BaseTenantIntegrationTest {
 
   private static final String PRE_POPULATED_CENTRAL_SERVER_ID = "edab6baf-c696-42b1-89bb-1bbb8759b0d2";
   private static final UUID PRE_POPULATED_CRITERIA_ID = fromString("71bd0beb-28cb-40bb-9f40-87463d61a553");
 
-  @Autowired
-  private TestRestTemplate testRestTemplate;
+  @MockitoBean
+  private KafkaCirculationEventListener kafkaCirculationEventListener;
+  @MockitoBean
+  private KafkaInventoryEventListener kafkaInventoryEventListener;
+  @MockitoBean
+  private KafkaInitialContributionEventListener kafkaInitialContributionEventListener;
+  @MockitoBean
+  private InnReachAuthClient innReachAuthClient;
+
   @Autowired
   private ContributionCriteriaConfigurationRepository repository;
   @Autowired
   private ContributionCriteriaConfigurationMapper mapper;
 
+  @BeforeEach
+  void init() {
+    when(innReachAuthClient.getAccessToken(any(), any())).thenReturn(ResponseEntity.ok(new AccessTokenDTO()));
+  }
 
   @Test
+  @Transactional
   @Sql(scripts = {
       "classpath:db/central-server/pre-populate-central-server.sql",
       "classpath:db/contribution-criteria/pre-populate-contribution-criteria.sql"
   })
-  void shouldGetExistingCriteria() {
-    var responseEntity = testRestTemplate.getForEntity(baseMappingURL(), ContributionCriteriaDTO.class);
+  void shouldGetExistingCriteria() throws Exception {
+    var result = mockMvc.perform(get(baseMappingURL())
+        .headers(defaultHeaders()))
+      .andExpect(status().is2xxSuccessful())
+      .andReturn();
 
-    assertTrue(responseEntity.getStatusCode().is2xxSuccessful());
-    assertTrue(responseEntity.hasBody());
-
-    var response = responseEntity.getBody();
+    var response = fromJson(result, ContributionCriteriaDTO.class);
     assertNotNull(response);
 
     var dbCriteria = findCriteria();
@@ -77,26 +98,28 @@ class ContributionCriteriaControllerTest extends BaseControllerTest {
   }
 
   @Test
-  void return404WhenCriteriaIsNotFoundByServerId() {
-    var responseEntity = testRestTemplate.getForEntity(baseMappingURL(), ContributionCriteriaDTO.class);
-
-    assertEquals(HttpStatus.NOT_FOUND, responseEntity.getStatusCode());
+  void return404WhenCriteriaIsNotFoundByServerId() throws Exception {
+    mockMvc.perform(get(baseMappingURL())
+        .headers(defaultHeaders()))
+      .andExpect(status().isNotFound());
   }
 
   @Test
   @Sql(scripts = {
       "classpath:db/central-server/pre-populate-central-server.sql"
   })
-  void shouldCreateNewCriteria() {
+  void shouldCreateNewCriteria() throws Exception {
     var newCriteria = deserializeFromJsonFile("/contribution-criteria/create-contribution-configuration-request.json",
         ContributionCriteriaDTO.class);
 
-    var responseEntity = testRestTemplate.postForEntity(baseMappingURL(), newCriteria, ContributionCriteriaDTO.class);
+    var result = mockMvc.perform(post(baseMappingURL())
+        .content(asJsonString(newCriteria))
+        .headers(defaultHeaders())
+        .contentType(APPLICATION_JSON))
+      .andExpect(status().is2xxSuccessful())
+      .andReturn();
 
-    assertTrue(responseEntity.getStatusCode().is2xxSuccessful());
-    assertTrue(responseEntity.hasBody());
-
-    var created = responseEntity.getBody();
+    var created = fromJson(result, ContributionCriteriaDTO.class);
 
     assertThat(created, samePropertyValuesAs(newCriteria, "id", "metadata"));
   }
@@ -105,17 +128,19 @@ class ContributionCriteriaControllerTest extends BaseControllerTest {
   @Sql(scripts = {
       "classpath:db/central-server/pre-populate-central-server.sql"
   })
-  void shouldCreateNewCriteriaWithoutExcludedLocations() {
+  void shouldCreateNewCriteriaWithoutExcludedLocations() throws Exception {
     var newCriteria = deserializeFromJsonFile(
         "/contribution-criteria/create-contribution-configuration-request-without-locations.json",
         ContributionCriteriaDTO.class);
 
-    var responseEntity = testRestTemplate.postForEntity(baseMappingURL(), newCriteria, ContributionCriteriaDTO.class);
+    var result = mockMvc.perform(post(baseMappingURL())
+        .content(asJsonString(newCriteria))
+        .headers(defaultHeaders())
+        .contentType(APPLICATION_JSON))
+      .andExpect(status().is2xxSuccessful())
+      .andReturn();
 
-    assertTrue(responseEntity.getStatusCode().is2xxSuccessful());
-    assertTrue(responseEntity.hasBody());
-
-    var created = responseEntity.getBody();
+    var created = fromJson(result, ContributionCriteriaDTO.class);
 
     assertThat(created, samePropertyValuesAs(newCriteria, "id", "metadata"));
   }
@@ -125,30 +150,37 @@ class ContributionCriteriaControllerTest extends BaseControllerTest {
       "classpath:db/central-server/pre-populate-central-server.sql",
       "classpath:db/contribution-criteria/pre-populate-contribution-criteria.sql"
   })
-  void return409WhenCriteriaAlreadyExists() {
+  void return409WhenCriteriaAlreadyExists() throws Exception {
     var newCriteria = deserializeFromJsonFile("/contribution-criteria/create-contribution-configuration-request.json",
         ContributionCriteriaDTO.class);
 
-    var responseEntity = testRestTemplate.postForEntity(baseMappingURL(), newCriteria, Error.class);
+    var result = mockMvc.perform(post(baseMappingURL())
+        .content(asJsonString(newCriteria))
+        .headers(defaultHeaders())
+        .contentType(APPLICATION_JSON))
+      .andExpect(status().isConflict())
+      .andReturn();
 
-    assertEquals(CONFLICT, responseEntity.getStatusCode());
-    assertNotNull(responseEntity.getBody());
-    assertThat(responseEntity.getBody().getMessage(), containsString("constraint [unq_contribution_criteria_server]"));
+    var error = fromJson(result, Error.class);
+    assertNotNull(error);
+    assertThat(error.getMessage(), containsString("constraint [unq_contribution_criteria_server]"));
   }
 
   @Test
+  @Transactional
   @Sql(scripts = {
       "classpath:db/central-server/pre-populate-central-server.sql",
       "classpath:db/contribution-criteria/pre-populate-contribution-criteria.sql"
   })
-  void shouldUpdateExistingCriteria() {
+  void shouldUpdateExistingCriteria() throws Exception {
     var criteria = deserializeFromJsonFile("/contribution-criteria/update-contribution-configuration-request.json",
         ContributionCriteriaDTO.class);
 
-    var responseEntity = testRestTemplate.exchange(baseMappingURL(), HttpMethod.PUT,
-        new HttpEntity<>(criteria), ContributionCriteriaDTO.class);
-
-    assertTrue(responseEntity.getStatusCode().is2xxSuccessful());
+    mockMvc.perform(put(baseMappingURL())
+        .content(asJsonString(criteria))
+        .headers(defaultHeaders())
+        .contentType(APPLICATION_JSON))
+      .andExpect(status().is2xxSuccessful());
 
     var dbCriteria = findCriteria();
     assertThat(dbCriteria, samePropertyValuesAs(criteria, "locationIds", "metadata"));
@@ -157,19 +189,21 @@ class ContributionCriteriaControllerTest extends BaseControllerTest {
   }
 
   @Test
+  @Transactional
   @Sql(scripts = {
       "classpath:db/central-server/pre-populate-central-server.sql",
       "classpath:db/contribution-criteria/pre-populate-contribution-criteria.sql"
   })
-  void shouldRemoveAllLocationIdsWhenUpdatingExistingCriteria() {
+  void shouldRemoveAllLocationIdsWhenUpdatingExistingCriteria() throws Exception {
     var criteria = deserializeFromJsonFile("/contribution-criteria/update-contribution-configuration-request.json",
         ContributionCriteriaDTO.class);
     criteria.setLocationIds(null);
 
-    var responseEntity = testRestTemplate.exchange(baseMappingURL(), HttpMethod.PUT,
-        new HttpEntity<>(criteria), ContributionCriteriaDTO.class);
-
-    assertTrue(responseEntity.getStatusCode().is2xxSuccessful());
+    mockMvc.perform(put(baseMappingURL())
+        .content(asJsonString(criteria))
+        .headers(defaultHeaders())
+        .contentType(APPLICATION_JSON))
+      .andExpect(status().is2xxSuccessful());
 
     var dbCriteria = findCriteria();
 
@@ -180,14 +214,15 @@ class ContributionCriteriaControllerTest extends BaseControllerTest {
   @Sql(scripts = {
       "classpath:db/central-server/pre-populate-central-server.sql"
   })
-  void return404IfCriteriaNotFoundWhenUpdating() {
+  void return404IfCriteriaNotFoundWhenUpdating() throws Exception {
     var criteria = deserializeFromJsonFile("/contribution-criteria/update-contribution-configuration-request.json",
         ContributionCriteriaDTO.class);
 
-    var responseEntity = testRestTemplate.exchange(baseMappingURL(), HttpMethod.PUT,
-        new HttpEntity<>(criteria), ContributionCriteriaDTO.class);
-
-    assertEquals(HttpStatus.NOT_FOUND, responseEntity.getStatusCode());
+    mockMvc.perform(put(baseMappingURL())
+        .content(asJsonString(criteria))
+        .headers(defaultHeaders())
+        .contentType(APPLICATION_JSON))
+      .andExpect(status().isNotFound());
   }
 
   @Test
@@ -195,11 +230,10 @@ class ContributionCriteriaControllerTest extends BaseControllerTest {
       "classpath:db/central-server/pre-populate-central-server.sql",
       "classpath:db/contribution-criteria/pre-populate-contribution-criteria.sql"
   })
-  void shouldDeleteExistingMapping() {
-    var responseEntity = testRestTemplate.exchange(baseMappingURL(), HttpMethod.DELETE,
-        HttpEntity.EMPTY, ContributionCriteriaDTO.class);
-
-    assertEquals(HttpStatus.NO_CONTENT, responseEntity.getStatusCode());
+  void shouldDeleteExistingMapping() throws Exception {
+    mockMvc.perform(delete(baseMappingURL())
+        .headers(defaultHeaders()))
+      .andExpect(status().isNoContent());
 
     var deleted = repository.findById(PRE_POPULATED_CRITERIA_ID);
     assertTrue(deleted.isEmpty());
@@ -209,11 +243,10 @@ class ContributionCriteriaControllerTest extends BaseControllerTest {
   @Sql(scripts = {
       "classpath:db/central-server/pre-populate-central-server.sql"
   })
-  void return404IfCriteriaNotFoundWhenDeleting() {
-    var responseEntity = testRestTemplate.exchange(baseMappingURL(), HttpMethod.DELETE,
-        HttpEntity.EMPTY, ContributionCriteriaDTO.class);
-
-    assertEquals(HttpStatus.NOT_FOUND, responseEntity.getStatusCode());
+  void return404IfCriteriaNotFoundWhenDeleting() throws Exception {
+    mockMvc.perform(delete(baseMappingURL())
+        .headers(defaultHeaders()))
+      .andExpect(status().isNotFound());
   }
 
   private ContributionCriteriaDTO findCriteria() {
