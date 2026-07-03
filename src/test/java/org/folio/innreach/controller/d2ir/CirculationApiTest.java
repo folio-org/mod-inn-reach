@@ -21,6 +21,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import static org.folio.innreach.fixture.CirculationFixture.createTransactionHoldDTO;
+import static org.folio.innreach.support.wiremock.WiremockStubExtension.resetWiremockStubs;
 import static org.folio.innreach.util.UUIDEncoder.encode;
 
 import java.time.Instant;
@@ -28,7 +29,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import lombok.SneakyThrows;
-import org.folio.innreach.controller.base.BaseApiControllerTest;
+import org.folio.innreach.it.base.BaseTenantIntegrationTest;
 import org.folio.innreach.domain.dto.OwningSiteCancelsRequestDTO;
 import org.folio.innreach.domain.service.RecordContributionService;
 import org.folio.innreach.external.service.InnReachExternalService;
@@ -62,7 +63,7 @@ import org.folio.innreach.util.UUIDEncoder;
 )
 @SqlMergeMode(MERGE)
 @ExtendWith(MockitoExtension.class)
-class CirculationApiTest extends BaseApiControllerTest {
+class CirculationApiTest extends BaseTenantIntegrationTest {
 
   public static final String INNREACH_LOCALSERVERS_URL = "/innreach/v2/contribution/localservers";
   public static final String HRID_SETTINGS_URL = "/hrid-settings-storage/hrid-settings";
@@ -149,7 +150,7 @@ class CirculationApiTest extends BaseApiControllerTest {
 
   @BeforeEach
   void setup() {
-    wm.resetAll();
+    resetWiremockStubs();
     reset(repository, circulationClient, requestService, holdingsService);
   }
 

@@ -31,12 +31,23 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.awaitility.Awaitility;
 import org.awaitility.core.ThrowingRunnable;
+import org.folio.innreach.util.JsonHelper;
 import org.folio.spring.integration.XOkapiHeaders;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
+import com.zaxxer.hikari.HikariDataSource;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.web.servlet.ResultActions;
+
+import javax.sql.DataSource;
+
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 public abstract class BaseTenantIntegrationTest extends BaseIntegrationTest {
@@ -53,11 +64,17 @@ public abstract class BaseTenantIntegrationTest extends BaseIntegrationTest {
 
   protected static WireMock wiremock;
 
+  private static JsonHelper jsonHelper;
+
+  private static final String TENANT_SCHEMA = TEST_TENANT + "_mod_inn_reach";
+
   @BeforeAll
-  static void setUpTenant() {
+  static void setUpTenant(@Autowired JsonHelper jh, @Autowired DataSource dataSource) {
+    jsonHelper = jh;
     createTopics(TENANT_TOPICS);
     setUpMockForTestTenantInit();
     enableTenant();
+    configureSearchPath(dataSource);
     resetWiremockStubs();
     wiremock = getWireMockClient();
   }
@@ -80,6 +97,23 @@ public abstract class BaseTenantIntegrationTest extends BaseIntegrationTest {
     // For example, stubs for reference-data endpoints that the app calls during init.
   }
 
+  /**
+   * Configures HikariCP to set search_path on every new connection to include
+   * the tenant schema. This ensures @Sql scripts and JPA queries target the
+   * correct schema created by enableTenant().
+   */
+  private static void configureSearchPath(DataSource dataSource) {
+    if (dataSource instanceof HikariDataSource hds) {
+      hds.setConnectionInitSql(
+        "SET timezone = 'UTC'; SET search_path TO " + TENANT_SCHEMA + ", public");
+      // Evict existing connections so they pick up the new init SQL
+      var pool = hds.getHikariPoolMXBean();
+      if (pool != null) {
+        pool.softEvictConnections();
+      }
+    }
+  }
+
   // --- WireMock helpers migrated from BaseApiControllerTest ---
 
   public static HttpHeaders getOkapiHeaders() {
@@ -93,6 +127,31 @@ public abstract class BaseTenantIntegrationTest extends BaseIntegrationTest {
       .atMost(ONE_MINUTE)
       .pollInterval(ONE_HUNDRED_MILLISECONDS)
       .untilAsserted(runnable);
+  }
+
+  public static void awaitAssertion(ThrowingRunnable runnable) {
+    awaitUntilAsserted(runnable);
+  }
+
+  protected void getAndExpect(String url, Template expectedResult) throws Exception {
+    mockMvc.perform(get(url))
+      .andExpect(status().isOk())
+      .andExpect(content()
+        .json(readTemplate(expectedResult)));
+  }
+
+  protected void putAndExpect(URI uri, Object requestBody, Template expectedResult) throws Exception {
+    putReq(uri, requestBody)
+      .andExpect(status().isOk())
+      .andExpect(content().json(
+        readTemplate(expectedResult)));
+  }
+
+  protected ResultActions putReq(URI uri, Object requestBody) throws Exception {
+    return mockMvc.perform(put(uri.getUrlTemplate(), uri.getUriVars())
+      .content(jsonHelper.toJson(requestBody))
+      .contentType(MediaType.APPLICATION_JSON)
+      .headers(getOkapiHeaders()));
   }
 
   protected static void stubGet(String url, String responsePath) {

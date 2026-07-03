@@ -17,7 +17,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlMergeMode;
 
-import org.folio.innreach.controller.base.BaseApiControllerTest;
+import org.folio.innreach.it.base.BaseTenantIntegrationTest;
 import org.folio.innreach.domain.entity.CentralServer;
 import org.folio.innreach.fixture.CentralServerFixture;
 import org.folio.innreach.repository.CentralServerRepository;
@@ -28,7 +28,7 @@ import org.folio.innreach.repository.CentralServerRepository;
     executionPhase = AFTER_TEST_METHOD
 )
 @SqlMergeMode(MERGE)
-class CentralServerConfigurationControllerTest extends BaseApiControllerTest {
+class CentralServerConfigurationControllerTest extends BaseTenantIntegrationTest {
 
   private static final String CS_TEST_CODE1 = "test1";
   private static final String CS_TEST_CODE2 = "test2";
@@ -239,7 +239,7 @@ class CentralServerConfigurationControllerTest extends BaseApiControllerTest {
     var centralServer = CentralServerFixture.createCentralServer();
 
     centralServer.setCentralServerCode(csCode);
-    centralServer.setCentralServerAddress(wm.baseUrl());
+    centralServer.setCentralServerAddress(getWiremockUrl());
 
     return repository.save(centralServer);
   }

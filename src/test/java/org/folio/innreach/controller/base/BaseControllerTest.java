@@ -28,7 +28,7 @@ import org.folio.tenant.rest.resource.TenantApi;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, classes = {ModInnReachApplication.class,
   BaseControllerTest.TestTenantController.class})
-@ActiveProfiles({"test", "it"})
+@ActiveProfiles({"test", "it", "stub-tenant"})
 @AutoConfigureTestRestTemplate
 public class BaseControllerTest {
 
@@ -51,7 +51,7 @@ public class BaseControllerTest {
 
   @EnableAutoConfiguration(exclude = {FolioLiquibaseConfiguration.class})
   @RestController("folioTenantController")
-  @Profile("test")
+  @Profile("stub-tenant")
   static class TestTenantController implements TenantApi {
 
     @Override

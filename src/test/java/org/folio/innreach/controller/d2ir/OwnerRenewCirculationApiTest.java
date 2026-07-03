@@ -38,7 +38,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlMergeMode;
 
-import org.folio.innreach.controller.base.BaseApiControllerTest;
+import org.folio.innreach.it.base.BaseTenantIntegrationTest;
 import org.folio.innreach.domain.entity.InnReachTransaction;
 import org.folio.innreach.domain.exception.EntityNotFoundException;
 import org.folio.innreach.dto.RenewLoanDTO;
@@ -54,7 +54,7 @@ import org.folio.innreach.repository.InnReachTransactionRepository;
     executionPhase = AFTER_TEST_METHOD
 )
 @SqlMergeMode(MERGE)
-class OwnerRenewCirculationApiTest extends BaseApiControllerTest {
+class OwnerRenewCirculationApiTest extends BaseTenantIntegrationTest {
 
   private static final String PRE_POPULATED_TRACKING_ID = "tracking1";
   private static final String PRE_POPULATED_CENTRAL_CODE = "d2ir";

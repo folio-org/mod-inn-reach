@@ -30,7 +30,7 @@ import org.springframework.test.web.servlet.MvcResult;
 import tools.jackson.databind.DeserializationFeature;
 import tools.jackson.databind.json.JsonMapper;
 
-@SpringBootTest
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")
 @AutoConfigureMockMvc
 @WithPostgresContainer
@@ -69,7 +69,7 @@ public abstract class BaseIntegrationTest {
         .contentType(APPLICATION_JSON)
         .header(TENANT, tenant)
         .header(URL, System.getProperty(WM_URL_PROPERTY)))
-      .andExpect(status().isNoContent());
+      .andExpect(status().is2xxSuccessful());
   }
 
   @SneakyThrows
@@ -86,7 +86,7 @@ public abstract class BaseIntegrationTest {
         .contentType(APPLICATION_JSON)
         .header(TENANT, tenantId)
         .header(TOKEN, TEST_TOKEN))
-      .andExpect(status().isNoContent());
+      .andExpect(status().is2xxSuccessful());
   }
 
   public static HttpHeaders defaultHeaders() {

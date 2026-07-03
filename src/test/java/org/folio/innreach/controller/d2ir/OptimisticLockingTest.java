@@ -23,7 +23,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.jdbc.Sql;
 
-import org.folio.innreach.controller.base.BaseApiControllerTest;
+import org.folio.innreach.it.base.BaseTenantIntegrationTest;
 import org.folio.innreach.domain.entity.InnReachTransaction;
 import org.folio.innreach.domain.entity.InnReachTransaction.TransactionState;
 import org.folio.innreach.domain.exception.ResourceVersionConflictException;
@@ -47,7 +47,7 @@ import java.util.UUID;
     },
     executionPhase = AFTER_TEST_METHOD
 )
-class OptimisticLockingTest extends BaseApiControllerTest {
+class OptimisticLockingTest extends BaseTenantIntegrationTest {
 
   private static final String CIRCULATION_ENDPOINT =
       "/inn-reach/d2ir/circ/{circulationOperationName}/{trackingId}/{centralCode}";
@@ -281,7 +281,7 @@ class OptimisticLockingTest extends BaseApiControllerTest {
     stubPut(holdingsUrl(), conflictResponse(), MappingActions.none());
   }
 
-  private BaseApiControllerTest.ResponseActions conflictResponse() {
+  private BaseTenantIntegrationTest.ResponseActions conflictResponse() {
     return response -> response.withStatus(HttpStatus.SC_CONFLICT)
         .withBodyFile("inventory/version-conflict.json");
   }

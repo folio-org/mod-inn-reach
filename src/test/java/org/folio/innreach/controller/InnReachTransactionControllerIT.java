@@ -3,6 +3,7 @@ package org.folio.innreach.controller;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.ITEM_RECEIVED;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.RECEIVE_UNANNOUNCED;
 import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.RETURN_UNCIRCULATED;
+import static org.folio.innreach.support.wiremock.WiremockStubExtension.resetWiremockStubs;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
@@ -34,7 +35,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlMergeMode;
 
-import org.folio.innreach.controller.base.BaseApiControllerTest;
+import org.folio.innreach.it.base.BaseTenantIntegrationTest;
 import org.folio.innreach.dto.TransactionCheckOutResponseDTO;
 import org.folio.innreach.external.service.InnReachExternalService;
 
@@ -47,7 +48,7 @@ import org.folio.innreach.external.service.InnReachExternalService;
 )
 @SqlMergeMode(MERGE)
 @ExtendWith(MockitoExtension.class)
-class InnReachTransactionControllerIT extends BaseApiControllerTest {
+class InnReachTransactionControllerIT extends BaseTenantIntegrationTest {
 
   private static final String CHECK_OUT_ITEM_HOLD_ENDPOINT =
     "/inn-reach/transactions/{itemBarcode}/check-out-item/{servicePointId}";
@@ -108,7 +109,7 @@ class InnReachTransactionControllerIT extends BaseApiControllerTest {
 
   @BeforeEach
   void setup() {
-    wm.resetAll();
+    resetWiremockStubs();
   }
 
   @SneakyThrows

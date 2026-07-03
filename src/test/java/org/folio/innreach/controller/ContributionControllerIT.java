@@ -2,6 +2,7 @@ package org.folio.innreach.controller;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.folio.innreach.support.wiremock.WiremockStubExtension.resetWiremockStubs;
 import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TEST_METHOD;
 import static org.springframework.test.context.jdbc.SqlMergeMode.MergeMode.MERGE;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -14,7 +15,7 @@ import java.util.UUID;
 import org.folio.innreach.batch.contribution.IterationEventReaderFactory;
 import org.folio.innreach.batch.contribution.service.ContributionJobRunner;
 import org.folio.innreach.client.InstanceStorageClient;
-import org.folio.innreach.controller.base.BaseApiControllerTest;
+import org.folio.innreach.it.base.BaseTenantIntegrationTest;
 import org.folio.innreach.dto.ContributionDTO;
 import org.folio.innreach.dto.MappingValidationStatusDTO;
 import org.folio.innreach.repository.ContributionRepository;
@@ -40,7 +41,7 @@ import org.springframework.test.context.jdbc.SqlMergeMode;
 )
 @SqlMergeMode(MERGE)
 @ExtendWith(MockitoExtension.class)
-class ContributionControllerIT extends BaseApiControllerTest {
+class ContributionControllerIT extends BaseTenantIntegrationTest {
 
   private static final String CURRENT_CONTRIBUTION_URL =
     "/inn-reach/central-servers/{centralServerId}/contributions/current";
@@ -68,10 +69,10 @@ class ContributionControllerIT extends BaseApiControllerTest {
 
   @BeforeEach
   void setup() {
-    wm.resetAll();
+    resetWiremockStubs();
     jdbcTemplate.update(
       "UPDATE central_server SET central_server_address = ? WHERE id = ?",
-      wm.baseUrl(), PRE_POPULATED_CENTRAL_SERVER_ID
+      getWiremockUrl(), PRE_POPULATED_CENTRAL_SERVER_ID
     );
   }
 

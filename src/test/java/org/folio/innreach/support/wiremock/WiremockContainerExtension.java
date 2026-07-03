@@ -32,6 +32,7 @@ public class WiremockContainerExtension implements BeforeAllCallback, AfterAllCa
     .withAccessToHost(true)
     .withCommand("--local-response-templating", "--disable-banner")
     .withCopyToContainer(MountableFile.forClasspathResource("wm/__files"), "/home/wiremock/__files")
+    .withCopyToContainer(MountableFile.forClasspathResource("wm/mappings"), "/home/wiremock/mappings")
     .withLogConsumer(new Slf4jLogConsumer(log).withSeparateOutputStreams());
 
   public static Admin getWireMockAdminClient() {
@@ -72,6 +73,9 @@ public class WiremockContainerExtension implements BeforeAllCallback, AfterAllCa
       adminClient = new HttpAdminClient(
         WM_CONTAINER.getHost(), WM_CONTAINER.getMappedPort(WM_DOCKER_PORT));
       client = new WireMock(adminClient);
+
+      // Configure the static WireMock.stubFor() to use this container
+      WireMock.configureFor(client);
     }
   }
 

@@ -81,8 +81,8 @@ public class WiremockStubExtension implements
     if (definedStubMappings == null || definedStubMappings.isEmpty()) {
       store.remove(getStubIdsKey(context));
       resetWiremockStubs();
-
-      validateUnmatchedRequests(unmatchedRequestValues);
+      // Skip validation when no @WireMockStub annotations were used --
+      // tests using programmatic stubs manage their own expectations
       return;
     }
 

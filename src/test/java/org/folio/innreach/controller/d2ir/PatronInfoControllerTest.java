@@ -44,7 +44,7 @@ import org.folio.innreach.client.AutomatedPatronBlocksClient;
 import org.folio.innreach.client.ManualPatronBlocksClient;
 import org.folio.innreach.client.PatronClient;
 import org.folio.innreach.client.UsersClient;
-import org.folio.innreach.controller.base.BaseApiControllerTest;
+import org.folio.innreach.it.base.BaseTenantIntegrationTest;
 import org.folio.innreach.domain.dto.folio.ResultList;
 import org.folio.innreach.domain.dto.folio.patron.PatronDTO;
 import org.folio.innreach.domain.service.UserCustomFieldMappingService;
@@ -56,7 +56,7 @@ import org.folio.innreach.dto.PatronInfoResponseDTO;
   executionPhase = AFTER_TEST_METHOD)
 @SqlMergeMode(MERGE)
 @AutoConfigureTestRestTemplate
-class PatronInfoControllerTest extends BaseApiControllerTest {
+class PatronInfoControllerTest extends BaseTenantIntegrationTest {
 
   private static final String VERIFY_PATRON_PATH = "/inn-reach/d2ir/circ/verifypatron";
 
