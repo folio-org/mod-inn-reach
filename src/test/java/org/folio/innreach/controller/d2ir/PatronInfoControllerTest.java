@@ -84,7 +84,7 @@ class PatronInfoControllerTest extends BaseTenantIntegrationTest {
   @MockitoBean
   private UserCustomFieldMappingService userCustomFieldService;
 
-  private HttpHeaders headers = circHeaders();
+  private HttpHeaders headers = getOkapiHeaders();
 
   @Test
   @Sql(scripts = {

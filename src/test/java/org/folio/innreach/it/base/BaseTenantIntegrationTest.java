@@ -107,6 +107,7 @@ public abstract class BaseTenantIntegrationTest extends BaseIntegrationTest {
   public static HttpHeaders getOkapiHeaders() {
     HttpHeaders headers = circHeaders();
     headers.add(XOkapiHeaders.URL, getWiremockUrl());
+    headers.add(XOkapiHeaders.TENANT, TEST_TENANT);
     return headers;
   }
 
@@ -122,7 +123,8 @@ public abstract class BaseTenantIntegrationTest extends BaseIntegrationTest {
   }
 
   protected void getAndExpect(String url, Template expectedResult) throws Exception {
-    mockMvc.perform(get(url))
+    mockMvc.perform(get(url)
+        .headers(getOkapiHeaders()))
       .andExpect(status().isOk())
       .andExpect(content()
         .json(readTemplate(expectedResult)));
