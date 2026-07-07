@@ -64,7 +64,6 @@ import static org.mockito.Mockito.when;
 class OngoingContributionEventProcessorTest extends BaseTenantIntegrationTest {
   private static final UUID CENTRAL_SERVER_ID = UUID.fromString("edab6baf-c696-42b1-89bb-1bbb8759b0d2");
   private static final Duration ASYNC_AWAIT_TIMEOUT = Duration.ofSeconds(15);
-  private static final String TENANT = "test_tenant";
 
   @MockitoBean
   private KafkaCirculationEventListener kafkaCirculationEventListener;
@@ -1389,7 +1388,7 @@ class OngoingContributionEventProcessorTest extends BaseTenantIntegrationTest {
     var newItem = createItem().id(itemId);
 
     return DomainEvent.<org.folio.innreach.dto.Item>builder()
-      .tenant(TENANT)
+      .tenant(TEST_TENANT)
       .timestamp(System.currentTimeMillis())
       .type(eventType)
       .data(new EntityChangedData<>(newItem, oldItem))
@@ -1401,7 +1400,7 @@ class OngoingContributionEventProcessorTest extends BaseTenantIntegrationTest {
     var newHolding = createHolding().id(holdingId);
 
     return DomainEvent.<org.folio.innreach.dto.Holding>builder()
-      .tenant(TENANT)
+      .tenant(TEST_TENANT)
       .timestamp(System.currentTimeMillis())
       .type(eventType)
       .data(new EntityChangedData<>(oldHolding, newHolding))
@@ -1413,7 +1412,7 @@ class OngoingContributionEventProcessorTest extends BaseTenantIntegrationTest {
     var newInstance = createInstance().id(instanceId);
 
     return DomainEvent.<Instance>builder()
-      .tenant(TENANT)
+      .tenant(TEST_TENANT)
       .timestamp(System.currentTimeMillis())
       .type(eventType)
       .data(new EntityChangedData<>(oldInstance, newInstance))
@@ -1421,7 +1420,7 @@ class OngoingContributionEventProcessorTest extends BaseTenantIntegrationTest {
   }
 
   private OngoingContributionStatus saveOngoingContributionStatus(OngoingContributionStatus ongoingContributionStatus, UUID centralServerId) {
-    ongoingContributionStatus.setTenant(TENANT);
+    ongoingContributionStatus.setTenant(TEST_TENANT);
     ongoingContributionStatus.setCentralServerId(centralServerId);
     return ongoingContributionStatusRepository.save(ongoingContributionStatus);
   }

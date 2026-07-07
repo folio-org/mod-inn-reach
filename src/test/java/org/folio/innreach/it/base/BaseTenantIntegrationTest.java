@@ -13,14 +13,13 @@ import static org.awaitility.Durations.ONE_HUNDRED_MILLISECONDS;
 import static org.awaitility.Durations.ONE_MINUTE;
 import static org.folio.innreach.fixture.TestUtil.circHeaders;
 import static org.folio.innreach.fixture.TestUtil.readFile;
-import static org.folio.innreach.support.kafka.KafkaContainerExtension.createTopics;
-import static org.folio.innreach.support.kafka.KafkaContainerExtension.deleteTopics;
 import static org.folio.innreach.support.wiremock.WiremockContainerExtension.getWireMockClient;
 import static org.folio.innreach.support.wiremock.WiremockStubExtension.resetWiremockStubs;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.function.UnaryOperator;
 
 import com.github.tomakehurst.wiremock.client.MappingBuilder;
@@ -31,8 +30,13 @@ import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.apache.kafka.clients.producer.ProducerConfig;
+import org.apache.kafka.common.serialization.StringSerializer;
 import org.awaitility.Awaitility;
 import org.awaitility.core.ThrowingRunnable;
+import org.folio.innreach.domain.event.DomainEvent;
+import org.folio.innreach.support.kafka.KafkaContainerExtension;
 import org.folio.innreach.util.JsonHelper;
 import org.folio.spring.integration.XOkapiHeaders;
 import org.junit.jupiter.api.AfterAll;
@@ -40,11 +44,15 @@ import org.junit.jupiter.api.BeforeAll;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.kafka.core.DefaultKafkaProducerFactory;
+import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.kafka.support.serializer.JacksonJsonSerializer;
 import org.springframework.test.annotation.DirtiesContext;
-import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.web.servlet.ResultActions;
 
 import org.folio.innreach.support.FolioContextTestExecutionListener;
+import org.folio.innreach.support.TestJdbcHelper;
+import org.springframework.context.annotation.Import;
 import org.springframework.test.context.TestExecutionListeners;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -54,31 +62,19 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @Log4j2
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
+@Import(TestJdbcHelper.class)
 @TestExecutionListeners(
   value = FolioContextTestExecutionListener.class,
   mergeMode = TestExecutionListeners.MergeMode.MERGE_WITH_DEFAULTS)
 public abstract class BaseTenantIntegrationTest extends BaseIntegrationTest {
 
-  protected static final List<String> TENANT_TOPICS = List.of(
-    "folio.testing.circulation.loan",
-    "folio.testing.circulation.request",
-    "folio.testing.circulation.check-in",
-    "folio.testing.inventory.item",
-    "folio.testing.inventory.holdings-record",
-    "folio.testing.inventory.instance",
-    "folio.testing.inventory.instance-contribution"
-  );
-
   protected static WireMock wiremock;
 
   private static JsonHelper jsonHelper;
 
-  private static final String TENANT_SCHEMA = TEST_TENANT + "_mod_inn_reach";
-
   @BeforeAll
   static void setUpTenant(@Autowired JsonHelper jh) {
     jsonHelper = jh;
-    createTopics(TENANT_TOPICS);
     setUpMockForTestTenantInit();
     enableTenant();
     resetWiremockStubs();
@@ -89,7 +85,6 @@ public abstract class BaseTenantIntegrationTest extends BaseIntegrationTest {
   static void tearDownTenant() {
     resetWiremockStubs();
     purgeTenant();
-    deleteTopics(TENANT_TOPICS);
     wiremock = null;
   }
 
@@ -248,6 +243,19 @@ public abstract class BaseTenantIntegrationTest extends BaseIntegrationTest {
   protected static String readTemplate(Template template) {
     String path = "json/" + template.getFile();
     return String.format(readFile(path), template.getParams());
+  }
+
+  protected static KafkaTemplate<String, DomainEvent> buildKafkaTemplate() {
+    var senderProps = Map.<String, Object>of(
+      ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, KafkaContainerExtension.getBootstrapServers(),
+      ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class,
+      ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JacksonJsonSerializer.class);
+
+    return new KafkaTemplate<>(new DefaultKafkaProducerFactory<>(senderProps));
+  }
+
+  protected static <T> List<ConsumerRecord<String, DomainEvent<T>>> asSingleConsumerRecord(String topic, UUID entityId, DomainEvent<T> event) {
+    return List.of(new ConsumerRecord(topic, 1, 1, entityId.toString(), event));
   }
 
   // --- Inner types migrated from BaseApiControllerTest ---

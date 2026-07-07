@@ -1,22 +1,22 @@
 package org.folio.innreach.domain.listener;
 
 import org.folio.innreach.domain.event.DomainEventType;
-import org.folio.innreach.domain.listener.base.BaseKafkaApiTest;
 import org.folio.innreach.domain.service.impl.BatchDomainEventProcessor;
 import org.folio.innreach.domain.service.impl.TenantScopedExecutionService;
+import org.folio.innreach.it.base.BaseTenantIntegrationTest;
 import org.junit.jupiter.api.Test;
 import org.springframework.kafka.listener.ListenerExecutionFailedException;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
-
 import java.util.UUID;
 
+import static org.folio.innreach.domain.listener.KafkaListenersConstants.INVENTORY_ITEM_TOPIC;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 
-class BatchDomainEventListenerTest extends BaseKafkaApiTest {
+class BatchDomainEventListenerTest extends BaseTenantIntegrationTest {
   private static final String TEST_TENANT_ID = "testing";
 
   private static final UUID PRE_POPULATED_LOCAL_ITEM_ID = UUID.fromString("c633da85-8112-4453-af9c-c250e417179d");
@@ -42,6 +42,5 @@ class BatchDomainEventListenerTest extends BaseKafkaApiTest {
 
     verify(executionService).runTenantScoped(eq(TEST_TENANT_ID), any(Runnable.class));
   }
-
 
 }

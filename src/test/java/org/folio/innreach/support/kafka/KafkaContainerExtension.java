@@ -1,5 +1,14 @@
 package org.folio.innreach.support.kafka;
 
+import static org.folio.innreach.domain.listener.KafkaListenersConstants.CIRC_CHECKIN_TOPIC;
+import static org.folio.innreach.domain.listener.KafkaListenersConstants.CIRC_LOAN_TOPIC;
+import static org.folio.innreach.domain.listener.KafkaListenersConstants.CIRC_REQUEST_TOPIC;
+import static org.folio.innreach.domain.listener.KafkaListenersConstants.INITIAL_CONTRIBUTION_TOPIC;
+import static org.folio.innreach.domain.listener.KafkaListenersConstants.INVENTORY_HOLDING_TOPIC;
+import static org.folio.innreach.domain.listener.KafkaListenersConstants.INVENTORY_INSTANCE_TOPIC;
+import static org.folio.innreach.domain.listener.KafkaListenersConstants.INVENTORY_ITEM_TOPIC;
+import static org.folio.innreach.domain.listener.KafkaListenersConstants.INVENTORY_ITEM_TOPIC1;
+import static org.folio.innreach.domain.listener.KafkaListenersConstants.INVENTORY_ITEM_TOPIC2;
 import static org.testcontainers.utility.DockerImageName.parse;
 
 import java.util.List;
@@ -25,6 +34,18 @@ public class KafkaContainerExtension implements BeforeAllCallback, AfterAllCallb
     .withEnv("KAFKA_AUTO_CREATE_TOPICS_ENABLE", "false")
     .withStartupAttempts(3);
 
+  private static final List<String> DEFAULT_TOPICS = List.of(
+    CIRC_LOAN_TOPIC,
+    CIRC_REQUEST_TOPIC,
+    CIRC_CHECKIN_TOPIC,
+    INVENTORY_ITEM_TOPIC,
+    INVENTORY_HOLDING_TOPIC,
+    INVENTORY_INSTANCE_TOPIC,
+    INITIAL_CONTRIBUTION_TOPIC,
+    INVENTORY_ITEM_TOPIC1,
+    INVENTORY_ITEM_TOPIC2
+  );
+
   @Override
   public void beforeAll(ExtensionContext context) {
     if (!CONTAINER.isRunning()) {
@@ -32,6 +53,7 @@ public class KafkaContainerExtension implements BeforeAllCallback, AfterAllCallb
     }
 
     System.setProperty(SPRING_PROPERTY_NAME, CONTAINER.getBootstrapServers());
+    createTopics(DEFAULT_TOPICS);
   }
 
   @Override

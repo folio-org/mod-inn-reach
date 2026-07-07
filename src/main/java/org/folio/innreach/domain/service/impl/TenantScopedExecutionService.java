@@ -13,7 +13,7 @@ import org.folio.spring.service.SystemUserService;
 
 @Service
 @RequiredArgsConstructor
-public class TenantScopedExecutionService {
+public class  TenantScopedExecutionService {
 
   private final ExecutionContextBuilder contextBuilder;
   private SystemUserService systemUserService;

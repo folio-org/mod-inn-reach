@@ -408,7 +408,7 @@ class InitialContributionEventProcessorTest extends BaseTenantIntegrationTest {
     jobExecutionStatus.setJobId(jobId);
     jobExecutionStatus.setStatus(ContributionStatus.IN_PROGRESS);
     jobExecutionStatus.setType("ITERATE");
-    jobExecutionStatus.setTenant("test");
+    jobExecutionStatus.setTenant(TEST_TENANT);
     jobExecutionStatus.setInstanceId(instanceId);
     jobExecutionStatus.setInstanceContributed(isInstanceContributed);
     return jobExecutionStatus;

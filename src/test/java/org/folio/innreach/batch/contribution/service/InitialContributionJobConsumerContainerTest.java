@@ -19,8 +19,8 @@ import org.folio.innreach.batch.contribution.listener.ContributionExceptionListe
 import org.folio.innreach.config.RetryConfig;
 import org.folio.innreach.config.props.ContributionJobProperties;
 import org.folio.innreach.domain.dto.folio.inventorystorage.InstanceIterationEvent;
-import org.folio.innreach.domain.listener.base.BaseKafkaApiTest;
-import org.folio.innreach.domain.service.impl.ContributionServiceImpl;
+import org.folio.innreach.it.base.BaseTenantIntegrationTest;
+import org.folio.innreach.support.kafka.KafkaContainerExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.kafka.support.serializer.JacksonJsonSerializer;
 import org.springframework.messaging.support.MessageBuilder;
@@ -29,7 +29,9 @@ import org.springframework.web.client.HttpClientErrorException;
 import tools.jackson.databind.json.JsonMapper;
 
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -38,16 +40,19 @@ import static org.awaitility.Awaitility.await;
 import static org.folio.innreach.batch.contribution.ContributionJobContextManager.beginContributionJobContext;
 import static org.folio.innreach.batch.contribution.IterationEventReaderFactory.ITERATION_JOB_ID_HEADER;
 import static org.folio.innreach.fixture.ContributionFixture.createContributionJobContext;
+import static org.folio.innreach.support.kafka.KafkaContainerExtension.createTopics;
+import static org.folio.innreach.support.kafka.KafkaContainerExtension.deleteTopics;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
 
-class InitialContributionJobConsumerContainerTest extends BaseKafkaApiTest{
+class InitialContributionJobConsumerContainerTest extends BaseTenantIntegrationTest{
 
   public static final String TOPIC = "folio.contrib.tester.innreach";
   public static final String TEST_TENANT = "testTenant";
 
   private static final ContributionJobContext JOB_CONTEXT = createContributionJobContext();
+  private static final List<String> topicsCreated = new ArrayList<>();
 
   private final Long maxInterval = 2000L;
 
@@ -67,11 +72,15 @@ class InitialContributionJobConsumerContainerTest extends BaseKafkaApiTest{
   @MockitoBean
   ContributionJobRunner contributionJobRunner;
 
-  @Autowired
-  ContributionServiceImpl contributionService;
-
   @MockitoBean("instanceExceptionListener")
   ContributionExceptionListener contributionExceptionListener;
+
+  @AfterAll
+  static void cleanupTopics() {
+    if (!topicsCreated.isEmpty()) {
+      deleteTopics(topicsCreated);
+    }
+  }
 
   @BeforeEach
   void clearMap() {
@@ -81,7 +90,7 @@ class InitialContributionJobConsumerContainerTest extends BaseKafkaApiTest{
 
   @Test
   void testStartAndStopConsumerIfServiceException() {
-    var topicName = getTopicName();
+    var topicName = createTopic();
     var context = prepareContext();
     var initialContributionJobConsumerContainer = prepareContributionJobConsumerContainer(topicName);
     InitialContributionMessageListener initialContributionMessageListener = prepareInitialContributionMessageListener(context);
@@ -102,7 +111,7 @@ class InitialContributionJobConsumerContainerTest extends BaseKafkaApiTest{
 
   @Test
   void testStartAndStopConsumerIfFeignException() {
-    var topicName = getTopicName();
+    var topicName = createTopic();
     var context = prepareContext();
     var initialContributionJobConsumerContainer = prepareContributionJobConsumerContainer(topicName);
     InitialContributionMessageListener initialContributionMessageListener = prepareInitialContributionMessageListener(context);
@@ -123,7 +132,7 @@ class InitialContributionJobConsumerContainerTest extends BaseKafkaApiTest{
 
   @Test
   void testStartOrCreateConsumer() {
-    var topicName = getTopicName();
+    var topicName = createTopic();
     var context = prepareContext();
     var initialContributionJobConsumerContainer = prepareContributionJobConsumerContainer(topicName);
     InitialContributionMessageListener initialContributionMessageListener = prepareInitialContributionMessageListener(context);
@@ -141,7 +150,7 @@ class InitialContributionJobConsumerContainerTest extends BaseKafkaApiTest{
 
   @Test
   void stopConsumer() {
-    var topicName = getTopicName();
+    var topicName = createTopic();
     var context = prepareContext();
 
     doNothing().when(contributionJobRunner).stopContribution(any());
@@ -164,7 +173,7 @@ class InitialContributionJobConsumerContainerTest extends BaseKafkaApiTest{
 
   @Test
   void testContainerIfRunning() {
-    var topicName = getTopicName();
+    var topicName = createTopic();
 
     var consumerProperties = kafkaProperties.buildConsumerProperties();
 
@@ -200,6 +209,13 @@ class InitialContributionJobConsumerContainerTest extends BaseKafkaApiTest{
       .centralServerId(UUID.randomUUID())
       .tenantId(TEST_TENANT)
       .build();
+  }
+
+  private String createTopic() {
+    var topicName = getTopicName();
+    createTopics(List.of(topicName));
+    topicsCreated.add(topicName);
+    return topicName;
   }
 
   private void produceEvent(String tempTopic) {

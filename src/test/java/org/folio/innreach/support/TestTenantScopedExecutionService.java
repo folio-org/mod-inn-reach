@@ -2,20 +2,27 @@ package org.folio.innreach.support;
 
 import lombok.SneakyThrows;
 import org.folio.innreach.domain.service.impl.TenantScopedExecutionService;
+import org.folio.spring.context.ExecutionContextBuilder;
+import org.folio.spring.scope.FolioExecutionContextSetter;
+import org.springframework.context.annotation.Primary;
+import org.springframework.context.annotation.Profile;
+import org.springframework.stereotype.Service;
 
 /**
- * Test replacement for {@link TenantScopedExecutionService} that runs jobs synchronously
- * without tenant scoping. Throws {@link RuntimeException} for tenant "testing4" to simulate
- * error scenarios.
- *
- * <p>Note: {@code @Primary @Service @Profile("test")} annotations will be added when
- * the Kafka test migration is complete (Task 9) and the inner class in BaseKafkaApiTest
- * is removed, to avoid conflicting bean definitions during migration.
+ * Test replacement for {@link TenantScopedExecutionService} that runs jobs synchronously.
+ * Properly sets the tenant context before running the job, except for tenant "testing4"
+ * which throws {@link RuntimeException} to simulate error scenarios.
  */
+@Primary
+@Service
+@Profile("test")
 public class TestTenantScopedExecutionService extends TenantScopedExecutionService {
 
-  public TestTenantScopedExecutionService() {
+  private final ExecutionContextBuilder contextBuilder;
+
+  public TestTenantScopedExecutionService(ExecutionContextBuilder contextBuilder) {
     super(null);
+    this.contextBuilder = contextBuilder;
   }
 
   @Override
@@ -24,11 +31,15 @@ public class TestTenantScopedExecutionService extends TenantScopedExecutionServi
     if (tenantId.equals("testing4")) {
       throw new RuntimeException("testing exception");
     }
-    job.run();
+    try (var fex = new FolioExecutionContextSetter(contextBuilder.buildContext(tenantId))) {
+      job.run();
+    }
   }
 
   @Override
   public void executeAsyncTenantScoped(String tenantId, Runnable job) {
-    job.run();
+    try (var fex = new FolioExecutionContextSetter(contextBuilder.buildContext(tenantId))) {
+      job.run();
+    }
   }
 }

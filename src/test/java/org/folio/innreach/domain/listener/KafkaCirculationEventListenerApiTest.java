@@ -1,6 +1,9 @@
 package org.folio.innreach.domain.listener;
 
 import static org.awaitility.Awaitility.await;
+import static org.folio.innreach.domain.listener.KafkaListenersConstants.CIRC_CHECKIN_TOPIC;
+import static org.folio.innreach.domain.listener.KafkaListenersConstants.CIRC_LOAN_TOPIC;
+import static org.folio.innreach.domain.listener.KafkaListenersConstants.CIRC_REQUEST_TOPIC;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
@@ -51,12 +54,19 @@ import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.folio.innreach.client.HoldingsStorageClient;
 import org.folio.innreach.dto.StorageLoanDTOStatus;
+import org.folio.innreach.external.client.InnReachAuthClient;
+import org.folio.innreach.external.dto.AccessTokenDTO;
+import org.folio.innreach.it.base.BaseTenantIntegrationTest;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
+import org.springframework.http.ResponseEntity;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.test.context.jdbc.Sql;
@@ -72,7 +82,6 @@ import org.folio.innreach.domain.entity.TransactionItemHold;
 import org.folio.innreach.domain.event.DomainEvent;
 import org.folio.innreach.domain.event.DomainEventType;
 import org.folio.innreach.domain.event.EntityChangedData;
-import org.folio.innreach.domain.listener.base.BaseKafkaApiTest;
 import org.folio.innreach.domain.service.impl.BatchDomainEventProcessor;
 import org.folio.innreach.dto.CheckInDTO;
 import org.folio.innreach.dto.ItemStatus;
@@ -87,7 +96,7 @@ import org.folio.innreach.repository.InnReachTransactionRepository;
   executionPhase = AFTER_TEST_METHOD
 )
 @SqlMergeMode(MERGE)
-class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
+class KafkaCirculationEventListenerApiTest extends BaseTenantIntegrationTest {
   private static final UUID LOAN_ID = UUID.randomUUID();
   private static final UUID PRE_POPULATED_LOCAL_LOAN_ID = UUID.fromString("7b43b4bc-3a57-4506-815a-78b01c38a2a1");
   private static final UUID REQUESTER_ID = UUID.randomUUID();
@@ -112,6 +121,8 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
   private static final Date DUE_DATE = new Date();
   private static final UUID CHECKIN_ID = UUID.randomUUID();
 
+  private static KafkaTemplate<String, DomainEvent> kafkaTemplate;
+
   @MockitoSpyBean
   private KafkaCirculationEventListener listener;
 
@@ -132,6 +143,19 @@ class KafkaCirculationEventListenerApiTest extends BaseKafkaApiTest {
 
   @MockitoBean
   private HoldingsStorageClient holdingsStorageClient;
+
+  @MockitoBean
+  protected InnReachAuthClient innReachAuthClient;
+
+  @BeforeAll
+  static void setUp() {
+    kafkaTemplate = buildKafkaTemplate();
+  }
+
+  @BeforeEach
+  public void setUpMocks() {
+    when(innReachAuthClient.getAccessToken(any(), any())).thenReturn(ResponseEntity.ok(new AccessTokenDTO()));
+  }
 
   @Test
   void shouldReceiveLoanEvent() {
