@@ -97,8 +97,6 @@ public abstract class BaseTenantIntegrationTest extends BaseIntegrationTest {
     // Add WireMock stubs needed during POST /_/tenant here.
   }
 
-  // --- WireMock helpers migrated from BaseApiControllerTest ---
-
   public static HttpHeaders getOkapiHeaders() {
     HttpHeaders headers = circHeaders();
     headers.add(XOkapiHeaders.URL, getWiremockUrl());
@@ -257,8 +255,6 @@ public abstract class BaseTenantIntegrationTest extends BaseIntegrationTest {
   protected static <T> List<ConsumerRecord<String, DomainEvent<T>>> asSingleConsumerRecord(String topic, UUID entityId, DomainEvent<T> event) {
     return List.of(new ConsumerRecord(topic, 1, 1, entityId.toString(), event));
   }
-
-  // --- Inner types migrated from BaseApiControllerTest ---
 
   @RequiredArgsConstructor(staticName = "of")
   @AllArgsConstructor(access = AccessLevel.PRIVATE)

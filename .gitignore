@@ -7,3 +7,5 @@
 /.vertx/
 *.log
 *-dev.*
+/docs/
+/.opencode/
