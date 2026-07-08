@@ -12,16 +12,12 @@ import org.folio.innreach.external.exception.InnReachGatewayException;
 import org.folio.innreach.external.exception.ServiceSuspendedException;
 import org.folio.innreach.it.base.BaseTenantIT;
 import org.folio.innreach.repository.CentralServerRepository;
-import org.folio.innreach.external.client.InnReachAuthClient;
-import org.folio.innreach.external.dto.AccessTokenDTO;
 import org.folio.innreach.repository.ContributionErrorRepository;
 import org.folio.innreach.repository.ContributionRepository;
 import org.folio.innreach.repository.JobExecutionStatusRepository;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.test.context.jdbc.Sql;
@@ -62,14 +58,6 @@ import org.folio.innreach.dto.Item;
 class InitialContributionEventProcessorIT extends BaseTenantIT {
   private static final UUID CENTRAL_SERVER_ID = UUID.fromString("edab6baf-c696-42b1-89bb-1bbb8759b0d2");
   private static final Duration ASYNC_AWAIT_TIMEOUT = Duration.ofSeconds(15);
-
-  @MockitoBean
-  private InnReachAuthClient innReachAuthClient;
-
-  @BeforeEach
-  void init() {
-    when(innReachAuthClient.getAccessToken(any(), any())).thenReturn(ResponseEntity.ok(new AccessTokenDTO()));
-  }
 
   @Autowired
   InitialContributionEventProcessor eventProcessor;

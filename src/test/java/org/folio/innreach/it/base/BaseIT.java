@@ -53,6 +53,7 @@ public abstract class BaseIT {
   @BeforeAll
   static void setupMockMvc(@Autowired MockMvc mockMvc) {
     BaseIT.mockMvc = mockMvc;
+    System.setProperty(TENANT, TEST_TENANT);
   }
 
   @SneakyThrows

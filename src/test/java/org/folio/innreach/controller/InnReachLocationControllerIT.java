@@ -3,8 +3,6 @@ package org.folio.innreach.controller;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TEST_METHOD;
 import static org.springframework.test.context.jdbc.SqlMergeMode.MergeMode.MERGE;
@@ -16,13 +14,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.folio.innreach.fixture.TestUtil.deserializeFromJsonFile;
 
 import java.util.UUID;
-import org.folio.innreach.external.client.InnReachAuthClient;
-import org.folio.innreach.external.dto.AccessTokenDTO;
 import org.folio.innreach.it.base.BaseTenantIT;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.http.ResponseEntity;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlMergeMode;
 import org.folio.innreach.domain.entity.base.AuditableUser;
@@ -38,14 +31,6 @@ class InnReachLocationControllerIT extends BaseTenantIT {
 
 	private static final String PRE_POPULATED_LOCATION1_ID = "a1c1472f-67ec-4938-b5a8-f119e51ab79b";
 	private static final AuditableUser PRE_POPULATED_USER = AuditableUser.SYSTEM;
-
-  @MockitoBean
-  private InnReachAuthClient innReachAuthClient;
-
-  @BeforeEach
-  void init() {
-    when(innReachAuthClient.getAccessToken(any(), any())).thenReturn(ResponseEntity.ok(new AccessTokenDTO()));
-  }
 
 	@Test
 	void return200HttpCode_and_createdInnReachLocation_when_createInnReachLocation() throws Exception {

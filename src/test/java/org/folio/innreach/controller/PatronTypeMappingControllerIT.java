@@ -17,8 +17,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.folio.innreach.fixture.TestUtil.deserializeFromJsonFile;
 import static org.folio.innreach.fixture.TestUtil.randomInteger;
 import static org.folio.innreach.util.ListUtils.mapItems;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
 
 import java.util.List;
 import java.util.Objects;
@@ -27,19 +25,14 @@ import java.util.UUID;
 import java.util.function.Predicate;
 
 import org.folio.innreach.it.base.BaseTenantIT;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlMergeMode;
 import org.folio.innreach.domain.entity.PatronTypeMapping;
 import org.folio.innreach.dto.Error;
 import org.folio.innreach.dto.PatronTypeMappingDTO;
 import org.folio.innreach.dto.PatronTypeMappingsDTO;
-import org.folio.innreach.external.client.InnReachAuthClient;
-import org.folio.innreach.external.dto.AccessTokenDTO;
 import org.folio.innreach.mapper.PatronTypeMappingMapper;
 import org.folio.innreach.repository.PatronTypeMappingRepository;
 
@@ -55,14 +48,6 @@ class PatronTypeMappingControllerIT extends BaseTenantIT {
   private static final String PRE_POPULATED_PATRON_TYPE_MAPPING_ID1 = "5c39c67f-1373-4ec9-b356-fb71aba3e659";
   private static final String PRE_POPULATED_PATRON_TYPE_MAPPING_ID2 = "1af0b16e-24bc-44cb-9c9a-ca07167e41d4";
   private static final String PRE_POPULATED_PATRON_GROUP_ID1 = "54e17c4c-e315-4d20-8879-efc694dea1ce";
-
-  @MockitoBean
-  private InnReachAuthClient innReachAuthClient;
-
-  @BeforeEach
-  void init() {
-    when(innReachAuthClient.getAccessToken(any(), any())).thenReturn(ResponseEntity.ok(new AccessTokenDTO()));
-  }
 
   @Autowired
   private PatronTypeMappingRepository repository;

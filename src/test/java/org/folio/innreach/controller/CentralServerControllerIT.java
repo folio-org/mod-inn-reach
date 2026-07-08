@@ -7,8 +7,6 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TEST_METHOD;
 import static org.springframework.test.context.jdbc.SqlMergeMode.MergeMode.MERGE;
@@ -20,13 +18,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import org.folio.innreach.dto.CentralServerDTO;
 import org.folio.innreach.dto.CentralServersDTO;
-import org.folio.innreach.external.client.InnReachAuthClient;
-import org.folio.innreach.external.dto.AccessTokenDTO;
 import org.folio.innreach.it.base.BaseTenantIT;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.http.ResponseEntity;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlMergeMode;
 
@@ -40,18 +33,11 @@ class CentralServerControllerIT extends BaseTenantIT {
 
   private static final String PRE_POPULATED_CENTRAL_SERVER_ID = "edab6baf-c696-42b1-89bb-1bbb8759b0d2";
 
-  @MockitoBean
-  private InnReachAuthClient innReachAuthClient;
-
-  @BeforeEach
-  void init() {
-    when(innReachAuthClient.getAccessToken(any(), any())).thenReturn(ResponseEntity.ok(new AccessTokenDTO()));
-  }
-
   @Test
   void return200HttpCode_and_createdCentralServerEntity_when_createCentralServer() throws Exception {
     var centralServerRequestDTO = deserializeFromJsonFile(
       "/central-server/create-central-server-request.json", CentralServerDTO.class);
+    centralServerRequestDTO.setCentralServerAddress(getWiremockUrl());
 
     var result = mockMvc.perform(post("/inn-reach/central-servers")
         .content(asJsonString(centralServerRequestDTO))
@@ -70,6 +56,7 @@ class CentralServerControllerIT extends BaseTenantIT {
   void return200HttpCode_and_createdCentralServerEntity_when_createCentralServerWithoutLocalServerCredentials() throws Exception {
     var centralServerRequestDTO = deserializeFromJsonFile(
       "/central-server/create-central-server-without-local-server-credentials-request.json", CentralServerDTO.class);
+    centralServerRequestDTO.setCentralServerAddress(getWiremockUrl());
 
     var result = mockMvc.perform(post("/inn-reach/central-servers")
         .content(asJsonString(centralServerRequestDTO))
@@ -193,6 +180,7 @@ class CentralServerControllerIT extends BaseTenantIT {
   void return409HttpCode_when_createCentralServerWithUniqueViolation() throws Exception {
     var centralServerRequestDTO = deserializeFromJsonFile(
       "/central-server/create-central-server-request.json", CentralServerDTO.class);
+    centralServerRequestDTO.setCentralServerAddress(getWiremockUrl());
 
     mockMvc.perform(post("/inn-reach/central-servers")
         .content(asJsonString(centralServerRequestDTO))
@@ -205,6 +193,7 @@ class CentralServerControllerIT extends BaseTenantIT {
   void return400HttpCode_when_createCentralServerWithDuplicateFolioLibraries() throws Exception {
     var centralServerRequestDTO = deserializeFromJsonFile(
       "/central-server/create-central-server-invalid-libraries-request.json", CentralServerDTO.class);
+    centralServerRequestDTO.setCentralServerAddress(getWiremockUrl());
 
     mockMvc.perform(post("/inn-reach/central-servers")
         .content(asJsonString(centralServerRequestDTO))
@@ -231,6 +220,7 @@ class CentralServerControllerIT extends BaseTenantIT {
     var centralServerRequestDTO = deserializeFromJsonFile(
       "/central-server/create-central-server-request.json", CentralServerDTO.class);
     centralServerRequestDTO.setCheckPickupLocation(true);
+    centralServerRequestDTO.setCentralServerAddress(getWiremockUrl());
 
     var result = mockMvc.perform(post("/inn-reach/central-servers")
         .content(asJsonString(centralServerRequestDTO))

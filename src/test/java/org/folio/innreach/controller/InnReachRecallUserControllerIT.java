@@ -7,20 +7,13 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
 
 import java.util.UUID;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlMergeMode;
 import org.folio.innreach.dto.InnReachRecallUserDTO;
-import org.folio.innreach.external.client.InnReachAuthClient;
-import org.folio.innreach.external.dto.AccessTokenDTO;
 import org.folio.innreach.it.base.BaseTenantIT;
 import org.folio.innreach.repository.CentralServerRepository;
 
@@ -35,14 +28,6 @@ class InnReachRecallUserControllerIT extends BaseTenantIT {
   private static final UUID PRE_POPULATED_CENTRAL_SERVER_ID = UUID.fromString("edab6baf-c697-42b2-89bb-1bbb8759b0d3");
 
   private static final String CENTRAL_SERVER_RECALL_USER_URI = "/inn-reach/central-servers/{id}/inn-reach-recall-user";
-
-  @MockitoBean
-  private InnReachAuthClient innReachAuthClient;
-
-  @BeforeEach
-  void init() {
-    when(innReachAuthClient.getAccessToken(any(), any())).thenReturn(ResponseEntity.ok(new AccessTokenDTO()));
-  }
 
   @Autowired
   private CentralServerRepository centralServerRepository;

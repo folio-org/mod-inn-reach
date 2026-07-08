@@ -14,7 +14,6 @@ import static org.springframework.test.context.jdbc.SqlMergeMode.MergeMode.MERGE
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
 import static org.folio.innreach.fixture.TestUtil.deserializeFromJsonFile;
 import static org.folio.innreach.fixture.TestUtil.randomIntegerExcept;
 import static org.folio.innreach.util.ListUtils.mapItems;
@@ -26,27 +25,17 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
-
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlMergeMode;
-
 import org.folio.innreach.domain.entity.ItemTypeMapping;
 import org.folio.innreach.dto.Error;
 import org.folio.innreach.dto.ItemTypeMappingDTO;
 import org.folio.innreach.dto.ItemTypeMappingsDTO;
-import org.folio.innreach.external.client.InnReachAuthClient;
-import org.folio.innreach.external.dto.AccessTokenDTO;
 import org.folio.innreach.it.base.BaseTenantIT;
 import org.folio.innreach.mapper.ItemTypeMappingMapper;
 import org.folio.innreach.repository.ItemTypeMappingRepository;
-
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
 
 @Sql(
   scripts = {
@@ -62,14 +51,6 @@ class ItemTypeMappingControllerIT extends BaseTenantIT {
   private static final String PRE_POPULATED_ITEM_TYPE_MAPPING_ID2 = "606f5a38-9e1f-45d0-856e-899c5667410d";
 
   private static final Integer PRE_POPULATED_CENTRAL_ITEM_TYPE1 = 1;
-
-  @MockitoBean
-  private InnReachAuthClient innReachAuthClient;
-
-  @BeforeEach
-  void init() {
-    when(innReachAuthClient.getAccessToken(any(), any())).thenReturn(ResponseEntity.ok(new AccessTokenDTO()));
-  }
 
   @Autowired
   private ItemTypeMappingRepository repository;

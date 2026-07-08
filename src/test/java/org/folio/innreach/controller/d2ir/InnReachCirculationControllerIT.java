@@ -83,14 +83,11 @@ import org.folio.innreach.dto.InnReachResponseDTO;
 import org.folio.innreach.dto.LoanDTO;
 import org.folio.innreach.dto.RenewLoanDTO;
 import org.folio.innreach.dto.TransactionHoldDTO;
-import org.folio.innreach.external.client.InnReachAuthClient;
-import org.folio.innreach.external.dto.AccessTokenDTO;
 import org.folio.innreach.external.dto.InnReachResponse;
 import org.folio.innreach.external.service.InnReachExternalService;
 import org.folio.innreach.it.base.BaseTenantIT;
 import org.folio.innreach.mapper.InnReachTransactionHoldMapper;
 import org.folio.innreach.repository.InnReachTransactionRepository;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -100,7 +97,6 @@ import org.mockito.Captor;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.test.context.jdbc.Sql;
@@ -169,14 +165,6 @@ class InnReachCirculationControllerIT extends BaseTenantIT {
   private static final String CENTRAL_PATRON_NAME = "Atreides, Paul";
   private static final Duration ASYNC_AWAIT_TIMEOUT = Duration.ofSeconds(15);
   private static final String PRE_POPULATED_USER_BARCODE = "0000098765";
-
-  @MockitoBean
-  private InnReachAuthClient innReachAuthClient;
-
-  @BeforeEach
-  void init() {
-    when(innReachAuthClient.getAccessToken(any(), any())).thenReturn(ResponseEntity.ok(new AccessTokenDTO()));
-  }
 
   @MockitoSpyBean
   private InnReachTransactionRepository repository;

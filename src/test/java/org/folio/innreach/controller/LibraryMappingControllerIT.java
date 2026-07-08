@@ -22,18 +22,14 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.folio.innreach.controller.ControllerTestUtils.collectFieldNames;
 import static org.folio.innreach.controller.ControllerTestUtils.createValidationError;
 import static org.folio.innreach.fixture.TestUtil.deserializeFromJsonFile;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
 
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Predicate;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlMergeMode;
@@ -43,8 +39,6 @@ import org.folio.innreach.dto.Error;
 import org.folio.innreach.dto.LibraryMappingDTO;
 import org.folio.innreach.dto.LibraryMappingsDTO;
 import org.folio.innreach.dto.ValidationErrorsDTO;
-import org.folio.innreach.external.client.InnReachAuthClient;
-import org.folio.innreach.external.dto.AccessTokenDTO;
 import org.folio.innreach.external.service.InnReachLocationExternalService;
 import org.folio.innreach.it.base.BaseTenantIT;
 import org.folio.innreach.mapper.LibraryMappingMapper;
@@ -66,14 +60,6 @@ class LibraryMappingControllerIT extends BaseTenantIT {
   private static final UUID PRE_POPULATED_LIBRARY2_ID = UUID.fromString("ffbef66a-12f5-480e-9ea2-499a406bdf27");
   private static final UUID PRE_POPULATED_INN_REACH_LOCATION1_ID = UUID.fromString(
       "26f7c8c5-f090-4742-b7c7-e08ed1cc4e67");
-
-  @MockitoBean
-  private InnReachAuthClient innReachAuthClient;
-
-  @BeforeEach
-  void init() {
-    when(innReachAuthClient.getAccessToken(any(), any())).thenReturn(ResponseEntity.ok(new AccessTokenDTO()));
-  }
 
   @Autowired
   private LibraryMappingRepository repository;

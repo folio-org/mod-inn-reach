@@ -4,8 +4,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TEST_METHOD;
 import static org.springframework.test.context.jdbc.SqlMergeMode.MergeMode.MERGE;
@@ -17,16 +15,11 @@ import static org.folio.innreach.fixture.TestUtil.deserializeFromJsonFile;
 import java.util.UUID;
 import org.folio.innreach.dto.PagingSlipTemplateDTO;
 import org.folio.innreach.dto.PagingSlipTemplatesDTO;
-import org.folio.innreach.external.client.InnReachAuthClient;
-import org.folio.innreach.external.dto.AccessTokenDTO;
 import org.folio.innreach.it.base.BaseTenantIT;
 import org.folio.innreach.mapper.PagingSlipTemplateMapper;
 import org.folio.innreach.repository.PagingSlipTemplateRepository;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlMergeMode;
 
@@ -42,18 +35,10 @@ class PagingSlipTemplateControllerIT extends BaseTenantIT {
   private static final UUID PRE_POPULATED_CENTRAL_SERVER_ID = UUID.fromString("edab6baf-c696-42b1-89bb-1bbb8759b0d2");
   private static final UUID PRE_POPULATED_PAGING_SLIP_TEMPLATE_ID = UUID.fromString("a731991d-310d-43c6-938a-626ff9b8d6b6");
 
-  @MockitoBean
-  private InnReachAuthClient innReachAuthClient;
-
   @Autowired
   private PagingSlipTemplateRepository repository;
   @Autowired
   private PagingSlipTemplateMapper mapper;
-
-  @BeforeEach
-  void init() {
-    when(innReachAuthClient.getAccessToken(any(), any())).thenReturn(ResponseEntity.ok(new AccessTokenDTO()));
-  }
 
   @Test
   @Sql(scripts = {

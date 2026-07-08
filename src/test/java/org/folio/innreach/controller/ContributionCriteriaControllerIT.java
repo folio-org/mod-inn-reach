@@ -9,8 +9,6 @@ import static org.hamcrest.Matchers.samePropertyValuesAs;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TEST_METHOD;
 import static org.springframework.test.context.jdbc.SqlMergeMode.MergeMode.MERGE;
@@ -25,16 +23,11 @@ import jakarta.transaction.Transactional;
 import java.util.UUID;
 import org.folio.innreach.dto.ContributionCriteriaDTO;
 import org.folio.innreach.dto.Error;
-import org.folio.innreach.external.client.InnReachAuthClient;
-import org.folio.innreach.external.dto.AccessTokenDTO;
 import org.folio.innreach.it.base.BaseTenantIT;
 import org.folio.innreach.mapper.ContributionCriteriaConfigurationMapper;
 import org.folio.innreach.repository.ContributionCriteriaConfigurationRepository;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlConfig;
 import org.springframework.test.context.jdbc.SqlMergeMode;
@@ -52,18 +45,10 @@ class ContributionCriteriaControllerIT extends BaseTenantIT {
   private static final String PRE_POPULATED_CENTRAL_SERVER_ID = "edab6baf-c696-42b1-89bb-1bbb8759b0d2";
   private static final UUID PRE_POPULATED_CRITERIA_ID = fromString("71bd0beb-28cb-40bb-9f40-87463d61a553");
 
-  @MockitoBean
-  private InnReachAuthClient innReachAuthClient;
-
   @Autowired
   private ContributionCriteriaConfigurationRepository repository;
   @Autowired
   private ContributionCriteriaConfigurationMapper mapper;
-
-  @BeforeEach
-  void init() {
-    when(innReachAuthClient.getAccessToken(any(), any())).thenReturn(ResponseEntity.ok(new AccessTokenDTO()));
-  }
 
   @Test
   @Transactional

@@ -1,5 +1,7 @@
 package org.folio.innreach.support;
 
+import static org.folio.spring.integration.XOkapiHeaders.TENANT;
+
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -20,7 +22,6 @@ import org.springframework.test.context.support.AbstractTestExecutionListener;
 public class FolioContextTestExecutionListener extends AbstractTestExecutionListener {
 
   private static final String SETTER_ATTR = "folioContextSetter";
-  private static final String TEST_TENANT = "testing";
 
   @Override
   public int getOrder() {
@@ -30,8 +31,9 @@ public class FolioContextTestExecutionListener extends AbstractTestExecutionList
   @Override
   public void beforeTestMethod(TestContext testContext) {
     var metadata = testContext.getApplicationContext().getBean(FolioModuleMetadata.class);
+    var tenantId = System.getProperty(TENANT);
     Map<String, Collection<String>> headers = Map.of(
-      "x-okapi-tenant", List.of(TEST_TENANT)
+      "x-okapi-tenant", List.of(tenantId)
     );
     var setter = new FolioExecutionContextSetter(metadata, headers);
     testContext.setAttribute(SETTER_ATTR, setter);

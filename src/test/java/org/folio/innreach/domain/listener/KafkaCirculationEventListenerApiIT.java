@@ -54,18 +54,14 @@ import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.folio.innreach.client.HoldingsStorageClient;
 import org.folio.innreach.dto.StorageLoanDTOStatus;
-import org.folio.innreach.external.client.InnReachAuthClient;
-import org.folio.innreach.external.dto.AccessTokenDTO;
 import org.folio.innreach.it.base.BaseTenantIT;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
-import org.springframework.http.ResponseEntity;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
@@ -144,17 +140,9 @@ class KafkaCirculationEventListenerApiIT extends BaseTenantIT {
   @MockitoBean
   private HoldingsStorageClient holdingsStorageClient;
 
-  @MockitoBean
-  protected InnReachAuthClient innReachAuthClient;
-
   @BeforeAll
   static void setUp() {
     kafkaTemplate = buildKafkaTemplate();
-  }
-
-  @BeforeEach
-  void setUpMocks() {
-    when(innReachAuthClient.getAccessToken(any(), any())).thenReturn(ResponseEntity.ok(new AccessTokenDTO()));
   }
 
   @Test

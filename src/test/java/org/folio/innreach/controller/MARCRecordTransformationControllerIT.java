@@ -18,12 +18,8 @@ import org.folio.innreach.client.SourceRecordStorageClient;
 import org.folio.innreach.domain.dto.folio.sourcerecord.SourceRecordDTO;
 import org.folio.innreach.dto.Instance;
 import org.folio.innreach.dto.TransformedMARCRecordDTO;
-import org.folio.innreach.external.client.InnReachAuthClient;
-import org.folio.innreach.external.dto.AccessTokenDTO;
 import org.folio.innreach.it.base.BaseTenantIT;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlMergeMode;
@@ -41,18 +37,10 @@ class MARCRecordTransformationControllerIT extends BaseTenantIT {
   private static final UUID PRE_POPULATED_CENTRAL_SERVER_ID = UUID.fromString("edab6baf-c696-42b1-89bb-1bbb8759b0d2");
 
   @MockitoBean
-  private InnReachAuthClient innReachAuthClient;
-
-  @MockitoBean
   private InstanceStorageClient instanceStorageClient;
 
   @MockitoBean
   private SourceRecordStorageClient sourceRecordStorageClient;
-
-  @BeforeEach
-  void init() {
-    when(innReachAuthClient.getAccessToken(any(), any())).thenReturn(ResponseEntity.ok(new AccessTokenDTO()));
-  }
 
   @Test
   @Sql(scripts = {

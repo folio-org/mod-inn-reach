@@ -27,12 +27,10 @@ import java.util.UUID;
 import org.folio.innreach.batch.contribution.IterationEventReaderFactory;
 import org.folio.innreach.external.exception.InnReachTimeOutException;
 import org.folio.innreach.it.base.BaseTenantIT;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.retry.RetryTemplate;
-import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlMergeMode;
@@ -45,8 +43,6 @@ import org.folio.innreach.domain.entity.Contribution;
 import org.folio.innreach.dto.ContributionDTO;
 import org.folio.innreach.dto.ContributionsDTO;
 import org.folio.innreach.dto.MappingValidationStatusDTO;
-import org.folio.innreach.external.client.InnReachAuthClient;
-import org.folio.innreach.external.dto.AccessTokenDTO;
 import org.folio.innreach.external.service.InnReachLocationExternalService;
 import org.folio.innreach.mapper.ContributionMapper;
 import org.folio.innreach.repository.ContributionRepository;
@@ -67,14 +63,6 @@ class ContributionControllerWithMocksForClientsIT extends BaseTenantIT {
   private static final UUID PRE_POPULATED_CENTRAL_SERVER_ID = UUID.fromString("edab6baf-c696-42b1-89bb-1bbb8759b0d2");
   private static final UUID PRE_POPULATED_CONTRIBUTION_ID = UUID.fromString("ae274737-c398-4cf6-8dd3-d228e5b1f608");
   private static final UUID PRE_POPULATED_ITERATION_JOB_ID = UUID.fromString("a193f510-b178-4ce6-ab70-d8e09f646a2d");
-
-  @MockitoBean
-  private InnReachAuthClient innReachAuthClient;
-
-  @BeforeEach
-  void init() {
-    when(innReachAuthClient.getAccessToken(any(), any())).thenReturn(ResponseEntity.ok(new AccessTokenDTO()));
-  }
 
   @MockitoBean
   private InstanceStorageClient instanceStorageClient;

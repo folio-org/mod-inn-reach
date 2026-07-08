@@ -3,8 +3,6 @@ package org.folio.innreach.controller;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TEST_METHOD;
 import static org.springframework.test.context.jdbc.SqlMergeMode.MergeMode.MERGE;
@@ -16,13 +14,8 @@ import static org.folio.innreach.fixture.TestUtil.deserializeFromJsonFile;
 
 import java.util.UUID;
 import org.folio.innreach.dto.VisiblePatronFieldConfigurationDTO;
-import org.folio.innreach.external.client.InnReachAuthClient;
-import org.folio.innreach.external.dto.AccessTokenDTO;
 import org.folio.innreach.it.base.BaseTenantIT;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.http.ResponseEntity;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlMergeMode;
 
@@ -37,14 +30,6 @@ import org.springframework.test.context.jdbc.SqlMergeMode;
 class VisiblePatronFieldConfigurationControllerIT extends BaseTenantIT {
   private static final String PRE_POPULATED_VISIBLE_PATRON_FIELD_CONFIG_ID = "58173d4f-5dce-407a-8f63-80d1a0df3218";
   private static final String PRE_POPULATED_CENTRAL_SERVER_ID = "edab6baf-c696-42b1-89bb-1bbb8759b0d2";
-
-  @MockitoBean
-  private InnReachAuthClient innReachAuthClient;
-
-  @BeforeEach
-  void init() {
-    when(innReachAuthClient.getAccessToken(any(), any())).thenReturn(ResponseEntity.ok(new AccessTokenDTO()));
-  }
 
   @Test
   @Sql(scripts = {"classpath:db/central-server/pre-populate-central-server.sql",

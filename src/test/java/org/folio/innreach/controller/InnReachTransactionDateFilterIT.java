@@ -27,25 +27,17 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Stream;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
-import org.springframework.http.ResponseEntity;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlMergeMode;
 
 import org.folio.innreach.dto.FilterDateOperation;
 import org.folio.innreach.dto.InnReachTransactionDTO;
 import org.folio.innreach.dto.InnReachTransactionsDTO;
-import org.folio.innreach.external.client.InnReachAuthClient;
-import org.folio.innreach.external.dto.AccessTokenDTO;
 import org.folio.innreach.it.base.BaseTenantIT;
-
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
 
 @Sql(
     scripts = {
@@ -70,14 +62,6 @@ class InnReachTransactionDateFilterIT extends BaseTenantIT {
   private static final OffsetDateTime TARGET_DATE = OffsetDateTime.parse(
       "2022-02-24T05:00:00+02:00",
       ISO_OFFSET_DATE_TIME);
-
-  @MockitoBean
-  private InnReachAuthClient innReachAuthClient;
-
-  @BeforeEach
-  void init() {
-    when(innReachAuthClient.getAccessToken(any(), any())).thenReturn(ResponseEntity.ok(new AccessTokenDTO()));
-  }
 
   @ParameterizedTest
   @MethodSource("dateTestData")
