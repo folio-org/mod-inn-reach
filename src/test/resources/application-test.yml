@@ -29,7 +29,7 @@ folio:
   system-user:
     enabled: false
     username: mod-innreach
-    password: Mod-innreach-1-0-0
+    password: mod-innreach-1-0-0
     lastname: System
     permissionsFilePath: permissions/test-permissions.csv
 management:

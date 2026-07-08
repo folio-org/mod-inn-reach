@@ -1,0 +1,25 @@
+{
+  "request": {
+    "method": "POST",
+    "urlPath": "/authn/credentials",
+    "bodyPatterns": [
+      {
+        "equalToJson": {
+          "username": "mod-innreach",
+          "password": "mod-innreach-1-0-0"
+        }
+      }
+    ],
+    "headers": {
+      "x-okapi-tenant": {
+        "equalTo": "test_tenant"
+      }
+    }
+  },
+  "response": {
+    "status": 201,
+    "headers": {
+      "Content-Type": "application/json"
+    }
+  }
+}

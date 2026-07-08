@@ -1,0 +1,1477 @@
+package org.folio.innreach.controller.d2ir;
+
+import static java.util.UUID.randomUUID;
+import static org.awaitility.Awaitility.await;
+import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.BORROWER_RENEW;
+import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.BORROWING_SITE_CANCEL;
+import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.CANCEL_REQUEST;
+import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.CLAIMS_RETURNED;
+import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.FINAL_CHECKIN;
+import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.ITEM_HOLD;
+import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.ITEM_IN_TRANSIT;
+import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.ITEM_RECEIVED;
+import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.ITEM_SHIPPED;
+import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.RECALL;
+import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.RECEIVE_UNANNOUNCED;
+import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.RETURN_UNCIRCULATED;
+import static org.folio.innreach.domain.entity.InnReachTransaction.TransactionState.TRANSFER;
+import static org.folio.innreach.fixture.CirculationFixture.createCancelRequestDTO;
+import static org.folio.innreach.fixture.CirculationFixture.createClaimsItemReturnedDTO;
+import static org.folio.innreach.fixture.CirculationFixture.createItemShippedDTO;
+import static org.folio.innreach.fixture.CirculationFixture.createRecallDTO;
+import static org.folio.innreach.fixture.CirculationFixture.createTransactionHoldDTO;
+import static org.folio.innreach.fixture.InventoryFixture.createInventoryHoldingDTO;
+import static org.folio.innreach.fixture.InventoryFixture.createInventoryItemDTO;
+import static org.folio.innreach.fixture.RequestFixture.createRequestDTO;
+import static org.folio.innreach.fixture.ServicePointUserFixture.createServicePointUserDTO;
+import static org.folio.innreach.fixture.TestUtil.circHeaders;
+import static org.folio.innreach.fixture.TestUtil.deserializeFromJsonFile;
+import static org.folio.util.StringUtil.cqlEncode;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
+import static org.springframework.http.HttpStatus.OK;
+import static org.springframework.http.MediaType.APPLICATION_JSON;
+import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TEST_METHOD;
+import static org.springframework.test.context.jdbc.SqlMergeMode.MergeMode.MERGE;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import lombok.SneakyThrows;
+import org.folio.innreach.batch.contribution.IterationEventReaderFactory;
+import org.folio.innreach.client.CirculationClient;
+import org.folio.innreach.client.HridSettingsClient;
+import org.folio.innreach.client.ItemStorageClient;
+import org.folio.innreach.client.ServicePointsUsersClient;
+import org.folio.innreach.domain.dto.OwningSiteCancelsRequestDTO;
+import org.folio.innreach.domain.dto.folio.ResultList;
+import org.folio.innreach.domain.dto.folio.User;
+import org.folio.innreach.domain.dto.folio.circulation.CirculationSettingDTO;
+import org.folio.innreach.domain.dto.folio.circulation.RequestDTO;
+import org.folio.innreach.domain.dto.folio.inventory.InventoryInstanceDTO;
+import org.folio.innreach.domain.dto.folio.inventory.InventoryItemStatus;
+import org.folio.innreach.domain.dto.folio.requestpreference.RequestPreferenceDTO;
+import org.folio.innreach.domain.entity.InnReachTransaction;
+import org.folio.innreach.domain.entity.TransactionPatronHold;
+import org.folio.innreach.domain.service.ConfigurationService;
+import org.folio.innreach.domain.service.HoldingsService;
+import org.folio.innreach.domain.service.InstanceService;
+import org.folio.innreach.domain.service.InventoryService;
+import org.folio.innreach.domain.service.ItemService;
+import org.folio.innreach.domain.service.PatronHoldService;
+import org.folio.innreach.domain.service.RecordContributionService;
+import org.folio.innreach.domain.service.RequestPreferenceService;
+import org.folio.innreach.domain.service.RequestService;
+import org.folio.innreach.domain.service.RetryableUpdateService;
+import org.folio.innreach.domain.service.UserService;
+import org.folio.innreach.domain.service.VirtualRecordService;
+import org.folio.innreach.dto.CheckOutRequestDTO;
+import org.folio.innreach.dto.InnReachResponseDTO;
+import org.folio.innreach.dto.LoanDTO;
+import org.folio.innreach.dto.RenewLoanDTO;
+import org.folio.innreach.dto.TransactionHoldDTO;
+import org.folio.innreach.external.client.InnReachAuthClient;
+import org.folio.innreach.external.dto.AccessTokenDTO;
+import org.folio.innreach.external.dto.InnReachResponse;
+import org.folio.innreach.external.service.InnReachExternalService;
+import org.folio.innreach.it.base.BaseTenantIT;
+import org.folio.innreach.mapper.InnReachTransactionHoldMapper;
+import org.folio.innreach.repository.InnReachTransactionRepository;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseEntity;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
+import org.springframework.test.context.jdbc.Sql;
+import org.springframework.test.context.jdbc.SqlConfig;
+import org.springframework.test.context.jdbc.SqlMergeMode;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.Date;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
+@SuppressWarnings("java:S8692")
+@Sql(
+  scripts = {
+    "classpath:db/central-server/clear-central-server-tables.sql",
+    "classpath:db/inn-reach-transaction/clear-inn-reach-transaction-tables.sql",
+    "classpath:db/patron-type-mapping/clear-patron-type-mapping-tables.sql",
+    "classpath:db/agency-loc-mapping/clear-agency-location-mapping.sql",
+    "classpath:db/item-type-mapping/clear-item-type-mapping-tables.sql",
+    "classpath:db/inn-reach-recall-user/clear-inn-reach-recall-user.sql"
+  },
+  executionPhase = AFTER_TEST_METHOD
+)
+@SqlMergeMode(MERGE)
+@ExtendWith(MockitoExtension.class)
+class InnReachCirculationControllerIT extends BaseTenantIT {
+
+  private static final String ITEM_IN_TRANSIT_ENDPOINT = "/inn-reach/d2ir/circ/intransit/{trackingId}/{centralCode}";
+  private static final String CIRCULATION_OPERATION_ENDPOINT = "/inn-reach/d2ir/circ/{circulationOperationName}/{trackingId}/{centralCode}";
+  private static final String CANCEL_ITEM_HOLD_PATH = "/inn-reach/d2ir/circ/cancelitemhold/{trackingId}/{centralCode}";
+  private static final String ITEM_RECEIVED_PATH = "/inn-reach/d2ir/circ/itemreceived/{trackingId}/{centralCode}";
+  private static final String RECALL_REQUEST_PATH = "/inn-reach/d2ir/circ/recall/{trackingId}/{centralCode}";
+  private static final String CANCEL_REQUEST_PATH = "/inn-reach/d2ir/circ/cancelrequest/{trackingId}/{centralCode}";
+  private static final String OWNINGSITE_CANCEL_PATH_TEMPLATE = "/circ/owningsitecancel/%s/%s";
+
+  private static final String PATRON_HOLD_OPERATION = "patronhold";
+  private static final String ITEM_HOLD_OPERATION = "itemhold";
+  private static final String ITEM_SHIPPED_OPERATION = "itemshipped";
+  private static final String LOCAL_HOLD_OPERATION = "localhold";
+
+  private static final String UNEXPECTED_TRANSACTION_STATE = "Unexpected transaction state: ";
+
+  private static final UUID NEW_LOAN_ID = UUID.fromString("dc02b484-4217-4207-8b2c-6e7f092b7057");
+  private static final UUID PRE_POPULATED_INSTANCE_ID = UUID.fromString("76834d5a-08e8-45ea-84ca-4d9b10aa341c");
+  private static final UUID PRE_POPULATED_HOLDINGS_RECORD_ID = UUID.fromString("76834d5a-08e8-45ea-84ca-4d9b10aa342c");
+  private static final UUID PRE_POPULATED_ITEM_ID = UUID.fromString("9a326225-6530-41cc-9399-a61987bfab3c");
+  private static final UUID PRE_POPULATED_REQUESTER_ID = UUID.fromString("f75ffab1-2e2f-43be-b159-3031e2cfc458");
+  private static final UUID PRE_POPULATED_PATRON_ID = UUID.fromString("4154a604-4d5a-4d8e-9160-057fc7b6e6b8");
+  private static final UUID PRE_POPULATED_PATRON2_ID = UUID.fromString("a7853dda-520b-4f7a-a1fb-9383665ea770");
+  private static final UUID PICK_IP_SERVICE_POINT = UUID.fromString("d08b7bbe-a978-4db8-b5af-a80556254a99");
+  private static final UUID PRE_POPULATE_SERVICE_ID = UUID.fromString("74a215e6-e3a1-475d-b7d6-f23b3a5d3c47");
+  private static final UUID PRE_POPULATE_PATRON_GROUP_ID = UUID.fromString("54e17c4c-e315-4d20-8879-efc694dea1ce");
+  private static final UUID PRE_POPULATED_CENTRAL_SERVER_ID = UUID.fromString("edab6baf-c696-42b1-89bb-1bbb8759b0d2");
+  private static final UUID PRE_POPULATED_MATERIAL_TYPE_ID = UUID.fromString("1a54b431-2e4f-452d-9cae-9cee66c9a892");
+
+  private static final String PRE_POPULATED_TRACKING1_ID = "tracking1";
+  private static final String PRE_POPULATED_TRACKING2_ID = "tracking2";
+  private static final String NEW_TRANSACTION_TRACKING_ID = "tracking99";
+  private static final String PRE_POPULATED_CENTRAL_CODE = "d2ir";
+  private static final String PRE_POPULATED_LOCAL_AGENCY_CODE1 = "q1w2e";
+  private static final String PRE_POPULATED_LOCAL_AGENCY_CODE2 = "w2e3r";
+  private static final String PRE_POPULATED_ANOTHER_LOCAL_AGENCY_CODE1 = "g91ub";
+  private static final Integer PRE_POPULATED_CENTRAL_PATRON_TYPE = 1;
+  private static final String CENTRAL_PATRON_NAME = "Atreides, Paul";
+  private static final Duration ASYNC_AWAIT_TIMEOUT = Duration.ofSeconds(15);
+  private static final String PRE_POPULATED_USER_BARCODE = "0000098765";
+
+  @MockitoBean
+  private InnReachAuthClient innReachAuthClient;
+
+  @BeforeEach
+  void init() {
+    when(innReachAuthClient.getAccessToken(any(), any())).thenReturn(ResponseEntity.ok(new AccessTokenDTO()));
+  }
+
+  @MockitoSpyBean
+  private InnReachTransactionRepository repository;
+
+  @MockitoBean
+  private ItemService itemService;
+  @MockitoBean
+  private RetryableUpdateService retryableUpdateService;
+  @MockitoBean
+  private CirculationClient circulationClient;
+  @MockitoSpyBean
+  private RequestService requestService;
+  @MockitoBean
+  private ServicePointsUsersClient servicePointsUsersClient;
+  @MockitoBean
+  private InnReachExternalService innReachExternalService;
+  @MockitoBean
+  private UserService userService;
+  @MockitoBean
+  private InventoryService inventoryService;
+  @MockitoBean
+  private InstanceService instanceService;
+  @MockitoBean
+  private PatronHoldService patronHoldService;
+  @MockitoBean
+  private HoldingsService holdingsService;
+  @MockitoSpyBean
+  private VirtualRecordService virtualRecordService;
+  @MockitoBean
+  private ConfigurationService configurationService;
+  @MockitoBean
+  private RequestPreferenceService requestPreferenceService;
+  @MockitoBean
+  private RecordContributionService recordContributionService;
+  @MockitoBean
+  private ItemStorageClient itemStorageClient;
+
+  @Autowired
+  private InnReachTransactionRepository transactionRepository;
+  @Autowired
+  private InnReachTransactionHoldMapper transactionHoldMapper;
+
+  @MockitoBean
+  IterationEventReaderFactory iterationEventReaderFactory;
+
+  private final HttpHeaders headers = circHeaders();
+
+  @Captor
+  ArgumentCaptor<RequestDTO> requestDtoCaptor;
+
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql",
+    "classpath:db/patron-type-mapping/pre-populate-patron-type-mapping.sql",
+    "classpath:db/agency-loc-mapping/pre-populate-agency-location-mapping.sql",
+    "classpath:db/item-type-mapping/pre-populate-item-type-mapping.sql"
+  })
+  void processPatronHoldCirculationRequest_createNewPatronHold() throws Exception {
+    var transactionHoldDTO = createTransactionHoldDTO();
+    var user = populateUser();
+
+    when(userService.getUserById(any())).thenReturn(Optional.of(user));
+
+    var mvcResult = mockMvc.perform(post(
+        CIRCULATION_OPERATION_ENDPOINT, PATRON_HOLD_OPERATION, NEW_TRANSACTION_TRACKING_ID, PRE_POPULATED_CENTRAL_CODE)
+        .content(asJsonString(transactionHoldDTO))
+        .headers(defaultHeaders())
+        .headers(headers)
+        .contentType(APPLICATION_JSON))
+      .andExpect(status().isOk())
+      .andReturn();
+    var responseBody = fromJson(mvcResult, InnReachResponseDTO.class);
+
+    assertNotNull(responseBody);
+    assertNotNull(responseBody.getErrors());
+    assertEquals(0, responseBody.getErrors().size());
+    assertEquals(InnReachResponse.OK_STATUS, responseBody.getStatus());
+
+    var innReachTransaction = repository.findByTrackingIdAndCentralServerCode(
+      NEW_TRANSACTION_TRACKING_ID, PRE_POPULATED_CENTRAL_CODE).orElse(null);
+
+    assertNotNull(innReachTransaction);
+    assertNotNull(innReachTransaction.getHold());
+    assertEquals(CENTRAL_PATRON_NAME, innReachTransaction.getHold().getPatronName());
+    assertEquals(PRE_POPULATED_CENTRAL_PATRON_TYPE, innReachTransaction.getHold().getCentralPatronType());
+  }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/patron-type-mapping/pre-populate-patron-type-mapping.sql",
+    "classpath:db/agency-loc-mapping/pre-populate-agency-location-mapping.sql",
+    "classpath:db/item-type-mapping/pre-populate-item-type-mapping.sql",
+    "classpath:db/mtype-mapping/pre-populate-material-type-mapping.sql",
+    "classpath:db/central-patron-type-mapping/pre-populate-central-patron_type-mapping-table.sql"
+  })
+  void processItemHoldCirculationRequest_createOwningSiteRequest() throws Exception {
+    var randomUUID = randomUUID();
+    var item = createInventoryItemDTO(InventoryItemStatus.AVAILABLE, PRE_POPULATED_MATERIAL_TYPE_ID,
+      randomUUID, randomUUID, randomUUID);
+    item.setHrid("0000085");
+    item.setHoldingsRecordId(randomUUID);
+    var transactionHoldDTO = sampleTransactionHoldDto(item.getHrid());
+
+    var holding = createInventoryHoldingDTO();
+    holding.setInstanceId(randomUUID);
+    var user = populateUser();
+    var circulationResuestDTO = createRequestDTO();
+    var requestPreference = new RequestPreferenceDTO(user.getId(), randomUUID);
+
+    when(itemService.getItemByHrId(any())).thenReturn(item);
+    when(holdingsService.find(any(UUID.class))).thenReturn(Optional.of(holding));
+    when(userService.getUserByBarcode(anyString())).thenReturn(Optional.of(user));
+    when(circulationClient.sendRequest(requestDtoCaptor.capture())).thenReturn(circulationResuestDTO);
+    when(requestPreferenceService.findUserRequestPreference(any(UUID.class))).thenReturn(requestPreference);
+
+    var mvcResult = mockMvc.perform(post(
+        CIRCULATION_OPERATION_ENDPOINT, ITEM_HOLD_OPERATION, NEW_TRANSACTION_TRACKING_ID, PRE_POPULATED_CENTRAL_CODE)
+        .content(asJsonString(transactionHoldDTO))
+        .headers(defaultHeaders())
+        .headers(headers)
+        .contentType(APPLICATION_JSON))
+      .andExpect(status().isOk())
+      .andReturn();
+
+    await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() -> {
+        assertEquals(OK.value(), mvcResult.getResponse().getStatus());
+        var responseBody = fromJson(mvcResult, InnReachResponseDTO.class);
+        assertNotNull(responseBody);
+        assertNotNull(responseBody.getErrors());
+        assertEquals(0, responseBody.getErrors().size());
+        assertEquals(InnReachResponse.OK_STATUS, responseBody.getStatus());
+      });
+
+    var innReachTransaction = repository.findByTrackingIdAndCentralServerCode(
+      NEW_TRANSACTION_TRACKING_ID, PRE_POPULATED_CENTRAL_CODE).orElse(null);
+
+    assertNotNull(innReachTransaction);
+    assertNotNull(innReachTransaction.getHold());
+    assertEquals(circulationResuestDTO.getId(), innReachTransaction.getHold().getFolioRequestId());
+    assertEquals(user.getBarcode(), innReachTransaction.getHold().getFolioPatronBarcode());
+
+    var capturedRequest = requestDtoCaptor.getValue();
+    assertNotNull(capturedRequest);
+    assertEquals(holding.getInstanceId(), capturedRequest.getInstanceId());
+    assertEquals(item.getHoldingsRecordId(), capturedRequest.getHoldingsRecordId());
+    assertEquals(requestPreference.getDefaultServicePointId(), capturedRequest.getPickupServicePointId());
+  }
+
+  @SneakyThrows
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/patron-type-mapping/pre-populate-patron-type-mapping.sql",
+    "classpath:db/agency-loc-mapping/pre-populate-agency-location-mapping.sql",
+    "classpath:db/item-type-mapping/pre-populate-item-type-mapping.sql",
+    "classpath:db/mtype-mapping/pre-populate-material-type-mapping.sql",
+    "classpath:db/central-patron-type-mapping/pre-populate-central-patron_type-mapping-table.sql"
+  })
+  void processItemHoldCirculationRequest_failToCreateOwningSiteRequest() throws Exception {
+    var randomUUID = randomUUID();
+    var item = createInventoryItemDTO(InventoryItemStatus.AVAILABLE, PRE_POPULATED_MATERIAL_TYPE_ID,
+      randomUUID, randomUUID, randomUUID);
+    item.setHrid("0000085");
+    item.setHoldingsRecordId(randomUUID);
+    var transactionHoldDTO = sampleTransactionHoldDto(item.getHrid());
+
+    var holding = createInventoryHoldingDTO();
+    holding.setInstanceId(randomUUID);
+    var instanceDto = new InventoryInstanceDTO();
+    instanceDto.setHrid("in000001");
+    var expectedRecontributionItem = new org.folio.innreach.dto.Item();
+    expectedRecontributionItem.setHoldingsRecordId(randomUUID);
+    var user = populateUser();
+    var requestPreference = new RequestPreferenceDTO(user.getId(), randomUUID);
+
+    when(itemService.getItemByHrId(any())).thenReturn(item);
+    when(holdingsService.find(any(UUID.class))).thenReturn(Optional.of(holding));
+    when(instanceService.find(any(UUID.class))).thenReturn(Optional.of(instanceDto));
+    when(userService.getUserByQuery(anyString())).thenReturn(Optional.of(user));
+    when(circulationClient.sendRequest(any()))
+      .thenThrow(new RuntimeException("Request not permitted"));
+    when(requestPreferenceService.findUserRequestPreference(any(UUID.class))).thenReturn(requestPreference);
+    when(itemStorageClient.findByQuery("hrid==" + cqlEncode(item.getHrid())))
+      .thenReturn(ResultList.of(1, List.of(expectedRecontributionItem)));
+
+    var mvcResult = mockMvc.perform(post(
+        CIRCULATION_OPERATION_ENDPOINT, ITEM_HOLD_OPERATION, NEW_TRANSACTION_TRACKING_ID, PRE_POPULATED_CENTRAL_CODE)
+        .content(asJsonString(transactionHoldDTO))
+        .headers(defaultHeaders())
+        .headers(headers)
+        .contentType(APPLICATION_JSON))
+      .andExpect(status().isOk())
+      .andReturn();
+
+    await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() -> {
+      var responseBody = fromJson(mvcResult, InnReachResponseDTO.class);
+      assertNotNull(responseBody);
+      assertNotNull(responseBody.getErrors());
+      assertEquals(0, responseBody.getErrors().size());
+      assertEquals(InnReachResponse.OK_STATUS, responseBody.getStatus());
+    });
+
+    var innReachTransaction = repository.findByTrackingIdAndCentralServerCode(
+      NEW_TRANSACTION_TRACKING_ID, PRE_POPULATED_CENTRAL_CODE).orElse(null);
+
+    assertNotNull(innReachTransaction);
+    assertEquals(CANCEL_REQUEST, innReachTransaction.getState());
+    verify(innReachExternalService).postInnReachApi(eq(PRE_POPULATED_CENTRAL_CODE),
+      eq(OWNINGSITE_CANCEL_PATH_TEMPLATE.formatted(NEW_TRANSACTION_TRACKING_ID, PRE_POPULATED_CENTRAL_CODE)),
+      any(OwningSiteCancelsRequestDTO.class));
+    verify(recordContributionService).contributeItems(PRE_POPULATED_CENTRAL_SERVER_ID,
+      instanceDto.getHrid(), List.of(expectedRecontributionItem));
+  }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql",
+    "classpath:db/patron-type-mapping/pre-populate-patron-type-mapping.sql",
+    "classpath:db/agency-loc-mapping/pre-populate-agency-location-mapping.sql",
+    "classpath:db/item-type-mapping/pre-populate-item-type-mapping.sql"
+  })
+  void processPatronHoldCirculationRequest_updateExitingPatronHold() throws Exception {
+    var existing = transactionRepository.findByTrackingIdAndCentralServerCode(
+      PRE_POPULATED_TRACKING1_ID, PRE_POPULATED_CENTRAL_CODE).get();
+    var transactionHoldDTO = transactionHoldMapper.toPatronHoldDTO((TransactionPatronHold) existing.getHold());
+    var user = populateUser();
+
+    when(userService.getUserById(any())).thenReturn(Optional.of(user));
+    when(inventoryService.getHridSettings()).thenReturn(new HridSettingsClient.HridSettings());
+
+    var mvcResult = mockMvc.perform(post(
+        CIRCULATION_OPERATION_ENDPOINT, PATRON_HOLD_OPERATION, PRE_POPULATED_TRACKING1_ID, PRE_POPULATED_CENTRAL_CODE)
+        .content(asJsonString(transactionHoldDTO))
+        .headers(defaultHeaders())
+        .headers(headers)
+        .contentType(APPLICATION_JSON))
+      .andExpect(status().isOk())
+      .andReturn();
+    var responseBody = fromJson(mvcResult, InnReachResponseDTO.class);
+
+    assertNotNull(responseBody);
+    assertNotNull(responseBody.getErrors());
+    assertEquals(0, responseBody.getErrors().size());
+    assertEquals(InnReachResponse.OK_STATUS, responseBody.getStatus());
+
+    var updatedTransaction = repository.findByTrackingIdAndCentralServerCode(
+      PRE_POPULATED_TRACKING1_ID, PRE_POPULATED_CENTRAL_CODE);
+
+    assertTrue(updatedTransaction.isPresent());
+
+    var innReachTransaction = updatedTransaction.get();
+
+    assertEquals(transactionHoldDTO.getTransactionTime(), innReachTransaction.getHold().getTransactionTime());
+    assertEquals(transactionHoldDTO.getPatronId(), innReachTransaction.getHold().getPatronId());
+    assertEquals(transactionHoldDTO.getPatronAgencyCode(), innReachTransaction.getHold().getPatronAgencyCode());
+    assertEquals(CENTRAL_PATRON_NAME, innReachTransaction.getHold().getPatronName());
+    assertEquals(PRE_POPULATED_CENTRAL_PATRON_TYPE, updatedTransaction.get().getHold().getCentralPatronType());
+  }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql",
+    "classpath:db/patron-type-mapping/pre-populate-patron-type-mapping.sql",
+    "classpath:db/agency-loc-mapping/pre-populate-agency-location-mapping.sql",
+    "classpath:db/item-type-mapping/pre-populate-item-type-mapping.sql"
+  })
+  void processItemShippedCircRequest_updateFolioItem_whenAssociatedItemExists() throws Exception {
+    var user = populateUser();
+    var item = createInventoryItemDTO();
+
+    when(userService.getUserById(any())).thenReturn(Optional.of(user));
+    when(itemService.find(any())).thenReturn(Optional.of(item));
+    when(itemService.findItemByBarcode(any())).thenReturn(Optional.of(item));
+    when(retryableUpdateService.changeAndUpdateWithRetry(any(), any(), any())).thenReturn(Optional.of(item));
+
+    var itemShippedDTO = createItemShippedDTO();
+
+    var mvcResult = mockMvc.perform(put(
+        CIRCULATION_OPERATION_ENDPOINT, ITEM_SHIPPED_OPERATION, PRE_POPULATED_TRACKING1_ID, PRE_POPULATED_CENTRAL_CODE)
+        .content(asJsonString(itemShippedDTO))
+        .headers(defaultHeaders())
+        .headers(headers)
+        .contentType(APPLICATION_JSON))
+      .andExpect(status().isOk())
+      .andReturn();
+    var responseEntityBody = fromJson(mvcResult, InnReachResponseDTO.class);
+
+    assertNotNull(responseEntityBody);
+    assertEquals("ok", responseEntityBody.getStatus());
+  }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
+  })
+  void processItemShippedCircRequest_returnFailedStatus_whenAssociatedItemDoesNotExist() throws Exception {
+    when(itemService.findItemByBarcode(any())).thenReturn(Optional.of(createInventoryItemDTO()));
+    when(retryableUpdateService.changeAndUpdateWithRetry(any(), any(), any())).thenThrow(new IllegalArgumentException("Not found"));
+
+    var transactionHoldDTO = createTransactionHoldDTO();
+
+    var mvcResult = mockMvc.perform(put(
+        CIRCULATION_OPERATION_ENDPOINT, ITEM_SHIPPED_OPERATION, PRE_POPULATED_TRACKING1_ID, PRE_POPULATED_CENTRAL_CODE)
+        .content(asJsonString(transactionHoldDTO))
+        .headers(defaultHeaders())
+        .headers(headers)
+        .contentType(APPLICATION_JSON))
+      .andExpect(status().isBadRequest())
+      .andReturn();
+
+    verify(itemService, times(0)).update(any());
+
+    var responseEntityBody = fromJson(mvcResult, InnReachResponseDTO.class);
+
+    assertNotNull(responseEntityBody);
+    assertEquals("failed", responseEntityBody.getStatus());
+  }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
+  })
+  void processCancelItemHoldRequest_whenItemIsNotCheckedOut() throws Exception {
+    when(circulationClient.findRequest(any())).thenReturn(Optional.of(new RequestDTO()));
+    doNothing().when(circulationClient).updateRequest(any(), any());
+
+    var transaction = fetchTransactionByTrackingId(PRE_POPULATED_TRACKING2_ID);
+    transaction.getHold().setFolioLoanId(null);
+    repository.save(transaction);
+
+    var transactionHoldDTO = createTransactionHoldDTO();
+
+    var mvcResult = mockMvc.perform(put(
+        CANCEL_ITEM_HOLD_PATH, PRE_POPULATED_TRACKING2_ID, PRE_POPULATED_CENTRAL_CODE)
+        .content(asJsonString(transactionHoldDTO))
+        .headers(defaultHeaders())
+        .headers(headers)
+        .contentType(APPLICATION_JSON))
+      .andExpect(status().isOk())
+      .andReturn();
+    var responseEntityBody = fromJson(mvcResult, InnReachResponseDTO.class);
+    assertNotNull(responseEntityBody);
+    assertEquals("ok", responseEntityBody.getStatus());
+
+    verify(requestService).cancelRequest(anyString(), any(UUID.class), any(UUID.class), eq("Request cancelled at borrowing site"));
+    var transactionUpdated = fetchTransactionByTrackingId(PRE_POPULATED_TRACKING2_ID);
+    assertEquals(BORROWING_SITE_CANCEL, transactionUpdated.getState());
+  }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
+  })
+  void processCancelItemHoldRequest_whenItemIsCheckedOut() throws Exception {
+    var transactionHoldDTO = createTransactionHoldDTO();
+
+    var mvcResult = mockMvc.perform(put(
+        CANCEL_ITEM_HOLD_PATH, PRE_POPULATED_TRACKING2_ID, PRE_POPULATED_CENTRAL_CODE)
+        .content(asJsonString(transactionHoldDTO))
+        .headers(defaultHeaders())
+        .headers(headers)
+        .contentType(APPLICATION_JSON))
+      .andExpect(status().isBadRequest())
+      .andReturn();
+    var responseEntityBody = fromJson(mvcResult, InnReachResponseDTO.class);
+    assertNotNull(responseEntityBody);
+    assertEquals("Requested item is already checked out.",
+      responseEntityBody.getReason());
+
+    verifyNoInteractions(requestService);
+    var transactionUpdated = fetchPrePopulatedTransaction();
+    assertNotEquals(BORROWING_SITE_CANCEL, transactionUpdated.getState());
+  }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
+  })
+  void precessReportUnshippedItemReceived_whenTransactionItemHold() throws Exception {
+    var transaction = fetchTransactionByTrackingId(PRE_POPULATED_TRACKING2_ID);
+    transaction.setState(ITEM_HOLD);
+    repository.save(transaction);
+
+    var transactionHoldDTO = createTransactionHoldDTO();
+
+    when(circulationClient.findRequest(transaction.getHold().getFolioRequestId())).thenReturn(Optional.of(createRequestDTO()));
+    when(servicePointsUsersClient.findServicePointsUsersByQuery("userId==" + cqlEncode(PRE_POPULATED_PATRON2_ID.toString())))
+      .thenReturn(ResultList.asSinglePage(createServicePointUserDTO()));
+    when(circulationClient.checkOutByBarcode(any(CheckOutRequestDTO.class))).thenReturn(new LoanDTO().id(NEW_LOAN_ID));
+
+    var mvcResult = mockMvc.perform(put(
+        "/inn-reach/d2ir/circ/receiveunshipped/{trackingId}/{centralCode}", PRE_POPULATED_TRACKING2_ID, PRE_POPULATED_CENTRAL_CODE)
+        .content(asJsonString(transactionHoldDTO))
+        .headers(defaultHeaders())
+        .headers(headers)
+        .contentType(APPLICATION_JSON))
+      .andExpect(status().isOk())
+      .andReturn();
+    var responseEntityBody = fromJson(mvcResult, InnReachResponseDTO.class);
+    assertNotNull(responseEntityBody);
+    assertEquals("ok", responseEntityBody.getStatus());
+
+    var transactionUpdated = fetchTransactionByTrackingId(PRE_POPULATED_TRACKING2_ID);
+    assertEquals(RECEIVE_UNANNOUNCED, transactionUpdated.getState());
+    assertEquals(NEW_LOAN_ID, transactionUpdated.getHold().getFolioLoanId());
+  }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
+  })
+  void processReportUnshippedItemReceived_whenTransactionItemShipped() throws Exception {
+    var transaction = fetchTransactionByTrackingId(PRE_POPULATED_TRACKING2_ID);
+    transaction.setState(ITEM_SHIPPED);
+    repository.save(transaction);
+
+    var transactionHoldDTO = createTransactionHoldDTO();
+
+    var mvcResult = mockMvc.perform(put(
+        "/inn-reach/d2ir/circ/receiveunshipped/{trackingId}/{centralCode}", PRE_POPULATED_TRACKING2_ID, PRE_POPULATED_CENTRAL_CODE)
+        .content(asJsonString(transactionHoldDTO))
+        .headers(defaultHeaders())
+        .headers(headers)
+        .contentType(APPLICATION_JSON))
+      .andExpect(status().isBadRequest())
+      .andReturn();
+    var responseEntityBody = fromJson(mvcResult, InnReachResponseDTO.class);
+    assertNotNull(responseEntityBody);
+    assertEquals(UNEXPECTED_TRANSACTION_STATE + transaction.getState(),
+      responseEntityBody.getReason());
+
+    var transactionUpdated = fetchTransactionByTrackingId(PRE_POPULATED_TRACKING2_ID);
+    assertNotEquals(RECEIVE_UNANNOUNCED, transactionUpdated.getState());
+  }
+
+  @ParameterizedTest
+  @EnumSource(names = {"ITEM_RECEIVED", "RECEIVE_UNANNOUNCED", "RECALL"})
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
+  })
+  void processItemInTransit_updateTransactionState(InnReachTransaction.TransactionState state) throws Exception {
+    var transaction = fetchPrePopulatedTransaction();
+    transaction.setState(state);
+    repository.save(transaction);
+
+    var transactionHoldDTO = createTransactionHoldDTO();
+
+    var mvcResult = mockMvc.perform(put(ITEM_IN_TRANSIT_ENDPOINT, PRE_POPULATED_TRACKING1_ID, PRE_POPULATED_CENTRAL_CODE)
+        .content(asJsonString(transactionHoldDTO))
+        .headers(defaultHeaders())
+        .headers(headers)
+        .contentType(APPLICATION_JSON))
+      .andExpect(status().isOk())
+      .andReturn();
+
+    var response = fromJson(mvcResult, InnReachResponseDTO.class);
+    assertNotNull(response);
+    assertEquals("success", response.getReason());
+
+    var transactionUpdated = fetchPrePopulatedTransaction();
+    assertEquals(ITEM_IN_TRANSIT, transactionUpdated.getState());
+  }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
+  })
+  void processItemInTransit_unexpectedTransactionState() throws Exception {
+    var transaction = fetchPrePopulatedTransaction();
+    transaction.setState(ITEM_HOLD);
+    repository.save(transaction);
+
+    var transactionHoldDTO = createTransactionHoldDTO();
+
+    var mvcResult = mockMvc.perform(put(ITEM_IN_TRANSIT_ENDPOINT, PRE_POPULATED_TRACKING1_ID, PRE_POPULATED_CENTRAL_CODE)
+        .content(asJsonString(transactionHoldDTO))
+        .headers(defaultHeaders())
+        .headers(headers)
+        .contentType(APPLICATION_JSON))
+      .andExpect(status().isBadRequest())
+      .andReturn();
+
+    var response = fromJson(mvcResult, InnReachResponseDTO.class);
+    assertNotNull(response);
+
+    assertEquals(UNEXPECTED_TRANSACTION_STATE + transaction.getState(), response.getReason());
+
+    var transactionUpdated = fetchPrePopulatedTransaction();
+    assertEquals(transaction.getState(), transactionUpdated.getState());
+  }
+
+  @ParameterizedTest
+  @EnumSource(names = {"ITEM_RECEIVED", "RECEIVE_UNANNOUNCED"})
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
+  })
+  void checkTransactionIsInStateItemReceivedOrReceiveUnannounced(InnReachTransaction.TransactionState testEnums) throws Exception {
+    var transactionHoldDTO = createTransactionHoldDTO();
+    var transactionBefore = fetchTransactionByTrackingId(PRE_POPULATED_TRACKING2_ID);
+
+    transactionBefore.setState(testEnums);
+    repository.save(transactionBefore);
+
+    mockMvc.perform(put(
+      "/inn-reach/d2ir/circ/returnuncirculated/{trackingId}/{centralCode}", PRE_POPULATED_TRACKING2_ID, PRE_POPULATED_CENTRAL_CODE)
+        .content(asJsonString(transactionHoldDTO))
+        .headers(defaultHeaders())
+        .headers(headers)
+        .contentType(APPLICATION_JSON))
+      .andExpect(status().isOk())
+      .andReturn();
+
+    var transactionAfter = fetchTransactionByTrackingId(PRE_POPULATED_TRACKING2_ID);
+
+    assertEquals(RETURN_UNCIRCULATED, transactionAfter.getState());
+  }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
+  })
+  void checkTransactionIsNotInStateItemReceivedOrReceiveUnannounced() throws Exception {
+    var transactionHoldDTO = createTransactionHoldDTO();
+    var transactionBefore = fetchPrePopulatedTransaction();
+
+    transactionBefore.setState(TRANSFER);
+    repository.save(transactionBefore);
+
+    mockMvc.perform(put(
+      "/inn-reach/d2ir/circ/returnuncirculated/{trackingId}/{centralCode}", PRE_POPULATED_TRACKING1_ID, PRE_POPULATED_CENTRAL_CODE)
+        .content(asJsonString(transactionHoldDTO))
+        .headers(defaultHeaders())
+        .headers(headers)
+        .contentType(APPLICATION_JSON))
+      .andExpect(status().isBadRequest())
+      .andReturn();
+
+    var transactionAfter = fetchPrePopulatedTransaction();
+
+    assertEquals(TRANSFER, transactionAfter.getState());
+  }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql"
+  },
+    config = @SqlConfig(transactionMode = SqlConfig.TransactionMode.ISOLATED))
+  void processLocalHoldCirculationRequest_createNew() throws Exception {
+    var transactionHoldDTO = createTransactionHoldDTO();
+    transactionHoldDTO.setItemAgencyCode(PRE_POPULATED_LOCAL_AGENCY_CODE1);
+    transactionHoldDTO.setPatronAgencyCode(PRE_POPULATED_LOCAL_AGENCY_CODE2);
+
+    var mvcResult = mockMvc.perform(put(
+        CIRCULATION_OPERATION_ENDPOINT, LOCAL_HOLD_OPERATION, NEW_TRANSACTION_TRACKING_ID, PRE_POPULATED_CENTRAL_CODE)
+        .content(asJsonString(transactionHoldDTO))
+        .headers(defaultHeaders())
+        .headers(headers)
+        .contentType(APPLICATION_JSON))
+      .andExpect(status().isOk())
+      .andReturn();
+
+    var responseBody = fromJson(mvcResult, InnReachResponseDTO.class);
+
+    assertNotNull(responseBody);
+    assertNotNull(responseBody.getErrors());
+    assertEquals(0, responseBody.getErrors().size());
+    assertEquals(InnReachResponse.OK_STATUS, responseBody.getStatus());
+
+    var innReachTransaction = fetchTransactionByTrackingId(NEW_TRANSACTION_TRACKING_ID);
+    assertNotNull(innReachTransaction);
+
+    assertNotNull(innReachTransaction.getHold());
+  }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
+  })
+  void processLocalHoldCirculationRequest_updateExiting() throws Exception {
+    var transactionHoldDTO = createTransactionHoldDTO();
+    transactionHoldDTO.setItemAgencyCode(PRE_POPULATED_LOCAL_AGENCY_CODE1);
+    transactionHoldDTO.setPatronAgencyCode(PRE_POPULATED_LOCAL_AGENCY_CODE2);
+
+    var mvcResult = mockMvc.perform(put(
+        CIRCULATION_OPERATION_ENDPOINT, LOCAL_HOLD_OPERATION, PRE_POPULATED_TRACKING1_ID, PRE_POPULATED_CENTRAL_CODE)
+        .content(asJsonString(transactionHoldDTO))
+        .headers(defaultHeaders())
+        .headers(headers)
+        .contentType(APPLICATION_JSON))
+      .andExpect(status().isOk())
+      .andReturn();
+
+    var responseBody = fromJson(mvcResult, InnReachResponseDTO.class);
+
+    assertNotNull(responseBody);
+    assertNotNull(responseBody.getErrors());
+    assertEquals(0, responseBody.getErrors().size());
+    assertEquals(InnReachResponse.OK_STATUS, responseBody.getStatus());
+
+    var innReachTransaction = fetchPrePopulatedTransaction();
+    assertNotNull(innReachTransaction);
+
+    assertEquals(transactionHoldDTO.getTransactionTime(), innReachTransaction.getHold().getTransactionTime());
+    assertEquals(transactionHoldDTO.getPatronId(), innReachTransaction.getHold().getPatronId());
+    assertEquals(transactionHoldDTO.getPatronAgencyCode(), innReachTransaction.getHold().getPatronAgencyCode());
+  }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/central-server/pre-populate-another-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
+  })
+  void processLocalHoldCirculationRequest_invalidAgencyCodes() throws Exception {
+    var transactionHoldDTO = createTransactionHoldDTO();
+    transactionHoldDTO.setPatronAgencyCode(PRE_POPULATED_LOCAL_AGENCY_CODE1);
+    transactionHoldDTO.setItemAgencyCode(PRE_POPULATED_ANOTHER_LOCAL_AGENCY_CODE1);
+
+    var mvcResult = mockMvc.perform(put(
+        CIRCULATION_OPERATION_ENDPOINT, LOCAL_HOLD_OPERATION, PRE_POPULATED_TRACKING1_ID, PRE_POPULATED_CENTRAL_CODE)
+        .content(asJsonString(transactionHoldDTO))
+        .headers(defaultHeaders())
+        .headers(headers)
+        .contentType(APPLICATION_JSON))
+      .andExpect(status().isBadRequest())
+      .andReturn();
+    var responseBody = fromJson(mvcResult, InnReachResponseDTO.class);
+
+    assertEquals("The patron and item agencies should be on the same local server", responseBody.getReason());
+  }
+
+  private InnReachTransaction fetchPrePopulatedTransaction() {
+    return fetchTransactionByTrackingId(PRE_POPULATED_TRACKING1_ID);
+  }
+
+  private InnReachTransaction fetchTransactionByTrackingId(String trackingId) {
+    return repository.findByTrackingIdAndCentralServerCode(trackingId, PRE_POPULATED_CENTRAL_CODE).get();
+  }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
+  })
+  void processItemReceivedRequest_whenItemIsShipped() throws Exception {
+    var transaction = repository.findByTrackingIdAndCentralServerCode(PRE_POPULATED_TRACKING2_ID,
+      PRE_POPULATED_CENTRAL_CODE).get();
+    transaction.setState(ITEM_SHIPPED);
+    repository.save(transaction);
+
+    var transactionHoldDTO = createTransactionHoldDTO();
+
+    var mvcResult = mockMvc.perform(put(
+        ITEM_RECEIVED_PATH, PRE_POPULATED_TRACKING2_ID, PRE_POPULATED_CENTRAL_CODE)
+        .content(asJsonString(transactionHoldDTO))
+        .headers(defaultHeaders())
+        .headers(headers)
+        .contentType(APPLICATION_JSON))
+      .andExpect(status().isOk())
+      .andReturn();
+    var responseEntityBody = fromJson(mvcResult, InnReachResponseDTO.class);
+    assertNotNull(responseEntityBody);
+    assertEquals("ok", responseEntityBody.getStatus());
+
+    var transactionUpdated = repository.findByTrackingIdAndCentralServerCode(PRE_POPULATED_TRACKING2_ID,
+      PRE_POPULATED_CENTRAL_CODE).get();
+    assertEquals(ITEM_RECEIVED, transactionUpdated.getState());
+  }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
+  })
+  void processItemReceivedRequest_whenItemIsNotShipped() throws Exception {
+    when(circulationClient.findRequest(any())).thenReturn(Optional.of(createRequestDTO()));
+    when(circulationClient.checkOutByBarcode(any(CheckOutRequestDTO.class))).thenReturn(new LoanDTO().id(NEW_LOAN_ID));
+    when(inventoryService.findDefaultServicePointIdForUser(PRE_POPULATED_PATRON2_ID)).thenReturn(Optional.of(PRE_POPULATE_SERVICE_ID));
+    var transactionHoldDTO = createTransactionHoldDTO();
+
+    var mvcResult = mockMvc.perform(put(
+        ITEM_RECEIVED_PATH, PRE_POPULATED_TRACKING2_ID, PRE_POPULATED_CENTRAL_CODE)
+        .content(asJsonString(transactionHoldDTO))
+        .headers(defaultHeaders())
+        .headers(headers)
+        .contentType(APPLICATION_JSON))
+      .andExpect(status().isOk())
+      .andReturn();
+    var responseEntityBody = fromJson(mvcResult, InnReachResponseDTO.class);
+    assertNotNull(responseEntityBody);
+    assertEquals("ok", responseEntityBody.getStatus());
+
+    var transactionUpdated = fetchTransactionByTrackingId(PRE_POPULATED_TRACKING2_ID);
+    assertEquals(ITEM_RECEIVED, transactionUpdated.getState());
+    assertEquals(NEW_LOAN_ID, transactionUpdated.getHold().getFolioLoanId());
+  }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:db/inn-reach-recall-user/pre-populate-inn-reach-recall-user.sql",
+    "classpath:db/central-server/pre-populate-central-server-with-recall-user.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql",
+    "classpath:db/patron-type-mapping/pre-populate-patron-type-mapping.sql"
+  })
+  void processRecallRequest_whenItemIsOnLoanToThePatron() throws Exception {
+    var recallDTO = createRecallDTO();
+    var user = populateUser();
+
+    when(userService.getUserById(PRE_POPULATED_PATRON_ID)).thenReturn(Optional.of(user));
+    when(circulationClient.findRequest(any())).thenReturn(Optional.of(new RequestDTO()));
+    when(circulationClient.sendRequest(requestDtoCaptor.capture())).thenReturn(new RequestDTO());
+    when(inventoryService.findDefaultServicePointIdForUser(PRE_POPULATED_REQUESTER_ID))
+      .thenReturn(Optional.of(PICK_IP_SERVICE_POINT));
+
+    var mvcResult = mockMvc.perform(put(
+        RECALL_REQUEST_PATH, PRE_POPULATED_TRACKING1_ID, PRE_POPULATED_CENTRAL_CODE)
+        .content(asJsonString(recallDTO))
+        .headers(defaultHeaders())
+        .headers(headers)
+        .contentType(APPLICATION_JSON))
+      .andExpect(status().isOk())
+      .andReturn();
+    var responseEntityBody = fromJson(mvcResult, InnReachResponseDTO.class);
+    assertNotNull(responseEntityBody);
+    assertEquals("ok", responseEntityBody.getStatus());
+
+    verify(requestService).createRecallRequest(any(), any(), any(), any());
+    var transactionUpdated = repository.findByTrackingIdAndCentralServerCode(PRE_POPULATED_TRACKING1_ID,
+      PRE_POPULATED_CENTRAL_CODE).get();
+    assertEquals(RECALL, transactionUpdated.getState());
+
+    RequestDTO requestDTO = requestDtoCaptor.getValue();
+    assertEquals(RequestDTO.RequestLevel.ITEM.getName(), requestDTO.getRequestLevel());
+    assertEquals(PRE_POPULATED_INSTANCE_ID, requestDTO.getInstanceId());
+    assertEquals(PRE_POPULATED_HOLDINGS_RECORD_ID, requestDTO.getHoldingsRecordId());
+    assertEquals(PRE_POPULATED_ITEM_ID, requestDTO.getItemId());
+    assertEquals(PRE_POPULATED_REQUESTER_ID, requestDTO.getRequesterId());
+  }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql",
+    "classpath:db/patron-type-mapping/pre-populate-patron-type-mapping.sql"
+  })
+  void processRecallRequest_whenItemIsOnTheHoldShelf() throws Exception {
+    var requestDTO = new RequestDTO();
+    requestDTO.setStatus(RequestDTO.RequestStatus.OPEN_AWAITING_PICKUP);
+    var user = populateUser();
+
+    when(userService.getUserById(PRE_POPULATED_PATRON_ID)).thenReturn(Optional.of(user));
+    when(circulationClient.findRequest(any())).thenReturn(Optional.of(new RequestDTO()));
+    when(circulationClient.sendRequest(requestDtoCaptor.capture())).thenReturn(new RequestDTO());
+    when(circulationClient.findRequest(any())).thenReturn(Optional.of(requestDTO));
+    doNothing().when(circulationClient).updateRequest(any(), any());
+
+    var transaction = repository.findByTrackingIdAndCentralServerCode(PRE_POPULATED_TRACKING1_ID,
+      PRE_POPULATED_CENTRAL_CODE).get();
+    transaction.setState(ITEM_SHIPPED);
+    transaction.getHold().setFolioLoanId(null);
+    repository.save(transaction);
+
+    var recallDTO = createRecallDTO();
+
+    var mvcResult = mockMvc.perform(put(
+        RECALL_REQUEST_PATH, PRE_POPULATED_TRACKING1_ID, PRE_POPULATED_CENTRAL_CODE)
+        .content(asJsonString(recallDTO))
+        .headers(defaultHeaders())
+        .headers(headers)
+        .contentType(APPLICATION_JSON))
+      .andExpect(status().isOk())
+      .andReturn();
+    var responseEntityBody = fromJson(mvcResult, InnReachResponseDTO.class);
+    assertNotNull(responseEntityBody);
+    assertEquals("ok", responseEntityBody.getStatus());
+
+    verify(requestService).cancelRequest(anyString(), any(UUID.class), any(UUID.class), eq("Item has been recalled."));
+    var transactionUpdated = repository.findByTrackingIdAndCentralServerCode(PRE_POPULATED_TRACKING1_ID,
+      PRE_POPULATED_CENTRAL_CODE).get();
+    assertEquals(RECALL, transactionUpdated.getState());
+  }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql",
+    "classpath:db/patron-type-mapping/pre-populate-patron-type-mapping.sql"
+  })
+  void processRecallRequest_whenBadRequest() throws Exception {
+    var requestDTO = new RequestDTO();
+    requestDTO.setStatus(RequestDTO.RequestStatus.OPEN_AWAITING_PICKUP);
+    var user = populateUser();
+
+    when(userService.getUserById(PRE_POPULATED_PATRON_ID)).thenReturn(Optional.of(user));
+    when(circulationClient.sendRequest(requestDtoCaptor.capture())).thenReturn(new RequestDTO());
+    when(circulationClient.findRequest(any())).thenReturn(Optional.of(requestDTO));
+    doThrow(new IllegalArgumentException("Test exception.")).when(requestService).findRequest(any(UUID.class));
+
+    var recallDTO = createRecallDTO();
+
+    var mvcResult = mockMvc.perform(put(
+        RECALL_REQUEST_PATH, PRE_POPULATED_TRACKING1_ID, PRE_POPULATED_CENTRAL_CODE)
+        .content(asJsonString(recallDTO))
+        .headers(defaultHeaders())
+        .headers(headers)
+        .contentType(APPLICATION_JSON))
+      .andExpect(status().isBadRequest())
+      .andReturn();
+    var responseEntityBody = fromJson(mvcResult, InnReachResponseDTO.class);
+    assertNotNull(responseEntityBody);
+    assertTrue(responseEntityBody.getReason().contains("Test exception."));
+
+    var transactionUpdated = repository.findByTrackingIdAndCentralServerCode(PRE_POPULATED_TRACKING1_ID,
+      PRE_POPULATED_CENTRAL_CODE).get();
+    assertNotEquals(RECALL, transactionUpdated.getState());
+  }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql",
+    "classpath:db/patron-type-mapping/pre-populate-patron-type-mapping.sql"
+  })
+  void processRecallRequest_whenRecallUserIsNotSet() throws Exception {
+    var user = populateUser();
+
+    when(userService.getUserById(PRE_POPULATED_PATRON_ID)).thenReturn(Optional.of(user));
+    when(circulationClient.findRequest(any())).thenReturn(Optional.of(new RequestDTO()));
+    when(circulationClient.sendRequest(requestDtoCaptor.capture())).thenReturn(new RequestDTO());
+
+    when(circulationClient.findRequest(any())).thenReturn(Optional.of(new RequestDTO()));
+    var recallDTO = createRecallDTO();
+
+    var mvcResult = mockMvc.perform(put(
+        RECALL_REQUEST_PATH, PRE_POPULATED_TRACKING1_ID, PRE_POPULATED_CENTRAL_CODE)
+        .content(asJsonString(recallDTO))
+        .headers(defaultHeaders())
+        .headers(headers)
+        .contentType(APPLICATION_JSON))
+      .andExpect(status().isBadRequest())
+      .andReturn();
+    var responseEntityBody = fromJson(mvcResult, InnReachResponseDTO.class);
+    assertNotNull(responseEntityBody);
+    assertTrue(responseEntityBody.getReason().contains("Recall user is not set for central server with code = " + PRE_POPULATED_CENTRAL_CODE));
+
+    var transactionUpdated = repository.findByTrackingIdAndCentralServerCode(PRE_POPULATED_TRACKING1_ID,
+      PRE_POPULATED_CENTRAL_CODE).get();
+    assertNotEquals(RECALL, transactionUpdated.getState());
+  }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
+  })
+  void borrowerRenewRequestCalculatedDueDateAfterBorrowerDueDate() throws Exception {
+    var loan = new LoanDTO();
+    loan.setDueDate(new Date(Instant.now().toEpochMilli()));
+    when(circulationClient.findLoan(any())).thenReturn(Optional.of(loan));
+
+    var renew = new LoanDTO();
+    renew.setDueDate(new Date(Instant.now().plus(1, ChronoUnit.DAYS).toEpochMilli()));
+    when(circulationClient.renewLoan(any())).thenReturn(renew);
+
+    var dueDateTime = (int) Instant.now().minus(1, ChronoUnit.DAYS).getEpochSecond();
+    var borrowerItem = new RenewLoanDTO();
+    borrowerItem.setDueDateTime(dueDateTime);
+
+    var transactionHoldDTO = createTransactionHoldDTO();
+    borrowerItem.setTransactionTime(transactionHoldDTO.getTransactionTime());
+    borrowerItem.setPatronId(transactionHoldDTO.getPatronId());
+    borrowerItem.setPatronAgencyCode(transactionHoldDTO.getPatronAgencyCode());
+    borrowerItem.setItemAgencyCode(transactionHoldDTO.getItemAgencyCode());
+    borrowerItem.setItemId(transactionHoldDTO.getItemId());
+
+    mockMvc.perform(put(
+        "/inn-reach/d2ir/circ/borrowerrenew/{trackingId}/{centralCode}", PRE_POPULATED_TRACKING1_ID, PRE_POPULATED_CENTRAL_CODE)
+        .content(asJsonString(borrowerItem))
+        .headers(defaultHeaders())
+        .headers(headers)
+        .contentType(APPLICATION_JSON))
+      .andExpect(status().isOk());
+
+    var transactionState = fetchPrePopulatedTransaction().getState();
+
+    assertEquals(BORROWER_RENEW, transactionState);
+  }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
+  })
+  void borrowerRenewRequestCalculatedDueDateBeforeBorrowerDueDate() throws Exception {
+    when(innReachExternalService.postInnReachApi(any(), any(), any())).thenReturn("ok");
+
+    var loan = new LoanDTO();
+    loan.setDueDate(new Date(Instant.now().toEpochMilli()));
+    when(circulationClient.findLoan(any())).thenReturn(Optional.of(loan));
+
+    var renew = new LoanDTO();
+    renew.setDueDate(new Date(Instant.now().minus(1, ChronoUnit.DAYS).toEpochMilli()));
+    when(circulationClient.renewLoan(any())).thenReturn(renew);
+
+    var dueDateTime = (int) Instant.now().plus(1, ChronoUnit.DAYS).getEpochSecond();
+    var borrowerItem = new RenewLoanDTO();
+    borrowerItem.setDueDateTime(dueDateTime);
+
+    var transactionHoldDTO = createTransactionHoldDTO();
+    borrowerItem.setTransactionTime(transactionHoldDTO.getTransactionTime());
+    borrowerItem.setPatronId(transactionHoldDTO.getPatronId());
+    borrowerItem.setPatronAgencyCode(transactionHoldDTO.getPatronAgencyCode());
+    borrowerItem.setItemAgencyCode(transactionHoldDTO.getItemAgencyCode());
+    borrowerItem.setItemId(transactionHoldDTO.getItemId());
+
+    mockMvc.perform(put(
+        "/inn-reach/d2ir/circ/borrowerrenew/{trackingId}/{centralCode}", PRE_POPULATED_TRACKING1_ID, PRE_POPULATED_CENTRAL_CODE)
+        .content(asJsonString(borrowerItem))
+        .headers(defaultHeaders())
+        .headers(headers)
+        .contentType(APPLICATION_JSON))
+      .andExpect(status().isOk());
+
+    var transactionState = fetchPrePopulatedTransaction().getState();
+
+    assertEquals(RECALL, transactionState);
+  }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
+  })
+  void borrowerRenewRequestExistingDueDateBeforeRequestedDueDateAndExceptionOccurs() throws Exception {
+    when(innReachExternalService.postInnReachApi(any(), any(), any())).thenReturn("ok");
+
+    var loan = new LoanDTO();
+    loan.setDueDate(new Date(Instant.now().toEpochMilli()));
+    when(circulationClient.findLoan(any())).thenReturn(Optional.of(loan));
+
+    when(circulationClient.renewLoan(any())).thenThrow(IllegalArgumentException.class);
+
+    var dueDateTime = (int) Instant.now().plus(1, ChronoUnit.DAYS).getEpochSecond();
+    var borrowerItem = new RenewLoanDTO();
+    borrowerItem.setDueDateTime(dueDateTime);
+
+    var transactionHoldDTO = createTransactionHoldDTO();
+    borrowerItem.setTransactionTime(transactionHoldDTO.getTransactionTime());
+    borrowerItem.setPatronId(transactionHoldDTO.getPatronId());
+    borrowerItem.setPatronAgencyCode(transactionHoldDTO.getPatronAgencyCode());
+    borrowerItem.setItemAgencyCode(transactionHoldDTO.getItemAgencyCode());
+    borrowerItem.setItemId(transactionHoldDTO.getItemId());
+
+    mockMvc.perform(put(
+        "/inn-reach/d2ir/circ/borrowerrenew/{trackingId}/{centralCode}", PRE_POPULATED_TRACKING1_ID, PRE_POPULATED_CENTRAL_CODE)
+        .content(asJsonString(borrowerItem))
+        .headers(defaultHeaders())
+        .headers(headers)
+        .contentType(APPLICATION_JSON))
+      .andExpect(status().isOk());
+
+    var transactionState = fetchPrePopulatedTransaction().getState();
+
+    assertEquals(RECALL, transactionState);
+  }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
+  })
+  void borrowerRenewRequestFailedRenewLoan() throws Exception {
+    var loan = new LoanDTO();
+    loan.setDueDate(new Date(Instant.now().toEpochMilli()));
+    when(circulationClient.findLoan(any())).thenReturn(Optional.of(loan));
+
+    when(circulationClient.renewLoan(any())).thenThrow(IllegalArgumentException.class);
+
+    var dueDateTime = (int) Instant.now().getEpochSecond();
+    var borrowerItem = new RenewLoanDTO();
+    borrowerItem.setDueDateTime(dueDateTime);
+
+    var transactionHoldDTO = createTransactionHoldDTO();
+    borrowerItem.setTransactionTime(transactionHoldDTO.getTransactionTime());
+    borrowerItem.setPatronId(transactionHoldDTO.getPatronId());
+    borrowerItem.setPatronAgencyCode(transactionHoldDTO.getPatronAgencyCode());
+    borrowerItem.setItemAgencyCode(transactionHoldDTO.getItemAgencyCode());
+    borrowerItem.setItemId(transactionHoldDTO.getItemId());
+
+    var transactionStateBefore = fetchPrePopulatedTransaction().getState();
+
+    mockMvc.perform(put(
+        "/inn-reach/d2ir/circ/borrowerrenew/{trackingId}/{centralCode}", PRE_POPULATED_TRACKING1_ID, PRE_POPULATED_CENTRAL_CODE)
+        .content(asJsonString(borrowerItem))
+        .headers(defaultHeaders())
+        .headers(headers)
+        .contentType(APPLICATION_JSON))
+      .andExpect(status().isBadRequest());
+
+    var transactionStateAfter = fetchPrePopulatedTransaction().getState();
+
+    assertEquals(transactionStateBefore, transactionStateAfter);
+  }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
+  })
+  void borrowerRenewRequestFailedRecallRequest() throws Exception {
+    when(innReachExternalService.postInnReachApi(any(), any(), any())).thenThrow(IllegalArgumentException.class);
+
+    var loan = new LoanDTO();
+    loan.setDueDate(new Date(Instant.now().toEpochMilli()));
+    when(circulationClient.findLoan(any())).thenReturn(Optional.of(loan));
+
+    var renew = new LoanDTO();
+    renew.setDueDate(new Date(Instant.now().minus(1, ChronoUnit.DAYS).toEpochMilli()));
+    when(circulationClient.renewLoan(any())).thenReturn(renew);
+
+    var dueDateTime = (int) Instant.now().getEpochSecond();
+    var borrowerItem = new RenewLoanDTO();
+    borrowerItem.setDueDateTime(dueDateTime);
+
+    var transactionHoldDTO = createTransactionHoldDTO();
+    borrowerItem.setTransactionTime(transactionHoldDTO.getTransactionTime());
+    borrowerItem.setPatronId(transactionHoldDTO.getPatronId());
+    borrowerItem.setPatronAgencyCode(transactionHoldDTO.getPatronAgencyCode());
+    borrowerItem.setItemAgencyCode(transactionHoldDTO.getItemAgencyCode());
+    borrowerItem.setItemId(transactionHoldDTO.getItemId());
+
+    var transactionStateBefore = fetchPrePopulatedTransaction().getState();
+
+    mockMvc.perform(put(
+        "/inn-reach/d2ir/circ/borrowerrenew/{trackingId}/{centralCode}", PRE_POPULATED_TRACKING1_ID, PRE_POPULATED_CENTRAL_CODE)
+        .content(asJsonString(borrowerItem))
+        .headers(defaultHeaders())
+        .headers(headers)
+        .contentType(APPLICATION_JSON))
+      .andExpect(status().isBadRequest());
+
+    var transactionStateAfter = fetchPrePopulatedTransaction().getState();
+
+    assertEquals(transactionStateBefore, transactionStateAfter);
+  }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
+  })
+  void shouldNotProcessCircRequest_whenRequiredHeadersAreNotPresent() throws Exception {
+    var transactionHoldDTO = createTransactionHoldDTO();
+
+    var mvcResult = mockMvc.perform(put(
+        ITEM_RECEIVED_PATH, PRE_POPULATED_TRACKING1_ID, PRE_POPULATED_CENTRAL_CODE)
+        .content(asJsonString(transactionHoldDTO))
+        .headers(defaultHeaders())
+        .contentType(APPLICATION_JSON))
+      .andExpect(status().isBadRequest())
+      .andReturn();
+    var responseEntityBody = fromJson(mvcResult, InnReachResponseDTO.class);
+    assertNotNull(responseEntityBody);
+    assertEquals("Required request header 'X-To-Code' for method parameter type String is not present", responseEntityBody.getReason());
+  }
+
+  @ParameterizedTest
+  @EnumSource(names = {"ITEM_IN_TRANSIT", "RETURN_UNCIRCULATED", "ITEM_RECEIVED", "ITEM_SHIPPED"})
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
+  })
+  void checkTransactionIsNotInStatePatronHoldOrTransfer(InnReachTransaction.TransactionState state) throws Exception {
+    var transactionHoldDTO = createTransactionHoldDTO();
+    var transactionBefore = fetchPrePopulatedTransaction();
+    mockFetchingCirculationSettings();
+
+    transactionBefore.setState(state);
+    repository.save(transactionBefore);
+
+    mockMvc.perform(put(
+      "/inn-reach/d2ir/circ/finalcheckin/{trackingId}/{centralCode}", PRE_POPULATED_TRACKING1_ID, PRE_POPULATED_CENTRAL_CODE)
+        .content(asJsonString(transactionHoldDTO))
+        .headers(defaultHeaders())
+        .headers(headers)
+        .contentType(APPLICATION_JSON))
+      .andExpect(status().isOk())
+      .andReturn();
+
+    var transactionAfter = fetchPrePopulatedTransaction();
+    assertEquals(FINAL_CHECKIN, transactionAfter.getState());
+    assertPatronHoldFieldsAreNull((TransactionPatronHold) transactionAfter.getHold());
+  }
+
+  @ParameterizedTest
+  @EnumSource(names = {"PATRON_HOLD", "TRANSFER"})
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
+  })
+  void checkTransactionIsInStatePatronHoldOrTransfer(InnReachTransaction.TransactionState state) throws Exception {
+    var transactionHoldDTO = createTransactionHoldDTO();
+    var transactionBefore = fetchPrePopulatedTransaction();
+
+    transactionBefore.setState(state);
+    repository.save(transactionBefore);
+
+    mockMvc.perform(put(
+        "/inn-reach/d2ir/circ/finalcheckin/{trackingId}/{centralCode}", PRE_POPULATED_TRACKING1_ID, PRE_POPULATED_CENTRAL_CODE)
+        .content(asJsonString(transactionHoldDTO))
+        .headers(defaultHeaders())
+        .headers(headers)
+        .contentType(APPLICATION_JSON))
+      .andExpect(status().isBadRequest());
+
+    var transaction = fetchPrePopulatedTransaction();
+
+    assertEquals(state, transaction.getState());
+  }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
+  })
+  void testClaimsItemReturned() throws Exception {
+    var request = createClaimsItemReturnedDTO();
+    var date = Instant.now().truncatedTo(ChronoUnit.SECONDS);
+    request.setClaimsReturnedDate((int) date.getEpochSecond());
+
+    mockMvc.perform(put(
+        "/inn-reach/d2ir/circ/claimsreturned/{trackingId}/{centralCode}", PRE_POPULATED_TRACKING1_ID, PRE_POPULATED_CENTRAL_CODE)
+        .content(asJsonString(request))
+        .headers(defaultHeaders())
+        .headers(headers)
+        .contentType(APPLICATION_JSON))
+      .andExpect(status().isOk());
+
+    var updatedTransaction = fetchPrePopulatedTransaction();
+
+    assertEquals(CLAIMS_RETURNED, updatedTransaction.getState());
+    assertNull(updatedTransaction.getHold().getPatronId());
+    assertNull(updatedTransaction.getHold().getPatronName());
+
+    verify(circulationClient).claimItemReturned(any(), argThat(req -> date.equals(req.getItemClaimedReturnedDateTime().toInstant())));
+  }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
+  })
+  void testClaimsItemReturned_UnknownDate() throws Exception {
+    var request = createClaimsItemReturnedDTO();
+    request.setClaimsReturnedDate(-1);
+
+    mockMvc.perform(put(
+        "/inn-reach/d2ir/circ/claimsreturned/{trackingId}/{centralCode}", PRE_POPULATED_TRACKING1_ID, PRE_POPULATED_CENTRAL_CODE)
+        .content(asJsonString(request))
+        .headers(defaultHeaders())
+        .headers(headers)
+        .contentType(APPLICATION_JSON))
+      .andExpect(status().isOk());
+
+    var updatedTransaction = fetchPrePopulatedTransaction();
+
+    assertEquals(CLAIMS_RETURNED, updatedTransaction.getState());
+    assertNull(updatedTransaction.getHold().getPatronId());
+    assertNull(updatedTransaction.getHold().getPatronName());
+
+    verify(circulationClient).claimItemReturned(any(), argThat(req -> req.getItemClaimedReturnedDateTime() != null));
+  }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql",
+    "classpath:db/patron-type-mapping/pre-populate-patron-type-mapping.sql",
+  })
+  void processCancelRequest() throws Exception {
+    mockFetchingCirculationSettings();
+    doNothing().when(requestService).cancelRequest(anyString(), any(UUID.class), any(UUID.class), anyString());
+    when(userService.getUserById(any(UUID.class))).thenReturn(Optional.of(populateUser()));
+
+    var cancelRequestDTO = createCancelRequestDTO();
+
+    mockMvc.perform(put(
+        CANCEL_REQUEST_PATH, PRE_POPULATED_TRACKING1_ID, PRE_POPULATED_CENTRAL_CODE)
+        .content(asJsonString(cancelRequestDTO))
+        .headers(defaultHeaders())
+        .headers(headers)
+        .contentType(APPLICATION_JSON))
+      .andExpect(status().isOk())
+      .andReturn();
+
+    await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() -> {
+      var transactionAfter = fetchPrePopulatedTransaction();
+      assertEquals(CANCEL_REQUEST, transactionAfter.getState());
+      verify(requestService).cancelRequest(anyString(), any(UUID.class), any(UUID.class), anyString());
+      verify(virtualRecordService).deleteVirtualRecords(any(), any(), any(), any());
+      assertPatronHoldFieldsAreNull((TransactionPatronHold) transactionAfter.getHold());
+    });
+  }
+
+  @ParameterizedTest
+  @EnumSource(names = {"ITEM_RECEIVED"})
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
+  })
+  void testFinalCheckInWithDeleteVirtualRecord(InnReachTransaction.TransactionState state) throws Exception {
+    var transactionHoldDTO = createTransactionHoldDTO();
+    var transactionBefore = fetchPrePopulatedTransaction();
+
+    mockFetchingCirculationSettings();
+    transactionBefore.setState(state);
+    repository.save(transactionBefore);
+
+    mockMvc.perform(put(
+      "/inn-reach/d2ir/circ/finalcheckin/{trackingId}/{centralCode}", PRE_POPULATED_TRACKING1_ID, PRE_POPULATED_CENTRAL_CODE)
+        .content(asJsonString(transactionHoldDTO))
+        .headers(defaultHeaders())
+        .headers(headers)
+        .contentType(APPLICATION_JSON))
+      .andExpect(status().isOk())
+      .andReturn();
+
+    await().atMost(ASYNC_AWAIT_TIMEOUT).untilAsserted(() -> {
+      var transactionAfter = fetchPrePopulatedTransaction();
+      assertEquals(FINAL_CHECKIN, transactionAfter.getState());
+      verify(virtualRecordService).deleteVirtualRecords(any(), any(), any(), any());
+      assertPatronHoldFieldsAreNull((TransactionPatronHold) transactionAfter.getHold());
+    });
+  }
+
+  private void mockFetchingCirculationSettings() {
+    var configurationDto =
+      deserializeFromJsonFile("/configuration/configuration-details-example.json", CirculationSettingDTO.class);
+    // Override checkoutTimeoutDuration to 0 so the scheduled delete task fires immediately in tests
+    configurationDto.getValue().put("checkoutTimeoutDuration", 0);
+    when(configurationService.fetchCheckoutSettings()).
+      thenReturn(ResultList.asSinglePage(configurationDto));
+  }
+
+  private void assertPatronHoldFieldsAreNull(TransactionPatronHold hold) {
+    assertNull(hold.getPatronId());
+    assertNull(hold.getPatronName());
+    assertNull(hold.getFolioPatronId());
+    assertNull(hold.getFolioPatronBarcode());
+    assertNull(hold.getFolioItemId());
+    assertNull(hold.getFolioHoldingId());
+    assertNull(hold.getFolioInstanceId());
+    assertNull(hold.getFolioLoanId());
+    assertNull(hold.getFolioItemBarcode());
+  }
+
+  private User populateUser() {
+    var user = new User();
+    user.setId(PRE_POPULATED_PATRON_ID);
+    user.setActive(true);
+    user.setUsername("test");
+    user.setBarcode(PRE_POPULATED_USER_BARCODE);
+    user.setPatronGroupId(PRE_POPULATE_PATRON_GROUP_ID);
+    var personal = new User.Personal();
+    personal.setPreferredFirstName("Paul");
+    personal.setFirstName("MuaDibs");
+    personal.setLastName("Atreides");
+    user.setPersonal(personal);
+    return user;
+  }
+
+  private TransactionHoldDTO sampleTransactionHoldDto(String itemId) {
+    return new TransactionHoldDTO()
+      .centralPatronType(200)
+      .patronName("patron")
+      .itemId(itemId)
+      .centralItemType(0)
+      .itemAgencyCode("abc01")
+      .pickupLocation("abc11:def22:ghi33")
+      .transactionTime(123456)
+      .patronAgencyCode("xyz01")
+      .patronId("123445667");
+  }
+}
