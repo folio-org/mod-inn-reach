@@ -56,6 +56,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.test.context.TestExecutionListeners;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -128,6 +129,13 @@ public abstract class BaseTenantIT extends BaseIT {
       .andExpect(status().isOk())
       .andExpect(content().json(
         readTemplate(expectedResult)));
+  }
+
+  protected ResultActions postReq(String url, Object requestBody) throws Exception {
+    return mockMvc.perform(post(url)
+      .content(jsonHelper.toJson(requestBody))
+      .contentType(MediaType.APPLICATION_JSON)
+      .headers(getOkapiHeaders()));
   }
 
   protected ResultActions putReq(URI uri, Object requestBody) throws Exception {

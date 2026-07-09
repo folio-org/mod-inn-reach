@@ -17,6 +17,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.context.jdbc.Sql.ExecutionPhase.AFTER_TEST_METHOD;
 import static org.springframework.test.context.jdbc.SqlMergeMode.MergeMode.MERGE;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.folio.innreach.fixture.PatronInfoRequestFixture.createPatronInfoRequest;
 import static org.folio.innreach.fixture.PatronInfoRequestFixture.createPatronInfoRequestWithLastNameFirstName;
 import static org.folio.innreach.fixture.PatronInfoRequestFixture.createPatronInfoRequestWithFirstNameMiddleNameLastName;
@@ -29,12 +30,7 @@ import org.folio.innreach.it.base.BaseTenantIT;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.resttestclient.TestRestTemplate;
-import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureTestRestTemplate;
-import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.context.jdbc.SqlMergeMode;
@@ -52,14 +48,11 @@ import org.folio.innreach.dto.PatronInfoResponseDTO;
   "classpath:db/central-server/clear-central-server-tables.sql"},
   executionPhase = AFTER_TEST_METHOD)
 @SqlMergeMode(MERGE)
-@AutoConfigureTestRestTemplate
 class PatronInfoControllerIT extends BaseTenantIT {
 
   private static final String VERIFY_PATRON_PATH = "/inn-reach/d2ir/circ/verifypatron";
 
   public static final String UNABLE_TO_VERIFY_PATRON = "Unable to verify patron";
-  @Autowired
-  private TestRestTemplate testRestTemplate;
   @MockitoBean
   private UsersClient usersClient;
   @MockitoBean
@@ -79,7 +72,7 @@ class PatronInfoControllerIT extends BaseTenantIT {
     "classpath:db/patron-type-mapping/pre-populate-patron-type-mapping.sql",
     "classpath:db/user-custom-field-mapping/pre-populate-user-custom-field-mapping.sql"
   })
-  void return200HttpCode_and_patronInfoResponseWithPatronInfo_when_patronFoundAndRequestAllowed() {
+  void return200HttpCode_and_patronInfoResponseWithPatronInfo_when_patronFoundAndRequestAllowed() throws Exception {
     var user = createUser();
     user.setPatronGroupId(UUID.fromString("54e17c4c-e315-4d20-8879-efc694dea1ce"));
     when(usersClient.findByQuery(anyString())).thenReturn(ResultList.of(1, List.of(user)));
@@ -90,13 +83,11 @@ class PatronInfoControllerIT extends BaseTenantIT {
 
     var patronInfoRequest = createPatronInfoRequest();
 
-    var responseEntity = testRestTemplate.postForEntity(
-      VERIFY_PATRON_PATH, new HttpEntity<>(patronInfoRequest, headers), PatronInfoResponseDTO.class);
+    var result = postReq(VERIFY_PATRON_PATH, patronInfoRequest)
+      .andExpect(status().isOk())
+      .andReturn();
 
-    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
-    assertNotNull(responseEntity.getBody());
-
-    var response = responseEntity.getBody();
+    var response = fromJson(result, PatronInfoResponseDTO.class);
     assertTrue(response.getRequestAllowed());
     assertNotNull(response.getPatronInfo());
   }
@@ -107,7 +98,7 @@ class PatronInfoControllerIT extends BaseTenantIT {
     "classpath:db/patron-type-mapping/pre-populate-patron-type-mapping.sql",
     "classpath:db/user-custom-field-mapping/pre-populate-user-custom-field-mapping.sql"
   })
-  void return200HttpCode_and_patronInfoResponseWithPatronInfo_when_patronFoundWithNoExpirationDateAndRequestAllowed() {
+  void return200HttpCode_and_patronInfoResponseWithPatronInfo_when_patronFoundWithNoExpirationDateAndRequestAllowed() throws Exception {
     var user = createUserWithoutExpirationDate();
     user.setPatronGroupId(UUID.fromString("54e17c4c-e315-4d20-8879-efc694dea1ce"));
     when(usersClient.findByQuery(anyString())).thenReturn(ResultList.of(1, List.of(user)));
@@ -118,13 +109,11 @@ class PatronInfoControllerIT extends BaseTenantIT {
 
     var patronInfoRequest = createPatronInfoRequest();
 
-    var responseEntity = testRestTemplate.postForEntity(
-      VERIFY_PATRON_PATH, new HttpEntity<>(patronInfoRequest, headers), PatronInfoResponseDTO.class);
+    var result = postReq(VERIFY_PATRON_PATH, patronInfoRequest)
+      .andExpect(status().isOk())
+      .andReturn();
 
-    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
-    assertNotNull(responseEntity.getBody());
-
-    var response = responseEntity.getBody();
+    var response = fromJson(result, PatronInfoResponseDTO.class);
     assertNotNull(response.getPatronInfo().getPatronExpireDate());
     assertTrue(response.getRequestAllowed());
     assertNotNull(response.getPatronInfo());
@@ -136,7 +125,7 @@ class PatronInfoControllerIT extends BaseTenantIT {
     "classpath:db/patron-type-mapping/pre-populate-patron-type-mapping.sql",
     "classpath:db/user-custom-field-mapping/pre-populate-user-custom-field-mapping.sql"
   })
-  void return200HttpCode_and_patronInfoResponseWithPatronInfo_hasLastNameFirstNameOrder_when_patronFoundAndRequestAllowed() {
+  void return200HttpCode_and_patronInfoResponseWithPatronInfo_hasLastNameFirstNameOrder_when_patronFoundAndRequestAllowed() throws Exception {
     var user = createUser();
     user.setPatronGroupId(UUID.fromString("54e17c4c-e315-4d20-8879-efc694dea1ce"));
     when(usersClient.findByQuery(anyString())).thenReturn(ResultList.of(1, List.of(user)));
@@ -147,13 +136,11 @@ class PatronInfoControllerIT extends BaseTenantIT {
 
     var patronInfoRequest = createPatronInfoRequestWithLastNameFirstName();
 
-    var responseEntity = testRestTemplate.postForEntity(
-      VERIFY_PATRON_PATH, new HttpEntity<>(patronInfoRequest, headers), PatronInfoResponseDTO.class);
+    var result = postReq(VERIFY_PATRON_PATH, patronInfoRequest)
+      .andExpect(status().isOk())
+      .andReturn();
 
-    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
-    assertNotNull(responseEntity.getBody());
-
-    var response = responseEntity.getBody();
+    var response = fromJson(result, PatronInfoResponseDTO.class);
     assertTrue(response.getRequestAllowed());
     assertNotNull(response.getPatronInfo());
   }
@@ -164,7 +151,7 @@ class PatronInfoControllerIT extends BaseTenantIT {
     "classpath:db/patron-type-mapping/pre-populate-patron-type-mapping.sql",
     "classpath:db/user-custom-field-mapping/pre-populate-user-custom-field-mapping.sql"
   })
-  void return200HttpCode_and_patronInfoResponseWithPatronInfo_hasFirstNameMiddleNameLastNameOrder_when_patronFoundAndRequestAllowed() {
+  void return200HttpCode_and_patronInfoResponseWithPatronInfo_hasFirstNameMiddleNameLastNameOrder_when_patronFoundAndRequestAllowed() throws Exception {
     var user = createUserWithMiddleName();
     user.setPatronGroupId(UUID.fromString("54e17c4c-e315-4d20-8879-efc694dea1ce"));
     when(usersClient.findByQuery(anyString())).thenReturn(ResultList.of(1, List.of(user)));
@@ -175,13 +162,11 @@ class PatronInfoControllerIT extends BaseTenantIT {
 
     var patronInfoRequest = createPatronInfoRequestWithFirstNameMiddleNameLastName();
 
-    var responseEntity = testRestTemplate.postForEntity(
-      VERIFY_PATRON_PATH, new HttpEntity<>(patronInfoRequest, headers), PatronInfoResponseDTO.class);
+    var result = postReq(VERIFY_PATRON_PATH, patronInfoRequest)
+      .andExpect(status().isOk())
+      .andReturn();
 
-    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
-    assertNotNull(responseEntity.getBody());
-
-    var response = responseEntity.getBody();
+    var response = fromJson(result, PatronInfoResponseDTO.class);
     assertTrue(response.getRequestAllowed());
     assertNotNull(response.getPatronInfo());
   }
@@ -192,7 +177,7 @@ class PatronInfoControllerIT extends BaseTenantIT {
     "classpath:db/patron-type-mapping/pre-populate-patron-type-mapping.sql",
     "classpath:db/user-custom-field-mapping/pre-populate-user-custom-field-mapping.sql"
   })
-  void return200HttpCode_and_patronInfoResponseWithPatronInfo_hasLastNameFirstNameMiddleNameOrder_when_patronFoundAndRequestAllowed() {
+  void return200HttpCode_and_patronInfoResponseWithPatronInfo_hasLastNameFirstNameMiddleNameOrder_when_patronFoundAndRequestAllowed() throws Exception {
     var user = createUserWithMiddleName();
     user.setPatronGroupId(UUID.fromString("54e17c4c-e315-4d20-8879-efc694dea1ce"));
     when(usersClient.findByQuery(anyString())).thenReturn(ResultList.of(1, List.of(user)));
@@ -203,13 +188,11 @@ class PatronInfoControllerIT extends BaseTenantIT {
 
     var patronInfoRequest = createPatronInfoRequestWithLastNameFirstNameMiddleName();
 
-    var responseEntity = testRestTemplate.postForEntity(
-      VERIFY_PATRON_PATH, new HttpEntity<>(patronInfoRequest, headers), PatronInfoResponseDTO.class);
+    var result = postReq(VERIFY_PATRON_PATH, patronInfoRequest)
+      .andExpect(status().isOk())
+      .andReturn();
 
-    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
-    assertNotNull(responseEntity.getBody());
-
-    var response = responseEntity.getBody();
+    var response = fromJson(result, PatronInfoResponseDTO.class);
     assertTrue(response.getRequestAllowed());
     assertNotNull(response.getPatronInfo());
   }
@@ -223,7 +206,7 @@ class PatronInfoControllerIT extends BaseTenantIT {
     "classpath:db/patron-type-mapping/pre-populate-patron-type-mapping.sql",
     "classpath:db/user-custom-field-mapping/pre-populate-user-custom-field-mapping.sql"
   })
-  void return200HttpCode_and_patronInfoResponseWithPatronInfo_hasWrongOrder_when_patronNotFound(String updatedName) {
+  void return200HttpCode_and_patronInfoResponseWithPatronInfo_hasWrongOrder_when_patronNotFound(String updatedName) throws Exception {
     var user = createUserWithMiddleName();
     user.setPatronGroupId(UUID.fromString("54e17c4c-e315-4d20-8879-efc694dea1ce"));
     when(usersClient.findByQuery(anyString())).thenReturn(ResultList.of(1, List.of(user)));
@@ -235,13 +218,11 @@ class PatronInfoControllerIT extends BaseTenantIT {
     var patronInfoRequest = createPatronInfoRequestWithLastNameFirstNameMiddleName();
     patronInfoRequest.setPatronName(updatedName);
 
-    var responseEntity = testRestTemplate.postForEntity(
-      VERIFY_PATRON_PATH, new HttpEntity<>(patronInfoRequest, headers), PatronInfoResponseDTO.class);
+    var result = postReq(VERIFY_PATRON_PATH, patronInfoRequest)
+      .andExpect(status().isOk())
+      .andReturn();
 
-    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
-    assertNotNull(responseEntity.getBody());
-
-    var response = responseEntity.getBody();
+    var response = fromJson(result, PatronInfoResponseDTO.class);
     assertFalse(response.getRequestAllowed());
     assertEquals(UNABLE_TO_VERIFY_PATRON,response.getReason());
   }
@@ -253,7 +234,7 @@ class PatronInfoControllerIT extends BaseTenantIT {
     "classpath:db/patron-type-mapping/pre-populate-patron-type-mapping.sql",
     "classpath:db/user-custom-field-mapping/pre-populate-user-custom-field-mapping.sql"
   })
-  void return200HttpCode_and_patronInfoResponseWithPatronInfo_hasIgnoreCaseCorrectOrderWithOutMiddleName_when_patronFoundAndRequestAllowed(String patronName) {
+  void return200HttpCode_and_patronInfoResponseWithPatronInfo_hasIgnoreCaseCorrectOrderWithOutMiddleName_when_patronFoundAndRequestAllowed(String patronName) throws Exception {
     var user = createUser();
     user.setPatronGroupId(UUID.fromString("54e17c4c-e315-4d20-8879-efc694dea1ce"));
     when(usersClient.findByQuery(anyString())).thenReturn(ResultList.of(1, List.of(user)));
@@ -265,13 +246,11 @@ class PatronInfoControllerIT extends BaseTenantIT {
     var patronInfoRequest = createPatronInfoRequest();
     patronInfoRequest.setPatronName(patronName);
 
-    var responseEntity = testRestTemplate.postForEntity(
-      VERIFY_PATRON_PATH, new HttpEntity<>(patronInfoRequest, headers), PatronInfoResponseDTO.class);
+    var result = postReq(VERIFY_PATRON_PATH, patronInfoRequest)
+      .andExpect(status().isOk())
+      .andReturn();
 
-    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
-    assertNotNull(responseEntity.getBody());
-
-    var response = responseEntity.getBody();
+    var response = fromJson(result, PatronInfoResponseDTO.class);
     assertTrue(response.getRequestAllowed());
     assertNotNull(response.getPatronInfo());
   }
@@ -285,7 +264,7 @@ class PatronInfoControllerIT extends BaseTenantIT {
     "classpath:db/patron-type-mapping/pre-populate-patron-type-mapping.sql",
     "classpath:db/user-custom-field-mapping/pre-populate-user-custom-field-mapping.sql"
   })
-  void return200HttpCode_and_patronInfoResponseWithPatronInfo_hasIgnoreCaseCorrectOrderWithMiddleName_when_patronFoundAndRequestAllowed(String patronName) {
+  void return200HttpCode_and_patronInfoResponseWithPatronInfo_hasIgnoreCaseCorrectOrderWithMiddleName_when_patronFoundAndRequestAllowed(String patronName) throws Exception {
     var user = createUserWithMiddleName();
     user.setPatronGroupId(UUID.fromString("54e17c4c-e315-4d20-8879-efc694dea1ce"));
     when(usersClient.findByQuery(anyString())).thenReturn(ResultList.of(1, List.of(user)));
@@ -297,13 +276,11 @@ class PatronInfoControllerIT extends BaseTenantIT {
     var patronInfoRequest = createPatronInfoRequest();
     patronInfoRequest.setPatronName(patronName);
 
-    var responseEntity = testRestTemplate.postForEntity(
-      VERIFY_PATRON_PATH, new HttpEntity<>(patronInfoRequest, headers), PatronInfoResponseDTO.class);
+    var result = postReq(VERIFY_PATRON_PATH, patronInfoRequest)
+      .andExpect(status().isOk())
+      .andReturn();
 
-    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
-    assertNotNull(responseEntity.getBody());
-
-    var response = responseEntity.getBody();
+    var response = fromJson(result, PatronInfoResponseDTO.class);
     assertTrue(response.getRequestAllowed());
     assertNotNull(response.getPatronInfo());
   }
@@ -316,9 +293,7 @@ class PatronInfoControllerIT extends BaseTenantIT {
     "classpath:db/patron-type-mapping/pre-populate-patron-type-mapping.sql",
     "classpath:db/user-custom-field-mapping/pre-populate-user-custom-field-mapping.sql"
   })
-  void return200HttpCode_and_patronInfoResponseWithPatronInfo_WithSpaceInFirstAndLastName(String patronName) {
-    // This test covers "first first last last", "last last first first", "first first last last middle"
-    // "last last, first first middle"
+  void return200HttpCode_and_patronInfoResponseWithPatronInfo_WithSpaceInFirstAndLastName(String patronName) throws Exception {
     var user = createUserWithTwoFirstAndTwoLastNames("john jimmy", "doe smith");
     user.setPatronGroupId(UUID.fromString("54e17c4c-e315-4d20-8879-efc694dea1ce"));
     when(usersClient.findByQuery(anyString())).thenReturn(ResultList.of(1, List.of(user)));
@@ -330,13 +305,11 @@ class PatronInfoControllerIT extends BaseTenantIT {
     var patronInfoRequest = createPatronInfoRequest();
     patronInfoRequest.setPatronName(patronName);
 
-    var responseEntity = testRestTemplate.postForEntity(
-      VERIFY_PATRON_PATH, new HttpEntity<>(patronInfoRequest, headers), PatronInfoResponseDTO.class);
+    var result = postReq(VERIFY_PATRON_PATH, patronInfoRequest)
+      .andExpect(status().isOk())
+      .andReturn();
 
-    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
-    assertNotNull(responseEntity.getBody());
-
-    var response = responseEntity.getBody();
+    var response = fromJson(result, PatronInfoResponseDTO.class);
     assertTrue(response.getRequestAllowed());
     assertNotNull(response.getPatronInfo());
   }
@@ -349,9 +322,7 @@ class PatronInfoControllerIT extends BaseTenantIT {
     "classpath:db/patron-type-mapping/pre-populate-patron-type-mapping.sql",
     "classpath:db/user-custom-field-mapping/pre-populate-user-custom-field-mapping.sql"
   })
-  void return200HttpCode_and_patronInfoResponseWithPatronInfo_WithSpaceInFirstName(String patronName) {
-    // This test covers "first first last", "last first first middle", "last, first first middle",
-    // "first first last middle", "last first first", "last, first first"
+  void return200HttpCode_and_patronInfoResponseWithPatronInfo_WithSpaceInFirstName(String patronName) throws Exception {
     var user = createUserWithTwoFirstAndTwoLastNames("john jimmy", PATRON_LAST_NAME);
     user.setPatronGroupId(UUID.fromString("54e17c4c-e315-4d20-8879-efc694dea1ce"));
     when(usersClient.findByQuery(anyString())).thenReturn(ResultList.of(1, List.of(user)));
@@ -363,13 +334,11 @@ class PatronInfoControllerIT extends BaseTenantIT {
     var patronInfoRequest = createPatronInfoRequest();
     patronInfoRequest.setPatronName(patronName);
 
-    var responseEntity = testRestTemplate.postForEntity(
-      VERIFY_PATRON_PATH, new HttpEntity<>(patronInfoRequest, headers), PatronInfoResponseDTO.class);
+    var result = postReq(VERIFY_PATRON_PATH, patronInfoRequest)
+      .andExpect(status().isOk())
+      .andReturn();
 
-    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
-    assertNotNull(responseEntity.getBody());
-
-    var response = responseEntity.getBody();
+    var response = fromJson(result, PatronInfoResponseDTO.class);
     assertTrue(response.getRequestAllowed());
     assertNotNull(response.getPatronInfo());
   }
@@ -382,8 +351,7 @@ class PatronInfoControllerIT extends BaseTenantIT {
           "classpath:db/patron-type-mapping/pre-populate-patron-type-mapping.sql",
           "classpath:db/user-custom-field-mapping/pre-populate-user-custom-field-mapping.sql"
   })
-  void return200HttpCode_and_patronInfoResponseWithPatronInfo_WithSpaceInFirstName_WithThreeFirstName(String patronName) {
-    // This test covers "last first first first" and "first first first last"
+  void return200HttpCode_and_patronInfoResponseWithPatronInfo_WithSpaceInFirstName_WithThreeFirstName(String patronName) throws Exception {
     var user = createUserWithTwoFirstAndTwoLastNames("john jimmy soni", PATRON_LAST_NAME);
     user.setPatronGroupId(UUID.fromString("54e17c4c-e315-4d20-8879-efc694dea1ce"));
     when(usersClient.findByQuery(anyString())).thenReturn(ResultList.of(1, List.of(user)));
@@ -395,13 +363,11 @@ class PatronInfoControllerIT extends BaseTenantIT {
     var patronInfoRequest = createPatronInfoRequest();
     patronInfoRequest.setPatronName(patronName);
 
-    var responseEntity = testRestTemplate.postForEntity(
-            VERIFY_PATRON_PATH, new HttpEntity<>(patronInfoRequest, headers), PatronInfoResponseDTO.class);
+    var result = postReq(VERIFY_PATRON_PATH, patronInfoRequest)
+      .andExpect(status().isOk())
+      .andReturn();
 
-    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
-    assertNotNull(responseEntity.getBody());
-
-    var response = responseEntity.getBody();
+    var response = fromJson(result, PatronInfoResponseDTO.class);
     assertTrue(response.getRequestAllowed());
     assertNotNull(response.getPatronInfo());
   }
@@ -414,8 +380,7 @@ class PatronInfoControllerIT extends BaseTenantIT {
           "classpath:db/patron-type-mapping/pre-populate-patron-type-mapping.sql",
           "classpath:db/user-custom-field-mapping/pre-populate-user-custom-field-mapping.sql"
   })
-  void return200HttpCode_and_patronInfoResponseWithPatronInfo_WithSpaceInFirstName_WithThreeLastName(String patronName) {
-    // This test covers "first last last last" and "last last last first"
+  void return200HttpCode_and_patronInfoResponseWithPatronInfo_WithSpaceInFirstName_WithThreeLastName(String patronName) throws Exception {
     var user = createUserWithTwoFirstAndTwoLastNames(PATRON_FIRST_NAME, "tan man dhan");
     user.setPatronGroupId(UUID.fromString("54e17c4c-e315-4d20-8879-efc694dea1ce"));
     when(usersClient.findByQuery(anyString())).thenReturn(ResultList.of(1, List.of(user)));
@@ -427,13 +392,11 @@ class PatronInfoControllerIT extends BaseTenantIT {
     var patronInfoRequest = createPatronInfoRequest();
     patronInfoRequest.setPatronName(patronName);
 
-    var responseEntity = testRestTemplate.postForEntity(
-            VERIFY_PATRON_PATH, new HttpEntity<>(patronInfoRequest, headers), PatronInfoResponseDTO.class);
+    var result = postReq(VERIFY_PATRON_PATH, patronInfoRequest)
+      .andExpect(status().isOk())
+      .andReturn();
 
-    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
-    assertNotNull(responseEntity.getBody());
-
-    var response = responseEntity.getBody();
+    var response = fromJson(result, PatronInfoResponseDTO.class);
     assertTrue(response.getRequestAllowed());
     assertNotNull(response.getPatronInfo());
   }
@@ -446,9 +409,7 @@ class PatronInfoControllerIT extends BaseTenantIT {
     "classpath:db/patron-type-mapping/pre-populate-patron-type-mapping.sql",
     "classpath:db/user-custom-field-mapping/pre-populate-user-custom-field-mapping.sql"
   })
-  void return200HttpCode_and_patronInfoResponseWithPatronInfo_WithSpaceInLastName(String patronName) {
-    // This test covers "last last first", "first last last middle", "last last first middle",
-    // "last last, first middle", "first last last"
+  void return200HttpCode_and_patronInfoResponseWithPatronInfo_WithSpaceInLastName(String patronName) throws Exception {
     var user = createUserWithTwoFirstAndTwoLastNames(PATRON_FIRST_NAME, "doe smith");
     user.setPatronGroupId(UUID.fromString("54e17c4c-e315-4d20-8879-efc694dea1ce"));
     when(usersClient.findByQuery(anyString())).thenReturn(ResultList.of(1, List.of(user)));
@@ -460,13 +421,11 @@ class PatronInfoControllerIT extends BaseTenantIT {
     var patronInfoRequest = createPatronInfoRequest();
     patronInfoRequest.setPatronName(patronName);
 
-    var responseEntity = testRestTemplate.postForEntity(
-      VERIFY_PATRON_PATH, new HttpEntity<>(patronInfoRequest, headers), PatronInfoResponseDTO.class);
+    var result = postReq(VERIFY_PATRON_PATH, patronInfoRequest)
+      .andExpect(status().isOk())
+      .andReturn();
 
-    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
-    assertNotNull(responseEntity.getBody());
-
-    var response = responseEntity.getBody();
+    var response = fromJson(result, PatronInfoResponseDTO.class);
     assertTrue(response.getRequestAllowed());
     assertNotNull(response.getPatronInfo());
   }
@@ -477,7 +436,7 @@ class PatronInfoControllerIT extends BaseTenantIT {
     "classpath:db/patron-type-mapping/pre-populate-patron-type-mapping.sql",
     "classpath:db/user-custom-field-mapping/pre-populate-user-custom-field-mapping.sql"
   })
-  void return200HttpCode_and_patronInfoResponseWithoutPatronInfo_when_patronFoundAndRequestNotAllowed() {
+  void return200HttpCode_and_patronInfoResponseWithoutPatronInfo_when_patronFoundAndRequestNotAllowed() throws Exception {
     var user = createUser();
     var block = new AutomatedPatronBlocksClient.AutomatedPatronBlock();
     block.setBlockBorrowing(true);
@@ -491,13 +450,11 @@ class PatronInfoControllerIT extends BaseTenantIT {
 
     var patronInfoRequest = createPatronInfoRequest();
 
-    var responseEntity = testRestTemplate.postForEntity(
-      VERIFY_PATRON_PATH, new HttpEntity<>(patronInfoRequest, headers), PatronInfoResponseDTO.class);
+    var result = postReq(VERIFY_PATRON_PATH, patronInfoRequest)
+      .andExpect(status().isOk())
+      .andReturn();
 
-    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
-    assertNotNull(responseEntity.getBody());
-
-    var response = responseEntity.getBody();
+    var response = fromJson(result, PatronInfoResponseDTO.class);
     assertFalse(response.getRequestAllowed());
     assertNull(response.getPatronInfo());
   }
@@ -508,18 +465,16 @@ class PatronInfoControllerIT extends BaseTenantIT {
     "classpath:db/patron-type-mapping/pre-populate-patron-type-mapping.sql",
     "classpath:db/user-custom-field-mapping/pre-populate-user-custom-field-mapping.sql"
   })
-  void return200HttpCode_and_patronInfoResponseWithError_when_verificationRequestFails() {
+  void return200HttpCode_and_patronInfoResponseWithError_when_verificationRequestFails() throws Exception {
     when(usersClient.findByQuery(anyString())).thenThrow(new IllegalArgumentException("Test exception"));
 
     var patronInfoRequest = createPatronInfoRequest();
 
-    var responseEntity = testRestTemplate.postForEntity(
-      VERIFY_PATRON_PATH, new HttpEntity<>(patronInfoRequest, headers), PatronInfoResponseDTO.class);
+    var result = postReq(VERIFY_PATRON_PATH, patronInfoRequest)
+      .andExpect(status().isOk())
+      .andReturn();
 
-    assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
-    assertNotNull(responseEntity.getBody());
-
-    var response = responseEntity.getBody();
+    var response = fromJson(result, PatronInfoResponseDTO.class);
     assertEquals(1, response.getErrors().size());
     assertTrue(response.getErrors().get(0).getMessages().get(0).contains("Test exception"));
   }
