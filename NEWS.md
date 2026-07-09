@@ -14,6 +14,7 @@
 
 ### Tech Debt
 * Improve API and module documentation ([MODINREACH-513](https://folio-org.atlassian.net/browse/MODINREACH-513))
+* Refactor Integration Tests to unify under common base class and technologies ([MODINREACH-606](https://folio-org.atlassian.net/browse/MODINREACH-606))
 
 ## v4.0.0 2026-04-17
 

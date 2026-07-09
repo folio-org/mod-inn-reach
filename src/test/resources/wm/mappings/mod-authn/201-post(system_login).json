@@ -1,0 +1,36 @@
+{
+  "request": {
+    "method": "POST",
+    "urlPath": "/authn/login-with-expiry",
+    "bodyPatterns": [
+      {
+        "equalToJson": {
+          "username": "mod-innreach",
+          "password": "mod-innreach-1-0-0"
+        }
+      }
+    ],
+    "headers": {
+      "x-okapi-tenant": {
+        "equalTo": "test_tenant"
+      }
+    }
+  },
+  "response": {
+    "status": 201,
+    "headers": {
+      "Content-Type": "application/json",
+      "Set-Cookie": [
+        "folioAccessToken=accessToken",
+        "folioRefreshToken=refreshToken"
+      ]
+    },
+    "jsonBody": {
+      "accessTokenExpiration": "2124-03-15T12:00:00Z",
+      "refreshTokenExpiration": "2124-03-15T12:00:00Z"
+    },
+    "transformers": [
+      "response-template"
+    ]
+  }
+}
