@@ -11,6 +11,7 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 
 import org.folio.innreach.repository.JobExecutionStatusRepository;
 import org.folio.innreach.repository.OngoingContributionStatusRepository;
@@ -109,6 +110,6 @@ class ContributionCleanupServiceTest {
 
     var captor = org.mockito.ArgumentCaptor.forClass(OffsetDateTime.class);
     verify(jobRepo).deleteBatchByStatusAndUpdatedBefore(anyList(), captor.capture(), anyInt());
-    assertThat(captor.getValue()).isBeforeOrEqualTo(OffsetDateTime.now().minusDays(10));
+    assertThat(captor.getValue()).isBeforeOrEqualTo(OffsetDateTime.now(ZoneOffset.UTC).minusDays(10));
   }
 }

@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.List;
 
 @Service
@@ -41,7 +42,7 @@ public class ContributionCleanupServiceImpl implements ContributionCleanupServic
       ContributionStatus.FAILED.name(),
       ContributionStatus.DE_CONTRIBUTED.name()
     );
-    var cutoff = OffsetDateTime.now().minusDays(retentionDays);
+    var cutoff = OffsetDateTime.now(ZoneOffset.UTC).minusDays(retentionDays);
 
     int initialDeleted = deleteInBatches(jobRepo::deleteBatchByStatusAndUpdatedBefore, terminalStatuses, cutoff);
     int ongoingDeleted = deleteInBatches(ongoingRepo::deleteBatchByStatusAndUpdatedBefore, terminalStatuses, cutoff);
