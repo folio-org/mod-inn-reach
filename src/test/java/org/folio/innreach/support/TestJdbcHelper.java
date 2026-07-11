@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.util.Map;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -25,6 +26,12 @@ public class TestJdbcHelper {
   public long count(String tenantId, String tableName) {
     var sql = "SELECT COUNT(*) FROM %s%s.%s".formatted(tenantId, DB_SCHEMA_PREFIX, tableName);
     var count = jdbcTemplate.queryForObject(sql, new MapSqlParameterSource(), Long.class);
+    return count != null ? count : 0;
+  }
+
+  public long countByStatus(String tenantId, String tableName, String status) {
+    var sql = "SELECT COUNT(*) FROM %s%s.%s WHERE status = :status".formatted(tenantId, DB_SCHEMA_PREFIX, tableName);
+    var count = jdbcTemplate.queryForObject(sql, Map.of("status", status), Long.class);
     return count != null ? count : 0;
   }
 
