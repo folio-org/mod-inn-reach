@@ -211,3 +211,7 @@ contribution:
   item-pause: ${CONTRIBUTION_ITEM_PAUSE:0.5}
   tenant-cache:
     ttl: 3600
+  cleanup:
+    enabled: ${OUTBOX_CLEANUP_ENABLED:true}
+    retention-days: ${OUTBOX_CLEANUP_RETENTION_DAYS:7}
+    batch-size: ${OUTBOX_CLEANUP_BATCH_SIZE:5000}

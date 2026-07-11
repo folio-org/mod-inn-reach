@@ -63,3 +63,7 @@ contribution:
   fetch-limit: 50
   tenant-cache:
     ttl: 120
+  cleanup:
+    enabled: true
+    retention-days: 3
+    batch-size: 100
