@@ -3,7 +3,6 @@ package org.folio.innreach.batch.contribution.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.folio.innreach.domain.entity.OngoingContributionStatus;
-import org.folio.innreach.domain.event.DomainEventType;
 import org.folio.innreach.domain.service.ContributionActionService;
 import org.folio.innreach.domain.service.InnReachTransactionActionService;
 import org.folio.innreach.domain.service.impl.TenantScopedExecutionService;
