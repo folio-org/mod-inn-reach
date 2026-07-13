@@ -668,8 +668,8 @@
         {
           "methods": [ "POST" ],
           "pathPattern": "/inn-reach/central-servers/contributions/cleanup",
-          "unit": "day",
-          "delay": "7",
+          "unit": "minute",
+          "delay": "10",
           "modulePermissions": [
 
           ]
