@@ -7,6 +7,8 @@ import static org.folio.innreach.dto.MappingValidationStatusDTO.VALID;
 import static org.folio.innreach.util.InnReachConstants.INVALID_CENTRAL_SERVER_ID;
 import static org.folio.innreach.util.InnReachConstants.MARC_ERROR_MSG;
 
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.Objects;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -188,6 +190,7 @@ public class ContributionActionServiceImpl implements ContributionActionService 
     ongoingContribution.setCentralServerId(holdingJob.getCentralServerId());
     ongoingContribution.setOldEntity(jsonHelper.toJson(item));
     ongoingContribution.setDomainEventType(eventType);
+    ongoingContribution.setUpdatedDate(OffsetDateTime.now(ZoneOffset.UTC));
     return ongoingContribution;
   }
 

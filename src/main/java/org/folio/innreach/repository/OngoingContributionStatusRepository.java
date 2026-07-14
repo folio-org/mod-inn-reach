@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -34,4 +35,16 @@ public interface OngoingContributionStatusRepository extends JpaRepository<Ongoi
 
   @Query(value = "select count(*) from ongoing_contribution_status o where o.status='IN_PROGRESS'", nativeQuery = true)
   long getInProgressRecordsCount();
+
+  @Modifying(flushAutomatically = true, clearAutomatically = true)
+  @Transactional
+  @Query(value = """
+    DELETE FROM ongoing_contribution_status
+    WHERE id IN (
+      SELECT id FROM ongoing_contribution_status
+      WHERE status IN (:statuses) AND updated_date < :cutoff
+      LIMIT :batchSize
+    )""", nativeQuery = true)
+  int deleteBatchByStatusAndUpdatedBefore(@Param("statuses") List<String> statuses,
+      @Param("cutoff") OffsetDateTime cutoff, @Param("batchSize") int batchSize);
 }

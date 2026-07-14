@@ -8,6 +8,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -41,4 +42,16 @@ public interface JobExecutionStatusRepository extends JpaRepository<JobExecution
     "from job_execution_status j inner join contribution c on j.job_id = c.job_id " +
     "where c.status=0 and j.status = 'IN_PROGRESS')", nativeQuery = true)
   void updateInProgressRecordsToReady();
+
+  @Modifying(flushAutomatically = true, clearAutomatically = true)
+  @Transactional
+  @Query(value = """
+    DELETE FROM job_execution_status
+    WHERE id IN (
+      SELECT id FROM job_execution_status
+      WHERE status IN (:statuses) AND updated_date < :cutoff
+      LIMIT :batchSize
+    )""", nativeQuery = true)
+  int deleteBatchByStatusAndUpdatedBefore(@Param("statuses") List<String> statuses,
+      @Param("cutoff") OffsetDateTime cutoff, @Param("batchSize") int batchSize);
 }

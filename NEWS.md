@@ -11,6 +11,7 @@
 * Fix handling Loan closure for Item Transaction with Recall Status ([MODINREACH-575](https://folio-org.atlassian.net/browse/MODINREACH-575))
 * Fix handling IN_TRANSIT message from In-Reach for Transaction with Recall status ([MODINREACH-576](https://folio-org.atlassian.net/browse/MODINREACH-576))
 * Handle contribution of Items from a holding moved to new Instance ([MODINREACH-512](https://folio-org.atlassian.net/browse/MODINREACH-512))
+* Add Folio Timer API implementation for scheduled clean up of processed contributions (ongoing and initial) ([MODINREACH-588](https://folio-org.atlassian.net/browse/MODINREACH-588))
 
 ### Tech Debt
 * Improve API and module documentation ([MODINREACH-513](https://folio-org.atlassian.net/browse/MODINREACH-513))

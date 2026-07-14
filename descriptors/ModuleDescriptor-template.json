@@ -659,6 +659,22 @@
           "permissionsRequired": []
         }
       ]
+    },
+    {
+      "id": "_timer",
+      "version": "1.0",
+      "interfaceType": "system",
+      "handlers": [
+        {
+          "methods": [ "POST" ],
+          "pathPattern": "/inn-reach/central-servers/contributions/cleanup",
+          "unit": "day",
+          "delay": "7",
+          "modulePermissions": [
+
+          ]
+        }
+      ]
     }
   ],
   "permissionSets": [
