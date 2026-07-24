@@ -44,7 +44,8 @@ public class InnReachTransactionFilterParameters {
     PATRON_AGENCY("patronAgencyCode"),
     CENTRAL_PATRON_TYPE("centralPatronType"),
     CENTRAL_ITEM_TYPE("centralItemType"),
-    PATRON_NAME("patronName");
+    PATRON_NAME("patronName"),
+    TITLE("title");
 
     @Getter
     private final String value;
