@@ -148,7 +148,9 @@
         "itemAgencyCode",
         "patronAgencyCode",
         "centralPatronType",
-        "centralItemType"
+        "centralItemType",
+        "patronName",
+        "title"
       ],
       "x-enum-varnames": [
         "transactionTime",
@@ -159,7 +161,9 @@
         "itemAgencyCode",
         "patronAgencyCode",
         "centralPatronType",
-        "centralItemType"
+        "centralItemType",
+        "patronName",
+        "title"
       ]
     },
     "sortOrder": {

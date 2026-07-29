@@ -68,6 +68,7 @@ import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
@@ -557,14 +558,19 @@ class InnReachTransactionControllerWithMocksForClientsIT extends BaseTenantIT {
       transactions.get(2).getMetadata().getCreatedDate()));
   }
 
-  @Test
+  @ParameterizedTest
+  @MethodSource("sortByTestArguments")
   @Sql(scripts = {
     "classpath:db/central-server/pre-populate-central-server.sql",
     "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
   })
-  void return200HttpCode_and_sortedTransactionList_when_SortByCentralItemTypeAscending() throws Exception {
-    var mvcResult = mockMvc.perform(get(
-        "/inn-reach/transactions?sortBy=centralItemType").headers(defaultHeaders()))
+  void return200HttpCode_and_sortedTransactionList_when_SortByAnyField(String sortBy, String sortOrder,
+                                                                       Comparator<InnReachTransactionDTO> comparator) throws Exception {
+    var url = "/inn-reach/transactions?sortBy=" + sortBy;
+    if (sortOrder != null) {
+      url += "&sortOrder=" + sortOrder;
+    }
+    var mvcResult = mockMvc.perform(get(url).headers(defaultHeaders()))
       .andExpect(status().isOk())
       .andReturn();
     var response = fromJson(mvcResult, InnReachTransactionsDTO.class);
@@ -572,27 +578,21 @@ class InnReachTransactionControllerWithMocksForClientsIT extends BaseTenantIT {
     assertEquals(3, response.getTotalRecords());
 
     var transactions = response.getTransactions();
-    assertTrue(transactions.get(0).getHold().getCentralItemType() <
-      transactions.get(2).getHold().getCentralItemType());
+    assertTrue(comparator.compare(transactions.get(0), transactions.get(2)) <= 0);
   }
 
-  @Test
-  @Sql(scripts = {
-    "classpath:db/central-server/pre-populate-central-server.sql",
-    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
-  })
-  void return200HttpCode_and_sortedTransactionList_when_SortByCentralPatronType() throws Exception {
-    var mvcResult = mockMvc.perform(get(
-        "/inn-reach/transactions?sortBy=centralPatronType").headers(defaultHeaders()))
-      .andExpect(status().isOk())
-      .andReturn();
-    var response = fromJson(mvcResult, InnReachTransactionsDTO.class);
-    assertNotNull(response);
-    assertEquals(3, response.getTotalRecords());
-
-    var transactions = response.getTransactions();
-    assertTrue(transactions.get(0).getHold().getCentralPatronType() <
-      transactions.get(1).getHold().getCentralPatronType());
+  private static Stream<Arguments> sortByTestArguments() {
+    return Stream.of(
+      Arguments.of("centralItemType", null, Comparator.comparingInt((InnReachTransactionDTO t) -> t.getHold().getCentralItemType())),
+      Arguments.of("centralPatronType", null, Comparator.comparingInt((InnReachTransactionDTO t) -> t.getHold().getCentralPatronType())),
+      Arguments.of("type", null, Comparator.comparingInt((InnReachTransactionDTO t) -> t.getType().ordinal())),
+      Arguments.of("type", "desc", Comparator.<InnReachTransactionDTO>comparingInt(t -> t.getType().ordinal()).reversed()),
+      Arguments.of("state", null, Comparator.comparingInt((InnReachTransactionDTO t) -> t.getState().ordinal())),
+      Arguments.of("itemAgencyCode", null, Comparator.comparing((InnReachTransactionDTO t) -> t.getHold().getItemAgencyCode())),
+      Arguments.of("patronAgencyCode", null, Comparator.comparing((InnReachTransactionDTO t) -> t.getHold().getPatronAgencyCode())),
+      Arguments.of("patronName", null, Comparator.comparing((InnReachTransactionDTO t) -> t.getHold().getPatronName())),
+      Arguments.of("title", null, Comparator.comparing((InnReachTransactionDTO t) -> t.getHold().getTitle(), String.CASE_INSENSITIVE_ORDER))
+    );
   }
 
   @Test
