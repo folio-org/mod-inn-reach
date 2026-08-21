@@ -1,3 +1,8 @@
+## v4.0.6 2026-08-21
+
+### Dependencies
+* Add missing dependencies ([MODINREACH-609](https://folio-org.atlassian.net/browse/MODINREACH-609))
+
 ## v4.0.5 2026-07-02
 
 ### Features
