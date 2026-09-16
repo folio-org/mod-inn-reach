@@ -1,0 +1,11 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.4.xsd">
+
+  <changeSet id="2026-09-16-01__alter_paging_slip_template_column_type" author="Mukhiddin Yusupov">
+    <sqlFile path="sql/2026-09-16-01__alter_paging_slip_template_column_type.sql" relativeToChangelogFile="true"/>
+  </changeSet>
+
+</databaseChangeLog>
