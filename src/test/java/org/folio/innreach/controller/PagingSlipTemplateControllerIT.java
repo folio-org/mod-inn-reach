@@ -1,5 +1,7 @@
 package org.folio.innreach.controller;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.contains;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -10,11 +12,13 @@ import static org.springframework.test.context.jdbc.SqlMergeMode.MergeMode.MERGE
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.folio.innreach.controller.ControllerTestUtils.createValidationError;
 import static org.folio.innreach.fixture.TestUtil.deserializeFromJsonFile;
 
 import java.util.UUID;
 import org.folio.innreach.dto.PagingSlipTemplateDTO;
 import org.folio.innreach.dto.PagingSlipTemplatesDTO;
+import org.folio.innreach.dto.ValidationErrorsDTO;
 import org.folio.innreach.it.base.BaseTenantIT;
 import org.folio.innreach.mapper.PagingSlipTemplateMapper;
 import org.folio.innreach.repository.PagingSlipTemplateRepository;
@@ -105,6 +109,51 @@ class PagingSlipTemplateControllerIT extends BaseTenantIT {
     assertNotNull(createdTemplate.getId());
     assertEquals(templateDTO.getDescription(), createdTemplate.getDescription());
     assertEquals(templateDTO.getTemplate(), createdTemplate.getTemplate());
+  }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql"
+  })
+  void shouldCreatePagingSlipTemplateWithMaxAllowedLength() throws Exception {
+    var templateDTO = new PagingSlipTemplateDTO()
+      .description("description")
+      .template("a".repeat(4094));
+
+    mockMvc.perform(put("/inn-reach/central-servers/{centralServerId}/paging-slip-template",
+        PRE_POPULATED_CENTRAL_SERVER_ID)
+        .content(asJsonString(templateDTO))
+        .headers(defaultHeaders())
+        .contentType(APPLICATION_JSON))
+      .andExpect(status().isNoContent());
+
+    var created = repository.fetchOneByCentralServerId(PRE_POPULATED_CENTRAL_SERVER_ID);
+
+    assertTrue(created.isPresent());
+    assertEquals(4094, created.get().getTemplate().length());
+  }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql"
+  })
+  void return400WhenTemplateExceedsMaxLength() throws Exception {
+    var templateDTO = new PagingSlipTemplateDTO()
+      .description("description")
+      .template("a".repeat(4095));
+
+    var result = mockMvc.perform(put("/inn-reach/central-servers/{centralServerId}/paging-slip-template",
+        PRE_POPULATED_CENTRAL_SERVER_ID)
+        .content(asJsonString(templateDTO))
+        .headers(defaultHeaders())
+        .contentType(APPLICATION_JSON))
+      .andExpect(status().isBadRequest())
+      .andReturn();
+
+    var body = fromJson(result, ValidationErrorsDTO.class);
+    assertNotNull(body);
+    assertThat(body.getValidationErrors(),
+      contains(createValidationError("template", "size must be between 0 and 4094")));
   }
 
   @Test
