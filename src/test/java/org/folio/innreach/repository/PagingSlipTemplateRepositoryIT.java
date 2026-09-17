@@ -125,4 +125,17 @@ class PagingSlipTemplateRepositoryIT extends BaseRepositoryIT {
     var ex = assertThrows(DataIntegrityViolationException.class, () -> repository.saveAndFlush(newTemplate));
     assertThat(ex.getMessage(), containsString("constraint [paging_slip_template_central_server_id_key]"));
   }
+
+  @Test
+  @Sql(scripts = {"classpath:db/central-server/pre-populate-central-server.sql"})
+  void shouldSaveTemplateLongerThanOldVarcharLimit() {
+    var newTemplate = createPagingSlipTemplate();
+    newTemplate.setCentralServer(refCentralServer());
+    newTemplate.setId(null);
+    newTemplate.setTemplate("a".repeat(3000)); // exceeds old varchar(2047) limit
+
+    var saved = repository.saveAndFlush(newTemplate);
+
+    assertEquals(3000, saved.getTemplate().length());
+  }
 }

@@ -18,7 +18,8 @@
     },
     "template": {
       "description": "Paging Slip Template template",
-      "type": "string"
+      "type": "string",
+      "maxLength": 4094
     },
     "metadata": {
       "description": "Entity metadata",
