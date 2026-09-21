@@ -1,3 +1,8 @@
+## In development
+
+### Features
+* Add support for inventory-view interface v3.3 for searching instances by HRID ([MODINREACH-607](https://folio-org.atlassian.net/browse/MODINREACH-607))
+
 ## v3.4.7 2026-07-02
 
 ### Features
