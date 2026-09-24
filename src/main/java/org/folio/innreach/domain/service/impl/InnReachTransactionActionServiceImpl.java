@@ -45,6 +45,7 @@ import org.folio.innreach.domain.entity.InnReachTransaction;
 import org.folio.innreach.domain.entity.TransactionItemHold;
 import org.folio.innreach.domain.entity.TransactionPatronHold;
 import org.folio.innreach.domain.event.CancelRequestEvent;
+import org.folio.innreach.domain.event.LoanAction;
 import org.folio.innreach.domain.event.MoveRequestEvent;
 import org.folio.innreach.domain.event.RecallRequestEvent;
 import org.folio.innreach.domain.exception.CirculationException;
@@ -76,8 +77,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
 
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.EnumSet;
 import java.util.List;
@@ -234,20 +233,15 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
     }
 
     var loanAction = loan.getAction();
-    var loanStatus = ofNullable(loan.getStatus()).map(StorageLoanDTOStatus::getName).orElse(null);
 
-    if (isLoanCheckedIn(loanAction, loanStatus)) {
-      log.info("handleLoanUpdate:: isLoanCheckedIn");
-      updateTransactionOnLoanClosure(loan, transaction);
-    } else if ("renewed".equalsIgnoreCase(loanAction)) {
-      log.info("handleLoanUpdate:: loan action is renewed");
-      updateTransactionOnLoanRenewal(loan, transaction);
-    } else if ("claimedReturned".equalsIgnoreCase(loanAction)) {
-      log.info("handleLoanUpdate:: loan action is claimedReturned");
-      updateTransactionOnLoanClaimedReturned(loan, transaction);
-    } else if ("recallrequested".equalsIgnoreCase(loanAction)) {
-      log.info("handleLoanUpdate:: loan action is recallRequested");
-      updateTransactionOnLoanRecallRequested(loan.getId(), loan.getDueDate(), transaction);
+    log.info("handleLoanUpdate:: loan action: [{}]", loanAction);
+    switch(LoanAction.from(loanAction)) {
+      case CHECKED_IN -> updateTransactionOnLoanClosure(loan, transaction);
+      case RENEW -> updateTransactionOnLoanRenewal(loan, transaction);
+      case CLAIMED_RETURNED -> updateTransactionOnLoanClaimedReturned(loan, transaction);
+      case RECALL_REQUESTED -> updateTransactionOnLoanRecallRequested(loan.getId(), loan.getDueDate(), transaction);
+      case DUE_DATE_CHANGED -> updateTransactionOnDueDateChange(loan, transaction);
+      case null -> log.info("handleLoanUpdate:: skip handling loan action: [{}]", loanAction);
     }
     log.info("handleLoanUpdate:: Finish handling Loan update");
   }
@@ -494,8 +488,7 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
     if (hasOpenRecallRequest) {
       log.info("recallItem:: request is open recall request");
       var loan = loanService.getById(transaction.getHold().getFolioLoanId());
-      var loanDueDate = loan.getDueDate().toInstant().truncatedTo(ChronoUnit.SECONDS);
-      var loanIntegerDueDate = (int) (loanDueDate.getEpochSecond());
+      var loanIntegerDueDate = toEpochSec(loan.getDueDate());
       transaction.getHold().setDueDateTime(loanIntegerDueDate);
 
       updateTransactionOnLoanRecallRequested(loan.getId(), loan.getDueDate(), transaction);
@@ -572,28 +565,42 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
 
   private void updateTransactionOnLoanRenewal(StorageLoanDTO loan, InnReachTransaction transaction) {
     log.debug("updateTransactionOnLoanRenewal:: parameters loan: {}, transaction: {}", loan, transaction);
-    if (transaction.getType() != PATRON) {
-      return;
+    if (transaction.getType() == PATRON) {
+      if (transaction.getState() == OWNER_RENEW) {
+        // on reacting to OWNER_RENEW message the borrower for patron transaction sets state to OWNER_RENEW and due date
+        // to the requested one which results in updating/renewing the related loan. So, no need to update the transaction
+        // again here by reacting to the resulted renew action.
+        return;
+      }
+
+      log.info("updateTransactionOnLoanRenewal:: Updating Patron transaction [trackingId={}] on the renewal " +
+          "of loan [id={}]", transaction.getTrackingId(), loan.getId());
+
+      var transactionDueDate = transaction.getHold().getDueDateTime();
+      var loanDueDate = toEpochSec(loan.getDueDate());
+      if (!Objects.equals(loanDueDate, transactionDueDate)) {
+        transaction.setState(BORROWER_RENEW);
+        transaction.getHold().setDueDateTime(loanDueDate);
+
+        notifier.reportBorrowerRenew(transaction, loanDueDate);
+      }
+    } else if (transaction.getType() == ITEM) {
+      log.info("Updating Item transaction [trackingId={}] on the renewal of loan [id={}]",
+        transaction.getTrackingId(), loan.getId());
+
+      var loanDueDate = toEpochSec(loan.getDueDate());
+      transaction.getHold().setDueDateTime(loanDueDate);
     }
+  }
 
-    if (transaction.getState() == OWNER_RENEW) {
-      // on reacting to OWNER_RENEW message the borrower for patron transaction sets state to OWNER_RENEW and due date
-      // to the requested one which results in updating/renewing the related loan. So, no need to update the transaction
-      // again here by reacting to the resulted renew action.
-      return;
-    }
+  private void updateTransactionOnDueDateChange(StorageLoanDTO loan, InnReachTransaction transaction) {
+    log.debug("updateTransactionOnDueDateChange:: parameters loan: {}, transaction: {}", loan, transaction);
+    if (transaction.getType() == ITEM) {
+      log.info("updateTransactionOnDueDateChange:: Updating Item transaction [trackingId={}] on " +
+          "due date change for loan [id={}]", transaction.getTrackingId(), loan.getId());
 
-    log.info("Updating patron transaction {} on the renewal of loan {}", transaction.getId(), loan.getId());
-
-    var transactionDueDate = Instant.ofEpochSecond(transaction.getHold().getDueDateTime());
-    var loanDueDate = toInstantTruncatedToSec(loan.getDueDate());
-    if (!loanDueDate.equals(transactionDueDate)) {
-      var loanIntegerDueDate = (int) loanDueDate.getEpochSecond();
-
-      transaction.setState(BORROWER_RENEW);
-      transaction.getHold().setDueDateTime(loanIntegerDueDate);
-
-      notifier.reportBorrowerRenew(transaction, loanIntegerDueDate);
+      var loanDueDate = toEpochSec(loan.getDueDate());
+      transaction.getHold().setDueDateTime(loanDueDate);
     }
   }
 
@@ -601,6 +608,11 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
     log.debug("updateTransactionOnLoanClosure:: parameters loan: {}, transaction: {}", loan, transaction);
 
     if (transaction.getType() == LOCAL) {
+      return;
+    }
+
+    var loanStatus = ofNullable(loan.getStatus()).map(StorageLoanDTOStatus::getName).orElse(null);
+    if (!isLoanClosed(loanStatus)) {
       return;
     }
 
@@ -843,7 +855,11 @@ public class InnReachTransactionActionServiceImpl implements InnReachTransaction
   }
 
   private boolean isLoanCheckedIn(String loanAction, String loanStatus) {
-    return "checkedin".equalsIgnoreCase(loanAction) && "closed".equalsIgnoreCase(loanStatus);
+    return "checkedin".equalsIgnoreCase(loanAction) && isLoanClosed(loanStatus);
+  }
+
+  private boolean isLoanClosed(String loanStatus) {
+    return "closed".equalsIgnoreCase(loanStatus);
   }
 
   private void validateIsPatronHoldWithVirtualItemRequest(InnReachTransaction transaction) {
