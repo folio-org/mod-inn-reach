@@ -629,7 +629,7 @@ class KafkaCirculationEventListenerApiIT extends BaseTenantIT {
 
     var updatedTransaction = transactionRepository.fetchOneById(transactionId).orElseThrow();
     assertEquals(toEpochSec(newDueDate), updatedTransaction.getHold().getDueDateTime());
-    assertEquals(originalDueDateTime, 1640091901);
+    assertEquals(1640091901, originalDueDateTime);
   }
 
   @Test
