@@ -14,6 +14,7 @@
 * Add Folio Timer API implementation for scheduled clean up of processed contributions (ongoing and initial) ([MODINREACH-588](https://folio-org.atlassian.net/browse/MODINREACH-588))
 * Add support for sorting by patron name and item title in GET transactions API ([MODINREACH-573](https://folio-org.atlassian.net/browse/MODINREACH-573))
 * Add API validation for increased max size of paging slip template and adjust DB table column for it ([MODINREACH-518](https://folio-org.atlassian.net/browse/MODINREACH-518))
+* Fix Owning Site Overdue Report showing stale due date after loan renewal or due date change ([MODINREACH-514](https://folio-org.atlassian.net/browse/MODINREACH-514))
 
 ### Tech Debt
 * Improve API and module documentation ([MODINREACH-513](https://folio-org.atlassian.net/browse/MODINREACH-513))

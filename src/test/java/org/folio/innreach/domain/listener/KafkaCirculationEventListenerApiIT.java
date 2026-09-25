@@ -584,6 +584,108 @@ class KafkaCirculationEventListenerApiIT extends BaseTenantIT {
     assertEquals((long) toEpochSec(loan.getDueDate()), payload.get("dueDateTime"));
   }
 
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql",
+  })
+  void shouldUpdateItemTransactionDueDateOnLoanRenewal() {
+    var folioLoanId = PRE_POPULATED_ITEM_TRANSACTION_LOAN_ID;
+    var transactionId = PRE_POPULATED_ITEM_TRANSACTION_ID;
+    var event = createLoanDomainEvent(DomainEventType.UPDATED);
+    var loan = event.getData().getNewEntity();
+    loan.setId(folioLoanId);
+    loan.setAction("renewed");
+    var newDueDate = loan.getDueDate();
+
+    listener.handleLoanEvents(asSingleConsumerRecord(CIRC_LOAN_TOPIC, folioLoanId, event));
+
+    verify(eventProcessor).process(anyList(), any(Consumer.class));
+
+    var updatedTransaction = transactionRepository.fetchOneById(transactionId).orElseThrow();
+    assertEquals(toEpochSec(newDueDate), updatedTransaction.getHold().getDueDateTime());
+  }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql",
+  })
+  void shouldUpdateItemTransactionDueDateOnDueDateChanged() {
+    var folioLoanId = PRE_POPULATED_ITEM_TRANSACTION_LOAN_ID;
+    var transactionId = PRE_POPULATED_ITEM_TRANSACTION_ID;
+    var event = createLoanDomainEvent(DomainEventType.UPDATED);
+    var loan = event.getData().getNewEntity();
+    loan.setId(folioLoanId);
+    loan.setAction("dueDateChanged");
+    var newDueDate = loan.getDueDate();
+
+    var transactionBeforeUpdate = transactionRepository.fetchOneById(transactionId).orElseThrow();
+    var originalDueDateTime = transactionBeforeUpdate.getHold().getDueDateTime();
+
+    listener.handleLoanEvents(asSingleConsumerRecord(CIRC_LOAN_TOPIC, folioLoanId, event));
+
+    verify(eventProcessor).process(anyList(), any(Consumer.class));
+
+    var updatedTransaction = transactionRepository.fetchOneById(transactionId).orElseThrow();
+    assertEquals(toEpochSec(newDueDate), updatedTransaction.getHold().getDueDateTime());
+    assertEquals(1640091901, originalDueDateTime);
+  }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql",
+  })
+  void shouldNotUpdatePatronTransactionDueDateOnDueDateChanged() {
+    var folioLoanId = PRE_POPULATED_PATRON_TRANSACTION_LOAN_ID;
+    var transactionId = PRE_POPULATED_PATRON_TRANSACTION_ID;
+    var event = createLoanDomainEvent(DomainEventType.UPDATED);
+    var loan = event.getData().getNewEntity();
+    loan.setId(folioLoanId);
+    loan.setAction("dueDateChanged");
+
+    var transactionBeforeUpdate = transactionRepository.fetchOneById(transactionId).orElseThrow();
+    var originalDueDateTime = transactionBeforeUpdate.getHold().getDueDateTime();
+    var originalState = transactionBeforeUpdate.getState();
+
+    listener.handleLoanEvents(asSingleConsumerRecord(CIRC_LOAN_TOPIC, folioLoanId, event));
+
+    verify(eventProcessor).process(anyList(), any(Consumer.class));
+
+    var updatedTransaction = transactionRepository.fetchOneById(transactionId).orElseThrow();
+    assertEquals(originalDueDateTime, updatedTransaction.getHold().getDueDateTime());
+    assertEquals(originalState, updatedTransaction.getState());
+  }
+
+  @Test
+  @Sql(scripts = {
+    "classpath:db/central-server/pre-populate-central-server.sql",
+    "classpath:db/inn-reach-transaction/pre-populate-inn-reach-transaction.sql"
+  })
+  void shouldNotCloseTransactionWhenLoanCheckedInButStatusOpen() {
+    var folioLoanId = PRE_POPULATED_PATRON_TRANSACTION_LOAN_ID;
+    var transactionId = PRE_POPULATED_PATRON_TRANSACTION_ID;
+    var event = createLoanDomainEvent(DomainEventType.UPDATED);
+    var loan = event.getData().getNewEntity();
+    loan.setId(folioLoanId);
+    loan.setStatus(new StorageLoanDTOStatus().name("Open"));
+    loan.setAction("checkedin");
+
+    var transactionBeforeUpdate = transactionRepository.fetchOneById(transactionId).orElseThrow();
+    var originalState = transactionBeforeUpdate.getState();
+    var originalDueDateTime = transactionBeforeUpdate.getHold().getDueDateTime();
+
+    listener.handleLoanEvents(asSingleConsumerRecord(CIRC_LOAN_TOPIC, folioLoanId, event));
+
+    verify(eventProcessor).process(anyList(), any(Consumer.class));
+    verify(innReachExternalService, never()).postInnReachApi(any(), any());
+
+    var updatedTransaction = transactionRepository.fetchOneById(transactionId).orElseThrow();
+    assertEquals(originalState, updatedTransaction.getState());
+    assertEquals(originalDueDateTime, updatedTransaction.getHold().getDueDateTime());
+  }
+
   private static DomainEvent<StorageLoanDTO> createLoanDomainEvent(DomainEventType eventType) {
     var loan = new StorageLoanDTO().id(LOAN_ID)
       .dueDate(DUE_DATE)
