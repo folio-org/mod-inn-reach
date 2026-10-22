@@ -20,10 +20,10 @@ import org.folio.innreach.dto.Item;
 @HttpExchange("inventory-view")
 public interface InventoryViewClient {
 
-  @GetExchange(url = "/instances?query=(id={instanceId})&limit=1")
+  @GetExchange(url = "/instances?query=(id=={instanceId})&limit=1")
   ResultList<InstanceView> getInstanceById(@PathVariable("instanceId") UUID instanceId);
 
-  @GetExchange(url = "/instances?query=(instance.hrid={hrid})&limit=1")
+  @GetExchange(url = "/instances?query=(instanceHrid=={hrid})&limit=1")
   ResultList<InstanceView> getInstanceByHrid(@PathVariable("hrid") String instanceHrid);
 
   @Data
