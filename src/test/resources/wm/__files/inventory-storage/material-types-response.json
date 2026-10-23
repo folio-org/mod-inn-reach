@@ -1,0 +1,25 @@
+{
+  "mtypes": [
+    {
+      "id": "1a54b431-2e4f-452d-9cae-9cee66c9a892",
+      "name": "book",
+      "source": "folio"
+    },
+    {
+      "id": "5ee11d91-f7e8-481d-b079-65d708582ccc",
+      "name": "dvd",
+      "source": "folio"
+    },
+    {
+      "id": "615b8413-82d5-4203-aa6e-e37984cb5ac3",
+      "name": "electronic resource",
+      "source": "folio"
+    },
+    {
+      "id": "dd0bf600-dbd9-44ab-9ff2-e2a61a6539f1",
+      "name": "microform",
+      "source": "folio"
+    }
+  ],
+  "totalRecords": 4
+}
