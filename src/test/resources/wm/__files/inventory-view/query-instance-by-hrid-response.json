@@ -1,0 +1,18 @@
+{
+  "instances": [
+    {
+      "instance": {
+        "id": "b81bcffd-9dd9-4e17-b6fd-eeecf790aad5",
+        "hrid": "in00000000355",
+        "source": "MARC",
+        "title": "Water resources of East Feliciana Parish, Louisiana",
+        "statisticalCodeIds": [],
+        "items": [],
+        "holdingsRecords": []
+      },
+      "holdingsRecords": [],
+      "items": []
+    }
+  ],
+  "totalRecords": 1
+}
