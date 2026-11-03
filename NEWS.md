@@ -1,3 +1,9 @@
+## v4.0.7 2026-11-02
+
+### Bugs
+* **Contribution**
+  * Add support for improved search of instances with inventory-view API by instance HRID ([MODINREACH-627](https://folio-org.atlassian.net/browse/MODINREACH-627))
+
 ## v4.0.6 2026-08-21
 
 ### Dependencies
