@@ -1,8 +1,14 @@
+## v3.4.8 2026-11-03
+
+### Bugs
+* **Contribution**
+  * Add support for improved search of instances with inventory-view API by instance HRID ([MODINREACH-625](https://folio-org.atlassian.net/browse/MODINREACH-625))
+
 ## v3.4.7 2026-07-02
 
 ### Features
 * **Contribution**
-* Handle contribution of Items from a holding moved to new Instance ([MODINREACH-512](https://folio-org.atlassian.net/browse/MODINREACH-512))
+  * Handle contribution of Items from a holding moved to new Instance ([MODINREACH-512](https://folio-org.atlassian.net/browse/MODINREACH-512))
 
 ## v3.4.6 2026-06-16
 
