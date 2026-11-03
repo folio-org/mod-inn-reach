@@ -1,0 +1,25 @@
+{
+  "totalRecords": 1,
+  "result": [
+    {
+      "instance": {
+        "id": "7fbd5d84-62d1-44c6-9c45-6cb73aab17fb",
+        "hrid": "bib001313",
+        "source": "MARC",
+        "instanceTypeId": "6312d172-f0cf-40f6-b27d-9fa8feaf332f"
+      },
+      "holdingsRecords": [
+        {
+          "id": "3a40852d-49fd-40f2-ae8e-7918d2d8b20e",
+          "instanceId": "7fbd5d84-62d1-44c6-9c45-6cb73aab17fb"
+        }
+      ],
+      "items": [
+        {
+          "id": "c8a76f1f-18cc-4f1b-8b7f-d56a2a6c67df",
+          "holdingsRecordId": "3a40852d-49fd-40f2-ae8e-7918d2d8b20e"
+        }
+      ]
+    }
+  ]
+}

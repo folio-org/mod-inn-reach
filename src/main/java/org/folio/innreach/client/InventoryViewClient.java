@@ -21,10 +21,10 @@ import org.folio.innreach.dto.Item;
 @FeignClient(name = "inventory-view", configuration = FolioFeignClientConfig.class)
 public interface InventoryViewClient {
 
-  @GetMapping(path = "/instances?query=(id={instanceId})&limit=1", consumes = "binary/octet-stream")
+  @GetMapping(path = "/instances?query=(id=={instanceId})&limit=1", consumes = "binary/octet-stream")
   ResultList<InstanceView> getInstanceById(@PathVariable("instanceId") UUID instanceId);
 
-  @GetMapping(path = "/instances?query=(instance.hrid={hrid})&limit=1", consumes = "binary/octet-stream")
+  @GetMapping(path = "/instances?query=(instanceHrid=={hrid})&limit=1", consumes = "binary/octet-stream")
   ResultList<InstanceView> getInstanceByHrid(@PathVariable("hrid") String instanceHrid);
 
   @Data
