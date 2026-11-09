@@ -35,6 +35,7 @@
     <easy-random.version>5.0.0</easy-random.version>
     <micrometer.version>1.17.2</micrometer.version>
     <log4j2.version>2.19.0</log4j2.version>
+    <apache-commons-text.version>1.15.0</apache-commons-text.version>
 
     <!-- plugins -->
     <openapi-generator.version>7.26.0</openapi-generator.version>
@@ -231,6 +232,13 @@
     <dependency>
       <groupId>com.google.code.gson</groupId>
       <artifactId>gson</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-text</artifactId>
+      <version>${apache-commons-text.version}</version>
+      <scope>test</scope>
     </dependency>
   </dependencies>
 
