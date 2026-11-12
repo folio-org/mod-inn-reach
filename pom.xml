@@ -371,7 +371,6 @@
                 <interfaceOnly>true</interfaceOnly>
                 <useSpringBoot4>true</useSpringBoot4>
                 <useJackson3>true</useJackson3>
-                <useJspecify>true</useJspecify>
                 <useTags>true</useTags>
               </configOptions>
             </configuration>
@@ -403,7 +402,6 @@
                 <interfaceOnly>true</interfaceOnly>
                 <useSpringBoot4>true</useSpringBoot4>
                 <useJackson3>true</useJackson3>
-                <useJspecify>true</useJspecify>
                 <useTags>true</useTags>
               </configOptions>
             </configuration>
@@ -435,7 +433,6 @@
                 <interfaceOnly>true</interfaceOnly>
                 <useSpringBoot4>true</useSpringBoot4>
                 <useJackson3>true</useJackson3>
-                <useJspecify>true</useJspecify>
                 <useTags>true</useTags>
               </configOptions>
             </configuration>
