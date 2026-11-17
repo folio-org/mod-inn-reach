@@ -1,3 +1,8 @@
+## v4.0.8 2026-11-17
+
+### Dependencies
+* Upgrade `folio-spring-support` to 10.0.1 ([MODINREACH-624](https://folio-org.atlassian.net/browse/MODINREACH-624))
+
 ## v4.0.7 2026-11-02
 
 ### Bugs
